@@ -1,0 +1,5 @@
+# Ignore Compiled Python #
+##########################
+*.pyc
+dist/*
+
