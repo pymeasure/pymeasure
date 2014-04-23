@@ -3,11 +3,16 @@
 
 class Command(object):
     
-    def __init__(self, writer, asker, doc=None):
+    def __init__(self, writer, asker, doc=None, choices=[]):
         self._writer, self._asker = writer, asker
         self.doc = doc
+        self.choices = choices
         
     def set(self, instrument, value):
+        if len(self.choices) > 0:
+            if value not in self.choices:
+                raise ValueError("Invalid choice for property '%s' on %s" % (
+                    self.name, repr(instrument)))
         instrument.write(self._writer % value)
         
     def get(self, instrument):
@@ -30,6 +35,7 @@ class Instrument(object):
             cmd = getattr(obj, name)
             if issubclass(type(cmd), Command):
                 obj._cmds[name] = cmd
+                cmd.name = name
                 setattr(obj.__class__, name, property(cmd.get, cmd.set, doc=str(cmd)))
         return obj
 
@@ -45,5 +51,5 @@ class Instrument(object):
         
 class ExampleInstrument(Instrument):
     
-    voltage = Command('VOLT %d', 'VOLT:MEASURE?', 'Voltage')
+    voltage = Command('VOLT %d', 'VOLT:MEASURE?', 'Measured voltage', choices=[1,2,3])
     
