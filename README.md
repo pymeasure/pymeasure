@@ -8,8 +8,8 @@
 
 ### External Packages
 
-* numpy
+* numpy, scipy
 * astropy
 * twisted
 * sqlalchemy
-* pyqt4, pyside
+* pyqt4, pyside, pyqtgraph
