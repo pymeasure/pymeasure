@@ -3,7 +3,7 @@
 
 class Command(object):
     
-    def __init__(self, writer, asker, doc=None, validator=None):
+    def __init__(self, asker, writer=None, doc=None, validator=None):
         """ Initailizes a new Command object based on the following inputs:
         
             writer -- string SCPI command for writing (setting)
@@ -20,6 +20,9 @@ class Command(object):
         SCPI command passed in during initialization. The value is passed
         through the validator function if its callable
         """
+        if writer is None:
+            raise Exception("Can not write to property '%s' on %s" % (
+                            self.name, repr(instrument)))
         if callable(self.validator):
             self.validator(self, instrument, value)
         instrument.write(self._writer % value)
@@ -37,6 +40,32 @@ class Command(object):
     def __repr__(self):
         return "<Command(write='%s', ask='%s')>" % (self._writer, self._asker)
 
+
+class CommandSet(object):
+    
+    def __init__(self, parent, commands={}):
+        super(CommandSet, self).__init__()
+        self.parent = parent
+        self._cmds = {}
+        for name, command in commands.iteritems():
+            self.add(name, command)
+        
+    def add(self, name, command):
+        """ Adds a new command object onto the CommandSet and attaches it
+        to the parent class
+        """
+        if not issubclass(type(command), Command):
+            raise TypeError("Command %s must be a child of the Command class" %
+                            command)
+        self._cmds[name] = command
+        command.name = name
+        p = property(command.get, command.set, doc=str(command))
+        setattr(self.parent.__class__, name, p)
+        setattr(self.parent.__class__, "get_%s" % name, lambda s: command.get(self))
+        setattr(self.parent.__class__, "set_%s" % name, lambda s,v: command.set(self, v))
+        
+    def __repr__(self):
+        return "<CommandSet%s>" % repr(self._cmds)
 
 def range_validator(command, instrument, value, minimum, maximum):
     """ Raises an exception if the value is not between the inclusive 
@@ -78,11 +107,11 @@ class Instrument(object):
         by the Command object.        
         """
         obj = super(Instrument, cls).__new__(cls)
-        obj._cmds = {}
+        obj._cmds = CommandSet(obj)
         for name in dir(obj):
             command = getattr(obj, name)
             if issubclass(type(command), Command):
-                obj._add_command(name, command)
+                obj._cmds.add(name, command)
         return obj
 
     def __init__(self, connection):
@@ -107,16 +136,6 @@ class Instrument(object):
         self.connection.flush()
         self.write(command)
         return self.read()
-    
-    def _add_command(self, name, command):
-        """ Adds a new command object onto the instrument
-        """
-        self._cmds[name] = command
-        command.name = name
-        p = property(command.get, command.set, doc=str(command))
-        setattr(self.__class__, name, p)
-        setattr(self.__class__, "get_%s" % name, lambda s: command.get(self))
-        setattr(self.__class__, "set_%s" % name, lambda s,v: command.set(self, v))
         
     def _assert_connection_methods(self):
         """ Asserts that the connection has the appropriate methods:
@@ -139,7 +158,6 @@ class FakeConnection(object):
         
     def flush(self):
         pass
-
         
 class ExampleInstrument(Instrument):
     
