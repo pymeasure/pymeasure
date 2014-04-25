@@ -28,7 +28,7 @@ class Command(object):
         """ Get method calls for ask on the instrument using the asker
         SCPI command passed in during initalization.
         """
-        instrument.ask(self._asker)
+        return instrument.ask(self._asker)
         
     def __str__(self):
         if self.doc is not None:
