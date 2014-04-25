@@ -80,12 +80,9 @@ class Instrument(object):
         obj = super(Instrument, cls).__new__(cls)
         obj._cmds = {}
         for name in dir(obj):
-            cmd = getattr(obj, name)
-            if issubclass(type(cmd), Command):
-                obj._cmds[name] = cmd
-                cmd.name = name
-                setattr(obj.__class__, name, property(cmd.get, cmd.set, 
-                        doc=str(cmd)))
+            command = getattr(obj, name)
+            if issubclass(type(command), Command):
+                obj._add_command(name, command)
         return obj
 
     def __init__(self, connection):
@@ -110,6 +107,16 @@ class Instrument(object):
         self.connection.flush()
         self.write(command)
         return self.read()
+    
+    def _add_command(self, name, command):
+        """ Adds a new command object onto the instrument
+        """
+        self._cmds[name] = command
+        command.name = name
+        p = property(command.get, command.set, doc=str(command))
+        setattr(self.__class__, name, p)
+        setattr(self.__class__, "get_%s" % name, lambda s: command.get(self))
+        setattr(self.__class__, "set_%s" % name, lambda s,v: command.set(self, v))
         
     def _assert_connection_methods(self):
         """ Asserts that the connection has the appropriate methods:
