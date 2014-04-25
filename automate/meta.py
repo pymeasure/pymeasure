@@ -46,10 +46,10 @@ def range_validator(command, instrument, value, minimum, maximum):
     """
     if value < minimum:
         raise ValueError("Value for '%s' is less than minimum (%s) on %s" % (
-                command.name, str(maximum), repr(instrument))
+                command.name, str(maximum), repr(instrument)))
     elif value > maximum:
         raise ValueError("Value for '%s' is greater than maximum (%s) on %s" % (
-                command.name, str(maximum), repr(instrument))
+                command.name, str(maximum), repr(instrument)))
 
 
 def choices_validator(command, instrument, value, choice_list):
@@ -66,7 +66,7 @@ def choices_validator(command, instrument, value, choice_list):
                          "on %s" % repr(instrument))
     if value not in choice_list:
         raise ValueError("Invalid choice for property '%s' on %s" % (
-            command.name, repr(instrument))
+            command.name, repr(instrument)))
         
 
 class Instrument(object):
@@ -101,14 +101,12 @@ class Instrument(object):
         
     def write(self, command):
         """ Writes a command through the connection """
-        print command # Debug only
         self.connection.write(command)
         
     def ask(self, command):
         """ Writes a query and then reads the result, after first flushing the
         connection to ensure an appropriate reponse
         """
-        print command # Debug only
         self.connection.flush()
         self.write(command)
         return self.read()
@@ -119,9 +117,22 @@ class Instrument(object):
         """
         for name in ['write', 'read', 'flush']:
             method = getattr(self.connection, name, None)
-            if not callable(write_method):
-                raise Exception("Connection %s for %s has no %s method" % (
-                            repr(self.connection), repr(self), name))
+            if not callable(method):
+                raise NameError("Connection %s has no %s method for %s" % (
+                            repr(self.connection), name, repr(self)))
+
+
+class FakeConnection(object):
+
+    def write(self, command):
+        print command
+        
+    def read(self):
+        return "reading is so fake!"
+        
+    def flush(self):
+        pass
+
         
 class ExampleInstrument(Instrument):
     
