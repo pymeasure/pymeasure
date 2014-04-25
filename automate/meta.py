@@ -20,7 +20,7 @@ class Command(object):
         SCPI command passed in during initialization. The value is passed
         through the validator function if its callable
         """
-        if writer is None:
+        if self._writer is None:
             raise Exception("Can not write to property '%s' on %s" % (
                             self.name, repr(instrument)))
         if callable(self.validator):
@@ -54,7 +54,9 @@ class CommandSet(object):
         """ Adds a new command object onto the CommandSet and attaches it
         to the parent class
         """
-        if not issubclass(type(command), Command):
+        if self == command:
+            return # Avoid adding itself to itself!
+        if not issubclass(type(command), (Command, CommandSet)):
             raise TypeError("Command %s must be a child of the Command class" %
                             command)
         self._cmds[name] = command
@@ -63,6 +65,20 @@ class CommandSet(object):
         setattr(self.parent.__class__, name, p)
         setattr(self.parent.__class__, "get_%s" % name, lambda s: command.get(self))
         setattr(self.parent.__class__, "set_%s" % name, lambda s,v: command.set(self, v))
+        
+    def add_multiple(self, commands):
+        """ Add multiple Commands and CommandSets through a dictonary
+        """
+        if type(commands) is not dict:
+            raise TypeError("Multiple commands must be passed as a dictionary")
+        for name, command in commands.iteritems():
+            if issubclass(type(command), (Command, CommandSet)):
+                self.add(name, command)
+                
+    def add_dir(self, obj):
+        """ Add multiple Commands and CommandSets from an objects directory
+        """
+        self.add_multiple({x: getattr(obj, x) for x in dir(obj)})
         
     def __repr__(self):
         return "<CommandSet%s>" % repr(self._cmds)
@@ -108,10 +124,7 @@ class Instrument(object):
         """
         obj = super(Instrument, cls).__new__(cls)
         obj._cmds = CommandSet(obj)
-        for name in dir(obj):
-            command = getattr(obj, name)
-            if issubclass(type(command), Command):
-                obj._cmds.add(name, command)
+        obj._cmds.add_dir(obj)
         return obj
 
     def __init__(self, connection):
@@ -162,7 +175,7 @@ class FakeConnection(object):
 class ExampleInstrument(Instrument):
     
     VOLTAGE_CHOICES = [1, 2, 3]
-    voltage = Command('VOLT %d', 'VOLT:MEASURE?', 'Measured voltage',
+    voltage = Command('VOLT:MEASURE?', 'VOLT %d', 'Measured voltage',
                     validator=lambda c,i,v: choices_validator(c,i,v, 
                     ExampleInstrument.VOLTAGE_CHOICES))
     
