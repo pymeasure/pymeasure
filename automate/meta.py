@@ -3,27 +3,25 @@
 
 class Command(object):
     
-    def __init__(self, writer, asker, doc=None, choices=[]):
+    def __init__(self, writer, asker, doc=None, validator=None):
         """ Initailizes a new Command object based on the following inputs:
         
             writer -- string SCPI command for writing (setting)
             asker -- string SCPI command for asking (getting)
             doc -- string that describes the variable for the help docs
-            choices -- a list of possible discrete choices
+            validator -- a function that raises an exception if the value 
+                        is invalid having been passed (self, instrument, value)
         """
         self._writer, self._asker = writer, asker
-        self.doc = doc
-        self.choices = choices
+        self.doc, self.validator = doc, validator
         
     def set(self, instrument, value):
         """ Set method calls for a write on the instrument using the writer
-        SCPI command passed in during initialization. Choices are evaluated
-        if there is a non-zero sized list of them.
+        SCPI command passed in during initialization. The value is passed
+        through the validator function if its callable
         """
-        if len(self.choices) > 0:
-            if value not in self.choices:
-                raise ValueError("Invalid choice for property '%s' on %s" % (
-                    self.name, repr(instrument)))
+        if callable(self.validator):
+            self.validator(self, instrument, value)
         instrument.write(self._writer % value)
         
     def get(self, instrument):
@@ -38,6 +36,37 @@ class Command(object):
         
     def __repr__(self):
         return "<Command(write='%s', ask='%s')>" % (self._writer, self._asker)
+
+
+def range_validator(command, instrument, value, minimum, maximum):
+    """ Validates a value between the inclusive set [minimum, maximum]
+        
+    Command(..., validator=lambda c,i,v: range_validator(c,i,v, MIN, MAX))
+    """
+    if value < minimum:
+        raise ValueError("Value for '%s' is less than minimum (%s) on %s" % (
+                command.name, str(maximum), repr(instrument))
+    elif value > maximum:
+        raise ValueError("Value for '%s' is greater than maximum (%s) on %s" % (
+                command.name, str(maximum), repr(instrument))
+
+
+def choices_validator(command, instrument, value, choice_list):
+    """ Validates a value out of a list of choices, where the choice_list
+    can be either a list or a string of the variable in the instrument
+    that holds the list
+    
+    Command(..., validator=lambda c,i,v: choices_validator(c,i,v, CHOICES))
+    """
+    if type(choice_list) is str:
+        choice_list = getattr(instrument, choice_list, [])
+    if type(choice_list) is not list:
+        raise ValueError("Incorrect type for choices list of validator "
+                         "on %s" % repr(instrument))
+    if value not in choice_list:
+        raise ValueError("Invalid choice for property '%s' on %s" % (
+            command.name, repr(instrument))
+        
 
 class Instrument(object):
 
@@ -95,5 +124,8 @@ class Instrument(object):
         
 class ExampleInstrument(Instrument):
     
-    voltage = Command('VOLT %d', 'VOLT:MEASURE?', 'Measured voltage', choices=[1,2,3])
+    VOLTAGE_CHOICES = [1, 2, 3]
+    voltage = Command('VOLT %d', 'VOLT:MEASURE?', 'Measured voltage',
+                    validator=lambda c,i,v: choices_validator(c,i,v, 
+                    ExampleInstrument.VOLTAGE_CHOICES))
     
