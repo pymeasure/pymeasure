@@ -39,7 +39,8 @@ class Command(object):
 
 
 def range_validator(command, instrument, value, minimum, maximum):
-    """ Validates a value between the inclusive set [minimum, maximum]
+    """ Raises an exception if the value is not between the inclusive 
+    set [minimum, maximum]
         
     Command(..., validator=lambda c,i,v: range_validator(c,i,v, MIN, MAX))
     """
@@ -52,9 +53,9 @@ def range_validator(command, instrument, value, minimum, maximum):
 
 
 def choices_validator(command, instrument, value, choice_list):
-    """ Validates a value out of a list of choices, where the choice_list
-    can be either a list or a string of the variable in the instrument
-    that holds the list
+    """ Raises an exception if the value is not in the list of choices,
+    where the choice_list can be either a list or a string of the variable
+    in the instrument that holds the list
     
     Command(..., validator=lambda c,i,v: choices_validator(c,i,v, CHOICES))
     """
