@@ -6,6 +6,8 @@
 
 from automate.gpib import GPIBInstrument
 from automate import RangeException, discreteTruncate
+import numpy as np
+from time import sleep
 
 class Agilent8722ES(GPIBInstrument):
     """ Represents the Agilent8722ES Vector Network Analyzer
@@ -49,6 +51,15 @@ class Agilent8722ES(GPIBInstrument):
         else:
             raise RangeException("Maximum scan points (1601) for Agilent 8722ES"
                                  " exceeded")
+                                 
+    def getScanPoints(self):
+        """ Gets the number of scan points
+        """
+        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("POIN?"), re.MULTILINE)
+        if search:
+           return int(float(search.group()))
+        else:
+            raise Exception("Improper message returned for the number of points")
                                  
     def setSweepTime(self, time):
         """ Sets the time over which the scan takes place in seconds """
@@ -120,14 +131,16 @@ class Agilent8722ES(GPIBInstrument):
         """ Blocks until the scan returns a operation complete signal
         or an abort event is set        
         """
-        from time import sleep
         while not abortEvent.isSet() and self.ask("OPC?") != '1\n':
             sleep(timeout)
+    
+    def getFrequencies(self):
+        """ Returns a list of frequencies from the last scan
+        """
         
     def getData(self):
         """ Returns the real and imaginary data from the last scan        
         """
-        import numpy as np
         data = self.ask("FORM4;OUTPDATA")[2:-2].split("\n\n  ")
         real = np.zeros(len(data), np.float64)
         imag = np.zeros(len(data), np.float64)
