@@ -37,7 +37,17 @@ class GPIBInstrument(Instrument):
 class PrologixAdapter(object):
     """ Encapsulates the additional commands necessary
     to communicate over a Prologix GPIB-USB Adapter and
-    implements the IConnection interface    
+    implements the IConnection interface
+    
+    To allow user access to the Prologix adapter in Linux, create the file:
+    /etc/udev/rules.d/51-prologix.rules, with contents:
+    
+    SUBSYSTEMS=="usb",ATTRS{idVendor}=="0403",ATTRS{idProduct}=="6001",MODE="0666"
+    
+    Then reload the udev rules with:
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+        
     """
 
     def __init__(self, port, timeout=0.5):
