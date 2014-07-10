@@ -4,8 +4,7 @@
 # Copyright: 2012 Cornell University
 #
 
-from zope.interface import implementer
-from automate import interfaces, Instrument
+from automate import Instrument
 
 class GPIBInstrument(Instrument):
     """ Base class for a GPIB Instrument that typically uses a
@@ -32,8 +31,7 @@ class GPIBInstrument(Instrument):
         """ Sends a command to reset the instrument """
         self.write("*RST")
 
-        
-@implementer(interfaces.IConnection)
+
 class PrologixAdapter(object):
     """ Encapsulates the additional commands necessary
     to communicate over a Prologix GPIB-USB Adapter and
@@ -98,8 +96,7 @@ but PyVISA is not required to use the automate package
 """
 try:
     import visa
- 
-    @implementer(interfaces.IConnection)
+    
     class VISAAdapter(object):
         """ Encapsulates the additional commands necessary
         to communicate over a PyVISA instrument class and
