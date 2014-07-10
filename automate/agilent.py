@@ -8,6 +8,7 @@ from automate.gpib import GPIBInstrument
 from automate import RangeException, discreteTruncate
 import numpy as np
 from time import sleep
+import re
 
 class Agilent8722ES(GPIBInstrument):
     """ Represents the Agilent8722ES Vector Network Analyzer
