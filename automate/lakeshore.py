@@ -3,8 +3,7 @@
 # Authors: Colin Jermain
 # Copyright: 2013 Cornell University
 #
-from automate import interfaces
-from automate.instruments import Instrument, RangeException
+from automate import interfaces, Instrument, RangeException
 from zope.interface import implementer
 from serial import Serial
 from time import sleep

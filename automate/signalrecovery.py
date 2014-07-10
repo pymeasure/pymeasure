@@ -3,7 +3,8 @@
 # Authors: Colin Jermain
 # Copyright: 2013 Cornell University
 #
-from gpib import GPIBInstrument, RangeException, discreteTruncate
+from automate.gpib import GPIBInstrument
+from automate import RangeException, discreteTruncate
 from time import sleep
 from array import array
 import numpy as np

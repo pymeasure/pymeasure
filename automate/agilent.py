@@ -4,8 +4,8 @@
 # Copyright: 2012 Cornell University
 #
 
-from automate.instruments.gpib import GPIBInstrument
-from automate.instruments import RangeException, discreteTruncate
+from automate.gpib import GPIBInstrument
+from automate import RangeException, discreteTruncate
 
 class Agilent8722ES(GPIBInstrument):
     """ Represents the Agilent8722ES Vector Network Analyzer

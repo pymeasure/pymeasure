@@ -4,7 +4,7 @@
 # Copyright: 2012 Cornell University
 #
 
-from automate.instruments import Instrument, RangeException
+from automate import Instrument, RangeException
 from zope.interface import implementer
 from numpy import array, float64
 

@@ -3,8 +3,8 @@
 # Authors: Colin Jermain
 # Copyright: 2012 Cornell University
 #
-from automate.instruments import RangeException, discreteTruncate
-from automate.instruments.gpib import GPIBInstrument
+from automate import RangeException, discreteTruncate
+from automate.gpib import GPIBInstrument
 from time import sleep
 from array import array
 from StringIO import StringIO

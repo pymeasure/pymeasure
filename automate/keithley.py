@@ -4,8 +4,8 @@
 # Copyright: 2012 Cornell University
 #
 
-from automate.instruments import RangeException
-from automate.instruments.gpib import GPIBInstrument, PrologixAdapter
+from automate import RangeException
+from automate.gpib import GPIBInstrument, PrologixAdapter
 from time import sleep
 from StringIO import StringIO
 import numpy as np

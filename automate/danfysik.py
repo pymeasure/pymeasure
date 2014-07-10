@@ -4,8 +4,7 @@
 # Copyright: 2012 Cornell University
 #
 
-from automate import interfaces
-from automate.instruments import Instrument, RangeException
+from automate import interfaces, Instrument, RangeException
 from zope.interface import implementer
 from time import sleep
 import numpy as np

@@ -5,8 +5,7 @@
 #
 
 from zope.interface import implementer
-from automate import interfaces
-from automate.instruments import Instrument
+from automate import interfaces, Instrument
 
 class GPIBInstrument(Instrument):
     """ Base class for a GPIB Instrument that typically uses a

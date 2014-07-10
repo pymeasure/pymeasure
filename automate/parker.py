@@ -3,7 +3,7 @@
 # Authors: Colin Jermain
 # Copyright: 2012 Cornell University
 #
-from automate.instruments import Instrument, RangeException
+from automate import Instrument, RangeException
 from time import sleep
 from serial import Serial
 import re
