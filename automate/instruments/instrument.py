@@ -138,3 +138,5 @@ def discreteTruncate(number, discreteSet):
         if number <= item:
             return item
     return False
+    
+class RangeException(Exception): pass
