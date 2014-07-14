@@ -6,15 +6,12 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate import interfaces, Instrument, RangeException
-from zope.interface import implementer
+from automate import Instrument, RangeException
 from time import sleep
 import numpy as np
 import re
 
 from serial import Serial
-# Ensure that the Serial object gets treated as an IConnection
-Serial = implementer(interfaces.IConnection)(Serial)
 
 class Danfysik8500(Instrument):
     """ Represents the Danfysik 8500 Electromanget Current Supply

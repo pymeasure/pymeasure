@@ -19,7 +19,7 @@ class Agilent8722ES(GPIBInstrument):
     SCAN_POINT_CHOICES = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
     scanPoints = Property("POIN?", "POIN%d", 
                     "Integer number of scan points", 
-                    validator=lambda c,i,v: choices_validator(c,i,v, 
+                    validator=lambda p,i,v: choices_validator(p,i,v, 
                               Agilent8722ES.SCAN_POINT_CHOICES),
                     search=r"\d\.\d+E[+-]\d{2}$",
                     formatter=lambda x: int(float(x)),
