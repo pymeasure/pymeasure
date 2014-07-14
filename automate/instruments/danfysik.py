@@ -1,9 +1,11 @@
-# Danfysik Classes
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Danfysik classes -- Power supply
 #
-# Authors: Colin Jermain
-# Copyright: 2012 Cornell University
+# automate Python package
+# Authors: Colin Jermain, Graham Rowlands
+# Copyright: 2014 Cornell University
 #
-
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from automate import interfaces, Instrument, RangeException
 from zope.interface import implementer
 from time import sleep

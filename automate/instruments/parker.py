@@ -1,8 +1,11 @@
-# Parker Classes
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Parker classes -- Motor controller
 #
-# Authors: Colin Jermain
-# Copyright: 2012 Cornell University
+# automate Python package
+# Authors: Colin Jermain, Graham Rowlands
+# Copyright: 2014 Cornell University
 #
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from automate import Instrument, RangeException
 from time import sleep
 from serial import Serial

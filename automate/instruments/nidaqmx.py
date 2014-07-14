@@ -1,3 +1,11 @@
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# DAQmx wrapper -- DAQ device
+#
+# automate Python package
+# Authors: Colin Jermain, Graham Rowlands
+# Copyright: 2014 Cornell University
+#
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Most of this code originally from http://www.scipy.org/Cookbook/Data_Acquisition_with_NIDAQmx
 
 import ctypes

@@ -1,8 +1,11 @@
-# LakeShore Classes
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Lakeshore classes -- Gaussmeter
 #
-# Authors: Colin Jermain
-# Copyright: 2013 Cornell University
+# automate Python package
+# Authors: Colin Jermain, Graham Rowlands
+# Copyright: 2014 Cornell University
 #
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from automate import interfaces, Instrument, RangeException
 from zope.interface import implementer
 from serial import Serial

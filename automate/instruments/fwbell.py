@@ -1,9 +1,11 @@
-# F.W. Bell Instrument Classes
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# FW Bell classes -- Gaussmeter
 #
-# Authors: Colin Jermain
-# Copyright: 2012 Cornell University
+# automate Python package
+# Authors: Colin Jermain, Graham Rowlands
+# Copyright: 2014 Cornell University
 #
-
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from automate import Instrument, RangeException
 from zope.interface import implementer
 from numpy import array, float64
