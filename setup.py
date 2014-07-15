@@ -5,7 +5,7 @@ setup(
     version='0.1.0',
     author='Colin Jermain',
     author_email='clj72@cornell.edu',
-    packages=['automate'],
+    packages=['automate', 'automate.instruments', 'automate.composites'],
     scripts=[],
     url='',
     license='LICENSE.txt',
