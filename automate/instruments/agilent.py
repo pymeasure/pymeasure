@@ -6,9 +6,9 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate.instruments import Instrument
+from automate.instruments import Instrument, discreteTruncate, RangeException
 import numpy as np
-import time, struct
+import time, struct, re
 
 class Agilent8257D(Instrument):
 	def __init__(self, resourceName, delay=0.02, **kwargs):
@@ -17,12 +17,19 @@ class Agilent8257D(Instrument):
 		    delay=delay, **kwargs
 	    )
 
-		self.add_control("power",     ":pow?",  ":pow {:g} dbm;")
-		self.add_control("frequency", ":freq?", ":freq {:g} Hz;")
+		self.add_control("power",     ":pow?",  ":pow %g dbm;")
+		self.add_control("frequency", ":freq?", ":freq %g Hz;")
+		self.add_control("center_frequency", ":SOUR:FREQ:CENT?", ":SOUR:FREQ:CENT %e HZ")
+		self.add_control("start_frequency", ":SOUR:FREQ:STAR?", ":SOUR:FREQ:STAR %e HZ")
+		self.add_control("stop_frequency", ":SOUR:FREQ:STOP?", ":SOUR:FREQ:STOP %e HZ")
+		self.add_control("start_power", ":SOUR:POW:STAR?", ":SOUR:POW:STAR %e DBM")
+		self.add_control("stop_power", ":SOUR:POW:STOP?", ":SOUR:POW:STOP %e DBM")
+		self.add_control("dwell_time", ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f")
+		self.add_measurement("step_points", ":SOUR:SWE:POIN?")
 
 	@property
 	def output(self):
-	    return True if int(self.ask(":output?"))==1 else False
+	    return int(self.ask(":output?"))==1
 	@output.setter
 	def output(self, value):
 	    if value:
@@ -55,10 +62,187 @@ class Agilent8257D(Instrument):
 			self.write(":PULM:INT:FREQ %g HZ;" % freq)
 		else:
 			print "This type of modulation does not exist."
+        
+    def setAmplitudeDepth(self, depth):
+        """ Sets the depth of amplitude modulation which corresponds
+        to the precentage of the signal modulated to
+        """
+        if depth > 0 and depth <= 100:
+            self.write(":SOUR:AM %d" % depth)
+        else:
+            raise RangeException("Agilent E8257D amplitude modulation out of range")
+            
+    def setAmplitudeSource(self, source='INT'):
+        """ Sets the source of the trigger for amplitude modulation """
+        self.write(":SOUR:AM:SOUR %s" % source)
+        
+    def setAmplitudeModulation(self, enable=True):
+        """ Enables (True) or disables (False) the amplitude modulation """
+        self.write(":SOUR:AM:STAT %d" % enable)
+
+    def setStepSweep(self):
+        """ Sets up for a step sweep through frequency """
+        self.write(":SOUR:FREQ:MODE SWE;:SOUR:SWE:GEN STEP;:SOUR:SWE:MODE AUTO;")
+    
+    def setRetrace(self, enable=True):
+        self.write(":SOUR:LIST:RETR %d" % enable)
+        
+    def singleSweep(self):
+        self.write(":SOUR:TSW")
+        
+    def startStepSweep(self):
+        """ Initiates a step sweep """
+        self.write(":SOUR:SWE:CONT:STAT ON")
+        
+    def stopStepSweep(self):
+        """ Stops a step sweep """
+        self.write(":SOUR:SWE:CONT:STAT OFF")
 
 	def shutdown(self):
 		self.modulation = False
 		self.output = False
+
+
+class Agilent8722ES(Instrument):
+    """ Represents the Agilent8722ES Vector Network Analyzer
+    and provides a high-level interface for taking scans of the
+    scattering parameters.
+    """
+
+    SCAN_POINT_VALUES = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
+
+    def __init__(self, resourceName, **kwargs):
+        super(Agilent8722ES, self).__init__(resourceName, "Agilent 8722ES Vector Network Analyzer", **kwargs)
+    
+    def setFixedFrequency(self, frequency):
+        """ Sets the scan to be of only one frequency in Hz """
+        self.setStartFrequency(frequency)
+        self.setStopFrequency(frequency)
+        self.setScanPoints(3)
+        
+    def setScatteringParameter(self, element):
+        """" Sets which scattering parameter to be measured based on the
+        matrix element notation
+        """
+        if element == "11": self.write("S11")
+        elif element == "12": self.write("S12")
+        elif element == "21": self.write("S21")
+        elif element == "22": self.write("S22")
+        else:
+            raise Exception("Invalid matrix element provided for Agilent 8722ES"
+                            " scattering parameter")
+        
+    def setScanPoints(self, points):
+        """ Sets the number of scan points, truncating to an allowed
+        value if not properly provided       
+        """
+        points = discreteTruncate(points, Agilent8722ES.SCAN_POINT_VALUES)
+        if points:
+            self.write("POIN%d" % points)
+        else:
+            raise RangeException("Maximum scan points (1601) for Agilent 8722ES"
+                                 " exceeded")
+                                 
+    def getScanPoints(self):
+        """ Gets the number of scan points
+        """
+        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("POIN?"), re.MULTILINE)
+        if search:
+           return int(float(search.group()))
+        else:
+            raise Exception("Improper message returned for the number of points")
+                                 
+    def setSweepTime(self, time):
+        """ Sets the time over which the scan takes place in seconds """
+        self.write("SWET%.2e" % time)
+                                 
+    def setStartFrequency(self, frequency):
+        """ Sets the start frequency for the scan in Hz """
+        self.write("STAR%.3e" % frequency)
+        
+    def setStopFrequency(self, frequency):
+        """ Sets the stop frequency for the scan in Hz """
+        self.write("STOP%.3e" % frequency)        
+                                 
+    def setIFBandwidth(self, bandwidth):
+        """ Sets the resolution bandwidth (IF bandwidth) """
+        allowedBandwidth = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
+        bandwidth = discreteTruncate(bandwidth, allowedBandwidth)
+        if bandwidth:
+            self.write("IFBW%d" % bandwidth)
+        else:
+            raise RangeException("Maximum IF bandwidth (6000) for Agilent "
+                                 "8722ES exceeded")
+    
+    def setAveraging(self, averages):
+        """ Turns on averaging of a specific number between 0 and 999        
+        """
+        if int(averages) > 999 or int(averages) < 0:
+            raise RangeException("Averaging must be in the range 0 to 999")
+        else:
+            self.write("AVERO1")
+            self.write("AVERFACT%d" % int(averages))
+            
+    def disableAveraging(self):
+        """ Disables averaging """
+        self.write("AVERO0")
+        
+    def isAveraging(self):
+        """ Returns True if averaging is enabled """
+        return self.ask("AVERO?") == '1\n'
+            
+    def restartAveraging(self, averages):
+        if int(averages) > 999 or int(averages) < 0:
+            raise RangeException("Averaging must be in the range 0 to 999")
+        else:
+            self.write("NUMG%d" % averages)
+            
+    def scan(self, averages=1, blocking=True, timeout=0.1, abortEvent=None):
+        """ Initiates a scan with the number of averages specified and
+        blocks until the operation is complete if blocking is True
+        """
+        if averages == 1:
+            self.disableAveraging()
+            self.setSingleSweep()
+        else:
+            self.setAveraging(averages)
+            self.restartAveraging(averages)
+            if blocking:
+                self.waitForScan(abortEvent)
+    
+    def scanSingle(self):
+        """ Initiates a single scan """
+        self.write("SING")
+        
+    def scanContinuous(self):
+        """ Initiates a continuous scan """
+        self.write("CONT")
+        
+    def waitForScan(self, timeout=0.1, abortEvent=None):
+        """ Blocks until the scan returns a operation complete signal
+        or an abort event is set        
+        """
+        while not abortEvent.isSet() and self.ask("OPC?") != '1\n':
+            time.sleep(timeout)
+    
+    def getFrequencies(self):
+        """ Returns a list of frequencies from the last scan
+        """
+        pass
+        
+    def getData(self):
+        """ Returns the real and imaginary data from the last scan        
+        """
+        data = self.ask("FORM4;OUTPDATA")[2:-2].split("\n\n  ")
+        real = np.zeros(len(data), np.float64)
+        imag = np.zeros(len(data), np.float64)
+        for i, point in enumerate(data):
+            pair = point.split(",  ", 1)
+            real[i] = float(pair[0])
+            imag[i] = float(pair[1])
+        return real, imag
+        
+
 
 # TODO: update this to use properties
 class DSO_X2022A(Instrument):
