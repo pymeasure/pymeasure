@@ -9,6 +9,7 @@
 from automate.instruments import Instrument, discreteTruncate, RangeException
 import numpy as np
 import time, struct, re
+from StringIO import StringIO
 
 class Agilent8257D(Instrument):
     def __init__(self, resourceName, delay=0.02, **kwargs):
@@ -219,22 +220,28 @@ class Agilent8722ES(Instrument):
         while not abortEvent.isSet() and self.ask("OPC?") != '1\n':
             time.sleep(timeout)
     
-    def getFrequencies(self):
+    @property
+    def frequencies(self):
         """ Returns a list of frequencies from the last scan
         """
-        pass
+        return np.linspace(self.start_frequency, self.stop_frequency, num=self.getScanPoints())
         
-    def getData(self):
+    @property
+    def data(self):
         """ Returns the real and imaginary data from the last scan        
         """
-        data = self.ask("FORM4;OUTPDATA")[2:-2].split("\n\n  ")
-        real = np.zeros(len(data), np.float64)
-        imag = np.zeros(len(data), np.float64)
-        for i, point in enumerate(data):
-            pair = point.split(",  ", 1)
-            real[i] = float(pair[0])
-            imag[i] = float(pair[1])
-        return real, imag
+        # TODO: Implement binary transfer instead of ASCII
+        data = np.loadtxt(StringIO(self.ask("FORM4;OUTPDATA")), delimiter=',', dtype=np.float32)
+        return data[:,0], data[:,1]
+        
+    def log_magnitude(self, real, imaginary): # dB
+        return 20*np.log10(self.magnitude(real, imaginary))
+    
+    def magnitude(self, real, imaginary):
+        return np.sqrt(real**2 + imaginary**2)
+        
+    def phase(self, real, imaginary): # degrees
+        return np.arctan2(imaginary, real)*180/np.pi
         
 
 
