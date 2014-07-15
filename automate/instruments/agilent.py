@@ -139,7 +139,17 @@ class Agilent8722ES(Instrument):
         else:
             raise Exception("Invalid scattering parameter requested for Agilent 8722ES")
         
-    def setScanPoints(self, points):
+    @property
+    def scan_points(self):
+        """ Gets the number of scan points
+        """
+        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("POIN?"), re.MULTILINE)
+        if search:
+           return int(float(search.group()))
+        else:
+            raise Exception("Improper message returned for the number of points")
+    @scan_points.setter
+    def scan_points(self, points):
         """ Sets the number of scan points, truncating to an allowed
         value if not properly provided       
         """
@@ -148,16 +158,7 @@ class Agilent8722ES(Instrument):
             self.write("POIN%d" % points)
         else:
             raise RangeException("Maximum scan points (1601) for Agilent 8722ES"
-                                 " exceeded")
-                                 
-    def getScanPoints(self):
-        """ Gets the number of scan points
-        """
-        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("POIN?"), re.MULTILINE)
-        if search:
-           return int(float(search.group()))
-        else:
-            raise Exception("Improper message returned for the number of points")  
+                                 " exceeded") 
                                  
     def setIFBandwidth(self, bandwidth):
         """ Sets the resolution bandwidth (IF bandwidth) """
