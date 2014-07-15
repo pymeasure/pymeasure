@@ -11,57 +11,57 @@ import numpy as np
 import time, struct, re
 
 class Agilent8257D(Instrument):
-	def __init__(self, resourceName, delay=0.02, **kwargs):
-		super(Agilent8257D, self).__init__(resourceName, 
-		    "Agilent 8257D RF Signal Generator",
-		    delay=delay, **kwargs
-	    )
+    def __init__(self, resourceName, delay=0.02, **kwargs):
+        super(Agilent8257D, self).__init__(resourceName, 
+            "Agilent 8257D RF Signal Generator",
+            delay=delay, **kwargs
+        )
 
-		self.add_control("power",     ":pow?",  ":pow %g dbm;")
-		self.add_control("frequency", ":freq?", ":freq %g Hz;")
-		self.add_control("center_frequency", ":SOUR:FREQ:CENT?", ":SOUR:FREQ:CENT %e HZ")
-		self.add_control("start_frequency", ":SOUR:FREQ:STAR?", ":SOUR:FREQ:STAR %e HZ")
-		self.add_control("stop_frequency", ":SOUR:FREQ:STOP?", ":SOUR:FREQ:STOP %e HZ")
-		self.add_control("start_power", ":SOUR:POW:STAR?", ":SOUR:POW:STAR %e DBM")
-		self.add_control("stop_power", ":SOUR:POW:STOP?", ":SOUR:POW:STOP %e DBM")
-		self.add_control("dwell_time", ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f")
-		self.add_measurement("step_points", ":SOUR:SWE:POIN?")
+        self.add_control("power",     ":pow?",  ":pow %g dbm;")
+        self.add_control("frequency", ":freq?", ":freq %g Hz;")
+        self.add_control("center_frequency", ":SOUR:FREQ:CENT?", ":SOUR:FREQ:CENT %e HZ")
+        self.add_control("start_frequency", ":SOUR:FREQ:STAR?", ":SOUR:FREQ:STAR %e HZ")
+        self.add_control("stop_frequency", ":SOUR:FREQ:STOP?", ":SOUR:FREQ:STOP %e HZ")
+        self.add_control("start_power", ":SOUR:POW:STAR?", ":SOUR:POW:STAR %e DBM")
+        self.add_control("stop_power", ":SOUR:POW:STOP?", ":SOUR:POW:STOP %e DBM")
+        self.add_control("dwell_time", ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f")
+        self.add_measurement("step_points", ":SOUR:SWE:POIN?")
 
-	@property
-	def output(self):
-	    return int(self.ask(":output?"))==1
-	@output.setter
-	def output(self, value):
-	    if value:
-		    self.write(":output on;")
-		else:
-			self.write(":output off;")
-	
-	@property
-	def modulation(self):
-	    return True if int(self.ask(":output:mod?"))==1 else False 
-	@modulation.setter
-	def modulation(self, value):
-	    if value:
-		    self.write(":output:mod on;")
-		    self.write(":lfo:sour int; :lfo:ampl 2.0vp; :lfo:stat on;")
-		else:
-			self.write(":output:mod off;")
-			self.write(":lfo:stat off;")
+    @property
+    def output(self):
+        return int(self.ask(":output?"))==1
+    @output.setter
+    def output(self, value):
+        if value:
+            self.write(":output on;")
+        else:
+            self.write(":output off;")
+    
+    @property
+    def modulation(self):
+        return True if int(self.ask(":output:mod?"))==1 else False 
+    @modulation.setter
+    def modulation(self, value):
+        if value:
+            self.write(":output:mod on;")
+            self.write(":lfo:sour int; :lfo:ampl 2.0vp; :lfo:stat on;")
+        else:
+            self.write(":output:mod off;")
+            self.write(":lfo:stat off;")
 
-	def configure_modulation(self, freq=10.0e9, modType="amplitude", modDepth=100.0):
-		if modType == "amplitude":
-			#self.write(":AM1;")
-			self.modulation = True
-			self.write(":AM:SOUR INT; :AM:INT:FUNC:SHAP SINE; :AM:STAT ON;")
-			self.write(":AM:INT:FREQ %g HZ; :AM %f" % (freq, modDepth))
-		elif modType == "pulse":
-			# Sets square pulse modulation at the desired freq
-			self.modulation = True
-			self.write(":PULM:SOUR:INT SQU; :PULM:SOUR INT; :PULM:STAT ON;")
-			self.write(":PULM:INT:FREQ %g HZ;" % freq)
-		else:
-			print "This type of modulation does not exist."
+    def configure_modulation(self, freq=10.0e9, modType="amplitude", modDepth=100.0):
+        if modType == "amplitude":
+            #self.write(":AM1;")
+            self.modulation = True
+            self.write(":AM:SOUR INT; :AM:INT:FUNC:SHAP SINE; :AM:STAT ON;")
+            self.write(":AM:INT:FREQ %g HZ; :AM %f" % (freq, modDepth))
+        elif modType == "pulse":
+            # Sets square pulse modulation at the desired freq
+            self.modulation = True
+            self.write(":PULM:SOUR:INT SQU; :PULM:SOUR INT; :PULM:STAT ON;")
+            self.write(":PULM:INT:FREQ %g HZ;" % freq)
+        else:
+            print "This type of modulation does not exist."
         
     def setAmplitudeDepth(self, depth):
         """ Sets the depth of amplitude modulation which corresponds
@@ -98,9 +98,9 @@ class Agilent8257D(Instrument):
         """ Stops a step sweep """
         self.write(":SOUR:SWE:CONT:STAT OFF")
 
-	def shutdown(self):
-		self.modulation = False
-		self.output = False
+    def shutdown(self):
+        self.modulation = False
+        self.output = False
 
 
 class Agilent8722ES(Instrument):
