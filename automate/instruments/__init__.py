@@ -54,7 +54,7 @@ try:
     class VISAAdapter(Adapter):
         """ Wrapper class for the VISA library """
         
-        def __init__(self, resourceName, **kwargs),
+        def __init__(self, resourceName, **kwargs):
             self.manager = visa.ResourceManager()
             if isinstance(resourceName, (int, long)):
                 resourceName = "GPIB0::%d::INSTR" % resourceName            
