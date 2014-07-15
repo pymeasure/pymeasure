@@ -225,7 +225,7 @@ class Agilent8722ES(Instrument):
     def frequencies(self):
         """ Returns a list of frequencies from the last scan
         """
-        return np.linspace(self.start_frequency, self.stop_frequency, num=self.getScanPoints())
+        return np.linspace(self.start_frequency, self.stop_frequency, num=self.scan_points)
         
     @property
     def data(self):
