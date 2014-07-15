@@ -118,7 +118,7 @@ class Magnet(object):
 class cframeGMW(Magnet):
     def __init__(self, noCalibration=False, delay=0.02, **kwargs):
         self.name = "GMW 5403 C-Frame Electromagnet - CCMR"
-        from automate.composits.fieldprobe import HallProbe
+        from automate.composites.fieldprobe import HallProbe
         from automate.instruments.keithley import Keithley2000
         from automate.instruments.yokogawa import Yokogawa7651
 
@@ -164,7 +164,7 @@ class ProjectionFieldF20(Magnet):
             self.logfunc = print
 
         self.name = "F20 Projection Field Magnet"
-        from automate.composits.fieldProbe import ThreeAxisF20
+        from automate.composites.fieldProbe import ThreeAxisF20
         from automate.instruments.esp import ESP300
         from automate.instruments.nidaqmx import DAQ
         from automate.instruments.yokogawa import Yokogawa7651
