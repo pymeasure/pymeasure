@@ -17,10 +17,10 @@ class Yokogawa7651(Instrument):
         self.add_measurement("id", "OS")
         
         # Simple control parameters
-        self.add_control("source_voltage", "OD;E", "S{:g};E")
-        self.add_control("source_current", "OD;E", "S{:g};E")
-        self.add_control("voltage", "OD;E", "S{:g};E")
-        self.add_control("current", "OD;E", "S{:g};E")
+        self.add_control("source_voltage", "OD;E", "S%g;E")
+        self.add_control("source_current", "OD;E", "S%g;E")
+        self.add_control("voltage", "OD;E", "S%g;E")
+        self.add_control("current", "OD;E", "S%g;E")
 
     @property
     def enabled(self):

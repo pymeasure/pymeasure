@@ -227,7 +227,7 @@ class Instrument(object):
                 self.check_errors()
             return vals
         def fset(self, value):
-            self.write(set_string.format(value))
+            self.write(set_string % value)
             if checkErrorsOnSet:
                 self.check_errors()
         # Add the property attribute

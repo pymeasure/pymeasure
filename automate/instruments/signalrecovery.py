@@ -17,14 +17,14 @@ class DSP7265(Instrument):
         self.curveBits = {'x': 1, 'y': 2, 'mag': 4, 'phase': 8, 'ADC1': 32, 'ADC2': 64, 'ADC3': 128}
         
         # Simple parameter controls go here
-        self.add_control("voltage",  "OA.",    "OA. {:g}")
-        self.add_control("frequency","OF.",    "OF. {:g}")
-        self.add_control("dac1",     "DAC. 1", "DAC. 1 {:g}")
-        self.add_control("dac2",     "DAC. 2", "DAC. 2 {:g}")
-        self.add_control("dac3",     "DAC. 3", "DAC. 3 {:g}")
-        self.add_control("dac4",     "DAC. 4", "DAC. 4 {:g}")
-        self.add_control("harmonic", "REFN",   "REFN {:d}")
-        self.add_control("phase",    "REFP.",  "REFP. {:g}")
+        self.add_control("voltage",  "OA.",    "OA. %g")
+        self.add_control("frequency","OF.",    "OF. %g")
+        self.add_control("dac1",     "DAC. 1", "DAC. 1 %g")
+        self.add_control("dac2",     "DAC. 2", "DAC. 2 %g")
+        self.add_control("dac3",     "DAC. 3", "DAC. 3 %g")
+        self.add_control("dac4",     "DAC. 4", "DAC. 4 %g")
+        self.add_control("harmonic", "REFN",   "REFN %d")
+        self.add_control("phase",    "REFP.",  "REFP. %g")
 
         # Simple measurements go here
         self.add_measurement("x", "X.")
