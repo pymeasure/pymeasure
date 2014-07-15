@@ -1,15 +1,14 @@
-# Hall Probe (GMW HG-302A) Class
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Hall Probe (GMW HG-302A) class
 #
-# Authors: Colin Jermain
-# Copyright: 2012 Cornell University
+# automate Python package
+# Authors: Colin Jermain, Graham Rowlands
+# Copyright: 2014 Cornell University
 #
-#blah
-from automate import interfaces
-from zope.interface import implementer
-from keithley import Keithley2400
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+from automate.instruments.keithley import Keithley2400
 import json
 
-@implementer(interfaces.IInstrument)
 class HallProbe(object):
     """ Represents a Hall probe Gaussmeter using a Keithley
     2400 Sourcemeter and GMW HG-302A Hall probe sensor and 
@@ -17,12 +16,12 @@ class HallProbe(object):
     instrument
     """
     
-    def __init__(self, adapter, address, calibrationFile):
+    def __init__(self, adapter, calibrationFile):
         """ Constructs the HallProbe object given a GPIBAdapter, 
         GPIB address, and calibration file        
         """
         self.loadCalibration(calibrationFile)        
-        self.meter = Keithley2400(adapter, address)
+        self.meter = Keithley2400(adapter)
         self.meter.reset()
         self.meter.setCurrentSource(10e-3, 8)
         self.meter.setVoltageMeasure()

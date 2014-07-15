@@ -6,9 +6,7 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate import interfaces, Instrument, RangeException
-from zope.interface import implementer
-from serial import Serial
+from automate.instruments import Instrument, SerialAdapter, RangeException
 from time import sleep
 import numpy as np
 
@@ -23,7 +21,10 @@ class LakeShore425(Instrument):
     units = ['Gauss', 'Tesla', 'Oersted', 'Ampere/meter']
     
     def __init__(self, port):
-        super(LakeShore425, self).__init__(Serial(port, 57600, timeout=0.5, parity='O', bytesize=7))
+        super(LakeShore425, self).__init__(
+            SerialAdapter(port, 57600, timeout=0.5, parity='O', bytesize=7),
+            "LakeShore 425 Gaussmeter",
+        )
 
     def write(self, command):
         """ Write a command ensuring proper line termination """

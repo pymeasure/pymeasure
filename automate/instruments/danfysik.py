@@ -1,17 +1,15 @@
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Danfysik classes -- Power supply
+# Danfysik classes -- Current supply
 #
 # automate Python package
 # Authors: Colin Jermain, Graham Rowlands
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate import Instrument, RangeException
+from automate.instruments import Instrument, SerialAdapter, RangeException
 from time import sleep
 import numpy as np
 import re
-
-from serial import Serial
 
 class Danfysik8500(Instrument):
     """ Represents the Danfysik 8500 Electromanget Current Supply
@@ -20,7 +18,10 @@ class Danfysik8500(Instrument):
     """
     
     def __init__(self, port):
-        Instrument.__init__(self, Serial(port, 9600, timeout=0.5))
+        super(Danfysik8500, self).__init__(
+            SerialAdapter(port, 9600, timeout=0.5),
+            "Danfysik 8500 Current Supply"
+        )
         
     def write(self, command):
         """ Write a command ensuring proper line termination """

@@ -1,26 +1,28 @@
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Agilent classes -- RF Sweeper, Vector Network Analyzer, etc.
+# Agilent classes -- RF Sweeper, Vector Network Analyzer
 #
 # automate Python package
 # Authors: Colin Jermain, Graham Rowlands
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from instrument import Instrument
+from automate.instruments import Instrument
 import numpy as np
 import time, struct
 
 class Agilent8257D(Instrument):
-	def __init__(self, gpibAddress):
-		self.gpibAddress = gpibAddress
-		self.instrument  = visa.instrument("GPIB::"+str(int(self.gpibAddress)), delay=0.02)
+	def __init__(self, resourceName, delay=0.02, **kwargs):
+		super(Agilent8257D, self).__init__(resourceName, 
+		    "Agilent 8257D RF Signal Generator",
+		    delay=delay, **kwargs
+	    )
 
 		self.add_control("power",     ":pow?",  ":pow {:g} dbm;")
 		self.add_control("frequency", ":freq?", ":freq {:g} Hz;")
 
 	@property
 	def output(self):
-	    return True if int(self.ask(":output?"))==1 else False 
+	    return True if int(self.ask(":output?"))==1 else False
 	@output.setter
 	def output(self, value):
 	    if value:
@@ -77,7 +79,7 @@ class DSO_X2022A(Instrument):
         #     self.logfunc = print
 
     def getError(self):
-        return self.instrument.ask(":system:error?")
+        return self.ask(":system:error?")
 
     def getErrors(self, commandName=None):
         while True:
@@ -93,85 +95,85 @@ class DSO_X2022A(Instrument):
                 print "Error in command %s: %s" % (commandName, err)
 
     def shutdown(self):
-        self.instrument.close()
+        self.connection.close()
 
     # @checkErrors
     def autoscale(self):
-        self.instrument.write(":autoscale")
+        self.write(":autoscale")
 
     # @checkErrors
     def run(self):
-        self.instrument.write(":RUN")
+        self.write(":RUN")
 
     # @checkErrors
     def stop(self):
-        self.instrument.write(":STOP")
+        self.write(":STOP")
 
     # @checkErrors
     def single(self):
-        self.instrument.write(":SINGLE")
+        self.write(":SINGLE")
 
     # =========================
     #        Horizontal 
     # =========================
     # @checkErrors
     def setTimebase(self, value):
-        self.instrument.write(":timebase:scale %g" % (value/10.0))
-        self.instrument.write(":timebase:mode main")
+        self.write(":timebase:scale %g" % (value/10.0))
+        self.write(":timebase:mode main")
 
     # @checkErrors
     def setDelay(self, value):
-        self.instrument.write(":timebase:delay %g" % value)
+        self.write(":timebase:delay %g" % value)
 
     # @checkErrors
     def setTimescale(self, value):
-        self.instrument.write(":timebase:range %g" % value)
+        self.write(":timebase:range %g" % value)
 
     # =========================
     #        Vertical 
     # =========================
     # @checkErrors
     def setRange(self, value, channel=1):
-        self.instrument.write(":channel%d:range %g" % (channel, value))
+        self.write(":channel%d:range %g" % (channel, value))
 
     # @checkErrors
     def setOffset(self, value, channel=1):
-        self.instrument.write(":channel%d:offset %g" % (channel, value))
+        self.write(":channel%d:offset %g" % (channel, value))
 
     # @checkErrors
     def setCoupling(self, value, channel=1):
         if (value not in ["DC", "AC"]):
             raise Exception("Incorrect Initialization Parameter")
         else:
-            self.instrument.write(":channel%d:offset %s" % (channel, value))
+            self.write(":channel%d:offset %s" % (channel, value))
 
     # =========================
     #        Trigger 
     # =========================
     # @checkErrors
     def setEdgeTrigger(self, channel, level, sign=1):
-        self.instrument.write(":trigger:mode edge")
-        self.instrument.write(":trigger:edge:source channel%d" % channel)
-        self.instrument.write(":trigger:edge:level %g" % level)
+        self.write(":trigger:mode edge")
+        self.write(":trigger:edge:source channel%d" % channel)
+        self.write(":trigger:edge:level %g" % level)
         if (sign>0):
-            self.instrument.write(":trigger:edge:slope positive")
+            self.write(":trigger:edge:slope positive")
         else:
-            self.instrument.write(":trigger:edge:slope negative")
+            self.write(":trigger:edge:slope negative")
 
     def setAutoSweep(self, auto):
         if auto:
-            self.instrument.write(":trigger:sweep auto")
+            self.write(":trigger:sweep auto")
         else:
-            self.instrument.write(":trigger:sweep normal")
+            self.write(":trigger:sweep normal")
 
     # @checkErrors
     def setExtTrigger(self):
-        self.instrument.write(":trigger:mode edge")
-        self.instrument.write(":trigger:edge:source external")
-        self.instrument.write(":trigger:edge:slope positive")
+        self.write(":trigger:mode edge")
+        self.write(":trigger:edge:source external")
+        self.write(":trigger:edge:slope positive")
 
     def trigger(self):
-        self.instrument.write(":trigger:force")
+        self.write(":trigger:force")
 
     # =========================
     #       Acquisition 
@@ -181,26 +183,26 @@ class DSO_X2022A(Instrument):
         if (mode not in ["normal", "average", "highres", "peak"]):
              raise Exception("Incorrect Initialization Parameter")
         else:
-            self.instrument.write(":acquire:type %s" % mode)
+            self.write(":acquire:type %s" % mode)
         # This must apparently be 100, no matter what?
-        self.instrument.write(":acquire:complete 100")
+        self.write(":acquire:complete 100")
         if mode=="average":
-            self.instrument.write(":acquire:count %d" % count)
+            self.write(":acquire:count %d" % count)
 
         # Set waveform data formatting
-        self.instrument.write(":waveform:format byte")
-        self.instrument.write(":waveform:points:mode raw")
+        self.write(":waveform:format byte")
+        self.write(":waveform:points:mode raw")
 
     def getAvailablePoints(self):
-        return int(self.instrument.ask_for_values(":waveform:points?")[0])
+        return int(self.ask_for_values(":waveform:points?")[0])
 
     # @checkErrors
     def getWaveformInfo(self, channel=1, display=False):
-        self.instrument.write(":waveform:source channel%d" % channel)
+        self.write(":waveform:source channel%d" % channel)
 
         wav_form_dict   = {0 : "BYTE", 1 : "WORD", 4 : "ASCii", }
         acq_type_dict   = {0 : "NORMal", 1 : "PEAK", 2 : "AVERage", 3 : "HRESolution", }
-        preamble_string = self.instrument.ask(":waveform:preamble?")
+        preamble_string = self.ask(":waveform:preamble?")
 
         descriptions = ( "Waveform format: %s", "Acquire type: %s", "Waveform points desired: %s", 
                          "Waveform average count: %s", "Waveform X increment: %s", "Waveform X origin: %s", 
@@ -231,38 +233,38 @@ class DSO_X2022A(Instrument):
     # @checkErrors
     def takeTrace(self, channel1=True, channel2=False):
         if channel1 and channel2:
-            self.instrument.write(":digitize channel1, channel2")
+            self.write(":digitize channel1, channel2")
         elif channel1:
-            self.instrument.write(":digitize channel1")
+            self.write(":digitize channel1")
         elif channel2:
-            self.instrument.write(":digitize channel2")
+            self.write(":digitize channel2")
         else:
             raise Exception("Scope:Digitize: No channels specified!")
 
     def takeTraceFast(self, channel1=True, channel2=False):
         if channel1 and channel2:
-            self.instrument.write(":digitize channel1, channel2")
+            self.write(":digitize channel1, channel2")
         elif channel1:
-            self.instrument.write(":digitize channel1")
+            self.write(":digitize channel1")
         elif channel2:
-            self.instrument.write(":digitize channel2")
+            self.write(":digitize channel2")
         else:
             raise Exception("Scope:Digitize: No channels specified!")
 
     # @checkErrors
     def downloadTrace(self, channel=1):
-        self.instrument.write(":waveform:source channel%d" % channel)
-        self.instrument.write(":waveform:data?")
-        data = self.instrument.read_raw()
+        self.write(":waveform:source channel%d" % channel)
+        self.write(":waveform:data?")
+        data = self.connection.read_raw()
         data = self.getBinaryBlock(data)
         data = np.array(struct.unpack("%dB" % len(data), data))
         
         # We need these to convert the binary value to something useful
-        x_increment = self.instrument.ask_for_values(":waveform:xincrement?")[0]
-        x_origin    = self.instrument.ask_for_values(":waveform:xorigin?")[0]
-        y_increment = self.instrument.ask_for_values(":waveform:yincrement?")[0]
-        y_origin    = self.instrument.ask_for_values(":waveform:yorigin?")[0]
-        y_reference = self.instrument.ask_for_values(":waveform:yreference?")[0]
+        x_increment = self.ask_for_values(":waveform:xincrement?")[0]
+        x_origin    = self.ask_for_values(":waveform:xorigin?")[0]
+        y_increment = self.ask_for_values(":waveform:yincrement?")[0]
+        y_origin    = self.ask_for_values(":waveform:yorigin?")[0]
+        y_reference = self.ask_for_values(":waveform:yreference?")[0]
 
         yValues = y_origin + y_increment*(data - y_reference)
         xValues = x_origin + x_increment*np.arange(0, len(yValues))
@@ -277,9 +279,9 @@ class DSO_X2022A(Instrument):
             if not self.cached2:
                 self.getWaveformInfo(channel=2)
 
-        self.instrument.write(":waveform:source channel%d" % channel)
-        self.instrument.write(":waveform:data?")
-        data = self.instrument.read_raw()
+        self.write(":waveform:source channel%d" % channel)
+        self.write(":waveform:data?")
+        data = self.connection.read_raw()
         data = self.getBinaryBlock(data)
         data = np.array(struct.unpack("%dB" % len(data), data))
 
@@ -306,10 +308,10 @@ class DSO_X2022A(Instrument):
 
     # @checkErrors
     def getScreenshot(self):
-        self.instrument.write(":hardcopy:inksaver off")
-        data = self.instrument.ask(":display:data? png, color")
+        self.write(":hardcopy:inksaver off")
+        data = self.ask(":display:data? png, color")
         return self.getBinaryBlock(data)
 
     def shutdown(self):
-        self.instrument.clear()
+        self.connection.clear()
         pass

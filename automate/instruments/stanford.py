@@ -6,8 +6,8 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-import math, sys, time
-from instrument import Instrument, discreteTruncate
+import time
+from automate.instruments import Instrument, discreteTruncate
 import numpy as np
 
 class SR830(Instrument):
@@ -26,9 +26,9 @@ class SR830(Instrument):
     CHANNEL1_VALUES = ['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2']
     CHANNEL2_VALUES = ['Y', 'Theta', 'Y Noise', 'Aux In 3', 'Aux In 4']
     
-    def __init__(self, resourceName, *args, **kwargs):
+    def __init__(self, resourceName, **kwargs):
         super(SR830, self).__init__(resourceName, 
-           "Stanford Research Systems SR830 Lock-in amplifier", *args, **kwargs)
+           "Stanford Research Systems SR830 Lock-in amplifier", **kwargs)
         
         self.add_control("sine_voltage", "SLVL?", "SLVL%0.3f")
         self.add_control("frequency", "FREQ?", "FREQ%0.3e")

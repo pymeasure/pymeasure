@@ -246,9 +246,11 @@ class Instrument(object):
         # Set convenience function, that we may pass by reference if necessary
         setattr(self.__class__, 'get_'+name, fget)
 
+    # TODO: Determine case basis for the addition of this method
     def clear(self):
         self.write("*CLS")
-    
+
+    # TODO: Determine case basis for the addition of this method
     def reset(self):
         self.write("*RST")
     

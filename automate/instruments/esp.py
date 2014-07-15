@@ -7,14 +7,13 @@
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from __future__ import print_function
-import visa
-from instrument import Instrument
-import time
+from automate.instruments import Instrument
+import visa, time
 
 class ESP300(Instrument):
     """This is the class for the ESP300 motion controller"""
-    def __init__(self, resourceName, *args, **kwargs):
-        super(ESP300, self).__init__(resourceName, "ESP300 Stage Controller", *args, **kwargs)
+    def __init__(self, resourceName, **kwargs):
+        super(ESP300, self).__init__(resourceName, "ESP300 Stage Controller", **kwargs)
 
         # Dictionary for mapping axes to their numerical labels
         self.axes = {'x': 1, 'y': 2, 'phi':3}

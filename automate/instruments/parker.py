@@ -6,9 +6,8 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate import Instrument, RangeException
+from automate.instruments import Instrument, SerialAdapter, RangeException
 from time import sleep
-from serial import Serial
 import re
 
 class ParkerGV6(Instrument):
@@ -20,7 +19,10 @@ class ParkerGV6(Instrument):
     degreesPerCount = 0.00045 # 90 deg per 200,000 count
     
     def __init__(self, port):
-        super(ParkerGV6, self).__init__(Serial(port, 9600, timeout=0.5))
+        super(ParkerGV6, self).__init__(
+            SerialAdapter(port, 9600, timeout=0.5),
+            "Parker GV6 Motor Controller"
+        )
         self.setDefaults()
              
     def setDefaults(self):

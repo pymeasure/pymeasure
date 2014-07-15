@@ -11,8 +11,8 @@ from instrument import Instrument
 import numpy as np
 
 class Yokogawa7651(Instrument):
-    def __init__(self, resourceName, *args, **kwargs):
-        super(Yokogawa7651, self).__init__(resourceName, "Yokogawa 7651 Programmable DC Source", *args, **kwargs)
+    def __init__(self, resourceName, **kwargs):
+        super(Yokogawa7651, self).__init__(resourceName, "Yokogawa 7651 Programmable DC Source", **kwargs)
         
         # Simple control parameters
         self.add_control("source_voltage", "OD;E", "S{:g};E")

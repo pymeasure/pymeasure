@@ -6,13 +6,8 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate import Instrument, RangeException
-from zope.interface import implementer
+from automate.instruments import Instrument, SerialAdapter, RangeException
 from numpy import array, float64
-
-from serial import Serial
-# Ensure that the Serial object gets treated as an IConnection
-Serial = implementer(interfaces.IConnection)(Serial)
 
 class FWBell5080(Instrument):
     """ Represents the F.W. Bell 5080 Handheld Gaussmeter and
@@ -21,7 +16,10 @@ class FWBell5080(Instrument):
     """
     
     def __init__(self, port):
-        super(FWBell5080, self).__init__(Serial(port, 2400, timeout=0.5))
+        super(FWBell5080, self).__init__(
+            SerialAdapter(port, 2400, timeout=0.5),
+            "F.W. Bell 5080 Handheld Gaussmeter"
+        )
 
     def identify(self):
         return self.ask("*IDN?")
@@ -98,5 +96,3 @@ class FWBell5080(Instrument):
         elif value == 2:
             return 3e4
             
-        
-        

@@ -7,19 +7,19 @@
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 import visa
-from instrument import Instrument
+from automate.instruments import Instrument
 import numpy as np
 import time
 
 class Keithley2000(Instrument):
-    def __init__(self, resourceName, *args, **kwargs):
-        super(Keithley2000, self).__init__(resourceName, "Keithley 2000 Multimeter", *args, **kwargs)
+    def __init__(self, resourceName, **kwargs):
+        super(Keithley2000, self).__init__(resourceName, "Keithley 2000 Multimeter", **kwargs)
         # Simple measurements go here
         self.add_measurement("voltage", ":read?")
         self.add_measurement("resistance", ":read?")
 
     def check_errors(self):
-        errors = map(int, self.instrument.ask_for_values(":system:error?"))
+        errors = map(int, self.connection.ask_for_values(":system:error?"))
         for err in errors:
             if err != 0:
                 self.log("Keithley Encountered error: %d\n" % err)
@@ -42,11 +42,11 @@ class Keithley2000(Instrument):
 
 class Keithley2400(Instrument):
     """This is the class for the Keithley 2000-series instruments"""
-    def __init__(self, resourceName, *args, **kwargs):
-        super(Keithley2400, self).__init__(resourceName, "Keithley 2400 Sourcemeter", *args, **kwargs)
+    def __init__(self, resourceName, **kwargs):
+        super(Keithley2400, self).__init__(resourceName, "Keithley 2400 Sourcemeter", **kwargs)
 
         self.write("format:data ascii")
-        self.instrument.values_format = visa.ascii
+        self.connection.values_format = visa.ascii
         self.reset()
         self.sourceMode = None
 
@@ -71,7 +71,7 @@ class Keithley2400(Instrument):
         self.beep(baseFreq*6.0/4.0, dur)
 
     def check_errors(self):
-        errors = map(int,self.instrument.ask_for_values(":system:error?"))
+        errors = map(int,self.connection.ask_for_values(":system:error?"))
         for err in errors:
             if err != 0:
                 self.log("Keithley Encountered error: %d\n" % err)
@@ -102,26 +102,26 @@ class Keithley2400(Instrument):
         self.check_errors()
 
     def getBuffer(self):
-        return self.instrument.ask_for_values(":TRAC:DATA?;")
+        return self.connection.ask_for_values(":TRAC:DATA?;")
    
     def startBuffer(self):
         self.write(":INIT")
 
     def resetBuffer(self):
-        self.instrument.ask("status:measurement?")
+        self.ask("status:measurement?")
         self.write("trace:clear; feed:control next")
 
     def stopBuffer(self):
         self.write(":TRAC:FEED:CONT NEV;:ABOR")
     
     def waitForBuffer(self):
-        self.instrument.wait_for_srq()
+        self.connection.wait_for_srq()
 
     def getMeans(self):
-        return self.instrument.ask_for_values(":CALC3:FORM MEAN;:CALC3:DATA?;")
+        return self.connection.ask_for_values(":CALC3:FORM MEAN;:CALC3:DATA?;")
 
     def getStandardDeviations(self):
-        return self.instrument.ask_for_values(":CALC3:FORM SDEV;:CALC3:DATA?;")
+        return self.connection.ask_for_values(":CALC3:FORM SDEV;:CALC3:DATA?;")
       
     def getVoltageMean(self):
         return self.getMeans()[0]
@@ -201,7 +201,7 @@ class Keithley2400(Instrument):
         self.check_errors()
 
     def status(self):
-        return self.instrument.ask("status:queue?;")
+        return self.ask("status:queue?;")
 
     def getResistanceBuffered(self):
         self.keith.startBuffer()
@@ -251,9 +251,9 @@ class Keithley2400(Instrument):
         else:
             currents = np.linspace(startI, stopI, num)
             self.write(":SOUR:SWE:DIR UP")
-        self.instrument.timeout = 30.0
+        self.connection.timeout = 30.0
         self.outputOn()
-        data = self.instrument.ask_for_values(":READ?") 
+        data = self.connection.ask_for_values(":READ?") 
 
         self.check_errors()
         return zip(currents,data)

@@ -7,14 +7,13 @@
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from __future__ import print_function
-
-from instrument import Instrument
+from automate.instruments import Instrument
 import time, struct
 
 class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
-    def __init__(self, resourceName, *args, **kwargs):
-        super(DSP7265, self).__init__(resourceName, "Signal Recovery DSP 7265", *args, **kwargs)
+    def __init__(self, resourceName, **kwargs):
+        super(DSP7265, self).__init__(resourceName, "Signal Recovery DSP 7265", **kwargs)
         self.curveBits = {'x': 1, 'y': 2, 'mag': 4, 'phase': 8, 'ADC1': 32, 'ADC2': 64, 'ADC3': 128}
         
         # Simple parameter controls go here
