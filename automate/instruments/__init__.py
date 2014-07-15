@@ -115,7 +115,10 @@ try:
             
         def values(self, command):
             result = self.ask(command)
-            return [float(x) for x in result.split(",")]
+            try:
+                return [float(x) for x in result.split(",")]
+            except:
+                return result.strip()
             
         def __repr__(self):
             return "<SerialAdapter(port='%s')>" % self.port
@@ -135,16 +138,16 @@ try:
         sudo udevadm trigger
             
         """
-        def __init__(self, port, address=None **kwargs):
+        def __init__(self, port, address=None, **kwargs):
+            self.address = address
             if isinstance(port, serial.Serial):
                 # A previous adapter is sharing this connection
                 self.connection = port
             else:
                 # Construct a new connection
-                self.connection = serial.Serial(port, 9600, **kwargs)
+                self.connection = serial.Serial(port, 9600, timeout=0.5, **kwargs)
                 self.connection.open()
                 self.setDefaults()
-            self.address = address
 
         def setDefaults(self):
             self.write("++auto 0") # Turn off auto read-after-write
@@ -155,9 +158,9 @@ try:
             if self.connection.isOpen():
                 self.connection.close()
 
-        def write(self, command, address=None):
+        def write(self, command):
             if self.address is not None:
-                self.connection.write("++addr %d\n" % address)
+                self.connection.write("++addr %d\n" % self.address)
             self.connection.write(command + "\n")
             
         def read(self):
@@ -217,7 +220,7 @@ class Instrument(object):
     def write(self, command): self.adapter.write(command)
     def read(self): return self.adapter.read()
     def values(self, command):
-        values = self.adapter.values(string)
+        values = self.adapter.values(command)
         if len(values) == 1:
             return values[0]
         else:

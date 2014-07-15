@@ -110,27 +110,33 @@ class Agilent8722ES(Instrument):
     """
 
     SCAN_POINT_VALUES = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
+    SCATTERING_PARAMETERS = ("S11", "S12", "S21", "S22")
+    S11, S12, S21, S22 = SCATTERING_PARAMETERS
 
     def __init__(self, resourceName, **kwargs):
         super(Agilent8722ES, self).__init__(resourceName, "Agilent 8722ES Vector Network Analyzer", **kwargs)
+        
+        self.add_control("start_frequency", "STAR?", "STAR %.3e HZ")
+        self.add_control("stop_frequency", "STOP?", "STOP %.3e HZ")
+        self.add_control("sweep_time", "SWET?", "SWET%.2e")
     
     def setFixedFrequency(self, frequency):
         """ Sets the scan to be of only one frequency in Hz """
         self.setStartFrequency(frequency)
         self.setStopFrequency(frequency)
         self.setScanPoints(3)
-        
-    def setScatteringParameter(self, element):
-        """" Sets which scattering parameter to be measured based on the
-        matrix element notation
-        """
-        if element == "11": self.write("S11")
-        elif element == "12": self.write("S12")
-        elif element == "21": self.write("S21")
-        elif element == "22": self.write("S22")
+
+    @property
+    def parameter(self):
+        for parameter in Agilent8722ES.SCATTERING_PARAMETERS:
+            if int(self.values("%s?" % parameter))==1: return parameter
+        return None
+    @parameter.setter
+    def parameter(self, value):
+        if value in Agilent8722ES.SCATTERING_PARAMETERS:
+            self.write("%s" % value)
         else:
-            raise Exception("Invalid matrix element provided for Agilent 8722ES"
-                            " scattering parameter")
+            raise Exception("Invalid scattering parameter requested for Agilent 8722ES")
         
     def setScanPoints(self, points):
         """ Sets the number of scan points, truncating to an allowed
@@ -150,19 +156,7 @@ class Agilent8722ES(Instrument):
         if search:
            return int(float(search.group()))
         else:
-            raise Exception("Improper message returned for the number of points")
-                                 
-    def setSweepTime(self, time):
-        """ Sets the time over which the scan takes place in seconds """
-        self.write("SWET%.2e" % time)
-                                 
-    def setStartFrequency(self, frequency):
-        """ Sets the start frequency for the scan in Hz """
-        self.write("STAR%.3e" % frequency)
-        
-    def setStopFrequency(self, frequency):
-        """ Sets the stop frequency for the scan in Hz """
-        self.write("STOP%.3e" % frequency)        
+            raise Exception("Improper message returned for the number of points")  
                                  
     def setIFBandwidth(self, bandwidth):
         """ Sets the resolution bandwidth (IF bandwidth) """
