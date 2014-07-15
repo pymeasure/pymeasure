@@ -14,6 +14,8 @@ class Yokogawa7651(Instrument):
     def __init__(self, resourceName, **kwargs):
         super(Yokogawa7651, self).__init__(resourceName, "Yokogawa 7651 Programmable DC Source", **kwargs)
         
+        self.add_measurement("id", "OS")
+        
         # Simple control parameters
         self.add_control("source_voltage", "OD;E", "S{:g};E")
         self.add_control("source_current", "OD;E", "S{:g};E")
