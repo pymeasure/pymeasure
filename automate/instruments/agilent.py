@@ -193,7 +193,7 @@ class Agilent8722ES(Instrument):
         else:
             self.write("NUMG%d" % averages)
             
-    def scan(self, averages=1, blocking=True, timeout=0.1, abortEvent=None):
+    def scan(self, averages=1, blocking=True, timeout=25, delay=0.1):
         """ Initiates a scan with the number of averages specified and
         blocks until the operation is complete if blocking is True
         """
@@ -203,8 +203,10 @@ class Agilent8722ES(Instrument):
         else:
             self.setAveraging(averages)
             self.restartAveraging(averages)
+            self.write("SRE 4; ESNB 1")
+            print self.adapter.ask("++spoll")
             if blocking:
-                self.waitForScan(abortEvent)
+                self.adapter.wait_for_srq(timeout, delay)
     
     def scanSingle(self):
         """ Initiates a single scan """
@@ -213,13 +215,6 @@ class Agilent8722ES(Instrument):
     def scanContinuous(self):
         """ Initiates a continuous scan """
         self.write("CONT")
-        
-    def waitForScan(self, timeout=0.1, abortEvent=None):
-        """ Blocks until the scan returns a operation complete signal
-        or an abort event is set        
-        """
-        while not abortEvent.isSet() and self.ask("OPC?") != '1\n':
-            time.sleep(timeout)
     
     @property
     def frequencies(self):

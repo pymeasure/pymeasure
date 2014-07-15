@@ -86,6 +86,9 @@ try:
         
         def values(self, command):
             return self.ask_for_values(command)
+            
+        def wait_for_srq(self, timeout=25, delay=0.1):
+            self.connection.wait_for_srq(timeout)
                        
         def __repr__(self):
             return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
@@ -174,6 +177,14 @@ try:
             calls of this function 
             """
             return PrologixAdapter(self.connection, gpib_address)
+            
+        def wait_for_srq(self, timeout=25, delay=0.1):
+            """ Wait for a SRQ and then resets the bit """
+            while int(self.ask("++srq")) != 1:
+                time.sleep(delay)
+            print(self.ask("++srq"))
+            print("Resetting SRQ")
+            self.ask("++spoll")
             
         def __repr__(self):
             if self.address:
