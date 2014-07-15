@@ -48,6 +48,7 @@ class FakeAdapter(Adapter):
     def __repr__(self):
         return "<FakeAdapter>"
 
+
 try:
     import visa
             
@@ -88,7 +89,9 @@ try:
                        
         def __repr__(self):
             return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
-         
+except ImportError:
+    print("PyVISA library could not be loaded")
+
 try:
     import serial
     
@@ -112,8 +115,7 @@ try:
             
         def values(self, command):
             result = self.ask(command)
-            values = re.split(
-            return [float(x) for x in result.split
+            return [float(x) for x in result.split(",")]
             
         def __repr__(self):
             return "<SerialAdapter(port='%s')>" % self.port
@@ -177,6 +179,9 @@ try:
             else:
                 return "<PrologixAdapter(port='%s')>" % self.port
             
+except ImportError:
+    print("PySerial library could not be loaded")
+
 
 class Instrument(object):
     """ Base class for Instruments, independent of the particular Adapter used
@@ -269,10 +274,10 @@ def discreteTruncate(number, discreteSet):
     """ Truncates the number to the closest element in the positive discrete set.
     Returns False if the number is larger than the maximum value or negative.    
     """
-    if number < 0 return False
+    if number < 0: return False
     discreteSet.sort()
     for item in discreteSet:
-        if number <= item return item
+        if number <= item: return item
     return False
     
 class RangeException(Exception): pass
