@@ -202,11 +202,12 @@ class Agilent8722ES(Instrument):
             self.setSingleSweep()
         else:
             self.setAveraging(averages)
+            self.write("*CLS;SRE 4;ESNB 1;")
             self.restartAveraging(averages)
-            self.write("SRE 4; ESNB 1")
-            print self.adapter.ask("++spoll")
             if blocking:
                 self.adapter.wait_for_srq(timeout, delay)
+    
+    # TODO: Add method for determining if the scan is completed
     
     def scanSingle(self):
         """ Initiates a single scan """
