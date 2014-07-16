@@ -6,7 +6,7 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-import time
+import time, re
 from automate.instruments import Instrument, discreteTruncate
 import numpy as np
 
@@ -33,37 +33,37 @@ class SR830(Instrument):
         self.add_control("sine_voltage", "SLVL?", "SLVL%0.3f")
         self.add_control("frequency", "FREQ?", "FREQ%0.3e")
         self.add_control("phase", "PHAS?", "PHAS%0.2f")
-        self.add_measurement("X", "OUTP?1")
-        self.add_measurement("Y", "OUTP?2")
-        self.add_measurement("R", "OUTP?3")
+        self.add_measurement("x", "OUTP?1")
+        self.add_measurement("y", "OUTP?2")
+        self.add_measurement("magnitude", "OUTP?3")
         self.add_measurement("theta", "OUTP?4")
 
     @property
     def channel1(self):
         """ Get the variable for Channel 1 """
-        return False # TODO: Implement
+        return SR830.CHANNEL1_VALUES[int(self.values("DDEF?1;")[0])]
         
     @channel1.setter
     def channel1(self, value):
         """ Set the variable for Channel 1 """
-        if not variable in SR830.CHANNEL1_VALUES:
+        if not value in SR830.CHANNEL1_VALUES:
             raise ValueError("Channel 1 selection is invalid for SR830")
         else:
-            index = SR830.CHANNEL1_VALUES.index(variable)
+            index = SR830.CHANNEL1_VALUES.index(value)
             self.write("DDEF1,%d,0" % index)
 
     @property
     def channel2(self):
         """ Get the variable for Channel 2 """
-        return False # TODO: Implement
+        return SR830.CHANNEL2_VALUES[int(self.values("DDEF?2;")[0])]
 
-    @channel1.setter
+    @channel2.setter
     def channel2(self, value):
         """ Set the variable for Channel 2 """
-        if not variable in SR830.CHANNEL1_VALUES:
+        if not value in SR830.CHANNEL2_VALUES:
             raise ValueError("Channel 2 selection is invalid for SR830")
         else:
-            index = SR830.CHANNEL1_VALUES.index(variable)
+            index = SR830.CHANNEL2_VALUES.index(value)
             self.write("DDEF2,%d,0" % index)
         
     def autoGain(self):
@@ -174,7 +174,8 @@ class SR830(Instrument):
         # Set the range as low as possible
         self.sensitivity(1.15*abs(self.R))
         
-    def getBufferCount(self):
+    @property
+    def buffer_count(self):
         query = self.ask("SPTS?")
         if query.count("\n") > 1:
             return int(re.match(r"\d+\n$", query, re.MULTILINE).group(0))
@@ -184,43 +185,43 @@ class SR830(Instrument):
     def fillBuffer(self, count, abortEvent=None, delay=0.001):
         channel1 = np.empty(count, np.float32)
         channel2 = np.empty(count, np.float32)
-        currentCount = self.getBufferCount()
+        currentCount = self.buffer_count
         index = 0
         while currentCount < count:
             print index, currentCount, count
             if currentCount > index:
-                channel1[index:currentCount] = self.getBuffer(1, index, currentCount)
-                channel2[index:currentCount] = self.getBuffer(2, index, currentCount)
+                channel1[index:currentCount] = self.buffer_data(1, index, currentCount)
+                channel2[index:currentCount] = self.buffer_data(2, index, currentCount)
                 index = currentCount
                 time.sleep(delay)
-            currentCount = self.getBufferCount()
+            currentCount = self.buffer_count
             if abortEvent is not None and abortEvent.isSet():
                 self.pauseBuffer()
                 return channel1, channel2
         self.pauseBuffer()
-        channel1[index:count+1] = self.getBuffer(1, index, count)
-        channel2[index:count+1] = self.getBuffer(2, index, count)
+        channel1[index:count+1] = self.buffer_data(1, index, count)
+        channel2[index:count+1] = self.buffer_data(2, index, count)
         return channel1, channel2 
     
     def bufferMeasure(self, count, stopRequest=None, delay=1e-3):
         self.write("FAST0;STRD")
         channel1 = np.empty(count, np.float64)
         channel2 = np.empty(count, np.float64)
-        currentCount = self.getBufferCount()
+        currentCount = self.buffer_count
         index = 0
         while currentCount < count:
             if currentCount > index:
-                channel1[index:currentCount] = self.getBuffer(1, index, currentCount)
-                channel2[index:currentCount] = self.getBuffer(2, index, currentCount)
+                channel1[index:currentCount] = self.buffer_data(1, index, currentCount)
+                channel2[index:currentCount] = self.buffer_data(2, index, currentCount)
                 index = currentCount
                 time.sleep(delay)
-            currentCount = self.getBufferCount()
+            currentCount = self.buffer_count
             if stopRequest is not None and stopRequest.isSet():
                 self.pauseBuffer()
                 return (0, 0, 0, 0)
         self.pauseBuffer()
-        channel1[index:count] = self.getBuffer(1, index, count)
-        channel2[index:count] = self.getBuffer(2, index, count)
+        channel1[index:count] = self.buffer_data(1, index, count)
+        channel2[index:count] = self.buffer_data(2, index, count)
         return (channel1.mean(), channel1.std(), channel2.mean(), channel2.std())   
     
     def pauseBuffer(self):
@@ -234,21 +235,18 @@ class SR830(Instrument):
 
     def waitForBuffer(self, count, stopRequest=None, timeout=60, timestep=0.01):
         i = 0
-        while not self.getBufferCount() >= count and i < (timeout / timestep):
+        while not self.buffer_count >= count and i < (timeout / timestep):
             time.sleep(timestep)
             i += 1
             if stopRequest is not None and stopRequest.isSet():
                 return False
         self.pauseBuffer()
 
-    def getBuffer(self, channel=1, start=0, end=None):
+    def buffer_data(self, channel=1, start=0, end=None):
         """ Aquires the 32 bit floating point data through binary transfer
         """
-        if end is None: end = self.getBufferCount()
-        self.connection.flush()
-        self.write("TRCB?%d,%d,%d" % (channel, start, end-start))
-        binary = ''.join(self.readlines())
-        return np.fromstring(binary, dtype=np.float32)
+        if end is None: end = self.buffer_count
+        return self.binary_values("TRCB?%d,%d,%d" % (channel, start, end-start))
             
     def resetBuffer(self):
         self.write("REST")
