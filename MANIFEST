@@ -20,4 +20,5 @@ automate/instruments/nidaqmx.py
 automate/instruments/parker.py
 automate/instruments/signalrecovery.py
 automate/instruments/stanford.py
+automate/instruments/tektronix.py
 automate/instruments/yokogawa.py
