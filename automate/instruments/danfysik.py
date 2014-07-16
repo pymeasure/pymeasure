@@ -11,20 +11,26 @@ from time import sleep
 import numpy as np
 import re
 
-class Danfysik8500Adapter(SerialAdapter):
+class DanfysikAdapter(SerialAdapter):
     
     def __init__(self, port):
-        super(Danfysik8500Adapter, self).__init__(port, termchar="\r", baudrate=9600, timeout=0.5)
+        super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
+        
+    def write(self, command):
+        self.connection.write(command + "\r")
         
     def read(self): # Overwrite to raise exceptions on error messages
-        result = super(Danfysik8500Adapter, self).read()
+        result = "".join(self.connection.readlines())
+        result = result.replace("\r", "")
         search = re.search("^\?\\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
             raise Exception("Danfysik 8500 raised the error: %s" % (
                             search.groups()[0]))
         else:
             return result
-        
+            
+        def __repr__(self):
+            return "<DanfysikAdapter(port='%s')>" % self.connection.port        
 
 class Danfysik8500(Instrument):
     """ Represents the Danfysik 8500 Electromanget Current Supply
@@ -47,14 +53,19 @@ class Danfysik8500(Instrument):
     
     def __init__(self, port):
         super(Danfysik8500, self).__init__(
-            Danfysik8500Adapter(port), "Danfysik 8500 Current Supply", includeSCPI=False
+            DanfysikAdapter(port), "Danfysik 8500 Current Supply", includeSCPI=False
         )
         self.write("ERRT") # Use text error messages
+        self.write("UNLOCK") # Unlock from remote or local mode
         
-    def setLocal(self):
+    @property
+    def id(self):
+        return self.ask("PRINT")
+        
+    def local(self):
         self.write("LOC")
         
-    def setRemote(self):
+    def remote(self):
         self.write("REM")
          
     @property
@@ -96,18 +107,25 @@ class Danfysik8500(Instrument):
         
     @property
     def current_ppm(self):
-        pass
+        return int(self.ask("DA 0")[2:])
     @current_ppm.setter
     def current_ppm(self, ppm):
-        self.write("DA 0,%d" % int(ppm))
+        if ppm < 0 or ppm > 1e6:
+            raise RangeException("Danfysik 8500 requires parts per million "
+                                 "to be an appropriate integer")
+        self.write("DA 0,%d" % ppm)
+    
+    @property
+    def slew_rate(self):
+        return float(self.ask("R3"))
     
     def waitForCurrent(self, delay=0.01):
         self.waitForReady(delay)
         while abs(self.getCurrent() - amps) > 0.02:
-            sleep(blockDelay)
+            sleep(delay)
         
     def isReady(self):
-        return self.getStatusHex() & 0b10 == 0
+        return self.status_hex & 0b10 == 0
 
     def waitForReady(self, delay=0.01): # timestep in seconds
         while not self.isReady():

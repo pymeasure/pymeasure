@@ -119,15 +119,14 @@ try:
         adapter
         """
         
-        def __init__(self, port, termchar=None, **kwargs):
+        def __init__(self, port, **kwargs):
             self.connection = serial.Serial(port, **kwargs)
-            self.termchar = termchar
         
         def __del__(self):
             self.connection.close()
         
         def write(self, command):
-            self.connection.write(command + self.termchar)
+            self.connection.write(command)
             
         def read(self):
             return "\n".join(self.connection.readlines())
@@ -146,7 +145,7 @@ try:
             return np.fromstring(data, dtype=dtype)
             
         def __repr__(self):
-            return "<SerialAdapter(port='%s')>" % self.port
+            return "<SerialAdapter(port='%s')>" % self.connection.port
             
     class PrologixAdapter(SerialAdapter):
         """ Encapsulates the additional commands necessary
@@ -210,7 +209,7 @@ try:
                 return "<PrologixAdapter(port='%s',address=%d)>" % (
                         self.port, self.address)
             else:
-                return "<PrologixAdapter(port='%s')>" % self.port
+                return "<PrologixAdapter(port='%s')>" % self.connection.port
             
 except ImportError:
     print("PySerial library could not be loaded")
