@@ -13,9 +13,8 @@ from StringIO import StringIO
 
 class Agilent8257D(Instrument):
     def __init__(self, resourceName, delay=0.02, **kwargs):
-        super(Agilent8257D, self).__init__(resourceName, 
-            "Agilent 8257D RF Signal Generator",
-            delay=delay, **kwargs
+        super(Agilent8257D, self).__init__(resourceName,
+            "Agilent 8257D RF Signal Generator", **kwargs
         )
 
         self.add_control("power",     ":pow?",  ":pow %g dbm;")
