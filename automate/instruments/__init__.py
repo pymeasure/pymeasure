@@ -18,7 +18,7 @@ class Adapter(object):
     
     def write(self, command):
         """ Writes a command """
-        pass
+        raise NameError("Adapter (sub)class has not implemented writing")
         
     def ask(self, command):
         """ Writes the command and returns the read result """
@@ -27,11 +27,15 @@ class Adapter(object):
         
     def read(self):
         """ Reads until the buffer is empty and returns the result """
-        pass
+        raise NameError("Adapter (sub)class has not implemented reading")
         
     def values(self, command):
         """ Returns a list of values from the string read """
-        pass
+        raise NameError("Adapter (sub)class has not implemented the values method")
+        
+    def binary_values(self, command, header_bytes=0, dtype=np.float32):
+        """ Returns a numpy array from a query for binary data """
+        raise NameError("Adapter (sub)class has not implemented the binary_values method")
 
 class FakeAdapter(Adapter):
     """Fake adapter for debugging purposes"""
@@ -39,11 +43,14 @@ class FakeAdapter(Adapter):
     def read(self):
         return "Fake string!"
         
-    def write(self, string):
+    def write(self, command):
         pass
         
-    def values(self, string):
+    def values(self, command):
         return [1.0, 2.0, 3.0]
+        
+    def binary_values(self, command):
+        return np.array([2, 3, 7, 8, 1])
         
     def __repr__(self):
         return "<FakeAdapter>"
@@ -59,7 +66,7 @@ try:
             self.manager = visa.ResourceManager()
             if isinstance(resourceName, (int, long)):
                 resourceName = "GPIB0::%d::INSTR" % resourceName            
-            if self.version() == 1.5:
+            if self.version == '1.5':
                 safeKeywords = ['resource_name', 'timeout', 'term_chars', 
                                 'chunk_size', 'lock', 'delay', 'send_end', 
                                 'values_format']
@@ -68,12 +75,15 @@ try:
                     if key not in safeKeywords:
                         kwargs.pop(key)
                 self.connection = self.manager.get_instrument(resourceName, **kwargs)
-            elif self.version() == 1.4:
+            elif self.version == '1.4':
                 self.connection = visa.instrument(resourceName, **kwargs)
         
+        @property
         def version(self):
-            # TODO: Check on __version__
-            return 1.5 if hasattr(self.manager, 'get_instrument') else 1.4
+            if hasattr(visa, '__version__'):
+                return visa.__version__
+            else:
+                return '1.4'
             
         def write(self, command):
             self.connection.write(command)
@@ -86,6 +96,12 @@ try:
         
         def values(self, command):
             return self.connection.ask_for_values(command)
+            
+        def binary_values(self, command, header_bytes=0, dtype=np.float32):
+            self.connection.write(command)
+            binary = self.connection.read_raw()
+            header, data = binary[:header_bytes], binary[header_bytes:]
+            return np.fromstring(data, dtype=dtype)
             
         def wait_for_srq(self, timeout=25, delay=0.1):
             self.connection.wait_for_srq(timeout)
@@ -122,6 +138,12 @@ try:
                 return [float(x) for x in result.split(",")]
             except:
                 return result.strip()
+                
+        def binary_values(self, command, header_bytes=0, dtype=np.float32):
+            self.connection.write(command)
+            binary = self.connection.read()
+            header, data = binary[:header_bytes], binary[header_bytes:]
+            return np.fromstring(data, dtype=dtype)
             
         def __repr__(self):
             return "<SerialAdapter(port='%s')>" % self.port
@@ -233,6 +255,8 @@ class Instrument(object):
             return values[0]
         else:
             return values
+    def binary_values(self, command, header_bytes=0, dtype=np.float32): 
+        return self.adapter.binary_values(command, header_bytes, dtype)
 
     def add_control(self, name, get_string, set_string, checkErrorsOnSet=False, checkErrorsOnGet=False):
         """This adds a property to the class based on the supplied SCPI commands. The presumption is
