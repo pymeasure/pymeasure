@@ -119,15 +119,15 @@ try:
         adapter
         """
         
-        def __init__(self, port, **kwargs):
+        def __init__(self, port, termchar=None, **kwargs):
             self.connection = serial.Serial(port, **kwargs)
-            self.connection.open()
+            self.termchar = termchar
         
         def __del__(self):
             self.connection.close()
         
         def write(self, command):
-            self.connection.write(command)
+            self.connection.write(command + self.termchar)
             
         def read(self):
             return "\n".join(self.connection.readlines())
@@ -220,7 +220,7 @@ class Instrument(object):
     """ Base class for Instruments, independent of the particular Adapter used
     to connect for communication
     """
-    def __init__(self, adapter, name, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
             if isinstance(adapter, (int, long, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -237,10 +237,11 @@ class Instrument(object):
             self.logfunc = print
 
         # TODO: Determine case basis for the addition of these methods
-        # Basic SCPI commands
-        self.add_measurement("id",       "*IDN?")
-        self.add_measurement("status",   "*STB?")
-        self.add_measurement("complete", "*OPC?")
+        if includeSCPI:
+            # Basic SCPI commands
+            self.add_measurement("id",       "*IDN?")
+            self.add_measurement("status",   "*STB?")
+            self.add_measurement("complete", "*OPC?")
 
         self.isShutdown = False
         self.log("Initializing <i>%s</i>." % self.name)

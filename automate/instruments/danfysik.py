@@ -11,21 +11,45 @@ from time import sleep
 import numpy as np
 import re
 
+class Danfysik8500Adapter(SerialAdapter):
+    
+    def __init__(self, port):
+        super(Danfysik8500Adapter, self).__init__(port, termchar="\r", baudrate=9600, timeout=0.5)
+        
+    def read(self): # Overwrite to raise exceptions on error messages
+        result = super(Danfysik8500Adapter, self).read()
+        search = re.search("^\?\\x07\s(?P<name>.*)$", result, re.MULTILINE)
+        if search:
+            raise Exception("Danfysik 8500 raised the error: %s" % (
+                            search.groups()[0]))
+        else:
+            return result
+        
+
 class Danfysik8500(Instrument):
     """ Represents the Danfysik 8500 Electromanget Current Supply
     and provides a high-level interface for interacting with the
-    instrument    
+    instrument
+    
+    To allow user access to the Prolific Technology PL2303 Serial port adapter
+    in Linux, create the file:
+    /etc/udev/rules.d/50-danfysik.rules, with contents:    
+    
+    SUBSYSTEMS=="usb",ATTRS{idVendor}=="067b",ATTRS{idProduct}=="2303",MODE="0666",SYMLINK+="danfysik"
+        
+    Then reload the udev rules with:
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+    
+    The device will be accessible through /dev/danfysik
+      
     """
     
     def __init__(self, port):
         super(Danfysik8500, self).__init__(
-            SerialAdapter(port, 9600, timeout=0.5),
-            "Danfysik 8500 Current Supply"
+            Danfysik8500Adapter(port), "Danfysik 8500 Current Supply", includeSCPI=False
         )
-        
-    def write(self, command):
-        """ Write a command ensuring proper line termination """
-        self.connection.write(command + "\r")
+        self.write("ERRT") # Use text error messages
         
     def setLocal(self):
         self.write("LOC")
@@ -33,11 +57,9 @@ class Danfysik8500(Instrument):
     def setRemote(self):
         self.write("REM")
          
-    def getPolarity(self):
-        if self.ask("PO")[0] == '+':
-            return 1
-        else:
-            return -1
+    @property
+    def polarity(self):
+        return 1 if self.ask("PO").strip() == '+' else -1
             
     def resetInterlocks(self):
         self.write("RS")
@@ -50,9 +72,10 @@ class Danfysik8500(Instrument):
         
     def isEnabled(self):
         """ Returns True if the supply is enabled """
-        return self.getStatusHex() & 0x800000 == 0
+        return self.status_hex & 0x800000 == 0
         
-    def getStatusHex(self):
+    @property
+    def status_hex(self):
         status = self.ask("S1H")
         match = re.search(r'(?P<hex>[A-Z0-9]{6})', status)
         if match is not None:
@@ -60,32 +83,38 @@ class Danfysik8500(Instrument):
         else:
             raise Exception("Danfysik status not properly returned. Instead "
                             "got '%s'" % status)
-        
-    def getCurrent(self):
-        return int(self.ask("AD 8"))*1e-2*self.getPolarity()
-        
-    def setCurrent(self, amps, blocking=False, blockDelay=0.01):
+    
+    @property    
+    def current(self):
+        return int(self.ask("AD 8"))*1e-2*self.polarity
+    @current.setter
+    def current(self, amps):
         if amps > 160 or amps < -160:
             raise RangeException("Danfysik 8500 is only capable of sourcing "
                                   "+/- 160 Amps")
-        else:
-            self.setCurrentPPM(int((1e6/160)*amps))
-            if blocking: # ensure the program halts until current is met
-                self.waitForReady(blockDelay)
-                while abs(self.getCurrent() - amps) > 0.02:
-                    sleep(blockDelay)
+        self.current_ppm = int((1e6/160)*amps)
         
-    def setCurrentPPM(self, ppm):
+    @property
+    def current_ppm(self):
+        pass
+    @current_ppm.setter
+    def current_ppm(self, ppm):
         self.write("DA 0,%d" % int(ppm))
+    
+    def waitForCurrent(self, delay=0.01):
+        self.waitForReady(delay)
+        while abs(self.getCurrent() - amps) > 0.02:
+            sleep(blockDelay)
         
     def isReady(self):
         return self.getStatusHex() & 0b10 == 0
 
-    def waitForReady(self, blockDelay=0.01): # timestep in seconds
+    def waitForReady(self, delay=0.01): # timestep in seconds
         while not self.isReady():
-            sleep(blockDelay)
-            
-    def getStatus(self):
+            sleep(delay)
+         
+    @property
+    def status(self):
         status = []
         indicator = self.ask("S1")
         if indicator[0] == "!":
