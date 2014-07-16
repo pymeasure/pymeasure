@@ -82,10 +82,10 @@ try:
             return self.connection.read()
             
         def ask(self, command):
-            return self.ask(command)
+            return self.connection.ask(command)
         
         def values(self, command):
-            return self.ask_for_values(command)
+            return self.connection.ask_for_values(command)
             
         def wait_for_srq(self, timeout=25, delay=0.1):
             self.connection.wait_for_srq(timeout)
