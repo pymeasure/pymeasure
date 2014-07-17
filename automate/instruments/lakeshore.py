@@ -10,44 +10,55 @@ from automate.instruments import Instrument, SerialAdapter, RangeException
 from time import sleep
 import numpy as np
 
-# Ensure that the Serial object gets treated as an IConnection
-Serial = implementer(interfaces.IConnection)(Serial)
+class LakeShoreUSBAdapter(SerialAdapter):
+    
+    def __init__(self, port):
+        super(LakeShoreUSBAdapter, self).__init__(port, 
+            baudrate=57600, 
+            timeout=0.5, 
+            parity='O', 
+            bytesize=7
+        )
+        
+    def write(self, command):
+        self.connection.write(command + "\n")
+
 
 class LakeShore425(Instrument):
     """ Represents the LakeShore 425 Gaussmeter and provides
-    a high-level interface for interacting with the instrument    
+    a high-level interface for interacting with the instrument
+    
+    To allow user access to the LakeShore 425 Gaussmeter in Linux, create the file:
+    /etc/udev/rules.d/52-lakeshore425.rules, with contents:    
+    
+    SUBSYSTEMS=="usb",ATTRS{idVendor}=="1fb9",ATTRS{idProduct}=="0401",MODE="0666",SYMLINK+="lakeshore425"
+        
+    Then reload the udev rules with:
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+    
+    The device will be accessible through /dev/lakeshore425 
+    
     """
 
-    units = ['Gauss', 'Tesla', 'Oersted', 'Ampere/meter']
+    UNIT_VALUES = ('Gauss', 'Tesla', 'Oersted', 'Ampere/meter')
+    GAUSS, TESLA, OERSTED, AMP_METER = UNIT_VALUES
     
     def __init__(self, port):
         super(LakeShore425, self).__init__(
-            SerialAdapter(port, 57600, timeout=0.5, parity='O', bytesize=7),
+            LakeShoreUSBAdapter(port),
             "LakeShore 425 Gaussmeter",
         )
-
-    def write(self, command):
-        """ Write a command ensuring proper line termination """
-        self.connection.write(command + "\n")
-
-    def identify(self):
-        return self.ask("*IDN?")
+        self.add_control("range", "RANGE?", "RANGE %d")
         
     def setAutoRange(self):
         """ Sets the field range to automatically adjust """
         self.write("AUTO")
         
-    def setRange(self, range):
-        """ Sets the range based on the manual values """
-        self.write("RANGE %d" % range)
-        
-    def getRange(self):
-        """ Returns the range given the units being used """
-        return self.ask("RANGE?")
-        
-    def getField(self):
+    @property
+    def field(self):
         """ Returns the field given the units being used """
-        return float(self.ask("RDGFIELD?"))
+        return self.values("RDGFIELD?")
         
     def setDC(self, wideBand=True):
         """ Sets up a steady-state (DC) measurement of the field """
@@ -72,17 +83,20 @@ class LakeShore425(Instrument):
     def getMode(self):
         """ Returns a tuple of the mode settings """
         return tuple(self.ask("RDGMODE?").split(','))
-        
-    def setUnit(self, unit):
+            
+    @property
+    def unit(self):
+        """ Returns the full name of the unit in use as a string """
+        return LakeShore425.UNIT_VALUES[int(self.ask("UNIT?"))-1]
+    @unit.setter
+    def unit(self, value):
         """ Sets the units from the avalible: Gauss, Tesla, Oersted, and
         Ampere/meter to be called as a string
         """
-        assert unit in self.units
-        self.write("UNIT %d" % (self.units.index(unit)+1))
-        
-    def getUnit(self):
-        """ Returns the full name of the unit in use as a string """
-        return self.units[int(self.ask("UNIT?"))]
+        if value in LakeShore425.UNIT_VALUES:
+            self.write("UNIT %d" % (LakeShore425.UNIT_VALUES.index(value)+1))
+        else:
+            raise Exception("Invalid unit provided to LakeShore 425")
         
     def zeroProbe(self):
         """ Initiates the zero field sequence to calibrate the probe """
@@ -97,7 +111,7 @@ class LakeShore425(Instrument):
             if abortEvent is not None:
                 if abortEvent.isSet():
                     break
-            data[i] = self.getField()
+            data[i] = self.field
             sleep(delay)
         return data.mean(), data.std()
 
