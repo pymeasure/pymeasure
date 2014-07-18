@@ -71,6 +71,11 @@ class Danfysik8500(Instrument):
     @property
     def polarity(self):
         return 1 if self.ask("PO").strip() == '+' else -1
+    
+    @polarity.setter
+    def polarity(self, value):
+        polarity = "+" if value > 0 else "-"
+        self.write("PO %s" % polarity)
             
     def resetInterlocks(self):
         self.write("RS")
@@ -110,10 +115,14 @@ class Danfysik8500(Instrument):
         return int(self.ask("DA 0")[2:])
     @current_ppm.setter
     def current_ppm(self, ppm):
-        if ppm < 0 or ppm > 1e6:
+        if abs(ppm) < 0 or abs(ppm) > 1e6:
             raise RangeException("Danfysik 8500 requires parts per million "
                                  "to be an appropriate integer")
         self.write("DA 0,%d" % ppm)
+    
+    @property
+    def current_setpoint(self):
+        return self.current_ppm*(160/1e6)
     
     @property
     def slew_rate(self):
@@ -121,7 +130,7 @@ class Danfysik8500(Instrument):
     
     def waitForCurrent(self, delay=0.01):
         self.waitForReady(delay)
-        while abs(self.getCurrent() - amps) > 0.02:
+        while abs(self.current - self.current_setpoint) > 0.02:
             sleep(delay)
         
     def isReady(self):
@@ -172,7 +181,7 @@ class Danfysik8500(Instrument):
         self.ask("RAMP S")
     
     def setRampToCurrent(self, current, points, delayTime=1):
-        initialCurrent = self.getCurrent()
+        initialCurrent = self.current
         self.clearRampSet()
         self.setRampDelay(delayTime)
         steps = np.linspace(initialCurrent, current, num=points)
@@ -180,7 +189,7 @@ class Danfysik8500(Instrument):
         self.write("\r".join(cmds))
         
     def rampToCurrent(self, current, points, delayTime=1):
-        initialCurrent = self.getCurrent()
+        initialCurrent = self.current
         self.clearRampSet()
         self.setRampDelay(delayTime)
         steps = np.linspace(initialCurrent, current, num=points)
