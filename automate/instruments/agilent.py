@@ -36,6 +36,12 @@ class Agilent8257D(Instrument):
             self.write(":output on;")
         else:
             self.write(":output off;")
+            
+    def enable(self):
+        self.output = True
+        
+    def disable(self):
+        self.output = False
     
     @property
     def modulation(self):
