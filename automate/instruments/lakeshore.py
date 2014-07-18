@@ -102,15 +102,14 @@ class LakeShore425(Instrument):
         """ Initiates the zero field sequence to calibrate the probe """
         self.write("ZPROBE")
         
-    def measure(self, points, abortEvent=None, delay=1e-3):
+    def measure(self, points, hasAborted=lambda x: return False, delay=1e-3):
         """Returns the mean and standard deviation of a given number
         of points while blocking
         """
         data = np.zeros(points, dtype=np.float32)
         for i in range(points):
-            if abortEvent is not None:
-                if abortEvent.isSet():
-                    break
+            if hasAborted():
+                break
             data[i] = self.field
             sleep(delay)
         return data.mean(), data.std()
