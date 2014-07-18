@@ -241,7 +241,10 @@ class ProcedureThread(Thread):
     def hasAborted(self):
         return self.abortEvent.isSet()
         
-    def abort(self, timeout=0):
+    def abort(self):
+        self.abortEvent.set()
+        
+    def join(self, timeout=0):
         self.abortEvent.wait(timeout)
         if not self.abortEvent.isSet():
             self.abortEvent.set()
@@ -293,8 +296,11 @@ try:
         
         def hasAborted(self):
             return self.abortEvent.isSet()
+        
+        def abort(self):
+            self.abortEvent.set()
             
-        def abort(self, timeout=0):
+        def join(self, timeout=0):
             self.abortEvent.wait(timeout)
             if not self.abortEvent.isSet():
                 self.abortEvent.set()
