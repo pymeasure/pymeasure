@@ -2,7 +2,9 @@
 README
 setup.py
 automate/__init__.py
+automate/data.py
 automate/experiment.py
+automate/listeners.py
 automate/composites/__init__.py
 automate/composites/fieldprobe.py
 automate/composites/hallprobe.py

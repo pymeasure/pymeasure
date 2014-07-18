@@ -207,7 +207,7 @@ class ProcedureThread(Thread):
         self.procedure.hasAborted = self.hasAborted
         self.procedure.emitData = self.emitData
         self.procedure.emitProgress = self.emitProgress
-        self.procedure.log = self.emitLog
+        self.procedure.log = self.log
         
     def run(self):
         if self.procedure is None:

@@ -34,7 +34,7 @@ class CSVWriter(Listener):
     def __init__(self, filename, labels=None):
         self.filename = filename
         self.labels = labels
-        super(DataWriter, self).__init__()
+        super(CSVWriter, self).__init__()
         
     def run(self):
         import csv
@@ -67,7 +67,7 @@ class LogWriter(Listener):
         with open(self.filename, 'wb', 0) as handle:
             while not self.abortEvent.isSet():
                 if not self.queue.empty():
-                    handle.writeline(self.queue.get())
+                    handle.write(self.queue.get() + "\n")
                     
 class ETADisplay(Listener):
     """ Uses the ETA package to print a status message that shows
