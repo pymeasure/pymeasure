@@ -161,6 +161,19 @@ class Procedure(object):
                 parameter.value = getattr(self, name)
                 result[name] = parameter.value
         return result
+        
+    def setParameters(self, parameters, exceptMissing=True):
+        """ Sets a dictionary of parameters and raises an exception if additional
+        parameters are present if exceptMissing is True
+        """
+        for name, value in parameters.iteritems():
+            if name in self._parameters:
+                self._parameters[name].value = value
+                setattr(self, name, self._parameters[name].value)
+            else:
+                if exceptMissing:
+                    raise NameError("Parameter '%s' does not belong to '%s'" % (
+                            name, repr(self)))
     
     @checkParameters   
     def enter(self):
