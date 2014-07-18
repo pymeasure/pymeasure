@@ -150,16 +150,25 @@ class Procedure(object):
         return wrapper
     
     def parameterValues(self):
-        """ Returns a dictionary of all the parameters and grabs any current
-        values that are not in the default definitions
+        """ Returns a dictionary of all the Parameter values and grabs any 
+        current values that are not in the default definitions
         """
         result = {}
         for name, parameter in self._parameters.iteritems():
-            if not hasattr(self, name):
-                result[name] = parameter
-            else:
+            if hasattr(self, name):
                 parameter.value = getattr(self, name)
-                result[name] = parameter.value
+            result[name] = parameter.value
+        return result
+        
+    def parameterObjects(self):
+        """ Returns a dictionary of all the Parameter objects and grabs any 
+        current values that are not in the default definitions
+        """
+        result = {}
+        for name, parameter in self._parameters.iteritems():
+            if hasattr(self, name):
+                parameter.value = getattr(self, name)
+            result[name] = parameter
         return result
         
     def setParameters(self, parameters, exceptMissing=True):
