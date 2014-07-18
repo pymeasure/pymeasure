@@ -1,3 +1,11 @@
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Generic classes for experiment procedures and parameters
+#
+# automate Python package
+# Authors: Colin Jermain, Graham Rowlands
+# Copyright: 2014 Cornell University
+#
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from threading import Event, Queue
 
 class Parameter(object):
