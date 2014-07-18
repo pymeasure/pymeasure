@@ -123,12 +123,12 @@ class Procedure(object):
                 if parameter.isSet():
                     setattr(self, item, parameter.value)
                 else:
-                    delattr(self, item)
+                    setattr(self, item, None)
     
     def parametersAreSet(self):
         """ Returns True if all parameters are set """
         for name, parameter in self._parameters.iteritems():
-            if not hasattr(self, name):
+            if getattr(self, name) is None:
                 return False
         return True
     
@@ -140,11 +140,12 @@ class Procedure(object):
         """
         def wrapper(self):
             for name, parameter in self._parameters.iteritems():
-                if not hasattr(self, name):
+                value = getattr(self, name)
+                if value is None:
                     raise NameError("Missing %s '%s' in %s" % (
                         self.parameter.__class__, name, self.__class__))
                 else:
-                    parameter.value = getattr(self, name)
+                    parameter.value = value
                     setattr(self, name, parameter.value)
             return function(self)
         return wrapper
@@ -155,9 +156,12 @@ class Procedure(object):
         """
         result = {}
         for name, parameter in self._parameters.iteritems():
-            if hasattr(self, name):
-                parameter.value = getattr(self, name)
-            result[name] = parameter.value
+            value = getattr(self, name)
+            if value is not None:
+                parameter.value = value
+                result[name] = parameter.value
+            else:
+                result[name] = None
         return result
         
     def parameterObjects(self):
@@ -166,8 +170,9 @@ class Procedure(object):
         """
         result = {}
         for name, parameter in self._parameters.iteritems():
-            if hasattr(self, name):
-                parameter.value = getattr(self, name)
+            value = getattr(self, name)
+            if value is not None:
+                parameter.value = value
             result[name] = parameter
         return result
         
