@@ -102,7 +102,7 @@ class LakeShore425(Instrument):
         """ Initiates the zero field sequence to calibrate the probe """
         self.write("ZPROBE")
         
-    def measure(self, points, hasAborted=lambda x: return False, delay=1e-3):
+    def measure(self, points, hasAborted=lambda:False, delay=1e-3):
         """Returns the mean and standard deviation of a given number
         of points while blocking
         """

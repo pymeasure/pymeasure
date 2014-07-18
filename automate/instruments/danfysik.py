@@ -128,7 +128,7 @@ class Danfysik8500(Instrument):
     def slew_rate(self):
         return float(self.ask("R3"))
     
-    def waitForCurrent(self, hasAborted=lambda x: return False, delay=0.01):
+    def waitForCurrent(self, hasAborted=lambda:False, delay=0.01):
         self.waitForReady(hasAborted, delay)
         while not hasAborted() and abs(self.current - self.current_setpoint) > 0.02:
             sleep(delay)
@@ -136,7 +136,7 @@ class Danfysik8500(Instrument):
     def isReady(self):
         return self.status_hex & 0b10 == 0
 
-    def waitForReady(self, hasAborted=lambda x: return False, delay=0.01):
+    def waitForReady(self, hasAborted=lambda:False, delay=0.01):
         while not hasAborted() and not self.isReady():
             sleep(delay)
          
