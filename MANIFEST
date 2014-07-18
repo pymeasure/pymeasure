@@ -3,7 +3,6 @@ README
 setup.py
 automate/__init__.py
 automate/experiment.py
-automate/parameter.py
 automate/composites/__init__.py
 automate/composites/fieldprobe.py
 automate/composites/hallprobe.py

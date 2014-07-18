@@ -6,7 +6,8 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from threading import Event, Queue
+from threading import Event, Thread
+from Queue import Queue
 
 class Parameter(object):
     """ Encapsulates the information for an experiment parameter
@@ -31,7 +32,7 @@ class Parameter(object):
         self._value = value
         
     def isSet(self):
-        return self.value is not None
+        return self._value is not None
         
     def __repr__(self):
         result = "<Parameter(name='%s'"
@@ -80,7 +81,7 @@ class FloatParameter(Parameter):
                              "type '%s'" % type(value))
     
     def __repr__(self):
-        result = super(IntegerParameter, self).__repr__()
+        result = super(FloatParameter, self).__repr__()
         return result.replace("<Parameter", "<FloatParameter", 1)
 
 
@@ -102,6 +103,8 @@ class Procedure(object):
     The exit method is called on sucessful completion, software error, or
     abort.    
     """
+    
+    _parameters = {}
     
     def __init__(self):
         self._updateParameters()
@@ -129,19 +132,22 @@ class Procedure(object):
                 return False
         return True
     
-    def checkParameters(self, function):
+    def checkParameters(function):
         """ Raises an exception if any parameter is missing before calling
         the associated function. Ensures that each value can be set and
         got, which should cast it into the right format. Used as a decorator 
         @checkParameters on the enter method
         """
-        for name, parameter in self._parameters.iteritems():
-            if not hasattr(self, name):
-                raise NameError("Missing %s '%s' in %s" % (
-                    self.parameter.__class__, name, self.__class__))
-            else:
-                parameter.value = getattr(self, name)
-                setattr(self, name, parameter.value)
+        def wrapper(self):
+            for name, parameter in self._parameters.iteritems():
+                if not hasattr(self, name):
+                    raise NameError("Missing %s '%s' in %s" % (
+                        self.parameter.__class__, name, self.__class__))
+                else:
+                    parameter.value = getattr(self, name)
+                    setattr(self, name, parameter.value)
+            return function(self)
+        return wrapper
     
     def parameterValues(self):
         """ Returns a dictionary of all the parameters and grabs any current
@@ -153,7 +159,7 @@ class Procedure(object):
                 result[name] = parameter
             else:
                 parameter.value = getattr(self, name)
-                result[name] = parameter.value)
+                result[name] = parameter.value
         return result
     
     @checkParameters   
@@ -280,6 +286,5 @@ try:
             if not self.abortEvent.isSet():
                 self.abortEvent.set()
             super(QProcedureThread, self).wait()
-
-
-
+except:
+    pass # Qt4 is not installed
