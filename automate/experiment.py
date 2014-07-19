@@ -12,6 +12,8 @@ from Queue import Queue
 class Parameter(object):
     """ Encapsulates the information for an experiment parameter
     with information about the name, and unit if supplied.
+    
+    Parameter name can not contain a colon ':'.
     """
 
     def __init__(self, name, unit=None, default=None):
@@ -35,9 +37,9 @@ class Parameter(object):
         return self._value is not None
         
     def __repr__(self):
-        result = "<Parameter(name='%s'"
+        result = "<Parameter(name='%s'" % self.name
         if self.isSet():
-            result += ",value='%s'" % repr(self.value)
+            result += ",value=%s" % repr(self.value)
         if self.unit:
             result += ",unit='%s'" % self.unit
         return result + ")>"

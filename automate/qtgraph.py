@@ -1,5 +1,6 @@
 from PyQt4.QtCore import pyqtSignal, QObject
 import pyqtgraph as pg
+import numpy as np
 
 class BufferCurve(pg.PlotDataItem):
     """ Creates a curve based on a predefined buffer size and allows
