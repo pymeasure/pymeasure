@@ -13,5 +13,6 @@ setup(
     long_description=open('README').read(),
     install_requires=[
         "Numpy >= 1.6.1",
+        "pandas >= 0.14",
     ],
 )

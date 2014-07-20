@@ -2,7 +2,6 @@
 README
 setup.py
 automate/__init__.py
-automate/data.py
 automate/experiment.py
 automate/listeners.py
 automate/qt.py
