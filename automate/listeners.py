@@ -81,16 +81,13 @@ try:
 
     class QListener(QThread):
         """Base class for PyQt4 threaded classes that listen for data
-        from the measurement. Each QListener uses signals and slots to
-        transmit data in a thread-safe fasion
+        from the measurement. Each QListener provides methods to act
+        as slots for singals.
         """
             
         def __init__(self, parent=None):
             self.abortEvent = Event()
             super(QListener, self).__init__(parent)
-           
-        def processData(self, data):
-            pass
             
         def join(self, timeout=0):
             self.abortEvent.wait(timeout)
@@ -100,6 +97,9 @@ try:
         
         
     class QCSVWriter(QListener):
+        """ Class for writing to CSV in the Qt context, where the write method
+        is called as a slot to fill up the data
+        """
         
         def __init__(self, filename, labels=None, parent=None):
             self.filename = filename
@@ -107,7 +107,9 @@ try:
             self.queue = Queue()
             super(QCSVWriter, self).__init__(parent)
             
-        def processData(self, data):
+        def write(self, data):
+            """ Slot for writing data asynchronously without closing the file
+            """
             self.queue.put(data)
             
         def run(self):
