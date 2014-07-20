@@ -12,7 +12,7 @@ from Queue import Queue
 class Listener(Thread):
     """Base class for threaded classes that listen for data
     from the measurement. Each Listener has its own queue
-    that should be filled with measurement data.    
+    that should be filled with measurement data.
     """
         
     def __init__(self,):
@@ -25,10 +25,11 @@ class Listener(Thread):
         if not self.abortEvent.isSet():
             self.abortEvent.set()
         super(Listener, self).join()
-        
+
+
 class CSVWriter(Listener):
     """Writes the incoming data to a CSV file using a comma to 
-    delimit the rows and a line break to delimit the columns.    
+    delimit the rows and a line break to delimit the columns.
     """
     
     def __init__(self, filename, labels=None):
@@ -55,12 +56,11 @@ class CSVWriter(Listener):
                             firstLine = False
                         writer.writerow([data[x] for x in self.labels])
 
-                
 class ETADisplay(Listener):
     """ Uses the ETA package to print a status message that shows
     the amount of time left for the process. The number of counts
     signifies the number of times the progress queue is expected to
-    be updated (once per loop).    
+    be updated (once per loop).
     """
     
     def __init__(self, count):
@@ -74,33 +74,34 @@ class ETADisplay(Listener):
                 self.queue.get()
                 self.eta.print_status()
         self.eta.done()
-        
+
 try:
 
     from PyQt4.QtCore import QThread, pyqtSignal
-    
+
     class QListener(QThread):
-    """Base class for PyQt4 threaded classes that listen for data
-    from the measurement. Each QListener uses signals and slots to
-    transmit data in a thread-safe fasion    
-    """
+        """Base class for PyQt4 threaded classes that listen for data
+        from the measurement. Each QListener uses signals and slots to
+        transmit data in a thread-safe fasion
+        """
+            
+        def __init__(self, parent=None):
+            self.abortEvent = Event()
+            super(QListener, self).__init__(parent)
+           
+        def processData(self, data):
+            pass
+            
+        def join(self, timeout=0):
+            self.abortEvent.wait(timeout)
+            if not self.abortEvent.isSet():
+                self.abortEvent.set()
+            super(QListener, self).join()
         
-    def __init__(self, parent=None):
-        self.abortEvent = Event()
-        super(QListener, self).__init__(parent)
-       
-    def processData(self, data):
-        pass        
-        
-    def join(self, timeout=0):
-        self.abortEvent.wait(timeout)
-        if not self.abortEvent.isSet():
-            self.abortEvent.set()
-        super(QListener, self).join()
         
     class QCSVWriter(QListener):
         
-        def __init__(self, filename, labels=None parent=None):
+        def __init__(self, filename, labels=None, parent=None):
             self.filename = filename
             self.labels = labels
             self.queue = Queue()
@@ -127,5 +128,6 @@ try:
                                 writer.writerow(self.labels)
                                 firstLine = False
                             writer.writerow([data[x] for x in self.labels])
-            
         
+except:
+    pass # PyQt4 is not installed
