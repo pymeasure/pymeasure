@@ -436,11 +436,11 @@ class Results(object):
             while not header_read:
                 line = f.readline()
                 if line.startswith(Results.COMMENT):
-                    header += line + Results.LINE_BREAK
+                    header += line.strip() + Results.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True
-        procedure = Results.parseHeader(header)
+        procedure = Results.parseHeader(header[:-1])
         results = Results(procedure, data_filename)
         results._header_count = header_count
         return results
