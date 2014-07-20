@@ -9,6 +9,7 @@
 import math, sys, time
 from instrument import Instrument
 import numpy as np
+import logging
 
 class Yokogawa7651(Instrument):
     def __init__(self, resourceName, **kwargs):
@@ -30,7 +31,7 @@ class Yokogawa7651(Instrument):
     @enabled.setter
     def enabled(self, value):
         if value:
-            self.logfunc("Enabling Yokogawa")
+            logging.info("Enabling Yokogawa")
             self.write("O1;E")
         else:
             self.write("O0;E")
@@ -82,7 +83,7 @@ class Yokogawa7651(Instrument):
         self.rampToCurrent(value, numSteps=numSteps, totalTime=totalTime)
 
     def shutdown(self):
-        self.log("Shutting down <i>%s</i>." % self.name)
+        super(Yokogawa7651, self).shutdown()
         self.rampToCurrent(0.0, numSteps=25)
         self.source_current = 0.0
         self.enabled = False

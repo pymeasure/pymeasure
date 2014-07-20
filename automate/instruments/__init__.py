@@ -10,6 +10,7 @@ from __future__ import print_function
 import copy
 import numpy as np
 import time
+import logging
 
 class Adapter(object):
     """ Adapts between the Instrument object and the connection, to allow
@@ -230,11 +231,6 @@ class Instrument(object):
         self.name = name
         self.adapter = adapter
 
-        if 'logfunc' in kwargs:
-            self.logfunc = kwargs['logfunc']
-        else:
-            self.logfunc = print
-
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
             # Basic SCPI commands
@@ -243,7 +239,7 @@ class Instrument(object):
             self.add_measurement("complete", "*OPC?")
 
         self.isShutdown = False
-        self.log("Initializing <i>%s</i>." % self.name)
+        logging.info("Initializing %s" % self.name)
         
     # Wrapper functions for the Adapter object
     def ask(self, command): return self.adapter.ask(command)
@@ -296,14 +292,11 @@ class Instrument(object):
     
     def shutdown(self):
         """Bring the instrument to a safe and stable state"""
-        self.log("Shutting down <i>%s</i>." % self.name)
+        logging.info("Shutting down %s" % self.name)
     
     def check_errors(self):
         """Return any accumulated errors. Must be reimplemented by subclasses."""
         pass
-
-    def log(self, string):
-        self.logfunc(string)
         
 def discreteTruncate(number, discreteSet):
     """ Truncates the number to the closest element in the positive discrete set.

@@ -55,20 +55,7 @@ class CSVWriter(Listener):
                             firstLine = False
                         writer.writerow([data[x] for x in self.labels])
 
-class LogWriter(Listener):
-    """ Writes the contents of a Queue to the specified filename
-    """
-
-    def __init__(self, filename):
-        self.filename = filename
-        super(LogWriter, self).__init__()
-        
-    def run(self):
-        with open(self.filename, 'wb', 0) as handle:
-            while not self.abortEvent.isSet():
-                if not self.queue.empty():
-                    handle.write(self.queue.get() + "\n")
-                    
+                
 class ETADisplay(Listener):
     """ Uses the ETA package to print a status message that shows
     the amount of time left for the process. The number of counts
@@ -87,3 +74,58 @@ class ETADisplay(Listener):
                 self.queue.get()
                 self.eta.print_status()
         self.eta.done()
+        
+try:
+
+    from PyQt4.QtCore import QThread, pyqtSignal
+    
+    class QListener(QThread):
+    """Base class for PyQt4 threaded classes that listen for data
+    from the measurement. Each QListener uses signals and slots to
+    transmit data in a thread-safe fasion    
+    """
+        
+    def __init__(self, parent=None):
+        self.abortEvent = Event()
+        super(QListener, self).__init__(parent)
+       
+    def processData(self, data):
+        pass        
+        
+    def join(self, timeout=0):
+        self.abortEvent.wait(timeout)
+        if not self.abortEvent.isSet():
+            self.abortEvent.set()
+        super(QListener, self).join()
+        
+    class QCSVWriter(QListener):
+        
+        def __init__(self, filename, labels=None parent=None):
+            self.filename = filename
+            self.labels = labels
+            self.queue = Queue()
+            super(QCSVWriter, self).__init__(parent)
+            
+        def processData(self, data):
+            self.queue.put(data)
+            
+        def run(self):
+            import csv
+            with open(self.filename, 'wb', 0) as csvfile:
+                writer = csv.writer(csvfile, delimiter=',')
+                firstLine = True
+                while not self.abortEvent.isSet():
+                    if not self.queue.empty():
+                        data = self.queue.get()
+                        if self.labels is None:
+                            if firstLine:
+                                writer.writerow(data.keys())
+                                firstLine = False
+                            writer.writerow(data.values())
+                        else:
+                            if firstLine:
+                                writer.writerow(self.labels)
+                                firstLine = False
+                            writer.writerow([data[x] for x in self.labels])
+            
+        

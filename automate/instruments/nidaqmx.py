@@ -10,6 +10,7 @@
 
 import ctypes
 import numpy as np
+import logging
 nidaq = ctypes.windll.nicaiu
 
 # Data Types

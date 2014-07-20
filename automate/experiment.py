@@ -216,7 +216,6 @@ class ProcedureThread(Thread):
         self.abortEvent = Event()
         self.abortEvent.clear()
         self.dataQueues = []
-        self.logQueue = Queue()
         self.progressQueue = Queue()
         self.finished = Event()
         
@@ -228,7 +227,6 @@ class ProcedureThread(Thread):
         self.procedure.hasAborted = self.hasAborted
         self.procedure.emitData = self.emitData
         self.procedure.emitProgress = self.emitProgress
-        self.procedure.log = self.log
         
     def run(self):
         if self.procedure is None:
@@ -255,9 +253,6 @@ class ProcedureThread(Thread):
     def emitData(self, data):
         for queue in self.dataQueues:
             queue.put(data)
-            
-    def log(self, message):
-        self.logQueue.put(message)
     
     def hasAborted(self):
         return self.abortEvent.isSet()
@@ -282,7 +277,6 @@ try:
         
         data = pyqtSignal(dict) 
         progress = pyqtSignal(float)
-        log = pyqtSignal(str)
         finished = pyqtSignal()
         
         def __init__(self, parent):
@@ -300,7 +294,6 @@ try:
             self.procedure.hasAborted = self.hasAborted
             self.procedure.emitData = self.data.emit
             self.procedure.emitProgress = self.progress.emit
-            self.procedure.log = self.log.emit
             
         def run(self):
             if self.procedure is None:
@@ -344,7 +337,7 @@ def uniqueFilename(directory, prefix='DATA', suffix='', ext='csv'):
     
 class Results(object):
     """ Provides a base class for experiment results tracking, which should be
-    extended for the specific data/logs collected for a Procedure
+    extended for the specific data collected for a Procedure
     """
     
     COMMENT = '#'

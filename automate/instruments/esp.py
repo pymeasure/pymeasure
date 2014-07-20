@@ -8,7 +8,8 @@
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from __future__ import print_function
 from automate.instruments import Instrument
-import visa, time
+import time
+import logging
 
 class ESP300(Instrument):
     """This is the class for the ESP300 motion controller"""
@@ -33,7 +34,7 @@ class ESP300(Instrument):
         for i in range(20):
             error = self.ask("TE?")
             if error != "0":
-                self.logfunc("ESP Error cleared...")
+                logging.debug("ESP Error cleared...")
             else:
                 break
 
@@ -114,15 +115,15 @@ class ESP300(Instrument):
             # Axis specific error
             axis = error[0]
             error = error[1:]
-            self.logfunc("ESP axis %s coughed up error %s" % (axis, axisErrors[error]))
+            logging.debug("ESP axis %s coughed up error %s" % (axis, axisErrors[error]))
             return error
         else:
-            self.logfunc("ESP coughed up error %s" % generalErrors[error])
+            logging.debug("ESP coughed up error %s" % generalErrors[error])
             return error
 
     def setMotorStatus(self, axis, status=True):
         if not axis in self.axes:
-            self.logfunc("Invalid axis specified: choose either x, y, or phi")
+            logging.debug("Invalid axis specified: choose either x, y, or phi")
             raise Exception("Invalid axis specification")
         if status is True:
             self.write("%dMO" % self.axes[axis])
@@ -131,7 +132,7 @@ class ESP300(Instrument):
 
     def getMotorStatus(self, axis):
         if not axis in self.axes:
-            self.logfunc("Invalid axis specified: choose either x, y, or phi")
+            logging.debug("Invalid axis specified: choose either x, y, or phi")
             raise Exception("Invalid axis specification")
             return False
         else:
@@ -143,7 +144,7 @@ class ESP300(Instrument):
 
     def getCoordinate(self, axis):
         if not axis in self.axes:
-            self.logfunc("Invalid axis specified: choose either x, y, or phi")
+            logging.debug("Invalid axis specified: choose either x, y, or phi")
             raise Exception("Invalid axis specification")
         value = self.values("%dTP" % self.axes[axis])
         # The phi stage is reversed...
@@ -209,7 +210,6 @@ class ESP300(Instrument):
         self.write("%dWS" % self.axes[axis])
         # Ensure motion is complete
         while self.values("%dMD" % self.axes[axis]) == 0:
-            # self.logfunc("sleeping until done")
             time.sleep(0.05)
         if (self.check_errors()!=0):
             raise Exception("Stage error raised during attempt to move.")
@@ -221,7 +221,7 @@ class ESP300(Instrument):
             self.setAxis('y', coords[1], checkFirst=checkFirst)
             self.setAxis('phi', coords[2], checkFirst=checkFirst)
         else:
-            self.logfunc("Wrong number of coordinates specified in setAxes")
+            logging.debug("Wrong number of coordinates specified in setAxes")
 
     def home(self, checkFirst=False):
         self.setAxes([0.0, 0.0, 0.0], checkFirst=checkFirst)
@@ -243,5 +243,5 @@ class ESP300(Instrument):
 
     def shutdown(self):
         self.setEnabled(False)
-        self.log("Shutting down <i>%s</i>." % self.name)
+        super(ESP300, self).shutdown()
 

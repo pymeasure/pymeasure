@@ -10,6 +10,7 @@ import visa
 from automate.instruments import Instrument
 import numpy as np
 import time
+import logging
 
 class Keithley2000(Instrument):
     def __init__(self, resourceName, **kwargs):
@@ -22,7 +23,7 @@ class Keithley2000(Instrument):
         errors = map(int, self.values(":system:error?"))
         for err in errors:
             if err != 0:
-                self.log("Keithley Encountered error: %d\n" % err)
+                logging.info("Keithley Encountered error: %d\n" % err)
 
     def configMeasureResistance(self, wires=2, NPLC=2):
         if (wires==2):
@@ -79,7 +80,7 @@ class Keithley2400(Instrument):
         errors = map(int,self.values(":system:error?"))
         for err in errors:
             if err != 0:
-                self.log("Keithley Encountered error: %d\n" % err)
+                logging.info("Keithley Encountered error: %d\n" % err)
 
     def reset(self):
         self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
@@ -294,7 +295,7 @@ class Keithley2400(Instrument):
 
     # One must seemingly configure the measurement before the source to avoid potential range issues
     def measureResistance(self, NPLC=1, rangeR=1000.0, autoRange=True):
-        self.log("<i>%s</i> is measuring resistance." % self.name)
+        logging.info("<i>%s</i> is measuring resistance." % self.name)
         self.write(":sens:func \"res\";:sens:res:mode man;:sens:res:nplc %f;:form:elem res;" % NPLC)
         if autoRange:
             self.write(":sens:res:rang:auto 1;")
@@ -303,7 +304,7 @@ class Keithley2400(Instrument):
         self.check_errors()
 
     def measureVoltage(self, NPLC=1, rangeV=1000.0, autoRange=True):
-        self.log("<i>%s</i> is measuring voltage." % self.name)
+        logging.info("<i>%s</i> is measuring voltage." % self.name)
         self.write(":sens:func \"volt\";:sens:volt:nplc %f;:form:elem volt;" % NPLC)
         if autoRange:
             self.write(":sens:volt:rang:auto 1;")
@@ -312,7 +313,7 @@ class Keithley2400(Instrument):
         self.check_errors()
 
     def measureCurrent(self, NPLC=1, rangeI=1000.0, autoRange=True):
-        self.log("<i>%s</i> is measuring current." % self.name)
+        logging.info("<i>%s</i> is measuring current." % self.name)
         self.write(":sens:func \"curr\";:sens:curr:nplc %f;:form:elem curr;" % NPLC)
         if autoRange:
             self.write(":sens:curr:rang:auto 1;")
@@ -321,7 +322,7 @@ class Keithley2400(Instrument):
         self.check_errors()
 
     def sourceCurrent(self, sourceI=0.01e-3, compV=0.1, rangeI=1.0e-3, autoRange=True):
-        self.log("<i>%s</i> is sourcing current." % self.name)
+        logging.info("<i>%s</i> is sourcing current." % self.name)
         self.sourceMode = "Current"
         if autoRange:
             self.write(":sour:func curr;:sour:curr:rang:auto 1;:sour:curr:lev %g;" % sourceI)
@@ -331,7 +332,7 @@ class Keithley2400(Instrument):
         self.check_errors()
 
     def sourceVoltage(self, sourceV=0.01e-3, compI=0.1, rangeI=2.0, rangeV=2.0, autoRange=True):
-        self.log("<i>%s</i> is sourcing voltage." % self.name)
+        logging.info("<i>%s</i> is sourcing voltage." % self.name)
         self.sourceMode = "Voltage"
         if autoRange:
             self.write("sour:func volt;:sour:volt:rang:auto 1;:sour:volt:lev %g;" % sourceV)
@@ -417,7 +418,7 @@ class Keithley2400(Instrument):
         self.write(":ROUT:TERM FRON")    
 
     def shutdown(self):
-        self.log("Shutting down <i>%s</i>." % self.name)
+        logging.info("Shutting down <i>%s</i>." % self.name)
         if self.sourceMode == "Current":
             self.rampSourceCurrent(0.0)
         else:
