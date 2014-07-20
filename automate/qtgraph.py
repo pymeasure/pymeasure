@@ -15,7 +15,7 @@ class BufferCurve(pg.PlotDataItem):
     data to be added dynamically, in additon to supporting error bars
     """
     
-    dataUpdated = pyqtSignal()
+    data_updated = pyqtSignal()
     
     def __init__(self, errors=False, **kwargs):
         pg.PlotDataItem.__init__(self, **kwargs)
@@ -56,7 +56,7 @@ class BufferCurve(pg.PlotDataItem):
                     )
                     
         self._ptr += 1
-        self.dataUpdated.emit()
+        self.data_updated.emit()
         
 class Crosshairs(QObject):
     """ Attaches crosshairs to the a plot and provides a signal with the

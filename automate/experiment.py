@@ -263,6 +263,9 @@ class ProcedureThread(Thread):
         for queue in self.dataQueues:
             queue.put(data)
     
+    def isRunning(self):
+        return self.isAlive()
+    
     def hasAborted(self):
         return self.abortEvent.isSet()
         
@@ -288,10 +291,9 @@ try:
         progress = pyqtSignal(float)
         finished = pyqtSignal()
         
-        def __init__(self, parent):
+        def __init__(self, parent=None):
             QThread.__init__(self, parent)
             self.procedure = None
-            self.settings = settings
             self.abortEvent = Event()
             self.abortEvent.clear()
         
