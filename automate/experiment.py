@@ -205,6 +205,15 @@ class Procedure(object):
         
     def exit(self):
         pass
+        
+    def __str__(self):
+        result = repr(self) + "\n"
+        for name, obj in self.parameterObjects().iteritems():
+            if obj.unit:
+                result += "%s: %s %s\n" % (obj.name, obj.value, obj.unit)
+            else:
+                result += "%s: %s\n" % (obj.name, obj.value)
+        return result
 
 
 class ProcedureThread(Thread):
