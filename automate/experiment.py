@@ -166,6 +166,7 @@ class Procedure(object):
             value = getattr(self, name)
             if value is not None:
                 parameter.value = value
+                setattr(self, name, parameter.value)
                 result[name] = parameter.value
             else:
                 result[name] = None
@@ -180,8 +181,18 @@ class Procedure(object):
             value = getattr(self, name)
             if value is not None:
                 parameter.value = value
+                setattr(self, name, parameter.value)
             result[name] = parameter
         return result
+        
+    def refreshParameters(self):
+        """ Enforces that all the parameters are re-cast and updated in the meta
+        dictionary
+        """
+        for name, parameter in self._parameters.iteritems():
+            value = getattr(self, name)
+            parameter.value = value
+            setattr(self, name, parameter.value)
         
     def setParameters(self, parameters, exceptMissing=True):
         """ Sets a dictionary of parameters and raises an exception if additional
@@ -249,6 +260,7 @@ class ProcedureThread(Thread):
         finally:
             self.procedure.exit()
             self.finished.set()
+            self.abortEvent.set() # ensure the thread joins
                   
     def emitProgress(self, precent):
         self.progressQueue.put(precent)
@@ -318,6 +330,7 @@ try:
             finally:
                 self.procedure.exit()
                 self.finished.emit()
+                self.abortEvent.set() # ensure the thread joins
         
         def hasAborted(self):
             return self.abortEvent.isSet()
@@ -425,7 +438,7 @@ class Results(object):
             else:
                 raise Exception("Missing '%s' parameter when loading '%s' class" % (
                         parameter.name, procedure_class))
-        procedure.parameterObjects() # Enforce update of meta data
+        procedure.refreshParameters() # Enforce update of meta data
         return procedure
                 
     @staticmethod
