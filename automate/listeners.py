@@ -162,16 +162,15 @@ try:
             super(QListener, self).join()
         
         
-    class QCSVWriter(QListener):
-        """ Class for writing to CSV in the Qt context, where the write method
-        is called as a slot to fill up the data
+    class QResultsWriter(QListener):
+        """ Class for writing results to a file in the Qt context, where the 
+        write method is called as a slot to fill up the data
         """
         
-        def __init__(self, filename, labels=None, parent=None):
-            self.filename = filename
-            self.labels = labels
+        def __init__(self, results, parent=None):
+            self.results = results
             self.queue = Queue()
-            super(QCSVWriter, self).__init__(parent)
+            super(QResultsWriter, self).__init__(parent)
             
         def write(self, data):
             """ Slot for writing data asynchronously without closing the file
@@ -179,23 +178,11 @@ try:
             self.queue.put(data)
             
         def run(self):
-            import csv
-            with open(self.filename, 'a', 0) as csvfile:
-                writer = csv.writer(csvfile, delimiter=',')
-                firstLine = True
+            with open(self.results.data_filename, 'a', 0) as handle:
                 while not self.abortEvent.isSet():
                     if not self.queue.empty():
                         data = self.queue.get()
-                        if self.labels is None:
-                            if firstLine:
-                                writer.writerow(data.keys())
-                                firstLine = False
-                            writer.writerow(data.values())
-                        else:
-                            if firstLine:
-                                writer.writerow(self.labels)
-                                firstLine = False
-                            writer.writerow([data[x] for x in self.labels])
+                        handle.write(self.results.format(data))
         
 except:
     pass # PyQt4 is not installed
