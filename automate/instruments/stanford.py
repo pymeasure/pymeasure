@@ -114,7 +114,7 @@ class SR830(Instrument):
         else:
             frequency = discreteTruncate(frequency, SR830.SAMPLE_FREQUENCY_VALUES)
             index = SR830.SAMPLE_FREQUENCY_VALUES.index(frequency)
-        self.write("SRAT%d" % index)
+        self.write("SRAT%f" % index)
         
     @property
     def time_constant(self):
@@ -123,9 +123,9 @@ class SR830(Instrument):
         
     @time_constant.setter
     def time_constant(self, value):
-        assert type(time) in [float, int]
-        time = discreteTruncate(time, SR830.TIME_CONSTANT_VALUES)
-        self.write("OFLT%d" % SR830.TIME_CONSTANT_VALUES.index(time))
+        assert type(value) in [float, int]
+        time = discreteTruncate(value, SR830.TIME_CONSTANT_VALUES)
+        self.write("OFLT%d" % SR830.TIME_CONSTANT_VALUES.index(value))
         
     @property
     def sensitivity(self):
@@ -133,9 +133,9 @@ class SR830(Instrument):
         
     @sensitivity.setter
     def sensitivity(self, value):
-        assert type(sensitivity) in [float, int]
-        sensitivity = discreteTruncate(sensitivity, SR830.SENSITIVITY_VALUES)
-        self.write("SENS%d" % SR830.SENSITIVITY_VALUES.index(sensitivity))   
+        assert type(value) in [float, int]
+        sensitivity = discreteTruncate(value, SR830.SENSITIVITY_VALUES)
+        self.write("SENS%d" % SR830.SENSITIVITY_VALUES.index(value))   
         
     @property
     def filter_slope(self):
@@ -143,9 +143,9 @@ class SR830(Instrument):
         
     @filter_slope.setter
     def filter_slope(self, value):
-        assert type(slope) in [float, int]
-        slope = discreteTruncate(slope, SR830.FILTER_SLOPE_VALUES)
-        self.write("OFSL%d" % SR830.FILTER_SLOPE_VALUES.index(slope))       
+        assert type(value) in [float, int]
+        slope = discreteTruncate(value, SR830.FILTER_SLOPE_VALUES)
+        self.write("OFSL%d" % SR830.FILTER_SLOPE_VALUES.index(value))       
      
     def aquireOnTrigger(self, enable=True):
         self.write("TSTR%d" % enable)
