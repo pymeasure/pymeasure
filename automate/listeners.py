@@ -41,7 +41,8 @@ class ResultsWriter(Listener):
             while not self.abortEvent.isSet():
                 if not self.queue.empty():
                     data = self.queue.get()
-                    handle.write(self.results.format(data)
+                    handle.write(self.results.format(data))
+
 
 class AverageWriter(ResultsWriter):
     
@@ -62,16 +63,16 @@ class AverageWriter(ResultsWriter):
                     self.loop_back.reset()
                 if not self.queue.empty():
                     data = self.queue.get()
-                    if self.first_pass = False:
+                    if not self.first_pass:
                         current_pointer = handle.tell()
                         old_data = self.results.parse(handle.readline())
                         handle.seek(current_pointer)
                         new_data = {}
                         for key, value in old_data.iteritems():
                             new_data[key] = (value * float(current_trace-1) + data[key])/float(current_trace)
-                        handle.write(self.results.format(new_data)
+                        handle.write(self.results.format(new_data))
                     else:
-                        handle.write(self.results.format(data)
+                        handle.write(self.results.format(data))
 
 
 class AverageManager(Listener):
@@ -103,7 +104,7 @@ class AverageManager(Listener):
                         self.results.append(Results(
                             self.average_results.procedure, 
                             self.trace_filename(trace)
-                        )
+                        ))
                         self.writers.append(ResultsWriter(self.results[trace-1]))
                         self.writers[trace-1].start()
                     self.writers[trace-1].queue.put(data)
