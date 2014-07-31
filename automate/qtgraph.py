@@ -6,9 +6,42 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+from automate.experiment import Results
 from PyQt4.QtCore import pyqtSignal, QObject
 import pyqtgraph as pg
 import numpy as np
+
+class ResultsCurve(pg.PlotDataItem):
+    """ Creates a curve loaded dynamically from a file through the Results
+    object and supports error bars
+    """
+    
+    def __init__(self, results, x, y, xerr=None, yerr=None, **kwargs):
+        pg.PlotDataItem.__init__(self, **kwargs)
+        self.results = results
+        self.x, self.y = x, y
+        if xerr or yerr:
+            self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
+    
+    def update(self):
+        """Updates the data by polling the results"""
+        
+        data = self.results.data # get the current snapshot    
+
+        # Set x-y data
+        self.setData(data[self.x], data[self.y])
+        
+        # Set error bars if enabled at construction
+        if hasattr(self, '_errorBars'):
+            self._errorBars.setOpts(
+                        x=data[self.x],
+                        y=data[self.y],
+                        top=data[self.yerr], 
+                        bottom=data[self.yerr],
+                        left=data[self.xerr],
+                        right=data[self.yerr],
+                        beam=max(data[self.xerr], data[self.yerr])
+                    )
 
 class BufferCurve(pg.PlotDataItem):
     """ Creates a curve based on a predefined buffer size and allows
