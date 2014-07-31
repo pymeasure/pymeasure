@@ -13,21 +13,27 @@ import numpy as np
 
 class ResultsCurve(pg.PlotDataItem):
     """ Creates a curve loaded dynamically from a file through the Results
-    object and supports error bars
+    object and supports error bars. The data can be forced to fully reload
+    on each update, useful for cases when the data is changing across the full
+    file instead of just appending.
     """
     
-    def __init__(self, results, x, y, xerr=None, yerr=None, **kwargs):
+    def __init__(self, results, x, y, xerr=None, yerr=None, force_reload=False, **kwargs):
         pg.PlotDataItem.__init__(self, **kwargs)
         self.results = results
         self.x, self.y = x, y
+        self.force_reload = force_reload
         if xerr or yerr:
             self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
+            self.xerr, self.yerr = xerr, yerr
     
     def update(self):
         """Updates the data by polling the results"""
         
+        if self.force_reload:
+            self.results.reload()
         data = self.results.data # get the current snapshot    
-
+        
         # Set x-y data
         self.setData(data[self.x], data[self.y])
         

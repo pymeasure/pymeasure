@@ -111,6 +111,8 @@ class Procedure(object):
     abort.    
     """
     
+    DATA_COLUMNS = []
+    
     _parameters = {}
     
     def __init__(self):
@@ -379,10 +381,11 @@ class Results(object):
         
         self.data_filename = data_filename
         if exists(data_filename): # Assume header is already written
-            self._data = pd.read_csv(data_filename, comment=Results.COMMENT)
+            self.reload()
         else:
             with open(data_filename, 'w') as f:
                 f.write(self.header())
+                f.write(self.labels())
             self._data = None
         
     def header(self):
@@ -401,7 +404,24 @@ class Results(object):
         self._header_count = len(h)
         h = [Results.COMMENT + l for l in h] # Comment each line
         return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
-        
+    
+    def labels(self):
+        """ Returns the columns labels as a string to be written to the file """
+        return Results.DELIMITER.join(self.procedure.DATA_COLUMNS) + Results.LINE_BREAK
+
+    def format(self, data):
+        """ Returns a formatted string containing the data to be written to a file """
+        rows = [str(data[x]) for x in self.procedure.DATA_COLUMNS]
+        return Results.DELIMITER.join(rows) + Results.LINE_BREAK
+
+    def parse(self, line):
+        """ Returns a dictionary containing the data from the line """
+        data = {}
+        items = line.split(Results.DELIMITER)
+        for i, key in enumerate(self.procedure.DATA_COLUMNS):
+            data[key] = items[i]
+        return data
+    
     @staticmethod
     def parseHeader(header):
         """ Returns a Procedure object with the parameters as defined in the
@@ -482,6 +502,9 @@ class Results(object):
             except:
                 pass # All data is up to date
         return self._data
-            
 
-
+    def reload(self):
+        """ Preforms a full reloading of the file data neglecting the comments """
+        chunks = pd.read_csv(self.data_filename, comment=Results.COMMENT,
+                    chunksize=Results.CHUNK_SIZE, iterator=True)
+        self._data = pd.concat(chunks, ignore_index=True)
