@@ -488,9 +488,9 @@ class Results(object):
             self._header_count = len(self.header()[-1].split(Results.LINE_BREAK))
         if self._data is None or len(self._data) == 0: # Data has not been read
             try:
-                self._data = pd.read_csv(self.data_filename, comment=Results.COMMENT)
+                self.reload()
             except:
-                raise Exception("The data file is currently empty")
+                self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS) # Empty dataframe
         else: # Concatenate additional data
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(self.data_filename, comment=Results.COMMENT, header=0,
@@ -508,3 +508,4 @@ class Results(object):
         chunks = pd.read_csv(self.data_filename, comment=Results.COMMENT,
                     chunksize=Results.CHUNK_SIZE, iterator=True)
         self._data = pd.concat(chunks, ignore_index=True)
+
