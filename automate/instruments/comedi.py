@@ -13,7 +13,7 @@ from pycomedi.constant import _NamedInt
 from pycomedi.channel import AnalogChannel
 from pycomedi.utility import inttrig_insn, Reader, CallbackReader
 import numpy as np
-from time import time
+from time import time, sleep
 from threading import Event
 
 def getAI(device, channel, range=None):
@@ -97,7 +97,8 @@ class SynchronousAI(object):
         """ Initiates the scan after first checking the command
         and does not block, returns the starting timestamp
         """
-        self._verifyCommand()  
+        self._verifyCommand()
+        sleep(0.01)
         self.subdevice.command()
         
         length = len(self.channels)
