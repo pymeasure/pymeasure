@@ -254,6 +254,21 @@ class Instrument(object):
     def binary_values(self, command, header_bytes=0, dtype=np.float32): 
         return self.adapter.binary_values(command, header_bytes, dtype)
 
+    def add_property(self, name, initial_value=0.0):
+        """This adds simple setter and getter properties called "name" for the internal variable 
+        that will be called _name"""
+        # Define the property first
+        setattr(self, "_"+name, initial_value)
+        def fget(self):
+            return getattr(self, "_"+name)
+        def fset(self, value):
+            setattr(self, "_"+name, value)
+        # Add the property attribute
+        setattr(self.__class__, name, property(fget, fset))
+        # Set convenience functions, that we may pass by reference if necessary
+        setattr(self.__class__, 'set_'+name, fset)
+        setattr(self.__class__, 'get_'+name, fget)
+
     def add_control(self, name, get_string, set_string, checkErrorsOnSet=False, checkErrorsOnGet=False):
         """This adds a property to the class based on the supplied SCPI commands. The presumption is
         that this parameter may be set and read from the instrument."""

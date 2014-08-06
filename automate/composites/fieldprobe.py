@@ -8,24 +8,6 @@
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from __future__ import print_function, division 
         
-class FieldProbe(object):
-    """Field probe base class, essentially performs the inverse role as the magnet class
-    in that it converts a signal from the supplied function call to a field in Oe."""
-    def __init__(self, readoutMethod, coefficient, offset=0):
-        super(FieldProbe, self).__init__()
-        self.dataCall    = readoutMethod
-        self.coefficient = coefficient
-        self.offset      = offset
-        self.terminated  = False
-    def getField(self):
-        return self.coefficient*self.dataCall() + self.offset
-    def shutdown(self):
-        self.terminated = True
-    @property
-    def field(self):
-        if not self.terminated:
-            return self.getField()
-    
 class ThreeAxisF20(FieldProbe):
     """Senis three axis hall probe"""
     def __init__(self, averages=1000, **kwargs):
@@ -78,12 +60,3 @@ class ThreeAxisF20(FieldProbe):
         self.terminated = True
         self.daq.shutdown()
 
-class HallProbe(FieldProbe):
-    """Usual hall probe taped to a pole piece somewhere"""
-    def __init__(self, *args, **kwargs):
-        super(HallProbe, self).__init__(*args, **kwargs)
-
-class Gaussmeter(FieldProbe):
-    """Gaussmeter with the most innacurate positioning possible"""
-    def __init__(self, *args, **kwargs):
-        super(Gaussmeter, self).__init__(*args, **kwargs)
