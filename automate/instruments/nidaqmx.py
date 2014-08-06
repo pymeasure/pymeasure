@@ -136,17 +136,3 @@ class DAQ(object):
 	def shutdown(self):
 		self.stop()
 		self.terminated = True
-
-# if __name__ == '__main__':
-# 	daqBoard  = DAQ("Dev1")
-# 	#daqBoard.setupAnalogVoltageIn([0,1,2], 4000, sampleRate=20000, scale=1.5)
-# 	daqBoard.setupAnalogVoltageOutMultipleChannels([0,1])
-# 	import time
-# 	for i in np.linspace(0,10.0,50):
-# 		daqBoard.writeAnalogVoltageMultipleChannels([i,i])
-# 		time.sleep(0.1)
-# 	for i in np.linspace(10.0,0,50):
-# 		daqBoard.writeAnalogVoltageMultipleChannels([i,i])
-# 		time.sleep(0.1)
-# 	#daqBoard.setupAnalogVoltageOut(channel=1)
-# 	#daqBoard.writeAnalogVoltage(0.0)

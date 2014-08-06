@@ -7,7 +7,7 @@
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 import math, sys, time
-from instrument import Instrument
+from automate.instruments import Instrument
 import numpy as np
 import logging
 
@@ -88,12 +88,3 @@ class Yokogawa7651(Instrument):
         self.source_current = 0.0
         self.enabled = False
     
-
-if __name__ == '__main__':
-    yoko = Yokogawa7651(2)
-    print yoko.source_voltage
-    yoko.enabled = True
-    yoko.voltage = 0.01
-    print yoko.voltage
-    yoko.voltage = 0.00
-    yoko.enabled = False
