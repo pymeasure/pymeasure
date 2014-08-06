@@ -91,6 +91,31 @@ class FloatParameter(Parameter):
         result = super(FloatParameter, self).__repr__()
         return result.replace("<Parameter", "<FloatParameter", 1)
 
+class ListParameter(Parameter):
+    
+    def __init__(self, name, choices, unit=None, default=None):
+        self.name = name
+        self._value = default
+        self.unit = unit
+        self.default = default
+        self._choices = choices
+
+    @property
+    def value(self):
+        if self.isSet():
+            return self._value
+        else:
+            raise ValueError("Parameter value is not set")
+            
+    @value.setter
+    def value(self, value):
+        if value in self._choices:
+            self._value = value
+        else:
+            raise ValueError("Invalid choice for parameter. Must be one of %s" % str(self._choices))
+        
+    def isSet(self):
+        return self._value is not None
 
 class Procedure(object):
     """Provides the base class of a procedure to organize the experiment
