@@ -288,6 +288,7 @@ class Keithley2400(Instrument):
         return (4 if val == 1 else 2)
     @wires.setter
     def wires(self, wires):
+        wires = int(wires)
         if (wires==2):
             self.write(":SYSTem:RSENse 0")
         elif (wires==4):
@@ -321,7 +322,7 @@ class Keithley2400(Instrument):
             self.write(":sens:curr:rang:auto 0;:sens:curr:rang %g" % rangeI)
         self.check_errors()
 
-    def sourceCurrent(self, sourceI=0.01e-3, compV=0.1, rangeI=1.0e-3, autoRange=True):
+    def sourceCurrent(self, sourceI=0.00e-3, compV=0.1, rangeI=1.0e-3, autoRange=True):
         logging.info("<i>%s</i> is sourcing current." % self.name)
         self.sourceMode = "Current"
         if autoRange:
@@ -331,7 +332,7 @@ class Keithley2400(Instrument):
         self.write(":sens:volt:prot %g;" % compV)
         self.check_errors()
 
-    def sourceVoltage(self, sourceV=0.01e-3, compI=0.1, rangeI=2.0, rangeV=2.0, autoRange=True):
+    def sourceVoltage(self, sourceV=0.00e-3, compI=0.1, rangeI=2.0, rangeV=2.0, autoRange=True):
         logging.info("<i>%s</i> is sourcing voltage." % self.name)
         self.sourceMode = "Voltage"
         if autoRange:

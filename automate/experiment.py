@@ -289,8 +289,8 @@ class ProcedureThread(Thread):
             self.finished.set()
             self.abortEvent.set() # ensure the thread joins
                   
-    def emitProgress(self, precent):
-        self.progressQueue.put(precent)
+    def emitProgress(self, percent):
+        self.progressQueue.put(percent)
     
     def emitFinished(self):
         self.finished.set()
