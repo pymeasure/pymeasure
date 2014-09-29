@@ -198,6 +198,11 @@ class Manager(object):
         """
         pass
         
+    def modified(self, experiment):
+        """ Callback that occurs when the queue has been modified
+        """
+        pass
+
     # Core methods
             
     def add(self, experiment):
@@ -206,7 +211,8 @@ class Manager(object):
         """
         assert type(experiment.id) == int
         self._queue.append(experiment)
-        
+        self.modified()
+
         log.msg("Added experiment %s to manager queue" % experiment)
         
         if self.shouldStartOnAdd() and not self.isRunning():
@@ -220,6 +226,7 @@ class Manager(object):
             raise Exception("Can not remove a experiment while it is running")
         else:
             experiment = self._queue.pop(self._qid(experiment_id))
+            self.modified()
             log.msg("Removed experiment %s from queue" % experiment)
             
     def swap(self, first_id, second_id):
@@ -235,6 +242,7 @@ class Manager(object):
             tmp = self._queue[firstId]
             self._queue[firstId] = self._queue[secondId]
             self._queue[secondId] = tmp
+            self.modified()
             log.msg("Swapped experiment (%d) with (%d) in the queue" % (firstId, secondId))
         
     def abort(self):
@@ -247,6 +255,7 @@ class Manager(object):
             log.msg("Initiating abort event for experiment %s" % self._runningExperiment)
             self._runningExperiment.abort()
             self.deferred.cancel()
+            self.modified()
         
     def next(self, result=False):
         """ Initiates the start of the next experiment in the queue as long
@@ -293,7 +302,6 @@ class Manager(object):
         if failure.check(defer.CancelledError) == None:
             log.msg("Caught exception in experiment %s" % self._runningExperiment)
             log.msg(failure)
-            
             self.failed(self._runningExperiment, failure)
             self._runningExperiment = None
         else:
@@ -305,7 +313,6 @@ class Manager(object):
         """ Callback function that cleans up after a user generated abort
         """
         log.msg("Caught abort event in experiment %s" % self._runningExperiment)
-        
         self._isRunning, self.deferred = False, None
         
         self.aborted(self._runningExperiment)

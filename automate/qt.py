@@ -8,6 +8,7 @@
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 import logging
 from PyQt4.QtGui import QPlainTextEdit, QDoubleSpinBox, QAbstractSpinBox, QDoubleValidator
+from PyQt4.QtGui import QTreeWidget
 
 def runInIPython(app):
     """ Attempts to run the QApplication in the IPython main loop, which
@@ -20,6 +21,22 @@ def runInIPython(app):
     except ImportError:
         app.exec_()
         
+class QManagerView(QTreeWidget):
+    def __init__(self, manager):
+        super(QManagerView, self).__init__()
+        
+        self.manager = manager
+
+        # Have the Manager use this class' methods as callbacks
+        self.manager.running  = self.running
+        self.manager.finished = self.finished
+        self.manager.failed   = self.failed
+        self.manager.aborted  = self.aborted
+        self.manager.modified = self.modified
+
+    def modified(self):
+        """Update the local copy of the queue and render"""
+        manager_items = self.manager._queue
     
 class QLogHandler(logging.Handler):
     
@@ -38,8 +55,8 @@ class Parameter(QDoubleSpinBox):
         self.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.validator = QDoubleValidator(-1.0e9, 1.0e9, 10, self)
         self.validator.setNotation(QDoubleValidator.ScientificNotation)
-        self.setMaximum( 10000000000)
-        self.setMinimum(-10000000000)
+        self.setMaximum( 1e12)
+        self.setMinimum(-1e12)
 
         # This is the physical unit associated with this value
         self.unit = ""
