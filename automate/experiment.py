@@ -137,10 +137,12 @@ class Procedure(object):
     """
     
     DATA_COLUMNS = []
+    FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
     
     _parameters = {}
     
     def __init__(self):
+        self.status = Procedure.QUEUED
         self._updateParameters()
     
     def _updateParameters(self):
@@ -271,20 +273,25 @@ class ProcedureThread(Thread):
             raise ValueError("Loading object must be inhereted from the"
                              " Procedure class")
         self.procedure = procedure
+        self.procedure.status = Procedure.QUEUED
         self.procedure.hasAborted = self.hasAborted
         self.procedure.emitData = self.emitData
         self.procedure.emitProgress = self.emitProgress
         
     def run(self):
+        self.procedure.status = Procedure.RUNNING
         if self.procedure is None:
             raise Exception("Attempting to run Procedure object before loading")
         self.procedure.enter()
         try:
             self.procedure.execute()
         except:
+            self.procedure.status = Procedure.FAILED
             import sys, traceback
             traceback.print_exc(file=sys.stdout)
         finally:
+            if self.procedure.status == Procedure.RUNNING:
+                self.procedure.status = Procedure.FINISHED
             self.procedure.exit()
             self.finished.set()
             self.abortEvent.set() # ensure the thread joins
@@ -310,6 +317,7 @@ class ProcedureThread(Thread):
         
     def abort(self):
         self.abortEvent.set()
+        self.procedure.status = Procedure.ABORTED
         
     def join(self, timeout=0):
         self.abortEvent.wait(timeout)
@@ -341,6 +349,7 @@ try:
                 raise ValueError("Loading object must be inhereted from the"
                                  " Procedure class")
             self.procedure = procedure
+            self.procedure.status = Procedure.QUEUED
             self.procedure.hasAborted = self.hasAborted
             self.procedure.emitData = self.data.emit
             self.procedure.emitProgress = self.progress.emit
@@ -352,9 +361,12 @@ try:
             try:
                 self.procedure.execute()
             except:
+                self.procedure.status = Procedure.FAILED
                 import sys, traceback
                 traceback.print_exc(file=sys.stdout)
             finally:
+                if self.procedure.status == Procedure.RUNNING:
+                    self.procedure.status = Procedure.FINISHED
                 self.procedure.exit()
                 self.finished.emit()
                 self.abortEvent.set() # ensure the thread joins
@@ -364,6 +376,7 @@ try:
         
         def abort(self):
             self.abortEvent.set()
+            self.procedure.status = Procedure.ABORTED
             
         def join(self, timeout=0):
             self.abortEvent.wait(timeout)
@@ -407,6 +420,7 @@ class Results(object):
         self.data_filename = data_filename
         if exists(data_filename): # Assume header is already written
             self.reload()
+            self.procedure = Procedure.FINISHED # TODO: Correctly store and retrieve status
         else:
             with open(data_filename, 'w') as f:
                 f.write(self.header())
