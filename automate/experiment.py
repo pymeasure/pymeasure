@@ -279,9 +279,9 @@ class ProcedureThread(Thread):
         self.procedure.emitProgress = self.emitProgress
         
     def run(self):
-        self.procedure.status = Procedure.RUNNING
         if self.procedure is None:
             raise Exception("Attempting to run Procedure object before loading")
+        self.procedure.status = Procedure.RUNNING
         self.procedure.enter()
         try:
             self.procedure.execute()
@@ -336,6 +336,7 @@ try:
         
         data = pyqtSignal(dict) 
         progress = pyqtSignal(float)
+        status_changed = pyqtSignal(int)
         finished = pyqtSignal()
         
         def __init__(self, parent=None):
@@ -357,17 +358,21 @@ try:
         def run(self):
             if self.procedure is None:
                 raise Exception("Attempting to run Procedure object before loading")
+            self.procedure.status = Procedure.RUNNING
+            self.status_changed.emit(self.procedure.status)
             self.procedure.enter()
             try:
                 self.procedure.execute()
             except:
                 self.procedure.status = Procedure.FAILED
+                self.status_changed.emit(self.procedure.status)
                 import sys, traceback
                 traceback.print_exc(file=sys.stdout)
             finally:
+                self.procedure.exit()
                 if self.procedure.status == Procedure.RUNNING:
                     self.procedure.status = Procedure.FINISHED
-                self.procedure.exit()
+                    self.status_changed.emit(self.procedure.status)
                 self.finished.emit()
                 self.abortEvent.set() # ensure the thread joins
         
@@ -377,6 +382,7 @@ try:
         def abort(self):
             self.abortEvent.set()
             self.procedure.status = Procedure.ABORTED
+            self.status_changed.emit(self.procedure.status)
             
         def join(self, timeout=0):
             self.abortEvent.wait(timeout)
@@ -547,4 +553,15 @@ class Results(object):
         chunks = pd.read_csv(self.data_filename, comment=Results.COMMENT,
                     chunksize=Results.CHUNK_SIZE, iterator=True)
         self._data = pd.concat(chunks, ignore_index=True)
+
+
+class Experiment(object):
+
+    def __init__(self, procedure, results, curve=None, browser_item=None):
+        self.procedure = procedure
+        self.results = results
+        self.curve = curve
+        self.browser_item = browser_item
+
+
 

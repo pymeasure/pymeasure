@@ -11,7 +11,9 @@ from PyQt4.QtGui import QPlainTextEdit, QDoubleSpinBox, QAbstractSpinBox, QDoubl
 from PyQt4.QtGui import QTreeWidget, QTreeWidgetItem, QProgressBar, QPixmap, QIcon, QColor
 from PyQt4.QtCore import QObject, pyqtSignal, Qt
 from os.path import basename
-from automate.experiment import Procedure
+from automate.experiment import Procedure, QProcedureThread, Experiment
+from automate.listeners import QResultsWriter
+from automate.qtgraph import ResultsCurve
 
 def runInIPython(app):
     """ Attempts to run the QApplication in the IPython main loop, which
@@ -25,6 +27,234 @@ def runInIPython(app):
         app.exec_()
 
 
+class Manager(QObject):
+
+    experiments = []
+    _is_continuous = True
+    _start_on_add = True
+    _running_thread = None
+    added = pyqtSignal(object)
+    running = pyqtSignal(object)
+    finished = pyqtSignal(object)
+    failed = pyqtSignal(object)
+    aborted = pyqtSignal(object)
+    abort_returned = pyqtSignal(object)
+
+    def __init__(self, plot, browser, parent=None):
+        super(Manager, self).__init__(parent=parent)
+        self.plot = plot
+        self.browser = browser
+    
+    def isRunning(self):
+        """ Returns True if a procedure is currently running
+        """
+        return self._running_thread != None
+        
+    def runningExperiment(self):
+        """ Returns the results object of the running procedure
+        """
+        for experiment in self.experiments:
+            if experiment.procedure.status == Procedure.RUNNING:
+                return experiment
+        return None
+        
+    def queuedExperiments(self):
+        """ Returns the procedures which are queued
+        """
+        queued = []
+        for experiment in self.experiments:
+            if experiment.procedure.status == Procedure.QUEUED:
+                queued.append(experiment)
+        return queued
+                
+    def add(self, experiment):
+        self.plot.addItem(experiment.curve)
+        self.browser.add(experiment)
+        
+        self.experiments.append(experiment)
+        if self._start_on_add and not self.isRunning():
+            self.next()
+            
+    def next(self):
+        """ Initiates the start of the next experiment in the queue as long
+        as no other experiments is currently running and there is a procedure
+        in the queue
+        """
+        if self.isRunning():
+            raise Exception("Another procedure is already running")
+        else:
+            queued = self.queuedExperiments()
+            if len(queued) == 0:
+                return
+                #raise Exception("No experiments are queued to be run")
+            else:
+                experiment = queued[0]
+                index = self.experiments.index(experiment)
+                
+                self._running_thread = QProcedureThread(parent=self)
+                self._running_thread.load(experiment.procedure)
+                self._running_thread.finished.connect(self._callback)
+                
+                self._data_writer = QResultsWriter(experiment.results)
+                self._running_thread.data.connect(self._data_writer.write)
+                
+                self._running_thread.progress.connect(experiment.browser_item.progressbar.setValue)
+                self._running_thread.status_changed.connect(experiment.browser_item.setStatus)
+                
+                self._data_writer.start()
+                self._running_thread.start()
+                self.running.emit(experiment)
+    
+    def abort(self):
+        """ Aborts the currently running experiment, but raises an exception if
+        there is no running experiment
+        """    
+        if not self.isRunning():
+            raise Exception("Attempting to abort when no experiment is running")
+        else:
+            self._running_thread.abort()
+            self._data_writer.join()
+            
+            self.aborted.emit(experiment)
+        
+    def _callback(self):
+        """ Handles the different cases upon which the running procedure thread
+        can call back
+        """
+        for experiment in self.experiments:
+            if experiment.procedure == self._running_thread.procedure:
+                break
+        if self._running_thread.procedure.status == Procedure.FAILED:
+            self.failed.emit(experiment)
+        elif self._running_thread.procedure.status == Procedure.ABORTED:
+            self.abort_returned.emit(experiment)
+        elif self._running_thread.procedure.status == Procedure.FINISHED:
+            self.finished.emit(experiment)
+            
+        self._running_thread = None
+        self._data_writer = None
+        if self._is_continuous: # Continue running procedures
+            self.next()
+            
+    def experimentFromBrowserItem(self, browser_item):
+        for experiment in self.experiments:
+            if experiment.browser_item == browser_item:
+                return experiment
+        raise Exception("This BrowserItem did not match any Experiments in the Manager")
+        
+    
+class BrowserItem(QTreeWidgetItem):
+    
+    def __init__(self, results, curve, parent=None):
+        super(BrowserItem, self).__init__(parent)
+        
+        pixelmap = QPixmap(24, 24)
+        pixelmap.fill(curve.opts['pen'].color())
+        self.setIcon(0, QIcon(pixelmap))
+        self.setFlags(self.flags() | Qt.ItemIsUserCheckable)
+        self.setCheckState(0, 2)
+        self.setText(1, basename(results.data_filename))
+        
+        self.setStatus(results.procedure.status)
+        
+        self.progressbar = QProgressBar()
+        self.progressbar.setRange(0,100)
+        self.progressbar.setValue(0)    
+    
+    def setStatus(self, status):
+        status_label = {
+            Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
+            Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted', 
+            Procedure.FINISHED: 'Finished'}
+        self.setText(3, status_label[status])
+
+
+class ExperimentBrowser(QTreeWidget):
+        
+    def __init__(self, procedure_class, parameters, parent=None):
+        super(ExperimentBrowser, self).__init__(parent)
+        self.procedure_parameters = parameters
+        self.procedure_class = procedure_class
+        
+        header_labels = ["Graph", "Filename", "Progress", "Status"]
+        parameter_objects = procedure_class().parameterObjects() # Get the default parameters
+        for parameter in parameters:
+            if parameter in parameter_objects:
+                header_labels.append(parameter_objects[parameter].name)
+            else:
+                raise Exception("Invalid parameter input for a ExperimentBrowser column")
+        
+        self.setColumnCount(len(header_labels))
+        self.setHeaderLabels(header_labels)
+        
+        for i, width in enumerate([80, 140]):
+            self.header().resizeSection(i, width)
+        
+    def add(self, experiment):
+        if not isinstance(experiment.procedure, self.procedure_class):
+            raise Exception("This ResultsBrowser only supports '%s' objects")
+        
+        item = experiment.browser_item
+        for i, column in enumerate(self.procedure_parameters):
+            item.setText(i+4, str(getattr(experiment.procedure, column)))
+        
+        self.addTopLevelItem(item)
+        self.setItemWidget(item, 2, item.progressbar)
+        return item   
+
+
+    
+class QLogHandler(logging.Handler):
+    
+    def __init__(self, log_display):
+        super(QLogHandler, self).__init__()
+        if not isinstance(log_display, QPlainTextEdit):
+            raise Exception("QLogHandler is only implemented for QPlainTextEdit objects")
+        self.log_display = log_display
+    
+    def emit(self, record):
+        self.log_display.appendPlainText(self.format(record))
+
+class Parameter(QDoubleSpinBox):
+    def __init__(self, parent=None):
+        super(Parameter, self).__init__(parent)
+        self.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.validator = QDoubleValidator(-1.0e9, 1.0e9, 10, self)
+        self.validator.setNotation(QDoubleValidator.ScientificNotation)
+        self.setMaximum( 1e12)
+        self.setMinimum(-1e12)
+
+        # This is the physical unit associated with this value
+        self.unit = ""
+
+    def validate(self, text, pos):
+        return self.validator.validate(text, pos)
+
+    def fixCase(self, text):
+        self.lineEdit().setText(text.toLower())
+
+    def valueFromText(self, text):
+        return float(str(text))
+
+    def textFromValue(self, value):
+        # return "%.*g" % (self.decimals(), value)
+        return "%.4g" % (value)
+
+    def stepEnabled(self):
+        return QAbstractSpinBox.StepNone
+
+    def __str__(self):
+        return "%.4g %s" % (self.value(), self.unit)
+
+    def setUnit(self, string):
+        self.unit = string
+        self.setProperty("unit", string)
+
+    def getUnit(self):
+        self.unit = self.property("unit").toString()
+        return self.unit
+        
+        
 class QueueManager(QObject):
     
     queue = []
@@ -155,180 +385,3 @@ class QueueManager(QObject):
             self.queue.pop(i2)
             self.queue.insert(i2, r1)
             
-
-
-class ResultsBrowser(QTreeWidget):
-    
-    results_items = {}
-    
-    def __init__(self, procedure_class, columns, header_widths=[], parent=None):
-        super(ResultsBrowser, self).__init__(parent)
-        self.procedure_columns = columns
-        self.procedure_class = procedure_class
-        
-        header_labels = ["Graph", "Filename"]
-        parameters = procedure_class().parameterObjects() # Get the default parameters
-        for column in columns:
-            if column in parameters:
-                header_labels.append(parameters[column].name)
-            else:
-                raise Exception("Invalid parameter input for a QueueBrowser column")
-        
-        self.setColumnCount(len(header_labels))
-        self.setHeaderLabels(header_labels)
-        
-        header_widths = [80, 140] + header_widths
-        for i, width in enumerate(header_widths):
-            self.header().resizeSection(i, width)
-        
-        
-    def add(self, results, color=None):
-        if not isinstance(results.procedure, self.procedure_class):
-            raise Exception("This ResultsBrowser only supports '%s' objects")
-        
-        item = QTreeWidgetItem()
-        pixelmap = QPixmap(24, 24)
-        pixelmap.fill(color)
-        item.setIcon(0, QIcon(pixelmap))
-        item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-        item.setCheckState(0, 2)
-        item.setText(1, basename(results.data_filename))     
-        
-        status_label = {Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
-            Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted', Procedure.FINISHED: 'Finished'}
-        item.setText(3, status_label[results.procedure.status])
-        
-        for i, column in enumerate(self.procedure_columns):
-            item.setText(i+2, str(getattr(results.procedure, column)))
-        
-        self.addTopLevelItem(item)
-        progressbar = QProgressBar(self)
-        progressbar.setRange(0,100)
-        progressbar.setValue(0)
-        self.setItemWidget(item, 2, progressbar)
-        
-        self.results_items[results] = item
-        return item
-        
-    def remove(self, results):
-        if results not in self.results_items:
-            raise Exception("Attempting to remove results object that does not exist in QueueBrowser")
-        self.takeTopLevelItem(self.indexFromItem(self.results_items[results]).row())
-        # TODO: Remove the item from the lookup dictionary
-        
-
-
-class QueueBrowser(ResultsBrowser):
-    
-    results_items = {}
-    
-    def __init__(self, procedure_class, columns, header_widths=[], parent=None):
-        super(QueueBrowser, self).__init__(procedure_class, columns, header_widths, parent)
-        self.queue_manager = QueueManager(procedure_class, parent)
-        self.procedure_columns = columns
-        
-        header_labels = ["Graph", "Filename", "Progress", "Status"]
-        parameters = procedure_class().parameterObjects() # Get the default parameters
-        for column in columns:
-            if column in parameters:
-                header_labels.append(parameters[column].name)
-            else:
-                raise Exception("Invalid parameter input for a QueueBrowser column")
-        
-        self.setColumnCount(len(header_labels))
-        self.setHeaderLabels(header_labels)
-        
-        header_widths = [80, 140, 80, 50] + header_widths
-        for i, width in enumerate(header_widths):
-            self.header().resizeSection(i, width)
-        
-        
-    def add(self, results, color=None):
-        if not isinstance(results.procedure, self.procedure_class):
-            raise Exception("This ResultsBrowser only supports '%s' objects")
-        
-        item = QTreeWidgetItem()
-        pixelmap = QPixmap(24, 24)
-        pixelmap.fill(color)
-        item.setIcon(0, QIcon(pixelmap))
-        item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-        item.setCheckState(0, 2)
-        item.setText(1, basename(results.data_filename))     
-        
-        status_label = {Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
-            Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted', Procedure.FINISHED: 'Finished'}
-        item.setText(3, status_label[results.procedure.status])
-        
-        for i, column in enumerate(self.procedure_columns):
-            item.setText(i+4, str(getattr(results.procedure, column)))
-        
-        self.addTopLevelItem(item)
-        progressbar = QProgressBar(self)
-        progressbar.setRange(0,100)
-        progressbar.setValue(0)
-        self.setItemWidget(item, 2, progressbar)
-        
-        self.results_items[results] = item
-        
-        #self.queue_manager.add(results)
-        
-        return item
-        
-    def remove(self, results):
-        if results not in self.results_items:
-            raise Exception("Attempting to remove results object that does not exist in QueueBrowser")
-        self.takeTopLevelItem(self.indexFromItem(self.results_items[results]).row())
-        # TODO: Remove the item from the lookup dictionary
-
-
-
-    
-class QLogHandler(logging.Handler):
-    
-    def __init__(self, log_display):
-        super(QLogHandler, self).__init__()
-        if not isinstance(log_display, QPlainTextEdit):
-            raise Exception("QLogHandler is only implemented for QPlainTextEdit objects")
-        self.log_display = log_display
-    
-    def emit(self, record):
-        self.log_display.appendPlainText(self.format(record))
-
-class Parameter(QDoubleSpinBox):
-    def __init__(self, parent=None):
-        super(Parameter, self).__init__(parent)
-        self.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.validator = QDoubleValidator(-1.0e9, 1.0e9, 10, self)
-        self.validator.setNotation(QDoubleValidator.ScientificNotation)
-        self.setMaximum( 1e12)
-        self.setMinimum(-1e12)
-
-        # This is the physical unit associated with this value
-        self.unit = ""
-
-    def validate(self, text, pos):
-        return self.validator.validate(text, pos)
-
-    def fixCase(self, text):
-        self.lineEdit().setText(text.toLower())
-
-    def valueFromText(self, text):
-        return float(str(text))
-
-    def textFromValue(self, value):
-        # return "%.*g" % (self.decimals(), value)
-        return "%.4g" % (value)
-
-    def stepEnabled(self):
-        return QAbstractSpinBox.StepNone
-
-    def __str__(self):
-        return "%.4g %s" % (self.value(), self.unit)
-
-    def setUnit(self, string):
-        self.unit = string
-        self.setProperty("unit", string)
-
-    def getUnit(self):
-        self.unit = self.property("unit").toString()
-        return self.unit

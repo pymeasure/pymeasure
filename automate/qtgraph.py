@@ -8,6 +8,7 @@
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from automate.experiment import Results
 from PyQt4.QtCore import pyqtSignal, QObject
+from PyQt4.QtGui import QPixmap, QIcon, QColor
 import pyqtgraph as pg
 import numpy as np
 
@@ -21,12 +22,13 @@ class ResultsCurve(pg.PlotDataItem):
     def __init__(self, results, x, y, xerr=None, yerr=None, force_reload=False, **kwargs):
         pg.PlotDataItem.__init__(self, **kwargs)
         self.results = results
+        self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
         self.force_reload = force_reload
         if xerr or yerr:
             self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
             self.xerr, self.yerr = xerr, yerr
-    
+        
     def update(self):
         """Updates the data by polling the results"""
         
