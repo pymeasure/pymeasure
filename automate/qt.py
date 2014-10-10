@@ -69,18 +69,23 @@ class Manager(QObject):
         
     def hasQueuedExperiments(self):
         return len(self.queuedExperiments()) > 0
+    
+    def filePaths(self):
+        """ Returns a list of file paths for the Experiments in the Manager
+        """
+        return [experiment.results.data_filename for experiment in self.experiments]
                 
     def queue(self, experiment):
-        self.plot.addItem(experiment.curve)
-        self.browser.add(experiment)
-        
-        self.experiments.append(experiment)
+        self.load(experiment)
         self.queued.emit(experiment)
         if self._start_on_add and not self.isRunning():
             self.next()
             
     def load(self, experiment):
-        pass
+        self.plot.addItem(experiment.curve)
+        self.browser.add(experiment)
+        
+        self.experiments.append(experiment)
             
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
@@ -116,6 +121,25 @@ class Manager(QObject):
         self._start_on_add = True
         self._continous = True
         self.next()
+        
+    def remove(self, experiment):
+        """ Removes the Experiment from the Manager, unless it is currently running
+        """
+        if not experiment in self.experiments:
+            raise Exception("Attempting to remove an Experiemnt that is not in the Manager")
+        else:
+            if self.isRunning() and experiment == self.runningExperiment():
+                raise Exception("Attempting to remove the currently running experiment")
+            else:
+                self.browser.takeTopLevelItem(self.browser.indexOfTopLevelItem(experiment.browser_item))
+                self.plot.removeItem(experiment.curve)
+                self.experiments.pop(self.experiments.index(experiment))
+               
+    def clear(self):
+        print self.experiments
+        for experiment in self.experiments:
+            print "Removing " + repr(experiment)
+            self.remove(experiment)
     
     def abort(self):
         """ Aborts the currently running experiment, but raises an exception if
@@ -190,6 +214,7 @@ class BrowserItem(QTreeWidgetItem):
         
         if status == Procedure.FAILED or status == Procedure.ABORTED:
             # Set progress bar color to red
+            return # Commented this out
             self.progressbar.setStyleSheet("""
             QProgressBar {
                 border: 1px solid #AAAAAA;

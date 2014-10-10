@@ -426,7 +426,7 @@ class Results(object):
         self.data_filename = data_filename
         if exists(data_filename): # Assume header is already written
             self.reload()
-            self.procedure = Procedure.FINISHED # TODO: Correctly store and retrieve status
+            self.procedure.status = Procedure.FINISHED # TODO: Correctly store and retrieve status
         else:
             with open(data_filename, 'w') as f:
                 f.write(self.header())
