@@ -159,7 +159,7 @@ try:
             self.abortEvent.wait(timeout)
             if not self.abortEvent.isSet():
                 self.abortEvent.set()
-            super(QListener, self).join()
+            super(QListener, self).wait()
         
         
     class QResultsWriter(QListener):

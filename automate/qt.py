@@ -33,7 +33,7 @@ class Manager(QObject):
     _is_continuous = True
     _start_on_add = True
     _running_thread = None
-    added = pyqtSignal(object)
+    queued = pyqtSignal(object)
     running = pyqtSignal(object)
     finished = pyqtSignal(object)
     failed = pyqtSignal(object)
@@ -66,14 +66,21 @@ class Manager(QObject):
             if experiment.procedure.status == Procedure.QUEUED:
                 queued.append(experiment)
         return queued
+        
+    def hasQueuedExperiments(self):
+        return len(self.queuedExperiments()) > 0
                 
-    def add(self, experiment):
+    def queue(self, experiment):
         self.plot.addItem(experiment.curve)
         self.browser.add(experiment)
         
         self.experiments.append(experiment)
+        self.queued.emit(experiment)
         if self._start_on_add and not self.isRunning():
             self.next()
+            
+    def load(self, experiment):
+        pass
             
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
@@ -105,6 +112,11 @@ class Manager(QObject):
                 self._running_thread.start()
                 self.running.emit(experiment)
     
+    def resume(self):
+        self._start_on_add = True
+        self._continous = True
+        self.next()
+    
     def abort(self):
         """ Aborts the currently running experiment, but raises an exception if
         there is no running experiment
@@ -112,10 +124,13 @@ class Manager(QObject):
         if not self.isRunning():
             raise Exception("Attempting to abort when no experiment is running")
         else:
+            self._start_on_add = False
+            self._continous = False
+        
             self._running_thread.abort()
             self._data_writer.join()
             
-            self.aborted.emit(experiment)
+            self.aborted.emit(self.experimentFromProcedure(self._running_thread.procedure))
         
     def _callback(self):
         """ Handles the different cases upon which the running procedure thread
@@ -124,23 +139,28 @@ class Manager(QObject):
         for experiment in self.experiments:
             if experiment.procedure == self._running_thread.procedure:
                 break
-        if self._running_thread.procedure.status == Procedure.FAILED:
-            self.failed.emit(experiment)
-        elif self._running_thread.procedure.status == Procedure.ABORTED:
-            self.abort_returned.emit(experiment)
-        elif self._running_thread.procedure.status == Procedure.FINISHED:
-            self.finished.emit(experiment)
-            
         self._running_thread = None
         self._data_writer = None
-        if self._is_continuous: # Continue running procedures
-            self.next()
+        if experiment.procedure.status == Procedure.FAILED:
+            self.failed.emit(experiment)
+        elif experiment.procedure.status == Procedure.ABORTED:
+            self.abort_returned.emit(experiment)
+        elif experiment.procedure.status == Procedure.FINISHED:
+            self.finished.emit(experiment)
+            if self._is_continuous: # Continue running procedures
+                self.next()
             
     def experimentFromBrowserItem(self, browser_item):
         for experiment in self.experiments:
             if experiment.browser_item == browser_item:
                 return experiment
         raise Exception("This BrowserItem did not match any Experiments in the Manager")
+        
+    def experimentFromProcedure(self, procedure):
+        for experiment in self.experiments:
+            if experiment.procedure == procedure:
+                return experiment
+        raise Exception("This Procedure did not match any Experiments in the Manager")
         
     
 class BrowserItem(QTreeWidgetItem):
@@ -167,6 +187,20 @@ class BrowserItem(QTreeWidgetItem):
             Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted', 
             Procedure.FINISHED: 'Finished'}
         self.setText(3, status_label[status])
+        
+        if status == Procedure.FAILED or status == Procedure.ABORTED:
+            # Set progress bar color to red
+            self.progressbar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #AAAAAA;
+                border-radius: 5px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: red;
+            }
+            """)
+            
 
 
 class ExperimentBrowser(QTreeWidget):
