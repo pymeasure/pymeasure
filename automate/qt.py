@@ -136,9 +136,7 @@ class Manager(QObject):
                 self.experiments.pop(self.experiments.index(experiment))
                
     def clear(self):
-        print self.experiments
-        for experiment in self.experiments:
-            print "Removing " + repr(experiment)
+        for experiment in self.experiments[:]:
             self.remove(experiment)
     
     def abort(self):

@@ -552,7 +552,10 @@ class Results(object):
         """ Preforms a full reloading of the file data neglecting the comments """
         chunks = pd.read_csv(self.data_filename, comment=Results.COMMENT,
                     chunksize=Results.CHUNK_SIZE, iterator=True)
-        self._data = pd.concat(chunks, ignore_index=True)
+        try:
+            self._data = pd.concat(chunks, ignore_index=True)
+        except:
+            self._data = chunks.read()
 
 
 class Experiment(object):
