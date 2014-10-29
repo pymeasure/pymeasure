@@ -256,6 +256,18 @@ class Procedure(object):
         return result
 
 
+class UnknownProcedure(Procedure):
+    """ Handles the case when a Procedure object can not be imported during
+    loading in the Results class
+    """
+    
+    def __init__(self, parameters):
+        self._parameters = parameters
+    
+    def enter(self):
+        raise Exception("UnknownProcedure can not be run")
+        
+
 class ProcedureThread(Thread):
     """Encapsulates the Procedure to be run within a thread."""
     
@@ -468,13 +480,12 @@ class Results(object):
         return data
     
     @staticmethod
-    def parseHeader(header):
+    def parseHeader(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
         header = header.split(Results.LINE_BREAK)
         procedure_module = None
-        procedure_class = None
         parameters = {}
         for line in header:
             if line.startswith(Results.COMMENT):
@@ -490,11 +501,14 @@ class Results(object):
                 parameters[search.group("name")] = (search.group("value"), search.group("unit"))
         if procedure_class is None:
             raise ValueError("Header does not contain the Procedure class")
-        from importlib import import_module
-        module = import_module(procedure_module)
-        procedure_class = getattr(module, procedure_class)
-        
-        procedure = procedure_class()
+        try:
+            from importlib import import_module
+            module = import_module(procedure_module)
+            procedure_class = getattr(module, procedure_class)
+            
+            procedure = procedure_class()
+        except:
+            procedure = UnknownProcedure(parameters)
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameterObjects().iteritems():
             if parameter.name in parameters:
@@ -507,7 +521,7 @@ class Results(object):
         return procedure
                 
     @staticmethod
-    def load(data_filename):
+    def load(data_filename, procedure_class=None):
         """ Returns a Results object with the associated Procedure object and
         data
         """
@@ -522,7 +536,7 @@ class Results(object):
                     header_count += 1
                 else:
                     header_read = True
-        procedure = Results.parseHeader(header[:-1])
+        procedure = Results.parseHeader(header[:-1], procedure_class)
         results = Results(procedure, data_filename)
         results._header_count = header_count
         return results
