@@ -252,8 +252,9 @@ class ExperimentBrowser(QTreeWidget):
             raise Exception("This ResultsBrowser only supports '%s' objects")
         
         item = experiment.browser_item
+        parameters = experiment.procedure.parameterObjects()
         for i, column in enumerate(self.procedure_parameters):
-            item.setText(i+4, str(getattr(experiment.procedure, column)))
+            item.setText(i+4, str(parameters[column]))
         
         self.addTopLevelItem(item)
         self.setItemWidget(item, 2, item.progressbar)

@@ -40,6 +40,14 @@ class Parameter(object):
         
     def isSet(self):
         return self._value is not None
+
+    def __str__(self):
+        result = ""
+        if self.isSet():
+            result += "%s" % str(self.value)
+            if self.unit:
+                result += " %s" % self.unit
+        return result
         
     def __repr__(self):
         result = "<Parameter(name='%s'" % self.name
@@ -302,9 +310,10 @@ class ProcedureThread(Thread):
             import sys, traceback
             traceback.print_exc(file=sys.stdout)
         finally:
+            self.procedure.exit()
             if self.procedure.status == Procedure.RUNNING:
                 self.procedure.status = Procedure.FINISHED
-            self.procedure.exit()
+                self.emitProgress(100.)
             self.finished.set()
             self.abortEvent.set() # ensure the thread joins
                   
@@ -385,6 +394,7 @@ try:
                 if self.procedure.status == Procedure.RUNNING:
                     self.procedure.status = Procedure.FINISHED
                     self.status_changed.emit(self.procedure.status)
+                    self.progress.emit(100.)
                 self.finished.emit()
                 self.abortEvent.set() # ensure the thread joins
         
@@ -513,6 +523,8 @@ class Results(object):
         for name, parameter in procedure.parameterObjects().iteritems():
             if parameter.name in parameters:
                 value, unit = parameters[parameter.name]
+                if parameter.unit == None and type(parameter) == Parameter and unit != None:
+                    value = value + " " + str(unit) # Force full string to be matched                
                 setattr(procedure, name, value)
             else:
                 raise Exception("Missing '%s' parameter when loading '%s' class" % (
