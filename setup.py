@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='Automate',
-    version='0.1.5',
+    version='0.1.6',
     author='Colin Jermain',
     author_email='clj72@cornell.edu',
     packages=['automate', 'automate.instruments', 'automate.composites'],
