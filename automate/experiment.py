@@ -99,13 +99,70 @@ class FloatParameter(Parameter):
         result = super(FloatParameter, self).__repr__()
         return result.replace("<Parameter", "<FloatParameter", 1)
 
+class VectorParameter(Parameter):
+    def __init__(self, name, length=3, unit=None, default=None):
+        self.name    = name
+        self._value  = default
+        self.unit    = unit
+        self.default = default
+        self._length = length
+
+    @property
+    def value(self):
+        if self.isSet():
+            return [float(ve) for ve in self._value]
+        else:
+            raise ValueError("Parameter value is not set")
+    
+    @value.setter
+    def value(self, value):
+        # Strip initial and final brackets
+        if isinstance(value, basestring):
+            if (value[0] != '[') or (value[-1] != ']'):
+                raise ValueError("VectorParameter must be passed a vector denoted"
+                                 " by square brackets if initializing by string.")
+            raw_list = value[1:-1].split(",")
+        elif isinstance(value, (list, tuple)):
+            raw_list = value
+        else:
+            raise ValueError("VectorParameter given undesired value of "
+                             "type '%s'" % type(value))
+        if len(raw_list) != self._length:
+            raise ValueError("VectorParameter given value of length "
+                             "%d instead of %d" % (len(raw_list), self._length))
+        try:
+            self._value = [float(ve) for ve in raw_list]
+
+        except ValueError:
+            raise ValueError("VectorParameter given input '%s' that could "
+                             "not be converted to floats." % str(value))
+
+    def __repr__(self):
+        result = "<VectorParameter(name='%s'" % self.name
+        if self.isSet():
+            result += ",value=%s" % "".join(repr(self.value).split())
+        if self.unit:
+            result += ",unit='%s'" % self.unit
+        return result + ")>"
+
+    def __str__(self):
+        """If we eliminate spaces within the list __repr__ then the
+        csv parser will interpret it as a single value."""
+        result = ""
+        if self.isSet():
+            result += "%s" % "".join(repr(self.value).split())
+            if self.unit:
+                result += " %s" % self.unit
+        return result
+        
+
 class ListParameter(Parameter):
     
     def __init__(self, name, choices, unit=None, default=None):
-        self.name = name
-        self._value = default
-        self.unit = unit
-        self.default = default
+        self.name     = name
+        self._value   = default
+        self.unit     = unit
+        self.default  = default
         self._choices = choices
 
     @property
@@ -464,9 +521,7 @@ class Results(object):
         h.append("Procedure: <%s>" % procedure)
         h.append("Parameters:")
         for name, parameter in self.parameters.iteritems():
-            h.append("\t%s: %s" % (parameter.name, parameter.value))
-            if parameter.unit:
-                h[-1] += " %s" % parameter.unit
+            h.append("\t%s: %s" % (parameter.name, str(parameter)))
         h.append("Data:")
         self._header_count = len(h)
         h = [Results.COMMENT + l for l in h] # Comment each line
