@@ -138,9 +138,10 @@ class VectorParameter(Parameter):
                              "not be converted to floats." % str(value))
 
     def __repr__(self):
+        if not self.isSet():
+            raise ValueError("Parameter value is not set")
         result = "<VectorParameter(name='%s'" % self.name
-        if self.isSet():
-            result += ",value=%s" % "".join(repr(self.value).split())
+        result += ",value=%s" % "".join(repr(self.value).split())
         if self.unit:
             result += ",unit='%s'" % self.unit
         return result + ")>"
@@ -148,14 +149,14 @@ class VectorParameter(Parameter):
     def __str__(self):
         """If we eliminate spaces within the list __repr__ then the
         csv parser will interpret it as a single value."""
+        if not self.isSet():
+            raise ValueError("Parameter value is not set")
         result = ""
-        if self.isSet():
-            result += "%s" % "".join(repr(self.value).split())
-            if self.unit:
-                result += " %s" % self.unit
+        result += "%s" % "".join(repr(self.value).split())
+        if self.unit:
+            result += " %s" % self.unit
         return result
         
-
 class ListParameter(Parameter):
     
     def __init__(self, name, choices, unit=None, default=None):
@@ -233,23 +234,17 @@ class Procedure(object):
                 return False
         return True
     
-    def checkParameters(function):
+    def checkParameters(self):
         """ Raises an exception if any parameter is missing before calling
         the associated function. Ensures that each value can be set and
         got, which should cast it into the right format. Used as a decorator 
         @checkParameters on the enter method
         """
-        def wrapper(self):
-            for name, parameter in self._parameters.iteritems():
-                value = getattr(self, name)
-                if value is None:
-                    raise NameError("Missing %s '%s' in %s" % (
-                        self.parameter.__class__, name, self.__class__))
-                else:
-                    parameter.value = value
-                    setattr(self, name, parameter.value)
-            return function(self)
-        return wrapper
+        for name, parameter in self._parameters.iteritems():
+            value = getattr(self, name)
+            if value is None:
+                raise NameError("Missing %s '%s' in %s" % (
+                    parameter.__class__, name, self.__class__))
     
     def parameterValues(self):
         """ Returns a dictionary of all the Parameter values and grabs any 
@@ -301,7 +296,6 @@ class Procedure(object):
                     raise NameError("Parameter '%s' does not belong to '%s'" % (
                             name, repr(self)))
     
-    @checkParameters   
     def enter(self):
         pass
         
@@ -563,7 +557,10 @@ class Results(object):
                 procedure_class = search.group("class")
             elif line.startswith("\t"):
                 search = re.search("\t(?P<name>[^:]+):\s(?P<value>[^\s]+)(?:\s(?P<unit>.+))?", line)
-                parameters[search.group("name")] = (search.group("value"), search.group("unit"))
+                if search is None:
+                    raise Exception("Error parsing header line %s." % line)
+                else:
+                    parameters[search.group("name")] = (search.group("value"), search.group("unit"))
         if procedure_class is None:
             raise ValueError("Header does not contain the Procedure class")
         try:
