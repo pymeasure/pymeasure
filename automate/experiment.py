@@ -494,6 +494,11 @@ class Results(object):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
+        if procedure_class is not None:
+            procedure = procedure_class()
+        else:
+            procedure = None
+        
         header = header.split(Results.LINE_BREAK)
         procedure_module = None
         parameters = {}
@@ -509,16 +514,15 @@ class Results(object):
             elif line.startswith("\t"):
                 search = re.search("\t(?P<name>[^:]+):\s(?P<value>[^\s]+)(?:\s(?P<unit>.+))?", line)
                 parameters[search.group("name")] = (search.group("value"), search.group("unit"))
-        if procedure_class is None:
-            raise ValueError("Header does not contain the Procedure class")
-        try:
-            from importlib import import_module
-            module = import_module(procedure_module)
-            procedure_class = getattr(module, procedure_class)
-            
-            procedure = procedure_class()
-        except:
-            procedure = UnknownProcedure(parameters)
+        if procedure is None:
+            try:
+                from importlib import import_module
+                module = import_module(procedure_module)
+                procedure_class = getattr(module, procedure_class)
+                
+                procedure = procedure_class()
+            except:
+                raise Exception("Failed to automatically load procedure class, specify it as a load argument")
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameterObjects().iteritems():
             if parameter.name in parameters:
