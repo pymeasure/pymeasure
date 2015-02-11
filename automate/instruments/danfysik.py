@@ -212,7 +212,7 @@ class Danfysik8500(Instrument):
             raise Exception("Timing for Danfysik 8500 ramp sequence is out of range")
         for i in range(len(times)):
             self.write("WSA %i,%i,%i,%i" % (stack, int(6250*currents[i]), int(6250*currents[i+1]), times[i]))
-        self.write("MULT %i" % multiplier)
+        self.write("MULT %i,%i" % (stack, multiplier))
         
     def clearSequence(self, stack):
         """ Clears the sequence stack by number 0-15 """
