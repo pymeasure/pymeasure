@@ -198,7 +198,7 @@ class Danfysik8500(Instrument):
         self.startRamp()
 
     # self.setSequence(0, [0, 10], [0.01])
-    def setSequence(self, stack, currents, times, multiplier=0):
+    def setSequence(self, stack, currents, times, multiplier=999999):
         """ Sets up an arbitrary ramp profile with a list of currents (Amps)
         and a list of interval times (seconds) on the specified stack number (0-15)
         """
@@ -211,7 +211,8 @@ class Danfysik8500(Instrument):
         else:
             raise Exception("Timing for Danfysik 8500 ramp sequence is out of range")
         for i in range(len(times)):
-            self.write("WSA %i,%i,%i,%i" % (stack, int(6250*currents[i]), int(6250*currents[i+1]), times[i]))
+            self.write("WSA %i,%i,%i,%i" % (stack, int(6250*abs(currents[i])), 
+                        int(6250*abs(currents[i+1])), times[i]))
         self.write("MULT %i,%i" % (stack, multiplier))
         
     def clearSequence(self, stack):
