@@ -566,15 +566,16 @@ class Results(object):
                     raise Exception("Error parsing header line %s." % line)
                 else:
                     parameters[search.group("name")] = (search.group("value"), search.group("unit"))
-        if procedure_class is None:
-            raise ValueError("Header does not contain the Procedure class")
-        try:
-            from importlib import import_module
-            module = import_module(procedure_module)
-            procedure_class = getattr(module, procedure_class)
-            procedure = procedure_class()
-        except:
-            procedure = UnknownProcedure(parameters)
+        if procedure is None:
+            if procedure_class is None:
+                raise ValueError("Header does not contain the Procedure class")
+            try:
+                from importlib import import_module
+                module = import_module(procedure_module)
+                procedure_class = getattr(module, procedure_class)
+                procedure = procedure_class()
+            except:
+                procedure = UnknownProcedure(parameters)
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameterObjects().iteritems():
