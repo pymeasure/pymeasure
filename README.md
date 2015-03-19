@@ -1,20 +1,24 @@
-PyMeasure Python Package
+# PyMeasure Python Package #
 
-Project goals
+PyMeasure is a repository of instrument objects to make experimental measurements easy to design and execute. It includes a number of structures for handling the measured data and making graphical displays and user interfaces.
 
-1. To not re-invent anything done well by others!
-2. To build a repository of instrument classes
-3. To make relational data storage easy with databases and files
+### Requirements ###
 
-External Packages
+Numpy - Numerical Python, handles large data sets
+Pandas - Built on Numpy to make data management easier
+PyQt4 - Graphical interface library for cross-platform Qt applications
+PySide - Alternative to PyQt4
+PyQtGraph - Real-time graphical display for data
 
-- numpy, pandas -- data management
-- pyqt4 or pyside, pyqtgraph -- graphical display
 
-Install:
+### Install: ###
 
-Get the latest release from GitHub and install via the Python pip installer.
+Get the latest release from GitHub and install via the Python `pip` installer.
 
+```shell
 pip install PyMeasure-<version>.tar.gz
+```
 
-Super user privileges (sudo) may be required on Linux.
+### Usage: ###
+
+Full document ion is being written to describe the rich features available.
