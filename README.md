@@ -1,4 +1,4 @@
-![PyMeasure Python Package](docs/images/PyMeasure.png  =315x)
+<img alt="PyMeasure Python Package" src="docs/images/PyMeasure.png" width="315" />
 
 # PyMeasure Python Package #
 
