@@ -1,0 +1,5 @@
+Copyright Cornell University 2013-2015
+
+Authors: 
+    Colin Jermain <clj72@cornell.edu>
+    Graham Rowlands <ger66@cornell.edu>
