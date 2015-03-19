@@ -1,15 +1,15 @@
 from distutils.core import setup
 
 setup(
-    name='Automate',
+    name='PyMeasure',
     version='0.1.6',
     author='Colin Jermain',
     author_email='clj72@cornell.edu',
-    packages=['automate', 'automate.instruments', 'automate.composites'],
+    packages=['pymeasure', 'pymeasure.instruments', 'pymeasure.composites'],
     scripts=[],
     url='',
     license='LICENSE.txt',
-    description='Automation objects for instrument control',
+    description='Measurement automation library for Python instrument control',
     long_description=open('README').read(),
     install_requires=[
         "Numpy >= 1.6.1",

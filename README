@@ -1,4 +1,4 @@
-Automate Python Package
+PyMeasure Python Package
 
 Project goals
 
@@ -15,6 +15,6 @@ Install:
 
 Get the latest release from GitHub and install via the Python pip installer.
 
-pip install Automate-<version>.tar.gz
+pip install PyMeasure-<version>.tar.gz
 
 Super user privileges (sudo) may be required on Linux.
