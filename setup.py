@@ -10,7 +10,7 @@ setup(
     url='',
     license='LICENSE.txt',
     description='Measurement automation library for Python instrument control',
-    long_description=open('README').read(),
+    long_description=open('README.md').read(),
     install_requires=[
         "Numpy >= 1.6.1",
         "pandas >= 0.14",
