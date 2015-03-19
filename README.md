@@ -1,3 +1,5 @@
+![PyMeasure Python Package](docs/images/PyMeasure.png)
+
 # PyMeasure Python Package #
 
 PyMeasure is a repository of instrument objects to make experimental measurements easy to design and execute. It includes a number of structures for handling the measured data and making graphical displays and user interfaces.
