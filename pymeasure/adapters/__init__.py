@@ -24,18 +24,15 @@ THE SOFTWARE.
 
 """
 
-from insturment import Instrument
+from adapter import Adapter, FakeAdapter
 
- 
-def discreteTruncate(number, discreteSet):
-    """ Truncates the number to the closest element in the positive discrete set.
-    Returns False if the number is larger than the maximum value or negative.    
-    """
-    if number < 0: return False
-    discreteSet.sort()
-    for item in discreteSet:
-        if number <= item: return item
-    return False
-    
+try:
+    from pymeasure.adapters.visa import VISAAdapter
+except ImportError:
+    print("PyVISA library could not be loaded")
 
-class RangeException(Exception): pass
+try:
+    from pymeasure.adapters.serial import SerialAdapter
+    from pymeasure.adapters.prologix import PrologixAdapter            
+except ImportError:
+    print("PySerial library could not be loaded")
