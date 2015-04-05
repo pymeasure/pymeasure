@@ -1,16 +1,36 @@
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Classes for using PyQtGraph
-#
-# automate Python package
-# Authors: Colin Jermain, Graham Rowlands
-# Copyright: 2014 Cornell University
-#
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate.experiment import Results
+"""
+
+This file is part of the PyMeasure package.
+
+Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+"""
+
+from pymeasure.experiment import Results
+
 from PyQt4.QtCore import pyqtSignal, QObject
 from PyQt4.QtGui import QPixmap, QIcon, QColor
 import pyqtgraph as pg
 import numpy as np
+
 
 class ResultsCurve(pg.PlotDataItem):
     """ Creates a curve loaded dynamically from a file through the Results
@@ -50,6 +70,9 @@ class ResultsCurve(pg.PlotDataItem):
                         right=data[self.yerr],
                         beam=max(data[self.xerr], data[self.yerr])
                     )
+
+    #TODO: Add method for changing x and y
+
 
 class BufferCurve(pg.PlotDataItem):
     """ Creates a curve based on a predefined buffer size and allows
