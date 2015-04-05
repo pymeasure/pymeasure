@@ -1,12 +1,31 @@
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Comedi Helper functions -- Generalized DAQ Drivers 
-#
-# automate Python package
-# Authors: Colin Jermain, Graham Rowlands
-# Copyright: 2014 Cornell University
-#
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate.experiment import Procedure, Parameter, FloatParameter, IntegerParameter
+"""
+
+This file is part of the PyMeasure package.
+
+Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+"""
+
+from pymeasure.experiment import Procedure, Parameter, FloatParameter, IntegerParameter
+
 from pycomedi.subdevice import StreamingSubdevice
 from pycomedi.constant import *
 from pycomedi.constant import _NamedInt
@@ -15,6 +34,7 @@ from pycomedi.utility import inttrig_insn, Reader, CallbackReader
 import numpy as np
 from time import time, sleep
 from threading import Event
+
 
 def getAI(device, channel, range=None):
     """ Returns the analog input channel as specified for a given device    
@@ -25,7 +45,8 @@ def getAI(device, channel, range=None):
     if range is not None:
         ai.range = ai.find_range(unit=UNIT.volt, min=range[0], max=range[1])
     return ai
-        
+
+
 def getAO(device, channel, range=None):
     """ Returns the analog output channel as specified for a given device    
     """
@@ -35,6 +56,7 @@ def getAO(device, channel, range=None):
     if range is not None:
         ao.range = ao.find_range(unit=UNIT.volt, min=range[0], max=range[1])
     return ao
+
     
 def readAI(device, channel, range=None, count=1):
     """ Reads a single measurement (count==1) from the analog input channel 
@@ -47,6 +69,7 @@ def readAI(device, channel, range=None, count=1):
         return converter.to_physical(ai.data_read())
     else:
         return converter.to_physical(ai.data_read_n(count))
+
     
 def writeAO(device, channel, voltage, range=None):
     """ Writes a single voltage to the analog output channel of the
