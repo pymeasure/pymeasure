@@ -24,48 +24,52 @@ THE SOFTWARE.
 
 """
 
+import numpy as np
+
 
 class Adapter(object):
     """ Adapts between the Instrument object and the connection, to allow
     flexible use of different connection methods
     """
-    
+
     def write(self, command):
         """ Writes a command """
         raise NameError("Adapter (sub)class has not implemented writing")
-        
+
     def ask(self, command):
         """ Writes the command and returns the read result """
         self.write(command)
         return self.read()
-        
+
     def read(self):
         """ Reads until the buffer is empty and returns the result """
         raise NameError("Adapter (sub)class has not implemented reading")
-        
+
     def values(self, command):
         """ Returns a list of values from the string read """
-        raise NameError("Adapter (sub)class has not implemented the values method")
-        
+        raise NameError("Adapter (sub)class has not implemented the "
+                        "values method")
+
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data """
-        raise NameError("Adapter (sub)class has not implemented the binary_values method")
+        raise NameError("Adapter (sub)class has not implemented the "
+                        "binary_values method")
 
 
 class FakeAdapter(Adapter):
     """Fake adapter for debugging purposes"""
-    
+
     def read(self):
         return "Fake string!"
-        
+
     def write(self, command):
         pass
-        
+
     def values(self, command):
         return [1.0, 2.0, 3.0]
-        
+
     def binary_values(self, command):
         return np.array([2, 3, 7, 8, 1])
-        
+
     def __repr__(self):
         return "<FakeAdapter>"

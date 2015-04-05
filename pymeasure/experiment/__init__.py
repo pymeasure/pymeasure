@@ -24,8 +24,6 @@ THE SOFTWARE.
 
 """
 
-import logging
-
 from parameters import (Parameter, IntegerParameter, FloatParameter,
                         VectorParameter, ListParameter)
 from procedure import Procedure, UnknownProcedure

@@ -35,12 +35,12 @@ class Listener(Thread):
     from the measurement. Each Listener has its own queue
     that should be filled with measurement data.
     """
-        
+
     def __init__(self,):
         self.abortEvent = Event()
         self.queue = Queue()
         super(Listener, self).__init__()
-        
+
     def join(self, timeout=0):
         self.abortEvent.wait(timeout)
         if not self.abortEvent.isSet():
@@ -49,13 +49,13 @@ class Listener(Thread):
 
 
 class ResultsWriter(Listener):
-    """Writes the incoming data through the Results object to 
+    """Writes the incoming data through the Results object to
     """
-    
+
     def __init__(self, results):
         self.results = results
         super(ResultsWriter, self).__init__()
-        
+
     def run(self):
         with open(self.results.data_filename, 'a', 0) as handle:
             while not self.abortEvent.isSet():
@@ -65,7 +65,7 @@ class ResultsWriter(Listener):
 
 
 class AverageWriter(ResultsWriter):
-    
+
     def __init__(self, results):
         super(AverageWriter, self).__init__(results)
         self.loop_back = Event()
@@ -89,7 +89,8 @@ class AverageWriter(ResultsWriter):
                         handle.seek(current_pointer)
                         new_data = {}
                         for key, value in old_data.iteritems():
-                            new_data[key] = (value * float(current_trace-1) + data[key])/float(current_trace)
+                            new_data[key] = (value * float(current_trace-1) +
+                                             data[key])/float(current_trace)
                         handle.write(self.results.format(new_data))
                     else:
                         handle.write(self.results.format(data))
@@ -101,12 +102,12 @@ class AverageManager(Listener):
     """
 
     LABEL = 'Trace'
-    
+
     def __init__(self, average_results, traces=1):
         self.average_results = average_results
         self.traces = traces
         super(TraceAverageWriter, self).__init__()
-        
+
     def run(self):
         average_writer = AverageWriter(self.average_results)
         average_writer.start()
@@ -122,24 +123,25 @@ class AverageManager(Listener):
                         if trace >= 2:
                             average_writer.loop_back.set()
                         self.results.append(Results(
-                            self.average_results.procedure, 
+                            self.average_results.procedure,
                             self.trace_filename(trace)
                         ))
-                        self.writers.append(ResultsWriter(self.results[trace-1]))
+                        self.writers.append(ResultsWriter(
+                            self.results[trace-1]))
                         self.writers[trace-1].start()
                     self.writers[trace-1].queue.put(data)
                 average_writer.queue.put(data)
-                
 
         average_writer.abortEvent.set()
-    
+
     @property
     def trace_filename(self, trace):
         """ Return the current trace filename """
         if self.traces < 2:
             return self.average_results.data_filename
         else:
-            return self.average_results.data_filename.replace(".csv", "_#%d.csv" % trace)
+            return self.average_results.data_filename.replace(
+                    ".csv", "_#%d.csv" % trace)
 
 
 class ETADisplay(Listener):
@@ -148,12 +150,12 @@ class ETADisplay(Listener):
     signifies the number of times the progress queue is expected to
     be updated (once per loop).
     """
-    
+
     def __init__(self, count):
         from eta import ETA
-        self.eta = eta = ETA(count)
+        self.eta = ETA(count)
         super(ETADisplay, self).__init__()
-        
+
     def run(self):
         while not self.abortEvent.isSet():
             if not self.queue.empty():

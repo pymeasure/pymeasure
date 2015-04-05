@@ -34,7 +34,7 @@ class Parameter(QDoubleSpinBox):
         self.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.validator = QDoubleValidator(-1.0e9, 1.0e9, 10, self)
         self.validator.setNotation(QDoubleValidator.ScientificNotation)
-        self.setMaximum( 1e12)
+        self.setMaximum(1e12)
         self.setMinimum(-1e12)
 
         # This is the physical unit associated with this value

@@ -24,10 +24,10 @@ THE SOFTWARE.
 
 """
 
-from adapter import Adapter
+from pymeasure.adapters.serial import SerialAdapter
 
 import serial
-import numpy as np
+from time import sleep
 
 
 class PrologixAdapter(SerialAdapter):
@@ -43,7 +43,7 @@ class PrologixAdapter(SerialAdapter):
     Then reload the udev rules with:
     sudo udevadm control --reload-rules
     sudo udevadm trigger
-        
+    
     """
     def __init__(self, port, address=None, **kwargs):
         self.address = address
@@ -57,9 +57,9 @@ class PrologixAdapter(SerialAdapter):
             self.setDefaults()
 
     def setDefaults(self):
-        self.write("++auto 0") # Turn off auto read-after-write
-        self.write("++eoi 1") # Append end-of-line to commands
-        self.write("++eos 2") # Append line-feed to commands
+        self.write("++auto 0")  # Turn off auto read-after-write
+        self.write("++eoi 1")  # Append end-of-line to commands
+        self.write("++eos 2")  # Append line-feed to commands
 
     def __del__(self):
         if self.connection.isOpen():
@@ -69,24 +69,24 @@ class PrologixAdapter(SerialAdapter):
         if self.address is not None:
             self.connection.write("++addr %d\n" % self.address)
         self.connection.write(command + "\n")
-        
+
     def read(self):
         """ Reads until timeout """
         self.write("++read")
         return "\n".join(self.connection.readlines())
-        
+
     def gpib(self, gpib_address):
-        """ Returns and PrologixAdapter object that references the GPIB 
+        """ Returns and PrologixAdapter object that references the GPIB
         address specified, while sharing the Serial connection with other
-        calls of this function 
+        calls of this function
         """
         return PrologixAdapter(self.connection, gpib_address)
-        
+
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Wait for a SRQ, and leaves the bit high """
         while int(self.ask("++srq")) != 1:
-            time.sleep(delay)
-        
+            sleep(delay)
+
     def __repr__(self):
         if self.address:
             return "<PrologixAdapter(port='%s',address=%d)>" % (

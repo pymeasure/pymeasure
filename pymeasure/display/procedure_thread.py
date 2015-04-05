@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 from pymeasure.experiment import Procedure
 
+from threading import Event
 from PyQt4.QtCore import QThread, pyqtSignal
 
 
@@ -33,18 +34,18 @@ class QProcedureThread(QThread):
     """Encapsulates the Procedure to be run within a QThread,
     compatible with PyQt4.
     """
-    
-    data = pyqtSignal(dict) 
+
+    data = pyqtSignal(dict)
     progress = pyqtSignal(float)
     status_changed = pyqtSignal(int)
     finished = pyqtSignal()
-    
+
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
         self.procedure = None
         self.abortEvent = Event()
         self.abortEvent.clear()
-    
+
     def load(self, procedure):
         if not isinstance(procedure, Procedure):
             raise ValueError("Loading object must be inhereted from the"
@@ -54,10 +55,11 @@ class QProcedureThread(QThread):
         self.procedure.hasAborted = self.hasAborted
         self.procedure.emitData = self.data.emit
         self.procedure.emitProgress = self.progress.emit
-        
+
     def run(self):
         if self.procedure is None:
-            raise Exception("Attempting to run Procedure object before loading")
+            raise Exception("Attempting to run Procedure object "
+                            "before loading")
         self.procedure.status = Procedure.RUNNING
         self.status_changed.emit(self.procedure.status)
         self.procedure.enter()
@@ -66,7 +68,10 @@ class QProcedureThread(QThread):
         except:
             self.procedure.status = Procedure.FAILED
             self.status_changed.emit(self.procedure.status)
-            import sys, traceback
+
+            import sys
+            import traceback
+
             traceback.print_exc(file=sys.stdout)
         finally:
             self.procedure.exit()
@@ -75,16 +80,16 @@ class QProcedureThread(QThread):
                 self.status_changed.emit(self.procedure.status)
                 self.progress.emit(100.)
             self.finished.emit()
-            self.abortEvent.set() # ensure the thread joins
-    
+            self.abortEvent.set()  # ensure the thread joins
+
     def hasAborted(self):
         return self.abortEvent.isSet()
-    
+
     def abort(self):
         self.abortEvent.set()
         self.procedure.status = Procedure.ABORTED
         self.status_changed.emit(self.procedure.status)
-        
+
     def join(self, timeout=0):
         self.abortEvent.wait(timeout)
         if not self.abortEvent.isSet():

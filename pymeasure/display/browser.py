@@ -25,40 +25,42 @@ THE SOFTWARE.
 """
 
 from pymeasure.experiment import Procedure
-from pymeasure.display import QProcedureThread
 
-from PyQt4.QtGui import QTreeWidget, QTreeWidgetItem
+from os.path import basename
+
+from PyQt4.QtGui import (QTreeWidget, QTreeWidgetItem, QPixmap,
+                         QIcon, QProgressBar)
 from PyQt4.QtCore import Qt
 
 
 class BrowserItem(QTreeWidgetItem):
-    
+
     def __init__(self, results, curve, parent=None):
         super(BrowserItem, self).__init__(parent)
-        
+
         pixelmap = QPixmap(24, 24)
         pixelmap.fill(curve.opts['pen'].color())
         self.setIcon(0, QIcon(pixelmap))
         self.setFlags(self.flags() | Qt.ItemIsUserCheckable)
         self.setCheckState(0, 2)
         self.setText(1, basename(results.data_filename))
-        
+
         self.setStatus(results.procedure.status)
-        
+
         self.progressbar = QProgressBar()
-        self.progressbar.setRange(0,100)
-        self.progressbar.setValue(0)    
-    
+        self.progressbar.setRange(0, 100)
+        self.progressbar.setValue(0)
+
     def setStatus(self, status):
         status_label = {
             Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
-            Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted', 
+            Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted',
             Procedure.FINISHED: 'Finished'}
         self.setText(3, status_label[status])
-        
+
         if status == Procedure.FAILED or status == Procedure.ABORTED:
             # Set progress bar color to red
-            return # Commented this out
+            return  # Commented this out
             self.progressbar.setStyleSheet("""
             QProgressBar {
                 border: 1px solid #AAAAAA;
@@ -69,39 +71,39 @@ class BrowserItem(QTreeWidgetItem):
                 background-color: red;
             }
             """)
-            
 
 
 class Browser(QTreeWidget):
-        
+
     def __init__(self, procedure_class, parameters, parent=None):
         super(Browser, self).__init__(parent)
         self.procedure_parameters = parameters
         self.procedure_class = procedure_class
-        
+
         header_labels = ["Graph", "Filename", "Progress", "Status"]
-        parameter_objects = procedure_class().parameterObjects() # Get the default parameters
+        # Get the default parameters
+        parameter_objects = procedure_class().parameterObjects()
         for parameter in parameters:
             if parameter in parameter_objects:
                 header_labels.append(parameter_objects[parameter].name)
             else:
                 raise Exception("Invalid parameter input for a Browser column")
-        
+
         self.setColumnCount(len(header_labels))
         self.setHeaderLabels(header_labels)
-        
+
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)
-        
+
     def add(self, experiment):
         if not isinstance(experiment.procedure, self.procedure_class):
             raise Exception("This ResultsBrowser only supports '%s' objects")
-        
+
         item = experiment.browser_item
         parameters = experiment.procedure.parameterObjects()
         for i, column in enumerate(self.procedure_parameters):
             item.setText(i+4, str(parameters[column]))
-        
+
         self.addTopLevelItem(item)
         self.setItemWidget(item, 2, item.progressbar)
-        return item 
+        return item

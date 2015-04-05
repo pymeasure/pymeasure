@@ -24,9 +24,11 @@ THE SOFTWARE.
 
 """
 
+import logging
 
 try:
     from procedure_thread import QProcedureThread
+    from listeners import QResultsWriter
 except ImportError:
     logging.warning("PyQt can not be imported")
 

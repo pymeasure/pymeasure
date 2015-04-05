@@ -28,7 +28,7 @@ THE SOFTWARE.
 class Parameter(object):
     """ Encapsulates the information for an experiment parameter
     with information about the name, and unit if supplied.
-    
+
     Parameter name can not contain a colon ':'.
     """
 
@@ -37,18 +37,18 @@ class Parameter(object):
         self._value = default
         self.unit = unit
         self.default = default
-        
+
     @property
     def value(self):
         if self.isSet():
             return self._value
         else:
             raise ValueError("Parameter value is not set")
-            
+
     @value.setter
     def value(self, value):
         self._value = value
-        
+
     def isSet(self):
         return self._value is not None
 
@@ -59,7 +59,7 @@ class Parameter(object):
             if self.unit:
                 result += " %s" % self.unit
         return result
-        
+
     def __repr__(self):
         result = "<Parameter(name='%s'" % self.name
         if self.isSet():
@@ -70,14 +70,14 @@ class Parameter(object):
 
 
 class IntegerParameter(Parameter):
-    
+
     @property
     def value(self):
         if self.isSet():
             return int(self._value)
         else:
             raise ValueError("Parameter value is not set")
-        
+
     @value.setter
     def value(self, value):
         try:
@@ -85,21 +85,21 @@ class IntegerParameter(Parameter):
         except ValueError:
             raise ValueError("IntegerParameter given non-integer value of "
                              "type '%s'" % type(value))
-                             
+
     def __repr__(self):
         result = super(IntegerParameter, self).__repr__()
         return result.replace("<Parameter", "<IntegerParameter", 1)
 
 
 class FloatParameter(Parameter):
-    
+
     @property
     def value(self):
         if self.isSet():
             return float(self._value)
         else:
             raise ValueError("Parameter value is not set")
-    
+
     @value.setter
     def value(self, value):
         try:
@@ -107,7 +107,7 @@ class FloatParameter(Parameter):
         except ValueError:
             raise ValueError("FloatParameter given non-float value of "
                              "type '%s'" % type(value))
-    
+
     def __repr__(self):
         result = super(FloatParameter, self).__repr__()
         return result.replace("<Parameter", "<FloatParameter", 1)
@@ -115,9 +115,9 @@ class FloatParameter(Parameter):
 
 class VectorParameter(Parameter):
     def __init__(self, name, length=3, unit=None, default=None):
-        self.name    = name
-        self._value  = default
-        self.unit    = unit
+        self.name = name
+        self._value = default
+        self.unit = unit
         self.default = default
         self._length = length
 
@@ -127,14 +127,15 @@ class VectorParameter(Parameter):
             return [float(ve) for ve in self._value]
         else:
             raise ValueError("Parameter value is not set")
-    
+
     @value.setter
     def value(self, value):
         # Strip initial and final brackets
         if isinstance(value, basestring):
             if (value[0] != '[') or (value[-1] != ']'):
-                raise ValueError("VectorParameter must be passed a vector denoted"
-                                 " by square brackets if initializing by string.")
+                raise ValueError("VectorParameter must be passed a vector"
+                                 " denoted by square brackets if initializing"
+                                 " by string.")
             raw_list = value[1:-1].split(",")
         elif isinstance(value, (list, tuple)):
             raw_list = value
@@ -173,12 +174,12 @@ class VectorParameter(Parameter):
 
 
 class ListParameter(Parameter):
-    
+
     def __init__(self, name, choices, unit=None, default=None):
-        self.name     = name
-        self._value   = default
-        self.unit     = unit
-        self.default  = default
+        self.name = name
+        self._value = default
+        self.unit = unit
+        self.default = default
         self._choices = choices
 
     @property
@@ -187,13 +188,14 @@ class ListParameter(Parameter):
             return self._value
         else:
             raise ValueError("Parameter value is not set")
-            
+
     @value.setter
     def value(self, value):
         if value in self._choices:
             self._value = value
         else:
-            raise ValueError("Invalid choice for parameter. Must be one of %s" % str(self._choices))
-        
+            raise ValueError("Invalid choice for parameter. "
+                             "Must be one of %s" % str(self._choices))
+
     def isSet(self):
         return self._value is not None
