@@ -24,6 +24,21 @@ THE SOFTWARE.
 
 """
 
-from adapters import LakeShoreUSBAdapter
-from lakeshore425 import LakeShore425
-from lakeshore331 import LakeShore331
+from pymeasure.instruments import Instrument
+
+
+class LakeShore331(Instrument):
+    """Instrument object for the Lake Shore 331 Temperature Controller"""
+
+    def __init__(self, adapter, **kwargs):
+        super(Lakeshore331, self).__init__(
+            adapter,
+            "Lakeshore 331 Temperature Controller",
+            **kwargs
+        )
+
+    @property
+    def temperature(self):
+        """ Temperature in Kelvin
+        """
+        return self.ask("KRDG?")
