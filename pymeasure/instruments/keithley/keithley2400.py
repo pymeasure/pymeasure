@@ -24,51 +24,61 @@ THE SOFTWARE.
 
 """
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, RangeException
+from pymeasure.adapters import PrologixAdapter
 
 import visa
 import numpy as np
 import time
 import logging
+from StringIO import StringIO
 
 
 class Keithley2400(Instrument):
     """This is the class for the Keithley 2000-series instruments"""
+
     def __init__(self, resourceName, **kwargs):
-        super(Keithley2400, self).__init__(resourceName, "Keithley 2400 Sourcemeter", **kwargs)
+        super(Keithley2400, self).__init__(
+            resourceName,
+            "Keithley 2400 Sourcemeter",
+            **kwargs
+        )
 
         self.write("format:data ascii")
         self.values_format = visa.ascii
         self.reset()
-        self.sourceMode = None
+        self.source_mode = None
 
         # Simple control parameters
-        self.add_control("source_voltage",  ":sour:volt?",    "sour:volt:lev %g;")
-        self.add_control("source_current",  ":sour:curr?",    "sour:curr:lev %g;")
-        
+        self.add_control("source_voltage", ":sour:volt?", "sour:volt:lev %g;")
+        self.add_control("source_current", ":sour:curr?", "sour:curr:lev %g;")
+
         # Simple measurements
-        self.add_measurement("voltage",    ":read?")
-        self.add_measurement("current",    ":read?")
+        self.add_measurement("voltage", ":read?")
+        self.add_measurement("current", ":read?")
         self.add_measurement("resistance", ":read?")
 
         self.add_measurement("buffer_count", ":TRAC:POIN:ACT?")
-        self.add_control("voltage_range", ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %0.2f") # TODO: Validate only -+ 210 V
-        self.add_control("current_range", ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG %0.2f") # TODO: Validate only -+ 1.05 A
-        self.add_control("resistance_range", ":RES:RANG?", ":RES:RANG %e") # TODO: Validate only 0 to 210 MOhm
+        self.add_control("voltage_range", ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %0.2f")
+        # TODO: Validate only -+ 210 V
+        self.add_control("current_range", ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG %0.2f")
+        # TODO: Validate only -+ 1.05 A
+        self.add_control("resistance_range", ":RES:RANG?", ":RES:RANG %e")
+        # TODO: Validate only 0 to 210 MOhm
 
-    def beep(self, freq, dur):
-        self.write(":SYST:BEEP %g, %g" % (freq, dur))
+    def beep(self, frequency, duration):
+        self.write(":SYST:BEEP %g, %g" % (frequency, duration))
 
-    def triad(self, baseFreq, dur):
+    def triad(self, base_frequency, duration):
         import time
-        self.beep(baseFreq, dur)
-        time.sleep(dur)
-        self.beep(baseFreq*5.0/4.0, dur)
-        time.sleep(dur)
-        self.beep(baseFreq*6.0/4.0, dur)
+        self.beep(base_frequency, duration)
+        time.sleep(duration)
+        self.beep(base_frequency*5.0/4.0, duration)
+        time.sleep(duration)
+        self.beep(base_frequency*6.0/4.0, duration)
 
     def check_errors(self):
-        errors = map(int,self.values(":system:error?"))
+        errors = map(int, self.values(":system:error?"))
         for err in errors:
             if err != 0:
                 logging.info("Keithley Encountered error: %d\n" % err)
@@ -76,287 +86,325 @@ class Keithley2400(Instrument):
     def reset(self):
         self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
 
-    def rampToCurrent(self, targetCurrent, numSteps=30, pause=20e-3):
-        currents = np.linspace(self.getSourceCurrent(), targetCurrent, numSteps)
+    def ramp_to_current(self, target_current, steps=30, pause=20e-3):
+        currents = np.linspace(
+            self.source_current,
+            target_current,
+            steps
+        )
         for current in currents:
             self.source_current = current
             time.sleep(pause)
 
-    def rampToVoltage(self, targetVoltage, numSteps=30, pause=20e-3):
-        voltages = np.linspace(self.getSourceVoltage(), targetVoltage, numSteps)
+    def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
+        voltages = np.linspace(
+            self.getSourceVoltage(),
+            target_voltage,
+            steps
+        )
         for voltage in voltages:
             self.source_voltage = voltage
             time.sleep(pause)
 
-    def setTriggerBus(self):
-        cmd = ":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;"
-        self.write(cmd)
+    def set_trigger_bus(self):
+        self.write(":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;")
 
-    def setTriggerCounts(self, arm, trigger):
+    def set_trigger_counts(self, arm, trigger):
         """ Sets the number of counts for both the sweeps (arm) and the
         points in those sweeps (trigger), where the total number of
         points can not exceed 2500
         """
         if arm * trigger > 2500 or arm * trigger < 0:
-            raise RangeException("Keithley 2400 has a combined maximum of 2500 counts")
+            raise RangeException("Keithley 2400 has a combined maximum "
+                                 "of 2500 counts")
         if arm < trigger:
             self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
         else:
             self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
-    
-    def setContinous(self):
+
+    def set_continous(self):
         """ Sets the Keithley to continously read samples
         and turns off any buffer or output triggering
         """
-        self.disableBuffer()
-        self.disableOutputTrigger()
-        self.setImmediateTrigger()
-    
-    def setImmediateTrigger(self):
+        self.disable_buffer()
+        self.disable_output_trigger()
+        self.set_immediate_trigger()
+
+    def set_immediate_trigger(self):
         """ Sets up the measurement to be taken with the internal
         trigger at the maximum sampling rate
         """
         self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
 
-    def setTimedArm(self, interval):
+    def set_timed_arm(self, interval):
         """ Sets up the measurement to be taken with the internal
         trigger at a variable sampling rate defined by the interval
         in seconds between sampling points
         """
         if interval > 99999.99 or interval < 0.001:
-            raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
+            raise RangeException("Keithley 2400 can only be time"
+                                 " triggered between 1 mS and 1 Ms")
         self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
-    
-    def setExternalTrigger(self, line=1):
+
+    def set_external_trigger(self, line=1):
         """ Sets up the measurments to be taken on the specified
         line of an external trigger
         """
         cmd = ":ARM:SOUR TLIN;:TRIG:SOUR TLIN;"
         cmd += ":ARM:ILIN %d;:TRIG:ILIN %d;" % (line, line)
         self.write(cmd)
-    
-    def setOutputTrigger(self, line=1, after='DEL'):
+
+    def set_output_trigger(self, line=1, after='DEL'):
         """ Sets up an output trigger on the specified trigger link
         line number, with the option of supplyiny the part of the
         measurement after which the trigger should be generated
         (default to Delay, which is right before the measurement)
         """
         self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
-    
-    def disableOutputTrigger(self):
+
+    def disable_output_trigger(self):
         """ Disables the output trigger for the Trigger layer
         """
         self.write(":TRIG:OUTP NONE")
 
-    def setBuffer(self, numPoints=64, delay=0):
+    def set_buffer(self, points=64, delay=0):
         # TODO: Check if :STAT:PRES is needed (was in Colin's old code
         self.write(":*CLS;*SRE 1;:STAT:MEAS:ENAB 512;")
-        self.write(":TRACE:CLEAR;:TRAC:POIN %d;:TRIG:COUN %d;:TRIG:delay %f;" % (numPoints, numPoints, 1.0e-3*delay))
+        self.write(":TRACE:CLEAR;"
+                   ":TRAC:POIN %d;:TRIG:COUN %d;:TRIG:delay %f;" % (
+                        points, points, 1.0e-3*delay))
         self.write(":TRAC:FEED SENSE;:TRAC:FEED:CONT NEXT;")
         self.check_errors()
 
-    def isBufferFull(self):
+    def is_buffer_full(self):
         """ Returns True if the buffer is full of measurements """
         return int(self.ask("*STB?;")) == 65
-    
-    def waitForBuffer(self, abortEvent=None, timeOut=60, timeStep=0.01):
+
+    def wait_for_buffer(self, has_aborted=lambda: False,
+                        time_out=60, time_step=0.01):
         """ Blocks waiting for a full buffer or an abort event with timing
         set in units of seconds
         """
+        # self.connection.wait_for_srq()
         i = 0
-        while not self.isBufferFull() and i < (timeOut / timeStep):
-            time.sleep(timeStep)
+        while not self.is_buffer_full() and i < (time_out / time_step):
+            time.sleep(time_step)
             i += 1
-            if abortEvent is not None and abortEvent.isSet():
+            if has_aborted():
                 return False
         if not self.isBufferFull():
             raise Exception("Timeout waiting for Keithley 2400 buffer to fill")
 
-    def getBuffer(self):
-        return np.loadtxt(StringIO(self.ask(":TRAC:DATA?")), dtype=np.float32,
-                    delimiter=',')
-   
-    def startBuffer(self):
+    def get_buffer(self):
+        return np.loadtxt(
+            StringIO(self.ask(":TRAC:DATA?")),
+            dtype=np.float32,
+            delimiter=','
+        )
+
+    def start_buffer(self):
         self.write(":INIT")
 
-    def resetBuffer(self):
+    def reset_buffer(self):
         self.ask("status:measurement?")
         self.write("trace:clear; feed:control next")
 
-    def stopBuffer(self):
+    def stop_buffer(self):
         """ Aborts the arming and triggering sequence and uses
         a Selected Device Clear (SDC) if possible
         """
         if type(self.connection) is PrologixAdapter:
             self.write("++clr")
         else:
-            self.write(":ABOR")        
+            self.write(":ABOR")
 
-    def disableBuffer(self):
+    def disable_buffer(self):
         """ Disables the connection between measurements and the
         buffer, but does not abort the measurement process
         """
         self.write(":TRAC:FEED:CONT NEV")
-    
-    def waitForBuffer(self):
-        self.connection.wait_for_srq()
-    
-    def getMeans(self):
-        """ Returns the calculated means for voltage, current, and resistance
-        from the buffer data  as a list
+
+    @property
+    def means(self):
+        """ Returns the calculated means (averages) for voltage,
+        current, and resistance from the buffer data  as a list
         """
         return self.values(":CALC3:FORM MEAN;:CALC3:DATA?;")
-        
-    def getMaximums(self):
-        """ Returns the calculated maximums for voltage, current, and 
-        resistance from the buffer data as a list 
+
+    @property
+    def maximums(self):
+        """ Returns the calculated maximums for voltage, current, and
+        resistance from the buffer data as a list
         """
         return self.values(":CALC3:FORM MAX;:CALC3:DATA?;")
-        
-    def getMinimums(self):
-        """ Returns the calculated minimums for voltage, current, and 
-        resistance from the buffer data as a list 
+
+    @property
+    def minimums(self):
+        """ Returns the calculated minimums for voltage, current, and
+        resistance from the buffer data as a list
         """
         return self.values(":CALC3:FORM MIN;:CALC3:DATA?;")
-        
-    def getStandardDeviations(self):
-        """ Returns the calculated standard deviations for voltage, current, 
-        and resistance from the buffer data as a list
-        """    
+
+    @property
+    def standard_devs(self):
+        """ Returns the calculated standard deviations for voltage,
+        current, and resistance from the buffer data as a list
+        """
         return self.values(":CALC3:FORM SDEV;:CALC3:DATA?;")
-        
-    def getVoltageMean(self):
+
+    @property
+    def mean_voltage(self):
         """ Returns the mean voltage from the buffer """
-        return self.getMeans()[0]
-        
-    def getVoltageMax(self):
+        return self.means[0]
+
+    @property
+    def max_voltage(self):
         """ Returns the maximum voltage from the buffer """
-        return self.getMaximums()[0]
-        
-    def getVoltageMin(self):
+        return self.maximums[0]
+
+    @property
+    def min_voltage(self):
         """ Returns the minimum voltage from the buffer """
-        return self.getMinimums()[0]
+        return self.minimums[0]
 
-    def getVoltageStd(self):
+    @property
+    def std_voltage(self):
         """ Returns the voltage standard deviation from the buffer """
-        return self.getStandardDeviations()[0]
+        return self.standard_devs[0]
 
-    def getCurrentMean(self):
+    @property
+    def mean_current(self):
         """ Returns the mean current from the buffer """
-        return self.getMeans()[1]
-        
-    def getCurrentMax(self):
+        return self.means[1]
+
+    @property
+    def max_current(self):
         """ Returns the maximum current from the buffer """
-        return self.getMaximums()[1]
-        
-    def getCurrentMin(self):
+        return self.maximums[1]
+
+    @property
+    def min_current(self):
         """ Returns the minimum current from the buffer """
-        return self.getMinimums()[1]
+        return self.mininums[1]
 
-    def getCurrentStd(self):
+    @property
+    def std_current(self):
         """ Returns the current standard deviation from the buffer """
-        return self.getStandardDeviations()[1]
+        return self.standard_devs[1]
 
-    def getResistanceMean(self):
+    @property
+    def mean_resistance(self):
         """ Returns the mean resistance from the buffer """
-        return self.getMeans()[2]
-        
-    def getResistanceMax(self):
-        """ Returns the maximum resistance from the buffer """
-        return self.getMaximums()[2]
-        
-    def getResistanceMin(self):
-        """ Returns the minimum resistance from the buffer """
-        return self.getMinimums()[2]
+        return self.means[2]
 
-    def getResistanceStd(self):
+    @property
+    def max_resistance(self):
+        """ Returns the maximum resistance from the buffer """
+        return self.maximums()[2]
+
+    @property
+    def min_resistance(self):
+        """ Returns the minimum resistance from the buffer """
+        return self.minimums[2]
+
+    @property
+    def std_resistance(self):
         """ Returns the resistance standard deviation from the buffer """
-        return self.getStandardDeviations()[2]
+        return self.standard_devs()[2]
 
     @property
     def wires(self):
         val = int(self.values(':system:rsense?'))
         return (4 if val == 1 else 2)
+
     @wires.setter
     def wires(self, wires):
         wires = int(wires)
-        if (wires==2):
+        if (wires == 2):
             self.write(":SYSTem:RSENse 0")
-        elif (wires==4):
+        elif (wires == 4):
             self.write(":SYSTem:RSENse 1")
 
-    # One must seemingly configure the measurement before the source to avoid potential range issues
-    def measureResistance(self, NPLC=1, rangeR=1000.0, autoRange=True):
+    def measure_resistance(self, nplc=1, resistance=1000.0, auto_range=True):
+        """ Sets up to measure resistance
+        """
         logging.info("<i>%s</i> is measuring resistance." % self.name)
-        self.write(":sens:func \"res\";:sens:res:mode man;:sens:res:nplc %f;:form:elem res;" % NPLC)
-        if autoRange:
+        self.write(":sens:func \"res\";"
+                   ":sens:res:mode man;"
+                   ":sens:res:nplc %f;:form:elem res;" % nplc)
+        if auto_range:
             self.write(":sens:res:rang:auto 1;")
         else:
-            self.write(":sens:res:rang:auto 0;:sens:res:rang %g" % rangeR)
+            self.write(":sens:res:rang:auto 0;:sens:res:rang %g" % resistance)
         self.check_errors()
 
-    def measureVoltage(self, NPLC=1, rangeV=1000.0, autoRange=True):
+    def measure_voltage(self, nplc=1, voltage=1000.0, auto_range=True):
+        """ Sets up to measure voltage
+        """
         logging.info("<i>%s</i> is measuring voltage." % self.name)
-        self.write(":sens:func \"volt\";:sens:volt:nplc %f;:form:elem volt;" % NPLC)
-        if autoRange:
+        self.write(":sens:func \"volt\";"
+                   ":sens:volt:nplc %f;:form:elem volt;" % nplc)
+        if auto_range:
             self.write(":sens:volt:rang:auto 1;")
         else:
-            self.write(":sens:volt:rang:auto 0;:sens:volt:rang %g" % rangeV)
+            self.write(":sens:volt:rang:auto 0;:sens:volt:rang %g" % voltage)
         self.check_errors()
 
-    def measureCurrent(self, NPLC=1, rangeI=1000.0, autoRange=True):
+    def measure_current(self, nplc=1, current=1000.0, auto_range=True):
         logging.info("<i>%s</i> is measuring current." % self.name)
-        self.write(":sens:func \"curr\";:sens:curr:nplc %f;:form:elem curr;" % NPLC)
-        if autoRange:
+        self.write(":sens:func \"curr\";"
+                   ":sens:curr:nplc %f;:form:elem curr;" % nplc)
+        if auto_range:
             self.write(":sens:curr:rang:auto 1;")
         else:
-            self.write(":sens:curr:rang:auto 0;:sens:curr:rang %g" % rangeI)
+            self.write(":sens:curr:rang:auto 0;:sens:curr:rang %g" % current)
         self.check_errors()
 
-    def sourceCurrent(self, sourceI=0.00e-3, compV=0.1, rangeI=1.0e-3, autoRange=True):
+    def config_current_source(self, source_current=0.00e-3,
+                              complicance_voltage=0.1, current_range=1.0e-3,
+                              auto_range=True):
+        """ Set up to source current
+        """
         logging.info("<i>%s</i> is sourcing current." % self.name)
-        self.sourceMode = "Current"
-        if autoRange:
-            self.write(":sour:func curr;:sour:curr:rang:auto 1;:sour:curr:lev %g;" % sourceI)
+        self.source_mode = "Current"
+        if auto_range:
+            self.write(":sour:func curr;"
+                       ":sour:curr:rang:auto 1;"
+                       ":sour:curr:lev %g;" % source_current)
         else:
-            self.write(":sour:func curr;:sour:curr:rang:auto 0;:sour:curr:rang %g;:sour:curr:lev %g;" % (rangeI, sourceI))
-        self.write(":sens:volt:prot %g;" % compV)
+            self.write(":sour:func curr;"
+                       ":sour:curr:rang:auto 0;"
+                       ":sour:curr:rang %g;:sour:curr:lev %g;" % (
+                            current_range, source_current))
+        self.write(":sens:volt:prot %g;" % complicance_voltage)
         self.check_errors()
 
-    def sourceVoltage(self, sourceV=0.00e-3, compI=0.1, rangeI=2.0, rangeV=2.0, autoRange=True):
+    def config_voltage_source(self, source_voltage=0.00e-3,
+                              compliance_current=0.1, current_range=2.0,
+                              voltage_range=2.0, auto_range=True):
+        """ Set up to source voltage
+        """
         logging.info("<i>%s</i> is sourcing voltage." % self.name)
-        self.sourceMode = "Voltage"
-        if autoRange:
-            self.write("sour:func volt;:sour:volt:rang:auto 1;:sour:volt:lev %g;" % sourceV)
+        self.source_mode = "Voltage"
+        if auto_range:
+            self.write("sour:func volt;"
+                       ":sour:volt:rang:auto 1;"
+                       ":sour:volt:lev %g;" % source_voltage)
         else:
-            self.write("sour:func volt;:sour:volt:rang:auto 0;:sour:volt:rang %g;:sour:volt:lev %g;" % (rangeV, sourceV))
-        self.write(":sens:curr:prot %g;" % compI)
+            self.write("sour:func volt;"
+                       ":sour:volt:rang:auto 0;"
+                       ":sour:volt:rang %g;:sour:volt:lev %g;" % (
+                            voltage_range, source_voltage))
+        self.write(":sens:curr:prot %g;" % compliance_current)
         self.check_errors()
 
     def status(self):
         return self.ask("status:queue?;")
 
-    def getResistanceBuffered(self):
-        self.keith.startBuffer()
-        self.keith.waitForBuffer()
-        return self.keith.getResistanceMean()
-        self.keith.resetBuffer()
-
-    def getVoltageBuffered(self):
-        self.keith.startBuffer()
-        self.keith.waitForBuffer()
-        return self.keith.getVoltageMean()
-        self.keith.resetBuffer()
-
-    def getCurrentBuffered(self):
-        self.keith.startBuffer()
-        self.keith.waitForBuffer()
-        return self.keith.getCurrentMean()
-        self.keith.resetBuffer()
-
     @property
     def output(self):
-        return self.values("output?")==1
+        return self.values("output?") == 1
+
     @output.setter
     def output(self, value):
         if value:
@@ -399,22 +447,22 @@ class Keithley2400(Instrument):
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay, backward=True))
         self.outputOff()
-        return data   
-        
-    def setRearTerminals(self):
-        """ Sets the rear terminals to be used instead of the front """
+        return data 
+
+    def use_rear_terminals(self):
+        """ Uses the rear terminals instead of the front """
         self.write(":ROUT:TERM REAR")
-        
-    def setFrontTerminals(self):
-        """ Sets the front terminals to be used instead of the rear """
-        self.write(":ROUT:TERM FRON")    
+
+    def use_front_terminals(self):
+        """ Uses the front terminals instead of the rear """
+        self.write(":ROUT:TERM FRON")
 
     def shutdown(self):
         logging.info("Shutting down <i>%s</i>." % self.name)
-        if self.sourceMode == "Current":
-            self.rampSourceCurrent(0.0)
+        if self.source_mode == "Current":
+            self.ramp_source_current(0.0)
         else:
-            self.rampSourceVoltage(0.0)
+            self.ramp_source_voltage(0.0)
         self.wires = 2
         self.stopBuffer()
         self.outputOff()

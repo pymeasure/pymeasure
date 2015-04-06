@@ -27,8 +27,9 @@ THE SOFTWARE.
 from pymeasure.instruments import Instrument, discreteTruncate, RangeException
 
 import numpy as np
-import time, struct, re
+import re
 from StringIO import StringIO
+
 
 class Agilent8722ES(Instrument):
     """ Represents the Agilent8722ES Vector Network Analyzer
@@ -41,13 +42,17 @@ class Agilent8722ES(Instrument):
     S11, S12, S21, S22 = SCATTERING_PARAMETERS
 
     def __init__(self, resourceName, **kwargs):
-        super(Agilent8722ES, self).__init__(resourceName, "Agilent 8722ES Vector Network Analyzer", **kwargs)
-        
+        super(Agilent8722ES, self).__init__(
+            resourceName,
+            "Agilent 8722ES Vector Network Analyzer",
+            **kwargs
+        )
+
         self.add_control("start_frequency", "STAR?", "STAR %.3e HZ")
         self.add_control("stop_frequency", "STOP?", "STOP %.3e HZ")
         self.add_control("sweep_time", "SWET?", "SWET%.2e")
-    
-    def setFixedFrequency(self, frequency):
+
+    def set_fixed_frequency(self, frequency):
         """ Sets the scan to be of only one frequency in Hz """
         self.setStartFrequency(frequency)
         self.setStopFrequency(frequency)
@@ -56,37 +61,43 @@ class Agilent8722ES(Instrument):
     @property
     def parameter(self):
         for parameter in Agilent8722ES.SCATTERING_PARAMETERS:
-            if int(self.values("%s?" % parameter))==1: return parameter
+            if int(self.values("%s?" % parameter)) == 1:
+                return parameter
         return None
+
     @parameter.setter
     def parameter(self, value):
         if value in Agilent8722ES.SCATTERING_PARAMETERS:
             self.write("%s" % value)
         else:
-            raise Exception("Invalid scattering parameter requested for Agilent 8722ES")
-        
+            raise Exception("Invalid scattering parameter requested"
+                            " for Agilent 8722ES")
+
     @property
     def scan_points(self):
         """ Gets the number of scan points
         """
-        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("POIN?"), re.MULTILINE)
+        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("POIN?"),
+                           re.MULTILINE)
         if search:
-           return int(float(search.group()))
+            return int(float(search.group()))
         else:
-            raise Exception("Improper message returned for the number of points")
+            raise Exception("Improper message returned for the"
+                            " number of points")
+
     @scan_points.setter
     def scan_points(self, points):
         """ Sets the number of scan points, truncating to an allowed
-        value if not properly provided       
+        value if not properly provided
         """
         points = discreteTruncate(points, Agilent8722ES.SCAN_POINT_VALUES)
         if points:
             self.write("POIN%d" % points)
         else:
-            raise RangeException("Maximum scan points (1601) for Agilent 8722ES"
-                                 " exceeded") 
-                                 
-    def setIFBandwidth(self, bandwidth):
+            raise RangeException("Maximum scan points (1601) for"
+                                 " Agilent 8722ES exceeded")
+
+    def set_IF_bandwidth(self, bandwidth):
         """ Sets the resolution bandwidth (IF bandwidth) """
         allowedBandwidth = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
         bandwidth = discreteTruncate(bandwidth, allowedBandwidth)
@@ -95,30 +106,30 @@ class Agilent8722ES(Instrument):
         else:
             raise RangeException("Maximum IF bandwidth (6000) for Agilent "
                                  "8722ES exceeded")
-    
-    def setAveraging(self, averages):
-        """ Turns on averaging of a specific number between 0 and 999        
+
+    def set_averaging(self, averages):
+        """ Turns on averaging of a specific number between 0 and 999
         """
         if int(averages) > 999 or int(averages) < 0:
             raise RangeException("Averaging must be in the range 0 to 999")
         else:
             self.write("AVERO1")
             self.write("AVERFACT%d" % int(averages))
-            
-    def disableAveraging(self):
+
+    def disable_averaging(self):
         """ Disables averaging """
         self.write("AVERO0")
-        
-    def isAveraging(self):
+
+    def is_averaging(self):
         """ Returns True if averaging is enabled """
         return self.ask("AVERO?") == '1\n'
-            
-    def restartAveraging(self, averages):
+
+    def restart_averaging(self, averages):
         if int(averages) > 999 or int(averages) < 0:
             raise RangeException("Averaging must be in the range 0 to 999")
         else:
             self.write("NUMG%d" % averages)
-            
+
     def scan(self, averages=1, blocking=True, timeout=25, delay=0.1):
         """ Initiates a scan with the number of averages specified and
         blocks until the operation is complete if blocking is True
@@ -132,38 +143,54 @@ class Agilent8722ES(Instrument):
             self.restartAveraging(averages)
             if blocking:
                 self.adapter.wait_for_srq(timeout, delay)
-    
-    # TODO: Add method for determining if the scan is completed
-    
-    def scanSingle(self):
+
+    def is_scan_complete():
+        pass  # TODO: Implement method for determining if the scan is completed
+
+    def scan_single(self):
         """ Initiates a single scan """
         self.write("SING")
-        
-    def scanContinuous(self):
+
+    def scan_continuous(self):
         """ Initiates a continuous scan """
         self.write("CONT")
-    
+
     @property
     def frequencies(self):
         """ Returns a list of frequencies from the last scan
         """
-        return np.linspace(self.start_frequency, self.stop_frequency, num=self.scan_points)
-        
+        return np.linspace(
+            self.start_frequency,
+            self.stop_frequency,
+            num=self.scan_points
+        )
+
     @property
     def data(self):
-        """ Returns the real and imaginary data from the last scan        
+        """ Returns the real and imaginary data from the last scan
         """
         # TODO: Implement binary transfer instead of ASCII
-        data = np.loadtxt(StringIO(self.ask("FORM4;OUTPDATA")), delimiter=',', dtype=np.float32)
-        return data[:,0], data[:,1]
-        
-    def log_magnitude(self, real, imaginary): # dB
-        return 20*np.log10(self.magnitude(real, imaginary))
-    
-    def magnitude(self, real, imaginary):
-        return np.sqrt(real**2 + imaginary**2)
-        
-    def phase(self, real, imaginary): # degrees
-        return np.arctan2(imaginary, real)*180/np.pi
-        
+        data = np.loadtxt(
+            StringIO(self.ask("FORM4;OUTPDATA")),
+            delimiter=',',
+            dtype=np.float32
+        )
+        return data[:, 0], data[:, 1]
 
+    def log_magnitude(self, real, imaginary):
+        """ Returns the magnitude in dB from a real and imaginary
+        number or numpy arrays
+        """
+        return 20*np.log10(self.magnitude(real, imaginary))
+
+    def magnitude(self, real, imaginary):
+        """ Returns the magnitude from a real and imaginary
+        number or numpy arrays
+        """
+        return np.sqrt(real**2 + imaginary**2)
+
+    def phase(self, real, imaginary):
+        """ Returns the phase in degrees from a real and imaginary
+        number or numpy arrays
+        """
+        return np.arctan2(imaginary, real)*180/np.pi

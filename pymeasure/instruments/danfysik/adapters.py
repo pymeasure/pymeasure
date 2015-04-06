@@ -24,21 +24,21 @@ THE SOFTWARE.
 
 """
 
-from pymeasure.instruments import Instrument, SerialAdapter, RangeException
+from pymeasure.instruments import SerialAdapter
 
-from time import sleep
-import numpy as np
 import re
 
+
 class DanfysikAdapter(SerialAdapter):
-    
+
     def __init__(self, port):
         super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
-        
+
     def write(self, command):
         self.connection.write(command + "\r")
-        
-    def read(self): # Overwrite to raise exceptions on error messages
+
+    def read(self):
+        # Overwrite to raise exceptions on error messages
         result = "".join(self.connection.readlines())
         result = result.replace("\r", "")
         search = re.search("^\?\\x07\s(?P<name>.*)$", result, re.MULTILINE)
@@ -47,7 +47,6 @@ class DanfysikAdapter(SerialAdapter):
                             search.groups()[0]))
         else:
             return result
-            
+
         def __repr__(self):
             return "<DanfysikAdapter(port='%s')>" % self.connection.port
-

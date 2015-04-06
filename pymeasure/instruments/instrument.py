@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 """
 
-from pymeasure.adapters import Adapter, VISAAdapter
+from pymeasure.adapters import VISAAdapter
 
 import numpy as np
 import logging
@@ -41,7 +41,7 @@ class Instrument(object):
         except ImportError:
             raise Exception("Invalid Adapter provided for Instrument since "
                             "PyVISA is not present")
-        
+
         self.name = name
         self.adapter = adapter
 
@@ -54,47 +54,61 @@ class Instrument(object):
 
         self.isShutdown = False
         logging.info("Initializing %s" % self.name)
-        
+
     # Wrapper functions for the Adapter object
     def ask(self, command): return self.adapter.ask(command)
+
     def write(self, command): self.adapter.write(command)
+
     def read(self): return self.adapter.read()
+
     def values(self, command):
         values = self.adapter.values(command)
         if len(values) == 1:
             return values[0]
         else:
             return values
-    def binary_values(self, command, header_bytes=0, dtype=np.float32): 
+
+    def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
     def add_property(self, name, initial_value=0.0):
-        """This adds simple setter and getter properties called "name" for the internal variable 
-        that will be called _name"""
+        """This adds simple setter and getter properties called "name"
+        for the internal variable that will be called _name
+        """
         # Define the property first
         setattr(self, "_"+name, initial_value)
+
         def fget(self):
             return getattr(self, "_"+name)
+
         def fset(self, value):
             setattr(self, "_"+name, value)
+
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
         # Set convenience functions, that we may pass by reference if necessary
         setattr(self.__class__, 'set_'+name, fset)
         setattr(self.__class__, 'get_'+name, fget)
 
-    def add_control(self, name, get_string, set_string, checkErrorsOnSet=False, checkErrorsOnGet=False):
-        """This adds a property to the class based on the supplied SCPI commands. The presumption is
-        that this parameter may be set and read from the instrument."""
+    def add_control(self, name, get_string, set_string,
+                    check_errors_on_set=False,
+                    check_errors_on_get=False):
+        """This adds a property to the class based on the supplied
+        SCPI commands. The presumption is that this parameter may
+        be set and read from the instrument."""
+
         def fget(self):
             vals = self.values(get_string)
-            if checkErrorsOnGet:
+            if check_errors_on_get:
                 self.check_errors()
             return vals
+
         def fset(self, value):
             self.write(set_string % value)
-            if checkErrorsOnSet:
+            if check_errors_on_set:
                 self.check_errors()
+
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
         # Set convenience functions, that we may pass by reference if necessary
@@ -102,8 +116,11 @@ class Instrument(object):
         setattr(self.__class__, 'get_'+name, fget)
 
     def add_measurement(self, name, get_string, checkErrorsOnGet=False):
-        """This adds a property to the class based on the supplied SCPI commands. The presumption is
-        that this is a measurement quantity that may only be read from the instrument, not set."""
+        """This adds a property to the class based on the supplied
+        SCPI commands. The presumption is that this is a measurement
+        quantity that may only be read from the instrument, not set.
+        """
+
         def fget(self):
             return self.values(get_string)
         # Add the property attribute
@@ -118,11 +135,12 @@ class Instrument(object):
     # TODO: Determine case basis for the addition of this method
     def reset(self):
         self.write("*RST")
-    
+
     def shutdown(self):
         """Bring the instrument to a safe and stable state"""
         logging.info("Shutting down %s" % self.name)
-    
+
     def check_errors(self):
-        """Return any accumulated errors. Must be reimplemented by subclasses."""
+        """Return any accumulated errors. Must be reimplemented by subclasses.
+        """
         pass

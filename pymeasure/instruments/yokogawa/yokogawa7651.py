@@ -26,18 +26,23 @@ THE SOFTWARE.
 
 from pymeasure.instruments import Instrument
 
-import math, sys, time
+import math
+import time
 import numpy as np
 import logging
 
 
 class Yokogawa7651(Instrument):
-    
+
     def __init__(self, resourceName, **kwargs):
-        super(Yokogawa7651, self).__init__(resourceName, "Yokogawa 7651 Programmable DC Source", **kwargs)
-        
+        super(Yokogawa7651, self).__init__(
+            resourceName,
+            "Yokogawa 7651 Programmable DC Source",
+            **kwargs
+        )
+
         self.add_measurement("id", "OS")
-        
+
         # Simple control parameters
         self.add_control("source_voltage", "OD;E", "S%g;E")
         self.add_control("source_current", "OD;E", "S%g;E")
@@ -49,6 +54,7 @@ class Yokogawa7651(Instrument):
         """See if 5th bit is set in the OC flag."""
         oc = int(self.ask("OC;E")[5:])
         return True if (oc & 0b10000) else False
+
     @enabled.setter
     def enabled(self, value):
         if value:
@@ -57,55 +63,66 @@ class Yokogawa7651(Instrument):
         else:
             self.write("O0;E")
 
-    def configSourceCurrent(self, maxCurrent, cycle=False):
-        """ For current range specified in A, set the device to the proper mode
+    def config_current_source(self, max_current, cycle=False):
+        """For current range specified in A, set the device to the proper mode
         the options are 1mA, 10mA, 100mA. This function automatically rounds up
         to the necessary range."""
 
-        intThing = int(math.log10(maxCurrent*0.95e3)+5.0)
-        if (intThing < 4):
-            intThing = 4
-        elif (intThing > 6):
-            intThing = 6
+        index = int(math.log10(max_current*0.95e3)+5.0)
+        if (index < 4):
+            index = 4
+        elif (index > 6):
+            index = 6
 
         # Turn off output first, then set the source and turn on again
-        if cycle: self.enabled = False
-        self.write("F5;R%d;E" % intThing)
-        if cycle: self.enabled = True
+        if cycle:
+            self.enabled = False
+        self.write("F5;R%d;E" % index)
+        if cycle:
+            self.enabled = True
 
-    def configSourceVoltage(self, maxVoltage, cycle=False):
-        """ For voltage range specified in V, set the device to the proper mode
-        the options are 10mV, 100mV, 1V, 10V, 30V This function automatically rounds up
-        to the necessary range."""
+    def config_voltage_source(self, max_voltage, cycle=False):
+        """For voltage range specified in V, set the device to the proper mode
+        the options are 10mV, 100mV, 1V, 10V, 30V This function automatically
+        rounds up to the necessary range."""
 
-        intThing = int(math.log10(maxVoltage*0.95e3)+2.0)
-        if (intThing < 2):
-            intThing = 2
-        elif (intThing > 6):
-            intThing = 6
+        index = int(math.log10(max_voltage*0.95e3)+2.0)
+        if (index < 2):
+            index = 2
+        elif (index > 6):
+            index = 6
 
         # Turn off output first, then set the source and turn on again
-        if cycle: self.enabled = False
-        self.write("F1;R%d;E" % intThing)
-        if cycle: self.enabled = True
+        if cycle:
+            self.enabled = False
+        self.write("F1;R%d;E" % index)
+        if cycle:
+            self.enabled = True
 
-    def rampToCurrent(self, current, numSteps=25, totalTime=0.5):
+    def ramp_to_current(self, current, steps=25, duration=0.5):
         """ For current in A, time in seconds """
-        startI = self.source_current
-        stopI  = current
-        pause  = totalTime/numSteps
-        if (startI != stopI):
-            currents = np.linspace(startI, stopI, numSteps)
+        start_current = self.source_current
+        stop_current = current
+        pause = duration/steps
+        if (start_current != stop_current):
+            currents = np.linspace(start_current, stop_current, steps)
             for current in currents:
                 self.source_current = current
                 time.sleep(pause)
 
-    def rampToVoltage(self, value, numSteps=25, totalTime=0.5):
-        self.rampToCurrent(value, numSteps=numSteps, totalTime=totalTime)
+    def ramp_to_voltage(self, voltage, steps=25, duration=0.5):
+        """ For voltage in V, time in seconds """
+        start_voltage = self.source_voltage
+        stop_voltage = voltage
+        pause = duration/steps
+        if (start_voltage != stop_voltage):
+            voltages = np.linspace(start_voltage, stop_voltage, steps)
+            for voltage in voltages:
+                self.source_voltage = voltage
+                time.sleep(pause)
 
     def shutdown(self):
         super(Yokogawa7651, self).shutdown()
-        self.rampToCurrent(0.0, numSteps=25)
+        self.ramp_to_current(0.0, steps=25)
         self.source_current = 0.0
         self.enabled = False
-    

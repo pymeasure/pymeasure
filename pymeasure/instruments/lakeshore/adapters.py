@@ -24,19 +24,19 @@ THE SOFTWARE.
 
 """
 
-from pymeasure.instruments import Instrument, SerialAdapter, RangeException
-from time import sleep
-import numpy as np
+from pymeasure.adapters import SerialAdapter
+
 
 class LakeShoreUSBAdapter(SerialAdapter):
-    
+
     def __init__(self, port):
-        super(LakeShoreUSBAdapter, self).__init__(port, 
-            baudrate=57600, 
-            timeout=0.5, 
-            parity='O', 
+        super(LakeShoreUSBAdapter, self).__init__(
+            port,
+            baudrate=57600,
+            timeout=0.5,
+            parity='O',
             bytesize=7
         )
-        
+
     def write(self, command):
         self.connection.write(command + "\n")

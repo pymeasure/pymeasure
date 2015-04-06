@@ -26,12 +26,17 @@ THE SOFTWARE.
 
 from pymeasure.instruments import Instrument
 
+import logging
+
 
 class Keithley2000(Instrument):
 
-
     def __init__(self, resourceName, **kwargs):
-        super(Keithley2000, self).__init__(resourceName, "Keithley 2000 Multimeter", **kwargs)
+        super(Keithley2000, self).__init__(
+            resourceName,
+            "Keithley 2000 Multimeter",
+            **kwargs
+        )
         self.add_measurement("voltage", ":read?")
         self.add_measurement("resistance", ":read?")
 
@@ -41,17 +46,17 @@ class Keithley2000(Instrument):
             if err != 0:
                 logging.info("Keithley Encountered error: %d\n" % err)
 
-    def configMeasureResistance(self, wires=2, NPLC=2):
-        if (wires==2):
+    def config_measure_resistance(self, wires=2, nplc=2):
+        if (wires == 2):
             self.write(":configure:resistance")
-            self.write(":resistance:nplcycles %g" % NPLC)
-        elif (wires==4):
+            self.write(":resistance:nplcycles %g" % nplc)
+        elif (wires == 4):
             self.write(":configure:fresistance")
-            self.write(":fresistance:nplcycles %g" % NPLC)
+            self.write(":fresistance:nplcycles %g" % nplc)
         else:
             raise Exception("Incorrect measurement type specified")
 
-    def configMeasureVoltage(self, Vrange=0.5, NPLC=2):
+    def config_measure_voltage(self, voltage_range=0.5, nplc=2):
             self.write(":configure:voltage")
-            self.write(":voltage:nplcycles %g" % NPLC)
-            self.write(":voltage:range %g" % Vrange)
+            self.write(":voltage:nplcycles %g" % nplc)
+            self.write(":voltage:range %g" % voltage_range)
