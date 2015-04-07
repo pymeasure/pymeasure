@@ -28,26 +28,23 @@ from pymeasure.experiment import Procedure
 
 from os.path import basename
 
-from PyQt4.QtGui import (QTreeWidget, QTreeWidgetItem, QPixmap,
-                         QIcon, QProgressBar)
-from PyQt4.QtCore import Qt
+from qt_variant import QtCore, QtGui
 
-
-class BrowserItem(QTreeWidgetItem):
+class BrowserItem(QtGui.QTreeWidgetItem):
 
     def __init__(self, results, curve, parent=None):
         super(BrowserItem, self).__init__(parent)
 
-        pixelmap = QPixmap(24, 24)
+        pixelmap = QtGui.QPixmap(24, 24)
         pixelmap.fill(curve.opts['pen'].color())
-        self.setIcon(0, QIcon(pixelmap))
-        self.setFlags(self.flags() | Qt.ItemIsUserCheckable)
+        self.setIcon(0, QtGui.QIcon(pixelmap))
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         self.setCheckState(0, 2)
         self.setText(1, basename(results.data_filename))
 
         self.setStatus(results.procedure.status)
 
-        self.progressbar = QProgressBar()
+        self.progressbar = QtGui.QProgressBar()
         self.progressbar.setRange(0, 100)
         self.progressbar.setValue(0)
 
@@ -73,7 +70,7 @@ class BrowserItem(QTreeWidgetItem):
             """)
 
 
-class Browser(QTreeWidget):
+class Browser(QtGui.QTreeWidget):
 
     def __init__(self, procedure_class, parameters, parent=None):
         super(Browser, self).__init__(parent)

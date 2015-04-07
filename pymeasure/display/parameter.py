@@ -24,16 +24,15 @@ THE SOFTWARE.
 
 """
 
-from PyQt4.QtGui import QDoubleSpinBox, QAbstractSpinBox, QDoubleValidator
+from qt_variant import QtGui
 
-
-class Parameter(QDoubleSpinBox):
+class Parameter(QtGui.QDoubleSpinBox):
 
     def __init__(self, parent=None):
         super(Parameter, self).__init__(parent)
-        self.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.validator = QDoubleValidator(-1.0e9, 1.0e9, 10, self)
-        self.validator.setNotation(QDoubleValidator.ScientificNotation)
+        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        self.validator = QtGui.QDoubleValidator(-1.0e9, 1.0e9, 10, self)
+        self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
         self.setMaximum(1e12)
         self.setMinimum(-1e12)
 
@@ -54,7 +53,7 @@ class Parameter(QDoubleSpinBox):
         return "%.4g" % (value)
 
     def stepEnabled(self):
-        return QAbstractSpinBox.StepNone
+        return QtGui.QAbstractSpinBox.StepNone
 
     def __str__(self):
         return "%.4g %s" % (self.value(), self.unit)

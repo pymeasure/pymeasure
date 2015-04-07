@@ -7,8 +7,8 @@
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 from __future__ import division, print_function
-from automate.instruments import Instrument
-from automate.composites import Composite
+from pymeasure.instruments import Instrument
+from pymeasure.composites import Composite
 import numpy as np
 import time
 import os.path

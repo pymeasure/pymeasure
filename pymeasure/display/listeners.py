@@ -24,12 +24,13 @@ THE SOFTWARE.
 
 """
 
-from threading import Event, Queue
-from PyQt4.QtCore import QThread
+from threading import Event
+from Queue import Queue
+from qt_variant import QtCore
 
 
-class QListener(QThread):
-    """Base class for PyQt4 threaded classes that listen for data
+class QListener(QtCore.QThread):
+    """Base class for PyQt4/PySide threaded classes that listen for data
     from the measurement. Each QListener provides methods to act
     as slots for singals.
     """

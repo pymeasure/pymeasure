@@ -6,7 +6,7 @@
 # Copyright: 2014 Cornell University
 #
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-from automate.instruments.keithley import Keithley2400
+from pymeasure.instruments.keithley import Keithley2400
 import json
 
 class HallProbe(object):

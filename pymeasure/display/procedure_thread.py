@@ -27,21 +27,20 @@ THE SOFTWARE.
 from pymeasure.experiment import Procedure
 
 from threading import Event
-from PyQt4.QtCore import QThread, pyqtSignal
+from qt_variant import QtCore
 
-
-class QProcedureThread(QThread):
+class QProcedureThread(QtCore.QThread):
     """Encapsulates the Procedure to be run within a QThread,
     compatible with PyQt4.
     """
 
-    data = pyqtSignal(dict)
-    progress = pyqtSignal(float)
-    status_changed = pyqtSignal(int)
-    finished = pyqtSignal()
+    data = QtCore.QSignal(dict)
+    progress = QtCore.QSignal(float)
+    status_changed = QtCore.QSignal(int)
+    finished = QtCore.QSignal()
 
     def __init__(self, parent=None):
-        QThread.__init__(self, parent)
+        QtCore.QThread.__init__(self, parent)
         self.procedure = None
         self.abortEvent = Event()
         self.abortEvent.clear()

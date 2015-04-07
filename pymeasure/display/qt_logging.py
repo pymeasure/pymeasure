@@ -24,15 +24,15 @@ THE SOFTWARE.
 
 """
 
-import logging
-from PyQt4.QtGui import QPlainTextEdit
+from logging import Handler
+from qt_variant import QtGui
 
 
-class QLogHandler(logging.Handler):
+class QLogHandler(Handler):
 
     def __init__(self, log_display):
         super(QLogHandler, self).__init__()
-        if not isinstance(log_display, QPlainTextEdit):
+        if not isinstance(log_display, QtGui.QPlainTextEdit):
             raise Exception("QLogHandler is only implemented for "
                             "QPlainTextEdit objects")
         self.log_display = log_display

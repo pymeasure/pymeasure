@@ -25,23 +25,24 @@ THE SOFTWARE.
 """
 
 from pymeasure.experiment import Procedure
-from pymeasure.display import QProcedureThread, QResultsWriter
+from pymeasure.display.procedure_thread import QProcedureThread
+from pymeasure.display.listeners import QResultsWriter
 
-from PyQt4.QtCore import QObject, pyqtSignal
+from qt_variant import QtCore
 
 
-class Manager(QObject):
+class Manager(QtCore.QObject):
 
     experiments = []
     _is_continuous = True
     _start_on_add = True
     _running_thread = None
-    queued = pyqtSignal(object)
-    running = pyqtSignal(object)
-    finished = pyqtSignal(object)
-    failed = pyqtSignal(object)
-    aborted = pyqtSignal(object)
-    abort_returned = pyqtSignal(object)
+    queued = QtCore.QSignal(object)
+    running = QtCore.QSignal(object)
+    finished = QtCore.QSignal(object)
+    failed = QtCore.QSignal(object)
+    aborted = QtCore.QSignal(object)
+    abort_returned = QtCore.QSignal(object)
 
     def __init__(self, plot, browser, parent=None):
         super(Manager, self).__init__(parent=parent)

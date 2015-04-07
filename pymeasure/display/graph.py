@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 """
 
-from PyQt4.QtCore import pyqtSignal, QObject
+from qt_variant import QtCore, QtGui
 import pyqtgraph as pg
 import numpy as np
 
@@ -77,7 +77,7 @@ class BufferCurve(pg.PlotDataItem):
     data to be added dynamically, in additon to supporting error bars
     """
 
-    data_updated = pyqtSignal()
+    data_updated = QtCore.QSignal()
 
     def __init__(self, errors=False, **kwargs):
         pg.PlotDataItem.__init__(self, **kwargs)
@@ -121,12 +121,12 @@ class BufferCurve(pg.PlotDataItem):
         self.data_updated.emit()
 
 
-class Crosshairs(QObject):
+class Crosshairs(QtCore.QObject):
     """ Attaches crosshairs to the a plot and provides a signal with the
     x and y graph coordinates
     """
 
-    coordinates = pyqtSignal(float, float)
+    coordinates = QtCore.QSignal(float, float)
 
     def __init__(self, plot, pen=None):
         """ Initiates the crosshars onto a plot given the pen style.
@@ -134,7 +134,7 @@ class Crosshairs(QObject):
         Example pen:
         pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
         """
-        QObject.__init__(self)
+        QtCore.QObject.__init__(self)
         self.vertical = pg.InfiniteLine(angle=90, movable=False, pen=pen)
         self.horizontal = pg.InfiniteLine(angle=0, movable=False, pen=pen)
         plot.addItem(self.vertical, ignoreBounds=True)

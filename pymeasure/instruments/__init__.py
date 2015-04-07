@@ -24,9 +24,9 @@ THE SOFTWARE.
 
 """
 
-from insturment import Instrument
+from instrument import Instrument
 
- 
+
 def discreteTruncate(number, discreteSet):
     """ Truncates the number to the closest element in the positive discrete set.
     Returns False if the number is larger than the maximum value or negative.    
