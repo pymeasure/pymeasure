@@ -39,7 +39,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'numpydoc'
+    'sphinx.ext.autodoc', 'sphinx.ext.autosummary'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyMeasure'
-copyright = u'2015, Colin Jermain, Graham Rowlands'
+copyright = u'2013-2015, Colin Jermain, Graham Rowlands'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
