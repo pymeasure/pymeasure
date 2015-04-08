@@ -25,7 +25,7 @@ THE SOFTWARE.
 """
 
 from parameters import (Parameter, IntegerParameter, FloatParameter,
-                        VectorParameter, ListParameter)
+                        VectorParameter, ListParameter, BooleanParameter)
 from procedure import Procedure, UnknownProcedure
 from procedure_thread import ProcedureThread
 

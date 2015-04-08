@@ -90,6 +90,32 @@ class IntegerParameter(Parameter):
         result = super(IntegerParameter, self).__repr__()
         return result.replace("<Parameter", "<IntegerParameter", 1)
 
+class BooleanParameter(Parameter):
+
+    @property
+    def value(self):
+        if self.isSet():
+            return self._value
+        else:
+            raise ValueError("Parameter value is not set")
+
+    @value.setter
+    def value(self, value):
+        try:
+            if value == "True":
+                self._value = True
+            elif value == "False":
+                self._value = False
+            else:
+                raise ValueError("Parameter value is not set, must be True or False.")
+        except ValueError:
+            raise ValueError("BooleanParameter given non-boolean value of "
+                             "type '%s'" % type(value))
+
+    def __repr__(self):
+        result = super(BooleanParameter, self).__repr__()
+        return result.replace("<Parameter", "<BooleanParameter", 1)
+
 
 class FloatParameter(Parameter):
 
