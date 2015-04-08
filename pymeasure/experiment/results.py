@@ -216,7 +216,7 @@ class Results(object):
                 self.data_filename,
                 comment=Results.COMMENT,
                 header=0,
-                cnames=self._data.columns,
+                names=self._data.columns,
                 chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
             )
             try:
