@@ -1,35 +1,37 @@
-"""
-
-This file is part of the PyMeasure package.
-
-Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-"""
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 
 
 class Parameter(object):
     """ Encapsulates the information for an experiment parameter
     with information about the name, and unit if supplied.
 
-    Parameter name can not contain a colon ':'.
+    The Parameter name can not contain a colon ':'.
+
+    :param name: A short description of the parameter (no colons allowed)
+    :param unit: The unit of measure for the parameter
+    :param default: The default value
     """
 
     def __init__(self, name, unit=None, default=None):
@@ -40,7 +42,7 @@ class Parameter(object):
 
     @property
     def value(self):
-        if self.isSet():
+        if self.is_set():
             return self._value
         else:
             raise ValueError("Parameter value is not set")
@@ -49,12 +51,14 @@ class Parameter(object):
     def value(self, value):
         self._value = value
 
-    def isSet(self):
+    def is_set(self):
+        """ Returns True if the Parameter value is set
+        """
         return self._value is not None
 
     def __str__(self):
         result = ""
-        if self.isSet():
+        if self.is_set():
             result += "%s" % str(self.value)
             if self.unit:
                 result += " %s" % self.unit
@@ -62,7 +66,7 @@ class Parameter(object):
 
     def __repr__(self):
         result = "<Parameter(name='%s'" % self.name
-        if self.isSet():
+        if self.is_set():
             result += ",value=%s" % repr(self.value)
         if self.unit:
             result += ",unit='%s'" % self.unit
@@ -73,7 +77,7 @@ class IntegerParameter(Parameter):
 
     @property
     def value(self):
-        if self.isSet():
+        if self.is_set():
             return int(self._value)
         else:
             raise ValueError("Parameter value is not set")
@@ -90,11 +94,12 @@ class IntegerParameter(Parameter):
         result = super(IntegerParameter, self).__repr__()
         return result.replace("<Parameter", "<IntegerParameter", 1)
 
+
 class BooleanParameter(Parameter):
 
     @property
     def value(self):
-        if self.isSet():
+        if self.is_set():
             return self._value
         else:
             raise ValueError("Parameter value is not set")
@@ -107,7 +112,8 @@ class BooleanParameter(Parameter):
             elif value == "False":
                 self._value = False
             else:
-                raise ValueError("Parameter value is not set, must be True or False.")
+                raise ValueError("Parameter value is not set, must be True"
+                                 " or False.")
         except ValueError:
             raise ValueError("BooleanParameter given non-boolean value of "
                              "type '%s'" % type(value))
@@ -121,7 +127,7 @@ class FloatParameter(Parameter):
 
     @property
     def value(self):
-        if self.isSet():
+        if self.is_set():
             return float(self._value)
         else:
             raise ValueError("Parameter value is not set")
@@ -149,7 +155,7 @@ class VectorParameter(Parameter):
 
     @property
     def value(self):
-        if self.isSet():
+        if self.is_set():
             return [float(ve) for ve in self._value]
         else:
             raise ValueError("Parameter value is not set")
@@ -179,7 +185,7 @@ class VectorParameter(Parameter):
                              "not be converted to floats." % str(value))
 
     def __repr__(self):
-        if not self.isSet():
+        if not self.is_set():
             raise ValueError("Parameter value is not set")
         result = "<VectorParameter(name='%s'" % self.name
         result += ",value=%s" % "".join(repr(self.value).split())
@@ -190,7 +196,7 @@ class VectorParameter(Parameter):
     def __str__(self):
         """If we eliminate spaces within the list __repr__ then the
         csv parser will interpret it as a single value."""
-        if not self.isSet():
+        if not self.is_set():
             raise ValueError("Parameter value is not set")
         result = ""
         result += "%s" % "".join(repr(self.value).split())
@@ -210,7 +216,7 @@ class ListParameter(Parameter):
 
     @property
     def value(self):
-        if self.isSet():
+        if self.is_set():
             return self._value
         else:
             raise ValueError("Parameter value is not set")
@@ -223,5 +229,5 @@ class ListParameter(Parameter):
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
 
-    def isSet(self):
+    def is_set(self):
         return self._value is not None

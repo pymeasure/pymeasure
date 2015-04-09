@@ -1,28 +1,26 @@
-"""
-
-This file is part of the PyMeasure package.
-
-Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-"""
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 
 from pymeasure.experiment import Procedure, UnknownProcedure, Parameter
 
@@ -47,6 +45,10 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv'):
 class Results(object):
     """ Provides a base class for experiment results tracking, which should be
     extended for the specific data collected for a Procedure
+
+    :param procedure: Procedure object
+    :param data_filename: The data filename where the data is or should be
+                          stored
     """
 
     COMMENT = '#'
@@ -112,7 +114,7 @@ class Results(object):
         return data
 
     @staticmethod
-    def parseHeader(header, procedure_class=None):
+    def parse_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
@@ -136,7 +138,8 @@ class Results(object):
                 procedure_module = search.group("module")
                 procedure_class = search.group("class")
             elif line.startswith("\t"):
-                regex = "\t(?P<name>[^:]+):\s(?P<value>[^\s]+)(?:\s(?P<unit>.+))?"
+                regex = ("\t(?P<name>[^:]+):\s(?P<value>[^\s]+)"
+                         "(?:\s(?P<unit>.+))?")
                 search = re.search(regex, line)
                 if search is None:
                     raise Exception("Error parsing header line %s." % line)
@@ -192,7 +195,7 @@ class Results(object):
                     header_count += 1
                 else:
                     header_read = True
-        procedure = Results.parseHeader(header[:-1], procedure_class)
+        procedure = Results.parse_header(header[:-1], procedure_class)
         results = Results(procedure, data_filename)
         results._header_count = header_count
         return results

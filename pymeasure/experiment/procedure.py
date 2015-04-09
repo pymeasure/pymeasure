@@ -1,28 +1,26 @@
-"""
-
-This file is part of the PyMeasure package.
-
-Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-"""
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 
 from parameters import Parameter
 
@@ -53,9 +51,9 @@ class Procedure(object):
 
     def __init__(self):
         self.status = Procedure.QUEUED
-        self._updateParameters()
+        self._update_parameters()
 
-    def _updateParameters(self):
+    def _update_parameters(self):
         """ Collects all the Parameter objects for this procedure and stores
         them in a meta dictionary so that the actual values can be set in their
         stead
@@ -66,19 +64,19 @@ class Procedure(object):
             parameter = getattr(self, item)
             if isinstance(parameter, Parameter):
                 self._parameters[item] = parameter
-                if parameter.isSet():
+                if parameter.is_set():
                     setattr(self, item, parameter.value)
                 else:
                     setattr(self, item, None)
 
-    def parametersAreSet(self):
+    def parameters_are_set(self):
         """ Returns True if all parameters are set """
         for name, parameter in self._parameters.iteritems():
             if getattr(self, name) is None:
                 return False
         return True
 
-    def checkParameters(self):
+    def check_parameters(self):
         """ Raises an exception if any parameter is missing before calling
         the associated function. Ensures that each value can be set and
         got, which should cast it into the right format. Used as a decorator
@@ -90,7 +88,7 @@ class Procedure(object):
                 raise NameError("Missing %s '%s' in %s" % (
                     parameter.__class__, name, self.__class__))
 
-    def parameterValues(self):
+    def parameter_values(self):
         """ Returns a dictionary of all the Parameter values and grabs any
         current values that are not in the default definitions
         """
@@ -105,7 +103,7 @@ class Procedure(object):
                 result[name] = None
         return result
 
-    def parameterObjects(self):
+    def parameter_objects(self):
         """ Returns a dictionary of all the Parameter objects and grabs any
         current values that are not in the default definitions
         """
@@ -118,7 +116,7 @@ class Procedure(object):
             result[name] = parameter
         return result
 
-    def refreshParameters(self):
+    def refresh_parameters(self):
         """ Enforces that all the parameters are re-cast and updated in the meta
         dictionary
         """
@@ -127,7 +125,7 @@ class Procedure(object):
             parameter.value = value
             setattr(self, name, parameter.value)
 
-    def setParameters(self, parameters, exceptMissing=True):
+    def set_parameters(self, parameters, exceptMissing=True):
         """ Sets a dictionary of parameters and raises an exception if additional
         parameters are present if exceptMissing is True
         """
@@ -141,12 +139,21 @@ class Procedure(object):
                             name, repr(self)))
 
     def enter(self):
+        """ Executes the commands needed at the start-up of the measurement
+        """
         pass
 
     def execute(self):
+        """ Preforms the commands needed for the measurement itself. During
+        execution the exit method will always be run following this method.
+        This includes when Exceptions are raised.
+        """
         pass
 
     def exit(self):
+        """ Executes the commands necessary to shut down the instruments
+        and leave them in a safe state.
+        """
         pass
 
     def __str__(self):

@@ -1,28 +1,26 @@
-"""
-
-This file is part of the PyMeasure package.
-
-Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-"""
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 
 from pymeasure.experiment import Results
 
@@ -31,9 +29,10 @@ from Queue import Queue
 
 
 class Listener(Thread):
-    """Base class for threaded classes that listen for data
-    from the measurement. Each Listener has its own queue
-    that should be filled with measurement data.
+    """This is the base class for threaded classes that listen for
+    data from the measurement. They are intended to be used without
+    the Qt display functionality and communicate with basic Python
+    Queues.
     """
 
     def __init__(self,):
@@ -42,14 +41,27 @@ class Listener(Thread):
         super(Listener, self).__init__()
 
     def join(self, timeout=0):
+        """ Joins the current thread with the Listener and forces an
+        abort if the process does not halt after the timeout
+
+        :param timeout: Timeout duration in seconds
+        """
         self.abortEvent.wait(timeout)
         if not self.abortEvent.isSet():
             self.abortEvent.set()
         super(Listener, self).join()
 
+    def has_aborted(self):
+        """ Returns True if the Listener thread has been aborted
+        """
+        return self.abort_event.isSet()
+
 
 class ResultsWriter(Listener):
     """Writes the incoming data through the Results object to
+    a CSV file specified in by the results.data_filename.
+
+    :param results: Results object to be written
     """
 
     def __init__(self, results):
@@ -106,7 +118,7 @@ class AverageManager(Listener):
     def __init__(self, average_results, traces=1):
         self.average_results = average_results
         self.traces = traces
-        super(TraceAverageWriter, self).__init__()
+        super(AverageManager, self).__init__()
 
     def run(self):
         average_writer = AverageWriter(self.average_results)
