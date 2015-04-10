@@ -29,7 +29,11 @@ from qt_variant import QtCore
 
 
 class Manager(QtCore.QObject):
-
+    """Controls the execution of :class:`.Experiment` classes by implementing a queue system
+    in which Experiments are added, removed, executed, or aborted. When instantiated, the
+    Manager is linked to a :class:`.Browser` and a PyQtGraph `PlotItem` within the user interface,
+    which are updated in accordance with the execution status of the Experiments.
+    """
     experiments = []
     _is_continuous = True
     _start_on_add = True
@@ -60,7 +64,7 @@ class Manager(QtCore.QObject):
         return None
 
     def queuedExperiments(self):
-        """ Returns the procedures which are queued
+        """ Returns the Experiments that are queued
         """
         queued = []
         for experiment in self.experiments:
@@ -69,6 +73,8 @@ class Manager(QtCore.QObject):
         return queued
 
     def hasQueuedExperiments(self):
+        """ Returns True if there is at least one Experiment in the queue.
+        """
         return len(self.queuedExperiments()) > 0
 
     def filePaths(self):
@@ -78,12 +84,16 @@ class Manager(QtCore.QObject):
                 experiment in self.experiments]
 
     def queue(self, experiment):
+        """ Adds an experiment to the queue.
+        """
         self.load(experiment)
         self.queued.emit(experiment)
         if self._start_on_add and not self.isRunning():
             self.next()
 
     def load(self, experiment):
+        """ Load a previously executed experiment into the Browser.
+        """
         self.plot.addItem(experiment.curve)
         self.browser.add(experiment)
 
@@ -92,7 +102,7 @@ class Manager(QtCore.QObject):
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
         as no other experiments is currently running and there is a procedure
-        in the queue
+        in the queue.
         """
         if self.isRunning():
             raise Exception("Another procedure is already running")
@@ -122,12 +132,14 @@ class Manager(QtCore.QObject):
                 self.running.emit(experiment)
 
     def resume(self):
+        """ Resume processing of the queue.
+        """
         self._start_on_add = True
         self._continous = True
         self.next()
 
     def remove(self, experiment):
-        """ Removes the Experiment from the Manager, unless it is currently running
+        """ Removes the Experiment from the Manager, unless it is currently running.
         """
         if experiment not in self.experiments:
             raise Exception("Attempting to remove an Experiemnt that is "
@@ -143,11 +155,13 @@ class Manager(QtCore.QObject):
                 self.experiments.pop(self.experiments.index(experiment))
 
     def clear(self):
+        """ Remove all Experiments from the Manager. 
+        """
         for experiment in self.experiments[:]:
             self.remove(experiment)
 
     def abort(self):
-        """ Aborts the currently running experiment, but raises an exception if
+        """ Aborts the currently running Experiment, but raises an exception if
         there is no running experiment
         """
         if not self.isRunning():
