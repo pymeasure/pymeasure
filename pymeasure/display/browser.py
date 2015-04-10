@@ -77,7 +77,7 @@ class Browser(QtGui.QTreeWidget):
 
         header_labels = ["Graph", "Filename", "Progress", "Status"]
         # Get the default parameters
-        parameter_objects = procedure_class().parameterObjects()
+        parameter_objects = procedure_class().parameter_objects()
         for parameter in parameters:
             if parameter in parameter_objects:
                 header_labels.append(parameter_objects[parameter].name)
@@ -95,7 +95,7 @@ class Browser(QtGui.QTreeWidget):
             raise Exception("This ResultsBrowser only supports '%s' objects")
 
         item = experiment.browser_item
-        parameters = experiment.procedure.parameterObjects()
+        parameters = experiment.procedure.parameter_objects()
         for i, column in enumerate(self.procedure_parameters):
             item.setText(i+4, str(parameters[column]))
 
