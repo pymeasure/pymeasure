@@ -93,7 +93,9 @@ class Instrument(object):
 
     def add_control(self, name, get_string, set_string,
                     check_errors_on_set=False,
-                    check_errors_on_get=False):
+                    check_errors_on_get=False,
+                    docs=None
+                    ):
         """This adds a property to the class based on the supplied
         SCPI commands. The presumption is that this parameter may
         be set and read from the instrument."""
@@ -109,11 +111,11 @@ class Instrument(object):
             if check_errors_on_set:
                 self.check_errors()
 
+        # Add the specified document string to the getter
+        fget.__doc__ = docs
+
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
-        # Set convenience functions, that we may pass by reference if necessary
-        setattr(self.__class__, 'set_'+name, fset)
-        setattr(self.__class__, 'get_'+name, fget)
 
     def add_measurement(self, name, get_string, checkErrorsOnGet=False):
         """This adds a property to the class based on the supplied
@@ -123,10 +125,12 @@ class Instrument(object):
 
         def fget(self):
             return self.values(get_string)
+
+        # Add the specified document string to the getter
+        fget.__doc__ = docs
+
         # Add the property attribute
         setattr(self.__class__, name, property(fget))
-        # Set convenience function, that we may pass by reference if necessary
-        setattr(self.__class__, 'get_'+name, fget)
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):

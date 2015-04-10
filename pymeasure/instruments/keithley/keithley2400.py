@@ -50,8 +50,8 @@ class Keithley2400(Instrument):
         self.source_mode = None
 
         # Simple control parameters
-        self.add_control("source_voltage", ":sour:volt?", "sour:volt:lev %g;")
-        self.add_control("source_current", ":sour:curr?", "sour:curr:lev %g;")
+        self.add_control("source_voltage", ":sour:volt?", "sour:volt:lev %g;", docs="Set or get the voltage supply.")
+        self.add_control("source_current", ":sour:curr?", "sour:curr:lev %g;", docs="Set or get the current supply.")
 
         # Simple measurements
         self.add_measurement("voltage", ":read?")
