@@ -66,7 +66,7 @@ class Results(object):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
         self.procedure_class = procedure.__class__
-        self.parameters = procedure.parameterObjects()
+        self.parameters = procedure.parameter_objects()
         self._header_count = -1
 
         self.data_filename = data_filename

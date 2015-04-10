@@ -69,20 +69,23 @@ class BrowserItem(QtGui.QTreeWidgetItem):
 
 
 class Browser(QtGui.QTreeWidget):
+    """Graphical list view of :class:`.Experiment` objects allowing the user 
+    to view the status of queued Experiments as well as loading and displaying 
+    data from previous runs.
 
-    def __init__(self, procedure_class, parameters, parent=None):
+    In order that different Experiments be displayed within the same Browser, they must 
+    have entries in `DATA_COLUMNS` corresponding to the `measured_quantities` of
+    the Browser.
+    """
+
+    def __init__(self, procedure_class, display_parameters, measured_quantities, parent=None):
         super(Browser, self).__init__(parent)
-        self.procedure_parameters = parameters
-        self.procedure_class = procedure_class
+        self.display_parameters  = display_parameters
+        self.procedure_class     = procedure_class
+        self.measured_quantities = measured_quantities
 
         header_labels = ["Graph", "Filename", "Progress", "Status"]
-        # Get the default parameters
-        parameter_objects = procedure_class().parameter_objects()
-        for parameter in parameters:
-            if parameter in parameter_objects:
-                header_labels.append(parameter_objects[parameter].name)
-            else:
-                raise Exception("Invalid parameter input for a Browser column")
+        header_labels.extend(self.display_parameters)
 
         self.setColumnCount(len(header_labels))
         self.setHeaderLabels(header_labels)
@@ -91,13 +94,23 @@ class Browser(QtGui.QTreeWidget):
             self.header().resizeSection(i, width)
 
     def add(self, experiment):
-        if not isinstance(experiment.procedure, self.procedure_class):
-            raise Exception("This ResultsBrowser only supports '%s' objects")
+        """Add a :class:`.Experiment` object to the Browser. This function
+        checks to make sure that the Experiment measures the appropriate 
+        quantities to warrant its inclusion, and then adds a BrowserItem to
+        the Browser, filling all relevant columns with Parameter data.
+        """
+        experiment_parameters = experiment.procedure.parameter_objects()
+        experiment_parameter_names = list(experiment_parameters.keys())
 
+        for measured_quantity in self.measured_quantities:
+            if measured_quantity not in experiment.procedure.DATA_COLUMNS:
+                raise Exception("Procedure does not measure the %s quantity." % measured_quantity)
+
+        # Set the relevant fields within the BrowserItem if that Parameter is implemented
         item = experiment.browser_item
-        parameters = experiment.procedure.parameter_objects()
-        for i, column in enumerate(self.procedure_parameters):
-            item.setText(i+4, str(parameters[column]))
+        for i, column in enumerate(self.display_parameters):
+            if column in experiment_parameter_names:
+                item.setText(i+4, str(experiment_parameters[column]))
 
         self.addTopLevelItem(item)
         self.setItemWidget(item, 2, item.progressbar)
