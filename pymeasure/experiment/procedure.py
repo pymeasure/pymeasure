@@ -28,20 +28,19 @@ from parameters import Parameter
 class Procedure(object):
     """Provides the base class of a procedure to organize the experiment
     execution. Procedures should be run in ProcedureThreads to ensure that
-    concurrent control is properly managed. Example:
+    concurrent control is properly managed.
 
-    procedure = Procedure()
-    thread = ProcedureThread() # or QProcedureThread()
-    thread.load(procedure)
-    thread.start()
+    .. code-block:: python
 
-    Inhereting classes should define the following methods:
-    - enter --> commands needed to startup instruments
-    - execute --> commands for procedure execution
-    - exit --> commands needed to stop instruments
+        procedure = Procedure()
+        thread = ProcedureThread() # or QProcedureThread()
+        thread.load(procedure)
+        thread.start()
 
-    The exit method is called on sucessful completion, software error, or
-    abort.
+    Inhereting classes are required to define the enter, execute,
+    and exit methods. The exit method is called on independent of the
+    sucessful completion, software error, or abort of code run in the
+    execute method.
     """
 
     DATA_COLUMNS = []
@@ -125,16 +124,16 @@ class Procedure(object):
             parameter.value = value
             setattr(self, name, parameter.value)
 
-    def set_parameters(self, parameters, exceptMissing=True):
+    def set_parameters(self, parameters, except_missing=True):
         """ Sets a dictionary of parameters and raises an exception if additional
-        parameters are present if exceptMissing is True
+        parameters are present if except_missing is True
         """
         for name, value in parameters.iteritems():
             if name in self._parameters:
                 self._parameters[name].value = value
                 setattr(self, name, self._parameters[name].value)
             else:
-                if exceptMissing:
+                if except_missing:
                     raise NameError("Parameter '%s' does not belong to '%s'" % (
                             name, repr(self)))
 
@@ -167,8 +166,8 @@ class Procedure(object):
 
 
 class UnknownProcedure(Procedure):
-    """ Handles the case when a Procedure object can not be imported during
-    loading in the Results class
+    """ Handles the case when a :class:`.Procedure` object can not be imported
+    during loading in the :class:`.Results` class
     """
 
     def __init__(self, parameters):

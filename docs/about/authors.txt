@@ -1,5 +1,6 @@
 Authors and contributors
 ========================
 
-Colin Jermain
-Graham Rowlands
+| Colin Jermain
+| Graham Rowlands
+

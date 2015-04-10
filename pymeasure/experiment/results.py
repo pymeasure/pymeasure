@@ -43,8 +43,13 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv'):
 
 
 class Results(object):
-    """ Provides a base class for experiment results tracking, which should be
-    extended for the specific data collected for a Procedure
+    """ The Results class provides a convenient interface to reading and
+    writing data in connection with a :class:`.Procedure` object.
+
+    :cvar COMMENT: The character used to identify a comment (default: #)
+    :cvar DELIMITER: The character used to delimit the data (default: ,)
+    :cvar LINE_BREAK: The character used for line breaks (default \\n)
+    :cvar CHUNK_SIZE: The length of the data chuck that is read
 
     :param procedure: Procedure object
     :param data_filename: The data filename where the data is or should be
@@ -231,8 +236,8 @@ class Results(object):
         return self._data
 
     def reload(self):
-        """ Preforms a full reloading of the file data neglecting
-        the comments
+        """ Preforms a full reloading of the file data, neglecting
+        any changes in the comments
         """
         chunks = pd.read_csv(
             self.data_filename,

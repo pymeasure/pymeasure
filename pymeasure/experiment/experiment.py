@@ -24,13 +24,14 @@
 
 
 class Experiment(object):
-    """ The Experiment class helps group the Procedure, Results, and their
-    display functionality. Its function is only as a convenient container.
+    """ The Experiment class helps group the :class:`.Procedure`,
+    :class:`.Results`, and their display functionality. Its function
+    is only as a convenient container.
 
-    :param procedure: Procedure object
-    :param results: Results object
-    :param curve: ResultsCurve object
-    :param browser_item: BrowserItem object
+    :param procedure: :class:`.Procedure` object
+    :param results: :class:`.Results` object
+    :param curve: :class:`.ResultsCurve` object
+    :param browser_item: :class:`.BrowserItem` object
     """
 
     def __init__(self, procedure, results, curve=None, browser_item=None):

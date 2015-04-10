@@ -27,7 +27,7 @@ class Parameter(object):
     """ Encapsulates the information for an experiment parameter
     with information about the name, and unit if supplied.
 
-    The Parameter name can not contain a colon ':'.
+    :var value: The value of the parameter
 
     :param name: A short description of the parameter (no colons allowed)
     :param unit: The unit of measure for the parameter
@@ -74,6 +74,15 @@ class Parameter(object):
 
 
 class IntegerParameter(Parameter):
+    """ :class:`.Parameter` sub-class that uses the integer type to
+    store the value.
+
+    :var value: The integer value of the parameter
+
+    :param name: A short description of the parameter (no colons allowed)
+    :param unit: The unit of measure for the parameter
+    :param default: The default integer value
+    """
 
     @property
     def value(self):
@@ -96,6 +105,15 @@ class IntegerParameter(Parameter):
 
 
 class BooleanParameter(Parameter):
+    """ :class:`.Parameter` sub-class that uses the boolean type to
+    store the value.
+
+    :var value: The boolean value of the parameter
+
+    :param name: A short description of the parameter (no colons allowed)
+    :param unit: The unit of measure for the parameter
+    :param default: The default boolean value
+    """
 
     @property
     def value(self):
@@ -124,6 +142,15 @@ class BooleanParameter(Parameter):
 
 
 class FloatParameter(Parameter):
+    """ :class:`.Parameter` sub-class that uses the floating point
+    type to store the value.
+
+    :var value: The floating point value of the parameter
+
+    :param name: A short description of the parameter (no colons allowed)
+    :param unit: The unit of measure for the parameter
+    :param default: The default floating point value
+    """
 
     @property
     def value(self):
@@ -146,6 +173,16 @@ class FloatParameter(Parameter):
 
 
 class VectorParameter(Parameter):
+    """ :class:`.Parameter` sub-class that stores the value in a
+    vector format.
+
+    :var value: The value of the parameter as a list of floating point numbers
+
+    :param name: A short description of the parameter (no colons allowed)
+    :param length: The integer dimensions of the vector
+    :param unit: The units of the vector
+    :param default: The default value
+    """
     def __init__(self, name, length=3, unit=None, default=None):
         self.name = name
         self._value = default
@@ -206,8 +243,16 @@ class VectorParameter(Parameter):
 
 
 class ListParameter(Parameter):
+    """ :class:`.Parameter` sub-class that stores the value as a list.
 
-    def __init__(self, name, choices, unit=None, default=None):
+    :param name: A short description of the parameter (no colons allowed)
+    :param choices: An explicit list of choices, which is disregarded if None
+    :param unit: The units of the vector
+    :param default: The default value
+
+    """
+
+    def __init__(self, name, choices=None, unit=None, default=None):
         self.name = name
         self._value = default
         self.unit = unit
@@ -223,7 +268,7 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        if value in self._choices:
+        if self._choices is not None and value in self._choices:
             self._value = value
         else:
             raise ValueError("Invalid choice for parameter. "
