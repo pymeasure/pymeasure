@@ -1,0 +1,13 @@
+#################
+pymeasure.display
+#################
+
+The display classes enable convenient use pymeasure from with PyQt or PySide graphical interfaces.
+
+==================
+Browser class
+==================
+
+.. autoclass:: pymeasure.display.browser.Browser
+   :members:
+
