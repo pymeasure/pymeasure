@@ -23,10 +23,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 """
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-
-import logging
 
 
 class Keithley2000(Instrument):
@@ -44,7 +45,7 @@ class Keithley2000(Instrument):
         errors = map(int, self.values(":system:error?"))
         for err in errors:
             if err != 0:
-                logging.info("Keithley Encountered error: %d\n" % err)
+                log.info("Keithley Encountered error: %d\n" % err)
 
     def config_measure_resistance(self, wires=2, nplc=2):
         if (wires == 2):

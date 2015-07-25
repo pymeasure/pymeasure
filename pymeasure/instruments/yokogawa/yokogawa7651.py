@@ -23,13 +23,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 """
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
 
 import math
 import time
 import numpy as np
-import logging
 
 
 class Yokogawa7651(Instrument):
@@ -58,7 +60,7 @@ class Yokogawa7651(Instrument):
     @enabled.setter
     def enabled(self, value):
         if value:
-            logging.info("Enabling Yokogawa")
+            log.info("Enabling Yokogawa")
             self.write("O1;E")
         else:
             self.write("O0;E")

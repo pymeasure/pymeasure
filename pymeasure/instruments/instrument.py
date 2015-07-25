@@ -23,11 +23,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 """
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.adapters import VISAAdapter
 
 import numpy as np
-import logging
 
 
 class Instrument(object):
@@ -53,7 +55,7 @@ class Instrument(object):
             self.add_measurement("complete", "*OPC?")
 
         self.isShutdown = False
-        logging.info("Initializing %s" % self.name)
+        log.info("Initializing %s" % self.name)
 
     # Wrapper functions for the Adapter object
     def ask(self, command): return self.adapter.ask(command)
@@ -142,7 +144,7 @@ class Instrument(object):
 
     def shutdown(self):
         """Bring the instrument to a safe and stable state"""
-        logging.info("Shutting down %s" % self.name)
+        log.info("Shutting down %s" % self.name)
 
     def check_errors(self):
         """Return any accumulated errors. Must be reimplemented by subclasses.
