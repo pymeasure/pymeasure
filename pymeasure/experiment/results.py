@@ -170,7 +170,7 @@ class Results(object):
                     unit is not None)
 
         # Fill the procedure with the parameters found
-        for name, parameter in procedure.parameterObjects().iteritems():
+        for name, parameter in procedure.parameter_objects().iteritems():
             if parameter.name in parameters:
                 value, unit = parameters[parameter.name]
 
@@ -181,7 +181,7 @@ class Results(object):
             else:
                 raise Exception("Missing '%s' parameter when loading '%s' class" % (
                         parameter.name, procedure_class))
-        procedure.refreshParameters()  # Enforce update of meta data
+        procedure.refresh_parameters()  # Enforce update of meta data
         return procedure
 
     @staticmethod

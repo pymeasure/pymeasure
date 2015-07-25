@@ -89,7 +89,7 @@ class Manager(QtCore.QObject):
         """
         self.load(experiment)
         self.queued.emit(experiment)
-        if self._start_on_add and not self.isRunning():
+        if self._start_on_add and not self.is_running():
             self.next()
 
     def load(self, experiment):
@@ -105,7 +105,7 @@ class Manager(QtCore.QObject):
         as no other experiments is currently running and there is a procedure
         in the queue.
         """
-        if self.isRunning():
+        if self.is_running():
             raise Exception("Another procedure is already running")
         else:
             queued = self.queued_experiments()
@@ -146,7 +146,7 @@ class Manager(QtCore.QObject):
             raise Exception("Attempting to remove an Experiemnt that is "
                             "not in the Manager")
         else:
-            if self.isRunning() and experiment == self.running_experiment():
+            if self.is_running() and experiment == self.running_experiment():
                 raise Exception("Attempting to remove the currently"
                                 " running experiment")
             else:
@@ -165,7 +165,7 @@ class Manager(QtCore.QObject):
         """ Aborts the currently running Experiment, but raises an exception if
         there is no running experiment
         """
-        if not self.isRunning():
+        if not self.is_running():
             raise Exception("Attempting to abort when no experiment is"
                             " running")
         else:

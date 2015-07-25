@@ -28,6 +28,6 @@ from procedure import Procedure, UnknownProcedure
 from procedure_thread import ProcedureThread
 
 from experiment import Experiment
-from results import Results
+from results import Results, unique_filename
 from listeners import (Listener, ResultsWriter, AverageWriter, 
                        AverageManager, ETADisplay)
