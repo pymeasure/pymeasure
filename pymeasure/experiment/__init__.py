@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from parameters import (Parameter, IntegerParameter, FloatParameter,
+from .parameters import (Parameter, IntegerParameter, FloatParameter,
                         VectorParameter, ListParameter, BooleanParameter)
-from procedure import Procedure, UnknownProcedure
-from procedure_thread import ProcedureThread
+from .procedure import Procedure, UnknownProcedure
+from .procedure_thread import ProcedureThread
 
-from experiment import Experiment
-from results import Results, unique_filename
-from listeners import (Listener, ResultsWriter, AverageWriter, 
+from .experiment import Experiment
+from .results import Results, unique_filename
+from .listeners import (Listener, ResultsWriter, AverageWriter, 
                        AverageManager, ETADisplay)

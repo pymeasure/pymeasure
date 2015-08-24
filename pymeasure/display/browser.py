@@ -23,7 +23,7 @@
 #
 
 from pymeasure.experiment import Procedure
-from qt_variant import QtCore, QtGui
+from .qt_variant import QtCore, QtGui
 
 from os.path import basename
 

@@ -22,10 +22,13 @@
 # THE SOFTWARE.
 #
 
-from procedure import Procedure
+from .procedure import Procedure
 
 from threading import Event, Thread
-from Queue import Queue
+try:
+    from Queue import Queue
+except:
+    from queue import Queue
 
 
 class ProcedureThread(Thread):

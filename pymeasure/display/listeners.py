@@ -22,10 +22,13 @@
 # THE SOFTWARE.
 #
 
-from qt_variant import QtCore
+from .qt_variant import QtCore
 
 from threading import Event
-from Queue import Queue
+try:
+    from Queue import Queue
+except:
+    from queue import Queue
 
 
 class QListener(QtCore.QThread):

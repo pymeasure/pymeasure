@@ -25,7 +25,7 @@
 from pymeasure.experiment import Procedure
 from pymeasure.display.procedure_thread import QProcedureThread
 from pymeasure.display.listeners import QResultsWriter
-from qt_variant import QtCore
+from .qt_variant import QtCore
 
 
 class Manager(QtCore.QObject):

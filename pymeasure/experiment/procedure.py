@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from parameters import Parameter
+from .parameters import Parameter
 
 
 class Procedure(object):

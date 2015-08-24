@@ -23,7 +23,7 @@
 #
 
 from pymeasure.experiment import Procedure
-from qt_variant import QtCore
+from .qt_variant import QtCore
 
 from threading import Event
 
