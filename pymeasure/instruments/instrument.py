@@ -119,7 +119,7 @@ class Instrument(object):
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
 
-    def add_measurement(self, name, get_string, checkErrorsOnGet=False):
+    def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
         """This adds a property to the class based on the supplied
         SCPI commands. The presumption is that this is a measurement
         quantity that may only be read from the instrument, not set.
