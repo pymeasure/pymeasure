@@ -33,7 +33,7 @@ from pymeasure.adapters import PrologixAdapter
 import visa
 import numpy as np
 import time
-from StringIO import StringIO
+from io import BytesIO
 
 
 class Keithley2400(Instrument):
@@ -199,7 +199,7 @@ class Keithley2400(Instrument):
 
     def get_buffer(self):
         return np.loadtxt(
-            StringIO(self.ask(":TRAC:DATA?")),
+            BytesIO(self.ask(":TRAC:DATA?")),
             dtype=np.float32,
             delimiter=','
         )

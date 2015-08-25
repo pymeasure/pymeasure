@@ -28,7 +28,7 @@ from pymeasure.instruments import Instrument, discreteTruncate, RangeException
 
 import numpy as np
 import re
-from StringIO import StringIO
+from io import BytesIO
 
 
 class Agilent8722ES(Instrument):
@@ -171,7 +171,7 @@ class Agilent8722ES(Instrument):
         """
         # TODO: Implement binary transfer instead of ASCII
         data = np.loadtxt(
-            StringIO(self.ask("FORM4;OUTPDATA")),
+            BytesIO(self.ask("FORM4;OUTPDATA")),
             delimiter=',',
             dtype=np.float32
         )
