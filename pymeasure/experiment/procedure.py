@@ -157,11 +157,8 @@ class Procedure(object):
 
     def __str__(self):
         result = repr(self) + "\n"
-        for name, obj in self.parameterObjects().items():
-            if obj.unit:
-                result += "%s: %s %s\n" % (obj.name, obj.value, obj.unit)
-            else:
-                result += "%s: %s\n" % (obj.name, obj.value)
+        for parameter self._parameters.items():
+            result += str(parameter)
         return result
 
 
