@@ -67,7 +67,6 @@ class PrologixAdapter(SerialAdapter):
         else:
             # Construct a new connection
             self.connection = serial.Serial(port, 9600, timeout=0.5, **kwargs)
-            self.connection.open()
             self.set_defaults()
 
     def set_defaults(self):
