@@ -155,8 +155,8 @@ class SynchronousAI(object):
             for i, c in enumerate(converters):
                 self.data[count,i] = c.to_physical(slice[i])
             
-            self.emitProgress(100.*count/self.samples)
-            self.emitData(self.data[count])
+            self.emit_progress(100.*count/self.samples)
+            self.emit_data(self.data[count])
             count += 1
             
         # Cancel measurement if it is still running (abort event)
