@@ -72,11 +72,11 @@ class ResultsWriter(Listener):
         super(ResultsWriter, self).__init__()
 
     def run(self):
-        with open(self.results.data_filename, 'a', 0) as handle:
+        with open(self.results.data_filename, 'ab', buffering=0) as handle:
             while not self.abortEvent.isSet():
                 if not self.queue.empty():
                     data = self.queue.get()
-                    handle.write(self.results.format(data))
+                    handle.write(self.results.format(data).encode())
 
 
 class AverageWriter(ResultsWriter):
