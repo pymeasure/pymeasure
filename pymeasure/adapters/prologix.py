@@ -93,7 +93,8 @@ class PrologixAdapter(SerialAdapter):
         """
         if self.address is not None:
             self.connection.write("++addr %d\n" % self.address)
-        self.connection.write(command + "\n")
+        command += "\n"
+        self.connection.write(command.encode())
 
     def read(self):
         """ Reads the response of the instrument until timeout
@@ -101,7 +102,7 @@ class PrologixAdapter(SerialAdapter):
         :returns: String ASCII response of the instrument
         """
         self.write("++read")
-        return "\n".join(self.connection.readlines())
+        return b"\n".join(self.connection.readlines()).decode()
 
     def gpib(self, address):
         """ Returns and PrologixAdapter object that references the GPIB
