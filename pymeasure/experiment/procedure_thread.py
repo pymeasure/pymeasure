@@ -72,7 +72,7 @@ class ProcedureThread(Thread):
             self.procedure.exit()
             if self.procedure.status == Procedure.RUNNING:
                 self.procedure.status = Procedure.FINISHED
-                self.emitProgress(100.)
+                self.emit_progress(100.)
             self.finished.set()
             self.abort_event.set()  # ensure the thread joins
 
