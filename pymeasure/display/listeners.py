@@ -64,7 +64,7 @@ class QResultsWriter(QListener):
         self.queue.put(data)
 
     def run(self):
-        with open(self.results.data_filename, 'a', 0) as handle:
+        with open(self.results.data_filename, 'ab', 0) as handle: # b flag for Python 3
             while not self.abortEvent.isSet():
                 if not self.queue.empty():
                     data = self.queue.get()
