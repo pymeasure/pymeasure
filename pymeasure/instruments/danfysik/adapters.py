@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 """
 
-from pymeasure.instruments import SerialAdapter
+from pymeasure.adapters.serial import SerialAdapter
 
 import re
 
