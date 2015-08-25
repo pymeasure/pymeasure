@@ -111,7 +111,7 @@ class PrologixAdapter(SerialAdapter):
         :param address: Integer GPIB address of the desired instrument
         :returns: PrologixAdapter for specific GPIB address
         """
-        return PrologixAdapter(self.connection, gpib_address)
+        return PrologixAdapter(self.connection, address)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
