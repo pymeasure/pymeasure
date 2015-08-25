@@ -91,7 +91,8 @@ class PrologixAdapter(SerialAdapter):
         :param command: SCPI command string to be sent to the instrument
         """
         if self.address is not None:
-            self.connection.write("++addr %d\n" % self.address)
+            address_command = "++addr %d\n" % self.address
+            self.connection.write(address_command.encode())
         command += "\n"
         self.connection.write(command.encode())
 
