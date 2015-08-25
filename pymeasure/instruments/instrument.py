@@ -38,7 +38,7 @@ class Instrument(object):
     """
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
-            if isinstance(adapter, (int, long, str)):
+            if isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
         except ImportError:
             raise Exception("Invalid Adapter provided for Instrument since "
