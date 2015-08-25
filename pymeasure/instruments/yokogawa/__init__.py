@@ -24,4 +24,4 @@ THE SOFTWARE.
 
 """
 
-from yokogawa7651 import Yokogawa7651
+from .yokogawa7651 import Yokogawa7651

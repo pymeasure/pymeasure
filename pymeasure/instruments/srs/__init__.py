@@ -24,4 +24,4 @@ THE SOFTWARE.
 
 """
 
-from sr830 import SR830
+from .sr830 import SR830

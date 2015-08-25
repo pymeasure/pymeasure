@@ -24,4 +24,4 @@ THE SOFTWARE.
 
 """
 
-from tds2000 import TDS2000
+from .tds2000 import TDS2000

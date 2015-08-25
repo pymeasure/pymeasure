@@ -24,4 +24,4 @@ THE SOFTWARE.
 
 """
 
-from parkerGV6 import ParkerGV6
+from .parkerGV6 import ParkerGV6

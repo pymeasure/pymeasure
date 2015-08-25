@@ -24,5 +24,5 @@ THE SOFTWARE.
 
 """
 
-from adapters import DanfysikAdapter
-from danfysik8500 import Danfysik8500
+from .adapters import DanfysikAdapter
+from .danfysik8500 import Danfysik8500

@@ -24,4 +24,4 @@ THE SOFTWARE.
 
 """
 
-from fwbell5080 import FWBell5080
+from .fwbell5080 import FWBell5080

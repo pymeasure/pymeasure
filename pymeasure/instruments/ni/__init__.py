@@ -24,4 +24,4 @@ THE SOFTWARE.
 
 """
 
-from daqmx import DAQmx
+from .daqmx import DAQmx
