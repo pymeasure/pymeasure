@@ -40,7 +40,8 @@ class DanfysikAdapter(SerialAdapter):
 
     def read(self):
         # Overwrite to raise exceptions on error messages
-        result = "".join(self.connection.readlines())
+        result = b"".join(self.connection.readlines())
+        results = results.decode()
         result = result.replace("\r", "")
         search = re.search("^\?\\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
