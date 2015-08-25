@@ -49,7 +49,7 @@ class SerialAdapter(Adapter):
 
         :param command: SCPI command string to be sent to the instrument
         """
-        self.connection.write(command)
+        self.connection.write(command.encode()) # encode added for Python 3
 
     def read(self):
         """ Reads until the buffer is empty and returns the resulting
