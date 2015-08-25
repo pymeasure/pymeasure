@@ -103,7 +103,7 @@ class AverageWriter(ResultsWriter):
                         old_data = self.results.parse(handle.readline())
                         handle.seek(current_pointer)
                         new_data = {}
-                        for key, value in old_data.iteritems():
+                        for key, value in old_data.items():
                             new_data[key] = (value * float(current_trace-1) +
                                              data[key])/float(current_trace)
                         handle.write(self.results.format(new_data))
