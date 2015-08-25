@@ -25,7 +25,7 @@ THE SOFTWARE.
 """
 
 from pymeasure.instruments import Instrument
-from adapters import LakeShoreUSBAdapter
+from .adapters import LakeShoreUSBAdapter
 
 from time import sleep
 import numpy as np
