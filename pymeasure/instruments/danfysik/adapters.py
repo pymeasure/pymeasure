@@ -35,7 +35,8 @@ class DanfysikAdapter(SerialAdapter):
         super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
 
     def write(self, command):
-        self.connection.write(command + "\r")
+        command += "\r"
+        self.connection.write(command.encode())
 
     def read(self):
         # Overwrite to raise exceptions on error messages
