@@ -157,7 +157,7 @@ class Procedure(object):
 
     def __str__(self):
         result = repr(self) + "\n"
-        for parameter self._parameters.items():
+        for parameter in self._parameters.items():
             result += str(parameter)
         return result
 
