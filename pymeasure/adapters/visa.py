@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from adapter import Adapter
+from .adapter import Adapter
 
 import visa
 import numpy as np

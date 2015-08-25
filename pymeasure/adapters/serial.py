@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from adapter import Adapter
+from .adapter import Adapter
 
 import serial
 import numpy as np
