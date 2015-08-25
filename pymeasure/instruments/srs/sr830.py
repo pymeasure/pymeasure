@@ -225,7 +225,6 @@ class SR830(Instrument):
         currentCount = self.buffer_count
         index = 0
         while currentCount < count:
-            print index, currentCount, count
             if currentCount > index:
                 ch1[index:currentCount] = self.buffer_data(1, index, currentCount)
                 ch2[index:currentCount] = self.buffer_data(2, index, currentCount)
