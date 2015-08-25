@@ -41,8 +41,8 @@ class QProcedureThread(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
         self.procedure = None
-        self.abortEvent = Event()
-        self.abortEvent.clear()
+        self.abort_event = Event()
+        self.abort_event.clear()
 
     def load(self, procedure):
         if not isinstance(procedure, Procedure):
@@ -50,9 +50,9 @@ class QProcedureThread(QtCore.QThread):
                              " Procedure class")
         self.procedure = procedure
         self.procedure.status = Procedure.QUEUED
-        self.procedure.hasAborted = self.hasAborted
-        self.procedure.emitData = self.data.emit
-        self.procedure.emitProgress = self.progress.emit
+        self.procedure.has_aborted = self.has_aborted
+        self.procedure.emit_data = self.data.emit
+        self.procedure.emit_progress = self.progress.emit
 
     def run(self):
         if self.procedure is None:
@@ -78,18 +78,18 @@ class QProcedureThread(QtCore.QThread):
                 self.status_changed.emit(self.procedure.status)
                 self.progress.emit(100.)
             self.finished.emit()
-            self.abortEvent.set()  # ensure the thread joins
+            self.abort_event.set()  # ensure the thread joins
 
-    def hasAborted(self):
-        return self.abortEvent.isSet()
+    def has_aborted(self):
+        return self.abort_event.isSet()
 
     def abort(self):
-        self.abortEvent.set()
+        self.abort_event.set()
         self.procedure.status = Procedure.ABORTED
         self.status_changed.emit(self.procedure.status)
 
     def join(self, timeout=0):
-        self.abortEvent.wait(timeout)
-        if not self.abortEvent.isSet():
-            self.abortEvent.set()
+        self.abort_event.wait(timeout)
+        if not self.abort_event.isSet():
+            self.abort_event.set()
         super(QProcedureThread, self).wait()
