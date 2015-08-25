@@ -136,14 +136,21 @@ class SynchronousAI(object):
         # Measurement loop
         count = 0
         while not hasAborted() and self.samples > count:
-            slice = np.fromfile(
-                        self.subdevice.device.file, 
-                        dtype=dtype,
-                        count=length
-                    )
+            #slice = np.fromfile( # Not functioning in Python 3
+            #            self.subdevice.device.file, 
+            #            dtype=dtype,
+            #            count=length
+            #        )
+            buffer = self.subdevice.device.file.read()
+            slice = np.fromstring(
+                buffer,
+                dtype=dtype,
+                count=length
+            )
+
             if len(slice) != length: # Reading finished
                 break
-                                
+
             # Convert to physical values
             for i, c in enumerate(converters):
                 self.data[count,i] = c.to_physical(slice[i])
