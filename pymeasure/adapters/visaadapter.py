@@ -28,8 +28,10 @@ import visa
 import numpy as np
 import copy
 
+class VISAAdapter15(Adapter):
+    pass
 
-class VISAAdapter(Adapter):
+class VISAAdapter14(Adapter):
     """ Adapter class for the VISA library using PyVISA to communicate
     to instruments
 
@@ -38,10 +40,10 @@ class VISAAdapter(Adapter):
     """
 
     def __init__(self, resourceName, **kwargs):
-        self.manager = visa.ResourceManager()
         if isinstance(resourceName, (int, long)):
             resourceName = "GPIB0::%d::INSTR" % resourceName
         if self.version == '1.5':
+            self.manager = visa.ResourceManager()
             safeKeywords = ['resource_name', 'timeout', 'term_chars',
                             'chunk_size', 'lock', 'delay', 'send_end',
                             'values_format']
