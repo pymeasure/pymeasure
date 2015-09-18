@@ -31,7 +31,11 @@ setup(
     version='0.2',
     author='Colin Jermain',
     author_email='clj72@cornell.edu',
-    packages=['pymeasure', 'pymeasure.instruments', 'pymeasure.composites'],
+    packages=[
+        'pymeasure', 'pymeasure.instruments',
+        'pymeasure.adapters', 'pymeasure.display',
+        'pymeasure.experiment'
+    ],
     scripts=[],
     url='',
     license='LICENSE.txt',
