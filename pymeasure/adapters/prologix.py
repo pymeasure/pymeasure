@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters.serial import SerialAdapter
+from pymeasure.adapters.serialadapter import SerialAdapter
 
 import serial
 from time import sleep
