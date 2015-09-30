@@ -162,8 +162,8 @@ class VISAAdapter17(Adapter):
                                 **kwargs
                           )
 
-    def config(self, is_binary = False, datatype = 'float32',
-                    container = np.array, converter = 'f', 
+    def config(self, is_binary = False, datatype = 'str',
+                    container = np.array, converter = 's', 
                     separator = ',', is_big_endian = False):
         """ Configurate the format of data transfer to and from the instrument.
 
