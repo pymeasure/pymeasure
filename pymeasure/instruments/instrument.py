@@ -74,11 +74,14 @@ class Instrument(object):
         return self.adapter.read()
 
     def values(self, command):
-        values = self.adapter.values(command)
-        if len(values) == 1:
-            return values[0]
-        else:
-            return values
+        result = self.ask(command).strip()
+        try:
+            return [float(x) for x in result.split(",")]
+        except:
+            return result
+
+    def ascii_values(self, command, **kwargs):
+        return self.adapter.ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
@@ -115,7 +118,10 @@ class Instrument(object):
             vals = self.values(get_string)
             if check_errors_on_get:
                 self.check_errors()
-            return vals
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
 
         def fset(self, value):
             self.write(set_string % value)
@@ -137,7 +143,11 @@ class Instrument(object):
         """
 
         def fget(self):
-            return self.values(get_string)
+            vals = self.values(get_string)
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
