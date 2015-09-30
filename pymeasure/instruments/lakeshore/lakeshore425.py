@@ -50,14 +50,32 @@ class LakeShore425(Instrument):
 
     UNIT_VALUES = ('Gauss', 'Tesla', 'Oersted', 'Ampere/meter')
     GAUSS, TESLA, OERSTED, AMP_METER = UNIT_VALUES
+    RANGES_HSE = ('35G', '350G', '3.5kG', '35kG')
 
     def __init__(self, port):
         super(LakeShore425, self).__init__(
             LakeShoreUSBAdapter(port),
             "LakeShore 425 Gaussmeter",
         )
-        self.add_control("range", "RANGE?", "RANGE %d")
+        #self.add_control("range", "RANGE?", "RANGE %d")
+        
+    @property
+    def range(self):
+        """ Get the current range."""
+        range_id = int(self.values("RANGE?")[0])
+        return LakeShore425.RANGES_HSE[range_id - 1]
 
+    @range.setter
+    def range(self, maxvalue):
+        """ Set an appropriate range.
+        
+        :param maxvalue: Maximum limit of input field, in Gauss.
+        """
+        range_id = 0
+        while maxvalue > 35*(10**range_id):
+            range_id += 1
+        self.write("RANGE %d" % (range_id+1) )
+        
     def auto_range(self):
         """ Sets the field range to automatically adjust """
         self.write("AUTO")
@@ -65,7 +83,7 @@ class LakeShore425(Instrument):
     @property
     def field(self):
         """ Returns the field given the units being used """
-        return self.values("RDGFIELD?")
+        return self.values("RDGFIELD?")[0]
 
     def dc_mode(self, wideband=True):
         """ Sets up a steady-state (DC) measurement of the field """
@@ -74,16 +92,16 @@ class LakeShore425(Instrument):
         else:
             self.mode(1, 0, 2)
 
-    def ac_mode(self, wideBand=True):
+    def ac_mode(self, wideband=True):
         """ Sets up a measurement of an oscillating (AC) field """
-        if wideBand:
+        if wideband:
             self.mode = (2, 1, 1)
         else:
             self.mode = (2, 1, 2)
 
     @property
     def mode(self):
-        return tuple(self.ask("RDGMODE?").split(','))
+        return tuple(self.values("RDGMODE?"))
 
     @mode.setter
     def mode(self, value):
