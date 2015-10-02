@@ -23,6 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 """
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument, RangeException
 from pymeasure.adapters import PrologixAdapter
@@ -30,8 +33,7 @@ from pymeasure.adapters import PrologixAdapter
 import visa
 import numpy as np
 import time
-import logging
-from StringIO import StringIO
+from io import BytesIO
 
 
 class Keithley2400(Instrument):
@@ -81,7 +83,7 @@ class Keithley2400(Instrument):
         errors = map(int, self.values(":system:error?"))
         for err in errors:
             if err != 0:
-                logging.info("Keithley Encountered error: %d\n" % err)
+                log.info("Keithley Encountered error: %d\n" % err)
 
     def reset(self):
         self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
@@ -197,7 +199,7 @@ class Keithley2400(Instrument):
 
     def get_buffer(self):
         return np.loadtxt(
-            StringIO(self.ask(":TRAC:DATA?")),
+            BytesIO(self.ask(":TRAC:DATA?")),
             dtype=np.float32,
             delimiter=','
         )
@@ -328,7 +330,7 @@ class Keithley2400(Instrument):
     def measure_resistance(self, nplc=1, resistance=1000.0, auto_range=True):
         """ Sets up to measure resistance
         """
-        logging.info("<i>%s</i> is measuring resistance." % self.name)
+        log.info("<i>%s</i> is measuring resistance." % self.name)
         self.write(":sens:func \"res\";"
                    ":sens:res:mode man;"
                    ":sens:res:nplc %f;:form:elem res;" % nplc)
@@ -341,7 +343,7 @@ class Keithley2400(Instrument):
     def measure_voltage(self, nplc=1, voltage=1000.0, auto_range=True):
         """ Sets up to measure voltage
         """
-        logging.info("<i>%s</i> is measuring voltage." % self.name)
+        log.info("<i>%s</i> is measuring voltage." % self.name)
         self.write(":sens:func \"volt\";"
                    ":sens:volt:nplc %f;:form:elem volt;" % nplc)
         if auto_range:
@@ -351,7 +353,7 @@ class Keithley2400(Instrument):
         self.check_errors()
 
     def measure_current(self, nplc=1, current=1000.0, auto_range=True):
-        logging.info("<i>%s</i> is measuring current." % self.name)
+        log.info("<i>%s</i> is measuring current." % self.name)
         self.write(":sens:func \"curr\";"
                    ":sens:curr:nplc %f;:form:elem curr;" % nplc)
         if auto_range:
@@ -365,7 +367,7 @@ class Keithley2400(Instrument):
                               auto_range=True):
         """ Set up to source current
         """
-        logging.info("<i>%s</i> is sourcing current." % self.name)
+        log.info("<i>%s</i> is sourcing current." % self.name)
         self.source_mode = "Current"
         if auto_range:
             self.write(":sour:func curr;"
@@ -384,7 +386,7 @@ class Keithley2400(Instrument):
                               voltage_range=2.0, auto_range=True):
         """ Set up to source voltage
         """
-        logging.info("<i>%s</i> is sourcing voltage." % self.name)
+        log.info("<i>%s</i> is sourcing voltage." % self.name)
         self.source_mode = "Voltage"
         if auto_range:
             self.write("sour:func volt;"
@@ -458,7 +460,7 @@ class Keithley2400(Instrument):
         self.write(":ROUT:TERM FRON")
 
     def shutdown(self):
-        logging.info("Shutting down <i>%s</i>." % self.name)
+        log.info("Shutting down <i>%s</i>." % self.name)
         if self.source_mode == "Current":
             self.ramp_source_current(0.0)
         else:

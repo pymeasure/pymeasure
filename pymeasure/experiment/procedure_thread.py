@@ -22,10 +22,13 @@
 # THE SOFTWARE.
 #
 
-from procedure import Procedure
+from .procedure import Procedure
 
 from threading import Event, Thread
-from Queue import Queue
+try:
+    from Queue import Queue
+except:
+    from queue import Queue
 
 
 class ProcedureThread(Thread):
@@ -69,7 +72,7 @@ class ProcedureThread(Thread):
             self.procedure.exit()
             if self.procedure.status == Procedure.RUNNING:
                 self.procedure.status = Procedure.FINISHED
-                self.emitProgress(100.)
+                self.emit_progress(100.)
             self.finished.set()
             self.abort_event.set()  # ensure the thread joins
 

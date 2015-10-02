@@ -25,7 +25,7 @@ THE SOFTWARE.
 """
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.insturments.danfysik import DanfysikAdapter
+from .adapters import DanfysikAdapter
 
 from time import sleep
 import numpy as np

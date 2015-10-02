@@ -22,10 +22,13 @@
 # THE SOFTWARE.
 #
 
-from qt_variant import QtCore
+from .qt_variant import QtCore
 
 from threading import Event
-from Queue import Queue
+try:
+    from Queue import Queue
+except:
+    from queue import Queue
 
 
 class QListener(QtCore.QThread):
@@ -61,7 +64,7 @@ class QResultsWriter(QListener):
         self.queue.put(data)
 
     def run(self):
-        with open(self.results.data_filename, 'a', 0) as handle:
+        with open(self.results.data_filename, 'ab', 0) as handle: # b flag for Python 3
             while not self.abortEvent.isSet():
                 if not self.queue.empty():
                     data = self.queue.get()

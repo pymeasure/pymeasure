@@ -24,4 +24,4 @@ THE SOFTWARE.
 
 """
 
-from dsp7265 import DSP7265
+from .dsp7265 import DSP7265

@@ -25,7 +25,10 @@
 from pymeasure.experiment import Results
 
 from threading import Event, Thread
-from Queue import Queue
+try:
+    from Queue import Queue
+except:
+    from queue import Queue
 
 
 class Listener(Thread):
@@ -69,11 +72,11 @@ class ResultsWriter(Listener):
         super(ResultsWriter, self).__init__()
 
     def run(self):
-        with open(self.results.data_filename, 'a', 0) as handle:
+        with open(self.results.data_filename, 'ab', buffering=0) as handle:
             while not self.abortEvent.isSet():
                 if not self.queue.empty():
                     data = self.queue.get()
-                    handle.write(self.results.format(data))
+                    handle.write(self.results.format(data).encode())
 
 
 class AverageWriter(ResultsWriter):
@@ -100,7 +103,7 @@ class AverageWriter(ResultsWriter):
                         old_data = self.results.parse(handle.readline())
                         handle.seek(current_pointer)
                         new_data = {}
-                        for key, value in old_data.iteritems():
+                        for key, value in old_data.items():
                             new_data[key] = (value * float(current_trace-1) +
                                              data[key])/float(current_trace)
                         handle.write(self.results.format(new_data))

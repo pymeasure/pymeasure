@@ -23,11 +23,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 """
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.adapters.visaadapter import VISAAdapter
 
 import numpy as np
-import logging
 
 
 class Instrument(object):
@@ -36,7 +38,7 @@ class Instrument(object):
     """
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
-            if isinstance(adapter, (int, long, str)):
+            if isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
         except ImportError:
             raise Exception("Invalid Adapter provided for Instrument since "
@@ -54,7 +56,7 @@ class Instrument(object):
             self.add_measurement("complete", "*OPC?")
 
         self.isShutdown = False
-        logging.info("Initializing %s." % self.name)
+        log.info("Initializing %s." % self.name)
         
     @property
     def id(self):
@@ -134,9 +136,8 @@ class Instrument(object):
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
 
-    def add_measurement(self, name, get_string, 
-                        checkErrorsOnGet=False, 
-                        docs = None):
+
+    def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
         """This adds a property to the class based on the supplied
         SCPI commands. The presumption is that this is a measurement
         quantity that may only be read from the instrument, not set.
@@ -166,7 +167,7 @@ class Instrument(object):
     def shutdown(self):
         """Bring the instrument to a safe and stable state"""
         self.isShutdown = True
-        logging.info("Shutting down %s" % self.name)
+        log.info("Shutting down %s" % self.name)
 
     def check_errors(self):
         """Return any accumulated errors. Must be reimplemented by subclasses.

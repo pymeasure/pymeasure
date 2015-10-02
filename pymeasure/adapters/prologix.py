@@ -67,7 +67,6 @@ class PrologixAdapter(SerialAdapter):
         else:
             # Construct a new connection
             self.connection = serial.Serial(port, 9600, timeout=0.5, **kwargs)
-            self.connection.open()
             self.set_defaults()
 
     def set_defaults(self):
@@ -92,8 +91,10 @@ class PrologixAdapter(SerialAdapter):
         :param command: SCPI command string to be sent to the instrument
         """
         if self.address is not None:
-            self.connection.write("++addr %d\n" % self.address)
-        self.connection.write(command + "\n")
+            address_command = "++addr %d\n" % self.address
+            self.connection.write(address_command.encode())
+        command += "\n"
+        self.connection.write(command.encode())
 
     def read(self):
         """ Reads the response of the instrument until timeout
@@ -101,7 +102,7 @@ class PrologixAdapter(SerialAdapter):
         :returns: String ASCII response of the instrument
         """
         self.write("++read")
-        return "\n".join(self.connection.readlines())
+        return b"\n".join(self.connection.readlines()).decode()
 
     def gpib(self, address):
         """ Returns and PrologixAdapter object that references the GPIB
@@ -111,7 +112,7 @@ class PrologixAdapter(SerialAdapter):
         :param address: Integer GPIB address of the desired instrument
         :returns: PrologixAdapter for specific GPIB address
         """
-        return PrologixAdapter(self.connection, gpib_address)
+        return PrologixAdapter(self.connection, address)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high

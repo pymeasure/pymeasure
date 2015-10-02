@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from parameters import Parameter
+from .parameters import Parameter
 
 
 class Procedure(object):
@@ -70,7 +70,7 @@ class Procedure(object):
 
     def parameters_are_set(self):
         """ Returns True if all parameters are set """
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             if getattr(self, name) is None:
                 return False
         return True
@@ -81,7 +81,7 @@ class Procedure(object):
         got, which should cast it into the right format. Used as a decorator
         @checkParameters on the enter method
         """
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             value = getattr(self, name)
             if value is None:
                 raise NameError("Missing %s '%s' in %s" % (
@@ -92,7 +92,7 @@ class Procedure(object):
         current values that are not in the default definitions
         """
         result = {}
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             value = getattr(self, name)
             if value is not None:
                 parameter.value = value
@@ -107,7 +107,7 @@ class Procedure(object):
         current values that are not in the default definitions
         """
         result = {}
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             value = getattr(self, name)
             if value is not None:
                 parameter.value = value
@@ -119,7 +119,7 @@ class Procedure(object):
         """ Enforces that all the parameters are re-cast and updated in the meta
         dictionary
         """
-        for name, parameter in self._parameters.iteritems():
+        for name, parameter in self._parameters.items():
             value = getattr(self, name)
             parameter.value = value
             setattr(self, name, parameter.value)
@@ -128,7 +128,7 @@ class Procedure(object):
         """ Sets a dictionary of parameters and raises an exception if additional
         parameters are present if except_missing is True
         """
-        for name, value in parameters.iteritems():
+        for name, value in parameters.items():
             if name in self._parameters:
                 self._parameters[name].value = value
                 setattr(self, name, self._parameters[name].value)
@@ -157,11 +157,8 @@ class Procedure(object):
 
     def __str__(self):
         result = repr(self) + "\n"
-        for name, obj in self.parameterObjects().iteritems():
-            if obj.unit:
-                result += "%s: %s %s\n" % (obj.name, obj.value, obj.unit)
-            else:
-                result += "%s: %s\n" % (obj.name, obj.value)
+        for parameter in self._parameters.items():
+            result += str(parameter)
         return result
 
 

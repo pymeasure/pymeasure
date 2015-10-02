@@ -23,10 +23,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 """
+import logging
+log = log.getLogger(__name__)
+log.addHandler(log.NullHandler())
 
 from pymeasure.instruments import Instrument
-
-import logging
 
 
 class Keithley2000(Instrument):
@@ -61,7 +62,7 @@ class Keithley2000(Instrument):
                                     separator = ',')
             if int(err[0]) != 0:
                 errmsg = self.title + ": %s: %s" % (err[0],err[1])
-                logging.error(errmsg + '\n')
+                log.error(errmsg + '\n')
             else:
                 break
             
@@ -132,7 +133,7 @@ class Keithley2000(Instrument):
             self.write(":%s:NPLCycles %g" %(self.config, nplc))
         else:
             errmsg = self.title + ": NPLC must be in 0.01 - 10. Do nothing."
-            logging.warning(errmsg + '\n')
+            log.warning(errmsg + '\n')
 
     # Establish a property
     nplc = property(get_nplc, set_nplc, "Number of power line cycles.")
@@ -184,7 +185,7 @@ class Keithley2000(Instrument):
             self.write(":%s:AVERage:STATe OFF" %config)
         elif count > 100:
             errmsg = self.title + ": Number of counts must be <= 100. Do nothing."
-            logging.warning(errmsg + '\n')
+            log.warning(errmsg + '\n')
         else:
             self.write(":%s:AVERage:STATe ON" %config)
             self.write(":%s:AVERage:TCONtrol %s" %(config, method))
@@ -201,7 +202,7 @@ class Keithley2000(Instrument):
             return self.values(":%s:DETector:BANDwidth?" % self.config)
         else:
             errmsg = self.title + ": Cannot get bandwidth in DC mode."
-            logging.warning(errmsg + '\n')
+            log.warning(errmsg + '\n')
         
         
     def set_bandwidth(self, bandwidth):
@@ -212,7 +213,7 @@ class Keithley2000(Instrument):
             self.write(":%s:DETector:BANDwidth %g" %(config, bandwidth))
         else:
             errmsg = self.title + ": Cannot set bandwidth in DC mode."
-            logging.warning(errmsg + '\n')
+            log.warning(errmsg + '\n')
 
     # Establish a property
     bandwidth = property(get_bandwidth, set_bandwidth, "Bandwidth for AC measurement.")

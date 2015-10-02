@@ -23,7 +23,7 @@
 #
 
 from pymeasure.experiment import Procedure
-from qt_variant import QtCore, QtGui
+from .qt_variant import QtCore, QtGui
 
 from os.path import basename
 
@@ -37,7 +37,7 @@ class BrowserItem(QtGui.QTreeWidgetItem):
         pixelmap.fill(curve.opts['pen'].color())
         self.setIcon(0, QtGui.QIcon(pixelmap))
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-        self.setCheckState(0, 2)
+        self.setCheckState(0, QtCore.Qt.Checked)
         self.setText(1, basename(results.data_filename))
 
         self.setStatus(results.procedure.status)
@@ -69,23 +69,25 @@ class BrowserItem(QtGui.QTreeWidgetItem):
 
 
 class Browser(QtGui.QTreeWidget):
-    """Graphical list view of :class:`.Experiment` objects allowing the user 
-    to view the status of queued Experiments as well as loading and displaying 
+    """Graphical list view of :class:`.Experiment` objects allowing the user
+    to view the status of queued Experiments as well as loading and displaying
     data from previous runs.
 
-    In order that different Experiments be displayed within the same Browser, they must 
-    have entries in `DATA_COLUMNS` corresponding to the `measured_quantities` of
-    the Browser.
+    In order that different Experiments be displayed within the same Browser,
+    they must have entries in `DATA_COLUMNS` corresponding to the
+    `measured_quantities` of the Browser.
     """
 
-    def __init__(self, procedure_class, display_parameters, measured_quantities, parent=None):
+    def __init__(self, procedure_class, display_parameters,
+                 measured_quantities, parent=None):
         super(Browser, self).__init__(parent)
-        self.display_parameters  = display_parameters
-        self.procedure_class     = procedure_class
+        self.display_parameters = display_parameters
+        self.procedure_class = procedure_class
         self.measured_quantities = measured_quantities
 
         header_labels = ["Graph", "Filename", "Progress", "Status"]
-        header_labels.extend(self.display_parameters)
+        for parameter in self.display_parameters:
+            header_labels.append(getattr(self.procedure_class, parameter).name)
 
         self.setColumnCount(len(header_labels))
         self.setHeaderLabels(header_labels)
@@ -95,7 +97,7 @@ class Browser(QtGui.QTreeWidget):
 
     def add(self, experiment):
         """Add a :class:`.Experiment` object to the Browser. This function
-        checks to make sure that the Experiment measures the appropriate 
+        checks to make sure that the Experiment measures the appropriate
         quantities to warrant its inclusion, and then adds a BrowserItem to
         the Browser, filling all relevant columns with Parameter data.
         """
@@ -104,9 +106,11 @@ class Browser(QtGui.QTreeWidget):
 
         for measured_quantity in self.measured_quantities:
             if measured_quantity not in experiment.procedure.DATA_COLUMNS:
-                raise Exception("Procedure does not measure the %s quantity." % measured_quantity)
+                raise Exception("Procedure does not measure the"
+                                " %s quantity." % measured_quantity)
 
-        # Set the relevant fields within the BrowserItem if that Parameter is implemented
+        # Set the relevant fields within the BrowserItem if
+        # that Parameter is implemented
         item = experiment.browser_item
         for i, column in enumerate(self.display_parameters):
             if column in experiment_parameter_names:

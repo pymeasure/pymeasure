@@ -23,7 +23,7 @@
 #
 
 from logging import Handler
-from qt_variant import QtGui
+from .qt_variant import QtGui
 
 
 class QLogHandler(Handler):

@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 """
 
-from instrument import Instrument
+from .instrument import Instrument
 
 
 def discreteTruncate(number, discreteSet):

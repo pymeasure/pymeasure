@@ -21,17 +21,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
 import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 try:
     from procedure_thread import QProcedureThread
     from listeners import QResultsWriter
 except ImportError:
-    logging.warning("PyQt can not be imported")
+    log.warning("Python bindings for Qt (PySide, PyQt) can not be imported")
 
 
-def runInIPython(app):
+def run_in_ipython(app):
     """ Attempts to run the QApplication in the IPython main loop, which
     requires the command "%gui qt" to be run prior to the script execution.
     On failure the Qt main loop is initialized instead

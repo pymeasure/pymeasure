@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 """
 
-from pymeasure.instruments import SerialAdapter
+from pymeasure.adapters.serial import SerialAdapter
 
 import re
 
@@ -35,11 +35,13 @@ class DanfysikAdapter(SerialAdapter):
         super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
 
     def write(self, command):
-        self.connection.write(command + "\r")
+        command += "\r"
+        self.connection.write(command.encode())
 
     def read(self):
         # Overwrite to raise exceptions on error messages
-        result = "".join(self.connection.readlines())
+        result = b"".join(self.connection.readlines())
+        result = result.decode()
         result = result.replace("\r", "")
         search = re.search("^\?\\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:

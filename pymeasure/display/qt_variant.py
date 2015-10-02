@@ -25,9 +25,9 @@
 import sys
 import os
 
-default_variant = 'PyQt4'
+default_variant = 'PySide'
 
-env_api = os.environ.get('QT_API', 'pyqt')
+env_api = os.environ.get('QT_API', 'pyside')
 if '--pyside' in sys.argv:
     variant = 'PySide'
 elif '--pyqt4' in sys.argv:

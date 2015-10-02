@@ -89,7 +89,7 @@ class Results(object):
                               repr(self.procedure_class)).group("name")
         h.append("Procedure: <%s>" % procedure)
         h.append("Parameters:")
-        for name, parameter in self.parameters.iteritems():
+        for name, parameter in self.parameters.items():
             h.append("\t%s: %s" % (parameter.name, str(parameter)))
         h.append("Data:")
         self._header_count = len(h)
@@ -170,7 +170,7 @@ class Results(object):
                     unit is not None)
 
         # Fill the procedure with the parameters found
-        for name, parameter in procedure.parameterObjects().iteritems():
+        for name, parameter in procedure.parameter_objects().items():
             if parameter.name in parameters:
                 value, unit = parameters[parameter.name]
 
@@ -181,7 +181,7 @@ class Results(object):
             else:
                 raise Exception("Missing '%s' parameter when loading '%s' class" % (
                         parameter.name, procedure_class))
-        procedure.refreshParameters()  # Enforce update of meta data
+        procedure.refresh_parameters()  # Enforce update of meta data
         return procedure
 
     @staticmethod

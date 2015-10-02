@@ -25,14 +25,15 @@
 from pymeasure.experiment import Procedure
 from pymeasure.display.procedure_thread import QProcedureThread
 from pymeasure.display.listeners import QResultsWriter
-from qt_variant import QtCore
+from .qt_variant import QtCore
 
 
 class Manager(QtCore.QObject):
-    """Controls the execution of :class:`.Experiment` classes by implementing a queue system
-    in which Experiments are added, removed, executed, or aborted. When instantiated, the
-    Manager is linked to a :class:`.Browser` and a PyQtGraph `PlotItem` within the user interface,
-    which are updated in accordance with the execution status of the Experiments.
+    """Controls the execution of :class:`.Experiment` classes by implementing
+    a queue system in which Experiments are added, removed, executed, or
+    aborted. When instantiated, the Manager is linked to a :class:`.Browser`
+    and a PyQtGraph `PlotItem` within the user interface, which are updated
+    in accordance with the execution status of the Experiments.
     """
     experiments = []
     _is_continuous = True
@@ -50,12 +51,12 @@ class Manager(QtCore.QObject):
         self.plot = plot
         self.browser = browser
 
-    def isRunning(self):
+    def is_running(self):
         """ Returns True if a procedure is currently running
         """
         return self._running_thread is not None
 
-    def runningExperiment(self):
+    def running_experiment(self):
         """ Returns the results object of the running procedure
         """
         for experiment in self.experiments:
@@ -63,7 +64,7 @@ class Manager(QtCore.QObject):
                 return experiment
         return None
 
-    def queuedExperiments(self):
+    def queued_experiments(self):
         """ Returns the Experiments that are queued
         """
         queued = []
@@ -72,12 +73,12 @@ class Manager(QtCore.QObject):
                 queued.append(experiment)
         return queued
 
-    def hasQueuedExperiments(self):
+    def has_queued_experiments(self):
         """ Returns True if there is at least one Experiment in the queue.
         """
-        return len(self.queuedExperiments()) > 0
+        return len(self.queued_experiments()) > 0
 
-    def filePaths(self):
+    def file_paths(self):
         """ Returns a list of file paths for the Experiments in the Manager
         """
         return [experiment.results.data_filename for
@@ -88,7 +89,7 @@ class Manager(QtCore.QObject):
         """
         self.load(experiment)
         self.queued.emit(experiment)
-        if self._start_on_add and not self.isRunning():
+        if self._start_on_add and not self.is_running():
             self.next()
 
     def load(self, experiment):
@@ -104,10 +105,10 @@ class Manager(QtCore.QObject):
         as no other experiments is currently running and there is a procedure
         in the queue.
         """
-        if self.isRunning():
+        if self.is_running():
             raise Exception("Another procedure is already running")
         else:
-            queued = self.queuedExperiments()
+            queued = self.queued_experiments()
             if len(queued) == 0:
                 return
                 # raise Exception("No experiments are queued to be run")
@@ -145,7 +146,7 @@ class Manager(QtCore.QObject):
             raise Exception("Attempting to remove an Experiemnt that is "
                             "not in the Manager")
         else:
-            if self.isRunning() and experiment == self.runningExperiment():
+            if self.is_running() and experiment == self.running_experiment():
                 raise Exception("Attempting to remove the currently"
                                 " running experiment")
             else:
@@ -155,7 +156,7 @@ class Manager(QtCore.QObject):
                 self.experiments.pop(self.experiments.index(experiment))
 
     def clear(self):
-        """ Remove all Experiments from the Manager. 
+        """ Remove all Experiments from the Manager.
         """
         for experiment in self.experiments[:]:
             self.remove(experiment)
@@ -164,7 +165,7 @@ class Manager(QtCore.QObject):
         """ Aborts the currently running Experiment, but raises an exception if
         there is no running experiment
         """
-        if not self.isRunning():
+        if not self.is_running():
             raise Exception("Attempting to abort when no experiment is"
                             " running")
         else:
@@ -175,7 +176,7 @@ class Manager(QtCore.QObject):
             self._data_writer.join()
 
             self.aborted.emit(
-                self.experimentFromProcedure(self._running_thread.procedure))
+                self.experiment_from_procedure(self._running_thread.procedure))
 
     def _callback(self):
         """ Handles the different cases upon which the running procedure thread
@@ -195,14 +196,14 @@ class Manager(QtCore.QObject):
             if self._is_continuous:  # Continue running procedures
                 self.next()
 
-    def experimentFromBrowserItem(self, browser_item):
+    def experiment_from_browser_item(self, browser_item):
         for experiment in self.experiments:
             if experiment.browser_item == browser_item:
                 return experiment
         raise Exception("This BrowserItem did not match any Experiments "
                         "in the Manager")
 
-    def experimentFromProcedure(self, procedure):
+    def experiment_from_procedure(self, procedure):
         for experiment in self.experiments:
             if experiment.procedure == procedure:
                 return experiment

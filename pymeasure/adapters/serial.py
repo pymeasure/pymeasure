@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from adapter import Adapter
+from .adapter import Adapter
 
 import serial
 import numpy as np
@@ -49,7 +49,7 @@ class SerialAdapter(Adapter):
 
         :param command: SCPI command string to be sent to the instrument
         """
-        self.connection.write(command)
+        self.connection.write(command.encode()) # encode added for Python 3
 
     def read(self):
         """ Reads until the buffer is empty and returns the resulting
@@ -57,7 +57,7 @@ class SerialAdapter(Adapter):
 
         :returns: String ASCII response of the instrument.
         """
-        return "\n".join(self.connection.readlines())
+        return "\n".join(self.connection.readlines().decode())
 
     def values(self, command):
         """ Writes a command to the instrument and returns a list of formatted

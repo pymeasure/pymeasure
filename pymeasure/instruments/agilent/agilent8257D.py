@@ -91,7 +91,7 @@ class Agilent8257D(Instrument):
             self.write(":PULM:SOUR:INT SQU; :PULM:SOUR INT; :PULM:STAT ON;")
             self.write(":PULM:INT:FREQ %g HZ;" % freq)
         else:
-            print "This type of modulation does not exist."
+            raise Exception("This type of modulation does not exist.")
 
     def set_amplitude_depth(self, depth):
         """ Sets the depth of amplitude modulation which corresponds
