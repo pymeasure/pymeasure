@@ -42,15 +42,20 @@ class Yokogawa7651(Instrument):
             "Yokogawa 7651 Programmable DC Source",
             **kwargs
         )
-
-        self.add_measurement("id", "OS")
-
+        
+        self.write("H0;E") # Set no header in output data
+        self.adapter.config()
+        
         # Simple control parameters
         self.add_control("source_voltage", "OD;E", "S%g;E")
         self.add_control("source_current", "OD;E", "S%g;E")
         self.add_control("voltage", "OD;E", "S%g;E")
         self.add_control("current", "OD;E", "S%g;E")
-
+        
+    @property
+    def id(self):
+        return self.ask("OS;E")
+        
     @property
     def enabled(self):
         """See if 5th bit is set in the OC flag."""
@@ -64,7 +69,7 @@ class Yokogawa7651(Instrument):
             self.write("O1;E")
         else:
             self.write("O0;E")
-
+        
     def config_current_source(self, max_current, cycle=False):
         """For current range specified in A, set the device to the proper mode
         the options are 1mA, 10mA, 100mA. This function automatically rounds up

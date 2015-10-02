@@ -27,7 +27,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from pymeasure.adapters import VISAAdapter
+from pymeasure.adapters.visaadapter import VISAAdapter
 
 import numpy as np
 
@@ -45,31 +45,45 @@ class Instrument(object):
                             "PyVISA is not present")
 
         self.name = name
+        self.SCPI = includeSCPI
         self.adapter = adapter
 
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
             # Basic SCPI commands
-            self.add_measurement("id",       "*IDN?")
+            #self.add_measurement("id",       "*IDN?")
             self.add_measurement("status",   "*STB?")
             self.add_measurement("complete", "*OPC?")
 
         self.isShutdown = False
-        log.info("Initializing %s" % self.name)
-
+        log.info("Initializing %s." % self.name)
+        
+    @property
+    def id(self):
+        if self.SCPI:
+            return self.adapter.ask("*IDN?")
+        else:
+            return "Warning: Property not implemented."
+            
     # Wrapper functions for the Adapter object
-    def ask(self, command): return self.adapter.ask(command)
+    def ask(self, command): 
+        return self.adapter.ask(command)
 
-    def write(self, command): self.adapter.write(command)
+    def write(self, command): 
+        self.adapter.write(command)
 
-    def read(self): return self.adapter.read()
+    def read(self): 
+        return self.adapter.read()
 
     def values(self, command):
-        values = self.adapter.values(command)
-        if len(values) == 1:
-            return values[0]
-        else:
-            return values
+        result = self.ask(command).strip()
+        try:
+            return [float(x) for x in result.split(",")]
+        except:
+            return result
+
+    def ascii_values(self, command, **kwargs):
+        return self.adapter.ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
@@ -106,7 +120,10 @@ class Instrument(object):
             vals = self.values(get_string)
             if check_errors_on_get:
                 self.check_errors()
-            return vals
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
 
         def fset(self, value):
             self.write(set_string % value)
@@ -119,6 +136,7 @@ class Instrument(object):
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
 
+
     def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
         """This adds a property to the class based on the supplied
         SCPI commands. The presumption is that this is a measurement
@@ -126,7 +144,11 @@ class Instrument(object):
         """
 
         def fget(self):
-            return self.values(get_string)
+            vals = self.values(get_string)
+            if len(vals) == 1:
+                return vals[0]
+            else:
+                return vals
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
@@ -144,6 +166,7 @@ class Instrument(object):
 
     def shutdown(self):
         """Bring the instrument to a safe and stable state"""
+        self.isShutdown = True
         log.info("Shutting down %s" % self.name)
 
     def check_errors(self):

@@ -28,12 +28,12 @@ log.addHandler(logging.NullHandler())
 from .adapter import Adapter, FakeAdapter
 
 try:
-    from pymeasure.adapters.visa import VISAAdapter
+    from pymeasure.adapters.visaadapter import VISAAdapter
 except ImportError:
     log.warning("PyVISA library could not be loaded")
 
 try:
-    from pymeasure.adapters.serial import SerialAdapter
+    from pymeasure.adapters.serialadapter import SerialAdapter
     from pymeasure.adapters.prologix import PrologixAdapter
 except ImportError:
     log.warning("PySerial library could not be loaded")

@@ -66,7 +66,10 @@ class DSP7265(Instrument):
             'ADC2': 64,
             'ADC3': 128
         }
-
+        
+        # Pre-condition
+        self.adapter.config(datatype = 'str', converter = 's')
+        
         # Simple parameter controls go here
         self.add_control("voltage",   "OA.",    "OA. %g")
         self.add_control("frequency", "OF.",    "OF. %g")
@@ -88,6 +91,15 @@ class DSP7265(Instrument):
         # Override the base method since the DSP is dumb about this one...
         self.add_measurement("id", "ID")
 
+    def values(self, command):
+        """ Rewrite the method because of extra character in return string."""
+        result = self.ask(command).strip()
+        result = result.replace('\x00','') # Remove extra unicode character
+        try:
+            return [float(x) for x in result.split(",")]
+        except:
+            return result
+        
     def setDifferentialMode(self, lineFiltering=True):
         self.write("VMODE 3")
         self.write("LF %d 0" % 3 if lineFiltering else 0)
@@ -160,7 +172,7 @@ class DSP7265(Instrument):
 
     @property
     def gain(self):
-        return self.values("ACGAIN.")
+        return self.values("ACGAIN")
 
     @gain.setter
     def gain(self, value):
