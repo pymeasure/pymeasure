@@ -27,7 +27,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from pymeasure.adapters.visaadapter import VISAAdapter
+from pymeasure.adapters.visa import VISAAdapter
 
 import numpy as np
 

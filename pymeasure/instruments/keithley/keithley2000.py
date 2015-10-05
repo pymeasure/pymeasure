@@ -44,6 +44,7 @@ class Keithley2000(Instrument):
                             datatype = 'float32',
                             converter = 'f',
                             separator = ',')
+                            
         self.add_measurement("measure", ":read?", 
                             checkErrorsOnGet = True, 
                             docs = "Measure and return a reading from the instrument.")
