@@ -27,6 +27,9 @@ from .adapter import Adapter
 import visa
 import numpy as np
 import copy
+import logging
+log = logging.getLogger(__name__)
+#log.addHandler(log.NullHandler())
 
 
 
@@ -67,21 +70,6 @@ class VISAAdapter(Adapter):
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
 
-
-class VISAAdapter14(Adapter):
-    """ Adapter class for VISA version 1.4. Be inherited by class VISAAdapter.
-
-    :param resource: VISA resource name that identifies the address.
-    :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument.
-    """
-    def __init__(self, resourceName, **kwargs):
-        self.connection = visa.instrument(resourceName, **kwargs)
-
-    def config(self, **kwargs):
-        """ Reserve for future implementation."""
-        print "Warning: Class method not yet implemented!"
-        pass
-
     def write(self, command):
         """ Writes a command to the instrument
 
@@ -96,6 +84,50 @@ class VISAAdapter14(Adapter):
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read()
+    
+    def values(self, command):
+        """ Writes a command to the instrument and returns a list of numerical
+        values from the result.
+
+        :param command: SCPI command to be sent to the instrument.
+        :returns: A list of numerical values.
+        """
+        results = str(self.ask(command)).strip()
+        results = results.split(',')
+        for result in results:
+            try:
+                result = float(result)
+            except:
+                pass # Keep as string
+        return results
+        
+    def binary_values(self, command, header_bytes=0, dtype=np.float32):
+        """ Returns a numpy array from a query for binary data 
+    
+        :param command: SCPI command to be sent to the instrument
+        :param header_bytes: Integer number of bytes to ignore in header
+        :param dtype: The NumPy data type to format the values with
+        :returns: NumPy array of values
+        """
+        self.connection.write(command)
+        binary = self.connection.read_raw()
+        header, data = binary[:header_bytes], binary[header_bytes:]
+        return np.fromstring(data, dtype=dtype)
+        
+
+class VISAAdapter14(Adapter):
+    """ Adapter class for VISA version 1.4. Be inherited by class VISAAdapter.
+
+    :param resource: VISA resource name that identifies the address.
+    :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument.
+    """
+    def __init__(self, resourceName, **kwargs):
+        self.connection = visa.instrument(resourceName, **kwargs)
+
+    def config(self, **kwargs):
+        """ Reserve for future implementation."""
+        log.warning("Class method config() not yet implemented! Do nothing.")
+        pass
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting 
@@ -106,7 +138,7 @@ class VISAAdapter14(Adapter):
         """
         return self.connection.ask(command)
 
-    def values(self, command):
+    def ask_values(self, command):
         """ Writes a command to the instrument and returns a list of formatted
         values from the result 
 
@@ -114,24 +146,6 @@ class VISAAdapter14(Adapter):
         :returns: String ASCII response of the instrument
         """
         return self.connection.ask_for_values(command)
-
-    def ascii_values(self, command):
-        """ Reserve for future implementation."""
-        print "Warning: Class method not yet fully implemented!"
-        return self.connection.ask(command)
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
-
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
-        """
-        self.connection.write(command)
-        binary = self.connection.read_raw()
-        header, data = binary[:header_bytes], binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
@@ -161,7 +175,7 @@ class VISAAdapter17(Adapter):
                                 resourceName,
                                 **kwargs
                           )
-
+        
     def config(self, is_binary = False, datatype = 'str',
                     container = np.array, converter = 's', 
                     separator = ',', is_big_endian = False):
@@ -181,21 +195,6 @@ class VISAAdapter17(Adapter):
         self.connection.values_format.separator = separator
         self.connection.values_format.is_big_endian = is_big_endian
 
-    def write(self, command):
-        """ Writes a command to the instrument
-
-        :param command: SCPI command string to be sent to the instrument
-        """
-        self.connection.write(command)
-
-    def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
-
-        :returns: String ASCII response of the instrument.
-        """
-        return self.connection.read()
-
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting 
         ASCII response
@@ -205,36 +204,15 @@ class VISAAdapter17(Adapter):
         """
         return self.connection.query(command)
 
-    def values(self, command):
+    def ask_values(self, command):
         """ Writes a command to the instrument and returns a list of formatted
-        values from the result 
+        values from the result. The format of the return is configurated by
+        self.config().
 
         :param command: SCPI command to be sent to the instrument
-        :returns: String ASCII response of the instrument
+        :returns: Formatted response of the instrument.
         """
         return self.connection.query_values(command)
-
-    def ascii_values(self, command, **kwargs):
-        """ Writes a command to the instrument and returns a list of ascii
-        response
-
-        :param command: SCPI command to be sent to the instrument
-        :returns: String ASCII response of the instrument
-        """
-        return self.connection.query_ascii_values(command, **kwargs)
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
-
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
-        """
-        self.connection.write(command)
-        binary = self.connection.read_raw()
-        header, data = binary[:header_bytes], binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
