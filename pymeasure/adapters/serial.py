@@ -66,11 +66,14 @@ class SerialAdapter(Adapter):
         :param command: SCPI command to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        result = self.ask(command).strip()
-        try:
-            return [float(x) for x in result.split(",")]
-        except:
-            return result
+        results = str(self.ask(command)).strip()
+        results = results.split(',')
+        for result in results:
+            try:
+                result = float(result)
+            except:
+                pass # Keep as string
+        return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data 
