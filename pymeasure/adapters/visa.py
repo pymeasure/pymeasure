@@ -31,6 +31,8 @@ import logging
 log = logging.getLogger(__name__)
 #log.addHandler(log.NullHandler())
 
+long = int # Python 3 fix
+
 
 
 class VISAAdapter(Adapter):
