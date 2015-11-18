@@ -24,14 +24,10 @@
 
 from pymeasure.experiment import Results
 
-from threading import Event, Thread
-try:
-    from Queue import Queue
-except:
-    from queue import Queue
+from multiprocessing import Process, Event, Queue
 
 
-class Listener(Thread):
+class Listener(Process):
     """This is the base class for threaded classes that listen for
     data from the measurement. They are intended to be used without
     the Qt display functionality and communicate with basic Python

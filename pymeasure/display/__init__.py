@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
-    from procedure_thread import QProcedureThread
+    from procedure_process import QProcedureProcess
     from listeners import QResultsWriter
 except ImportError:
     log.warning("Python bindings for Qt (PySide, PyQt) can not be imported")

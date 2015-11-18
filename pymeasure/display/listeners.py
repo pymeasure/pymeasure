@@ -24,15 +24,11 @@
 
 from .qt_variant import QtCore
 
-from threading import Event
-try:
-    from Queue import Queue
-except:
-    from queue import Queue
+from multiprocessing import Event, Queue
 
 
-class QListener(QtCore.QThread):
-    """Base class for PyQt4/PySide threaded classes that listen for data
+class QListener(QtCore.QProcess):
+    """Base class for PyQt4/PySide process classes that listen for data
     from the measurement. Each QListener provides methods to act
     as slots for singals.
     """

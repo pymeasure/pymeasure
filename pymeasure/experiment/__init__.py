@@ -25,7 +25,7 @@
 from .parameters import (Parameter, IntegerParameter, FloatParameter,
                         VectorParameter, ListParameter, BooleanParameter)
 from .procedure import Procedure, UnknownProcedure
-from .procedure_thread import ProcedureThread
+from .procedure_process import ProcedureProcess
 
 from .experiment import Experiment
 from .results import Results, unique_filename

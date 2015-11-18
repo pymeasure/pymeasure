@@ -22,26 +22,27 @@
 # THE SOFTWARE.
 #
 
-from .procedure import Procedure
+from pymeasure.experiment import Procedure
+from .qt_variant import QtCore
 
-from threading import Event, Thread
-try:
-    from Queue import Queue
-except:
-    from queue import Queue
+from multiprocessing import Event
 
 
-class ProcedureThread(Thread):
-    """Encapsulates the Procedure to be run within a thread."""
+class QProcedureThread(QtCore.QProcess):
+    """Encapsulates the Procedure to be run within a QProcess,
+    compatible with PyQt4/PySide.
+    """
 
-    def __init__(self):
-        Thread.__init__(self)
+    data = QtCore.QSignal(dict)
+    progress = QtCore.QSignal(float)
+    status_changed = QtCore.QSignal(int)
+    finished = QtCore.QSignal()
+
+    def __init__(self, parent=None):
+        QtCore.QProcess.__init__(self, parent)
         self.procedure = None
         self.abort_event = Event()
         self.abort_event.clear()
-        self.data_queues = []
-        self.progress_queue = Queue()
-        self.finished = Event()
 
     def load(self, procedure):
         if not isinstance(procedure, Procedure):
@@ -50,19 +51,21 @@ class ProcedureThread(Thread):
         self.procedure = procedure
         self.procedure.status = Procedure.QUEUED
         self.procedure.has_aborted = self.has_aborted
-        self.procedure.emit_data = self.emit_data
-        self.procedure.emit_progress = self.emit_progress
+        self.procedure.emit_data = self.data.emit
+        self.procedure.emit_progress = self.progress.emit
 
     def run(self):
         if self.procedure is None:
             raise Exception("Attempting to run Procedure object "
                             "before loading")
         self.procedure.status = Procedure.RUNNING
+        self.status_changed.emit(self.procedure.status)
         self.procedure.enter()
         try:
             self.procedure.execute()
         except:
             self.procedure.status = Procedure.FAILED
+            self.status_changed.emit(self.procedure.status)
 
             import sys
             import traceback
@@ -72,25 +75,10 @@ class ProcedureThread(Thread):
             self.procedure.exit()
             if self.procedure.status == Procedure.RUNNING:
                 self.procedure.status = Procedure.FINISHED
-                self.emit_progress(100.)
-            self.finished.set()
+                self.status_changed.emit(self.procedure.status)
+                self.progress.emit(100.)
+            self.finished.emit()
             self.abort_event.set()  # ensure the thread joins
-
-    def emit_progress(self, percent):
-        self.progress_queue.put(percent)
-
-    def emit_finished(self):
-        self.finished.set()
-
-    def add_data_queue(self, queue):
-        self.data_queues.append(queue)
-
-    def emit_data(self, data):
-        for queue in self.data_queues:
-            queue.put(data)
-
-    def is_running(self):
-        return self.isAlive()
 
     def has_aborted(self):
         return self.abort_event.isSet()
@@ -98,9 +86,10 @@ class ProcedureThread(Thread):
     def abort(self):
         self.abort_event.set()
         self.procedure.status = Procedure.ABORTED
+        self.status_changed.emit(self.procedure.status)
 
     def join(self, timeout=0):
         self.abort_event.wait(timeout)
         if not self.abort_event.isSet():
             self.abort_event.set()
-        super(ProcedureThread, self).join()
+        super(QProcedureThread, self).wait()
