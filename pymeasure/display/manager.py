@@ -128,8 +128,8 @@ class Manager(QtCore.QObject):
                 self._running_process.status_changed.connect(
                     experiment.browser_item.setStatus)
 
-                self._data_writer.start()
-                self._running_process.start()
+                self._data_writer.start(self._data_writer.run)
+                self._running_process.start(self._running_process.run)
                 self.running.emit(experiment)
 
     def resume(self):
@@ -185,6 +185,8 @@ class Manager(QtCore.QObject):
         for experiment in self.experiments:
             if experiment.procedure == self._running_process.procedure:
                 break
+        del self._running_process
+        del self._data_writer
         self._running_process = None
         self._data_writer = None
         if experiment.procedure.status == Procedure.FAILED:
