@@ -68,4 +68,4 @@ class QResultsWriter(QListener):
             while not self.abortEvent.isSet():
                 if not self.queue.empty():
                     data = self.queue.get()
-                    handle.write(self.results.format(data))
+                    handle.write(self.results.format(data).encode())
