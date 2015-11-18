@@ -28,7 +28,7 @@ from .qt_variant import QtCore
 from multiprocessing import Event
 
 
-class QProcedureThread(QtCore.QProcess):
+class QProcedureProcess(QtCore.QProcess):
     """Encapsulates the Procedure to be run within a QProcess,
     compatible with PyQt4/PySide.
     """
