@@ -33,6 +33,7 @@ class StoppableProcess(Process):
     def __init__(self):
         self._should_stop = Event()
         self._should_stop.clear()
+        super(StoppableProcess, self).__init__()
 
     def join(self, timeout=0):
         """ Joins the current process and force it to stop after
