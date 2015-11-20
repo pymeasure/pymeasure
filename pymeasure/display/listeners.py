@@ -24,44 +24,70 @@
 
 from .qt_variant import QtCore
 
-from multiprocessing import Event, Queue
+import zmq
+from msgpack import loads
+from time import sleep
+from multiprocessing import Process, Event
+
+from .thread import StoppableQThread
+from ..experiment.procedure import Procedure
 
 
-class QListener(QtCore.QProcess):
-    """Base class for PyQt4/PySide process classes that listen for data
-    from the measurement. Each QListener provides methods to act
-    as slots for singals.
+class QListener(StoppableQThread):
+    """Base class for QThreads that need to listen for messages
+    on a ZMQ channel and can be stopped by a thread- and process-safe
+    method call
     """
 
-    def __init__(self, parent=None):
-        self.abortEvent = Event()
-        super(QListener, self).__init__(parent)
+    def __init__(self, channel, topic=''):
+        """ Constructs the Listener object with a subscriber channel 
+        over which to listen for messages
 
-    def join(self, timeout=0):
-        self.abortEvent.wait(timeout)
-        if not self.abortEvent.isSet():
-            self.abortEvent.set()
-        super(QListener, self).wait()
-
-
-class QResultsWriter(QListener):
-    """ Class for writing results to a file in the Qt context, where the
-    write method is called as a slot to fill up the data
-    """
-
-    def __init__(self, results, parent=None):
-        self.results = results
-        self.queue = Queue()
-        super(QResultsWriter, self).__init__(parent)
-
-    def write(self, data):
-        """ Slot for writing data asynchronously without closing the file
+        :param channel: Channel to listen on
         """
-        self.queue.put(data)
+        self.context = zmq.Context()
+        self.subscriber = self.context.socket(zmq.SUB)
+        self.subscriber.connect(subscriber_channel)
+        self.subscriber.setsocketopt(zmq.SUBSCRIBE, topic.encode())
+        super(Listener, self).__init__()
+
+    def receive(self):
+        topic, raw_data = self.subscriber.recv()
+        return topic, loads(raw_data)
+
+    def __repr__(self):
+        return "<%s(channel=%s,topic=%s,should_stop=%s)>" % (
+            self.__class__.__name__, channel, topic, self.should_stop())
+
+
+class ProcedureMonitor(QListener):
+    """ ProcedureMonitor listens for status and progress messages
+    on a ZMQ channel and routes them to signals and slots
+    """
+
+    status = QtCore.QSignal(int)
+    progress = QtCore.QSignal(float)
+    running = QtCore.QSignal()
+    failed = QtCore.QSignal()
+    finished = QtCore.QSignal()
+
+    def __init__(self, channel):
+        super(QListener, self).__init__(channel, '')
 
     def run(self):
-        with open(self.results.data_filename, 'ab', 0) as handle: # b flag for Python 3
-            while not self.abortEvent.isSet():
-                if not self.queue.empty():
-                    data = self.queue.get()
-                    handle.write(self.results.format(data).encode())
+        while not self.should_stop():
+            topic, data = self.receive()
+            if topic == 'status':
+                self.status.emit(data)
+                if data == Procedure.FAILED:
+                    self.failed.emit()
+                elif data == Procedure.FINISHED:
+                    self.finished.emit()
+            elif topic == 'progress':
+                self.progress.emit(data)
+            sleep(0.01)
+
+
+
+
+
