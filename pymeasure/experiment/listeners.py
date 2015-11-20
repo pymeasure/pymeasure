@@ -24,8 +24,6 @@
 
 import zmq
 from msgpack import dumps, loads
-from time import sleep
-from traceback import format_exc
 from multiprocessing import Process, Event
 
 from .process import StoppableProcess
