@@ -27,7 +27,7 @@ from multiprocessing import Process, Event
 
 class StoppableProcess(Process):
     """ Base class for Processes which require the ability
-    to be stopped by a thread- and process-safe method call
+    to be stopped by a process-safe method call
     """
 
     def __init__(self):
@@ -36,7 +36,7 @@ class StoppableProcess(Process):
         super(StoppableProcess, self).__init__()
 
     def join(self, timeout=0):
-        """ Joins the current process and force it to stop after
+        """ Joins the current process and forces it to stop after
         the timeout if necessary
 
         :param timeout: Timeout duration in seconds
