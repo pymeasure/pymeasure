@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from os.path import basename
+
 from pymeasure.experiment import Procedure
 from pymeasure.experiment.workers import ProcedureWorker
 from pymeasure.experiment.listeners import ResultsWriter
@@ -73,6 +75,12 @@ class ExperimentQueue(QtCore.QObject):
     def __contains__(self, value):
         if isinstance(value, Experiment):
             return value in self.queue
+        if isinstance(value, str):
+            for experiment in self.queue:
+                if basename(experiment.data_filename) == basename(value):
+                    return True
+            return False
+        return False
 
     def next(self):
         """ Returns the next experiment on the queue
