@@ -222,14 +222,14 @@ class Manager(QtCore.QObject):
                     experiment.data_filename,
                     'tcp://localhost:%s' % self.port
                 )
-                self.writer.start()
+                self._writer.start()
                 sleep(0.01)
 
                 self._worker = ProcedureWorker(
                     experiment.data_filename,
                     'tcp://*:%s' % self.port
                 )
-                self.worker.start()
+                self._worker.start()
 
     def _running(self):
         if self.is_running():
