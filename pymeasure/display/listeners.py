@@ -72,7 +72,7 @@ class ProcedureMonitor(QListener):
     finished = QtCore.QSignal()
 
     def __init__(self, channel):
-        super(QListener, self).__init__(channel, topic='')
+        super(ProcedureMonitor, self).__init__(channel, topic='')
 
     def run(self):
         while not self.should_stop():
