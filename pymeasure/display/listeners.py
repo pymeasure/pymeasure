@@ -47,7 +47,7 @@ class QListener(StoppableQThread):
         """
         self.context = zmq.Context()
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect(subscriber_channel)
+        self.subscriber.connect(channel)
         self.subscriber.setsocketopt(zmq.SUBSCRIBE, topic.encode())
         super(QListener, self).__init__()
 
