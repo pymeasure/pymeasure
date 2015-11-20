@@ -43,7 +43,7 @@ class Experiment(QtCore.QObject):
     """
 
     def __init__(self, results, curve, browser_item, parent=None):
-        super(Experiment, self).__init__(self, parent=parent)
+        super(Experiment, self).__init__(parent)
         self.results = results
         self.data_filename = self.results.data_filename
         self.procedure = self.results.procedure
