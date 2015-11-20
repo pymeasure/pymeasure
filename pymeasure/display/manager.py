@@ -148,11 +148,11 @@ class Manager(QtCore.QObject):
         """
         return self._worker is not None
 
-    def update_progress(self, progress):
+    def _update_progress(self, progress):
         if self.is_running():
             self._running_experiment.browser_item.progressbar.setValue(progress)
 
-    def update_status(self, status):
+    def _update_status(self, status):
         if self.is_running():
             self._running_experiment.procedure.status = status
 
@@ -210,7 +210,11 @@ class Manager(QtCore.QObject):
                 )
                 self.worker.start()
 
-    def clean_up(self):
+    def _running(self):
+        if self.is_running():
+            self.running.emit(self.running_experiment)
+
+    def _clean_up(self):
         self._worker.stop()
         self._writer.stop()
         self._worker.join()
@@ -223,7 +227,7 @@ class Manager(QtCore.QObject):
         self._writer = None
         self._running_experiment = None
 
-    def finish(self):
+    def _finish(self):
         experiment = self._running_experiment
         self.clean_up()
         if experiment.procedure.status == Procedure.FAILED:
