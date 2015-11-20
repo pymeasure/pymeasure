@@ -41,7 +41,6 @@ class ProcedureWorker(StoppableProcess):
         defined in the file at the filepath
         """
         self.results = Results.load(filepath)
-        self.abort_event = abort_event
         self.procedure.status = Procedure.QUEUED
 
         self.context = zmq.Context()
