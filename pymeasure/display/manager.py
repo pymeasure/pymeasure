@@ -155,6 +155,7 @@ class Manager(QtCore.QObject):
     def _update_status(self, status):
         if self.is_running():
             self._running_experiment.procedure.status = status
+            self._running_experiment.browser_item.setStatus(status)
 
     def load(self, experiment):
         """ Load a previously executed Experiment
