@@ -58,7 +58,7 @@ class ProcedureWorker(StoppableProcess):
         super(ProcedureWorker, self).__init__()
 
     def emit(self, topic, data):
-        self.publisher.send_multipart([topic, dumps(data)])
+        self.publisher.send_multipart([topic.encode(), dumps(data).encode()])
 
     def update_status(self, status):
         self.status = status
