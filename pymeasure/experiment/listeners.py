@@ -45,7 +45,7 @@ class Listener(StoppableProcess):
         self.context = zmq.Context()
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.connect(channel)
-        self.subscriber.setsocketopt(zmq.SUBSCRIBE, topic.encode())
+        self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
         super(Listener, self).__init__()
 
     def receive(self):
