@@ -60,13 +60,13 @@ class ProcedureWorker(StoppableProcess):
     def emit(self, topic, data):
         if isinstance(topic, str):
             topic = topic.encode()
-        self.publisher.send_multipart([topic, dumps(data).encode()])
+        self.publisher.send_multipart([topic, dumps(data)])
 
     def update_status(self, status):
         self.status = status
         self.emit('status', status)
 
-    def handle_exception(self, expection):
+    def handle_exception(self, exception):
         log.error("ProcedureWorker caught error in %r" % self.procedure)
         log.exception(exception)
         traceback_str = format_exc()
