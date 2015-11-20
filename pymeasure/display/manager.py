@@ -23,6 +23,7 @@
 #
 
 from os.path import basename
+from time import sleep
 
 from pymeasure.experiment import Procedure
 from pymeasure.experiment.workers import ProcedureWorker
