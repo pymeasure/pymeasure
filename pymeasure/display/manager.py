@@ -99,6 +99,12 @@ class ExperimentQueue(QtCore.QObject):
             return False
         return True
 
+    def with_browser_item(self, item):
+        for experiment in self.queue:
+            if experiment.browser_item == item:
+                return experiment
+        return None
+
 
 class Manager(QtCore.QObject):
     """Controls the execution of :class:`.Experiment` classes by implementing
