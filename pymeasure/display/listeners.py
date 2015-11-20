@@ -53,7 +53,7 @@ class QListener(StoppableQThread):
 
     def receive(self):
         topic, raw_data = self.subscriber.recv()
-        return topic.decode(), loads(raw_data).decode9)
+        return topic.decode(), loads(raw_data).decode())
 
     def __repr__(self):
         return "<%s(channel=%s,topic=%s,should_stop=%s)>" % (
