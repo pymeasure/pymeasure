@@ -22,6 +22,10 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 import zmq
 from msgpack import dumps
 from traceback import format_exc
