@@ -32,10 +32,10 @@ class StoppableQThread(QtCore.QThread):
     to be stopped by a thread-safe method call
     """
 
-    def __init__(self):
+    def __init__(self, parent=None):
         self._should_stop = Event()
         self._should_stop.clear()
-        super(StoppableQThread, self).__init__()
+        super(StoppableQThread, self).__init__(parent)
 
     def join(self, timeout=0):
         """ Joins the current thread and forces it to stop after
