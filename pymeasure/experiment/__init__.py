@@ -25,9 +25,6 @@
 from .parameters import (Parameter, IntegerParameter, FloatParameter,
                         VectorParameter, ListParameter, BooleanParameter)
 from .procedure import Procedure, UnknownProcedure
-from .procedure_process import ProcedureProcess
-
-from .experiment import Experiment
 from .results import Results, unique_filename
-from .listeners import (Listener, ResultsWriter, AverageWriter, 
-                       AverageManager, ETADisplay)
+from .workers import ProcedureWorker
+from .listeners import Listener, ResultsWriter

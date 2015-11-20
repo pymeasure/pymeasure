@@ -22,154 +22,58 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.experiment import Results
+import zmq
+from msgpack import dumps, loads
+from time import sleep
+from traceback import format_exc
+from multiprocessing import Process, Event
 
-from multiprocessing import Process, Event, Queue
+from .process import StoppableProcess
+from .results import Results
 
 
-class Listener(Process):
-    """This is the base class for threaded classes that listen for
-    data from the measurement. They are intended to be used without
-    the Qt display functionality and communicate with basic Python
-    Queues.
+class Listener(StoppableProcess):
+    """Base class for Processes that need to listen for messages
+    on a ZMQ channel and can be stopped by a thread- and process-safe
+    method call
     """
 
-    def __init__(self,):
-        self.abortEvent = Event()
-        self.queue = Queue()
+    def __init__(self, channel, topic=''):
+        """ Constructs the Listener object with a subscriber channel 
+        over which to listen for messages
+
+        :param channel: Channel to listen on
+        """
+        self.context = zmq.Context()
+        self.subscriber = self.context.socket(zmq.SUB)
+        self.subscriber.connect(subscriber_channel)
+        self.subscriber.setsocketopt(zmq.SUBSCRIBE, topic.encode())
         super(Listener, self).__init__()
 
-    def join(self, timeout=0):
-        """ Joins the current thread with the Listener and forces an
-        abort if the process does not halt after the timeout
+    def receive(self):
+        topic, raw_data = self.subscriber.recv()
+        return topic, loads(raw_data)
 
-        :param timeout: Timeout duration in seconds
-        """
-        self.abortEvent.wait(timeout)
-        if not self.abortEvent.isSet():
-            self.abortEvent.set()
-        super(Listener, self).join()
-
-    def has_aborted(self):
-        """ Returns True if the Listener thread has been aborted
-        """
-        return self.abort_event.isSet()
+    def __repr__(self):
+        return "<%s(channel=%s,topic=%s,should_stop=%s)>" % (
+            self.__class__.__name__, channel, topic, self.should_stop())
 
 
 class ResultsWriter(Listener):
-    """Writes the incoming data through the Results object to
-    a CSV file specified in by the results.data_filename.
-
-    :param results: Results object to be written
+    """ ResultsWriter loads the initial Results for a filepath and
+    appends data by listening for it over a ZMQ channel
     """
 
-    def __init__(self, results):
-        self.results = results
-        super(ResultsWriter, self).__init__()
+    def __init__(self, filepath, channel, topic='results'):
+        """ Constructs a ResultsWriter to record the Procedure data
+        into the filepath, by waiting for data on the subscription
+        channel
+        """
+        self.results = Results.load(filepath)
+        super(ResultsWriter, self).__init__(channel, topic)
 
     def run(self):
         with open(self.results.data_filename, 'ab', buffering=0) as handle:
-            while not self.abortEvent.isSet():
-                if not self.queue.empty():
-                    data = self.queue.get()
-                    handle.write(self.results.format(data).encode())
-
-
-class AverageWriter(ResultsWriter):
-
-    def __init__(self, results):
-        super(AverageWriter, self).__init__(results)
-        self.loop_back = Event()
-        self.first_pass = True
-
-    def run(self):
-        with open(self.results.data_filename, 'a', 0) as handle:
-            start_pointer = handle.tell()
-            current_trace = 1
-            while not self.abortEvent.isSet():
-                if self.loop_back.isSet():
-                    self.first_pass = False
-                    self.current_trace += 1
-                    handle.seek(start_pointer)
-                    self.loop_back.reset()
-                if not self.queue.empty():
-                    data = self.queue.get()
-                    if not self.first_pass:
-                        current_pointer = handle.tell()
-                        old_data = self.results.parse(handle.readline())
-                        handle.seek(current_pointer)
-                        new_data = {}
-                        for key, value in old_data.items():
-                            new_data[key] = (value * float(current_trace-1) +
-                                             data[key])/float(current_trace)
-                        handle.write(self.results.format(new_data))
-                    else:
-                        handle.write(self.results.format(data))
-
-
-class AverageManager(Listener):
-    """ Manages writing data to different files during the trace average so that
-    all data is retained
-    """
-
-    LABEL = 'Trace'
-
-    def __init__(self, average_results, traces=1):
-        self.average_results = average_results
-        self.traces = traces
-        super(AverageManager, self).__init__()
-
-    def run(self):
-        average_writer = AverageWriter(self.average_results)
-        average_writer.start()
-        current_trace = 0
-        self.results = []
-        self.writers = []
-        while not self.abortEvent.isSet():
-            if not self.queue.empty():
-                data = self.queue.get()
-                if self.traces > 1:
-                    trace = data.pop(AverageManager.LABEL)
-                    if trace > current_trace:
-                        if trace >= 2:
-                            average_writer.loop_back.set()
-                        self.results.append(Results(
-                            self.average_results.procedure,
-                            self.trace_filename(trace)
-                        ))
-                        self.writers.append(ResultsWriter(
-                            self.results[trace-1]))
-                        self.writers[trace-1].start()
-                    self.writers[trace-1].queue.put(data)
-                average_writer.queue.put(data)
-
-        average_writer.abortEvent.set()
-
-    @property
-    def trace_filename(self, trace):
-        """ Return the current trace filename """
-        if self.traces < 2:
-            return self.average_results.data_filename
-        else:
-            return self.average_results.data_filename.replace(
-                    ".csv", "_#%d.csv" % trace)
-
-
-class ETADisplay(Listener):
-    """ Uses the ETA package to print a status message that shows
-    the amount of time left for the process. The number of counts
-    signifies the number of times the progress queue is expected to
-    be updated (once per loop).
-    """
-
-    def __init__(self, count):
-        from eta import ETA
-        self.eta = ETA(count)
-        super(ETADisplay, self).__init__()
-
-    def run(self):
-        while not self.abortEvent.isSet():
-            if not self.queue.empty():
-                self.queue.get()
-                self.eta.print_status()
-        self.eta.done()
+            while not self.should_stop():
+                topic, data = self.receive()
+                handle.write(self.results.format(data).encode())

@@ -22,20 +22,36 @@
 # THE SOFTWARE.
 #
 
+from multiprocessing import Process, Event
 
-class Experiment(object):
-    """ The Experiment class helps group the :class:`.Procedure`,
-    :class:`.Results`, and their display functionality. Its function
-    is only as a convenient container.
 
-    :param procedure: :class:`.Procedure` object
-    :param results: :class:`.Results` object
-    :param curve: :class:`.ResultsCurve` object
-    :param browser_item: :class:`.BrowserItem` object
+class StoppableProcess(Process):
+    """ Base class for Processes which require the ability
+    to be stopped by a thread- and process-safe method call
     """
 
-    def __init__(self, procedure, results, curve=None, browser_item=None):
-        self.procedure = procedure
-        self.results = results
-        self.curve = curve
-        self.browser_item = browser_item
+    def __init__(self):
+        self._should_stop = Event()
+        self._should_stop.clear()
+
+    def join(self, timeout=0):
+        """ Joins the current process and force it to stop after
+        the timeout if necessary
+
+        :param timeout: Timeout duration in seconds
+        """
+        self._should_stop.wait(timeout)
+        if not self.should_stop():
+            self.stop()
+        super(StoppableProcess, self).join()
+
+    def stop(self):
+        self._should_stop.set()
+
+    def should_stop(self):
+        return self._should_stop.is_set()
+
+    def __repr__(self):
+        return "<%s(should_stop=%s)>" % (
+            self.__class__.__name__, self.should_stop())
+
