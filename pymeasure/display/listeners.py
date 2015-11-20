@@ -49,7 +49,7 @@ class QListener(StoppableQThread):
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.connect(subscriber_channel)
         self.subscriber.setsocketopt(zmq.SUBSCRIBE, topic.encode())
-        super(Listener, self).__init__()
+        super(QListener, self).__init__()
 
     def receive(self):
         topic, raw_data = self.subscriber.recv()
@@ -72,7 +72,7 @@ class ProcedureMonitor(QListener):
     finished = QtCore.QSignal()
 
     def __init__(self, channel):
-        super(QListener, self).__init__(channel, '')
+        super(QListener, self).__init__(channel, topic='')
 
     def run(self):
         while not self.should_stop():
