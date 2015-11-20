@@ -51,6 +51,7 @@ class ProcedureWorker(StoppableProcess):
         # route Procedure output
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
+        super(ProcedureWorker, self).__init__()
 
     def emit(self, topic, data):
         self.publisher.send_multipart([topic, dumps(data)])
