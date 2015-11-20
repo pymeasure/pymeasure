@@ -27,7 +27,7 @@ from .qt_variant import QtCore
 import zmq
 from msgpack import loads
 from time import sleep
-from multiprocessing import Process, Event
+from multiprocessing import Event
 
 from .thread import StoppableQThread
 from ..experiment.procedure import Procedure
