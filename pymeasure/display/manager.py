@@ -156,6 +156,12 @@ class Manager(QtCore.QObject):
         """
         return self._worker is not None
 
+    def running_experiment(self):
+        if self.is_running():
+            return self._running_experiment
+        else:
+            raise Exception("There is no Experiment running")
+
     def _update_progress(self, progress):
         if self.is_running():
             self._running_experiment.browser_item.progressbar.setValue(progress)
