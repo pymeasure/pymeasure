@@ -29,62 +29,92 @@ log.addHandler(logging.NullHandler())
 import zmq
 from msgpack import dumps
 from traceback import format_exc
+from time import sleep
 
-from .process import StoppableProcess
+from pymeasure.process import StoppableProcess
+from .listeners import Recorder
 from .results import Results
 from .procedure import Procedure
 
 
-class ProcedureWorker(StoppableProcess):
-    """ ProcedureWorker runs the procedure and emits information about
-    the procedure and its status over a ZMQ channel
+class Worker(StoppableProcess):
+    """ Worker runs the procedure and emits information about
+    the procedure and its status over a ZMQ TCP port. In a child
+    thread, a Recorder is run to write the results to 
     """
 
-    def __init__(self, filepath, channel):
-        """ Constructs a ProcedureWorker to perform the Procedure 
+    def __init__(self, results, port):
+        """ Constructs a Worker to perform the Procedure 
         defined in the file at the filepath
         """
-        self.results = Results.load(filepath)
+        super(Worker, self).__init__()
+        self.port = port
+        self.results = results
         self.procedure = self.results.procedure
         self.procedure.status = Procedure.QUEUED
 
-        self.context = zmq.Context()
-        self.publisher = self.context.socket(zmq.PUB)
-        self.publisher.bind(channel)
-
-        # route Procedure output
-        self.procedure.should_stop = self.should_stop
-        self.procedure.emit = self.emit
-        super(ProcedureWorker, self).__init__()
+    def join(self, timeout=0):
+        try:
+            super(Worker, self).join(timeout)
+        except (KeyboardInterrupt, SystemExit):
+            log.warning("User stopped Worker join prematurely")
+            self.stop()
+            super(Worker, self).join()
 
     def emit(self, topic, data):
+        """ Emits data of some topic over TCP """
         if isinstance(topic, str):
             topic = topic.encode()
+        log.debug("Emitting message: %s %s" % (topic, data))
         self.publisher.send_multipart([topic, dumps(data)])
 
     def update_status(self, status):
-        self.status = status
+        self.procedure.status = status
         self.emit('status', status)
 
     def handle_exception(self, exception):
-        log.error("ProcedureWorker caught error in %r" % self.procedure)
+        log.error("Worker caught error in %r" % self.procedure)
         log.exception(exception)
         traceback_str = format_exc()
         self.emit('error', traceback_str)
 
     def run(self):
+        self.recorder = Recorder(self.results, self.port)
+        self.recorder._should_stop = self._should_stop
+        self.recorder.start()
+
+        # route Procedure output
+        self.procedure.should_stop = self.should_stop
+        self.procedure.emit = self.emit
+
+        self.context = zmq.Context.instance()
+        self.publisher = self.context.socket(zmq.PUB)
+        self.publisher.bind('tcp://*:%d' % self.port)
+        log.info("Worker connected to tcp://*:%d" % self.port)
+        sleep(0.01)
+
         log.info("Running %r with %r" % (self.procedure, self))
         self.update_status(Procedure.RUNNING)
         self.emit('progress', 0.)
-        self.procedure.enter()
+        self.procedure.startup()
         try:
             self.procedure.execute()
+        except (KeyboardInterrupt, SystemExit):
+            log.warning("User stopped Worker execution prematurely")
+            self.update_status(Procedure.FAILED)
         except Exception as e:
             self.handle_exception(e)
             self.update_status(Procedure.FAILED)
         finally:
-            self.procedure.exit()
+            self.procedure.shutdown()
             if self.procedure.status == Procedure.RUNNING:
                 self.update_status(Procedure.FINISHED)
                 self.emit('progress', 100.)
             self.stop()
+
+    def __repr__(self):
+        return "<%s(port=%s,procedure=%s,should_stop=%s)>" % (
+            self.__class__.__name__, self.port, 
+            self.procedure.__class__.__name__, 
+            self.should_stop()
+        )

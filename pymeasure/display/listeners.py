@@ -22,6 +22,10 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 from .qt_variant import QtCore
 
 import zmq
@@ -29,40 +33,53 @@ from msgpack import loads
 from time import sleep
 from multiprocessing import Event
 
-from .thread import StoppableQThread
-from ..experiment.procedure import Procedure
+from pymeasure.thread import StoppableQThread
+from pymeasure.experiment.procedure import Procedure
 
 
 class QListener(StoppableQThread):
     """Base class for QThreads that need to listen for messages
-    on a ZMQ channel and can be stopped by a thread- and process-safe
+    on a ZMQ TCP port and can be stopped by a thread- and process-safe
     method call
     """
 
-    def __init__(self, channel, topic=''):
-        """ Constructs the Listener object with a subscriber channel 
+    def __init__(self, port, topic='', timeout=0.01):
+        """ Constructs the Listener object with a subscriber port 
         over which to listen for messages
 
-        :param channel: Channel to listen on
+        :param port: TCP port to listen on
+        :param topic: Topic to listen on
+        :param timeout: Timeout in seconds to recheck stop flag
         """
-        self.context = zmq.Context()
+        self.port = port
+        self.topic = topic
+        self.context = zmq.Context.instance()
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect(channel)
+        self.subscriber.connect('tcp://localhost:%d' % port)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
+        log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
+            self.__class__.__name__, topic, port))
+
+        self.poller = zmq.Poller()
+        self.poller.register(self.subscriber, zmq.POLLIN)
+        self.timeout = timeout
         super(QListener, self).__init__()
 
     def receive(self):
         topic, raw_data = self.subscriber.recv()
         return topic.decode(), loads(raw_data).decode()
 
+    def message_waiting(self):
+        return self.poller.poll(self.timeout)
+
     def __repr__(self):
-        return "<%s(channel=%s,topic=%s,should_stop=%s)>" % (
-            self.__class__.__name__, channel, topic, self.should_stop())
+        return "<%s(port=%s,topic=%s,should_stop=%s)>" % (
+            self.__class__.__name__, self.port, self.topic, self.should_stop())
 
 
-class ProcedureMonitor(QListener):
-    """ ProcedureMonitor listens for status and progress messages
-    on a ZMQ channel and routes them to signals and slots
+class QMonitor(QListener):
+    """ Monitor listens for status and progress messages
+    on a ZMQ TCP port and routes them to signals and slots
     """
 
     status = QtCore.QSignal(int)
@@ -71,21 +88,22 @@ class ProcedureMonitor(QListener):
     failed = QtCore.QSignal()
     finished = QtCore.QSignal()
 
-    def __init__(self, channel):
-        super(ProcedureMonitor, self).__init__(channel, topic='')
+    def __init__(self, port, timeout=0.01):
+        super(ProcedureMonitor, self).__init__(port, topic='', timeout=timeout)
 
     def run(self):
         while not self.should_stop():
-            topic, data = self.receive()
-            if topic == 'status':
-                self.status.emit(data)
-                if data == Procedure.FAILED:
-                    self.failed.emit()
-                elif data == Procedure.FINISHED:
-                    self.finished.emit()
-            elif topic == 'progress':
-                self.progress.emit(data)
-            sleep(0.01)
+            if self.message_waiting():
+                topic, data = self.receive()
+                if topic == 'status':
+                    self.status.emit(data)
+                    if data == Procedure.FAILED:
+                        self.failed.emit()
+                    elif data == Procedure.FINISHED:
+                        self.finished.emit()
+                elif topic == 'progress':
+                    self.progress.emit(data)
+        log.info("Monitor caught stop command")
 
 
 

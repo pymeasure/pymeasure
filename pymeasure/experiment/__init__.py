@@ -26,5 +26,5 @@ from .parameters import (Parameter, IntegerParameter, FloatParameter,
                         VectorParameter, ListParameter, BooleanParameter)
 from .procedure import Procedure, UnknownProcedure
 from .results import Results, unique_filename
-from .workers import ProcedureWorker
-from .listeners import Listener, ResultsWriter
+from .workers import Worker
+from .listeners import Listener, Recorder

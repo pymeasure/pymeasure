@@ -22,56 +22,76 @@
 # THE SOFTWARE.
 #
 
-import zmq
-from msgpack import dumps, loads
-from multiprocessing import Process, Event
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
-from .process import StoppableProcess
+import zmq
+from msgpack import loads
+from time import sleep
+
+from pymeasure.thread import StoppableThread
 from .results import Results
 
 
-class Listener(StoppableProcess):
-    """Base class for Processes that need to listen for messages
-    on a ZMQ channel and can be stopped by a thread- and process-safe
+class Listener(StoppableThread):
+    """Base class for Threads that need to listen for messages
+    on a ZMQ TCP port and can be stopped by a thread-safe
     method call
     """
 
-    def __init__(self, channel, topic=''):
-        """ Constructs the Listener object with a subscriber channel 
+    def __init__(self, port, topic='', timeout=0.01):
+        """ Constructs the Listener object with a subscriber port 
         over which to listen for messages
 
-        :param channel: Channel to listen on
+        :param port: TCP port to listen on
+        :param topic: Topic to listen on
+        :param timeout: Timeout in seconds to recheck stop flag
         """
-        self.context = zmq.Context()
+        self.port = port
+        self.topic = topic
+        self.context = zmq.Context.instance()
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect(channel)
+        self.subscriber.connect('tcp://localhost:%d' % port)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
+        log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
+            self.__class__.__name__, topic, port))
+
+        self.poller = zmq.Poller()
+        self.poller.register(self.subscriber, zmq.POLLIN)
+        self.timeout = timeout
         super(Listener, self).__init__()
 
-    def receive(self):
-        topic, raw_data = self.subscriber.recv()
-        return topic.decode(), loads(raw_data).decode()
+    def receive(self, flags=0):
+        topic, raw_data = self.subscriber.recv_multipart(flags=flags)
+        return topic.decode(), loads(raw_data, encoding='utf-8')
+
+    def message_waiting(self):
+        return self.poller.poll(self.timeout)
 
     def __repr__(self):
-        return "<%s(channel=%s,topic=%s,should_stop=%s)>" % (
-            self.__class__.__name__, channel, topic, self.should_stop())
+        return "<%s(port=%s,topic=%s,should_stop=%s)>" % (
+            self.__class__.__name__, self.port, self.topic, self.should_stop())
 
 
-class ResultsWriter(Listener):
-    """ ResultsWriter loads the initial Results for a filepath and
-    appends data by listening for it over a ZMQ channel
+class Recorder(Listener):
+    """ Recorder loads the initial Results for a filepath and
+    appends data by listening for it over a ZMQ TCP port
     """
 
-    def __init__(self, filepath, channel, topic='results'):
-        """ Constructs a ResultsWriter to record the Procedure data
+    def __init__(self, results, port, topic='results', timeout=0.01):
+        """ Constructs a Recorder to record the Procedure data
         into the filepath, by waiting for data on the subscription
-        channel
+        port
         """
-        self.results = Results.load(filepath)
-        super(ResultsWriter, self).__init__(channel, topic)
+        self.results = results
+        super(Recorder, self).__init__(port, topic, timeout)
 
     def run(self):
         with open(self.results.data_filename, 'ab', buffering=0) as handle:
+            log.info("Recording to file: %s" % self.results.data_filename)
             while not self.should_stop():
-                topic, data = self.receive()
-                handle.write(self.results.format(data).encode())
+                if self.message_waiting():
+                    topic, data = self.receive()
+                    handle.write(self.results.format(data).encode())
+            log.info("Recorder caught stop command")

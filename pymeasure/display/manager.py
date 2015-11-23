@@ -22,13 +22,16 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 from os.path import basename
 from time import sleep
 
 from pymeasure.experiment import Procedure
-from pymeasure.experiment.workers import ProcedureWorker
-from pymeasure.experiment.listeners import ResultsWriter
-from pymeasure.display.listeners import ProcedureMonitor
+from pymeasure.experiment.workers import Worker
+from pymeasure.display.listeners import QMonitor
 from .qt_variant import QtCore
 
 
@@ -128,15 +131,14 @@ class Manager(QtCore.QObject):
 
         self.experiments = ExperimentQueue()
         self._worker = None
-        self._writer = None
         self._running_experiment = None
         
         self.plot = plot
         self.browser = browser
 
         self.port = port
-        self.monitor = ProcedureMonitor('tcp://localhost:%d' % port)
-        # Route Monitor callbacks through signals and slots
+        self.monitor = QMonitor(port)
+        # Route QMonitor callbacks through signals and slots
         self.monitor.running.connect(self._running)
         self.monitor.finished.connect(self._finish)
         self.monitor.progress.connect(self._update_progress)
@@ -151,10 +153,6 @@ class Manager(QtCore.QObject):
         if self._worker is not None:
             self._worker.stop()
             self._worker.join()
-
-        if self._writer is not None:
-            self._writer.stop()
-            self._writer.join()
 
         super(Manager, self).__del__()
 
@@ -219,17 +217,7 @@ class Manager(QtCore.QObject):
                 experiment = self.experiments.next()
                 self._running_experiment = experiment
 
-                self._writer = ResultsWriter(
-                    experiment.data_filename,
-                    'tcp://localhost:%s' % self.port
-                )
-                self._writer.start()
-                sleep(0.01)
-
-                self._worker = ProcedureWorker(
-                    experiment.data_filename,
-                    'tcp://*:%s' % self.port
-                )
+                self._worker = Worker(experiment.results, self.port)
                 self._worker.start()
 
     def _running(self):
@@ -237,16 +225,9 @@ class Manager(QtCore.QObject):
             self.running.emit(self.running_experiment)
 
     def _clean_up(self):
-        self._worker.stop()
-        self._writer.stop()
-        self._worker.join()
-        self._writer.join()
-        
+        self._worker.join()      
         del self._worker
-        del self._writer
-
         self._worker = None
-        self._writer = None
         self._running_experiment = None
 
     def _finish(self):
