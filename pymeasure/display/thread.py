@@ -22,18 +22,19 @@
 # THE SOFTWARE.
 #
 
-from threading import Thread, Event
+from threading import Event
+from .qt_variant import QtCore
 
 
-class StoppableThread(Thread):
-    """ Base class for Processes which require the ability
+class StoppableQThread(QtCore.QThread):
+    """ Base class for QThreads which require the ability
     to be stopped by a thread-safe method call
     """
 
-    def __init__(self):
+    def __init__(self, parent=None):
         self._should_stop = Event()
         self._should_stop.clear()
-        super(StoppableThread, self).__init__()
+        super(StoppableQThread, self).__init__(parent)
 
     def join(self, timeout=0):
         """ Joins the current thread and forces it to stop after
@@ -44,7 +45,7 @@ class StoppableThread(Thread):
         self._should_stop.wait(timeout)
         if not self.should_stop():
             self.stop()
-        super(StoppableThread, self).join()
+        super(StoppableQThread, self).wait()
 
     def stop(self):
         self._should_stop.set()
