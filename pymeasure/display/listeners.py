@@ -33,7 +33,7 @@ from msgpack import loads
 from time import sleep
 from multiprocessing import Event
 
-from pymeasure.thread import StoppableQThread
+from pymeasure.display.thread import StoppableQThread
 from pymeasure.experiment.procedure import Procedure
 
 
@@ -77,7 +77,7 @@ class QListener(StoppableQThread):
             self.__class__.__name__, self.port, self.topic, self.should_stop())
 
 
-class QMonitor(QListener):
+class Monitor(QListener):
     """ Monitor listens for status and progress messages
     on a ZMQ TCP port and routes them to signals and slots
     """
@@ -89,7 +89,7 @@ class QMonitor(QListener):
     finished = QtCore.QSignal()
 
     def __init__(self, port, timeout=0.01):
-        super(ProcedureMonitor, self).__init__(port, topic='', timeout=timeout)
+        super(Monitor, self).__init__(port, topic='', timeout=timeout)
 
     def run(self):
         while not self.should_stop():

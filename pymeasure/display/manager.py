@@ -31,7 +31,7 @@ from time import sleep
 
 from pymeasure.experiment import Procedure
 from pymeasure.experiment.workers import Worker
-from pymeasure.display.listeners import QMonitor
+from pymeasure.display.listeners import Monitor
 from .qt_variant import QtCore
 
 
@@ -137,8 +137,8 @@ class Manager(QtCore.QObject):
         self.browser = browser
 
         self.port = port
-        self.monitor = QMonitor(port)
-        # Route QMonitor callbacks through signals and slots
+        self.monitor = Monitor(port)
+        # Route Monitor callbacks through signals and slots
         self.monitor.running.connect(self._running)
         self.monitor.finished.connect(self._finish)
         self.monitor.progress.connect(self._update_progress)
