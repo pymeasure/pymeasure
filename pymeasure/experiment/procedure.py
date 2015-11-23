@@ -137,7 +137,7 @@ class Procedure(object):
                     raise NameError("Parameter '%s' does not belong to '%s'" % (
                             name, repr(self)))
 
-    def enter(self):
+    def startup(self):
         """ Executes the commands needed at the start-up of the measurement
         """
         pass
@@ -149,7 +149,7 @@ class Procedure(object):
         """
         pass
 
-    def exit(self):
+    def shutdown(self):
         """ Executes the commands necessary to shut down the instruments
         and leave them in a safe state.
         """
