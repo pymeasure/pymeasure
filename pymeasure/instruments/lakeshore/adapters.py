@@ -39,4 +39,4 @@ class LakeShoreUSBAdapter(SerialAdapter):
         )
 
     def write(self, command):
-        self.connection.write(command + "\n")
+        super(LakeShoreUSBAdapter, self).write(command + "\n")
