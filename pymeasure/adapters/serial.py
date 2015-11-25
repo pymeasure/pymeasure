@@ -57,7 +57,7 @@ class SerialAdapter(Adapter):
 
         :returns: String ASCII response of the instrument.
         """
-        return "\n".join(self.connection.readlines().decode())
+        return b"\n".join(self.connection.readlines()).decode()
 
     def values(self, command):
         """ Writes a command to the instrument and returns a list of formatted
