@@ -34,3 +34,11 @@ def console_log(logger, level=logging.INFO):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+
+def file_log(logger, log_filename, level=logging.INFO):
+    logger.setLevel(level)
+    ch = logging.FileHandler(log_filename)
+    ch.setLevel(level)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
