@@ -60,7 +60,7 @@ if __name__ == "__main__":
     results = Results(procedure, filename)
     log.info("Set up Results")
 
-    plotter = Plotter(results, x='Iteration', y='Random Number')
+    plotter = Plotter(results)
     plotter.start()
 
     worker = Worker(results, port)

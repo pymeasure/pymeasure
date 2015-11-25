@@ -24,6 +24,7 @@
 
 from .qt_variant import QtCore, QtGui
 Qt = QtCore.Qt
+
 from pymeasure.process import StoppableProcess
 from .graph import ResultsCurve, Crosshairs
 
@@ -33,37 +34,100 @@ import pyqtgraph as pg
 
 class PlotterWindow(QtGui.QMainWindow):
 
+    label_style = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
+
     def __init__(self, plotter, parent=None):
         super(PlotterWindow, self).__init__(parent)
         self.plotter = plotter
 
         self.setWindowTitle('Results Plotter')
         self.main = QtGui.QWidget(self)
-        self.setCentralWidget(self.main)
 
-        self.plot_widget = pg.PlotWidget(self.main, background='#ffffff')
+        vbox = QtGui.QVBoxLayout(self.main)
+        vbox.setSpacing(0)
 
-        self.coordinates = QtGui.QLabel(self.main)
+        info_box = QtGui.QVBoxLayout()
+        hbox1 = QtGui.QHBoxLayout()
+        hbox1.setSpacing(6)
+        hbox1.setContentsMargins(-1, 6, -1, -1)        
+
+        file_label = QtGui.QLabel(self.main)
+        file_label.setText('Data Filename:')
+
+        self.file = QtGui.QLineEdit(self.main)
+        self.file.setText(plotter.results.data_filename)
+
+        hbox1.addWidget(file_label)
+        hbox1.addWidget(self.file)
+        info_box.addLayout(hbox1)
+
+        hbox2 = QtGui.QHBoxLayout()
+        hbox2.setSpacing(10)
+        hbox2.setContentsMargins(-1, 6, -1, 6)
+
+        columns_x_label = QtGui.QLabel(self.main)
+        columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        columns_x_label.setText('X Axis:')
+        columns_y_label = QtGui.QLabel(self.main)
+        columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        columns_y_label.setText('Y Axis:')
+        
+        self.columns_x = QtGui.QComboBox(self.main)
+        self.columns_y = QtGui.QComboBox(self.main)
+        columns = plotter.results.procedure.DATA_COLUMNS
+        for column in columns:
+            self.columns_x.addItem(column)
+            self.columns_y.addItem(column)
+        self.columns_x.activated.connect(self.update_x_column)
+        self.columns_y.activated.connect(self.update_y_column)
+
+        hbox2.addWidget(columns_x_label)
+        hbox2.addWidget(self.columns_x)
+        hbox2.addWidget(columns_y_label)
+        hbox2.addWidget(self.columns_y)
+        info_box.addLayout(hbox2)
+        vbox.addLayout(info_box)
+        
+        frame = QtGui.QFrame(self.main)
+        frame.setAutoFillBackground(False)
+        frame.setStyleSheet("background: #fff")
+        frame.setFrameShape(QtGui.QFrame.StyledPanel)
+        frame.setFrameShadow(QtGui.QFrame.Sunken)
+        frame.setMidLineWidth(1)
+        vbox2 = QtGui.QVBoxLayout(frame)
+
+        self.plot_widget = pg.PlotWidget(frame, background='#ffffff')
+        self.coordinates = QtGui.QLabel(frame)
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
+        self.coordinates.setStyleSheet("background: #fff")
+        self.coordinates.setText("")
+        self.coordinates.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+
+        vbox2.addWidget(self.plot_widget)
+        frame.setLayout(vbox2)
+        vbox2.addWidget(self.coordinates)
+        vbox.addWidget(frame)
 
         self.plot = self.plot_widget.getPlotItem()
-        label_style = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
-        self.plot.setLabel('bottom', self.plotter.x, **label_style) # units='Oe'
-        self.plot.setLabel('left', self.plotter.y, **label_style)
+
         self.crosshairs = Crosshairs(self.plot, pen=pg.mkPen(color='#AAAAAA', 
                             style=Qt.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
-        self.vbox = QtGui.QVBoxLayout(self)
-        self.vbox.addWidget(self.plot_widget)
-        self.vbox.addWidget(self.coordinates)
-        self.main.setLayout(self.vbox)
+        self.main.setLayout(vbox)
+        self.setCentralWidget(self.main)
         self.main.show()
         self.resize(800, 600)
 
-        self.curve = ResultsCurve(plotter.results, plotter.x, plotter.y,
-            plotter.xerr, plotter.yerr, pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
+        self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
+            pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
         self.plot.addItem(self.curve)
+
+        self.plot.setLabel('bottom', columns[0], **self.label_style)
+        self.plot.setLabel('left', columns[1], **self.label_style)  
+
+        self.columns_x.setCurrentIndex(0)
+        self.columns_y.setCurrentIndex(1)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.curve.update)
@@ -75,6 +139,18 @@ class PlotterWindow(QtGui.QMainWindow):
     def update_coordinates(self, x, y):
         label = "(%0.3f, %0.3f)"
         self.coordinates.setText(label % (x, y))
+
+    def update_x_column(self, index):
+        axis = self.columns_x.itemText(index)
+        self.curve.x = axis
+        # TODO parse units as: units='Oe'
+        self.plot.setLabel('bottom', axis, **self.label_style)
+
+    def update_y_column(self, index):
+        axis = self.columns_y.itemText(index)
+        self.curve.y = axis
+        # TODO parse units as: units='Oe'
+        self.plot.setLabel('left', axis, **self.label_style)  
 
     def check_stop(self):
         """ Checks if the Plotter should stop and exits the Qt main loop if so
@@ -89,12 +165,9 @@ class Plotter(StoppableProcess):
     object and supports error bars.
     """
 
-    def __init__(self, results, x, y, xerr=None, yerr=None, refresh_time=0.1):
+    def __init__(self, results, refresh_time=0.1):
         super(Plotter, self).__init__()
         self.results = results
-        self.x, self.y = x, y
-        self.xerr, self.yerr = xerr, yerr
-        # TODO: parse units from x and y strings
         self.refresh_time = refresh_time
 
     def run(self):
