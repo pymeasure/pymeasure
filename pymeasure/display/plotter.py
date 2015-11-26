@@ -22,6 +22,10 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 from .qt_variant import QtCore, QtGui
 Qt = QtCore.Qt
 
@@ -29,6 +33,7 @@ from pymeasure.process import StoppableProcess
 from .graph import ResultsCurve, Crosshairs
 
 import sys
+from time import sleep
 import pyqtgraph as pg
 
 
@@ -135,6 +140,11 @@ class PlotterWindow(QtGui.QMainWindow):
         self.timer.timeout.connect(self.check_stop)
         self.timer.start(plotter.refresh_time*1e3)
 
+    def quit(self, evt=None):
+        log.info("Quitting the Plotter")
+        self.timer.stop()
+        self.close()
+        self.plotter.stop()
 
     def update_coordinates(self, x, y):
         label = "(%0.3f, %0.3f)"
@@ -173,7 +183,10 @@ class Plotter(StoppableProcess):
     def run(self):
         app = QtGui.QApplication(sys.argv)
         window = PlotterWindow(self)
+        app.aboutToQuit.connect(window.quit)
         window.show()
         app.exec_()
 
-        
+    def wait_for_close(self, check_time=0.1):
+        while not self.should_stop():
+            sleep(check_time)
