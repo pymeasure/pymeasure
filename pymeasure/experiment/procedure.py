@@ -27,20 +27,19 @@ from .parameters import Parameter
 
 class Procedure(object):
     """Provides the base class of a procedure to organize the experiment
-    execution. Procedures should be run in ProcedureThreads to ensure that
-    concurrent control is properly managed.
+    execution. Procedures should be run by Workers to ensure that
+    asynchronous execution is properly managed.
 
     .. code-block:: python
 
         procedure = Procedure()
-        thread = ProcedureThread() # or QProcedureThread()
-        thread.load(procedure)
-        thread.start()
+        results = Results(procedure, data_filename)
+        worker = Worker(results, port)
+        worker.start()
 
-    Inhereting classes are required to define the enter, execute,
-    and exit methods. The exit method is called on independent of the
-    sucessful completion, software error, or abort of code run in the
-    execute method.
+    Inheriting classes should define the startup, execute, and shutdown
+    methods as needed. The shutdown method is called even with a
+    software exception or abort event during the execute method.
     """
 
     DATA_COLUMNS = []
@@ -53,9 +52,9 @@ class Procedure(object):
         self._update_parameters()
 
     def _update_parameters(self):
-        """ Collects all the Parameter objects for this procedure and stores
-        them in a meta dictionary so that the actual values can be set in their
-        stead
+        """ Collects all the Parameter objects for the procedure and stores
+        them in a meta dictionary so that the actual values can be set in 
+        their stead
         """
         if not self._parameters:
             self._parameters = {}
@@ -79,7 +78,7 @@ class Procedure(object):
         """ Raises an exception if any parameter is missing before calling
         the associated function. Ensures that each value can be set and
         got, which should cast it into the right format. Used as a decorator
-        @checkParameters on the enter method
+        @check_parameters on the startup method
         """
         for name, parameter in self._parameters.items():
             value = getattr(self, name)
@@ -144,14 +143,14 @@ class Procedure(object):
 
     def execute(self):
         """ Preforms the commands needed for the measurement itself. During
-        execution the exit method will always be run following this method.
+        execution the shutdown method will always be run following this method.
         This includes when Exceptions are raised.
         """
         pass
 
     def shutdown(self):
         """ Executes the commands necessary to shut down the instruments
-        and leave them in a safe state.
+        and leave them in a safe state. This method is always run at the end.
         """
         pass
 
@@ -170,5 +169,5 @@ class UnknownProcedure(Procedure):
     def __init__(self, parameters):
         self._parameters = parameters
 
-    def enter(self):
+    def startup(self):
         raise Exception("UnknownProcedure can not be run")
