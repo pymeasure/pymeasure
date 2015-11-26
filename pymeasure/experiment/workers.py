@@ -80,7 +80,6 @@ class Worker(StoppableProcess):
 
     def run(self):
         self.recorder = Recorder(self.results, self.port)
-        self.recorder._should_stop = self._should_stop
         self.recorder.start()
 
         # route Procedure output
@@ -110,6 +109,7 @@ class Worker(StoppableProcess):
             if self.procedure.status == Procedure.RUNNING:
                 self.update_status(Procedure.FINISHED)
                 self.emit('progress', 100.)
+            self.recorder.stop()
             self.stop()
 
     def __repr__(self):
