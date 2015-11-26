@@ -53,7 +53,7 @@ if __name__ == "__main__":
     log.info("Using data file: %s" % filename)
 
     procedure = TestProcedure()
-    procedure.iterations = 10000
+    procedure.iterations = 20
     procedure.delay = 0.1
     log.info("Set up TestProcedure with %d iterations" % procedure.iterations)
 
@@ -70,3 +70,6 @@ if __name__ == "__main__":
 
     log.info("Joining with the worker in at most 20 min")
     worker.join(60*20)
+    log.info("Waiting for Plotter to close")
+    plotter.wait_for_close()
+    log.info("Plotter closed")
