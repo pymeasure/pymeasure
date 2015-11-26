@@ -31,7 +31,9 @@ def console_log(logger, level=logging.INFO):
     logger.setLevel(level)
     ch = logging.StreamHandler()
     ch.setLevel(level)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        fmt='%(asctime)s: %(message)s (%(name)s, %(levelname)s)',
+        datefmt='%I:%M:%S %p')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
