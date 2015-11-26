@@ -49,8 +49,11 @@ class Worker(StoppableProcess):
         """
         super(Worker, self).__init__()
         self.port = port
+        if not isinstance(results, Results):
+            raise ValueError("Invalid Results object during Worker construction")
         self.results = results
         self.procedure = self.results.procedure
+        self.procedure.check_parameters()
         self.procedure.status = Procedure.QUEUED
 
     def join(self, timeout=0):
