@@ -30,6 +30,8 @@ import zmq
 from msgpack_numpy import loads
 from time import sleep
 
+from threading import Thread
+from queue import Empty
 from pymeasure.thread import StoppableThread
 from .results import Results
 
@@ -75,24 +77,28 @@ class Listener(StoppableThread):
             self.__class__.__name__, self.port, self.topic, self.should_stop())
 
 
-class Recorder(Listener):
+class Recorder(Thread):
     """ Recorder loads the initial Results for a filepath and
-    appends data by listening for it over a ZMQ TCP port
+    appends data by listening for it over a queue. The queue
+    ensures that no data is lost between the Recorder and Worker.
     """
 
-    def __init__(self, results, port, topic='results', timeout=0.01):
+    def __init__(self, results, queue):
         """ Constructs a Recorder to record the Procedure data
         into the filepath, by waiting for data on the subscription
         port
         """
         self.results = results
-        super(Recorder, self).__init__(port, topic, timeout)
+        self.queue = queue
+        self.timeout = timeout
+        super(Recorder, self).__init__()
 
     def run(self):
         with open(self.results.data_filename, 'ab', buffering=0) as handle:
             log.info("Recording to file: %s" % self.results.data_filename)
-            while not self.should_stop():
-                if self.message_waiting():
-                    topic, data = self.receive()
-                    handle.write(self.results.format(data).encode())
+            while True:
+                data = self.queue.get()
+                if data is None:
+                    break
+                handle.write(self.results.format(data).encode())
             log.info("Recorder caught stop command")

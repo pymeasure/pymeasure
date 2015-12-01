@@ -31,6 +31,7 @@ from msgpack_numpy import dumps
 from traceback import format_exc
 from time import sleep
 
+from multiprocessing import Queue
 from pymeasure.process import StoppableProcess
 from .listeners import Recorder
 from .results import Results
@@ -56,6 +57,9 @@ class Worker(StoppableProcess):
         self.procedure.check_parameters()
         self.procedure.status = Procedure.QUEUED
 
+        self.results_queue = Queue()
+        self.status_queue = Queue()
+
     def join(self, timeout=0):
         try:
             super(Worker, self).join(timeout)
@@ -70,6 +74,10 @@ class Worker(StoppableProcess):
             topic = topic.encode()
         log.debug("Emitting message: %s %s" % (topic, data))
         self.publisher.send_multipart([topic, dumps(data)])
+        if topic == b'results':
+            self.results_queue.put(data)
+        elif topic == b'status':
+            self.status_queue.put(data)
 
     def update_status(self, status):
         self.procedure.status = status
@@ -82,7 +90,7 @@ class Worker(StoppableProcess):
         self.emit('error', traceback_str)
 
     def run(self):
-        self.recorder = Recorder(self.results, self.port)
+        self.recorder = Recorder(self.results, self.results_queue)
         self.recorder.start()
 
         # route Procedure methods
@@ -115,7 +123,7 @@ class Worker(StoppableProcess):
             if self.procedure.status == Procedure.RUNNING:
                 self.update_status(Procedure.FINISHED)
                 self.emit('progress', 100.)
-            self.recorder.stop()
+            self.results_queue.put(None)
             self.stop()
 
     def __repr__(self):
