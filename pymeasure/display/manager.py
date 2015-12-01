@@ -197,20 +197,21 @@ class Manager(QtCore.QObject):
             raise Exception("Another procedure is already running")
         else:
             if self.experiments.has_next():
+                log.debug("Manager is initiating the next experiment")
                 experiment = self.experiments.next()
                 self._running_experiment = experiment
 
                 self._worker = Worker(experiment.results, self.port)
 
                 self._monitor = Monitor(self._worker.monitor_queue)
-                self._monitor.running.connect(self._running)
-                self._monitor.failed.connect(self._failed)
-                self._monitor.abort_returned.connect(self._abort_returned)
-                self._monitor.finished.connect(self._finish)
+                self._monitor.worker_running.connect(self._running)
+                self._monitor.worker_failed.connect(self._failed)
+                self._monitor.worker_abort_returned.connect(self._abort_returned)
+                self._monitor.worker_finished.connect(self._finish)
                 self._monitor.progress.connect(self._update_progress)
                 self._monitor.status.connect(self._update_status)
-                self._monitor.start()
 
+                self._monitor.start()
                 self._worker.start()
 
     def _running(self):
@@ -226,24 +227,18 @@ class Manager(QtCore.QObject):
         log.debug("Manager has cleaned up after the Worker")
 
     def _failed(self):
-        if not self.is_running():
-            return # TODO: Determine cause of double-callbacks
         log.debug("Manager's running experiment has failed")
         experiment = self._running_experiment
         self._clean_up()
         self.failed.emit(experiment)
 
     def _abort_returned(self):
-        if not self.is_running():
-            return # TODO: Determine cause of double-callbacks
         log.debug("Manager's running experiment has returned after an abort")
         experiment = self._running_experiment
         self._clean_up()
         self.abort_returned.emit(experiment)
 
     def _finish(self):
-        if not self.is_running():
-            return # TODO: Determine cause of double-callbacks
         log.debug("Manager's running experiment has finished")
         experiment = self._running_experiment
         self._clean_up()

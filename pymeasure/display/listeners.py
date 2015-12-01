@@ -85,10 +85,10 @@ class Monitor(QtCore.QThread):
 
     status = QtCore.QSignal(int)
     progress = QtCore.QSignal(float)
-    running = QtCore.QSignal()
-    failed = QtCore.QSignal()
-    finished = QtCore.QSignal()
-    abort_returned = QtCore.QSignal()
+    worker_running = QtCore.QSignal()
+    worker_failed = QtCore.QSignal()
+    worker_finished = QtCore.QSignal() # Distinguished from QThread.finished
+    worker_abort_returned = QtCore.QSignal()
 
     def __init__(self, queue):
         self.queue = queue
@@ -102,12 +102,14 @@ class Monitor(QtCore.QThread):
             topic, data = data
             if topic == 'status':
                 self.status.emit(data)
-                if data == Procedure.FAILED:
-                    self.failed.emit()
+                if data == Procedure.RUNNING:
+                    self.worker_running.emit()
+                elif data == Procedure.FAILED:
+                    self.worker_failed.emit()
                 elif data == Procedure.FINISHED:
-                    self.finished.emit()
+                    self.worker_finished.emit()
                 elif data == Procedure.ABORTED:
-                    self.abort_returned.emit()
+                    self.worker_abort_returned.emit()
             elif topic == 'progress':
                 self.progress.emit(data)
         log.info("Monitor caught stop command")
