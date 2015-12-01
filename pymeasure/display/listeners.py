@@ -29,9 +29,8 @@ log.addHandler(logging.NullHandler())
 from .qt_variant import QtCore
 
 import zmq
-from msgpack import loads
+from msgpack_numpy import loads
 from time import sleep
-from multiprocessing import Event
 
 from pymeasure.display.thread import StoppableQThread
 from pymeasure.experiment.procedure import Procedure
@@ -53,7 +52,8 @@ class QListener(StoppableQThread):
         """
         self.port = port
         self.topic = topic
-        self.context = zmq.Context.instance()
+        self.context = zmq.Context()
+        log.debug("%s has ZMQ Context: %r" % (self.__class__.__name__, self.context))
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.connect('tcp://localhost:%d' % port)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
@@ -65,9 +65,9 @@ class QListener(StoppableQThread):
         self.timeout = timeout
         super(QListener, self).__init__()
 
-    def receive(self):
-        topic, raw_data = self.subscriber.recv()
-        return topic.decode(), loads(raw_data).decode()
+    def receive(self, flags=0):
+        topic, raw_data = self.subscriber.recv_multipart(flags=flags)
+        return topic.decode(), loads(raw_data, encoding='utf-8')
 
     def message_waiting(self):
         return self.poller.poll(self.timeout)
@@ -87,8 +87,9 @@ class Monitor(QListener):
     running = QtCore.QSignal()
     failed = QtCore.QSignal()
     finished = QtCore.QSignal()
+    abort_returned = QtCore.QSignal()
 
-    def __init__(self, port, timeout=0.01):
+    def __init__(self, port, timeout=1):
         super(Monitor, self).__init__(port, topic='', timeout=timeout)
 
     def run(self):
@@ -101,6 +102,8 @@ class Monitor(QListener):
                         self.failed.emit()
                     elif data == Procedure.FINISHED:
                         self.finished.emit()
+                    elif data == Procedure.ABORTED:
+                        self.abort_returned.emit()
                 elif topic == 'progress':
                     self.progress.emit(data)
         log.info("Monitor caught stop command")

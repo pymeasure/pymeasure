@@ -27,7 +27,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from .qt_variant import QtCore, QtGui
-Qt = QtCore.Qt
 
 from pymeasure.process import StoppableProcess
 from .graph import ResultsCurve, Crosshairs
@@ -116,7 +115,7 @@ class PlotterWindow(QtGui.QMainWindow):
         self.plot = self.plot_widget.getPlotItem()
 
         self.crosshairs = Crosshairs(self.plot, pen=pg.mkPen(color='#AAAAAA', 
-                            style=Qt.DashLine))
+                            style=QtCore.Qt.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
         self.main.setLayout(vbox)

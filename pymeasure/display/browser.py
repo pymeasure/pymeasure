@@ -22,6 +22,10 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 from pymeasure.experiment import Procedure
 from .qt_variant import QtCore, QtGui
 
@@ -66,6 +70,9 @@ class BrowserItem(QtGui.QTreeWidgetItem):
                 background-color: red;
             }
             """)
+
+    def setProgress(self, progress):
+        self.progressbar.setValue(progress)
 
 
 class Browser(QtGui.QTreeWidget):

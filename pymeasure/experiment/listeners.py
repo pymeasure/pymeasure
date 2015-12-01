@@ -50,7 +50,8 @@ class Listener(StoppableThread):
         """
         self.port = port
         self.topic = topic
-        self.context = zmq.Context.instance()
+        self.context = zmq.Context()
+        log.debug("%s has ZMQ Context: %r" % (self.__class__.__name__, self.context))
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.connect('tcp://localhost:%d' % port)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())

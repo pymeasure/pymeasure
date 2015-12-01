@@ -85,15 +85,16 @@ class Worker(StoppableProcess):
         self.recorder = Recorder(self.results, self.port)
         self.recorder.start()
 
-        # route Procedure output
+        # route Procedure methods
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
 
-        self.context = zmq.Context.instance()
+        self.context = zmq.Context()
+        log.debug("Worker ZMQ Context: %r" % self.context)
         self.publisher = self.context.socket(zmq.PUB)
         self.publisher.bind('tcp://*:%d' % self.port)
         log.info("Worker connected to tcp://*:%d" % self.port)
-        sleep(0.01)
+        sleep(0.8)
 
         log.info("Running %r with %r" % (self.procedure, self))
         self.update_status(Procedure.RUNNING)
@@ -109,6 +110,8 @@ class Worker(StoppableProcess):
             self.update_status(Procedure.FAILED)
         finally:
             self.procedure.shutdown()
+            if self.should_stop() and self.procedure.status == Procedure.RUNNING:
+                self.update_status(Procedure.ABORTED)
             if self.procedure.status == Procedure.RUNNING:
                 self.update_status(Procedure.FINISHED)
                 self.emit('progress', 100.)

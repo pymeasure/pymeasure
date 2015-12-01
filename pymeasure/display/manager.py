@@ -126,7 +126,7 @@ class Manager(QtCore.QObject):
     aborted = QtCore.QSignal(object)
     abort_returned = QtCore.QSignal(object)
 
-    def __init__(self, plot, browser, port=5558, parent=None):
+    def __init__(self, plot, browser, port=5888, parent=None):
         super(Manager, self).__init__(parent=parent)
 
         self.experiments = ExperimentQueue()
@@ -140,14 +140,27 @@ class Manager(QtCore.QObject):
         self.monitor = Monitor(port)
         # Route Monitor callbacks through signals and slots
         self.monitor.running.connect(self._running)
+        self.monitor.failed.connect(self._failed)
+        self.monitor.abort_returned.connect(self._abort_returned)
         self.monitor.finished.connect(self._finish)
         self.monitor.progress.connect(self._update_progress)
         self.monitor.status.connect(self._update_status)
+        self.monitor.start()
+
+    def __del__(self):
+        """ Ensures that the processes and threads are properly
+        shutdown before deleting the Manager
+        """
+        if self.monitor is not None:
+            self.monitor.join()
+        if self._worker is not None:
+            self._worker.join()
+        super(Manager, self).__del__()
 
     def is_running(self):
         """ Returns True if a procedure is currently running
         """
-        return self._worker is not None
+        return self._running_experiment is not None
 
     def running_experiment(self):
         if self.is_running():
@@ -157,7 +170,7 @@ class Manager(QtCore.QObject):
 
     def _update_progress(self, progress):
         if self.is_running():
-            self._running_experiment.browser_item.progressbar.setValue(progress)
+            self._running_experiment.browser_item.setProgress(progress)
 
     def _update_status(self, status):
         if self.is_running():
@@ -217,18 +230,25 @@ class Manager(QtCore.QObject):
         del self._worker
         self._worker = None
         self._running_experiment = None
+        log.debug("Manager has cleaned up after the Worker")
+
+    def _failed(self):
+        experiment = self._running_experiment
+        self._clean_up()
+        self.failed.emit(experiment)
+
+    def _abort_returned(self):
+        experiment = self._running_experiment
+        self._clean_up()
+        self.abort_returned.emit(experiment)
 
     def _finish(self):
         experiment = self._running_experiment
-        self.clean_up()
-        if experiment.procedure.status == Procedure.FAILED:
-            self.failed.emit(experiment)
-        elif experiment.procedure.status == Procedure.ABORTED:
-            self.abort_returned.emit(experiment)
-        elif experiment.procedure.status == Procedure.FINISHED:
-            self.finished.emit(experiment)
-            if self._is_continuous:  # Continue running procedures
-                self.next()
+        self._clean_up()
+        experiment.browser_item.setProgress(100.)
+        self.finished.emit(experiment)
+        if self._is_continuous:  # Continue running procedures
+            self.next()
 
     def resume(self):
         """ Resume processing of the queue.

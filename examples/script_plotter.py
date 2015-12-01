@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import random
 import tempfile
 from time import sleep
@@ -35,6 +33,7 @@ class TestProcedure(Procedure):
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
+            self.emit('progress', 100.*i/self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -53,7 +52,7 @@ if __name__ == "__main__":
     log.info("Using data file: %s" % filename)
 
     procedure = TestProcedure()
-    procedure.iterations = 20
+    procedure.iterations = 200
     procedure.delay = 0.1
     log.info("Set up TestProcedure with %d iterations" % procedure.iterations)
 
