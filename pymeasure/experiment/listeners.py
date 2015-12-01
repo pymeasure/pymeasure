@@ -90,7 +90,6 @@ class Recorder(Thread):
         """
         self.results = results
         self.queue = queue
-        self.timeout = timeout
         super(Recorder, self).__init__()
 
     def run(self):
