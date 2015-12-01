@@ -57,8 +57,8 @@ class Worker(StoppableProcess):
         self.procedure.check_parameters()
         self.procedure.status = Procedure.QUEUED
 
-        self.results_queue = Queue()
-        self.status_queue = Queue()
+        self.recorder_queue = Queue()
+        self.monitor_queue = Queue()
 
     def join(self, timeout=0):
         try:
@@ -75,9 +75,9 @@ class Worker(StoppableProcess):
         log.debug("Emitting message: %s %s" % (topic, data))
         self.publisher.send_multipart([topic, dumps(data)])
         if topic == b'results':
-            self.results_queue.put(data)
-        elif topic == b'status':
-            self.status_queue.put(data)
+            self.recorder_queue.put(data)
+        elif topic == b'status' or topic == b'progress':
+            self.monitor_queue.put((topic.decode(), data))
 
     def update_status(self, status):
         self.procedure.status = status
@@ -90,7 +90,7 @@ class Worker(StoppableProcess):
         self.emit('error', traceback_str)
 
     def run(self):
-        self.recorder = Recorder(self.results, self.results_queue)
+        self.recorder = Recorder(self.results, self.recorder_queue)
         self.recorder.start()
 
         # route Procedure methods
@@ -102,7 +102,7 @@ class Worker(StoppableProcess):
         self.publisher = self.context.socket(zmq.PUB)
         self.publisher.bind('tcp://*:%d' % self.port)
         log.info("Worker connected to tcp://*:%d" % self.port)
-        sleep(0.8)
+        sleep(0.01)
 
         log.info("Running %r with %r" % (self.procedure, self))
         self.update_status(Procedure.RUNNING)
@@ -123,7 +123,8 @@ class Worker(StoppableProcess):
             if self.procedure.status == Procedure.RUNNING:
                 self.update_status(Procedure.FINISHED)
                 self.emit('progress', 100.)
-            self.results_queue.put(None)
+            self.recorder_queue.put(None)
+            self.monitor_queue.put(None)
             self.stop()
 
     def __repr__(self):

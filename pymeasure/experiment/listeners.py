@@ -31,7 +31,6 @@ from msgpack_numpy import loads
 from time import sleep
 
 from threading import Thread
-from queue import Empty
 from pymeasure.thread import StoppableThread
 from .results import Results
 

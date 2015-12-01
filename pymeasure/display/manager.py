@@ -132,30 +132,12 @@ class Manager(QtCore.QObject):
         self.experiments = ExperimentQueue()
         self._worker = None
         self._running_experiment = None
+        self._monitor = None
         
         self.plot = plot
         self.browser = browser
 
         self.port = port
-        self.monitor = Monitor(port)
-        # Route Monitor callbacks through signals and slots
-        self.monitor.running.connect(self._running)
-        self.monitor.failed.connect(self._failed)
-        self.monitor.abort_returned.connect(self._abort_returned)
-        self.monitor.finished.connect(self._finish)
-        self.monitor.progress.connect(self._update_progress)
-        self.monitor.status.connect(self._update_status)
-        self.monitor.start()
-
-    def __del__(self):
-        """ Ensures that the processes and threads are properly
-        shutdown before deleting the Manager
-        """
-        if self.monitor is not None:
-            self.monitor.join()
-        if self._worker is not None:
-            self._worker.join()
-        super(Manager, self).__del__()
 
     def is_running(self):
         """ Returns True if a procedure is currently running
@@ -219,6 +201,16 @@ class Manager(QtCore.QObject):
                 self._running_experiment = experiment
 
                 self._worker = Worker(experiment.results, self.port)
+
+                self._monitor = Monitor(self._worker.monitor_queue)
+                self._monitor.running.connect(self._running)
+                self._monitor.failed.connect(self._failed)
+                self._monitor.abort_returned.connect(self._abort_returned)
+                self._monitor.finished.connect(self._finish)
+                self._monitor.progress.connect(self._update_progress)
+                self._monitor.status.connect(self._update_status)
+                self._monitor.start()
+
                 self._worker.start()
 
     def _running(self):
@@ -226,23 +218,33 @@ class Manager(QtCore.QObject):
             self.running.emit(self.running_experiment)
 
     def _clean_up(self):
-        self._worker.join()      
+        self._worker.join()
         del self._worker
+        del self._monitor
         self._worker = None
         self._running_experiment = None
         log.debug("Manager has cleaned up after the Worker")
 
     def _failed(self):
+        if not self.is_running():
+            return # TODO: Determine cause of double-callbacks
+        log.debug("Manager's running experiment has failed")
         experiment = self._running_experiment
         self._clean_up()
         self.failed.emit(experiment)
 
     def _abort_returned(self):
+        if not self.is_running():
+            return # TODO: Determine cause of double-callbacks
+        log.debug("Manager's running experiment has returned after an abort")
         experiment = self._running_experiment
         self._clean_up()
         self.abort_returned.emit(experiment)
 
     def _finish(self):
+        if not self.is_running():
+            return # TODO: Determine cause of double-callbacks
+        log.debug("Manager's running experiment has finished")
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)

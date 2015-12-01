@@ -77,9 +77,10 @@ class QListener(StoppableQThread):
             self.__class__.__name__, self.port, self.topic, self.should_stop())
 
 
-class Monitor(QListener):
+class Monitor(QtCore.QThread):
     """ Monitor listens for status and progress messages
-    on a ZMQ TCP port and routes them to signals and slots
+    from a Worker through a queue to ensure no messages
+    are lost
     """
 
     status = QtCore.QSignal(int)
@@ -89,23 +90,26 @@ class Monitor(QListener):
     finished = QtCore.QSignal()
     abort_returned = QtCore.QSignal()
 
-    def __init__(self, port, timeout=1):
-        super(Monitor, self).__init__(port, topic='', timeout=timeout)
+    def __init__(self, queue):
+        self.queue = queue
+        super(Monitor, self).__init__()
 
     def run(self):
-        while not self.should_stop():
-            if self.message_waiting():
-                topic, data = self.receive()
-                if topic == 'status':
-                    self.status.emit(data)
-                    if data == Procedure.FAILED:
-                        self.failed.emit()
-                    elif data == Procedure.FINISHED:
-                        self.finished.emit()
-                    elif data == Procedure.ABORTED:
-                        self.abort_returned.emit()
-                elif topic == 'progress':
-                    self.progress.emit(data)
+        while True:
+            data = self.queue.get()
+            if data is None:
+                break
+            topic, data = data
+            if topic == 'status':
+                self.status.emit(data)
+                if data == Procedure.FAILED:
+                    self.failed.emit()
+                elif data == Procedure.FINISHED:
+                    self.finished.emit()
+                elif data == Procedure.ABORTED:
+                    self.abort_returned.emit()
+            elif topic == 'progress':
+                self.progress.emit(data)
         log.info("Monitor caught stop command")
 
 
