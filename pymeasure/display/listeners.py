@@ -28,8 +28,12 @@ log.addHandler(logging.NullHandler())
 
 from .qt_variant import QtCore
 
-import zmq
-from msgpack_numpy import loads
+try:
+    import zmq
+    from msgpack_numpy import loads
+except ImportError:
+    log.warning("ZMQ and MsgPack are required for TCP communication")
+
 from time import sleep
 
 from pymeasure.display.thread import StoppableQThread

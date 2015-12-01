@@ -44,7 +44,5 @@ setup(
     install_requires=[
         "Numpy >= 1.6.1",
         "pandas >= 0.14",
-        "pyzmq >= 14.7.0",
-        "msgpack-python >= 0.4.6"
     ],
 )

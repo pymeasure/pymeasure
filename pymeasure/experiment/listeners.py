@@ -26,8 +26,12 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-import zmq
-from msgpack_numpy import loads
+try:
+    import zmq
+    from msgpack_numpy import loads
+except ImportError:
+    log.warning("ZMQ and MsgPack are required for TCP communication")
+
 from time import sleep
 
 from threading import Thread

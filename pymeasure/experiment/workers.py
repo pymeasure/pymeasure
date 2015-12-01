@@ -26,8 +26,12 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-import zmq
-from msgpack_numpy import dumps
+try:
+    import zmq
+    from msgpack_numpy import dumps
+except ImportError:
+    log.warning("ZMQ and MsgPack are required for TCP communication")
+
 from traceback import format_exc
 from time import sleep
 
@@ -73,7 +77,10 @@ class Worker(StoppableProcess):
         if isinstance(topic, str):
             topic = topic.encode()
         log.debug("Emitting message: %s %s" % (topic, data))
-        self.publisher.send_multipart([topic, dumps(data)])
+        try:
+            self.publisher.send_multipart([topic, dumps(data)])
+        except (NameError, AttributeError):
+            pass # No dumps defined
         if topic == b'results':
             self.recorder_queue.put(data)
         elif topic == b'status' or topic == b'progress':
@@ -97,12 +104,15 @@ class Worker(StoppableProcess):
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
 
-        self.context = zmq.Context()
-        log.debug("Worker ZMQ Context: %r" % self.context)
-        self.publisher = self.context.socket(zmq.PUB)
-        self.publisher.bind('tcp://*:%d' % self.port)
-        log.info("Worker connected to tcp://*:%d" % self.port)
-        sleep(0.01)
+        try:
+            self.context = zmq.Context()
+            log.debug("Worker ZMQ Context: %r" % self.context)
+            self.publisher = self.context.socket(zmq.PUB)
+            self.publisher.bind('tcp://*:%d' % self.port)
+            log.info("Worker connected to tcp://*:%d" % self.port)
+            sleep(0.01)
+        except:
+            pass
 
         log.info("Running %r with %r" % (self.procedure, self))
         self.update_status(Procedure.RUNNING)
