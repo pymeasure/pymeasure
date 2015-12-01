@@ -148,10 +148,9 @@ class Manager(QtCore.QObject):
         """ Ensures that the processes and threads are properly
         shutdown before deleting the Manager
         """
-        self.monitor.stop()
-        self.monitor.join()
+        if self.monitor is not None:
+            self.monitor.join()
         if self._worker is not None:
-            self._worker.stop()
             self._worker.join()
 
         super(Manager, self).__del__()
