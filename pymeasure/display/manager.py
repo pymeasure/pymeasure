@@ -105,7 +105,7 @@ class ExperimentQueue(QtCore.QObject):
 
     def with_browser_item(self, item):
         for experiment in self.queue:
-            if experiment.browser_item == item:
+            if experiment.browser_item is item:
                 return experiment
         return None
 
