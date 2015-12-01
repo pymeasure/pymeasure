@@ -144,17 +144,6 @@ class Manager(QtCore.QObject):
         self.monitor.progress.connect(self._update_progress)
         self.monitor.status.connect(self._update_status)
 
-    def __del__(self):
-        """ Ensures that the processes and threads are properly
-        shutdown before deleting the Manager
-        """
-        if self.monitor is not None:
-            self.monitor.join()
-        if self._worker is not None:
-            self._worker.join()
-
-        super(Manager, self).__del__()
-
     def is_running(self):
         """ Returns True if a procedure is currently running
         """
