@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 import zmq
-from msgpack import loads
+from msgpack_numpy import loads
 from time import sleep
 
 from pymeasure.thread import StoppableThread
