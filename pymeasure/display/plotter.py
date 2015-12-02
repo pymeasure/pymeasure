@@ -38,8 +38,6 @@ import pyqtgraph as pg
 
 class PlotterWindow(QtGui.QMainWindow):
 
-    label_style = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
-
     def __init__(self, plotter, refresh_time=0.1, parent=None):
         super(PlotterWindow, self).__init__(parent)
         self.plotter = plotter
