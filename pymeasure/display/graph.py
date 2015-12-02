@@ -253,6 +253,9 @@ class PlotWidget(QtGui.QWidget):
     of the data to be dynamically choosen
     """
 
+    x_axis_changed = QtCore.QSignal(str)
+    y_axis_changed = QtCore.QSignal(str)
+
     def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, parent=None):
         super(PlotWidget, self).__init__(parent=parent)
         self.columns = columns
@@ -303,7 +306,9 @@ class PlotWidget(QtGui.QWidget):
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
+        self.x_axis_changed.emit(axis)
 
     def update_y_column(self, index):
         axis = self.columns_y.itemText(index)
-        self.plot_frame.change_y_axis(axis)  
+        self.plot_frame.change_y_axis(axis) 
+        self.y_axis_changed.emit(axis)

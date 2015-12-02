@@ -31,8 +31,10 @@ from time import sleep
 
 from pymeasure.experiment import Procedure
 from pymeasure.experiment.workers import Worker
-from pymeasure.display.listeners import Monitor
-from .qt_variant import QtCore
+from .listeners import Monitor
+from .graph import PlotWidget
+from .browser import Browser
+from .qt_variant import QtCore, QtGui
 
 
 class Experiment(QtCore.QObject):
@@ -268,3 +270,129 @@ class Manager(QtCore.QObject):
             self._worker.stop()
 
             self.aborted.emit(self._running_experiment)
+
+
+class ManagedWindow(QtGui.QMainWindow):
+    """ The ManagedWindow uses a Manager to control Workers in a Queue,
+    and provides a simple interface. The queue method must be overwritten
+    by a child class which is required to pass an Experiment containing the
+    Results and Procedure to self.manager.queue.
+    """
+
+    def __init__(self, procedure_class, browser_columns=[], x_axis=None, y_axis=None, parent=None):
+        super(ManagedWindow, self).__init__(parent=parent)
+        app = QtCore.QCoreApplication.instance()
+        app.aboutToQuit.connect(self.quit)
+        self.procedure_class = procedure_class
+        self.browser_columns = browser_columns
+        self.x_axis, self.y_axis = x_axis, y_axis
+        self._setup_ui()
+
+    def _setup_ui(self):
+        self.main = QtGui.QWidget(self)
+
+        vbox = QtGui.QVBoxLayout(self.main)
+        vbox.setSpacing(0)
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.setSpacing(10)
+        hbox.setContentsMargins(-1, 6, -1, 6)
+        self.queue_button = QtGui.QPushButton('Queue', self)
+        self.queue_button.clicked.connect(self.queue)
+        self.abort_button = QtGui.QPushButton('Abort', self)
+        self.abort_button.setEnabled(False)
+        self.abort_button.clicked.connect(self.abort)
+        hbox.addWidget(self.queue_button)
+        hbox.addWidget(self.abort_button)
+        vbox.addLayout(hbox)
+
+        self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        self.plot_widget.x_axis_changed.connect(self.x_axis_changed)
+        self.plot_widget.y_axis_changed.connect(self.y_axis_changed)
+        self.plot = self.plot_widget.plot
+        vbox.addWidget(self.plot_widget)
+
+        self.browser = Browser(
+            self.procedure_class,
+            self.browser_columns, 
+            [self.x_axis, self.y_axis],
+            parent=self.main
+        )
+        
+        self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        #self.browser.customContextMenuRequested.connect(self.on_curve_context)
+        self.browser.itemChanged.connect(self.browser_item_changed)
+        vbox.addWidget(self.browser)
+
+        self.manager = Manager(self.plot, self.browser, parent=self)
+        self.manager.abort_returned.connect(self.abort_returned)
+        self.manager.queued.connect(self.queued)
+        self.manager.running.connect(self.running)
+        self.manager.finished.connect(self.finished)
+
+        self.main.setLayout(vbox)
+        self.setCentralWidget(self.main)
+        self.main.show()
+        self.resize(800, 600)
+
+    def x_axis_changed(self, axis):
+        self.x_axis = axis
+
+    def y_axis_changed(self, axis):
+        self.y_axis = axis
+
+    def quit(self, evt=None):
+        self.close()
+
+    def browser_item_changed(self, item, column):
+        if column == 0:
+            state = item.checkState(0)
+            experiment = self.manager.experiments.with_browser_item(item)
+            if state == 0:
+                self.plot.removeItem(experiment.curve)
+            else:
+                self.plot.addItem(experiment.curve)
+
+    def queue(self):
+        """ This method should be overwritten by the child class. The
+        self.manager.queue method should be passed an Experiment object
+        which contains the Results and Procedure to be run.
+        """
+        raise Exception("The queue method must call self.manager.queue(experiment)")
+
+    def abort(self):
+        self.abort_button.setEnabled(False)
+        self.abort_button.setText("Resume")
+        self.abort_button.clicked.disconnect()
+        self.abort_button.clicked.connect(self.resume)
+        try:
+            self.manager.abort()
+        except:
+            log.error('Failed to abort experiment', exc_info=True)
+            self.abort_button.setText("Abort")
+            self.abort_button.clicked.disconnect()
+            self.abort_button.clicked.connect(self.abort)
+
+    def resume(self):
+        self.abort_button.setText("Abort")
+        self.abort_button.clicked.disconnect()
+        self.abort_button.clicked.connect(self.abort)
+        if self.manager.experiments.has_next():
+            self.manager.resume()
+        else:
+            self.abort_button.setEnabled(False)
+
+    def queued(self, experiment):
+        self.abort_button.setEnabled(True)
+
+    def running(self, experiment):
+        pass
+
+    def abort_returned(self, experiment):
+        if self.manager.experiments.has_next():
+            self.abort_button.setText("Resume")
+            self.abort_button.setEnabled(True)
+
+    def finished(self, experiment):
+        if not self.manager.experiments.has_next():
+            self.abort_button.setEnabled(False) 
