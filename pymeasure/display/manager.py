@@ -218,7 +218,7 @@ class Manager(QtCore.QObject):
 
     def _running(self):
         if self.is_running():
-            self.running.emit(self.running_experiment)
+            self.running.emit(self._running_experiment)
 
     def _clean_up(self):
         self._worker.join()
