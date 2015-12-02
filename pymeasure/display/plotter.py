@@ -48,7 +48,7 @@ class PlotterWindow(QtGui.QMainWindow):
 
         vbox = QtGui.QVBoxLayout(self.main)
         vbox.setSpacing(0)
-        
+
         hbox1 = QtGui.QHBoxLayout()
         hbox1.setSpacing(6)
         hbox1.setContentsMargins(-1, 6, -1, -1)        
@@ -83,15 +83,7 @@ class PlotterWindow(QtGui.QMainWindow):
         log.info("Quitting the Plotter")
         self.close()
         self.plotter.stop()
-
-    def update_x_column(self, index):
-        axis = self.columns_x.itemText(index)
-        self.plot_frame.change_x_axis(axis)
-
-    def update_y_column(self, index):
-        axis = self.columns_y.itemText(index)
-        self.plot_frame.change_y_axis(axis)  
-
+    
     def check_stop(self):
         """ Checks if the Plotter should stop and exits the Qt main loop if so
         """
