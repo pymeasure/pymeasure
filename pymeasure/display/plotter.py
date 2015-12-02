@@ -29,7 +29,7 @@ log.addHandler(logging.NullHandler())
 from .qt_variant import QtCore, QtGui
 
 from pymeasure.process import StoppableProcess
-from .graph import ResultsCurve, Crosshairs
+from .graph import ResultsCurve, Crosshairs, PlotFrame
 
 import sys
 from time import sleep
@@ -40,7 +40,7 @@ class PlotterWindow(QtGui.QMainWindow):
 
     label_style = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
 
-    def __init__(self, plotter, parent=None):
+    def __init__(self, plotter, refresh_time=0.1, parent=None):
         super(PlotterWindow, self).__init__(parent)
         self.plotter = plotter
 
@@ -92,31 +92,12 @@ class PlotterWindow(QtGui.QMainWindow):
         info_box.addLayout(hbox2)
         vbox.addLayout(info_box)
         
-        frame = QtGui.QFrame(self.main)
-        frame.setAutoFillBackground(False)
-        frame.setStyleSheet("background: #fff")
-        frame.setFrameShape(QtGui.QFrame.StyledPanel)
-        frame.setFrameShadow(QtGui.QFrame.Sunken)
-        frame.setMidLineWidth(1)
-        vbox2 = QtGui.QVBoxLayout(frame)
+        self.plot_frame = PlotFrame(columns[0], columns[1])
+        self.plot = self.plot_frame.plot
+        self.columns_x.setCurrentIndex(0)
+        self.columns_y.setCurrentIndex(1)
 
-        self.plot_widget = pg.PlotWidget(frame, background='#ffffff')
-        self.coordinates = QtGui.QLabel(frame)
-        self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
-        self.coordinates.setStyleSheet("background: #fff")
-        self.coordinates.setText("")
-        self.coordinates.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-
-        vbox2.addWidget(self.plot_widget)
-        frame.setLayout(vbox2)
-        vbox2.addWidget(self.coordinates)
-        vbox.addWidget(frame)
-
-        self.plot = self.plot_widget.getPlotItem()
-
-        self.crosshairs = Crosshairs(self.plot, pen=pg.mkPen(color='#AAAAAA', 
-                            style=QtCore.Qt.DashLine))
-        self.crosshairs.coordinates.connect(self.update_coordinates)
+        vbox.addWidget(self.plot_frame)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)
@@ -127,21 +108,10 @@ class PlotterWindow(QtGui.QMainWindow):
             pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
         self.plot.addItem(self.curve)
 
-        self.plot.setLabel('bottom', columns[0], **self.label_style)
-        self.plot.setLabel('left', columns[1], **self.label_style)  
-
-        self.columns_x.setCurrentIndex(0)
-        self.columns_y.setCurrentIndex(1)
-
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.curve.update)
-        self.timer.timeout.connect(self.crosshairs.update)
-        self.timer.timeout.connect(self.check_stop)
-        self.timer.start(plotter.refresh_time*1e3)
+        self.plot_frame.updated.connect(self.check_stop)
 
     def quit(self, evt=None):
         log.info("Quitting the Plotter")
-        self.timer.stop()
         self.close()
         self.plotter.stop()
 
@@ -151,15 +121,11 @@ class PlotterWindow(QtGui.QMainWindow):
 
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
-        self.curve.x = axis
-        # TODO parse units as: units='Oe'
-        self.plot.setLabel('bottom', axis, **self.label_style)
+        self.plot_frame.change_x_axis(axis)
 
     def update_y_column(self, index):
         axis = self.columns_y.itemText(index)
-        self.curve.y = axis
-        # TODO parse units as: units='Oe'
-        self.plot.setLabel('left', axis, **self.label_style)  
+        self.plot_frame.change_y_axis(axis)  
 
     def check_stop(self):
         """ Checks if the Plotter should stop and exits the Qt main loop if so
@@ -181,7 +147,7 @@ class Plotter(StoppableProcess):
 
     def run(self):
         app = QtGui.QApplication(sys.argv)
-        window = PlotterWindow(self)
+        window = PlotterWindow(self, refresh_time=self.refresh_time)
         app.aboutToQuit.connect(window.quit)
         window.show()
         app.exec_()

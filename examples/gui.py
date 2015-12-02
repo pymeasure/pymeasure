@@ -14,9 +14,9 @@ from pymeasure.experiment import Results, Worker, unique_filename
 from pymeasure.display.qt_variant import QtCore, QtGui
 from pymeasure.display.manager import Manager, Experiment
 from pymeasure.display.browser import Browser, BrowserItem
-from pymeasure.display.graph import ResultsCurve, Crosshairs
+from pymeasure.display.graph import ResultsCurve, Crosshairs, PlotFrame
 
-console_log(log, level=logging.DEBUG)
+console_log(log, level=logging.INFO)
 
 
 class TestProcedure(Procedure):
@@ -78,34 +78,8 @@ class MainWindow(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         vbox.addLayout(hbox)
 
-        frame = QtGui.QFrame(self.main)
-        frame.setAutoFillBackground(False)
-        frame.setStyleSheet("background: #fff")
-        frame.setFrameShape(QtGui.QFrame.StyledPanel)
-        frame.setFrameShadow(QtGui.QFrame.Sunken)
-        frame.setMidLineWidth(1)
-        vbox2 = QtGui.QVBoxLayout(frame)
-
-        self.plot_widget = pg.PlotWidget(frame, background='#ffffff')
-        self.coordinates = QtGui.QLabel(frame)
-        self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
-        self.coordinates.setStyleSheet("background: #fff")
-        self.coordinates.setText("")
-        self.coordinates.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-
-        vbox2.addWidget(self.plot_widget)
-        frame.setLayout(vbox2)
-        vbox2.addWidget(self.coordinates)
-        vbox.addWidget(frame)
-
-        self.plot = self.plot_widget.getPlotItem()
-        label_style = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
-        self.plot.setLabel('bottom', self.X_AXIS, **label_style)
-        self.plot.setLabel('left', self.Y_AXIS, **label_style)
-
-        self.crosshairs = Crosshairs(self.plot, pen=pg.mkPen(color='#AAAAAA', 
-                            style=QtCore.Qt.DashLine))
-        self.crosshairs.coordinates.connect(self.update_coordinates)
+        self.plot_frame = PlotFrame(self.X_AXIS, self.Y_AXIS)
+        vbox.addWidget(self.plot_frame)
 
         columns = [
             'iterations', 'delay', 'seed'
@@ -117,16 +91,11 @@ class MainWindow(QtGui.QMainWindow):
         self.browser.itemChanged.connect(self.browser_item_changed)
         vbox.addWidget(self.browser)
 
-        self.manager = Manager(self.plot, self.browser, parent=self)
+        self.manager = Manager(self.plot_frame.plot, self.browser, parent=self)
         self.manager.abort_returned.connect(self.abort_returned)
         self.manager.queued.connect(self.queued)
         self.manager.running.connect(self.running)
         self.manager.finished.connect(self.finished)
-
-        self.plot_timer = QtCore.QTimer()
-        self.plot_timer.timeout.connect(self.update_curves)
-        self.plot_timer.timeout.connect(self.crosshairs.update)
-        self.plot_timer.start(250) # Update plot every 1/4 sec
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)
@@ -135,15 +104,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def quit(self, evt=None):
         self.close()
-
-    def update_coordinates(self, x, y):
-        label = "(%0.3f, %0.3f)"
-        self.coordinates.setText(label % (x, y))
-
-    def update_curves(self):
-        for item in self.plot.items:
-            if isinstance(item, ResultsCurve):
-                item.update()
 
     def browser_item_changed(self, item, column):
         if column == 0:
@@ -158,8 +118,8 @@ class MainWindow(QtGui.QMainWindow):
         filename = tempfile.mktemp()
 
         procedure = TestProcedure()
-        procedure.iterations = 20
-        procedure.delay = 0.2
+        procedure.iterations = 200
+        procedure.delay = 0.1
 
         results = Results(procedure, filename)
 

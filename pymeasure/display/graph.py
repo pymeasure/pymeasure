@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from .qt_variant import QtCore
+from .qt_variant import QtCore, QtGui
 
 import pyqtgraph as pg
 import numpy as np
@@ -170,3 +170,80 @@ class Crosshairs(QtCore.QObject):
             self.update()
         else:
             raise Exception("Mouse location not known")
+
+
+class PlotFrame(QtGui.QFrame):
+    """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
+    the plot based on the refresh_time, and allows the axes
+    to be changed on the fly, which updates the plotted data
+    """
+
+    LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
+    updated = QtCore.QSignal()
+
+    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, parent=None):
+        super(PlotFrame, self).__init__(parent=parent)
+        self.refresh_time = refresh_time
+        self._setup_ui()
+        self.change_x_axis(x_axis)
+        self.change_y_axis(y_axis)
+
+    def _setup_ui(self):
+        self.setAutoFillBackground(False)
+        self.setStyleSheet("background: #fff")
+        self.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.setMidLineWidth(1)
+
+        vbox = QtGui.QVBoxLayout(self)
+
+        self.plot_widget = pg.PlotWidget(self, background='#ffffff')
+        self.coordinates = QtGui.QLabel(self)
+        self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
+        self.coordinates.setStyleSheet("background: #fff")
+        self.coordinates.setText("")
+        self.coordinates.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+
+        vbox.addWidget(self.plot_widget)
+        vbox.addWidget(self.coordinates)
+        self.setLayout(vbox)
+
+        self.plot = self.plot_widget.getPlotItem()
+
+        self.crosshairs = Crosshairs(self.plot,
+            pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
+        self.crosshairs.coordinates.connect(self.update_coordinates)
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_curves)
+        self.timer.timeout.connect(self.crosshairs.update)
+        self.timer.timeout.connect(self.updated)
+        self.timer.start(self.refresh_time*1e3)
+
+    def update_coordinates(self, x, y):
+        label = "(%0.3f, %0.3f)"
+        self.coordinates.setText(label % (x, y))
+
+    def update_curves(self):
+        for item in self.plot.items:
+            if isinstance(item, ResultsCurve):
+                item.update()
+
+    def parse_units(self, axis):
+        """ Returns the units of an axis by searching the string
+        """ 
+        # TODO Implement this method
+        return None
+
+    def change_x_axis(self, axis):
+        for item in self.plot.items:
+            if isinstance(item, ResultsCurve):
+                item.x = axis
+        self.plot.setLabel('bottom', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
+
+    def change_y_axis(self, axis):
+        for item in self.plot.items:
+            if isinstance(item, ResultsCurve):
+                item.y = axis
+        self.plot.setLabel('left', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
+
