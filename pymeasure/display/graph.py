@@ -247,3 +247,63 @@ class PlotFrame(QtGui.QFrame):
                 item.y = axis
         self.plot.setLabel('left', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
 
+
+class PlotWidget(QtGui.QWidget):
+    """ Extends the PlotFrame to allow different columns
+    of the data to be dynamically choosen
+    """
+
+    def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, parent=None):
+        super(PlotWidget, self).__init__(parent=parent)
+        self.columns = columns
+        self.refresh_time = refresh_time
+        self._setup_ui()
+        self.plot_frame.change_x_axis(x_axis)
+        self.plot_frame.change_y_axis(y_axis)
+
+    def _setup_ui(self):
+
+        vbox = QtGui.QVBoxLayout(self)
+        vbox.setSpacing(0)
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.setSpacing(10)
+        hbox.setContentsMargins(-1, 6, -1, 6)
+
+        columns_x_label = QtGui.QLabel(self)
+        columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        columns_x_label.setText('X Axis:')
+        columns_y_label = QtGui.QLabel(self)
+        columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        columns_y_label.setText('Y Axis:')
+        
+        self.columns_x = QtGui.QComboBox(self)
+        self.columns_y = QtGui.QComboBox(self)
+        for column in self.columns:
+            self.columns_x.addItem(column)
+            self.columns_y.addItem(column)
+        self.columns_x.activated.connect(self.update_x_column)
+        self.columns_y.activated.connect(self.update_y_column)
+
+        hbox.addWidget(columns_x_label)
+        hbox.addWidget(self.columns_x)
+        hbox.addWidget(columns_y_label)
+        hbox.addWidget(self.columns_y)
+        vbox.addLayout(hbox)
+        
+        self.plot_frame = PlotFrame(self.columns[0], self.columns[1])
+        self.updated = self.plot_frame.updated
+        self.plot = self.plot_frame.plot
+        self.columns_x.setCurrentIndex(0)
+        self.columns_y.setCurrentIndex(1)
+
+        vbox.addWidget(self.plot_frame)
+        self.setLayout(vbox)
+
+    def update_x_column(self, index):
+        axis = self.columns_x.itemText(index)
+        self.plot_frame.change_x_axis(axis)
+
+    def update_y_column(self, index):
+        axis = self.columns_y.itemText(index)
+        self.plot_frame.change_y_axis(axis)  

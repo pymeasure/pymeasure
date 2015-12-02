@@ -14,7 +14,7 @@ from pymeasure.experiment import Results, Worker, unique_filename
 from pymeasure.display.qt_variant import QtCore, QtGui
 from pymeasure.display.manager import Manager, Experiment
 from pymeasure.display.browser import Browser, BrowserItem
-from pymeasure.display.graph import ResultsCurve, Crosshairs, PlotFrame
+from pymeasure.display.graph import ResultsCurve, Crosshairs, PlotWidget
 
 console_log(log, level=logging.INFO)
 
@@ -78,8 +78,9 @@ class MainWindow(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         vbox.addLayout(hbox)
 
-        self.plot_frame = PlotFrame(self.X_AXIS, self.Y_AXIS)
-        vbox.addWidget(self.plot_frame)
+        self.plot_widget = PlotWidget(TestProcedure.DATA_COLUMNS, self.X_AXIS, self.Y_AXIS)
+        self.plot = self.plot_widget.plot
+        vbox.addWidget(self.plot_widget)
 
         columns = [
             'iterations', 'delay', 'seed'
@@ -91,7 +92,7 @@ class MainWindow(QtGui.QMainWindow):
         self.browser.itemChanged.connect(self.browser_item_changed)
         vbox.addWidget(self.browser)
 
-        self.manager = Manager(self.plot_frame.plot, self.browser, parent=self)
+        self.manager = Manager(self.plot, self.browser, parent=self)
         self.manager.abort_returned.connect(self.abort_returned)
         self.manager.queued.connect(self.queued)
         self.manager.running.connect(self.running)

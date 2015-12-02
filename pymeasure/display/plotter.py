@@ -29,7 +29,7 @@ log.addHandler(logging.NullHandler())
 from .qt_variant import QtCore, QtGui
 
 from pymeasure.process import StoppableProcess
-from .graph import ResultsCurve, Crosshairs, PlotFrame
+from .graph import ResultsCurve, Crosshairs, PlotWidget
 
 import sys
 from time import sleep
@@ -41,14 +41,14 @@ class PlotterWindow(QtGui.QMainWindow):
     def __init__(self, plotter, refresh_time=0.1, parent=None):
         super(PlotterWindow, self).__init__(parent)
         self.plotter = plotter
+        columns = plotter.results.procedure.DATA_COLUMNS
 
         self.setWindowTitle('Results Plotter')
         self.main = QtGui.QWidget(self)
 
         vbox = QtGui.QVBoxLayout(self.main)
         vbox.setSpacing(0)
-
-        info_box = QtGui.QVBoxLayout()
+        
         hbox1 = QtGui.QHBoxLayout()
         hbox1.setSpacing(6)
         hbox1.setContentsMargins(-1, 6, -1, -1)        
@@ -61,41 +61,12 @@ class PlotterWindow(QtGui.QMainWindow):
 
         hbox1.addWidget(file_label)
         hbox1.addWidget(self.file)
-        info_box.addLayout(hbox1)
+        vbox.addLayout(hbox1)
 
-        hbox2 = QtGui.QHBoxLayout()
-        hbox2.setSpacing(10)
-        hbox2.setContentsMargins(-1, 6, -1, 6)
+        self.plot_widget = PlotWidget(columns)
+        self.plot = self.plot_widget.plot
 
-        columns_x_label = QtGui.QLabel(self.main)
-        columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        columns_x_label.setText('X Axis:')
-        columns_y_label = QtGui.QLabel(self.main)
-        columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        columns_y_label.setText('Y Axis:')
-        
-        self.columns_x = QtGui.QComboBox(self.main)
-        self.columns_y = QtGui.QComboBox(self.main)
-        columns = plotter.results.procedure.DATA_COLUMNS
-        for column in columns:
-            self.columns_x.addItem(column)
-            self.columns_y.addItem(column)
-        self.columns_x.activated.connect(self.update_x_column)
-        self.columns_y.activated.connect(self.update_y_column)
-
-        hbox2.addWidget(columns_x_label)
-        hbox2.addWidget(self.columns_x)
-        hbox2.addWidget(columns_y_label)
-        hbox2.addWidget(self.columns_y)
-        info_box.addLayout(hbox2)
-        vbox.addLayout(info_box)
-        
-        self.plot_frame = PlotFrame(columns[0], columns[1])
-        self.plot = self.plot_frame.plot
-        self.columns_x.setCurrentIndex(0)
-        self.columns_y.setCurrentIndex(1)
-
-        vbox.addWidget(self.plot_frame)
+        vbox.addWidget(self.plot_widget)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)
@@ -106,7 +77,7 @@ class PlotterWindow(QtGui.QMainWindow):
             pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
         self.plot.addItem(self.curve)
 
-        self.plot_frame.updated.connect(self.check_stop)
+        self.plot_widget.updated.connect(self.check_stop)
 
     def quit(self, evt=None):
         log.info("Quitting the Plotter")
