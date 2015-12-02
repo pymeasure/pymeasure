@@ -115,10 +115,6 @@ class PlotterWindow(QtGui.QMainWindow):
         self.close()
         self.plotter.stop()
 
-    def update_coordinates(self, x, y):
-        label = "(%0.3f, %0.3f)"
-        self.coordinates.setText(label % (x, y))
-
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
