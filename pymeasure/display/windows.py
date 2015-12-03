@@ -35,6 +35,61 @@ from .browser import Browser, BrowserItem
 from .manager import Manager, Experiment
 
 
+class PlotterWindow(QtGui.QMainWindow):
+
+    def __init__(self, plotter, refresh_time=0.1, parent=None):
+        super(PlotterWindow, self).__init__(parent)
+        self.plotter = plotter
+        columns = plotter.results.procedure.DATA_COLUMNS
+
+        self.setWindowTitle('Results Plotter')
+        self.main = QtGui.QWidget(self)
+
+        vbox = QtGui.QVBoxLayout(self.main)
+        vbox.setSpacing(0)
+
+        hbox1 = QtGui.QHBoxLayout()
+        hbox1.setSpacing(6)
+        hbox1.setContentsMargins(-1, 6, -1, -1)        
+
+        file_label = QtGui.QLabel(self.main)
+        file_label.setText('Data Filename:')
+
+        self.file = QtGui.QLineEdit(self.main)
+        self.file.setText(plotter.results.data_filename)
+
+        hbox1.addWidget(file_label)
+        hbox1.addWidget(self.file)
+        vbox.addLayout(hbox1)
+
+        self.plot_widget = PlotWidget(columns)
+        self.plot = self.plot_widget.plot
+
+        vbox.addWidget(self.plot_widget)
+
+        self.main.setLayout(vbox)
+        self.setCentralWidget(self.main)
+        self.main.show()
+        self.resize(800, 600)
+
+        self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
+            pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
+        self.plot.addItem(self.curve)
+
+        self.plot_widget.updated.connect(self.check_stop)
+
+    def quit(self, evt=None):
+        log.info("Quitting the Plotter")
+        self.close()
+        self.plotter.stop()
+    
+    def check_stop(self):
+        """ Checks if the Plotter should stop and exits the Qt main loop if so
+        """
+        if self.plotter.should_stop():
+            QtCore.QCoreApplication.instance().quit()
+
+
 class ManagedWindow(QtGui.QMainWindow):
     """ The ManagedWindow uses a Manager to control Workers in a Queue,
     and provides a simple interface. The queue method must be overwritten

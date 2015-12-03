@@ -17,7 +17,6 @@ from pymeasure.display.windows import ManagedWindow
 console_log(log, level=logging.INFO)
 
 
-
 class TestProcedure(Procedure):
 
     iterations = IntegerParameter('Loop Iterations', default=100)
