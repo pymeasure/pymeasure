@@ -86,6 +86,9 @@ class ExperimentQueue(QtCore.QObject):
             return False
         return False
 
+    def __getitem__(self, key):
+        return self.queue[key]
+
     def next(self):
         """ Returns the next experiment on the queue
         """

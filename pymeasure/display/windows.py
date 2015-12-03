@@ -30,9 +30,9 @@ import os
 import pyqtgraph as pg
 
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget
+from .widgets import PlotWidget, BrowserWidget
 from .curves import ResultsCurve
-from .browser import Browser, BrowserItem
+from .browser import BrowserItem
 from .manager import Manager, Experiment
 
 
@@ -121,12 +121,17 @@ class ManagedWindow(QtGui.QMainWindow):
         self.plot_widget.y_axis_changed.connect(self.y_axis_changed)
         self.plot = self.plot_widget.plot
 
-        self.browser = Browser(
+        self.browser_widget = BrowserWidget(
             self.procedure_class,
             self.browser_columns, 
             [self.x_axis, self.y_axis],
             parent=self
         )
+        self.browser_widget.show_button.clicked.connect(self.show_experiments)
+        self.browser_widget.hide_button.clicked.connect(self.hide_experiments)
+        self.browser_widget.clear_button.clicked.connect(self.clear_experiments)
+        self.browser_widget.open_button.clicked.connect(self.open_experiment)
+        self.browser = self.browser_widget.browser
         
         self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
@@ -151,7 +156,7 @@ class ManagedWindow(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         vbox.addLayout(hbox)
         vbox.addWidget(self.plot_widget)
-        vbox.addWidget(self.browser)
+        vbox.addWidget(self.browser_widget)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)
@@ -214,6 +219,24 @@ class ManagedWindow(QtGui.QMainWindow):
                 lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
             menu.exec_(self.browser.viewport().mapToGlobal(position))
+
+    def show_experiments(self):
+        root = self.browser.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            item.setCheckState(0, QtCore.Qt.Checked)
+
+    def hide_experiments(self):
+        root = self.browser.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            item.setCheckState(0, QtCore.Qt.Unchecked)
+
+    def clear_experiments(self):
+        self.manager.clear()
+
+    def open_experiment(self):
+        pass
 
     def change_color(self, experiment):
         color = QtGui.QColorDialog.getColor(
@@ -283,15 +306,21 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def queued(self, experiment):
         self.abort_button.setEnabled(True)
+        self.browser_widget.show_button.setEnabled(True)
+        self.browser_widget.hide_button.setEnabled(True)
+        self.browser_widget.clear_button.setEnabled(True)
 
     def running(self, experiment):
-        pass
+        self.browser_widget.clear_button.setEnabled(False)
 
     def abort_returned(self, experiment):
         if self.manager.experiments.has_next():
             self.abort_button.setText("Resume")
             self.abort_button.setEnabled(True)
+        else:
+            self.browser_widget.clear_button.setEnabled(True)
 
     def finished(self, experiment):
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False) 
+            self.browser_widget.clear_button.setEnabled(True)
