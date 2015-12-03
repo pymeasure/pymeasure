@@ -259,19 +259,10 @@ class ManagedWindow(QtGui.QMainWindow):
         import subprocess
         proc = subprocess.Popen(['gedit', filename])
 
-    def new_curve(self, results, color=None):
-        # TODO: Pass throught to PlotWidget
+    def new_curve(self, results, color=None, **kwargs):
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
-        curve = ResultsCurve(results, 
-            x=self.plot_widget.plot_frame.x_axis,
-            y=self.plot_widget.plot_frame.y_axis,
-            pen=pg.mkPen(color=color, width=2), 
-            antialias=False
-        )
-        curve.setSymbol(None)
-        curve.setSymbolBrush(None)
-        return curve
+        return self.plot_widget.new_curve(results, color=color, **kwargs)
 
     def new_experiment(self, results, curve=None):
         if curve is None:

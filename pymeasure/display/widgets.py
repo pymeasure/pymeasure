@@ -171,7 +171,21 @@ class PlotWidget(QtGui.QWidget):
 
         vbox.addLayout(hbox)
         vbox.addWidget(self.plot_frame)
-        self.setLayout(vbox)        
+        self.setLayout(vbox)
+
+    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+        if 'pen' not in kwargs:
+            kwargs['pen'] = pg.mkPen(color=color, width=2)
+        if 'antialias' not in kwargs:
+            kwargs['antialias'] = False
+        curve = ResultsCurve(results, 
+            x=self.plot_frame.x_axis,
+            y=self.plot_frame.y_axis,
+            **kwargs
+        )
+        curve.setSymbol(None)
+        curve.setSymbolBrush(None)
+        return curve
 
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
