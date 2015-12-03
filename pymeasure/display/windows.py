@@ -26,6 +26,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+import os
 import pyqtgraph as pg
 
 from .Qt import QtCore, QtGui
@@ -128,7 +129,7 @@ class ManagedWindow(QtGui.QMainWindow):
         )
         
         self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        #self.browser.customContextMenuRequested.connect(self.on_curve_context)
+        self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
 
         self.manager = Manager(self.plot, self.browser, parent=self)
@@ -175,6 +176,59 @@ class ManagedWindow(QtGui.QMainWindow):
             else:
                 self.plot.addItem(experiment.curve)
 
+    def browser_item_menu(self, position):
+        item = self.browser.itemAt(position)
+        
+        if item is not None:
+            experiment = self.manager.experiments.with_browser_item(item)
+        
+            menu = QtGui.QMenu(self)
+
+            # Open
+            action_open = QtGui.QAction(menu)
+            action_open.setText("Open Data Externally")
+            action_open.triggered.connect(
+                lambda: self.open_file_externally(experiment.results.data_filename))
+            menu.addAction(action_open)
+            
+            # Change Color
+            action_change_color = QtGui.QAction(menu)
+            action_change_color.setText("Change Color")
+            action_change_color.triggered.connect(
+                lambda: self.change_color(experiment))
+            menu.addAction(action_change_color)
+
+            # Remove
+            action_remove = QtGui.QAction(menu)
+            action_remove.setText("Remove Graph")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment: # Experiment running
+                    action_remove.setEnabled(False)
+            action_remove.triggered.connect(lambda: self.manager.remove(experiment))
+            menu.addAction(action_remove)
+
+            # Use parameters
+            action_use = QtGui.QAction(menu)
+            action_use.setText("Use These Parameters")
+            action_use.triggered.connect(
+                lambda: self.set_parameters(experiment.procedure.parameter_objects()))
+            menu.addAction(action_use)
+            menu.exec_(self.browser.viewport().mapToGlobal(position))
+
+    def change_color(self, experiment):
+        color = QtGui.QColorDialog.getColor(
+            initial=experiment.curve.opts['pen'].color(), parent=self)
+        if color.isValid():
+            pixelmap = QtGui.QPixmap(24, 24)
+            pixelmap.fill(color)
+            experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
+            experiment.curve.setPen(pg.mkPen(color=color, width=2))
+
+    def open_file_externally(self, filename):
+        # TODO: Make this function OS-agnostic
+        import subprocess
+        proc = subprocess.Popen(['gedit', filename])
+
     def new_curve(self, results, color=None):
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
@@ -189,6 +243,14 @@ class ManagedWindow(QtGui.QMainWindow):
             curve = self.new_curve(results)
         browser_item = BrowserItem(results, curve)
         return Experiment(results, curve, browser_item)
+
+    def set_parameters(self, parameters):
+        """ This method should be overwritten by the child class. The
+        parameters argument is a dictionary of Parameter objects.
+        The Parameters should overwrite the GUI values so that a user
+        can click "Queue" to capture the same parameters.
+        """
+        pass
 
     def queue(self):
         """ This method should be overwritten by the child class. The
