@@ -24,7 +24,7 @@
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.addHandler(logging.NullHandler())
 
 
 def console_log(logger, level=logging.INFO):
