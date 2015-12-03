@@ -378,7 +378,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.manager.queue method should be passed an Experiment object
         which contains the Results and Procedure to be run.
         """
-        raise Exception("The queue method must call self.manager.queue(experiment)")
+        raise Exception("ManagedWindow child class does not implement queue method")
 
     def abort(self):
         self.abort_button.setEnabled(False)
