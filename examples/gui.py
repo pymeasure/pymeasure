@@ -60,6 +60,7 @@ class MainWindow(ManagedWindow):
             x_axis='Iteration',
             y_axis='Random Number'
         )
+        self.setWindowTitle('GUI Example')
 
     def queue(self):
         filename = tempfile.mktemp()
@@ -70,14 +71,7 @@ class MainWindow(ManagedWindow):
 
         results = Results(procedure, filename)
 
-        color = pg.intColor(self.browser.topLevelItemCount() % 8)
-        curve = ResultsCurve(results, x=self.x_axis, y=self.y_axis, 
-            pen=pg.mkPen(color=color, width=2), antialias=False)
-        curve.setSymbol(None)
-        curve.setSymbolBrush(None)
-
-        browser_item = BrowserItem(results, curve)
-        experiment = Experiment(results, curve, browser_item)
+        experiment = self.new_experiment(results)
 
         self.manager.queue(experiment)
 

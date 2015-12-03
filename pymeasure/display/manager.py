@@ -28,12 +28,13 @@ log.addHandler(logging.NullHandler())
 
 from os.path import basename
 from time import sleep
+import pyqtgraph as pg
 
 from pymeasure.experiment import Procedure
 from pymeasure.experiment.workers import Worker
 from .listeners import Monitor
-from .graph import PlotWidget
-from .browser import Browser
+from .graph import PlotWidget, ResultsCurve
+from .browser import Browser, BrowserItem
 from .Qt import QtCore, QtGui
 
 
@@ -356,6 +357,21 @@ class ManagedWindow(QtGui.QMainWindow):
                 self.plot.removeItem(experiment.curve)
             else:
                 self.plot.addItem(experiment.curve)
+
+    def new_curve(self, results, color=None):
+        if color is None:
+            color = pg.intColor(self.browser.topLevelItemCount() % 8)
+        curve = ResultsCurve(results, x=self.x_axis, y=self.y_axis, 
+            pen=pg.mkPen(color=color, width=2), antialias=False)
+        curve.setSymbol(None)
+        curve.setSymbolBrush(None)
+        return curve
+
+    def new_experiment(self, results, curve=None):
+        if curve is None:
+            curve = self.new_curve(results)
+        browser_item = BrowserItem(results, curve)
+        return Experiment(results, curve, browser_item)
 
     def queue(self):
         """ This method should be overwritten by the child class. The
