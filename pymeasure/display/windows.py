@@ -235,7 +235,7 @@ class ManagedWindow(QtGui.QMainWindow):
             for filename in map(str,filenames):
                 if filename in self.manager.experiments:
                     QtGui.QMessageBox.warning(self, "Load Error", 
-                            "The file %s cannot be opened twice." % basename(filename))   
+                            "The file %s cannot be opened twice." % os.path.basename(filename))   
                 elif filename == '':
                     return
                 else:
@@ -263,8 +263,12 @@ class ManagedWindow(QtGui.QMainWindow):
         # TODO: Pass throught to PlotWidget
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
-        curve = ResultsCurve(results, x=self.x_axis, y=self.y_axis, 
-            pen=pg.mkPen(color=color, width=2), antialias=False)
+        curve = ResultsCurve(results, 
+            x=self.plot_widget.plot_frame.x_axis,
+            y=self.plot_widget.plot_frame.y_axis,
+            pen=pg.mkPen(color=color, width=2), 
+            antialias=False
+        )
         curve.setSymbol(None)
         curve.setSymbolBrush(None)
         return curve
