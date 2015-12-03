@@ -28,10 +28,13 @@ log.addHandler(logging.NullHandler())
 
 from .Qt import QtCore, QtGui
 
+import os
 import pyqtgraph as pg
 import numpy as np
+
 from .curves import ResultsCurve, Crosshairs
 from .browser import Browser
+from ..experiment.results import Results
 
 
 class PlotFrame(QtGui.QFrame):
@@ -42,6 +45,8 @@ class PlotFrame(QtGui.QFrame):
 
     LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
     updated = QtCore.QSignal()
+    x_axis_changed = QtCore.QSignal(str)
+    y_axis_changed = QtCore.QSignal(str)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, parent=None):
         super(PlotFrame, self).__init__(parent=parent)
@@ -102,12 +107,16 @@ class PlotFrame(QtGui.QFrame):
             if isinstance(item, ResultsCurve):
                 item.x = axis
         self.plot.setLabel('bottom', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
+        self.x_axis = axis
+        self.x_axis_changed.emit(axis)
 
     def change_y_axis(self, axis):
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
                 item.y = axis
         self.plot.setLabel('left', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
+        self.y_axis = axis
+        self.y_axis_changed.emit(axis)
 
 
 class PlotWidget(QtGui.QWidget):
@@ -115,17 +124,16 @@ class PlotWidget(QtGui.QWidget):
     of the data to be dynamically choosen
     """
 
-    x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(str)
-
     def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, parent=None):
         super(PlotWidget, self).__init__(parent=parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self._setup_ui()
         self._layout()
-        self.plot_frame.change_x_axis(x_axis)
-        self.plot_frame.change_y_axis(y_axis)
+        if x_axis is not None:
+            self.plot_frame.change_x_axis(x_axis)
+        if y_axis is not None:
+            self.plot_frame.change_y_axis(y_axis)
 
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
@@ -168,12 +176,10 @@ class PlotWidget(QtGui.QWidget):
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
-        self.x_axis_changed.emit(axis)
 
     def update_y_column(self, index):
         axis = self.columns_y.itemText(index)
-        self.plot_frame.change_y_axis(axis) 
-        self.y_axis_changed.emit(axis)
+        self.plot_frame.change_y_axis(axis)
 
 
 class BrowserWidget(QtGui.QWidget):
@@ -210,3 +216,66 @@ class BrowserWidget(QtGui.QWidget):
         vbox.addLayout(hbox)
         vbox.addWidget(self.browser)
         self.setLayout(vbox) 
+
+
+class ResultsDialog(QtGui.QFileDialog):
+
+    def __init__(self, columns, parent=None):
+        super(ResultsDialog, self).__init__(parent=parent)
+        self.columns = columns
+        self._setup_ui()
+
+    def _setup_ui(self):
+        preview_tab = QtGui.QTabWidget()
+        vbox = QtGui.QVBoxLayout()
+        param_vbox = QtGui.QVBoxLayout()
+        vbox_widget = QtGui.QWidget()
+        param_vbox_widget = QtGui.QWidget()
+
+        self.plot_widget = PlotWidget(self.columns, parent=self)
+        self.plot = self.plot_widget.plot
+        self.preview_param = QtGui.QTreeWidget()
+        param_header = QtGui.QTreeWidgetItem(["Name","Value"])
+        self.preview_param.setHeaderItem(param_header)
+        self.preview_param.setColumnWidth(0,150)
+        self.preview_param.setAlternatingRowColors(True)
+
+        vbox.addWidget(self.plot_widget)
+        param_vbox.addWidget(self.preview_param)
+        vbox_widget.setLayout(vbox)
+        param_vbox_widget.setLayout(param_vbox)
+        preview_tab.addTab(vbox_widget, "Plot Preview")
+        preview_tab.addTab(param_vbox_widget, "Run Parameters")
+        self.layout().addWidget(preview_tab,0,5,4,1)
+        self.layout().setColumnStretch(5,1)
+        self.setMinimumSize(900, 500)
+        self.resize(900, 500)
+
+        self.setFileMode(QtGui.QFileDialog.ExistingFiles)
+        self.currentChanged.connect(self.update_plot)
+
+    def update_plot(self, filename):
+        self.plot.clear()
+        if not os.path.isdir(filename) and filename != '':
+            try:
+                results = Results.load(str(filename))
+            except ValueError:
+                return
+            except Exception as e:
+                raise e
+
+            curve = ResultsCurve(results,
+                x=self.plot_widget.plot_frame.x_axis,
+                y=self.plot_widget.plot_frame.y_axis,
+                pen=pg.mkPen(color=(255,0,0), width=1.75),
+                antialias=True
+            )
+            curve.update()
+
+            self.plot.addItem(curve)
+
+            self.preview_param.clear()
+            for key, param in results.procedure.parameter_objects().items():
+                new_item = QtGui.QTreeWidgetItem([param.name, str(param)])
+                self.preview_param.addTopLevelItem(new_item)
+            self.preview_param.sortItems(0, QtCore.Qt.AscendingOrder)

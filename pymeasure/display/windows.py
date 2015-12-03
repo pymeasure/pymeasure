@@ -30,10 +30,11 @@ import os
 import pyqtgraph as pg
 
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget, BrowserWidget
+from .widgets import PlotWidget, BrowserWidget, ResultsDialog
 from .curves import ResultsCurve
 from .browser import BrowserItem
 from .manager import Manager, Experiment
+from ..experiment.results import Results
 
 
 class PlotterWindow(QtGui.QMainWindow):
@@ -117,8 +118,6 @@ class ManagedWindow(QtGui.QMainWindow):
         self.abort_button.clicked.connect(self.abort)
 
         self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
-        self.plot_widget.x_axis_changed.connect(self.x_axis_changed)
-        self.plot_widget.y_axis_changed.connect(self.y_axis_changed)
         self.plot = self.plot_widget.plot
 
         self.browser_widget = BrowserWidget(
@@ -162,12 +161,6 @@ class ManagedWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.main)
         self.main.show()
         self.resize(800, 600)
-
-    def x_axis_changed(self, axis):
-        self.x_axis = axis
-
-    def y_axis_changed(self, axis):
-        self.y_axis = axis
 
     def quit(self, evt=None):
         self.close()
@@ -236,7 +229,21 @@ class ManagedWindow(QtGui.QMainWindow):
         self.manager.clear()
 
     def open_experiment(self):
-        pass
+        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS)
+        if dialog.exec_():
+            filenames = dialog.selectedFiles()
+            for filename in map(str,filenames):
+                if filename in self.manager.experiments:
+                    QtGui.QMessageBox.warning(self, "Load Error", 
+                            "The file %s cannot be opened twice." % basename(filename))   
+                elif filename == '':
+                    return
+                else:
+                    results = Results.load(filename)
+                    experiment = self.new_experiment(results)
+                    experiment.browser_item.progressbar.setValue(100.)
+                    self.manager.load(experiment)
+                    log.info('Opened data file %s' % filename)
 
     def change_color(self, experiment):
         color = QtGui.QColorDialog.getColor(
@@ -253,6 +260,7 @@ class ManagedWindow(QtGui.QMainWindow):
         proc = subprocess.Popen(['gedit', filename])
 
     def new_curve(self, results, color=None):
+        # TODO: Pass throught to PlotWidget
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
         curve = ResultsCurve(results, x=self.x_axis, y=self.y_axis, 
