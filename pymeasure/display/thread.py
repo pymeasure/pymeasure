@@ -23,7 +23,7 @@
 #
 
 from threading import Event
-from .qt_variant import QtCore
+from .Qt import QtCore
 
 
 class StoppableQThread(QtCore.QThread):

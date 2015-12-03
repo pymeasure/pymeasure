@@ -26,7 +26,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from .qt_variant import QtCore
+from .Qt import QtCore
 
 try:
     import zmq

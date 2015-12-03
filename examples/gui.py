@@ -11,12 +11,13 @@ log.addHandler(logging.NullHandler())
 from pymeasure.log import console_log
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
-from pymeasure.display.qt_variant import QtGui
+from pymeasure.display.Qt import QtGui
 from pymeasure.display.manager import Experiment, ManagedWindow
 from pymeasure.display.browser import BrowserItem
 from pymeasure.display.graph import ResultsCurve
 
 console_log(log, level=logging.INFO)
+
 
 
 class TestProcedure(Procedure):

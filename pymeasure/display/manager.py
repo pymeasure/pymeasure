@@ -34,7 +34,7 @@ from pymeasure.experiment.workers import Worker
 from .listeners import Monitor
 from .graph import PlotWidget
 from .browser import Browser
-from .qt_variant import QtCore, QtGui
+from .Qt import QtCore, QtGui
 
 
 class Experiment(QtCore.QObject):
@@ -287,8 +287,39 @@ class ManagedWindow(QtGui.QMainWindow):
         self.browser_columns = browser_columns
         self.x_axis, self.y_axis = x_axis, y_axis
         self._setup_ui()
+        self._layout()
 
     def _setup_ui(self):
+        self.queue_button = QtGui.QPushButton('Queue', self)
+        self.queue_button.clicked.connect(self.queue)
+
+        self.abort_button = QtGui.QPushButton('Abort', self)
+        self.abort_button.setEnabled(False)
+        self.abort_button.clicked.connect(self.abort)
+
+        self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        self.plot_widget.x_axis_changed.connect(self.x_axis_changed)
+        self.plot_widget.y_axis_changed.connect(self.y_axis_changed)
+        self.plot = self.plot_widget.plot
+
+        self.browser = Browser(
+            self.procedure_class,
+            self.browser_columns, 
+            [self.x_axis, self.y_axis],
+            parent=self
+        )
+        
+        self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        #self.browser.customContextMenuRequested.connect(self.on_curve_context)
+        self.browser.itemChanged.connect(self.browser_item_changed)
+
+        self.manager = Manager(self.plot, self.browser, parent=self)
+        self.manager.abort_returned.connect(self.abort_returned)
+        self.manager.queued.connect(self.queued)
+        self.manager.running.connect(self.running)
+        self.manager.finished.connect(self.finished)
+
+    def _layout(self):
         self.main = QtGui.QWidget(self)
 
         vbox = QtGui.QVBoxLayout(self.main)
@@ -297,38 +328,11 @@ class ManagedWindow(QtGui.QMainWindow):
         hbox = QtGui.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
-        self.queue_button = QtGui.QPushButton('Queue', self)
-        self.queue_button.clicked.connect(self.queue)
-        self.abort_button = QtGui.QPushButton('Abort', self)
-        self.abort_button.setEnabled(False)
-        self.abort_button.clicked.connect(self.abort)
         hbox.addWidget(self.queue_button)
         hbox.addWidget(self.abort_button)
         vbox.addLayout(hbox)
-
-        self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
-        self.plot_widget.x_axis_changed.connect(self.x_axis_changed)
-        self.plot_widget.y_axis_changed.connect(self.y_axis_changed)
-        self.plot = self.plot_widget.plot
         vbox.addWidget(self.plot_widget)
-
-        self.browser = Browser(
-            self.procedure_class,
-            self.browser_columns, 
-            [self.x_axis, self.y_axis],
-            parent=self.main
-        )
-        
-        self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        #self.browser.customContextMenuRequested.connect(self.on_curve_context)
-        self.browser.itemChanged.connect(self.browser_item_changed)
         vbox.addWidget(self.browser)
-
-        self.manager = Manager(self.plot, self.browser, parent=self)
-        self.manager.abort_returned.connect(self.abort_returned)
-        self.manager.queued.connect(self.queued)
-        self.manager.running.connect(self.running)
-        self.manager.finished.connect(self.finished)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)

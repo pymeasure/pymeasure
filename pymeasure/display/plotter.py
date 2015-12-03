@@ -26,7 +26,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from .qt_variant import QtCore, QtGui
+from .Qt import QtCore, QtGui
 
 from pymeasure.process import StoppableProcess
 from .graph import ResultsCurve, Crosshairs, PlotWidget

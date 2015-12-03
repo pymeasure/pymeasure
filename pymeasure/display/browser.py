@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.experiment import Procedure
-from .qt_variant import QtCore, QtGui
+from .Qt import QtCore, QtGui
 
 from os.path import basename
 

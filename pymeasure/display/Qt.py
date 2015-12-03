@@ -22,18 +22,6 @@
 # THE SOFTWARE.
 #
 
-from logging import Handler
-from .Qt import QtGui
+from pyqtgraph.Qt import *
 
-
-class QLogHandler(Handler):
-
-    def __init__(self, log_display):
-        super(QLogHandler, self).__init__()
-        if not isinstance(log_display, QtGui.QPlainTextEdit):
-            raise Exception("QLogHandler is only implemented for "
-                            "QPlainTextEdit objects")
-        self.log_display = log_display
-
-    def emit(self, record):
-        self.log_display.appendPlainText(self.format(record))
+QtCore.QSignal = QtCore.pyqtSignal

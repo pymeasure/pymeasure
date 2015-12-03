@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from .qt_variant import QtCore, QtGui
+from .Qt import QtCore, QtGui
 
 import pyqtgraph as pg
 import numpy as np

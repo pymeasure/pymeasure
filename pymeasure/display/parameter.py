@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from qt_variant import QtGui
+from .Qt import QtGui
 
 
 class Parameter(QtGui.QDoubleSpinBox):
