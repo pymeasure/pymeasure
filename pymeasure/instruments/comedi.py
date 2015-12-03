@@ -135,9 +135,17 @@ class SynchronousAI(object):
                 
         # Measurement loop
         count = 0
+        size = self.data.itemsize
+        previous_bin_slice = b''
+        
         while not hasAborted() and self.samples > count:
-            slice = np.fromfile(
-                self.subdevice.device.file,
+            bin_slice = previous_bin_slice
+            while len(bin_slice) < size:
+                bin_slice += self.subdevice.device.file.read(size)
+            previous_bin_slice = bin_slice[size:]
+            bin_slice = bin_slice[:size]
+            slice = np.fromstring(
+                bin_slice,
                 dtype=dtype,
                 count=length
             )
