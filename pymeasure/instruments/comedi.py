@@ -135,7 +135,7 @@ class SynchronousAI(object):
                 
         # Measurement loop
         count = 0
-        size = self.data.itemsize
+        size = int(self.data.itemsize/2)*length
         previous_bin_slice = b''
         
         while not hasAborted() and self.samples > count:
