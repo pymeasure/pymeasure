@@ -121,8 +121,9 @@ class SR830(Instrument):
         """ Returns the offset precent and the exapnsion term
         that are used to scale the channel in question
         """
-
-        offset, expand = self.ask("OEXP? %d" % channel).split(',')
+        if channel not in self.CHANNELS:
+            raise ValueError('SR830 channel is invalid')
+        offset, expand = self.ask("OEXP? %d" % self.CHANNELS.index(channel)).split(',')
         return float(offset), self.expansion[int(expand)]
 
     def set_scaling(self, channel, precent, expand=0):
@@ -130,8 +131,10 @@ class SR830(Instrument):
         certain precent (-105% to 105%) of the signal, with
         an optional expansion term (0, 10=1, 100=2)
         """
+        if channel not in self.CHANNELS:
+            raise ValueError('SR830 channel is invalid')
         expand = discreteTruncate(expand, self.expansion)
-        self.write("OEXP %i,%.2f,%i" % (channel, precent, expand))
+        self.write("OEXP %i,%.2f,%i" % (self.CHANNELS.index(channel), precent, expand))
 
     def output_conversion(self, channel):
         """ Returns a function that can be used to determine
