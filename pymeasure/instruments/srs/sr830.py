@@ -57,6 +57,7 @@ class SR830(Instrument):
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
     CHANNEL1_VALUES = ['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2']
     CHANNEL2_VALUES = ['Y', 'Theta', 'Y Noise', 'Aux In 3', 'Aux In 4']
+    CHANNELS = ['X', 'Y', 'R']
 
     def __init__(self, resourceName, **kwargs):
         super(SR830, self).__init__(
@@ -82,7 +83,7 @@ class SR830(Instrument):
     def channel1(self, value):
         """ Set the variable for Channel 1 """
         if value not in SR830.CHANNEL1_VALUES:
-            raise ValueError("Channel 1 selection is invalid for SR830")
+            raise ValueError("SR830 channel 1 selection is invalid")
         else:
             index = SR830.CHANNEL1_VALUES.index(value)
             self.write("DDEF1,%d,0" % index)
@@ -96,7 +97,7 @@ class SR830(Instrument):
     def channel2(self, value):
         """ Set the variable for Channel 2 """
         if value not in SR830.CHANNEL2_VALUES:
-            raise ValueError("Channel 2 selection is invalid for SR830")
+            raise ValueError("SR830 channel 2 selection is invalid")
         else:
             index = SR830.CHANNEL2_VALUES.index(value)
             self.write("DDEF2,%d,0" % index)
@@ -111,23 +112,34 @@ class SR830(Instrument):
         self.write("APHS")
 
     def auto_offset(self, channel):
-        """ Offsets the channel (X=1, Y=2, R=3) to zero """
-        self.write("AOFF %i" % channel)
+        """ Offsets the channel (X, Y, or R) to zero """
+        if channel not in self.CHANNELS:
+            raise ValueError('SR830 channel is invalid')
+        self.write("AOFF %d" % self.CHANNELS.index(channel))
 
-    @property
-    def offset(self, channel):
-        """ Returns the offset precent and the exapnsion term """
-        offset, expand = self.ask("OEXP? %i" % channel).split(',')
+    def get_scaling(self, channel):
+        """ Returns the offset precent and the exapnsion term
+        that are used to scale the channel in question
+        """
+
+        offset, expand = self.ask("OEXP? %d" % channel).split(',')
         return float(offset), self.expansion[int(expand)]
 
-    @offset.setter
-    def offset(self, channel, precent, expand=0):
+    def set_scaling(self, channel, precent, expand=0):
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
-        certain precent (-105% to 105%) of the signal with
+        certain precent (-105% to 105%) of the signal, with
         an optional expansion term (0, 10=1, 100=2)
         """
         expand = discreteTruncate(expand, self.expansion)
         self.write("OEXP %i,%.2f,%i" % (channel, precent, expand))
+
+    def output_conversion(self, channel):
+        """ Returns a function that can be used to determine
+        the signal from the channel output (X, Y, or R)
+        """
+        offset, expand = self.get_scaling(channel)
+        sensitivity = self.sensitivity
+        return lambda x: (x/(10.*expand) + offset) * sensitivity
 
     @property
     def sample_frequency(self):
