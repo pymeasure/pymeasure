@@ -115,7 +115,8 @@ class SR830(Instrument):
         """ Offsets the channel (X, Y, or R) to zero """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        self.write("AOFF %d" % self.CHANNELS.index(channel))
+        channel = self.CHANNELS.index(channel) + 1
+        self.write("AOFF %d" % channel)
 
     def get_scaling(self, channel):
         """ Returns the offset precent and the exapnsion term
@@ -123,7 +124,8 @@ class SR830(Instrument):
         """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        offset, expand = self.ask("OEXP? %d" % self.CHANNELS.index(channel)).split(',')
+        channel = self.CHANNELS.index(channel) + 1
+        offset, expand = self.ask("OEXP? %d" % channel).split(',')
         return float(offset), self.expansion[int(expand)]
 
     def set_scaling(self, channel, precent, expand=0):
@@ -133,8 +135,9 @@ class SR830(Instrument):
         """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
+        channel = self.CHANNELS.index(channel) + 1
         expand = discreteTruncate(expand, self.expansion)
-        self.write("OEXP %i,%.2f,%i" % (self.CHANNELS.index(channel), precent, expand))
+        self.write("OEXP %i,%.2f,%i" % (channel, precent, expand))
 
     def output_conversion(self, channel):
         """ Returns a function that can be used to determine
