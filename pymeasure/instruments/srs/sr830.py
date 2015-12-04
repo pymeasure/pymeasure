@@ -52,7 +52,7 @@ class SR830(Instrument):
         50e-3, 100e-3, 200e-3, 500e-3, 1
     ]
 
-    EXPANSION_VALUES = [0, 10, 100]
+    EXPANSION_VALUES = [1, 10, 100]
     FILTER_SLOPE_VALUES = [6, 12, 18, 24]
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
     CHANNEL1_VALUES = ['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2']
@@ -126,7 +126,7 @@ class SR830(Instrument):
             raise ValueError('SR830 channel is invalid')
         channel = self.CHANNELS.index(channel) + 1
         offset, expand = self.ask("OEXP? %d" % channel).split(',')
-        return float(offset), self.expansion[int(expand)]
+        return float(offset), self.EXPANSION_VALUES[int(expand)]
 
     def set_scaling(self, channel, precent, expand=0):
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
@@ -136,7 +136,7 @@ class SR830(Instrument):
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
         channel = self.CHANNELS.index(channel) + 1
-        expand = discreteTruncate(expand, self.expansion)
+        expand = discreteTruncate(expand, self.EXPANSION_VALUES)
         self.write("OEXP %i,%.2f,%i" % (channel, precent, expand))
 
     def output_conversion(self, channel):
