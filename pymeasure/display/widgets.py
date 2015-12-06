@@ -112,6 +112,7 @@ class PlotFrame(QtGui.QFrame):
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
                 item.x = axis
+                item.update()
         self.plot.setLabel('bottom', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
@@ -120,6 +121,7 @@ class PlotFrame(QtGui.QFrame):
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
                 item.y = axis
+                item.update()
         self.plot.setLabel('left', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
