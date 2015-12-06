@@ -246,6 +246,7 @@ class Manager(QtCore.QObject):
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)
+        experiment.curve.update()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()

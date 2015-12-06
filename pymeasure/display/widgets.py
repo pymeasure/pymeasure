@@ -35,7 +35,7 @@ import numpy as np
 from .curves import ResultsCurve, Crosshairs
 from .browser import Browser
 from ..experiment.results import Results
-from ..experiment import parameters
+from ..experiment import parameters, Procedure
 from . import inputs
 
 class PlotFrame(QtGui.QFrame):
@@ -49,9 +49,10 @@ class PlotFrame(QtGui.QFrame):
     x_axis_changed = QtCore.QSignal(str)
     y_axis_changed = QtCore.QSignal(str)
 
-    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, parent=None):
+    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super(PlotFrame, self).__init__(parent=parent)
         self.refresh_time = refresh_time
+        self.check_status = check_status
         self._setup_ui()
         self.change_x_axis(x_axis)
         self.change_y_axis(y_axis)
@@ -93,10 +94,13 @@ class PlotFrame(QtGui.QFrame):
         self.coordinates.setText(label % (x, y))
 
     def update_curves(self):
-        # TODO: Only update curves that are actively being filled (is Procedure.status accurate?)
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
-                item.update()
+                if self.check_status:
+                    if item.results.procedure.status == Procedure.RUNNING:
+                        item.update()
+                else:
+                    item.update()
 
     def parse_units(self, axis):
         """ Returns the units of an axis by searching the string
@@ -126,10 +130,11 @@ class PlotWidget(QtGui.QWidget):
     of the data to be dynamically choosen
     """
 
-    def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, parent=None):
+    def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super(PlotWidget, self).__init__(parent=parent)
         self.columns = columns
         self.refresh_time = refresh_time
+        self.check_status = check_status
         self._setup_ui()
         self._layout()
         if x_axis is not None:
@@ -153,7 +158,12 @@ class PlotWidget(QtGui.QWidget):
         self.columns_x.activated.connect(self.update_x_column)
         self.columns_y.activated.connect(self.update_y_column)
 
-        self.plot_frame = PlotFrame(self.columns[0], self.columns[1])
+        self.plot_frame = PlotFrame(
+            self.columns[0],
+            self.columns[1],
+            self.refresh_time,
+            self.check_status
+        )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
         self.columns_x.setCurrentIndex(0)

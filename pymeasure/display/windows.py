@@ -64,7 +64,7 @@ class PlotterWindow(QtGui.QMainWindow):
         hbox1.addWidget(self.file)
         vbox.addLayout(hbox1)
 
-        self.plot_widget = PlotWidget(columns)
+        self.plot_widget = PlotWidget(columns, check_status=False)
         self.plot = self.plot_widget.plot
 
         vbox.addWidget(self.plot_widget)
