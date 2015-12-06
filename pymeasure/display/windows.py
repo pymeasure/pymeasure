@@ -160,10 +160,11 @@ class ManagedWindow(QtGui.QMainWindow):
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.queue_button)
         hbox.addWidget(self.abort_button)
+        hbox.addStretch()
 
         inputs_vbox.addWidget(self.inputs)
         inputs_vbox.addLayout(hbox)
-        inputs_vbox.insertStretch(10, 10)
+        inputs_vbox.addStretch()
         inputs_dock.setLayout(inputs_vbox)
 
         dock = QtGui.QDockWidget('Input Parameters')
@@ -174,8 +175,12 @@ class ManagedWindow(QtGui.QMainWindow):
         vbox = QtGui.QVBoxLayout(self.main)
         vbox.setSpacing(0)
 
-        vbox.addWidget(self.plot_widget)
-        vbox.addWidget(self.browser_widget)
+        splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
+        splitter.addWidget(self.plot_widget)
+        splitter.addWidget(self.browser_widget)
+        self.plot_widget.setMinimumSize(100, 200)
+
+        vbox.addWidget(splitter)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)

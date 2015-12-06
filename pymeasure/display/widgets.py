@@ -237,6 +237,7 @@ class BrowserWidget(QtGui.QWidget):
         hbox.addWidget(self.show_button)
         hbox.addWidget(self.hide_button)
         hbox.addWidget(self.clear_button)
+        hbox.addStretch()
         hbox.addWidget(self.open_button)
 
         vbox.addLayout(hbox)
