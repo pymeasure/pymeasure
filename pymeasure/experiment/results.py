@@ -22,7 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.experiment import Procedure, UnknownProcedure, Parameter
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+from .procedure import Procedure, UnknownProcedure
+from .parameters import Parameter
 
 from os.path import exists
 from datetime import datetime
@@ -161,11 +166,15 @@ class Results(object):
                 module = import_module(procedure_module)
                 procedure_class = getattr(module, procedure_class)
                 procedure = procedure_class()
-            except:
+            except ImportError:
                 procedure = UnknownProcedure(parameters)
+                log.warning("Unknown Procedure in %s" % self.data_filename)
+            except Exception as e:
+                raise e
 
         def parameter_found(parameter, unit):
-            return (parameter.unit is None and
+            return (hasattr(parameter, 'unit') and
+                    parameter.unit is None and
                     type(parameter) is Parameter and
                     unit is not None)
 
