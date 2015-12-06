@@ -30,15 +30,15 @@ class Parameter(object):
     :var value: The value of the parameter
 
     :param name: A short description of the parameter (no colons allowed)
-    :param unit: The unit of measure for the parameter
     :param default: The default value
+    :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def __init__(self, name, unit=None, default=None):
+    def __init__(self, name, default=None, ui_class=None):
         self.name = name
         self._value = default
-        self.unit = unit
         self.default = default
+        self.ui_class = None
 
     @property
     def value(self):
@@ -57,20 +57,11 @@ class Parameter(object):
         return self._value is not None
 
     def __str__(self):
-        result = ""
-        if self.is_set():
-            result += "%s" % str(self.value)
-            if self.unit:
-                result += " %s" % self.unit
-        return result
+        return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        result = "<Parameter(name='%s'" % self.name
-        if self.is_set():
-            result += ",value=%s" % repr(self.value)
-        if self.unit:
-            result += ",unit='%s'" % self.unit
-        return result + ")>"
+        return "<%s(name=%s,value=%s,default=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.default)
 
 
 class IntegerParameter(Parameter):
@@ -80,9 +71,15 @@ class IntegerParameter(Parameter):
     :var value: The integer value of the parameter
 
     :param name: A short description of the parameter (no colons allowed)
-    :param unit: The unit of measure for the parameter
+    :param units: The units of measure for the parameter
     :param default: The default integer value
     """
+
+    def __init__(self, name, unit=None, minimum=-1e9, maximum=1e9, **kwargs):
+        super(IntegerParameter, self).__init__(name, **kwargs)
+        self.unit = unit
+        self.minimum = minimum
+        self.maximum = maximum
 
     @property
     def value(self):
@@ -94,14 +91,28 @@ class IntegerParameter(Parameter):
     @value.setter
     def value(self, value):
         try:
-            self._value = int(value)
+            value = int(value)
         except ValueError:
             raise ValueError("IntegerParameter given non-integer value of "
                              "type '%s'" % type(value))
+        if value < self.minimum:
+            raise ValueError("IntegerParameter value is below the minimum")
+        elif value > self.maximum:
+            raise ValueError("IntegerParameter value is above the maximum")
+        else:
+            self._value = value
+
+    def __str__(self):
+        if not self.is_set():
+            return ''
+        result = "%d" % self._value
+        if self.unit:
+            result += " %s" % self.unit
+        return result
 
     def __repr__(self):
-        result = super(IntegerParameter, self).__repr__()
-        return result.replace("<Parameter", "<IntegerParameter", 1)
+        return "<%s(name=%s,value=%s,unit=%s,default=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.unit, self.default)
 
 
 class BooleanParameter(Parameter):
@@ -111,7 +122,6 @@ class BooleanParameter(Parameter):
     :var value: The boolean value of the parameter
 
     :param name: A short description of the parameter (no colons allowed)
-    :param unit: The unit of measure for the parameter
     :param default: The default boolean value
     """
 
@@ -125,20 +135,10 @@ class BooleanParameter(Parameter):
     @value.setter
     def value(self, value):
         try:
-            if value == "True":
-                self._value = True
-            elif value == "False":
-                self._value = False
-            else:
-                raise ValueError("Parameter value is not set, must be True"
-                                 " or False.")
+            self._value = bool(value)
         except ValueError:
             raise ValueError("BooleanParameter given non-boolean value of "
                              "type '%s'" % type(value))
-
-    def __repr__(self):
-        result = super(BooleanParameter, self).__repr__()
-        return result.replace("<Parameter", "<BooleanParameter", 1)
 
 
 class FloatParameter(Parameter):
@@ -152,6 +152,12 @@ class FloatParameter(Parameter):
     :param default: The default floating point value
     """
 
+    def __init__(self, name, unit=None, minimum=-1e9, maximum=1e9, **kwargs):
+        super(FloatParameter, self).__init__(name, **kwargs)
+        self.unit = unit
+        self.minimum = minimum
+        self.maximum = maximum
+
     @property
     def value(self):
         if self.is_set():
@@ -162,14 +168,28 @@ class FloatParameter(Parameter):
     @value.setter
     def value(self, value):
         try:
-            self._value = float(value)
+            value = float(value)
         except ValueError:
             raise ValueError("FloatParameter given non-float value of "
                              "type '%s'" % type(value))
+        if value < self.minimum:
+            raise ValueError("FloatParameter value is below the minimum")
+        elif value > self.maximum:
+            raise ValueError("FloatParameter value is above the maximum")
+        else:
+            self._value = value
+
+    def __str__(self):
+        if not self.is_set():
+            return ''
+        result = "%g" % self._value
+        if self.unit:
+            result += " %s" % self.unit
+        return result
 
     def __repr__(self):
-        result = super(FloatParameter, self).__repr__()
-        return result.replace("<Parameter", "<FloatParameter", 1)
+        return "<%s(name=%s,value=%s,unit=%s,default=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.unit, self.default)
 
 
 class VectorParameter(Parameter):
@@ -184,6 +204,7 @@ class VectorParameter(Parameter):
     :param default: The default value
     """
     def __init__(self, name, length=3, unit=None, default=None):
+        # TODO: Update VectorParameter with new methods
         self.name = name
         self._value = default
         self.unit = unit
@@ -253,6 +274,7 @@ class ListParameter(Parameter):
     """
 
     def __init__(self, name, choices=None, unit=None, default=None):
+        # TODO: Update ListParameter with new methods
         self.name = name
         self._value = default
         self.unit = unit

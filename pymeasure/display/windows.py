@@ -30,7 +30,7 @@ import os
 import pyqtgraph as pg
 
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget, BrowserWidget, ResultsDialog
+from .widgets import PlotWidget, BrowserWidget, InputsWidget, ResultsDialog
 from .curves import ResultsCurve
 from .browser import BrowserItem
 from .manager import Manager, Experiment
@@ -99,12 +99,13 @@ class ManagedWindow(QtGui.QMainWindow):
     Results and Procedure to self.manager.queue.
     """
 
-    def __init__(self, procedure_class, browser_columns=[], x_axis=None, y_axis=None, parent=None):
+    def __init__(self, procedure_class, inputs=[], displays=[], x_axis=None, y_axis=None, parent=None):
         super(ManagedWindow, self).__init__(parent=parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
         self.procedure_class = procedure_class
-        self.browser_columns = browser_columns
+        self.inputs = inputs
+        self.displays = displays
         self.x_axis, self.y_axis = x_axis, y_axis
         self._setup_ui()
         self._layout()
@@ -122,7 +123,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
-            self.browser_columns, 
+            self.displays, 
             [self.x_axis, self.y_axis],
             parent=self
         )
@@ -136,6 +137,12 @@ class ManagedWindow(QtGui.QMainWindow):
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
 
+        self.inputs = InputsWidget(
+            self.procedure_class,
+            self.inputs,
+            parent=self
+        )
+
         self.manager = Manager(self.plot, self.browser, parent=self)
         self.manager.abort_returned.connect(self.abort_returned)
         self.manager.queued.connect(self.queued)
@@ -145,22 +152,35 @@ class ManagedWindow(QtGui.QMainWindow):
     def _layout(self):
         self.main = QtGui.QWidget(self)
 
-        vbox = QtGui.QVBoxLayout(self.main)
-        vbox.setSpacing(0)
+        inputs_dock = QtGui.QWidget(self)
+        inputs_vbox = QtGui.QVBoxLayout(self.main)
 
         hbox = QtGui.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.queue_button)
         hbox.addWidget(self.abort_button)
-        vbox.addLayout(hbox)
+
+        inputs_vbox.addWidget(self.inputs)
+        inputs_vbox.addLayout(hbox)
+        inputs_vbox.insertStretch(10, 10)
+        inputs_dock.setLayout(inputs_vbox)
+
+        dock = QtGui.QDockWidget('Input Parameters')
+        dock.setWidget(inputs_dock)
+        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+
+        vbox = QtGui.QVBoxLayout(self.main)
+        vbox.setSpacing(0)
+
         vbox.addWidget(self.plot_widget)
         vbox.addWidget(self.browser_widget)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)
         self.main.show()
-        self.resize(800, 600)
+        self.resize(1000, 800)
 
     def quit(self, evt=None):
         self.close()
@@ -202,7 +222,7 @@ class ManagedWindow(QtGui.QMainWindow):
             if self.manager.is_running():
                 if self.manager.running_experiment() == experiment: # Experiment running
                     action_remove.setEnabled(False)
-            action_remove.triggered.connect(lambda: self.manager.remove(experiment))
+            action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
             menu.addAction(action_remove)
 
             # Use parameters
@@ -212,6 +232,13 @@ class ManagedWindow(QtGui.QMainWindow):
                 lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
             menu.exec_(self.browser.viewport().mapToGlobal(position))
+
+    def remove_experiment(self, experiment):
+        reply = QtGui.QMessageBox.question(self, 'Remove Graph',
+            "Are you sure you want to remove the graph?", QtGui.QMessageBox.Yes | 
+            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+        if reply == QtGui.QMessageBox.Yes:
+            self.manager.remove(experiment)
 
     def show_experiments(self):
         root = self.browser.invisibleRootItem()
@@ -259,6 +286,12 @@ class ManagedWindow(QtGui.QMainWindow):
         import subprocess
         proc = subprocess.Popen(['gedit', filename])
 
+    def make_procedure(self):
+        if not isinstance(self.inputs, InputsWidget):
+            raise Exception("ManagedWindow can not make a Procedure"
+                            " without a InputsWidget type")
+        return self.inputs.get_procedure()
+
     def new_curve(self, results, color=None, **kwargs):
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
@@ -276,7 +309,10 @@ class ManagedWindow(QtGui.QMainWindow):
         The Parameters should overwrite the GUI values so that a user
         can click "Queue" to capture the same parameters.
         """
-        pass
+        if not isinstance(self.inputs, InputsWidget):
+            raise Exception("ManagedWindow can not set parameters"
+                            " without a InputsWidget")
+        self.inputs.set_parameters(parameters)
 
     def queue(self):
         """ This method should be overwritten by the child class. The

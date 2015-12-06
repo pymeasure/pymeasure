@@ -2,7 +2,6 @@ import sys
 import random
 import tempfile
 from time import sleep
-import pyqtgraph as pg
 
 import logging
 log = logging.getLogger('')
@@ -11,7 +10,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.log import console_log
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
-from pymeasure.display.Qt import QtGui
+from pymeasure.display.Qt import QtGui, fromUi
 from pymeasure.display.windows import ManagedWindow
 
 
@@ -51,18 +50,27 @@ class MainWindow(ManagedWindow):
     def __init__(self):
         super(MainWindow, self).__init__(
             procedure_class=TestProcedure,
-            inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
             y_axis='Random Number'
         )
         self.setWindowTitle('GUI Example')
 
+    def _setup_ui(self):
+        super(MainWindow, self)._setup_ui()
+        self.parameters.hide()
+        self.parameters = fromUi('gui_custom_parameters.ui')
+
     def queue(self):
         filename = tempfile.mktemp()
 
-        procedure = self.make_procedure()
+        procedure = TestProcedure()
+        procedure.seed = str(self.parameters.seed.text())
+        procedure.iterations = self.parameters.iterations.value()
+        procedure.delay = self.parameters.delay.value()
+
         results = Results(procedure, filename)
+
         experiment = self.new_experiment(results)
 
         self.manager.queue(experiment)

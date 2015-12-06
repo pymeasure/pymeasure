@@ -35,7 +35,8 @@ import numpy as np
 from .curves import ResultsCurve, Crosshairs
 from .browser import Browser
 from ..experiment.results import Results
-
+from ..experiment import parameters
+from . import inputs
 
 class PlotFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -92,6 +93,7 @@ class PlotFrame(QtGui.QFrame):
         self.coordinates.setText(label % (x, y))
 
     def update_curves(self):
+        # TODO: Only update curves that are actively being filled (is Procedure.status accurate?)
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
                 item.update()
@@ -230,6 +232,72 @@ class BrowserWidget(QtGui.QWidget):
         vbox.addLayout(hbox)
         vbox.addWidget(self.browser)
         self.setLayout(vbox) 
+
+
+class InputsWidget(QtGui.QWidget):
+
+    def __init__(self, procedure_class, inputs=[], parent=None):
+        super(InputsWidget, self).__init__(parent=parent)
+        self._procedure_class = procedure_class
+        self._procedure = procedure_class()
+        self._inputs = inputs
+        self._setup_ui()
+        self._layout()
+        
+    def _setup_ui(self):
+        parameter_objects = self._procedure.parameter_objects()
+        for name in self._inputs:
+            parameter = parameter_objects[name]
+            if parameter.ui_class is not None:
+                element = parameter.ui_class(parameter)
+
+            elif isinstance(parameter, parameters.FloatParameter):
+                element = inputs.ScientificInput(parameter)
+
+            elif isinstance(parameter, parameters.IntegerParameter):
+                element = inputs.IntegerInput(parameter)
+
+            elif isinstance(parameter, parameters.BooleanParameter):
+                element = inputs.BooleanInput(parameter)
+
+            elif isinstance(parameter, parameters.ListParameter):
+                element = inputs.ListInput(parameter)
+
+            elif isinstance(parameter, parameters.Parameter):
+                element = inputs.StringInput(parameter)
+
+            setattr(self, name, element)
+
+    def _layout(self):
+        vbox = QtGui.QVBoxLayout(self)
+        vbox.setSpacing(6)
+
+        parameters = self._procedure.parameter_objects()
+        for name in self._inputs:
+            label = QtGui.QLabel(self)
+            label.setText("%s:" % parameters[name].name)
+            vbox.addWidget(label)
+            vbox.addWidget(getattr(self, name))
+
+        self.setLayout(vbox)
+
+    def set_parameters(self, parameter_objects):
+        """
+        """
+        for name in self._inputs:
+            element = getattr(self, name)
+            element.set_parameter(parameter_objects[name])
+
+    def get_procedure(self):
+        """ Returns the current procedure
+        """
+        self._procedure = self._procedure_class()
+        parameter_values = {}
+        for name in self._inputs:
+            element = getattr(self, name)
+            parameter_values[name] = element.parameter.value
+        self._procedure.set_parameters(parameter_values)
+        return self._procedure
 
 
 class ResultsDialog(QtGui.QFileDialog):
