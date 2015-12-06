@@ -187,6 +187,9 @@ class PlotWidget(QtGui.QWidget):
         vbox.addWidget(self.plot_frame)
         self.setLayout(vbox)
 
+    def sizeHint(self):
+        return QtCore.QSize(300, 600)
+
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=2)
