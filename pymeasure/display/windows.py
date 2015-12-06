@@ -197,6 +197,9 @@ class ManagedWindow(QtGui.QMainWindow):
             if state == 0:
                 self.plot.removeItem(experiment.curve)
             else:
+                experiment.curve.x = self.plot_widget.plot_frame.x_axis
+                experiment.curve.y = self.plot_widget.plot_frame.y_axis
+                experiment.curve.update()
                 self.plot.addItem(experiment.curve)
 
     def browser_item_menu(self, position):
