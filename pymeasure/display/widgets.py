@@ -92,8 +92,7 @@ class PlotFrame(QtGui.QFrame):
         self.timer.start(self.refresh_time*1e3)
 
     def update_coordinates(self, x, y):
-        label = "(%0.3f, %0.3f)"
-        self.coordinates.setText(label % (x, y))
+        self.coordinates.setText("(%g, %g)" % (x, y))
 
     def update_curves(self):
         for item in self.plot.items:
