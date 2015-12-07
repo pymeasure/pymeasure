@@ -150,8 +150,10 @@ class PlotWidget(QtGui.QWidget):
         self._setup_ui()
         self._layout()
         if x_axis is not None:
+            self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
             self.plot_frame.change_x_axis(x_axis)
         if y_axis is not None:
+            self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
             self.plot_frame.change_y_axis(y_axis)
 
     def _setup_ui(self):
