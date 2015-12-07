@@ -98,6 +98,8 @@ class Browser(QtGui.QTreeWidget):
 
         self.setColumnCount(len(header_labels))
         self.setHeaderLabels(header_labels)
+        self.setSortingEnabled(True)
+        self.sortItems(1, QtCore.Qt.AscendingOrder)
 
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)
