@@ -58,16 +58,16 @@ class MainWindow(ManagedWindow):
 
     def _setup_ui(self):
         super(MainWindow, self)._setup_ui()
-        self.parameters.hide()
-        self.parameters = fromUi('gui_custom_parameters.ui')
+        self.inputs.hide()
+        self.inputs = fromUi('gui_custom_inputs.ui')
 
     def queue(self):
         filename = tempfile.mktemp()
 
         procedure = TestProcedure()
-        procedure.seed = str(self.parameters.seed.text())
-        procedure.iterations = self.parameters.iterations.value()
-        procedure.delay = self.parameters.delay.value()
+        procedure.seed = str(self.inputs.seed.text())
+        procedure.iterations = self.inputs.iterations.value()
+        procedure.delay = self.inputs.delay.value()
 
         results = Results(procedure, filename)
 
