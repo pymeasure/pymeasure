@@ -23,6 +23,7 @@
 #
 
 import logging
+from logging.handlers import QueueHandler
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -44,3 +45,13 @@ def file_log(logger, log_filename, level=logging.INFO):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+
+
+class TopicQueueHandler(QueueHandler):
+
+    def __init__(self, queue, topic='log'):
+        super(TopicQueueHandler, self).__init__(queue)
+        self.topic = topic
+
+    def enqueue(self, record):
+        self.queue.put_nowait([self.topic, record])

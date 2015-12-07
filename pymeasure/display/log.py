@@ -23,17 +23,16 @@
 #
 
 from logging import Handler
-from .Qt import QtGui
+from .Qt import QtCore, QtGui
 
 
-class QLogHandler(Handler):
+class LogHandler(QtCore.QObject, Handler):
 
-    def __init__(self, log_display):
-        super(QLogHandler, self).__init__()
-        if not isinstance(log_display, QtGui.QPlainTextEdit):
-            raise Exception("QLogHandler is only implemented for "
-                            "QPlainTextEdit objects")
-        self.log_display = log_display
+    record = QtCore.QSignal(object)
+
+    def __init__(self, parent=None):
+        Handler.__init__(self)
+        QtCore.QObject.__init__(self, parent=parent)
 
     def emit(self, record):
-        self.log_display.appendPlainText(self.format(record))
+        self.record.emit(self.format(record))

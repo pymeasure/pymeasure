@@ -37,6 +37,7 @@ from .browser import Browser
 from ..experiment.results import Results
 from ..experiment import parameters, Procedure
 from . import inputs
+from .log import LogHandler
 
 class PlotFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -314,6 +315,31 @@ class InputsWidget(QtGui.QWidget):
             parameter_values[name] = element.parameter.value
         self._procedure.set_parameters(parameter_values)
         return self._procedure
+
+
+class LogWidget(QtGui.QWidget):
+
+    def __init__(self, parent=None):
+        super(LogWidget, self).__init__(parent=parent)
+        self._setup_ui()
+        self._layout()
+
+    def _setup_ui(self):
+        self.view = QtGui.QPlainTextEdit()
+        self.view.setReadOnly(True)
+        self.handler = LogHandler()
+        self.handler.setFormatter(logging.Formatter(
+            fmt='%(asctime)s : %(message)s (%(levelname)s)',
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+        ))
+        self.handler.record.connect(self.view.appendPlainText)
+
+    def _layout(self):
+        vbox = QtGui.QVBoxLayout(self)
+        vbox.setSpacing(0)
+
+        vbox.addWidget(self.view)
+        self.setLayout(vbox)
 
 
 class ResultsDialog(QtGui.QFileDialog):

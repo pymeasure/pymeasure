@@ -40,6 +40,7 @@ from pymeasure.process import StoppableProcess
 from .listeners import Recorder
 from .results import Results
 from .procedure import Procedure
+from ..log import TopicQueueHandler
 
 
 class Worker(StoppableProcess):
@@ -97,6 +98,12 @@ class Worker(StoppableProcess):
         self.emit('error', traceback_str)
 
     def run(self):
+        global log
+        log = logging.getLogger('')
+        log.handlers = [] # Remove all other handlers
+        log.addHandler(TopicQueueHandler(self.monitor_queue))
+        log.info("Worker process started")
+
         self.recorder = Recorder(self.results, self.recorder_queue)
         self.recorder.start()
 
@@ -114,7 +121,7 @@ class Worker(StoppableProcess):
         except:
             pass
 
-        log.info("Running %r with %r" % (self.procedure, self))
+        log.info("Worker started running an instance of %r" % (self.procedure.__class__.__name__))
         self.update_status(Procedure.RUNNING)
         self.emit('progress', 0.)
         self.procedure.startup()

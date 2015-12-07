@@ -30,10 +30,11 @@ import os
 import pyqtgraph as pg
 
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget, BrowserWidget, InputsWidget, ResultsDialog
+from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog
 from .curves import ResultsCurve
 from .browser import BrowserItem
 from .manager import Manager, Experiment
+from .log import LogHandler
 from ..experiment.results import Results
 
 
@@ -99,18 +100,25 @@ class ManagedWindow(QtGui.QMainWindow):
     Results and Procedure to self.manager.queue.
     """
 
-    def __init__(self, procedure_class, inputs=[], displays=[], x_axis=None, y_axis=None, parent=None):
+    def __init__(self, procedure_class, inputs=[], displays=[], x_axis=None, y_axis=None, log_channel='', log_level=logging.INFO, parent=None):
         super(ManagedWindow, self).__init__(parent=parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
         self.procedure_class = procedure_class
         self.inputs = inputs
         self.displays = displays
+        self.log = logging.getLogger(log_channel)
+        log.setLevel(log_level)
+        self.log.setLevel(log_level)
         self.x_axis, self.y_axis = x_axis, y_axis
         self._setup_ui()
         self._layout()
 
     def _setup_ui(self):
+        self.log_widget = LogWidget()
+        self.log.addHandler(self.log_widget.handler) # needs to be in Qt context?
+        log.info("ManagedWindow connected to logging")
+
         self.queue_button = QtGui.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self.queue)
 
@@ -148,6 +156,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.manager.queued.connect(self.queued)
         self.manager.running.connect(self.running)
         self.manager.finished.connect(self.finished)
+        self.manager.log.connect(self.log.handle)
 
     def _layout(self):
         self.main = QtGui.QWidget(self)
@@ -172,14 +181,17 @@ class ManagedWindow(QtGui.QMainWindow):
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
 
-        vbox = QtGui.QVBoxLayout(self.main)
-        vbox.setSpacing(0)
+        tabs = QtGui.QTabWidget(self.main)
+        tabs.addTab(self.plot_widget, "Results Graph")
+        tabs.addTab(self.log_widget, "Experiment Log")
 
         splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
-        splitter.addWidget(self.plot_widget)
+        splitter.addWidget(tabs)
         splitter.addWidget(self.browser_widget)
         self.plot_widget.setMinimumSize(100, 200)
 
+        vbox = QtGui.QVBoxLayout(self.main)
+        vbox.setSpacing(0)
         vbox.addWidget(splitter)
 
         self.main.setLayout(vbox)

@@ -128,6 +128,7 @@ class Manager(QtCore.QObject):
     failed = QtCore.QSignal(object)
     aborted = QtCore.QSignal(object)
     abort_returned = QtCore.QSignal(object)
+    log = QtCore.QSignal(object)
 
     def __init__(self, plot, browser, port=5888, parent=None):
         super(Manager, self).__init__(parent=parent)
@@ -161,6 +162,9 @@ class Manager(QtCore.QObject):
         if self.is_running():
             self._running_experiment.procedure.status = status
             self._running_experiment.browser_item.setStatus(status)
+
+    def _update_log(self, record):
+        self.log.emit(record)
 
     def load(self, experiment):
         """ Load a previously executed Experiment
@@ -213,6 +217,7 @@ class Manager(QtCore.QObject):
                 self._monitor.worker_finished.connect(self._finish)
                 self._monitor.progress.connect(self._update_progress)
                 self._monitor.status.connect(self._update_status)
+                self._monitor.log.connect(self._update_log)
 
                 self._monitor.start()
                 self._worker.start()
