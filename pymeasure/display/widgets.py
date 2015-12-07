@@ -355,9 +355,10 @@ class LogWidget(QtGui.QWidget):
 
 class ResultsDialog(QtGui.QFileDialog):
 
-    def __init__(self, columns, parent=None):
+    def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
         super(ResultsDialog, self).__init__(parent=parent)
         self.columns = columns
+        self.x_axis, self.y_axis = x_axis, y_axis
         self._setup_ui()
 
     def _setup_ui(self):
@@ -367,7 +368,7 @@ class ResultsDialog(QtGui.QFileDialog):
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
 
-        self.plot_widget = PlotWidget(self.columns, parent=self)
+        self.plot_widget = PlotWidget(self.columns, self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
         self.preview_param = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name","Value"])

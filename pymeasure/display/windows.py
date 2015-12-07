@@ -276,7 +276,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.manager.clear()
 
     def open_experiment(self):
-        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS)
+        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
         if dialog.exec_():
             filenames = dialog.selectedFiles()
             for filename in map(str,filenames):
