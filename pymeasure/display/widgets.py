@@ -29,6 +29,7 @@ log.addHandler(logging.NullHandler())
 from .Qt import QtCore, QtGui
 
 import os
+import re
 import pyqtgraph as pg
 import numpy as np
 
@@ -103,18 +104,25 @@ class PlotFrame(QtGui.QFrame):
                 else:
                     item.update()
 
-    def parse_units(self, axis):
+    def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
-        """ 
-        # TODO Implement this method
-        return None
+        """
+        unit_pattern = "\((?P<unit>\w+)\)"
+        match = re.search(unit_pattern, axis)
+        if match:
+            if 'unit' in match.groupdict():
+                label = re.sub(unit_pattern, '', axis)
+                return label, match.groupdict()['unit']
+        else:
+            return axis, None
 
     def change_x_axis(self, axis):
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
                 item.x = axis
                 item.update()
-        self.plot.setLabel('bottom', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
+        label, unit = self.parse_axis(axis)
+        self.plot.setLabel('bottom', label, units=unit, **self.LABEL_STYLE)
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
 
@@ -123,7 +131,8 @@ class PlotFrame(QtGui.QFrame):
             if isinstance(item, ResultsCurve):
                 item.y = axis
                 item.update()
-        self.plot.setLabel('left', axis, units=self.parse_units(axis), **self.LABEL_STYLE)
+        label, unit = self.parse_axis(axis)
+        self.plot.setLabel('left', label, units=unit, **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
 
