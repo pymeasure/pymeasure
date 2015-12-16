@@ -99,6 +99,7 @@ class ManagedWindow(QtGui.QMainWindow):
     by a child class which is required to pass an Experiment containing the
     Results and Procedure to self.manager.queue.
     """
+    EDITOR = 'gedit'
 
     def __init__(self, procedure_class, inputs=[], displays=[], x_axis=None, y_axis=None, log_channel='', log_level=logging.INFO, parent=None):
         super(ManagedWindow, self).__init__(parent=parent)
@@ -305,7 +306,7 @@ class ManagedWindow(QtGui.QMainWindow):
     def open_file_externally(self, filename):
         # TODO: Make this function OS-agnostic
         import subprocess
-        proc = subprocess.Popen(['gedit', filename])
+        proc = subprocess.Popen([self.EDITOR, filename])
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
