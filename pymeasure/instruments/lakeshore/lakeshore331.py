@@ -1,3 +1,7 @@
+"""
+
+This file is part of the PyMeasure package.
+
 Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,3 +21,24 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+"""
+
+from pymeasure.instruments import Instrument
+
+
+class LakeShore331(Instrument):
+    """Instrument object for the Lake Shore 331 Temperature Controller"""
+
+    def __init__(self, adapter, **kwargs):
+        super(Lakeshore331, self).__init__(
+            adapter,
+            "Lakeshore 331 Temperature Controller",
+            **kwargs
+        )
+
+    @property
+    def temperature(self):
+        """ Temperature in Kelvin
+        """
+        return self.ask("KRDG?")

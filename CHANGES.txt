@@ -1,0 +1,52 @@
+Version 0.2 -- released 12/16/15
+================================
+- Python 3 compatibility, removed support for Python 2
+- Considerable renaming for better PEP8 compliance
+- Added MIT License
+- Major restructuring of the package to break it into smaller modules
+- Major rewrite of display functionality, introducing new Qt objects for easy extensions
+- Major rewrite of procedure execution, now using a Worker process which takes advantage of multi-core CPUs
+- Addition of a number of examples
+- New methods for listening to Procedures, introducing ZMQ for TCP connectivity
+- Updates to Keithley2400 and VISAAdapter
+
+Version 0.1.6 -- released 4/19/15
+=================================
+- Renamed the package to PyMeasure from Automate to be more descriptive about its purpose
+- Addition of VectorParameter to allow vectors to be input for Procedures
+- Minor fixes for the Results and Danfysik8500
+
+Version 0.1.5 -- release 10/22/14
+=================================
+- New Manager class for handling Procedures in a queue fashion
+- New Browser that works in tandem with the Manager to display the queue
+- Bug fixes for Results loading
+
+Version 0.1.4 -- released 8/2/14
+================================
+- Integrated Results class into display and file writing
+- Bug fixes for Listener classes
+- Bug fixes for SR830
+
+Version 0.1.3 -- released 7/20/14
+=================================
+- Replaced logging system with Python logging package
+- Added data management (Results) and bug fixes for Procedures and Parameters
+- Added pandas v0.14 to requirements for data management
+- Added data listeners, Qt4 and PyQtGraph helpers
+
+Version 0.1.2 -- released 7/18/14
+=================================
+- Bug fixes to LakeShore 425
+- Added new Procedure and Parameter classes for generic experiments
+- Added version number in package
+
+Version 0.1.1 -- released 7/16/14
+=================================
+- Bug fixes to PrologixAdapter, VISAAdapter, Agilent 8722ES, Agilent 8257D, Stanford SR830, Danfysik8500
+- Added Tektronix TDS 2000 with basic functionality
+- Fixed Danfysik communication to handle errors properly
+
+Version 0.1.0 -- released 7/15/14
+=================================
+- Initial release

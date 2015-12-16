@@ -22,4 +22,37 @@
 # THE SOFTWARE.
 #
 
-__version__ = '0.2'
+from threading import Event
+from .Qt import QtCore
+
+
+class StoppableQThread(QtCore.QThread):
+    """ Base class for QThreads which require the ability
+    to be stopped by a thread-safe method call
+    """
+
+    def __init__(self, parent=None):
+        self._should_stop = Event()
+        self._should_stop.clear()
+        super(StoppableQThread, self).__init__(parent)
+
+    def join(self, timeout=0):
+        """ Joins the current thread and forces it to stop after
+        the timeout if necessary
+
+        :param timeout: Timeout duration in seconds
+        """
+        self._should_stop.wait(timeout)
+        if not self.should_stop():
+            self.stop()
+        super(StoppableQThread, self).wait()
+
+    def stop(self):
+        self._should_stop.set()
+
+    def should_stop(self):
+        return self._should_stop.is_set()
+
+    def __repr__(self):
+        return "<%s(should_stop=%s)>" % (
+            self.__class__.__name__, self.should_stop())

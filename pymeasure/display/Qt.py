@@ -22,4 +22,23 @@
 # THE SOFTWARE.
 #
 
-__version__ = '0.2'
+from pyqtgraph.Qt import QtGui, QtCore, loadUiType
+
+QtCore.QSignal = QtCore.pyqtSignal
+
+def fromUi(*args, **kwargs):
+    """ Returns a Qt object constructed using loadUiType
+    based on its arguments. All QWidget objects in the
+    form class are set in the returned object for easy
+    accessiblity.
+    """
+    formClass, baseClass = loadUiType(*args, **kwargs)
+    widget = baseClass()
+    form = formClass()
+    form.setupUi(widget)
+    form.retranslateUi(widget)
+    for name in dir(form):
+        element = getattr(form, name)
+        if isinstance(element, QtGui.QWidget):
+            setattr(widget, name, element)
+    return widget

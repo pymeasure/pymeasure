@@ -2,4 +2,6 @@
 ##########################
 *.pyc
 dist/*
-
+MANIFEST
+.env/*
+PyMeasure.egg-info/*

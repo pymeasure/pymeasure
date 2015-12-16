@@ -22,4 +22,36 @@
 # THE SOFTWARE.
 #
 
-__version__ = '0.2'
+import logging
+from logging.handlers import QueueHandler
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+def console_log(logger, level=logging.INFO):
+    logger.setLevel(level)
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    formatter = logging.Formatter(
+        fmt='%(asctime)s: %(message)s (%(name)s, %(levelname)s)',
+        datefmt='%I:%M:%S %p')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+def file_log(logger, log_filename, level=logging.INFO):
+    logger.setLevel(level)
+    ch = logging.FileHandler(log_filename)
+    ch.setLevel(level)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+
+class TopicQueueHandler(QueueHandler):
+
+    def __init__(self, queue, topic='log'):
+        super(TopicQueueHandler, self).__init__(queue)
+        self.topic = topic
+
+    def enqueue(self, record):
+        self.queue.put_nowait([self.topic, record])

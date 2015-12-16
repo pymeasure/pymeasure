@@ -22,4 +22,37 @@
 # THE SOFTWARE.
 #
 
-__version__ = '0.2'
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+from .Qt import QtGui
+
+from ..process import StoppableProcess
+from .windows import PlotterWindow
+
+import sys
+from time import sleep
+import pyqtgraph as pg
+
+
+class Plotter(StoppableProcess):
+    """ Plotter dynamically plots data from a file through the Results
+    object and supports error bars.
+    """
+
+    def __init__(self, results, refresh_time=0.1):
+        super(Plotter, self).__init__()
+        self.results = results
+        self.refresh_time = refresh_time
+
+    def run(self):
+        app = QtGui.QApplication(sys.argv)
+        window = PlotterWindow(self, refresh_time=self.refresh_time)
+        app.aboutToQuit.connect(window.quit)
+        window.show()
+        app.exec_()
+
+    def wait_for_close(self, check_time=0.1):
+        while not self.should_stop():
+            sleep(check_time)

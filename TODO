@@ -1,0 +1,5 @@
+TODO: Fix curve display when the only displayed item is Queued & has no data
+TODO: Fix run-away graph display on autoscale
+TODO: Fix status and progress blip (Finished, 100%) in browser item on starting to run procedure
+TODO: Work on docs
+TODO: Give an option for Results loading to ignore errors

@@ -1,0 +1,11 @@
+This is intended to be a temporary place for suggestions and discussions. Please post any ideas here. Once being adapted or rejected, they'll be deleted accordingly.
+#################
+
+A. Short nickname for instruments
+A.1. Minh-Hai: I think it's convenient to assign each instrument a short nickname, such as Name(GPIB address), e.g. Keithley(26). This nickname will be used in reporting issues into the log file, so that users know where the issues are immediately without tracking down the codes. This suggestion has been demonstrated in the Keithley2000.py.
+
+B. Compatibility between adapters
+B.1. Minh-Hai: In the visa adapter, I leave two methods what work in pair:
+.. config(): Configurate how to communicate with the instrument and the format of the responds.
+.. ask_values(): Return a response from the instrument in the format that is configurated by config().
+These two methods are very handy when testing instruments. However we should check to see if other adapters (pyserial, prologix) have similar functions or not. If not, we should mark these two methods for deletion prior to release.

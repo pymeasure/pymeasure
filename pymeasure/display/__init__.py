@@ -21,5 +21,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
-__version__ = '0.2'
+try:
+    from .manager import Manager
+    from .plotter import Plotter
+except ImportError:
+    log.warning("Python bindings for Qt (PySide, PyQt) can not be imported")
+except Exception as e:
+    raise e
+
+
+def run_in_ipython(app):
+    """ Attempts to run the QApplication in the IPython main loop, which
+    requires the command "%gui qt" to be run prior to the script execution.
+    On failure the Qt main loop is initialized instead
+    """
+    try:
+        from IPython.lib.guisupport import start_event_loop_qt4
+        start_event_loop_qt4(app)
+    except ImportError:
+        app.exec_()

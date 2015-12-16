@@ -21,5 +21,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
-__version__ = '0.2'
+from .adapter import Adapter, FakeAdapter
+
+try:
+    from pymeasure.adapters.visa import VISAAdapter
+except ImportError:
+    log.warning("PyVISA library could not be loaded")
+
+try:
+    from pymeasure.adapters.serial import SerialAdapter
+    from pymeasure.adapters.prologix import PrologixAdapter
+except ImportError:
+    log.warning("PySerial library could not be loaded")
