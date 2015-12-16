@@ -25,7 +25,7 @@
 
 class Parameter(object):
     """ Encapsulates the information for an experiment parameter
-    with information about the name, and unit if supplied.
+    with information about the name, and units if supplied.
 
     :var value: The value of the parameter
 
@@ -80,7 +80,7 @@ class IntegerParameter(Parameter):
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
         super(IntegerParameter, self).__init__(name, **kwargs)
-        self.units = unit
+        self.units = units
         self.minimum = minimum
         self.maximum = maximum
 
