@@ -1,6 +1,14 @@
-Version 0.2 -- in progress
-==========================
-- Python 3 compatability
+Version 0.2 -- released 12/16/15
+================================
+- Python 3 compatibility, removed support for Python 2
+- Considerable renaming for better PEP8 compliance
+- Added MIT License
+- Major restructuring of the package to break it into smaller modules
+- Major rewrite of display functionality, introducing new Qt objects for easy extensions
+- Major rewrite of procedure execution, now using a Worker process which takes advantage of multi-core CPUs
+- Addition of a number of examples
+- New methods for listening to Procedures, introducing ZMQ for TCP connectivity
+- Updates to Keithley2400 and VISAAdapter
 
 Version 0.1.6 -- released 4/19/15
 =================================

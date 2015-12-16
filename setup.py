@@ -39,7 +39,7 @@ setup(
     scripts=[],
     url='',
     license='LICENSE.txt',
-    description='Measurement automation library for Python instrument control',
+    description='Measurement library for instrument communication, procedure execution, and live-plotting',
     long_description=open('README.md').read(),
     install_requires=[
         "Numpy >= 1.6.1",
