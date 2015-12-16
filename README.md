@@ -21,8 +21,8 @@ There are a number of other packages that are required for specific functionalit
 
 For communicating with VISA instruments, the PyVISA package is required. PySerial is used for basic serial communication.
 
-[PyVISA](https://github.com/hgrecco/pyvisa) - VISA instrument communication library
-[PySerial](https://github.com/pyserial/pyserial) - Serial communication library
+[PyVISA](https://github.com/hgrecco/pyvisa) - VISA instrument communication library   
+[PySerial](https://github.com/pyserial/pyserial) - Serial communication library   
 
 The live-plotting and user-interfaces require either PyQt4 or PySide, in combination with PyQtGraph.
 
@@ -32,8 +32,8 @@ The live-plotting and user-interfaces require either PyQt4 or PySide, in combina
 
 For listening in on the experimental procedure execution through TCP messaging, the PyZMQ and MsgPack-Numpy libraries are required. This is not necessary for general use.
 
-[PyZMQ](https://github.com/zeromq/pyzmq) - Message communication library
-[MsgPack-Numpy](https://github.com/lebedov/msgpack-numpy) - Compresses messages and handles Numpy arrays
+[PyZMQ](https://github.com/zeromq/pyzmq) - Message communication library   
+[MsgPack-Numpy](https://github.com/lebedov/msgpack-numpy) - Compresses messages and handles Numpy arrays   
 
 ### Install: ###
 
