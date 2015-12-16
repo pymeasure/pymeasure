@@ -29,21 +29,28 @@ log.addHandler(logging.NullHandler())
 from .procedure import Procedure, UnknownProcedure
 from .parameters import Parameter
 
-from os.path import exists
+import os
 from datetime import datetime
 import re
 import pandas as pd
 
 
-def unique_filename(directory, prefix='DATA', suffix='', ext='csv'):
+def unique_filename(directory, prefix='DATA', suffix='', ext='csv', dated_folder=False):
     """ Returns a unique filename based on the directory and prefix
     """
-    date = datetime.now().strftime("%Y%m%d")
+    now = datetime.now()
+    directory = os.path.abspath(directory)
+    if dated_folder:
+        directory = os.path.join(directory, now.strftime("%Y-%m-%d"))
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     i = 1
-    filename = "%s%s%s_%d%s.%s" % (directory, prefix, date, i, suffix, ext)
-    while exists(filename):
+    basename = "%s%s" % (prefix, now.strftime("%Y%m%d"))
+    basepath = os.path.join(directory, basename)
+    filename = "%s_%d%s.%s" % (basepath, i, suffix, ext)
+    while os.path.exists(filename):
         i += 1
-        filename = "%s%s%s_%d%s.%s" % (directory, prefix, date, i, suffix, ext)
+        filename = "%s_%d%s.%s" % (basepath, i, suffix, ext)
     return filename
 
 
