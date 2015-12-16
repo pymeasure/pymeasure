@@ -82,7 +82,7 @@ class Results(object):
         self._header_count = -1
 
         self.data_filename = data_filename
-        if exists(data_filename):  # Assume header is already written
+        if os.path.exists(data_filename):  # Assume header is already written
             self.reload()
             self.procedure.status = Procedure.FINISHED
             # TODO: Correctly store and retrieve status
