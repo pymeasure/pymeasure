@@ -14,7 +14,7 @@ from pymeasure.experiment import Results, Worker, unique_filename
 class TestProcedure(Procedure):
 
     iterations = IntegerParameter('Loop Iterations', default=100)
-    delay = FloatParameter('Delay Time', unit='s', default=0.2)
+    delay = FloatParameter('Delay Time', units='s', default=0.2)
     seed = Parameter('Random Seed', default='12345')
 
     DATA_COLUMNS = ['Iteration', 'Random Number']

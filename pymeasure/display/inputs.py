@@ -75,8 +75,8 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         if self._parameter.default:
             self.setValue(self._parameter.default)
-        if self._parameter.unit:
-            self.setSuffix(" %s" % self._parameter.unit)
+        if self._parameter.units:
+            self.setSuffix(" %s" % self._parameter.units)
 
     def set_parameter(self, parameter):
         super(FloatInput, self).set_parameter(parameter)
@@ -96,8 +96,8 @@ class IntegerInput(QtGui.QSpinBox, Input):
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         if self._parameter.default:
             self.setValue(self._parameter.default)
-        if self._parameter.unit:
-            self.setSuffix(" %s" % self._parameter.unit)
+        if self._parameter.units:
+            self.setSuffix(" %s" % self._parameter.units)
 
     def set_parameter(self, parameter):
         super(IntegerInput, self).set_parameter(parameter)
@@ -132,8 +132,8 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
         Input.__init__(self, parameter)
         if self._parameter.default:
             self.setValue(self._parameter.default)
-        if self._parameter.unit:
-            self.setSuffix(" %s" % self._parameter.unit)
+        if self._parameter.units:
+            self.setSuffix(" %s" % self._parameter.units)
 
     def set_parameter(self, parameter):
         super(ScientificInput, self).set_parameter(parameter)
@@ -143,10 +143,10 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
         self._parameter.value = self.value()
 
     def validate(self, text, pos):
-        if self._parameter.unit:
-            text = text[:-(len(self._parameter.unit) + 1)]
+        if self._parameter.units:
+            text = text[:-(len(self._parameter.units) + 1)]
             result = self.validator.validate(text, pos)
-            return (result[0], result[1] + " %s" % self._parameter.unit, result[2])
+            return (result[0], result[1] + " %s" % self._parameter.units, result[2])
         else:
             return self.validator.validate(text, pos)
 
@@ -154,8 +154,8 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
         self.lineEdit().setText(text.toLower())
 
     def valueFromText(self, text):
-        if self._parameter.unit:
-            return float(str(text)[:-(len(self._parameter.unit) + 1)])
+        if self._parameter.units:
+            return float(str(text)[:-(len(self._parameter.units) + 1)])
         else:
             return float(str(text))
 

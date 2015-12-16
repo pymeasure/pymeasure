@@ -29,7 +29,7 @@ class Parameter(object):
 
     :var value: The value of the parameter
 
-    :param name: A short description of the parameter (no colons allowed)
+    :param name: The parameter name
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
@@ -70,14 +70,17 @@ class IntegerParameter(Parameter):
 
     :var value: The integer value of the parameter
 
-    :param name: A short description of the parameter (no colons allowed)
+    :param name: The parameter name
     :param units: The units of measure for the parameter
+    :param minimum: The minimum allowed value (default: -1e9)
+    :param maximum: The maximum allowed value (default: 1e9)
     :param default: The default integer value
+    :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def __init__(self, name, unit=None, minimum=-1e9, maximum=1e9, **kwargs):
+    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
         super(IntegerParameter, self).__init__(name, **kwargs)
-        self.unit = unit
+        self.units = unit
         self.minimum = minimum
         self.maximum = maximum
 
@@ -106,13 +109,13 @@ class IntegerParameter(Parameter):
         if not self.is_set():
             return ''
         result = "%d" % self._value
-        if self.unit:
-            result += " %s" % self.unit
+        if self.units:
+            result += " %s" % self.units
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,unit=%s,default=%s)>" % (
-            self.__class__.__name__, self.name, self._value, self.unit, self.default)
+        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
 class BooleanParameter(Parameter):
@@ -121,8 +124,9 @@ class BooleanParameter(Parameter):
 
     :var value: The boolean value of the parameter
 
-    :param name: A short description of the parameter (no colons allowed)
+    :param name: The parameter name
     :param default: The default boolean value
+    :param ui_class: A Qt class to use for the UI of this parameter
     """
 
     @property
@@ -147,14 +151,17 @@ class FloatParameter(Parameter):
 
     :var value: The floating point value of the parameter
 
-    :param name: A short description of the parameter (no colons allowed)
-    :param unit: The unit of measure for the parameter
+    :param name: The parameter name
+    :param units: The units of measure for the parameter
+    :param minimum: The minimum allowed value (default: -1e9)
+    :param maximum: The maximum allowed value (default: 1e9)
     :param default: The default floating point value
+    :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def __init__(self, name, unit=None, minimum=-1e9, maximum=1e9, **kwargs):
+    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
         super(FloatParameter, self).__init__(name, **kwargs)
-        self.unit = unit
+        self.units = units
         self.minimum = minimum
         self.maximum = maximum
 
@@ -183,13 +190,13 @@ class FloatParameter(Parameter):
         if not self.is_set():
             return ''
         result = "%g" % self._value
-        if self.unit:
-            result += " %s" % self.unit
+        if self.units:
+            result += " %s" % self.units
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,unit=%s,default=%s)>" % (
-            self.__class__.__name__, self.name, self._value, self.unit, self.default)
+        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
 class VectorParameter(Parameter):
@@ -198,18 +205,16 @@ class VectorParameter(Parameter):
 
     :var value: The value of the parameter as a list of floating point numbers
 
-    :param name: A short description of the parameter (no colons allowed)
+    :param name: The parameter name
     :param length: The integer dimensions of the vector
-    :param unit: The units of the vector
+    :param units: The units of measure for the parameter
     :param default: The default value
+    :param ui_class: A Qt class to use for the UI of this parameter
     """
-    def __init__(self, name, length=3, unit=None, default=None):
-        # TODO: Update VectorParameter with new methods
-        self.name = name
-        self._value = default
-        self.unit = unit
-        self.default = default
-        self._length = length
+    def __init__(self, name, length=3, units=None, **kwargs):
+        self._length = length        
+        super(VectorParameter, self).__init__(name, **kwargs)
+        self.units = units
 
     @property
     def value(self):
@@ -242,44 +247,35 @@ class VectorParameter(Parameter):
             raise ValueError("VectorParameter given input '%s' that could "
                              "not be converted to floats." % str(value))
 
-    def __repr__(self):
-        if not self.is_set():
-            raise ValueError("Parameter value is not set")
-        result = "<VectorParameter(name='%s'" % self.name
-        result += ",value=%s" % "".join(repr(self.value).split())
-        if self.unit:
-            result += ",unit='%s'" % self.unit
-        return result + ")>"
-
     def __str__(self):
         """If we eliminate spaces within the list __repr__ then the
         csv parser will interpret it as a single value."""
         if not self.is_set():
-            raise ValueError("Parameter value is not set")
-        result = ""
-        result += "%s" % "".join(repr(self.value).split())
-        if self.unit:
-            result += " %s" % self.unit
+            return ''
+        result = "".join(repr(self.value).split())
+        if self.units:
+            result += " %s" % self.units
         return result
+
+    def __repr__(self):
+        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
 class ListParameter(Parameter):
     """ :class:`.Parameter` sub-class that stores the value as a list.
 
-    :param name: A short description of the parameter (no colons allowed)
+    :param name: The parameter name
     :param choices: An explicit list of choices, which is disregarded if None
-    :param unit: The units of the vector
+    :param units: The units of measure for the parameter
     :param default: The default value
-
+    :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def __init__(self, name, choices=None, unit=None, default=None):
-        # TODO: Update ListParameter with new methods
-        self.name = name
-        self._value = default
-        self.unit = unit
-        self.default = default
+    def __init__(self, name, choices=None, units=None):
         self._choices = choices
+        super(ListParameter, self).__init__(name, **kwargs)
+        self.units = units
 
     @property
     def value(self):
@@ -295,6 +291,3 @@ class ListParameter(Parameter):
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
-
-    def is_set(self):
-        return self._value is not None

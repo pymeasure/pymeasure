@@ -192,7 +192,7 @@ Let's extend our SimpleProcedure with a RandomProcedure, which generates random 
     class RandomProcedure(Procedure):
 
         iterations = IntegerParameter('Loop Iterations')
-        delay = FloatParameter('Delay Time', unit='s', default=0.2)
+        delay = FloatParameter('Delay Time', units='s', default=0.2)
         seed = Parameter('Random Seed', default='12345')
 
         DATA_COLUMNS = ['Iteration', 'Random Number']

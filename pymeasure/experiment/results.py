@@ -149,14 +149,14 @@ class Results(object):
                 procedure_class = search.group("class")
             elif line.startswith("\t"):
                 regex = ("\t(?P<name>[^:]+):\s(?P<value>[^\s]+)"
-                         "(?:\s(?P<unit>.+))?")
+                         "(?:\s(?P<units>.+))?")
                 search = re.search(regex, line)
                 if search is None:
                     raise Exception("Error parsing header line %s." % line)
                 else:
                     parameters[search.group("name")] = (
                         search.group("value"),
-                        search.group("unit")
+                        search.group("units")
                     )
         if procedure is None:
             if procedure_class is None:
@@ -172,20 +172,20 @@ class Results(object):
             except Exception as e:
                 raise e
 
-        def parameter_found(parameter, unit):
-            return (hasattr(parameter, 'unit') and
-                    parameter.unit is None and
+        def units_found(parameter, units):
+            return (hasattr(parameter, 'units') and
+                    parameter.units is None and
                     type(parameter) is Parameter and
-                    unit is not None)
+                    units is not None)
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
             if parameter.name in parameters:
-                value, unit = parameters[parameter.name]
+                value, units = parameters[parameter.name]
 
-                if parameter_found(parameter, unit):
+                if units_found(parameter, units):
                     # Force full string to be matched
-                    value = value + " " + str(unit)
+                    value = value + " " + str(units)
                 setattr(procedure, name, value)
             else:
                 raise Exception("Missing '%s' parameter when loading '%s' class" % (

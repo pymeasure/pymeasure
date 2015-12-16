@@ -106,12 +106,12 @@ class PlotFrame(QtGui.QFrame):
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
         """
-        unit_pattern = "\((?P<unit>\w+)\)"
-        match = re.search(unit_pattern, axis)
+        units_pattern = "\((?P<units>\w+)\)"
+        match = re.search(units_pattern, axis)
         if match:
-            if 'unit' in match.groupdict():
-                label = re.sub(unit_pattern, '', axis)
-                return label, match.groupdict()['unit']
+            if 'units' in match.groupdict():
+                label = re.sub(units_pattern, '', axis)
+                return label, match.groupdict()['units']
         else:
             return axis, None
 
@@ -120,8 +120,8 @@ class PlotFrame(QtGui.QFrame):
             if isinstance(item, ResultsCurve):
                 item.x = axis
                 item.update()
-        label, unit = self.parse_axis(axis)
-        self.plot.setLabel('bottom', label, units=unit, **self.LABEL_STYLE)
+        label, units = self.parse_axis(axis)
+        self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
 
@@ -130,8 +130,8 @@ class PlotFrame(QtGui.QFrame):
             if isinstance(item, ResultsCurve):
                 item.y = axis
                 item.update()
-        label, unit = self.parse_axis(axis)
-        self.plot.setLabel('left', label, units=unit, **self.LABEL_STYLE)
+        label, units = self.parse_axis(axis)
+        self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
 
