@@ -26,6 +26,7 @@ from .config import get_config
 from pymeasure.log import get_log, setup_logging
 from pymeasure.experiment import Results, Worker
 import time, signal
+import numpy as np
 import gc
 log = get_log()
 
@@ -45,24 +46,6 @@ def get_array_zero(maxval, step):
 def create_filename(title):
     filename = unique_filename(suffix='_%s' %title, **get_config()._sections['Filename'])
     return filename
-
-class Timeout():
-    """Timeout class using ALARM signal."""
-    class Timeout(Exception):
-        pass
- 
-    def __init__(self, sec):
-        self.sec = sec
- 
-    def __enter__(self):
-        signal.signal(signal.SIGALRM, self.raise_timeout)
-        signal.alarm(self.sec)
- 
-    def __exit__(self, *args):
-        signal.alarm(0)    # disable alarm
- 
-    def raise_timeout(self, *args):
-        raise Timeout.Timeout()
 
 class Measurable(object):
     '''Measurable variable for getting e.g. instrument parameters'''
@@ -124,12 +107,11 @@ class Experiment(Worker):
         self.emit('results', data)
 
     def plot_live(self, *args, **kwargs):
-        try:
-            with Timeout(10):
-                while self.data.empty:
-                    time.sleep(.1)
-        except Timeout.Timeout:
-            log.warning('Timeout, no data received for liveplot')
+        t=time.time()
+        while self.data.empty:
+            time.sleep(.1)
+            if (time.time()-t)>10:
+                log.warning('Timeout, no data received for liveplot')
         self.plot(*args, **kwargs)
         while not self.should_stop():
             self.plot(*args, **kwargs)

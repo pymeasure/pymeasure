@@ -24,8 +24,8 @@ THE SOFTWARE.
 
 """
 import logging
-log = log.getLogger(__name__)
-log.addHandler(log.NullHandler())
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
 

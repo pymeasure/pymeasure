@@ -135,7 +135,8 @@ class Instrument(object):
 
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
-
+        setattr(self.__class__, 'do_get_%s' %name, fget)
+        
 
     def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
         """This adds a property to the class based on the supplied
@@ -155,6 +156,7 @@ class Instrument(object):
 
         # Add the property attribute
         setattr(self.__class__, name, property(fget))
+        setattr(self.__class__, 'do_get_%s' %name, fget)
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):
