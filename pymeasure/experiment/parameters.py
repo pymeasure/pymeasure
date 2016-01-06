@@ -226,7 +226,7 @@ class VectorParameter(Parameter):
     @value.setter
     def value(self, value):
         # Strip initial and final brackets
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"

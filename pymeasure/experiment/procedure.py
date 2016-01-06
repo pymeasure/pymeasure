@@ -23,6 +23,7 @@
 #
 
 from .parameters import Parameter
+from pymeasure.log import get_log
 
 
 class Procedure(object):
@@ -47,9 +48,14 @@ class Procedure(object):
 
     _parameters = {}
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
         self._update_parameters()
+        log = get_log()
+        for key in kwargs:
+            if key in self._parameters.keys():
+                setattr(self, key, kwargs[key])
+                log.info('Setting parameter %s to %s' %(key, kwargs[key]))
 
     def _update_parameters(self):
         """ Collects all the Parameter objects for the procedure and stores

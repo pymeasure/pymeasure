@@ -27,6 +27,10 @@ from logging.handlers import QueueHandler
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+def get_log(name=__name__):
+    log = logging.getLogger(name)
+    log.addHandler(logging.NullHandler())
+    return log
 
 def console_log(logger, level=logging.INFO):
     logger.setLevel(level)
@@ -46,6 +50,18 @@ def file_log(logger, log_filename, level=logging.INFO):
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
+def setup_logging(logger=None, console=False, console_level='INFO', filename='', file_level='DEBUG'):
+    '''Setup logging for console and/or file logging. Defaults to no logging.'''    
+    if logger is None:
+        logger = get_log()
+    logger.handlers = []
+    logging.getLogger('').handlers = []
+    if console:
+        console_log(log, level=getattr(logging,console_level))
+        log.info('Set up console logging')
+    if filename is not '':
+        file_log(log, filename, level=getattr(logging,file_level))
+        log.info('Set up file logging')
 
 class TopicQueueHandler(QueueHandler):
 

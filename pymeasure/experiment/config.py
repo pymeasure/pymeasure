@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import configparser
+import logging
+from .results import unique_filename
+import numpy as np
+import signal
+from pymeasure.log import setup_logging, get_log
 
-from .parameters import (Parameter, IntegerParameter, FloatParameter,
-                        VectorParameter, ListParameter, BooleanParameter)
-from .procedure import Procedure, UnknownProcedure
-from .results import Results, unique_filename
-from .workers import Worker
-from .listeners import Listener, Recorder
-from .config import get_config
-from .experiment import Experiment, Measurable, get_array, get_array_steps, get_array_zero
+def get_config(filename=''):
+    global _CONFIG_FILE
+    if filename == '':
+        filename = _CONFIG_FILE
+    else:
+        _CONFIG_FILE = filename
+    config = configparser.ConfigParser()
+    config.read(filename)
+    return config
+
+def init_from_config(filename=''):
+    global _CONFIG_FILE
+    if filename == '':
+        filename = _CONFIG_FILE
+    else:
+        _CONFIG_FILE = filename
+    config = get_config(filename)
+    # logging
+    if 'Logging' in config._sections.keys():
+        log = get_log()
+        setup_logging(log, **config._sections['Logging'])
+    # plotting
+    if 'rcParams' in config._sections.keys():
+        import matplotlib
+        for key in config._sections['rcParams']:
+            matplotlib.rcParams[key] = eval(config._sections['rcParams'][key])
+
+_CONFIG_FILE = "config.ini"

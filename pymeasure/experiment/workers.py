@@ -41,6 +41,7 @@ from .listeners import Recorder
 from .results import Results
 from .procedure import Procedure
 from ..log import TopicQueueHandler
+from pymeasure.log import file_log
 
 
 class Worker(StoppableProcess):
@@ -99,9 +100,10 @@ class Worker(StoppableProcess):
 
     def run(self):
         global log
-        log = logging.getLogger('')
-        log.handlers = [] # Remove all other handlers
-        log.addHandler(TopicQueueHandler(self.monitor_queue))
+        # log = logging.getLogger('')
+        # log.handlers = [] # Remove all other handlers
+        # log.addHandler(TopicQueueHandler(self.monitor_queue))
+
         log.info("Worker process started")
 
         self.recorder = Recorder(self.results, self.recorder_queue)
@@ -143,6 +145,7 @@ class Worker(StoppableProcess):
             self.recorder_queue.put(None)
             self.monitor_queue.put(None)
             self.stop()
+            log.info('Finished worker process')
 
     def __repr__(self):
         return "<%s(port=%s,procedure=%s,should_stop=%s)>" % (
