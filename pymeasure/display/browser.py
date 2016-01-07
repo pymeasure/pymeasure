@@ -103,6 +103,7 @@ class Browser(QtGui.QTreeWidget):
             self.sortItems(1, QtCore.Qt.AscendingOrder)
 
         for i, width in enumerate([80, 140]):
+            self.header().resizeSection(i, width)
 
     def add(self, experiment):
         """Add a :class:`.Experiment` object to the Browser. This function
