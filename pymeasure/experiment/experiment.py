@@ -25,6 +25,7 @@ from .results import unique_filename
 from .config import get_config
 from pymeasure.log import get_log, setup_logging
 from pymeasure.experiment import Results, Worker
+from .parameters import Measurable
 import time, signal
 import numpy as np
 import gc
@@ -41,22 +42,13 @@ def get_array_steps(start, stop, numsteps):
 
 def get_array_zero(maxval, step):
     '''Returns a numpy array from 0 to maxval to -maxval to 0'''
-    return np.concatenate((np.arange(0,maxval,step), np.arange(maxval, -maxval, -step), np.arange(-maxval, step, step)))
+    return np.concatenate((np.arange(0,maxval,step), np.arange(maxval, -maxval, -step), np.arange(-maxval, 0, step)))
 
 def create_filename(title):
     filename = unique_filename(suffix='_%s' %title, **get_config()._sections['Filename'])
     return filename
 
-class Measurable(object):
-    '''Measurable variable for getting e.g. instrument parameters'''
-    def __init__(self, name, fget, units=None, measure=True, **kwargs):
-        self.name = name
-        self.units = units
-        self.measure = measure
-        self.fget = fget
-        self.__class__.value = property(fget)
-
-class Experiment(Worker):
+class Experiment():
     '''Class for running procedures.'''
     def __init__(self, title, procedure, logging=True):
         self.title = title
@@ -67,44 +59,19 @@ class Experiment(Worker):
         self.figs = []
         self._data = []
 
-        self.gen_measurement()
-
         self.filename = create_filename(self.title)
         log.info("Using data file: %s" % self.filename)
 
         self.results = Results(self.procedure, self.filename)
         log.info("Set up Results")
 
-        super(Experiment, self).__init__(self.results, self.port)
+        self.worker = Worker(self.results, self.port)
+        log.info("Create worker")
 
     @property
     def data(self):
         self._data = self.results.data
         return self._data
-
-    def gen_measurement(self):
-        '''Create MEASURE and DATA_COLUMNS variables for measure method.
-        '''
-        if not hasattr(self.procedure,'measure'):
-            self.procedure.measure = self.measure
-            self.procedure.MEASURE = {}
-            for item in dir(self.procedure):
-                parameter = getattr(self.procedure, item)
-                if isinstance(parameter, Measurable):
-                    if parameter.measure:
-                        self.procedure.MEASURE.update({item: parameter.fget})
-            if self.procedure.DATA_COLUMNS == []:
-                self.procedure.DATA_COLUMNS = self.procedure.MEASURE.keys()
-
-    def get_datapoint(self):
-        params = self.procedure.MEASURE
-        data = {key:params[key]() for key in params}
-        return data
-
-    def measure(self):
-        data = self.get_datapoint()
-        log.debug("Produced numbers: %s" % data)
-        self.emit('results', data)
 
     def plot_live(self, *args, **kwargs):
         t=time.time()
@@ -113,7 +80,7 @@ class Experiment(Worker):
             if (time.time()-t)>10:
                 log.warning('Timeout, no data received for liveplot')
         self.plot(*args, **kwargs)
-        while not self.should_stop():
+        while not self.worker.should_stop():
             self.plot(*args, **kwargs)
         if self.is_alive():
             self.terminate()

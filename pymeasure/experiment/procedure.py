@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from .parameters import Parameter
+from .parameters import Parameter, Measurable
 from pymeasure.log import get_log
 
 
@@ -56,6 +56,29 @@ class Procedure(object):
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
                 log.info('Setting parameter %s to %s' %(key, kwargs[key]))
+        self.gen_measurement()
+
+    def gen_measurement(self):
+        '''Create MEASURE and DATA_COLUMNS variables for measure method.
+        '''
+        self.MEASURE = {}
+        for item in dir(self):
+            parameter = getattr(self, item)
+            if isinstance(parameter, Measurable):
+                if parameter.measure:
+                    self.MEASURE.update({item: parameter.fget})
+        if self.DATA_COLUMNS == []:
+            self.DATA_COLUMNS = self.MEASURE.keys()
+
+    def get_datapoint(self):
+        data = {key:self.MEASURE[key]() for key in self.MEASURE}
+        return data
+
+    def measure(self):
+        data = self.get_datapoint()
+        log = get_log()
+        log.debug("Produced numbers: %s" % data)
+        self.emit('results', data)
 
     def _update_parameters(self):
         """ Collects all the Parameter objects for the procedure and stores

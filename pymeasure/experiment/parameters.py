@@ -291,3 +291,12 @@ class ListParameter(Parameter):
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
+
+class Measurable(object):
+    '''Measurable variable for getting e.g. instrument parameters'''
+    def __init__(self, name, fget, units=None, measure=True, **kwargs):
+        self.name = name
+        self.units = units
+        self.measure = measure
+        self.fget = fget
+        self.__class__.value = property(fget)
