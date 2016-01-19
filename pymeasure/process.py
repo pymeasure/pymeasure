@@ -44,7 +44,7 @@ class StoppableProcess(Process):
         self._should_stop.wait(timeout)
         if not self.should_stop():
             self.stop()
-        super(StoppableProcess, self).join()
+        super(StoppableProcess, self).join(0)
 
     def stop(self):
         self._should_stop.set()
