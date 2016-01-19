@@ -23,6 +23,7 @@
 #
 
 import logging
+from logging.handlers import QueueHandler
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -50,7 +51,7 @@ class Worker(StoppableProcess):
     thread, a Recorder is run to write the results to 
     """
 
-    def __init__(self, results, port):
+    def __init__(self, results, log_queue=None, port=None):
         """ Constructs a Worker to perform the Procedure 
         defined in the file at the filepath
         """
@@ -65,6 +66,9 @@ class Worker(StoppableProcess):
 
         self.recorder_queue = Queue()
         self.monitor_queue = Queue()
+        if log_queue is None:
+            log_queue = Queue()
+        self.log_queue = log_queue
 
     def join(self, timeout=0):
         try:
@@ -72,7 +76,7 @@ class Worker(StoppableProcess):
         except (KeyboardInterrupt, SystemExit):
             log.warning("User stopped Worker join prematurely")
             self.stop()
-            super(Worker, self).join()
+            super(Worker, self).join(0)
 
     def emit(self, topic, data):
         """ Emits data of some topic over TCP """
@@ -100,10 +104,10 @@ class Worker(StoppableProcess):
 
     def run(self):
         global log
-        # log = logging.getLogger('')
-        # log.handlers = [] # Remove all other handlers
-        # log.addHandler(TopicQueueHandler(self.monitor_queue))
-
+        log = logging.getLogger()
+        log.handlers = [] # Remove all other handlers
+        log.addHandler(TopicQueueHandler(self.monitor_queue))
+        log.addHandler(QueueHandler(self.log_queue))
         log.info("Worker process started")
 
         self.recorder = Recorder(self.results, self.recorder_queue)
@@ -113,15 +117,16 @@ class Worker(StoppableProcess):
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
 
-        try:
-            self.context = zmq.Context()
-            log.debug("Worker ZMQ Context: %r" % self.context)
-            self.publisher = self.context.socket(zmq.PUB)
-            self.publisher.bind('tcp://*:%d' % self.port)
-            log.info("Worker connected to tcp://*:%d" % self.port)
-            sleep(0.01)
-        except:
-            pass
+        if self.port is not None:
+            try:
+                self.context = zmq.Context()
+                log.debug("Worker ZMQ Context: %r" % self.context)
+                self.publisher = self.context.socket(zmq.PUB)
+                self.publisher.bind('tcp://*:%d' % self.port)
+                log.info("Worker connected to tcp://*:%d" % self.port)
+                sleep(0.01)
+            except:
+                pass
 
         log.info("Worker started running an instance of %r" % (self.procedure.__class__.__name__))
         self.update_status(Procedure.RUNNING)
@@ -145,7 +150,7 @@ class Worker(StoppableProcess):
             self.recorder_queue.put(None)
             self.monitor_queue.put(None)
             self.stop()
-            log.info('Finished worker process')
+            del self.recorder
 
     def __repr__(self):
         return "<%s(port=%s,procedure=%s,should_stop=%s)>" % (

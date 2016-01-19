@@ -208,7 +208,7 @@ class Manager(QtCore.QObject):
                 experiment = self.experiments.next()
                 self._running_experiment = experiment
 
-                self._worker = Worker(experiment.results, self.port)
+                self._worker = Worker(experiment.results, port=self.port)
 
                 self._monitor = Monitor(self._worker.monitor_queue)
                 self._monitor.worker_running.connect(self._running)
