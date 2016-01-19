@@ -23,12 +23,17 @@
 #
 
 import logging
+from threading import Thread
+from multiprocessing import Queue
 from logging.handlers import QueueHandler
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def console_log(logger, level=logging.INFO):
+
+def console_log(logger, level=logging.INFO, queue=None):
+    if queue is None:
+        queue = Queue()
     logger.setLevel(level)
     ch = logging.StreamHandler()
     ch.setLevel(level)
@@ -37,14 +42,43 @@ def console_log(logger, level=logging.INFO):
         datefmt='%I:%M:%S %p')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+    scribe = Scribe(queue)
+    return scribe
 
-def file_log(logger, log_filename, level=logging.INFO):
+def file_log(logger, log_filename, level=logging.INFO, queue=None):
+    if queue is None:
+        queue = Queue()
     logger.setLevel(level)
     ch = logging.FileHandler(log_filename)
     ch.setLevel(level)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+    scribe = Scribe(queue)
+    return scribe
+
+
+class Scribe(Thread):
+
+    def __init__(self, queue):
+        self.queue = queue
+        super(Scribe, self).__init__(name='logging-thread')
+
+    def stop(self):
+        self.queue.put(None)
+        self.join()
+
+    def run(self):
+        log.info("Starting logger scribe")
+        while True:
+            try:
+                record = self.queue.get()
+            except (KeyboardInterrupt, SystemExit):
+                break
+            if record is None:
+                break
+            logger = logging.getLogger(record.name)
+            logger.handle(record)
 
 
 class TopicQueueHandler(QueueHandler):

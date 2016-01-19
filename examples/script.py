@@ -43,25 +43,29 @@ class TestProcedure(Procedure):
 
 
 if __name__ == "__main__":
-    port = 5888
-    
-    console_log(log, level=logging.DEBUG)
+
+    scribe = console_log(log, level=logging.DEBUG)
+    scribe.start()
 
     filename = tempfile.mktemp()
     log.info("Using data file: %s" % filename)
 
     procedure = TestProcedure()
-    procedure.iterations = 20
-    procedure.delay = 0.1
+    procedure.iterations = 100
+    procedure.delay = 0.01
     log.info("Set up TestProcedure with %d iterations" % procedure.iterations)
 
     results = Results(procedure, filename)
     log.info("Set up Results")
 
-    worker = Worker(results, port)
+    worker = Worker(results, scribe.queue)
     log.info("Created worker for TestProcedure")
     log.info("Starting worker...")
     worker.start()
 
     log.info("Joining with the worker in at most 20 min")
     worker.join(60*20)
+    log.info("Worker has joined")
+
+    log.info("Stopping the logging")
+    scribe.stop()
