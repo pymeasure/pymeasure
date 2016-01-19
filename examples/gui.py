@@ -69,7 +69,6 @@ class MainWindow(ManagedWindow):
 
 
 if __name__ == "__main__":
-    #console_log(log, level=logging.INFO)
     app = QtGui.QApplication(sys.argv)
     window = MainWindow()
     window.show()
