@@ -24,8 +24,8 @@ THE SOFTWARE.
 
 """
 import logging
-log = log.getLogger(__name__)
-log.addHandler(log.NullHandler())
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
 
@@ -108,7 +108,7 @@ class Keithley2000(Instrument):
 
         :return: (Maximum limit, Auto Range status)        
         """
-        return self.ascii_values(":%s:RANGe:UPPer?;AUTO?" % self.config,
+        return self.values(":%s:RANGe:UPPer?;AUTO?" % self.config,
                                          separator = ';')
      
     def set_range(self, maxvalue):
@@ -144,7 +144,7 @@ class Keithley2000(Instrument):
         
         :return: (Relative value, status ON/OFF)        
         """
-        return self.ascii_values(":%s:REFerence?;REFerence:STATe?" % self.config,
+        return self.values(":%s:REFerence?;REFerence:STATe?" % self.config,
                                  separator = ';')
 
     def set_reference(self, RefValue):
@@ -168,10 +168,9 @@ class Keithley2000(Instrument):
         :return: (number of counts, status ON/OFF, control MOVing/REPeat)
         """
         config = self.config
-        return self.ascii_values(":%s:AVERage:COUNt?;STATe?" % config, 
+        return self.values(":%s:AVERage:COUNt?;STATe?" % config, 
                                 separator = ';') \
-            + self.ascii_values(":%s:AVERage:TCONtrol?" % config, 
-                                converter = 's')
+            + self.values(":%s:AVERage:TCONtrol?" % config)
         
     def set_average(self, count, method = "REPeat"):
         """ Make multiple readings and output the average
