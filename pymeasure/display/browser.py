@@ -86,7 +86,7 @@ class Browser(QtGui.QTreeWidget):
     """
 
     def __init__(self, procedure_class, display_parameters,
-                 measured_quantities, parent=None):
+                 measured_quantities, sort_by_filename=False, parent=None):
         super(Browser, self).__init__(parent)
         self.display_parameters = display_parameters
         self.procedure_class = procedure_class
@@ -99,7 +99,8 @@ class Browser(QtGui.QTreeWidget):
         self.setColumnCount(len(header_labels))
         self.setHeaderLabels(header_labels)
         self.setSortingEnabled(True)
-        self.sortItems(1, QtCore.Qt.AscendingOrder)
+        if sort_by_filename:
+            self.sortItems(1, QtCore.Qt.AscendingOrder)
 
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)

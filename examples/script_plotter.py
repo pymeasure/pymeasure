@@ -44,9 +44,9 @@ class TestProcedure(Procedure):
 
 
 if __name__ == "__main__":
-    console_log(log, level=logging.DEBUG)
-
-    port = 5888
+    
+    scribe = console_log(log, level=logging.DEBUG)
+    scribe.start()
 
     filename = tempfile.mktemp()
     log.info("Using data file: %s" % filename)
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     plotter = Plotter(results)
     plotter.start()
 
-    worker = Worker(results, port)
+    worker = Worker(results, scribe.queue)
     log.info("Created worker for TestProcedure")
     log.info("Starting worker...")
     worker.start()
@@ -72,3 +72,6 @@ if __name__ == "__main__":
     log.info("Waiting for Plotter to close")
     plotter.wait_for_close()
     log.info("Plotter closed")
+
+    log.info("Stopping the logging")
+    scribe.stop()
