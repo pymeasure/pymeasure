@@ -22,7 +22,10 @@
 # THE SOFTWARE.
 #
 
-from multiprocessing import Process, Event
+from multiprocessing import set_start_method, Process, Event
+
+# Force Windows multiprocessing behavior on Unix
+set_start_method('spawn', force=True)
 
 
 class StoppableProcess(Process):

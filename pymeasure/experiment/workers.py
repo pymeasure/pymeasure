@@ -61,6 +61,7 @@ class Worker(StoppableProcess):
             raise ValueError("Invalid Results object during Worker construction")
         self.results = results
         self.procedure = self.results.procedure
+        self.procedures_file = self.procedure.__module__
         self.procedure.check_parameters()
         self.procedure.status = Procedure.QUEUED
 
@@ -112,6 +113,8 @@ class Worker(StoppableProcess):
 
         self.recorder = Recorder(self.results, self.recorder_queue)
         self.recorder.start()
+
+        locals()[self.procedures_file] = __import__(self.procedures_file)
 
         # route Procedure methods
         self.procedure.should_stop = self.should_stop
