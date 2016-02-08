@@ -62,7 +62,7 @@ if __name__ == "__main__":
     plotter = Plotter(results)
     plotter.start()
 
-    worker = Worker(results, scribe.queue)
+    worker = Worker(results, scribe.queue, log_level=logging.DEBUG)
     log.info("Created worker for TestProcedure")
     log.info("Starting worker...")
     worker.start()
