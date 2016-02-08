@@ -3,7 +3,7 @@ import tempfile
 from time import sleep
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
 from pymeasure.log import console_log
@@ -51,14 +51,14 @@ if __name__ == "__main__":
     log.info("Using data file: %s" % filename)
 
     procedure = TestProcedure()
-    procedure.iterations = 100
+    procedure.iterations = 1000
     procedure.delay = 0.01
     log.info("Set up TestProcedure with %d iterations" % procedure.iterations)
 
     results = Results(procedure, filename)
     log.info("Set up Results")
 
-    worker = Worker(results, scribe.queue)
+    worker = Worker(results, scribe.queue, log_level=logging.DEBUG)
     log.info("Created worker for TestProcedure")
     log.info("Starting worker...")
     worker.start()

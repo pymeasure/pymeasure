@@ -51,7 +51,7 @@ class Worker(StoppableProcess):
     thread, a Recorder is run to write the results to 
     """
 
-    def __init__(self, results, log_queue=None, port=None):
+    def __init__(self, results, log_queue=None, log_level=logging.INFO, port=None):
         """ Constructs a Worker to perform the Procedure 
         defined in the file at the filepath
         """
@@ -70,6 +70,7 @@ class Worker(StoppableProcess):
         if log_queue is None:
             log_queue = Queue()
         self.log_queue = log_queue
+        self.log_level = log_level
 
     def join(self, timeout=0):
         try:
@@ -106,6 +107,7 @@ class Worker(StoppableProcess):
     def run(self):
         global log
         log = logging.getLogger()
+        log.setLevel(self.log_level)
         log.handlers = [] # Remove all other handlers
         log.addHandler(TopicQueueHandler(self.monitor_queue))
         log.addHandler(QueueHandler(self.log_queue))
@@ -116,7 +118,7 @@ class Worker(StoppableProcess):
 
         locals()[self.procedures_file] = __import__(self.procedures_file)
 
-        # route Procedure methods
+        # route Procedure methods & log
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
 
