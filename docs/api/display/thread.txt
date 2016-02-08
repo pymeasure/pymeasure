@@ -1,0 +1,6 @@
+##############
+Thread classes
+##############
+
+.. automodule:: pymeasure.display.Qt
+   :members:

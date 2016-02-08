@@ -1,0 +1,6 @@
+#############
+Graph classes
+#############
+
+.. automodule:: pymeasure.display.graph
+   :members:
