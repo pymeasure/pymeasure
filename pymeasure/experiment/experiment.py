@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 from .results import unique_filename
-from .config import get_config
+from .config import get_config, set_mpl_rcparams
 from pymeasure.log import setup_logging
 from pymeasure.experiment import Results, Worker
 from .parameters import Measurable
+from IPython import display
 import time, signal
 import numpy as np
 import gc
@@ -60,8 +61,11 @@ class Experiment():
         self.plots = []
         self.figs = []
         self._data = []
+        self.analyse = lambda x: x
 
         config = get_config(config_file)
+        set_mpl_rcparams(config)
+
         self.scribe = setup_logging(log, **config._sections['Logging'])
         self.scribe.start()
 
@@ -80,7 +84,7 @@ class Experiment():
 
     @property
     def data(self):
-        self._data = self.results.data
+        self._data = self.analyse(self.results.data.copy())
         return self._data
 
     def plot_live(self, *args, **kwargs):
@@ -92,8 +96,9 @@ class Experiment():
         self.plot(*args, **kwargs)
         while not self.worker.should_stop():
             self.plot(*args, **kwargs)
-        if self.is_alive():
-            self.terminate()
+        display.clear_output(wait=True)
+        if self.worker.is_alive():
+            self.worker.terminate()
 
     def plot(self, *args, **kwargs):
         if not self.plots:
@@ -115,7 +120,6 @@ class Experiment():
         gc.collect()
 
     def update_plot(self):
-        from IPython import display
         try:
             tasks = []
             self.data

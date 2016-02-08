@@ -28,31 +28,13 @@ import numpy as np
 import signal
 from pymeasure.log import setup_logging
 
-def get_config(filename=''):
-    global _CONFIG_FILE
-    if filename == '':
-        filename = _CONFIG_FILE
-    else:
-        _CONFIG_FILE = filename
+def get_config(filename='default_config.ini'):
     config = configparser.ConfigParser()
     config.read(filename)
     return config
 
-def init_from_config(filename=''):
-    global _CONFIG_FILE
-    if filename == '':
-        filename = _CONFIG_FILE
-    else:
-        _CONFIG_FILE = filename
-    config = get_config(filename)
-    # logging
-    if 'Logging' in config._sections.keys():
-        log = logging.getLogger()
-        setup_logging(log, **config._sections['Logging'])
-    # plotting
-    if 'rcParams' in config._sections.keys():
+def set_mpl_rcparams(config):
+    if 'matplotlib.rcParams' in config._sections.keys():
         import matplotlib
-        for key in config._sections['rcParams']:
-            matplotlib.rcParams[key] = eval(config._sections['rcParams'][key])
-
-_CONFIG_FILE = "config.ini"
+        for key in config._sections['matplotlib.rcParams']:
+            matplotlib.rcParams[key] = eval(config._sections['matplotlib.rcParams'][key])

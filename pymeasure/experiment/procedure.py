@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,8 @@
 
 from .parameters import Parameter, Measurable
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger()
+log.addHandler(logging.NullHandler())
 
 class Procedure(object):
     """Provides the base class of a procedure to organize the experiment
