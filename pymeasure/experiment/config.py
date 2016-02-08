@@ -26,7 +26,7 @@ import logging
 from .results import unique_filename
 import numpy as np
 import signal
-from pymeasure.log import setup_logging, get_log
+from pymeasure.log import setup_logging
 
 def get_config(filename=''):
     global _CONFIG_FILE
@@ -47,7 +47,7 @@ def init_from_config(filename=''):
     config = get_config(filename)
     # logging
     if 'Logging' in config._sections.keys():
-        log = get_log()
+        log = logging.getLogger()
         setup_logging(log, **config._sections['Logging'])
     # plotting
     if 'rcParams' in config._sections.keys():

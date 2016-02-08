@@ -23,8 +23,8 @@
 #
 
 from .parameters import Parameter, Measurable
-from pymeasure.log import get_log
-
+import logging
+log = logging.getLogger(__name__)
 
 class Procedure(object):
     """Provides the base class of a procedure to organize the experiment
@@ -51,7 +51,6 @@ class Procedure(object):
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
         self._update_parameters()
-        log = get_log()
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
@@ -76,7 +75,6 @@ class Procedure(object):
 
     def measure(self):
         data = self.get_datapoint()
-        log = get_log()
         log.debug("Produced numbers: %s" % data)
         self.emit('results', data)
 

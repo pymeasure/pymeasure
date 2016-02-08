@@ -29,12 +29,6 @@ from logging.handlers import QueueHandler
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-def get_log(name=__name__):
-    log = logging.getLogger(name)
-    log.addHandler(logging.NullHandler())
-    return log
-
-
 def console_log(logger, level=logging.INFO, queue=None):
     if queue is None:
         queue = Queue()
@@ -84,18 +78,21 @@ class Scribe(Thread):
             logger = logging.getLogger(record.name)
             logger.handle(record)
 
-def setup_logging(logger=None, console=False, console_level='INFO', filename='', file_level='DEBUG'):
+def setup_logging(logger=None, console=False, console_level='INFO', filename='', file_level='DEBUG', queue=None):
     '''Setup logging for console and/or file logging. Defaults to no logging.'''    
+    logger.handlers = []
+    if queue is None:
+        queue = Queue()
     if logger is None:
         logger = get_log()
-    logger.handlers = []
-    logging.getLogger('').handlers = []
     if console:
-        console_log(log, level=getattr(logging,console_level))
-        log.info('Set up console logging')
+        console_log(logger, level=getattr(logging,console_level))
+        logger.info('Set up console logging')
     if filename is not '':
-        file_log(log, filename, level=getattr(logging,file_level))
-        log.info('Set up file logging')
+        file_log(logger, filename, level=getattr(logging,file_level))
+        logger.info('Set up file logging')
+    scribe = Scribe(queue)
+    return scribe
 
 class TopicQueueHandler(QueueHandler):
 

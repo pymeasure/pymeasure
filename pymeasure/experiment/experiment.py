@@ -23,13 +23,15 @@
 #
 from .results import unique_filename
 from .config import get_config
-from pymeasure.log import get_log, setup_logging
+from pymeasure.log import setup_logging
 from pymeasure.experiment import Results, Worker
 from .parameters import Measurable
 import time, signal
 import numpy as np
 import gc
-log = get_log()
+import logging
+log = logging.getLogger()
+log.addHandler(logging.NullHandler())
 
 def get_array(start, stop, step):
     '''Returns a numpy array from start to stop'''
@@ -50,7 +52,7 @@ def create_filename(title):
 
 class Experiment():
     '''Class for running procedures.'''
-    def __init__(self, title, procedure, logging=True):
+    def __init__(self, title, procedure, config_file = 'my_config.ini'):
         self.title = title
         self.procedure = procedure
         self.measlist = []
@@ -59,14 +61,22 @@ class Experiment():
         self.figs = []
         self._data = []
 
+        config = get_config(config_file)
+        self.scribe = setup_logging(log, **config._sections['Logging'])
+        self.scribe.start()
+
         self.filename = create_filename(self.title)
         log.info("Using data file: %s" % self.filename)
 
         self.results = Results(self.procedure, self.filename)
         log.info("Set up Results")
 
-        self.worker = Worker(self.results, self.port)
+        self.worker = Worker(self.results, self.scribe.queue, logging.DEBUG)
         log.info("Create worker")
+
+    def start(self):
+        log.info("Starting worker...")
+        self.worker.start()
 
     @property
     def data(self):
