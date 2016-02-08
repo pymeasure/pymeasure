@@ -109,6 +109,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.inputs = inputs
         self.displays = displays
         self.log = logging.getLogger(log_channel)
+        self.log_level = log_level
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.x_axis, self.y_axis = x_axis, y_axis
@@ -152,7 +153,7 @@ class ManagedWindow(QtGui.QMainWindow):
             parent=self
         )
 
-        self.manager = Manager(self.plot, self.browser, parent=self)
+        self.manager = Manager(self.plot, self.browser, log_level=self.log_level, parent=self)
         self.manager.abort_returned.connect(self.abort_returned)
         self.manager.queued.connect(self.queued)
         self.manager.running.connect(self.running)
