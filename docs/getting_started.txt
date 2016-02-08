@@ -30,7 +30,7 @@ In the :code:`pymeasure` package you will find a number of instruments already d
   from pymeasure.instruments.keithley import Keithley2400
 
 
-If the instrument you are planning to use is not already in the repository, follow the instructions on :ref:`adding an instrument <instrument_adding>`.
+If the instrument you are planning to use is not already in the repository, follow the instructions on :doc:`adding an instrument <contribute/adding_instruments>`.
 
 ******************
 Graphical displays
