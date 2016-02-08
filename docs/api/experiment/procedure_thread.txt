@@ -1,6 +1,0 @@
-######################
-Procedure Thread class
-######################
-
-.. automodule:: pymeasure.experiment.procedure
-   :members:

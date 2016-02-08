@@ -21,7 +21,7 @@ Since many instruments have similar functions, a few naming conventions have bee
 .. function names should be all lowercase with underbars if needed.
 
 Usage of getter and setter
-###############
+##########################
 Many settings (such as range, enabled status, etc) are provided by the instrument with a pair of actions: one is to read the current setting value, the other is to assign a value to the setting. One can write two methods, get_setting() and set_setting() for instance, to handle these two actions; or altenatively use getter and setter decorators. In most cases, the two ways are equivalent. In order to incorporate different programming styles, and for the convenience of users, our convention is as follow:
 - Write two functions get_setting() and set_setting(). The latter one should have only one non-keyword argument (but can have many keyword arguments).
 - Define a property setting = property(get_setting, set_setting).
