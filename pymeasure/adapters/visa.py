@@ -87,7 +87,7 @@ class VISAAdapter(Adapter):
         """
         return self.connection.read()
     
-    def values(self, command):
+    def values(self, command, separator = ','):
         """ Writes a command to the instrument and returns a list of numerical
         values from the result.
 
@@ -95,7 +95,7 @@ class VISAAdapter(Adapter):
         :returns: A list of numerical values.
         """
         results = str(self.ask(command)).strip()
-        results = results.split(',')
+        results = results.split(separator)
         for result in results:
             try:
                 result = float(result)

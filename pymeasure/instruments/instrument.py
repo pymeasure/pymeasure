@@ -61,7 +61,7 @@ class Instrument(object):
     @property
     def id(self):
         if self.SCPI:
-            return self.adapter.ask("*IDN?")
+            return self.adapter.ask("*IDN?").strip()
         else:
             return "Warning: Property not implemented."
             
@@ -75,15 +75,8 @@ class Instrument(object):
     def read(self): 
         return self.adapter.read()
 
-    def values(self, command):
-        result = self.ask(command).strip()
-        try:
-            return [float(x) for x in result.split(",")]
-        except:
-            return result
-
-    def ascii_values(self, command, **kwargs):
-        return self.adapter.ascii_values(command, **kwargs)
+    def values(self, command, separator = ','):
+        return self.adapter.values(command, separator = separator)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
