@@ -36,7 +36,7 @@ setup(
     ],
     scripts=[],
     url='https://github.com/ralph-group/pymeasure',
-    license='LICENSE.txt',
+    license='MIT License',
     description='Measurement library for instrument communication, procedure execution, and live-plotting',
     long_description=open('README.md').read(),
     install_requires=[
