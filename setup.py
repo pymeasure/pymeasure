@@ -24,20 +24,19 @@ THE SOFTWARE.
 
 """
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='PyMeasure',
     version='0.2',
-    author='Colin Jermain',
-    author_email='clj72@cornell.edu',
+    author='Colin Jermain, Graham Rowlands',
     packages=[
         'pymeasure', 'pymeasure.instruments',
         'pymeasure.adapters', 'pymeasure.display',
         'pymeasure.experiment'
     ],
     scripts=[],
-    url='',
+    url='https://github.com/ralph-group/pymeasure',
     license='LICENSE.txt',
     description='Measurement library for instrument communication, procedure execution, and live-plotting',
     long_description=open('README.md').read(),
