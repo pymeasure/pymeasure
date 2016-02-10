@@ -2,5 +2,5 @@
 Thread classes
 ##############
 
-.. automodule:: pymeasure.display.Qt
+.. automodule:: pymeasure.display.thread
    :members:
