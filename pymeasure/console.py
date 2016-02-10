@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,26 +21,41 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-try:
-    from .manager import Manager
-    from .plotter import Plotter
-except ImportError:
-    log.warning("Python bindings for Qt (PySide, PyQt) can not be imported")
-except Exception as e:
-    raise e
+import numpy as np
+from datetime.datetime import now
 
 
-def run_in_ipython(app):
-    """ Attempts to run the QApplication in the IPython main loop, which
-    requires the command "%gui qt" to be run prior to the script execution.
-    On failure the Qt main loop is initialized instead
+class ProgressBar(object):
+    """ ProgressBar keeps track of the progress, predicts the
+    estimated time of arrival (ETA), and formats the bar for
+    display in the console
     """
-    try:
-        from IPython.lib.guisupport import start_event_loop_qt4
-        start_event_loop_qt4(app)
-    except ImportError:
-        app.exec_()
+
+    def __init__(self):
+        self.data = np.empty()
+        self.progress_precents = []
+        self.progress_times = []
+
+    def advance(self, progress):
+        """ Appends the progress state and the current
+        time to the data, so that a more accurate prediction
+        for the ETA can be made
+        """
+        pass
+
+    def __str__(self):
+        """ Returns a string representation of the progress bar
+        """
+        pass
+
+
+def display(log, port, level=logging.INFO):
+    """ Displays the log to the console with a progress bar
+    that always remains at the bottom of the screen and refreshes itself
+    """
+    pass

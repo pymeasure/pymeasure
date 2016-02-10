@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyMeasure'
-copyright = u'2013-2015, Colin Jermain, Graham Rowlands'
+copyright = u'2013-2016, Colin Jermain, Graham Rowlands'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
