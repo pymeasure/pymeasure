@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,19 +59,19 @@ class Procedure(object):
         self.gen_measurement()
 
     def gen_measurement(self):
-        '''Create MEASURE and DATA_COLUMNS variables for measure method.
+        '''Create MEASURE and DATA_COLUMNS variables for get_datapoint method.
         '''
         self.MEASURE = {}
         for item in dir(self):
             parameter = getattr(self, item)
             if isinstance(parameter, Measurable):
                 if parameter.measure:
-                    self.MEASURE.update({item: parameter.fget})
+                    self.MEASURE.update({parameter.name: item})
         if self.DATA_COLUMNS == []:
-            self.DATA_COLUMNS = self.MEASURE.keys()
+            self.DATA_COLUMNS = Measurable.DATA_COLUMNS
 
     def get_datapoint(self):
-        data = {key:self.MEASURE[key]() for key in self.MEASURE}
+        data = {key:getattr(self,self.MEASURE[key]).value for key in self.MEASURE}
         return data
 
     def measure(self):

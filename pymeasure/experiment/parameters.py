@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -294,9 +294,27 @@ class ListParameter(Parameter):
 
 class Measurable(object):
     '''Measurable variable for getting e.g. instrument parameters'''
-    def __init__(self, name, fget, units=None, measure=True, **kwargs):
+    DATA_COLUMNS = []
+    def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
         self.name = name
         self.units = units
         self.measure = measure
-        self.fget = fget
-        self.__class__.value = property(fget)
+        if fget != None:
+            self.fget = fget
+            self._value = fget()
+        else:
+            self._value = default
+        Measurable.DATA_COLUMNS.append(name)
+
+    def fget(self):
+        return self._value
+
+    @property
+    def value(self):
+        if hasattr(self, 'fget'):
+            self._value = self.fget()
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value

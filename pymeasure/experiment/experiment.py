@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,13 @@
 #
 from .results import unique_filename
 from .config import get_config, set_mpl_rcparams
-from pymeasure.log import setup_logging
+from pymeasure.log import setup_logging, console_log
 from pymeasure.experiment import Results, Worker
 from .parameters import Measurable
 from IPython import display
 import time, signal
 import numpy as np
+import tempfile
 import gc
 import logging
 log = logging.getLogger()
@@ -48,12 +49,16 @@ def get_array_zero(maxval, step):
     return np.concatenate((np.arange(0,maxval,step), np.arange(maxval, -maxval, -step), np.arange(-maxval, 0, step)))
 
 def create_filename(title):
-    filename = unique_filename(suffix='_%s' %title, **get_config()._sections['Filename'])
+    config = get_config()
+    if 'Filename' in config._sections.keys():
+        filename = unique_filename(suffix='_%s' %title, **config._sections['Filename'])
+    else:
+        filename = tempfile.mktemp()
     return filename
 
 class Experiment():
     '''Class for running procedures.'''
-    def __init__(self, title, procedure, config_file = 'my_config.ini'):
+    def __init__(self, title, procedure, analyse=(lambda x: x)):
         self.title = title
         self.procedure = procedure
         self.measlist = []
@@ -61,12 +66,14 @@ class Experiment():
         self.plots = []
         self.figs = []
         self._data = []
-        self.analyse = lambda x: x
+        self.analyse = analyse
 
-        config = get_config(config_file)
+        config = get_config()
         set_mpl_rcparams(config)
-
-        self.scribe = setup_logging(log, **config._sections['Logging'])
+        if 'Logging' in config._sections.keys():
+            self.scribe = setup_logging(log, **config._sections['Logging'])
+        else:
+            self.scribe = console_log(log)
         self.scribe.start()
 
         self.filename = create_filename(self.title)

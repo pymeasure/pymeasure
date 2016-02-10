@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2015 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,14 @@ from .results import unique_filename
 import numpy as np
 import signal
 from pymeasure.log import setup_logging
+import os
+
+def set_file(filename):
+    os.environ['CONFIG'] = filename
 
 def get_config(filename='default_config.ini'):
+    if 'CONFIG' in os.environ.keys():
+        filename = os.environ['CONFIG']
     config = configparser.ConfigParser()
     config.read(filename)
     return config
