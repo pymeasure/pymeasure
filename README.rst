@@ -24,6 +24,7 @@ PyMeasure builds on the success of two key Python packages.
 
 | `Numpy`_ - Numerical Python, which handles large data sets efficiently  
 | `Pandas`_ - An extension of Numpy that simplifies data management
+| 
 
 There are a number of other packages that are required for specific functionality. 
 
@@ -31,12 +32,14 @@ For communicating with VISA instruments, the PyVISA package is required. PySeria
 
 | `PyVISA`_ - VISA instrument communication library   
 | `PySerial`_ - Serial communication library   
+| 
 
 The live-plotting and user-interfaces require either PyQt4 or PySide, in combination with PyQtGraph.
 
 | `PyQt4`_ - Cross-platform Qt library for graphical user interfaces    
 | `PySide`_ - Alternative to PyQt4, licensed appropriately for commercial use   
 | `PyQtGraph`_ - Efficient live-plotting library   
+| 
 
 For listening in on the experimental procedure execution through TCP messaging, the PyZMQ and MsgPack-Numpy libraries are required. This is not necessary for general use.
 

@@ -12,7 +12,7 @@ Welcome to PyMeasure's documentation!
 
 PyMeasure is a repository of instrument objects to make experimental measurements easy to design and execute. It includes a number of structures for handling the measured data and making graphical displays and user interfaces.
 
-PyMeasure is currently under active development, so please report any issues you experience to our `Issues page`.
+PyMeasure is currently under active development, so please report any issues you experience to our `Issues page`_.
 
 *********
 Contents:
