@@ -38,7 +38,7 @@ setup(
     url='https://github.com/ralph-group/pymeasure',
     license='MIT License',
     description='Measurement library for instrument communication, procedure execution, and live-plotting',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     install_requires=[
         "Numpy >= 1.6.1",
         "pandas >= 0.14",
