@@ -4,9 +4,13 @@
 
 PyMeasure makes measurements easy to set up and run. The package is composed of two parts: (1) a repository of instruments classes that make communicating and taking data easy, and (2) a system for running experiment procedures and graphing their data live.
 
+PyMeasure is currently under active development, so please report any issues you experience to our [Issues page](https://github.com/ralph-group/pymeasure/issues).
+
 ### Getting started ###
 
-The full documentation is still being written, but in the meantime, there exists a number of examples that can help you get up and running. Checkout the `examples` directory.
+Check out [the documentation]() for a [tutorial on getting started]().
+
+There are a number of examples in the `examples` directory that can help you get up and running.
 
 ### Requirements ###
 
@@ -37,8 +41,8 @@ For listening in on the experimental procedure execution through TCP messaging, 
 
 ### Install: ###
 
-Get the latest release from GitHub and install via the Python `pip` installer.
+Get the latest release from GitHub or install via the Python `pip` installer:
 
 ```shell
-pip install PyMeasure-<version>.tar.gz
+pip install pymeasure
 ```

@@ -9,5 +9,5 @@ This section contains specific documentation on the classes and methods of the p
 
    adapters
    experiment/index
-   display
+   display/index
    instruments/index

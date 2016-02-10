@@ -1,6 +1,0 @@
-################
-Experiment class
-################
-
-.. automodule:: pymeasure.experiment.experiment
-   :members:
