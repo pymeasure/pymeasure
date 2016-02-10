@@ -11,10 +11,12 @@ The :code:`pymeasure` package uses an object oriented approach for communicating
 
 Instruments with VISA (GPIB, Serial, etc) are supported through the `PyVISA package`_ under the hood. `Prologix GPIB`_ adapters are also supported.
 
-
+.. _PyVISA package: http://pyvisa.readthedocs.org/en/master/
+.. _Prologix GPIB: http://prologix.biz/
 
 Before using PyMeasure, you should be acquainted with `basic Python programming for the sciences`_ and understand the concept of objects.
 
+.. _basic Python programming for the sciences: https://scipy-lectures.github.io/
 
 
 ****************
@@ -28,7 +30,7 @@ In the :code:`pymeasure` package you will find a number of instruments already d
   from pymeasure.instruments.keithley import Keithley2400
 
 
-If the instrument you are planning to use is not already in the repository, follow the instructions on :ref:`adding an instrument <instrument_adding>`.
+If the instrument you are planning to use is not already in the repository, follow the instructions on :doc:`adding an instrument <contribute/adding_instruments>`.
 
 ******************
 Graphical displays

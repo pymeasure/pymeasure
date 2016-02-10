@@ -9,16 +9,16 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="171.73608mm"
-   height="27.275127mm"
-   viewBox="0 0 608.51369 96.644152"
+   width="167.22055mm"
+   height="27.275129mm"
+   viewBox="0 0 592.51377 96.644159"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r"
    sodipodi:docname="PyMeasure.svg"
-   inkscape:export-filename="/home/colin/Desktop/pymeasure/PyMeasure.png"
-   inkscape:export-xdpi="93.12529"
-   inkscape:export-ydpi="93.12529">
+   inkscape:export-filename="/home/colin/Research/Software/pymeasure/docs/images/PyMeasure tmp.png"
+   inkscape:export-xdpi="46.562561"
+   inkscape:export-ydpi="46.562561">
   <defs
      id="defs4">
     <filter
@@ -81,9 +81,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.70710678"
-     inkscape:cx="112.06539"
-     inkscape:cy="-52.831187"
+     inkscape:zoom="0.5"
+     inkscape:cx="275.73627"
+     inkscape:cy="-39.307506"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -106,8 +106,8 @@
     <inkscape:grid
        type="xygrid"
        id="grid4136"
-       originx="-70.862194"
-       originy="-894.50004" />
+       originx="-70.862196"
+       originy="-894.50003" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -125,18 +125,18 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-70.862193,-61.218037)">
+     transform="translate(-70.862193,-61.218034)">
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:35.54630661px;line-height:125%;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="259.39301"
-       y="131.58414"
+       x="243.39301"
+       y="133.58414"
        id="text4138"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4140"
-         x="259.39301"
-         y="131.58414"
+         x="243.39301"
+         y="133.58414"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:87.50000763px;font-family:'Abyssinica SIL';-inkscape-font-specification:'Abyssinica SIL'"><tspan
    style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:87.50000763px;font-family:'Abyssinica SIL';-inkscape-font-specification:'Abyssinica SIL';fill:#008000"
    id="tspan4142">Py</tspan>Measure</tspan></text>
