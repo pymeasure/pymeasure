@@ -293,7 +293,19 @@ class ListParameter(Parameter):
                              "Must be one of %s" % str(self._choices))
 
 class Measurable(object):
-    '''Measurable variable for getting e.g. instrument parameters'''
+    """ Encapsulates the information for a measurable experiment parameter
+    with information about the name, fget function and units if supplied.
+    The value property is called when the procedure retrieves a datapoint
+    and calls the fget function. If no fget function is specified, the value
+    property will return the latest set value of the parameter (or default
+    if never set).
+
+    :var value: The value of the parameter
+
+    :param name: The parameter name
+    :param fget: The parameter fget function (e.g. an instrument parameter)
+    :param default: The default value
+    """
     DATA_COLUMNS = []
     def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
         self.name = name

@@ -36,19 +36,23 @@ log = logging.getLogger()
 log.addHandler(logging.NullHandler())
 
 def get_array(start, stop, step):
-    '''Returns a numpy array from start to stop'''
+    """Returns a numpy array from start to stop"""
     step = np.sign(stop-start)*abs(step)
     return np.arange(start, stop+step, step)
 
 def get_array_steps(start, stop, numsteps):
-    '''Returns a numpy array from start to stop in numsteps'''
+    """Returns a numpy array from start to stop in numsteps"""
     return get_array(start, stop, (abs(stop-start)/numsteps))
 
 def get_array_zero(maxval, step):
-    '''Returns a numpy array from 0 to maxval to -maxval to 0'''
+    """Returns a numpy array from 0 to maxval to -maxval to 0"""
     return np.concatenate((np.arange(0,maxval,step), np.arange(maxval, -maxval, -step), np.arange(-maxval, 0, step)))
 
 def create_filename(title):
+    """
+    Create a new filename according to the style defined in the config file.
+    If no config is specified, create a temporary file.
+    """
     config = get_config()
     if 'Filename' in config._sections.keys():
         filename = unique_filename(suffix='_%s' %title, **config._sections['Filename'])
@@ -57,7 +61,33 @@ def create_filename(title):
     return filename
 
 class Experiment():
-    '''Class for running procedures.'''
+    """ Class which starts logging and creates/runs the results and worker processes.
+
+    .. code-block:: python
+
+        procedure = Procedure()
+        experiment = Experiment(title, procedure)
+        experiment.start()
+        experiment.plot_live('x', 'y', style='.-')
+
+        for a multi-subplot graph:
+
+        import pylab as pl
+        ax1 = pl.subplot(121)
+        experiment.plot('x','y',ax=ax1)
+        ax2 = pl.subplot(122)
+        experiment.plot('x','z',ax=ax2)
+        experiment.plot_live()
+
+    :var value: The value of the parameter
+
+    :param title: The experiment title
+    :param procedure: The procedure object
+    :param analyse: Post-analysis function, which takes a pandas dataframe as input and
+    returns it with added (analysed) columns. The analysed results are accessible via
+    experiment.data, as opposed to experiment.results.data for the 'raw' data.
+    :param _data_timeout: Time limit for how long live plotting should wait for datapoints.
+    """
     def __init__(self, title, procedure, analyse=(lambda x: x)):
         self.title = title
         self.procedure = procedure
@@ -67,6 +97,7 @@ class Experiment():
         self.figs = []
         self._data = []
         self.analyse = analyse
+        self._data_timeout = 10
 
         config = get_config()
         set_mpl_rcparams(config)
@@ -86,39 +117,54 @@ class Experiment():
         log.info("Create worker")
 
     def start(self):
+        """Start the worker"""
         log.info("Starting worker...")
         self.worker.start()
 
     @property
     def data(self):
+        """Data property which returns analysed data, if an analyse function
+        is defined, otherwise returns the raw data."""
         self._data = self.analyse(self.results.data.copy())
         return self._data
 
-    def plot_live(self, *args, **kwargs):
+    def wait_for_data(self):
+        """Wait for the data attribute to fill with datapoints."""
         t=time.time()
         while self.data.empty:
             time.sleep(.1)
-            if (time.time()-t)>10:
+            if (time.time()-t)>self._data_timeout:
                 log.warning('Timeout, no data received for liveplot')
-        self.plot(*args, **kwargs)
-        while not self.worker.should_stop():
-            self.plot(*args, **kwargs)
-        display.clear_output(wait=True)
-        if self.worker.is_alive():
-            self.worker.terminate()
+                return False
+        return True
+
+    def plot_live(self, *args, **kwargs):
+        """Live plotting loop for jupyter notebook, which automatically updates
+        (an) in-line matplotlib graph(s). Will create a new plot as specified by input
+        arguments, or will update (an) existing plot(s)."""
+        if self.wait_for_data():
+            if not(self.plots):
+                self.plot(*args, **kwargs)
+            while not self.worker.should_stop():
+                self.update_plot()
+            display.clear_output(wait=True)
+            if self.worker.is_alive():
+                self.worker.terminate()
+            self.scribe.stop()
 
     def plot(self, *args, **kwargs):
-        if not self.plots:
+        """Plot the results from the experiment.data pandas dataframe. Store the
+        plots in a plots list attribute."""
+        if self.wait_for_data():
             kwargs['title'] = self.title
             ax = self.data.plot(*args, **kwargs)
             self.plots.append({'type': 'plot', 'args': args, 'kwargs': kwargs, 'ax': ax})
             if ax.get_figure() not in self.figs:
                 self.figs.append(ax.get_figure())
             self._user_interrupt = False
-        else:
-            self.update_plot()
 
     def clear_plot(self):
+        """Clear the figures and plot lists."""
         for fig in self.figs:
             fig.clf()
             pl.close()
@@ -127,6 +173,8 @@ class Experiment():
         gc.collect()
 
     def update_plot(self):
+        """Update the plots in the plots list with new data from the experiment.data
+        pandas dataframe."""
         try:
             tasks = []
             self.data
@@ -151,6 +199,8 @@ class Experiment():
             self._user_interrupt = True
     
     def pcolor(self, xname, yname, zname, *args, **kwargs):
+        """Plot the results from the experiment.data pandas dataframe in a pcolor graph.
+        Store the plots in a plots list attribute."""
         title = self.title
         x,y,z = self._data[xname], self._data[yname], self._data[zname]
         shape = (len(y.unique()), len(x.unique()))
@@ -168,6 +218,7 @@ class Experiment():
             self.figs.append(ax.get_figure())
     
     def update_pcolor(self, ax, xname, yname, zname):
+        """Update a pcolor graph with new data."""
         x,y,z = self._data[xname], self._data[yname], self._data[zname]
         shape = (len(y.unique()), len(x.unique()))
         diff = shape[0]*shape[1] - len(z)
@@ -180,9 +231,17 @@ class Experiment():
         ax.invert_yaxis()
 
     def update_line(self, ax, hl, xname, yname):
+        """Update a line in a matplotlib graph with new data."""
         del hl._xorig, hl._yorig
         hl.set_xdata(self._data[xname])
         hl.set_ydata(self._data[yname])
         ax.relim()
         ax.autoscale()
         gc.collect()
+
+    def __del__(self):
+        self.scribe.stop()
+        if self.worker.is_alive():
+            self.worker.recorder_queue.put(None)
+            self.worker.monitor_queue.put(None)
+            self.worker.stop()

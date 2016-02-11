@@ -30,6 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 def console_log(logger, level=logging.INFO, queue=None):
+    """Create a console log handler. Return a scribe thread object."""
     if queue is None:
         queue = Queue()
     logger.setLevel(level)
@@ -44,6 +45,7 @@ def console_log(logger, level=logging.INFO, queue=None):
     return scribe
 
 def file_log(logger, log_filename, level=logging.INFO, queue=None):
+    """Create a file log handler. Return a scribe thread object."""
     if queue is None:
         queue = Queue()
     logger.setLevel(level)
@@ -57,7 +59,11 @@ def file_log(logger, log_filename, level=logging.INFO, queue=None):
 
 
 class Scribe(Thread):
+    """ Scribe class which logs records as retrieved from a queue to support consistent
+    multi-process logging.
 
+    :param queue: The multiprocessing queue which the scriber will listen to.
+    """
     def __init__(self, queue):
         self.queue = queue
         super(Scribe, self).__init__(name='logging-thread')
@@ -79,7 +85,8 @@ class Scribe(Thread):
             logger.handle(record)
 
 def setup_logging(logger=None, console=False, console_level='INFO', filename='', file_level='DEBUG', queue=None):
-    '''Setup logging for console and/or file logging. Defaults to no logging.'''    
+    """Setup logging for console and/or file logging. Returns a scribe thread object.
+    Defaults to no logging."""    
     logger.handlers = []
     if queue is None:
         queue = Queue()

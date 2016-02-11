@@ -42,6 +42,9 @@ class Procedure(object):
     Inheriting classes should define the startup, execute, and shutdown
     methods as needed. The shutdown method is called even with a
     software exception or abort event during the execute method.
+    
+    If keyword arguments are provided, they are added to the object as
+    attributes.
     """
 
     DATA_COLUMNS = []
