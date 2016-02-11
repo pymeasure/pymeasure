@@ -35,7 +35,7 @@ Let's start with a simple example of a procedure which loops over a certain numb
                 if self.should_stop():
                     break
 
-At the top of the SimpleProcedure class we define the required Parameters. In this case, :python:`iterations` is a IntegerParameter that defines the number of loops to preform. Inside our Procedure class we reference the value in the iterations Parameter by the class variable where the Parameter is stored (:python:`self.iterations`). PyMeasure swaps out the Parameters with their values behind the scene, which makes accessing the values of parameters very convenient.
+At the top of the SimpleProcedure class we define the required Parameters. In this case, :python:`iterations` is a IntegerParameter that defines the number of loops to perform. Inside our Procedure class we reference the value in the iterations Parameter by the class variable where the Parameter is stored (:python:`self.iterations`). PyMeasure swaps out the Parameters with their values behind the scene, which makes accessing the values of parameters very convenient.
 
 We define the data columns that will be recorded in a list stored in :python:`DATA_COLUMNS`. This sets the order by which columns are stored in the file. In this example, we will store the Iteration number for each loop iteration.
 
@@ -73,7 +73,7 @@ Now we are ready to start the worker. ::
 
     worker.start()
 
-The Worker process will be launched in a separate process, which allows us to perform other task while it is running. When writing a script that should block (wait for the Worker to finish), we need to join the Worker back into the main process. ::
+The Worker process will be launched in a separate process, which allows us to perform other tasks while it is running. When writing a script that should block (wait for the Worker to finish), we need to join the Worker back into the main process. ::
 
     worker.join(timeout=3600) # wait at most 1 hr (3600 sec)
 

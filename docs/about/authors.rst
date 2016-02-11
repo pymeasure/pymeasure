@@ -3,5 +3,5 @@ Authors and contributors
 
 | Colin Jermain
 | Graham Rowlands
-| Minh Hai Nguyen
+| Minh-Hai Nguyen
 | Guen Prawiro-Atmodjo
