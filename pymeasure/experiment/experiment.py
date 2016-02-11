@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
 from .results import unique_filename
 from .config import get_config, set_mpl_rcparams
 from pymeasure.log import setup_logging, console_log
@@ -31,6 +32,7 @@ import time, signal
 import numpy as np
 import tempfile
 import gc
+
 import logging
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
@@ -60,6 +62,7 @@ def create_filename(title):
         filename = tempfile.mktemp()
     return filename
 
+
 class Experiment():
     """ Class which starts logging and creates/runs the results and worker processes.
 
@@ -84,8 +87,8 @@ class Experiment():
     :param title: The experiment title
     :param procedure: The procedure object
     :param analyse: Post-analysis function, which takes a pandas dataframe as input and
-    returns it with added (analysed) columns. The analysed results are accessible via
-    experiment.data, as opposed to experiment.results.data for the 'raw' data.
+        returns it with added (analysed) columns. The analysed results are accessible via
+        experiment.data, as opposed to experiment.results.data for the 'raw' data.
     :param _data_timeout: Time limit for how long live plotting should wait for datapoints.
     """
     def __init__(self, title, procedure, analyse=(lambda x: x)):
