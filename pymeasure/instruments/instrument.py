@@ -46,6 +46,9 @@ class Instrument(object):
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
+        class Object(object):
+            pass
+        self.get = Object()
 
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
@@ -127,7 +130,8 @@ class Instrument(object):
 
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
-
+        setattr(self.get, name, lambda: fget(self))
+        
 
     def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
         """This adds a property to the class based on the supplied
@@ -147,6 +151,7 @@ class Instrument(object):
 
         # Add the property attribute
         setattr(self.__class__, name, property(fget))
+        setattr(self.get, name, lambda: fget(self))
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):

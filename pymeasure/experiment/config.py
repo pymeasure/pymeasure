@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import configparser
+import logging
+from .results import unique_filename
+import numpy as np
+import signal
+from pymeasure.log import setup_logging
+import os
 
-from .parameters import (Parameter, IntegerParameter, FloatParameter,
-                        VectorParameter, ListParameter, BooleanParameter, Measurable)
-from .procedure import Procedure, UnknownProcedure
-from .results import Results, unique_filename
-from .workers import Worker
-from .listeners import Listener, Recorder
-from .config import get_config
-from .experiment import Experiment, get_array, get_array_steps, get_array_zero
+def set_file(filename):
+    os.environ['CONFIG'] = filename
+
+def get_config(filename='default_config.ini'):
+    if 'CONFIG' in os.environ.keys():
+        filename = os.environ['CONFIG']
+    config = configparser.ConfigParser()
+    config.read(filename)
+    return config
+
+def set_mpl_rcparams(config):
+    if 'matplotlib.rcParams' in config._sections.keys():
+        import matplotlib
+        for key in config._sections['matplotlib.rcParams']:
+            matplotlib.rcParams[key] = eval(config._sections['matplotlib.rcParams'][key])

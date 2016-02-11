@@ -42,6 +42,7 @@ from .listeners import Recorder
 from .results import Results
 from .procedure import Procedure
 from ..log import TopicQueueHandler
+from pymeasure.log import file_log
 
 
 class Worker(StoppableProcess):

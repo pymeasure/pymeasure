@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -226,7 +226,7 @@ class VectorParameter(Parameter):
     @value.setter
     def value(self, value):
         # Strip initial and final brackets
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
@@ -291,3 +291,42 @@ class ListParameter(Parameter):
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
+
+class Measurable(object):
+    """ Encapsulates the information for a measurable experiment parameter
+    with information about the name, fget function and units if supplied.
+    The value property is called when the procedure retrieves a datapoint
+    and calls the fget function. If no fget function is specified, the value
+    property will return the latest set value of the parameter (or default
+    if never set).
+
+    :var value: The value of the parameter
+
+    :param name: The parameter name
+    :param fget: The parameter fget function (e.g. an instrument parameter)
+    :param default: The default value
+    """
+    DATA_COLUMNS = []
+    def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
+        self.name = name
+        self.units = units
+        self.measure = measure
+        if fget != None:
+            self.fget = fget
+            self._value = fget()
+        else:
+            self._value = default
+        Measurable.DATA_COLUMNS.append(name)
+
+    def fget(self):
+        return self._value
+
+    @property
+    def value(self):
+        if hasattr(self, 'fget'):
+            self._value = self.fget()
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value

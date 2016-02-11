@@ -46,7 +46,7 @@ class Keithley2400(Instrument):
         )
 
         self.write("format:data ascii")
-        self.values_format = visa.ascii
+        # self.values_format = visa.ascii
         self.reset()
         self.source_mode = None
 
@@ -79,10 +79,14 @@ class Keithley2400(Instrument):
         self.beep(base_frequency*6.0/4.0, duration)
 
     def check_errors(self):
-        errors = map(int, self.values(":system:error?"))
-        for err in errors:
-            if err != 0:
-                log.info("Keithley Encountered error: %d\n" % err)
+        import re
+        err = int(re.search(r'\d+', self.values(":system:error?")).group())
+        while err != 0:
+            t = time.time()
+            log.info("Keithley Encountered error: %d\n" % err)
+            err = int(re.search(r'\d+', self.values(":system:error?")).group())
+            if (time.time()-t)>10:
+                log.warning('Timeout for Keithley error retrieval.')
 
     def reset(self):
         self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")

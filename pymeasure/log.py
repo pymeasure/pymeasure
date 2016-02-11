@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,9 +29,8 @@ from logging.handlers import QueueHandler
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-
-
 def console_log(logger, level=logging.INFO, queue=None):
+    """Create a console log handler. Return a scribe thread object."""
     if queue is None:
         queue = Queue()
     logger.setLevel(level)
@@ -46,6 +45,7 @@ def console_log(logger, level=logging.INFO, queue=None):
     return scribe
 
 def file_log(logger, log_filename, level=logging.INFO, queue=None):
+    """Create a file log handler. Return a scribe thread object."""
     if queue is None:
         queue = Queue()
     logger.setLevel(level)
@@ -59,7 +59,11 @@ def file_log(logger, log_filename, level=logging.INFO, queue=None):
 
 
 class Scribe(Thread):
+    """ Scribe class which logs records as retrieved from a queue to support consistent
+    multi-process logging.
 
+    :param queue: The multiprocessing queue which the scriber will listen to.
+    """
     def __init__(self, queue):
         self.queue = queue
         super(Scribe, self).__init__(name='logging-thread')
@@ -80,6 +84,22 @@ class Scribe(Thread):
             logger = logging.getLogger(record.name)
             logger.handle(record)
 
+def setup_logging(logger=None, console=False, console_level='INFO', filename='', file_level='DEBUG', queue=None):
+    """Setup logging for console and/or file logging. Returns a scribe thread object.
+    Defaults to no logging."""    
+    logger.handlers = []
+    if queue is None:
+        queue = Queue()
+    if logger is None:
+        logger = get_log()
+    if console:
+        console_log(logger, level=getattr(logging,console_level))
+        logger.info('Set up console logging')
+    if filename is not '':
+        file_log(logger, filename, level=getattr(logging,file_level))
+        logger.info('Set up file logging')
+    scribe = Scribe(queue)
+    return scribe
 
 class TopicQueueHandler(QueueHandler):
 
