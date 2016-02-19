@@ -57,8 +57,8 @@ Get the latest release from GitHub or install via the Python :code:`pip` install
 
 
 
-.. _the documentation: https://readthedocs.org/pymeasure
-.. _tutorial on getting started: https://readthedocs.org/pymeasure/getting_started.html
+.. _the documentation: http://pymeasure.readthedocs.org/en/latest/
+.. _tutorial on getting started: http://pymeasure.readthedocs.org/en/latest/getting_started.html
 .. _Issues page: https://github.com/ralph-group/pymeasure/issues
 .. _Numpy: https://github.com/numpy/numpy
 .. _Pandas: https://github.com/pydata/pandas
