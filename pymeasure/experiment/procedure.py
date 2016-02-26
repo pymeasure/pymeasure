@@ -56,9 +56,8 @@ class Procedure(object):
         self.status = Procedure.QUEUED
         self._update_parameters()
         for key in kwargs:
-            if key in self._parameters.keys():
-                setattr(self, key, kwargs[key])
-                log.info('Setting parameter %s to %s' %(key, kwargs[key]))
+            setattr(self, key, kwargs[key])
+            log.info('Setting parameter %s to %s' %(key, kwargs[key]))
         self.gen_measurement()
 
     def gen_measurement(self):
