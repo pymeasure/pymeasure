@@ -26,7 +26,7 @@ from threading import Thread, Event
 
 
 class StoppableThread(Thread):
-    """ Base class for Processes which require the ability
+    """ Base class for Threads which require the ability
     to be stopped by a thread-safe method call
     """
 
