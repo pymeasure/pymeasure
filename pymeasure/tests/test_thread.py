@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +22,18 @@
 # THE SOFTWARE.
 #
 
-from threading import Thread, Event
+from pymeasure.thread import StoppableThread
 
 
-class StoppableThread(Thread):
-    """ Base class for Threads which require the ability
-    to be stopped by a thread-safe method call
-    """
+def test_stopping():
+    t = StoppableThread()
+    t.start()
+    t.stop()
+    assert t.should_stop() == True
+    t.join()
 
-    def __init__(self):
-        self._should_stop = Event()
-        self._should_stop.clear()
-        super(StoppableThread, self).__init__()
-
-    def join(self, timeout=0):
-        """ Joins the current thread and forces it to stop after
-        the timeout if necessary
-
-        :param timeout: Timeout duration in seconds
-        """
-        self._should_stop.wait(timeout)
-        if not self.should_stop():
-            self.stop()
-        super(StoppableThread, self).join()
-
-    def stop(self):
-        self._should_stop.set()
-
-    def should_stop(self):
-        return self._should_stop.is_set()
-
-    def __repr__(self):
-        return "<%s(should_stop=%s)>" % (
-            self.__class__.__name__, self.should_stop())
+def test_joining():
+    t = StoppableThread()
+    t.start()
+    t.join()
+    assert t.should_stop() == True

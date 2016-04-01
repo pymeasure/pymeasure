@@ -27,6 +27,7 @@ import logging
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
 
+
 class Procedure(object):
     """Provides the base class of a procedure to organize the experiment
     execution. Procedures should be run by Workers to ensure that
@@ -64,6 +65,7 @@ class Procedure(object):
     def gen_measurement(self):
         '''Create MEASURE and DATA_COLUMNS variables for get_datapoint method.
         '''
+        # TODO: Refactor measurables implementation to be consistent with parameters
         self.MEASURE = {}
         for item in dir(self):
             parameter = getattr(self, item)

@@ -22,36 +22,9 @@
 # THE SOFTWARE.
 #
 
-from threading import Thread, Event
+import pytest
 
 
-class StoppableThread(Thread):
-    """ Base class for Threads which require the ability
-    to be stopped by a thread-safe method call
-    """
-
-    def __init__(self):
-        self._should_stop = Event()
-        self._should_stop.clear()
-        super(StoppableThread, self).__init__()
-
-    def join(self, timeout=0):
-        """ Joins the current thread and forces it to stop after
-        the timeout if necessary
-
-        :param timeout: Timeout duration in seconds
-        """
-        self._should_stop.wait(timeout)
-        if not self.should_stop():
-            self.stop()
-        super(StoppableThread, self).join()
-
-    def stop(self):
-        self._should_stop.set()
-
-    def should_stop(self):
-        return self._should_stop.is_set()
-
-    def __repr__(self):
-        return "<%s(should_stop=%s)>" % (
-            self.__class__.__name__, self.should_stop())
+def pytest_addoption(parser):
+    parser.addoption("--runslow", action="store_true",
+        help="run slow tests")
