@@ -4,24 +4,38 @@ environment:
 
   matrix:
 
+    fast_finish: true     # immediately finish build once one of the jobs fails.
+
     # For Python versions available on Appveyor, see
     # http://www.appveyor.com/docs/installed-software#python
     # The list here is complete (excluding Python 2.6, which
     # isn't covered by this document) at the time of writing.
 
     - PYTHON: "C:\\Python34"
+      PYTHON_VERSION: "3.4"
+
     - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python33-x64"
-      DISTUTILS_USE_SDK: "1"
+      PYTHON_VERSION: "3.5"
+
     - PYTHON: "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4"
       DISTUTILS_USE_SDK: "1"
+      PYTHON_ARCH: "64"
+
     - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5"
+      DISTUTILS_USE_SDK: "1"
+      PYTHON_ARCH: "64"
 
 skip_tags: true
+
+init:
+  - "ECHO %PYTHON_VERSION% %PYTHON%"
 
 install:
   # We need wheel installed to build wheels
   - "%PYTHON%\\python.exe -m pip install wheel"
+  - "%PYTHON%\\python.exe -m pip install setuptools"
   - "%PYTHON%\\python.exe -m pip install -r requirements.txt"
 
 build: off
