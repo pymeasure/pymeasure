@@ -4,10 +4,10 @@ Version 0.3 -- released 4/8/16
 - Updated set of example scripts and notebooks
 - New PyMeasure logo released
 - Removed support for Python <3.4
-- Changed multiprocessing to use spawn for compabability
+- Changed multiprocessing to use spawn for compatibility
 - Significant work on the documentation
 - Added initial tests for non-instrument code
-- Continous integration setup for Linux and Windows
+- Continuous integration setup for Linux and Windows
 
 Version 0.2 -- released 12/16/15
 ================================
