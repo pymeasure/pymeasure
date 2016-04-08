@@ -4,7 +4,7 @@
 PyMeasure Scientific package
 ############################
 
-PyMeasure makes scientific measurements easy to set up and run. The package contains a repository of instrument classes and a system for running experiment procedures, which provides graphical interfaces for graphing live data and managing queues of experiments. Both parts of the package are independent, and when combined provide all the necessary requirements for advanced measurements with limited coding.
+PyMeasure makes scientific measurements easy to set up and run. The package contains a repository of instrument classes and a system for running experiment procedures, which provides graphical interfaces for graphing live data and managing queues of experiments. Both parts of the package are independent, and when combined provide all the necessary requirements for advanced measurements with limited coding needed.
 
 PyMeasure is currently under active development, so please report any issues you experience to our `Issues page`_.
 
