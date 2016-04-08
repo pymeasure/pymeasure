@@ -8,6 +8,12 @@ PyMeasure makes measurements easy to set up and run. The package is composed of 
 
 PyMeasure is currently under active development, so please report any issues you experience to our `Issues page`_.
 
+.. image:: https://ci.appveyor.com/api/projects/status/hcj2n2a7l97wfbb8/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/cjermain/pymeasure
+
+.. image:: https://travis-ci.org/ralph-group/pymeasure.svg?branch=master
+    :target: https://travis-ci.org/ralph-group/pymeasure
+
 Getting started
 ***************
 
