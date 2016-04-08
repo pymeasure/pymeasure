@@ -1,4 +1,4 @@
-.. image:: docs/images/PyMeasure.png
+.. image:: https://raw.githubusercontent.com/ralph-group/pymeasure/master/docs/images/PyMeasure.png
     :alt: PyMeasure Scientific package
 
 PyMeasure Scientific package
