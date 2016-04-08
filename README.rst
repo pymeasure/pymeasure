@@ -1,5 +1,4 @@
 .. image:: docs/images/PyMeasure.png
-  :width: 315
 
 PyMeasure
 #########
