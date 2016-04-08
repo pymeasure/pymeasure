@@ -24,10 +24,6 @@
 
 from pymeasure.instruments import Instrument, discreteTruncate, RangeException
 
-import numpy as np
-import re
-from io import BytesIO
-
 
 class AnritsuMG3692C(Instrument):
     """ Represents the Anritsu MG3692C Signal Generator
@@ -39,3 +35,27 @@ class AnritsuMG3692C(Instrument):
             "Anritsu MG3692C Signal Generator",
             **kwargs
         )
+
+        self.add_control("power", ":POWER?", ":POWER %g dBm;")
+        self.add_control("frequency", ":FREQUENCY?", ":FREQUENCY %g Hz;")
+
+    @property
+    def output(self):
+        return int(self.ask(":OUTPUT?")) == 1
+
+    @output.setter
+    def output(self, value):
+        if value:
+            self.write(":OUTPUT ON;")
+        else:
+            self.write(":OUTPUT OFF;")
+
+    def enable(self):
+        self.output = True
+
+    def disable(self):
+        self.output = False
+
+    def shutdown(self):
+        self.modulation = False
+        self.disable()
