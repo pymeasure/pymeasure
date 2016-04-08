@@ -36,6 +36,7 @@ setup(
     ],
     scripts=[],
     url='https://github.com/ralph-group/pymeasure',
+    download_url = 'https://github.com/ralph-group/pymeasure/tarball/v0.3',
     license='MIT License',
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read(),
