@@ -11,19 +11,23 @@ environment:
 
     - PYTHON: "C:\\Python34"
       PYTHON_VERSION: "3.4"
+      PLATFORM: x86
 
     - PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5"
+      PLATFORM: x86
 
     - PYTHON: "C:\\Python34-x64"
       PYTHON_VERSION: "3.4"
       DISTUTILS_USE_SDK: "1"
       PYTHON_ARCH: "64"
+      PLATFORM: x64
 
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5"
       DISTUTILS_USE_SDK: "1"
       PYTHON_ARCH: "64"
+      PLATFORM: x64
 
       fast_finish: true     # immediately finish build once one of the jobs fails.
 
@@ -33,7 +37,13 @@ init:
   - "ECHO %PYTHON_VERSION% %PYTHON%"
 
 install:
+
+  # Set VC variables for the platform
+  - if %PLATFORM% == x64 call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\vcvarsx86_amd64.bat"
+  - if %PLATFORM% == x86 call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\vcvars32.bat"
+
   # We need wheel installed to build wheels
+  - "%PYTHON%\\python.exe -m pip install --upgrade pip"
   - "%PYTHON%\\python.exe -m pip install wheel"
   - "%PYTHON%\\python.exe -m pip install setuptools"
   - "%PYTHON%\\python.exe -m pip install -r requirements.txt"
