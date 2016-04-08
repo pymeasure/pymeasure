@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ from setuptools import setup
 
 setup(
     name='PyMeasure',
-    version='0.2',
-    author='Colin Jermain, Graham Rowlands',
+    version='0.3',
+    author='PyMeasure Developers',
     packages=[
         'pymeasure', 'pymeasure.instruments',
         'pymeasure.adapters', 'pymeasure.display',
@@ -37,7 +37,7 @@ setup(
     scripts=[],
     url='https://github.com/ralph-group/pymeasure',
     license='MIT License',
-    description='Measurement library for instrument communication, procedure execution, and live-plotting',
+    description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read(),
     install_requires=[
         "Numpy >= 1.6.1",
@@ -53,5 +53,6 @@ setup(
         "Operating System :: Unix",
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Scientific/Engineering",
-    ]
+    ],
+    keywords="measure instrument experiment control automate graph plot"
 )
