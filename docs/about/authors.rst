@@ -1,5 +1,5 @@
-Authors and contributors
-========================
+Authors and developers
+======================
 
 | Colin Jermain
 | Graham Rowlands

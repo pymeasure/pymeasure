@@ -2,8 +2,11 @@
 ##########################
 *.pyc
 dist/*
+build/*
 MANIFEST
 .env/*
 docs/_build/*
 examples/.ipynb_checkpoints/*
 PyMeasure.egg-info/*
+.cache/*
+.pypirc

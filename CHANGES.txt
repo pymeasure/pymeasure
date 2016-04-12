@@ -1,3 +1,14 @@
+Version 0.3 -- released 4/8/16
+==============================
+- Added IPython (Jupyter) notebook support with significant features
+- Updated set of example scripts and notebooks
+- New PyMeasure logo released
+- Removed support for Python <3.4
+- Changed multiprocessing to use spawn for compatibility
+- Significant work on the documentation
+- Added initial tests for non-instrument code
+- Continuous integration setup for Linux and Windows
+
 Version 0.2 -- released 12/16/15
 ================================
 - Python 3 compatibility, removed support for Python 2

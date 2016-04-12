@@ -21,7 +21,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   getting_started
+   getting_started/index
    basic_tutorial
    contribute/index
    api/index

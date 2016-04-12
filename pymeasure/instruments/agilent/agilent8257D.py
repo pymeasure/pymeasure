@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,39 +36,46 @@ class Agilent8257D(Instrument):
             **kwargs
         )
 
-        self.add_control("power",     ":pow?",  ":pow %g dbm;")
-        self.add_control("frequency", ":freq?", ":freq %g Hz;")
+        self.add_control("power",     ":pow?",  ":pow %g dbm;",
+                         docs = "RF power in dBm")
+        self.add_control("frequency", ":freq?", ":freq %g Hz;",
+                         docs = "RF frequency in Hz")
         self.add_control("center_frequency", ":SOUR:FREQ:CENT?", ":SOUR:FREQ:CENT %e HZ")
         self.add_control("start_frequency", ":SOUR:FREQ:STAR?", ":SOUR:FREQ:STAR %e HZ")
         self.add_control("stop_frequency", ":SOUR:FREQ:STOP?", ":SOUR:FREQ:STOP %e HZ")
         self.add_control("start_power", ":SOUR:POW:STAR?", ":SOUR:POW:STAR %e DBM")
         self.add_control("stop_power", ":SOUR:POW:STOP?", ":SOUR:POW:STOP %e DBM")
-        self.add_control("dwell_time", ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f")
+        self.add_control("dwell_time", ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f",
+                         docs = "Settling time in seconds at the current freq/power setting")
         self.add_measurement("step_points", ":SOUR:SWE:POIN?")
 
-    @property
-    def output(self):
+    def get_output(self):
+        """ Return if the output is ON"""
         return int(self.ask(":output?")) == 1
 
-    @output.setter
-    def output(self, value):
+    def set_output(self, value):
+        """ Set output ON/OFF"""
         if value:
             self.write(":output on;")
         else:
             self.write(":output off;")
-
+            
+    output = property(get_output, set_output)
+    
     def enable(self):
+        """ Set output = ON"""
         self.output = True
 
     def disable(self):
+        """ Set output = OFF"""
         self.output = False
 
-    @property
-    def modulation(self):
+    def get_modulation(self):
+        """ Return if modulation is ON"""
         return True if int(self.ask(":output:mod?")) == 1 else False
 
-    @modulation.setter
-    def modulation(self, value):
+    def set_modulation(self, value):
+        """ Set modulation ON/OFF"""
         if value:
             self.write(":output:mod on;")
             self.write(":lfo:sour int; :lfo:ampl 2.0vp; :lfo:stat on;")
@@ -76,8 +83,16 @@ class Agilent8257D(Instrument):
             self.write(":output:mod off;")
             self.write(":lfo:stat off;")
 
+    modulation = property(get_modulation, set_modulation)
+    
     def configure_modulation(self, freq=10.0e9, modType="amplitude",
                              modDepth=100.0):
+        """ Configure modulation and turn modulation ON
+        
+        :param freq: Modulation frequency, Hz
+        :param modType: 'amplitude' or 'pulse'
+        :param modDepth: AM modulation magnitude in percentage
+        """
         if modType == "amplitude":
             # self.write(":AM1;")
             self.modulation = True

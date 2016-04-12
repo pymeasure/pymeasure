@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands, Guen Prawiroatmodjo
+# Copyright (c) 2013-2016 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,21 +22,27 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger()
+log.addHandler(logging.NullHandler())
+
+try:
+    from IPython import display
+except:
+    log.warning("IPython could not be imported")
+
 from .results import unique_filename
 from .config import get_config, set_mpl_rcparams
 from pymeasure.log import setup_logging, console_log
 from pymeasure.experiment import Results, Worker
 from .parameters import Measurable
-from IPython import display
 import time, signal
 import numpy as np
 import tempfile
 import gc
 import os
 
-import logging
-log = logging.getLogger()
-log.addHandler(logging.NullHandler())
+
 
 def get_array(start, stop, step):
     """Returns a numpy array from start to stop"""

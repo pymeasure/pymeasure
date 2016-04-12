@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2016 Colin Jermain, Graham Rowlands
+# Copyright (c) 2013-2016 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ from threading import Thread, Event
 
 
 class StoppableThread(Thread):
-    """ Base class for Processes which require the ability
+    """ Base class for Threads which require the ability
     to be stopped by a thread-safe method call
     """
 
