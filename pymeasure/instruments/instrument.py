@@ -26,10 +26,17 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+try:
+    import zmq
+    from msgpack_numpy import dumps
+except ImportError:
+    log.warning("ZMQ and MsgPack are required for TCP communication")
+
+from multiprocessing import Process
+from ..experiment.listeners import Listener
 from pymeasure.adapters.visa import VISAAdapter
 
 import numpy as np
-
 
 class Instrument(object):
     """ Base class for Instruments, independent of the particular Adapter used
@@ -170,3 +177,65 @@ class Instrument(object):
         """Return any accumulated errors. Must be reimplemented by subclasses.
         """
         pass
+
+
+class InstrumentDaemon(Instrument, Listener):
+    """ InstrumentDaemon runs a loop in a thread and executes instrument commands as received
+    """
+    instances = []
+    def __init__(self, adapter, name, includeSCPI=True, port=None, **kwargs):
+        self.port = port
+        self.instrument_name = name
+        self.running = True
+        log.info("Initializing %s InstrumentDaemon." % self.instrument_name)
+        topic = self.instrument_name + '_request'
+        super(Instrument, self).__init__(port, topic)
+        self.start()
+        InstrumentDaemon.instances.append(self)
+
+    def run(self):
+        global log
+        log = logging.getLogger()
+        log.handlers = [] # Remove all other handlers
+        log.info("Instrument process started")
+
+        if self.port is not None:
+            try:
+                self.context = zmq.Context()
+                log.debug("Worker ZMQ Context: %r" % self.context)
+                self.publisher = self.context.socket(zmq.PUB)
+                self.publisher.bind('tcp://*:%d' % self.port)
+                log.info("Worker connected to tcp://*:%d" % self.port)
+                sleep(0.01)
+            except:
+                pass
+
+        while self.running:
+            topic, data = self.receive()
+            if topic == self.instrument_name + '_request':
+                cmd = data
+
+                if not cmd: break
+                if cmd == 'close':
+                    self.running = False
+                else:
+                    try:
+                        if '=' in cmd:
+                            cmd = cmd.replace(' =','=')
+                            cmd = cmd.replace('= ','=')
+                            param, value = re.split('=',cmd)
+                            # if param in self._params:
+                            #     setattr(instrument, param, eval(value))
+                            # else:
+                            #     logging.warning('Instrument %s does not have attribute %s.' %(instrument._name, param))
+                            # response = 'True'
+                        if '(' in cmd:
+                            response = eval('self.' + cmd)
+                        else:
+                            response = str(getattr(self, cmd))
+                        topic = self.instrument_name + '_reply'
+                        self.publisher.send_multipart([topic.encode(), dumps(response)])
+                    except Exception as e:
+                        logging.warning('Command \'%s\' not recognized: %s' %(cmd, e))
+                        topic = self.instrument_name + '_reply'
+                        self.publisher.send_multipart([topic.encode(), dumps('None')])
