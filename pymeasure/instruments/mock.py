@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrumentdaemon import Instrument
 from pymeasure.adapters import FakeAdapter
 import numpy, time
 

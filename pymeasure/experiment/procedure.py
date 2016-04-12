@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from .parameters import Parameter, Measurable
+from .parameters import Parameter
 import logging
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())

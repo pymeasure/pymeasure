@@ -35,7 +35,6 @@ from .results import unique_filename
 from .config import get_config, set_mpl_rcparams
 from pymeasure.log import setup_logging, console_log
 from pymeasure.experiment import Results, Worker
-from .parameters import Measurable
 import time, signal
 import numpy as np
 import tempfile

@@ -34,6 +34,7 @@ except ImportError:
 
 from pymeasure.adapters.visa import VISAAdapter
 from multiprocessing import Process
+from ..experiment.listeners import Listener
 
 import numpy as np
 
@@ -53,7 +54,7 @@ class Instrument(Listener):
             raise Exception("Invalid Adapter provided for Instrument since "
                             "PyVISA is not present")
         self.port = port
-        self.name = name
+        self.instrument_name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
         class Object(object):
@@ -70,14 +71,15 @@ class Instrument(Listener):
         self.isShutdown = False
 
         self.running = True
-        log.info("Initializing %s." % self.name)
+        log.info("Initializing %s." % self.instrument_name)
+        topic = self.instrument_name + '_request'
+        super(Instrument, self).__init__(port, topic)
         self.start()
         Instrument.instances.append(self)
 
     def run(self):
         global log
         log = logging.getLogger()
-        log.setLevel(self.log_level)
         log.handlers = [] # Remove all other handlers
         log.info("Instrument process started")
 
@@ -94,7 +96,7 @@ class Instrument(Listener):
 
         while self.running:
             topic, data = self.receive()
-            if topic == self.name:
+            if topic == self.instrument_name + '_request':
                 cmd = data
 
                 if not cmd: break
@@ -106,24 +108,22 @@ class Instrument(Listener):
                             cmd = cmd.replace(' =','=')
                             cmd = cmd.replace('= ','=')
                             param, value = re.split('=',cmd)
-                            if param in instrument._params:
-                                setattr(instrument, param, eval(value))
-                            else:
-                                logging.warning('Instrument %s does not have attribute %s.' %(instrument._name, param))
-                            response = 'True'
-                        elif '(' in cmd:
-                            response = eval('instrument.' + cmd)
+                            # if param in self._params:
+                            #     setattr(instrument, param, eval(value))
+                            # else:
+                            #     logging.warning('Instrument %s does not have attribute %s.' %(instrument._name, param))
+                            # response = 'True'
+                        if '(' in cmd:
+                            response = eval('self.' + cmd)
                         else:
-                            response = str(getattr(instrument, cmd))
-                        self.publisher.send_multipart([topic, dumps(response)])
+                            response = str(getattr(self, cmd))
+                        topic = self.instrument_name + '_reply'
+                        self.publisher.send_multipart([topic.encode(), dumps(response)])
                     except Exception as e:
                         logging.warning('Command \'%s\' not recognized: %s' %(cmd, e))
-                        self.publisher.send_multipart([topic, dumps('None')])
+                        topic = self.instrument_name + '_reply'
+                        self.publisher.send_multipart([topic.encode(), dumps('None')])
 
-    def __del__(self):
-        self._pipe[0].close()
-        self.exitcode
-        
     @property
     def id(self):
         if self.SCPI:
@@ -228,7 +228,7 @@ class Instrument(Listener):
     def shutdown(self):
         """Bring the instrument to a safe and stable state"""
         self.isShutdown = True
-        log.info("Shutting down %s" % self.name)
+        log.info("Shutting down %s" % self.instrument_name)
 
     def check_errors(self):
         """Return any accumulated errors. Must be reimplemented by subclasses.
