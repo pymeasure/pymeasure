@@ -292,41 +292,41 @@ class ListParameter(Parameter):
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
 
-class Measurable(object):
-    """ Encapsulates the information for a measurable experiment parameter
-    with information about the name, fget function and units if supplied.
-    The value property is called when the procedure retrieves a datapoint
-    and calls the fget function. If no fget function is specified, the value
-    property will return the latest set value of the parameter (or default
-    if never set).
+# class Measurable(object):
+#     """ Encapsulates the information for a measurable experiment parameter
+#     with information about the name, fget function and units if supplied.
+#     The value property is called when the procedure retrieves a datapoint
+#     and calls the fget function. If no fget function is specified, the value
+#     property will return the latest set value of the parameter (or default
+#     if never set).
 
-    :var value: The value of the parameter
+#     :var value: The value of the parameter
 
-    :param name: The parameter name
-    :param fget: The parameter fget function (e.g. an instrument parameter)
-    :param default: The default value
-    """
-    DATA_COLUMNS = []
-    def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
-        self.name = name
-        self.units = units
-        self.measure = measure
-        if fget != None:
-            self.fget = fget
-            self._value = fget()
-        else:
-            self._value = default
-        Measurable.DATA_COLUMNS.append(name)
+#     :param name: The parameter name
+#     :param fget: The parameter fget function (e.g. an instrument parameter)
+#     :param default: The default value
+#     """
+#     DATA_COLUMNS = []
+#     def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
+#         self.name = name
+#         self.units = units
+#         self.measure = measure
+#         if fget != None:
+#             self.fget = fget
+#             self._value = fget()
+#         else:
+#             self._value = default
+#         Measurable.DATA_COLUMNS.append(name)
 
-    def fget(self):
-        return self._value
+#     def fget(self):
+#         return self._value
 
-    @property
-    def value(self):
-        if hasattr(self, 'fget'):
-            self._value = self.fget()
-        return self._value
+#     @property
+#     def value(self):
+#         if hasattr(self, 'fget'):
+#             self._value = self.fget()
+#         return self._value
 
-    @value.setter
-    def value(self, value):
-        self._value = value
+#     @value.setter
+#     def value(self, value):
+#         self._value = value

@@ -25,10 +25,11 @@
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+from logging.handlers import QueueHandler
 
 try:
     import zmq
-    from msgpack_numpy import loads
+    from msgpack_numpy import loads, dumps
 except ImportError:
     log.warning("ZMQ and MsgPack are required for TCP communication")
 
@@ -36,8 +37,8 @@ from time import sleep
 
 from threading import Thread
 from pymeasure.thread import StoppableThread
+from pymeasure.process import StoppableProcess
 from .results import Results
-
 
 class Listener(StoppableThread):
     """Base class for Threads that need to listen for messages
@@ -46,7 +47,7 @@ class Listener(StoppableThread):
     """
 
     def __init__(self, port, topic='', timeout=0.01):
-        """ Constructs the Listener object with a subscriber port 
+        """ Constructs the Listener object with a subscriber port
         over which to listen for messages
 
         :param port: TCP port to listen on
@@ -104,3 +105,72 @@ class Recorder(Thread):
                     break
                 handle.write(self.results.format(data).encode())
             log.info("Recorder caught stop command")
+
+class Daemon(StoppableThread):
+    """ Daemon receives commands by listening for it over a queue and
+    puts the response in another queue. The queues ensure that no data
+    is lost between the Daemon and Server.
+    """
+
+    def __init__(self):
+        """ Constructs a Daemon to receive commands from a Server process
+        """
+        super(Daemon, self).__init__()
+
+    def run(self):
+        while True:
+            data = self.commands.command_queue.get()
+            if data is None:
+                self.stop()
+            response = self.commands.eval(data)
+            self.commands.response_queue.put(response.encode())
+        log.info("Daemon %s caught stop command" %self.name)
+
+class Server(StoppableProcess):
+    """ Server manages and runs Daemon threads, publishes received data on a ZMQ socket
+    and keeps a data buffer to prevent lost packages.
+    """
+    def __init__(self, port, log_queue=None, log_level=logging.INFO):
+        self.daemons = []
+        self.port = port
+        if log_queue is None:
+            log_queue = Queue()
+        self.log_queue = log_queue
+        self.log_level = log_level
+
+        super(Server, self).__init__()
+
+    def run(self):
+        global log
+        log = logging.getLogger()
+        log.setLevel(self.log_level)
+        # log.handlers = [] # Remove all other handlers
+        log.addHandler(QueueHandler(self.log_queue))
+        log.info("Server process %s started" %self.name)
+
+        if self.port is not None:
+            self.context = zmq.Context()
+            log.debug("Worker ZMQ Context: %r" % self.context)
+            self.publisher = self.context.socket(zmq.PUB)
+            self.publisher.bind('tcp://*:%d' % self.port)
+            log.info("Worker connected to tcp://*:%d" % self.port)
+            sleep(0.01)
+
+        while not self.should_stop():
+            data = self.queue.get()
+            if data is None:
+                self.stop()
+            self.emit(*data)
+            if data[0] == 'create_instrument':
+                self.create_daemon(*data[1])
+        log.info("Server %s caught stop command" %self.name)
+
+    def emit(self, topic, data):
+        """ Emits data of some topic over TCP """
+        if isinstance(topic, str):
+            topic = topic.encode()
+        log.debug("Emitting message: %s %s" % (topic, data))
+        try:
+            self.publisher.send_multipart([topic, dumps(data)])
+        except (NameError, AttributeError):
+            pass # No dumps defined

@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import InstrumentDaemon
 from pymeasure.adapters import FakeAdapter
 import numpy, time
 
-class Mock(Instrument):
+class Mock(InstrumentDaemon):
     '''Mock instrument for testing.'''
     def __init__(self, wait=.1, **kwargs):
         super(Mock, self).__init__(

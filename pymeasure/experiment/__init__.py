@@ -23,7 +23,7 @@
 #
 
 from .parameters import (Parameter, IntegerParameter, FloatParameter,
-                        VectorParameter, ListParameter, BooleanParameter, Measurable)
+                        VectorParameter, ListParameter, BooleanParameter)
 from .procedure import Procedure, UnknownProcedure
 from .results import Results, unique_filename
 from .workers import Worker

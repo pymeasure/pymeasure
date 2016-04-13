@@ -26,24 +26,36 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+try:
+    import zmq
+    from msgpack_numpy import dumps
+except ImportError:
+    log.warning("ZMQ and MsgPack are required for TCP communication")
+
+from multiprocessing import Process, Queue, current_process
+from ..experiment.listeners import Listener, Daemon, Server
 from pymeasure.adapters.visa import VISAAdapter
+from pymeasure.adapters import FakeAdapter
+import inspect, types, os
 
 import numpy as np
 
-
-class Instrument(object):
+class InstrumentBase(object):
     """ Base class for Instruments, independent of the particular Adapter used
     to connect for communication
     """
-    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
-        try:
-            if isinstance(adapter, (int, str)):
-                adapter = VISAAdapter(adapter, **kwargs)
-        except ImportError:
-            raise Exception("Invalid Adapter provided for Instrument since "
-                            "PyVISA is not present")
+    def __init__(self, adapter, name, includeSCPI=True, port=None, **kwargs):
+        if port is None:
+            try:
+                if isinstance(adapter, (int, str)):
+                    adapter = VISAAdapter(adapter, **kwargs)
+            except ImportError:
+                raise Exception("Invalid Adapter provided for Instrument since "
+                                "PyVISA is not present")
+        else:
+            adapter = FakeAdapter()
 
-        self.name = name
+        self.instrument_name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
         class Object(object):
@@ -57,24 +69,27 @@ class Instrument(object):
             self.add_measurement("status",   "*STB?")
             self.add_measurement("complete", "*OPC?")
 
+        self._params = [a[0] for a in inspect.getmembers(type(self), lambda a: type(a)==property)]
+        self._functions = [f[0] for f in inspect.getmembers(type(self), lambda a:type(a) == types.FunctionType) if (not(f[0].startswith('_')))]
+
         self.isShutdown = False
-        log.info("Initializing %s." % self.name)
-        
+        log.info("Initializing %s." % self.instrument_name)
+
     @property
     def id(self):
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
         else:
             return "Warning: Property not implemented."
-            
+
     # Wrapper functions for the Adapter object
-    def ask(self, command): 
+    def ask(self, command):
         return self.adapter.ask(command)
 
-    def write(self, command): 
+    def write(self, command):
         self.adapter.write(command)
 
-    def read(self): 
+    def read(self):
         return self.adapter.read()
 
     def values(self, command, separator = ','):
@@ -131,7 +146,7 @@ class Instrument(object):
         # Add the property attribute
         setattr(self.__class__, name, property(fget, fset))
         setattr(self.get, name, lambda: fget(self))
-        
+
 
     def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
         """This adds a property to the class based on the supplied
@@ -170,3 +185,83 @@ class Instrument(object):
         """Return any accumulated errors. Must be reimplemented by subclasses.
         """
         pass
+
+class Commands(object):
+    """ Commands evaluates commands for an instrument and returns the result
+    """
+    def __init__(self, instrument, response_queue):
+        self.instrument = instrument
+        self.command_queue = Queue()
+        self.response_queue = response_queue
+
+    def eval(self, command):
+        try:
+            if '=' in cmd:
+                cmd = cmd.replace(' =','=')
+                cmd = cmd.replace('= ','=')
+                param, value = re.split('=',cmd)
+                if param in self.instrument._params:
+                    setattr(self.instrument, param, eval(value))
+                else:
+                    logging.warning('Instrument %s does not have attribute %s.' %(instrument._name, param))
+                response = 'True'
+            if '(' in cmd:
+                response = eval('self.instrument.' + cmd)
+            else:
+                response = str(getattr(self.instrument, cmd))
+            return response
+        except Exception as e:
+            logging.warning('Command \'%s\' not recognized: %s' %(cmd, e))
+            return None
+
+class InstrumentDaemon(InstrumentBase, Daemon):
+    """ InstrumentDaemon runs a loop in a thread and executes instrument commands as received
+    """
+    instances = []
+    def __init__(self, adapter, name, includeSCPI=True, queue=None, **kwargs):
+        self.commands = Commands(self, queue)
+
+        self.instrument_name = name
+        self.running = True
+
+        log.info("Initializing %s InstrumentDaemon." % self.instrument_name)
+
+        InstrumentBase.__init__(self, adapter=adapter, name=name, includeSCPI=True)
+        Daemon.__init__(self)
+        InstrumentDaemon.instances.append(self)
+        self.start()
+
+def get_instrument_server(port = None, scribe_queue=None, log_level=logging.INFO):
+    """ Get instance of InstrumentServer for specified port"""
+    if port in InstrumentServer.instances.keys():
+        return InstrumentServer.instances[port]
+    else:
+        return InstrumentServer(port, scribe_queue, log_level)
+
+class InstrumentServer(Server):
+    """ InstrumentServer manages an adapter and runs InstrumentDaemon threads for each
+    instrument connected to the interface."""
+    instances = {}
+    def __init__(self, port = 5001, log_queue=None, log_level=logging.INFO):
+        self.port = port
+        self.queue = Queue()
+        super(InstrumentServer, self).__init__(port, log_queue, log_level)
+        InstrumentServer.instances[port] = self
+        self.start()
+
+    def create_instrument(self, instrument_class, adapter):
+        module_name = instrument_class.__module__
+        class_name = instrument_class.__name__
+        data = ['create_instrument', [module_name, class_name, adapter]]
+        self.queue.put(data)
+
+    def create_daemon(self, module_name, class_name, adapter):
+        mod = __import__(module_name, fromlist=[class_name])
+        instrument_class = getattr(mod, class_name)
+        daemon = instrument_class(adapter, queue=self.queue)
+        self.daemons.append(daemon)
+
+class Instrument(InstrumentBase if current_process().name == 'MainProcess' else InstrumentDaemon):
+    def __init__(self, adapter, name, includeSCPI=True, queue=None, port=None, **kwargs):
+        if port is None:
+            super(Instrument, self).__init__(adapter, name, includeSCPI=True, queue=queue, **kwargs)

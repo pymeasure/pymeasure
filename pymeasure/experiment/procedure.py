@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from .parameters import Parameter, Measurable
+from .parameters import Parameter
 import logging
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
@@ -57,32 +57,30 @@ class Procedure(object):
         self.status = Procedure.QUEUED
         self._update_parameters()
         for key in kwargs:
-            if key in self._parameters.keys():
-                setattr(self, key, kwargs[key])
-                log.info('Setting parameter %s to %s' %(key, kwargs[key]))
-        self.gen_measurement()
+            setattr(self, key, kwargs[key])
+            log.info('Setting parameter %s to %s' %(key, kwargs[key]))
+    #     self.gen_measurement()
 
-    def gen_measurement(self):
-        '''Create MEASURE and DATA_COLUMNS variables for get_datapoint method.
-        '''
-        # TODO: Refactor measurables implementation to be consistent with parameters
-        self.MEASURE = {}
-        for item in dir(self):
-            parameter = getattr(self, item)
-            if isinstance(parameter, Measurable):
-                if parameter.measure:
-                    self.MEASURE.update({parameter.name: item})
-        if self.DATA_COLUMNS == []:
-            self.DATA_COLUMNS = Measurable.DATA_COLUMNS
+    # def gen_measurement(self):
+    #     '''Create MEASURE and DATA_COLUMNS variables for get_datapoint method.
+    #     '''
+    #     self.MEASURE = {}
+    #     for item in dir(self):
+    #         parameter = getattr(self, item)
+    #         if isinstance(parameter, Measurable):
+    #             if parameter.measure:
+    #                 self.MEASURE.update({parameter.name: item})
+    #     if self.DATA_COLUMNS == []:
+    #         self.DATA_COLUMNS = Measurable.DATA_COLUMNS
 
-    def get_datapoint(self):
-        data = {key:getattr(self,self.MEASURE[key]).value for key in self.MEASURE}
-        return data
+    # def get_datapoint(self):
+    #     data = {key:getattr(self,self.MEASURE[key]).value for key in self.MEASURE}
+    #     return data
 
-    def measure(self):
-        data = self.get_datapoint()
-        log.debug("Produced numbers: %s" % data)
-        self.emit('results', data)
+    # def measure(self):
+    #     data = self.get_datapoint()
+    #     log.debug("Produced numbers: %s" % data)
+    #     self.emit('results', data)
 
     def _update_parameters(self):
         """ Collects all the Parameter objects for the procedure and stores

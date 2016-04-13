@@ -70,7 +70,7 @@ class VISAAdapter(Adapter):
             return '1.4'
 
     def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
+        return self.visa_resource_name()
 
     def write(self, command):
         """ Writes a command to the instrument
@@ -86,7 +86,7 @@ class VISAAdapter(Adapter):
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read()
-    
+
     def values(self, command, separator = ','):
         """ Writes a command to the instrument and returns a list of numerical
         values from the result.
@@ -102,10 +102,10 @@ class VISAAdapter(Adapter):
             except:
                 pass # Keep as string
         return results
-        
+
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
-    
+        """ Returns a numpy array from a query for binary data
+
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
         :param dtype: The NumPy data type to format the values with
@@ -115,7 +115,7 @@ class VISAAdapter(Adapter):
         binary = self.connection.read_raw()
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
-        
+
 
 class VISAAdapter14(Adapter):
     """ Adapter class for VISA version 1.4. Be inherited by class VISAAdapter.
@@ -132,7 +132,7 @@ class VISAAdapter14(Adapter):
         pass
 
     def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting 
+        """ Writes the command to the instrument and returns the resulting
         ASCII response
 
         :param command: SCPI command string to be sent to the instrument
@@ -142,7 +142,7 @@ class VISAAdapter14(Adapter):
 
     def ask_values(self, command):
         """ Writes a command to the instrument and returns a list of formatted
-        values from the result 
+        values from the result
 
         :param command: SCPI command to be sent to the instrument
         :returns: String ASCII response of the instrument
@@ -157,6 +157,8 @@ class VISAAdapter14(Adapter):
         """
         self.connection.wait_for_srq(timeout)
 
+    def visa_resource_name(self):
+        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
 
 class VISAAdapter17(Adapter):
     """ Adapter class for VISA version 1.5 or above. Be inherited by class VISAAdapter.
@@ -177,9 +179,9 @@ class VISAAdapter17(Adapter):
                                 resourceName,
                                 **kwargs
                           )
-        
+
     def config(self, is_binary = False, datatype = 'str',
-                    container = np.array, converter = 's', 
+                    container = np.array, converter = 's',
                     separator = ',', is_big_endian = False):
         """ Configurate the format of data transfer to and from the instrument.
 
@@ -198,7 +200,7 @@ class VISAAdapter17(Adapter):
         self.connection.values_format.is_big_endian = is_big_endian
 
     def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting 
+        """ Writes the command to the instrument and returns the resulting
         ASCII response
 
         :param command: SCPI command string to be sent to the instrument
@@ -215,6 +217,9 @@ class VISAAdapter17(Adapter):
         :returns: Formatted response of the instrument.
         """
         return self.connection.query_values(command)
+
+    def visa_resource_name(self):
+        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high

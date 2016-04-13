@@ -26,8 +26,8 @@ import numpy as np
 
 
 class Adapter(object):
-    """ Base class for Adapter child classes, which adapt between the Instrument 
-    object and the connection, to allow flexible use of different connection 
+    """ Base class for Adapter child classes, which adapt between the Instrument
+    object and the connection, to allow flexible use of different connection
     techniques.
 
     This class should only be inhereted from.
@@ -41,7 +41,7 @@ class Adapter(object):
         raise NameError("Adapter (sub)class has not implemented writing")
 
     def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting 
+        """ Writes the command to the instrument and returns the resulting
         ASCII response
 
         :param command: SCPI command string to be sent to the instrument
@@ -60,7 +60,7 @@ class Adapter(object):
 
     def values(self, command):
         """ Writes a command to the instrument and returns a list of formatted
-        values from the result 
+        values from the result
 
         :param command: SCPI command to be sent to the instrument
         :returns: String ASCII response of the instrument
@@ -69,7 +69,7 @@ class Adapter(object):
                         "values method")
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
+        """ Returns a numpy array from a query for binary data
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
@@ -79,10 +79,17 @@ class Adapter(object):
         raise NameError("Adapter (sub)class has not implemented the "
                         "binary_values method")
 
+    @property
+    def name(self):
+        return self.__class__.__name__
+
 
 class FakeAdapter(Adapter):
     """The Fake adapter class is provided for debugging purposes,
     which returns valid data for each Adapter method"""
+    class Object(object):
+            pass
+    connection = Object()
 
     def read(self):
         """ Returns a fake string for debugging purposes
