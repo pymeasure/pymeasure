@@ -261,7 +261,7 @@ class InstrumentServer(Server):
         daemon = instrument_class(adapter, queue=self.queue)
         self.daemons.append(daemon)
 
-class Instrument(InstrumentDaemon if current_process().name == 'MainProcess' else InstrumentDaemon):
+class Instrument(InstrumentBase if current_process().name == 'MainProcess' else InstrumentDaemon):
     def __init__(self, adapter, name, includeSCPI=True, queue=None, port=None, **kwargs):
         if port is None:
             super(Instrument, self).__init__(adapter, name, includeSCPI=True, queue=queue, **kwargs)
