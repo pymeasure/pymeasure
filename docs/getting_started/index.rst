@@ -10,5 +10,4 @@ The following sections provide instructions for getting started with PyMeasure.
    introduction
    dependencies
    installing
-   instruments
-   graphical
+   connecting
