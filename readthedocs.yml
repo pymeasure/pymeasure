@@ -1,0 +1,9 @@
+formats:
+        - epub
+        - pdf
+
+requirements_file: requirements/docs.txt
+
+python:
+   version: 3
+   setup_py_install: true
