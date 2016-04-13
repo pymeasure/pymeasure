@@ -1,3 +1,11 @@
+######################
+Setting up a Procedure
+######################
+
+This tutorial will walk you through using PyMeasure to aquire a current-voltage (IV) characteristic using a Keithley 2400. Even if you don't have access to this instrument, this tutorial will help explain the method for using instruments in PyMeasure.
+
+
+
 Basic tutorial
 ==============
 
