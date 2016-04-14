@@ -2,7 +2,7 @@
 Introduction
 ############
 
-The :code:`pymeasure` package uses an object oriented approach for communicating with instruments, which provides a more intuitive interface through the encapsulation of low level SCPI commands. That way you can focus on solving the measurement problems at hand, instead of re-inventing how to communicate with them. 
+PyMeasure uses an object oriented approach for communicating with scientific instruments, which provides a more intuitive interface where the low-level SCPI and GPIB commands are hidden from normal use. Users can focus on solving the measurement problems at hand, instead of re-inventing how to communicate with instruments. 
 
 Instruments with VISA (GPIB, Serial, etc) are supported through the `PyVISA package`_ under the hood. `Prologix GPIB`_ adapters are also supported.
 
@@ -16,14 +16,18 @@ Before using PyMeasure, you should be acquainted with `basic Python programming 
 Instrument ready
 ================
 
-In the :code:`pymeasure` package you will find a number of instruments already defined. Their definitions are organized based on the manufacturer name of the instrument. For example the class that defines the Keithley 2400 SourceMeter can be imported by calling:
+The package includes a number of instruments already defined. Their definitions are organized based on the manufacturer name of the instrument. For example the class that defines the Keithley 2400 SourceMeter can be imported by calling:
 
 .. code-block:: python
 
   from pymeasure.instruments.keithley import Keithley2400
 
+The :doc:`Getting Started <getting_started>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments>`.
+
 
 Graphical displays
 ==================
 
-Graphical displays can be easily developed to manage the execution of measurement procedures.
+Graphical user interfaces (GUIs) can be easily generated to manage execution of measurement procedures with PyMeasure. This includes live plotting for data, and a queue system for managing large numbers of experiments.
+
+These features are explored in the :doc:`Using a graphical interface <tutorial/graphical>` tutorial.

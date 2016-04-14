@@ -7,7 +7,7 @@
 PyMeasure scientific package
 ############################
 
-.. image:: https://raw.githubusercontent.com/ralph-group/pymeasure/master/docs/images/PyMeasure.png
+.. image:: images/PyMeasure.png
     :alt: PyMeasure Scientific package
 
 PyMeasure makes scientific measurements easy to set up and run. The package contains a repository of instrument classes and a system for running experiment procedures, which provides graphical interfaces for graphing live data and managing queues of experiments. Both parts of the package are independent, and when combined provide all the necessary requirements for advanced measurements with only limited coding.
@@ -22,6 +22,8 @@ PyMeasure is currently under active development, so please report any issues you
 
 .. image:: https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat
     :target: http://pymeasure.readthedocs.org/en/latest/
+
+.. _Issues page: https://github.com/ralph-group/pymeasure/issues
 
 
 The main documentation for the site is organized into a couple sections:
@@ -77,13 +79,3 @@ Information about development is also available:
    about/authors
    about/license
 
-
-
-
-**********
-References
-**********
-
-.. target-notes::
-
-.. _Issues page: https://github.com/ralph-group/pymeasure/issues
