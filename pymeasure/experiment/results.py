@@ -35,7 +35,8 @@ import re
 import pandas as pd
 
 
-def unique_filename(directory, prefix='DATA', suffix='', ext='csv', dated_folder=False, index=True, datetimeformat="%Y-%m-%d"):
+def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
+                    dated_folder=False, index=True, datetimeformat="%Y-%m-%d"):
     """ Returns a unique filename based on the directory and prefix
     """
     now = datetime.now()
