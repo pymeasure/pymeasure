@@ -35,4 +35,26 @@ This example illustrates that the top-level methods like :code:`id` are really c
 Using adapters 
 ==============
 
-Many instruments will work with the VISA library. However, there are others that require a more advanced configuration to connect to them.
+PyMeasure supports a number of adapters, which are responsible for communicating with the underlying hardware. In the example above, we passed the string "GPIB::4" when constructing the instrument. By default this constructs a VISAAdapter class to connect to the instrument using VISA. Instead of passing a string, we could equally pass an adapter object. ::
+
+    from pymeasure.adapters import VISAAdapter
+
+    adapter = VISAAdapter("GPIB::4")
+    sourcemeter = Keithely2400(adapter)
+
+To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper permissions are needed in Linux, see :ref:`PrologixAdapter`), the adapter is constructed in a similar way. Unlike the VISA adapter which is specific to each instrument, the Prologix adapter can be shared by many instruments. Therefore, they are addressed separately based on the GPIB address number when passing the adapter into the instrument construction. ::
+
+    from pymeasure.adapters import PrologixAdapter
+
+    adapter = PrologixAdapter('/dev/ttyUSB0')
+    sourcemeter = Keithley2400(adapeter.gpib(4))
+
+For instruments using serial communication that have particular settings that need to be matched, a custom :ref:`Adapter` sub-class can be made. For example, the LakeShore 425 Gaussmeter connects via USB, but uses particular serial communication settings. Therefore, a :ref:`LakeShoreUSBAdapter` class enables these requirements in the background. ::
+
+    from pymeasure.instruments.lakeshore import LakeShore425
+
+    gaussmeter = LakeShore425('/dev/lakeshore425')
+
+Behind the scenes the :code:`/dev/lakeshore425` port is passed to the :ref:`LakeShoreUSBAdapter`.
+
+The above examples illustrate different methods for communicating with instruments, using adapters to keep instrument code independent from the communication protocols. Next we present the methods for setting up measurements.
