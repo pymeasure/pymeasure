@@ -4,10 +4,12 @@ Using a graphical interface
 
 In the previous tutorial we measured the IV characteristic of a sample to show how we can set up a simple experiment in PyMeasure. The real power of PyMeasure comes when we also use the graphical tools that are included to turn our simple example into a full-flegged user interface.
 
+Using the Plotter
+~~~~~~~~~~~~~~~~~
 
-Plotting data in a graphical interface is easily achieved with the Plotter object. The Plotter takes a Results object and plots the data at a regular interval, grabbing the latest data each time from the file.
+While it lacks the nice features of the ManagedWindow, the Plotter object is the simplest way of getting live-plotting. The Plotter takes a Results object and plots the data at a regular interval, grabbing the latest data each time from the file.
 
-Let's extend our SimpleProcedure with a RandomProcedure, which generates random numbers during our loop. ::
+Let's extend our SimpleProcedure with a RandomProcedure, which generates random numbers during our loop. This example does not include instruments to provide a simpler example. ::
 
     import logging
     log = logging.getLogger(__name__)
@@ -16,6 +18,7 @@ Let's extend our SimpleProcedure with a RandomProcedure, which generates random 
     import random
     from time import sleep
     from pymeasure.log import console_log
+    from pymeasure.display import Plotter
     from pymeasure.experiment import Procedure, Results, Worker
     from pymeasure.experiment import IntegerParameter, FloatParameter, Parameter
 
@@ -62,9 +65,8 @@ Let's extend our SimpleProcedure with a RandomProcedure, which generates random 
         plotter.start()
         log.info("Started the Plotter")
 
-        port = 5888
-        log.info("Constructing the Worker on port: %d" % port)
-        worker = Worker(results, port=port)
+        log.info("Constructing the Worker")
+        worker = Worker(results)
         worker.start()
         log.info("Started the Worker")
 
@@ -78,3 +80,98 @@ The important addition is the construction of the Plotter from the Results objec
     plotter.start()
 
 Just like the Worker, the Plotter is started in a different process so that it can be run on a separate CPU for higher performance. The Plotter launches a Qt graphical interface using pyqtgraph which allows the Results data to be viewed based on the columns in the data.
+
+TODO: Add screenshot of plotter
+
+
+Using the ManagedWindow
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The ManagedWindow is the most convenient tool for running measurements with your Procedure. This has the major advantage of accepting the input parameters graphically. From the parameters, a graphical form is automatically generated that allows the inputs to be typed in. With this feature, measurements can be started dynamically, instead of defined in a script.
+
+Another major feature of the ManagedWindow is its support for running measurements in a sequential queue. This allows you to set up a number of measurements with different input parameters, and watch them unfold on the live-plot. This is especially useful for long running measurements. The ManagedWindow achieves this through the Manager object, which coordinates which Procedure the Worker should run and keeps track of its status as the Worker progresses.
+
+Below we adapt our previous example to use a ManagedWindow. ::
+
+    import logging
+    log = logging.getLogger(__name__)
+    log.addHandler(logging.NullHandler())
+
+    import random
+    from time import sleep
+    from pymeasure.log import console_log
+    from pymeasure.display.Qt import QtGui
+    from pymeasure.display.windows import ManagedWindow
+    from pymeasure.experiment import Procedure, Results
+    from pymeasure.experiment import IntegerParameter, FloatParameter, Parameter
+
+    class RandomProcedure(Procedure):
+
+        iterations = IntegerParameter('Loop Iterations')
+        delay = FloatParameter('Delay Time', units='s', default=0.2)
+        seed = Parameter('Random Seed', default='12345')
+
+        DATA_COLUMNS = ['Iteration', 'Random Number']
+
+        def startup(self):
+            log.info("Setting the seed of the random number generator")
+            random.seed(self.seed)
+
+        def execute(self):
+            log.info("Starting the loop of %d iterations" % self.iterations)
+            for i in range(self.iterations):
+                data = {
+                    'Iteration': i,
+                    'Random Number': random.random()
+                }
+                self.emit('results', data)
+                log.debug("Emitting results: %s" % data)
+                sleep(self.delay)
+                if self.should_stop():
+                    log.warning("Caught the stop flag in the procedure")
+                    break
+
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super(MainWindow, self).__init__(
+                procedure_class=RandomProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number'
+            )
+            self.setWindowTitle('GUI Example')
+
+        def queue(self):
+            filename = tempfile.mktemp()
+
+            procedure = self.make_procedure()
+            results = Results(procedure, filename)
+            experiment = self.new_experiment(results)
+
+            self.manager.queue(experiment)
+
+
+    if __name__ == "__main__":
+        app = QtGui.QApplication(sys.argv)
+        window = MainWindow()
+        window.show()
+        sys.exit(app.exec_())
+
+
+
+This results in the following graphical display.
+
+TODO: Add screenshot of ManagedWindow
+
+In the code, the MainWindow class is a sub-class of the ManagedWindow class. We overwrite the constructor to provide information about the procedure class and its options. The :python:`inputs` are a list of Parameters class-variable names, which the display will generate graphical fields for. The :python:`displays` is a similar list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
+
+The :python:`queue` method establishes how the Procedure object is constructed. We use the :python:`self.make_procedure` method to create a Procedure based on the graphical input fields. Here we are free to modify the procedure before putting it on the queue. In this context, the Manager uses an Experiment object to keep track of the Procedure, Results, and its associated graphical representations in the browser and live-graph. This is then given to the Manager to queue the experiment.
+
+By default the Manager starts a measurement when its procedure is queued. The abort button can be pressed to stop an experiment. In the Procedure, the :python:`self.should_stop` call will catch the abort event and halt the measurement. It is important to check this value, or the Procedure will not be responsive to the abort event.
+
+If you abort a measurement, the resume button must be pressed to continue the next measurement. This allows you to adjust anything, which is presumably why the abort was needed.
+
+Now that you have learned about the ManagedWindow, you have all of the basics to get up and running quickly with a measurement and produce an easy to use graphical interface with PyMeasure.

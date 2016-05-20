@@ -31,3 +31,5 @@ Graphical displays
 Graphical user interfaces (GUIs) can be easily generated to manage execution of measurement procedures with PyMeasure. This includes live plotting for data, and a queue system for managing large numbers of experiments.
 
 These features are explored in the :doc:`Using a graphical interface <tutorial/graphical>` tutorial.
+
+TODO: Add screenshots of ManagedWindow and Plotter

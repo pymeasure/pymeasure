@@ -142,9 +142,9 @@ We now construct a Worker with the Results object, since it contains our Procedu
 
     from pymeasure.experiment import Worker
 
-    worker = Worker(results, port=5888)
+    worker = Worker(results)
 
-The Worker publishes data and other run-time information onto the local network over a specific TCP port, 5888 in this case. Other Listener objects can tune in to the published information on that port, which allows our program to communicate across processes and threads easily.
+The Worker publishes data and other run-time information through specific queues, but can also publish this information over the local network on a specific TCP port (using the optional :python:`port` argument. Using TCP communication allows great flexibility for sharing information with Listener objects. Queues are used as the standard communication method because they preserve the data order, which is of critical importance to storing data accurately and reacting to the measurement status in order.
 
 Now we are ready to start the worker. ::
 
@@ -186,7 +186,7 @@ Let's put all the pieces together. Our SimpleProcedure can be run in a script by
         data_filename = 'example.csv'
         results = Results(procedure, data_filename)
 
-        worker = Worker(results, port=5888)
+        worker = Worker(results)
         worker.start()
 
         worker.join(timeout=3600) # wait at most 1 hr (3600 sec)
@@ -237,9 +237,8 @@ Let's extend our SimpleProcedure with logging. ::
         log.info("Constructing the Results with a data file: %s" % data_filename)
         results = Results(procedure, data_filename)
 
-        port = 5888
-        log.info("Constructing the Worker on port: %d" % port)
-        worker = Worker(results, port=port)
+        log.info("Constructing the Worker")
+        worker = Worker(results)
         worker.start()
         log.info("Started the Worker")
 
@@ -247,13 +246,13 @@ Let's extend our SimpleProcedure with logging. ::
         worker.join(timeout=3600) # wait at most 1 hr (3600 sec)
         log.info("Finished the measurement")
 
-First, we have imported the Python logging module and grabbed the logger using the __name__ argument. This gives us logging information specific to the current file. Conversely, we could use the '' argument to get all logs, including those of pymeasure. We use the console_log function to conveniently output the log to the console. Further details on how to use the logger are addressed in the Python logging documentation.
+First, we have imported the Python logging module and grabbed the logger using the :python:`__name__` argument. This gives us logging information specific to the current file. Conversely, we could use the :python:`''` argument to get all logs, including those of pymeasure. We use the :python:`console_log` function to conveniently output the log to the console. Further details on how to use the logger are addressed in the Python logging documentation.
 
 
 Modifying our script
 ~~~~~~~~~~~~~~~~~~~~
 
-Now that you have a background how to use the different features of the Procedure class, and how they are run, we will revist our IV characteristic measurement. Below we present the modified version of our example script, now as a IVProcedure class. ::
+Now that you have a background on how to use the different features of the Procedure class, and how they are run, we will revisit our IV characteristic measurement using Procedures. Below we present the modified version of our example script, now as a IVProcedure class. ::
 
     # Import necessary packages
     from pymeasure.instruments.keithley import Keithley2400
@@ -271,7 +270,7 @@ Now that you have a background how to use the different features of the Procedur
         DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Voltage Std (V)']
 
         def startup(self):
-            # Connect and configure the instrument
+            log.info("Connecting and configuring the instrument")
             self.sourcemeter = Keithley2400("GPIB::4")
             self.sourcemeter.reset()
             self.sourcemeter.use_front_terminals()
@@ -289,10 +288,12 @@ Now that you have a background how to use the different features of the Procedur
 
             # Loop through each current point, measure and record the voltage
             for current in currents:
+                log.info("Setting the current to %g A" % current)
                 self.sourcemeter.current = current
                 self.sourcemeter.reset_buffer()
                 sleep(0.1)
                 self.sourcemeter.start_buffer()
+                log.info("Waiting for the buffer to fill with measurements")
                 self.sourcemeter.wait_for_buffer()
 
                 self.emit('results', {
@@ -302,10 +303,34 @@ Now that you have a background how to use the different features of the Procedur
                 })
                 sleep(0.01)
                 if self.should_stop():
+                    log.info("User aborted the procedure")
                     break
 
         def shutdown(self):
-            self.sourcemeter.shutdown()   
+            self.sourcemeter.shutdown()
+            log.info("Finished measuring")
 
+    if __name__ == "__main__":
+        console_log(log)
 
-At this point, you are familiar with how to construct a Procedure sub-class. The next section shows how to put these procedures to work in a graphical environment. 
+        log.info("Constructing an IVProcedure")
+        procedure = IVProcedure()
+        procedure.data_points = 100
+        procedure.averages = 50
+        procedure.max_current = -0.01
+        procedure.min_current = 0.01
+
+        data_filename = 'example.csv'
+        log.info("Constructing the Results with a data file: %s" % data_filename)
+        results = Results(procedure, data_filename)
+
+        log.info("Constructing the Worker")
+        worker = Worker(results)
+        worker.start()
+        log.info("Started the Worker")
+
+        log.info("Joining with the worker in at most 1 hr")
+        worker.join(timeout=3600) # wait at most 1 hr (3600 sec)
+        log.info("Finished the measurement")
+
+At this point, you are familiar with how to construct a Procedure sub-class. The next section shows how to put these procedures to work in a graphical environment, where will have live-plotting of the data and the ability to easily queue up a number of experiments in sequence. All of these features come from using the Procedure object.
