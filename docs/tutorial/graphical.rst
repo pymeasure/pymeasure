@@ -81,7 +81,8 @@ The important addition is the construction of the Plotter from the Results objec
 
 Just like the Worker, the Plotter is started in a different process so that it can be run on a separate CPU for higher performance. The Plotter launches a Qt graphical interface using pyqtgraph which allows the Results data to be viewed based on the columns in the data.
 
-TODO: Add screenshot of plotter
+.. image:: pymeasure-plotter.png
+    :alt: Results Plotter Example
 
 
 Using the ManagedWindow
@@ -164,14 +165,24 @@ Below we adapt our previous example to use a ManagedWindow. ::
 
 This results in the following graphical display.
 
-TODO: Add screenshot of ManagedWindow
+.. image:: pymeasure-managedwindow.png
+    :alt: ManagedWindow Example
 
 In the code, the MainWindow class is a sub-class of the ManagedWindow class. We overwrite the constructor to provide information about the procedure class and its options. The :python:`inputs` are a list of Parameters class-variable names, which the display will generate graphical fields for. The :python:`displays` is a similar list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
 
 The :python:`queue` method establishes how the Procedure object is constructed. We use the :python:`self.make_procedure` method to create a Procedure based on the graphical input fields. Here we are free to modify the procedure before putting it on the queue. In this context, the Manager uses an Experiment object to keep track of the Procedure, Results, and its associated graphical representations in the browser and live-graph. This is then given to the Manager to queue the experiment.
 
+.. image:: pymeasure-managedwindow-queued.png
+    :alt: ManagedWindow Queue Example
+
 By default the Manager starts a measurement when its procedure is queued. The abort button can be pressed to stop an experiment. In the Procedure, the :python:`self.should_stop` call will catch the abort event and halt the measurement. It is important to check this value, or the Procedure will not be responsive to the abort event.
 
+.. image:: pymeasure-managedwindow-resume.png
+    :alt: ManagedWindow Resume Example
+
 If you abort a measurement, the resume button must be pressed to continue the next measurement. This allows you to adjust anything, which is presumably why the abort was needed.
+
+.. image:: pymeasure-managedwindow-running.png
+    :alt: ManagedWindow Running Example
 
 Now that you have learned about the ManagedWindow, you have all of the basics to get up and running quickly with a measurement and produce an easy to use graphical interface with PyMeasure.

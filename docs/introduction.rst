@@ -32,4 +32,5 @@ Graphical user interfaces (GUIs) can be easily generated to manage execution of 
 
 These features are explored in the :doc:`Using a graphical interface <tutorial/graphical>` tutorial.
 
-TODO: Add screenshots of ManagedWindow and Plotter
+.. image:: tutorial/pymeasure-managedwindow-running.png
+    :alt: ManagedWindow Running Example
