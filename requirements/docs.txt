@@ -1,0 +1,5 @@
+-r core.txt
+pyserial==2.7
+#PySide==1.2.4
+pyqtgraph==0.9.10
+PyVISA==1.8

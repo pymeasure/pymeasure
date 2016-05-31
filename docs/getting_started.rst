@@ -1,3 +1,9 @@
+###############
+Getting started
+###############
+
+This section provides instructions for installing PyMeasure.
+
 Dependencies
 ============
 
@@ -8,9 +14,9 @@ Core dependencies
 
 PyMeasure builds on the success of two key Python packages.
 
-| `Numpy`_ - Numerical Python, which handles large data sets efficiently  
-| `Pandas`_ - An extension of Numpy that simplifies data management
-| 
+* `Numpy`_ - Numerical Python, which handles large data sets efficiently  
+* `Pandas`_ - An extension of Numpy that simplifies data management
+ 
 
 Optional dependencies
 *********************
@@ -19,21 +25,20 @@ There are a number of other packages that are required for specific functionalit
 
 For communicating with VISA instruments, the PyVISA package is required. PySerial is used for basic serial communication.
 
-| `PyVISA`_ - VISA instrument communication library   
-| `PySerial`_ - Serial communication library   
-| 
+* `PyVISA`_ - VISA instrument communication library   
+* `PySerial`_ - Serial communication library    
 
 The live-plotting and user-interfaces require either PyQt4 or PySide, in combination with PyQtGraph.
 
-| `PyQt4`_ - Cross-platform Qt library for graphical user interfaces    
-| `PySide`_ - Alternative to PyQt4, licensed appropriately for commercial use   
-| `PyQtGraph`_ - Efficient live-plotting library   
-| 
+* `PyQt4`_ - Cross-platform Qt library for graphical user interfaces    
+* `PySide`_ - Alternative to PyQt4, licensed appropriately for commercial use   
+* `PyQtGraph`_ - Efficient live-plotting library    
 
 For listening in on the experimental procedure execution through TCP messaging, the PyZMQ and MsgPack-Numpy libraries are required. This is not necessary for general use.
 
-| `PyZMQ`_ - Message communication library   
-| `MsgPack Numpy`_ - Compresses messages and handles Numpy arrays   
+* `PyZMQ`_ - Message communication library   
+* `MsgPack Numpy`_ - Compresses messages and handles Numpy arrays   
+
 
 .. _Numpy: https://github.com/numpy/numpy
 .. _Pandas: https://github.com/pydata/pandas
@@ -44,3 +49,23 @@ For listening in on the experimental procedure execution through TCP messaging, 
 .. _PyQtGraph: https://github.com/pyqtgraph/pyqtgraph
 .. _PyZMQ: https://github.com/zeromq/pyzmq
 .. _MsgPack Numpy: https://github.com/lebedov/msgpack-numpy
+
+
+.. _installing
+
+Installing
+==========
+
+Get the latest release from `GitHub`_ or install via the Python :code:`pip` installer:
+
+.. code-block:: python
+    
+    pip install pymeasure
+
+
+If you plan to use any of the addition dependencies, install them seperately.
+
+Now that you have PyMeasure installed, the next step is to :doc:`connect to an instrument <tutorial/connecting>`.
+
+.. _GitHub: https://github.com/ralph-group/pymeasure/releases
+
