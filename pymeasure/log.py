@@ -87,11 +87,11 @@ class Scribe(Thread):
 def setup_logging(logger=None, console=False, console_level='INFO', filename='', file_level='DEBUG', queue=None):
     """Setup logging for console and/or file logging. Returns a scribe thread object.
     Defaults to no logging."""    
-    logger.handlers = []
     if queue is None:
         queue = Queue()
     if logger is None:
-        logger = get_log()
+        logger = logging.getLogger()
+    logger.handlers = []
     if console:
         console_log(logger, level=getattr(logging,console_level))
         logger.info('Set up console logging')
