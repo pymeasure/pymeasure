@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters import SerialAdapter, VISAAdapter
+from pymeasure.adapters import SerialAdapter
 
 
 class LakeShoreUSBAdapter(SerialAdapter):
