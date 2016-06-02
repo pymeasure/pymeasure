@@ -57,9 +57,7 @@ class Keithley2000(Instrument):
     def check_errors(self):
         """ Read all errors from the instrument."""
         while True:
-            err = self.adapter.ascii_values(":system:error?", 
-                                    converter = 's', 
-                                    separator = ',')
+            err = self.adapter.values(":system:error?")
             if int(err[0]) != 0:
                 errmsg = self.title + ": %s: %s" % (err[0],err[1])
                 log.error(errmsg + '\n')

@@ -258,8 +258,8 @@ class VectorParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
-            self.__class__.__name__, self.name, self._value, self.units, self.default)
+        return "<%s(name=%s,value=%s,units=%s,length=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
 class ListParameter(Parameter):
@@ -272,7 +272,7 @@ class ListParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def __init__(self, name, choices=None, units=None):
+    def __init__(self, name, choices=None, units=None, **kwargs):
         self._choices = choices
         super(ListParameter, self).__init__(name, **kwargs)
         self.units = units
@@ -292,6 +292,98 @@ class ListParameter(Parameter):
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
 
+class PhysicalParameter(VectorParameter):
+    """ :class: '.VectorParameter' sub-class of 2 dimentions to store a value
+    and its uncertainty.
+    
+    :var value: The value of the parameter as a list of 2 floating point numbers
+
+    :param name: The parameter name
+    :param uncertainty_type: Type of uncertainty, 'absolute', 'relative' or 'percentage'
+    :param units: The units of measure for the parameter
+    :param default: The default value
+    :param ui_class: A Qt class to use for the UI of this parameter
+    """
+    
+    def __init__(self, name, uncertaintyType='absolute', **kwargs):
+        super(PhysicalParameter, self).__init__(name, length=2, **kwargs)
+        self._utype = ListParameter("uncertainty type",
+                                   choices = ['absolute', 'relative', 'percentage'],
+                                   default = None)
+        self._utype.value = uncertaintyType
+        
+    @property
+    def value(self):
+        if self.is_set():
+            return [float(ve) for ve in self._value]
+        else:
+            raise ValueError("Parameter value is not set")
+            
+    @value.setter
+    def value(self, value):
+        # Strip initial and final brackets
+        if isinstance(value, str):
+            if (value[0] != '[') or (value[-1] != ']'):
+                raise ValueError("VectorParameter must be passed a vector"
+                                 " denoted by square brackets if initializing"
+                                 " by string.")
+            raw_list = value[1:-1].split(",")
+        elif isinstance(value, (list, tuple)):
+            raw_list = value
+        else:
+            raise ValueError("VectorParameter given undesired value of "
+                             "type '%s'" % type(value))
+        if len(raw_list) != self._length:
+            raise ValueError("VectorParameter given value of length "
+                             "%d instead of %d" % (len(raw_list), self._length))
+        try:
+            self._value = [float(ve) for ve in raw_list]
+        except ValueError:
+            raise ValueError("VectorParameter given input '%s' that could "
+                             "not be converted to floats." % str(value))
+        # Uncertainty must be non-negative
+        self._value[1] = abs(self._value[1])
+    
+    @property
+    def uncertainty_type(self):
+        return self._utype.value
+    
+    @uncertainty_type.setter
+    def uncertainty_type(self, uncertaintyType):
+        oldType = self._utype.value
+        self._utype.value = uncertaintyType
+        newType = self._utype.value
+        
+        if self.is_set():
+            # Convert uncertainty value to the new type
+            if (oldType, newType) == ('absolute', 'relative'):
+                self._value[1] = abs(self._value[1]/self._value[0])
+            if (oldType, newType) == ('relative', 'absolute'):
+                self._value[1] = abs(self._value[1]*self._value[0])
+            if (oldType, newType) == ('relative', 'percentage'):
+                self._value[1] = abs(self._value[1]*100.0)
+            if (oldType, newType) == ('percentage', 'relative'):
+                self._value[1] = abs(self._value[1]*0.01)
+            if (oldType, newType) == ('percentage', 'absolute'):
+                self._value[1] = abs(self._value[1]*self._value[0]*0.01)
+            if (oldType, newType) == ('absolute', 'percentage'):
+                self._value[1] = abs(self._value[1]*100.0/self._value[0])
+
+    def __str__(self):
+        if not self.is_set():
+            return ''
+        result = "%g +/- %g" %(self._value[0], self._value[1])
+        if self.units:
+            result += " %s" %self.units
+        if self._utype.value != None:
+            result += " (%s)" %self._utype.value
+        return result
+
+    def __repr__(self):
+        return "<%s(name=%s,value=%s,units=%s,uncertaintyType=%s)>" % (
+            self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
+ 
+ 
 class Measurable(object):
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.

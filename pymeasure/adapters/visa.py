@@ -96,12 +96,16 @@ class VISAAdapter(Adapter):
         """
         results = str(self.ask(command)).strip()
         results = results.split(separator)
-        for result in results:
+        
+        def try_float(num):
+            """ Try to convert to float """
             try:
-                result = float(result)
+                num = float(num)
             except:
                 pass # Keep as string
-        return results
+            return num
+
+        return [try_float(result) for result in results]
         
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data 
