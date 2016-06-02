@@ -2,7 +2,8 @@ formats:
         - epub
         - pdf
 
-requirements_file: requirements/docs.txt
+conda:
+    file: requirements/conda.yml
 
 python:
    version: 3
