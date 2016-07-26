@@ -22,6 +22,36 @@
 # THE SOFTWARE.
 #
 
-from .agilent8257D import Agilent8257D
-from .agilent8722ES import Agilent8722ES
-from .agilentE4408B import AgilentE4408B
+from pymeasure.instruments import Instrument, discreteTruncate, RangeException
+from io import StringIO
+
+
+class AgilentE4408B(Instrument):
+    """ Represents the AgilentE4408B Spectrum Analyzer
+    and provides a high-level interface for taking scans of
+    high-frequency spectrums
+    """
+
+
+    def __init__(self, resourceName, **kwargs):
+        super(AgilentE4408B, self).__init__(
+            resourceName,
+            "Agilent E4408B Spectrum Analyzer",
+            **kwargs
+        )
+
+        self.add_control("start_frequency", ":SENS:FREQ:STAR?", ":SENS:FREQ:STAR %.3e HZ")
+        self.add_control("stop_frequency", ":SENS:FREQ:STOP?", ":SENS:FREQ:STOP %.3e HZ")
+        self.add_control("sweep_time", ":SENS:SWE:TIME?", ":SENS:SWE:TIME %.2e")
+
+    def trace(self, number=1):
+        """ Returns a numpy array of the data for a particular trace
+        based on the trace number (1, 2, or 3)
+        """
+        self.write(":FORMat:TRACe:DATA ASCII")
+        data = np.loadtxt(
+            StringIO(self.ask(":TRACE:DATA? TRACE%d" % number)),
+            delimiter=',',
+            dtype=np.float64
+        )
+        return data
