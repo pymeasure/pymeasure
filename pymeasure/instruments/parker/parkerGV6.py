@@ -22,7 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SerialAdapter
+from pymeasure.instruments import Instrument
+from pymeasure.adapters import SerialAdapter
 from time import sleep
 import re
 
