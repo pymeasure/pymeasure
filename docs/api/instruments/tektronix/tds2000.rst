@@ -1,0 +1,6 @@
+####################
+TDS2000 Oscilloscope
+####################
+
+.. autoclass:: pymeasure.instruments.tektronix.tds2000.TDS2000
+   :members:

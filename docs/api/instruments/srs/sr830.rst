@@ -1,0 +1,6 @@
+#######################
+SR830 Lock-in Amplifier
+#######################
+
+.. autoclass:: pymeasure.instruments.srs.sr830.SR830
+   :members:
