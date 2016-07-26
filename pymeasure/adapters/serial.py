@@ -83,8 +83,8 @@ class SerialAdapter(Adapter):
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        self.connection.write(command)
-        binary = self.connection.read()
+        self.connection.write(command.encode())
+        binary = self.connection.read().decode()
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 

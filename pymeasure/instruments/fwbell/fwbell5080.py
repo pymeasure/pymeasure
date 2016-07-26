@@ -22,7 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SerialAdapter, RangeException
+from pymeasure.instruments import Instrument, RangeException
+from pymeasure.adapters import SerialAdapter
 from numpy import array, float64
 
 

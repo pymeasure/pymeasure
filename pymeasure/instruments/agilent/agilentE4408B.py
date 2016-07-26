@@ -22,30 +22,36 @@
 # THE SOFTWARE.
 #
 
-from .instrument import Instrument
+from pymeasure.instruments import Instrument, discreteTruncate, RangeException
+from io import StringIO
 
 
-def discreteTruncate(number, discreteSet):
-    """ Truncates the number to the closest element in the positive discrete set.
-    Returns False if the number is larger than the maximum value or negative.    
+class AgilentE4408B(Instrument):
+    """ Represents the AgilentE4408B Spectrum Analyzer
+    and provides a high-level interface for taking scans of
+    high-frequency spectrums
     """
-    if number < 0: return False
-    discreteSet.sort()
-    for item in discreteSet:
-        if number <= item: return item
-    return False
-    
 
-class RangeException(Exception): pass
 
-from . import agilent
-from . import anritsu
-from . import danfysik
-from . import fwbell
-from . import keithley
-from . import lakeshore
-from . import parker
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import yokogawa
+    def __init__(self, resourceName, **kwargs):
+        super(AgilentE4408B, self).__init__(
+            resourceName,
+            "Agilent E4408B Spectrum Analyzer",
+            **kwargs
+        )
+
+        self.add_control("start_frequency", ":SENS:FREQ:STAR?", ":SENS:FREQ:STAR %.3e HZ")
+        self.add_control("stop_frequency", ":SENS:FREQ:STOP?", ":SENS:FREQ:STOP %.3e HZ")
+        self.add_control("sweep_time", ":SENS:SWE:TIME?", ":SENS:SWE:TIME %.2e")
+
+    def trace(self, number=1):
+        """ Returns a numpy array of the data for a particular trace
+        based on the trace number (1, 2, or 3)
+        """
+        self.write(":FORMat:TRACe:DATA ASCII")
+        data = np.loadtxt(
+            StringIO(self.ask(":TRACE:DATA? TRACE%d" % number)),
+            delimiter=',',
+            dtype=np.float64
+        )
+        return data
