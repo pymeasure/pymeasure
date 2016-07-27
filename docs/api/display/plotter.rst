@@ -3,4 +3,5 @@ Plotter class
 #############
 
 .. automodule:: pymeasure.display.plotter
-   :members:
+    :members:
+    :show-inheritance: 

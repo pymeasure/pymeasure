@@ -49,6 +49,70 @@ class DSP7265(Instrument):
 
     SLOPES = [6, 12, 18, 24]
 
+    voltage = Instrument.control(
+        "OA.", "OA. %g",
+        """ A floating point property that represents the voltage
+        in Volts. This property can be set. """
+    )
+    frequency = Instrument.control(
+        "OF.", "OF. %g",
+        """ A floating point property that represents the lock-in
+        frequency in Hz. This property can be set. """
+    ) 
+    dac1 = Instrument.control(
+        "DAC. 1", "DAC. 1 %g",
+        """ A floating point property that represents the output
+        value on DAC1 in Volts. This property can be set. """
+    )
+    dac2 = Instrument.control(
+        "DAC. 2", "DAC. 2 %g",
+        """ A floating point property that represents the output
+        value on DAC2 in Volts. This property can be set. """
+    )
+    dac3 = Instrument.control(
+        "DAC. 3", "DAC. 3 %g",
+        """ A floating point property that represents the output
+        value on DAC3 in Volts. This property can be set. """
+    )
+    dac4 = Instrument.control(
+        "DAC. 4", "DAC. 4 %g",
+        """ A floating point property that represents the output
+        value on DAC4 in Volts. This property can be set. """
+    )
+    harmonic = Instrument.control(
+        "REFN", "REFN %d",
+        """ An integer property that represents the reference
+        harmonic mode control, taking values from 1 to 65535.
+        This property can be set. """
+    )
+    phase = Instrument.control(
+        "REFP.", "REFP. %g",
+        """ A floating point property that represents the reference
+        harmonic phase in degrees. This property can be set. """
+    )
+    x = Instrument.measurement("X.", 
+        """ Reads the X value in Volts """
+    )
+    y = Instrument.measurement("Y.", 
+        """ Reads the Y value in Volts """
+    )
+    xy = Instrument.measurement("X.Y.", 
+        """ Reads both the X and Y values in Volts """
+    )
+    mag = Instrument.measurement("Mag.", 
+        """ Reads the magnitude in Volts """
+    )
+    adc1 = Instrument.measurement("ADC. 1", 
+        """ Reads the input value of ADC1 in Volts """
+    )
+    adc2 = Instrument.measurement("ADC. 2", 
+        """ Reads the input value of ADC2 in Volts """
+    )
+    id = Instrument.measurement("ID",
+        """ Reads the instrument identification """
+    )
+
+
     def __init__(self, resourceName, **kwargs):
         super(DSP7265, self).__init__(
             resourceName,
@@ -67,27 +131,6 @@ class DSP7265(Instrument):
         
         # Pre-condition
         self.adapter.config(datatype = 'str', converter = 's')
-        
-        # Simple parameter controls go here
-        self.add_control("voltage",   "OA.",    "OA. %g")
-        self.add_control("frequency", "OF.",    "OF. %g")
-        self.add_control("dac1",      "DAC. 1", "DAC. 1 %g")
-        self.add_control("dac2",      "DAC. 2", "DAC. 2 %g")
-        self.add_control("dac3",      "DAC. 3", "DAC. 3 %g")
-        self.add_control("dac4",      "DAC. 4", "DAC. 4 %g")
-        self.add_control("harmonic",  "REFN",   "REFN %d")
-        self.add_control("phase",     "REFP.",  "REFP. %g")
-
-        # Simple measurements go here
-        self.add_measurement("x", "X.")
-        self.add_measurement("y", "Y.")
-        self.add_measurement("xy", "X.Y.")
-        self.add_measurement("mag", "Mag.")
-        self.add_measurement("adc1", "ADC. 1")
-        self.add_measurement("adc2", "ADC. 2")
-
-        # Override the base method since the DSP is dumb about this one...
-        self.add_measurement("id", "ID")
 
     def values(self, command):
         """ Rewrite the method because of extra character in return string."""

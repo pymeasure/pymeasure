@@ -31,6 +31,8 @@ class FWBell5080(Instrument):
     """ Represents the F.W. Bell 5080 Handheld Gaussmeter and
     provides a high-level interface for interacting with the
     instrument
+
+    :param port: The serial port of the instrument
     """
 
     def __init__(self, port):
@@ -39,16 +41,23 @@ class FWBell5080(Instrument):
             "F.W. Bell 5080 Handheld Gaussmeter"
         )
 
-    def identify(self):
+    @property
+    def id(self):
+        """ The identification of the instrument.
+        """
         return self.ask("*IDN?")
 
     def reset(self):
+        """ Resets the instrument.
+        """
         self.write("*OPC")
 
     def measure(self, averages=1):
         """ Returns the measured field over a certain number of averages
         in Gauss and the standard deviation in the averages if measured in
         Gauss or Tesla. Raise an exception if set in Ampere meter units.
+
+        :param averages: The number of averages to preform
         """
         if averages == 1:
             value = self.ask(":MEAS:FLUX?")[:-2]
@@ -66,32 +75,34 @@ class FWBell5080(Instrument):
             return (data.mean(), data.std())
 
     def set_DC_gauss_units(self):
-        """ Sets the meter to measure DC field in Gauss """
+        """ Sets the meter to measure DC field in Gauss. """
         self.write(":UNIT:FLUX:DC:GAUS")
 
     def set_DC_tesla_units(self):
-        """ Sets the meter to measure DC field in Tesla """
+        """ Sets the meter to measure DC field in Tesla. """
         self.write(":UNIT:FLUX:DC:TESL")
 
     def set_AC_gauss_units(self):
-        """ Sets the meter to measure AC field in Gauss """
+        """ Sets the meter to measure AC field in Gauss. """
         self.write(":UNIT:FLUX:AC:GAUS")
 
     def set_AC_tesla_units(self):
-        """ Sets the meter to measure AC field in Telsa """
+        """ Sets the meter to measure AC field in Telsa. """
         self.write(":UNIT:FLUX:AC:TESL")
 
     def get_units(self):
-        """ Returns the units being used """
+        """ Returns the units being used. """
         return self.ask(":UNIT:FLUX?")[:-2]
 
     def set_auto_range(self):
-        """ Enables the auto range functionality """
+        """ Enables the auto range functionality. """
         self.write(":SENS:FLUX:RANG:AUTO")
 
     def set_range(self, max_gauss):
         """ Manually sets the range in Gauss and truncates to
         an allowed range value
+
+        :param max_gauss: The maximum field of the range in Gauss
         """
         if max_gauss < 3e2:
             self.write(":SENS:FLUX:RANG 0")
@@ -104,7 +115,7 @@ class FWBell5080(Instrument):
                                  "measurements above 30 kGauss")
 
     def get_range(self):
-        """ Returns the range in Gauss """
+        """ Returns the maximum field of the range in Gauss """
         value = int(self.ask(":SENS:FLUX:RANG?")[:-2])
         if value == 0:
             return 3e2

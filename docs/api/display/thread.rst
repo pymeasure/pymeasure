@@ -3,4 +3,5 @@ Thread classes
 ##############
 
 .. automodule:: pymeasure.display.thread
-   :members:
+    :members:
+    :show-inheritance: 

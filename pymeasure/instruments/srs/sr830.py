@@ -56,20 +56,40 @@ class SR830(Instrument):
     CHANNEL2_VALUES = ['Y', 'Theta', 'Y Noise', 'Aux In 3', 'Aux In 4']
     CHANNELS = ['X', 'Y', 'R']
 
+    sine_voltage = Instrument.control(
+        "SLVL?", "SLVL%0.3f",
+        """ A floating point property that represents the reference sine-wave
+        voltage in Volts. This property can be set. """
+    )
+    frequency = Instrument.control(
+        "FREQ?", "FREQ%0.5e",
+        """ A floating point property that represents the lock-in frequency
+        in Hz. This property can be set. """
+    )
+    phase = Instrument.control(
+        "PHAS?", "PHAS%0.2f",
+        """ A floating point property that represents the lock-in phase
+        in degrees. This property can be set. """
+    )
+    x = Instrument.measurement("OUTP?1",
+        """ Reads the X value in Volts. """
+    )
+    y = Instrument.measurement("OUTP?2",
+        """ Reads the Y value in Volts. """
+    )
+    magnitude = Instrument.measurement("OUTP?3",
+        """ Reads the magnitude in Volts. """
+    )
+    theta = Instrument.measurement("OUTP?4",
+        """ Reads the theta value in degrees. """
+    )
+
     def __init__(self, resourceName, **kwargs):
         super(SR830, self).__init__(
             resourceName,
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
-
-        self.add_control("sine_voltage", "SLVL?", "SLVL%0.3f")
-        self.add_control("frequency", "FREQ?", "FREQ%0.3e")
-        self.add_control("phase", "PHAS?", "PHAS%0.2f")
-        self.add_measurement("x", "OUTP?1")
-        self.add_measurement("y", "OUTP?2")
-        self.add_measurement("magnitude", "OUTP?3")
-        self.add_measurement("theta", "OUTP?4")
 
     @property
     def channel1(self):

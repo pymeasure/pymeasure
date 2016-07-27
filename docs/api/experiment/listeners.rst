@@ -3,4 +3,6 @@ Listener class
 ##############
 
 .. automodule:: pymeasure.experiment.listeners
-   :members:
+    :members:
+    :undoc-members:
+    :show-inheritance: 

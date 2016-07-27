@@ -32,8 +32,14 @@ import numpy as np
 
 
 class Instrument(object):
-    """ Base class for Instruments, independent of the particular Adapter used
-    to connect for communication
+    """ This provides the base class for all Instruments, which is 
+    independent of the particular Adapter used to connect for 
+    communication to the instrument. It provides basic SCPI commands
+    by default, but can be toggled with :code:`includeSCPI`.
+
+    :param adapter: An :class:`Adapter<pymeasure.adapters.Adapter>` object
+    :param name: A string name
+    :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     """
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
@@ -53,32 +59,49 @@ class Instrument(object):
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
             # Basic SCPI commands
-            #self.add_measurement("id",       "*IDN?")
-            self.add_measurement("status",   "*STB?")
-            self.add_measurement("complete", "*OPC?")
+            self.status = self.measurement("*STB?", 
+                """ Returns the status of the instrument """)
+            self.complete = self.measurement("*OPC?",
+                """ TODO: Add this doc """)
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
         
     @property
     def id(self):
+        """ Requests and returns the identification of the instrument.
+        """
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
         else:
             return "Warning: Property not implemented."
             
     # Wrapper functions for the Adapter object
-    def ask(self, command): 
+    def ask(self, command):
+        """ Writes the command to the instrument through the adapter
+        and returns the read response.
+
+        :param command: command string to be sent to the instrument
+        """
         return self.adapter.ask(command)
 
-    def write(self, command): 
+    def write(self, command):
+        """ Writes the command to the instrument through the adapter.
+
+        :param command: command string to be sent to the instrument
+        """
         self.adapter.write(command)
 
     def read(self): 
+        """ Reads from the instrument through the adapter and returns the
+        response.
+        """
         return self.adapter.read()
 
-    def values(self, command, separator = ','):
-        return self.adapter.values(command, separator = separator)
+    def values(self, command, separator=','):
+        """
+        """
+        return self.adapter.values(command, separator=separator)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
@@ -102,18 +125,23 @@ class Instrument(object):
         setattr(self.__class__, 'set_'+name, fset)
         setattr(self.__class__, 'get_'+name, fget)
 
-    def add_control(self, name, get_string, set_string,
-                    check_errors_on_set=False,
-                    check_errors_on_get=False,
-                    docs=None
-                    ):
-        """This adds a property to the class based on the supplied
-        SCPI commands. The presumption is that this parameter may
-        be set and read from the instrument."""
+    @staticmethod
+    def control(get_command, set_command, docs,
+                check_set_errors=False, check_get_errors=False):
+        """Returns a property for the class based on the supplied
+        commands. This parameter may be set and read from the 
+        instrument.
+
+        :param get_command: A string command that asks for the value
+        :param set_command: A string command that writes the value
+        :param docs: A docstring that will be included in the documentation
+        :param check_set_errors: Toggles checking errors after setting
+        :param check_get_errors: Toggles checking errors after getting        
+        """
 
         def fget(self):
-            vals = self.values(get_string)
-            if check_errors_on_get:
+            vals = self.values(get_command)
+            if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
                 return vals[0]
@@ -121,26 +149,30 @@ class Instrument(object):
                 return vals
 
         def fset(self, value):
-            self.write(set_string % value)
-            if check_errors_on_set:
+            self.write(set_command % value)
+            if check_set_errors:
                 self.check_errors()
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
 
-        # Add the property attribute
-        setattr(self.__class__, name, property(fget, fset))
-        setattr(self.get, name, lambda: fget(self))
-        
+        return property(fget, fset)
+    
+    @staticmethod
+    def measurement(get_command, docs, check_get_errors=False):
+        """ Returns a property for the class based on the supplied
+        commands. This is a measurement quantity that may only be 
+        read from the instrument, not set.
 
-    def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
-        """This adds a property to the class based on the supplied
-        SCPI commands. The presumption is that this is a measurement
-        quantity that may only be read from the instrument, not set.
+        :param get_command: A string command that asks for the value
+        :param docs: A docstring that will be included in the documentation
+        :param check_get_errors: Toggles checking errors after getting 
         """
 
         def fget(self):
-            vals = self.values(get_string)
+            vals = self.values(get_command)
+            if check_get_errors:
+                self.check_errors()
             if len(vals) == 1:
                 return vals[0]
             else:
@@ -149,20 +181,22 @@ class Instrument(object):
         # Add the specified document string to the getter
         fget.__doc__ = docs
 
-        # Add the property attribute
-        setattr(self.__class__, name, property(fget))
-        setattr(self.get, name, lambda: fget(self))
+        return property(fget)
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):
+        """ Clears the instrument status byte
+        """
         self.write("*CLS")
 
     # TODO: Determine case basis for the addition of this method
     def reset(self):
+        """ Resets the instrument
+        """
         self.write("*RST")
 
     def shutdown(self):
-        """Bring the instrument to a safe and stable state"""
+        """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
         log.info("Shutting down %s" % self.name)
 

@@ -39,6 +39,25 @@ class Agilent8722ES(Instrument):
     SCATTERING_PARAMETERS = ("S11", "S12", "S21", "S22")
     S11, S12, S21, S22 = SCATTERING_PARAMETERS
 
+    start_frequency = Instrument.control(
+        "STAR?", "STAR %e Hz",
+        """ A floating point property that represents the start frequency
+        in Hz. This property can be set.
+        """
+    )
+    stop_frequency = Instrument.control(
+        "STOP?", "STOP %e Hz",
+        """ A floating point property that represents the stop frequency
+        in Hz. This property can be set.
+        """
+    )
+    sweep_time = Instrument.control(
+        "SWET?", "SWET%.2e",
+        """ A floating point property that represents the sweep time
+        in seconds. This property can be set.
+        """
+    )
+
     def __init__(self, resourceName, **kwargs):
         super(Agilent8722ES, self).__init__(
             resourceName,
@@ -46,15 +65,11 @@ class Agilent8722ES(Instrument):
             **kwargs
         )
 
-        self.add_control("start_frequency", "STAR?", "STAR %.3e HZ")
-        self.add_control("stop_frequency", "STOP?", "STOP %.3e HZ")
-        self.add_control("sweep_time", "SWET?", "SWET%.2e")
-
     def set_fixed_frequency(self, frequency):
         """ Sets the scan to be of only one frequency in Hz """
-        self.setStartFrequency(frequency)
-        self.setStopFrequency(frequency)
-        self.setScanPoints(3)
+        self.start_frequency = frequency
+        self.stop_frequency = frequency
+        self.scan_points = 3
 
     @property
     def parameter(self):

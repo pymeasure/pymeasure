@@ -26,6 +26,9 @@ from pymeasure.instruments import Instrument
 
 
 class TDS2000(Instrument):
+    """ Represents the Tektronix TDS 2000 Oscilloscope
+    and provides a high-level for interacting with the instrument
+    """
 
     class Measurement(object):
 

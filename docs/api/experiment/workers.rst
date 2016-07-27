@@ -3,4 +3,6 @@ Worker class
 ############
 
 .. automodule:: pymeasure.experiment.workers
-   :members:
+    :members:
+    :undoc-members:
+    :show-inheritance: 

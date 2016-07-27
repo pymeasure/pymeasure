@@ -26,8 +26,66 @@ from pymeasure.instruments import Instrument, RangeException
 
 
 class Agilent8257D(Instrument):
-    """Interface for the Agilent 8257D signal generator
+    """Represents the Agilent 8257D Signal Generator and 
+    provides a high-level interface for interacting with 
+    the instrument.
     """
+
+    power = Instrument.control(
+        ":POW?;", ":POW %g dBm;",
+        """ A floating point property that represents the output power
+        in dBm. This property can be set.
+        """
+    )
+    frequency = Instrument.control(
+        ":FREQ?;", ":FREQ %e Hz;",
+        """ A floating point property that represents the output frequency
+        in Hz. This property can be set.
+        """
+    )
+    start_frequency = Instrument.control(
+        ":SOUR:FREQ:STAR?", ":SOUR:FREQ:STAR %e Hz",
+        """ A floating point property that represents the start frequency
+        in Hz. This property can be set.
+        """
+    )
+    center_frequency = Instrument.control(
+        ":SOUR:FREQ:CENT?", ":SOUR:FREQ:CENT %e Hz;",
+        """ A floating point property that represents the center frequency
+        in Hz. This property can be set.
+        """
+    )
+    stop_frequency = Instrument.control(
+        ":SOUR:FREQ:STOP?", ":SOUR:FREQ:STOP %e Hz",
+        """ A floating point property that represents the stop frequency
+        in Hz. This property can be set.
+        """
+    )
+    start_power = Instrument.control(
+        ":SOUR:POW:STAR?", ":SOUR:POW:STAR %e dBm",
+        """ A floating point property that represents the start power
+        in dBm. This property can be set.
+        """
+    )
+    start_power = Instrument.control(
+        ":SOUR:POW:STOP?", ":SOUR:POW:STOP %e dBm",
+        """ A floating point property that represents the stop power
+        in dBm. This property can be set.
+        """
+    )
+    dwell_time = Instrument.control(
+        ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f",
+        """ A floating point property that represents the settling time
+        in seconds at the current frequency or power setting. 
+        This property can be set.
+        """
+    )
+    step_points = Instrument.control(
+        ":SOUR:SWE:POIN?", ":SOUR:SWE:POIN %d",
+        """ An integer number of points in a step sweep. This property
+        can be set.
+        """
+    )
 
     def __init__(self, resourceName, delay=0.02, **kwargs):
         super(Agilent8257D, self).__init__(
@@ -35,19 +93,6 @@ class Agilent8257D(Instrument):
             "Agilent 8257D RF Signal Generator",
             **kwargs
         )
-
-        self.add_control("power",     ":pow?",  ":pow %g dbm;",
-                         docs = "RF power in dBm")
-        self.add_control("frequency", ":freq?", ":freq %g Hz;",
-                         docs = "RF frequency in Hz")
-        self.add_control("center_frequency", ":SOUR:FREQ:CENT?", ":SOUR:FREQ:CENT %e HZ")
-        self.add_control("start_frequency", ":SOUR:FREQ:STAR?", ":SOUR:FREQ:STAR %e HZ")
-        self.add_control("stop_frequency", ":SOUR:FREQ:STOP?", ":SOUR:FREQ:STOP %e HZ")
-        self.add_control("start_power", ":SOUR:POW:STAR?", ":SOUR:POW:STAR %e DBM")
-        self.add_control("stop_power", ":SOUR:POW:STOP?", ":SOUR:POW:STOP %e DBM")
-        self.add_control("dwell_time", ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f",
-                         docs = "Settling time in seconds at the current freq/power setting")
-        self.add_measurement("step_points", ":SOUR:SWE:POIN?")
 
     def get_output(self):
         """ Return if the output is ON"""

@@ -23,6 +23,7 @@
 #
 
 from .instrument import Instrument
+from .mock import Mock
 
 
 def discreteTruncate(number, discreteSet):

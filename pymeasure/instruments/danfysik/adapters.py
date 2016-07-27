@@ -28,22 +28,42 @@ import re
 
 
 class DanfysikAdapter(SerialAdapter):
+    """ Provides a :class:`SerialAdapter` with the specific baudrate
+    and timeout for Danfysik serial communication.
+
+    Initiates the adapter to open serial communcation over
+    the supplied port.
+
+    :param port: A string representing the serial port
+    """
 
     def __init__(self, port):
         super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
 
     def write(self, command):
+        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>` 
+        method to automatically append a Unix-style linebreak at 
+        the end of the command.
+
+        :param command: SCPI command string to be sent to the instrument
+        """
         command += "\r"
         self.connection.write(command.encode())
 
     def read(self):
+        """ Overwrites the :func:`SerialAdapter.read <pymeasure.adapters.Adapter.read>` 
+        method to automatically raise exceptions if errors are reported by the instrument.
+        
+        :returns: String ASCII response of the instrument
+        :raises: An :code:`Exception` if the Danfysik raises an error
+        """
         # Overwrite to raise exceptions on error messages
         result = b"".join(self.connection.readlines())
         result = result.decode()
         result = result.replace("\r", "")
         search = re.search("^\?\\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
-            raise Exception("Danfysik 8500 raised the error: %s" % (
+            raise Exception("Danfysik raised the error: %s" % (
                             search.groups()[0]))
         else:
             return result

@@ -37,15 +37,20 @@ class Danfysik8500(Instrument):
 
     To allow user access to the Prolific Technology PL2303 Serial port adapter
     in Linux, create the file:
-    /etc/udev/rules.d/50-danfysik.rules, with contents:
+    :code:`/etc/udev/rules.d/50-danfysik.rules`, with contents:
 
-    SUBSYSTEMS=="usb",ATTRS{idVendor}=="067b",ATTRS{idProduct}=="2303",MODE="0666",SYMLINK+="danfysik"
+    .. code-block:: none
+
+        SUBSYSTEMS=="usb",ATTRS{idVendor}=="067b",ATTRS{idProduct}=="2303",MODE="0666",SYMLINK+="danfysik"
 
     Then reload the udev rules with:
-    sudo udevadm control --reload-rules
-    sudo udevadm trigger
 
-    The device will be accessible through /dev/danfysik
+    .. code-block:: bash
+
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger
+
+    The device will be accessible through the port :code:`/dev/danfysik`.
     """
 
     def __init__(self, port):
@@ -59,16 +64,28 @@ class Danfysik8500(Instrument):
 
     @property
     def id(self):
+        """ The identification of the instrument.
+        """
         return self.ask("PRINT")
 
     def local(self):
+        """ Sets the instrument in local mode, where the front
+        panel can be used.
+        """
         self.write("LOC")
 
     def remote(self):
+        """ Sets the instrument in remote mode, where the the
+        front panel is disabled.
+        """
         self.write("REM")
 
     @property
     def polarity(self):
+        """ The polarity of the current supply, being either
+        -1 or 1. This property can be set by suppling one of
+        these values.
+        """
         return 1 if self.ask("PO").strip() == '+' else -1
 
     @polarity.setter
@@ -77,20 +94,30 @@ class Danfysik8500(Instrument):
         self.write("PO %s" % polarity)
 
     def resetInterlocks(self):
+        """ Resets the instrument interlocks.
+        """
         self.write("RS")
 
     def enable(self):
+        """ Enables the flow of current.
+        """
         self.write("N")
 
     def disable(self):
+        """ Disables the flow of current.
+        """
         self.write("F")
 
     def isEnabled(self):
-        """ Returns True if the supply is enabled """
+        """ Returns True if the current supply is enabled.
+        """
         return self.status_hex & 0x800000 == 0
 
     @property
     def status_hex(self):
+        """ The status in hexadecimal. This value is parsed in
+        :attr:`~.status` into a human-readable list.
+        """
         status = self.ask("S1H")
         match = re.search(r'(?P<hex>[A-Z0-9]{6})', status)
         if match is not None:
@@ -101,6 +128,9 @@ class Danfysik8500(Instrument):
 
     @property
     def current(self):
+        """ The actual current in Amps. This property can be set through
+        :attr:`~.current_ppm`.
+        """
         return int(self.ask("AD 8"))*1e-2*self.polarity
 
     @current.setter
@@ -112,6 +142,8 @@ class Danfysik8500(Instrument):
 
     @property
     def current_ppm(self):
+        """ The current in parts per million. This property can be set.
+        """
         return int(self.ask("DA 0")[2:])
 
     @current_ppm.setter
@@ -123,32 +155,58 @@ class Danfysik8500(Instrument):
 
     @property
     def current_setpoint(self):
+        """ The setpoint for the current, which can deviate from the actual current
+        (:attr:`~.current`) while the supply is in the process of setting the value.
+        """
         return self.current_ppm*(160/1e6)
 
     @property
     def slew_rate(self):
+        """ The slew rate of the current sweep.
+        """
         return float(self.ask("R3"))
 
     def wait_for_current(self, has_aborted=lambda: False, delay=0.01):
+        """ Blocks the process until the current has stabilized. A
+        provided function :code:`has_aborted` can be supplied, which
+        is checked after each delay time (in seconds) in addition to the
+        stability check. This allows an abort feature to be integrated.
+
+        :param has_aborted: A function that returns True if the process should stop waiting
+        :param delay: The delay time in seconds between each check for stability
+        """
         self.wait_for_ready(has_aborted, delay)
         while not has_aborted() and not self.is_current_stable():
             sleep(delay)
 
     def is_current_stable(self):
         """ Returns True if the current is within 0.02 A of the
-        setpoint value
+        setpoint value.
         """
         return abs(self.current - self.current_setpoint) <= 0.02
 
     def is_ready(self):
+        """ Returns True if the instrument is in the ready state.
+        """
         return self.status_hex & 0b10 == 0
 
     def wait_for_ready(self, has_aborted=lambda: False, delay=0.01):
+        """ Blocks the process until the instrument is ready. A
+        provided function :code:`has_aborted` can be supplied, which
+        is checked after each delay time (in seconds) in addition to the
+        readiness check. This allows an abort feature to be integrated.
+
+        :param has_aborted: A function that returns True if the process should stop waiting
+        :param delay: The delay time in seconds between each check for readiness
+        """
         while not has_aborted() and not self.is_ready():
             sleep(delay)
 
     @property
     def status(self):
+        """ A list of human-readable strings that contain
+        the instrument status information, based on :attr:`~.status_hex`.
+        """
         status = []
         indicator = self.ask("S1")
         if indicator[0] == "!":
@@ -183,36 +241,54 @@ class Danfysik8500(Instrument):
         return status
 
     def clear_ramp_set(self):
+        """ Clears the ramp set.
+        """
         self.write("RAMPSET C")
 
     def set_ramp_delay(self, time):
+        """ Sets the ramp delay time in seconds.
+
+        :param time: The time delay time in seconds
+        """
         self.write("RAMPSET %f" % time)
 
     def start_ramp(self):
+        """ Starts the current ramp.
+        """
         self.write("RAMP R")
 
     def add_ramp_step(self, current):
+        """ Adds a current step to the ramp set.
+
+        :param current: A current in Amps
+        """
         self.write("R %.6f" % (current/160.))
 
     def stop_ramp(self):
+        """ Stops the current ramp.
+        """
         self.ask("RAMP S")
 
     def set_ramp_to_current(self, current, points, delay_time=1):
+        """ Sets up a linear ramp from the initial current to a different
+        current, with a number of points, and delay time.
+
+        :param current: The final current in Amps
+        :param points: The number of linear points to traverse
+        :param delay_time: A delay time in seconds 
+        """
         initial_current = self.current
-        self.clearRampSet()
-        self.setRampDelay(delay_time)
+        self.clear_ramp_set()
+        self.set_ramp_delay(delay_time)
         steps = np.linspace(initial_current, current, num=points)
         cmds = ["R %.6f" % (step/160.) for step in steps]
         self.write("\r".join(cmds))
 
     def ramp_to_current(self, current, points, delay_time=1):
-        initial_current = self.current
-        self.clearRampSet()
-        self.setRampDelay(delay_time)
-        steps = np.linspace(initial_current, current, num=points)
-        cmds = ["R %.6f" % (step/160.) for step in steps]
-        self.write("\r".join(cmds))
-        self.startRamp()
+        """ Executes :meth:`~.set_ramp_to_current` and starts the ramp.
+        """
+        self.set_ramp_to_current(current, points, delay_time)
+        self.start_ramp()
 
     # self.setSequence(0, [0, 10], [0.01])
     def set_sequence(self, stack, currents, times, multiplier=999999):
@@ -238,17 +314,37 @@ class Danfysik8500(Instrument):
         self.write("MULT %i,%i" % (stack, multiplier))
 
     def clear_sequence(self, stack):
-        """ Clears the sequence stack by number 0-15 """
+        """ Clears the sequence by the stack number.
+        
+        :param stack: A stack number between 0-15 
+        """
         self.write("CSS %i" % stack)
 
     def sync_sequence(self, stack, delay=0):
+        """ Arms the ramp sequence to be triggered by a hardware
+        input to pin P33 1&2 (10 to 24 V) or a TS command. If a
+        delay is provided, the sequence will start after the delay.
+
+        :param stack: A stack number between 0-15
+        :param delay: A delay time in seconds
+        """
         self.write("SYNC %i, %i" % (stack, delay))
 
     def start_sequence(self, stack):
+        """ Starts a sequence by the stack number.
+
+        :param stack: A stack number between 0-15 
+        """
         self.write("TS %i" % stack)
 
     def stop_sequence(self):
+        """ Stops the currently running sequence.
+        """
         self.write("STOP")
 
     def is_sequence_running(self, stack):
+        """ Returns True if a sequence is running with a given stack number
+
+        :param stack: A stack number between 0-15 
+        """
         return re.search("R%i," % stack, self.ask("S2")) is not None
