@@ -45,10 +45,10 @@ class LakeShoreUSBAdapter(SerialAdapter):
         )
 
     def write(self, command):
-        """ Overwrites the :func:`Adapter.write <pymeasure.adapters.Adapter.write>` method to automatically append
-        a Unix-style linebreak at the end of the command.
+        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
+        method to automatically append a Unix-style linebreak at the end
+        of the command.
 
         :param command: SCPI command string to be sent to the instrument
-        :returns: String ASCII response of the instrument
         """
         super(LakeShoreUSBAdapter, self).write(command + "\n")
