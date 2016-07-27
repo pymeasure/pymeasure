@@ -127,6 +127,7 @@ class Instrument(object):
 
     @staticmethod
     def control(get_command, set_command, docs,
+                validator=lambda x: x,
                 check_set_errors=False, check_get_errors=False):
         """Returns a property for the class based on the supplied
         commands. This parameter may be set and read from the 
@@ -135,6 +136,8 @@ class Instrument(object):
         :param get_command: A string command that asks for the value
         :param set_command: A string command that writes the value
         :param docs: A docstring that will be included in the documentation
+        :param validator: A function that returns a valid value from the input, 
+                          and otherwise raises an exception
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting        
         """
@@ -149,6 +152,7 @@ class Instrument(object):
                 return vals
 
         def fset(self, value):
+            value = validator(value)
             self.write(set_command % value)
             if check_set_errors:
                 self.check_errors()
