@@ -38,6 +38,19 @@ class Yokogawa7651(Instrument):
     and provides a high-level for interacting with the instrument.
     """
 
+    source_voltage = Instrument.control(
+        "OD;E", "S%g;E",
+        """ A floating point property that represents the output voltage
+        in Volts, if that mode is active. This property can be set. """
+    )
+    source_current = Instrument.control(
+        "OD;E", "S%g;E",
+        """ A floating point property that represents the output current
+        in Amps, if that mode is active. This property can be set. """
+    )
+    voltage = source_voltage
+    current = source_current
+
     def __init__(self, resourceName, **kwargs):
         super(Yokogawa7651, self).__init__(
             resourceName,
@@ -47,12 +60,6 @@ class Yokogawa7651(Instrument):
         
         self.write("H0;E") # Set no header in output data
         self.adapter.config()
-        
-        # Simple control parameters
-        self.add_control("source_voltage", "OD;E", "S%g;E")
-        self.add_control("source_current", "OD;E", "S%g;E")
-        self.add_control("voltage", "OD;E", "S%g;E")
-        self.add_control("current", "OD;E", "S%g;E")
         
     @property
     def id(self):

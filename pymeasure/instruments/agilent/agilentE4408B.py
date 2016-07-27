@@ -32,6 +32,24 @@ class AgilentE4408B(Instrument):
     high-frequency spectrums
     """
 
+    start_frequency = Instrument.control(
+        ":SOUR:FREQ:STAR?", ":SOUR:FREQ:STAR %e Hz",
+        """ A floating point property that represents the start frequency
+        in Hz. This property can be set.
+        """
+    )
+    center_frequency = Instrument.control(
+        ":SOUR:FREQ:CENT?", ":SOUR:FREQ:CENT %e Hz;",
+        """ A floating point property that represents the center frequency
+        in Hz. This property can be set.
+        """
+    )
+    sweep_time = Instrument.control(
+        ":SENS:SWE:TIME?", ":SENS:SWE:TIME %.2e",
+        """ A floating point property that represents the sweep time
+        in seconds. This property can be set.
+        """
+    )
 
     def __init__(self, resourceName, **kwargs):
         super(AgilentE4408B, self).__init__(
@@ -39,10 +57,6 @@ class AgilentE4408B(Instrument):
             "Agilent E4408B Spectrum Analyzer",
             **kwargs
         )
-
-        self.add_control("start_frequency", ":SENS:FREQ:STAR?", ":SENS:FREQ:STAR %.3e HZ")
-        self.add_control("stop_frequency", ":SENS:FREQ:STOP?", ":SENS:FREQ:STOP %.3e HZ")
-        self.add_control("sweep_time", ":SENS:SWE:TIME?", ":SENS:SWE:TIME %.2e")
 
     def trace(self, number=1):
         """ Returns a numpy array of the data for a particular trace

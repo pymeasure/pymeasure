@@ -28,6 +28,16 @@ from pymeasure.instruments import Instrument, discreteTruncate, RangeException
 class AnritsuMG3692C(Instrument):
     """ Represents the Anritsu MG3692C Signal Generator
     """
+    power = Instrument.control(
+        ":POWER?;", ":POWER %g dBm;",
+        """ A floating point property that represents the output power
+        in dBm. This property can be set. """
+    )
+    frequency = Instrument.control(
+        ":FREQUENCY?;", ":FREQUENCY %e Hz;",
+        """ A floating point property that represents the output frequency
+        in Hz. This property can be set. """
+    )
 
     def __init__(self, resourceName, **kwargs):
         super(AnritsuMG3692C, self).__init__(
@@ -35,28 +45,6 @@ class AnritsuMG3692C(Instrument):
             "Anritsu MG3692C Signal Generator",
             **kwargs
         )
-
-    @property
-    def power(self):
-        """ A floating point property that represents the output power in
-        dBm. This property can be set.
-        """
-        return self.ask(":POWER?;")
-
-    @power.setter
-    def power(self, value):
-        self.write(":POWER %g dBm;" % value)
-
-    @property
-    def frequency(self):
-        """ A floating point property that represents the output frequency
-        in Hz. This property can be set.
-        """
-        return self.ask(":FREQUENCY?;")
-
-    @frequency.setter
-    def frequency(self, value):
-        self.write(":FREQUENCY %g Hz;" % value)
 
     @property
     def output(self):

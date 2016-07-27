@@ -60,7 +60,6 @@ class LakeShore425(Instrument):
             LakeShoreUSBAdapter(port),
             "LakeShore 425 Gaussmeter",
         )
-        #self.add_control("range", "RANGE?", "RANGE %d")
         
     @property
     def range(self):

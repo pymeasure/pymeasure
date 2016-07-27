@@ -38,6 +38,50 @@ from io import BytesIO
 class Keithley2400(Instrument):
     """This is the class for the Keithley 2000-series instruments"""
 
+    source_voltage = Instrument.control(
+        ":SOUR:VOLT?;", ":SOUR:VOLT:LEV %g;",
+        """ A floating point property that represents the output voltage
+        in Volts. This property can be set. """
+    )
+    source_current = Instrument.control(
+        ":SOUR:CURR?;", ":SOUR:CURR:LEV %g;",
+        """ A floating point property that represents the output current
+        in Amps. This property can be set. """
+    )
+    voltage = Instrument.measurement(":READ?",
+        """ Reads the voltage in Volts, if configured for this reading.
+        """
+    )
+    current = Instrument.measurement(":READ?",
+        """ Reads the current in Amps, if configured for this reading.
+        """
+    )
+    resistance = Instrument.measurement(":READ?",
+        """ Reads the resistance in Ohms, if configured for this reading.
+        """
+    )
+    buffer_count = Instrument.measurement(":TRAC:POIN:ACT?",
+        """ Reads the integer buffer count. """
+    )
+    # TODO: Validate voltage_range between -+ 210 V
+    voltage_range = Instrument.control(
+        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %0.2f",
+        """ A floating point property that represents the voltage range
+        in Volts. This property can be set. """
+    )
+    # TODO: Validate only -+ 1.05 A
+    current_range = Instrument.control(
+        ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG %0.2f",
+        """ A floating point property that represents the current range
+        in Amps. This property can be set. """
+    )
+    # TODO: Validate only 0 to 210 MOhm
+    resistance_range = Instrument.control(
+        ":RES:RANG?", ":RES:RANG %e",
+        """ A floating point property that represents the resistance range
+        in Ohms. This property can be set. """
+    )
+
     def __init__(self, resourceName, **kwargs):
         super(Keithley2400, self).__init__(
             resourceName,
@@ -49,23 +93,6 @@ class Keithley2400(Instrument):
         # self.values_format = visa.ascii
         self.reset()
         self.source_mode = None
-
-        # Simple control parameters
-        self.add_control("source_voltage", ":sour:volt?", "sour:volt:lev %g;", docs="Set or get the voltage supply.")
-        self.add_control("source_current", ":sour:curr?", "sour:curr:lev %g;", docs="Set or get the current supply.")
-
-        # Simple measurements
-        self.add_measurement("voltage", ":read?")
-        self.add_measurement("current", ":read?")
-        self.add_measurement("resistance", ":read?")
-
-        self.add_measurement("buffer_count", ":TRAC:POIN:ACT?")
-        self.add_control("voltage_range", ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %0.2f")
-        # TODO: Validate only -+ 210 V
-        self.add_control("current_range", ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG %0.2f")
-        # TODO: Validate only -+ 1.05 A
-        self.add_control("resistance_range", ":RES:RANG?", ":RES:RANG %e")
-        # TODO: Validate only 0 to 210 MOhm
 
     def beep(self, frequency, duration):
         self.write(":SYST:BEEP %g, %g" % (frequency, duration))

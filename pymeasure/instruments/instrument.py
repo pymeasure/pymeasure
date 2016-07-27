@@ -59,9 +59,10 @@ class Instrument(object):
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
             # Basic SCPI commands
-            #self.add_measurement("id",       "*IDN?")
-            self.add_measurement("status",   "*STB?")
-            self.add_measurement("complete", "*OPC?")
+            self.status = self.measurement("*STB?", 
+                """ Returns the status of the instrument """)
+            self.complete = self.measurement("*OPC?",
+                """ TODO: Add this doc """)
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
@@ -124,18 +125,23 @@ class Instrument(object):
         setattr(self.__class__, 'set_'+name, fset)
         setattr(self.__class__, 'get_'+name, fget)
 
-    def add_control(self, name, get_string, set_string,
-                    check_errors_on_set=False,
-                    check_errors_on_get=False,
-                    docs=None
-                    ):
-        """This adds a property to the class based on the supplied
-        commands. The presumption is that this parameter may
-        be set and read from the instrument."""
+    @staticmethod
+    def control(get_command, set_command, docs,
+                check_set_errors=False, check_get_errors=False):
+        """Returns a property for the class based on the supplied
+        commands. This parameter may be set and read from the 
+        instrument.
+
+        :param get_command: A string command that asks for the value
+        :param set_command: A string command that writes the value
+        :param docs: A docstring that will be included in the documentation
+        :param check_set_errors: Toggles checking errors after setting
+        :param check_get_errors: Toggles checking errors after getting        
+        """
 
         def fget(self):
-            vals = self.values(get_string)
-            if check_errors_on_get:
+            vals = self.values(get_command)
+            if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
                 return vals[0]
@@ -143,26 +149,30 @@ class Instrument(object):
                 return vals
 
         def fset(self, value):
-            self.write(set_string % value)
-            if check_errors_on_set:
+            self.write(set_command % value)
+            if check_set_errors:
                 self.check_errors()
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
 
-        # Add the property attribute
-        setattr(self.__class__, name, property(fget, fset))
-        setattr(self.get, name, lambda: fget(self))
-        
+        return property(fget, fset)
+    
+    @staticmethod
+    def measurement(get_command, docs, check_get_errors=False):
+        """ Returns a property for the class based on the supplied
+        commands. This is a measurement quantity that may only be 
+        read from the instrument, not set.
 
-    def add_measurement(self, name, get_string, checkErrorsOnGet=False, docs=None):
-        """This adds a property to the class based on the supplied
-        SCPI commands. The presumption is that this is a measurement
-        quantity that may only be read from the instrument, not set.
+        :param get_command: A string command that asks for the value
+        :param docs: A docstring that will be included in the documentation
+        :param check_get_errors: Toggles checking errors after getting 
         """
 
         def fget(self):
-            vals = self.values(get_string)
+            vals = self.values(get_command)
+            if check_get_errors:
+                self.check_errors()
             if len(vals) == 1:
                 return vals[0]
             else:
@@ -171,9 +181,7 @@ class Instrument(object):
         # Add the specified document string to the getter
         fget.__doc__ = docs
 
-        # Add the property attribute
-        setattr(self.__class__, name, property(fget))
-        setattr(self.get, name, lambda: fget(self))
+        return property(fget)
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):
