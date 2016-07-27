@@ -24,8 +24,8 @@
 
 import pytest
 from pymeasure.instruments.validators import (
-    strict_range, strict_discrete_set,
-    truncated_range, truncated_discrete_set
+    strict_range, strict_discrete_set, strict_map,
+    truncated_range, truncated_discrete_set, truncated_map
 )
 
 def test_strict_range():
@@ -53,3 +53,35 @@ def test_truncated_discrete_set():
     assert truncated_discrete_set(5.1, range(10)) == 6
     assert truncated_discrete_set(11, range(10)) == 9
     assert truncated_discrete_set(-10, range(10)) == 0
+
+def test_strict_map():
+    values = {5: 1, 10: 2, 20: 3}
+    assert strict_map(5, values) == 1
+    assert strict_map(10, values) == 2
+    assert strict_map(20, values) == 3
+    with pytest.raises(ValueError) as e_info:
+        strict_map(5.1, values)
+
+    assert strict_map(5, range(10)) == 5
+    with pytest.raises(ValueError) as e_info:
+        strict_map(5.1, range(10))
+    with pytest.raises(ValueError) as e_info:
+        strict_map(20, range(10))
+
+    values = [1, 2, 5]
+    assert strict_map(5, values) == 2
+    with pytest.raises(ValueError) as e_info:
+        strict_map(3, values)
+
+def test_truncated_map():
+    values = {5: 1, 10: 2, 20: 3}
+    assert truncated_map(5, values) == 1
+    assert truncated_map(10, values) == 2
+    assert truncated_map(20, values) == 3
+    assert truncated_map(30, values) == 3
+    assert truncated_map(0, values) == 1
+
+    assert truncated_map(5, range(10)) == 5
+    assert truncated_map(5.1, range(10)) == 6
+    assert truncated_map(-10, range(10)) == 0
+    assert truncated_map(20, range(10)) == 9
