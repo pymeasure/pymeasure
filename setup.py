@@ -43,7 +43,8 @@ setup(
     install_requires=[
         "Numpy >= 1.6.1",
         "pandas >= 0.14",
-        "pyvisa >= 1.8"
+        "pyvisa >= 1.8",
+        "pyserial >= 2.7"
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
