@@ -2,5 +2,6 @@
 DSP 7265 Lock-in Amplifier
 ##########################
 
-.. autoclass:: pymeasure.instruments.signalrecovery.dsp7265.DSP7265
-   :members:
+.. autoclass:: pymeasure.instruments.signalrecovery.DSP7265
+    :members:
+    :show-inheritance:

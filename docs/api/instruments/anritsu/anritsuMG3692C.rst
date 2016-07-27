@@ -2,5 +2,6 @@
 Anritsu MG3692C Signal Generator
 ################################
 
-.. autoclass:: pymeasure.instruments.anritsu.anritsuMG3692C.AnritsuMG3692C
-   :members:
+.. autoclass:: pymeasure.instruments.anritsu.AnritsuMG3692C
+    :members:
+    :show-inheritance:

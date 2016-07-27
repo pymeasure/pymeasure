@@ -1,8 +1,10 @@
+.. module:: pymeasure.instruments
+
 #####################
 pymeasure.instruments
 #####################
 
-This section contains specific documentation on the classes and methods of the package.
+This section contains documentation on the instrument classes.
 
 .. toctree::
    :maxdepth: 2

@@ -32,8 +32,14 @@ import numpy as np
 
 
 class Instrument(object):
-    """ Base class for Instruments, independent of the particular Adapter used
-    to connect for communication
+    """ This provides the base class for all Instruments, which is 
+    independent of the particular Adapter used to connect for 
+    communication to the instrument. It provides basic SCPI commands
+    by default, but can be toggled with :code:`includeSCPI`.
+
+    :param adapter: An :class:`Adapter<pymeasure.adapters.Adapter>` object
+    :param name: A string name
+    :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     """
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
@@ -62,23 +68,39 @@ class Instrument(object):
         
     @property
     def id(self):
+        """ Requests and returns the identification of the instrument.
+        """
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
         else:
             return "Warning: Property not implemented."
             
     # Wrapper functions for the Adapter object
-    def ask(self, command): 
+    def ask(self, command):
+        """ Writes the command to the instrument through the adapter
+        and returns the read response.
+
+        :param command: command string to be sent to the instrument
+        """
         return self.adapter.ask(command)
 
-    def write(self, command): 
+    def write(self, command):
+        """ Writes the command to the instrument through the adapter.
+
+        :param command: command string to be sent to the instrument
+        """
         self.adapter.write(command)
 
     def read(self): 
+        """ Reads from the instrument through the adapter and returns the
+        response.
+        """
         return self.adapter.read()
 
-    def values(self, command, separator = ','):
-        return self.adapter.values(command, separator = separator)
+    def values(self, command, separator=','):
+        """
+        """
+        return self.adapter.values(command, separator=separator)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
@@ -108,7 +130,7 @@ class Instrument(object):
                     docs=None
                     ):
         """This adds a property to the class based on the supplied
-        SCPI commands. The presumption is that this parameter may
+        commands. The presumption is that this parameter may
         be set and read from the instrument."""
 
         def fget(self):
@@ -155,14 +177,18 @@ class Instrument(object):
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):
+        """ Clears the instrument status byte
+        """
         self.write("*CLS")
 
     # TODO: Determine case basis for the addition of this method
     def reset(self):
+        """ Resets the instrument
+        """
         self.write("*RST")
 
     def shutdown(self):
-        """Bring the instrument to a safe and stable state"""
+        """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
         log.info("Shutting down %s" % self.name)
 

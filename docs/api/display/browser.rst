@@ -3,4 +3,5 @@ Browser classes
 ###############
 
 .. automodule:: pymeasure.display.browser
-   :members:
+    :members:
+    :show-inheritance: 

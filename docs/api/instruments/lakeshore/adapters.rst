@@ -2,5 +2,8 @@
 LakeShore Adapters
 ##################
 
-.. autoclass:: pymeasure.instruments.lakeshore.adapters.LakeShoreUSBAdapter
-   :members:
+.. autoclass:: pymeasure.instruments.lakeshore.LakeShoreUSBAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance: 

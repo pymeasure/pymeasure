@@ -34,6 +34,9 @@ import numpy as np
 
 
 class Yokogawa7651(Instrument):
+    """ Represents the Yokogawa 7651 Programmable DC Source
+    and provides a high-level for interacting with the instrument.
+    """
 
     def __init__(self, resourceName, **kwargs):
         super(Yokogawa7651, self).__init__(
@@ -53,11 +56,17 @@ class Yokogawa7651(Instrument):
         
     @property
     def id(self):
+        """ Returns the identification of the instrument
+        """
         return self.ask("OS;E")
         
     @property
     def enabled(self):
-        """See if 5th bit is set in the OC flag."""
+        """ This property is True if the source output is enabled, determined 
+        by checking if the 5th bit of the OC flag is a binary 1. This property 
+        can be set with a True or False value for enable or disabled
+        respectively.
+        """
         oc = int(self.ask("OC;E")[5:])
         return True if (oc & 0b10000) else False
 
@@ -70,9 +79,9 @@ class Yokogawa7651(Instrument):
             self.write("O0;E")
         
     def config_current_source(self, max_current, cycle=False):
-        """For current range specified in A, set the device to the proper mode
-        the options are 1mA, 10mA, 100mA. This function automatically rounds up
-        to the necessary range."""
+        """ Configures the instrument to source current based on a maximum current
+        in Amps, which can take the value of 1, 10, and 100 mA. This function 
+        automatically rounds up to the necessary range."""
 
         index = int(math.log10(max_current*0.95e3)+5.0)
         if (index < 4):
@@ -88,9 +97,9 @@ class Yokogawa7651(Instrument):
             self.enabled = True
 
     def config_voltage_source(self, max_voltage, cycle=False):
-        """For voltage range specified in V, set the device to the proper mode
-        the options are 10mV, 100mV, 1V, 10V, 30V This function automatically
-        rounds up to the necessary range."""
+        """ Configures the instrument to source voltage based on a maximum voltage
+        in Volts, which can take the value of 10 mV, 100 mV, 1 V, 10 V, and 30 V.
+        This function automatically rounds up to the necessary range."""
 
         index = int(math.log10(max_voltage*0.95e3)+2.0)
         if (index < 2):
@@ -106,7 +115,9 @@ class Yokogawa7651(Instrument):
             self.enabled = True
 
     def ramp_to_current(self, current, steps=25, duration=0.5):
-        """ For current in A, time in seconds """
+        """ Ramps the current to a value in Amps by traversing a linear spacing
+        of current steps over a duration, defined in seconds.
+        """
         start_current = self.source_current
         stop_current = current
         pause = duration/steps
@@ -117,7 +128,9 @@ class Yokogawa7651(Instrument):
                 time.sleep(pause)
 
     def ramp_to_voltage(self, voltage, steps=25, duration=0.5):
-        """ For voltage in V, time in seconds """
+        """ Ramps the voltage to a value in Volts by traversing a linear spacing
+        of voltage steps over a duration, defined in seconds.
+        """
         start_voltage = self.source_voltage
         stop_voltage = voltage
         pause = duration/steps
@@ -129,6 +142,7 @@ class Yokogawa7651(Instrument):
 
     def shutdown(self):
         super(Yokogawa7651, self).shutdown()
+        # TODO: Check if current or voltage is being sourced
         self.ramp_to_current(0.0, steps=25)
         self.source_current = 0.0
         self.enabled = False

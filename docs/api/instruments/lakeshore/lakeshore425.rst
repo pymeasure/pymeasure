@@ -2,5 +2,6 @@
 LakeShore 425 Gaussmeter
 ########################
 
-.. autoclass:: pymeasure.instruments.lakeshore.lakeshore425.LakeShore425
-   :members:
+.. autoclass:: pymeasure.instruments.lakeshore.LakeShore425
+    :members:
+    :show-inheritance:

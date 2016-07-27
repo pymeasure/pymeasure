@@ -3,4 +3,5 @@ Manager classes
 ###############
 
 .. automodule:: pymeasure.display.manager
-   :members:
+    :members:
+    :show-inheritance: 

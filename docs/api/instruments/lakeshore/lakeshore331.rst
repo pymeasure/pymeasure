@@ -2,5 +2,6 @@
 LakeShore 331 Temperature Controller
 ####################################
 
-.. autoclass:: pymeasure.instruments.lakeshore.lakeshore331.LakeShore331
-   :members:
+.. autoclass:: pymeasure.instruments.lakeshore.LakeShore331
+    :members:
+    :show-inheritance:

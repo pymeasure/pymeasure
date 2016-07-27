@@ -2,5 +2,6 @@
 F.W. Bell 5080 Handheld Gaussmeter
 ##################################
 
-.. autoclass:: pymeasure.instruments.fwbell.fwbell5080.FWBell5080
-   :members:
+.. autoclass:: pymeasure.instruments.fwbell.FWBell5080
+    :members:
+    :show-inheritance:

@@ -2,5 +2,6 @@
 Danfysik Serial Adapter
 #######################
 
-.. autoclass:: pymeasure.instruments.danfysik.adapters.DanfysikAdapter
-   :members:
+.. autoclass:: pymeasure.instruments.danfysik.DanfysikAdapter
+    :members:
+    :show-inheritance:

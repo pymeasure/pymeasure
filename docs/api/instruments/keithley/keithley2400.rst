@@ -2,5 +2,6 @@
 Keithley 2400 SourceMeter
 #########################
 
-.. autoclass:: pymeasure.instruments.keithley.keithley2400.Keithley2400
-   :members:
+.. autoclass:: pymeasure.instruments.keithley.Keithley2400
+    :members:
+    :show-inheritance:

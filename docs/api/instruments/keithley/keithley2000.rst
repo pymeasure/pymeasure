@@ -2,5 +2,6 @@
 Keithley 2000 Multimeter
 ########################
 
-.. autoclass:: pymeasure.instruments.keithley.keithley2000.Keithley2000
-   :members:
+.. autoclass:: pymeasure.instruments.keithley.Keithley2000
+    :members:
+    :show-inheritance:

@@ -51,7 +51,7 @@ Information about development is also available:
 .. _api-docs:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: API References
 
    api/adapters

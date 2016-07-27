@@ -3,4 +3,5 @@ Widget classes
 ##############
 
 .. automodule:: pymeasure.display.widgets
-   :members:
+    :members:
+    :show-inheritance: 

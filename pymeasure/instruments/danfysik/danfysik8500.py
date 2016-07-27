@@ -37,15 +37,20 @@ class Danfysik8500(Instrument):
 
     To allow user access to the Prolific Technology PL2303 Serial port adapter
     in Linux, create the file:
-    /etc/udev/rules.d/50-danfysik.rules, with contents:
+    :code:`/etc/udev/rules.d/50-danfysik.rules`, with contents:
 
-    SUBSYSTEMS=="usb",ATTRS{idVendor}=="067b",ATTRS{idProduct}=="2303",MODE="0666",SYMLINK+="danfysik"
+    .. code-block:: none
+
+        SUBSYSTEMS=="usb",ATTRS{idVendor}=="067b",ATTRS{idProduct}=="2303",MODE="0666",SYMLINK+="danfysik"
 
     Then reload the udev rules with:
-    sudo udevadm control --reload-rules
-    sudo udevadm trigger
 
-    The device will be accessible through /dev/danfysik
+    .. code-block:: bash
+
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger
+
+    The device will be accessible through the port :code:`/dev/danfysik`.
     """
 
     def __init__(self, port):

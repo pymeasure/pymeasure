@@ -2,5 +2,6 @@
 Agilent 8257D Signal Generator
 ##############################
 
-.. autoclass:: pymeasure.instruments.agilent.agilent8257D.Agilent8257D
-   :members:
+.. autoclass:: pymeasure.instruments.agilent.Agilent8257D
+    :members:
+    :show-inheritance:
