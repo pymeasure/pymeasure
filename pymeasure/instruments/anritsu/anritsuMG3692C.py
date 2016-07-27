@@ -36,8 +36,27 @@ class AnritsuMG3692C(Instrument):
             **kwargs
         )
 
-        self.add_control("power", ":POWER?", ":POWER %g dBm;")
-        self.add_control("frequency", ":FREQUENCY?", ":FREQUENCY %g Hz;")
+    @property
+    def power(self):
+        """ A floating point property that represents the output power in
+        dBm. This property can be set.
+        """
+        return self.ask(":POWER?;")
+
+    @power.setter
+    def power(self, value):
+        self.write(":POWER %g dBm;" % value)
+
+    @property
+    def frequency(self):
+        """ A floating point property that represents the output frequency
+        in Hz. This property can be set.
+        """
+        return self.ask(":FREQUENCY?;")
+
+    @frequency.setter
+    def frequency(self, value):
+        self.write(":FREQUENCY %g Hz;" % value)
 
     @property
     def output(self):
