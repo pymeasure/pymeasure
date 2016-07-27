@@ -41,6 +41,9 @@ class AnritsuMG3692C(Instrument):
 
     @property
     def output(self):
+        """ A boolean property that represents the signal output state.
+        This property can be set to control the output.
+        """
         return int(self.ask(":OUTPUT?")) == 1
 
     @output.setter
@@ -51,11 +54,18 @@ class AnritsuMG3692C(Instrument):
             self.write(":OUTPUT OFF;")
 
     def enable(self):
+        """ Enables the signal output.
+        """
         self.output = True
 
     def disable(self):
+        """ Disables the signal output.
+        """
         self.output = False
 
     def shutdown(self):
+        """ Shuts down the instrument, putting it in a safe state.
+        """
+        # TODO: Implement modulation
         self.modulation = False
         self.disable()
