@@ -129,7 +129,8 @@ class Instrument(object):
     @staticmethod
     def control(get_command, set_command, docs,
                 validator=lambda x, y: x, values=[], map_values=False,
-                check_set_errors=False, check_get_errors=False):
+                check_set_errors=False, check_get_errors=False,
+                **kwargs):
         """Returns a property for the class based on the supplied
         commands. This property may be set and read from the 
         instrument.
@@ -152,7 +153,7 @@ class Instrument(object):
             inverse = {v: k for k, v in values.items()}
 
         def fget(self):
-            vals = self.values(get_command)
+            vals = self.values(get_command, **kwargs)
             if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
@@ -193,7 +194,8 @@ class Instrument(object):
         return property(fget, fset)
     
     @staticmethod
-    def measurement(get_command, docs, map_values=None, check_get_errors=False):
+    def measurement(get_command, docs, map_values=None, 
+                    check_get_errors=False, **kwargs):
         """ Returns a property for the class based on the supplied
         commands. This is a measurement quantity that may only be 
         read from the instrument, not set.
@@ -212,7 +214,7 @@ class Instrument(object):
             inverse = {v: k for k, v in values.items()}
 
         def fget(self):
-            vals = self.values(get_command)
+            vals = self.values(get_command, **kwargs)
             if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
