@@ -35,17 +35,43 @@ class FWBell5080(Instrument):
     :param port: The serial port of the instrument
     """
 
+    id = Instrument.measurement(
+        "*IDN?", """ Reads the idenfitication information """
+    )
+    units = Instrument.measurement(
+        ":UNIT:FLUX?",
+        """ Reads the units being used
+        """
+    )
+    range = Instrument.control(
+        ":SENS:FLUX:RANG?", ":SENS:FLUX:RANG %d",
+        """ A floating point property that controls the maximum field
+        range in Gauss, which can take the values 300, 3,000, and 
+        30,000 G. Values outside these are truncated to the closest
+        valid value. This property can be set.
+        """
+        validator=truncated_discrete_set,
+        values={300:0, 3000:1, 30000:2}
+        map_values=True
+    )
+
     def __init__(self, port):
         super(FWBell5080, self).__init__(
             SerialAdapter(port, 2400, timeout=0.5),
             "F.W. Bell 5080 Handheld Gaussmeter"
         )
 
-    @property
-    def id(self):
-        """ The identification of the instrument.
+    def read(self):
+        """ Overwrites the standard read method to remove the last
+        2 characters from the output
         """
-        return self.ask("*IDN?")
+        return super(FWBell5080, self).read()[:-2]
+
+    def ask(self):
+        """ Overwrites the standard ask method to remove the last
+        2 characters from the output
+        """
+        return super(FWBell5080, self).ask()[:-2]
 
     def reset(self):
         """ Resets the instrument.
@@ -60,7 +86,7 @@ class FWBell5080(Instrument):
         :param averages: The number of averages to preform
         """
         if averages == 1:
-            value = self.ask(":MEAS:FLUX?")[:-2]
+            value = self.ask(":MEAS:FLUX?")
             if value[-1] == "G":  # Field in gauss
                 return (float(value[:-1]), 0)
             elif value[-1] == "T":  # Field in tesla
@@ -74,52 +100,22 @@ class FWBell5080(Instrument):
             data = array(data, dtype=float64)
             return (data.mean(), data.std())
 
-    def set_DC_gauss_units(self):
-        """ Sets the meter to measure DC field in Gauss. """
+    def use_DC_gauss(self):
+        """ Sets the meter to measure DC fields in Gauss. """
         self.write(":UNIT:FLUX:DC:GAUS")
 
-    def set_DC_tesla_units(self):
-        """ Sets the meter to measure DC field in Tesla. """
-        self.write(":UNIT:FLUX:DC:TESL")
-
-    def set_AC_gauss_units(self):
-        """ Sets the meter to measure AC field in Gauss. """
+    def use_AC_gauss(self):
+        """ Sets the meter to measure AC fields in Gauss. """
         self.write(":UNIT:FLUX:AC:GAUS")
 
-    def set_AC_tesla_units(self):
-        """ Sets the meter to measure AC field in Telsa. """
+    def use_DC_tesla(self):
+        """ Sets the meter to measure DC fields in Tesla. """
+        self.write(":UNIT:FLUX:DC:TESL")
+
+    def use_AC_tesla(self):
+        """ Sets the meter to measure AC fields in Tesla. """
         self.write(":UNIT:FLUX:AC:TESL")
 
-    def get_units(self):
-        """ Returns the units being used. """
-        return self.ask(":UNIT:FLUX?")[:-2]
-
-    def set_auto_range(self):
+    def auto_range(self):
         """ Enables the auto range functionality. """
         self.write(":SENS:FLUX:RANG:AUTO")
-
-    def set_range(self, max_gauss):
-        """ Manually sets the range in Gauss and truncates to
-        an allowed range value
-
-        :param max_gauss: The maximum field of the range in Gauss
-        """
-        if max_gauss < 3e2:
-            self.write(":SENS:FLUX:RANG 0")
-        elif max_gauss < 3e3:
-            self.write(":SENS:FLUX:RANG 1")
-        elif max_gauss < 3e4:
-            self.write(":SENS:FLUX:RANG 2")
-        else:
-            raise RangeException("F.W. Bell 5080 is not capable of field "
-                                 "measurements above 30 kGauss")
-
-    def get_range(self):
-        """ Returns the maximum field of the range in Gauss """
-        value = int(self.ask(":SENS:FLUX:RANG?")[:-2])
-        if value == 0:
-            return 3e2
-        elif value == 1:
-            return 3e3
-        elif value == 2:
-            return 3e4
