@@ -34,6 +34,7 @@ install:
 
   - conda update --yes conda
   - conda install --yes pip
+  - conda install --yes nbformat
   - ENVIRONMENT_FILE="requirements/conda-${PYTHON}.yml"
   - conda env create -f $ENVIRONMENT_FILE
   - source activate pymeasure
