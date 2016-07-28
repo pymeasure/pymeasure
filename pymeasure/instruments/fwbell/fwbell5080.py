@@ -36,7 +36,7 @@ class FWBell5080(Instrument):
     """
 
     id = Instrument.measurement(
-        "*IDN?", """ Reads the idenfitication information """
+        "*IDN?", """ Reads the idenfitication information. """
     )
     units = Instrument.measurement(
         ":UNIT:FLUX?",

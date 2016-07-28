@@ -53,6 +53,10 @@ class Danfysik8500(Instrument):
     The device will be accessible through the port :code:`/dev/danfysik`.
     """
 
+    id = Instrument.measurement(
+        "PRINT", """ Reads the idenfitication information. """
+    )
+
     def __init__(self, port):
         super(Danfysik8500, self).__init__(
             DanfysikAdapter(port),
@@ -61,12 +65,6 @@ class Danfysik8500(Instrument):
         )
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode
-
-    @property
-    def id(self):
-        """ The identification of the instrument.
-        """
-        return self.ask("PRINT")
 
     def local(self):
         """ Sets the instrument in local mode, where the front
@@ -93,7 +91,7 @@ class Danfysik8500(Instrument):
         polarity = "+" if value > 0 else "-"
         self.write("PO %s" % polarity)
 
-    def resetInterlocks(self):
+    def reset_interlocks(self):
         """ Resets the instrument interlocks.
         """
         self.write("RS")
@@ -108,7 +106,7 @@ class Danfysik8500(Instrument):
         """
         self.write("F")
 
-    def isEnabled(self):
+    def is_enabled(self):
         """ Returns True if the current supply is enabled.
         """
         return self.status_hex & 0x800000 == 0
