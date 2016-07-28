@@ -12,10 +12,15 @@ env:
 
 # command to install dependencies
 install:
+  - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
+        MINICONDA_OS="MacOSX"
+    else
+        MINICONDA_OS="Linux"
+    fi
   - MINICONDA_URL="http://repo.continuum.io/miniconda"
-  - MINICONDA_FILE="Miniconda-latest-Linux-x86_64.sh"
+  - MINICONDA_FILE="Miniconda3-latest-${MINICONDA_OS}-x86_64.sh"
   - wget "${MINICONDA_URL}/${MINICONDA_FILE}"
-  - bash $MINICONDA_FILE -b
+  - bash $MINICONDA_FILE-b -p $HOME/miniconda
 
   - export PATH=$HOME/miniconda/bin:$PATH
 
