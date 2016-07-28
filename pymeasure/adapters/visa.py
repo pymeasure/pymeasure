@@ -86,26 +86,6 @@ class VISAAdapter(Adapter):
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read()
-    
-    def values(self, command, separator = ','):
-        """ Writes a command to the instrument and returns a list of numerical
-        values from the result.
-
-        :param command: SCPI command to be sent to the instrument.
-        :returns: A list of numerical values.
-        """
-        results = str(self.ask(command)).strip()
-        results = results.split(separator)
-        
-        def try_float(num):
-            """ Try to convert to float """
-            try:
-                num = float(num)
-            except:
-                pass # Keep as string
-            return num
-
-        return [try_float(result) for result in results]
         
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data 
