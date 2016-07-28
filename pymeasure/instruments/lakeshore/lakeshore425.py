@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
 from .adapters import LakeShoreUSBAdapter
 
 from time import sleep
@@ -51,9 +52,27 @@ class LakeShore425(Instrument):
     The device will be accessible through :code:`/dev/lakeshore425`.
     """
 
-    UNIT_VALUES = ('Gauss', 'Tesla', 'Oersted', 'Ampere/meter')
-    GAUSS, TESLA, OERSTED, AMP_METER = UNIT_VALUES
-    RANGES_HSE = ('35G', '350G', '3.5kG', '35kG')
+    field = Instrument.measurement(
+        "RDGFIELD?",
+        """ Returns the field in the current units """
+    )
+    unit = Instrument.control(
+        "UNIT?", "UNIT %d",
+        """ A string property that controls the units of the instrument,
+        which can take the values of G, T, Oe, or A/m. """,
+        validator=strict_discrete_set,
+        values={'G':1, 'T':2, 'Oe':3, 'A/m':4},
+        map_values=True
+    )
+    range = Instrument.control(
+        "RANGE?", "RANGE %d",
+        """ A floating point property that controls the field range in
+        units of Gauss, which can take the values 35, 350, 3500, and
+        35,000 G. """,
+        validator=truncated_discrete_set,
+        values={35:1, 350:2, 3500:3, 35000:4},
+        map_values=True
+    )
 
     def __init__(self, port):
         super(LakeShore425, self).__init__(
@@ -61,31 +80,9 @@ class LakeShore425(Instrument):
             "LakeShore 425 Gaussmeter",
         )
         
-    @property
-    def range(self):
-        """ Get the current range."""
-        range_id = int(self.values("RANGE?")[0])
-        return LakeShore425.RANGES_HSE[range_id - 1]
-
-    @range.setter
-    def range(self, maxvalue):
-        """ Set an appropriate range.
-        
-        :param maxvalue: Maximum limit of input field, in Gauss.
-        """
-        range_id = 0
-        while maxvalue > 35*(10**range_id):
-            range_id += 1
-        self.write("RANGE %d" % (range_id+1) )
-        
     def auto_range(self):
         """ Sets the field range to automatically adjust """
         self.write("AUTO")
-
-    @property
-    def field(self):
-        """ Returns the field given the units being used """
-        return self.values("RDGFIELD?")[0]
 
     def dc_mode(self, wideband=True):
         """ Sets up a steady-state (DC) measurement of the field """
@@ -112,21 +109,6 @@ class LakeShore425(Instrument):
         """
         mode, filter, band = value
         self.write("RDGMODE %d,%d,%d" % (mode, filter, band))
-
-    @property
-    def unit(self):
-        """ Returns the full name of the unit in use as a string """
-        return LakeShore425.UNIT_VALUES[int(self.ask("UNIT?"))-1]
-
-    @unit.setter
-    def unit(self, value):
-        """ Sets the units from the avalible: Gauss, Tesla, Oersted, and
-        Ampere/meter to be called as a string
-        """
-        if value in LakeShore425.UNIT_VALUES:
-            self.write("UNIT %d" % (LakeShore425.UNIT_VALUES.index(value)+1))
-        else:
-            raise Exception("Invalid unit provided to LakeShore 425")
 
     def zero_probe(self):
         """ Initiates the zero field sequence to calibrate the probe """

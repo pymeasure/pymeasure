@@ -22,4 +22,34 @@
 # THE SOFTWARE.
 #
 
-__version__ = '0.4'
+import pytest
+from pymeasure.instruments.validators import (
+    strict_range, strict_discrete_set,
+    truncated_range, truncated_discrete_set,
+)
+
+def test_strict_range():
+    assert strict_range(5, range(10)) == 5
+    assert strict_range(5.1, range(10)) == 5.1
+    with pytest.raises(ValueError) as e_info:
+        strict_range(20, range(10))
+
+
+def test_strict_discrete_set():
+    assert strict_discrete_set(5, range(10)) == 5
+    with pytest.raises(ValueError) as e_info:
+        strict_discrete_set(5.1, range(10))
+    with pytest.raises(ValueError) as e_info:
+        strict_discrete_set(20, range(10))
+
+def test_truncated_range():
+    assert truncated_range(5, range(10)) == 5
+    assert truncated_range(5.1, range(10)) == 5.1
+    assert truncated_range(-10, range(10)) == 0
+    assert truncated_range(20, range(10)) == 9
+
+def test_truncated_discrete_set():
+    assert truncated_discrete_set(5, range(10)) == 5
+    assert truncated_discrete_set(5.1, range(10)) == 6
+    assert truncated_discrete_set(11, range(10)) == 9
+    assert truncated_discrete_set(-10, range(10)) == 0

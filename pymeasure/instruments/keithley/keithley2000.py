@@ -31,6 +31,14 @@ from pymeasure.instruments import Instrument
 
 class Keithley2000(Instrument):
 
+    measure = Instrument.control(
+        "measure", ":read?",
+        """ Returns a measurement reading for the configured variable. """,
+        check_get_errors=True
+    )
+    voltage = measure # alias when measuring voltage
+    resistance = measure # alias when measuring resistance
+
     def __init__(self, resourceName, **kwargs):
         super(Keithley2000, self).__init__(
             resourceName,
@@ -44,15 +52,8 @@ class Keithley2000(Instrument):
                             converter = 'f',
                             separator = ',')
                             
-        self.add_measurement("measure", ":read?", 
-                            checkErrorsOnGet = True, 
-                            docs = "Measure and return a reading from the instrument.")
         # Reset the instrument.
         self.reset()
-
-        # The below properties are kept for compatibility with previous versions
-        self.add_measurement("voltage", ":read?")
-        self.add_measurement("resistance", ":read?")
         
     def check_errors(self):
         """ Read all errors from the instrument."""

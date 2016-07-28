@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.adapters.visa import VISAAdapter
+from pymeasure.adapters import FakeAdapter
 
 import numpy as np
 
@@ -127,28 +128,62 @@ class Instrument(object):
 
     @staticmethod
     def control(get_command, set_command, docs,
-                check_set_errors=False, check_get_errors=False):
+                validator=lambda x, y: x, values=[], map_values=False,
+                check_set_errors=False, check_get_errors=False,
+                **kwargs):
         """Returns a property for the class based on the supplied
-        commands. This parameter may be set and read from the 
+        commands. This property may be set and read from the 
         instrument.
 
         :param get_command: A string command that asks for the value
         :param set_command: A string command that writes the value
         :param docs: A docstring that will be included in the documentation
+        :param validator: A function that takes both a value and a group of valid values
+                          and returns a valid value, while it otherwise raises an exception
+        :param values: A list, range, or dictionary of valid values, that can be used
+                       as to map values if :code:`map_values` is True.
+        :param map_values: A boolean flag that determines if the values should be 
+                          interpreted as a map
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting        
         """
 
+        if map_values and type(values) is dict:
+            # Prepare the inverse values for performance
+            inverse = {v: k for k, v in values.items()}
+
         def fget(self):
-            vals = self.values(get_command)
+            vals = self.values(get_command, **kwargs)
             if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
-                return vals[0]
+                if not map_values:
+                    return vals[0]
+                elif type(values) in (list, range):
+                    return values[int(vals[0])]
+                elif type(values) is dict:
+                    return inverse[vals[0]]
+                else:
+                    raise ValueError(
+                        'Values of type `{}` are not allowed '
+                        'for Instrument.control'.format(type(values))
+                    )
             else:
                 return vals
 
         def fset(self, value):
+            value = validator(value, values)
+            if not map_values:
+                pass
+            elif type(values) in (list, range):
+                value = values.index(value)
+            elif type(values) is dict:
+                value = values[value]
+            else:
+                raise ValueError(
+                    'Values of type `{}` are not allowed '
+                    'for Instrument.control'.format(type(values))
+                )
             self.write(set_command % value)
             if check_set_errors:
                 self.check_errors()
@@ -159,22 +194,41 @@ class Instrument(object):
         return property(fget, fset)
     
     @staticmethod
-    def measurement(get_command, docs, check_get_errors=False):
+    def measurement(get_command, docs, map_values=None, 
+                    check_get_errors=False, **kwargs):
         """ Returns a property for the class based on the supplied
         commands. This is a measurement quantity that may only be 
         read from the instrument, not set.
 
         :param get_command: A string command that asks for the value
         :param docs: A docstring that will be included in the documentation
+        :param values: A list, range, or dictionary of valid values, that can be used
+                       as to map values if :code:`map_values` is True.
+        :param map_values: A boolean flag that determines if the values should be 
+                          interpreted as a map
         :param check_get_errors: Toggles checking errors after getting 
         """
 
+        if map_values and type(values) is dict:
+            # Prepare the inverse values for performance
+            inverse = {v: k for k, v in values.items()}
+
         def fget(self):
-            vals = self.values(get_command)
+            vals = self.values(get_command, **kwargs)
             if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
-                return vals[0]
+                if not map_values:
+                    return vals[0]
+                elif type(values) in (list, range):
+                    return values[int(vals[0])]
+                elif type(values) is dict:
+                    return inverse[vals[0]]
+                else:
+                    raise ValueError(
+                        'Values of type `{}` are not allowed '
+                        'for Instrument.measurement'.format(type(values))
+                    )
             else:
                 return vals
 
@@ -204,3 +258,17 @@ class Instrument(object):
         """Return any accumulated errors. Must be reimplemented by subclasses.
         """
         pass
+
+
+class FakeInstrument(Instrument):
+    """ Provides a fake implementation of the Instrument class
+    for testing purposes.
+    """
+
+    def __init__(self, **kwargs):
+        super(FakeInstrument, self).__init__(
+            FakeAdapter(),
+            "Fake Instrument",
+            includeSCPI=False,
+            **kwargs
+        )

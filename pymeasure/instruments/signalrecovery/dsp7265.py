@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_discrete_set
 
 from time import sleep
 import numpy as np
@@ -30,24 +31,6 @@ import numpy as np
 
 class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
-
-    TIME_CONSTANTS = [
-        10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
-        640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-        200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
-        100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
-        20.0e3, 50.0e3
-    ]
-
-    SENSITIVITIES = [
-        0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
-        200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
-        20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
-        2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-        200.0e-3, 500.0e-3, 1.0
-    ]
-
-    SLOPES = [6, 12, 18, 24]
 
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -111,7 +94,43 @@ class DSP7265(Instrument):
     id = Instrument.measurement("ID",
         """ Reads the instrument identification """
     )
-
+    sensitivity = Instrument.control(
+        "SEN.", "SEN %d",
+        """ A floating point property that controls the sensitivity
+        range in Volts, which can take discrete values from 2 nV to 
+        1 V. This property can be set. """,
+        validator=truncated_discrete_set,
+        values=[
+            0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
+            200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
+            20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
+            2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+            200.0e-3, 500.0e-3, 1.0
+        ]
+    )
+    slope = Instrument.control(
+        "SLOPE", "SLOPE %d",
+        """ A integer property that controls the filter slope in
+        dB/octave, which can take the values 6, 12, 18, or 24 dB/octave.
+        This property can be set. """,
+        validator=truncated_discrete_set,
+        values=[6, 12, 18, 24],
+        map_values=True
+    )
+    time_constant = Instrument.control(
+        "TC.", "TC %d",
+        """ A floating point property that controls the time constant
+        in seconds, which takes values from 10 microseconds to 50,000
+        seconds. This property can be set. """,
+        validator=truncated_discrete_set,
+        values=[
+            10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
+            640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+            200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
+            100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
+            20.0e3, 50.0e3
+        ]
+    )
 
     def __init__(self, resourceName, **kwargs):
         super(DSP7265, self).__init__(
@@ -164,35 +183,6 @@ class DSP7265(Instrument):
         # Takes time in seconds
         self.write("ADC3TIME %g" % int(1000*value))
         sleep(value*1.2)
-
-    @property
-    def time_constant(self):
-        return self.values("TC.")
-
-    @time_constant.setter
-    def time_constant(self, value):
-        ind = next(i for i, v in enumerate(self.TIME_CONSTANTS)
-                   if v >= (value-1.0e-9))
-        self.write("TC %d" % ind)
-
-    @property
-    def sensitivity(self):
-        return self.values("SEN.")
-
-    @sensitivity.setter
-    def sensitivity(self, value):
-        ind = next(i for i, v in enumerate(self.SENSITIVITIES)
-                   if v >= (value-1.0e-9))
-        self.write("SEN %d" % ind)
-
-    @property
-    def slope(self):
-        return self.SLOPES[int(self.values("SLOPE"))]
-
-    @slope.setter
-    def slope(self, value):
-        ind = next(i for i, v in enumerate(self.SLOPES) if v >= (value-1.0e-9))
-        self.write("SLOPE %d" % ind)
 
     @property
     def auto_gain(self):

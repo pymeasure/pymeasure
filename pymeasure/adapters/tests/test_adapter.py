@@ -22,4 +22,13 @@
 # THE SOFTWARE.
 #
 
-__version__ = '0.4'
+from pymeasure.adapters import FakeAdapter
+
+
+def test_adapter_values():
+    a = FakeAdapter()
+    assert a.values("5,6,7") == [5, 6, 7]
+    assert a.values("5,6,7", cast=str) == ['5', '6', '7']
+    assert a.values("X,Y,Z") == ['X', 'Y', 'Z']
+    assert a.values("X,Y,Z", cast=str) == ['X', 'Y', 'Z']
+    assert a.values("X.Y.Z", separator='.') == ['X', 'Y', 'Z']
