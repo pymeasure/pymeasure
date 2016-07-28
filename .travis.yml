@@ -1,14 +1,18 @@
-os:
-  - linux
-  - osx
 language: python
+
 matrix:
+  include:
+    - os: linux
+      env: python=3.4  CONDA_PY=34
+    - os: linux
+      env: python=3.5  CONDA_PY=35
+    - os: osx
+      env: python=3.4  CONDA_PY=34
+    - os: osx
+      env: python=3.5  CONDA_PY=35
+
   allow_failures:
     - os: osx
-env:
-  matrix:
-    - python=3.4  CONDA_PY=34
-    - python=3.5  CONDA_PY=35
 
 # command to install dependencies
 install:
