@@ -5,12 +5,26 @@ language: python
 matrix:
   allow_failures:
     - os: osx
-python:
-  - "3.4"
-  - "3.5"
-  - "3.5-dev" # 3.5 development branch
-  - "nightly" # currently points to 3.6-dev
+env:
+  matrix:
+    - python=3.4  CONDA_PY=34
+    - python=3.5  CONDA_PY=35
+
 # command to install dependencies
-install: "pip install -r requirements/core.txt"
+install:
+  - MINICONDA_URL="http://repo.continuum.io/miniconda"
+  - MINICONDA_FILE="Miniconda-latest-Linux-x86_64.sh"
+  - wget "${MINICONDA_URL}/${MINICONDA_FILE}"
+  - bash $MINICONDA_FILE -b
+
+  - export PATH=$HOME/miniconda/bin:$PATH
+
+  - conda update --yes conda
+  - conda install --yes pip
+  - conda info -a
+  - conda env create -f requirements/conda.yml
+  - source activate pymeasure
+  - python setup.py install
+
 # command to run tests
 script: py.test
