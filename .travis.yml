@@ -17,9 +17,9 @@ matrix:
 # command to install dependencies
 install:
   - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
-        MINICONDA_OS="MacOSX"
+        MINICONDA_OS="MacOSX";
     else
-        MINICONDA_OS="Linux"
+        MINICONDA_OS="Linux";
     fi
   - MINICONDA_URL="http://repo.continuum.io/miniconda"
   - MINICONDA_FILE="Miniconda3-latest-${MINICONDA_OS}-x86_64.sh"
