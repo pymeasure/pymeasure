@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments.validators import truncated_discrete_set
 from pymeasure.adapters import SerialAdapter
 from numpy import array, float64
 
@@ -48,10 +49,9 @@ class FWBell5080(Instrument):
         """ A floating point property that controls the maximum field
         range in Gauss, which can take the values 300, 3,000, and 
         30,000 G. Values outside these are truncated to the closest
-        valid value. This property can be set.
-        """
+        valid value. This property can be set. """,
         validator=truncated_discrete_set,
-        values={300:0, 3000:1, 30000:2}
+        values={300:0, 3000:1, 30000:2},
         map_values=True
     )
 

@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_discrete_set
 
 from time import sleep
 import numpy as np
@@ -94,7 +95,7 @@ class DSP7265(Instrument):
         """ Reads the instrument identification """
     )
     sensitivity = Instrument.control(
-        "SEN.", "SEN %d"
+        "SEN.", "SEN %d",
         """ A floating point property that controls the sensitivity
         range in Volts, which can take discrete values from 2 nV to 
         1 V. This property can be set. """,
@@ -111,8 +112,7 @@ class DSP7265(Instrument):
         "SLOPE", "SLOPE %d",
         """ A integer property that controls the filter slope in
         dB/octave, which can take the values 6, 12, 18, or 24 dB/octave.
-        This property can be set.
-        """,
+        This property can be set. """,
         validator=truncated_discrete_set,
         values=[6, 12, 18, 24],
         map_values=True
@@ -121,8 +121,7 @@ class DSP7265(Instrument):
         "TC.", "TC %d",
         """ A floating point property that controls the time constant
         in seconds, which takes values from 10 microseconds to 50,000
-        seconds. This property can be set.
-        """,
+        seconds. This property can be set. """,
         validator=truncated_discrete_set,
         values=[
             10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
