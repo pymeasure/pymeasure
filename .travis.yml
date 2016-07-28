@@ -1,18 +1,18 @@
-language: python
+language: c
 
 matrix:
   include:
     - os: linux
-      env: python=3.4  CONDA_PY=34
+      env: PYTHON=3.4  CONDA_PY=34
       sudo: true
     - os: linux
-      env: python=3.5  CONDA_PY=35
+      env: PYTHON=3.5  CONDA_PY=35
       sudo: true
     - os: osx
-      env: python=3.4  CONDA_PY=34
+      env: PYTHON=3.4  CONDA_PY=34
       sudo: false
     - os: osx
-      env: python=3.5  CONDA_PY=35
+      env: PYTHON=3.5  CONDA_PY=35
       sudo: false
 
   allow_failures:
@@ -34,9 +34,9 @@ install:
 
   - conda update --yes conda
   - conda install --yes pip
-  - conda info -a
-  - conda env create -f requirements/conda.yml
+  - conda env create -f requirements/conda.yml python=${PYTHON}
   - source activate pymeasure
+  - conda info -a
   - python setup.py install
 
 # command to run tests
