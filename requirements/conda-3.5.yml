@@ -7,7 +7,7 @@ dependencies:
 - numpy=1.11.0=py35_1
 - openssl=1.0.2h=1
 - pandas=0.18.1=np111py35_0
-- pip=8.1.1=py35_1
+- pip=8.1.2=py35_0
 - py=1.4.31=py35_0
 - pyqt=4.11.4=py35_2
 - pyqtgraph=0.9.10=py35_1
@@ -28,4 +28,3 @@ dependencies:
 - zlib=1.2.8=3
 - pip:
   - pyvisa==1.8
-  - fontconfig==2.11.1
