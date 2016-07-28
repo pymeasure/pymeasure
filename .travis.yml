@@ -15,9 +15,6 @@ matrix:
       env: PYTHON=3.5  CONDA_PY=35
       sudo: false
 
-  allow_failures:
-    - os: osx
-
 # command to install dependencies
 install:
   - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
