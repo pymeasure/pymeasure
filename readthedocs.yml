@@ -3,7 +3,7 @@ formats:
         - pdf
 
 conda:
-    file: requirements/conda.yml
+    file: requirements/conda-3.5.yml
 
 python:
    version: 3

@@ -34,7 +34,8 @@ install:
 
   - conda update --yes conda
   - conda install --yes pip
-  - conda env create -f requirements/conda.yml python=${PYTHON}
+  - ENVIRONMENT_FILE="requirements/conda-${PYTHON}"
+  - conda env create -f $ENVIRONMENT_FILE
   - source activate pymeasure
   - conda info -a
   - python setup.py install
