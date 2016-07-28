@@ -54,23 +54,6 @@ def strict_discrete_set(value, values):
             value, values
         ))
 
-def strict_map(value, values):
-    """ Provides a validator function that returns a value
-    from a corresponding map, and raises a ValueError if the value
-    is not contained in the map. If the map is a dictionary, the keys
-    are used as the valid values and the associated value is returned. 
-    If the map is a list or range, the index of the item is returned.
-
-    :param value: A value to test
-    :param values: A map of valid values in either dictionary, list, or range format
-    """
-    if type(values) == dict:
-        value = strict_discrete_set(value, values.keys())
-        return values[value]
-    elif type(values) in (list, range):
-        value = strict_discrete_set(value, values)
-        return values.index(value)
-
 def truncated_range(value, values):
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the closest
@@ -94,28 +77,10 @@ def truncated_discrete_set(value, values):
     :param value: A value to test
     :param values: A set of values that are valid
     """
-    if hasattr(values, 'sort'):
-        values.sort()
+    # Force the values to be sorted
+    values = list(values)
+    values.sort()
     for v in values:
         if value <= v:
             return v
     return v
-
-def truncated_map(value, values):
-    """ Provides a validator function that returns a value
-    from a corresponding map, and uses :func:`~.truncate_discrete_set`
-    to determine valid values. If the map is a dictionary, the keys
-    are used as the valid values and the associated value is returned. 
-    If the map is a list or range, the index of the item is returned.
-
-    :param value: A value to test
-    :param values: A map of valid values in either dictionary, list, or range format
-    """
-    if type(values) == dict:
-        keys = list(values.keys())
-        keys.sort()
-        value = truncated_discrete_set(value, keys)
-        return values[value]
-    elif type(values) in (list, range):
-        value = truncated_discrete_set(value, values)
-        return values.index(value)
