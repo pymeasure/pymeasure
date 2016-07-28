@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, discreteTruncate
+from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
 
 import numpy as np
 import time
@@ -36,24 +37,9 @@ class SR830(Instrument):
         32, 64, 128, 256, 512
     ]
 
-    TIME_CONSTANTS = [
-        10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
-        30e-3, 100e-3, 300e-3, 1, 3, 10, 100, 300, 1e3,
-        3e3, 10e3, 30e3
-    ]
-
-    SENSITIVITIES = [
-        2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
-        500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
-        200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
-        50e-3, 100e-3, 200e-3, 500e-3, 1
-    ]
-
     EXPANSION_VALUES = [1, 10, 100]
     FILTER_SLOPE_VALUES = [6, 12, 18, 24]
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
-    CHANNEL1_VALUES = ['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2']
-    CHANNEL2_VALUES = ['Y', 'Theta', 'Y Noise', 'Aux In 3', 'Aux In 4']
     CHANNELS = ['X', 'Y', 'R']
 
     sine_voltage = Instrument.control(
@@ -83,6 +69,61 @@ class SR830(Instrument):
     theta = Instrument.measurement("OUTP?4",
         """ Reads the theta value in degrees. """
     )
+    channel1 = Instrument.control(
+        "DDEF?1;", "DDEF1,%d,0",
+        """ A string property that represents the type of Channel 1,
+        taking the values X, R, X Noise, Aux In 1, or Aux In 2. 
+        This property can be set.""",
+        validator=strict_discrete_set,
+        values=['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2'],
+        map_values=True
+    )
+    channel2 = Instrument.control(
+        "DDEF?2;", "DDEF2,%d,0",
+        """ A string property that represents the type of Channel 2,
+        taking the values Y, Theta, Y Noise, Aux In 3, or Aux In 4.
+        This property can be set.""",
+        validator=strict_discrete_set,
+        values=['Y', 'Theta', 'Y Noise', 'Aux In 3', 'Aux In 4'],
+        map_values=True
+    )
+    sensitivity = Instrument.control(
+        "SENS?", "SENS%d",
+        """ A floating point property that controls the sensitivity in Volts,
+        which can take discrete values from 2 nV to 1 V. Values are truncated
+        to the next highest level if they are not exact. """,
+        validator=truncated_discrete_set,
+        values=[
+            2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
+            500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
+            200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
+            50e-3, 100e-3, 200e-3, 500e-3, 1
+        ],
+        map_values=True
+    )
+    time_constant = Instrument.control(
+        "OFLT?", "OFLT%d",
+        """ A floating point property that controls the time constant
+        in seconds, which can take discrete values from 10 microseconds
+        to 30,000 seconds. Values are truncated to the next highest
+        level if they are not exact. """,
+        validator=truncated_discrete_set,
+        values=[
+            10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
+            30e-3, 100e-3, 300e-3, 1, 3, 10, 100, 300, 1e3,
+            3e3, 10e3, 30e3
+        ],
+        map_values=True
+    )
+    filter_slope = Instrument.control(
+        "OFSL?", "OFSL%d",
+        """ An integer property that controls the filter slope, which
+        can take on the values 6, 12, 18, and 24 dB/octave. Values are
+        truncated to the next highest level if they are not exact. """,
+        validator=truncated_discrete_set,
+        values=[6, 12, 18, 24],
+        map_values=True
+    )
 
     def __init__(self, resourceName, **kwargs):
         super(SR830, self).__init__(
@@ -90,34 +131,6 @@ class SR830(Instrument):
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
-
-    @property
-    def channel1(self):
-        """ Get the variable for Channel 1 """
-        return SR830.CHANNEL1_VALUES[int(self.values("DDEF?1;")[0])]
-
-    @channel1.setter
-    def channel1(self, value):
-        """ Set the variable for Channel 1 """
-        if value not in SR830.CHANNEL1_VALUES:
-            raise ValueError("SR830 channel 1 selection is invalid")
-        else:
-            index = SR830.CHANNEL1_VALUES.index(value)
-            self.write("DDEF1,%d,0" % index)
-
-    @property
-    def channel2(self):
-        """ Get the variable for Channel 2 """
-        return SR830.CHANNEL2_VALUES[int(self.values("DDEF?2;")[0])]
-
-    @channel2.setter
-    def channel2(self, value):
-        """ Set the variable for Channel 2 """
-        if value not in SR830.CHANNEL2_VALUES:
-            raise ValueError("SR830 channel 2 selection is invalid")
-        else:
-            index = SR830.CHANNEL2_VALUES.index(value)
-            self.write("DDEF2,%d,0" % index)
 
     def auto_gain(self):
         self.write("AGAN")
@@ -183,37 +196,6 @@ class SR830(Instrument):
             frequency = discreteTruncate(frequency, SR830.SAMPLE_FREQUENCIES)
             index = SR830.SAMPLE_FREQUENCIES.index(frequency)
         self.write("SRAT%f" % index)
-
-    @property
-    def time_constant(self):
-        identifier = re.search(r'^[0-9]+', self.ask("OFLT?"), re.M).group()
-        return float(SR830.TIME_CONSTANTS[int(identifier)])
-
-    @time_constant.setter
-    def time_constant(self, value):
-        assert type(value) in [float, int]
-        time = discreteTruncate(value, SR830.TIME_CONSTANTS)
-        self.write("OFLT%d" % SR830.TIME_CONSTANTS.index(time))
-
-    @property
-    def sensitivity(self):
-        return SR830.SENSITIVITIES[int(self.ask("SENS?"))]
-
-    @sensitivity.setter
-    def sensitivity(self, value):
-        assert type(value) in [float, int]
-        sensitivity = discreteTruncate(value, SR830.SENSITIVITIES)
-        self.write("SENS%d" % SR830.SENSITIVITIES.index(sensitivity))
-
-    @property
-    def filter_slope(self):
-        return SR830.FILTER_SLOPE_VALUES[int(self.ask("OFSL?"))]
-
-    @filter_slope.setter
-    def filter_slope(self, value):
-        assert type(value) in [float, int]
-        slope = discreteTruncate(value, SR830.FILTER_SLOPE_VALUES)
-        self.write("OFSL%d" % SR830.FILTER_SLOPE_VALUES.index(slope))
 
     def aquireOnTrigger(self, enable=True):
         self.write("TSTR%d" % enable)
