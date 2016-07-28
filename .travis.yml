@@ -4,12 +4,16 @@ matrix:
   include:
     - os: linux
       env: python=3.4  CONDA_PY=34
+      sudo: true
     - os: linux
       env: python=3.5  CONDA_PY=35
+      sudo: true
     - os: osx
       env: python=3.4  CONDA_PY=34
+      sudo: false
     - os: osx
       env: python=3.5  CONDA_PY=35
+      sudo: false
 
   allow_failures:
     - os: osx
