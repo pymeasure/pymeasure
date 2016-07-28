@@ -28,6 +28,7 @@ log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument, RangeException
 from pymeasure.adapters import PrologixAdapter
+from pymeasure.instruments.validators import truncated_range
 
 import visa
 import numpy as np
@@ -63,23 +64,53 @@ class Keithley2400(Instrument):
     buffer_count = Instrument.measurement(":TRAC:POIN:ACT?",
         """ Reads the integer buffer count. """
     )
-    # TODO: Validate voltage_range between -+ 210 V
     voltage_range = Instrument.control(
         ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %0.2f",
         """ A floating point property that represents the voltage range
-        in Volts. This property can be set. """
+        in Volts, which can take values from -210 to 210 V. 
+        This property can be set. """,
+        validator=truncated_range,
+        values=[-210, 210]
     )
-    # TODO: Validate only -+ 1.05 A
     current_range = Instrument.control(
         ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG %0.2f",
         """ A floating point property that represents the current range
-        in Amps. This property can be set. """
+        in Amps, which can take values between -1.05 and +1.05 A. 
+        This property can be set. """,
+        validator=truncated_range,
+        values=[-1.05, 1.05]
     )
-    # TODO: Validate only 0 to 210 MOhm
     resistance_range = Instrument.control(
         ":RES:RANG?", ":RES:RANG %e",
         """ A floating point property that represents the resistance range
-        in Ohms. This property can be set. """
+        in Ohms, which can take values from 0 to 210 MOhms. 
+        This property can be set. """,
+        validator=truncated_range,
+        values=[0, 210e6]
+    )
+    means = Instrument.measurement(
+        ":CALC3:FORM MEAN;:CALC3:DATA?;",
+        """ Reads the calculated means (averages) for voltage,
+        current, and resistance from the buffer data  as a list
+        """
+    )
+    maximums = Instrument.measurement(
+        ":CALC3:FORM MAX;:CALC3:DATA?;",
+        """ Returns the calculated maximums for voltage, current, and
+        resistance from the buffer data as a list
+        """
+    )
+    minimums = Instrument.measurement(
+        ":CALC3:FORM MIN;:CALC3:DATA?;",
+        """ Returns the calculated minimums for voltage, current, and
+        resistance from the buffer data as a list
+        """
+    )
+    standard_devs = Instrument.measurement(
+        ":CALC3:FORM SDEV;:CALC3:DATA?;",
+        """ Returns the calculated standard deviations for voltage,
+        current, and resistance from the buffer data as a list
+        """
     )
 
     def __init__(self, resourceName, **kwargs):
@@ -257,34 +288,6 @@ class Keithley2400(Instrument):
         self.write(":TRAC:FEED:CONT NEV")
 
     @property
-    def means(self):
-        """ Returns the calculated means (averages) for voltage,
-        current, and resistance from the buffer data  as a list
-        """
-        return self.values(":CALC3:FORM MEAN;:CALC3:DATA?;")
-
-    @property
-    def maximums(self):
-        """ Returns the calculated maximums for voltage, current, and
-        resistance from the buffer data as a list
-        """
-        return self.values(":CALC3:FORM MAX;:CALC3:DATA?;")
-
-    @property
-    def minimums(self):
-        """ Returns the calculated minimums for voltage, current, and
-        resistance from the buffer data as a list
-        """
-        return self.values(":CALC3:FORM MIN;:CALC3:DATA?;")
-
-    @property
-    def standard_devs(self):
-        """ Returns the calculated standard deviations for voltage,
-        current, and resistance from the buffer data as a list
-        """
-        return self.values(":CALC3:FORM SDEV;:CALC3:DATA?;")
-
-    @property
     def mean_voltage(self):
         """ Returns the mean voltage from the buffer """
         return self.means[0]
@@ -342,7 +345,7 @@ class Keithley2400(Instrument):
     @property
     def std_resistance(self):
         """ Returns the resistance standard deviation from the buffer """
-        return self.standard_devs()[2]
+        return self.standard_devs[2]
 
     @property
     def wires(self):
