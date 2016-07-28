@@ -23,6 +23,7 @@
 #
 
 import numpy as np
+from copy import copy
 
 
 class Adapter(object):
@@ -58,15 +59,23 @@ class Adapter(object):
         """
         raise NameError("Adapter (sub)class has not implemented reading")
 
-    def values(self, command):
+    def values(self, command, separator=',', cast=float):
         """ Writes a command to the instrument and returns a list of formatted
         values from the result 
 
         :param command: SCPI command to be sent to the instrument
-        :returns: String ASCII response of the instrument
+        :param separator: A separator character to split the string into a list
+        :param cast: A type to cast the result
+        :returns: A list of the desired type, or strings where the casting fails
         """
-        raise NameError("Adapter (sub)class has not implemented the "
-                        "values method")
+        results = str(self.ask(command)).strip()
+        results = results.split(separator)
+        for i, result in enumerate(results):
+            try:
+                results[i] = cast(result)
+            except:
+                pass # Keep as string
+        return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data 
@@ -81,28 +90,38 @@ class Adapter(object):
 
 
 class FakeAdapter(Adapter):
-    """The Fake adapter class is provided for debugging purposes,
-    which returns valid data for each Adapter method"""
+    """Provides a fake adapter for debugging purposes,
+    which bounces back the command so that arbitrary values 
+    testing is possible.
+
+    .. code-block:: python
+
+        a = FakeAdapter()
+        assert a.read() == ""
+        a.write("5")
+        assert a.read() == "5"
+        assert a.read() == ""
+        assert a.ask("10") == "10"
+        assert a.values("10") == [10]
+
+    """
+
+    _buffer = ""
 
     def read(self):
-        """ Returns a fake string for debugging purposes
+        """ Returns the last commands given after the
+        last read call.
         """
-        return "Fake string!"
+        result = copy(self._buffer)
+        # Reset the buffer
+        self._buffer = ""
+        return result
 
     def write(self, command):
-        """ Fakes the writing of a command for debugging purposes
+        """ Writes the command to a buffer, so that it can
+        be read back.
         """
-        pass
-
-    def values(self, command):
-        """ Returns a list of fake values for debugging purposes
-        """
-        return [1.0, 2.0, 3.0]
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a list of fake values in a NumPy array
-        """
-        return np.array([2, 3, 7, 8, 1], dtype=dtype)
+        self._buffer += command
 
     def __repr__(self):
         return "<FakeAdapter>"
