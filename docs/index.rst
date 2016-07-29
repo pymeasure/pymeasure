@@ -12,7 +12,9 @@ PyMeasure scientific package
 
 PyMeasure makes scientific measurements easy to set up and run. The package contains a repository of instrument classes and a system for running experiment procedures, which provides graphical interfaces for graphing live data and managing queues of experiments. Both parts of the package are independent, and when combined provide all the necessary requirements for advanced measurements with only limited coding.
 
-PyMeasure is currently under active development, so please report any issues you experience to our `Issues page`_.
+Installing Python and PyMeasure are demonstrated in the :doc:`Quick Start guide <quick_start>`. From there, checkout the existing :doc:`instruments that are avalible for use <api/instruments/index>`.
+
+PyMeasure is currently under active development, so please report any issues you experience on our `Issues page`_.
 
 .. image:: https://ci.appveyor.com/api/projects/status/hcj2n2a7l97wfbb8/branch/master?svg=true
     :target: https://ci.appveyor.com/project/cjermain/pymeasure
@@ -44,7 +46,7 @@ Information about development is also available:
    :caption: Learning PyMeasure
 
    introduction
-   getting_started
+   quick_start
    tutorial/index
 
 

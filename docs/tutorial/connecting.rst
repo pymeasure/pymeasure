@@ -5,7 +5,7 @@ Connecting to an instrument
 .. role:: python(code)
     :language: python
 
-After following the :doc:`Getting Started <../getting_started>` section, you now have a working installation of PyMeasure. This section describes connecting to an instrument, using a Keithley 2400 SourceMeter as an example. To follow the tutorial, open a command prompt, IPython terminal, or Jupyter notebook.
+After following the :doc:`Quick Start <../quick_start>` section, you now have a working installation of PyMeasure. This section describes connecting to an instrument, using a Keithley 2400 SourceMeter as an example. To follow the tutorial, open a command prompt, IPython terminal, or Jupyter notebook.
 
 First import the instrument of interest. ::
 

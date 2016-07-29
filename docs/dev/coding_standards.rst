@@ -1,35 +1,31 @@
+################
 Coding Standards
-================
+################
 
 In order to maintain consistency across the different instruments in the PyMeasure repository, we enforce the following standards.
 
 Python style guides
-###################
+===================
 
-Python 3 is used in PyMeasure. The `PEP8 style guide`_ and `PEP257 docstring conventions`_ should be followed.
+Only Python 3 is used in PyMeasure. This prevents the maintaininace overhead of supporting Python 2.7,  which will loose official support in the future.
+
+The `PEP8 style guide`_ and `PEP257 docstring conventions`_ should be followed.
 
 .. _PEP8 style guide: https://www.python.org/dev/peps/pep-0008/
 .. _PEP257 docstring conventions: https://www.python.org/dev/peps/pep-0257/
 
-Function and variable names should be lower case with underscores as needed to seperate words. Camel case should not be used, unless working with Qt, where it is common.
+Function and variable names should be lower case with underscores as needed to seperate words. CamelCase should only be used for class names, unless working with Qt, where its use is common.
 
-Standard naming
-###############
+Documentation
+=============
 
-Since many instruments have similar functions, a few naming conventions have been adopted to make the interface more consistent.
+PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_. All functions, classes, and methods should be documented in the code using a `docstring`_.
 
-.. function names should be all lowercase with underbars if needed.
+.. _Sphinx documentation generator: http://www.sphinx-doc.org/en/stable/
+.. _docstring: http://www.sphinx-doc.org/en/stable/ext/example_numpy.html?highlight=docstring
 
-Usage of getter and setter
-##########################
-Many settings (such as range, enabled status, etc) are provided by the instrument with a pair of actions: one is to read the current setting value, the other is to assign a value to the setting. One can write two methods, get_setting() and set_setting() for instance, to handle these two actions; or altenatively use getter and setter decorators. In most cases, the two ways are equivalent. In order to incorporate different programming styles, and for the convenience of users, our convention is as follow:
-- Write two functions get_setting() and set_setting(). The latter one should have only one non-keyword argument (but can have many keyword arguments).
-- Define a property setting = property(get_setting, set_setting).
 
-Using a buffer
+Usage of getter and setter functions
+====================================
 
-.. code-block:: python
-
-  set_buffer
-  wait_for_buffer
-  get_buffer
+Getter and setter functions are discouraged, since properties provide a more fluid experience. Given the extensive tools avalible for defining properties, detailed in the :ref:`Advanced properties <advanced-properties>` section, these types of properties are prefered.

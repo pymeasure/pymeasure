@@ -2,27 +2,27 @@
 Introduction
 ############
 
-PyMeasure uses an object oriented approach for communicating with scientific instruments, which provides an intuitive interface where the low-level SCPI and GPIB commands are hidden from normal use. Users can focus on solving the measurement problems at hand, instead of re-inventing how to communicate with instruments. 
+PyMeasure uses an object-oriented approach for communicating with scientific instruments, which provides an intuitive interface where the low-level SCPI and GPIB commands are hidden from normal use. Users can focus on solving the measurement problems at hand, instead of re-inventing how to communicate with instruments. 
 
 Instruments with VISA (GPIB, Serial, etc) are supported through the `PyVISA package`_ under the hood. `Prologix GPIB`_ adapters are also supported. Communication protocols can be swapped, so that instrument classes can be used with all supported protocols interchangeably.
 
 .. _PyVISA package: http://pyvisa.readthedocs.org/en/master/
 .. _Prologix GPIB: http://prologix.biz/
 
-Before using PyMeasure, you should be acquainted with `basic Python programming for the sciences`_ and understand the concept of objects.
+Before using PyMeasure, you may find it helpful to be acquainted with `basic Python programming for the sciences`_ and understand the concept of objects.
 
 .. _basic Python programming for the sciences: https://scipy-lectures.github.io/
 
 Instrument ready
 ================
 
-The package includes a number of instruments already defined. Their definitions are organized based on the manufacturer name of the instrument. For example the class that defines the Keithley 2400 SourceMeter can be imported by calling:
+The package includes a number of :doc:`instruments already defined<api/instruments/index>`. Their definitions are organized based on the manufacturer name of the instrument. For example the class that defines the :doc:`Keithley 2400 SourceMeter<api/instruments/keithley/keithley2400>` can be imported by calling:
 
 .. code-block:: python
 
   from pymeasure.instruments.keithley import Keithley2400
 
-The :doc:`Getting Started <getting_started>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments>`.
+The :doc:`Tutorials <tutorial/index>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments>`.
 
 
 Graphical displays
