@@ -33,33 +33,3 @@ In another cell of the notebook, we can check the version number of PyMeasure by
     pymeasure.__version__
 
 You should see the version of PyMeasure printed out. At this point you have PyMeasure installed, and you are ready to start using it! Are you ready to :doc:`connect to an instrument <./tutorial/connecting>`?
-
-Using the development version
-=============================
-
-If you are interested in using the development version to use the latest features or contribute to the code-base, then you will need `Git version control`_ installed. On Windows, we recommend `Github Desktop`_.
-
-.. _Git version control: https://git-scm.com/
-.. _GitHub Desktop: https://git-scm.com/downloads
-
-Clone the :code:`ralph-group/pymeasure` master branch, which is the stable development branch. On macOS and Linux, this is performed by the following terminal commands, where you should choose a desired path.
-
-.. code-block:: bash
-
-    cd /path/for/code
-    git clone https://github.com/ralph-group/pymeasure.git
-
-If you had already installed PyMeasure using :code:`pip`, make sure to uninstall it before continuing.
-
-.. code-block:: bash
-
-    pip uninstall pymeasure
-
-Install PyMeasure in the editable mode.
-
-.. code-block:: none
-
-    cd /path/for/code/pymeasure
-    pip install -e .
-
-This will allow you to edit the files of PyMeasure and see the changes reflected. Make sure to reset your notebook kernel or Python console when doing so.

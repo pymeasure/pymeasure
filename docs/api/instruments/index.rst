@@ -10,6 +10,7 @@ This section contains documentation on the instrument classes.
    :maxdepth: 2
 
    instruments
+   validators
    comedi
 
 Instruments by manufacturer:
