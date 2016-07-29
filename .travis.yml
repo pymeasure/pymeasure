@@ -1,16 +1,42 @@
-os:
-  - linux
-  - osx
-language: python
+language: c
+
 matrix:
-  allow_failures:
+  include:
+    - os: linux
+      env: PYTHON=3.4  CONDA_PY=34
+      sudo: true
+    - os: linux
+      env: PYTHON=3.5  CONDA_PY=35
+      sudo: true
     - os: osx
-python:
-  - "3.4"
-  - "3.5"
-  - "3.5-dev" # 3.5 development branch
-  - "nightly" # currently points to 3.6-dev
+      env: PYTHON=3.4  CONDA_PY=34
+      sudo: false
+    - os: osx
+      env: PYTHON=3.5  CONDA_PY=35
+      sudo: false
+
 # command to install dependencies
-install: "pip install -r requirements/core.txt"
+install:
+  - if [ ${TRAVIS_OS_NAME} == "osx" ]; then
+        MINICONDA_OS="MacOSX";
+    else
+        MINICONDA_OS="Linux";
+    fi
+  - MINICONDA_URL="http://repo.continuum.io/miniconda"
+  - MINICONDA_FILE="Miniconda3-latest-${MINICONDA_OS}-x86_64.sh"
+  - wget "${MINICONDA_URL}/${MINICONDA_FILE}"
+  - bash $MINICONDA_FILE -b -p $HOME/miniconda
+
+  - export PATH=$HOME/miniconda/bin:$PATH
+
+  - conda update --yes conda
+  - conda install --yes pip
+  - conda install --yes nbformat
+  - ENVIRONMENT_FILE="requirements/conda-${PYTHON}.yml"
+  - conda env create -f $ENVIRONMENT_FILE
+  - source activate pymeasure
+  - conda info -a
+  - python setup.py install
+
 # command to run tests
 script: py.test
