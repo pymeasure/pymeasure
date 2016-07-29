@@ -1,11 +1,6 @@
 name: pymeasure
 dependencies:
-- freetype=2.5.5=1
-- libpng=1.6.22=0
-- libxml2=2.9.2=0
-- mkl=11.3.3=0
 - numpy=1.11.1=py34_0
-- openssl=1.0.2h=1
 - pandas=0.18.1=np111py34_0
 - pip=8.1.2=py34_0
 - py=1.4.31=py34_0
@@ -16,15 +11,9 @@ dependencies:
 - python=3.4.5=0
 - python-dateutil=2.5.3=py34_0
 - pytz=2016.6.1=py34_0
-- qt=4.8.7=4
-- readline=6.2=2
 - setuptools=23.0.0=py34_0
 - sip=4.18=py34_0
 - six=1.10.0=py34_0
-- sqlite=3.13.0=0
-- tk=8.5.18=0
 - wheel=0.29.0=py34_0
-- xz=5.2.2=0
-- zlib=1.2.8=3
 - pip:
   - pyvisa==1.8
