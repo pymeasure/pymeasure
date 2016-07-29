@@ -17,24 +17,15 @@ PyMeasure is currently under active development, so please report any issues you
 .. image:: https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat
     :target: http://pymeasure.readthedocs.org/en/latest/
 
-Getting started
-***************
+Quick start
+***********
 
-Check out `the documentation`_ for a `tutorial on getting started`_.
+Check out `the documentation`_ for the `quick start guide`_, that covers the installation of Python and PyMeasure.
 
-There are a number of examples in the :code:`examples` directory that can help you get up and running.
-
-Install:
-********
-
-Get the latest release from GitHub or install via the Python :code:`pip` installer:
-
-.. code-block:: python
-    
-    pip install pymeasure
-
+There are a number of examples in the `examples`_ directory that can help you get up and running.
 
 
 .. _the documentation: http://pymeasure.readthedocs.org/en/latest/
-.. _tutorial on getting started: http://pymeasure.readthedocs.org/en/latest/getting_started.html
+.. _quick start guide: http://pymeasure.readthedocs.io/en/latest/quick_start.html
 .. _Issues page: https://github.com/ralph-group/pymeasure/issues
+.. _examples: https://github.com/ralph-group/pymeasure/tree/master/examples
