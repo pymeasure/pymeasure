@@ -1,3 +1,12 @@
+Version 0.4 -- released 7/29/16
+===============================
+- Replaced Instrument add_measurement and add_control with measurement and control functions
+- Added validators to allow Instrument.control to match restricted ranges
+- Added mapping to Instrument.control to allow more flexible inputs
+- Conda is now used to set up the Python environment
+- macOS testing in continuous integration
+- Major updates to the documentation
+
 Version 0.3 -- released 4/8/16
 ==============================
 - Added IPython (Jupyter) notebook support with significant features
