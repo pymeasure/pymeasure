@@ -31,8 +31,7 @@ from pymeasure.instruments import Instrument
 
 class Keithley2000(Instrument):
 
-    measure = Instrument.control(
-        "measure", ":read?",
+    measure = Instrument.measurement(":read?",
         """ Returns a measurement reading for the configured variable. """,
         check_get_errors=True
     )
