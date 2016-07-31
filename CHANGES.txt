@@ -1,3 +1,7 @@
+Version 0.4.1 -- released 7/31/16
+=================================
+- Critical fix in setup.py for importing instruments (also added to documentation)
+
 Version 0.4 -- released 7/29/16
 ===============================
 - Replaced Instrument add_measurement and add_control with measurement and control functions
