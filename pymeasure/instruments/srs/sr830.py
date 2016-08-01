@@ -36,9 +36,19 @@ class SR830(Instrument):
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
         32, 64, 128, 256, 512
     ]
-
+    SENSITIVITIES = [
+        2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
+        500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
+        200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
+        50e-3, 100e-3, 200e-3, 500e-3, 1
+    ]
+    TIME_CONSTANTS = [
+        10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
+        30e-3, 100e-3, 300e-3, 1, 3, 10, 100, 300, 1e3,
+        3e3, 10e3, 30e3
+    ]
+    FILTER_SLOPES = [6, 12, 18, 24]
     EXPANSION_VALUES = [1, 10, 100]
-    FILTER_SLOPE_VALUES = [6, 12, 18, 24]
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
     CHANNELS = ['X', 'Y', 'R']
 
@@ -93,12 +103,7 @@ class SR830(Instrument):
         which can take discrete values from 2 nV to 1 V. Values are truncated
         to the next highest level if they are not exact. """,
         validator=truncated_discrete_set,
-        values=[
-            2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
-            500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
-            200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
-            50e-3, 100e-3, 200e-3, 500e-3, 1
-        ],
+        values=SENSITIVITIES,
         map_values=True
     )
     time_constant = Instrument.control(
@@ -108,11 +113,7 @@ class SR830(Instrument):
         to 30,000 seconds. Values are truncated to the next highest
         level if they are not exact. """,
         validator=truncated_discrete_set,
-        values=[
-            10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
-            30e-3, 100e-3, 300e-3, 1, 3, 10, 100, 300, 1e3,
-            3e3, 10e3, 30e3
-        ],
+        values=TIME_CONSTANTS,
         map_values=True
     )
     filter_slope = Instrument.control(
@@ -121,7 +122,7 @@ class SR830(Instrument):
         can take on the values 6, 12, 18, and 24 dB/octave. Values are
         truncated to the next highest level if they are not exact. """,
         validator=truncated_discrete_set,
-        values=[6, 12, 18, 24],
+        values=FILTER_SLOPES,
         map_values=True
     )
 
