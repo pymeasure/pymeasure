@@ -99,10 +99,11 @@ class Instrument(object):
         """
         return self.adapter.read()
 
-    def values(self, command, separator=','):
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
         """
-        """
-        return self.adapter.values(command, separator=separator)
+        return self.adapter.values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
