@@ -22,32 +22,22 @@
 # THE SOFTWARE.
 #
 
-from .instrument import Instrument
-from .mock import Mock
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+from pymeasure.instruments import Instrument
 
 
-def discreteTruncate(number, discreteSet):
-    """ Truncates the number to the closest element in the positive discrete set.
-    Returns False if the number is larger than the maximum value or negative.    
+class HP33120A(Instrument):
+    """ Represents the Hewlett Packard 33120A Function Generator
+    and provides a high-level interface for interacting with the
+    instrument.
     """
-    if number < 0: return False
-    discreteSet.sort()
-    for item in discreteSet:
-        if number <= item: return item
-    return False
-    
 
-class RangeException(Exception): pass
-
-from . import agilent
-from . import anritsu
-from . import danfysik
-from . import fwbell
-from . import hp
-from . import keithley
-from . import lakeshore
-from . import parker
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import yokogawa
+    def __init__(self, resourceName, **kwargs):
+        super(HP33120A, self).__init__(
+            resourceName,
+            "Hewlett Packard 33120A Function Generator",
+            **kwargs
+        )
