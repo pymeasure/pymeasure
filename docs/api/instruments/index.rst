@@ -22,6 +22,7 @@ Instruments by manufacturer:
    anritsu/index
    danfysik/index
    fwbell/index
+   hp/index
    keithley/index
    lakeshore/index
    parker/index
