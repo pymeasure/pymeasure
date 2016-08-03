@@ -34,10 +34,13 @@ import visa
 import numpy as np
 import time
 from io import BytesIO
+import re
 
 
 class Keithley2400(Instrument):
-    """This is the class for the Keithley 2000-series instruments"""
+    """ Represents the Keithely 2400 SourceMeter and provides a
+    high-level interface for interacting with the instrument.
+    """
 
     source_voltage = Instrument.control(
         ":SOUR:VOLT?;", ":SOUR:VOLT:LEV %g;",
@@ -116,7 +119,7 @@ class Keithley2400(Instrument):
     def __init__(self, resourceName, **kwargs):
         super(Keithley2400, self).__init__(
             resourceName,
-            "Keithley 2400 Sourcemeter",
+            "Keithley 2400 SourceMeter",
             **kwargs
         )
 
@@ -126,10 +129,19 @@ class Keithley2400(Instrument):
         self.source_mode = None
 
     def beep(self, frequency, duration):
+        """ Sounds a system beep.
+
+        :param frequency: A frequency in Hz between 65 Hz and 2 MHz
+        :param duration: A time in seconds between 0 and 7.9 seconds
+        """
         self.write(":SYST:BEEP %g, %g" % (frequency, duration))
 
     def triad(self, base_frequency, duration):
-        import time
+        """ Sounds a musical triad using the system beep.
+
+        :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
+        :param duration: A time in seconds between 0 and 7.9 seconds
+        """
         self.beep(base_frequency, duration)
         time.sleep(duration)
         self.beep(base_frequency*5.0/4.0, duration)
@@ -137,7 +149,8 @@ class Keithley2400(Instrument):
         self.beep(base_frequency*6.0/4.0, duration)
 
     def check_errors(self):
-        import re
+        """ Logs any system errors reported by the instrument.
+        """
         err = int(re.search(r'\d+', self.values(":system:error?")).group())
         while err != 0:
             t = time.time()
@@ -147,9 +160,17 @@ class Keithley2400(Instrument):
                 log.warning('Timeout for Keithley error retrieval.')
 
     def reset(self):
+        """ Resets the instrument and clears the queue.  """
         self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
 
     def ramp_to_current(self, target_current, steps=30, pause=20e-3):
+        """ Ramps to a target current from the set current value over 
+        a certain number of linear steps, each separated by a pause duration.
+
+        :param target_current: A current in Amps
+        :param steps: An integer number of steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
         currents = np.linspace(
             self.source_current,
             target_current,
@@ -160,6 +181,13 @@ class Keithley2400(Instrument):
             time.sleep(pause)
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
+        """ Ramps to a target voltage from the set voltage value over 
+        a certain number of linear steps, each separated by a pause duration.
+
+        :param target_voltage: A voltage in Amps
+        :param steps: An integer number of steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
         voltages = np.linspace(
             self.getSourceVoltage(),
             target_voltage,
@@ -169,7 +197,22 @@ class Keithley2400(Instrument):
             self.source_voltage = voltage
             time.sleep(pause)
 
-    def set_trigger_bus(self):
+    def trigger(self):
+        """ Executes a bus trigger, which can be used when 
+        :meth:`~.trigger_on_bus` is configured. 
+        """
+        return self.write("*TRG")
+
+    def trigger_immediatley(self):
+        """ Configures measurements to be taken with the internal
+        trigger at the maximum sampling rate.
+        """
+        self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
+
+    def trigger_on_bus(self):
+        """ Configures the trigger to detect events based on the bus
+        trigger, which can be activated by GET or *TRG.
+        """
         self.write(":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;")
 
     def set_trigger_counts(self, arm, trigger):
@@ -185,19 +228,13 @@ class Keithley2400(Instrument):
         else:
             self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
 
-    def set_continous(self):
-        """ Sets the Keithley to continously read samples
+    def sample_continuously(self):
+        """ Causes the instrument to continuously read samples
         and turns off any buffer or output triggering
         """
         self.disable_buffer()
         self.disable_output_trigger()
-        self.set_immediate_trigger()
-
-    def set_immediate_trigger(self):
-        """ Sets up the measurement to be taken with the internal
-        trigger at the maximum sampling rate
-        """
-        self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
+        self.trigger_immediatley()
 
     def set_timed_arm(self, interval):
         """ Sets up the measurement to be taken with the internal
@@ -210,7 +247,7 @@ class Keithley2400(Instrument):
         self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
 
     def set_external_trigger(self, line=1):
-        """ Sets up the measurments to be taken on the specified
+        """ Sets up the measurements to be taken on the specified
         line of an external trigger
         """
         cmd = ":ARM:SOUR TLIN;:TRIG:SOUR TLIN;"
@@ -349,7 +386,7 @@ class Keithley2400(Instrument):
 
     @property
     def wires(self):
-        val = int(self.values(':system:rsense?'))
+        val = int(self.values(":system:rsense?"))
         return (4 if val == 1 else 2)
 
     @wires.setter
@@ -360,8 +397,12 @@ class Keithley2400(Instrument):
         elif (wires == 4):
             self.write(":SYSTem:RSENse 1")
 
-    def measure_resistance(self, nplc=1, resistance=1000.0, auto_range=True):
-        """ Sets up to measure resistance
+    def measure_resistance(self, nplc=1, resistance=2.1e5, auto_range=True):
+        """ Configures the measurement of resistance.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param resistance: Upper limit of resistance in Ohms, from -210 MOhms to 210 MOhms
+        :param auto_range: Enables auto_range if True, else uses the set resistance
         """
         log.info("<i>%s</i> is measuring resistance." % self.name)
         self.write(":sens:func \"res\";"
@@ -373,8 +414,12 @@ class Keithley2400(Instrument):
             self.write(":sens:res:rang:auto 0;:sens:res:rang %g" % resistance)
         self.check_errors()
 
-    def measure_voltage(self, nplc=1, voltage=1000.0, auto_range=True):
-        """ Sets up to measure voltage
+    def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
+        """ Configures the measurement of voltage.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
+        :param auto_range: Enables auto_range if True, else uses the set voltage
         """
         log.info("<i>%s</i> is measuring voltage." % self.name)
         self.write(":sens:func \"volt\";"
@@ -385,7 +430,13 @@ class Keithley2400(Instrument):
             self.write(":sens:volt:rang:auto 0;:sens:volt:rang %g" % voltage)
         self.check_errors()
 
-    def measure_current(self, nplc=1, current=1000.0, auto_range=True):
+    def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
+        """ Configures the measurement of current.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param current: Upper limit of current in Amps, from -1.05 A to 1.05 A
+        :param auto_range: Enables auto_range if True, else uses the set current
+        """
         log.info("<i>%s</i> is measuring current." % self.name)
         self.write(":sens:func \"curr\";"
                    ":sens:curr:nplc %f;:form:elem curr;" % nplc)
@@ -485,11 +536,13 @@ class Keithley2400(Instrument):
         return data 
 
     def use_rear_terminals(self):
-        """ Uses the rear terminals instead of the front """
+        """ Enables the rear terminals for measurement, and 
+        disables the front terminals. """
         self.write(":ROUT:TERM REAR")
 
     def use_front_terminals(self):
-        """ Uses the front terminals instead of the rear """
+        """ Enables the front terminals for measurement, and 
+        disables the rear terminals. """
         self.write(":ROUT:TERM FRON")
 
     def shutdown(self):
