@@ -8,24 +8,30 @@ PyMeasure makes scientific measurements easy to set up and run. The package cont
 
 PyMeasure is currently under active development, so please report any issues you experience to our `Issues page`_.
 
+.. _Issues page: https://github.com/ralph-group/pymeasure/issues
+
+PyMeasure runs on Python 3.4 and 3.5, and is tested with continous-integration on Linux, macOS, and Windows.
+
 .. image:: https://ci.appveyor.com/api/projects/status/hcj2n2a7l97wfbb8/branch/master?svg=true
     :target: https://ci.appveyor.com/project/cjermain/pymeasure
 
 .. image:: https://travis-ci.org/ralph-group/pymeasure.svg?branch=master
     :target: https://travis-ci.org/ralph-group/pymeasure
 
-.. image:: https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat
-    :target: http://pymeasure.readthedocs.org/en/latest/
+.. image:: http://readthedocs.org/projects/pymeasure/badge/?version=latest
+    :target: http://pymeasure.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://zenodo.org/badge/23569/ralph-group/pymeasure.svg
+   :target: https://zenodo.org/badge/latestdoi/23569/ralph-group/pymeasure
 
 Quick start
-***********
+===========
 
 Check out `the documentation`_ for the `quick start guide`_, that covers the installation of Python and PyMeasure.
 
 There are a number of examples in the `examples`_ directory that can help you get up and running.
 
-
 .. _the documentation: http://pymeasure.readthedocs.org/en/latest/
 .. _quick start guide: http://pymeasure.readthedocs.io/en/latest/quick_start.html
-.. _Issues page: https://github.com/ralph-group/pymeasure/issues
 .. _examples: https://github.com/ralph-group/pymeasure/tree/master/examples
