@@ -26,8 +26,8 @@ Now that you have Python installed, open up a "Jupyter Notebook". We will use th
 
 .. code-block:: none
 
-   > !conda config --add channels conda-forge
-   > !conda install xonsh
+   !conda config --add channels conda-forge
+   !conda install xonsh
 
 This will install PyMeasure and all the required dependencies. 
 
