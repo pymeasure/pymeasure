@@ -28,15 +28,18 @@ from pymeasure.instruments import Instrument
 class LakeShore331(Instrument):
     """Instrument object for the Lake Shore 331 Temperature Controller"""
 
+    temperature_A = Instrument.measurement(
+        "KRDG? A",
+        """ Reads the temperature of the sensor A in Kelvin """
+    )
+    temperature_A = Instrument.measurement(
+        "KRDG? B",
+        """ Reads the temperature of the sensor B in Kelvin """
+    )
+
     def __init__(self, adapter, **kwargs):
-        super(Lakeshore331, self).__init__(
+        super(LakeShore331, self).__init__(
             adapter,
-            "Lakeshore 331 Temperature Controller",
+            "Lake Shore 331 Temperature Controller",
             **kwargs
         )
-
-    @property
-    def temperature(self):
-        """ Temperature in Kelvin
-        """
-        return self.ask("KRDG?")
