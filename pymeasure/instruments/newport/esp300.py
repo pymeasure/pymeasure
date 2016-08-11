@@ -234,7 +234,9 @@ class ESP300(Instrument):
 
     By default this instrument is constructed with x, y, and phi
     attributes that represent axes 1, 2, and 3. Custom implementations
-    can overwrite this depending on the avalible axes.
+    can overwrite this depending on the avalible axes. Axes are controlled
+    through a :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
+    class.
     """
 
     error = Instrument.measurement(
