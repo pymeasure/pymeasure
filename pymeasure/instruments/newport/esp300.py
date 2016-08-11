@@ -203,6 +203,12 @@ class Axis(object):
         """ Disables motion for the axis. """
         self.write("MF")
 
+    def home(self, type=1):
+        """ Drives the axis to the home position, which may be the negative
+        hardware limit for some actuators (e.g. LTA-HS).
+        """
+        self.write("OR%d")
+
     def define_position(self, position):
         """ Overwrites the value of the current position with the given
         value. """
