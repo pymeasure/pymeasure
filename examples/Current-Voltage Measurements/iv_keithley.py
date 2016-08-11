@@ -46,7 +46,6 @@ class IVProcedure(Procedure):
     current_step = FloatParameter('Current Step', units='mA', default=0.1)
     delay = FloatParameter('Delay Time', units='ms', default=20)
     voltage_range = FloatParameter('Voltage Range', units='V', default=10)
-    field = FloatParameter('Applied Field', units='Oe', default=0)
 
     DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Resistance (Ohm)']
 
@@ -107,15 +106,21 @@ class MainWindow(ManagedWindow):
     def __init__(self):
         super(MainWindow, self).__init__(
             procedure_class=IVProcedure,
-            inputs=['max_current', 'min_current', 'current_step', 'delay', 'voltage_range', 'field'],
-            displays=['max_current', 'min_current', 'current_step', 'delay', 'voltage_range', 'field'],
+            inputs=[
+                'max_current', 'min_current', 'current_step',
+                'delay', 'voltage_range'
+            ],
+            displays=[
+                'max_current', 'min_current', 'current_step',
+                'delay', 'voltage_range'
+            ],
             x_axis='Current (A)',
             y_axis='Voltage (V)'
         )
         self.setWindowTitle('IV Measurement')
 
     def queue(self):
-        directory = "C:/Users/RalphGroup/Documents/Colin/Programs/Data/"
+        directory = "./" # Change this to the desired directory
         filename = unique_filename(directory, prefix='IV')
 
         procedure = self.make_procedure()
