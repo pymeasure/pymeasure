@@ -1,27 +1,3 @@
-#
-# This file is part of the PyMeasure package.
-#
-# Copyright (c) 2013-2016 PyMeasure Developers
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-
 """
 This example demonstrates how to make a graphical interface to preform
 IV characteristic measurements. There are a two items that need to be 
@@ -32,7 +8,7 @@ changed for your system:
 
 Run the program by changing to the directory containing this file and calling:
 
-python iv.py
+python iv_keithley.py
 
 """
 
@@ -47,8 +23,7 @@ import pyqtgraph as pg
 from time import sleep
 import numpy as np
 
-from pymeasure.instruments.keithley import Keithley2000
-from pymeasure.instruments.yokogawa import Yokogawa7651
+from pymeasure.instruments.keithley import Keithley2000, Keithley2400
 from pymeasure.instruments import Instrument
 from pymeasure.log import console_log
 from pymeasure.experiment import Results
@@ -58,7 +33,8 @@ from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatPa
 from pymeasure.experiment import unique_filename
 
 class K2000(Keithley2000):
-    """ Temporary fix for PyMeasure 0.4.1 """
+    """ Temporary fix for PyMeasure 0.4.1
+    """
     measure = Instrument.measurement(":read?", """""")
     voltage = measure
     current = measure
@@ -80,10 +56,16 @@ class IVProcedure(Procedure):
         # Medium = 1 NPLC, 20 ms
         self.meter.config_measure_voltage(self.voltage_range, nplc=1)
         
-        self.source = Yokogawa7651("GPIB::4")
-        self.source.config_current_source(self.max_current*1e-3)
-        
-        sleep(1)
+        self.source = Keithley2400("GPIB::1")
+        #self.source.config_current_source(self.max_current*1e-3)
+        # Temporary fix for PyMeasure 0.4.1
+        self.source.write(":sour:func curr;"
+                   ":sour:curr:rang:auto 0;"
+                   ":sour:curr:rang %g;:sour:curr:lev %g;" % (
+                        self.max_current*1e-3, self.min_current*1e-3))
+        self.source.write(":sens:volt:prot %g;" % self.voltage_range)
+        self.source.output = True
+        sleep(2)
 
     def execute(self):
         currents_up = np.arange(self.min_current, self.max_current, self.current_step)
@@ -95,7 +77,7 @@ class IVProcedure(Procedure):
         log.info("Starting to sweep through current")
         for i, current in enumerate(currents):
             log.debug("Measuring current: %g mA" % current)
-            self.source.current = current
+            self.source.source_current = current
             sleep(self.delay*1e-3)
             voltage = self.meter.voltage
             if abs(current) <= 1e-10:
@@ -114,7 +96,8 @@ class IVProcedure(Procedure):
                 break
 
     def shutdown(self):
-        self.source.current = 0
+        self.source.source_current = 0
+        self.source.output = False
         log.info("Finished")
 
 
