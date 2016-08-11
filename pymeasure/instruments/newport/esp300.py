@@ -281,8 +281,8 @@ class ESP300(Instrument):
 
     @property
     def axes(self):
-        """ A list of the Axis objects that are present.
-        """
+        """ A list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
+        objects that are present. """
         axes = []
         for name in dir(self):
             item = getattr(self, name)
@@ -303,8 +303,7 @@ class ESP300(Instrument):
             axis.disable()
 
     def shutdown(self):
-        """ Disables all of the avalible axes by looping through
-        all of the Axis objects avalible.
+        """ Shuts down the controller by disabling all of the axes.
         """
         self.disable()
 
