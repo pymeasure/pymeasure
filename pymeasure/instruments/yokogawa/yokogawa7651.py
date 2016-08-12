@@ -40,13 +40,13 @@ class Yokogawa7651(Instrument):
 
     source_voltage = Instrument.control(
         "OD;E", "S%g;E",
-        """ A floating point property that represents the output voltage
-        in Volts, if that mode is active. This property can be set. """
+        """ A floating point property that controls the source voltage
+        in Volts, if that mode is active. """
     )
     source_current = Instrument.control(
         "OD;E", "S%g;E",
-        """ A floating point property that represents the output current
-        in Amps, if that mode is active. This property can be set. """
+        """ A floating point property that controls the source current
+        in Amps, if that mode is active. """
     )
     voltage = source_voltage
     current = source_current
@@ -59,31 +59,30 @@ class Yokogawa7651(Instrument):
         )
         
         self.write("H0;E") # Set no header in output data
-        self.adapter.config()
+        #self.adapter.config() - Removed, unclear of usage
         
     @property
     def id(self):
-        """ Returns the identification of the instrument
-        """
+        """ Returns the identification of the instrument """
         return self.ask("OS;E")
         
     @property
-    def enabled(self):
-        """ This property is True if the source output is enabled, determined 
-        by checking if the 5th bit of the OC flag is a binary 1. This property 
-        can be set with a True or False value for enable or disabled
-        respectively.
+    def source_enabled(self):
+        """ Reads a boolean value that is True if the source is enabled, 
+        determined by checking if the 5th bit of the OC flag is a binary 1.
         """
         oc = int(self.ask("OC;E")[5:])
-        return True if (oc & 0b10000) else False
+        return oc & 0b10000
 
-    @enabled.setter
-    def enabled(self, value):
-        if value:
-            log.info("Enabling Yokogawa")
-            self.write("O1;E")
-        else:
-            self.write("O0;E")
+    def enable_source(self):
+        """ Enables the source of current or voltage depending on the
+        configuration of the instrument. """
+        self.write("O1;E")
+
+    def disable_source(self):
+        """ Disables the source of current or voltage depending on the
+        configuration of the instrument. """
+        self.write("O0;E")
         
     def config_current_source(self, max_current, cycle=False):
         """ Configures the instrument to source current based on a maximum current
@@ -98,10 +97,10 @@ class Yokogawa7651(Instrument):
 
         # Turn off output first, then set the source and turn on again
         if cycle:
-            self.enabled = False
+            self.disable_source()
         self.write("F5;R%d;E" % index)
         if cycle:
-            self.enabled = True
+            self.enable_source()
 
     def config_voltage_source(self, max_voltage, cycle=False):
         """ Configures the instrument to source voltage based on a maximum voltage
@@ -116,10 +115,10 @@ class Yokogawa7651(Instrument):
 
         # Turn off output first, then set the source and turn on again
         if cycle:
-            self.enabled = False
+            self.disable_source()
         self.write("F1;R%d;E" % index)
         if cycle:
-            self.enabled = True
+            self.enable_source()
 
     def ramp_to_current(self, current, steps=25, duration=0.5):
         """ Ramps the current to a value in Amps by traversing a linear spacing
@@ -152,4 +151,4 @@ class Yokogawa7651(Instrument):
         # TODO: Check if current or voltage is being sourced
         self.ramp_to_current(0.0, steps=25)
         self.source_current = 0.0
-        self.enabled = False
+        self.disable_source()
