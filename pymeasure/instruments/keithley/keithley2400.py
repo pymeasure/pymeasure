@@ -44,12 +44,12 @@ class Keithley2400(Instrument):
 
     source_voltage = Instrument.control(
         ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
-        """ A floating point property that controls the output voltage
+        """ A floating point property that controls the source voltage
         in Volts. """
     )
     source_current = Instrument.control(
         ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
-        """ A floating point property that controls the output current
+        """ A floating point property that controls the source current
         in Amps. """
     )
     source_voltage_range = Instrument.control(
@@ -150,9 +150,9 @@ class Keithley2400(Instrument):
         current, and resistance from the buffer data as a list
         """
     )
-    output_enabled = Instrument.measurement(
+    source_enabled = Instrument.measurement(
         "OUTPUT?",
-        """ Reads a boolean value that is True if the output is enabled.
+        """ Reads a boolean value that is True if the source is enabled.
         """,
         cast=bool
     )
@@ -174,13 +174,13 @@ class Keithley2400(Instrument):
             **kwargs
         )
 
-    def enable_output(self):
-        """ Enables the output of current or voltage depending on the
+    def enable_source(self):
+        """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT ON")
 
-    def disable_output(self):
-        """ Disables the output of current or voltage depending on the
+    def disable_source(self):
+        """ Disables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT OFF")
 
@@ -397,7 +397,7 @@ class Keithley2400(Instrument):
         and turns off any buffer or output triggering
         """
         self.disable_buffer()
-        self.disable_output_trigger()
+        self.disable_source()_trigger()
         self.trigger_immediately()
 
     def set_timed_arm(self, interval):
@@ -589,7 +589,7 @@ class Keithley2400(Instrument):
             currents = np.linspace(startI, stopI, num)
             self.write(":SOUR:SWE:DIR UP")
         self.connection.timeout = 30.0
-        self.enable_output()
+        self.enable_source()()
         data = self.values(":READ?") 
 
         self.check_errors()
@@ -599,10 +599,10 @@ class Keithley2400(Instrument):
         data = []
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay, backward=True))
-        self.disable_output()    
+        self.disable_source()()    
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay, backward=True))
-        self.disable_output()
+        self.disable_source()()
         return data 
 
     def use_rear_terminals(self):
@@ -624,4 +624,4 @@ class Keithley2400(Instrument):
         else:
             self.ramp_to_voltage(0.0)
         self.stop_buffer()
-        self.disable_output()
+        self.disable_source()()
