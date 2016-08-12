@@ -180,7 +180,7 @@ class Axis(object):
     )
 
     def __init__(self, axis, controller):
-        self.axis = axis
+        self.axis = str(axis)
         self.controller = controller
 
     def ask(self, command):
@@ -284,10 +284,18 @@ class ESP300(Instrument):
         """ A list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
         objects that are present. """
         axes = []
-        for name in dir(self):
-            item = getattr(self, name)
-            if isinstance(item, Axis):
-                axes.append(item)
+        directory = dir(self)
+        for name in directory:
+            if name == 'axes':
+                continue # Skip this property
+            try:
+                item = getattr(self, name)
+                if isinstance(item, Axis):
+                    axes.append(item)
+            except TypeError:
+                continue
+            except Exception as e:
+                raise e
         return axes
 
     def enable(self):
@@ -306,5 +314,4 @@ class ESP300(Instrument):
         """ Shuts down the controller by disabling all of the axes.
         """
         self.disable()
-
 
