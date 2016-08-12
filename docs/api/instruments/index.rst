@@ -23,6 +23,7 @@ Instruments by manufacturer:
    danfysik/index
    fwbell/index
    hp/index
+   gmw/index
    keithley/index
    lakeshore/index
    parker/index

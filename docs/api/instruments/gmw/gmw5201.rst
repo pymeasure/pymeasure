@@ -1,0 +1,7 @@
+######################################
+GMW 5201 Projected Field Electromagnet
+######################################
+
+.. autoclass:: pymeasure.instruments.gmw.GMW5201
+    :members:
+    :show-inheritance:
