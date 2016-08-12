@@ -589,7 +589,7 @@ class Keithley2400(Instrument):
             currents = np.linspace(startI, stopI, num)
             self.write(":SOUR:SWE:DIR UP")
         self.connection.timeout = 30.0
-        self.enable_source()()
+        self.enable_source()
         data = self.values(":READ?") 
 
         self.check_errors()
@@ -599,10 +599,10 @@ class Keithley2400(Instrument):
         data = []
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay, backward=True))
-        self.disable_source()()    
+        self.disable_source()    
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay, backward=True))
-        self.disable_source()()
+        self.disable_source()
         return data 
 
     def use_rear_terminals(self):
@@ -624,4 +624,4 @@ class Keithley2400(Instrument):
         else:
             self.ramp_to_voltage(0.0)
         self.stop_buffer()
-        self.disable_source()()
+        self.disable_source()
