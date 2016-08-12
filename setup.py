@@ -40,6 +40,7 @@ setup(
         'pymeasure.instruments.hp',
         'pymeasure.instruments.keithley',
         'pymeasure.instruments.lakeshore',
+        'pymeasure.instruments.newport',
         'pymeasure.instruments.parker',
         'pymeasure.instruments.signalrecovery',
         'pymeasure.instruments.srs',
