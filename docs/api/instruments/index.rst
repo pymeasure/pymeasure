@@ -22,8 +22,10 @@ Instruments by manufacturer:
    anritsu/index
    danfysik/index
    fwbell/index
+   hp/index
    keithley/index
    lakeshore/index
+   newport/index
    parker/index
    signalrecovery/index
    srs/index

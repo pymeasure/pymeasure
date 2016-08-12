@@ -195,7 +195,7 @@ class Instrument(object):
         return property(fget, fset)
     
     @staticmethod
-    def measurement(get_command, docs, map_values=None, 
+    def measurement(get_command, docs, values=[], map_values=None, 
                     check_get_errors=False, **kwargs):
         """ Returns a property for the class based on the supplied
         commands. This is a measurement quantity that may only be 

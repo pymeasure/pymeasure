@@ -115,3 +115,18 @@ def test_control_dict_str_map():
     assert fake.x == 'Y'
     fake.x = 'Z'
     assert fake.read() == '3'
+
+def test_measurement_dict_str_map():
+    class Fake(FakeInstrument):
+        x = Instrument.measurement(
+            "", "",
+            values={'X':1, 'Y':2, 'Z':3},
+            map_values=True,
+        )
+    fake = Fake()
+    fake.write('1')
+    assert fake.x == 'X'
+    fake.write('2')
+    assert fake.x == 'Y'
+    fake.write('3')
+    assert fake.x == 'Z'
