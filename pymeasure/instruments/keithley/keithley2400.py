@@ -397,7 +397,7 @@ class Keithley2400(Instrument):
         and turns off any buffer or output triggering
         """
         self.disable_buffer()
-        self.disable_source()_trigger()
+        self.disable_output_trigger()
         self.trigger_immediately()
 
     def set_timed_arm(self, interval):
