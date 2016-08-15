@@ -106,7 +106,7 @@ class LakeShore331(Instrument):
         # Only get the setpoint once, assuming it does not change
         setpoint_value = getattr(self, setpoint_name)
         def precent_difference(temperature):
-            return (temperature - setpoint_value)/setpoint_value
+            return 100*(temperature - setpoint_value)/setpoint_value
         t = time()
         while precent_difference(getattr(self, temperature_name)) < accuracy:
             sleep(interval)
