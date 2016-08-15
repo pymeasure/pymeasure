@@ -22,11 +22,30 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+from time import sleep, time
+
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
 
 
 class LakeShore331(Instrument):
-    """Instrument object for the Lake Shore 331 Temperature Controller"""
+    """ Represents the Lake Shore 331 Temperature Controller and provides
+    a high-level interface for interacting with the instrument.
+
+    .. code-block: python
+
+        controller = LakeShore331("GPIB::1")
+        controller.setpoint_1 = 50 # Kelvin
+        controller.heater_range = 'low'
+        controller.wait_for_temperature()
+
+        print(controller.temperature_A)
+
+    """
 
     temperature_A = Instrument.measurement(
         "KRDG? A",
@@ -36,6 +55,26 @@ class LakeShore331(Instrument):
         "KRDG? B",
         """ Reads the temperature of the sensor B in Kelvin """
     )
+    setpoint_1 = Instrument.control(
+        "SETP? 1", "SETP 1, %g",
+        """ A floating point property that controls the setpoint temperature
+        in Kelvin for Loop 1. """
+    )
+    setpoint = setpoint_1 # alias for Loop 1
+    setpoint_2 = Instrument.control(
+        "SETP? 2", "SETP 2, %g",
+        """ A floating point property that controls the setpoint temperature
+        in Kelvin for Loop 2. """
+    )
+    heater_range = Instrument.control(
+        "RANGE?", "RANGE %d",
+        """ A string property that controls the heater range, which
+        can take the values: off, low, medium, and high. These values
+        correlate to 0, 0.5, 5 and 50 W respectively. """,
+        validator=strict_discrete_set,
+        values={'off':0, 'low':1, 'medium':2, 'high':3},
+        map_values=True
+    )
 
     def __init__(self, adapter, **kwargs):
         super(LakeShore331, self).__init__(
@@ -43,3 +82,35 @@ class LakeShore331(Instrument):
             "Lake Shore 331 Temperature Controller",
             **kwargs
         )
+
+    def disable_heater(self):
+        """ Turns the heater range to off to disable the heater. """
+        self.heater_range = 'off'
+
+    def wait_for_temperature(self, accuracy=0.1, 
+            interval=0.1, sensor='A', setpoint=1, timeout=360):
+        """ Blocks the program, waiting for the temperature to reach the setpoint
+        within the accuracy (%), checking this each interval time in seconds.
+
+        :param accuracy: An acceptable percentage deviation between the 
+                         setpoint and temperature
+        :param interval: A time in seconds that controls the refresh rate
+        :param sensor: The desired sensor to read, either A or B
+        :param setpoint: The desired setpoint loop to read, either 1 or 2
+        :param timeout: A timeout in seconds after which an exception is raised
+        """
+        temperature_name = 'temperature_%s' % sensor
+        setpoint_name = 'setpoint_%d' % setpoint
+        # Only get the setpoint once, assuming it does not change
+        setpoint_value = getattr(self, setpoint_name)
+        def precent_difference(temperature):
+            return (temperature - setpoint_value)/setpoint_value
+        t = time()
+        while precent_difference(getattr(self, temperature_name)) < accuracy:
+            sleep(interval)
+            if (time()-t) > timeout:
+                raise Exception((
+                    "Timeout occured after waiting %g seconds when setting "
+                    "the LakeShore 331 temperature to %g"
+                ) % (timeout, setpoint))
+
