@@ -36,31 +36,31 @@ class LakeShore331(Instrument):
     """ Represents the Lake Shore 331 Temperature Controller and provides
     a high-level interface for interacting with the instrument.
 
-    .. code-block: python
+    .. code-block:: python
 
         controller = LakeShore331("GPIB::1")
-        controller.setpoint_1 = 50 # Kelvin
-        controller.heater_range = 'low'
-        controller.wait_for_temperature()
 
-        print(controller.temperature_A)
+        print(controller.setpoint_1)        # Print the current setpoint for loop 1
+        controller.setpoint_1 = 50          # Change the setpoint to 50 K
+        controller.heater_range = 'low'     # Change the heater range to Low
+        controller.wait_for_temperature()   # Wait for the temperature to stabilize
+        print(controller.temperature_A)     # Print the temperature at sensor A
 
     """
 
     temperature_A = Instrument.measurement(
         "KRDG? A",
-        """ Reads the temperature of the sensor A in Kelvin """
+        """ Reads the temperature of the sensor A in Kelvin. """
     )
-    temperature_A = Instrument.measurement(
+    temperature_B = Instrument.measurement(
         "KRDG? B",
-        """ Reads the temperature of the sensor B in Kelvin """
+        """ Reads the temperature of the sensor B in Kelvin. """
     )
     setpoint_1 = Instrument.control(
         "SETP? 1", "SETP 1, %g",
         """ A floating point property that controls the setpoint temperature
         in Kelvin for Loop 1. """
     )
-    setpoint = setpoint_1 # alias for Loop 1
     setpoint_2 = Instrument.control(
         "SETP? 2", "SETP 2, %g",
         """ A floating point property that controls the setpoint temperature
@@ -84,7 +84,7 @@ class LakeShore331(Instrument):
         )
 
     def disable_heater(self):
-        """ Turns the heater range to off to disable the heater. """
+        """ Turns the :attr:`~.heater_range` to :code:`off` to disable the heater. """
         self.heater_range = 'off'
 
     def wait_for_temperature(self, accuracy=0.1, 
@@ -99,7 +99,8 @@ class LakeShore331(Instrument):
         :param sensor: The desired sensor to read, either A or B
         :param setpoint: The desired setpoint loop to read, either 1 or 2
         :param timeout: A timeout in seconds after which an exception is raised
-        :param should_stop: A function that returns True if waiting should stop
+        :param should_stop: A function that returns True if waiting should stop, by
+                            default this always returns False
         """
         temperature_name = 'temperature_%s' % sensor
         setpoint_name = 'setpoint_%d' % setpoint
@@ -112,7 +113,7 @@ class LakeShore331(Instrument):
             sleep(interval)
             if (time()-t) > timeout:
                 raise Exception((
-                    "Timeout occured after waiting %g seconds when setting "
+                    "Timeout occurred after waiting %g seconds when setting "
                     "the LakeShore 331 temperature to %g"
                 ) % (timeout, setpoint))
             if should_stop():
