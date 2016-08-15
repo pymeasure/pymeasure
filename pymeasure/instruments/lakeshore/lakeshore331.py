@@ -114,7 +114,7 @@ class LakeShore331(Instrument):
             if (time()-t) > timeout:
                 raise Exception((
                     "Timeout occurred after waiting %g seconds when setting "
-                    "the LakeShore 331 temperature to %g"
+                    "the LakeShore 331 temperature to %g K."
                 ) % (timeout, setpoint))
             if should_stop():
                 return
