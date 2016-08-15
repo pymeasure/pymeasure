@@ -88,7 +88,8 @@ class LakeShore331(Instrument):
         self.heater_range = 'off'
 
     def wait_for_temperature(self, accuracy=0.1, 
-            interval=0.1, sensor='A', setpoint=1, timeout=360):
+            interval=0.1, sensor='A', setpoint=1, timeout=360,
+            should_stop=lambda: False):
         """ Blocks the program, waiting for the temperature to reach the setpoint
         within the accuracy (%), checking this each interval time in seconds.
 
@@ -98,6 +99,7 @@ class LakeShore331(Instrument):
         :param sensor: The desired sensor to read, either A or B
         :param setpoint: The desired setpoint loop to read, either 1 or 2
         :param timeout: A timeout in seconds after which an exception is raised
+        :param should_stop: A function that returns True if waiting should stop
         """
         temperature_name = 'temperature_%s' % sensor
         setpoint_name = 'setpoint_%d' % setpoint
@@ -113,4 +115,6 @@ class LakeShore331(Instrument):
                     "Timeout occured after waiting %g seconds when setting "
                     "the LakeShore 331 temperature to %g"
                 ) % (timeout, setpoint))
+            if should_stop():
+                return
 
