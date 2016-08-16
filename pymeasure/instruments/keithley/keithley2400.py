@@ -30,58 +30,73 @@ from pymeasure.instruments import Instrument, RangeException
 from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
-import visa
+from .buffer import KeithleyBuffer
+
 import numpy as np
 import time
 from io import BytesIO
 import re
 
 
-class Keithley2400(Instrument):
+class Keithley2400(Instrument, KeithleyBuffer):
     """ Represents the Keithely 2400 SourceMeter and provides a
     high-level interface for interacting with the instrument.
+
+    .. code-block:: python
+
+        keithley = Keithley2400("GPIB::1")
+        
+        keithley.source_mode = 'current'        # Sets up to source current
+        keithley.source_current_range = 10e-3   # Sets the source current range to 10 mA
+        keithley.compliance_voltage = 10        # Sets the complinance voltage to 10 V
+        keithley.source_current = 0             # Sets the source current to 0 mA
+
+        keithley.measure_voltage()              # Sets up to measure voltage
+
+        keithley.ramp_to_current(5e-3)          # Ramps the current to 5 mA
+        print(keithley.voltage)                 # Prints the voltage in Volts
+
     """
 
-    source_voltage = Instrument.control(
-        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
-        """ A floating point property that controls the source voltage
-        in Volts. """
-    )
-    source_current = Instrument.control(
-        ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
-        """ A floating point property that controls the source current
-        in Amps. """
-    )
-    source_voltage_range = Instrument.control(
-        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %g",
-        """ A floating point property that controls the source voltage 
-        range in Volts, which can take values from -210 to 210 V. """,
-        validator=truncated_range,
-        values=[-210, 210]
-    )
-    source_current_range = Instrument.control(
-        ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG %g",
-        """ A floating point property that controls the source current
-        range in Amps, which can take values between -1.05 and +1.05 A. """,
-        validator=truncated_range,
-        values=[-1.05, 1.05]
-    )
+    # TODO: Add measurement mode property
+
     source_mode = Instrument.control(
         ":SOUR:FUNC?", ":SOUR:FUNC %s",
         """ A string property that controls the source mode, which can
         take the values 'current' or 'voltage'. The convenience methods
         :meth:`~.config_source_current` and :meth:`~.config_source_voltage`
-        are prefered over setting this directly. """,
+        can also be used. """,
         validator=strict_discrete_set,
         values={'current':'CURR', 'voltage':'VOLT'},
         map_values=True
     )
-    compliance_voltage = Instrument.control(
-        ":SENS:VOLT:PROT?", ":SENS:VOLT:PROT %g",
-        """ A floating point property that controls the compliance voltage
-        in Volts. """,
+    source_enabled = Instrument.measurement("OUTPUT?",
+        """ Reads a boolean value that is True if the source is enabled. """,
+        cast=bool
+    )
+
+    ###############
+    # Current (A) #
+    ###############
+
+    current = Instrument.measurement(":READ?",
+        """ Reads the current in Amps, if configured for this reading.
+        """
+    )
+    current_range = Instrument.control(
+        ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
+        """ A floating point property that controls the measurement current
+        range in Amps, which can take values between -1.05 and +1.05 A. 
+        Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[-210, 210]
+        values=[-1.05, 1.05]
+    )
+    current_nplc = Instrument.control(
+        ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
+        """ A floating point property that controls the number of power line cycles
+        (NPLC) for the DC current measurements, which sets the integration period 
+        and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
+        Fast, Medium, and Slow respectively. """
     )
     compliance_current = Instrument.control(
         ":SENS:CURR:PROT?", ":SENS:CURR:PROT %g",
@@ -90,71 +105,86 @@ class Keithley2400(Instrument):
         validator=truncated_range,
         values=[-1.05, 1.05]
     )
+    source_current = Instrument.control(
+        ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
+        """ A floating point property that controls the source current
+        in Amps. """
+    )
+    source_current_range = Instrument.control(
+        ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
+        """ A floating point property that controls the source current
+        range in Amps, which can take values between -1.05 and +1.05 A. 
+        Auto-range is disabled when this property is set. """,
+        validator=truncated_range,
+        values=[-1.05, 1.05]
+    )
+
+    ###############
+    # Voltage (V) #
+    ###############
+
     voltage = Instrument.measurement(":READ?",
         """ Reads the voltage in Volts, if configured for this reading.
         """
     )
-    current = Instrument.measurement(":READ?",
-        """ Reads the current in Amps, if configured for this reading.
-        """
+    voltage_range = Instrument.control(
+        ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
+        """ A floating point property that controls the measurement voltage
+        range in Volts, which can take values from -210 to 210 V. 
+        Auto-range is disabled when this property is set. """,
+        validator=truncated_range,
+        values=[-210, 210]
     )
+    voltage_nplc = Instrument.control(
+        ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
+        """ A floating point property that controls the number of power line cycles
+        (NPLC) for the DC voltage measurements, which sets the integration period 
+        and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
+        Fast, Medium, and Slow respectively. """
+    )
+    compliance_voltage = Instrument.control(
+        ":SENS:VOLT:PROT?", ":SENS:VOLT:PROT %g",
+        """ A floating point property that controls the compliance voltage
+        in Volts. """,
+        validator=truncated_range,
+        values=[-210, 210]
+    )
+    source_voltage = Instrument.control(
+        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
+        """ A floating point property that controls the source voltage
+        in Volts. """
+    )
+    source_voltage_range = Instrument.control(
+        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
+        """ A floating point property that controls the source voltage 
+        range in Volts, which can take values from -210 to 210 V. 
+        Auto-range is disabled when this property is set. """,
+        validator=truncated_range,
+        values=[-210, 210]
+    )
+
+    ####################
+    # Resistance (Ohm) #
+    ####################
+
     resistance = Instrument.measurement(":READ?",
         """ Reads the resistance in Ohms, if configured for this reading.
         """
     )
-    voltage_range = Instrument.control(
-        ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG %g",
-        """ A floating point property that controls the measurement voltage
-        range in Volts, which can take values from -210 to 210 V. """,
-        validator=truncated_range,
-        values=[-210, 210]
-    )
-    current_range = Instrument.control(
-        ":SENS:CURR:RANG?", ":SENS:CURR:RANG %g",
-        """ A floating point property that controls the measurement current
-        range in Amps, which can take values between -1.05 and +1.05 A. """,
-        validator=truncated_range,
-        values=[-1.05, 1.05]
-    )
     resistance_range = Instrument.control(
-        ":RES:RANG?", ":RES:RANG %e",
+        ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
         """ A floating point property that controls the resistance range
-        in Ohms, which can take values from 0 to 210 MOhms. """,
+        in Ohms, which can take values from 0 to 210 MOhms. 
+        Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 210e6]
     )
-    buffer_count = Instrument.measurement(":TRAC:POIN:ACT?",
-        """ Reads the integer buffer count. """
-    )
-    means = Instrument.measurement(
-        ":CALC3:FORM MEAN;:CALC3:DATA?;",
-        """ Reads the calculated means (averages) for voltage,
-        current, and resistance from the buffer data  as a list
-        """
-    )
-    maximums = Instrument.measurement(
-        ":CALC3:FORM MAX;:CALC3:DATA?;",
-        """ Returns the calculated maximums for voltage, current, and
-        resistance from the buffer data as a list
-        """
-    )
-    minimums = Instrument.measurement(
-        ":CALC3:FORM MIN;:CALC3:DATA?;",
-        """ Returns the calculated minimums for voltage, current, and
-        resistance from the buffer data as a list
-        """
-    )
-    standard_devs = Instrument.measurement(
-        ":CALC3:FORM SDEV;:CALC3:DATA?;",
-        """ Returns the calculated standard deviations for voltage,
-        current, and resistance from the buffer data as a list
-        """
-    )
-    source_enabled = Instrument.measurement(
-        "OUTPUT?",
-        """ Reads a boolean value that is True if the source is enabled.
-        """,
-        cast=bool
+    resistance_nplc = Instrument.control(
+        ":SENS:RES:NPLC?", ":SENS:RES:NPLC %g",
+        """ A floating point property that controls the number of power line cycles
+        (NPLC) for the 2-wire resistance measurements, which sets the integration period 
+        and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
+        Fast, Medium, and Slow respectively. """
     )
     wires = Instrument.control(
         ":SYSTEM:RSENSE?", ":SYSTEM:RSENSE %d",
@@ -167,11 +197,59 @@ class Keithley2400(Instrument):
         map_values=True
     )
 
-    def __init__(self, resourceName, **kwargs):
+    buffer_points = Instrument.control(
+        ":TRAC:POIN?", ":TRAC:POIN %d",
+        """ An integer property that controls the number of buffer points. This
+        does not represent actual points in the buffer, but the configuration
+        value instead. """,
+        validator=truncated_range,
+        values=[1, 2500],
+        cast=int
+    )
+    means = Instrument.measurement(
+        ":CALC3:FORM MEAN;:CALC3:DATA?;",
+        """ Reads the calculated means (averages) for voltage,
+        current, and resistance from the buffer data  as a list. """
+    )
+    maximums = Instrument.measurement(
+        ":CALC3:FORM MAX;:CALC3:DATA?;",
+        """ Returns the calculated maximums for voltage, current, and
+        resistance from the buffer data as a list. """
+    )
+    minimums = Instrument.measurement(
+        ":CALC3:FORM MIN;:CALC3:DATA?;",
+        """ Returns the calculated minimums for voltage, current, and
+        resistance from the buffer data as a list. """
+    )
+    standard_devs = Instrument.measurement(
+        ":CALC3:FORM SDEV;:CALC3:DATA?;",
+        """ Returns the calculated standard deviations for voltage,
+        current, and resistance from the buffer data as a list. """
+    )
+
+    ###########
+    # Trigger #
+    ###########
+    
+    trigger_count = Instrument.control(
+        ":TRIG:COUN?", ":TRIG:COUN %d",
+        """ An integer property that controls the trigger count,
+        which can take values from 1 to 9,999. """,
+        validator=truncated_range,
+        values=[1, 2500],
+        cast=int
+    )
+    trigger_delay = Instrument.control(
+        ":TRIG:SEQ:DEL?", ":TRIG:SEQ:DEL %g",
+        """ A floating point property that controls the trigger delay
+        in seconds, which can take values from 0 to 999.9999 s. """,
+        validator=truncated_range,
+        values=[0, 999.9999]
+    )
+
+    def __init__(self, adapter, **kwargs):
         super(Keithley2400, self).__init__(
-            resourceName,
-            "Keithley 2400 SourceMeter",
-            **kwargs
+            adapter, "Keithley 2400 SourceMeter", **kwargs
         )
 
     def enable_source(self):
@@ -198,7 +276,7 @@ class Keithley2400(Instrument):
         if auto_range:
             self.write(":SENS:RES:RANG:AUTO 1;")
         else:
-            self.write(":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g" % resistance)
+            self.resistance_range = resistance
         self.check_errors()
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
@@ -214,7 +292,7 @@ class Keithley2400(Instrument):
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
-            self.write(":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g" % voltage)
+            self.voltage_range = voltage
         self.check_errors()
 
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
@@ -230,7 +308,7 @@ class Keithley2400(Instrument):
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
         else:
-            self.write(":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g" % current)
+            self.current_range = current
         self.check_errors()
 
     def auto_range_source(self):
@@ -241,8 +319,8 @@ class Keithley2400(Instrument):
         else:
             self.write(":SOUR:VOLT:RANG:AUTO 1")
 
-    def config_current_source(self, compliance_voltage=0.1, 
-             current_range=None):
+    def config_current_source(self, current_range=None, 
+             compliance_voltage=0.1):
         """ Configures the instrument to source current, and
         uses an auto range unless a current range is specified.
         The compliance voltage is also set. 
@@ -256,13 +334,12 @@ class Keithley2400(Instrument):
         if current_range is None:
             self.auto_range_source()
         else:
-            self.write(":SOUR:CURR:RANG:AUTO 0")
             self.source_current_range = current_range
         self.compliance_voltage = compliance_voltage
         self.check_errors()
 
-    def config_voltage_source(self, compliance_current=0.1, 
-            voltage_range=None):
+    def config_voltage_source(self, voltage_range=None, 
+            compliance_current=0.1):
         """ Configures the instrument to source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.
@@ -276,7 +353,6 @@ class Keithley2400(Instrument):
         if voltage_range is None:
             self.auto_range_source()
         else:
-            self.write(":SOUR:VOLT:RANG:AUTO 0")
             self.source_voltage_range = voltage_range
         self.compliance_current = complinance_current
         self.check_errors()
@@ -435,75 +511,6 @@ class Keithley2400(Instrument):
         """ Disables the output trigger for the Trigger layer
         """
         self.write(":TRIG:OUTP NONE")
-
-    def config_buffer(self, points=64, delay=0):
-        """ Configures the measurement buffer for a number of points, to be
-        taken with a specified delay.
-
-        :param points: The number of points in the buffer
-        :param delay: The delay time in seconds
-        """
-        # TODO: Check if :STAT:PRES is needed (was in Colin's old code)
-        self.write(":*CLS;*SRE 1;:STAT:MEAS:ENAB 512;")
-        self.write(":TRACE:CLEAR;"
-                   ":TRAC:POIN %d;:TRIG:COUN %d;:TRIG:delay %f;" % (
-                        points, points, 1.0e-3*delay))
-        self.write(":TRAC:FEED SENSE;:TRAC:FEED:CONT NEXT;")
-        self.check_errors()
-
-    def is_buffer_full(self):
-        """ Returns True if the buffer is full of measurements """
-        return int(self.ask("*STB?;")) == 65
-
-    def wait_for_buffer(self, should_stop=lambda: False,
-                        time_out=60, time_step=0.01):
-        """ Blocks the program, waiting for a full buffer. This function 
-        returns early if the :code:`should_stop` function returns True or
-        the timeout is reached before the buffer is full.
-
-        :param should_stop: A function that returns True when this function should return early
-        :param time_out: A time in seconds after which this function should return early
-        :param time_step: A time in seconds for how often to check if the buffer is full
-        """
-        # self.connection.wait_for_srq()
-        i = 0
-        while not self.is_buffer_full() and i < (time_out / time_step):
-            time.sleep(time_step)
-            i += 1
-            if should_stop():
-                return False
-        if not self.isBufferFull():
-            raise Exception("Timed out waiting for Keithley 2400 buffer to fill.")
-
-    def get_buffer(self):
-        self.write("format:data ascii")
-        return np.loadtxt(
-            BytesIO(self.ask(":TRAC:DATA?")),
-            dtype=np.float32,
-            delimiter=','
-        )
-
-    def start_buffer(self):
-        self.write(":INIT")
-
-    def reset_buffer(self):
-        self.ask("status:measurement?")
-        self.write("trace:clear; feed:control next")
-
-    def stop_buffer(self):
-        """ Aborts the arming and triggering sequence and uses
-        a Selected Device Clear (SDC) if possible
-        """
-        if type(self.connection) is PrologixAdapter:
-            self.write("++clr")
-        else:
-            self.write(":ABOR")
-
-    def disable_buffer(self):
-        """ Disables the connection between measurements and the
-        buffer, but does not abort the measurement process
-        """
-        self.write(":TRAC:FEED:CONT NEV")
 
     @property
     def mean_voltage(self):
