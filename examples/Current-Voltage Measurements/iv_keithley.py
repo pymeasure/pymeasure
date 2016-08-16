@@ -17,9 +17,6 @@ log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
 import sys
-import random
-import tempfile
-import pyqtgraph as pg
 from time import sleep
 import numpy as np
 
@@ -29,15 +26,9 @@ from pymeasure.log import console_log
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+from pymeasure.experiment import Procedure, FloatParameter
 from pymeasure.experiment import unique_filename
 
-class K2000(Keithley2000):
-    """ Temporary fix for PyMeasure 0.4.1
-    """
-    measure = Instrument.measurement(":read?", """""")
-    voltage = measure
-    current = measure
 
 class IVProcedure(Procedure):
 
@@ -51,20 +42,16 @@ class IVProcedure(Procedure):
 
     def startup(self):
         log.info("Setting up instruments")
-        self.meter = K2000("GPIB::25")
-        # Number of power line cycles (NPLC)
-        # Medium = 1 NPLC, 20 ms
-        self.meter.config_measure_voltage(self.voltage_range, nplc=1)
+        self.meter = Keithley2000("GPIB::25")
+        self.meter.mode = 'voltage'
+        self.meter.voltage_range = self.voltage_range
+        self.meter.voltage_nplc = 1 # Integration constant to Medium
         
         self.source = Keithley2400("GPIB::1")
-        #self.source.config_current_source(self.max_current*1e-3)
-        # Temporary fix for PyMeasure 0.4.1
-        self.source.write(":sour:func curr;"
-                   ":sour:curr:rang:auto 0;"
-                   ":sour:curr:rang %g;:sour:curr:lev %g;" % (
-                        self.max_current*1e-3, self.min_current*1e-3))
-        self.source.write(":sens:volt:prot %g;" % self.voltage_range)
-        self.source.output = True
+        self.source.source_mode = 'current'
+        self.source.source_current_range = self.max_current*1e-3 # A
+        self.source.complinance_voltage = self.voltage_range
+        self.source.enable_source()
         sleep(2)
 
     def execute(self):
@@ -96,8 +83,7 @@ class IVProcedure(Procedure):
                 break
 
     def shutdown(self):
-        self.source.source_current = 0
-        self.source.output = False
+        self.source.shutdown()
         log.info("Finished")
 
 
