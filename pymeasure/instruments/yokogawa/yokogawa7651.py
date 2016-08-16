@@ -27,16 +27,49 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-
-import math
-import time
+from pymeasure.instruments.validators import (
+    truncated_discrete_set, strict_discrete_set,
+    truncated_range
+)
+from time import sleep
 import numpy as np
+import re
 
 
 class Yokogawa7651(Instrument):
     """ Represents the Yokogawa 7651 Programmable DC Source
     and provides a high-level for interacting with the instrument.
+
+    .. code-block:: python
+
+        yoko = Yokogawa7651("GPIB::1")
+
+        yoko.source_mode = 'current'        # Sets up to source current
+        yoko.source_current_range = 10e-3   # Sets the current range to 10 mA
+        yoko.compliance_voltage = 10        # Sets the compliance voltage to 10 V
+        yoko.source_current = 0             # Sets the source current to 0 mA
+
+        yoko.enable_source()                # Enables the current output
+        yoko.ramp_to_current(5e-3)          # Ramps the current to 5 mA
+
+        yoko.shutdown()                     # Ramps the current to 0 mA and disables output
+
     """
+
+    @staticmethod
+    def _find(v, key):
+        """ Returns a value by parsing a current panel setting output
+        string array, which is returned with a call to "OS;E". This
+        is used for Instrument.control methods, and should not be
+        called directly by the user.
+        """
+        status = ''.join(v.split("\r\n\n")[1:-1])
+        keys = re.findall('[^\dE+.-]+', status)
+        values = re.findall('[\dE+.-]+', status)
+        if key not in keys:
+            raise ValueError("Invalid key used to search for status of Yokogawa 7561")
+        else:
+            return values[keys.index(key)]
 
     source_voltage = Instrument.control(
         "OD;E", "S%g;E",
@@ -48,23 +81,66 @@ class Yokogawa7651(Instrument):
         """ A floating point property that controls the source current
         in Amps, if that mode is active. """
     )
-    voltage = source_voltage
-    current = source_current
+    source_voltage_range = Instrument.control(
+        "OS;E", "R%d;E",
+        """ A floating point property that sets the source voltage range
+        in Volts, which can take values: 10 mV, 100 mV, 1 V, 10 V, and 30 V.
+        Voltages are truncted to an appropriate value if needed. """,
+        validator=truncated_discrete_set,
+        values={10e-3:2, 100e-3:3, 1:4, 10:5, 30:6},
+        map_values=True,
+        get_process=lambda v: int(Yokogawa7651._find(v, 'R'))
+    )
+    source_current_range = Instrument.control(
+        "OS;E", "R%d;E",
+        """ A floating point property that sets the current voltage range
+        in Amps, which can take values: 1 mA, 10 mA, and 100 mA.
+        Currents are truncted to an appropriate value if needed. """,
+        validator=truncated_discrete_set,
+        values={1e-3:4, 10e-3:5, 100e-3:6},
+        map_values=True,
+        get_process=lambda v: int(Yokogawa7651._find(v, 'R'))
+    )
+    source_mode = Instrument.control(
+        "OS;E", "F%d;E",
+        """ A string property that controls the source mode, which can
+        take the values 'current' or 'voltage'. The convenience methods
+        :meth:`~.config_source_current` and :meth:`~.config_source_voltage`
+        can also be used. """,
+        validator=strict_discrete_set,
+        values={'current':5, 'voltage':1},
+        map_values=True,
+        get_process=lambda v: int(Yokogawa7651._find(v, 'F'))
+    )
+    compliance_voltage = Instrument.control(
+        "OS;E", "LV%g;E",
+        """ A floating point property that sets the compliance voltage
+        in Volts, which can take values between 1 and 30 V. """,
+        validator=truncated_range,
+        values=[1, 30],
+        get_process=lambda v: int(Yokogawa7651._find(v, 'LV'))
+    )
+    compliance_current = Instrument.control(
+        "OS;E", "LA%g;E",
+        """ A floating point property that sets the compliance current
+        in Amps, which can take values from 5 to 120 mA. """,
+        validator=truncated_range,
+        values=[5e-3, 120e-3],
+        get_process=lambda v: float(Yokogawa7651._find(v, 'LA'))*1e-3, # converts A to mA
+        set_process=lambda v: v*1e3, # converts mA to A
+    )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super(Yokogawa7651, self).__init__(
-            resourceName,
-            "Yokogawa 7651 Programmable DC Source",
-            **kwargs
+            adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
         )
         
         self.write("H0;E") # Set no header in output data
-        #self.adapter.config() - Removed, unclear of usage
         
     @property
     def id(self):
         """ Returns the identification of the instrument """
-        return self.ask("OS;E")
+        return self.ask("OS;E").split('\r\n\n')[0]
         
     @property
     def source_enabled(self):
@@ -84,41 +160,21 @@ class Yokogawa7651(Instrument):
         configuration of the instrument. """
         self.write("O0;E")
         
-    def config_current_source(self, max_current, cycle=False):
+    def config_current_source(self, max_current, complinance_voltage=1):
         """ Configures the instrument to source current based on a maximum current
         in Amps, which can take the value of 1, 10, and 100 mA. This function 
-        automatically rounds up to the necessary range."""
+        automatically rounds up to the necessary range. """
+        self.source_mode = 'current'
+        self.source_current_range = max_current
+        self.complinance_voltage = complinance_voltage
 
-        index = int(math.log10(max_current*0.95e3)+5.0)
-        if (index < 4):
-            index = 4
-        elif (index > 6):
-            index = 6
-
-        # Turn off output first, then set the source and turn on again
-        if cycle:
-            self.disable_source()
-        self.write("F5;R%d;E" % index)
-        if cycle:
-            self.enable_source()
-
-    def config_voltage_source(self, max_voltage, cycle=False):
+    def config_voltage_source(self, max_voltage, complinance_current=10e-3):
         """ Configures the instrument to source voltage based on a maximum voltage
         in Volts, which can take the value of 10 mV, 100 mV, 1 V, 10 V, and 30 V.
         This function automatically rounds up to the necessary range."""
-
-        index = int(math.log10(max_voltage*0.95e3)+2.0)
-        if (index < 2):
-            index = 2
-        elif (index > 6):
-            index = 6
-
-        # Turn off output first, then set the source and turn on again
-        if cycle:
-            self.disable_source()
-        self.write("F1;R%d;E" % index)
-        if cycle:
-            self.enable_source()
+        self.source_mode = 'voltage'
+        self.source_voltage_range = max_voltage
+        self.complinance_current = compliance_current
 
     def ramp_to_current(self, current, steps=25, duration=0.5):
         """ Ramps the current to a value in Amps by traversing a linear spacing
@@ -131,7 +187,7 @@ class Yokogawa7651(Instrument):
             currents = np.linspace(start_current, stop_current, steps)
             for current in currents:
                 self.source_current = current
-                time.sleep(pause)
+                sleep(pause)
 
     def ramp_to_voltage(self, voltage, steps=25, duration=0.5):
         """ Ramps the voltage to a value in Volts by traversing a linear spacing
@@ -144,11 +200,15 @@ class Yokogawa7651(Instrument):
             voltages = np.linspace(start_voltage, stop_voltage, steps)
             for voltage in voltages:
                 self.source_voltage = voltage
-                time.sleep(pause)
+                sleep(pause)
 
     def shutdown(self):
-        super(Yokogawa7651, self).shutdown()
-        # TODO: Check if current or voltage is being sourced
+        """ Shuts down the instrument, and ramps the current or voltage to zero
+        before disabling the source. """
+
+        # Since voltage and current are set the same way, this
+        # ramps either the current or voltage to zero
         self.ramp_to_current(0.0, steps=25)
         self.source_current = 0.0
         self.disable_source()
+        super(Yokogawa7651, self).shutdown()
