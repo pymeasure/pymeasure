@@ -44,7 +44,7 @@ class Yokogawa7651(Instrument):
 
         yoko = Yokogawa7651("GPIB::1")
 
-        yoko.source_mode = 'current'        # Sets up to source current
+        yoko.apply_current()                # Sets up to source current
         yoko.source_current_range = 10e-3   # Sets the current range to 10 mA
         yoko.compliance_voltage = 10        # Sets the compliance voltage to 10 V
         yoko.source_current = 0             # Sets the source current to 0 mA
@@ -105,7 +105,7 @@ class Yokogawa7651(Instrument):
         "OS;E", "F%d;E",
         """ A string property that controls the source mode, which can
         take the values 'current' or 'voltage'. The convenience methods
-        :meth:`~.config_source_current` and :meth:`~.config_source_voltage`
+        :meth:`~.Yokogawa7651.apply_current` and :meth:`~.Yokogawa7651.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
         values={'current':5, 'voltage':1},
@@ -160,18 +160,18 @@ class Yokogawa7651(Instrument):
         configuration of the instrument. """
         self.write("O0;E")
         
-    def config_current_source(self, max_current, complinance_voltage=1):
-        """ Configures the instrument to source current based on a maximum current
-        in Amps, which can take the value of 1, 10, and 100 mA. This function 
-        automatically rounds up to the necessary range. """
+    def apply_current(self, max_current=1e-3, complinance_voltage=1):
+        """ Configures the instrument to apply a source current, which can
+        take optional parameters that defer to the :attr:`~.Yokogawa7651.source_current_range`
+        and :attr:`~.Yokogawa7651.compliance_voltage` properties. """
         self.source_mode = 'current'
         self.source_current_range = max_current
         self.complinance_voltage = complinance_voltage
 
-    def config_voltage_source(self, max_voltage, complinance_current=10e-3):
-        """ Configures the instrument to source voltage based on a maximum voltage
-        in Volts, which can take the value of 10 mV, 100 mV, 1 V, 10 V, and 30 V.
-        This function automatically rounds up to the necessary range."""
+    def apply_voltage(self, max_voltage=1, complinance_current=10e-3):
+        """ Configures the instrument to apply a source voltage, which can
+        take optional parameters that defer to the :attr:`~.Yokogawa7651.source_voltage_range`
+        and :attr:`~.Yokogawa7651.compliance_current` properties. """
         self.source_mode = 'voltage'
         self.source_voltage_range = max_voltage
         self.complinance_current = compliance_current
@@ -179,6 +179,9 @@ class Yokogawa7651(Instrument):
     def ramp_to_current(self, current, steps=25, duration=0.5):
         """ Ramps the current to a value in Amps by traversing a linear spacing
         of current steps over a duration, defined in seconds.
+
+        :param steps: A number of linear steps to traverse
+        :param duration: A time in seconds over which to ramp
         """
         start_current = self.source_current
         stop_current = current
@@ -192,6 +195,9 @@ class Yokogawa7651(Instrument):
     def ramp_to_voltage(self, voltage, steps=25, duration=0.5):
         """ Ramps the voltage to a value in Volts by traversing a linear spacing
         of voltage steps over a duration, defined in seconds.
+
+        :param steps: A number of linear steps to traverse
+        :param duration: A time in seconds over which to ramp
         """
         start_voltage = self.source_voltage
         stop_voltage = voltage

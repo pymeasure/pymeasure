@@ -46,15 +46,18 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
         keithley = Keithley2400("GPIB::1")
         
-        keithley.source_mode = 'current'        # Sets up to source current
+        keithley.apply_current()                # Sets up to source current
         keithley.source_current_range = 10e-3   # Sets the source current range to 10 mA
         keithley.compliance_voltage = 10        # Sets the complinance voltage to 10 V
         keithley.source_current = 0             # Sets the source current to 0 mA
+        keithley.enable_source()                # Enables the source output
 
         keithley.measure_voltage()              # Sets up to measure voltage
 
         keithley.ramp_to_current(5e-3)          # Ramps the current to 5 mA
         print(keithley.voltage)                 # Prints the voltage in Volts
+
+        keithley.shutdown()                     # Ramps the current to 0 mA and disables output
 
     """
 
@@ -64,7 +67,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         ":SOUR:FUNC?", ":SOUR:FUNC %s",
         """ A string property that controls the source mode, which can
         take the values 'current' or 'voltage'. The convenience methods
-        :meth:`~.config_source_current` and :meth:`~.config_source_voltage`
+        :meth:`~.Keithley2400.apply_current` and :meth:`~.Keithley2400.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
         values={'current':'CURR', 'voltage':'VOLT'},
@@ -319,15 +322,15 @@ class Keithley2400(Instrument, KeithleyBuffer):
         else:
             self.write(":SOUR:VOLT:RANG:AUTO 1")
 
-    def config_current_source(self, current_range=None, 
+    def apply_current(self, current_range=None, 
              compliance_voltage=0.1):
-        """ Configures the instrument to source current, and
+        """ Configures the instrument to apply a source current, and
         uses an auto range unless a current range is specified.
         The compliance voltage is also set. 
 
         :param compliance_voltage: A float in the correct range for a 
-                                   :attr:`~.compliance_voltage`
-        :param current_range: A :attr:`~.current_range` value or None
+                                   :attr:`~.Keithley2400.compliance_voltage`
+        :param current_range: A :attr:`~.Keithley2400.current_range` value or None
         """
         log.info("%s is sourcing current." % self.name)
         self.source_mode = 'current'
@@ -338,9 +341,9 @@ class Keithley2400(Instrument, KeithleyBuffer):
         self.compliance_voltage = compliance_voltage
         self.check_errors()
 
-    def config_voltage_source(self, voltage_range=None, 
+    def apply_voltage(self, voltage_range=None, 
             compliance_current=0.1):
-        """ Configures the instrument to source voltage, and
+        """ Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.
 

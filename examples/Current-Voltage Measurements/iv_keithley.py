@@ -43,12 +43,12 @@ class IVProcedure(Procedure):
     def startup(self):
         log.info("Setting up instruments")
         self.meter = Keithley2000("GPIB::25")
-        self.meter.mode = 'voltage'
+        self.meter.measure_voltage()
         self.meter.voltage_range = self.voltage_range
         self.meter.voltage_nplc = 1 # Integration constant to Medium
         
         self.source = Keithley2400("GPIB::1")
-        self.source.source_mode = 'current'
+        self.source.apply_current()
         self.source.source_current_range = self.max_current*1e-3 # A
         self.source.complinance_voltage = self.voltage_range
         self.source.enable_source()
