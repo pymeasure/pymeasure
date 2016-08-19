@@ -64,9 +64,13 @@ class IVProcedure(Procedure):
         log.info("Starting to sweep through current")
         for i, current in enumerate(currents):
             log.debug("Measuring current: %g mA" % current)
+
             self.source.source_current = current
+            # Or use self.source.ramp_to_current(current, delay=0.1)
             sleep(self.delay*1e-3)
+            
             voltage = self.meter.voltage
+
             if abs(current) <= 1e-10:
                 resistance = np.nan
             else:
