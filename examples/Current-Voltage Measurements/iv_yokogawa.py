@@ -24,11 +24,11 @@ from pymeasure.instruments.keithley import Keithley2000
 from pymeasure.instruments.yokogawa import Yokogawa7651
 from pymeasure.instruments import Instrument
 from pymeasure.log import console_log
-from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment import Procedure, FloatParameter
-from pymeasure.experiment import unique_filename
+from pymeasure.experiment import (
+    Procedure, FloatParameter, unique_filename, Results
+)
 
 
 class IVProcedure(Procedure):
