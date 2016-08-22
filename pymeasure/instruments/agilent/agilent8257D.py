@@ -22,13 +22,23 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 
 class Agilent8257D(Instrument):
     """Represents the Agilent 8257D Signal Generator and 
     provides a high-level interface for interacting with 
     the instrument.
+
+    .. code-block:: python
+
+        generator = Agilent8257D("GPIB::1")
+
+        generator.power = 0                     # Sets the output power to 0 dBm
+        generator.frequency = 5                 # Sets the output frequency to 5 GHz
+        generator.enable()                      # Enables the output
+
     """
 
     power = Instrument.control(
@@ -86,109 +96,199 @@ class Agilent8257D(Instrument):
         can be set.
         """
     )
+    is_enabled = Instrument.measurement(":OUTPUT?",
+        """ Reads a boolean value that is True if the output is on. """,
+        cast=bool
+    )
+    has_modulation = Instrument.measurement(":OUTPUT:MOD?",
+        """ Reads a boolean value that is True if the modulation is enabled. """,
+        cast=bool
+    )
 
-    def __init__(self, resourceName, delay=0.02, **kwargs):
+    ########################
+    # Amplitude modulation #
+    ########################
+
+    has_amplitude_modulation = Instrument.measurement(":SOUR:AM:STAT?",
+        """ Reads a boolean value that is True if the amplitude modulation is enabled. """,
+        cast=bool
+    )
+    amplitude_depth = Instrument.control(
+        ":SOUR:AM:DEPT?", ":SOUR:AM:DEPT %g",
+        """ A floating point property that controls the amplitude modulation
+        in precent, which can take values from 0 to 100 %. """,
+        validator=truncated_range,
+        values=[0, 100]
+    )
+    AMPLITUDE_SOURCES = {
+        'internal':'INT', 'internal 2':'INT2', 
+        'external':'EXT', 'external 2':'EXT2'
+    }
+    amplitude_source = Instrument.control(
+        ":SOUR:AM:SOUR?", ":SOUR:AM:SOUR %s",
+        """ A string property that controls the source of the amplitude modulation
+        signal, which can take the values: 'internal', 'internal 2', 'external', and
+        'external 2'. """,
+        validator=strict_discrete_set,
+        values=AMPLITUDE_SOURCES,
+        map_values=True
+    )
+
+    ####################
+    # Pulse modulation #
+    ####################
+
+    has_pulse_modulation = Instrument.measurement(":SOUR:PULM:STAT?",
+        """ Reads a boolean value that is True if the pulse modulation is enabled. """,
+        cast=bool
+    )
+    PULSE_SOURCES = {
+        'internal':'INT', 'external':'EXT', 'scalar':'SCAL'
+    }
+    pulse_source = Instrument.control(
+        ":SOUR:PULM:SOUR?", ":SOUR:PULM:SOUR %s",
+        """ A string property that controls the source of the pulse modulation
+        signal, which can take the values: 'internal', 'external', and
+        'scalar'. """,
+        validator=strict_discrete_set,
+        values=PULSE_SOURCES,
+        map_values=True
+    )
+    PULSE_INPUTS = {
+        'square':'SQU', 'free-run':'FRUN',
+        'triggered':'TRIG', 'doublet':'DOUB', 'gated':'GATE'
+    }
+    pulse_input = Instrument.control(
+        ":SOUR:PULM:SOUR:INT?", ":SOUR:PULM:SOUR:INT %s",
+        """ A string property that controls the internally generated modulation
+        input for the pulse modulation, which can take the values: 'square', 'free-run',
+        'triggered', 'doublet', and 'gated'.
+        """,
+        validator=strict_discrete_set,
+        values=PULSE_INPUTS,
+        map_values=True
+    )
+    pulse_frequency = Instrument.control(
+        ":SOUR:PULM:INT:FREQ?", ":SOUR:PULM:INT:FREQ %g",
+        """ A floating point property that controls the pulse rate frequency in Hertz,
+        which can take values from 0.1 Hz to 10 MHz. """,
+        validator=truncated_range,
+        values=[0.1, 10e6]
+    )
+
+    #######################
+    # Internal Oscillator #
+    #######################
+
+    internal_frequency = Instrument.control(
+        ":SOUR:AM:INT:FREQ?", ":SOUR:AM:INT:FREQ %g",
+        """ A floating point property that controls the frequency of the internal
+        oscillator in Hertz, which can take values from 0.5 Hz to 1 MHz. """,
+        validator=truncated_range,
+        values=[0.5, 1e6]
+    )
+    INTERNAL_SHAPES = {
+        'sine':'SINE', 'triangle':'TRI', 'square':'SQU', 'ramp':'RAMP', 
+        'noise':'NOIS', 'dual-sine':'DUAL', 'swept-sine':'SWEP'
+    }
+    internal_shape = Instrument.control(
+        ":SOUR:AM:INT:FUNC:SHAP?", ":SOUR:AM:INT:FUNC:SHAP %s",
+        """ A string property that controls the shape of the internal oscillations,
+        which can take the values: 'sine', 'triangle', 'square', 'ramp', 'noise',
+        'dual-sine', and 'swept-sine'. """,
+        validator=strict_discrete_set,
+        values=INTERNAL_SHAPES,
+        map_values=True
+    )
+
+    def __init__(self, adapter, delay=0.02, **kwargs):
         super(Agilent8257D, self).__init__(
-            resourceName,
-            "Agilent 8257D RF Signal Generator",
-            **kwargs
+            adapter, "Agilent 8257D RF Signal Generator", **kwargs
         )
 
-    def get_output(self):
-        """ Return if the output is ON"""
-        return int(self.ask(":output?")) == 1
-
-    def set_output(self, value):
-        """ Set output ON/OFF"""
-        if value:
-            self.write(":output on;")
-        else:
-            self.write(":output off;")
-            
-    output = property(get_output, set_output)
-    
     def enable(self):
-        """ Set output = ON"""
-        self.output = True
+        """ Enables the output of the signal. """
+        self.write(":OUTPUT ON;")
 
     def disable(self):
-        """ Set output = OFF"""
-        self.output = False
+        """ Disables the output of the signal. """
+        self.write(":OUTPUT OFF;")
 
-    def get_modulation(self):
-        """ Return if modulation is ON"""
-        return True if int(self.ask(":output:mod?")) == 1 else False
+    def enable_modulation(self):
+        self.write(":OUTPUT:MOD ON;")
+        self.write(":lfo:sour int; :lfo:ampl 2.0vp; :lfo:stat on;")
 
-    def set_modulation(self, value):
-        """ Set modulation ON/OFF"""
-        if value:
-            self.write(":output:mod on;")
-            self.write(":lfo:sour int; :lfo:ampl 2.0vp; :lfo:stat on;")
-        else:
-            self.write(":output:mod off;")
-            self.write(":lfo:stat off;")
+    def disable_modulation(self):
+        """ Disables the signal modulation. """
+        self.write(":OUTPUT:MOD OFF;")
+        self.write(":lfo:stat off;")
 
-    modulation = property(get_modulation, set_modulation)
-    
-    def configure_modulation(self, freq=10.0e9, modType="amplitude",
-                             modDepth=100.0):
-        """ Configure modulation and turn modulation ON
-        
-        :param freq: Modulation frequency, Hz
-        :param modType: 'amplitude' or 'pulse'
-        :param modDepth: AM modulation magnitude in percentage
+    def config_amplitude_modulation(self, frequency=1e3, depth=100.0, shape='sine'):
+        """ Configures the amplitude modulation of the output signal.
+
+        :param frequency: A modulation frequency for the internal oscillator
+        :param depth: A linear depth precentage
+        :param shape: A string that describes the shape for the internal oscillator
         """
-        if modType == "amplitude":
-            # self.write(":AM1;")
-            self.modulation = True
-            self.write(":AM:SOUR INT; :AM:INT:FUNC:SHAP SINE; :AM:STAT ON;")
-            self.write(":AM:INT:FREQ %g HZ; :AM %f" % (freq, modDepth))
-        elif modType == "pulse":
-            # Sets square pulse modulation at the desired freq
-            self.modulation = True
-            self.write(":PULM:SOUR:INT SQU; :PULM:SOUR INT; :PULM:STAT ON;")
-            self.write(":PULM:INT:FREQ %g HZ;" % freq)
-        else:
-            raise Exception("This type of modulation does not exist.")
+        self.enable_amplitude_modulation()
+        self.amplitude_source = 'internal'
+        self.internal_frequency = frequency
+        self.internal_shape = 'sine'
+        self.amplitude_depth = depth
 
-    def set_amplitude_depth(self, depth):
-        """ Sets the depth of amplitude modulation which corresponds
-        to the precentage of the signal modulated to
+    def enable_amplitude_modulation(self):
+        """ Enables amplitude modulation of the output signal. """
+        self.write(":SOUR:AM:STAT ON")
+
+    def disable_amplitude_modulation(self):
+        """ Disables amplitude modulation of the output signal. """
+        self.write(":SOUR:AM:STAT OFF")
+
+    def config_pulse_modulation(self, frequency=1e3, input='square'):
+        """ Configures the pulse modulation of the output signal.
+
+        :param frequency: A pulse rate frequency in Hertz
+        :param input: A string that describes the internal pulse input
         """
-        if depth > 0 and depth <= 100:
-            self.write(":SOUR:AM %d" % depth)
-        else:
-            raise RangeException("Agilent E8257D amplitude modulation"
-                                 " out of range")
+        self.enable_pulse_modulation()
+        self.pulse_source = 'internal'
+        self.pulse_input = 'square'
+        self.pulse_frequency = frequency
 
-    def set_amplitude_source(self, source='INT'):
-        """ Sets the source of the trigger for amplitude modulation """
-        self.write(":SOUR:AM:SOUR %s" % source)
+    def enable_pulse_modulation(self):
+        """ Enables pulse modulation of the output signal. """
+        self.write(":SOUR:PULM:STAT ON")
 
-    def set_amplitude_modulation(self, enable=True):
-        """ Enables (True) or disables (False) the amplitude modulation """
-        self.write(":SOUR:AM:STAT %d" % enable)
+    def disable_pulse_modulation(self):
+        """ Disables pulse modulation of the output signal. """
+        self.write(":SOUR:PULM:STAT OFF")
 
-    def set_step_sweep(self):
-        """ Sets up for a step sweep through frequency """
+    def config_step_sweep(self):
+        """ Configures a step sweep through frequency """
         self.write(":SOUR:FREQ:MODE SWE;"
                    ":SOUR:SWE:GEN STEP;"
                    ":SOUR:SWE:MODE AUTO;")
 
-    def set_retrace(self, enable=True):
-        self.write(":SOUR:LIST:RETR %d" % enable)
+    def enable_retrace(self):
+        self.write(":SOUR:LIST:RETR 1")
+
+    def disable_retrace(self):
+        self.write(":SOUR:LIST:RETR 0")
 
     def single_sweep(self):
         self.write(":SOUR:TSW")
 
     def start_step_sweep(self):
-        """ Initiates a step sweep """
+        """ Starts a step sweep. """
         self.write(":SOUR:SWE:CONT:STAT ON")
 
     def stop_step_sweep(self):
-        """ Stops a step sweep """
+        """ Stops a step sweep. """
         self.write(":SOUR:SWE:CONT:STAT OFF")
 
     def shutdown(self):
-        self.modulation = False
-        self.output = False
+        """ Shuts down the instrument by disabling any modulation
+        and the output signal.
+        """
+        self.disable_modulation()
+        self.disable()
