@@ -106,15 +106,15 @@ class LakeShore331(Instrument):
         setpoint_name = 'setpoint_%d' % setpoint
         # Only get the setpoint once, assuming it does not change
         setpoint_value = getattr(self, setpoint_name)
-        def precent_difference(temperature):
-            return 100*(temperature - setpoint_value)/setpoint_value
+        def percent_difference(temperature):
+            return abs(100*(temperature - setpoint_value)/setpoint_value)
         t = time()
-        while precent_difference(getattr(self, temperature_name)) < accuracy:
+        while percent_difference(getattr(self, temperature_name)) > accuracy:
             sleep(interval)
             if (time()-t) > timeout:
                 raise Exception((
-                    "Timeout occurred after waiting %g seconds when setting "
-                    "the LakeShore 331 temperature to %g K."
+                    "Timeout occurred after waiting %g seconds for "
+                    "the LakeShore 331 temperature to reach %g K."
                 ) % (timeout, setpoint))
             if should_stop():
                 return
