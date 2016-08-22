@@ -22,13 +22,14 @@ Installing PyMeasure
 Install with conda
 ------------------
 
-If you have the `Anaconda distribution`_ you can use the conda package mangager to easily install PyMeasure and all required dependencies.  
-Open a terminal and type the following commands (On windows look for the `Anaconda Prompt` in the start menu). :
+If you have the `Anaconda distribution`_ you can use the conda package mangager to easily install PyMeasure and all required dependencies.
+
+Open a terminal and type the following commands (on Windows look for the `Anaconda Prompt` in the Start Menu):
 
 .. code-block:: bash
 
-   > conda config --add channels conda-forge
-   > conda install pymeasure
+    conda config --add channels conda-forge
+    conda install pymeasure
 
 This will install PyMeasure and all the required dependencies. 
 
@@ -38,16 +39,16 @@ Install with ``pip``
 PyMeasure can also be installed with :code:`pip`. 
 
 .. code-block:: bash
-    
-    > pip install pymeasure
+
+    pip install pymeasure
  
-Note, that this may involve some extra work inorder manage all dependencies.
+Depending on your operating system, using this method may require additional work to install the required dependencies, which include the Qt libaries.
 
     
-Check that it works
--------------------
+Checking the version
+--------------------
 
-Now that you have Python and PyMeasure installed, open up a "Jupyter Notebook" to test it.  Try to run the following code in the notebook.
+Now that you have Python and PyMeasure installed, open up a "Jupyter Notebook" to test which version you have installed. Execute the following code into a notebook cell.
 
 .. code-block:: python
 
