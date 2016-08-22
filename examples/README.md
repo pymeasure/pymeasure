@@ -30,5 +30,5 @@ There are two examples of for measuring current-voltage (IV) characteristics, wh
 
 Besides the interfaces shown in the [Basic examples](#basic), you can also make measurements in Jupyter notebooks. Its recommended that you use caution when using this technique, as the notebooks allow scripts to be executed out of order and they do not provide the same level of performance as the standard interfaces. Despite these caveats, the notebooks can be a flexible method for running custom experiments, where the Procedure needs to be modified often.
 
-1. [script.ipynb](Notebook Examples/script.ipynb) - Runs the simulated random number Procedure from [gui.py](Basic/gui.py) in a notebook.
-2. [script2.ipynb](Notebook Examples/script2.ipynb) - Extends [script.ipynb](Notebook Examples/script.ipynb), using custom configurations and Measureable parameters.
+1. [script.ipynb](Notebook Experiments/script.ipynb) - Runs the simulated random number Procedure from [gui.py](Basic/gui.py) in a notebook.
+2. [script2.ipynb](Notebook Experiments/script2.ipynb) - Extends [script.ipynb](Notebook Experiments/script.ipynb), using custom configurations and Measureable parameters.
