@@ -136,7 +136,19 @@ class Worker(StoppableProcess):
         log.info("Worker started running an instance of %r" % (self.procedure.__class__.__name__))
         self.update_status(Procedure.RUNNING)
         self.emit('progress', 0.)
-        self.procedure.startup()
+        # Try to run the startup method
+        try:
+            self.procedure.startup()
+        except Exception as e:
+            log.warning("Error in startup method caused Worker to stop prematurely")
+            self.handle_exception(e)
+            self.update_status(Procedure.FAILED)
+            self.recorder_queue.put(None)
+            self.monitor_queue.put(None)
+            self.stop()
+            del self.recorder
+            return
+        # If all has gone well, run the execute method
         try:
             self.procedure.execute()
         except (KeyboardInterrupt, SystemExit):

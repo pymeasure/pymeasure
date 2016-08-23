@@ -24,7 +24,7 @@
 
 import pytest
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 def test_fake_instrument():
 
@@ -115,6 +115,39 @@ def test_control_dict_str_map():
     assert fake.x == 'Y'
     fake.x = 'Z'
     assert fake.read() == '3'
+
+def test_control_process():
+    
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "%d", "",
+            validator=strict_range,
+            values=[5e-3, 120e-3],
+            get_process=lambda v: v*1e-3,
+            set_process=lambda v: v*1e3,
+        )
+
+    fake = Fake()
+    fake.x = 10e-3
+    assert fake.read() == '10'
+    fake.x = 30e-3
+    assert fake.x == 30e-3
+
+def test_control_get_process():
+    
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "JUNK%d", "",
+            validator=strict_range,
+            values=[0, 10],
+            get_process=lambda v: int(v.replace('JUNK', '')),
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == 'JUNK5'
+    fake.x = 5
+    assert fake.x == 5
 
 def test_measurement_dict_str_map():
     class Fake(FakeInstrument):
