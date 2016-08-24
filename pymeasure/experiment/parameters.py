@@ -38,7 +38,7 @@ class Parameter(object):
         self.name = name
         self._value = default
         self.default = default
-        self.ui_class = None
+        self.ui_class = ui_class
 
     @property
     def value(self):
@@ -212,7 +212,7 @@ class VectorParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
     def __init__(self, name, length=3, units=None, **kwargs):
-        self._length = length        
+        self._length = length
         super(VectorParameter, self).__init__(name, **kwargs)
         self.units = units
 
@@ -295,7 +295,7 @@ class ListParameter(Parameter):
 class PhysicalParameter(VectorParameter):
     """ :class: '.VectorParameter' sub-class of 2 dimentions to store a value
     and its uncertainty.
-    
+
     :var value: The value of the parameter as a list of 2 floating point numbers
 
     :param name: The parameter name
@@ -304,21 +304,21 @@ class PhysicalParameter(VectorParameter):
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
-    
+
     def __init__(self, name, uncertaintyType='absolute', **kwargs):
         super(PhysicalParameter, self).__init__(name, length=2, **kwargs)
         self._utype = ListParameter("uncertainty type",
                                    choices = ['absolute', 'relative', 'percentage'],
                                    default = None)
         self._utype.value = uncertaintyType
-        
+
     @property
     def value(self):
         if self.is_set():
             return [float(ve) for ve in self._value]
         else:
             raise ValueError("Parameter value is not set")
-            
+
     @value.setter
     def value(self, value):
         # Strip initial and final brackets
@@ -343,17 +343,17 @@ class PhysicalParameter(VectorParameter):
                              "not be converted to floats." % str(value))
         # Uncertainty must be non-negative
         self._value[1] = abs(self._value[1])
-    
+
     @property
     def uncertainty_type(self):
         return self._utype.value
-    
+
     @uncertainty_type.setter
     def uncertainty_type(self, uncertaintyType):
         oldType = self._utype.value
         self._utype.value = uncertaintyType
         newType = self._utype.value
-        
+
         if self.is_set():
             # Convert uncertainty value to the new type
             if (oldType, newType) == ('absolute', 'relative'):
@@ -382,8 +382,8 @@ class PhysicalParameter(VectorParameter):
     def __repr__(self):
         return "<%s(name=%s,value=%s,units=%s,uncertaintyType=%s)>" % (
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
- 
- 
+
+
 class Measurable(object):
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.
