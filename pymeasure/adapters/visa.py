@@ -31,8 +31,6 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-long = int # Python 3 fix
-
 class VISAAdapter(Adapter):
     """ Adapter class for the VISA library using PyVISA to communicate
     to instruments. Inherit from either class VISAAdapter14 or VISAAdapter15.
