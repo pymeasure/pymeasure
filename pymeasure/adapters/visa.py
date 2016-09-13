@@ -46,7 +46,7 @@ class VISAAdapter(Adapter):
 
         if isinstance(resourceName, int):
             resourceName = "GPIB0::%d::INSTR" % resourceName
-        super(VISAAdapter, self).__init__(resourceName, **kwargs)
+        super(VISAAdapter, self).__init__()
         self.resource_name = resourceName
         self.manager = visa.ResourceManager()
         safeKeywords = ['resource_name', 'timeout', 'term_chars',
