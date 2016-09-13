@@ -44,7 +44,7 @@ class VISAAdapter(Adapter):
         if version < 1.7:
             raise NotImplementedError("PyVisa {} is no longer supported. Please upgrade to version 1.8 or later.".format(version))
 
-        if isinstance(resourceName, (int, long)):
+        if isinstance(resourceName, int):
             resourceName = "GPIB0::%d::INSTR" % resourceName
         super(VISAAdapter, self).__init__(resourceName, **kwargs)
         self.resource_name = resourceName
