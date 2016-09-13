@@ -51,7 +51,7 @@ class VISAAdapter(Adapter):
         self.manager = visa.ResourceManager()
         safeKeywords = ['resource_name', 'timeout', 'term_chars',
                         'chunk_size', 'lock', 'delay', 'send_end',
-                        'values_format']
+                        'values_format', 'read_termination']
         kwargsCopy = copy.deepcopy(kwargs)
         for key in kwargsCopy:
             if key not in safeKeywords:
