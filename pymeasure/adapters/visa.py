@@ -44,14 +44,14 @@ class VISAAdapter(Adapter):
         if version < 1.7:
             raise NotImplementedError("PyVisa {} is no longer supported. Please upgrade to version 1.8 or later.".format(version))
 
-        if isinstance(resourceName, (int, long)):
+        if isinstance(resourceName, int):
             resourceName = "GPIB0::%d::INSTR" % resourceName
-        super(VISAAdapter, self).__init__(resourceName, **kwargs)
+        super(VISAAdapter, self).__init__()
         self.resource_name = resourceName
         self.manager = visa.ResourceManager()
         safeKeywords = ['resource_name', 'timeout', 'term_chars',
                         'chunk_size', 'lock', 'delay', 'send_end',
-                        'values_format']
+                        'values_format', 'read_termination']
         kwargsCopy = copy.deepcopy(kwargs)
         for key in kwargsCopy:
             if key not in safeKeywords:
