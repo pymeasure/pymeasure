@@ -48,7 +48,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         
         keithley.apply_current()                # Sets up to source current
         keithley.source_current_range = 10e-3   # Sets the source current range to 10 mA
-        keithley.compliance_voltage = 10        # Sets the complinance voltage to 10 V
+        keithley.compliance_voltage = 10        # Sets the compliance voltage to 10 V
         keithley.source_current = 0             # Sets the source current to 0 mA
         keithley.enable_source()                # Enables the source output
 
@@ -357,7 +357,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
             self.auto_range_source()
         else:
             self.source_voltage_range = voltage_range
-        self.compliance_current = complinance_current
+        self.compliance_current = compliance_current
         self.check_errors()
 
     def beep(self, frequency, duration):
