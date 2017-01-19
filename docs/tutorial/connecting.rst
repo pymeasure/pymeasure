@@ -12,7 +12,7 @@ First import the instrument of interest. ::
     from pymeasure.instruments.keithley import Keithley2400
 
 Then construct an object by passing the GPIB address. For this example we connect to the instrument over GPIB (using VISA) with an address of 4. See the :ref:`adapters <adapters>` section below for more details. ::
- 
+
     sourcemeter = Keithley2400("GPIB::4")
 
 For instruments with standard SCPI commands, an :code:`id` property will return the results of a :code:`*IDN?` SCPI command, identifying the instrument. ::
@@ -32,7 +32,7 @@ This example illustrates that the top-level methods like :code:`id` are really c
 
 .. _adapters:
 
-Using adapters 
+Using adapters
 ==============
 
 PyMeasure supports a number of adapters, which are responsible for communicating with the underlying hardware. In the example above, we passed the string "GPIB::4" when constructing the instrument. By default this constructs a VISAAdapter class to connect to the instrument using VISA. Instead of passing a string, we could equally pass an adapter object. ::
@@ -47,7 +47,7 @@ To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper 
     from pymeasure.adapters import PrologixAdapter
 
     adapter = PrologixAdapter('/dev/ttyUSB0')
-    sourcemeter = Keithley2400(adapeter.gpib(4))
+    sourcemeter = Keithley2400(adapter.gpib(4))
 
 For instruments using serial communication that have particular settings that need to be matched, a custom :ref:`Adapter` sub-class can be made. For example, the LakeShore 425 Gaussmeter connects via USB, but uses particular serial communication settings. Therefore, a :ref:`LakeShoreUSBAdapter` class enables these requirements in the background. ::
 
