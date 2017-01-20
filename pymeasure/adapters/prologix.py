@@ -41,23 +41,23 @@ class PrologixAdapter(SerialAdapter):
     :param port: The Serial port name or a serial.Serial object
     :param address: Integer GPIB address of the desired instrument
     :param kwargs: Key-word arguments if constructing a new serial object
-    
+
     :ivar address: Integer GPIB address of the desired instrument
 
     To allow user access to the Prologix adapter in Linux, create the file:
     :code:`/etc/udev/rules.d/51-prologix.rules`, with contents:
-    
+
     .. code-block:: bash
 
         SUBSYSTEMS=="usb",ATTRS{idVendor}=="0403",ATTRS{idProduct}=="6001",MODE="0666"
-    
+
     Then reload the udev rules with:
 
     .. code-block:: bash
 
         sudo udevadm control --reload-rules
         sudo udevadm trigger
-    
+
     """
     def __init__(self, port, address=None, **kwargs):
         self.address = address
@@ -126,6 +126,6 @@ class PrologixAdapter(SerialAdapter):
     def __repr__(self):
         if self.address:
             return "<PrologixAdapter(port='%s',address=%d)>" % (
-                    self.port, self.address)
+                    self.connection.port, self.address)
         else:
             return "<PrologixAdapter(port='%s')>" % self.connection.port
