@@ -7,4 +7,8 @@ Instrument classes
 
 .. autoclass:: pymeasure.instruments.Mock
     :members:
-    :show-inheritance: 
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.instrument.USBTMCInstrument
+    :members:
+    :show-inheritance:

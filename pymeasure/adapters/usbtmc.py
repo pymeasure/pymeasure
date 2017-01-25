@@ -22,6 +22,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 import os
 import sys
@@ -31,7 +34,6 @@ import re
 import usb.core
 import usb.util
 from .adapter import Adapter
-
 # constants
 USBTMC_bInterfaceClass    = 0xFE
 USBTMC_bInterfaceSubClass = 3
@@ -173,49 +175,49 @@ def find_device(idVendor=None, idProduct=None, iSerial=None):
 
 
 class USBTMCAdapter(Adapter):
-    """USBTMC instrument interface client.
+    """USBTMC instrument interface adapter client.
 
-    The USBTMC protocol is used in some modern controllers.  Connection is
-    performed via a USB device.  Not a serial connection.
+    The USBTMC protocol is a recognized protocol specified by
+    `www.usb.org <http://www.usb.org/developers/defined_class#BaseClassFEh>`_,
+    also known as USB488, is used in some modern controllers as a GPIB
+    interface via the USB bus.
+
+    The class accepts a variable number of arguments, allowing for a variety of
+    instantiation mechanisms.  this allows for connection of any number of
+    similar devices on the same USB bus.
+
+    :param \*args: Variable positional arguments
+    :param \*\*kwargs: Variable key word arguments
+
+    :raises ValueError: Thrown when input arguments cannot be parsed
+    :raises USBTMCError: Thrown when configured device is not available
+
+    The adapter can establish the proper connection based on the input
+    parameters given.  If there is only a single device (`idProduct`,
+    `idVendor`) connected on the USB bus, then this is sufficient.
+
+    If more than one of any given model connected simultaneously, then
+    a more specific `idSerial` parameter must be given, on its own, or
+    alongside (`idProduct`, `idVendor`) pairs.
+
+    Alternatively, a VISA resource string can be supplied as a sole positional argument.
+
+    .. code-block:: python
+
+        # Any single string argument is processed as a VISA resource string
+        adapter = USBTMCAdapter('VISA::08')
+        # Alternatively, specify the device by a combination of its idVendor,
+        # idProduct, and/or, idSerial property.
+        # These can be provided as positional arguments or as key word arguments.
+        adapter = USBTMCAdapter(idVendor, idProduct)
+        adapter2 = USBTMCAdapter(idVendor=1234, idProduct=4321)
+        adapter3 = USBTMCAdapter(idVendor, idProduct, idSerial)
+        adapter4 = USBTMCAdapter(idSerial=45678)
+
     """
 
     def __init__(self, *args, **kwargs):
-        """Create new USBTMC instrument object.
-
-        Takes a variable number of arguments, allowing for a variety of
-        instantiation mechanisms.  this allows for connection of any number of devices on the system USB bus.
-
-        :param *args: Variable positional arguments
-        :param **kwargs: Variable key word arguments
-
-        :raises ValueError: Thrown when input arguments cannot be parsed
-        :raises USBTMCError: Thrown when configured device is not available
-        ie:
-
-        The adapter can establish the proper connection based on the input
-        parameters given.  If there is only a single device (`idProduct`,
-        `idVendor`) connected on the USB bus, then this is sufficient.
-
-        If more than one of any given model connected simultaneously, then
-        a more specific `idSerial` parameter must be given, on its own, or
-        alongside (`idProduct`, `idVendor`) pairs.
-
-        Alternatively, a VISA resource string can be used, though the
-        `:class:pymeasure.adapters.visa.VISAAdapter` is preferred.
-
-
-        .. code-block:: python
-            # Any single string argument is processed as a VISA resource string
-            adapter = USBTMCAdapter('VISA::08')
-
-            # Alternatively, specify the device by a combination of its idVendor,
-            # idProduct, and/or, idSerial property.
-            # These can be provided as positional arguments or as key word arguments.
-            adapter = USBTMCAdapter(idVendor, idProduct)
-            adapter2 = USBTMCAdapter(idVendor=1234, idProduct=4321)
-            adapter3 = USBTMCAdapter(idVendor, idProduct, idSerial)
-            adapter4 = USBTMCAdapter(idSerial=45678)
-        """
+        """Create new USBTMC instrument object."""
         self.idVendor = 0
         self.idProduct = 0
         self.iSerial = None
@@ -291,6 +293,7 @@ class USBTMCAdapter(Adapter):
                 resource = val
             elif op == 'encoding':
                 self.encoding = val
+
         if resource is not None:
             res = parse_visa_resource_string(resource)
 
@@ -311,7 +314,8 @@ class USBTMCAdapter(Adapter):
             else:
                 self.device = find_device(self.idVendor, self.idProduct, self.iSerial)
                 if self.device is None:
-                    raise USBTMCError("Device not found", 'init')
+                    # raise USBTMCError("Device not found", 'init')
+                    log.error("Device not found")
 
     def __del__(self):
         """Delete method override."""
@@ -326,6 +330,9 @@ class USBTMCAdapter(Adapter):
         # initialize device
 
         # find first USBTMC interface
+        if self.device is None:
+            raise USBTMCError("No Device Found", 'init')
+
         for cfg in self.device:
             for iface in cfg:
                 if (self.device.idVendor == 0x1334) or \
@@ -671,7 +678,7 @@ class USBTMCAdapter(Adapter):
         if type(message) is tuple or type(message) is list:
             # recursive call for a list of commands
             for message_i in message:
-                self.write(message_i, self.encoding)
+                self.write(message_i)
             return
 
         self.write_raw(str(message).encode(self.encoding))
@@ -694,7 +701,7 @@ class USBTMCAdapter(Adapter):
         try:
             if self.advantest_quirk and not was_locked:
                 self.lock()
-            self.write(message, self.encoding)
+            self.write(message)
             return self.read(num, self.encoding)
         finally:
             if self.advantest_quirk and not was_locked:

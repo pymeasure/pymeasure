@@ -29,13 +29,18 @@ log.addHandler(logging.NullHandler())
 from pymeasure.adapters.visa import VISAAdapter
 from pymeasure.adapters import FakeAdapter
 
+try:
+    from pymeasure.adapters import USBTMCAdapter
+except ImportError:
+    log.warning("Could not import USBTMCAdapter.")
+
 import numpy as np
 import inspect
 
 
 class Instrument(object):
-    """ This provides the base class for all Instruments, which is 
-    independent of the particular Adapter used to connect for 
+    """ This provides the base class for all Instruments, which is
+    independent of the particular Adapter used to connect for
     communication to the instrument. It provides basic SCPI commands
     by default, but can be toggled with :code:`includeSCPI`.
 
@@ -61,14 +66,14 @@ class Instrument(object):
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
             # Basic SCPI commands
-            self.status = self.measurement("*STB?", 
+            self.status = self.measurement("*STB?",
                 """ Returns the status of the instrument """)
             self.complete = self.measurement("*OPC?",
                 """ TODO: Add this doc """)
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
-        
+
     @property
     def id(self):
         """ Requests and returns the identification of the instrument. """
@@ -76,7 +81,7 @@ class Instrument(object):
             return self.adapter.ask("*IDN?").strip()
         else:
             return "Warning: Property not implemented."
-            
+
     # Wrapper functions for the Adapter object
     def ask(self, command):
         """ Writes the command to the instrument through the adapter
@@ -93,7 +98,7 @@ class Instrument(object):
         """
         self.adapter.write(command)
 
-    def read(self): 
+    def read(self):
         """ Reads from the instrument through the adapter and returns the
         response.
         """
@@ -115,7 +120,7 @@ class Instrument(object):
                 check_set_errors=False, check_get_errors=False,
                 **kwargs):
         """Returns a property for the class based on the supplied
-        commands. This property may be set and read from the 
+        commands. This property may be set and read from the
         instrument.
 
         :param get_command: A string command that asks for the value
@@ -125,14 +130,14 @@ class Instrument(object):
                           and returns a valid value, while it otherwise raises an exception
         :param values: A list, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
-        :param map_values: A boolean flag that determines if the values should be 
+        :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
-        :param get_process: A function that take a value and allows processing 
+        :param get_process: A function that take a value and allows processing
                             before value mapping, returning the processed value
         :param set_process: A function that takes a value and allows processing
                             before value mapping, returning the processed value
         :param check_set_errors: Toggles checking errors after setting
-        :param check_get_errors: Toggles checking errors after getting        
+        :param check_get_errors: Toggles checking errors after getting
         """
 
         if map_values and type(values) is dict:
@@ -181,26 +186,26 @@ class Instrument(object):
         fget.__doc__ = docs
 
         return property(fget, fset)
-    
+
     @staticmethod
     def measurement(get_command, docs, values=[], map_values=None,
-                get_process=lambda v: v, command_process=lambda c: c, 
+                get_process=lambda v: v, command_process=lambda c: c,
                 check_get_errors=False, **kwargs):
         """ Returns a property for the class based on the supplied
-        commands. This is a measurement quantity that may only be 
+        commands. This is a measurement quantity that may only be
         read from the instrument, not set.
 
         :param get_command: A string command that asks for the value
         :param docs: A docstring that will be included in the documentation
         :param values: A list, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
-        :param map_values: A boolean flag that determines if the values should be 
+        :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
-        :param get_process: A function that take a value and allows processing 
+        :param get_process: A function that take a value and allows processing
                             before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
                             before executing the command, for both getting and setting
-        :param check_get_errors: Toggles checking errors after getting 
+        :param check_get_errors: Toggles checking errors after getting
         """
 
         if map_values and type(values) is dict:
@@ -240,16 +245,16 @@ class Instrument(object):
         """Returns a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
-        
+
         :param set_command: A string command that writes the value
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
         :param values: A list, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
-        :param map_values: A boolean flag that determines if the values should be 
+        :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
-        :param check_set_errors: Toggles checking errors after setting     
+        :param check_set_errors: Toggles checking errors after setting
         """
 
         if map_values and type(values) is dict:
@@ -316,3 +321,40 @@ class FakeInstrument(Instrument):
             includeSCPI=False,
             **kwargs
         )
+
+
+class USBTMCInstrument(Instrument):
+    """Generic Instrument Class for Instruments communicating via USBTMC.
+
+    The first argument can be an instantiated :class:`USBTMCAdapter <pymeasure.adapters.USBTMCAdapter>`
+    object.
+
+    .. code-block:: python
+
+        adapter = USBTMCAdapter(*adapter_args)
+        inst = USBTMCInstrument("Generic USBTMC Instrument", adapter)
+
+    Alternatively, positional arguments and keyword arguments will be
+    passed to construct a fresh adapter instance.  This allows for
+    Instrument objects to save static data such as `idVendor` and
+    `idProduct`, or a user to instantiate the instrument with a custom
+    `idSerial` keyword argument.
+
+    .. code-block:: python
+
+        inst = USBTMCInstrument("Generic USBTMC Instrument", 12345, 54321)
+        inst_1 = USBTMCInstrument("Generic USBTMC Instrument", idVendor=12345, idProduct=54321)
+        inst_2 = USBTMCInstrument("Generic USBTMC Instrument", "USB::1234::5678::INSTR")
+        inst_3 = USBTMCInstrument("Generic USBTMC Instrument", idSerial=23567)
+
+    """
+
+    def __init__(self, name, *args, **kwargs):
+        """Constructor method."""
+        assert len(args) > 0
+        if isinstance(args[0], USBTMCAdapter):
+            adapter = args[0]
+        else:
+            adapter = USBTMCAdapter(*args, **kwargs)
+
+        super(USBTMCInstrument, self).__init__(adapter, name)
