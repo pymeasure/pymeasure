@@ -55,10 +55,10 @@ VISA adapter
     :show-inheritance:
 
 ==============
-USBTMC Adapter
+USBTMC adapter
 ==============
 
-.. autoclass:: pymeasure.adapters.usbtmc
+.. autoclass:: pymeasure.adapters.USBTMCAdapter
     :members:
     :undoc-members:
     :inherited-members:

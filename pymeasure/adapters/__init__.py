@@ -37,3 +37,8 @@ try:
     from pymeasure.adapters.prologix import PrologixAdapter
 except ImportError:
     log.warning("PySerial library could not be loaded")
+
+try:
+    from pymeasure.adapters.usbtmc import USBTMCAdapter
+except ImportError:
+    log.warning("PyUSB library could not be loaded")
