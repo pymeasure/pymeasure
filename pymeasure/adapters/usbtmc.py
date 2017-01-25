@@ -192,17 +192,29 @@ class USBTMCAdapter(Adapter):
         :raises USBTMCError: Thrown when configured device is not available
         ie:
 
-        # Any single string argument is processed as a VISA resource string
-        adapter = USBTMC('VISA::08')
+        The adapter can establish the proper connection based on the input
+        parameters given.  If there is only a single device (`idProduct`,
+        `idVendor`) connected on the USB bus, then this is sufficient.
 
-        # Alternatively, specify the device by a combination of its idVendor,
-        # idProduct, and/or, idSerial property.
-        # These can be provided as positional arguments or as key word arguments.
-        adapter = USBTMC(idVendor, idProduct)
-        adapter = USBTMC(idVendor=1234, idProduct=4321)
-        adapter = USBTMC(idVendor, idProduct, idSerial)
+        If more than one of any given model connected simultaneously, then
+        a more specific `idSerial` parameter must be given, on its own, or
+        alongside (`idProduct`, `idVendor`) pairs.
 
-        :raises UsbTmcError
+        Alternatively, a VISA resource string can be used, though the
+        `:class:pymeasure.adapters.visa.VISAAdapter` is preferred.
+
+
+        .. code-block:: python
+            # Any single string argument is processed as a VISA resource string
+            adapter = USBTMCAdapter('VISA::08')
+
+            # Alternatively, specify the device by a combination of its idVendor,
+            # idProduct, and/or, idSerial property.
+            # These can be provided as positional arguments or as key word arguments.
+            adapter = USBTMCAdapter(idVendor, idProduct)
+            adapter2 = USBTMCAdapter(idVendor=1234, idProduct=4321)
+            adapter3 = USBTMCAdapter(idVendor, idProduct, idSerial)
+            adapter4 = USBTMCAdapter(idSerial=45678)
         """
         self.idVendor = 0
         self.idProduct = 0
@@ -278,7 +290,7 @@ class USBTMCAdapter(Adapter):
             elif op == 'resource':
                 resource = val
             elif op == 'encoding':
-                self.encoding = encoding
+                self.encoding = val
         if resource is not None:
             res = parse_visa_resource_string(resource)
 
