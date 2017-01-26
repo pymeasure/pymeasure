@@ -30,7 +30,7 @@ from pymeasure.adapters.visa import VISAAdapter
 from pymeasure.adapters import FakeAdapter
 
 try:
-    from pymeasure.adapters import USBTMCAdapter
+    from pymeasure.adapters import USBTMCAdapter, USBTMCException
 except ImportError:
     log.warning("Could not import USBTMCAdapter.")
 
@@ -351,8 +351,8 @@ class USBTMCInstrument(Instrument):
 
     def __init__(self, name, *args, **kwargs):
         """Constructor method."""
-        assert len(args) > 0
-        if isinstance(args[0], USBTMCAdapter):
+        # assert len(args) > 0
+        if len(args) > 0 and isinstance(args[0], USBTMCAdapter):
             adapter = args[0]
         else:
             adapter = USBTMCAdapter(*args, **kwargs)
