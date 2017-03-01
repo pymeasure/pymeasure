@@ -25,50 +25,78 @@
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+from time import sleep
 from functools import wraps
-from .adapter import Adapter
-try:
-    from usbtmc import Instrument as USBTMCDriver
-    from usb.core import USBError
-except ImportError:
-    log.warning("Missing required package, python-usbtmc")
+from .adapter import Adapter, AdapterError
+from usb.core import USBError
+from usbtmc.usbtmc import Instrument as USBTMCDriver, UsbtmcException, struct
+
+RECONNECTION_ATTEMPTS = 3
 
 
-def reconnect_attempt(fn):
-    """Method wrapper to reconnect if method times out."""
-
+def attempt_reconnect(fn):
+    """Method wrapper to reconnect if wrapped method times out."""
+    @wraps(fn)
     def wrapped(self, *args, **kwargs):
-        n_attempts = 3
+        n_attempts = RECONNECTION_ATTEMPTS
         while n_attempts > 0:
-            log.info("Reconnect Attempts: {}".format(n_attempts))
             try:
                 return fn(self, *args, **kwargs)
             except USBError as err:
-                log.error(dir(err))
-                if err.code == 110:  # Timeout Error
+                log.warning(str(err))
+                if err.errno == 110:  # Timeout Error
                     n_attempts -= 1
-                    self = args[0]
-                    self.reset_device()
+                    self.reset_device()  # This seems to fix it when working manually
+            except (UsbtmcException, struct.error) as err:
+                # Catch any usbtmc errors and handle them appropriately
+                log.warning(str(err))
+                n_attempts -= 1
+                self.reset_device()
 
-        log.error("Reconnection timeout [{}]".format(fn.__name__))
+        log.error("Max reconnection attempts encountered [{}]".format(fn.__name__))
         return ''
 
     return wrapped
 
 
 class USBTMCAdapter(Adapter):
-    """Implement a USBTMC interface via the ``python-usbtmc`` library.
+    r"""Implement a USBTMC interface via the ``python-usbtmc`` library.
 
     :keyword encoding: Optional encoding to use when communicating with the device, defaults to ``utf-8``
-    :type encoding: str
+    :type encoding: ``str``
 
-    .. topic:: Usage
+    :param \*args:
+        See Arguments Below
+    :param \**kwargs:
+        See Keyword Arguments Below
+
+    :Arguments:
+        * *VISAResourceString* (``str``) --
+            A VISA resource string corresponding to the connected device
+        * *idVendor* (``int``) --
+            The vendor ID of the device to connect as a hex or int
+        * *idProduct* (``int``) --
+            The product ID of the device to connect as a hex or int
+        * *idSerial* (``int``) --
+            The Serial number of the device to connect in hex or int
+
+    :Keyword Arguments:
+        * *idVendor* (``int``) --
+            The vendor ID of the device to connect as a hex or int
+        * *idProduct* (`int`) --
+            The product ID of the device to connect as a hex or int
+        * *idSerial* (``int``) --
+            The Serial number of the device to connect in hex or int
+
+    .. note:: Usage
 
         The USBTMC protocol requires some extra knowledge in order to connect
         to devices. This attempts to explain some common connection scenarios.
 
     Any additional constructor positional and keyword arguments are passed
-     onwards to the python-usbtmc connection driver.  This accepts several types of arguments.
+     onwards to the ``python-usbtmc`` connection driver, which accepts several
+     types of arguments.   More detail can be found in the `python-usbtmc`
+     `docs <https://www.mankier.com/1/pythonusbtmc#Python_Usbtmc_Examples>`_
 
     If the entire VISA resource name is known, this can be passed as a simple string.
 
@@ -115,19 +143,28 @@ class USBTMCAdapter(Adapter):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         self.encoding = kwargs.pop('encoding', 'utf-8')
-        self.connection = USBTMCDriver(*args, **kwargs)
+        try:
+            self.connection = USBTMCDriver(*args, **kwargs)
+        except UsbtmcException as e:
+            raise AdapterError(str(e))
 
-    @reconnect_attempt
+    @attempt_reconnect
     def write(self, command):
         """Write to the USBTMC device."""
         self.connection.write(command, encoding=self.encoding)
 
-    @reconnect_attempt
+    @attempt_reconnect
     def read(self):
         """Read from the USBTMC device."""
         return self.connection.read(encoding=self.encoding)
 
+    def close(self):
+        """Close the current connection and release back to OS."""
+        return self.connection.close()
+
     def reset_device(self):
         """Try and reset the device."""
         if self.connection.iface is not None:
+            log.info("Resetting USBTMC Device")
             self.connection.device.reset()
+            sleep(0.5)

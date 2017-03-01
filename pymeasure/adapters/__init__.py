@@ -25,7 +25,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from .adapter import Adapter, FakeAdapter
+from .adapter import Adapter, FakeAdapter, AdapterError
 
 try:
     from pymeasure.adapters.visa import VISAAdapter

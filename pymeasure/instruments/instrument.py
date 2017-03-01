@@ -30,7 +30,7 @@ from pymeasure.adapters.visa import VISAAdapter
 from pymeasure.adapters import FakeAdapter
 
 try:
-    from pymeasure.adapters import USBTMCAdapter, USBTMCException
+    from pymeasure.adapters.usbtmc import USBTMCAdapter
 except ImportError:
     log.warning("Could not import USBTMCAdapter.")
 
