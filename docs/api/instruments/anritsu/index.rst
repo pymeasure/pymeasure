@@ -10,3 +10,4 @@ This section contains specific documentation on the Anritsu instruments that are
    :maxdepth: 2
 
    anritsuMG3692C
+   anritsuMS9710C

@@ -89,7 +89,6 @@ def joined_validators(*validators):
     """ Join a list of validators together as a single.  Expects a list of validator functions and values.
 
     :param validators: an iterable of other validators
-    :param values an iterable of validator values
     """
     def validate(value, values):
         for validator, vals in zip(validators, values):

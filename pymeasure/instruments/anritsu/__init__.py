@@ -23,3 +23,4 @@
 #
 
 from .anritsuMG3692C import AnritsuMG3692C
+from .anritsuMS9710C import AnritsuMS9710C
