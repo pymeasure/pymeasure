@@ -26,6 +26,7 @@ import pytest
 from pymeasure.instruments.validators import (
     strict_range, strict_discrete_set,
     truncated_range, truncated_discrete_set,
+    joined_validators
 )
 
 def test_strict_range():
@@ -53,3 +54,13 @@ def test_truncated_discrete_set():
     assert truncated_discrete_set(5.1, range(10)) == 6
     assert truncated_discrete_set(11, range(10)) == 9
     assert truncated_discrete_set(-10, range(10)) == 0
+
+def test_joined_validators():
+    tst_validator = joined_validators(strict_discrete_set, strict_range)
+    assert tst_validator(5, [["ON", "OFF"], range(10)]) == 5
+    assert tst_validator(5.1, [["ON", "OFF"], range(10)]) == 5.1
+    assert tst_validator("ON", [["ON", "OFF"], range(10)]) == "ON"
+    with pytest.raises(ValueError) as e_info:
+        tst_validator("OUT", [["ON", "OFF"], range(10)])
+    with pytest.raises(ValueError) as e_info:
+        tst_validator(20, [["ON", "OFF"], range(10)])
