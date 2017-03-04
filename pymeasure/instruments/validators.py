@@ -84,3 +84,17 @@ def truncated_discrete_set(value, values):
         if value <= v:
             return v
     return v
+
+def joined_validators(*validators):
+    """ Join a list of validators together as a single.  Expects a list of validator functions and values.
+
+    :param validators: an iterable of other validators
+    """
+    def validate(value, values):
+        for validator, vals in zip(validators, values):
+            try:
+                return validator(value, vals)
+            except (ValueError, TypeError):
+                pass
+        raise ValueError("Value of {} not in chained validator set".format(value))
+    return validate
