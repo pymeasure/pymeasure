@@ -66,9 +66,9 @@ class AgilentE4980(Instrument):
         self.write("INIT:CONT ON")
         self.write(":TRIG:IMM")
         measured = self.values("FETCh:IMPedance:FORMatted?")
-        # gets 4-ples of numbers
-        zetas = [measured[_] for _ in range(0, len(aa), 4)]
-        thetas = [measured[_] for _ in range(1, len(aa), 4)]
+        # gets 4-ples of numbers (?)
+        zetas = [measured[_] for _ in range(0, len(measured), 4)]
+        thetas = [measured[_] for _ in range(1, len(measured), 4)]
         return zetas, thetas
     
     #TODO: maybe refactor as property?
