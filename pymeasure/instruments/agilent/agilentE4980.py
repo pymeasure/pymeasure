@@ -1,11 +1,26 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb 27 13:04:42 2017
-
-@author: DSpirito
-
-LCR meter E4980AL
-"""
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2016 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
@@ -25,7 +40,7 @@ class AgilentE4980(Instrument):
                                    values=[20, 3e5])
 
     # FETCH? returns [A,B,state]: impedance returns only A,B
-    #TODO: check behaviour with lists
+    # TODO: check behaviour with lists
     #
     impedance = Instrument.measurement(":FETCH?", "Measured values A and B, according to mode",
                                        get_process=lambda x: x[:2])
@@ -70,9 +85,9 @@ class AgilentE4980(Instrument):
         zetas = [measured[_] for _ in range(0, len(measured), 4)]
         thetas = [measured[_] for _ in range(1, len(measured), 4)]
         return zetas, thetas
-    
-    #TODO: maybe refactor as property?
-    def aperture(self,time=None, averages=1):
+
+    # TODO: maybe refactor as property?
+    def aperture(self, time=None, averages=1):
         """
         set and get aperture
         time: string, SHORT, MED, LONG (case insensitive); if None, get values
@@ -85,4 +100,4 @@ class AgilentE4980(Instrument):
                 self.write(":APER {0}, {1}".format(time, averages))
             else:
                 print("Time must be a string: SHORT, MED, LONG")
-                print("Aperture is: "+self.ask(":APER?"))
+                print("Aperture is: " + self.ask(":APER?"))
