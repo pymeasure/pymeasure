@@ -72,14 +72,14 @@ class AgilentE4980(Instrument):
         # self.write("*RST;*CLS")
         self.write("TRIG:SOUR BUS")
         self.write("DISP:PAGE LIST")
-        # use mode STEP to use trigger delay
+        # use mode STEP to use trigger step delay
         self.write("LIST:MODE STEP")
         self.write("TRIG:DEL %f" % delay)
         lista_str = ",".join(['%e' % f for f in freq_list])
         self.write("LIST:FREQ %s" % lista_str)
         # trigger
         self.write("INIT:CONT ON")
-        self.write(":TRIG:IMM")
+        #self.write(":TRIG:IMM")
         measured = self.values("FETCh:IMPedance:FORMatted?")
         # gets 4-ples of numbers (?)
         zetas = [measured[_] for _ in range(0, len(measured), 4)]
