@@ -27,7 +27,7 @@ from pymeasure.instruments import Instrument
 class Agilent34410A(Instrument):
     """
     Represent the multimiters HP/Agilent/Keysight 34410A, and related
-    Implemented measuremets:
+    Implemented measurements:
         voltage_dc, voltage_ac, current_dc, current_ac, resistance, resistance_4w
     """
     #only the most simple functions are implemented
@@ -39,9 +39,9 @@ class Agilent34410A(Instrument):
     
     current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC voltage")
     
-    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "AC voltage")
+    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance")
     
-    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "AC voltage")
+    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance")
     
     def __init__(self, adapter, delay=0.02, **kwargs):
         super(Agilent34410A, self).__init__(
