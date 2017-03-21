@@ -12,3 +12,4 @@ This section contains specific documentation on the Agilent instruments that are
    agilent8257D
    agilent8722ES
    agilentE4408B
+   Agilent34410A
