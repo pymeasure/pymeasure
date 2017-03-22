@@ -34,6 +34,7 @@ setup(
         'pymeasure.adapters', 'pymeasure.display',
         'pymeasure.experiment',
         'pymeasure.instruments.agilent',
+        'pymeasure.instruments.ami',
         'pymeasure.instruments.anritsu',
         'pymeasure.instruments.danfysik',
         'pymeasure.instruments.fwbell',
