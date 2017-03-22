@@ -45,6 +45,7 @@ setup(
         'pymeasure.instruments.parker',
         'pymeasure.instruments.signalrecovery',
         'pymeasure.instruments.srs',
+        'pymeasure.instruments.thorlabs',
         'pymeasure.instruments.tektronix',
         'pymeasure.instruments.yokogawa',
     ],
