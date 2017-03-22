@@ -22,38 +22,70 @@
 # THE SOFTWARE.
 #
 
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 
 
 class AgilentE4980(Instrument):
     """Represents LCR meter E4980A/AL"""
 
     ac_voltage = Instrument.control(":VOLT:LEV?", ":VOLT:LEV %g",
-                                    "AC voltage level",
-                                    validator=truncated_range,
+                                    "AC voltage level, in Volts",
+                                    validator=strict_range,
                                     values=[0, 20])
+    
+    ac_current = Instrument.control(":CURR:LEV?", ":CURR:LEV %g",
+                                    "AC current level, in Amps",
+                                    validator=strict_range,
+                                    values=[0, 0.1])
+    
 
     frequency = Instrument.control(":FREQ:CW?", ":FREQ:CW %g",
-                                   "AC frequency",
-                                   validator=truncated_range,
-                                   values=[20, 3e5])
+                                   "AC frequency (range depending on model), in Hertz",
+                                   validator=strict_range,
+                                   values=[20, 2e6])
 
     # FETCH? returns [A,B,state]: impedance returns only A,B
-    # TODO: check behaviour with lists
-    #
-    impedance = Instrument.measurement(":FETCH?", "Measured values A and B, according to mode",
+    impedance = Instrument.measurement(":FETCH?", 
+                                       "Measured data A and B, according to :attr:`~.AgilentE4980.mode`",
                                        get_process=lambda x: x[:2])
 
     mode = Instrument.control("FUNCtion:IMPedance:TYPE?", "FUNCtion:IMPedance:TYPE %s",
-                              "Select quantities to be measured",
+                              """
+Select quantities to be measured:
+    
+    * CPD: Parallel capacitance [F] and dissipation factor [number]
+    * CPQ: Parallel capacitance [F] and quality factor [number]
+    * CPG: Parallel capacitance [F] and parallel conductance [S]
+    * CPRP: Parallel capacitance [F] and parallel resistance [Ohm]
+
+    * CSD: Series capacitance [F] and dissipation factor [number]
+    * CSQ: Series capacitance [F] and quality factor [number]
+    * CSRS: Series capacitance [F] and series resistance [Ohm]
+
+   * LPD: Parallel inductance [H] and dissipation factor [number]
+   * LPQ: Parallel inductance [H] and quality factor [number]
+   * LPG: Parallel inductance [H] and parallel conductance [S]
+   * LPRP: Parallel inductance [H] and parallel resistance [Ohm]
+   
+    * LSD: Series inductance [H] and dissipation factor [number]
+    * LSQ: Seriesinductance [H] and quality factor [number]
+    * LSRS: Series inductance [H] and series resistance [Ohm]
+    
+    * RX: Resitance [Ohm] and reactance [Ohm]
+    * ZTD: Impedance, magnitude [Ohm] and phase [deg]
+    * ZTR: Impedance, magnitude [Ohm] and phase [rad]
+    * GB: Conductance [S] and susceptance [S]
+    * YTD: Admittance, magnitude [Ohm] and phase [deg]
+    * YTR: Admittance magnitude [Ohm] and phase [rad]
+""",
                               validator=strict_discrete_set,
                               values=["CPD", "CPQ", "CPG", "CPRP",
                                       "CSD", "CSQ", "CSRS",
                                       "LPD", "LPQ", "LPG", "LPRP",
-                                      "LPRD", "LSD", "LSQ",
-                                      "LSRS", "LSRD", "RX",
-                                      "ZTD", "ZTR", "GB", "YTD", "YTR"])
+                                      "LSD", "LSQ", "LSRS", 
+                                      "RX", "ZTD", "ZTR", "GB", "YTD", "YTR",])
 
     def __init__(self, adapter, **kwargs):
         super(AgilentE4980, self).__init__(
@@ -63,41 +95,44 @@ class AgilentE4980(Instrument):
         # format: output ascii
         self.write("FORM ASC")
 
-    def freq_sweep(self, freq_list, delay=0):
+    def freq_sweep(self, freq_list):
         """
-        Run frequency list sweep
-        freq_list: list of frequency to be swept
-        delay: trigger delay between each frequency in the list"""
+        Run frequency list sweep using sequential trigger
+            :param freq_list: list of frequencies
+        Returns values as configured with :attr:`~.AgilentE4980.mode`
+            """
         # manual, page 299
         # self.write("*RST;*CLS")
         self.write("TRIG:SOUR BUS")
         self.write("DISP:PAGE LIST")
-        # use mode STEP to use trigger step delay
-        self.write("LIST:MODE STEP")
-        self.write("TRIG:DEL %f" % delay)
+        #trigge in sequential mode
+        self.write("LIST:MODE SEQ")
         lista_str = ",".join(['%e' % f for f in freq_list])
         self.write("LIST:FREQ %s" % lista_str)
         # trigger
         self.write("INIT:CONT ON")
-        #self.write(":TRIG:IMM")
+        self.write(":TRIG:IMM")
         measured = self.values("FETCh:IMPedance:FORMatted?")
-        # gets 4-ples of numbers (?)
-        zetas = [measured[_] for _ in range(0, len(measured), 4)]
-        thetas = [measured[_] for _ in range(1, len(measured), 4)]
-        return zetas, thetas
+        #at the end return to internal trigger
+        self.write(":TRIG:SOUR INT")
+        # gets 4-ples of numbers, first two are data A and B
+        a_data = [measured[_] for _ in range(0, len(measured), 4)]
+        b_data = [measured[_] for _ in range(1, len(measured), 4)]
+        return a_data, b_data
 
     # TODO: maybe refactor as property?
     def aperture(self, time=None, averages=1):
         """
         set and get aperture
-        time: string, SHORT, MED, LONG (case insensitive); if None, get values
-        averages: numeric
+            :param time: integration time as string: SHORT, MED, LONG (case insensitive); 
+            if None, get values
+            :param averages: number of averages, numeric
         """
         if time is None:
-            return self.ask(":APER?")
+            read_values = self.ask(":APER?").split(',')
+            return read_values[0], int(read_values[1])
         else:
             if time.upper() in ["SHORT", "MED", "LONG"]:
                 self.write(":APER {0}, {1}".format(time, averages))
             else:
-                print("Time must be a string: SHORT, MED, LONG")
-                print("Aperture is: " + self.ask(":APER?"))
+                raise Exception("Time must be a string: SHORT, MED, LONG")
