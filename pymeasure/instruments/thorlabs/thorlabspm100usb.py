@@ -26,7 +26,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, RangeException
 
 
 class ThorlabsPM100USB(Instrument):
@@ -54,12 +54,12 @@ class ThorlabsPM100USB(Instrument):
         """Set wavelength in nm and get power in W
         If wavelength is out of range it will be set to range limit"""
         if wavelength < self.wavelength_min:
-            print("Wavelength %.2f nm out of range: using minimum wavelength: %.2f nm" % (
+            raise RangeException("Wavelength %.2f nm out of range: using minimum wavelength: %.2f nm" % (
                 wavelength, self.wavelength_min))
             # explicit setting wavelenghth, althought it would be automatically set
             wavelength = self.wavelength_min
         if wavelength > self.wavelength_max:
-            print("Wavelength %.2f nm out of range: using maximum wavelength: %.2f nm" % (
+            raise RangeException("Wavelength %.2f nm out of range: using maximum wavelength: %.2f nm" % (
                 wavelength, self.wavelength_max))
             wavelength = self.wavelength_max
         self.wavelength = wavelength
@@ -88,9 +88,9 @@ class ThorlabsPM100USB(Instrument):
         if self.is_energy:
             return self.values("MEAS:ENER?")
         else:
-            print("%s is not an energy sensor" % self.sensor_name)
+            raise Exception("%s is not an energy sensor" % self.sensor_name)
             return 0
 
     @energy.setter
     def energy(self, val):
-        print("Energy not settable!")
+        raise Exception("Energy not settable!")
