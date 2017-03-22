@@ -19,6 +19,7 @@ Instruments by manufacturer:
    :maxdepth: 2
 
    agilent/index
+   ami/index
    anritsu/index
    danfysik/index
    fwbell/index

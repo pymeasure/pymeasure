@@ -1,0 +1,7 @@
+####################
+AMI 430 Power Supply
+####################
+
+.. autoclass:: pymeasure.instruments.agilent.AgilentE4408B
+    :members:
+    :show-inheritance:

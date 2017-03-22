@@ -37,13 +37,13 @@ import numpy as np
 import re
 
 
-class ami430(Instrument):
+class AMI430(Instrument):
     """ Represents the AMI 430 Power supply
     and provides a high-level for interacting with the instrument.
 
     .. code-block:: python
 
-        magnet = AMI430("TCPIP::ami430_zaxis.nowacklab.edu::7180::SOCKET")
+        magnet = AMI430("TCPIP::web.address.com::7180::SOCKET")
 
         
         magnet.coilconst = 1.182                 # kGauss/A
@@ -221,13 +221,8 @@ class ami430(Instrument):
         ramps down the current to zero, and turns off the persistent switch.
         """
         self.enable_persistent_switch()
-
         self.wait_for_holding()
-
         self.ramp_rate_current = ramp_rate
-
         self.zero()
-
         self.wait_for_holding()
-
         self.disable_persistent_switch()
