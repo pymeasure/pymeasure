@@ -12,6 +12,7 @@ This section contains documentation on the instrument classes.
    instruments
    validators
    comedi
+   resources
 
 Instruments by manufacturer:
 
