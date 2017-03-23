@@ -24,7 +24,7 @@
 
 from .instrument import Instrument
 from .mock import Mock
-
+from .resources import list_resources
 
 def discreteTruncate(number, discreteSet):
     """ Truncates the number to the closest element in the positive discrete set.
@@ -52,5 +52,4 @@ from . import srs
 from . import tektronix
 from . import thorlabs
 from . import yokogawa
-from resources import list_resources
 
