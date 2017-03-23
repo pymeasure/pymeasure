@@ -50,5 +50,7 @@ from . import parker
 from . import signalrecovery
 from . import srs
 from . import tektronix
+from . import thorlabs
 from . import yokogawa
 from resources import list_resources
+

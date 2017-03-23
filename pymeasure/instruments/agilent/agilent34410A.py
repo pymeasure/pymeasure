@@ -22,8 +22,28 @@
 # THE SOFTWARE.
 #
 
-from .agilent8257D import Agilent8257D
-from .agilent8722ES import Agilent8722ES
-from .agilentE4408B import AgilentE4408B
-from .agilentE4980 import AgilentE4980
-from .agilent34410A import Agilent34410A
+from pymeasure.instruments import Instrument
+
+class Agilent34410A(Instrument):
+    """
+    Represent the multimiters HP/Agilent/Keysight 34410A, and related
+    Implemented measurements:
+        voltage_dc, voltage_ac, current_dc, current_ac, resistance, resistance_4w
+    """
+    #only the most simple functions are implemented
+    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
+    
+    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
+    
+    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
+    
+    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
+    
+    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
+    
+    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
+    
+    def __init__(self, adapter, delay=0.02, **kwargs):
+        super(Agilent34410A, self).__init__(
+            adapter, "HP/Agilent/Keysight 34410A Multimiter", **kwargs
+        )

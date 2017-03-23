@@ -21,9 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
 from pymeasure.adapters.serial import SerialAdapter
-
 import serial
 from time import sleep
 
@@ -40,6 +38,7 @@ class PrologixAdapter(SerialAdapter):
 
     :param port: The Serial port name or a serial.Serial object
     :param address: Integer GPIB address of the desired instrument
+    :param rw_delay: An optional delay to set between a write and read call for slow to respond instruments.
     :param kwargs: Key-word arguments if constructing a new serial object
 
     :ivar address: Integer GPIB address of the desired instrument
@@ -59,8 +58,10 @@ class PrologixAdapter(SerialAdapter):
         sudo udevadm trigger
 
     """
-    def __init__(self, port, address=None, **kwargs):
+    def __init__(self, port, address=None, rw_delay=None, **kwargs):
         self.address = address
+        self.rw_delay = rw_delay
+
         if isinstance(port, serial.Serial):
             # A previous adapter is sharing this connection
             self.connection = port
@@ -84,6 +85,17 @@ class PrologixAdapter(SerialAdapter):
         if self.connection.isOpen():
             self.connection.close()
 
+    def ask(self, command):
+        """ Ask the Prologix controller, include a forced delay for some instruments.
+
+        :param command: SCPI command string to be sent to instrument
+        """
+
+        self.write(command)
+        if self.rw_delay is not None:
+            sleep(self.rw_delay)
+        return self.read()
+
     def write(self, command):
         """ Writes the command to the GPIB address stored in the
         :attr:`.address`
@@ -104,15 +116,17 @@ class PrologixAdapter(SerialAdapter):
         self.write("++read")
         return b"\n".join(self.connection.readlines()).decode()
 
-    def gpib(self, address):
+    def gpib(self, address, rw_delay=None):
         """ Returns and PrologixAdapter object that references the GPIB
         address specified, while sharing the Serial connection with other
         calls of this function
 
         :param address: Integer GPIB address of the desired instrument
+        :param rw_delay: Set a custom Read/Write delay for the instrument
         :returns: PrologixAdapter for specific GPIB address
         """
-        return PrologixAdapter(self.connection, address)
+        rw_delay = rw_delay or self.rw_delay
+        return PrologixAdapter(self.connection, address, rw_delay=rw_delay)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high

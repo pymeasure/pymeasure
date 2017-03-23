@@ -20,6 +20,7 @@ Instruments by manufacturer:
    :maxdepth: 2
 
    agilent/index
+   ami/index
    anritsu/index
    danfysik/index
    fwbell/index
@@ -31,4 +32,5 @@ Instruments by manufacturer:
    signalrecovery/index
    srs/index
    tektronix/index
+   thorlabs/index
    yokogawa/index
