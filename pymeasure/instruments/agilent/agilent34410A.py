@@ -22,33 +22,28 @@
 # THE SOFTWARE.
 #
 
-from .instrument import Instrument
-from .mock import Mock
+from pymeasure.instruments import Instrument
 
-
-def discreteTruncate(number, discreteSet):
-    """ Truncates the number to the closest element in the positive discrete set.
-    Returns False if the number is larger than the maximum value or negative.    
+class Agilent34410A(Instrument):
     """
-    if number < 0: return False
-    discreteSet.sort()
-    for item in discreteSet:
-        if number <= item: return item
-    return False
+    Represent the multimiters HP/Agilent/Keysight 34410A, and related
+    Implemented measurements:
+        voltage_dc, voltage_ac, current_dc, current_ac, resistance, resistance_4w
+    """
+    #only the most simple functions are implemented
+    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
     
-
-class RangeException(Exception): pass
-
-from . import agilent
-from . import anritsu
-from . import danfysik
-from . import fwbell
-from . import hp
-from . import keithley
-from . import lakeshore
-from . import parker
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import thorlabs
-from . import yokogawa
+    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
+    
+    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
+    
+    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
+    
+    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
+    
+    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
+    
+    def __init__(self, adapter, delay=0.02, **kwargs):
+        super(Agilent34410A, self).__init__(
+            adapter, "HP/Agilent/Keysight 34410A Multimiter", **kwargs
+        )
