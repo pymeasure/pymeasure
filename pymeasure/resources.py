@@ -31,18 +31,18 @@ def list_resources():
     
     .. code-block:: python
 
-    resources = list_resources()
-    #prints (e.g.)
-        #0 : GPIB0::22::INSTR : Agilent Technologies,34410A,******
-        #1 : GPIB0::26::INSTR : Keithley Instruments Inc., Model 2612, *****
-    dmm = Agilent34410(resources[0])
+        resources = list_resources()
+        #prints (e.g.)
+            #0 : GPIB0::22::INSTR : Agilent Technologies,34410A,******
+            #1 : GPIB0::26::INSTR : Keithley Instruments Inc., Model 2612, *****
+        dmm = Agilent34410(resources[0])
     
     """
     rm = visa.ResourceManager()
     instrs = rm.list_resources()
-    #trying to catch errors in comunication
-    try:
-        for n, instr in enumerate(instrs):
+    for n, instr in enumerate(instrs):
+        #trying to catch errors in comunication
+        try:
             res = rm.open_resource(instr)
             #try to avoid errors from *idn?
             try:
@@ -51,10 +51,9 @@ def list_resources():
                 idn = "Not known"
             finally:
                 res.close()
-            print(n,":", instr,":", idn)
-    except visa.VisaIOError as e:
-        print(n, ":", instr,":", "Visa IO Error: check connections")
-        print(e)
-    finally:
-        rm.close()
-        return instrs
+                print(n,":", instr,":", idn)
+        except visa.VisaIOError as e:
+            print(n, ":", instr,":", "Visa IO Error: check connections")
+            print(e)
+    rm.close()
+    return instrs
