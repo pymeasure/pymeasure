@@ -22,34 +22,38 @@
 # THE SOFTWARE.
 #
 
-from .instrument import Instrument
-from .mock import Mock
-from .resources import list_resources
+import visa
 
-def discreteTruncate(number, discreteSet):
-    """ Truncates the number to the closest element in the positive discrete set.
-    Returns False if the number is larger than the maximum value or negative.    
+
+def list_resources():
     """
-    if number < 0: return False
-    discreteSet.sort()
-    for item in discreteSet:
-        if number <= item: return item
-    return False
+    Prints the available resources, and returns a list of VISA resource names
     
+    .. code-block:: python
 
-class RangeException(Exception): pass
-
-from . import agilent
-from . import anritsu
-from . import danfysik
-from . import fwbell
-from . import hp
-from . import keithley
-from . import lakeshore
-from . import parker
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import thorlabs
-from . import yokogawa
-
+        resources = list_resources()
+        #prints (e.g.)
+            #0 : GPIB0::22::INSTR : Agilent Technologies,34410A,******
+            #1 : GPIB0::26::INSTR : Keithley Instruments Inc., Model 2612, *****
+        dmm = Agilent34410(resources[0])
+    
+    """
+    rm = visa.ResourceManager()
+    instrs = rm.list_resources()
+    for n, instr in enumerate(instrs):
+        #trying to catch errors in comunication
+        try:
+            res = rm.open_resource(instr)
+            #try to avoid errors from *idn?
+            try:
+                idn = res.ask('*idn?')[:-1]
+            except:
+                idn = "Not known"
+            finally:
+                res.close()
+                print(n,":", instr,":", idn)
+        except visa.VisaIOError as e:
+            print(n, ":", instr,":", "Visa IO Error: check connections")
+            print(e)
+    rm.close()
+    return instrs
