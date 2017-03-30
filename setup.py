@@ -27,7 +27,7 @@ from setuptools import setup
 
 setup(
     name='PyMeasure',
-    version='0.4.2',
+    version='0.4.3',
     author='PyMeasure Developers',
     packages=[
         'pymeasure', 'pymeasure.instruments',
@@ -51,7 +51,7 @@ setup(
     ],
     scripts=[],
     url='https://github.com/ralph-group/pymeasure',
-    download_url = 'https://github.com/ralph-group/pymeasure/tarball/v0.4.2',
+    download_url = 'https://github.com/ralph-group/pymeasure/tarball/v0.4.3',
     license='MIT License',
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
