@@ -1,3 +1,12 @@
+Version 0.4.3 -- released 3/30/17
+=================================
+- Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and 
+  Anritsu MS9710C instruments (@TvBMcMaster, @dvspirito, and @mhdg)
+- Updates to PyVISA support (@minhhaiphys)
+- Initial work on resource manager (@dvspirito)
+- Fixes for Prologix adapter that allow read-write delays (@TvBMcMaster)
+- Fixes for conda environment on continuous integration
+
 Version 0.4.2 -- released 8/23/16
 =================================
 - New instructions for installing with Anaconda and conda-forge package (thanks @melund!)
