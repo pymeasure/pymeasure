@@ -122,7 +122,7 @@ Select quantities to be measured:
             except VisaIOError:
                 pass
         #at the end return to manual trigger
-        self.write(":TRIG:SOUR MAN")
+        self.write(":TRIG:SOUR HOLD")
         # gets 4-ples of numbers, first two are data A and B
         a_data = [measured[_] for _ in range(0, len(measured), 4)]
         b_data = [measured[_] for _ in range(1, len(measured), 4)]
