@@ -105,16 +105,24 @@ Select quantities to be measured:
         # self.write("*RST;*CLS")
         self.write("TRIG:SOUR BUS")
         self.write("DISP:PAGE LIST")
-        #trigge in sequential mode
+        self.write("FORM ASC")
+        #trigger in sequential mode
         self.write("LIST:MODE SEQ")
         lista_str = ",".join(['%e' % f for f in freq_list])
         self.write("LIST:FREQ %s" % lista_str)
         # trigger
         self.write("INIT:CONT ON")
         self.write(":TRIG:IMM")
-        measured = self.values("FETCh:IMPedance:FORMatted?")
-        #at the end return to internal trigger
-        self.write(":TRIG:SOUR INT")
+        #wait for completed measurement
+        #using the Error signal (there should be a better way)
+        while 1:
+            try:
+                measured = self.values(":FETCh:IMPedance:FORMatted?")
+                break
+            except VisaIOError:
+                pass
+        #at the end return to manual trigger
+        self.write(":TRIG:SOUR MAN")
         # gets 4-ples of numbers, first two are data A and B
         a_data = [measured[_] for _ in range(0, len(measured), 4)]
         b_data = [measured[_] for _ in range(1, len(measured), 4)]
