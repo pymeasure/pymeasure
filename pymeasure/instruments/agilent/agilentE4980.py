@@ -87,6 +87,17 @@ Select quantities to be measured:
                                       "LSD", "LSQ", "LSRS", 
                                       "RX", "ZTD", "ZTR", "GB", "YTD", "YTR",])
 
+
+    trigger_source = Instrument.control("TRIG:SOUR?", "TRIG:SOUR %s",
+                                            """
+Select trigger source; accept the values:
+    * HOLD: manual
+    * INT: internal
+    * BUS: external bus (GPIB/LAN/USB)
+    * EXT: external connector""",
+                                        validator=strict_discrete_set,
+                                        values = ["HOLD", "INT", "BUS", "EXT"])
+
     def __init__(self, adapter, **kwargs):
         super(AgilentE4980, self).__init__(
             adapter, "Agilent E4980A/AL LCR meter", **kwargs
