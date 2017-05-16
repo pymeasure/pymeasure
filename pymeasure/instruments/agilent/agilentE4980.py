@@ -25,6 +25,7 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pyvisa.errors import VisaIOError
 
 
 class AgilentE4980(Instrument):
@@ -106,10 +107,11 @@ Select trigger source; accept the values:
         # format: output ascii
         self.write("FORM ASC")
 
-    def freq_sweep(self, freq_list):
+    def freq_sweep(self, freq_list, return_freq=False):
         """
         Run frequency list sweep using sequential trigger
             :param freq_list: list of frequencies
+            :param return_freq: if True, returns the frequencies read from the instrument
         Returns values as configured with :attr:`~.AgilentE4980.mode`
             """
         # manual, page 299
@@ -135,9 +137,13 @@ Select trigger source; accept the values:
         #at the end return to manual trigger
         self.write(":TRIG:SOUR HOLD")
         # gets 4-ples of numbers, first two are data A and B
-        a_data = [measured[_] for _ in range(0, len(measured), 4)]
-        b_data = [measured[_] for _ in range(1, len(measured), 4)]
-        return a_data, b_data
+        a_data = [measured[_] for _ in range(0,  4*len(freq_list), 4)]
+        b_data = [measured[_] for _ in range(1,  4*len(freq_list), 4)]
+        if return_freq:
+            read_freqs = self.values("LIST:FREQ?")
+            return a_data, b_data, read_freqs
+        else:
+            return a_data, b_data
 
     # TODO: maybe refactor as property?
     def aperture(self, time=None, averages=1):
