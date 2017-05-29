@@ -39,6 +39,7 @@ setup(
         'pymeasure.instruments.danfysik',
         'pymeasure.instruments.fwbell',
         'pymeasure.instruments.hp',
+        'pymeasure.instruments.gmw',
         'pymeasure.instruments.keithley',
         'pymeasure.instruments.lakeshore',
         'pymeasure.instruments.newport',

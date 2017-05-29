@@ -1,0 +1,7 @@
+##############################
+GMW 5403 C-Frame Electromagnet
+##############################
+
+.. autoclass:: pymeasure.instruments.gmw.GMW5403
+    :members:
+    :show-inheritance:
