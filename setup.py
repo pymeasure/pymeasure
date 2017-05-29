@@ -43,6 +43,7 @@ setup(
         'pymeasure.instruments.lakeshore',
         'pymeasure.instruments.newport',
         'pymeasure.instruments.parker',
+        'pymeasure.instruments.quantumdesign',
         'pymeasure.instruments.signalrecovery',
         'pymeasure.instruments.srs',
         'pymeasure.instruments.thorlabs',

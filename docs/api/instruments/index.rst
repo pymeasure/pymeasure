@@ -29,6 +29,7 @@ Instruments by manufacturer:
    lakeshore/index
    newport/index
    parker/index
+   quantumdesign/index
    signalrecovery/index
    srs/index
    tektronix/index

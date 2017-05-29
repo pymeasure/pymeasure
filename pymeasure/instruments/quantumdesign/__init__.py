@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2016 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,35 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .instrument import Instrument
-from .mock import Mock
-from .resources import list_resources
-
-def discreteTruncate(number, discreteSet):
-    """ Truncates the number to the closest element in the positive discrete set.
-    Returns False if the number is larger than the maximum value or negative.    
-    """
-    if number < 0: return False
-    discreteSet.sort()
-    for item in discreteSet:
-        if number <= item: return item
-    return False
-    
-
-class RangeException(Exception): pass
-
-from . import agilent
-from . import anritsu
-from . import danfysik
-from . import fwbell
-from . import hp
-from . import keithley
-from . import lakeshore
-from . import parker
-from . import quantumdesign
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import thorlabs
-from . import yokogawa
-
+from .ppms import PPMS
