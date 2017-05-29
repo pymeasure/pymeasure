@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from ami430 import AMI430
+from .ami430 import AMI430
