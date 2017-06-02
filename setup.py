@@ -23,32 +23,13 @@
 #
 
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='PyMeasure',
     version='0.4.3',
     author='PyMeasure Developers',
-    packages=[
-        'pymeasure', 'pymeasure.instruments',
-        'pymeasure.adapters', 'pymeasure.display',
-        'pymeasure.experiment',
-        'pymeasure.instruments.agilent',
-        'pymeasure.instruments.ami',
-        'pymeasure.instruments.anritsu',
-        'pymeasure.instruments.danfysik',
-        'pymeasure.instruments.fwbell',
-        'pymeasure.instruments.hp',
-        'pymeasure.instruments.keithley',
-        'pymeasure.instruments.lakeshore',
-        'pymeasure.instruments.newport',
-        'pymeasure.instruments.parker',
-        'pymeasure.instruments.signalrecovery',
-        'pymeasure.instruments.srs',
-        'pymeasure.instruments.thorlabs',
-        'pymeasure.instruments.tektronix',
-        'pymeasure.instruments.yokogawa',
-    ],
+    packages=find_packages(),
     scripts=[],
     url='https://github.com/ralph-group/pymeasure',
     download_url = 'https://github.com/ralph-group/pymeasure/tarball/v0.4.3',

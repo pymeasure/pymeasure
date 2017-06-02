@@ -36,7 +36,6 @@ install:
   - conda env create -f $ENVIRONMENT_FILE
   - source activate pymeasure
   - conda info -a
-  - python setup.py install
 
 # command to run tests
 script: py.test
