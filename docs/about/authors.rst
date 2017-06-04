@@ -9,4 +9,8 @@ The following developers have contributed to the PyMeasure package:
 | Graham Rowlands
 | Minh-Hai Nguyen
 | Guen Prawiro-Atmodjo
-|
+| Tim van Boxtel
+| Davide Spirito
+| Marcos Guimaraes
+| Ghislain Antony Vaillant
+| Ben Feinstein
