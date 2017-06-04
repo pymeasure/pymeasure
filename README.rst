@@ -25,6 +25,9 @@ PyMeasure runs on Python 3.4 and 3.5, and is tested with continous-integration o
 .. image:: https://zenodo.org/badge/23569/ralph-group/pymeasure.svg
    :target: https://zenodo.org/badge/latestdoi/23569/ralph-group/pymeasure
 
+.. image:: https://anaconda.org/conda-forge/pymeasure/badges/version.svg
+   :target: https://anaconda.org/conda-forge/pymeasure
+
 Quick start
 ===========
 
