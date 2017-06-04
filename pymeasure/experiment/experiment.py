@@ -69,7 +69,7 @@ def create_filename(title):
     return filename
 
 
-class Experiment():
+class Experiment(object):
     """ Class which starts logging and creates/runs the results and worker processes.
 
     .. code-block:: python
