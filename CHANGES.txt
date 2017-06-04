@@ -1,3 +1,9 @@
+Version 0.4.4 -- released 6/4/17
+================================
+- Fix pip install for non-wheel builds
+- Update to Agilent E4980 (@dvspirito)
+- Minor fixes for docs, tests, and formatting (@ghisvail, @feinsteinben)
+
 Version 0.4.3 -- released 3/30/17
 =================================
 - Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and 
