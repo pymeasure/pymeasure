@@ -3,3 +3,5 @@ include README.rst
 include LICENSE.txt
 include CHANGES.txt
 recursive-include pymeasure *
+recursive-include docs *
+prune docs/_build
