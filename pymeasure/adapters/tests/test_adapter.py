@@ -22,7 +22,12 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from pymeasure.adapters import FakeAdapter
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def test_adapter_values():

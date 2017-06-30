@@ -22,10 +22,15 @@
 # THE SOFTWARE.
 #
 
-from .adapter import Adapter
+import logging
 
 import serial
 import numpy as np
+
+from .adapter import Adapter
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class SerialAdapter(Adapter):
@@ -37,7 +42,10 @@ class SerialAdapter(Adapter):
     """
 
     def __init__(self, port, **kwargs):
-        self.connection = serial.Serial(port, **kwargs)
+        if isinstance(port, serial.Serial):
+            self.connection = port
+        else:
+            self.connection = serial.Serial(port, **kwargs)
 
     def __del__(self):
         """ Ensures the connection is closed upon deletion
@@ -49,7 +57,7 @@ class SerialAdapter(Adapter):
 
         :param command: SCPI command string to be sent to the instrument
         """
-        self.connection.write(command.encode()) # encode added for Python 3
+        self.connection.write(command.encode())  # encode added for Python 3
 
     def read(self):
         """ Reads until the buffer is empty and returns the resulting
