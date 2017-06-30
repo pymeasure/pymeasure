@@ -22,17 +22,21 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+import numpy
+import time
+
 from pymeasure.adapters import FakeAdapter
-import numpy, time
+from pymeasure.instruments import Instrument
+
 
 class Mock(Instrument):
-    '''Mock instrument for testing.'''
+    """Mock instrument for testing."""
+
     def __init__(self, wait=.1, **kwargs):
-        super(Mock, self).__init__(
+        super().__init__(
             FakeAdapter,
             "Mock instrument",
-            includeSCPI = False,
+            includeSCPI=False,
             **kwargs
         )
         self._wait = wait
@@ -42,58 +46,57 @@ class Mock(Instrument):
         self._time = 0
         self._wave = self.wave
         self._units = {'voltage': 'V',
-                      'output_voltage': 'V',
-                      'time': 's',
-                      'wave': 'a.u.'}
+                       'output_voltage': 'V',
+                       'time': 's',
+                       'wave': 'a.u.'}
 
     def get_time(self):
         """Get elapsed time"""
-        if self._tstart==0:
+        if self._tstart == 0:
             self._tstart = time.time()
-        self._time = time.time()-self._tstart
+        self._time = time.time() - self._tstart
         return self._time
-    
+
     def set_time(self, value):
         """
         Wait for the timer to reach the specified time.
         If value = 0, reset.
         """
-        if value==0:
+        if value == 0:
             self._tstart = 0
         else:
             while self.time < value:
                 time.sleep(0.001)
-        return True
 
     def reset_time(self):
-        '''Reset the timer to 0 s.'''
+        """Reset the timer to 0 s."""
         self.time = 0
-        self.time
+        self.get_time()
 
-    time = property(fget = get_time, fset = set_time)
+    time = property(fget=get_time, fset=set_time)
 
     def get_wave(self):
         """Get wave."""
         return float(numpy.sin(self.time))
 
-    wave = property(fget = get_wave)
+    wave = property(fget=get_wave)
 
     def get_voltage(self):
         """Get the voltage."""
         time.sleep(self._wait)
         return self._voltage
-    
-        def __getitem__(self, keys):
-            return keys
 
-    voltage = property(fget = get_voltage)
-    
+    def __getitem__(self, keys):
+        return keys
+
+    voltage = property(fget=get_voltage)
+
     def get_output_voltage(self):
         return self._output_voltage
-    
+
     def set_output_voltage(self, value):
         """Set the voltage."""
         time.sleep(self._wait)
         self._output_voltage = value
 
-    output_voltage = property(fget = get_output_voltage, fset = set_output_voltage)
+    output_voltage = property(fget=get_output_voltage, fset=set_output_voltage)

@@ -23,14 +23,14 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-from pymeasure.adapters.visa import VISAAdapter
-from pymeasure.adapters import FakeAdapter
 
 import numpy as np
-import inspect
+
+from pymeasure.adapters import FakeAdapter
+from pymeasure.adapters.visa import VISAAdapter
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Instrument(object):
@@ -43,6 +43,8 @@ class Instrument(object):
     :param name: A string name
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     """
+
+    # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
             if isinstance(adapter, (int, str)):
@@ -54,21 +56,23 @@ class Instrument(object):
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
+
         class Object(object):
             pass
+
         self.get = Object()
 
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
             # Basic SCPI commands
-            self.status = self.measurement("*STB?", 
-                """ Returns the status of the instrument """)
+            self.status = self.measurement("*STB?",
+                                           """ Returns the status of the instrument """)
             self.complete = self.measurement("*OPC?",
-                """ TODO: Add this doc """)
+                                             """ TODO: Add this doc """)
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
-        
+
     @property
     def id(self):
         """ Requests and returns the identification of the instrument. """
@@ -76,7 +80,7 @@ class Instrument(object):
             return self.adapter.ask("*IDN?").strip()
         else:
             return "Warning: Property not implemented."
-            
+
     # Wrapper functions for the Adapter object
     def ask(self, command):
         """ Writes the command to the instrument through the adapter
@@ -93,7 +97,7 @@ class Instrument(object):
         """
         self.adapter.write(command)
 
-    def read(self): 
+    def read(self):
         """ Reads from the instrument through the adapter and returns the
         response.
         """
@@ -110,7 +114,7 @@ class Instrument(object):
 
     @staticmethod
     def control(get_command, set_command, docs,
-                validator=lambda v, vs: v, values=[], map_values=False,
+                validator=lambda v, vs: v, values=(), map_values=False,
                 get_process=lambda v: v, set_process=lambda v: v,
                 check_set_errors=False, check_get_errors=False,
                 **kwargs):
@@ -123,7 +127,7 @@ class Instrument(object):
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
-        :param values: A list, range, or dictionary of valid values, that can be used
+        :param values: A list, tuple, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be 
                           interpreted as a map
@@ -135,7 +139,7 @@ class Instrument(object):
         :param check_get_errors: Toggles checking errors after getting        
         """
 
-        if map_values and type(values) is dict:
+        if map_values and isinstance(values, dict):
             # Prepare the inverse values for performance
             inverse = {v: k for k, v in values.items()}
 
@@ -147,9 +151,9 @@ class Instrument(object):
                 value = get_process(vals[0])
                 if not map_values:
                     return value
-                elif type(values) in (list, range):
+                elif isinstance(values, (list, tuple, range)):
                     return values[int(value)]
-                elif type(values) is dict:
+                elif isinstance(values, dict):
                     return inverse[value]
                 else:
                     raise ValueError(
@@ -164,9 +168,9 @@ class Instrument(object):
             value = set_process(validator(value, values))
             if not map_values:
                 pass
-            elif type(values) in (list, range):
+            elif isinstance(values, (list, tuple, range)):
                 value = values.index(value)
-            elif type(values) is dict:
+            elif isinstance(values, dict):
                 value = values[value]
             else:
                 raise ValueError(
@@ -181,18 +185,18 @@ class Instrument(object):
         fget.__doc__ = docs
 
         return property(fget, fset)
-    
+
     @staticmethod
-    def measurement(get_command, docs, values=[], map_values=None,
-                get_process=lambda v: v, command_process=lambda c: c, 
-                check_get_errors=False, **kwargs):
+    def measurement(get_command, docs, values=(), map_values=None,
+                    get_process=lambda v: v, command_process=lambda c: c,
+                    check_get_errors=False, **kwargs):
         """ Returns a property for the class based on the supplied
         commands. This is a measurement quantity that may only be 
         read from the instrument, not set.
 
         :param get_command: A string command that asks for the value
         :param docs: A docstring that will be included in the documentation
-        :param values: A list, range, or dictionary of valid values, that can be used
+        :param values: A list, tuple, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be 
                           interpreted as a map
@@ -203,7 +207,7 @@ class Instrument(object):
         :param check_get_errors: Toggles checking errors after getting 
         """
 
-        if map_values and type(values) is dict:
+        if map_values and isinstance(values, dict):
             # Prepare the inverse values for performance
             inverse = {v: k for k, v in values.items()}
 
@@ -215,9 +219,9 @@ class Instrument(object):
                 value = get_process(vals[0])
                 if not map_values:
                     return value
-                elif type(values) in (list, range):
+                elif isinstance(values, (list, tuple, range)):
                     return values[int(value)]
-                elif type(values) is dict:
+                elif isinstance(values, dict):
                     return inverse[value]
                 else:
                     raise ValueError(
@@ -234,7 +238,7 @@ class Instrument(object):
 
     @staticmethod
     def setting(set_command, docs,
-                validator=lambda x, y: x, values=[], map_values=False,
+                validator=lambda x, y: x, values=(), map_values=False,
                 check_set_errors=False,
                 **kwargs):
         """Returns a property for the class based on the supplied
@@ -245,14 +249,14 @@ class Instrument(object):
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
-        :param values: A list, range, or dictionary of valid values, that can be used
+        :param values: A list, tuple, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be 
                           interpreted as a map
         :param check_set_errors: Toggles checking errors after setting     
         """
 
-        if map_values and type(values) is dict:
+        if map_values and isinstance(values, dict):
             # Prepare the inverse values for performance
             inverse = {v: k for k, v in values.items()}
 
@@ -263,9 +267,9 @@ class Instrument(object):
             value = validator(value, values)
             if not map_values:
                 pass
-            elif type(values) in (list, range):
+            elif isinstance(values, (list, tuple, range)):
                 value = values.index(value)
-            elif type(values) is dict:
+            elif isinstance(values, dict):
                 value = values[value]
             else:
                 raise ValueError(
@@ -280,7 +284,6 @@ class Instrument(object):
         fget.__doc__ = docs
 
         return property(fget, fset)
-
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):
@@ -310,7 +313,7 @@ class FakeInstrument(Instrument):
     """
 
     def __init__(self, **kwargs):
-        super(FakeInstrument, self).__init__(
+        super().__init__(
             FakeAdapter(),
             "Fake Instrument",
             includeSCPI=False,
