@@ -23,9 +23,8 @@
 #
 
 import pytest
-from pymeasure.experiment.results import Results
+
 import os
-import tempfile
 from importlib.machinery import SourceFileLoader
 
 # Load the procedure, without it being in a module
@@ -39,6 +38,3 @@ def test_procedure():
     p = procedure.TestProcedure()
     assert p.iterations == 100
     assert hasattr(p, 'execute')
-
-
-

@@ -23,11 +23,13 @@
 #
 
 import logging
+
+import numpy as np
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-import numpy as np
-from datetime.datetime import now
+log.warning('not implemented yet')
 
 
 class ProgressBar(object):
@@ -38,7 +40,7 @@ class ProgressBar(object):
 
     def __init__(self):
         self.data = np.empty()
-        self.progress_precents = []
+        self.progress_percentage = []
         self.progress_times = []
 
     def advance(self, progress):

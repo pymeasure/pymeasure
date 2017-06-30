@@ -23,17 +23,16 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-from .Qt import QtGui
-
-from ..process import StoppableProcess
-from .windows import PlotterWindow
 
 import sys
-from time import sleep
-import pyqtgraph as pg
+import time
+
+from .Qt import QtGui
+from .windows import PlotterWindow
+from ..process import StoppableProcess
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Plotter(StoppableProcess):
@@ -55,4 +54,4 @@ class Plotter(StoppableProcess):
 
     def wait_for_close(self, check_time=0.1):
         while not self.should_stop():
-            sleep(check_time)
+            time.sleep(check_time)

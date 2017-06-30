@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 from .adapter import Adapter, FakeAdapter
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 try:
     from pymeasure.adapters.visa import VISAAdapter

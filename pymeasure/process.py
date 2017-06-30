@@ -22,10 +22,15 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from multiprocessing import set_start_method, Process, Event
 
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 # Force Windows multiprocessing behavior on Unix
-set_start_method('spawn', force=True)
+set_start_method('spawn')
 
 
 class StoppableProcess(Process):
@@ -34,9 +39,9 @@ class StoppableProcess(Process):
     """
 
     def __init__(self):
+        super().__init__()
         self._should_stop = Event()
         self._should_stop.clear()
-        super(StoppableProcess, self).__init__()
 
     def join(self, timeout=0):
         """ Joins the current process and forces it to stop after
@@ -47,7 +52,7 @@ class StoppableProcess(Process):
         self._should_stop.wait(timeout)
         if not self.should_stop():
             self.stop()
-        super(StoppableProcess, self).join(0)
+        super().join(0)
 
     def stop(self):
         self._should_stop.set()
@@ -58,4 +63,3 @@ class StoppableProcess(Process):
     def __repr__(self):
         return "<%s(should_stop=%s)>" % (
             self.__class__.__name__, self.should_stop())
-

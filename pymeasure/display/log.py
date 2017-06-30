@@ -22,17 +22,22 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from logging import Handler
-from .Qt import QtCore, QtGui
+
+from .Qt import QtCore
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class LogHandler(QtCore.QObject, Handler):
-
     record = QtCore.QSignal(object)
 
     def __init__(self, parent=None):
+        QtCore.QObject.__init__(self, parent)
         Handler.__init__(self)
-        QtCore.QObject.__init__(self, parent=parent)
 
     def emit(self, record):
         self.record.emit(self.format(record))

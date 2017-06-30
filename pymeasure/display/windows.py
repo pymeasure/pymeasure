@@ -23,26 +23,26 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 import os
 import pyqtgraph as pg
 
+from .browser import BrowserItem
+from .curves import ResultsCurve
+from .manager import Manager, Experiment
 from .Qt import QtCore, QtGui
 from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog
-from .curves import ResultsCurve
-from .browser import BrowserItem
-from .manager import Manager, Experiment
-from .log import LogHandler
 from ..experiment.results import Results
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class PlotterWindow(QtGui.QMainWindow):
-
     def __init__(self, plotter, refresh_time=0.1, parent=None):
-        super(PlotterWindow, self).__init__(parent)
+        super().__init__(parent)
         self.plotter = plotter
+        self.refresh_time = refresh_time
         columns = plotter.results.procedure.DATA_COLUMNS
 
         self.setWindowTitle('Results Plotter')
@@ -51,9 +51,9 @@ class PlotterWindow(QtGui.QMainWindow):
         vbox = QtGui.QVBoxLayout(self.main)
         vbox.setSpacing(0)
 
-        hbox1 = QtGui.QHBoxLayout()
-        hbox1.setSpacing(6)
-        hbox1.setContentsMargins(-1, 6, -1, -1)        
+        hbox = QtGui.QHBoxLayout()
+        hbox.setSpacing(6)
+        hbox.setContentsMargins(-1, 6, -1, -1)
 
         file_label = QtGui.QLabel(self.main)
         file_label.setText('Data Filename:')
@@ -61,11 +61,11 @@ class PlotterWindow(QtGui.QMainWindow):
         self.file = QtGui.QLineEdit(self.main)
         self.file.setText(plotter.results.data_filename)
 
-        hbox1.addWidget(file_label)
-        hbox1.addWidget(self.file)
-        vbox.addLayout(hbox1)
+        hbox.addWidget(file_label)
+        hbox.addWidget(self.file)
+        vbox.addLayout(hbox)
 
-        self.plot_widget = PlotWidget(columns, check_status=False)
+        self.plot_widget = PlotWidget(columns, refresh_time=self.refresh_time, check_status=False)
         self.plot = self.plot_widget.plot
 
         vbox.addWidget(self.plot_widget)
@@ -76,7 +76,7 @@ class PlotterWindow(QtGui.QMainWindow):
         self.resize(800, 600)
 
         self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
-            pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
+                                  pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
         self.plot.addItem(self.curve)
 
         self.plot_widget.updated.connect(self.check_stop)
@@ -85,7 +85,7 @@ class PlotterWindow(QtGui.QMainWindow):
         log.info("Quitting the Plotter")
         self.close()
         self.plotter.stop()
-    
+
     def check_stop(self):
         """ Checks if the Plotter should stop and exits the Qt main loop if so
         """
@@ -101,8 +101,9 @@ class ManagedWindow(QtGui.QMainWindow):
     """
     EDITOR = 'gedit'
 
-    def __init__(self, procedure_class, inputs=[], displays=[], x_axis=None, y_axis=None, log_channel='', log_level=logging.INFO, parent=None):
-        super(ManagedWindow, self).__init__(parent=parent)
+    def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
+                 log_channel='', log_level=logging.INFO, parent=None):
+        super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
         self.procedure_class = procedure_class
@@ -118,7 +119,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def _setup_ui(self):
         self.log_widget = LogWidget()
-        self.log.addHandler(self.log_widget.handler) # needs to be in Qt context?
+        self.log.addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.info("ManagedWindow connected to logging")
 
         self.queue_button = QtGui.QPushButton('Queue', self)
@@ -133,7 +134,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
-            self.displays, 
+            self.displays,
             [self.x_axis, self.y_axis],
             parent=self
         )
@@ -142,7 +143,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.browser_widget.clear_button.clicked.connect(self.clear_experiments)
         self.browser_widget.open_button.clicked.connect(self.open_experiment)
         self.browser = self.browser_widget.browser
-        
+
         self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
@@ -218,10 +219,10 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
-        
+
         if item is not None:
             experiment = self.manager.experiments.with_browser_item(item)
-        
+
             menu = QtGui.QMenu(self)
 
             # Open
@@ -230,7 +231,7 @@ class ManagedWindow(QtGui.QMainWindow):
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
-            
+
             # Change Color
             action_change_color = QtGui.QAction(menu)
             action_change_color.setText("Change Color")
@@ -242,7 +243,7 @@ class ManagedWindow(QtGui.QMainWindow):
             action_remove = QtGui.QAction(menu)
             action_remove.setText("Remove Graph")
             if self.manager.is_running():
-                if self.manager.running_experiment() == experiment: # Experiment running
+                if self.manager.running_experiment() == experiment:  # Experiment running
                     action_remove.setEnabled(False)
             action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
             menu.addAction(action_remove)
@@ -257,8 +258,9 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def remove_experiment(self, experiment):
         reply = QtGui.QMessageBox.question(self, 'Remove Graph',
-            "Are you sure you want to remove the graph?", QtGui.QMessageBox.Yes | 
-            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+                                           "Are you sure you want to remove the graph?",
+                                           QtGui.QMessageBox.Yes |
+                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             self.manager.remove(experiment)
 
@@ -281,10 +283,11 @@ class ManagedWindow(QtGui.QMainWindow):
         dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
         if dialog.exec_():
             filenames = dialog.selectedFiles()
-            for filename in map(str,filenames):
+            for filename in map(str, filenames):
                 if filename in self.manager.experiments:
-                    QtGui.QMessageBox.warning(self, "Load Error", 
-                            "The file %s cannot be opened twice." % os.path.basename(filename))   
+                    QtGui.QMessageBox.warning(self, "Load Error",
+                                              "The file %s cannot be opened twice." % os.path.basename(
+                                                  filename))
                 elif filename == '':
                     return
                 else:
@@ -384,5 +387,5 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def finished(self, experiment):
         if not self.manager.experiments.has_next():
-            self.abort_button.setEnabled(False) 
+            self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)

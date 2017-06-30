@@ -23,19 +23,19 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-from pymeasure.experiment import Procedure
-from .Qt import QtCore, QtGui
 
 from os.path import basename
 
+from .Qt import QtCore, QtGui
+from ..experiment import Procedure
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 
 class BrowserItem(QtGui.QTreeWidgetItem):
-
     def __init__(self, results, curve, parent=None):
-        super(BrowserItem, self).__init__(parent)
+        super().__init__(parent)
 
         pixelmap = QtGui.QPixmap(24, 24)
         pixelmap.fill(curve.opts['pen'].color())
@@ -87,7 +87,7 @@ class Browser(QtGui.QTreeWidget):
 
     def __init__(self, procedure_class, display_parameters,
                  measured_quantities, sort_by_filename=False, parent=None):
-        super(Browser, self).__init__(parent)
+        super().__init__(parent)
         self.display_parameters = display_parameters
         self.procedure_class = procedure_class
         self.measured_quantities = measured_quantities
@@ -125,7 +125,7 @@ class Browser(QtGui.QTreeWidget):
         item = experiment.browser_item
         for i, column in enumerate(self.display_parameters):
             if column in experiment_parameter_names:
-                item.setText(i+4, str(experiment_parameters[column]))
+                item.setText(i + 4, str(experiment_parameters[column]))
 
         self.addTopLevelItem(item)
         self.setItemWidget(item, 2, item.progressbar)

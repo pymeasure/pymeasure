@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
-from .parameters import Parameter, Measurable
 import logging
+
+from .parameters import Parameter, Measurable
+
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
 
@@ -49,6 +51,7 @@ class Procedure(object):
     """
 
     DATA_COLUMNS = []
+    MEASURE = {}
     FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
 
     _parameters = {}
@@ -59,24 +62,25 @@ class Procedure(object):
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
-                log.info('Setting parameter %s to %s' %(key, kwargs[key]))
+                log.info('Setting parameter %s to %s' % (key, kwargs[key]))
         self.gen_measurement()
 
     def gen_measurement(self):
-        '''Create MEASURE and DATA_COLUMNS variables for get_datapoint method.
-        '''
-        # TODO: Refactor measurables implementation to be consistent with parameters
+        """Create MEASURE and DATA_COLUMNS variables for get_datapoint method."""
+        # TODO: Refactor measurable-s implementation to be consistent with parameters
+
         self.MEASURE = {}
         for item in dir(self):
             parameter = getattr(self, item)
             if isinstance(parameter, Measurable):
                 if parameter.measure:
                     self.MEASURE.update({parameter.name: item})
-        if self.DATA_COLUMNS == []:
+
+        if not self.DATA_COLUMNS:
             self.DATA_COLUMNS = Measurable.DATA_COLUMNS
 
     def get_datapoint(self):
-        data = {key:getattr(self,self.MEASURE[key]).value for key in self.MEASURE}
+        data = {key: getattr(self, self.MEASURE[key]).value for key in self.MEASURE}
         return data
 
     def measure(self):
@@ -167,7 +171,7 @@ class Procedure(object):
             else:
                 if except_missing:
                     raise NameError("Parameter '%s' does not belong to '%s'" % (
-                            name, repr(self)))
+                        name, repr(self)))
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement
@@ -187,6 +191,12 @@ class Procedure(object):
         """
         pass
 
+    def emit(self, topic, record):
+        raise NotImplementedError('should be monkey patched by a worker')
+
+    def should_stop(self):
+        raise NotImplementedError('should be monkey patched by a worker')
+
     def __str__(self):
         result = repr(self) + "\n"
         for parameter in self._parameters.items():
@@ -200,7 +210,8 @@ class UnknownProcedure(Procedure):
     """
 
     def __init__(self, parameters):
+        super().__init__()
         self._parameters = parameters
 
     def startup(self):
-        raise Exception("UnknownProcedure can not be run")
+        raise NotImplementedError("UnknownProcedure can not be run")

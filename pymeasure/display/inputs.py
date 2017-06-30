@@ -22,16 +22,24 @@
 # THE SOFTWARE.
 #
 
-from .Qt import QtCore, QtGui
+import logging
+
 import re
+
+from .Qt import QtCore, QtGui
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Input(QtCore.QObject):
     """ Takes a Parameter object in the constructor and has a
     parameter method
-    """ 
-    
+    """
+
     def __init__(self, parameter):
+        super().__init__()
+        self._parameter = None
         self.set_parameter(parameter)
 
     def set_parameter(self, parameter):
@@ -50,9 +58,8 @@ class Input(QtCore.QObject):
 
 
 class StringInput(QtGui.QLineEdit, Input):
-    
     def __init__(self, parameter, parent=None):
-        QtGui.QLineEdit.__init__(self, parent=parent)
+        QtGui.QLineEdit.__init__(self, parent)
         Input.__init__(self, parameter)
         if self._parameter.default:
             self.setText(self._parameter.default)
@@ -66,9 +73,8 @@ class StringInput(QtGui.QLineEdit, Input):
 
 
 class FloatInput(QtGui.QDoubleSpinBox, Input):
-    
     def __init__(self, parameter, parent=None):
-        QtGui.QDoubleSpinBox.__init__(self, parent=parent)
+        QtGui.QDoubleSpinBox.__init__(self, parent)
         Input.__init__(self, parameter)
         self.setMinimum(self._parameter.minimum)
         self.setMaximum(self._parameter.maximum)
@@ -87,9 +93,8 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
 
 
 class IntegerInput(QtGui.QSpinBox, Input):
-    
     def __init__(self, parameter, parent=None):
-        QtGui.QSpinBox.__init__(self, parent=parent)
+        QtGui.QSpinBox.__init__(self, parent)
         Input.__init__(self, parameter)
         self.setMinimum(self._parameter.minimum)
         self.setMaximum(self._parameter.maximum)
@@ -107,20 +112,19 @@ class IntegerInput(QtGui.QSpinBox, Input):
         self._parameter.value = self.value()
 
 
-class BooleanInput():
+class BooleanInput(object):
     # TODO: Implement this class
     pass
 
 
-class ListInput():
+class ListInput(object):
     # TODO: Implement this class
     pass
 
 
 class ScientificInput(QtGui.QDoubleSpinBox, Input):
-
     def __init__(self, parameter, parent=None):
-        QtGui.QDoubleSpinBox.__init__(self, parent=parent)
+        QtGui.QDoubleSpinBox.__init__(self, parent)
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
@@ -146,7 +150,7 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
         if self._parameter.units:
             text = text[:-(len(self._parameter.units) + 1)]
             result = self.validator.validate(text, pos)
-            return (result[0], result[1] + " %s" % self._parameter.units, result[2])
+            return result[0], result[1] + " %s" % self._parameter.units, result[2]
         else:
             return self.validator.validate(text, pos)
 

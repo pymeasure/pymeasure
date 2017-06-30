@@ -22,15 +22,19 @@
 # THE SOFTWARE.
 #
 
-from .adapter import Adapter
+import logging
 
+import copy
 import visa
 import numpy as np
-import copy
-import logging
+
+from .adapter import Adapter
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
+# noinspection PyPep8Naming,PyUnresolvedReferences
 class VISAAdapter(Adapter):
     """ Adapter class for the VISA library using PyVISA to communicate
     to instruments. Inherit from either class VISAAdapter14 or VISAAdapter15.
@@ -38,11 +42,14 @@ class VISAAdapter(Adapter):
     :param resource: VISA resource name that identifies the address
     :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
     """
+
     def __init__(self, resourceName, **kwargs):
-        #Check PyVisa version
+        # Check PyVisa version
         version = float(self.version)
         if version < 1.7:
-            raise NotImplementedError("PyVisa {} is no longer supported. Please upgrade to version 1.8 or later.".format(version))
+            raise NotImplementedError(
+                "PyVisa {} is no longer supported. Please upgrade to version 1.8 or later.".format(
+                    version))
 
         if isinstance(resourceName, int):
             resourceName = "GPIB0::%d::INSTR" % resourceName
@@ -57,9 +64,10 @@ class VISAAdapter(Adapter):
             if key not in safeKeywords:
                 kwargs.pop(key)
         self.connection = self.manager.get_instrument(
-                                resourceName,
-                                **kwargs
-                          )
+            resourceName,
+            **kwargs
+        )
+
     @property
     def version(self):
         """ The string of the PyVISA version in use
@@ -119,9 +127,9 @@ class VISAAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def config(self, is_binary = False, datatype = 'str',
-                    container = np.array, converter = 's',
-                    separator = ',', is_big_endian = False):
+    def config(self, is_binary=False, datatype='str',
+               container=np.array, converter='s',
+               separator=',', is_big_endian=False):
         """ Configurate the format of data transfer to and from the instrument.
 
         :param is_binary: If True, data is in binary format, otherwise ASCII.
@@ -132,12 +140,11 @@ class VISAAdapter(Adapter):
         :param is_big_endian: Endianness.
         """
         self.connection.values_format.is_binary = is_binary
-        self.connection.values_format.datatype  = datatype
+        self.connection.values_format.datatype = datatype
         self.connection.values_format.container = container
         self.connection.values_format.converter = converter
         self.connection.values_format.separator = separator
         self.connection.values_format.is_big_endian = is_big_endian
-
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
@@ -145,4 +152,4 @@ class VISAAdapter(Adapter):
         :param timeout: Timeout duration in seconds
         :param delay: Time delay between checking SRQ in seconds
         """
-        self.connection.wait_for_srq(timeout*1000)
+        self.connection.wait_for_srq(timeout * 1000)

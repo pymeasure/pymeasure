@@ -26,16 +26,16 @@ import pytest
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
-def test_fake_instrument():
 
+def test_fake_instrument():
     fake = FakeInstrument()
     fake.write("Testing")
     assert fake.read() == "Testing"
     assert fake.read() == ""
     assert fake.values("5") == [5]
 
-def test_control_doc():
 
+def test_control_doc():
     doc = """ X property """
 
     class Fake(Instrument):
@@ -45,15 +45,15 @@ def test_control_doc():
 
     assert Fake.x.__doc__ == doc
 
+
 def test_control_validator():
-
     class Fake(FakeInstrument):
-
         x = Instrument.control(
-            "", "%d", "", 
+            "", "%d", "",
             validator=strict_discrete_set,
             values=range(10),
         )
+
     fake = Fake()
     fake.x = 5
     assert fake.read() == '5'
@@ -64,15 +64,14 @@ def test_control_validator():
 
 
 def test_control_validator_map():
-
     class Fake(FakeInstrument):
-
         x = Instrument.control(
-            "", "%d", "", 
+            "", "%d", "",
             validator=strict_discrete_set,
             values=[4, 5, 6, 7],
             map_values=True,
         )
+
     fake = Fake()
     fake.x = 5
     assert fake.read() == '1'
@@ -83,14 +82,14 @@ def test_control_validator_map():
 
 
 def test_control_dict_map():
-
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
-            values={5:1, 10:2, 20:3},
+            values={5: 1, 10: 2, 20: 3},
             map_values=True,
         )
+
     fake = Fake()
     fake.x = 5
     assert fake.read() == '1'
@@ -99,15 +98,16 @@ def test_control_dict_map():
     fake.x = 20
     assert fake.read() == '3'
 
-def test_control_dict_str_map():
 
+def test_control_dict_str_map():
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
-            values={'X':1, 'Y':2, 'Z':3},
+            values={'X': 1, 'Y': 2, 'Z': 3},
             map_values=True,
         )
+
     fake = Fake()
     fake.x = 'X'
     assert fake.read() == '1'
@@ -116,15 +116,15 @@ def test_control_dict_str_map():
     fake.x = 'Z'
     assert fake.read() == '3'
 
+
 def test_control_process():
-    
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_range,
             values=[5e-3, 120e-3],
-            get_process=lambda v: v*1e-3,
-            set_process=lambda v: v*1e3,
+            get_process=lambda v: v * 1e-3,
+            set_process=lambda v: v * 1e3,
         )
 
     fake = Fake()
@@ -133,8 +133,8 @@ def test_control_process():
     fake.x = 30e-3
     assert fake.x == 30e-3
 
+
 def test_control_get_process():
-    
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "JUNK%d", "",
@@ -149,13 +149,15 @@ def test_control_get_process():
     fake.x = 5
     assert fake.x == 5
 
+
 def test_measurement_dict_str_map():
     class Fake(FakeInstrument):
         x = Instrument.measurement(
             "", "",
-            values={'X':1, 'Y':2, 'Z':3},
+            values={'X': 1, 'Y': 2, 'Z': 3},
             map_values=True,
         )
+
     fake = Fake()
     fake.write('1')
     assert fake.x == 'X'

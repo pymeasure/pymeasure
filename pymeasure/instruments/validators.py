@@ -32,12 +32,13 @@ def strict_range(value, values):
     :param values: A range of values (range, list, etc.)
     :raises: ValueError if the value is out of the range
     """
-    if value <= max(values) and value >= min(values):
+    if min(values) <= value <= max(values):
         return value
     else:
         raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
             value, min(values), max(values)
         ))
+
 
 def strict_discrete_set(value, values):
     """ Provides a validator function that returns the value
@@ -54,6 +55,7 @@ def strict_discrete_set(value, values):
             value, values
         ))
 
+
 def truncated_range(value, values):
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the closest
@@ -62,12 +64,13 @@ def truncated_range(value, values):
     :param value: A value to test
     :param values: A set of values that are valid
     """
-    if value <= max(values) and value >= min(values):
+    if min(values) <= value <= max(values):
         return value
     elif value > max(values):
         return max(values)
     else:
         return min(values)
+
 
 def truncated_discrete_set(value, values):
     """ Provides a validator function that returns the value
@@ -83,13 +86,16 @@ def truncated_discrete_set(value, values):
     for v in values:
         if value <= v:
             return v
-    return v
+
+    return values[-1]
+
 
 def joined_validators(*validators):
     """ Join a list of validators together as a single.  Expects a list of validator functions and values.
 
     :param validators: an iterable of other validators
     """
+
     def validate(value, values):
         for validator, vals in zip(validators, values):
             try:
@@ -97,4 +103,18 @@ def joined_validators(*validators):
             except (ValueError, TypeError):
                 pass
         raise ValueError("Value of {} not in chained validator set".format(value))
+
     return validate
+
+
+def discreteTruncate(number, discreteSet):
+    """ Truncates the number to the closest element in the positive discrete set.
+    Returns False if the number is larger than the maximum value or negative.
+    """
+    if number < 0:
+        return False
+    discreteSet.sort()
+    for item in discreteSet:
+        if number <= item:
+            return item
+    return False

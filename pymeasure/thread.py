@@ -22,7 +22,12 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from threading import Thread, Event
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class StoppableThread(Thread):
@@ -31,9 +36,9 @@ class StoppableThread(Thread):
     """
 
     def __init__(self):
+        super().__init__()
         self._should_stop = Event()
         self._should_stop.clear()
-        super(StoppableThread, self).__init__()
 
     def join(self, timeout=0):
         """ Joins the current thread and forces it to stop after
@@ -44,7 +49,7 @@ class StoppableThread(Thread):
         self._should_stop.wait(timeout)
         if not self.should_stop():
             self.stop()
-        super(StoppableThread, self).join()
+        super().join()
 
     def stop(self):
         self._should_stop.set()

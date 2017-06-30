@@ -22,11 +22,14 @@
 # THE SOFTWARE.
 #
 
+import time
+from multiprocessing import Queue
+
 from pymeasure.experiment.listeners import Listener, Recorder
 from pymeasure.experiment.results import Results
-from multiprocessing import Queue
-from time import sleep
 
+# TODO: Make results_for_testing.csv
+# TODO: Make procedure_for_testing.py
 
 """
 def test_recorder_stop():
@@ -35,6 +38,3 @@ def test_recorder_stop():
     r = Recorder(d, q)
     r.
 """
-
-# TODO: Make results_for_testing.csv
-# TODO: Make procedure_for_testing.py

@@ -29,6 +29,7 @@ from pymeasure.instruments.validators import (
     joined_validators
 )
 
+
 def test_strict_range():
     assert strict_range(5, range(10)) == 5
     assert strict_range(5.1, range(10)) == 5.1
@@ -43,17 +44,20 @@ def test_strict_discrete_set():
     with pytest.raises(ValueError) as e_info:
         strict_discrete_set(20, range(10))
 
+
 def test_truncated_range():
     assert truncated_range(5, range(10)) == 5
     assert truncated_range(5.1, range(10)) == 5.1
     assert truncated_range(-10, range(10)) == 0
     assert truncated_range(20, range(10)) == 9
 
+
 def test_truncated_discrete_set():
     assert truncated_discrete_set(5, range(10)) == 5
     assert truncated_discrete_set(5.1, range(10)) == 6
     assert truncated_discrete_set(11, range(10)) == 9
     assert truncated_discrete_set(-10, range(10)) == 0
+
 
 def test_joined_validators():
     tst_validator = joined_validators(strict_discrete_set, strict_range)

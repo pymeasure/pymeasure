@@ -73,8 +73,8 @@ class Adapter(object):
         for i, result in enumerate(results):
             try:
                 results[i] = cast(result)
-            except:
-                pass # Keep as string
+            except Exception:
+                pass  # Keep as string
         return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):

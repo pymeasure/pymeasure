@@ -25,6 +25,13 @@ environment:
       #PYTHON_ARCH: "64"
       PLATFORM: x64
 
+    - PYTHON_VERSION: "3.6"
+      MINICONDA: C:\Miniconda36-x64
+      #PYTHON: "C:\\Python36-x64"
+      #DISTUTILS_USE_SDK: "1"
+      #PYTHON_ARCH: "64"
+      PLATFORM: x64
+
     # 32-bit
     - PYTHON_VERSION: "3.4"
       MINICONDA: C:\Miniconda3
@@ -34,6 +41,11 @@ environment:
     - PYTHON_VERSION: "3.5"
       MINICONDA: C:\Miniconda35
       #PYTHON: "C:\\Python35"
+      PLATFORM: x86
+
+    - PYTHON_VERSION: "3.6"
+      MINICONDA: C:\Miniconda36
+      #PYTHON: "C:\\Python36"
       PLATFORM: x86
 
 skip_tags: true
