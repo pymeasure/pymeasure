@@ -23,12 +23,13 @@
 #
 
 import pytest
-from pymeasure.experiment.workers import Worker
-from pymeasure.experiment.results import Results
 import os
 import tempfile
 from time import sleep
 from importlib.machinery import SourceFileLoader
+
+from pymeasure.experiment.workers import Worker
+from pymeasure.experiment.results import Results
 
 # Load the procedure, without it being in a module
 data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
@@ -47,6 +48,7 @@ def test_procedure():
     assert p.iterations == 100
     assert hasattr(p, 'execute')
 
+
 def test_worker_stop():
     p = procedure.TestProcedure()
     f = tempfile.mktemp()
@@ -57,6 +59,7 @@ def test_worker_stop():
     assert w.should_stop()
     w.join()
 
+
 @slow
 def test_worker_finish():
     p = procedure.TestProcedure()
@@ -66,4 +69,4 @@ def test_worker_finish():
     w.start()
     w.join()
     sleep(2)
-    assert w.is_alive() == False
+    assert not w.is_alive()

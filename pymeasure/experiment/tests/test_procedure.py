@@ -23,6 +23,7 @@
 #
 
 import pytest
+
 from pymeasure.experiment.procedure import Procedure
 from pymeasure.experiment.parameters import Parameter
 
@@ -39,6 +40,5 @@ def test_parameters():
     objs = p.parameter_objects()
     assert 'x' in objs
     assert objs['x'].value == p.x
-
 
 # TODO: Add tests for measureables

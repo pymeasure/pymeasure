@@ -29,11 +29,12 @@ def test_stopping():
     t = StoppableThread()
     t.start()
     t.stop()
-    assert t.should_stop() == True
+    assert t.should_stop() is True
     t.join()
+
 
 def test_joining():
     t = StoppableThread()
     t.start()
     t.join()
-    assert t.should_stop() == True
+    assert t.should_stop() is True

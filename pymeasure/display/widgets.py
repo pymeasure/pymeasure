@@ -23,22 +23,22 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-from .Qt import QtCore, QtGui
 
 import os
 import re
 import pyqtgraph as pg
-import numpy as np
 
-from .curves import ResultsCurve, Crosshairs
 from .browser import Browser
-from ..experiment.results import Results
-from ..experiment import parameters, Procedure
-from . import inputs
+from .curves import ResultsCurve, Crosshairs
+from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from .log import LogHandler
+from .Qt import QtCore, QtGui
+from ..experiment import parameters, Procedure
+from ..experiment.results import Results
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 
 class PlotFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -52,7 +52,7 @@ class PlotFrame(QtGui.QFrame):
     y_axis_changed = QtCore.QSignal(str)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
-        super(PlotFrame, self).__init__(parent=parent)
+        super().__init__(parent)
         self.refresh_time = refresh_time
         self.check_status = check_status
         self._setup_ui()
@@ -73,7 +73,8 @@ class PlotFrame(QtGui.QFrame):
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
         self.coordinates.setStyleSheet("background: #fff")
         self.coordinates.setText("")
-        self.coordinates.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.coordinates.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
 
         vbox.addWidget(self.plot_widget)
         vbox.addWidget(self.coordinates)
@@ -82,14 +83,14 @@ class PlotFrame(QtGui.QFrame):
         self.plot = self.plot_widget.getPlotItem()
 
         self.crosshairs = Crosshairs(self.plot,
-            pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
+                                     pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_curves)
         self.timer.timeout.connect(self.crosshairs.update)
         self.timer.timeout.connect(self.updated)
-        self.timer.start(self.refresh_time*1e3)
+        self.timer.start(int(self.refresh_time * 1e3))
 
     def update_coordinates(self, x, y):
         self.coordinates.setText("(%g, %g)" % (x, y))
@@ -141,8 +142,9 @@ class PlotWidget(QtGui.QWidget):
     of the data to be dynamically choosen
     """
 
-    def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
-        super(PlotWidget, self).__init__(parent=parent)
+    def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True,
+                 parent=None):
+        super().__init__(parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -162,7 +164,7 @@ class PlotWidget(QtGui.QWidget):
         self.columns_y_label = QtGui.QLabel(self)
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_y_label.setText('Y Axis:')
-        
+
         self.columns_x = QtGui.QComboBox(self)
         self.columns_y = QtGui.QComboBox(self)
         for column in self.columns:
@@ -206,11 +208,11 @@ class PlotWidget(QtGui.QWidget):
             kwargs['pen'] = pg.mkPen(color=color, width=2)
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
-        curve = ResultsCurve(results, 
-            x=self.plot_frame.x_axis,
-            y=self.plot_frame.y_axis,
-            **kwargs
-        )
+        curve = ResultsCurve(results,
+                             x=self.plot_frame.x_axis,
+                             y=self.plot_frame.y_axis,
+                             **kwargs
+                             )
         curve.setSymbol(None)
         curve.setSymbolBrush(None)
         return curve
@@ -225,9 +227,8 @@ class PlotWidget(QtGui.QWidget):
 
 
 class BrowserWidget(QtGui.QWidget):
-
     def __init__(self, *args, parent=None):
-        super(BrowserWidget, self).__init__(parent=parent)
+        super().__init__(parent)
         self.browser_args = args
         self._setup_ui()
         self._layout()
@@ -241,7 +242,7 @@ class BrowserWidget(QtGui.QWidget):
         self.show_button = QtGui.QPushButton('Show all', self)
         self.show_button.setEnabled(False)
         self.open_button = QtGui.QPushButton('Open', self)
-        self.open_button.setEnabled(True)        
+        self.open_button.setEnabled(True)
 
     def _layout(self):
         vbox = QtGui.QVBoxLayout(self)
@@ -258,19 +259,18 @@ class BrowserWidget(QtGui.QWidget):
 
         vbox.addLayout(hbox)
         vbox.addWidget(self.browser)
-        self.setLayout(vbox) 
+        self.setLayout(vbox)
 
 
 class InputsWidget(QtGui.QWidget):
-
-    def __init__(self, procedure_class, inputs=[], parent=None):
-        super(InputsWidget, self).__init__(parent=parent)
+    def __init__(self, procedure_class, inputs=(), parent=None):
+        super().__init__(parent)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
         self._inputs = inputs
         self._setup_ui()
         self._layout()
-        
+
     def _setup_ui(self):
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
@@ -279,19 +279,21 @@ class InputsWidget(QtGui.QWidget):
                 element = parameter.ui_class(parameter)
 
             elif isinstance(parameter, parameters.FloatParameter):
-                element = inputs.ScientificInput(parameter)
+                element = ScientificInput(parameter)
 
             elif isinstance(parameter, parameters.IntegerParameter):
-                element = inputs.IntegerInput(parameter)
+                element = IntegerInput(parameter)
 
             elif isinstance(parameter, parameters.BooleanParameter):
-                element = inputs.BooleanInput(parameter)
+                # noinspection PyArgumentList
+                element = BooleanInput(parameter)  # TODO not implemented yet
 
             elif isinstance(parameter, parameters.ListParameter):
-                element = inputs.ListInput(parameter)
+                # noinspection PyArgumentList
+                element = ListInput(parameter)  # TODO not implemented yet
 
             elif isinstance(parameter, parameters.Parameter):
-                element = inputs.StringInput(parameter)
+                element = StringInput(parameter)
 
             setattr(self, name, element)
 
@@ -309,15 +311,12 @@ class InputsWidget(QtGui.QWidget):
         self.setLayout(vbox)
 
     def set_parameters(self, parameter_objects):
-        """
-        """
         for name in self._inputs:
             element = getattr(self, name)
             element.set_parameter(parameter_objects[name])
 
     def get_procedure(self):
-        """ Returns the current procedure
-        """
+        """ Returns the current procedure """
         self._procedure = self._procedure_class()
         parameter_values = {}
         for name in self._inputs:
@@ -328,9 +327,8 @@ class InputsWidget(QtGui.QWidget):
 
 
 class LogWidget(QtGui.QWidget):
-
     def __init__(self, parent=None):
-        super(LogWidget, self).__init__(parent=parent)
+        super().__init__(parent)
         self._setup_ui()
         self._layout()
 
@@ -353,9 +351,8 @@ class LogWidget(QtGui.QWidget):
 
 
 class ResultsDialog(QtGui.QFileDialog):
-
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
-        super(ResultsDialog, self).__init__(parent=parent)
+        super().__init__(parent)
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
         self._setup_ui()
@@ -370,9 +367,9 @@ class ResultsDialog(QtGui.QFileDialog):
         self.plot_widget = PlotWidget(self.columns, self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
         self.preview_param = QtGui.QTreeWidget()
-        param_header = QtGui.QTreeWidgetItem(["Name","Value"])
+        param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
         self.preview_param.setHeaderItem(param_header)
-        self.preview_param.setColumnWidth(0,150)
+        self.preview_param.setColumnWidth(0, 150)
         self.preview_param.setAlternatingRowColors(True)
 
         vbox.addWidget(self.plot_widget)
@@ -381,8 +378,8 @@ class ResultsDialog(QtGui.QFileDialog):
         param_vbox_widget.setLayout(param_vbox)
         preview_tab.addTab(vbox_widget, "Plot Preview")
         preview_tab.addTab(param_vbox_widget, "Run Parameters")
-        self.layout().addWidget(preview_tab,0,5,4,1)
-        self.layout().setColumnStretch(5,1)
+        self.layout().addWidget(preview_tab, 0, 5, 4, 1)
+        self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
 
@@ -400,11 +397,11 @@ class ResultsDialog(QtGui.QFileDialog):
                 raise e
 
             curve = ResultsCurve(results,
-                x=self.plot_widget.plot_frame.x_axis,
-                y=self.plot_widget.plot_frame.y_axis,
-                pen=pg.mkPen(color=(255,0,0), width=1.75),
-                antialias=True
-            )
+                                 x=self.plot_widget.plot_frame.x_axis,
+                                 y=self.plot_widget.plot_frame.y_axis,
+                                 pen=pg.mkPen(color=(255, 0, 0), width=1.75),
+                                 antialias=True
+                                 )
             curve.update()
 
             self.plot.addItem(curve)

@@ -5,5 +5,5 @@ pytest==2.9.1
 python-dateutil==2.5.2
 pytz==2016.3
 six==1.10.0
-PyVISA==1.8
+pyvisa==1.8
 pyserial==2.7

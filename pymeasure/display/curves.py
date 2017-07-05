@@ -22,10 +22,15 @@
 # THE SOFTWARE.
 #
 
-from .Qt import QtCore, QtGui
+import logging
 
 import pyqtgraph as pg
 import numpy as np
+
+from .Qt import QtCore
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class ResultsCurve(pg.PlotDataItem):
@@ -37,7 +42,7 @@ class ResultsCurve(pg.PlotDataItem):
 
     def __init__(self, results, x, y, xerr=None, yerr=None,
                  force_reload=False, **kwargs):
-        pg.PlotDataItem.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.results = results
         self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
@@ -48,7 +53,6 @@ class ResultsCurve(pg.PlotDataItem):
 
     def update(self):
         """Updates the data by polling the results"""
-
         if self.force_reload:
             self.results.reload()
         data = self.results.data  # get the current snapshot
@@ -59,14 +63,15 @@ class ResultsCurve(pg.PlotDataItem):
         # Set error bars if enabled at construction
         if hasattr(self, '_errorBars'):
             self._errorBars.setOpts(
-                        x=data[self.x],
-                        y=data[self.y],
-                        top=data[self.yerr],
-                        bottom=data[self.yerr],
-                        left=data[self.xerr],
-                        right=data[self.yerr],
-                        beam=max(data[self.xerr], data[self.yerr])
-                    )
+                x=data[self.x],
+                y=data[self.y],
+                top=data[self.yerr],
+                bottom=data[self.yerr],
+                left=data[self.xerr],
+                right=data[self.yerr],
+                beam=max(data[self.xerr], data[self.yerr])
+            )
+
 
 # TODO: Add method for changing x and y
 
@@ -79,7 +84,7 @@ class BufferCurve(pg.PlotDataItem):
     data_updated = QtCore.QSignal()
 
     def __init__(self, errors=False, **kwargs):
-        pg.PlotDataItem.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         if errors:
             self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
         self._buffer = None
@@ -107,14 +112,14 @@ class BufferCurve(pg.PlotDataItem):
         if hasattr(self, '_errorBars'):
             self._buffer[self._ptr, 2:] = [xError, yError]
             self._errorBars.setOpts(
-                        x=self._buffer[:self._ptr, 0],
-                        y=self._buffer[:self._ptr, 1],
-                        top=self._buffer[:self._ptr, 3],
-                        bottom=self._buffer[:self._ptr, 3],
-                        left=self._buffer[:self._ptr, 2],
-                        right=self._buffer[:self._ptr, 2],
-                        beam=np.max(self._buffer[:self._ptr, 2:])
-                    )
+                x=self._buffer[:self._ptr, 0],
+                y=self._buffer[:self._ptr, 1],
+                top=self._buffer[:self._ptr, 3],
+                bottom=self._buffer[:self._ptr, 3],
+                left=self._buffer[:self._ptr, 2],
+                right=self._buffer[:self._ptr, 2],
+                beam=np.max(self._buffer[:self._ptr, 2:])
+            )
 
         self._ptr += 1
         self.data_updated.emit()
@@ -133,7 +138,8 @@ class Crosshairs(QtCore.QObject):
         Example pen:
         pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
         """
-        QtCore.QObject.__init__(self)
+        super().__init__()
+
         self.vertical = pg.InfiniteLine(angle=90, movable=False, pen=pen)
         self.horizontal = pg.InfiniteLine(angle=0, movable=False, pen=pen)
         plot.addItem(self.vertical, ignoreBounds=True)
@@ -158,10 +164,10 @@ class Crosshairs(QtCore.QObject):
         the x and y values correspond to those on the display.
         """
         if self.position is not None:
-            mousePoint = self.plot.vb.mapSceneToView(self.position)
-            self.coordinates.emit(mousePoint.x(), mousePoint.y())
-            self.vertical.setPos(mousePoint.x())
-            self.horizontal.setPos(mousePoint.y())
+            mouse_point = self.plot.vb.mapSceneToView(self.position)
+            self.coordinates.emit(mouse_point.x(), mouse_point.y())
+            self.vertical.setPos(mouse_point.x())
+            self.horizontal.setPos(mouse_point.y())
 
     def mouseMoved(self, event=None):
         """ Updates the mouse position upon mouse movement """

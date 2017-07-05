@@ -23,39 +23,41 @@
 #
 
 import logging
+import time
+import traceback
 from logging.handlers import QueueHandler
+from multiprocessing import Queue
+
+from .listeners import Recorder
+from .procedure import Procedure
+from .results import Results
+from ..log import TopicQueueHandler
+from ..process import StoppableProcess
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:
     import zmq
-    from msgpack_numpy import dumps
+    import cloudpickle
 except ImportError:
-    log.warning("ZMQ and MsgPack are required for TCP communication")
-
-from traceback import format_exc
-from time import sleep
-
-from multiprocessing import Queue
-from pymeasure.process import StoppableProcess
-from .listeners import Recorder
-from .results import Results
-from .procedure import Procedure
-from ..log import TopicQueueHandler
-from pymeasure.log import file_log
+    zmq = None
+    cloudpickle = None
+    log.warning("ZMQ and cloudpickle are required for TCP communication")
 
 
 class Worker(StoppableProcess):
     """ Worker runs the procedure and emits information about
     the procedure and its status over a ZMQ TCP port. In a child
-    thread, a Recorder is run to write the results to 
+    thread, a Recorder is run to write the results to
     """
 
     def __init__(self, results, log_queue=None, log_level=logging.INFO, port=None):
-        """ Constructs a Worker to perform the Procedure 
+        """ Constructs a Worker to perform the Procedure
         defined in the file at the filepath
         """
-        super(Worker, self).__init__()
+        super().__init__()
+
         self.port = port
         if not isinstance(results, Results):
             raise ValueError("Invalid Results object during Worker construction")
@@ -65,50 +67,71 @@ class Worker(StoppableProcess):
         self.procedure.check_parameters()
         self.procedure.status = Procedure.QUEUED
 
+        self.recorder = None
         self.recorder_queue = Queue()
+
         self.monitor_queue = Queue()
         if log_queue is None:
             log_queue = Queue()
         self.log_queue = log_queue
         self.log_level = log_level
 
+        self.context = None
+        self.publisher = None
+
     def join(self, timeout=0):
         try:
-            super(Worker, self).join(timeout)
+            super().join(timeout)
         except (KeyboardInterrupt, SystemExit):
             log.warning("User stopped Worker join prematurely")
             self.stop()
-            super(Worker, self).join(0)
+            super().join(0)
 
-    def emit(self, topic, data):
+    def emit(self, topic, record):
         """ Emits data of some topic over TCP """
-        if isinstance(topic, str):
-            topic = topic.encode()
-        log.debug("Emitting message: %s %s" % (topic, data))
+        log.debug("Emitting message: %s %s", topic, record)
+
         try:
-            self.publisher.send_multipart([topic, dumps(data)])
+            data = cloudpickle.dumps((topic, record))
+            self.publisher.send_multipart(data)
         except (NameError, AttributeError):
-            pass # No dumps defined
-        if topic == b'results':
-            self.recorder_queue.put(data)
-        elif topic == b'status' or topic == b'progress':
-            self.monitor_queue.put((topic.decode(), data))
+            pass  # No dumps defined
+        if topic == 'results':
+            self.recorder.handle(record)
+        elif topic == 'status' or topic == 'progress':
+            self.monitor_queue.put((topic.decode(), record))
+
+    def handle_abort(self):
+        log.exception("User stopped Worker execution prematurely")
+        self.update_status(Procedure.ABORTED)
+
+    def handle_error(self):
+        log.exception("Worker caught an error on %r", self.procedure)
+        traceback_str = traceback.format_exc()
+        self.emit('error', traceback_str)
+        self.update_status(Procedure.FAILED)
 
     def update_status(self, status):
         self.procedure.status = status
         self.emit('status', status)
 
-    def handle_exception(self, exception):
-        log.error("Worker caught error in %r" % self.procedure)
-        log.exception(exception)
-        traceback_str = format_exc()
-        self.emit('error', traceback_str)
+    def shutdown(self):
+        self.procedure.shutdown()
+
+        if self.should_stop() and self.procedure.status == Procedure.RUNNING:
+            self.update_status(Procedure.ABORTED)
+        elif self.procedure.status == Procedure.RUNNING:
+            self.update_status(Procedure.FINISHED)
+            self.emit('progress', 100.)
+
+        self.recorder.enqueue_sentinel()
+        self.monitor_queue.put(None)
 
     def run(self):
         global log
         log = logging.getLogger()
         log.setLevel(self.log_level)
-        log.handlers = [] # Remove all other handlers
+        log.handlers = []  # Remove all other handlers
         log.addHandler(TopicQueueHandler(self.monitor_queue))
         log.addHandler(QueueHandler(self.log_queue))
         log.info("Worker process started")
@@ -129,49 +152,28 @@ class Worker(StoppableProcess):
                 self.publisher = self.context.socket(zmq.PUB)
                 self.publisher.bind('tcp://*:%d' % self.port)
                 log.info("Worker connected to tcp://*:%d" % self.port)
-                sleep(0.01)
-            except:
-                pass
+                time.sleep(0.01)
+            except Exception:
+                log.exception("couldn't connect to ZMQ context")
 
-        log.info("Worker started running an instance of %r" % (self.procedure.__class__.__name__))
+        log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
         self.update_status(Procedure.RUNNING)
         self.emit('progress', 0.)
-        # Try to run the startup method
+
         try:
             self.procedure.startup()
-        except Exception as e:
-            log.warning("Error in startup method caused Worker to stop prematurely")
-            self.handle_exception(e)
-            self.update_status(Procedure.FAILED)
-            self.recorder_queue.put(None)
-            self.monitor_queue.put(None)
-            self.stop()
-            del self.recorder
-            return
-        # If all has gone well, run the execute method
-        try:
             self.procedure.execute()
         except (KeyboardInterrupt, SystemExit):
-            log.warning("User stopped Worker execution prematurely")
-            self.update_status(Procedure.FAILED)
-        except Exception as e:
-            self.handle_exception(e)
-            self.update_status(Procedure.FAILED)
+            self.handle_abort()
+        except Exception:
+            self.handle_error()
         finally:
-            self.procedure.shutdown()
-            if self.should_stop() and self.procedure.status == Procedure.RUNNING:
-                self.update_status(Procedure.ABORTED)
-            if self.procedure.status == Procedure.RUNNING:
-                self.update_status(Procedure.FINISHED)
-                self.emit('progress', 100.)
-            self.recorder_queue.put(None)
-            self.monitor_queue.put(None)
+            self.shutdown()
             self.stop()
-            del self.recorder
 
     def __repr__(self):
         return "<%s(port=%s,procedure=%s,should_stop=%s)>" % (
-            self.__class__.__name__, self.port, 
-            self.procedure.__class__.__name__, 
+            self.__class__.__name__, self.port,
+            self.procedure.__class__.__name__,
             self.should_stop()
         )

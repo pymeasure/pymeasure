@@ -8,11 +8,17 @@ matrix:
     - os: linux
       env: PYTHON=3.5  CONDA_PY=35
       sudo: true
+    - os: linux
+      env: PYTHON=3.6  CONDA_PY=36
+      sudo: true
     - os: osx
       env: PYTHON=3.4  CONDA_PY=34
       sudo: false
     - os: osx
       env: PYTHON=3.5  CONDA_PY=35
+      sudo: false
+    - os: osx
+      env: PYTHON=3.6  CONDA_PY=36
       sudo: false
 
 # command to install dependencies

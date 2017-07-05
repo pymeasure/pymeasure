@@ -29,11 +29,12 @@ def test_stopping():
     p = StoppableProcess()
     p.start()
     p.stop()
-    assert p.should_stop() == True
+    assert p.should_stop() is True
     p.join()
+
 
 def test_joining():
     p = StoppableProcess()
     p.start()
     p.join()
-    assert p.should_stop() == True
+    assert p.should_stop() is True

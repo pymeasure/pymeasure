@@ -32,16 +32,26 @@ setup(
     packages=find_packages(),
     scripts=[],
     url='https://github.com/ralph-group/pymeasure',
-    download_url = 'https://github.com/ralph-group/pymeasure/tarball/v0.4.4',
+    download_url='https://github.com/ralph-group/pymeasure/tarball/v0.4.4',
     license='MIT License',
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
     install_requires=[
-        "Numpy >= 1.6.1",
+        "numpy >= 1.6.1",
         "pandas >= 0.14",
         "pyvisa >= 1.8",
         "pyserial >= 2.7",
         "pyqtgraph >= 0.9.10"
+    ],
+    extras_require={
+        'matplotlib': ['matplotlib >= 2.0.2'],
+        'tcp': [
+            'zmq >= 16.0.2',
+            'cloudpickle >= 0.3.1'
+        ]
+    },
+    tests_require=[
+        'pytest >= 2.9.1'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

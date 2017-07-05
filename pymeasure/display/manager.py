@@ -23,16 +23,16 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 from os.path import basename
-from time import sleep
 
-from pymeasure.experiment import Procedure
-from pymeasure.experiment.workers import Worker
-from .listeners import Monitor
 from .Qt import QtCore
+from .listeners import Monitor
+from ..experiment import Procedure
+from ..experiment.workers import Worker
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Experiment(QtCore.QObject):
@@ -40,14 +40,13 @@ class Experiment(QtCore.QObject):
     :class:`.Results`, and their display functionality. Its function
     is only a convenient container.
 
-    :param procedure: :class:`.Procedure` object
     :param results: :class:`.Results` object
     :param curve: :class:`.ResultsCurve` object
     :param browser_item: :class:`.BrowserItem` object
     """
 
     def __init__(self, results, curve, browser_item, parent=None):
-        super(Experiment, self).__init__(parent)
+        super().__init__(parent)
         self.results = results
         self.data_filename = self.results.data_filename
         self.procedure = self.results.procedure
@@ -61,6 +60,7 @@ class ExperimentQueue(QtCore.QObject):
     """
 
     def __init__(self):
+        super().__init__()
         self.queue = []
 
     def append(self, experiment):
@@ -95,15 +95,16 @@ class ExperimentQueue(QtCore.QObject):
         for experiment in self.queue:
             if experiment.procedure.status == Procedure.QUEUED:
                 return experiment
-        raise Exception("There are no queued experiments")
+        raise StopIteration("There are no queued experiments")
 
     def has_next(self):
         """ Returns True if another item is on the queue
         """
         try:
             self.next()
-        except:
+        except StopIteration:
             return False
+
         return True
 
     def with_browser_item(self, item):
@@ -131,14 +132,14 @@ class Manager(QtCore.QObject):
     log = QtCore.QSignal(object)
 
     def __init__(self, plot, browser, port=5888, log_level=logging.INFO, parent=None):
-        super(Manager, self).__init__(parent=parent)
+        super().__init__(parent)
 
         self.experiments = ExperimentQueue()
         self._worker = None
         self._running_experiment = None
         self._monitor = None
         self.log_level = log_level
-        
+
         self.plot = plot
         self.browser = browser
 
@@ -261,7 +262,7 @@ class Manager(QtCore.QObject):
         """ Resume processing of the queue.
         """
         self._start_on_add = True
-        self._continous = True
+        self._is_continuous = True
         self.next()
 
     def abort(self):
@@ -273,7 +274,7 @@ class Manager(QtCore.QObject):
                             "is running")
         else:
             self._start_on_add = False
-            self._continous = False
+            self._is_continuous = False
 
             self._worker.stop()
 

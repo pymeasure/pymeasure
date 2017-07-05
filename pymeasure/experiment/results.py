@@ -23,16 +23,18 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+
+import os
+import re
+from datetime import datetime
+
+import pandas as pd
 
 from .procedure import Procedure, UnknownProcedure
 from .parameters import Parameter
 
-import os
-from datetime import datetime
-import re
-import pandas as pd
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
@@ -86,15 +88,23 @@ class Results(object):
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
 
+        if isinstance(data_filename, (list, tuple)):
+            data_filenames, data_filename = data_filename, data_filename[0]
+        else:
+            data_filenames = [data_filename]
+
         self.data_filename = data_filename
+        self.data_filenames = data_filenames
+
         if os.path.exists(data_filename):  # Assume header is already written
             self.reload()
             self.procedure.status = Procedure.FINISHED
             # TODO: Correctly store and retrieve status
         else:
-            with open(data_filename, 'w') as f:
-                f.write(self.header())
-                f.write(self.labels())
+            for filename in self.data_filenames:
+                with open(filename, 'w') as f:
+                    f.write(self.header())
+                    f.write(self.labels())
             self._data = None
 
     def header(self):
@@ -135,8 +145,7 @@ class Results(object):
             data[key] = items[i]
         return data
 
-    @staticmethod
-    def parse_header(header, procedure_class=None):
+    def parse_header(self, header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
@@ -175,8 +184,8 @@ class Results(object):
                 raise ValueError("Header does not contain the Procedure class")
             try:
                 from importlib import import_module
-                module = import_module(procedure_module)
-                procedure_class = getattr(module, procedure_class)
+                procedure_module = import_module(procedure_module)
+                procedure_class = getattr(procedure_module, procedure_class)
                 procedure = procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
@@ -187,7 +196,7 @@ class Results(object):
         def units_found(parameter, units):
             return (hasattr(parameter, 'units') and
                     parameter.units is None and
-                    type(parameter) is Parameter and
+                    isinstance(parameter, Parameter) and
                     units is not None)
 
         # Fill the procedure with the parameters found
@@ -201,7 +210,7 @@ class Results(object):
                 setattr(procedure, name, value)
             else:
                 raise Exception("Missing '%s' parameter when loading '%s' class" % (
-                        parameter.name, procedure_class))
+                    parameter.name, procedure_class))
         procedure.refresh_parameters()  # Enforce update of meta data
         return procedure
 
@@ -236,7 +245,7 @@ class Results(object):
             # Data has not been read
             try:
                 self.reload()
-            except:
+            except Exception:
                 # Empty dataframe
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
         else:  # Concatenate additional data
@@ -252,7 +261,7 @@ class Results(object):
                 tmp_frame = pd.concat(chunks, ignore_index=True)
                 self._data = pd.concat([self._data, tmp_frame],
                                        ignore_index=True)
-            except:
+            except Exception:
                 pass  # All data is up to date
         return self._data
 
@@ -268,5 +277,5 @@ class Results(object):
         )
         try:
             self._data = pd.concat(chunks, ignore_index=True)
-        except:
+        except Exception:
             self._data = chunks.read()

@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -30,8 +31,6 @@ try:
     from .plotter import Plotter
 except ImportError:
     log.warning("Python bindings for Qt (PySide, PyQt) can not be imported")
-except Exception as e:
-    raise e
 
 
 def run_in_ipython(app):
@@ -41,6 +40,7 @@ def run_in_ipython(app):
     """
     try:
         from IPython.lib.guisupport import start_event_loop_qt4
-        start_event_loop_qt4(app)
     except ImportError:
         app.exec_()
+    else:
+        start_event_loop_qt4(app)

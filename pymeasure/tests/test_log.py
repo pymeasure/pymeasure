@@ -22,27 +22,28 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.log import Scribe
+import time
 from multiprocessing import Queue
-from time import sleep
 
+from pymeasure.log import Scribe
+
+
+# TODO: Add tests for logging convenience functions and TopicQueueHandler
 
 def test_scribe_stop():
     q = Queue()
     s = Scribe(q)
     s.start()
-    assert s.is_alive() == True
+    assert s.is_alive() is True
     s.stop()
-    assert s.is_alive() == False
+    assert s.is_alive() is False
+
 
 def test_scribe_finish():
     q = Queue()
     s = Scribe(q)
     s.start()
-    assert s.is_alive() == True
+    assert s.is_alive() is True
     q.put(None)
-    sleep(0.1)
-    assert s.is_alive() == False
-
-
-# TODO: Add tests for logging convenience functions and TopicQueueHandler
+    time.sleep(0.1)
+    assert s.is_alive() is False

@@ -79,10 +79,10 @@ class IntegerParameter(Parameter):
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
-        super(IntegerParameter, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self.units = units
-        self.minimum = minimum
-        self.maximum = maximum
+        self.minimum = int(minimum)
+        self.maximum = int(maximum)
 
     @property
     def value(self):
@@ -160,7 +160,7 @@ class FloatParameter(Parameter):
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
-        super(FloatParameter, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self.units = units
         self.minimum = minimum
         self.maximum = maximum
@@ -211,9 +211,10 @@ class VectorParameter(Parameter):
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
+
     def __init__(self, name, length=3, units=None, **kwargs):
+        super().__init__(name, **kwargs)
         self._length = length
-        super(VectorParameter, self).__init__(name, **kwargs)
         self.units = units
 
     @property
@@ -273,8 +274,8 @@ class ListParameter(Parameter):
     """
 
     def __init__(self, name, choices=None, units=None, **kwargs):
+        super().__init__(name, **kwargs)
         self._choices = choices
-        super(ListParameter, self).__init__(name, **kwargs)
         self.units = units
 
     @property
@@ -292,6 +293,7 @@ class ListParameter(Parameter):
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
 
+
 class PhysicalParameter(VectorParameter):
     """ :class: '.VectorParameter' sub-class of 2 dimentions to store a value
     and its uncertainty.
@@ -306,10 +308,10 @@ class PhysicalParameter(VectorParameter):
     """
 
     def __init__(self, name, uncertaintyType='absolute', **kwargs):
-        super(PhysicalParameter, self).__init__(name, length=2, **kwargs)
+        super().__init__(name, length=2, **kwargs)
         self._utype = ListParameter("uncertainty type",
-                                   choices = ['absolute', 'relative', 'percentage'],
-                                   default = None)
+                                    choices=['absolute', 'relative', 'percentage'],
+                                    default=None)
         self._utype.value = uncertaintyType
 
     @property
@@ -357,26 +359,26 @@ class PhysicalParameter(VectorParameter):
         if self.is_set():
             # Convert uncertainty value to the new type
             if (oldType, newType) == ('absolute', 'relative'):
-                self._value[1] = abs(self._value[1]/self._value[0])
+                self._value[1] = abs(self._value[1] / self._value[0])
             if (oldType, newType) == ('relative', 'absolute'):
-                self._value[1] = abs(self._value[1]*self._value[0])
+                self._value[1] = abs(self._value[1] * self._value[0])
             if (oldType, newType) == ('relative', 'percentage'):
-                self._value[1] = abs(self._value[1]*100.0)
+                self._value[1] = abs(self._value[1] * 100.0)
             if (oldType, newType) == ('percentage', 'relative'):
-                self._value[1] = abs(self._value[1]*0.01)
+                self._value[1] = abs(self._value[1] * 0.01)
             if (oldType, newType) == ('percentage', 'absolute'):
-                self._value[1] = abs(self._value[1]*self._value[0]*0.01)
+                self._value[1] = abs(self._value[1] * self._value[0] * 0.01)
             if (oldType, newType) == ('absolute', 'percentage'):
-                self._value[1] = abs(self._value[1]*100.0/self._value[0])
+                self._value[1] = abs(self._value[1] * 100.0 / self._value[0])
 
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%g +/- %g" %(self._value[0], self._value[1])
+        result = "%g +/- %g" % (self._value[0], self._value[1])
         if self.units:
-            result += " %s" %self.units
-        if self._utype.value != None:
-            result += " (%s)" %self._utype.value
+            result += " %s" % self.units
+        if self._utype.value is not None:
+            result += " (%s)" % self._utype.value
         return result
 
     def __repr__(self):
@@ -399,11 +401,12 @@ class Measurable(object):
     :param default: The default value
     """
     DATA_COLUMNS = []
+
     def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
         self.name = name
         self.units = units
         self.measure = measure
-        if fget != None:
+        if fget is not None:
             self.fget = fget
             self._value = fget()
         else:

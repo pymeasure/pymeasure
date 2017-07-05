@@ -21,9 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.adapters.serial import SerialAdapter
+import time
+
 import serial
-from time import sleep
+
+from .serial import SerialAdapter
 
 
 class PrologixAdapter(SerialAdapter):
@@ -58,16 +60,12 @@ class PrologixAdapter(SerialAdapter):
         sudo udevadm trigger
 
     """
+
     def __init__(self, port, address=None, rw_delay=None, **kwargs):
+        super().__init__(port, timeout=0.5, **kwargs)
         self.address = address
         self.rw_delay = rw_delay
-
-        if isinstance(port, serial.Serial):
-            # A previous adapter is sharing this connection
-            self.connection = port
-        else:
-            # Construct a new connection
-            self.connection = serial.Serial(port, 9600, timeout=0.5, **kwargs)
+        if not isinstance(port, serial.Serial):
             self.set_defaults()
 
     def set_defaults(self):
@@ -78,13 +76,6 @@ class PrologixAdapter(SerialAdapter):
         self.write("++eoi 1")  # Append end-of-line to commands
         self.write("++eos 2")  # Append line-feed to commands
 
-    def __del__(self):
-        """ Ensures that the Serial connection is closed upon object
-        deletion if it is open
-        """
-        if self.connection.isOpen():
-            self.connection.close()
-
     def ask(self, command):
         """ Ask the Prologix controller, include a forced delay for some instruments.
 
@@ -93,7 +84,7 @@ class PrologixAdapter(SerialAdapter):
 
         self.write(command)
         if self.rw_delay is not None:
-            sleep(self.rw_delay)
+            time.sleep(self.rw_delay)
         return self.read()
 
     def write(self, command):
@@ -135,11 +126,11 @@ class PrologixAdapter(SerialAdapter):
         :param delay: Time delay between checking SRQ in seconds
         """
         while int(self.ask("++srq")) != 1:  # TODO: Include timeout!
-            sleep(delay)
+            time.sleep(delay)
 
     def __repr__(self):
-        if self.address:
+        if self.address is not None:
             return "<PrologixAdapter(port='%s',address=%d)>" % (
-                    self.connection.port, self.address)
+                self.connection.port, self.address)
         else:
             return "<PrologixAdapter(port='%s')>" % self.connection.port
