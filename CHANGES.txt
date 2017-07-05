@@ -1,3 +1,12 @@
+Version 0.4.5 -- released 7/4/17
+================================
+- Recorder and Scribe now leverage QueueListener (@feinsteinben)
+- PrologixAdapter and SerialAdapter now handle Serial objects as adapters (@feinsteinben)
+- Optional TCP support now uses cloudpickle for serialization (@feinsteinben)
+- Significant PEP8 review and bug fixes (@feinsteinben)
+- Includes docs in the code distribution (@ghisvail)
+- Continuous integration support for Python 3.6 (@feinsteinben)
+
 Version 0.4.4 -- released 6/4/17
 ================================
 - Fix pip install for non-wheel builds
