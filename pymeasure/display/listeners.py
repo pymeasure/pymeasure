@@ -71,8 +71,7 @@ class QListener(StoppableQThread):
         self.timeout = timeout
 
     def receive(self, flags=0):
-        data = self.subscriber.recv_multipart(flags=flags)
-        topic, record = cloudpickle.loads(data)
+        topic, record = self.subscriber.recv_serialized(deserialize=cloudpickle.loads, flags=flags)
         return topic, record
 
     def message_waiting(self):
