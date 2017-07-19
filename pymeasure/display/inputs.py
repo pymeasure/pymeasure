@@ -41,9 +41,19 @@ class Input(QtCore.QObject):
         super().__init__()
         self._parameter = None
         self.set_parameter(parameter)
+        self.set_value(parameter)
 
     def set_parameter(self, parameter):
         self._parameter = parameter
+
+    def set_value(self, parameter):
+        if hasattr(self, 'setValue'):
+            try:
+                value = parameter.value  # if parameter is not set yet, this will raise ValueError
+            except ValueError:
+                pass  # parameter is not set yet
+            else:
+                self.setValue(value)
 
     def update_parameter(self):
         """ Mutates the self._parameter variable to update
@@ -64,10 +74,6 @@ class StringInput(QtGui.QLineEdit, Input):
         if self._parameter.default:
             self.setText(self._parameter.default)
 
-    def set_parameter(self, parameter):
-        super(StringInput, self).set_parameter(parameter)
-        self.setText(parameter.value)
-
     def update_parameter(self):
         self._parameter.value = self.text()
 
@@ -84,10 +90,6 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
         if self._parameter.units:
             self.setSuffix(" %s" % self._parameter.units)
 
-    def set_parameter(self, parameter):
-        super(FloatInput, self).set_parameter(parameter)
-        self.setValue(parameter.value)
-
     def update_parameter(self):
         self._parameter.value = self.value()
 
@@ -103,10 +105,6 @@ class IntegerInput(QtGui.QSpinBox, Input):
             self.setValue(self._parameter.default)
         if self._parameter.units:
             self.setSuffix(" %s" % self._parameter.units)
-
-    def set_parameter(self, parameter):
-        super(IntegerInput, self).set_parameter(parameter)
-        self.setValue(parameter.value)
 
     def update_parameter(self):
         self._parameter.value = self.value()
@@ -138,10 +136,6 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
             self.setValue(self._parameter.default)
         if self._parameter.units:
             self.setSuffix(" %s" % self._parameter.units)
-
-    def set_parameter(self, parameter):
-        super(ScientificInput, self).set_parameter(parameter)
-        self.setValue(parameter.value)
 
     def update_parameter(self):
         self._parameter.value = self.value()
