@@ -99,7 +99,7 @@ class Worker(StoppableProcess):
         if topic == 'results':
             self.recorder.handle(record)
         elif topic == 'status' or topic == 'progress':
-            self.monitor_queue.put((topic.decode(), record))
+            self.monitor_queue.put((topic, record))
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")
