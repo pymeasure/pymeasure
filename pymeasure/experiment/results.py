@@ -24,9 +24,11 @@
 
 import logging
 
+import csv
 import os
 import re
 from datetime import datetime
+from io import StringIO
 
 import pandas as pd
 
@@ -62,31 +64,45 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
 
 
 class CSVFormatter(logging.Formatter):
-    """ Formatter of data results """
+    """ Formatter of data results as csv."""
 
-    def __init__(self, columns, delimiter=','):
+    def __init__(self, columns, **kwargs):
         """Creates a csv formatter for a given list of columns (=header).
 
         :param columns: list of column names.
         :type columns: list
-        :param delimiter: delimiter between columns.
-        :type delimiter: str
         """
         super().__init__()
-        self.columns = columns
-        self.delimiter = delimiter
+        self._buffer = StringIO()
+        self._columns = columns
+        kwargs.pop('lineterminator', None)
+        self._csv = csv.DictWriter(self._buffer, self._columns, lineterminator='', **kwargs)
+
+    def _clear_buffer(self):
+        self._buffer.truncate(0)
+
+    def _read_buffer(self):
+        return self._buffer.getvalue()
 
     def format(self, record):
-        """Formats a record as csv.
+        """Formats a csv record (line).
 
         :param record: record to format.
         :type record: dict
-        :return: a string
+        :return: csv representation of the record.
         """
-        return self.delimiter.join('{}'.format(record[x]) for x in self.columns)
+        self._clear_buffer()
+        self._csv.writerow(record)
+        return self._read_buffer()
 
     def format_header(self):
-        return self.delimiter.join(self.columns)
+        """Formats the csv header.
+
+        :return: csv representation of the header.
+        """
+        self._clear_buffer()
+        self._csv.writeheader()
+        return self._read_buffer()
 
 
 class Results(object):
