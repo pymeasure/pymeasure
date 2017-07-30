@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 import os
 from importlib.machinery import SourceFileLoader
+
+from pymeasure.experiment.results import CSVFormatter
 
 # Load the procedure, without it being in a module
 data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
@@ -38,3 +38,18 @@ def test_procedure():
     p = procedure.TestProcedure()
     assert p.iterations == 100
     assert hasattr(p, 'execute')
+
+
+def test_csv_formatter_format_header():
+    """Tests CSVFormatter.format_header() method."""
+    columns = ['t', 'x', 'y', 'z', 'V']
+    formatter = CSVFormatter(columns=columns)
+    assert formatter.format_header() == 't,x,y,z,V'
+
+
+def test_csv_formatter_format():
+    """Tests CSVFormatter.format() method."""
+    columns = ['t', 'x', 'y', 'z', 'V']
+    formatter = CSVFormatter(columns=columns)
+    data = {'t': 1, 'y': 2, 'z': 3.0, 'x': -1, 'V': 'abc'}
+    assert formatter.format(data) == '1,-1,2,3.0,abc'

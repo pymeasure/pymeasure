@@ -43,7 +43,7 @@ except ImportError:
 class Monitor(QueueListener):
     def __init__(self, results, queue):
         console = StreamHandler()
-        console.setFormatter(results.format)
+        console.setFormatter(results.formatter)
 
         super().__init__(queue, console)
 
@@ -103,7 +103,7 @@ class Recorder(QueueListener):
         handlers = []
         for filename in results.data_filenames:
             fh = FileHandler(filename=filename, **kwargs)
-            fh.setFormatter(results.format)
+            fh.setFormatter(results.formatter)
             fh.setLevel(logging.NOTSET)
             handlers.append(fh)
 

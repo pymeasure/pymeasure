@@ -61,6 +61,34 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
     return filename
 
 
+class CSVFormatter(logging.Formatter):
+    """ Formatter of data results """
+
+    def __init__(self, columns, delimiter=','):
+        """Creates a csv formatter for a given list of columns (=header).
+
+        :param columns: list of column names.
+        :type columns: list
+        :param delimiter: delimiter between columns.
+        :type delimiter: str
+        """
+        super().__init__()
+        self.columns = columns
+        self.delimiter = delimiter
+
+    def format(self, record):
+        """Formats a record as csv.
+
+        :param record: record to format.
+        :type record: dict
+        :return: a string
+        """
+        return self.delimiter.join('{}'.format(record[x]) for x in self.columns)
+
+    def format_header(self):
+        return self.delimiter.join(self.columns)
+
+
 class Results(object):
     """ The Results class provides a convenient interface to reading and
     writing data in connection with a :class:`.Procedure` object.
@@ -87,6 +115,8 @@ class Results(object):
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
+
+        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
         if isinstance(data_filename, (list, tuple)):
             data_filenames, data_filename = data_filename, data_filename[0]
@@ -127,15 +157,13 @@ class Results(object):
         """ Returns the columns labels as a string to be written
         to the file
         """
-        return (Results.DELIMITER.join(self.procedure.DATA_COLUMNS) +
-                Results.LINE_BREAK)
+        return self.formatter.format_header() + Results.LINE_BREAK
 
     def format(self, data):
         """ Returns a formatted string containing the data to be written
         to a file
         """
-        rows = [str(data[x]) for x in self.procedure.DATA_COLUMNS]
-        return Results.DELIMITER.join(rows) + Results.LINE_BREAK
+        return self.formatter.format(data)
 
     def parse(self, line):
         """ Returns a dictionary containing the data from the line """
