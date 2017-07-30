@@ -43,13 +43,24 @@ class Input(QtCore.QObject):
         self.set_parameter(parameter)
 
     def set_parameter(self, parameter):
+        """Connects a parameter to the input box, and initializes the box value.
+
+        :param parameter: parameter to connect.
+        :return:
+        """
         self._parameter = parameter
+
+        if parameter.default:
+            self.setValue(parameter.default)
+
+        if hasattr(parameter, 'units') and parameter.units:
+            self.setSuffix(" %s" % parameter.units)
 
     def update_parameter(self):
         """ Mutates the self._parameter variable to update
         its value
         """
-        pass
+        self._parameter.value = self.value()
 
     @property
     def parameter(self):
@@ -61,15 +72,17 @@ class StringInput(QtGui.QLineEdit, Input):
     def __init__(self, parameter, parent=None):
         QtGui.QLineEdit.__init__(self, parent)
         Input.__init__(self, parameter)
-        if self._parameter.default:
-            self.setText(self._parameter.default)
 
-    def set_parameter(self, parameter):
-        super(StringInput, self).set_parameter(parameter)
-        self.setText(parameter.value)
+    def setValue(self, value):
+        # QtGui.QLineEdit has a setText() method instead of setValue()
+        return super().setText(value)
 
-    def update_parameter(self):
-        self._parameter.value = self.text()
+    def setSuffix(self, value):
+        pass
+
+    def value(self):
+        # QtGui.QLineEdit has a text() method instead of value()
+        return super().text()
 
 
 class FloatInput(QtGui.QDoubleSpinBox, Input):
@@ -79,17 +92,6 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
         self.setMinimum(self._parameter.minimum)
         self.setMaximum(self._parameter.maximum)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-        if self._parameter.default:
-            self.setValue(self._parameter.default)
-        if self._parameter.units:
-            self.setSuffix(" %s" % self._parameter.units)
-
-    def set_parameter(self, parameter):
-        super(FloatInput, self).set_parameter(parameter)
-        self.setValue(parameter.value)
-
-    def update_parameter(self):
-        self._parameter.value = self.value()
 
 
 class IntegerInput(QtGui.QSpinBox, Input):
@@ -99,17 +101,6 @@ class IntegerInput(QtGui.QSpinBox, Input):
         self.setMinimum(self._parameter.minimum)
         self.setMaximum(self._parameter.maximum)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-        if self._parameter.default:
-            self.setValue(self._parameter.default)
-        if self._parameter.units:
-            self.setSuffix(" %s" % self._parameter.units)
-
-    def set_parameter(self, parameter):
-        super(IntegerInput, self).set_parameter(parameter)
-        self.setValue(parameter.value)
-
-    def update_parameter(self):
-        self._parameter.value = self.value()
 
 
 class BooleanInput(object):
@@ -134,17 +125,6 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
             10, self)
         self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
         Input.__init__(self, parameter)
-        if self._parameter.default:
-            self.setValue(self._parameter.default)
-        if self._parameter.units:
-            self.setSuffix(" %s" % self._parameter.units)
-
-    def set_parameter(self, parameter):
-        super(ScientificInput, self).set_parameter(parameter)
-        self.setValue(parameter.value)
-
-    def update_parameter(self):
-        self._parameter.value = self.value()
 
     def validate(self, text, pos):
         if self._parameter.units:
