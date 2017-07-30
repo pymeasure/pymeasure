@@ -92,8 +92,7 @@ class Worker(StoppableProcess):
         log.debug("Emitting message: %s %s", topic, record)
 
         try:
-            data = cloudpickle.dumps((topic, record))
-            self.publisher.send_multipart(data)
+            self.publisher.send_serialized((topic, record), serialize=cloudpickle.dumps)
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
