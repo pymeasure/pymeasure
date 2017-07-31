@@ -4,6 +4,7 @@ include LICENSE.txt
 include CHANGES.txt
 include AUTHORS.txt
 recursive-include pymeasure *
+recursive-include tests *
 recursive-include docs *
 prune docs/_build
 recursive-exclude * __pycache__
