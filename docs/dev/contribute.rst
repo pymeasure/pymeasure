@@ -91,10 +91,15 @@ Your pull-request will be merged by the PyMeasure maintainers once it meets the 
 Unit testing
 ============
 
-Unit tests are run each time a new commit is made to a branch. The purpose is to catch changes that break the current functionality, by testing each feature unit. PyMeasure relies on `py.test`_ to preform these tests, which are run on TravisCI and Appveyor for Linux/macOS and Windows respectively.
+Unit tests are run each time a new commit is made to a branch. The purpose is to catch changes that break the current functionality, by testing each feature unit. PyMeasure relies on `pytest`_ to preform these tests, which are run on TravisCI and Appveyor for Linux/macOS and Windows respectively.
 
-If your feature can be tested, writing tests are highly encouraged. This will ensure that your features keep working as new features are added.
+Running the unit tests while you develop is highly encouraged. This will ensure that you have a working contribution when you create a pull request.
 
-.. _`py.test`: http://pytest.org/latest/
+.. code-block:: bash
+    python setup.py test
+
+If your feature can be tested, unit tests are required. This will ensure that your features keep working as new features are added.
+
+.. _`pytest`: http://pytest.org/latest/
 
 Now you are familiar with all the pieces of the PyMeasure development work-flow. We look forward to seeing your pull-request!
