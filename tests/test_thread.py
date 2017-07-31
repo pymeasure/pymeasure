@@ -25,7 +25,7 @@
 from pymeasure.thread import StoppableThread
 
 
-def test_stopping():
+def test_thread_stopping():
     t = StoppableThread()
     t.start()
     t.stop()
@@ -33,7 +33,7 @@ def test_stopping():
     t.join()
 
 
-def test_joining():
+def test_thread_joining():
     t = StoppableThread()
     t.start()
     t.join()

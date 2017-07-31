@@ -25,7 +25,7 @@
 from pymeasure.process import StoppableProcess
 
 
-def test_stopping():
+def test_process_stopping():
     p = StoppableProcess()
     p.start()
     p.stop()
@@ -33,7 +33,7 @@ def test_stopping():
     p.join()
 
 
-def test_joining():
+def test__process_joining():
     p = StoppableProcess()
     p.start()
     p.join()
