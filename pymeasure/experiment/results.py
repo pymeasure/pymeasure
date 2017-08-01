@@ -307,3 +307,10 @@ class Results(object):
             self._data = pd.concat(chunks, ignore_index=True)
         except Exception:
             self._data = chunks.read()
+
+    def __repr__(self):
+        return "<{}(filename='{}',procedure={},shape={})>".format(
+            self.__class__.__name__, self.data_filename,
+            self.procedure.__class__.__name__,
+            self.data.shape
+        )
