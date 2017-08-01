@@ -53,6 +53,11 @@ class Procedure(object):
     DATA_COLUMNS = []
     MEASURE = {}
     FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
+    STATUS_STRINGS = {
+        FINISHED: 'Finished', FAILED: 'Failed', 
+        ABORTED: 'Aborted', QUEUED: 'Queued',
+        RUNNING: 'Running'
+    }
 
     _parameters = {}
 
@@ -202,6 +207,12 @@ class Procedure(object):
         for parameter in self._parameters.items():
             result += str(parameter)
         return result
+
+    def __repr__(self):
+        return "<{}(status={},parameters_are_set={})>".format(
+            self.__class__.__name__, self.STATUS_STRINGS[self.status],
+            self.parameters_are_set()
+        )
 
 
 class UnknownProcedure(Procedure):
