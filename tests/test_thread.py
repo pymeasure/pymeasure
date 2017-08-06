@@ -32,7 +32,6 @@ def test_thread_stopping():
     assert t.should_stop() is True
     t.join()
 
-
 def test_thread_joining():
     t = StoppableThread()
     t.start()

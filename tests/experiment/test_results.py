@@ -29,13 +29,13 @@ from pymeasure.experiment.results import CSVFormatter
 
 # Load the procedure, without it being in a module
 data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-procedure = SourceFileLoader('procedure', data_path).load_module()
+RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
 
 
 def test_procedure():
     """ Ensure that the loaded test procedure is properly functioning
     """
-    p = procedure.TestProcedure()
+    p = RandomProcedure()
     assert p.iterations == 100
     assert hasattr(p, 'execute')
 

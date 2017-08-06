@@ -23,15 +23,14 @@
 #
 
 import time
-from multiprocessing import Queue
-
+from pymeasure.process import context
 from pymeasure.log import Scribe
 
 
 # TODO: Add tests for logging convenience functions and TopicQueueHandler
 
 def test_scribe_stop():
-    q = Queue()
+    q = context.Queue()
     s = Scribe(q)
     s.start()
     assert s.is_alive() is True
@@ -40,7 +39,7 @@ def test_scribe_stop():
 
 
 def test_scribe_finish():
-    q = Queue()
+    q = context.Queue()
     s = Scribe(q)
     s.start()
     assert s.is_alive() is True

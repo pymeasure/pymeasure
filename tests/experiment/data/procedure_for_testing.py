@@ -26,10 +26,10 @@ from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatPa
 import random
 
 
-class TestProcedure(Procedure):
+class RandomProcedure(Procedure):
 
     iterations = IntegerParameter('Loop Iterations', default=100)
-    delay = FloatParameter('Delay Time', units='s', default=0.2)
+    delay = FloatParameter('Delay Time', units='s', default=0.001)
     seed = Parameter('Random Seed', default='12345')
 
     DATA_COLUMNS = ['Iteration', 'Random Number']

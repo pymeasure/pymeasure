@@ -24,23 +24,23 @@
 
 import logging
 
-from multiprocessing import set_start_method, Process, Event
+from multiprocessing import get_context
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Force Windows multiprocessing behavior on Unix
-set_start_method('spawn', force=True)
+context = get_context('spawn')
 
 
-class StoppableProcess(Process):
+class StoppableProcess(context.Process):
     """ Base class for Processes which require the ability
     to be stopped by a process-safe method call
     """
 
     def __init__(self):
         super().__init__()
-        self._should_stop = Event()
+        self._should_stop = context.Event()
         self._should_stop.clear()
 
     def join(self, timeout=0):
@@ -52,7 +52,7 @@ class StoppableProcess(Process):
         self._should_stop.wait(timeout)
         if not self.should_stop():
             self.stop()
-        super().join(0)
+        return super().join(0)
 
     def stop(self):
         self._should_stop.set()
