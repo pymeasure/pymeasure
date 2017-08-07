@@ -41,7 +41,6 @@ slow = pytest.mark.skipif(
     reason="need --runslow option to run"
 )
 
-@pytest.mark.skip(reason="")
 def test_procedure():
     """ Ensure that the loaded test procedure is properly functioning
     """
@@ -50,7 +49,6 @@ def test_procedure():
     assert procedure.delay == 0.001
     assert hasattr(procedure, 'execute')
 
-@pytest.mark.skip(reason="")
 def test_worker_stop():
     procedure = RandomProcedure()
     file = tempfile.mktemp()
@@ -61,7 +59,6 @@ def test_worker_stop():
     assert worker.should_stop()
     worker.join()
 
-@pytest.mark.skip(reason="")
 def test_worker_finish():
     procedure = RandomProcedure()
     procedure.iterations = 100
