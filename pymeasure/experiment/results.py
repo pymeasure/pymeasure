@@ -173,7 +173,8 @@ class Results(object):
             data[key] = items[i]
         return data
 
-    def parse_header(self, header, procedure_class=None):
+    @staticmethod
+    def parse_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
@@ -217,7 +218,7 @@ class Results(object):
                 procedure = procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
-                log.warning("Unknown Procedure in %s" % self.data_filename)
+                log.warning("Unknown Procedure being used")
             except Exception as e:
                 raise e
 

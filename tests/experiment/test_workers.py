@@ -35,7 +35,6 @@ from pymeasure.experiment.results import Results
 data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
 RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
 
-
 slow = pytest.mark.skipif(
     not pytest.config.getoption("--runslow"),
     reason="need --runslow option to run"
@@ -62,9 +61,12 @@ def test_worker_stop():
 def test_worker_finish():
     procedure = RandomProcedure()
     procedure.iterations = 100
+    procedure.delay = 0.001
     file = tempfile.mktemp()
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
     worker.join(timeout=0.5)
 
+    new_results = Results.load(file, procedure_class=RandomProcedure)
+    assert new_results.data.shape == (100, 2)

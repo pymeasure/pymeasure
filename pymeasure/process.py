@@ -29,8 +29,9 @@ from multiprocessing import get_context
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-# Force Windows multiprocessing behavior on Unix
 context = get_context()
+# Useful for multiprocessing debugging:
+# context.log_to_stderr(logging.DEBUG)
 
 
 class StoppableProcess(context.Process):
