@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Force Windows multiprocessing behavior on Unix
-context = get_context('spawn')
+context = get_context()
 
 
 class StoppableProcess(context.Process):
