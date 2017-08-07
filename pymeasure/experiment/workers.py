@@ -92,14 +92,13 @@ class Worker(StoppableProcess):
         log.debug("Emitting message: %s %s", topic, record)
 
         try:
-            data = cloudpickle.dumps((topic, record))
-            self.publisher.send_multipart(data)
+            self.publisher.send_serialized((topic, record), serialize=cloudpickle.dumps)
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
             self.recorder.handle(record)
         elif topic == 'status' or topic == 'progress':
-            self.monitor_queue.put((topic.decode(), record))
+            self.monitor_queue.put((topic, record))
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")

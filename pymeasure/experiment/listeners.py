@@ -43,7 +43,7 @@ except ImportError:
 class Monitor(QueueListener):
     def __init__(self, results, queue):
         console = StreamHandler()
-        console.setFormatter(results.format)
+        console.setFormatter(results.formatter)
 
         super().__init__(queue, console)
 
@@ -78,8 +78,7 @@ class Listener(StoppableThread):
         self.timeout = timeout
 
     def receive(self, flags=0):
-        data = self.subscriber.recv_multipart(flags=flags)
-        topic, record = cloudpickle.loads(data)
+        topic, record = self.subscriber.recv_serialized(deserialize=cloudpickle.loads, flags=flags)
         return topic, record
 
     def message_waiting(self):
@@ -103,7 +102,7 @@ class Recorder(QueueListener):
         handlers = []
         for filename in results.data_filenames:
             fh = FileHandler(filename=filename, **kwargs)
-            fh.setFormatter(results.format)
+            fh.setFormatter(results.formatter)
             fh.setLevel(logging.NOTSET)
             handlers.append(fh)
 
