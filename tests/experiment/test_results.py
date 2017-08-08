@@ -28,8 +28,9 @@ from importlib.machinery import SourceFileLoader
 from pymeasure.experiment.results import CSVFormatter
 
 # Load the procedure, without it being in a module
-data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
+#data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
+#RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
+from data.procedure_for_testing import RandomProcedure
 
 
 def test_procedure():
