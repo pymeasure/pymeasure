@@ -22,13 +22,15 @@
 # THE SOFTWARE.
 #
 
+import sys
 import logging
 import time
 import traceback
 from logging.handlers import QueueHandler
+from importlib.machinery import SourceFileLoader
 
 from .listeners import Recorder
-from .procedure import Procedure
+from .procedure import Procedure, ProcedureWrapper
 from .results import Results
 from ..log import TopicQueueHandler
 from ..process import StoppableProcess, context
@@ -77,6 +79,36 @@ class Worker(StoppableProcess):
 
         self.context = None
         self.publisher = None
+
+    def __getstate__(self):
+        # Get all information needed to reconstruct procedure
+        self._parameters = self.procedure.parameter_values()
+        self._class = self.procedure.__class__.__name__
+        module = sys.modules[self.procedure.__module__]
+        self._package = module.__package__
+        self._module = module.__name__
+        self._file = module.__file__
+
+        state = self.__dict__.copy()
+        del state['procedure']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        # Restore the procedure
+        module = SourceFileLoader(self._module, self._file).load_module()
+        cls = getattr(module, self._class)
+
+        self.procedure = cls()
+        self.procedure.set_parameters(self._parameters)
+        self.procedure.refresh_parameters()
+
+        del self._parameters
+        del self._class
+        del self._package
+        del self._module
+        del self._file
 
     def join(self, timeout=0):
         try:
