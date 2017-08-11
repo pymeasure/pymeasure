@@ -63,10 +63,8 @@ class Worker(StoppableProcess):
         if not isinstance(results, Results):
             raise ValueError("Invalid Results object during Worker construction")
         self.results = results
-        self.procedure = self.results.procedure
-        self.procedures_file = self.procedure.__module__
-        self.procedure.check_parameters()
-        self.procedure.status = Procedure.QUEUED
+        self.results.procedure.check_parameters()
+        self.results.procedure.status = Procedure.QUEUED
 
         self.recorder = None
         self.recorder_queue = context.Queue()
@@ -79,36 +77,6 @@ class Worker(StoppableProcess):
 
         self.context = None
         self.publisher = None
-
-    def __getstate__(self):
-        # Get all information needed to reconstruct procedure
-        self._parameters = self.procedure.parameter_values()
-        self._class = self.procedure.__class__.__name__
-        module = sys.modules[self.procedure.__module__]
-        self._package = module.__package__
-        self._module = module.__name__
-        self._file = module.__file__
-
-        state = self.__dict__.copy()
-        del state['procedure']
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
-        # Restore the procedure
-        module = SourceFileLoader(self._module, self._file).load_module()
-        cls = getattr(module, self._class)
-
-        self.procedure = cls()
-        self.procedure.set_parameters(self._parameters)
-        self.procedure.refresh_parameters()
-
-        del self._parameters
-        del self._class
-        del self._package
-        del self._module
-        del self._file
 
     def join(self, timeout=0):
         try:
@@ -166,10 +134,12 @@ class Worker(StoppableProcess):
         log.addHandler(QueueHandler(self.log_queue))
         log.info("Worker process started")
 
+        self.procedure = self.results.procedure
+
         self.recorder = Recorder(self.results, self.recorder_queue)
         self.recorder.start()
 
-        locals()[self.procedures_file] = __import__(self.procedures_file)
+        #locals()[self.procedures_file] = __import__(self.procedures_file)
 
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop

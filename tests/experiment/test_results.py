@@ -23,9 +23,11 @@
 #
 
 import os
+import tempfile
+import pickle
 from importlib.machinery import SourceFileLoader
 
-from pymeasure.experiment.results import CSVFormatter
+from pymeasure.experiment.results import Results, CSVFormatter
 
 # Load the procedure, without it being in a module
 #data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
@@ -54,3 +56,16 @@ def test_csv_formatter_format():
     formatter = CSVFormatter(columns=columns)
     data = {'t': 1, 'y': 2, 'z': 3.0, 'x': -1, 'V': 'abc'}
     assert formatter.format(data) == '1,-1,2,3.0,abc'
+
+
+def test_procedure_wrapper():
+    assert RandomProcedure.iterations.value == 100
+    procedure = RandomProcedure()
+    procedure.iterations = 101
+    file = tempfile.mktemp()
+    results = Results(procedure, file)
+
+    new_results = pickle.loads(pickle.dumps(results))
+    assert hasattr(new_results, 'procedure')
+    assert new_results.procedure.iterations == 101
+    assert RandomProcedure.iterations.value == 100
