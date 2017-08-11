@@ -42,6 +42,7 @@ slow = pytest.mark.skipif(
     reason="need --runslow option to run"
 )
 
+
 def test_procedure():
     """ Ensure that the loaded test procedure is properly functioning
     """

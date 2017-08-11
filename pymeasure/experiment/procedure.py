@@ -23,6 +23,9 @@
 #
 
 import logging
+import sys
+from copy import deepcopy
+from importlib.machinery import SourceFileLoader
 
 from .parameters import Parameter, Measurable
 
@@ -103,7 +106,7 @@ class Procedure(object):
         for item in dir(self):
             parameter = getattr(self, item)
             if isinstance(parameter, Parameter):
-                self._parameters[item] = parameter
+                self._parameters[item] = deepcopy(parameter)
                 if parameter.is_set():
                     setattr(self, item, parameter.value)
                 else:
@@ -226,3 +229,39 @@ class UnknownProcedure(Procedure):
 
     def startup(self):
         raise NotImplementedError("UnknownProcedure can not be run")
+
+
+class ProcedureWrapper(object):
+
+    def __init__(self, procedure):
+        self.procedure = procedure
+
+    def __getstate__(self):
+        # Get all information needed to reconstruct procedure
+        self._parameters = self.procedure.parameter_values()
+        self._class = self.procedure.__class__.__name__
+        module = sys.modules[self.procedure.__module__]
+        self._package = module.__package__
+        self._module = module.__name__
+        self._file = module.__file__
+
+        state = self.__dict__.copy()
+        del state['procedure']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        # Restore the procedure
+        module = SourceFileLoader(self._module, self._file).load_module()
+        cls = getattr(module, self._class)
+
+        self.procedure = cls()
+        self.procedure.set_parameters(self._parameters)
+        self.procedure.refresh_parameters()
+
+        del self._parameters
+        del self._class
+        del self._package
+        del self._module
+        del self._file
