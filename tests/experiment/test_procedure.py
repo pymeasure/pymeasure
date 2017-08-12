@@ -23,9 +23,12 @@
 #
 
 import pytest
+import pickle
 
-from pymeasure.experiment.procedure import Procedure
+from pymeasure.experiment.procedure import Procedure, ProcedureWrapper
 from pymeasure.experiment.parameters import Parameter
+
+from data.procedure_for_testing import RandomProcedure
 
 
 def test_parameters():
@@ -42,3 +45,14 @@ def test_parameters():
     assert objs['x'].value == p.x
 
 # TODO: Add tests for measureables
+
+def test_procedure_wrapper():
+    assert RandomProcedure.iterations.value == 100
+    procedure = RandomProcedure()
+    procedure.iterations = 101
+    wrapper = ProcedureWrapper(procedure)
+
+    new_wrapper = pickle.loads(pickle.dumps(wrapper))
+    assert hasattr(new_wrapper, 'procedure')
+    assert new_wrapper.procedure.iterations == 101
+    assert RandomProcedure.iterations.value == 100

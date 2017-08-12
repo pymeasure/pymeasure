@@ -22,51 +22,33 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import os
-import tempfile
-from time import sleep
-from importlib.machinery import SourceFileLoader
-
-from pymeasure.experiment.workers import Worker
-from pymeasure.experiment.results import Results
-
-# Load the procedure, without it being in a module
-data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-procedure = SourceFileLoader('procedure', data_path).load_module()
-
-slow = pytest.mark.skipif(
-    not pytest.config.getoption("--runslow"),
-    reason="need --runslow option to run"
+from pymeasure.experiment import (
+    Procedure, IntegerParameter, 
+    Parameter, FloatParameter
 )
+import random
+from time import sleep
 
 
-def test_procedure():
-    """ Ensure that the loaded test procedure is properly functioning
-    """
-    p = procedure.TestProcedure()
-    assert p.iterations == 100
-    assert hasattr(p, 'execute')
+class RandomProcedure(Procedure):
 
+    iterations = IntegerParameter('Loop Iterations', default=100)
+    delay = FloatParameter('Delay Time', units='s', default=0.001)
+    seed = Parameter('Random Seed', default='12345')
 
-def test_worker_stop():
-    p = procedure.TestProcedure()
-    f = tempfile.mktemp()
-    r = Results(p, f)
-    w = Worker(r)
-    w.start()
-    w.stop()
-    assert w.should_stop()
-    w.join()
+    DATA_COLUMNS = ['Iteration', 'Random Number']
 
+    def startup(self):
+        random.seed(self.seed)
 
-@slow
-def test_worker_finish():
-    p = procedure.TestProcedure()
-    f = tempfile.mktemp()
-    r = Results(p, f)
-    w = Worker(r)
-    w.start()
-    w.join()
-    sleep(2)
-    assert not w.is_alive()
+    def execute(self):
+        for i in range(self.iterations):
+            data = {
+                'Iteration': i,
+                'Random Number': random.random()
+            }
+            self.emit('results', data)
+            self.emit('progress', 100.*i/self.iterations)
+            sleep(self.delay)
+            if self.should_stop():
+                break

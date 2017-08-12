@@ -25,7 +25,8 @@
 import logging
 import logging.handlers
 from logging.handlers import QueueHandler
-from multiprocessing import Queue
+
+from .process import context
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -42,7 +43,7 @@ class QueueListener(logging.handlers.QueueListener):
 def console_log(logger, level=logging.INFO, queue=None):
     """Create a console log handler. Return a scribe thread object."""
     if queue is None:
-        queue = Queue()
+        queue = context.Queue()
     logger.setLevel(level)
     ch = logging.StreamHandler()
     ch.setLevel(level)
@@ -58,7 +59,7 @@ def console_log(logger, level=logging.INFO, queue=None):
 def file_log(logger, log_filename, level=logging.INFO, queue=None, **kwargs):
     """Create a file log handler. Return a scribe thread object."""
     if queue is None:
-        queue = Queue()
+        queue = context.Queue()
     logger.setLevel(level)
     ch = logging.FileHandler(log_filename, **kwargs)
     ch.setLevel(level)
@@ -88,7 +89,7 @@ def setup_logging(logger=None, console=False, console_level='INFO', filename=Non
     """Setup logging for console and/or file logging. Returns a scribe thread object.
     Defaults to no logging."""
     if queue is None:
-        queue = Queue()
+        queue = context.Queue()
     if logger is None:
         logger = logging.getLogger()
     if file_kwargs is None:

@@ -44,4 +44,4 @@ install:
   - conda info -a
 
 # command to run tests
-script: py.test
+script: python setup.py test

@@ -49,7 +49,7 @@ class StoppableThread(Thread):
         self._should_stop.wait(timeout)
         if not self.should_stop():
             self.stop()
-        super().join()
+        return super().join(0)
 
     def stop(self):
         self._should_stop.set()

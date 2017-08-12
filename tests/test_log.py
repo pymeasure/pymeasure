@@ -22,34 +22,27 @@
 # THE SOFTWARE.
 #
 
-import os
-from importlib.machinery import SourceFileLoader
-
-from pymeasure.experiment.results import CSVFormatter
-
-# Load the procedure, without it being in a module
-data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-procedure = SourceFileLoader('procedure', data_path).load_module()
+import time
+from pymeasure.process import context
+from pymeasure.log import Scribe
 
 
-def test_procedure():
-    """ Ensure that the loaded test procedure is properly functioning
-    """
-    p = procedure.TestProcedure()
-    assert p.iterations == 100
-    assert hasattr(p, 'execute')
+# TODO: Add tests for logging convenience functions and TopicQueueHandler
+
+def test_scribe_stop():
+    q = context.Queue()
+    s = Scribe(q)
+    s.start()
+    assert s.is_alive() is True
+    s.stop()
+    assert s.is_alive() is False
 
 
-def test_csv_formatter_format_header():
-    """Tests CSVFormatter.format_header() method."""
-    columns = ['t', 'x', 'y', 'z', 'V']
-    formatter = CSVFormatter(columns=columns)
-    assert formatter.format_header() == 't,x,y,z,V'
-
-
-def test_csv_formatter_format():
-    """Tests CSVFormatter.format() method."""
-    columns = ['t', 'x', 'y', 'z', 'V']
-    formatter = CSVFormatter(columns=columns)
-    data = {'t': 1, 'y': 2, 'z': 3.0, 'x': -1, 'V': 'abc'}
-    assert formatter.format(data) == '1,-1,2,3.0,abc'
+def test_scribe_finish():
+    q = context.Queue()
+    s = Scribe(q)
+    s.start()
+    assert s.is_alive() is True
+    q.put(None)
+    time.sleep(0.1)
+    assert s.is_alive() is False

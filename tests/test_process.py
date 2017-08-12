@@ -25,16 +25,15 @@
 from pymeasure.process import StoppableProcess
 
 
-def test_stopping():
-    p = StoppableProcess()
-    p.start()
-    p.stop()
-    assert p.should_stop() is True
-    p.join()
+def test_process_stopping():
+    process = StoppableProcess()
+    process.start()
+    process.stop()
+    assert process.should_stop() is True
+    process.join()
 
-
-def test_joining():
-    p = StoppableProcess()
-    p.start()
-    p.join()
-    assert p.should_stop() is True
+def test__process_joining():
+    process = StoppableProcess()
+    process.start()
+    process.join()
+    assert process.should_stop() is True

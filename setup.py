@@ -50,6 +50,9 @@ setup(
             'cloudpickle >= 0.3.1'
         ]
     },
+    setup_requires=[
+        'pytest-runner'
+    ],
     tests_require=[
         'pytest >= 2.9.1'
     ],

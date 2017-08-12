@@ -22,28 +22,18 @@
 # THE SOFTWARE.
 #
 
-import time
-from multiprocessing import Queue
-
-from pymeasure.log import Scribe
+from pymeasure.thread import StoppableThread
 
 
-# TODO: Add tests for logging convenience functions and TopicQueueHandler
+def test_thread_stopping():
+    t = StoppableThread()
+    t.start()
+    t.stop()
+    assert t.should_stop() is True
+    t.join()
 
-def test_scribe_stop():
-    q = Queue()
-    s = Scribe(q)
-    s.start()
-    assert s.is_alive() is True
-    s.stop()
-    assert s.is_alive() is False
-
-
-def test_scribe_finish():
-    q = Queue()
-    s = Scribe(q)
-    s.start()
-    assert s.is_alive() is True
-    q.put(None)
-    time.sleep(0.1)
-    assert s.is_alive() is False
+def test_thread_joining():
+    t = StoppableThread()
+    t.start()
+    t.join()
+    assert t.should_stop() is True
