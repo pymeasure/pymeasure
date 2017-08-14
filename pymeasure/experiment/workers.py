@@ -22,17 +22,18 @@
 # THE SOFTWARE.
 #
 
+import sys
 import logging
 import time
 import traceback
 from logging.handlers import QueueHandler
-from multiprocessing import Queue
+from importlib.machinery import SourceFileLoader
 
 from .listeners import Recorder
-from .procedure import Procedure
+from .procedure import Procedure, ProcedureWrapper
 from .results import Results
 from ..log import TopicQueueHandler
-from ..process import StoppableProcess
+from ..process import StoppableProcess, context
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -62,17 +63,15 @@ class Worker(StoppableProcess):
         if not isinstance(results, Results):
             raise ValueError("Invalid Results object during Worker construction")
         self.results = results
-        self.procedure = self.results.procedure
-        self.procedures_file = self.procedure.__module__
-        self.procedure.check_parameters()
-        self.procedure.status = Procedure.QUEUED
+        self.results.procedure.check_parameters()
+        self.results.procedure.status = Procedure.QUEUED
 
         self.recorder = None
-        self.recorder_queue = Queue()
+        self.recorder_queue = context.Queue()
 
-        self.monitor_queue = Queue()
+        self.monitor_queue = context.Queue()
         if log_queue is None:
-            log_queue = Queue()
+            log_queue = context.Queue()
         self.log_queue = log_queue
         self.log_level = log_level
 
@@ -135,16 +134,18 @@ class Worker(StoppableProcess):
         log.addHandler(QueueHandler(self.log_queue))
         log.info("Worker process started")
 
+        self.procedure = self.results.procedure
+
         self.recorder = Recorder(self.results, self.recorder_queue)
         self.recorder.start()
 
-        locals()[self.procedures_file] = __import__(self.procedures_file)
+        #locals()[self.procedures_file] = __import__(self.procedures_file)
 
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
 
-        if self.port is not None:
+        if self.port is not None and zmq is not None:
             try:
                 self.context = zmq.Context()
                 log.debug("Worker ZMQ Context: %r" % self.context)

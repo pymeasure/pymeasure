@@ -26,6 +26,9 @@ import logging
 
 import os
 import re
+import sys
+from copy import deepcopy
+from importlib.machinery import SourceFileLoader
 from datetime import datetime
 
 import pandas as pd
@@ -137,6 +140,39 @@ class Results(object):
                     f.write(self.labels())
             self._data = None
 
+    def __getstate__(self):
+        # Get all information needed to reconstruct procedure
+        self._parameters = self.procedure.parameter_values()
+        self._class = self.procedure.__class__.__name__
+        module = sys.modules[self.procedure.__module__]
+        self._package = module.__package__
+        self._module = module.__name__
+        self._file = module.__file__
+
+        state = self.__dict__.copy()
+        del state['procedure']
+        del state['procedure_class']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        # Restore the procedure
+        module = SourceFileLoader(self._module, self._file).load_module()
+        cls = getattr(module, self._class)
+
+        self.procedure = cls()
+        self.procedure.set_parameters(self._parameters)
+        self.procedure.refresh_parameters()
+
+        self.procedure_class = cls
+
+        del self._parameters
+        del self._class
+        del self._package
+        del self._module
+        del self._file
+
     def header(self):
         """ Returns a text header to accompany a datafile so that the procedure
         can be reconstructed
@@ -173,7 +209,8 @@ class Results(object):
             data[key] = items[i]
         return data
 
-    def parse_header(self, header, procedure_class=None):
+    @staticmethod
+    def parse_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
@@ -217,7 +254,7 @@ class Results(object):
                 procedure = procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
-                log.warning("Unknown Procedure in %s" % self.data_filename)
+                log.warning("Unknown Procedure being used")
             except Exception as e:
                 raise e
 
@@ -307,3 +344,10 @@ class Results(object):
             self._data = pd.concat(chunks, ignore_index=True)
         except Exception:
             self._data = chunks.read()
+
+    def __repr__(self):
+        return "<{}(filename='{}',procedure={},shape={})>".format(
+            self.__class__.__name__, self.data_filename,
+            self.procedure.__class__.__name__,
+            self.data.shape
+        )

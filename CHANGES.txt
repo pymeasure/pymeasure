@@ -1,3 +1,10 @@
+Version 0.4.6 -- released 8/12/17
+=================================
+- Reverted multiprocessing start method keyword arguments to fix Unix spawn issues (@ndr37)
+- Fixes to regressions in Results writing (@feinsteinben)
+- Fixes to TCP support using cloudpickle (@feinsteinben)
+- Restructing of unit test framework
+
 Version 0.4.5 -- released 7/4/17
 ================================
 - Recorder and Scribe now leverage QueueListener (@feinsteinben)

@@ -27,7 +27,10 @@
 
 import ctypes
 import numpy as np
-nidaq = ctypes.windll.nicaiu
+from sys import platform
+
+if platform == "win32":
+    nidaq = ctypes.windll.nicaiu
 
 # Data Types
 int32 = ctypes.c_long
