@@ -42,12 +42,13 @@ import numpy as np
 import time
 
 
-class Keithley2600(Instrument):
-    """Represents the Keithely 2600 Series SourceMeters and provides a
+class Keithley2600AB(Instrument):
+    """Represents the Keithley 2600A and 2600B Series SourceMeters and provides a
     high-level interface for interacting with the instrument.
+    Keithley 2600 before 'A' use a different kind of triggering and buffering
 
     #Todo: Define and implement the required functions using TSP commands sent over the adapter
-    #Idea: Define TSP_string and append commands to the script. Start, i.e. send to the instrument, with TSP_to_instrument ??
+    #Idea: Define TSP_string and append commands to the script. Start, i.e. send to the instrument, with start_measurement ??
 
     .. code-block:: python
 
@@ -70,7 +71,7 @@ class Keithley2600(Instrument):
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
-            "Keithley2600 SourceMeter",
+            "Keithley2600AB SourceMeter",
             includeSCPI=False,
             **kwargs
         )
@@ -89,6 +90,88 @@ class Keithley2600(Instrument):
                        'wave': 'a.u.'}
 
 
+
+###########
+#beepmania#
+###########
+
+    #time of full note in ms
+    _fullnotetime = 800
+
+    # the notes
+    P = 0   # pause
+    C = 1
+    CS = 2  # C sharp
+    D = 3
+    DS = 4
+    E = 5
+    F = 6
+    FS = 7
+    G = 8
+    GS = 9
+    A = 10
+    AS = 11
+    B = 12
+    # enharmonics
+    CF = B
+    DF = CS
+    EF = DS
+    FF = E
+    GF = FS
+    AF = GS
+    BF = AS
+    #durations
+    FN = _fullnotetime   #full note
+    EN = FN/8   #eighth note
+    QN = FN/4   #quarter note
+    HN = FN/2   #half note
+
+
+
+def play(self, octave, note, duration):
+        """Plays a note on the beeper
+        :param octave: the octave of the note(1-8)
+        :param note: the name of the note within the octave (C-B). Only sharped notes are recognized"""
+        if note == 0:    # a pause
+            time.sleep(duration/1000)
+            return
+        frequency = 32.7032           # C1
+        for k in range(0, octave):    # compute C in given octave
+            frequency *= 2
+        for k in range(0, note):      # compute frequency of given note
+            frequency *= 1.059463094  # 1.059463094 = 12th root of 2
+        time.sleep(0.0001*_fullnotetime)             # delay between keys
+        self.write(f'beeper.beep({duration}, {frequency})')
+
+    def bigben():
+        self.play(4,E,HN)
+        self.play(4,C,HN)
+        self.play(4,D,HN)
+        self.play(3,G,HN+QN); play(3,P,QN)
+        self.play(3,G,HN)
+        self.play(4,D,HN)
+        self.play(4,E,HN)
+        self.play(4,C,HN+QN)
+
+    def beep(self, frequency, duration)
+       """Sounds a system beep.
+       :param frequency: the frequency of the beep
+       :param duration: the duration of the beep
+       """
+       self.write(f'beeper.beep({duration}, {frequency})')
+
+    def triad(self, base_frequency, duration):
+        """ Sounds a musical triad using the system beep.
+
+        :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
+        :param duration: A time in seconds between 0 and 7.9 seconds
+        """
+        self.beep(base_frequency, duration)
+        time.sleep(duration)
+        self.beep(base_frequency*5.0/4.0, duration)
+        time.sleep(duration)
+        self.beep(base_frequency*6.0/4.0, duration)
+
     ###############
     # Current (A) #
     ###############
@@ -98,6 +181,16 @@ class Keithley2600(Instrument):
 
     ###############
     # Voltage (V) #
+    ###############
+
+
+    ###############
+    #   Buffer    #
+    ###############
+
+
+    ###############
+    # Time/Trigger#
     ###############
 
 
