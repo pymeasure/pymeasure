@@ -23,16 +23,16 @@
 #
 
 import logging
-
 import os
-import visa
-import pyqtgraph as pg
 
+import pyqtgraph as pg
+import visa
+from PyQt5.QtWidgets import *
+
+from .Qt import QtCore, QtGui
 from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment
-from .Qt import QtCore, QtGui
-from PyQt5.QtWidgets import *
 from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog
 from ..experiment.results import Results
 
@@ -248,7 +248,8 @@ class ManagedWindow(QtGui.QMainWindow):
     def instrument_clicked(self, item):
         itemtext = item.text()
         n, instr, idn = itemtext.split('-')
-        QMessageBox.information(self, "Instrument Selection", "You clicked: \nitem\t\t"+n+"\nadress:\t\t"+instr+"\nidn:\t\t"+idn)
+        QMessageBox.information(self, "Instrument Selection",
+                                "You clicked: \nitem\t\t" + n + "\nadress:\t\t" + instr + "\nidn:\t\t" + idn)  # TODO: Replace this with a function that adds the selected instrument(-adress) to the current procedure
 
     def browser_item_changed(self, item, column):
         if column == 0:
