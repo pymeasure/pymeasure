@@ -23,6 +23,7 @@
 #
 
 import logging
+import re
 
 import numpy as np
 
@@ -312,10 +313,44 @@ class FakeInstrument(Instrument):
     for testing purposes.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, adapter=None, name=None, includeSCPI=False, **kwargs):
         super().__init__(
             FakeAdapter(),
-            "Fake Instrument",
-            includeSCPI=False,
+            name or "Fake Instrument",
+            includeSCPI=includeSCPI,
             **kwargs
         )
+
+    @staticmethod
+    def control(get_command, set_command, docs,
+                validator=lambda v, vs: v, values=(), map_values=False,
+                get_process=lambda v: v, set_process=lambda v: v,
+                check_set_errors=False, check_get_errors=False,
+                **kwargs):
+        """Fake Instrument.control.
+
+        Strip commands and only store and return values indicated by
+        format strings to mimic many simple commands.
+        This is analogous how the tests in test_instrument are handled.
+        """
+
+        # Regex search to find first format specifier in the command
+        fmt_spec_pattern = r'(%[\w.#-+ *]*[diouxXeEfFgGcrsa%])'
+        match = re.search(fmt_spec_pattern, set_command)
+        if match:
+            format_specifier = match.group(0)
+        else:
+            format_specifier = ''
+        # To preserve as much functionality as possible, call the real
+        # control method with modified get_command and set_command.
+        return Instrument.control(get_command="",
+                                  set_command=format_specifier,
+                                  docs=docs,
+                                  validator=validator,
+                                  values=values,
+                                  map_values=map_values,
+                                  get_process=get_process,
+                                  set_process=set_process,
+                                  check_set_errors=check_set_errors,
+                                  check_get_errors=check_get_errors,
+                                  **kwargs)
