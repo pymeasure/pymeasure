@@ -40,9 +40,9 @@ Instrument file
 
 All standard instruments should be child class of :class:`Instrument <pymeasure.instruments.Instrument>`. This provides the basic functionality for working with :class:`Adapters <pymeasure.adapters.Adapter>`, which perform the actual communication. 
 
-The most basic instrument, for our "Extreme 5000" example looks as follows.
+The most basic instrument, for our "Extreme 5000" example starts like this:
 
-.. code-block:: python
+.. testcode::
 
     #
     # This file is part of the PyMeasure package.
@@ -68,11 +68,21 @@ The most basic instrument, for our "Extreme 5000" example looks as follows.
     # THE SOFTWARE.
     #
 
-    from pymeasure.instruments import Instrument
+    # from pymeasure.instruments import Instrument
+    
+.. testcode::
+    :hide:
 
+    # Behind the scene, replace Instrument with FakeInstrument to enable
+    # doctesting all this
+    from pymeasure.instruments.instrument import FakeInstrument as Instrument
 
+This is a minimal instrument definition:
+
+.. testcode::
+    
     class Extreme5000(Instrument):
-        """ Represents the Extreme 5000 instrument
+        """ Represents the imaginary Extreme 5000 instrument.
         """
 
         def __init__(self, resourceName, **kwargs):
@@ -95,27 +105,33 @@ In PyMeasure, `Python properties`_ are the preferred method for dealing with var
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
 
-.. code-block:: python
+.. testcode::
 
-     id = Instrument.measurement(
+     Extreme5000.id = Instrument.measurement(
         "*IDN?", """ Reads the instrument identification """
      )
 
+.. testcode::
+    :hide:
+    
+    # We are not mocking this in FakeInstrument, let's override silently
+    Extreme5000.id = 'Extreme 5000 identification from instrument'
+    
 You will notice that a documentation string is required, and should be descriptive and specific.
 
 When we use this property we will get the identification information.
 
-.. code-block:: python
+.. doctest::
 
-    >> extreme = Extreme5000("GPIB::1")
-    >> extreme.id           # Reads "*IDN?"
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.id           # Reads "*IDN?"
     'Extreme 5000 identification from instrument'
 
 The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
 
-.. code-block:: python
+.. testcode::
 
-    voltage = Instrument.control(
+    Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """ A floating point property that controls the voltage
         in Volts. This property can be set.
@@ -128,11 +144,11 @@ You will notice that we use the `Python string format`_ :code:`%g` to pass throu
 
 We can use this property to set the voltage to 100 mV, which will execute the command and then request the current voltage.
 
-.. code-block:: python
+.. doctest::
 
-    >> extreme = Extreme5000("GPIB::1")
-    >> extreme.voltage = 0.1        # Executes ":VOLT 0.1"
-    >> extreme.voltage              # Reads ":VOLT?"
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.voltage = 0.1        # Executes ":VOLT 0.1"
+    >>> extreme.voltage              # Reads ":VOLT?"
     0.1
 
 Using both of these functions, you can create a number of properties for basic measurements and controls. The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command.
@@ -153,9 +169,10 @@ If you have a property with a restricted range, you can use the :func:`strict_ra
 
 For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, we can modify our previous example to use a strict validator over this range.
 
-.. code-block:: python
-
-    voltage = Instrument.control(
+.. testcode::
+  
+    from pymeasure.instruments.validators import strict_range
+    Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """ A floating point property that controls the voltage
         in Volts, from -1 to 1 V. This property can be set. """,
@@ -165,17 +182,20 @@ For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, w
 
 Now our voltage will raise a ValueError if the value is out of the range.
 
-.. code-block:: python
+.. doctest::
 
-    >> extreme = Extreme5000("GPIB::1")
-    >> extreme.voltage = 100
-    Exception: ValueError("Value of 100 is not in range [-1, 1]")
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.voltage = 100
+    Traceback (most recent call last):
+    ...
+    ValueError: Value of 100 is not in range [-1,1]
 
 This is useful if you want to alert the programmer that they are using an invalid value. However, sometimes it can be nicer to truncate the value to be within the range.
 
-.. code-block:: python
+.. testcode::
 
-    voltage = Instrument.control(
+    from pymeasure.instruments.validators import truncated_range
+    Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """ A floating point property that controls the voltage
         in Volts, from -1 to 1 V. Invalid voltages are truncated.
@@ -186,12 +206,12 @@ This is useful if you want to alert the programmer that they are using an invali
 
 Now our voltage will not raise an error, and will truncate the value to the range bounds.
 
-.. code-block:: python
+.. doctest::
 
-    >> extreme = Extreme5000("GPIB::1")
-    >> extreme.voltage = 100        # Executes ":VOLT 1"  
-    >> extreme.voltage
-    1
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.voltage = 100        # Executes ":VOLT 1"  
+    >>> extreme.voltage
+    1.0
 
 In a discrete set
 *****************
