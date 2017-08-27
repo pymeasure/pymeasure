@@ -5,7 +5,7 @@ Making a measurement
 .. role:: python(code)
     :language: python
 
-This tutorial will walk you through using PyMeasure to acquire a current-voltage (IV) characteristic using a Keithley 2400. Even if you don't have access to this instrument, this tutorial will explain the method for making measurements with PyMeasure. First we describe using a simple script to make the measurement. From there, we show how :ref:`Procedures` objects greatly simplify the workflow, which leads to making the measurement with a graphical interface. 
+This tutorial will walk you through using PyMeasure to acquire a current-voltage (IV) characteristic using a Keithley 2400. Even if you don't have access to this instrument, this tutorial will explain the method for making measurements with PyMeasure. First we describe using a simple script to make the measurement. From there, we show how :mod:`Procedure <pymeasure.experiment.procedure>` objects greatly simplify the workflow, which leads to making the measurement with a graphical interface. 
 
 Using scripts
 =============
@@ -80,7 +80,7 @@ Running this example script will execute the measurement and save the data to a 
 * Canceling a running measurement causes the system to end in a undetermined state
 * Exceptions also end the system in an undetermined state
 
-The :ref:`Procedure` class allows us to solve all of these issues. The next section introduces the :ref:`Procedure` class and shows how to modify our script example to take advantage of these features.
+The :class:`Procedure <pymeasure.experiment.procedure.Procedure>` class allows us to solve all of these issues. The next section introduces the :class:`Procedure <pymeasure.experiment.procedure.Procedure>` class and shows how to modify our script example to take advantage of these features.
 
 
 Using Procedures

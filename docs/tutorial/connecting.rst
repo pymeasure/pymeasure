@@ -42,19 +42,19 @@ PyMeasure supports a number of adapters, which are responsible for communicating
     adapter = VISAAdapter("GPIB::4")
     sourcemeter = Keithely2400(adapter)
 
-To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper permissions are needed in Linux, see :ref:`PrologixAdapter`), the adapter is constructed in a similar way. Unlike the VISA adapter which is specific to each instrument, the Prologix adapter can be shared by many instruments. Therefore, they are addressed separately based on the GPIB address number when passing the adapter into the instrument construction. ::
+To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper permissions are needed in Linux, see :class:`PrologixAdapter <pymeasure.adapters.PrologixAdapter>`), the adapter is constructed in a similar way. Unlike the VISA adapter which is specific to each instrument, the Prologix adapter can be shared by many instruments. Therefore, they are addressed separately based on the GPIB address number when passing the adapter into the instrument construction. ::
 
     from pymeasure.adapters import PrologixAdapter
 
     adapter = PrologixAdapter('/dev/ttyUSB0')
     sourcemeter = Keithley2400(adapter.gpib(4))
 
-For instruments using serial communication that have particular settings that need to be matched, a custom :ref:`Adapter` sub-class can be made. For example, the LakeShore 425 Gaussmeter connects via USB, but uses particular serial communication settings. Therefore, a :ref:`LakeShoreUSBAdapter` class enables these requirements in the background. ::
+For instruments using serial communication that have particular settings that need to be matched, a custom :class:`Adapter <pymeasure.adapters.Adapter>` sub-class can be made. For example, the LakeShore 425 Gaussmeter connects via USB, but uses particular serial communication settings. Therefore, a :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>` class enables these requirements in the background. ::
 
     from pymeasure.instruments.lakeshore import LakeShore425
 
     gaussmeter = LakeShore425('/dev/lakeshore425')
 
-Behind the scenes the :code:`/dev/lakeshore425` port is passed to the :ref:`LakeShoreUSBAdapter`.
+Behind the scenes the :code:`/dev/lakeshore425` port is passed to the :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>`.
 
 The above examples illustrate different methods for communicating with instruments, using adapters to keep instrument code independent from the communication protocols. Next we present the methods for setting up measurements.
