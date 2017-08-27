@@ -348,8 +348,8 @@ class Keithley2400(Instrument, KeithleyBuffer):
         The compliance current is also set.
 
         :param compliance_current: A float in the correct range for a 
-                                   :attr:`~.compliance_current`
-        :param voltage_range: A :attr:`~.voltage_range` value or None
+                                   :attr:`~.Keithley2400.compliance_current`
+        :param voltage_range: A :attr:`~.Keithley2400.voltage_range` value or None
         """
         log.info("%s is sourcing voltage." % self.name)
         self.source_mode = 'voltage'
