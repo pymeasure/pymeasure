@@ -109,9 +109,11 @@ Select trigger source; accept the values:
 
     def freq_sweep(self, freq_list, return_freq=False):
         """
-        Run frequency list sweep using sequential trigger
-            :param freq_list: list of frequencies
-            :param return_freq: if True, returns the frequencies read from the instrument
+        Run frequency list sweep using sequential trigger.
+
+        :param freq_list: list of frequencies
+        :param return_freq: if True, returns the frequencies read from the instrument
+        
         Returns values as configured with :attr:`~.AgilentE4980.mode`
             """
         # manual, page 299
@@ -148,10 +150,10 @@ Select trigger source; accept the values:
     # TODO: maybe refactor as property?
     def aperture(self, time=None, averages=1):
         """
-        set and get aperture
-            :param time: integration time as string: SHORT, MED, LONG (case insensitive); 
-            if None, get values
-            :param averages: number of averages, numeric
+        Set and get aperture.
+
+        :param time: integration time as string: SHORT, MED, LONG (case insensitive); if None, get values
+        :param averages: number of averages, numeric
         """
         if time is None:
             read_values = self.ask(":APER?").split(',')
