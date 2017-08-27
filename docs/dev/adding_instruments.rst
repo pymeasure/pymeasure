@@ -101,7 +101,10 @@ In practice, we have developed a number of convenience functions for making inst
 Writing properties
 ==================
 
-In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set. PyMeasure comes with two convenience functions for making properties for classes. The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that issues a GPIB/SCPI requests when the value is used. For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added above the :code:`def __init__` line in our above example class.
+In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set. 
+PyMeasure comes with two convenience functions for making properties for classes. 
+The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that issues a GPIB/SCPI requests when the value is used. 
+For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added above the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
 
@@ -162,6 +165,11 @@ Many GPIB/SCIP commands are more restrictive than our basic examples above. The 
 
 In the examples below we assume you have imported the validators.
 
+.. testcode::
+    :hide:
+
+    from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
+
 In a restricted range
 *********************
 
@@ -171,7 +179,6 @@ For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, w
 
 .. testcode::
   
-    from pymeasure.instruments.validators import strict_range
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """ A floating point property that controls the voltage
@@ -194,7 +201,6 @@ This is useful if you want to alert the programmer that they are using an invali
 
 .. testcode::
 
-    from pymeasure.instruments.validators import truncated_range
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """ A floating point property that controls the voltage
@@ -220,9 +226,9 @@ Often a control property should only take a few discrete values. You can use the
 
 For example, if our "Extreme 5000" has a :code:`:RANG <float>` command that sets the voltage range that can take values of 10 mV, 100 mV, and 1 V in Volts, then we can write a control as follows.
 
-.. code-block:: python
+.. testcode::
 
-    voltage = Instrument.control(
+    Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %g",
         """ A floating point property that controls the voltage
         range in Volts. This property can be set.
@@ -233,11 +239,11 @@ For example, if our "Extreme 5000" has a :code:`:RANG <float>` command that sets
 
 Now we can set the voltage range, which will automatically truncate to an appropriate value.
 
-.. code-block:: python
+.. doctest::
 
-    >> extreme = Extreme5000("GPIB::1")
-    >> extreme.voltage_range = 0.08
-    >> extreme.voltage_range
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.voltage = 0.08
+    >>> extreme.voltage
     0.1
 
 
@@ -248,9 +254,9 @@ Now that you are familiar with the validators, you can additionally use maps to 
 
 If your set of values is a list, then the command will use the index of the list. For example, if our "Extreme 5000" instead has a :code:`:RANG <integer>`, where 0, 1, and 2 correspond to 10 mV, 100 mV, and 1 V, then we can use the following control.
 
-.. code-block:: python
+.. testcode::
 
-    voltage = Instrument.control(
+    Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
         """ A floating point property that controls the voltage
         range in Volts, which takes values of 10 mV, 100 mV and 1 V.
@@ -262,11 +268,21 @@ If your set of values is a list, then the command will use the index of the list
 
 Now the actual GPIB/SCIP command is ":RANG 1" for a value of 100 mV, since the index of 100 mV in the values list is 1.
 
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.voltage = 100e-3
+    >>> extreme.read()
+    '1'
+    >>> extreme.voltage = 1
+    >>> extreme.voltage
+    1
+
 Dictionaries provide a more flexible method for mapping between real-values and those required by the instrument. If instead the :code:`:RANG <integer>` took 1, 2, and 3 to correspond to 10 mV, 100 mV, and 1 V, then we can replace our previous control with the following.
 
-.. code-block:: python
+.. testcode::
 
-    voltage = Instrument.control(
+    Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
         """ A floating point property that controls the voltage
         range in Volts, which takes values of 10 mV, 100 mV and 1 V.
@@ -276,11 +292,21 @@ Dictionaries provide a more flexible method for mapping between real-values and 
         map_values=True
     )
 
-The dictionary now maps the keys to specific values. The values and keys can be any type, so this can support properties that use strings.
+.. doctest::
 
-.. code-block:: python
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.voltage = 10e-3
+    >>> extreme.read()
+    '1'
+    >>> extreme.voltage = 100e-3
+    >>> extreme.voltage
+    0.1
 
-    channel = Instrument.control(
+The dictionary now maps the keys to specific values. The values and keys can be any type, so this can support properties that use strings:
+
+.. testcode::
+  
+    Extreme5000.channel = Instrument.control(
         ":CHAN?", ":CHAN %d",
         """ A string property that controls the measurement channel,
         which can take the values X, Y, or Z.
@@ -289,5 +315,15 @@ The dictionary now maps the keys to specific values. The values and keys can be 
         values={'X':1, 'Y':2, 'Z':3},
         map_values=True
     )
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.channel = 'X'
+    >>> extreme.read()
+    '1'
+    >>> extreme.channel = 'Y'
+    >>> extreme.channel
+    'Y'
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be significantly extended by using validators and maps.
