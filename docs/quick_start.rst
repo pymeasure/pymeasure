@@ -4,8 +4,6 @@ Quick start
 
 This section provides instructions for getting up and running quickly with PyMeasure.
 
-.. _installing
-
 Setting up Python
 =================
 

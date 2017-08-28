@@ -58,11 +58,11 @@ class HP33120A(Instrument):
     )
     max_frequency = Instrument.measurement(
         "SOUR:FREQ? MAX", 
-        """ Reads the maximum :attr:`~.frequency` in Hz for the given shape """
+        """ Reads the maximum :attr:`~.HP33120A.frequency` in Hz for the given shape """
     )
     min_frequency = Instrument.measurement(
         "SOUR:FREQ? MIN", 
-        """ Reads the minimum :attr:`~.frequency` in Hz for the given shape """
+        """ Reads the minimum :attr:`~.HP33120A.frequency` in Hz for the given shape """
     )
     amplitude = Instrument.control(
         "SOUR:VOLT?", "SOUR:VOLT %g",

@@ -114,7 +114,7 @@ class Danfysik8500(Instrument):
     @property
     def status_hex(self):
         """ The status in hexadecimal. This value is parsed in
-        :attr:`~.status` into a human-readable list.
+        :attr:`~.Danfysik8500.status` into a human-readable list.
         """
         status = self.ask("S1H")
         match = re.search(r'(?P<hex>[A-Z0-9]{6})', status)
@@ -154,7 +154,7 @@ class Danfysik8500(Instrument):
     @property
     def current_setpoint(self):
         """ The setpoint for the current, which can deviate from the actual current
-        (:attr:`~.current`) while the supply is in the process of setting the value.
+        (:attr:`~.Danfysik8500.current`) while the supply is in the process of setting the value.
         """
         return self.current_ppm*(160/1e6)
 
