@@ -11,6 +11,9 @@ matrix:
     - os: linux
       env: PYTHON=3.6  CONDA_PY=36
       sudo: true
+    - os: linux
+      env: PYTHON=3.6 DOCS=true
+      sudo: true
     - os: osx
       env: PYTHON=3.4  CONDA_PY=34
       sudo: false
@@ -41,7 +44,16 @@ install:
   - ENVIRONMENT_FILE="requirements/conda-${PYTHON}.yml"
   - conda env create -f $ENVIRONMENT_FILE
   - source activate pymeasure
+  - if [ -n "${DOCS}" ]; then
+        conda install --yes sphinx sphinx_rtd_theme;
+    fi
   - conda info -a
 
 # command to run tests
-script: python setup.py test
+script: 
+  - python setup.py test
+  - if [ -n "${DOCS}" ]; then
+        cd docs;
+        make doctest || travis_terminate 1;
+        make html || travis_terminate 1;
+    fi
