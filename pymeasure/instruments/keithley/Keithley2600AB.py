@@ -45,7 +45,9 @@ import time
 class Keithley2600AB(Instrument):
     """Represents the Keithley 2600A and 2600B Series SourceMeters and provides a
     high-level interface for interacting with the instrument.
-    Note: Keithley 2600 before 'A' use a different kind of triggering and buffering!
+
+    Commands are either sent to the instrument when they are called (start_on_call = True) or appended to TSP_script (start_on_call = False).
+    The generated TSP script can then be sent to the instrument vie send_script()
 
     #Todo: Define and implement the required functions using TSP commands sent over the adapter
     #Idea: Define TSP_string and append commands to the script. Start, i.e. send to the instrument, with start_measurement ??
@@ -77,8 +79,78 @@ class Keithley2600AB(Instrument):
             **kwargs
         )
 
-        #define startup and local variables here
+        #TSP script commands can be directly sent and executed or appended to a string and send as one. Having self.TSP_script also allows to use already implemented TSP scripts (has to be tested!)
+        self.start_on_call = True
+        self.TSP_script = ""
 
+
+
+    def write_command(self, new_command):
+        """Writes the TSP command either directly to the instrument or to the TSP_script, depending on the choice of start_on_call"""
+        if self.start_on_call:
+            self.write(new_command)
+        else if not start_on_call:
+            self.TSP_script = self.TSP_script + " " + new_command  # TODO: Check whether the command is a valid TSP command?!
+
+    def execute_script(self):
+        """Executes the TSP_script, i.e. sends the string with the commands to the instrument."""
+        self.write(TSP_script)
+
+    def clear_script(self):
+        """clears the script so it can be redefined"""
+        self.TSP_script = ""
+
+    def reset(self):
+            """Resets the SMU"""
+            self.write_command('reset()')
+
+    def set_output(self, smux = 'smua', state):
+        """Turn the output on or off"""
+        #Turn it into  allcaps
+        state.upper()
+        if state == "ON" or state == "OFF"
+            self.write_command(f'{smua}.source.output = OUTPUT_{state}')
+###########
+# voltage #
+###########
+
+    def set_output_fcn (self, smux = 'smua', keyword):
+    """Set the source function to be used .
+    :param smux:    SMU to be used. Commonly smua
+    :param keyword: Defines whether the source function is set to voltage or current
+
+"""
+        if keyword == 'voltage':
+            self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCVOLTS')
+        else:
+            if keyword == 'current':
+                self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCAMPS')
+    def set_voltage (self, smux = 'smua', voltage):
+        """Sets the voltage
+        :param smux:    SMU to be used. Commonly smua
+        :param voltage: voltage that is to be set"""
+        self.write_command(f'{smux}.source.levelv = {voltage}') #todo: Use validator for voltage
+        
+    def read_voltage(self, smux = 'smua', buffer = 'nvbuffer1', datapoints = 10):
+        """Measures the voltage and saves data to internal buffer, then returns ....
+        :param smux:        SMU to be used. Commonly smua
+        :param buffer:      The Keithley 26XX series offers two dedicated buffers per SMU channel. This parameter defines which one is used to buffer measurement data
+        :param datapoints:  number of measurements performed"""
+        self.write_command(f'{smux}.measure.count = {datapoints})
+        self.write_command(f'{smux}.measure.v({smux}.{buffer})
+
+        if self.start_on_call:
+
+
+###########
+# current #
+###########
+
+   def set_current (self, smux = 'smua', current):
+        """Sets the current
+        :param smux:    SMU to be used. Commonly smua
+        :param current: current that is to be set"""
+        self.write_command(f'{smux}.source.levelv = {current}') #todo: Use validator for current
 
 
 
