@@ -100,57 +100,71 @@ class Keithley2600AB(Instrument):
         """clears the script so it can be redefined"""
         self.TSP_script = ""
 
+
+#####################
+# general functions #
+#####################
+
     def reset(self):
             """Resets the SMU"""
             self.write_command('reset()')
 
     def set_output(self, smux = 'smua', state):
-        """Turn the output on or off"""
+        """Turn the output on or off. State of the output can also be changed with :code enable_source or :code disable_source"""
         #Turn it into  allcaps
         state.upper()
         if state == "ON" or state == "OFF"
             self.write_command(f'{smua}.source.output = OUTPUT_{state}')
+
+    def enable_source(self, smux='smua'):
+        self.write_command(f'{smua}.source.output = OUTPUT_ON')
+
+    def disable_source(self, smux='smua'):
+        self.write_command(f'{smua}.source.output = OUTPUT_OFF')
+
+    def set_autorange(self, smux = 'smua', state='ON', measurefunction):
+        """Sets the auto-range value of the smu channel
+        :param smux:    SMU channel to be used
+        :param state:   auto-range channel to be set. can be OFF: Disabled, ON: Enabled or FOLLOW_LIMIT: Measure range automatically set to the limit range
+        :param measurefunction: The measurement function for which the autorange property is changed."""
+        voltages = {'voltage','voltages'}
+        currents = {'current''currents'}
+        measurefunction.lower()
+
+        if measurefunction in voltages:
+            measurefunction = 'v'
+        else:
+            if measurefunction in currents:
+                measurefunction = 'i'
+
+        self.write_command(f'{smux}.measure.autorange{measurefunction} = AUTORANGE_{state}')
+
+    def set_delay(self, mdelay, smux = 'smua'):
+        """This attribute allows for additional delay (settling time) before taking a measurement.
+        If more than one measurement per sourced value is performed, the measurement delay is only inserted before the first measurement.
+        :param mdelay: the time in seconds after sourcing before the first measurement is performed.
+        :param smux: The channel of the SMU that is used"""
+        self.write_command(f'{smux}.measure.delay = {mdelay}')
+
+    def set_output_fcn (self, smux = 'smua', keyword):
+        """Set the source function to be used .
+        :param smux:    SMU to be used. Commonly smua
+        :param keyword: Defines whether the source function is set to voltage or current"""""
+        if keyword == 'voltage':
+             self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCVOLTS')
+        else:
+                if keyword == 'current':
+                    self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCAMPS')
+
 ###########
 # voltage #
 ###########
 
-    def set_output_fcn (self, smux = 'smua', keyword):
-    """Set the source function to be used .
-    :param smux:    SMU to be used. Commonly smua
-    :param keyword: Defines whether the source function is set to voltage or current
-
-"""
-        if keyword == 'voltage':
-            self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCVOLTS')
-        else:
-            if keyword == 'current':
-                self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCAMPS')
-    def set_voltage (self, smux = 'smua', voltage):
-        """Sets the voltage
-        :param smux:    SMU to be used. Commonly smua
-        :param voltage: voltage that is to be set"""
-        self.write_command(f'{smux}.source.levelv = {voltage}') #todo: Use validator for voltage
-        
-    def read_voltage(self, smux = 'smua', buffer = 'nvbuffer1', datapoints = 10):
-        """Measures the voltage and saves data to internal buffer, then returns ....
-        :param smux:        SMU to be used. Commonly smua
-        :param buffer:      The Keithley 26XX series offers two dedicated buffers per SMU channel. This parameter defines which one is used to buffer measurement data
-        :param datapoints:  number of measurements performed"""
-        self.write_command(f'{smux}.measure.count = {datapoints})
-        self.write_command(f'{smux}.measure.v({smux}.{buffer})
-
-        if self.start_on_call:
 
 
-###########
-# current #
-###########
 
-   def set_current (self, smux = 'smua', current):
-        """Sets the current
-        :param smux:    SMU to be used. Commonly smua
-        :param current: current that is to be set"""
-        self.write_command(f'{smux}.source.levelv = {current}') #todo: Use validator for current
+
+
 
 
 
@@ -159,14 +173,17 @@ class Keithley2600AB(Instrument):
 #   beep  #
 ###########
 
+    def read_buffer(self, smux='smua', buffer = 'nvbuffer1'):
 
+        np.array(self.write_command('printbuffer(1, {smux}.{buffer}.n, {smux}.{buffer})'))
+        #todo: write read_buffer method
 
-    def beep(self, frequency, duration)
+    def beep(self, frequency, duration):
        """Sounds a system beep.
        :param frequency: the frequency of the beep
-       :param duration: the duration of the beep
-       """
+       :param duration: the duration of the beep"""
        self.write(f'beeper.beep({duration}, {frequency})')
+
 
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.
@@ -180,17 +197,44 @@ class Keithley2600AB(Instrument):
         time.sleep(duration)
         self.beep(base_frequency*6.0/4.0, duration)
 
-    ###############
-    # Current (A) #
-    ###############
+###############
+# Current (A) #
+###############
+    def set_current (self, smux = 'smua', current):
+        """Sets the current
+        :param smux:    SMU to be used. Commonly smua
+        :param current: current that is to be set"""
+        self.write_command(f'{smux}.source.levelv = {current}') #todo: Use validator for current
 
 
+###############
+# Voltage (V) #
+###############
+    def set_voltage(self, smux='smua', voltage):
+            """Sets the voltage
+            :param smux:    SMU to be used. Commonly smua
+            :param voltage: voltage that is to be set"""
+            self.write_command(f'{smux}.source.levelv = {voltage}')  # todo: Use validator for voltage
 
+    def read_voltage(self, smux='smua', buffer='nvbuffer1', datapoints=10):
+            """Measures the voltage and saves data to internal buffer, then returns ....
+            :param smux:        SMU to be used. Commonly smua
+            :param buffer:      The Keithley 26XX series offers two dedicated buffers per SMU channel. This parameter defines which one is used to buffer measurement data
+            :param datapoints:  number of measurements performed"""
+            # clear buffer
+            self.write_command(f'{smux}.{buffer}.clear() smua.nvbuffer1.appendmode = 1')
+            # set number of points and fill buffer
+            self.write_command(f'{smux}.measure.count = {datapoints})
+            self.write_command(f'{smux}.measure.v({smux}.{buffer})
 
-    ###############
-    # Voltage (V) #
-    ###############
+            if self.start_on_call:
+            # read and return buffer
+                else:
+            #todo: write measure_voltage method
 
+            ###########
+            # current #
+            ###########
 
     ###############
     #   Buffer    #
