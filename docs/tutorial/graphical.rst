@@ -52,7 +52,7 @@ Let's extend our SimpleProcedure with a RandomProcedure, which generates random 
     if __name__ == "__main__":
         console_log(log)
 
-        log.info("Constructing a SimpleProcedure")
+        log.info("Constructing a RandomProcedure")
         procedure = RandomProcedure()
         procedure.iterations = 100
 
