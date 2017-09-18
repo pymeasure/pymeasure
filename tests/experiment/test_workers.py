@@ -32,9 +32,9 @@ from pymeasure.experiment.workers import Worker
 from pymeasure.experiment.results import Results
 
 # Load the procedure, without it being in a module
-#data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-#RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
-from data.procedure_for_testing import RandomProcedure
+data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
+RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
+#from data.procedure_for_testing import RandomProcedure
 
 
 slow = pytest.mark.skipif(
@@ -71,6 +71,5 @@ def test_worker_finish():
     worker.start()
     worker.join(timeout=0.5)
 
-    # TODO: Decide the fate of Process vs. Thread and implement this test
-    #new_results = Results.load(file, procedure_class=RandomProcedure)
-    #assert new_results.data.shape == (100, 2)
+    new_results = Results.load(file, procedure_class=RandomProcedure)
+    assert new_results.data.shape == (100, 2)
