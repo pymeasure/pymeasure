@@ -130,9 +130,9 @@ class Worker(StoppableThread):
         global log
         log = logging.getLogger()
         log.setLevel(self.log_level)
-        log.handlers = []  # Remove all other handlers
-        log.addHandler(TopicQueueHandler(self.monitor_queue))
-        log.addHandler(QueueHandler(self.log_queue))
+        # log.handlers = []  # Remove all other handlers
+        # log.addHandler(TopicQueueHandler(self.monitor_queue))
+        # log.addHandler(QueueHandler(self.log_queue))
         log.info("Worker thread started")
 
         self.procedure = self.results.procedure
