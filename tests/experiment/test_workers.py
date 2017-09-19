@@ -69,7 +69,7 @@ def test_worker_finish():
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
-    worker.join(timeout=0.5)
+    worker.join(timeout=5)
 
     new_results = Results.load(file, procedure_class=RandomProcedure)
     assert new_results.data.shape == (100, 2)
