@@ -70,27 +70,43 @@ class Keithley2600AB(Instrument):
         )
 
         #TSP script commands can be directly sent and executed or appended to a string and send as one. Having self.TSP_script also allows to use already implemented TSP scripts (has to be tested!)
-        self.start_on_call = True
+        self.__start_on_call = True
+        self.__start_on_call_change = False
         self.TSP_script = ""
 
 ################################
 # TSP script related functions #
 ################################
+    def start_on_call(self, value=True):
+        self.__start_on_call = value
+        self.__start_on_call_change = True
+
+
+
     def write_command(self, new_command):
-        """Writes the TSP command either directly to the instrument or to the TSP_script, depending on the choice of start_on_call"""
-        if self.start_on_call:
-            self.write(new_command)
-        else if not start_on_call:
-            self.TSP_script = self.TSP_script + "\n" + new_command  # TODO: Check whether the command is a valid TSP command?!
+        """Writes the TSP command to the instrument. if start_on_call is False, the script is not executed upon receiving the command"""
+
+        if not start_on_call and self.__start_on_call_change: # catch only first write after change of property __start_on_call
+            self.write('loadscript')
+            self.__start_on_call_change = False
+
+        self.write(new_command)
 
     def execute_script(self):
-        """Executes the TSP_script, i.e. sends the string with the commands to the instrument."""
-        self.write(TSP_script)
+        """Executes the TSP_script """
+        self.write('endscript')
+        self.write('run()')
 
     def clear_script(self):
         """clears the script so it can be redefined"""
         self.TSP_script = ""
 #todo: add load_TSP function that allows to load external TSP scripts (load --> execute makes them usable)
+    def load_TSP(self, filename):
+        self.write('loadscript')
+        #load file here
+        self.write('endscript')
+
+
 #####################
 # general functions #
 #####################
