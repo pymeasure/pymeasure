@@ -96,6 +96,7 @@ Unit tests are run each time a new commit is made to a branch. The purpose is to
 Running the unit tests while you develop is highly encouraged. This will ensure that you have a working contribution when you create a pull request.
 
 .. code-block:: bash
+
     python setup.py test
 
 If your feature can be tested, unit tests are required. This will ensure that your features keep working as new features are added.

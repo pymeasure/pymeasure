@@ -74,7 +74,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     current = Instrument.measurement(":READ?",
         """ Reads a DC or AC current measurement in Amps, based on the
-        active :attr:`~.mode`. """
+        active :attr:`~.Keithley2000.mode`. """
     )
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
@@ -150,7 +150,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     voltage = Instrument.measurement(":READ?",
         """ Reads a DC or AC voltage measurement in Volts, based on the
-        active :attr:`~.mode`. """
+        active :attr:`~.Keithley2000.mode`. """
     )
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
@@ -226,7 +226,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     resistance = Instrument.measurement(":READ?",
         """ Reads a resistance measurement in Ohms for both 2-wire and 4-wire
-        configurations, based on the active :attr:`~.mode`. """
+        configurations, based on the active :attr:`~.Keithley2000.mode`. """
     )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
@@ -295,7 +295,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     frequency = Instrument.measurement(":READ?",
         """ Reads a frequency measurement in Hz, based on the
-        active :attr:`~.mode`. """
+        active :attr:`~.Keithley2000.mode`. """
     )
     frequency_reference = Instrument.control(
         ":SENS:FREQ:REF?", ":SENS:FREQ:REF %g",
@@ -335,7 +335,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     period = Instrument.measurement(":READ?",
         """ Reads a period measurement in seconds, based on the
-        active :attr:`~.mode`. """
+        active :attr:`~.Keithley2000.mode`. """
     )
     period_reference = Instrument.control(
         ":SENS:PER:REF?", ":SENS:PER:REF %g",
@@ -375,7 +375,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     temperature = Instrument.measurement(":READ?",
         """ Reads a temperature measurement in Celsius, based on the
-        active :attr:`~.mode`. """
+        active :attr:`~.Keithley2000.mode`. """
     )
     temperature_reference = Instrument.control(
         ":SENS:TEMP:REF?", ":SENS:TEMP:REF %g",
@@ -521,7 +521,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ Sets the active mode to use auto-range,
         or can set another mode by its name.
 
-        :param mode: A valid :attr:`~.mode` name, or None for the active mode
+        :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
         self.write(":SENS:%s:RANG:AUTO 1" % self._mode_command(mode))
 
@@ -529,7 +529,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ Enables the reference for the active mode,
         or can set another mode by its name.
 
-        :param mode: A valid :attr:`~.mode` name, or None for the active mode
+        :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
         self.write(":SENS:%s:REF:STAT 1" % self._mode_command(mode))
 
@@ -537,7 +537,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ Disables the reference for the active mode,
         or can set another mode by its name.
 
-        :param mode: A valid :attr:`~.mode` name, or None for the active mode
+        :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
         self.write(":SENS:%s:REF:STAT 0" % self._mode_command(mode))
 
@@ -545,7 +545,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ Sets the active value as the reference for the active mode,
         or can set another mode by its name.
 
-        :param mode: A valid :attr:`~.mode` name, or None for the active mode
+        :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
         self.write(":SENS:%s:REF:ACQ" % self._mode_command(mode))
 
@@ -553,7 +553,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ Enables the averaging filter for the active mode,
         or can set another mode by its name.
 
-        :param mode: A valid :attr:`~.mode` name, or None for the active mode
+        :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         :param type: The type of averaging filter, either 'repeat' or 'moving'.
         :param count: A number of averages, which can take take values from 1 to 100
         """
@@ -565,7 +565,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ Disables the averaging filter for the active mode,
         or can set another mode by its name.
 
-        :param mode: A valid :attr:`~.mode` name, or None for the active mode
+        :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
         self.write(":SENS:%s:AVER:STAT 0" % self._mode_command(mode))
 
@@ -582,7 +582,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     def remote_lock(self):
         """ Disables and locks the front panel controls to prevent
         changes during remote operations. This is disabled by
-        calling :meth:`~.local`.  """
+        calling :meth:`~.Keithley2000.local`.  """
         self.write(":SYST:RWL")
 
     def reset(self):
