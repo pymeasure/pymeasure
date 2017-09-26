@@ -23,14 +23,16 @@
 #
 
 import logging
-
 import os
-import pyqtgraph as pg
 
+import pyqtgraph as pg
+import visa
+from PyQt5.QtWidgets import *
+
+from .Qt import QtCore, QtGui
 from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment
-from .Qt import QtCore, QtGui
 from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog
 from ..experiment.results import Results
 
@@ -117,11 +119,18 @@ class ManagedWindow(QtGui.QMainWindow):
         self._setup_ui()
         self._layout()
 
+
     def _setup_ui(self):
+        self.list_widget = QListWidget()
+        self.list_widget.itemClicked.connect(self.instrument_clicked)
+        self.refresh_button = QtGui.QPushButton('Refresh', self)
+        self.refresh_button.setEnabled(True)
+        self.refresh_button.clicked.connect(self.refresh_instruments)
+        self.refresh_instruments()
+
         self.log_widget = LogWidget()
         self.log.addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.info("ManagedWindow connected to logging")
-
         self.queue_button = QtGui.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self.queue)
 
@@ -176,6 +185,8 @@ class ManagedWindow(QtGui.QMainWindow):
 
         inputs_vbox.addWidget(self.inputs)
         inputs_vbox.addLayout(hbox)
+        inputs_vbox.addWidget(self.list_widget)
+        inputs_vbox.addWidget(self.refresh_button)
         inputs_vbox.addStretch()
         inputs_dock.setLayout(inputs_vbox)
 
@@ -204,6 +215,41 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def quit(self, evt=None):
         self.close()
+
+    def refresh_instruments(self):
+        if self.list_widget.count() == 0:
+            startup = True
+        else:
+            self.list_widget.clear()
+            startup = False
+        rm = visa.ResourceManager()
+        instrs = rm.list_resources()
+        for n, instr in enumerate(instrs):
+            # trying to catch errors in comunication
+            try:
+                res = rm.open_resource(instr)
+                # try to avoid errors from *idn?
+                try:
+                    # noinspection PyUnresolvedReferences
+                    idn = res.ask('*idn?')[:-1]
+                except visa.Error:
+                    idn = "Not known"
+                finally:
+                    res.close()
+                    self.list_widget.addItem(str(n)+"-"+str(instr)+"-"+str(idn))
+            except visa.VisaIOError as e:
+                print(n, ":", instr, ":", "Visa IO Error: check connections")
+                print(e)
+        rm.close()
+        if not startup:
+            QMessageBox.information(self, "Refresh", "Instruments refreshed")
+        log.info('Connected instruments refreshed.')
+
+    def instrument_clicked(self, item):
+        itemtext = item.text()
+        n, instr, idn = itemtext.split('-')
+        QMessageBox.information(self, "Instrument Selection",
+                                "You clicked: \nitem\t\t" + n + "\nadress:\t\t" + instr + "\nidn:\t\t" + idn)  # TODO: Replace this with a function that adds the selected instrument(-adress) to the current procedure
 
     def browser_item_changed(self, item, column):
         if column == 0:

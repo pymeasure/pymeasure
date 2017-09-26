@@ -73,6 +73,8 @@ class Procedure(object):
                 log.info('Setting parameter %s to %s' % (key, kwargs[key]))
         self.gen_measurement()
 
+
+
     def gen_measurement(self):
         """Create MEASURE and DATA_COLUMNS variables for get_datapoint method."""
         # TODO: Refactor measurable-s implementation to be consistent with parameters
