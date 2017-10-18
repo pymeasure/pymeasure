@@ -23,7 +23,7 @@
 #
 
 import time
-from multiprocessing import Queue
+from queue import Queue
 
 from pymeasure.experiment.listeners import Listener, Recorder
 from pymeasure.experiment.results import Results

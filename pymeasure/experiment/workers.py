@@ -28,12 +28,13 @@ import time
 import traceback
 from logging.handlers import QueueHandler
 from importlib.machinery import SourceFileLoader
+from queue import Queue
 
 from .listeners import Recorder
 from .procedure import Procedure, ProcedureWrapper
 from .results import Results
 from ..log import TopicQueueHandler
-from ..process import StoppableProcess, context
+from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -47,7 +48,7 @@ except ImportError:
     log.warning("ZMQ and cloudpickle are required for TCP communication")
 
 
-class Worker(StoppableProcess):
+class Worker(StoppableThread):
     """ Worker runs the procedure and emits information about
     the procedure and its status over a ZMQ TCP port. In a child
     thread, a Recorder is run to write the results to
@@ -67,11 +68,11 @@ class Worker(StoppableProcess):
         self.results.procedure.status = Procedure.QUEUED
 
         self.recorder = None
-        self.recorder_queue = context.Queue()
+        self.recorder_queue = Queue()
 
-        self.monitor_queue = context.Queue()
+        self.monitor_queue = Queue()
         if log_queue is None:
-            log_queue = context.Queue()
+            log_queue = Queue()
         self.log_queue = log_queue
         self.log_level = log_level
 
@@ -129,10 +130,10 @@ class Worker(StoppableProcess):
         global log
         log = logging.getLogger()
         log.setLevel(self.log_level)
-        log.handlers = []  # Remove all other handlers
-        log.addHandler(TopicQueueHandler(self.monitor_queue))
-        log.addHandler(QueueHandler(self.log_queue))
-        log.info("Worker process started")
+        # log.handlers = []  # Remove all other handlers
+        # log.addHandler(TopicQueueHandler(self.monitor_queue))
+        # log.addHandler(QueueHandler(self.log_queue))
+        log.info("Worker thread started")
 
         self.procedure = self.results.procedure
 
