@@ -1,3 +1,10 @@
+Version 0.5 -- released 10/18/17
+================================
+- Threads are used by default, eliminating multiprocessing issues with spawn
+- Enhanced unit tests for threading
+- Sphinx Doctests are added to the documentation (@bilderbuchi)
+- Improvements to documentation (@JuMaD)
+
 Version 0.4.6 -- released 8/12/17
 =================================
 - Reverted multiprocessing start method keyword arguments to fix Unix spawn issues (@ndr37)

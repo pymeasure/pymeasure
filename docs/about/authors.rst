@@ -14,3 +14,6 @@ The following developers have contributed to the PyMeasure package:
 | Marcos Guimaraes
 | Ghislain Antony Vaillant
 | Ben Feinstein
+| Neal Reynolds
+| Christoph Buchner
+| Julian Dlugosch
