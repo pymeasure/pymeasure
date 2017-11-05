@@ -34,7 +34,11 @@ log.addHandler(logging.NullHandler())
 
 class Input(QtCore.QObject):
     """
-    Takes a Parameter object in the constructor and has a parameter method
+    Mix-in class that connects a :mod:`Parameter <.parameters>` object to a GUI
+    input box.
+
+    :param parameter: The parameter to connect to this input box.
+    :attr parameter: Read-only property to access the associated parameter.
     """
 
     def __init__(self, parameter):
@@ -44,10 +48,10 @@ class Input(QtCore.QObject):
 
     def set_parameter(self, parameter):
         """
-        Connects a parameter to the input box, and initializes the box value.
+        Connects a new parameter to the input box, and initializes the box
+        value.
 
         :param parameter: parameter to connect.
-        :return:
         """
         self._parameter = parameter
 
@@ -59,17 +63,29 @@ class Input(QtCore.QObject):
 
     def update_parameter(self):
         """
-        Mutates the self._parameter variable to update its value
+        Update the parameter value with the Input GUI element's current value.
         """
         self._parameter.value = self.value()
 
     @property
     def parameter(self):
+        """
+        The connected parameter object. Read-only property; see
+        :meth:`set_parameter`.
+
+        Note that reading this property will have the side-effect of updating
+        its value from the GUI input box.
+        """
         self.update_parameter()
         return self._parameter
 
 
 class StringInput(QtGui.QLineEdit, Input):
+    """
+    String input box connected to a :class:`Parameter`. Parameter subclasses
+    that are string-based may also use this input, but non-string parameters
+    should use more specialised input classes.
+    """
     def __init__(self, parameter, parent=None):
         QtGui.QLineEdit.__init__(self, parent)
         Input.__init__(self, parameter)
@@ -87,26 +103,38 @@ class StringInput(QtGui.QLineEdit, Input):
 
 
 class FloatInput(QtGui.QDoubleSpinBox, Input):
+    """
+    Spin input box for floating-point values, connected to a
+    :class:`FloatParameter`.
+
+    .. seealso::
+        Class :class:`~.ScientificInput`
+            For inputs in scientific notation.
+    """
     def __init__(self, parameter, parent=None):
         QtGui.QDoubleSpinBox.__init__(self, parent)
         Input.__init__(self, parameter)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
-        """ Inherited from :class:`Input` """
+        # Override from :class:`Input`
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
         super().set_parameter(parameter) # default gets set here, after min/max
 
 
 class IntegerInput(QtGui.QSpinBox, Input):
+    """
+    Spin input box for integer values, connected to a
+    :class:`IntegerParameter`.
+    """
     def __init__(self, parameter, parent=None):
         QtGui.QSpinBox.__init__(self, parent)
         Input.__init__(self, parameter)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
-        """ Inherited from :class:`Input` """
+        # Override from :class:`Input`
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
         super().set_parameter(parameter) # default gets set here, after min/max
@@ -114,23 +142,40 @@ class IntegerInput(QtGui.QSpinBox, Input):
 
 
 class BooleanInput(object):
+    """
+    Checkbox for boolean values, connected to a
+    :class:`BooleanParameter`. **Not yet implemented.**
+    """
     # TODO: Implement this class
     pass
 
 
 class ListInput(object):
+    """
+    Dropdown for list values, connected to a
+    :class:`BooleanParameter`. **Not yet implemented.**
+    """
     # TODO: Implement this class
     pass
 
 
 class ScientificInput(QtGui.QDoubleSpinBox, Input):
+    """
+    Spinner input box for floating-point values, connected to a
+    :class:`FloatParameter`. This box will display and accept values in
+    scientific notation when appropriate.
+
+    .. seealso::
+        Class :class:`~.FloatInput`
+            For a non-scientific floating-point input box.
+    """
     def __init__(self, parameter, parent=None):
         QtGui.QDoubleSpinBox.__init__(self, parent)
         Input.__init__(self, parameter)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
-        # inherited from Input
+        # Override from :class:`Input`
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
         self.validator = QtGui.QDoubleValidator(
