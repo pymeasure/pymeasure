@@ -295,7 +295,7 @@ class ListParameter(Parameter):
 
 
 class PhysicalParameter(VectorParameter):
-    """ :class:`.VectorParameter` sub-class of 2 dimentions to store a value
+    """ :class:`.VectorParameter` sub-class of 2 dimensions to store a value
     and its uncertainty.
 
     :var value: The value of the parameter as a list of 2 floating point numbers
