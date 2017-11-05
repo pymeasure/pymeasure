@@ -263,6 +263,9 @@ class BrowserWidget(QtGui.QWidget):
 
 
 class InputsWidget(QtGui.QWidget):
+    # tuple of Input classes that do not need an external label
+    NO_LABEL_INPUTS = (BooleanInput,)
+
     def __init__(self, procedure_class, inputs=(), parent=None):
         super().__init__(parent)
         self._procedure_class = procedure_class
@@ -285,8 +288,7 @@ class InputsWidget(QtGui.QWidget):
                 element = IntegerInput(parameter)
 
             elif isinstance(parameter, parameters.BooleanParameter):
-                # noinspection PyArgumentList
-                element = BooleanInput(parameter)  # TODO not implemented yet
+                element = BooleanInput(parameter)
 
             elif isinstance(parameter, parameters.ListParameter):
                 # noinspection PyArgumentList
@@ -303,9 +305,10 @@ class InputsWidget(QtGui.QWidget):
 
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
-            label = QtGui.QLabel(self)
-            label.setText("%s:" % parameters[name].name)
-            vbox.addWidget(label)
+            if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
+                label = QtGui.QLabel(self)
+                label.setText("%s:" % parameters[name].name)
+                vbox.addWidget(label)
             vbox.addWidget(getattr(self, name))
 
         self.setLayout(vbox)

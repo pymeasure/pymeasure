@@ -140,14 +140,28 @@ class IntegerInput(QtGui.QSpinBox, Input):
         super().set_parameter(parameter) # default gets set here, after min/max
 
 
-
-class BooleanInput(object):
+class BooleanInput(QtGui.QCheckBox, Input):
     """
     Checkbox for boolean values, connected to a
-    :class:`BooleanParameter`. **Not yet implemented.**
+    :class:`BooleanParameter`.
     """
-    # TODO: Implement this class
-    pass
+    def __init__(self, parameter, parent=None):
+        QtGui.QCheckBox.__init__(self, parent)
+        Input.__init__(self, parameter)
+
+    def set_parameter(self, parameter):
+        # Override from :class:`Input`
+        self.setText(parameter.name)
+        super().set_parameter(parameter)
+
+    def setValue(self, value):
+        return super().setChecked(value)
+
+    def setSuffix(self, value):
+        pass
+
+    def value(self):
+        return super().isChecked()
 
 
 class ListInput(object):
