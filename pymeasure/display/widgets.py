@@ -291,8 +291,7 @@ class InputsWidget(QtGui.QWidget):
                 element = BooleanInput(parameter)
 
             elif isinstance(parameter, parameters.ListParameter):
-                # noinspection PyArgumentList
-                element = ListInput(parameter)  # TODO not implemented yet
+                element = ListInput(parameter)
 
             elif isinstance(parameter, parameters.Parameter):
                 element = StringInput(parameter)

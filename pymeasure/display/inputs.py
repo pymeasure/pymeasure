@@ -125,8 +125,7 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
 
 class IntegerInput(QtGui.QSpinBox, Input):
     """
-    Spin input box for integer values, connected to a
-    :class:`IntegerParameter`.
+    Spin input box for integer values, connected to a :class:`IntegerParameter`.
     """
     def __init__(self, parameter, parent=None):
         QtGui.QSpinBox.__init__(self, parent)
@@ -142,8 +141,7 @@ class IntegerInput(QtGui.QSpinBox, Input):
 
 class BooleanInput(QtGui.QCheckBox, Input):
     """
-    Checkbox for boolean values, connected to a
-    :class:`BooleanParameter`.
+    Checkbox for boolean values, connected to a :class:`BooleanParameter`.
     """
     def __init__(self, parameter, parent=None):
         QtGui.QCheckBox.__init__(self, parent)
@@ -164,13 +162,39 @@ class BooleanInput(QtGui.QCheckBox, Input):
         return super().isChecked()
 
 
-class ListInput(object):
+class ListInput(QtGui.QComboBox, Input):
     """
-    Dropdown for list values, connected to a
-    :class:`BooleanParameter`. **Not yet implemented.**
+    Dropdown for list values, connected to a :class:`ListParameter`.
     """
-    # TODO: Implement this class
-    pass
+    def __init__(self, parameter, parent=None):
+        self._stringChoices = None
+        QtGui.QCheckBox.__init__(self, parent)
+        Input.__init__(self, parameter)
+        self.setEditable(False)
+
+    def set_parameter(self, parameter):
+        # Override from :class:`Input`
+        try:
+            self._stringChoices = tuple(str(choice) for choice in parameter.choices)
+        except TypeError: # choices is None
+            self._stringChoices = tuple()
+        super().set_parameter(parameter)
+        self.clear()
+        self.insertItems(0, self._stringChoices)
+
+    def setValue(self, value):
+        try:
+            index = self._parameter.choices.index(value)
+            self.setCurrentIndex(index)
+        except (TypeError, ValueError) as e: # no choices or choice invalid
+            raise ValueError("Invalid choice for parameter. "
+                             "Must be one of %s" % str(self._choices)) from e
+
+    def setSuffix(self, value):
+        self._stringChoices = tuple(choice + str(value) for choice in self._stringChoices)
+
+    def value(self):
+        return self._parameter.choices[self.currentIndex()]
 
 
 class ScientificInput(QtGui.QDoubleSpinBox, Input):

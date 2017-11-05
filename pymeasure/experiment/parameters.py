@@ -275,7 +275,7 @@ class ListParameter(Parameter):
 
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
-        self._choices = choices
+        self._choices = tuple(choices) if choices is not None else None
         self.units = units
 
     @property
@@ -292,6 +292,11 @@ class ListParameter(Parameter):
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
+
+    @property
+    def choices(self):
+        """ Returns an immutable iterable of choices, or None if not set. """
+        return self._choices
 
 
 class PhysicalParameter(VectorParameter):
