@@ -33,8 +33,8 @@ log.addHandler(logging.NullHandler())
 
 
 class Input(QtCore.QObject):
-    """ Takes a Parameter object in the constructor and has a
-    parameter method
+    """
+    Takes a Parameter object in the constructor and has a parameter method
     """
 
     def __init__(self, parameter):
@@ -43,7 +43,8 @@ class Input(QtCore.QObject):
         self.set_parameter(parameter)
 
     def set_parameter(self, parameter):
-        """Connects a parameter to the input box, and initializes the box value.
+        """
+        Connects a parameter to the input box, and initializes the box value.
 
         :param parameter: parameter to connect.
         :return:
@@ -57,8 +58,8 @@ class Input(QtCore.QObject):
             self.setSuffix(" %s" % parameter.units)
 
     def update_parameter(self):
-        """ Mutates the self._parameter variable to update
-        its value
+        """
+        Mutates the self._parameter variable to update its value
         """
         self._parameter.value = self.value()
 
@@ -89,18 +90,27 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
     def __init__(self, parameter, parent=None):
         QtGui.QDoubleSpinBox.__init__(self, parent)
         Input.__init__(self, parameter)
-        self.setMinimum(self._parameter.minimum)
-        self.setMaximum(self._parameter.maximum)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+
+    def set_parameter(self, parameter):
+        """ Inherited from :class:`Input` """
+        self.setMinimum(parameter.minimum)
+        self.setMaximum(parameter.maximum)
+        super().set_parameter(parameter) # default gets set here, after min/max
 
 
 class IntegerInput(QtGui.QSpinBox, Input):
     def __init__(self, parameter, parent=None):
         QtGui.QSpinBox.__init__(self, parent)
         Input.__init__(self, parameter)
-        self.setMinimum(self._parameter.minimum)
-        self.setMaximum(self._parameter.maximum)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+
+    def set_parameter(self, parameter):
+        """ Inherited from :class:`Input` """
+        self.setMinimum(parameter.minimum)
+        self.setMaximum(parameter.maximum)
+        super().set_parameter(parameter) # default gets set here, after min/max
+
 
 
 class BooleanInput(object):
@@ -116,15 +126,19 @@ class ListInput(object):
 class ScientificInput(QtGui.QDoubleSpinBox, Input):
     def __init__(self, parameter, parent=None):
         QtGui.QDoubleSpinBox.__init__(self, parent)
+        Input.__init__(self, parameter)
+        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+
+    def set_parameter(self, parameter):
+        # inherited from Input
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.validator = QtGui.QDoubleValidator(
             parameter.minimum,
             parameter.maximum,
             10, self)
         self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
-        Input.__init__(self, parameter)
+        super().set_parameter(parameter) # default gets set here, after min/max
 
     def validate(self, text, pos):
         if self._parameter.units:
