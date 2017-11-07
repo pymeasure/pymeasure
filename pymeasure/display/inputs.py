@@ -55,7 +55,7 @@ class Input(QtCore.QObject):
         """
         self._parameter = parameter
 
-        if parameter.default:
+        if parameter.default is not None:
             self.setValue(parameter.default)
 
         if hasattr(parameter, 'units') and parameter.units:
@@ -168,7 +168,7 @@ class ListInput(QtGui.QComboBox, Input):
     """
     def __init__(self, parameter, parent=None):
         self._stringChoices = None
-        QtGui.QCheckBox.__init__(self, parent)
+        QtGui.QComboBox.__init__(self, parent)
         Input.__init__(self, parameter)
         self.setEditable(False)
 
@@ -180,7 +180,12 @@ class ListInput(QtGui.QComboBox, Input):
             self._stringChoices = tuple()
         super().set_parameter(parameter)
         self.clear()
-        self.insertItems(0, self._stringChoices)
+        self.addItems(self._stringChoices)
+
+        # can't be set in super().set_parameter: addItems not yet called there
+        if parameter.default is not None:
+            self.setValue(parameter.default)
+
 
     def setValue(self, value):
         try:
@@ -188,7 +193,7 @@ class ListInput(QtGui.QComboBox, Input):
             self.setCurrentIndex(index)
         except (TypeError, ValueError) as e: # no choices or choice invalid
             raise ValueError("Invalid choice for parameter. "
-                             "Must be one of %s" % str(self._choices)) from e
+                             "Must be one of %s" % str(self._parameter.choices)) from e
 
     def setSuffix(self, value):
         self._stringChoices = tuple(choice + str(value) for choice in self._stringChoices)
