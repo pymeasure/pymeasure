@@ -9,14 +9,6 @@ environment:
     # The list here is complete (excluding Python 2.6, which
     # isn't covered by this document) at the time of writing.
 
-    # 64-bit
-    - PYTHON_VERSION: "3.4"
-      MINICONDA: C:\Miniconda3-x64
-      #PYTHON: "C:\\Python34-x64"
-      #DISTUTILS_USE_SDK: "1"
-      #PYTHON_ARCH: "64"
-      PLATFORM: x64  
-
     - PYTHON_VERSION: "3.5"
       MINICONDA: C:\Miniconda35-x64
       #PYTHON: "C:\\Python35-x64"
@@ -30,12 +22,6 @@ environment:
       #DISTUTILS_USE_SDK: "1"
       #PYTHON_ARCH: "64"
       PLATFORM: x64
-
-    # 32-bit
-    - PYTHON_VERSION: "3.4"
-      MINICONDA: C:\Miniconda3
-      #PYTHON: "C:\\Python34"
-      PLATFORM: x86
 
     - PYTHON_VERSION: "3.5"
       MINICONDA: C:\Miniconda35
