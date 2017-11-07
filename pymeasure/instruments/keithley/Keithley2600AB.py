@@ -197,6 +197,11 @@ class Keithley2600AB(Instrument):
         self.clear_screen()
         self.write_command(f'display.settext{textstring}')
 
+    def shutdown(self):
+        """Brings the instrument to a safe and stable state"""
+        self.set_output(state='OFF')
+        log.info("Output set to OFF")
+
 ###########
 # buffer  #
 ###########
@@ -222,7 +227,30 @@ class Keithley2600AB(Instrument):
         """Returns the Data from a buffer as numpy array
         :param buffer:  The instrument buffer to be read."""
         #todo: Check whether it is that simple to get data into np array
-        return np.array(self.write(f'printbuffer(1, {buffer}.n,{buffer})'))
+        return np.array(self.write(f'printbuffer(1, {buffer}.n,{buffer})'), dtype=np.float64)
+
+        def read_buffer(self, smux='smua', buffer='nvbuffer1'):
+
+    def wait_for_buffer(self, should_stop=lambda: False,
+                        timeout=60, interval=0.1):
+        """ Blocks the program, waiting for a full buffer. This function
+        returns early if the :code:`should_stop` function returns True or
+        the timeout is reached before the buffer is full.
+
+        :param should_stop: A function that returns True when this function should return early
+        :param timeout: A time in seconds after which this function should return early
+        :param interval: A time in seconds for how often to check if the buffer is full
+        """
+        # TODO: Use SRQ initially instead of constant polling
+        # self.adapter.wait_for_srq()
+        t = time()
+        while not self.is_buffer_full():
+            sleep(interval)
+            if should_stop():
+                return
+            if (time() - t) > 10:
+                raise Exception("Timed out waiting for Keithley buffer to fill.")
+
 
 ###########
 # voltage #
@@ -263,10 +291,7 @@ class Keithley2600AB(Instrument):
 #   beep  #
 ###########
 
-    def read_buffer(self, smux='smua', buffer = 'nvbuffer1'):
 
-        np.array(self.write_command('printbuffer(1, {smux}.{buffer}.n, {smux}.{buffer})'))
-        #todo: write read_buffer method
 
     def beep(self, frequency, duration):
        """Sounds a system beep.
@@ -274,7 +299,7 @@ class Keithley2600AB(Instrument):
        :param duration: the duration of the beep"""
        self.write_command(f'beeper.beep({duration}, {frequency})')
 
-    def triad(self, base_frequency, duration):
+    def triad(self, base_frequency=440, duration=0.3):
         """ Sounds a musical triad using the system beep. Can for instance be used to indicate a finished measurement.
 
         :param base_frequency: Frequency of the base tone in Hz (between 65 Hz and 1.3 MHz)
