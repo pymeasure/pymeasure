@@ -94,7 +94,6 @@ class PlotterWindow(QtGui.QMainWindow):
         if self.plotter.should_stop():
             QtCore.QCoreApplication.instance().quit()
 
-
 class ManagedWindow(QtGui.QMainWindow):
     """ The ManagedWindow uses a Manager to control Workers in a Queue,
     and provides a simple interface. The queue method must be overwritten
@@ -121,6 +120,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
 
     def _setup_ui(self):
+        # instrument picker
         self.list_widget = QListWidget()
         self.list_widget.itemClicked.connect(self.instrument_clicked)
         self.refresh_button = QtGui.QPushButton('Refresh', self)
@@ -183,6 +183,7 @@ class ManagedWindow(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
+        #Instrument Picker
         inputs_vbox.addWidget(self.inputs)
         inputs_vbox.addLayout(hbox)
         inputs_vbox.addWidget(self.list_widget)

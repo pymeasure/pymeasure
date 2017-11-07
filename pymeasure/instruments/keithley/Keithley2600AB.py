@@ -229,7 +229,9 @@ class Keithley2600AB(Instrument):
         #todo: Check whether it is that simple to get data into np array
         return np.array(self.write(f'printbuffer(1, {buffer}.n,{buffer})'), dtype=np.float64)
 
-        def read_buffer(self, smux='smua', buffer='nvbuffer1'):
+    def read_buffer(self, smux='smua', buffer='nvbuffer1'):
+        # todo: define function to read keithley buffer
+        print('reading buffer')
 
     def wait_for_buffer(self, should_stop=lambda: False,
                         timeout=60, interval=0.1):
