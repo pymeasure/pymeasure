@@ -23,14 +23,28 @@
 #
 
 from pymeasure.instruments import Instrument, discreteTruncate
-from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, \
+    truncated_discrete_set, strict_range
 
+from enum import Enum
 import numpy as np
 import time
 import re
 
 
 class SR830(Instrument):
+
+    class OutputInterface(Enum):
+        RS232=0
+        GPIB=1
+
+    REF_SOURCES = ['external', 'internal']
+    REF_TRIGGERS = ['sine_zero', 'ttl_rising', 'ttl_falling']
+
+    IN_MODES = ['a', 'a-b', 'i_1mohm', 'i_100mohm']
+    IN_GROUNDS = ['float', 'ground']
+    IN_COUPLINGS = ['ac', 'dc']
+    IN_LINE_FILTS = ['off', '1x', '2x', 'both']
 
     SAMPLE_FREQUENCIES = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
@@ -49,89 +63,317 @@ class SR830(Instrument):
     ]
     FILTER_SLOPES = [6, 12, 18, 24]
     EXPANSION_VALUES = [1, 10, 100]
-    RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
+    RESERVE_VALUES = ['high', 'normal', 'low']
     CHANNELS = ['X', 'Y', 'R']
+
+    ref_source = Instrument.control(
+        "FMOD?", "FMOD%d",
+        """
+        Reference source configuration. Can be set. Possible values:
+
+        *  ``"external"``: the internal PLL phase locks to the REF IN input
+        signal, using this for lock-in measurement and for both the TTL OUT
+        (on the back) and SINE OUT. See also :attr:`ref_trigger` and
+        :attr:`~.sine_voltage` (for the SINE OUT).
+        * ``"internal"``: uses the internal oscillator, which can be configured
+        with the :attr:`~.frequency`, :attr:`~.phase` and :attr:`~.sine_voltage`
+        attributes.
+        """,
+        validator=strict_discrete_set,
+        values=REF_SOURCES,
+        map_values=True,
+        set_process=lambda s: s.lower()
+    )
+
+    ref_trigger = Instrument.control(
+        "RSLP?", "RSLP%i",
+        """
+        Reference trigger used to lock into the REF IN input signal.
+        Possible values:
+
+        * ``"sine_zero"``: sine zero crossings. Cannot be used below 1Hz.
+        * ``"ttl_rising"``: TTL rising edge
+        * ``"ttl_falling"``: TTL falling edge
+        """,
+        validator=strict_discrete_set,
+        values=REF_TRIGGERS,
+        map_values=True,
+        set_process=lambda s: s.lower()
+    )
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
-        """ A floating point property that represents the reference sine-wave
-        voltage in Volts. This property can be set. """
+        """
+        Reference SINE OUT voltage (in volts RMS, floating-point). This property
+        can be set, is rounded to 0.002 V and has range 0.004 <= v <= 5.000.
+        """,
+        validator=strict_range,
+        values=[0.004, 5.000]
     )
+
     frequency = Instrument.control(
         "FREQ?", "FREQ%0.5e",
-        """ A floating point property that represents the lock-in frequency
-        in Hz. This property can be set. """
+        """
+        Lock-in frequency (in Hertz, floating-point). This
+        property can be set only if :attr:`~.ref_source` is ``"internal"``.
+        The value is rounded to 5 digits or 0.0001 Hz, whichever is greater. The
+        range is limited to ``0.001 <= n*f <= 102000`` (where ``n`` is the
+        value of :attr:`~.harmonic`) (if harmonic > 1, this range constraint is
+        not verified by PyMeasure).
+        """,
+        validator=strict_range,
+        values=[0.001, 102000]
     )
+
+    harmonic = Instrument.control(
+        "HARM?", "HARM%d",
+        """
+        Detection harmonic (integer). The detected lock-in frequency will be
+        harmonic*:attr:`~.frequency`. This property can be set. Its valid range
+        is 1 to 19999, but only if harmonic*:attr:`~.frequency` <= 102000 Hz
+        (the latter is not verified in PyMeasure).
+        """,
+        validator=strict_range,
+        values=[1, 19999]
+    )
+
     phase = Instrument.control(
         "PHAS?", "PHAS%0.2f",
-        """ A floating point property that represents the lock-in phase
-        in degrees. This property can be set. """
+        """
+        The lock-in phase (degrees, floating-point). This property
+        can be set only if :attr:`~.ref_source` is ``"internal"``
+        (TBD - not documented but it is true of frequency). The value is rounded
+        to 0.01 degrees. Its valid set range is -360.00 <= x <= 729.99, which
+        is wrapped into the range -180.00 <= x <= +180.00. Its valid read range
+        -180.00 <= x <= +180.00. """,
+        validator=strict_range,
+        values=[-360.00, 729.99]
     )
-    x = Instrument.measurement("OUTP?1",
-        """ Reads the X value in Volts. """
+
+    input_mode = Instrument.control(
+        "ISRC?", "ISRC%d",
+        """
+        The input mode. This property can be set. Possible values:
+
+        * ``"a"``: Input signal is from the A connector only.
+        * ``"a-b"``: Input signal is differential (A - B).
+        * ``"i_1mohm"``: Current input with 1 MΩ gain.
+        * ``"i_100mohm"``: Current input with 100 MΩ gain.
+
+        Sensitivities between 20nA and 1μA will automatically sselect the 1 MΩ
+        range.
+        """,
+        validator=strict_discrete_set,
+        values=IN_MODES,
+        map_values=True,
+        set_process=lambda s: s.lower()
     )
-    y = Instrument.measurement("OUTP?2",
-        """ Reads the Y value in Volts. """
+
+    input_ground = Instrument.control(
+        "IGND?", "IGND%d",
+        """
+        The input shield cable grounding. This property can be set.
+        Possible values: ``"float"`` or ``"ground"``. See the manual.
+        """,
+        validator=strict_discrete_set,
+        values=IN_GROUNDS,
+        map_values=True,
+        set_process=lambda s: s.lower()
     )
-    magnitude = Instrument.measurement("OUTP?3",
-        """ Reads the magnitude in Volts. """
+
+    input_coupling = Instrument.control(
+        "ICPL?", "ICPL%d",
+        """
+        The input coupling. This property can be set. Possible values:
+        ``"ac"`` or ``"dc"``. When using ``"ac"`` coupling, be aware of the
+        cutoff frequency and its effect on measurements at low frequency
+        (see the manual).
+        """,
+        validator=strict_discrete_set,
+        values=IN_COUPLINGS,
+        map_values=True,
+        set_process=lambda s: s.lower()
     )
-    theta = Instrument.measurement("OUTP?4",
-        """ Reads the theta value in degrees. """
+
+    input_line_filt = Instrument.control(
+        "ILIN?", "ILIN%d",
+        """
+        Status of the input line filter. This configures two notch filters to
+        reject line frequency noise (e.g. 60 Hz in North America). This
+        property can be set. Possible values:
+
+        * ``"off"``
+        * ``"1x"``: Reject line frequency, e.g. 60 Hz.
+        * ``"2x"``: Reject the first harmonic, e.g. 120 Hz.
+        * ``"both"``: Reject both line frequency and its first harmonic.
+
+        Be aware of the effect on measurements near these frequencies due to
+        these filters.
+        """,
+        validator=strict_discrete_set,
+        values=IN_LINE_FILTS,
+        map_values=True,
+        set_process=lambda s: s.lower()
     )
+
     channel1 = Instrument.control(
         "DDEF?1;", "DDEF1,%d,0",
-        """ A string property that represents the type of Channel 1,
-        taking the values X, R, X Noise, Aux In 1, or Aux In 2. 
-        This property can be set.""",
+        """
+        Channel 1 displayed measurement. Possible values: ``"X"``, ``"R"``,
+        ``"X Noise"``, ``"Aux In 1"``, ``"Aux In 2"``. The ratio is always set
+        to none. This property can be set.
+        """,
         validator=strict_discrete_set,
         values=['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2'],
-        map_values=True
+        map_values=True,
+        get_process=lambda s: s[0] # ignore the ratio
     )
+
     channel2 = Instrument.control(
         "DDEF?2;", "DDEF2,%d,0",
-        """ A string property that represents the type of Channel 2,
-        taking the values Y, Theta, Y Noise, Aux In 3, or Aux In 4.
-        This property can be set.""",
+        """
+        Channel 1 displayed measurement. Possible values: ``"Y"``, ``"Theta"``,
+        ``"Y Noise"``, ``"Aux In 3"``, ``"Aux In 4"``. The ratio is always set
+        to none. This property can be set.
+        """,
         validator=strict_discrete_set,
         values=['Y', 'Theta', 'Y Noise', 'Aux In 3', 'Aux In 4'],
-        map_values=True
+        map_values=True,
+        get_process=lambda s: s[0] # ignore the ratio
     )
+
+    channel1_out = Instrument.control(
+        "FPOP?1;", "FPOP1,%d",
+        """
+        Channel 1 front panel analog output (not display). Possible values:
+
+        * ``"display"``: channel1 display
+        * ``"x"``: force the output to be X
+        """,
+        validator=strict_discrete_set,
+        values=['display', 'x'],
+        map_values=True,
+        set_procss=lambda s: s.lower()
+    )
+
+    channel2_out = Instrument.control(
+        "FPOP?2;", "FPOP2,%d",
+        """
+        Channel 2 front panel analog output (not display). Possible values:
+
+        * ``"display"``: channel2 display
+        * ``"x"``: force the output to be Y
+        """,
+        validator=strict_discrete_set,
+        values=['display', 'y'],
+        map_values=True,
+        set_procss=lambda s: s.lower()
+    )
+
+    channel1_value = Instrument.measurement("OUTR?1",
+        """ Reads the current channel 1 display,
+            in the same units as the display. """)
+
+    channel2_value = Instrument.measurement("OUTR?2",
+        """ Reads the current channel 2 display,
+            in the same units as the display. """)
+
+    x = Instrument.measurement("OUTP?1",
+        """ Reads the X measurement in volts. """
+    )
+
+    y = Instrument.measurement("OUTP?2",
+        """ Reads the Y measurement in volts. """
+    )
+
+    magnitude = Instrument.measurement("OUTP?3",
+        """ Reads the magnitude measurement in volts. """
+    )
+
+    theta = Instrument.measurement("OUTP?4",
+        """ Reads the theta (phase) measurement in degrees. """
+    )
+
     sensitivity = Instrument.control(
         "SENS?", "SENS%d",
-        """ A floating point property that controls the sensitivity in Volts,
-        which can take discrete values from 2 nV to 1 V. Values are truncated
-        to the next highest level if they are not exact. """,
+        """
+        Sensitivity (in volts, floating-point), which can take discrete
+        values from 2 nV to 1 V. When :attr:`input_mode` is a current mode,
+        unit is in μA. Values are rounded to the next highest level if they
+        are not exact.
+        """,
         validator=truncated_discrete_set,
         values=SENSITIVITIES,
         map_values=True
     )
+
     time_constant = Instrument.control(
         "OFLT?", "OFLT%d",
-        """ A floating point property that controls the time constant
-        in seconds, which can take discrete values from 10 microseconds
-        to 30,000 seconds. Values are truncated to the next highest
-        level if they are not exact. """,
+        """
+        Low-pass filter time constant (in seconds, floating-point), which can
+        take discrete values from 10 μs to 30 ks. Values are rounded to the
+        next highest level if they are not exact.
+        """,
         validator=truncated_discrete_set,
         values=TIME_CONSTANTS,
         map_values=True
     )
+
     filter_slope = Instrument.control(
         "OFSL?", "OFSL%d",
-        """ An integer property that controls the filter slope, which
-        can take on the values 6, 12, 18, and 24 dB/octave. Values are
-        truncated to the next highest level if they are not exact. """,
+        """
+        Low-pass filter slope. Possible values are 6, 12, 18 or 24 dB/octave,
+        as an integer. Values are rounded to the next highest value if they
+        are not exact.
+        """,
         validator=truncated_discrete_set,
         values=FILTER_SLOPES,
         map_values=True
     )
 
-    def __init__(self, resourceName, **kwargs):
+    reserve = Instrument.control(
+        "RMOD?", "RMOD%d",
+        """
+        The dynamic reserve mode. Possible values are:
+
+        * ``"high"``: High Reserve
+        * ``"normal"``: Normal
+        * ``"low"``: Low noise
+
+        In version 0.5 and prior, the values "High reserve", "Normal" and
+        "Low noise" were used. These values are deprecated but available
+        when setting this property.
+        """,
+        validator=strict_discrete_set,
+        values=RESERVE_VALUES,
+        map_values=True,
+        set_process=lambda s: s.lower().split(' ')[0]
+    )
+
+    sync_filter = Instrument.control(
+        "SYNC?", "SYNC%d",
+        """
+        Synchronous filter (boolean). If True, and the detection frequency
+        (:attr:`~.harmonic` * :attr:`~.frequency`) is less than 200 Hz, then
+        the synchronous filter is turned on.
+        """,
+        set_process=lambda x: 1 if x else 0
+    )
+
+    def __init__(self, resourceName, outx=OutputInterface.GPIB, **kwargs):
+        """
+        :param resourceName: resource name string or instance of a PyMeasure
+            adapter object referring to this instrument's connection
+        :param outx: Output interface. One of OutputInterface.RS232 or
+            OutputInterface.GPIB. Required for the instrument to send responses
+            to the correct interface.
+        """
         super(SR830, self).__init__(
             resourceName,
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
+        self.write("OUTX%d" % outx)
 
     def auto_gain(self):
         self.write("AGAN")
@@ -150,7 +392,7 @@ class SR830(Instrument):
         self.write("AOFF %d" % channel)
 
     def get_scaling(self, channel):
-        """ Returns the offset precent and the exapnsion term
+        """ Returns the offset percent and the exapnsion term
         that are used to scale the channel in question
         """
         if channel not in self.CHANNELS:
@@ -161,7 +403,7 @@ class SR830(Instrument):
 
     def set_scaling(self, channel, precent, expand=0):
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
-        certain precent (-105% to 105%) of the signal, with
+        certain percent (-105% to 105%) of the signal, with
         an optional expansion term (0, 10=1, 100=2)
         """
         if channel not in self.CHANNELS:
@@ -172,7 +414,8 @@ class SR830(Instrument):
 
     def output_conversion(self, channel):
         """ Returns a function that can be used to determine
-        the signal from the channel output (X, Y, or R)
+        the signal from the channel output (X, Y, or R), given the currently
+        configured offset/expand and sensitivity.
         """
         offset, expand = self.get_scaling(channel)
         sensitivity = self.sensitivity
@@ -180,7 +423,7 @@ class SR830(Instrument):
 
     @property
     def sample_frequency(self):
-        """ Gets the sample frequency in Hz """
+        """ Gets the data storage sample frequency in Hz """
         index = int(self.ask("SRAT?"))
         if index is 14:
             return None  # Trigger
@@ -189,7 +432,7 @@ class SR830(Instrument):
 
     @sample_frequency.setter
     def sample_frequency(self, frequency):
-        """Sets the sample frequency in Hz (None is Trigger)"""
+        """Sets the data storage sample frequency in Hz (``None`` is Trigger)"""
         assert type(frequency) in [float, int, type(None)]
         if frequency is None:
             index = 14  # Trigger
@@ -198,31 +441,97 @@ class SR830(Instrument):
             index = SR830.SAMPLE_FREQUENCIES.index(frequency)
         self.write("SRAT%f" % index)
 
-    def aquireOnTrigger(self, enable=True):
+    def acquireOnTrigger(self, enable=True):
         self.write("TSTR%d" % enable)
 
-    @property
-    def reserve(self):
-        return SR830.RESERVE_VALUES[int(self.ask("RMOD?"))]
+    def enable_lia_status(input_=None, filter_=None, output=None, unlock=None,
+        range_=None, time_constant=None, storage_triggered=None):
+        """
+        Set whether or not to report various lock-in status conditions. For all
+        parameters, a ``None`` value will be left unchanged, while ``True`` will
+        enable and ``False`` will disable reporting.
 
-    @reserve.setter
-    def reserve(self, reserve):
-        if reserve not in SR830.RESERVE_VALUES:
-            index = 1
-        else:
-            index = SR830.RESERVE_VALUES.index(reserve)
-        self.write("RMOD%d" % index)
+        :param input_: :meth:`~.is_input_overload`
+        :param filter_: :meth:`~.is_filter_overload`
+        :param output: :meth:`~.is_output_overload`
+        :param unlock: :meth:`~.is_ref_unlocked`
+        :param range_: :meth:`~.is_freq_range_changed`
+        :param time_constant: :meth:`~.is_time_constant_changed`
+        :param storage_triggered: :meth:`~.is_data_storage_triggered`
+        """
+        cmd = "LIAE %d,%d"
+        values = (input_, filter_, output, unlock,
+                  range_, time_constant, storage_triggered)
+        for i, v in enumerate(values):
+            if v is not None:
+                self.write(cmd % (i, 1 if v else 0))
 
-    def is_out_of_range(self):
-        """ Returns True if the magnitude is out of range
+    def is_input_overload(self):
+        """
+        Return True if an input or amplifier overload has been detected.
+        The detection status is cleared on the instrument.
+        """
+        return int(self.ask("LIAS?0")) is 1
+
+    def is_filter_overload(self):
+        """
+        Return True if a filter overload has been detected.
+        The detection status is cleared on the instrument.
+        """
+        return int(self.ask("LIAS?1")) is 1
+
+    def is_output_overload(self):
+        """
+        Return True if an output measurement overload has been detected.
+        The detection status is cleared on the instrument.
         """
         return int(self.ask("LIAS?2")) is 1
 
+    def is_ref_unlocked(self):
+        """
+        Return True if the PLL failed to lock to the reference since last check.
+        The detection status is cleared on the instrument.
+        """
+        return int(self.ask("LIAS?3")) is 1
+
+    def is_freq_range_changed(self):
+        """
+        Return True if a frequency range transition has occurred since last
+        check (above or below approximately 200 Hz). Sync filtering and time
+        constants > 30s are disabled in the upper range.
+        The detection status is cleared on the instrument.
+        """
+        return int(self.ask("LIAS?4")) is 1
+
+    def is_time_constant_changed(self):
+        """
+        Return True if the time constant was automatically changed
+        (e.g. due to frequency, dynamic reserve, etc. changes) since the
+        last check.
+        The detection status is cleared on the instrument.
+        """
+        return int(self.ask("LIAS?5")) is 1
+
+    def is_data_storage_triggered(self):
+        """
+        Return True if data storage was triggered since last check.
+        The detection status is cleared on the instrument.
+        """
+        return int(self.ask("LIAS?6")) is 1
+
+    def is_out_of_range(self):
+        """
+        .. deprecated:: 0.6
+           Use :meth:`~.is_output_overload()`
+        """
+        return self.is_out_of_range()
+
     def quick_range(self):
-        """ While the magnitude is out of range, increase
+        """
+        While the magnitude is out of range, increase
         the sensitivity by one setting
         """
-        while self.is_out_of_range():
+        while self.is_output_overload():
             self.write("SENS%d" % (int(self.ask("SENS?"))+1))
             time.sleep(5.0*self.time_constant)
             self.write("*CLS")
@@ -300,7 +609,7 @@ class SR830(Instrument):
         self.pauseBuffer()
 
     def get_buffer(self, channel=1, start=0, end=None):
-        """ Aquires the 32 bit floating point data through binary transfer
+        """ Acquires the 32 bit floating point data through binary transfer
         """
         if end is None:
             end = self.buffer_count
@@ -312,3 +621,5 @@ class SR830(Instrument):
 
     def trigger(self):
         self.write("TRIG")
+
+SR830.aquireOnTrigger = SR830.acquireOnTrigger # for backwards compatibility
