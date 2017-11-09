@@ -21,33 +21,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.instruments import Instrument
 
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-
-from .buffer import KeithleyBuffer
+from pymeasure.instruments import Instrument
 
 import numpy as np
 import time
 
 
-class Keithley2600AB(Instrument):
-    """Represents the Keithley 26XX Series SourceMeters and provides a
+# Todo: Define and implement the required functions using TSP commands sent over the adapter
+# Todo: Give a minimal code example: Set up instrument, Set up Buffer, Perform measurement
+
+class Keithley2600(Instrument):
+    """Represents the Keithley 2600 Series SourceMeters and provides a
     high-level interface for interacting with the instrument.
 
     Commands are sent directly to the instrument. __start_on_call decides whether the received commands are executed
     by the instrument immediately or after calling execute_script().
 
-    External TSP scripts (in Lua) can be loaded onto the instrument via load_TSP(filename)
+    External TSP scripts (written in Lua) can be loaded onto the instrument via load_TSP(filename)
 
-    #Todo: Define and implement the required functions using TSP commands sent over the adapter
-    #Todo: Give a minimal code example: Set up instrument, Set up Buffer, Perform measurement
+
 
     .. code-block:: python
 
@@ -61,12 +58,13 @@ class Keithley2600AB(Instrument):
 
         super().__init__(
             adapter,
-            "Keithley2600AB SourceMeter",
+            "Keithley2600 SourceMeter",
             includeSCPI=False,
             **kwargs
         )
 
-        #TSP script commands can be directly sent and executed or appended to a string and send as one. Having self.TSP_script also allows to use already implemented TSP scripts (has to be tested!)
+        # TSP script commands can be directly sent and executed or appended to a string and send as one.
+        # Having self.TSP_script also allows to use already implemented TSP scripts (still to be tested!)
         self.__start_on_call = True
         self.__start_on_call_change = False
 
@@ -74,6 +72,7 @@ class Keithley2600AB(Instrument):
 ################################
 # TSP script related functions #
 ################################
+
     def start_on_call(self, value=True):
         """Set function for the private parameter __start_on_call that also acticates the flag __start_on_call_change.
         This way, write_command can fetch the first sent command after change of __start_on_call from True to False.
@@ -112,11 +111,6 @@ class Keithley2600AB(Instrument):
         # todo: include a way to use the loaded script as named and not anonymous script. I.e. save it on the instrument for later execution. This also requires a change in execute_script()
 
         log.info('Uploaded TSP script:' + filename)
-
-
-
-
-
 
 #####################
 # general functions #
@@ -173,11 +167,14 @@ class Keithley2600AB(Instrument):
                 if keyword == 'current':
                     self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCAMPS')
 
+    def shutdown(self):
+        """Brings the instrument to a safe and stable state"""
+        self.set_output(state='OFF')
+        log.info("Output set to OFF")
 
-
-                ##########
-                # screen #
-                ##########
+    ##########
+    # screen #
+    ##########
 
     def clear_screen(self):
         """Clears the screen of the connected device"""
@@ -197,10 +194,7 @@ class Keithley2600AB(Instrument):
         self.clear_screen()
         self.write_command(f'display.settext{textstring}')
 
-    def shutdown(self):
-        """Brings the instrument to a safe and stable state"""
-        self.set_output(state='OFF')
-        log.info("Output set to OFF")
+
 
 ###########
 # buffer  #
@@ -258,8 +252,8 @@ class Keithley2600AB(Instrument):
 # voltage #
 ###########
 
-    def autosweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V'):
-        """ This method uses the Keithley built-in TSP scripts to execute linear or logarithmic sweeps.
+    def auto_sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V'):
+        """ This method uses the Keithley factory TSP scripts to execute linear or logarithmic sweeps.
         Autozero (the internal function to avoid zero drift) is disabled for the sweep to ensure it does not cause timing issues.
         All measured values are written to the internal buffer and read out after the measurement - i.e. data is shown only after a complete cycle.
         :param start:   Start value of the sweep parameter
@@ -270,6 +264,7 @@ class Keithley2600AB(Instrument):
         :param keyword: Sweeping method. Can be either 'lin' for linear or 'log' for logarithmic
         :param source:  Sourced quantity (i.e. 'V' or 'I')
         """
+        # todo: Return the buffer after measurement?
 
         if source == 'V':
             if keyword == 'lin':
@@ -287,6 +282,22 @@ class Keithley2600AB(Instrument):
                 print("Invalid choice of keyword in sweep(source='I')")
         else:
             print("Invalid choice of method in sweep()")
+
+    def sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V', autorange=True):
+        """Executes a linear or logarithmic sweeep manually - i.e. returns the buffer value after each data point is measured
+        """
+
+        if keyword == 'lin':
+
+            if source = 'V':
+                self.enable_source()
+                if autorange:
+                    self.set_autorange('i')
+                for voltage in setpoints:
+                    self.set_voltage(voltage)
+                    # todo: get buffer data and write it to an array, dict
+                    # datapoints[voltage] = self.get_buffer_data()
+                    # todo: return data
 
 
 ###########
