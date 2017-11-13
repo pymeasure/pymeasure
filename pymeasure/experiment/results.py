@@ -302,6 +302,7 @@ class Results(object):
 
     @property
     def data(self):
+        """ Returns the result data as a Pandas dataframe. """
         # Need to update header count for correct referencing
         if self._header_count == -1:
             self._header_count = len(

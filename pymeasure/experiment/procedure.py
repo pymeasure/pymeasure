@@ -169,8 +169,13 @@ class Procedure(object):
             setattr(self, name, parameter.value)
 
     def set_parameters(self, parameters, except_missing=True):
-        """ Sets a dictionary of parameters and raises an exception if additional
-        parameters are present if except_missing is True
+        """
+        Sets the value for :class:`Parameter`s defined for this Procedure.
+
+        :param parameters: A dictionary of :class:`Parameter` objects.
+        :param except_missing: If True, and additional keys are present
+            which are not defined as Parameters in this Procedure, then a
+            NameError is raised. If False, such additional keys are ignored.
         """
         for name, value in parameters.items():
             if name in self._parameters:
@@ -187,9 +192,9 @@ class Procedure(object):
         pass
 
     def execute(self):
-        """ Preforms the commands needed for the measurement itself. During
-        execution the shutdown method will always be run following this method.
-        This includes when Exceptions are raised.
+        """ Performs the commands needed for the measurement itself. During
+        execution, the :meth:`shutdown` method will always be run after this
+        method, even when exceptions are raised.
         """
         pass
 
