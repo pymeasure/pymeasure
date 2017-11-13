@@ -373,7 +373,10 @@ class SR830(Instrument):
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
-        self.write("OUTX%d" % outx)
+        try:
+            self.write("OUTX%d" % outx.value)
+        except AttributeError: # outx is an int maybe?
+            self.write("OUTX%d" % outx)
 
     def auto_gain(self):
         self.write("AGAN")
