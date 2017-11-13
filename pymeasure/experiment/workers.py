@@ -101,27 +101,40 @@ class Worker(StoppableThread):
             self.monitor_queue.put((topic, record))
 
     def handle_abort(self):
-        log.exception("User stopped Worker execution prematurely")
+        log.exception("User aborted Worker execution")
         self.update_status(Procedure.ABORTED)
 
     def handle_error(self):
-        log.exception("Worker caught an error on %r", self.procedure)
+        log.exception("Worker caught an exception during execution of %r",
+            self.procedure)
         traceback_str = traceback.format_exc()
         self.emit('error', traceback_str)
         self.update_status(Procedure.FAILED)
+
+    def handle_shutdown_error(self):
+        log.exception("Worker caught exception during shutdown of %r",
+            self.procedure)
+        log.warning("Warning: Procedure shutdown failed. Equipment may not be "
+            "in a safe post-experiment state.")
+        traceback_str = traceback.format_exc()
+        self.emit('error', traceback_str)
 
     def update_status(self, status):
         self.procedure.status = status
         self.emit('status', status)
 
     def shutdown(self):
-        self.procedure.shutdown()
+        try:
+            self.procedure.shutdown()
+        except Exception:
+            self.handle_shutdown_error()
 
-        if self.should_stop() and self.procedure.status == Procedure.RUNNING:
-            self.update_status(Procedure.ABORTED)
-        elif self.procedure.status == Procedure.RUNNING:
-            self.update_status(Procedure.FINISHED)
-            self.emit('progress', 100.)
+        if self.procedure.status == Procedure.RUNNING:
+            if self.should_stop(): # if stop was called to abort
+                self.update_status(Procedure.ABORTED)
+            else: # stop not called, reached shutdown() naturally
+                self.update_status(Procedure.FINISHED)
+                self.emit('progress', 100.)
 
         self.recorder.enqueue_sentinel()
         self.monitor_queue.put(None)
