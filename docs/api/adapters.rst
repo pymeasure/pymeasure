@@ -14,16 +14,6 @@ Adapter base class
     :members:
     :undoc-members:
 
-============
-Fake adapter
-============
-
-.. autoclass:: pymeasure.adapters.FakeAdapter
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance: 
-
 ==============
 Serial adapter
 ==============
@@ -53,3 +43,24 @@ VISA adapter
     :undoc-members:
     :inherited-members:
     :show-inheritance: 
+
+============
+Fake adapter (for testing)
+============
+
+.. autoclass:: pymeasure.adapters.FakeAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance: 
+
+=================
+Fake SCPI adapter (for testing)
+=================
+
+.. autoclass:: pymeasure.adapters.FakeScpiAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+

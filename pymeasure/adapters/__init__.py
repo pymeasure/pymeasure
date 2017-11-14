@@ -24,6 +24,7 @@
 import logging
 
 from .adapter import Adapter, FakeAdapter
+from .fake_scpi import FakeScpiAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
