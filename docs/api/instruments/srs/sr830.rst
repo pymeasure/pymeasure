@@ -5,3 +5,16 @@ SR830 Lock-in Amplifier
 .. autoclass:: pymeasure.instruments.srs.SR830
     :members:
     :show-inheritance:
+
+==========================
+Testing/Simulation Classes
+==========================
+
+.. autoclass:: pymeasure.instruments.srs.FakeSR830Adapter
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.srs.FakeSR830DUT
+    :members:
+    :show-inheritance:
+

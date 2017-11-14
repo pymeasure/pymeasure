@@ -71,13 +71,14 @@ class SR830(Instrument):
         """
         Reference source configuration. Can be set. Possible values:
 
-        *  ``"external"``: the internal PLL phase locks to the REF IN input
-        signal, using this for lock-in measurement and for both the TTL OUT
-        (on the back) and SINE OUT. See also :attr:`ref_trigger` and
-        :attr:`~.sine_voltage` (for the SINE OUT).
+        * ``"external"``: the internal PLL phase locks to the REF IN input
+          signal, using this for lock-in measurement and for both the TTL OUT
+          (on the back) and SINE OUT. See also :attr:`ref_trigger` and
+          :attr:`~.sine_voltage` (for the SINE OUT).
         * ``"internal"``: uses the internal oscillator, which can be configured
-        with the :attr:`~.frequency`, :attr:`~.phase` and :attr:`~.sine_voltage`
-        attributes.
+          with the :attr:`~.frequency`, :attr:`~.phase` and :attr:`~.sine_voltage`
+          attributes.
+
         """,
         validator=strict_discrete_set,
         values=REF_SOURCES,
@@ -129,8 +130,8 @@ class SR830(Instrument):
         "HARM?", "HARM%d",
         """
         Detection harmonic (integer). The detected lock-in frequency will be
-        harmonic*:attr:`~.frequency`. This property can be set. Its valid range
-        is 1 to 19999, but only if harmonic*:attr:`~.frequency` <= 102000 Hz
+        harmonic * :attr:`~.frequency`. This property can be set. Its valid range
+        is 1 to 19999, but only if harmonic * :attr:`~.frequency` <= 102000 Hz
         (the latter is not verified in PyMeasure).
         """,
         validator=strict_range,
@@ -395,7 +396,7 @@ class SR830(Instrument):
         self.write("AOFF %d" % channel)
 
     def get_scaling(self, channel):
-        """ Returns the offset percent and the exapnsion term
+        """ Returns the offset percent and the expansion term
         that are used to scale the channel in question
         """
         if channel not in self.CHANNELS:

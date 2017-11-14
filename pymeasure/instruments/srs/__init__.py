@@ -23,3 +23,4 @@
 #
 
 from .sr830 import SR830
+from .sr830_fake import FakeSR830Adapter, FakeSR830DUT
