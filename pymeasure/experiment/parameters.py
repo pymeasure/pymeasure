@@ -275,7 +275,7 @@ class ListParameter(Parameter):
 
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
-        self._choices = choices
+        self._choices = tuple(choices) if choices is not None else None
         self.units = units
 
     @property
@@ -293,9 +293,14 @@ class ListParameter(Parameter):
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
 
+    @property
+    def choices(self):
+        """ Returns an immutable iterable of choices, or None if not set. """
+        return self._choices
+
 
 class PhysicalParameter(VectorParameter):
-    """ :class:`.VectorParameter` sub-class of 2 dimentions to store a value
+    """ :class:`.VectorParameter` sub-class of 2 dimensions to store a value
     and its uncertainty.
 
     :var value: The value of the parameter as a list of 2 floating point numbers

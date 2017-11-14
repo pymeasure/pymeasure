@@ -26,52 +26,72 @@ import logging
 
 import re
 
-from .Qt import QtCore, QtGui
+from .Qt import QtCore, QtGui, qt_min_version
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Input(QtCore.QObject):
-    """ Takes a Parameter object in the constructor and has a
-    parameter method
+class Input(object):
+    """
+    Mix-in class that connects a :mod:`Parameter <.parameters>` object to a GUI
+    input box.
+
+    :param parameter: The parameter to connect to this input box.
+    :attr parameter: Read-only property to access the associated parameter.
     """
 
-    def __init__(self, parameter):
-        super().__init__()
+    def __init__(self, parameter, **kwargs):
+        super().__init__(**kwargs)
         self._parameter = None
         self.set_parameter(parameter)
 
     def set_parameter(self, parameter):
-        """Connects a parameter to the input box, and initializes the box value.
+        """
+        Connects a new parameter to the input box, and initializes the box
+        value.
 
         :param parameter: parameter to connect.
-        :return:
         """
         self._parameter = parameter
 
-        if parameter.default:
+        if parameter.default is not None:
             self.setValue(parameter.default)
 
         if hasattr(parameter, 'units') and parameter.units:
             self.setSuffix(" %s" % parameter.units)
 
     def update_parameter(self):
-        """ Mutates the self._parameter variable to update
-        its value
+        """
+        Update the parameter value with the Input GUI element's current value.
         """
         self._parameter.value = self.value()
 
     @property
     def parameter(self):
+        """
+        The connected parameter object. Read-only property; see
+        :meth:`set_parameter`.
+
+        Note that reading this property will have the side-effect of updating
+        its value from the GUI input box.
+        """
         self.update_parameter()
         return self._parameter
 
 
 class StringInput(QtGui.QLineEdit, Input):
-    def __init__(self, parameter, parent=None):
-        QtGui.QLineEdit.__init__(self, parent)
-        Input.__init__(self, parameter)
+    """
+    String input box connected to a :class:`Parameter`. Parameter subclasses
+    that are string-based may also use this input, but non-string parameters
+    should use more specialised input classes.
+    """
+    def __init__(self, parameter, parent=None, **kwargs):
+        if qt_min_version(5):
+            super().__init__(parameter=parameter, parent=parent, **kwargs)
+        else:
+            QtGui.QLineEdit.__init__(self, parent=parent, **kwargs)
+            Input.__init__(self, parameter)
 
     def setValue(self, value):
         # QtGui.QLineEdit has a setText() method instead of setValue()
@@ -86,45 +106,145 @@ class StringInput(QtGui.QLineEdit, Input):
 
 
 class FloatInput(QtGui.QDoubleSpinBox, Input):
-    def __init__(self, parameter, parent=None):
-        QtGui.QDoubleSpinBox.__init__(self, parent)
-        Input.__init__(self, parameter)
-        self.setMinimum(self._parameter.minimum)
-        self.setMaximum(self._parameter.maximum)
+    """
+    Spin input box for floating-point values, connected to a
+    :class:`FloatParameter`.
+
+    .. seealso::
+        Class :class:`~.ScientificInput`
+            For inputs in scientific notation.
+    """
+    def __init__(self, parameter, parent=None, **kwargs):
+        if qt_min_version(5):
+            super().__init__(parameter=parameter, parent=parent, **kwargs)
+        else:
+            QtGui.QDoubleSpinBox.__init__(self, parent=parent, **kwargs)
+            Input.__init__(self, parameter)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+
+    def set_parameter(self, parameter):
+        # Override from :class:`Input`
+        self.setMinimum(parameter.minimum)
+        self.setMaximum(parameter.maximum)
+        super().set_parameter(parameter) # default gets set here, after min/max
 
 
 class IntegerInput(QtGui.QSpinBox, Input):
-    def __init__(self, parameter, parent=None):
-        QtGui.QSpinBox.__init__(self, parent)
-        Input.__init__(self, parameter)
-        self.setMinimum(self._parameter.minimum)
-        self.setMaximum(self._parameter.maximum)
+    """
+    Spin input box for integer values, connected to a :class:`IntegerParameter`.
+    """
+    def __init__(self, parameter, parent=None, **kwargs):
+        if qt_min_version(5):
+            super().__init__(parameter=parameter, parent=parent, **kwargs)
+        else:
+            QtGui.QSpinBox.__init__(self, parent=parent, **kwargs)
+            Input.__init__(self, parameter)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
+    def set_parameter(self, parameter):
+        # Override from :class:`Input`
+        self.setMinimum(parameter.minimum)
+        self.setMaximum(parameter.maximum)
+        super().set_parameter(parameter) # default gets set here, after min/max
 
-class BooleanInput(object):
-    # TODO: Implement this class
-    pass
+
+class BooleanInput(QtGui.QCheckBox, Input):
+    """
+    Checkbox for boolean values, connected to a :class:`BooleanParameter`.
+    """
+    def __init__(self, parameter, parent=None, **kwargs):
+        if qt_min_version(5):
+            super().__init__(parameter=parameter, parent=parent, **kwargs)
+        else:
+            QtGui.QCheckBox.__init__(self, parent=parent, **kwargs)
+            Input.__init__(self, parameter)
+
+    def set_parameter(self, parameter):
+        # Override from :class:`Input`
+        self.setText(parameter.name)
+        super().set_parameter(parameter)
+
+    def setValue(self, value):
+        return super().setChecked(value)
+
+    def setSuffix(self, value):
+        pass
+
+    def value(self):
+        return super().isChecked()
 
 
-class ListInput(object):
-    # TODO: Implement this class
-    pass
+class ListInput(QtGui.QComboBox, Input):
+    """
+    Dropdown for list values, connected to a :class:`ListParameter`.
+    """
+    def __init__(self, parameter, parent=None, **kwargs):
+        if qt_min_version(5):
+            super().__init__(parameter=parameter, parent=parent, **kwargs)
+        else:
+            QtGui.QComboBox.__init__(self, parent=parent, **kwargs)
+            Input.__init__(self, parameter)
+        self._stringChoices = None
+        self.setEditable(False)
+
+    def set_parameter(self, parameter):
+        # Override from :class:`Input`
+        try:
+            self._stringChoices = tuple(str(choice) for choice in parameter.choices)
+        except TypeError: # choices is None
+            self._stringChoices = tuple()
+        super().set_parameter(parameter)
+        self.clear()
+        self.addItems(self._stringChoices)
+
+        # can't be set in super().set_parameter: addItems not yet called there
+        if parameter.default is not None:
+            self.setValue(parameter.default)
+
+
+    def setValue(self, value):
+        try:
+            index = self._parameter.choices.index(value)
+            self.setCurrentIndex(index)
+        except (TypeError, ValueError) as e: # no choices or choice invalid
+            raise ValueError("Invalid choice for parameter. "
+                             "Must be one of %s" % str(self._parameter.choices)) from e
+
+    def setSuffix(self, value):
+        self._stringChoices = tuple(choice + str(value) for choice in self._stringChoices)
+
+    def value(self):
+        return self._parameter.choices[self.currentIndex()]
 
 
 class ScientificInput(QtGui.QDoubleSpinBox, Input):
-    def __init__(self, parameter, parent=None):
-        QtGui.QDoubleSpinBox.__init__(self, parent)
+    """
+    Spinner input box for floating-point values, connected to a
+    :class:`FloatParameter`. This box will display and accept values in
+    scientific notation when appropriate.
+
+    .. seealso::
+        Class :class:`~.FloatInput`
+            For a non-scientific floating-point input box.
+    """
+    def __init__(self, parameter, parent=None, **kwargs):
+        if qt_min_version(5):
+            super().__init__(parameter=parameter, parent=parent, **kwargs)
+        else:
+            QtGui.QDoubleSpinBox.__init__(self, parent, **kwargs)
+            Input.__init__(self, parameter)
+        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+
+    def set_parameter(self, parameter):
+        # Override from :class:`Input`
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
         self.validator = QtGui.QDoubleValidator(
             parameter.minimum,
             parameter.maximum,
             10, self)
         self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
-        Input.__init__(self, parameter)
+        super().set_parameter(parameter) # default gets set here, after min/max
 
     def validate(self, text, pos):
         if self._parameter.units:
