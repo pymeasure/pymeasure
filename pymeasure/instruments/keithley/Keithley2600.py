@@ -31,11 +31,12 @@ from pymeasure.instruments import Instrument
 import numpy as np
 import time
 
+from .buffer import KeithleyBuffer
 
-# Todo: Define and implement the required functions using TSP commands sent over the adapter
+
 # Todo: Give a minimal code example: Set up instrument, Set up Buffer, Perform measurement
 
-class Keithley2600(Instrument):
+class Keithley2600(Instrument, KeithleyBuffer):
     """Represents the Keithley 2600 Series SourceMeters and provides a
     high-level interface for interacting with the instrument.
 
@@ -85,7 +86,7 @@ class Keithley2600(Instrument):
     def write_command(self, new_command):
         """Writes the TSP command to the instrument. if start_on_call is False, the script is not executed upon receiving the command"""
 
-        if not start_on_call and self.__start_on_call_change:  # catch only first write after change of property __start_on_call from True to False
+        if not self.__start_on_call and self.__start_on_call_change:  # catch only first write after change of property __start_on_call from True to False
             self.write('loadscript')
             self.__start_on_call_change = False
 
@@ -96,8 +97,6 @@ class Keithley2600(Instrument):
         if not start_on_call:
             self.write('endscript')
             self.write('run()')
-
-
 
     def load_TSP(self, filename):
         """Loads a TSP script (external file) as anonymous script onto the connected instrument.The script can be executed using self.execute_script
@@ -192,10 +191,42 @@ class Keithley2600(Instrument):
                             $$ Escape sequence to display a single dollar symbol ($)
                             """
         self.clear_screen()
-        self.write_command(f'display.settext{textstring}')
 
+        self.write_command(f'display.settext("{textstring}")')
 
+        #self.write_command('display.settext("Normal $BBlinking$N")')
 
+    def set_screen_func(self, smux='smua', function='V', acdc = 'DC'):
+        """
+        Sets the screen to show the defined measurefunction
+        :param smux:        smu used for measurement
+        :param function:    function to be displayed
+        :param acdc:        ac or dc measurement
+        """
+        #TODO: TEST THIS FUNCTION BEFORE USAGE!!!
+
+        function.upper()
+        acdc.upper()
+        if function in ['V', 'VOLTS']:
+            print(f'display.{smux}.measure.func = display.MEASURE_{acdc}VOLTS')
+            self.write_command(f'display.{smux}.measure.func = display.MEASURE_{acdc}VOLTS')
+        else:
+            if function in ['A', 'AMPERE','I']:
+                self.write_command(f'display.{smux}.measure.func = display.MEASURE_{acdc}AMPS')
+
+        self.smu_screen(smux=smux)
+
+    def smu_screen(self, smux='SMUA'):
+        """Displays the source-measure and compliance display for the selected SMU
+        :param smux:    String defining, the smu which parameters are displayed
+        """
+        smux.upper()
+        self.write_command(f'display.screen = display.{smux}')
+
+    def get_screen_text(self):
+        self.write_command('text = display.gettext()')
+        screentext = self.ask('print(text)')
+        return screentext
 ###########
 # buffer  #
 ###########
@@ -217,35 +248,32 @@ class Keithley2600(Instrument):
 
         self.write_command(f'format.data = format.ASCII\n format.asciiprecision = {precision}')
 
-    def get_buffer_data(self, buffer='smua.nvbuffer1'):
+    def get_buffer_data(self, smux='smua', buffer='nvbuffer1'):
         """Returns the Data from a buffer as numpy array
         :param buffer:  The instrument buffer to be read."""
-        #todo: Check whether it is that simple to get data into np array
-        return np.array(self.write(f'printbuffer(1, {buffer}.n,{buffer})'), dtype=np.float64)
+
+        print('waiting for buffer')
+       #wait for all operations to finish
+
+
+        self.wait_for_buffer()
+        print('buffer ready')
+        sourced = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.sourcevalues)')
+        measured = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.readings)')
+        timestamps = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.timestamps)')
+        print('asked')
+        return {'sourced':sourced,'measured': measured,'timestamps':timestamps}
 
     def read_buffer(self, smux='smua', buffer='nvbuffer1'):
         # todo: define function to read keithley buffer
         print('reading buffer')
 
-    def wait_for_buffer(self, should_stop=lambda: False,
-                        timeout=60, interval=0.1):
-        """ Blocks the program, waiting for a full buffer. This function
-        returns early if the :code:`should_stop` function returns True or
-        the timeout is reached before the buffer is full.
-
-        :param should_stop: A function that returns True when this function should return early
-        :param timeout: A time in seconds after which this function should return early
-        :param interval: A time in seconds for how often to check if the buffer is full
+    #def wait_for_buffer(self):
+        """ Blocks the program, waiting for a full buffer.
         """
-        # TODO: Use SRQ initially instead of constant polling
-        # self.adapter.wait_for_srq()
-        t = time()
-        while not self.is_buffer_full():
-            sleep(interval)
-            if should_stop():
-                return
-            if (time() - t) > 10:
-                raise Exception("Timed out waiting for Keithley buffer to fill.")
+        self.adapter.wait_for_srq(timeout=60000)
+        print('srq received')
+
 
 
 ###########
@@ -266,22 +294,26 @@ class Keithley2600(Instrument):
         """
         # todo: Return the buffer after measurement?
 
+
         if source == 'V':
             if keyword == 'lin':
-                self.write_command(f'SweepVLinMeasureI({smux}, {start}, {stop}, {stime}, {points}')
+                self.write_command(f'SweepVLinMeasureI({smux}, {start}, {stop}, {stime}, {points})')
             elif keyword == 'log':
                 self.write_command(f'SweepVLogMeasureI({smux}, {start}, {stop}, {stime}, {points})')
             else:
                 print("Invalid choice of keyword in sweep(source='V')")
         elif source == 'I':
             if keyword == 'lin':
-                self.write_command(f'SweepILinMeasureV({smux}, {start}, {stop}, {stime}, {points}')
+                self.write_command(f'SweepILinMeasureV({smux}, {start}, {stop}, {stime}, {points})')
             elif keyword == 'log':
                 self.write_command(f'SweepILogMeasureV({smux}, {start}, {stop}, {stime}, {points})')
             else:
                 print("Invalid choice of keyword in sweep(source='I')")
+                self.set_screentext("Invalid choice of keyword in sweep(source='I')")
         else:
             print("Invalid choice of method in sweep()")
+            self.set_screentext("Invalid choice of method in sweep()")
+        self.write_command('waitcomplete()')
 
     def sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V', autorange=True):
         """Executes a linear or logarithmic sweeep manually - i.e. returns the buffer value after each data point is measured
@@ -289,7 +321,7 @@ class Keithley2600(Instrument):
 
         if keyword == 'lin':
 
-            if source = 'V':
+            if source == 'V':
                 self.enable_source()
                 if autorange:
                     self.set_autorange('i')
@@ -303,8 +335,6 @@ class Keithley2600(Instrument):
 ###########
 #   beep  #
 ###########
-
-
 
     def beep(self, frequency, duration):
        """Sounds a system beep.
