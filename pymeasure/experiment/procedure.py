@@ -64,7 +64,7 @@ class Procedure(object):
 
     _parameters = {}
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.status = Procedure.QUEUED
         self._update_parameters()
         for key in kwargs:
@@ -72,6 +72,7 @@ class Procedure(object):
                 setattr(self, key, kwargs[key])
                 log.info('Setting parameter %s to %s' % (key, kwargs[key]))
         self.gen_measurement()
+        super().__init__(*args, **kwargs)
 
     def gen_measurement(self):
         """Create MEASURE and DATA_COLUMNS variables for get_datapoint method."""

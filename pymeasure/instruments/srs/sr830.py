@@ -527,7 +527,7 @@ class SR830(Instrument):
         .. deprecated:: 0.6
            Use :meth:`~.is_output_overload()`
         """
-        return self.is_out_of_range()
+        return self.is_output_overload()
 
     def quick_range(self):
         """
