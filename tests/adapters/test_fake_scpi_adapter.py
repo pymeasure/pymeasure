@@ -50,6 +50,13 @@ class TestFakeScpiAdapter:
         a.set_value('QWER', 10)
         assert a.ask("QWER?") == "10\n"
 
+    def test_set_noargs_should_noop(self):
+        a = FakeScpiAdapter()
+        a.write('ABCD')
+        assert a.read() == ""
+        with pytest.raises(KeyError):
+            a.write("ABCD?")
+
     def test_set_and_query_should_return(self):
         a = FakeScpiAdapter(default_value=8)
         a.write('QWER 5')
@@ -59,6 +66,11 @@ class TestFakeScpiAdapter:
         a = FakeScpiAdapter(default_value=8)
         a.write('ARRY 1,2,3,4')
         assert [x.strip() for x in a.ask("ARRY?").split(',')] == ["1", "2", "3", "4"]
+
+    def test_set_arg_without_space(self): # regression test
+        a = FakeScpiAdapter()
+        a.write('BOOP66')
+        assert a.ask('BOOP?') == '66\n'
 
     def test_query_partial_args(self):
         a = FakeScpiAdapter()

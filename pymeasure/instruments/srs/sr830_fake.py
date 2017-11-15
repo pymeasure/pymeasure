@@ -64,8 +64,8 @@ class FakeSR830DUT:
         self.t0 = perf_counter()
         self._f = frequency
         self.tau = truncated_discrete_set(tau, SR830.TIME_CONSTANTS)
-        self.last_r = self.meas_r if self.meas_r is not None else 0
-        self.last_p = self.meas_p if self.meas_r is not None else 0
+        self.last_r = self.r() if self.meas_r is not None else 0
+        self.last_p = self.theta() if self.meas_r is not None else 0
 
         # calculate response target
         _, meas = freqresp(self.lti, w=[2 * np.pi * self._f])
@@ -85,7 +85,7 @@ class FakeSR830DUT:
         t = perf_counter() - self.t0
         return (self.meas_p - self.last_p) \
                 * (1 - np.exp(-4.5*t/(10*self.tau)) * np.cos(t/self.tau + np.pi/2)) \
-                + self.last_r
+                + self.last_p
 
 
 class FakeSR830Adapter(FakeScpiAdapter):
@@ -110,6 +110,7 @@ class FakeSR830Adapter(FakeScpiAdapter):
         self.set_handler('*RST', self.reset_handler)
         self.set_handler('FREQ', self.freq_handler)
         self.set_handler('OFLT', self.tau_handler)
+        self.set_handler('LIAS', self.zero_handler)
 
         self._freq = 1000.0
         self._tau = 0.1
@@ -124,7 +125,7 @@ class FakeSR830Adapter(FakeScpiAdapter):
         self.set_value('FMOD', 1)
         self.set_value('HARM', 1)
         self.set_value('SLVL', 1.000)
-        self.freq_handler(args=(1000.0), query=False)
+        self.freq_handler(args=(1000.0,), query=False)
         self.set_value('RSLP', 0)
 
         # INPUT / FILTERS
@@ -136,7 +137,7 @@ class FakeSR830Adapter(FakeScpiAdapter):
         # GAIN / TC
         self.set_value('SENS', 26)
         self.set_value('RMOD', 2)
-        self.tau_handler(args=(8), query=False)
+        self.tau_handler(args=(8,), query=False)
         self.set_value('OFSL', 1)
         self.set_value('SYNC', 0)
 
@@ -191,4 +192,8 @@ class FakeSR830Adapter(FakeScpiAdapter):
         else:
             self._tau = SR830.TIME_CONSTANTS[args[0]]
             self._dut.configure(self._freq, self._tau)
+
+
+    def zero_handler(self, args=tuple(), query=False):
+        return 0
 

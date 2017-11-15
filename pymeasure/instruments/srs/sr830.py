@@ -448,8 +448,8 @@ class SR830(Instrument):
     def acquireOnTrigger(self, enable=True):
         self.write("TSTR%d" % enable)
 
-    def enable_lia_status(input_=None, filter_=None, output=None, unlock=None,
-        range_=None, time_constant=None, storage_triggered=None):
+    def enable_lia_status(self, input_=None, filter_=None, output=None,
+        unlock=None, range_=None, time_constant=None, storage_triggered=None):
         """
         Set whether or not to report various lock-in status conditions. For all
         parameters, a ``None`` value will be left unchanged, while ``True`` will

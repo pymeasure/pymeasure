@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import re
 
 from pymeasure.adapters.adapter import Adapter
 
@@ -79,6 +80,8 @@ class FakeScpiAdapter(Adapter):
         queries to that key (i.e. ``"CMDD?"``) or, if a callable, the handler
         to set for that SCPI command mnemonic (key).
     """
+
+    re_digit = re.compile('\d')
 
     def __init__(self, default_value=None, **kwargs):
         self._store = {}
@@ -180,14 +183,25 @@ class FakeScpiAdapter(Adapter):
                         raise KeyError('No matching parameters for "%s"' % command)
 
         else: # set commands
+            # insert space before 1st arg - some equipment accepts numerical args w/o space
+            first_digit_match = self.re_digit.search(command)
+            if first_digit_match is not None:
+                first_digit_index = first_digit_match.start()
+                command = command[:first_digit_index] + ' ' + command[first_digit_index:]
+
+            # split command and args
             command_parts = command.strip().split(' ', 1)
             key = command_parts[0].strip()
-            args = self._parse_args(command_parts[1])
+            if len(command_parts) > 1:
+                args = self._parse_args(command_parts[1])
+            else:
+                args = tuple()
 
             if key in self._handlers:
                 self.respond(self._handlers[key](args=args, query=False))
-            else:
+            elif args: # only if args specified
                 self.set_value(key, args)
+            # else noop
 
 
 
@@ -202,7 +216,7 @@ class FakeScpiAdapter(Adapter):
                         args.append(float(arg_str))
                     except ValueError:
                         args.append(arg_str)
-            return tuple(arg for arg in args if arg)
+            return tuple(arg for arg in args if arg) # rejects empty strings
 
 
     def respond(self, resp):

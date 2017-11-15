@@ -74,7 +74,7 @@ class TestDUT:
         assert max(r) > 1.05/sqrt(2) # overshoots
         assert min(t) < 85 # undershoots
 
-    def test_dut_different_tau(self):
+    def test_dut_larger_tau_should_have_longer_transient(self):
         d1 = FakeSR830DUT(fmin=1, fmax=10000)
 
         r1 = []
@@ -99,6 +99,21 @@ class TestDUT:
 
         assert r2.index(max(r2)) > r1.index(max(r1))
         assert t2.index(min(t2)) > t1.index(min(t1))
+
+    def test_dut_multiple_configures_should_converge(self):
+        d = FakeSR830DUT(fmin=1, fmax=10000)
+
+        r = []
+        t = []
+
+        d.configure(frequency=1, tau=3e-3)
+        time.sleep(0.1)
+
+        d.configure(frequency=10000, tau=3e-3)
+        time.sleep(0.1)
+
+        assert 0.99/sqrt(2) <= d.r() <= 1.01*sqrt(2)
+        assert -90*1.01 <= d.theta() <= -90*0.99
 
 
 class TestFakeSR830:
