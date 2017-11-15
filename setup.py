@@ -38,6 +38,7 @@ setup(
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
     install_requires=[
         "numpy >= 1.6.1",
+        "scipy >= 0.18.1",
         "pandas >= 0.14",
         "pyvisa >= 1.8",
         "pyserial >= 2.7",

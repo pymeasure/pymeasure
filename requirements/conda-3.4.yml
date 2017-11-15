@@ -1,6 +1,7 @@
 name: pymeasure
 dependencies:
 - numpy=1.11.1=py34_0
+- scipy=0.18.1
 - pandas=0.18.1=np111py34_0
 - pip=8.1.2=py34_0
 - py=1.4.31=py34_0
