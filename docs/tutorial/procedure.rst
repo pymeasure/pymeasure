@@ -127,7 +127,7 @@ Next we will show how to run the procedure.
 
 Running Procedures
 ~~~~~~~~~~~~~~~~~~
-A Procedure is run by a Worker object. The Worker executes the Procedure in a separate process, which has a speed advantage on computers with multiple processors and allows other scripts to execute asynchronously with the procedure (e.g. a graphical user interface). In addition to performing the measurement, the Worker spawns a Recorder object, which listens for the :python:`'results'` topic in data emitted by the Procedure, and writes those lines to a data file. The Results object provides a convenient abstraction to keep track of where the data should be stored, the data in an accessible form, and the Procedure that pertains to those results.
+A Procedure is run by a Worker object. The Worker executes the Procedure in a separate Python thread, which allows other code to execute in parallel to the procedure (e.g. a graphical user interface). In addition to performing the measurement, the Worker spawns a Recorder object, which listens for the :python:`'results'` topic in data emitted by the Procedure, and writes those lines to a data file. The Results object provides a convenient abstraction to keep track of where the data should be stored, the data in an accessible form, and the Procedure that pertains to those results.
 
 We first construct a Results object for our Procedure. ::
     
@@ -150,7 +150,7 @@ Now we are ready to start the worker. ::
 
     worker.start()
 
-The Worker process will be launched in a separate process, which allows us to perform other tasks while it is running. When writing a script that should block (wait for the Worker to finish), we need to join the Worker back into the main process. ::
+This method starts the worker in a separate Python thread, which allows us to perform other tasks while it is running. When writing a script that should block (wait for the Worker to finish), we need to join the Worker back into the main thread. ::
 
     worker.join(timeout=3600) # wait at most 1 hr (3600 sec)
 
