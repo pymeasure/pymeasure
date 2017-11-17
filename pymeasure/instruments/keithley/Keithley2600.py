@@ -28,7 +28,6 @@ log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
 
-import numpy as np
 import time
 
 from .buffer import KeithleyBuffer
@@ -40,12 +39,16 @@ class Keithley2600(Instrument, KeithleyBuffer):
     """Represents the Keithley 2600 Series SourceMeters and provides a
     high-level interface for interacting with the instrument.
 
-    Commands are sent directly to the instrument. __start_on_call decides whether the received commands are executed
-    by the instrument immediately or after calling execute_script().
+    The Keithley 2600 series operates with lua-like commands in Keithley's proprietory Test Script Program (TSP) language
+    and does not support SCPI beyond basic commands (*IDN? and so on).
 
-    External TSP scripts (written in Lua) can be loaded onto the instrument via load_TSP(filename)
+    Commands are sent directly to the instrument via self.write_command(). __start_on_call decides whether the received
+    commands are executed immediately or after calling execute_script().
+    All (pymeasure) functions that wait for a command should always be executed with __start_on_call = True, or else
+    they will time-out.
 
-
+    Keithley 2600 Instruments come with some factory (TSP) scripts already loaded on the instrument.
+    External TSP scripts (written in Lua) can be loaded onto the instrument via load_TSP(filename).
 
     .. code-block:: python
 
@@ -253,9 +256,7 @@ class Keithley2600(Instrument, KeithleyBuffer):
         :param buffer:  The instrument buffer to be read."""
 
         print('waiting for buffer')
-       #wait for all operations to finish
-
-
+        # ToDo: wait for all operations to finish
         self.wait_for_buffer()
         print('buffer ready')
         sourced = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.sourcevalues)')
@@ -268,11 +269,9 @@ class Keithley2600(Instrument, KeithleyBuffer):
         # todo: define function to read keithley buffer
         print('reading buffer')
 
-    #def wait_for_buffer(self):
-        """ Blocks the program, waiting for a full buffer.
-        """
+    """def wait_for_buffer(self):        
         self.adapter.wait_for_srq(timeout=60000)
-        print('srq received')
+        print('srq received')"""
 
 
 
