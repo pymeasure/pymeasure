@@ -327,8 +327,6 @@ class Keithley2600(Instrument, KeithleyBuffer):
 
         self.raise_srq()
 
-
-
     def sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V', autorange=True):
         """Executes a linear or logarithmic sweeep manually - i.e. returns the buffer value after each data point is measured
         """
