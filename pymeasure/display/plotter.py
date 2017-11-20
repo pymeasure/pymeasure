@@ -61,12 +61,10 @@ class Plotter(StoppableProcess):
     def setup_plot(self, plot):
         """
         This method does nothing by default, but can be overridden by the child
-        class in order to set up custom options for the plot
+        class in order to set up custom options for the plot window, via its
+        PlotItem_.
 
-        This method is called during the constructor, after all other set up has
-        been completed, and is provided as a convenience method to parallel Plotter.
-
-        :param plot: This window's PlotItem instance.
+        :param plot: This window's PlotItem_ instance.
 
         .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
         """

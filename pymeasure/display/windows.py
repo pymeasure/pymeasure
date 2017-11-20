@@ -41,17 +41,22 @@ log.addHandler(logging.NullHandler())
 class PlotterWindow(QtGui.QMainWindow):
     """
     A window for plotting experiment results. Should not be
-    instantiated directly, but only via the :class:`Plotter` class.
+    instantiated directly, but only via the
+    :class:`~pymeasure.display.plotter.Plotter` class.
 
-    :attr plot: The `pyqtgraph.PlotItem`_ object for this window. Can be
+    .. seealso::
+
+        Tutorial :ref:`tutorial-plotterwindow`
+            A tutorial and example code for using the Plotter and PlotterWindow.
+
+    .. attribute plot::
+
+        The `pyqtgraph.PlotItem`_ object for this window. Can be
         accessed to further customise the plot view programmatically, e.g.,
         display log-log or semi-log axes by default, change axis range, etc.
 
     .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
 
-    .. seealso::
-
-        Tutorial: :ref:`tutorial-plotterwindow`
     """
     def __init__(self, plotter, refresh_time=0.1, parent=None):
         super().__init__(parent)
@@ -112,12 +117,18 @@ class ManagedWindow(QtGui.QMainWindow):
     Abstract base class.
 
     The ManagedWindow provides an interface for inputting experiment
-    parameters, running several experiments (:class:`Procedure`), plotting
+    parameters, running several experiments
+    (:class:`~pymeasure.experiment.procedure.Procedure`), plotting
     result curves, and listing the experiments conducted during a session.
 
     The ManagedWindow uses a Manager to control Workers in a Queue,
-    and provides a simple interface. The :meth:`queue` method must be overridden
-    by the child class.
+    and provides a simple interface. The :meth:`~.queue` method must be
+    overridden by the child class.
+
+    .. seealso::
+
+        Tutorial :ref:`tutorial-managedwindow`
+            A tutorial and example on the basic configuration and usage of ManagedWindow.
 
     .. attribute:: plot
 
@@ -126,11 +137,6 @@ class ManagedWindow(QtGui.QMainWindow):
         display log-log or semi-log axes by default, change axis range, etc.
 
     .. _pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
-    .. seealso::
-
-        Tutorial :ref:`tutorial-managedwindow`
-            A tutorial and example on the basic configuration and usage of ManagedWindow.
 
 
     """
@@ -382,8 +388,11 @@ class ManagedWindow(QtGui.QMainWindow):
         Abstract method, which must be overridden by the child class.
 
         Implementations must call ``self.manager.queue(experiment)`` and pass
-        an ``experiment`` (:class:`Experiment`) object which contains the
-        :class:`Results` and :class:`Procedure` to be run.
+        an ``experiment``
+        (:class:`~pymeasure.experiment.experiment.Experiment`) object which
+        contains the
+        :class:`~pymeasure.experiment.results.Results` and
+        :class:`~pymeasure.experiment.procedure.Procedure` to be run.
 
         For example:
 
