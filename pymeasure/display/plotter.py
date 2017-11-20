@@ -38,6 +38,11 @@ log.addHandler(logging.NullHandler())
 class Plotter(StoppableProcess):
     """ Plotter dynamically plots data from a file through the Results
     object and supports error bars.
+
+    .. seealso::
+
+        Tutorial :ref:`tutorial-plotterwindow`
+            A tutorial and example on using the Plotter and PlotterWindow.
     """
 
     def __init__(self, results, refresh_time=0.1):
@@ -48,9 +53,22 @@ class Plotter(StoppableProcess):
     def run(self):
         app = QtGui.QApplication(sys.argv)
         window = PlotterWindow(self, refresh_time=self.refresh_time)
+        self.setup_plot(window.plot)
         app.aboutToQuit.connect(window.quit)
         window.show()
         app.exec_()
+
+    def setup_plot(self, plot):
+        """
+        This method does nothing by default, but can be overridden by the child
+        class in order to set up custom options for the plot window, via its
+        PlotItem_.
+
+        :param plot: This window's PlotItem_ instance.
+
+        .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+        """
+        pass
 
     def wait_for_close(self, check_time=0.1):
         while not self.should_stop():
