@@ -4,6 +4,8 @@ Using a graphical interface
 
 In the previous tutorial we measured the IV characteristic of a sample to show how we can set up a simple experiment in PyMeasure. The real power of PyMeasure comes when we also use the graphical tools that are included to turn our simple example into a full-flegged user interface.
 
+.. _tutorial-plotterwindow:
+
 Using the Plotter
 ~~~~~~~~~~~~~~~~~
 
@@ -84,6 +86,7 @@ Just like the Worker, the Plotter is started in a different process so that it c
 .. image:: pymeasure-plotter.png
     :alt: Results Plotter Example
 
+.. _tutorial-managedwindow:
 
 Using the ManagedWindow
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -170,14 +173,14 @@ This results in the following graphical display.
 .. image:: pymeasure-managedwindow.png
     :alt: ManagedWindow Example
 
-In the code, the MainWindow class is a sub-class of the ManagedWindow class. We overwrite the constructor to provide information about the procedure class and its options. The :python:`inputs` are a list of Parameters class-variable names, which the display will generate graphical fields for. The :python:`displays` is a similar list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
+In the code, the MainWindow class is a sub-class of the ManagedWindow class. We override the constructor to provide information about the procedure class and its options. The :code:`inputs` are a list of Parameters class-variable names, which the display will generate graphical fields for. The :code:`displays` is a similar list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
 
-The :python:`queue` method establishes how the Procedure object is constructed. We use the :python:`self.make_procedure` method to create a Procedure based on the graphical input fields. Here we are free to modify the procedure before putting it on the queue. In this context, the Manager uses an Experiment object to keep track of the Procedure, Results, and its associated graphical representations in the browser and live-graph. This is then given to the Manager to queue the experiment.
+The :code:`queue` method establishes how the Procedure object is constructed. We use the :code:`self.make_procedure` method to create a Procedure based on the graphical input fields. Here we are free to modify the procedure before putting it on the queue. In this context, the Manager uses an Experiment object to keep track of the Procedure, Results, and its associated graphical representations in the browser and live-graph. This is then given to the Manager to queue the experiment.
 
 .. image:: pymeasure-managedwindow-queued.png
     :alt: ManagedWindow Queue Example
 
-By default the Manager starts a measurement when its procedure is queued. The abort button can be pressed to stop an experiment. In the Procedure, the :python:`self.should_stop` call will catch the abort event and halt the measurement. It is important to check this value, or the Procedure will not be responsive to the abort event.
+By default the Manager starts a measurement when its procedure is queued. The abort button can be pressed to stop an experiment. In the Procedure, the :code:`self.should_stop` call will catch the abort event and halt the measurement. It is important to check this value, or the Procedure will not be responsive to the abort event.
 
 .. image:: pymeasure-managedwindow-resume.png
     :alt: ManagedWindow Resume Example
@@ -188,3 +191,44 @@ If you abort a measurement, the resume button must be pressed to continue the ne
     :alt: ManagedWindow Running Example
 
 Now that you have learned about the ManagedWindow, you have all of the basics to get up and running quickly with a measurement and produce an easy to use graphical interface with PyMeasure.
+
+Customising the plot options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For both the PlotterWindow and ManagedWindow, plotting is provided by the pyqtgraph_ library. This library allows you to change various plot options, as you might expect: axis ranges (by default auto-ranging), logarithmic and semilogarithmic axes, downsampling, grid display, FFT display, etc. There are two main ways you can do this:
+
+1. You can right click on the plot to manually change any available options. This is also a good way of getting an overview of what options are available in pyqtgraph. Option changes will, of course, not persist across a restart of your program.
+2. You can programmatically set these options using pyqtgraph's PlotItem_ API, so that the window will open with these display options already set, as further explained below.
+
+For :class:`~pymeasure.display.plotter.Plotter`, you can make a sub-class that overrides the :meth:`~pymeasure.display.plotter.Plotter.setup_plot` method. This method will be called when the Plotter constructs the window. As an example ::
+
+    class LogPlotter(Plotter):
+        def setup_plot(self, plot):
+            # use logarithmic x-axis (e.g. for frequency sweeps)
+            plot.setLogMode(x=True)
+
+For :class:`~pymeasure.display.windows.ManagedWindow`, Similarly to the Plotter, the :meth:`~pymeasure.display.windows.ManagedWindow.setup_plot` method can be overridden by your sub-class in order to do the set-up ::
+
+    class MainWindow(ManagedWindow):
+
+        # ...
+
+        def setup_plot(self, plot):
+            # use logarithmic x-axis (e.g. for frequency sweeps)
+            plot.setLogMode(x=True)
+
+        # ...
+
+It is also possible to access the :attr:`~pymeasure.display.windows.ManagedWindow.plot` attribute while outside of your sub-class, for example we could modify the previous section's example ::
+
+    if __name__ == "__main__":
+        app = QtGui.QApplication(sys.argv)
+        window = MainWindow()
+        window.plot.setLogMode(x=True) # use logarithmic x-axis (e.g. for frequency sweeps)
+        window.show()
+        sys.exit(app.exec_())
+
+See pyqtgraph's API documentation on PlotItem_ for further details.
+
+.. _pyqtgraph: http://www.pyqtgraph.org/
+.. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
