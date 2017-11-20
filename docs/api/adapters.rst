@@ -44,9 +44,9 @@ VISA adapter
     :inherited-members:
     :show-inheritance: 
 
-============
+==========================
 Fake adapter (for testing)
-============
+==========================
 
 .. autoclass:: pymeasure.adapters.FakeAdapter
     :members:
@@ -54,9 +54,9 @@ Fake adapter (for testing)
     :inherited-members:
     :show-inheritance: 
 
-=================
+===============================
 Fake SCPI adapter (for testing)
-=================
+===============================
 
 .. autoclass:: pymeasure.adapters.FakeScpiAdapter
     :members:
