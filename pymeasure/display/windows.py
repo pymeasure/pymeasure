@@ -39,6 +39,25 @@ log.addHandler(logging.NullHandler())
 
 
 class PlotterWindow(QtGui.QMainWindow):
+    """
+    A window for plotting experiment results. Should not be
+    instantiated directly, but only via the
+    :class:`~pymeasure.display.plotter.Plotter` class.
+
+    .. seealso::
+
+        Tutorial :ref:`tutorial-plotterwindow`
+            A tutorial and example code for using the Plotter and PlotterWindow.
+
+    .. attribute plot::
+
+        The `pyqtgraph.PlotItem`_ object for this window. Can be
+        accessed to further customise the plot view programmatically, e.g.,
+        display log-log or semi-log axes by default, change axis range, etc.
+
+    .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+
+    """
     def __init__(self, plotter, refresh_time=0.1, parent=None):
         super().__init__(parent)
         self.plotter = plotter
@@ -94,10 +113,32 @@ class PlotterWindow(QtGui.QMainWindow):
 
 
 class ManagedWindow(QtGui.QMainWindow):
-    """ The ManagedWindow uses a Manager to control Workers in a Queue,
-    and provides a simple interface. The queue method must be overwritten
-    by a child class which is required to pass an Experiment containing the
-    Results and Procedure to self.manager.queue.
+    """
+    Abstract base class.
+
+    The ManagedWindow provides an interface for inputting experiment
+    parameters, running several experiments
+    (:class:`~pymeasure.experiment.procedure.Procedure`), plotting
+    result curves, and listing the experiments conducted during a session.
+
+    The ManagedWindow uses a Manager to control Workers in a Queue,
+    and provides a simple interface. The :meth:`~.queue` method must be
+    overridden by the child class.
+
+    .. seealso::
+
+        Tutorial :ref:`tutorial-managedwindow`
+            A tutorial and example on the basic configuration and usage of ManagedWindow.
+
+    .. attribute:: plot
+
+        The `pyqtgraph.PlotItem`_ object for this window. Can be
+        accessed to further customise the plot view programmatically, e.g.,
+        display log-log or semi-log axes by default, change axis range, etc.
+
+    .. _pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+
+
     """
     EDITOR = 'gedit'
 
@@ -116,6 +157,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.x_axis, self.y_axis = x_axis, y_axis
         self._setup_ui()
         self._layout()
+        self.setup_plot(self.plot)
 
     def _setup_ui(self):
         self.log_widget = LogWidget()
@@ -341,11 +383,47 @@ class ManagedWindow(QtGui.QMainWindow):
         self.inputs.set_parameters(parameters)
 
     def queue(self):
-        """ This method should be overwritten by the child class. The
-        self.manager.queue method should be passed an Experiment object
-        which contains the Results and Procedure to be run.
         """
-        raise Exception("ManagedWindow child class does not implement queue method")
+
+        Abstract method, which must be overridden by the child class.
+
+        Implementations must call ``self.manager.queue(experiment)`` and pass
+        an ``experiment``
+        (:class:`~pymeasure.experiment.experiment.Experiment`) object which
+        contains the
+        :class:`~pymeasure.experiment.results.Results` and
+        :class:`~pymeasure.experiment.procedure.Procedure` to be run.
+
+        For example:
+
+        .. code-block:: python
+
+            def queue(self):
+                filename = unique_filename('results', prefix="data") # from pymeasure.experiment
+
+                procedure = self.make_procedure() # Procedure class was passed at construction
+                results = Results(procedure, filename)
+                experiment = self.new_experiment(results)
+
+                self.manager.queue(experiment)
+
+        """
+        raise NotImplementedError(
+            "Abstract method ManagedWindow.queue not implemented")
+
+    def setup_plot(self, plot):
+        """
+        This method does nothing by default, but can be overridden by the child
+        class in order to set up custom options for the plot
+
+        This method is called during the constructor, after all other set up has
+        been completed, and is provided as a convenience method to parallel Plotter.
+
+        :param plot: This window's PlotItem instance.
+
+        .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+        """
+        pass
 
     def abort(self):
         self.abort_button.setEnabled(False)
