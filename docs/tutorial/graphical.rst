@@ -98,6 +98,8 @@ Below we adapt our previous example to use a ManagedWindow. ::
     log = logging.getLogger(__name__)
     log.addHandler(logging.NullHandler())
 
+    import sys
+    import tempfile
     import random
     from time import sleep
     from pymeasure.log import console_log

@@ -48,3 +48,13 @@ def fromUi(*args, **kwargs):
         if isinstance(element, QtGui.QWidget):
             setattr(widget, name, element)
     return widget
+
+def qt_min_version(major, minor=0):
+    """
+    Check for a minimum Qt version. For example, to check for version 4.11
+    or later, call ``check_qt_version(4, 11)``.
+
+    :return bool: True if PyQt version >= min_version
+    """
+    return (QtCore.QT_VERSION >= ((major << 16) + (minor << 8)))
+
