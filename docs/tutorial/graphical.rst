@@ -79,7 +79,7 @@ The important addition is the construction of the Plotter from the Results objec
     plotter = Plotter(results)
     plotter.start()
 
-Just like the Worker, the Plotter is started in a different process so that it can be run on a separate CPU for higher performance. The Plotter launches a Qt graphical interface using pyqtgraph which allows the Results data to be viewed based on the columns in the data.
+The Plotter is started in a different process so that it can be run on a separate CPU for higher performance. The Plotter launches a Qt graphical interface using pyqtgraph which allows the Results data to be viewed based on the columns in the data.
 
 .. image:: pymeasure-plotter.png
     :alt: Results Plotter Example
