@@ -265,13 +265,24 @@ class Keithley2600(Instrument, KeithleyBuffer):
         print('asked')
         return {'sourced':sourced,'measured': measured,'timestamps':timestamps}
 
-    def read_buffer(self, smux='smua', buffer='nvbuffer1'):
-        # todo: define function to read keithley buffer
-        print('reading buffer')
+    def setup_srq(self):
+        """Sets up the instrument to issue an SRQ on a positive transition of the user-bit 0"""
+        # ToDo: Add support for  multiple user-bits
 
-    """def wait_for_buffer(self):        
+        self.write_command("status.reset()")
+        self.write_command("status.operation.user.condition = 0")
+        self.write_command("status.operation.user.enable = status.operation.user.BIT0")
+        self.write_command("status.operation.user.ptr = status.operation.user.BIT0")
+        self.write_command("status.operation.enable = status.operation.USER")  # bit12
+        self.write_command("status.request_enable = status.OSB")  # bit7
+
+    def raise_srq(self):
+        """Sets user-bit 0 and therby issues an SRQ if setup_srq has been called before"""
+        self.write_command("status.operation.user.condition = status.operation.user.BIT0")
+
+    def wait_for_buffer(self):
         self.adapter.wait_for_srq(timeout=60000)
-        print('srq received')"""
+        print('srq received')
 
 
 
@@ -291,8 +302,8 @@ class Keithley2600(Instrument, KeithleyBuffer):
         :param keyword: Sweeping method. Can be either 'lin' for linear or 'log' for logarithmic
         :param source:  Sourced quantity (i.e. 'V' or 'I')
         """
-        # todo: Return the buffer after measurement?
 
+        self.setup_srq()
 
         if source == 'V':
             if keyword == 'lin':
@@ -313,6 +324,10 @@ class Keithley2600(Instrument, KeithleyBuffer):
             print("Invalid choice of method in sweep()")
             self.set_screentext("Invalid choice of method in sweep()")
         self.write_command('waitcomplete()')
+
+        self.raise_srq()
+
+
 
     def sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V', autorange=True):
         """Executes a linear or logarithmic sweeep manually - i.e. returns the buffer value after each data point is measured
