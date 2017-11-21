@@ -107,10 +107,11 @@ class FakeSR830Adapter(FakeScpiAdapter):
         self._dut = dut
         self.set_value('*IDN', 'Stanford_Research_Systems,SR830,s/n99999,ver9.999')
         self.set_handler('OUTP', self.outp_handler)
+        self.set_handler('SNAP', self.snap_handler)
         self.set_handler('*RST', self.reset_handler)
         self.set_handler('FREQ', self.freq_handler)
         self.set_handler('OFLT', self.tau_handler)
-        self.set_handler('LIAS', self.zero_handler)
+        self.set_handler('LIAS', self.zero_handler) # all status bits zero for now
 
         self._freq = 1000.0
         self._tau = 0.1
@@ -165,6 +166,7 @@ class FakeSR830Adapter(FakeScpiAdapter):
             raise ValueError('Query-only command')
 
         measid = args[0]
+        print(measid)
 
         if measid == 1:
             r, theta = self._dut.r(), self._dut.theta()
@@ -176,6 +178,27 @@ class FakeSR830Adapter(FakeScpiAdapter):
             return self._dut.r()
         elif measid == 4:
             return self._dut.theta()
+
+
+    def snap_handler(self, args=tuple(), query=False):
+        if not query:
+            raise ValueError('Query-only command')
+
+        results = []
+
+        for measid in args:
+            if measid <= 4:
+                results.append(self.outp_handler((measid,), query=True))
+            elif measid <= 8: # no AUX simulation supported
+                results.append(0.0)
+            elif measid == 9:
+                results.append(self.freq_handler(query=True))
+            elif measid == 10 or measid == 11: # No CH1/2 display simulation
+                results.append(0.0)
+        print(results)
+        print(self._dut.r(), self._dut.theta)
+        print("=====")
+        return ','.join("{:.6f}".format(result) for result in results)
 
 
     def freq_handler(self, args=tuple(), query=False):

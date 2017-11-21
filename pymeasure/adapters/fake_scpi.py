@@ -108,6 +108,18 @@ class FakeScpiAdapter(Adapter):
         self._store[key] = value
 
 
+    def get_value(self, key):
+        """
+        Get the stored value for a key. Used to programmatically retrieve
+        values set by SCPI commands, e.g., in custom handlers.
+
+        :param str key: Key to retrieve.
+        :return: Data for this key, as stored internally (numeric type when
+            possible, else string, or a list thereof).
+        """
+        return self._store[key]
+
+
     def set_handler(self, key, handler):
         """
         Set a handler for a specific key. Handles both queries and commands

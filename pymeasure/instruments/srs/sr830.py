@@ -65,6 +65,8 @@ class SR830(Instrument):
     EXPANSION_VALUES = [1, 10, 100]
     RESERVE_VALUES = ['high', 'normal', 'low']
     CHANNELS = ['X', 'Y', 'R']
+    SNAP_VALUES = [None, 'X', 'Y', 'R', 'THETA', 'AUX1', 'AUX2', 'AUX3', 'AUX4',
+                   'FREQ', 'CH1', 'CH2'] # starts at 1
 
     ref_source = Instrument.control(
         "FMOD?", "FMOD%d",
@@ -361,6 +363,29 @@ class SR830(Instrument):
         set_process=lambda x: 1 if x else 0
     )
 
+    lia_status_byte = Instrument.measurement(
+        "LIAS?",
+        """
+        Get the full LIA status byte as an integer value. The bits, and the
+        associated single-bit getter, are as follows:
+        
+        * 0: :meth:`~.is_input_overload`
+        * 1: :meth:`~.is_filter_overload`
+        * 2: :meth:`~.is_output_overload`
+        * 3: :meth:`~.is_freq_range_changed`
+        * 4: :meth:`~.is_freq_range_changed`
+        * 5: :meth:`~.is_time_constant_changed`
+        * 6: :meth:`~.is_data_storage_triggered`
+        * 7: Unused
+
+        This method is faster than the individual calls, as it obtains the
+        entire status byte in one command to the instrument.
+
+        Only bits enabled by :meth:`enable_lia_status` will be set by the
+        instrument when the associated event occurs.
+        """)
+
+
     def __init__(self, resourceName, outx=OutputInterface.GPIB, **kwargs):
         """
         :param resourceName: resource name string or instance of a PyMeasure
@@ -374,19 +399,71 @@ class SR830(Instrument):
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
+
+        # for adapters that support terminations - per the SR830 docs
+        try:
+            if self.adapter.write_term is None:
+                self.adapter.write_term = '\r'
+        except AttributeError:
+            pass
+
+        try:
+            if self.adapter.read_term is None:
+                self.adapter.read_term = b'\r'
+        except AttributeError:
+            pass
+
         try:
             self.write("OUTX%d" % outx.value)
         except AttributeError: # outx is an int maybe?
             self.write("OUTX%d" % outx)
 
+
+    def measure_multiple(self, measurements=('R', 'THETA')):
+        """
+        Get between 1 and 6 measurements. All measurements are taken at a single
+        instant, unlike using properties like :attr:`.r` and :attr:`.theta`,
+        which retrieve each measurement in sequence.
+
+        Possible measurement types are 'X', 'Y', 'R', 'THETA', 'AUX1', 'AUX2',
+        'AUX3', 'AUX4', 'FREQ', 'CH1' (channel 1 display value) and 'CH2'
+        (channel 2 display value).
+
+        Implements the SR830's SNAP command.
+
+        :param measurements: A list of measurements to get. Must be between 2
+            and 6 values, inclusively.
+        :return: A dictionary of the requested measurements. For example, for
+            a call ``get_measurements(['R', 'THETA'])``, the return value will
+            look like ``{'R': 0.01004, 'THETA': 30.445}``.
+        """
+        if len(measurements) < 2 or len(measurements) > 6:
+            raise ValueError("Must request between 2 and 6 measurements")
+        try:
+            meas_args_s = ','.join(
+                str(self.SNAP_VALUES.index(meas.upper())) for meas in measurements)
+        except ValueError as e:
+            raise ValueError("Invalid measurement string") from e
+        except AttributeError as e:
+            raise ValueError("Invalid measurement: must be list of strings") from e
+        values = self.values("SNAP?{}".format(meas_args_s))
+        value_dict = {}
+        for name, value in zip(measurements, values):
+            value_dict[name.upper()] = value
+        return value_dict
+
+
     def auto_gain(self):
         self.write("AGAN")
+
 
     def auto_reserve(self):
         self.write("ARSV")
 
+
     def auto_phase(self):
         self.write("APHS")
+
 
     def auto_offset(self, channel):
         """ Offsets the channel (X, Y, or R) to zero """
@@ -394,6 +471,7 @@ class SR830(Instrument):
             raise ValueError('SR830 channel is invalid')
         channel = self.CHANNELS.index(channel) + 1
         self.write("AOFF %d" % channel)
+
 
     def get_scaling(self, channel):
         """ Returns the offset percent and the expansion term
@@ -404,6 +482,7 @@ class SR830(Instrument):
         channel = self.CHANNELS.index(channel) + 1
         offset, expand = self.ask("OEXP? %d" % channel).split(',')
         return float(offset), self.EXPANSION_VALUES[int(expand)]
+
 
     def set_scaling(self, channel, precent, expand=0):
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
@@ -416,6 +495,7 @@ class SR830(Instrument):
         expand = discreteTruncate(expand, self.EXPANSION_VALUES)
         self.write("OEXP %i,%.2f,%i" % (channel, precent, expand))
 
+
     def output_conversion(self, channel):
         """ Returns a function that can be used to determine
         the signal from the channel output (X, Y, or R), given the currently
@@ -425,6 +505,7 @@ class SR830(Instrument):
         sensitivity = self.sensitivity
         return lambda x: (x/(10.*expand) + offset) * sensitivity
 
+
     @property
     def sample_frequency(self):
         """ Gets the data storage sample frequency in Hz """
@@ -433,6 +514,7 @@ class SR830(Instrument):
             return None  # Trigger
         else:
             return SR830.SAMPLE_FREQUENCIES[index]
+
 
     @sample_frequency.setter
     def sample_frequency(self, frequency):
@@ -445,8 +527,10 @@ class SR830(Instrument):
             index = SR830.SAMPLE_FREQUENCIES.index(frequency)
         self.write("SRAT%f" % index)
 
-    def acquireOnTrigger(self, enable=True):
+
+    def acquire_on_trigger(self, enable=True):
         self.write("TSTR%d" % enable)
+
 
     def enable_lia_status(self, input_=None, filter_=None, output=None,
         unlock=None, range_=None, time_constant=None, storage_triggered=None):
@@ -470,33 +554,50 @@ class SR830(Instrument):
             if v is not None:
                 self.write(cmd % (i, 1 if v else 0))
 
+
     def is_input_overload(self):
         """
         Return True if an input or amplifier overload has been detected.
         The detection status is cleared on the instrument.
         """
-        return int(self.ask("LIAS?0")) is 1
+        try:
+            return int(self.ask("LIAS?0")) is 1
+        except ValueError:
+            return False
+
 
     def is_filter_overload(self):
         """
         Return True if a filter overload has been detected.
         The detection status is cleared on the instrument.
         """
-        return int(self.ask("LIAS?1")) is 1
+        try:
+            return int(self.ask("LIAS?1")) is 1
+        except ValueError:
+            return False
+
 
     def is_output_overload(self):
         """
         Return True if an output measurement overload has been detected.
         The detection status is cleared on the instrument.
         """
-        return int(self.ask("LIAS?2")) is 1
+        try:
+            return int(self.ask("LIAS?2")) is 1
+        except ValueError:
+            return False
+
 
     def is_ref_unlocked(self):
         """
         Return True if the PLL failed to lock to the reference since last check.
         The detection status is cleared on the instrument.
         """
-        return int(self.ask("LIAS?3")) is 1
+        try:
+            return int(self.ask("LIAS?3")) is 1
+        except ValueError:
+            return False
+
 
     def is_freq_range_changed(self):
         """
@@ -505,7 +606,11 @@ class SR830(Instrument):
         constants > 30s are disabled in the upper range.
         The detection status is cleared on the instrument.
         """
-        return int(self.ask("LIAS?4")) is 1
+        try:
+            return int(self.ask("LIAS?4")) is 1
+        except ValueError:
+            return False
+
 
     def is_time_constant_changed(self):
         """
@@ -514,21 +619,33 @@ class SR830(Instrument):
         last check.
         The detection status is cleared on the instrument.
         """
-        return int(self.ask("LIAS?5")) is 1
+        try:
+            return int(self.ask("LIAS?5")) is 1
+        except ValueError:
+            return False
+
 
     def is_data_storage_triggered(self):
         """
         Return True if data storage was triggered since last check.
         The detection status is cleared on the instrument.
         """
-        return int(self.ask("LIAS?6")) is 1
+        try:
+            return int(self.ask("LIAS?6")) is 1
+        except ValueError:
+            return False
+
 
     def is_out_of_range(self):
         """
         .. deprecated:: 0.6
            Use :meth:`~.is_output_overload()`
         """
-        return self.is_output_overload()
+        try:
+            return self.is_output_overload()
+        except ValueError:
+            return False
+
 
     def quick_range(self):
         """
@@ -542,6 +659,7 @@ class SR830(Instrument):
         # Set the range as low as possible
         self.sensitivity(1.15*abs(self.R))
 
+
     @property
     def buffer_count(self):
         query = self.ask("SPTS?")
@@ -549,6 +667,7 @@ class SR830(Instrument):
             return int(re.match(r"\d+\n$", query, re.MULTILINE).group(0))
         else:
             return int(query)
+
 
     def fill_buffer(self, count, has_aborted=lambda: False, delay=0.001):
         ch1 = np.empty(count, np.float32)
@@ -569,6 +688,7 @@ class SR830(Instrument):
         ch1[index:count+1] = self.buffer_data(1, index, count)
         ch2[index:count+1] = self.buffer_data(2, index, count)
         return ch1, ch2
+
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):
         self.write("FAST0;STRD")
@@ -591,14 +711,17 @@ class SR830(Instrument):
         ch2[index:count] = self.buffer_data(2, index, count)
         return (ch1.mean(), ch1.std(), ch2.mean(), ch2.std())
 
+
     def pause_buffer(self):
         self.write("PAUS")
+
 
     def start_buffer(self, fast=False):
         if fast:
             self.write("FAST2;STRD")
         else:
             self.write("FAST0;STRD")
+
 
     def wait_for_buffer(self, count, has_aborted=lambda: False,
                         timeout=60, timestep=0.01):
@@ -612,6 +735,7 @@ class SR830(Instrument):
                 return False
         self.pauseBuffer()
 
+
     def get_buffer(self, channel=1, start=0, end=None):
         """ Acquires the 32 bit floating point data through binary transfer
         """
@@ -620,10 +744,12 @@ class SR830(Instrument):
         return self.binary_values("TRCB?%d,%d,%d" % (
                         channel, start, end-start))
 
+
     def reset_buffer(self):
         self.write("REST")
+
 
     def trigger(self):
         self.write("TRIG")
 
-SR830.aquireOnTrigger = SR830.acquireOnTrigger # for backwards compatibility
+SR830.aquireOnTrigger = SR830.acquire_on_trigger # for backwards compatibility
