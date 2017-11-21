@@ -166,7 +166,6 @@ class FakeSR830Adapter(FakeScpiAdapter):
             raise ValueError('Query-only command')
 
         measid = args[0]
-        print(measid)
 
         if measid == 1:
             r, theta = self._dut.r(), self._dut.theta()
@@ -195,9 +194,6 @@ class FakeSR830Adapter(FakeScpiAdapter):
                 results.append(self.freq_handler(query=True))
             elif measid == 10 or measid == 11: # No CH1/2 display simulation
                 results.append(0.0)
-        print(results)
-        print(self._dut.r(), self._dut.theta)
-        print("=====")
         return ','.join("{:.6f}".format(result) for result in results)
 
 

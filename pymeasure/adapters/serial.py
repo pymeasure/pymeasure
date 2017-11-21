@@ -34,38 +34,130 @@ log.addHandler(logging.NullHandler())
 
 
 class SerialAdapter(Adapter):
-    """ Adapter class for using the Python Serial package to allow
-    serial communication to instrument
+    """
+    Adapter class for using the PySerial package to allow serial communication
+    to an instrument.
 
-    :param port: Serial port
-    :param kwargs: Any valid key-word argument for serial.Serial
+    ``read_term`` changes the behaviour of :meth:`read` and :meth:`ask`. If it
+    is not specified, the legacy behaviour is retained, where these methods will
+    wait until a timeout occurs to return the data collected so far; in this
+    case, setting the ``timeout`` parameter is important!
+
+    If it is specified, :meth:`read` and :meth:`ask` will return data up to the
+    first time the termination character is found. See :meth:`.read` for
+    remarks and warnings on this behaviour.
+
+    :param port: Serial port name (str), or serial.Serial object.
+    :param str|None write_term: Command termination string. This string is
+        appended to all commands passed to the interface via :meth:`write` or
+        :meth:`ask`.
+    :param str|bytes|bytearray|None read_term: Terminator for a response
+        from the device, as a byte-like. Default is ``None`` for backwards
+        compatibility.
+    :param kwargs: Any valid keyword argument for serial.Serial.
     """
 
-    def __init__(self, port, **kwargs):
+    def __init__(self, port, write_term=None, read_term=None,
+            **kwargs):
         if isinstance(port, serial.Serial):
             self.connection = port
         else:
             self.connection = serial.Serial(port, **kwargs)
+        
+        self.write_term = write_term
+        self.read_term = read_term
+
+
+    @property
+    def write_term(self):
+        """
+        Same as the constructor :attr:`write_term` parameter. Property can be
+        read and written. Always returns a ``str`` or ``None`` when read.
+        """
+        return self._write_term
+
+
+    @write_term.setter
+    def write_term(self, value):
+        if value is None:
+            self._write_term = None
+        else:
+            try: # if bytes, decode
+                self._write_term = value.decode('ascii')
+            except AttributeError: # anything else
+                self._write_term = str(value)
+
+
+    @property
+    def read_term(self):
+        """
+        Same as the constructor :attr:`read_term` parameter. Property can be
+        read and written. Always returns a ``bytes`` or ``None`` when read.
+        """
+        return self._read_term
+
+
+    @read_term.setter
+    def read_term(self, value):
+        if value is None:
+            self._read_term = None
+        else:
+            try:
+                value.decode # test if already bytes/bytearray
+                self._read_term = bytes(value)
+            except AttributeError:
+                self._read_term = str(value).encode('ascii')
+
 
     def __del__(self):
-        """ Ensures the connection is closed upon deletion
         """
-        self.connection.close()
+        Ensures the connection is closed upon deletion
+        """
+        try:
+            self.connection.close()
+        except (AttributeError, NameError):
+            pass # self.connection doesn't exist/is None (e.g. connection err)
 
     def write(self, command):
-        """ Writes a command to the instrument
+        """
+        Writes a command to the instrument.
 
         :param command: SCPI command string to be sent to the instrument
         """
-        self.connection.write(command.encode())  # encode added for Python 3
+        if self.write_term:
+            command += self.write_term
+        self.connection.write(command.encode('ascii'))  # encode added for Python 3
 
     def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
-
-        :returns: String ASCII response of the instrument.
         """
-        return b"\n".join(self.connection.readlines()).decode()
+        Reads until the buffer is empty and returns the resulting ASCII response.
+
+        If a termination character ``read_term`` is specified, read up to the
+        terminator (or until timeout) instead. This may be faster if a high
+        rate of commands is needed (avoids waiting a full timeout period),
+        but this violates the :meth:`Adapter.read` contract that states the
+        entire buffer is returned: some instruments may not work, in particular
+        if they pool several commands and then bulk read the result.
+
+        :returns: Response from the instrument, as a string interpreted as ASCII
+        """
+        if not self.read_term:
+            return b"\n".join(self.connection.readlines()).decode()
+        else:
+            data = bytearray()
+            current = self.connection.read(1)
+            # while a character has been read (i.e. not timeout)
+            while current:
+                if current == self.read_term:
+                    # if we have data, stop read, else discard and wait for data
+                    if len(data) > 0:
+                        break
+                else:
+                    data.extend(current)
+                current = self.connection.read(1)
+            else:
+                log.warn("Timed out reading data, no terminator received.")
+            return data.decode()
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data 
