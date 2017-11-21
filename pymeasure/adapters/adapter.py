@@ -27,11 +27,12 @@ from copy import copy
 
 
 class Adapter(object):
-    """ Base class for Adapter child classes, which adapt between the Instrument 
-    object and the connection, to allow flexible use of different connection 
-    techniques.
+    """
+    Abstract base class for Adapter child classes, which adapt between the
+    Instrument object and the connection, to allow flexible use of different
+    connection techniques.
 
-    This class should only be inhereted from.
+    This class should always be sub-classed, never instantiated directly.
     """
 
     def write(self, command):
@@ -39,7 +40,7 @@ class Adapter(object):
 
         :param command: SCPI command string to be sent to the instrument
         """
-        raise NameError("Adapter (sub)class has not implemented writing")
+        raise NotImplementedError("Adapter (sub)class has not implemented writing")
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting 
@@ -57,7 +58,7 @@ class Adapter(object):
 
         :returns: String ASCII response of the instrument.
         """
-        raise NameError("Adapter (sub)class has not implemented reading")
+        raise NotImplementedError("Adapter (sub)class has not implemented reading")
 
     def values(self, command, separator=',', cast=float):
         """ Writes a command to the instrument and returns a list of formatted
