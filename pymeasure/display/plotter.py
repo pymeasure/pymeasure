@@ -29,13 +29,13 @@ import time
 
 from .Qt import QtGui
 from .windows import PlotterWindow
-from ..process import StoppableProcess
+from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Plotter(StoppableProcess):
+class Plotter(StoppableThread):
     """ Plotter dynamically plots data from a file through the Results
     object and supports error bars.
 
