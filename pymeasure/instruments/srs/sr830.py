@@ -22,14 +22,17 @@
 # THE SOFTWARE.
 #
 
+from enum import Enum
+from itertools import zip_longest
+import time
+import re
+
+import numpy as np
+
 from pymeasure.instruments import Instrument, discreteTruncate
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, strict_range
 
-from enum import Enum
-import numpy as np
-import time
-import re
 
 
 class SR830(Instrument):
@@ -436,6 +439,13 @@ class SR830(Instrument):
         :return: A dictionary of the requested measurements. For example, for
             a call ``get_measurements(['R', 'THETA'])``, the return value will
             look like ``{'R': 0.01004, 'THETA': 30.445}``.
+
+        :raises ValueError: Instrument did not respond with expected number of
+            results (this may indicate a problem with the instrument, the
+            connection to the instrument, or an issue with the
+            adapter/connection configuration). (ValueError may also be raised
+            in the usual case situation the parameters are malformed; check the
+            message for details.)
         """
         if len(measurements) < 2 or len(measurements) > 6:
             raise ValueError("Must request between 2 and 6 measurements")
@@ -448,7 +458,9 @@ class SR830(Instrument):
             raise ValueError("Invalid measurement: must be list of strings") from e
         values = self.values("SNAP?{}".format(meas_args_s))
         value_dict = {}
-        for name, value in zip(measurements, values):
+        if len(measurements) != len(values):
+            raise ValueError("Instrument did not respond with expected number of results")
+        for name, value in zip_longest(measurements, values):
             value_dict[name.upper()] = value
         return value_dict
 
