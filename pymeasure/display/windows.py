@@ -49,7 +49,7 @@ class PlotterWindow(QtGui.QMainWindow):
         Tutorial :ref:`tutorial-plotterwindow`
             A tutorial and example code for using the Plotter and PlotterWindow.
 
-    .. attribute plot::
+    .. attribute:: plot
 
         The `pyqtgraph.PlotItem`_ object for this window. Can be
         accessed to further customise the plot view programmatically, e.g.,
