@@ -71,8 +71,8 @@ class TestFakeScpiAdapter:
         a = FakeScpiAdapter(default_value=8)
         a.write('ARRY 1,1.234')
         read_vals = [x.strip() for x in a.ask("ARRY?").split(',')]
-        assert read_vals[0] == 1
-        assert (1.234 - 1e-12) <= read_vals[1] <= (1.234 + 1e-12)
+        assert read_vals[0] == "1"
+        assert (1.234 - 1e-12) <= float(read_vals[1]) <= (1.234 + 1e-12)
 
     def test_set_arg_without_space(self): # regression test
         a = FakeScpiAdapter()

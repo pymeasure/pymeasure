@@ -214,7 +214,12 @@ class FakeScpiAdapter(Adapter):
                         args.append(float(arg_str))
                     except ValueError:
                         args.append(arg_str)
-            return tuple(arg for arg in args)
+            if len(args) != 1 or args[0] != '':
+                # handles the no-args case while allowing empty args
+                # e.g. "CMD 1,,2" -> (1, '', 2)
+                return tuple(args)
+            else:
+                return tuple()
 
 
     def respond(self, resp):
