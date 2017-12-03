@@ -214,7 +214,7 @@ class FakeScpiAdapter(Adapter):
                         args.append(float(arg_str))
                     except ValueError:
                         args.append(arg_str)
-            return tuple(arg for arg in args if arg) # rejects empty strings
+            return tuple(arg for arg in args)
 
 
     def respond(self, resp):

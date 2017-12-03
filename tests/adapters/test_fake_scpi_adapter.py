@@ -64,8 +64,15 @@ class TestFakeScpiAdapter:
 
     def test_set_and_query_multiple_args(self):
         a = FakeScpiAdapter(default_value=8)
-        a.write('ARRY 1,2,3,4')
-        assert [x.strip() for x in a.ask("ARRY?").split(',')] == ["1", "2", "3", "4"]
+        a.write('ARRY 0,1,2,3')
+        assert [x.strip() for x in a.ask("ARRY?").split(',')] == ["0", "1", "2", "3"]
+
+    def test_set_and_query_val_floats(self):
+        a = FakeScpiAdapter(default_value=8)
+        a.write('ARRY 1,1.234')
+        read_vals = [x.strip() for x in a.ask("ARRY?").split(',')]
+        assert read_vals[0] == 1
+        assert (1.234 - 1e-12) <= read_vals[1] <= (1.234 + 1e-12)
 
     def test_set_arg_without_space(self): # regression test
         a = FakeScpiAdapter()
