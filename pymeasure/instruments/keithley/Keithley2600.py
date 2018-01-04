@@ -95,6 +95,7 @@ class Keithley2600(Instrument, KeithleyBuffer):
 
         self.write(new_command)
 
+
     def execute_script(self):
         """Executes the TSP_script """
         if not start_on_call:
@@ -255,14 +256,10 @@ class Keithley2600(Instrument, KeithleyBuffer):
         """Returns the Data from a buffer as numpy array
         :param buffer:  The instrument buffer to be read."""
 
-        print('waiting for buffer')
-        # ToDo: wait for all operations to finish
-        self.wait_for_buffer()
-        print('buffer ready')
+
         sourced = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.sourcevalues)')
         measured = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.readings)')
         timestamps = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.timestamps)')
-        print('asked')
         return {'sourced':sourced,'measured': measured,'timestamps':timestamps}
 
     def setup_srq(self):
@@ -277,10 +274,11 @@ class Keithley2600(Instrument, KeithleyBuffer):
         self.write_command("status.request_enable = status.OSB")  # bit7
 
     def raise_srq(self):
-        """Sets user-bit 0 and therby issues an SRQ if setup_srq has been called before"""
+        """Performs a positive transistion of user-bit 0, raising the SRQ if setup_srq has been set before"""
         self.write_command("status.operation.user.condition = status.operation.user.BIT0")
 
-    def wait_for_buffer(self):
+
+    def wait_for_srq(self):
         self.adapter.wait_for_srq(timeout=60000)
         print('srq received')
 
@@ -304,7 +302,6 @@ class Keithley2600(Instrument, KeithleyBuffer):
         """
 
         self.setup_srq()
-
         if source == 'V':
             if keyword == 'lin':
                 self.write_command(f'SweepVLinMeasureI({smux}, {start}, {stop}, {stime}, {points})')
