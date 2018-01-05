@@ -251,9 +251,9 @@ class Keithley2400(Instrument, KeithleyBuffer):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2400, self).__init__(
-            adapter, "Keithley 2400 SourceMeter", **kwargs
-        )
+            super(Keithley2400, self).__init__(
+                adapter, "Keithley 2400 SourceMeter", **kwargs
+            )
 
     def enable_source(self):
         """ Enables the source of current or voltage depending on the

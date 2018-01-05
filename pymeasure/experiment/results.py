@@ -178,6 +178,8 @@ class Results(object):
         can be reconstructed
         """
         h = []
+        time = 'Timestamp: {:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
+        h.append(time)
         procedure = re.search("'(?P<name>[^']+)'",
                               repr(self.procedure_class)).group("name")
         h.append("Procedure: <%s>" % procedure)

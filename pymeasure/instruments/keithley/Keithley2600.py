@@ -95,6 +95,7 @@ class Keithley2600(Instrument, KeithleyBuffer):
 
         self.write(new_command)
 
+
     def execute_script(self):
         """Executes the TSP_script """
         if not start_on_call:
@@ -113,6 +114,7 @@ class Keithley2600(Instrument, KeithleyBuffer):
         # todo: include a way to use the loaded script as named and not anonymous script. I.e. save it on the instrument for later execution. This also requires a change in execute_script()
 
         log.info('Uploaded TSP script:' + filename)
+
 
 #####################
 # general functions #
@@ -168,6 +170,13 @@ class Keithley2600(Instrument, KeithleyBuffer):
         else:
                 if keyword == 'current':
                     self.write_command(f'{smux}.source.func = {smux}.OUTPUT_DCAMPS')
+
+    def set_integration_time(self, itime, UF=50, smux = 'smua'):
+        """Sets the integration time for all measurements in multiple of power line cycles.
+        :param itime    Desired integration time in ms
+        :param UF       Utility Frequency. Most common for Europe, Asia, South America & Afrika: 50Hz, North America: 60Hz -> check which one applies"""
+        nplc = itime * UF
+        self.write_command(f'{smux}.measure.nplc = {nplc}')
 
     def shutdown(self):
         """Brings the instrument to a safe and stable state"""
@@ -251,27 +260,48 @@ class Keithley2600(Instrument, KeithleyBuffer):
 
         self.write_command(f'format.data = format.ASCII\n format.asciiprecision = {precision}')
 
+    def setup_buffer(self, smux = 'smua', id = '1', precision = 6):
+        """Convenience function to clear buffer and set it to ascii in one function.
+        :param smux:    The SMU which buffer should be cleared.
+        :param id:      The id of the buffer to be cleared. Each smu has two dedicaded reading buffers. use id ='all' to clear all reading buffers
+        :param precision:   Precision used for all data received fromt he buffer
+        """
+        self.clear_buffer(smux, id)
+        self.set_buffer_ascii(precision)
+
+
     def get_buffer_data(self, smux='smua', buffer='nvbuffer1'):
         """Returns the Data from a buffer as numpy array
         :param buffer:  The instrument buffer to be read."""
 
-        print('waiting for buffer')
-        # ToDo: wait for all operations to finish
-        self.wait_for_buffer()
-        print('buffer ready')
+
         sourced = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.sourcevalues)')
         measured = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.readings)')
         timestamps = self.ask(f'printbuffer(1, {smux}.{buffer}.n,{smux}.{buffer}.timestamps)')
-        print('asked')
         return {'sourced':sourced,'measured': measured,'timestamps':timestamps}
 
-    def read_buffer(self, smux='smua', buffer='nvbuffer1'):
-        # todo: define function to read keithley buffer
-        print('reading buffer')
+#######
+# SRQ #
+#######
+    def setup_srq(self):
+        """Sets up the instrument to issue an SRQ on a positive transition of the user-bit 0"""
+        # ToDo: Add support for  multiple user-bits
 
-    """def wait_for_buffer(self):        
+        self.write_command("status.reset()")
+        self.write_command("status.operation.user.condition = 0")
+        self.write_command("status.operation.user.enable = status.operation.user.BIT0")
+        self.write_command("status.operation.user.ptr = status.operation.user.BIT0")
+        self.write_command("status.operation.enable = status.operation.USER")  # bit12
+        self.write_command("status.request_enable = status.OSB")  # bit7
+
+    def raise_srq(self):
+        """Performs a positive transistion of user-bit 0, raising the SRQ if setup_srq has been set before"""
+        self.write_command("status.operation.user.condition = status.operation.user.BIT0")
+
+
+    def wait_for_srq(self):
         self.adapter.wait_for_srq(timeout=60000)
-        print('srq received')"""
+        print('srq received')
 
 
 
@@ -291,8 +321,8 @@ class Keithley2600(Instrument, KeithleyBuffer):
         :param keyword: Sweeping method. Can be either 'lin' for linear or 'log' for logarithmic
         :param source:  Sourced quantity (i.e. 'V' or 'I')
         """
-        # todo: Return the buffer after measurement?
 
+        self.setup_srq()
 
         if source == 'V':
             if keyword == 'lin':
@@ -312,7 +342,9 @@ class Keithley2600(Instrument, KeithleyBuffer):
         else:
             print("Invalid choice of method in sweep()")
             self.set_screentext("Invalid choice of method in sweep()")
+
         self.write_command('waitcomplete()')
+        self.raise_srq()
 
     def sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V', autorange=True):
         """Executes a linear or logarithmic sweeep manually - i.e. returns the buffer value after each data point is measured
@@ -353,6 +385,7 @@ class Keithley2600(Instrument, KeithleyBuffer):
         time.sleep(duration)
         self.beep(base_frequency*6.0/4.0, duration)
         #todo: change function so sleep gets executed within the instrument and not on PC
+
 ###############
 # Current (A) #
 ###############
