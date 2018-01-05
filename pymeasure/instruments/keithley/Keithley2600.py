@@ -98,7 +98,7 @@ class Keithley2600(Instrument, KeithleyBuffer):
 
     def execute_script(self):
         """Executes the TSP_script """
-        if not start_on_call:
+        if not self.__start_on_call:
             self.write('endscript')
             self.write('run()')
 
@@ -300,14 +300,13 @@ class Keithley2600(Instrument, KeithleyBuffer):
 
 
     def wait_for_srq(self):
+        """Wait for SRQ over the connected Adapter."""
         self.adapter.wait_for_srq(timeout=60000)
         print('srq received')
 
-
-
-###########
-# voltage #
-###########
+    ###################
+    # Factory Scripts #
+    ###################
 
     def auto_sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V'):
         """ This method uses the Keithley factory TSP scripts to execute linear or logarithmic sweeps.
@@ -321,7 +320,7 @@ class Keithley2600(Instrument, KeithleyBuffer):
         :param keyword: Sweeping method. Can be either 'lin' for linear or 'log' for logarithmic
         :param source:  Sourced quantity (i.e. 'V' or 'I')
         """
-
+        # todo: Check whether turning the OUTPUT on is still necessary!
         self.setup_srq()
 
         if source == 'V':
@@ -346,21 +345,75 @@ class Keithley2600(Instrument, KeithleyBuffer):
         self.write_command('waitcomplete()')
         self.raise_srq()
 
-    def sweep(self, start, stop, stime, points, smux='smua', keyword='lin', source='V', autorange=True):
-        """Executes a linear or logarithmic sweeep manually - i.e. returns the buffer value after each data point is measured
+    def auto_pulse_train(self, level, limit=1, ton, toff, points, smux='smua', bias=0, buffer='nvbuffer1',
+                         tag=1, source='V', sweep='None', start=0, stop=0):
+        """ This method uses the Keithley Factory TSP scripts to Configure and execute a pulse-train
+         with measurements at the end of each pulse. Measurements start 1/NPLC before the end of each pulse
+
+        :param level        Voltage/current level above bias in a non-sweeped pulse train
+        :param limit        Limit/compliance in V/A during the pulse
+        :param ton          Pulse on time in seconds
+        :param toff         Pulse of time in seconds (i.e. time between end and start)
+        :param points       Number of pulse-measure cycles
+        :param smux         SMU to be sourced
+        :param bias         Bias voltage that the output returns to after level
+        :param buffer       Internal buffer that saves the measurement data
+        :param tag          Tag of the configured pulse train - recuired to initiate it via InitiatePulseTest(tag)
+        :param source       The sourced/pulsed quantity
+        :param sweep        The type of sweep the pulse level undergoes (can be 'None','Lin' or 'Log' )
+        :param start        Start value for Lin/Log sweep
+        :param stop         Stop value for Lin/Log sweep
+
+        All times and or levels can also be supplied as list of form '{1,2,3,5,10}' (String!).
+        Then, the nth pulse takes the nth value of the list.
+
         """
 
-        if keyword == 'lin':
-
+        if sweep == 'None':
             if source == 'V':
-                self.enable_source()
-                if autorange:
-                    self.set_autorange('i')
-                for voltage in setpoints:
-                    self.set_voltage(voltage)
-                    # todo: get buffer data and write it to an array, dict
-                    # datapoints[voltage] = self.get_buffer_data()
-                    # todo: return data
+                self.write_command(
+                    f'f, msg = ConfigPulseVMeasureI({smux}, {bias}, {level}, {limit}, {ton}, {toff}, {points},'
+                    f' {buffer}, {tag})')
+            else if source == 'I':
+                self.write_command(
+                    f'f, msg = ConfigPulseVMeasureI({smux}, {bias}, {level}, {limit}, {ton}, {toff}, {points},'
+                    f' {buffer}, {tag})')
+        elif sweep == 'lin':
+            if source == 'V':
+                self.write_command(f'f, msg = ConfigPulseVMeasureISweepLin({smux}, {bias}, {start}, {stop}, {limit},'
+                                   f' {ton}, {toff},{points}, {buffer}, {tag})
+                if source == 'I':
+                    self.write_command(
+                        f'f, msg = ConfigPulseIMeasureVSweepLin({smux}, {bias}, {start}, {stop}, {limit},'
+                        f' {ton}, {toff},{points}, {buffer}, {tag})
+                elif sweep == 'log':
+                    if
+                source == 'V':
+                self.write_command(f'f, msg = ConfigPulseVMeasureISweepLog({smux}, {bias}, {start}, {stop}, {limit},'
+                                   f' {ton}, {toff},{points}, {buffer}, {tag})
+                if source == 'I':
+                    self.write_command(
+                        f'f, msg = ConfigPulseIMeasureVSweepLog({smux}, {bias}, {start}, {stop}, {limit},'
+                        f' {ton}, {toff},{points}, {buffer}, {tag})
+
+                else:
+                    log.info('Invalid sweep method for auto_pulse_train')
+            return false
+
+        flag = self.ask('print(f)')
+        msg = self.ask('print(msg)')
+        log.info(f'ConfigPulse Flag: {flag}')
+        log.info(f'ConfigPulse Message: {msg}')
+
+        if flag == true:
+            self.setup_srq()
+            self.write_command(f'InitiatePulseTest({tag})')
+            self.write_command('waitcomplete()')
+        else:
+            log.info('Configuration of Pulse Train was unsuccessful.')
+            return false
+
+        self.raise_srq()
 
 
 ###########
