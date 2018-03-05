@@ -22,5 +22,6 @@
 # THE SOFTWARE.
 #
 
+from .Keithley2600 import Keithley2600
 from .keithley2000 import Keithley2000
 from .keithley2400 import Keithley2400
