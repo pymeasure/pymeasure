@@ -1,4 +1,7 @@
 name: pymeasure
+channels:
+- conda-forge
+- defaults
 dependencies:
 - numpy=1.11.1=py34_0
 - pandas=0.18.1=np111py34_0
