@@ -240,6 +240,7 @@ class Instrument(object):
     @staticmethod
     def setting(set_command, docs,
                 validator=lambda x, y: x, values=(), map_values=False,
+                set_process=lambda v: v,
                 check_set_errors=False,
                 **kwargs):
         """Returns a property for the class based on the supplied
@@ -254,7 +255,9 @@ class Instrument(object):
                        as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be 
                           interpreted as a map
-        :param check_set_errors: Toggles checking errors after setting     
+        :param set_process: A function that takes a value and allows processing
+                            before value mapping, returning the processed value
+        :param check_set_errors: Toggles checking errors after setting
         """
 
         if map_values and isinstance(values, dict):
@@ -265,7 +268,7 @@ class Instrument(object):
             raise LookupError("Instrument.setting properties can not be read.")
 
         def fset(self, value):
-            value = validator(value, values)
+            value = set_process(validator(value, values))
             if not map_values:
                 pass
             elif isinstance(values, (list, tuple, range)):
