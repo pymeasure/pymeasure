@@ -11,7 +11,7 @@ dependencies:
 - python=3.5.1=0
 - python-dateutil=2.5.3=py35_0
 - pytz=2016.4=py35_0
-- setuptools=21.2.1=py35_0
+- setuptools>27.3.0
 - sip=4.16.9=py35_0
 - six=1.10.0=py35_0
 - wheel=0.29.0=py35_0

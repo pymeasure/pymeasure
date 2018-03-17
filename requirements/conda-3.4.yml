@@ -11,7 +11,7 @@ dependencies:
 - python=3.4.5=0
 - python-dateutil=2.5.3=py34_0
 - pytz=2016.6.1=py34_0
-- setuptools=23.0.0=py34_0
+- setuptools>27.3.0
 - sip=4.18=py34_0
 - six=1.10.0=py34_0
 - wheel=0.29.0=py34_0
