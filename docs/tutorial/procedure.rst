@@ -85,7 +85,7 @@ The :class:`Procedure <pymeasure.experiment.procedure.Procedure>` class allows u
 
 Using Procedures
 ================
-The Procedure object bundles the sequence of steps in an experiment with the parameters required for a its successful execution. This simple structure comes with huge benefits, since a number of convenient tools for making the measurement use this common interface.
+The Procedure object bundles the sequence of steps in an experiment with the parameters required for its successful execution. This simple structure comes with huge benefits, since a number of convenient tools for making the measurement use this common interface.
 
 Let's start with a simple example of a procedure which loops over a certain number of iterations. We make the SimpleProcedure object as a sub-class of Procedure, since SimpleProcedure *is a* Procedure. ::
 
