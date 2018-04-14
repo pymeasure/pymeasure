@@ -38,18 +38,15 @@ log.addHandler(logging.NullHandler())
 # noinspection PyPep8Naming,PyUnresolvedReferences
 class VISAAdapter(Adapter):
     """ Adapter class for the VISA library using PyVISA to communicate
-    to instruments. Inherit from either class VISAAdapter14 or VISAAdapter15.
+    with instruments.
 
     :param resource: VISA resource name that identifies the address
     :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
     """
 
     def __init__(self, resourceName, **kwargs):
-        # Check PyVisa version
-        if self.version < parse_version('1.7'):
-            raise NotImplementedError(
-                "PyVisa {} is no longer supported. Please upgrade to version 1.8 or later.".format(
-                    self.version.public))
+        if not VISAAdapter.has_supported_version():
+            raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
         if isinstance(resourceName, int):
             resourceName = "GPIB0::%d::INSTR" % resourceName
@@ -68,14 +65,13 @@ class VISAAdapter(Adapter):
             **kwargs
         )
 
-    @property
-    def version(self):
-        """ The string of the PyVISA version in use
-        """
+    @staticmethod
+    def has_supported_version():
+        """ Returns True if the PyVISA version is greater than 1.8 """
         if hasattr(visa, '__version__'):
-            return parse_version(visa.__version__)
+            return parse_version(visa.__version__) >= parse_version('1.8')
         else:
-            return parse_version('1.4')
+            return False
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
