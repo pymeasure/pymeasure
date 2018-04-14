@@ -25,4 +25,4 @@
 from pymeasure.adapters import VISAAdapter
 
 def test_visa_version():
-  assert VISAAdatper.has_supported_version()
+  assert VISAAdapter.has_supported_version()
