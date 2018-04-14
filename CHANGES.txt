@@ -1,3 +1,11 @@
+Version 0.5.1 -- released 4/14/18
+=================================
+- Minor versions of PyVISA are now properly handled
+- Documentation improvements (@Laogeodritt and @ederag)
+- Instruments now have `set_process` capability (@bilderbuchi)
+- Plotter now uses threads (@dvspirito)
+- Display inputs and PlotItem improvements (@Laogeodritt)
+
 Version 0.5 -- released 10/18/17
 ================================
 - Threads are used by default, eliminating multiprocessing issues with spawn
