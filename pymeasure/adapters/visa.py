@@ -27,6 +27,7 @@ import logging
 import copy
 import visa
 import numpy as np
+from pkg_resources import parse_version
 
 from .adapter import Adapter
 
@@ -45,11 +46,10 @@ class VISAAdapter(Adapter):
 
     def __init__(self, resourceName, **kwargs):
         # Check PyVisa version
-        version = float(self.version)
-        if version < 1.7:
+        if self.version < parse_version('1.7'):
             raise NotImplementedError(
                 "PyVisa {} is no longer supported. Please upgrade to version 1.8 or later.".format(
-                    version))
+                    self.version.public))
 
         if isinstance(resourceName, int):
             resourceName = "GPIB0::%d::INSTR" % resourceName
@@ -73,9 +73,9 @@ class VISAAdapter(Adapter):
         """ The string of the PyVISA version in use
         """
         if hasattr(visa, '__version__'):
-            return visa.__version__
+            return parse_version(visa.__version__)
         else:
-            return '1.4'
+            return parse_version('1.4')
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
