@@ -195,3 +195,8 @@ class Agilent4156(Instrument):
         """ Save the voltage or current in the instrument variable list """
         self.write(':PAGE:DISP:MODE LIST')
         self.write(':PAGE:DISP:DVAR ' + name)
+        if channel_in_group(ch, SMU_CHANNELS) is True:
+            name = check_current_voltage_name(name)
+            self.write(send_to_channel(ch) + "INAM %s" % name)
+        else:
+            raise ValueError("Cannot set current name for non-SMU units")
