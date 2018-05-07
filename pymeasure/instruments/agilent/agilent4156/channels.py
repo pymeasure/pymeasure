@@ -27,7 +27,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
+from pymeasure.instruments.validators import *
+
 
 class smu1(Instrument):
     def __init__(self, resourceName, **kwargs):
@@ -42,7 +43,7 @@ class smu1(Instrument):
         ":PAGE:CHAN:SMU1:MODE %s",
         """ A string property that controls the SMU1 channel mode,
         which can take the values 'V', 'I' or 'COMM'.
-        VPULSE AND IPULSE are not yet supportedself.
+        VPULSE AND IPULSE are not yet supported.
         """,
         validator=strict_discrete_set,
         values=["V", "I", "COMM"],
@@ -58,6 +59,52 @@ class smu1(Instrument):
         """,
         validator=strict_discrete_set,
         values=["VAR1", "VAR2", "VARD", "COMM"],
+        check_set_errors=True,
+        check_get_errors=True,
+    )
+
+    series_resistance = Instrument.control(
+        ":PAGE:CHAN:SMU1:SRES?",
+        ":PAGE:CHAN:SMU1:SRES %s",
+        """ This command sets the SERIES RESISTANCE of SMU1, which can take
+        values of '0OHM', '10KOHM', '100KOHM', or '1MOHM'
+        At *RST, this value is 0 OHM.
+        """,
+        validator=strict_discrete_set,
+        values=["0OHM", "10KOHM", "100KOHM", "1MOHM"],
+        check_set_errors=True,
+        check_get_errors=True,
+    )
+
+    disable = Instrument.setting(
+        ":PAGE:CHAN:SMU1:DIS",
+        """ This command deletes the settings of SMU<n>."""
+    )
+
+    constant_value = Instrument.control(
+        ":PAGE:MEAS:CONS:SMU1?",
+        ":PAGE:MEAS:CONS:SMU1 %g",
+        """ This command sets the constant SOURCE value of SMU1 for the sweep
+        measurement. You use this command only if the function of the specified
+        SMU is CONStant and the mode is not COMMon. At *RST, this value is 0 V.
+        Only voltage source range is validated.
+        """,
+        validator=strict_range,
+        values=[-200, 200],
+        check_set_errors=True,
+        check_get_errors=True,
+    )
+
+    compliance = Instrument.control(
+        ":PAGE:MEAS:CONS:SMU1:COMP?",
+        ":PAGE:MEAS:CONS:SMU1:COMP %g",
+        """ This command sets the constant COMPLIANCE value of SMU1 for the sweep
+        measurement. You use this command only if the function of the specified
+        SMU is CONStant and the mode is not COMMon.
+        Only current compliance range is validated.
+        """,
+        validator=strict_range,
+        values=[-200, 200],
         check_set_errors=True,
         check_get_errors=True,
     )
