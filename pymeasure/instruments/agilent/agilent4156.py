@@ -108,27 +108,25 @@ class Agilent4156(Instrument):
         check_get_errors=True
     )
 
-    def measure(self, path=None, to_csv=False):
+    def stop(self):
+        """Stops the ongoing measurement"""
+        self.write(":PAGE:SCON:STOP")
+
+    def measure(self):
         """
-        Performs a single sweep measurement and waits for completion.
-        :param file: File name for data export
-        :param path: Path for data export. Default = None
-        :param to_csv: Boolean value that enables CSV export if True.
-        Default = False.
-        :rtype: Pandas Dataframe
+        Performs a single measurement and waits for completion in sweep mode.
+        In sampling mode:
+            - the measurement must be stopped using :method:~`stop`.
+            - the instrument is hardcoded to capture 50 data points.
         """
-        self.write("PAGE:SCON:MEAS:SING")
-        time.sleep(0.01)
-        self.ask("*OPC?")
-        data = self.get_data()
-        header = self.data_variables
-        df = pd.DataFrame(data=data, columns=header)
-        if to_csv:
-            _, ext = os.path.splitext(path)
-            if ext != ".csv":
-                path = path + ".csv"
-            df.to_csv(path, index=False)
-        return df
+        if self.analyzer_mode == 'SWE':
+            self.write(":PAGE:SCON:MEAS:SING")
+            self.write("*WAI")
+
+        else:
+            self.write(":PAGE:MEAS:SAMP:PER INF")
+            self.write(":PAGE:MEAS:SAMP:POIN 50")
+            self.write(":PAGE:SCON:MEAS:SING")
 
     def disable_all(self):
         """ Disables all channels in the instrument
@@ -269,7 +267,7 @@ class Agilent4156(Instrument):
         for obj, setup in new_settings_dict.items():
             for setting, value in setup.items():
                 setattr(obj, setting, value)
-                time.sleep(0.01)
+                time.sleep(0.1)
 
     def save(self, trace_list):
         """ Save the voltage or current in the instrument display list
@@ -322,30 +320,39 @@ class Agilent4156(Instrument):
         varlist = dlist + dvar
         return list(filter(None, varlist))
 
-    def __get_meas_data(self, var):
+    def get_data(self, path=None, to_csv=False):
         """
-        Get measurement data for variable
-        The string identifying voltage or current on channel is passed in as
-        arguement, and the data for that quantity is obtained from instrument.
+        Gets the measurement data from the instrument.
+        :param file: File name for data export
+        :param path: Path for data export. Default = None
+        :param to_csv: Boolean value that enables CSV export if True.
+        Default = False.
+        :returns: Pandas Dataframe
         """
-        self.write(":FORM:DATA ASC")
-        values = self.values(":DATA? \'{}\'".format(var))
-        return values
+        if self.ask("*OPC?") == '1':
+            header = self.data_variables
+            self.write(":FORM:DATA ASC")
+            # recursively get data for each variable
+            for i, listvar in enumerate(header):
+                data = self.values(":DATA? \'{}\'".format(listvar))
+                time.sleep(0.01)
+                if i == 0:
+                    lastdata = data
+                else:
+                    data = np.column_stack((lastdata, data))
+                    lastdata = data
 
-    def get_data(self):
-        """
-        Arrange all measured data into a matrix
-        Uses column_stack from numpy to arrange all measured quantities as
-        columns on a numpy array.
-        """
-        for i, listvar in enumerate(self.data_variables):
-            data = np.array(self.__get_meas_data(listvar))
-            if i == 0:
-                lastdata = data
+            df = pd.DataFrame(data=data, columns=header, index=None)
+            if to_csv:
+                _, ext = os.path.splitext(path)
+                if ext != ".csv":
+                    path = path + ".csv"
+                df.to_csv(path, index=False)
+            if self.analyzer_mode = "SAMPLING"
+                df = pd.DataFrame(df.mean()).transpose()
+                return df
             else:
-                data = np.column_stack((lastdata, data))
-                lastdata = data
-        return data
+                return df
 
 ##########
 # CHANNELS
@@ -422,7 +429,10 @@ class smu(Instrument):
 
     @property
     def constant_value(self):
-        value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
+        if Agilent4156.analyzer_mode = "SWEEP"
+            value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
+        else:
+            value = self.ask(":PAGE:MEAS:SAMP:CONS:{}?".format(self.channel))
         self.check_errors()
         return value
 
@@ -438,12 +448,20 @@ class smu(Instrument):
         validator = strict_range
         values = self.__validate_cons()
         value = validator(const_value, values)
-        self.write(":PAGE:MEAS:CONS:{0} {1}".format(self.channel, value))
+        if Agilent4156.analyzer_mode == 'SWEEP':
+            self.write(":PAGE:MEAS:CONS:{0} {1}".format(self.channel, value))
+        else:
+            self.write(":PAGE:MEAS:SAMP:CONS:{0} {1}".format(
+                self.channel, value))
         self.check_errors()
 
     @property
     def compliance(self):
-        value = self.ask(":PAGE:MEAS:CONS:{}:COMP?".format(self.channel))
+        if Agilent4156.analyzer_mode = "SWEEP":
+            value = self.ask(":PAGE:MEAS:CONS:{}:COMP?".format(self.channel))
+        else:
+            value = self.ask(
+                ":PAGE:MEAS:SAMP:CONS:{}:COMP?".format(self.channel))
         self.check_errors()
         return value
 
@@ -456,9 +474,14 @@ class smu(Instrument):
         on :attr:`~.channels.channel_mode` setting.
         """
         validator = strict_range
-        values = self.__validate_cons()
+        values = self.__validate_compl()
         value = validator(comp, values)
-        self.write(":PAGE:MEAS:CONS:{0}:COMP {1}".format(self.channel, value))
+        if Agilent4156.analyzer_mode == 'SWEEP':
+            self.write(":PAGE:MEAS:CONS:{0}:COMP {1}".format(
+                self.channel, value))
+        else:
+            self.write(":PAGE:MEAS:SAMP:CONS:{0}:COMP {1}".format(
+                self.channel, value))
         self.check_errors()
 
     @property
@@ -522,6 +545,24 @@ class smu(Instrument):
                 raise ValueError('Channel is not in V or I mode.')
         return values
 
+    def __validate_compl(self):
+        """Validates the instrument compliance for operation in constant mode.
+        """
+        try:
+            not((self.channel_mode != 'COMM') and (
+                self.channel_function == 'CONS'))
+        except:
+            raise ValueError(
+                'Cannot set constant SMU parameters when SMU mode is COMMON, '
+                'or when SMU function is not CONSTANT.')
+        else:
+            if self.channel_mode == 'I':
+                values = [-200, 200]
+            elif self.channel_mode == 'V':
+                values = [-1, 1]
+            else:
+                raise ValueError('Channel is not in V or I mode.')
+        return values
 #################
 # SWEEP VARIABLES
 #################
