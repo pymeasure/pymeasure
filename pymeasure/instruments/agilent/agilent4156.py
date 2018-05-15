@@ -35,7 +35,7 @@ import numpy as np
 import time
 import pandas as pd
 import os
-import ruamel_yaml as yaml
+import json
 
 ######
 # MAIN
@@ -117,7 +117,7 @@ class Agilent4156(Instrument):
         Performs a single measurement and waits for completion in sweep mode.
         In sampling mode:
             - the measurement must be stopped using :method:~`stop`.
-            - the instrument is hardcoded to capture 50 data points.
+            - the instrument is hardcoded to capture 25 data points.
         """
         if self.analyzer_mode == 'SWE':
             self.write(":PAGE:SCON:MEAS:SING")
@@ -125,7 +125,7 @@ class Agilent4156(Instrument):
 
         else:
             self.write(":PAGE:MEAS:SAMP:PER INF")
-            self.write(":PAGE:MEAS:SAMP:POIN 50")
+            self.write(":PAGE:MEAS:SAMP:POIN 25")
             self.write(":PAGE:SCON:MEAS:SING")
 
     def disable_all(self):
@@ -140,15 +140,15 @@ class Agilent4156(Instrument):
         self.smu4.disable
         time.sleep(0.1)
 
-    def configure(self, settings_dict, use_yaml=False):
+    def configure(self, settings_dict, use_json=False):
         """ Convenience function to configure the channel setup and sweep.
-        :param settings_dict: A dictionary of Instrument object : config_dict
+        :param settings_dict: A dictionary of {Instrument object : config_dict}
         where the instrument object addresses the particular SMU or sweep
         variable, and the config_dict is a dictionary containing the properties
         of the instrument object as keys with their corresponding value setting
         as dictionary values.
 
-        Alternately, settings_dict can be a yaml file,
+        Alternately, settings_dict can be a json configuration file.
 
         Manually creating dictionary of instrument settings.
         .. code-block:: python
@@ -199,42 +199,45 @@ class Agilent4156(Instrument):
 
             instr.configure(all_settings)
 
-        Example YAML file for the same setup:
-        .. code-block:: yaml
-            'SMU1':
-                'channel_mode' : 'V'
-                'channel_function' : 'VAR1'
-                'voltage_name' : 'VC'
-                'current_name' : 'IC'
-                'series_resistance' : '0OHM'
-
-            'VAR1':
-                'start' : 1
-                'stop' : 2
-                'step' : 0.1
-                'spacing' : 'LINEAR'
-                'compliance' : 0.5
-
-            'SMU2':
-                'channel_mode' : 'I'
-                'channel_function' : 'VAR2'
-                'voltage_name' : 'VB'
-                'current_name' : 'IB'
-                'series_resistance' : '0OHM'
-
-            'VAR2':
-                'start' : 0
-                'step' : 10e-6
-                'points' : 3
-                'compliance' : 0.1
-
-            'SMU3':
-                'channel_mode' : 'V'
-                'channel_function' : 'CONS'
-                'constant_value' : 0
-                'voltage_name' : 'VE'
-                'current_name' : 'IE'
-                'compliance' : 0.1
+        Example JSON file for the same setup:
+        .. code-block:: json
+            {
+                "SMU1": {
+                    "voltage_name" : "VC",
+                    "current_name" : "IC",
+                    "channel_function" : "VAR1",
+                    "channel_mode" : "V",
+                    "series_resistance" : "0OHM"
+                },
+                "VAR1": {
+                    "start" : 1,
+                    "stop" : 2,
+                    "step" : 0.1,
+                    "spacing" : "LINEAR",
+                    "compliance" : 0.5
+                },
+                "SMU2": {
+                    "voltage_name" : "VB",
+                    "current_name" : "IB",
+                    "channel_function" : "VAR2",
+                    "channel_mode" : "I",
+                    "series_resistance" : "0OHM"
+                },
+                "VAR2": {
+                    "start" : 0,
+                    "step" : 10e-6,
+                    "points" : 3,
+                    "compliance" : 0.1
+                },
+                "SMU3": {
+                    "voltage_name" : "VE",
+                    "current_name" : "IE",
+                    "channel_function" : "CONS",
+                    "channel_mode" : "V",
+                    "constant_value" : 0,
+                    "compliance" : 0.1
+                }
+            }
 
         The instrument can then be configured using,
         .. code-block:: python
@@ -249,11 +252,11 @@ class Agilent4156(Instrument):
                     'VAR2': self.var2,
                     'VARD': self.vard
                     }
-        if use_yaml:
+        if use_json:
             with open(settings_dict, 'r') as stream:
                 try:
-                    instr_settings = yaml.load(stream)
-                except yaml.YAMLError as e:
+                    instr_settings = json.load(stream)
+                except json.JSONDecodeError as e:
                     print(e)
 
             # replace dict keys with Instrument objects
@@ -348,9 +351,9 @@ class Agilent4156(Instrument):
                 if ext != ".csv":
                     path = path + ".csv"
                 df.to_csv(path, index=False)
-            if self.analyzer_mode = "SAMPLING"
-                df = pd.DataFrame(df.mean()).transpose()
-                return df
+            if self.analyzer_mode == "SAMPLING":
+                df_mean = pd.DataFrame(df.mean(), index=None).transpose()
+                return df_mean
             else:
                 return df
 
@@ -429,7 +432,7 @@ class smu(Instrument):
 
     @property
     def constant_value(self):
-        if Agilent4156.analyzer_mode = "SWEEP"
+        if Agilent4156.analyzer_mode == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
         else:
             value = self.ask(":PAGE:MEAS:SAMP:CONS:{}?".format(self.channel))
@@ -457,7 +460,7 @@ class smu(Instrument):
 
     @property
     def compliance(self):
-        if Agilent4156.analyzer_mode = "SWEEP":
+        if Agilent4156.analyzer_mode == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}:COMP?".format(self.channel))
         else:
             value = self.ask(
@@ -534,7 +537,7 @@ class smu(Instrument):
                 self.channel_function == 'CONS'))
         except:
             raise ValueError(
-                'Cannot set constant SMU parameters when SMU mode is COMMON, '
+                'Cannot set constant SMU function when SMU mode is COMMON, '
                 'or when SMU function is not CONSTANT.')
         else:
             if self.channel_mode == 'V':
