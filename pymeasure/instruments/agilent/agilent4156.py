@@ -58,6 +58,10 @@ class Agilent4156(Instrument):
         self.smu2 = smu(self.adapter, 'SMU2', **kwargs)
         self.smu3 = smu(self.adapter, 'SMU3', **kwargs)
         self.smu4 = smu(self.adapter, 'SMU4', **kwargs)
+        self.vmu1 = vmu(self.adapter, 'VMU1', **kwargs)
+        self.vmu2 = vmu(self.adapter, 'VMU2', **kwargs)
+        self.vsu1 = vsu(self.adapter, 'VSU1', **kwargs)
+        self.vsu2 = vsu(self.adapter, 'VSU2', **kwargs)
         self.var1 = var1(self.adapter, **kwargs)
         self.var2 = var2(self.adapter, **kwargs)
         self.vard = vard(self.adapter, **kwargs)
@@ -138,6 +142,10 @@ class Agilent4156(Instrument):
         self.smu3.disable
         time.sleep(0.1)
         self.smu4.disable
+        time.sleep(0.1)
+        self.vmu1.disable
+        time.sleep(0.1)
+        self.vmu2.disable
         time.sleep(0.1)
 
     def configure(self, settings_dict, use_json=False):
@@ -248,6 +256,10 @@ class Agilent4156(Instrument):
                     'SMU2': self.smu2,
                     'SMU3': self.smu3,
                     'SMU4': self.smu4,
+                    'VMU1': self.vmu1,
+                    'VMU2': self.vmu2,
+                    'VSU1': self.vsu1,
+                    'VSU2': self.vsu2,
                     'VAR1': self.var1,
                     'VAR2': self.var2,
                     'VARD': self.vard
@@ -499,7 +511,7 @@ class smu(Instrument):
         If input is greater than 6 characters long or starts with a number,
         the name is autocorrected and prepended with 'a'. Event is logged.
         """
-        value = smu.__check_current_voltage_name(vname)
+        value = check_current_voltage_name(vname)
         self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
 
     @property
@@ -514,20 +526,8 @@ class smu(Instrument):
         If input is greater than 6 characters long or starts with a number,
         the name is autocorrected and prepended with 'a'. Event is logged.
         """
-        value = smu.__check_current_voltage_name(iname)
+        value = check_current_voltage_name(iname)
         self.write(":PAGE:CHAN:{0}:INAME \'{1}\'".format(self.channel, value))
-
-    @staticmethod
-    def __check_current_voltage_name(name):
-        """ Checks if current and voltage names specified for channel
-        conforms to the accepted naming scheme. Returns auto-corrected name
-        starting with 'a' if name is unsuitable.
-        """
-        if (len(name) > 6) or not name[0].isalpha():
-            new_name = 'a' + name[:5]
-            log.info("Renaming %s to %s..." % (name, new_name))
-            name = new_name
-        return name
 
     def __validate_cons(self):
         """Validates the instrument settings for operation in constant mode.
@@ -545,7 +545,8 @@ class smu(Instrument):
             elif self.channel_mode == 'I':
                 values = [-1, 1]
             else:
-                raise ValueError('Channel is not in V or I mode.')
+                raise ValueError(
+                    'Channel is not in V or I mode. It might be disabled.')
         return values
 
     def __validate_compl(self):
@@ -566,6 +567,120 @@ class smu(Instrument):
             else:
                 raise ValueError('Channel is not in V or I mode.')
         return values
+
+
+class vmu(Instrument):
+    def __init__(self, resourceName, channel, **kwargs):
+        super().__init__(
+            resourceName,
+            "VMU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
+            **kwargs
+        )
+        self.channel = channel.upper()
+
+    @property
+    def voltage_name(self):
+        value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
+        return value
+
+    @voltage_name.setter
+    def voltage_name(self, vname):
+        """ Controls the voltage name of the VMU channel
+        :param vname: Voltage name of the channel.
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
+        """
+        value = check_current_voltage_name(vname)
+        self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
+
+    @property
+    def disable(self):
+        """ This command deletes the settings of VMU<n>."""
+        self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
+        self.check_errors()
+
+    @property
+    def channel_mode(self):
+        value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
+        self.check_errors()
+        return value
+
+    @channel_mode.setter
+    def channel_mode(self, mode):
+        """ A string property that controls the VMU<n> channel mode.
+        :param mode: Set channel mode - 'V', 'DVOL'
+        """
+        validator = strict_discrete_set
+        values = ["V", "DVOL"]
+        value = validator(mode, values)
+        self.write(":PAGE:CHAN:{0}:MODE {1}".format(self.channel, value))
+        self.check_errors()
+
+
+class vsu(Instrument):
+    def __init__(self, resourceName, channel, **kwargs):
+        super().__init__(
+            resourceName,
+            "VSU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
+            **kwargs
+        )
+        self.channel = channel.upper()
+
+    @property
+    def voltage_name(self):
+        value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
+        return value
+
+    @voltage_name.setter
+    def voltage_name(self, vname):
+        """ Controls the voltage name of the VMU channel
+        :param vname: Voltage name of the channel.
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
+        """
+        value = check_current_voltage_name(vname)
+        self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
+
+    @property
+    def disable(self):
+        """ This command deletes the settings of VMU<n>."""
+        self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
+        self.check_errors()
+
+    @property
+    def channel_mode(self):
+        value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
+        self.check_errors()
+        return value
+
+    @property
+    def constant_value(self):
+        if Agilent4156.analyzer_mode == "SWEEP":
+            value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
+        else:
+            value = self.ask(":PAGE:MEAS:SAMP:CONS:{}?".format(self.channel))
+        self.check_errors()
+        return value
+
+    @constant_value.setter
+    def constant_value(self, const_value):
+        """ This command sets the constant source value of SMU<n> for the sweep
+        measurement. You use this command only if :attr:`~channels.channel_function`
+        is `CONS` and :attr:`~.channels.channel_mode` is not `COMM`.
+        At *RST, this value is 0 V.
+        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
+        on :attr:`~.channels.channel_mode` setting.
+        """
+        validator = strict_range
+        values = [-200, 200]
+        value = validator(const_value, values)
+        if Agilent4156.analyzer_mode == 'SWEEP':
+            self.write(":PAGE:MEAS:CONS:{0} {1}".format(self.channel, value))
+        else:
+            self.write(":PAGE:MEAS:SAMP:CONS:{0} {1}".format(
+                self.channel, value))
+        self.check_errors()
+
 #################
 # SWEEP VARIABLES
 #################
@@ -788,3 +903,15 @@ class vard(Instrument):
         check_set_errors=True,
         check_get_errors=True
     )
+
+
+def check_current_voltage_name(name):
+    """ Checks if current and voltage names specified for channel
+    conforms to the accepted naming scheme. Returns auto-corrected name
+    starting with 'a' if name is unsuitable.
+    """
+    if (len(name) > 6) or not name[0].isalpha():
+        new_name = 'a' + name[:5]
+        log.info("Renaming %s to %s..." % (name, new_name))
+        name = new_name
+    return name
