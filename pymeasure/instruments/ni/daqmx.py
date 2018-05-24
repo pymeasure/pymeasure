@@ -50,7 +50,7 @@ class DAQmx(object):
     """Instrument object for interfacing with NI-DAQmx devices."""
     def __init__(self, name, *args, **kwargs):
         super(DAQmx, self).__init__()
-        self.resourceName = name
+        self.resourceName = name # NOTE: Device number, e.g. Dev1 or PXI1Slot2
         self.numChannels = 0
         self.numSamples = 0
         self.dataBuffer = 0
@@ -77,7 +77,7 @@ class DAQmx(object):
                                 DAQmx_Val_Rising,DAQmx_Val_FiniteSamps,
                                 uInt64(self.numSamples)));
 
-    def setupAnalogVoltageOut(self, channel=0):
+    def setup_analog_voltage_out(self, channel=0):
         resourceString = self.resourceName + "/ao" + str(channel)
         self.taskHandleAO = TaskHandle(0)
         self.CHK(nidaq.DAQmxCreateTask("", ctypes.byref( self.taskHandleAO )))
@@ -86,7 +86,7 @@ class DAQmx(object):
                 float64(-10.0), float64(10.0),
                 DAQmx_Val_Volts, None))
 
-    def setupAnalogVoltageOutMultipleChannels(self, channelList):
+    def setup_analog_voltage_out_multiple_channels(self, channelList):
         resourceString = ""
         for num, channel in enumerate(channelList):
             if num > 0:
@@ -99,20 +99,19 @@ class DAQmx(object):
                 float64(-10.0), float64(10.0),
                 DAQmx_Val_Volts, None))
 
-
-    def writeAnalogVoltage(self, value):
-        timeout = -1.0 
+    def write_analog_voltage(self, value):
+        timeout = -1.0
         self.CHK(nidaq.DAQmxWriteAnalogScalarF64( self.taskHandleAO,
-            1, # Autostart 
-            float64(timeout), 
-            float64(value), 
+            1, # Autostart
+            float64(timeout),
+            float64(value),
             None))
 
-    def writeAnalogVoltageMultipleChannels(self, values):
-        timeout = -1.0 
+    def write_analog_voltage_multiple_channels(self, values):
+        timeout = -1.0
         self.CHK(nidaq.DAQmxWriteAnalogF64( self.taskHandleAO,
             1, # Samples per channel
-            1, # Autostart 
+            1, # Autostart
             float64(timeout),
             DAQmx_Val_GroupByChannel,
             (np.array(values)).ctypes.data,
@@ -122,10 +121,10 @@ class DAQmx(object):
         read = int32()
         self.CHK(nidaq.DAQmxReadAnalogF64(self.taskHandleAI ,self.numSamples,float64(10.0),
                                 DAQmx_Val_GroupByChannel, self.dataBuffer.ctypes.data,
-                                self.numChannels*self.numSamples,ctypes.byref(read),None))  
+                                self.numChannels*self.numSamples,ctypes.byref(read),None))
         return self.dataBuffer.transpose()
 
-    def acquireAverage(self):
+    def acquire_average(self):
         if not self.terminated:
             avg = np.mean(self.acquire(), axis=1)
             return avg

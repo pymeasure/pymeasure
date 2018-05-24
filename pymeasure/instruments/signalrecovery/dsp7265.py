@@ -31,7 +31,7 @@ import numpy as np
 
 class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
-
+    # TODO: add regultors on most of these
     voltage = Instrument.control(
         "OA.", "OA. %g",
         """ A floating point property that represents the voltage
@@ -41,7 +41,7 @@ class DSP7265(Instrument):
         "OF.", "OF. %g",
         """ A floating point property that represents the lock-in
         frequency in Hz. This property can be set. """
-    ) 
+    )
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
         """ A floating point property that represents the output
@@ -73,22 +73,22 @@ class DSP7265(Instrument):
         """ A floating point property that represents the reference
         harmonic phase in degrees. This property can be set. """
     )
-    x = Instrument.measurement("X.", 
+    x = Instrument.measurement("X.",
         """ Reads the X value in Volts """
     )
-    y = Instrument.measurement("Y.", 
+    y = Instrument.measurement("Y.",
         """ Reads the Y value in Volts """
     )
-    xy = Instrument.measurement("X.Y.", 
+    xy = Instrument.measurement("X.Y.",
         """ Reads both the X and Y values in Volts """
     )
-    mag = Instrument.measurement("Mag.", 
+    mag = Instrument.measurement("Mag.", # TODO: Should be capitalized?
         """ Reads the magnitude in Volts """
     )
-    adc1 = Instrument.measurement("ADC. 1", 
+    adc1 = Instrument.measurement("ADC. 1",
         """ Reads the input value of ADC1 in Volts """
     )
-    adc2 = Instrument.measurement("ADC. 2", 
+    adc2 = Instrument.measurement("ADC. 2",
         """ Reads the input value of ADC2 in Volts """
     )
     id = Instrument.measurement("ID",
@@ -97,7 +97,7 @@ class DSP7265(Instrument):
     sensitivity = Instrument.control(
         "SEN.", "SEN %d",
         """ A floating point property that controls the sensitivity
-        range in Volts, which can take discrete values from 2 nV to 
+        range in Volts, which can take discrete values from 2 nV to
         1 V. This property can be set. """,
         validator=truncated_discrete_set,
         values=[
@@ -106,7 +106,7 @@ class DSP7265(Instrument):
             20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
             2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
             200.0e-3, 500.0e-3, 1.0
-        ]
+        ] # TODO: Determine if map_values = True here!!!
     )
     slope = Instrument.control(
         "SLOPE", "SLOPE %d",
@@ -129,7 +129,7 @@ class DSP7265(Instrument):
             200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
             100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
             20.0e3, 50.0e3
-        ]
+        ] # TODO: Determine if map_values = True here!!!
     )
 
     def __init__(self, resourceName, **kwargs):
@@ -147,7 +147,7 @@ class DSP7265(Instrument):
             'ADC2': 64,
             'ADC3': 128
         }
-        
+
         # Pre-condition
         self.adapter.config(datatype = 'str', converter = 's')
 
@@ -159,7 +159,7 @@ class DSP7265(Instrument):
             return [float(x) for x in result.split(",")]
         except:
             return result
-        
+
     def setDifferentialMode(self, lineFiltering=True):
         self.write("VMODE 3")
         self.write("LF %d 0" % 3 if lineFiltering else 0)
