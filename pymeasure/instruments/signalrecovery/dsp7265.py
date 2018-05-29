@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_discrete_set
+from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, modular_range
 
 from time import sleep
 import numpy as np
@@ -31,47 +31,63 @@ import numpy as np
 
 class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
-    # TODO: add regultors on most of these
+
     voltage = Instrument.control(
         "OA.", "OA. %g",
         """ A floating point property that represents the voltage
-        in Volts. This property can be set. """
+        in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[0,5]
     )
     frequency = Instrument.control(
         "OF.", "OF. %g",
         """ A floating point property that represents the lock-in
-        frequency in Hz. This property can be set. """
+        frequency in Hz. This property can be set. """,
+        validator=truncated_range,
+        values=[0,2.5e5]
     )
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
         """ A floating point property that represents the output
-        value on DAC1 in Volts. This property can be set. """
+        value on DAC1 in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[-12,12]
     )
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
         """ A floating point property that represents the output
-        value on DAC2 in Volts. This property can be set. """
+        value on DAC2 in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[-12,12]
     )
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
         """ A floating point property that represents the output
-        value on DAC3 in Volts. This property can be set. """
+        value on DAC3 in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[-12,12]
     )
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
         """ A floating point property that represents the output
-        value on DAC4 in Volts. This property can be set. """
+        value on DAC4 in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[-12,12]
     )
     harmonic = Instrument.control(
         "REFN", "REFN %d",
         """ An integer property that represents the reference
         harmonic mode control, taking values from 1 to 65535.
-        This property can be set. """
+        This property can be set. """,
+        validator=truncated_discrete_set,
+        values=list(range(65535))
     )
     phase = Instrument.control(
         "REFP.", "REFP. %g",
         """ A floating point property that represents the reference
-        harmonic phase in degrees. This property can be set. """
+        harmonic phase in degrees. This property can be set. """,
+        validator=modular_range,
+        values=[0,360]
     )
     x = Instrument.measurement("X.",
         """ Reads the X value in Volts """
@@ -106,7 +122,8 @@ class DSP7265(Instrument):
             20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
             2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
             200.0e-3, 500.0e-3, 1.0
-        ] # TODO: Determine if map_values = True here!!!
+        ],
+        map_values=True
     )
     slope = Instrument.control(
         "SLOPE", "SLOPE %d",
@@ -129,7 +146,8 @@ class DSP7265(Instrument):
             200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
             100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
             20.0e3, 50.0e3
-        ] # TODO: Determine if map_values = True here!!!
+        ],
+        map_values=True
     )
 
     def __init__(self, resourceName, **kwargs):

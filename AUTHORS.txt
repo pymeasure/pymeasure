@@ -11,3 +11,4 @@ Neal Reynolds
 Christoph Buchner
 Julian Dlugosch
 Sylvain Karlen
+Joseph Mittelstaedt
