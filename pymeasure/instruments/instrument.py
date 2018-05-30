@@ -48,15 +48,8 @@ class Instrument(object):
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
-            if isinstance(adapter, str):
-                daqform = re.compile('Dev\d{1,}')
-                matchdaq = daqform.fullmatch(adapter)
-                pxiform = re.compile('PXI\d{1,}Slot\d{1,}')
-                matchpxi = pxiform.fullmatch(adapter)
-                if matchdaq or matchpxi:
-                    pass
-                elif isinstance(adapter, (int, str)):
-                    adapter = VISAAdapter(adapter, **kwargs)
+            if isinstance(adapter, (int, str)):
+                adapter = VISAAdapter(adapter, **kwargs)
         except ImportError:
             raise Exception("Invalid Adapter provided for Instrument since "
                             "PyVISA is not present")
