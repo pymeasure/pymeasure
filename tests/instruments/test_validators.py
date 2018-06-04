@@ -23,9 +23,11 @@
 #
 
 import pytest
+from math import isclose
 from pymeasure.instruments.validators import (
     strict_range, strict_discrete_set,
     truncated_range, truncated_discrete_set,
+    modular_range, modular_range_bidirectional,
     joined_validators
 )
 
@@ -57,6 +59,23 @@ def test_truncated_discrete_set():
     assert truncated_discrete_set(5.1, range(10)) == 6
     assert truncated_discrete_set(11, range(10)) == 9
     assert truncated_discrete_set(-10, range(10)) == 0
+
+def test_modular_range():
+    assert modular_range(5, range(10)) == 5
+    assert isclose(modular_range(5.1, range(10)), 5.1, rel_tol=1e-10)
+    assert modular_range(11, range(10)) == 1
+    assert isclose(modular_range(11.3, range(10)), 1.3, rel_tol=1e-10)
+    assert isclose(modular_range(-7.1, range(10)), 2.9, rel_tol=1e-10)
+    assert isclose(modular_range(-13.2, range(10)), 6.8, rel_tol=1e-10)
+
+def test_modular_range_bidirectional():
+    assert modular_range_bidirectional(5, range(10)) == 5
+    assert isclose(modular_range_bidirectional(5.1, range(10)), 5.1, rel_tol=1e-10)
+    assert modular_range_bidirectional(11, range(10)) == 1
+    assert isclose(modular_range_bidirectional(11.3, range(10)), 1.3, rel_tol=1e-10)
+    assert modular_range_bidirectional(-7, range(10)) == -7
+    assert isclose(modular_range_bidirectional(-7.1, range(10)), -7.1, rel_tol=1e-10)
+    assert isclose(modular_range_bidirectional(-13.2, range(10)), -3.2, rel_tol=1e-10)
 
 
 def test_joined_validators():
