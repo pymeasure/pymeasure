@@ -63,19 +63,19 @@ def test_truncated_discrete_set():
 def test_modular_range():
     assert modular_range(5, range(10)) == 5
     assert isclose(modular_range(5.1, range(10)), 5.1, rel_tol=1e-10)
-    assert modular_range(11, range(10)) == 1
-    assert isclose(modular_range(11.3, range(10)), 1.3, rel_tol=1e-10)
-    assert isclose(modular_range(-7.1, range(10)), 2.9, rel_tol=1e-10)
-    assert isclose(modular_range(-13.2, range(10)), 6.8, rel_tol=1e-10)
+    assert modular_range(11, range(10)) == 2
+    assert isclose(modular_range(11.3, range(10)), 2.3, rel_tol=1e-10)
+    assert isclose(modular_range(-7.1, range(10)), 1.9, rel_tol=1e-10)
+    assert isclose(modular_range(-13.2, range(10)), 4.8, rel_tol=1e-10)
 
 def test_modular_range_bidirectional():
     assert modular_range_bidirectional(5, range(10)) == 5
     assert isclose(modular_range_bidirectional(5.1, range(10)), 5.1, rel_tol=1e-10)
-    assert modular_range_bidirectional(11, range(10)) == 1
-    assert isclose(modular_range_bidirectional(11.3, range(10)), 1.3, rel_tol=1e-10)
+    assert modular_range_bidirectional(11, range(10)) == 2
+    assert isclose(modular_range_bidirectional(11.3, range(10)), 2.3, rel_tol=1e-10)
     assert modular_range_bidirectional(-7, range(10)) == -7
     assert isclose(modular_range_bidirectional(-7.1, range(10)), -7.1, rel_tol=1e-10)
-    assert isclose(modular_range_bidirectional(-13.2, range(10)), -3.2, rel_tol=1e-10)
+    assert isclose(modular_range_bidirectional(-13.2, range(10)), -4.2, rel_tol=1e-10)
 
 
 def test_joined_validators():
