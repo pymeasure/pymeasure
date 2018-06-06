@@ -35,8 +35,8 @@ log.addHandler(logging.NullHandler())
 
 
 class Instrument(object):
-    """ This provides the base class for all Instruments, which is 
-    independent of the particular Adapter used to connect for 
+    """ This provides the base class for all Instruments, which is
+    independent of the particular Adapter used to connect for
     communication to the instrument. It provides basic SCPI commands
     by default, but can be toggled with :code:`includeSCPI`.
 
@@ -120,7 +120,7 @@ class Instrument(object):
                 check_set_errors=False, check_get_errors=False,
                 **kwargs):
         """Returns a property for the class based on the supplied
-        commands. This property may be set and read from the 
+        commands. This property may be set and read from the
         instrument.
 
         :param get_command: A string command that asks for the value
@@ -130,14 +130,14 @@ class Instrument(object):
                           and returns a valid value, while it otherwise raises an exception
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
-        :param map_values: A boolean flag that determines if the values should be 
+        :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
-        :param get_process: A function that take a value and allows processing 
+        :param get_process: A function that take a value and allows processing
                             before value mapping, returning the processed value
         :param set_process: A function that takes a value and allows processing
                             before value mapping, returning the processed value
         :param check_set_errors: Toggles checking errors after setting
-        :param check_get_errors: Toggles checking errors after getting        
+        :param check_get_errors: Toggles checking errors after getting
         """
 
         if map_values and isinstance(values, dict):
@@ -192,20 +192,20 @@ class Instrument(object):
                     get_process=lambda v: v, command_process=lambda c: c,
                     check_get_errors=False, **kwargs):
         """ Returns a property for the class based on the supplied
-        commands. This is a measurement quantity that may only be 
+        commands. This is a measurement quantity that may only be
         read from the instrument, not set.
 
         :param get_command: A string command that asks for the value
         :param docs: A docstring that will be included in the documentation
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
-        :param map_values: A boolean flag that determines if the values should be 
+        :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
-        :param get_process: A function that take a value and allows processing 
+        :param get_process: A function that take a value and allows processing
                             before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
                             before executing the command, for both getting and setting
-        :param check_get_errors: Toggles checking errors after getting 
+        :param check_get_errors: Toggles checking errors after getting
         """
 
         if map_values and isinstance(values, dict):
@@ -246,14 +246,14 @@ class Instrument(object):
         """Returns a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
-        
+
         :param set_command: A string command that writes the value
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
                        as to map values if :code:`map_values` is True.
-        :param map_values: A boolean flag that determines if the values should be 
+        :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
         :param set_process: A function that takes a value and allows processing
                             before value mapping, returning the processed value

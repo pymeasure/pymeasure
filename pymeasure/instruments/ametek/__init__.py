@@ -22,23 +22,4 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .mock import Mock
-from .resources import list_resources
-from .validators import discreteTruncate
-
-from . import agilent
-from . import ametek
-from . import anritsu
-from . import danfysik
-from . import fwbell
-from . import hp
-from . import keithley
-from . import lakeshore
-from . import parker
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import thorlabs
-from . import yokogawa
+from .ametek7270 import Ametek7270

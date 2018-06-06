@@ -72,6 +72,31 @@ def truncated_range(value, values):
         return min(values)
 
 
+def modular_range(value, values):
+    """ Provides a validator function that returns the value
+    if it is in the range. Otherwise it returns the value,
+    modulo the max of the range.
+
+    :param value: a value to test
+    :param values: A set of values that are valid
+    """
+    return value % max(values)
+
+
+def modular_range_bidirectional(value, values):
+    """ Provides a validator function that returns the value
+    if it is in the range. Otherwise it returns the value,
+    modulo the max of the range. Allows negative values.
+
+    :param value: a value to test
+    :param values: A set of values that are valid
+    """
+    if value > 0:
+        return value % max(values)
+    else:
+        return -1 * (abs(value) % max(values))
+
+
 def truncated_discrete_set(value, values):
     """ Provides a validator function that returns the value
     if it is in the discrete set. Otherwise, it returns the smallest
