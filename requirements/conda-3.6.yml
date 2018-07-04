@@ -4,7 +4,7 @@ dependencies:
 - pandas=0.19.2=np112py36_1
 - pip=9.0.1=py36_1
 - py=1.4.34=py36_0
-- pyqt=5.6.0=py36_2
+- pyqt=4.11
 - pyqtgraph=0.10.0=py36_0
 - pyserial=2.7=py36_0
 - pytest=3.1.1=py36_0
