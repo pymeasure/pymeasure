@@ -124,7 +124,7 @@ class Agilent4156(Instrument):
             - the instrument is hardcoded to capture 25 data points.
         """
         if self.analyzer_mode == 'SWE':
-            self.write(":PAGE:SCON:MEAS:SING; *OPC")    
+            self.write(":PAGE:SCON:MEAS:SING; *OPC")
 
         else:
             self.write(":PAGE:MEAS:SAMP:PER INF")
@@ -345,7 +345,8 @@ class Agilent4156(Instrument):
         Default = False.
         :returns: Pandas Dataframe
         """
-        if int(self.ask('*OPC?')): header = self.data_variables
+        if int(self.ask('*OPC?')):
+            header = self.data_variables
         self.write(":FORM:DATA ASC")
         # recursively get data for each variable
         for i, listvar in enumerate(header):
