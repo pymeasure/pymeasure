@@ -124,8 +124,7 @@ class Agilent4156(Instrument):
             - the instrument is hardcoded to capture 25 data points.
         """
         if self.analyzer_mode == 'SWE':
-            self.write(":PAGE:SCON:MEAS:SING")
-            self.write("*WAI")
+            self.write(":PAGE:SCON:MEAS:SING; *OPC")    
 
         else:
             self.write(":PAGE:MEAS:SAMP:PER INF")
@@ -157,9 +156,11 @@ class Agilent4156(Instrument):
         as dictionary values.
 
         Alternately, settings_dict can be a json configuration file.
+        This is the recommended approach.
 
         Manually creating dictionary of instrument settings.
         .. code-block:: python
+            instr = Agilent4156("GPIB0::25", read_termination='\n', timeout=10)
             # configure settings and sweeps
             smu1_setup = {'channel_mode' : 'V',
                           'channel_function' : 'VAR1',
@@ -249,7 +250,7 @@ class Agilent4156(Instrument):
 
         The instrument can then be configured using,
         .. code-block:: python
-            instr.configure('config.yaml', use_yaml=True)
+            instr.configure('config.json', use_json=True)
         """
         self.disable_all()
         obj_dict = {'SMU1': self.smu1,
@@ -344,30 +345,29 @@ class Agilent4156(Instrument):
         Default = False.
         :returns: Pandas Dataframe
         """
-        if self.ask("*OPC?") == '1':
-            header = self.data_variables
-            self.write(":FORM:DATA ASC")
-            # recursively get data for each variable
-            for i, listvar in enumerate(header):
-                data = self.values(":DATA? \'{}\'".format(listvar))
-                time.sleep(0.01)
-                if i == 0:
-                    lastdata = data
-                else:
-                    data = np.column_stack((lastdata, data))
-                    lastdata = data
-
-            df = pd.DataFrame(data=data, columns=header, index=None)
-            if to_csv:
-                _, ext = os.path.splitext(path)
-                if ext != ".csv":
-                    path = path + ".csv"
-                df.to_csv(path, index=False)
-            if self.analyzer_mode == "SAMPLING":
-                df_mean = pd.DataFrame(df.mean(), index=None).transpose()
-                return df_mean
+        if int(self.ask('*OPC?')): header = self.data_variables
+        self.write(":FORM:DATA ASC")
+        # recursively get data for each variable
+        for i, listvar in enumerate(header):
+            data = self.values(":DATA? \'{}\'".format(listvar))
+            time.sleep(0.01)
+            if i == 0:
+                lastdata = data
             else:
-                return df
+                data = np.column_stack((lastdata, data))
+                lastdata = data
+
+        df = pd.DataFrame(data=data, columns=header, index=None)
+        if to_csv:
+            _, ext = os.path.splitext(path)
+            if ext != ".csv":
+                path = path + ".csv"
+            df.to_csv(path, index=False)
+        if self.analyzer_mode == "SAMPLING":
+            df_mean = pd.DataFrame(df.mean(), index=None).transpose()
+            return df_mean
+        else:
+            return df
 
 ##########
 # CHANNELS
@@ -444,7 +444,7 @@ class smu(Instrument):
 
     @property
     def constant_value(self):
-        if Agilent4156.analyzer_mode == "SWEEP":
+        if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
         else:
             value = self.ask(":PAGE:MEAS:SAMP:CONS:{}?".format(self.channel))
@@ -463,7 +463,7 @@ class smu(Instrument):
         validator = strict_range
         values = self.__validate_cons()
         value = validator(const_value, values)
-        if Agilent4156.analyzer_mode == 'SWEEP':
+        if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
             self.write(":PAGE:MEAS:CONS:{0} {1}".format(self.channel, value))
         else:
             self.write(":PAGE:MEAS:SAMP:CONS:{0} {1}".format(
@@ -472,7 +472,7 @@ class smu(Instrument):
 
     @property
     def compliance(self):
-        if Agilent4156.analyzer_mode == "SWEEP":
+        if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}:COMP?".format(self.channel))
         else:
             value = self.ask(
@@ -491,7 +491,7 @@ class smu(Instrument):
         validator = strict_range
         values = self.__validate_compl()
         value = validator(comp, values)
-        if Agilent4156.analyzer_mode == 'SWEEP':
+        if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
             self.write(":PAGE:MEAS:CONS:{0}:COMP {1}".format(
                 self.channel, value))
         else:
@@ -540,13 +540,7 @@ class smu(Instrument):
                 'Cannot set constant SMU function when SMU mode is COMMON, '
                 'or when SMU function is not CONSTANT.')
         else:
-            if self.channel_mode == 'V':
-                values = [-200, 200]
-            elif self.channel_mode == 'I':
-                values = [-1, 1]
-            else:
-                raise ValueError(
-                    'Channel is not in V or I mode. It might be disabled.')
+            values = valid_iv(self.channel_mode)
         return values
 
     def __validate_compl(self):
@@ -560,12 +554,7 @@ class smu(Instrument):
                 'Cannot set constant SMU parameters when SMU mode is COMMON, '
                 'or when SMU function is not CONSTANT.')
         else:
-            if self.channel_mode == 'I':
-                values = [-200, 200]
-            elif self.channel_mode == 'V':
-                values = [-1, 1]
-            else:
-                raise ValueError('Channel is not in V or I mode.')
+            values = valid_compliance(self.channel_mode)
         return values
 
 
@@ -655,7 +644,7 @@ class vsu(Instrument):
 
     @property
     def constant_value(self):
-        if Agilent4156.analyzer_mode == "SWEEP":
+        if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
         else:
             value = self.ask(":PAGE:MEAS:SAMP:CONS:{}?".format(self.channel))
@@ -674,11 +663,28 @@ class vsu(Instrument):
         validator = strict_range
         values = [-200, 200]
         value = validator(const_value, values)
-        if Agilent4156.analyzer_mode == 'SWEEP':
+        if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
             self.write(":PAGE:MEAS:CONS:{0} {1}".format(self.channel, value))
         else:
             self.write(":PAGE:MEAS:SAMP:CONS:{0} {1}".format(
                 self.channel, value))
+        self.check_errors()
+
+    @property
+    def channel_function(self):
+        value = self.ask(":PAGE:CHAN:{}:FUNC?".format(self.channel))
+        self.check_errors()
+        return value
+
+    @channel_function.setter
+    def channel_function(self, function):
+        """ A string property that controls the VSU channel function.
+        :param function: 'VAR1', 'VAR2', 'VARD' or 'CONS'.
+        """
+        validator = strict_discrete_set
+        values = ["VAR1", "VAR2", "VARD", "CONS"]
+        value = validator(function, values)
+        self.write(":PAGE:CHAN:{0}:FUNC {1}".format(self.channel, value))
         self.check_errors()
 
 #################
@@ -686,86 +692,109 @@ class vsu(Instrument):
 #################
 
 
-class var1(Instrument):
+class varx(Instrument):
+    """ Base class to define sweep variable settings """
+
+    def __init__(self, resourceName, var_name, **kwargs):
+        super().__init__(
+            resourceName,
+            "Methods to setup sweep variables",
+            **kwargs
+        )
+        self.var = var_name.upper()
+
+    @property
+    def channel_mode(self):
+        channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
+        for ch in channels:
+            ch_func = self.ask(":PAGE:CHAN:{}:FUNC?".format(ch))
+            if ch_func == self.var:
+                ch_mode = self.ask(":PAGE:CHAN:{}:MODE?".format(ch))
+        return ch_mode
+
+    @property
+    def start(self):
+        value = self.ask(":PAGE:MEAS:{}:STAR?".format(self.var))
+        self.check_errors()
+        return value
+
+    @start.setter
+    def start(self, value):
+        """ Sets the sweep START value.
+        """
+        validator = strict_range
+        values = valid_iv(self.channel_mode)
+        set_value = validator(value, values)
+        self.write(":PAGE:MEAS:{}:STAR {}".format(self.var, set_value))
+        self.check_errors()
+
+    @property
+    def stop(self):
+        value = self.ask(":PAGE:MEAS:{}:STOP?".format(self.var))
+        self.check_errors()
+        return value
+
+    @stop.setter
+    def stop(self, value):
+        """ Sets the sweep STOP value.
+        """
+        validator = strict_range
+        values = valid_iv(self.channel_mode)
+        set_value = validator(value, values)
+        self.write(":PAGE:MEAS:{}:STOP {}".format(self.var, set_value))
+        self.check_errors()
+
+    @property
+    def step(self):
+        value = self.ask(":PAGE:MEAS:{}:STEP?".format(self.var))
+        self.check_errors()
+        return value
+
+    @step.setter
+    def step(self, value):
+        """ Sets the sweep STEP value of VAR2.
+        """
+        validator = strict_range
+        values = 2*valid_iv(self.channel_mode)
+        set_value = validator(value, values)
+        self.write(":PAGE:MEAS:{}:STEP {}".format(self.var, set_value))
+        self.check_errors()
+
+    @property
+    def compliance(self):
+        value = self.ask(":PAGE:MEAS:{}:COMP?")
+        self.check_errors()
+        return value
+
+    @compliance.setter
+    def compliance(self, value):
+        """ Sets the sweep COMPLIANCE value.
+        """
+        validator = strict_range
+        values = 2*valid_compliance(self.channel_mode)
+        set_value = validator(value, values)
+        self.write(":PAGE:MEAS:{}:COMP {}".format(self.var, set_value))
+        self.check_errors()
+
+
+class var1(varx):
     """ Class to handle all the definitions needed for VAR1
     """
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
-            "Definitions for VAR1 sweep variable.",
+            "VAR1",
             **kwargs
         )
-
-    start = Instrument.control(
-        ":PAGE:MEAS:VAR1:START?",
-        ":PAGE:MEAS:VAR1:START %g",
-        """
-        This command sets the sweep START value of VAR1.
-        At *RST, this value is 0 V.
-        -200 to 200 V or -1 to 1 A. The range of this value
-        depends on the unit type of VAR1.
-        Input is only validated for voltages.
-        """,
-        validator=strict_range,
-        values=[-200, 200],
-        check_set_errors=True,
-        check_get_errors=True
-    )
-
-    stop = Instrument.control(
-        ":PAGE:MEAS:VAR1:STOP?",
-        ":PAGE:MEAS:VAR1:STOP %g",
-        """
-        This command sets the sweep STOP value of VAR1.
-        At *RST, this value is 1 V.
-        -200 to 200 V or -1 to 1 A. The range of this value
-        depends on the unit type of VAR1.
-        Input is only validated for voltages.
-        """,
-        validator=strict_range,
-        values=[-200, 200],
-        check_set_errors=True,
-        check_get_errors=True
-    )
-
-    step = Instrument.control(
-        ":PAGE:MEAS:VAR1:STEP?",
-        ":PAGE:MEAS:VAR1:STEP %g",
-        """
-        This command sets the sweep STEP value of VAR1 for the linear sweep.
-        This parameter is not used for logarithmic sweep.
-        -400 to 400 V or -2 to 2 A. Input is only validated for voltages.
-        The range of this value depends on the unit type of VAR1.
-        The polarity of step value is automatically determined by the relation between start
-        and stop values. So, for the step value you specify, only absolute value has meaning.
-        The polarity has no meaning.
-        """,
-        validator=strict_range,
-        values=[-400, 400],
-        check_set_errors=True,
-        check_get_errors=True
-    )
-
-    compliance = Instrument.control(
-        ":PAGE:MEAS:VAR1:COMP?",
-        ":PAGE:MEAS:VAR1:COMP %g",
-        """
-        This command sets the COMPLIANCE value of VAR1 in Volts/Ampsself. At *RST, this value is 100 mA.
-        Only current compliance is validated in function input.
-        """,
-        validator=strict_range,
-        values=[-1, 1],
-        check_set_errors=True,
-        check_get_errors=True
-    )
 
     spacing = Instrument.control(
         ":PAGE:MEAS:VAR1:SPAC?",
         ":PAGE:MEAS:VAR1:SPAC %s",
         """
-        This command selects the sweep type of VAR1: linear staircase or logarithmic
-        staircase. Valid inputs are 'LINEAR', 'LOG10', 'LOG25', 'LOG50'.
+        This command selects the sweep type of VAR1:
+            linear staircase or logarithmic staircase.
+        Valid inputs are 'LINEAR', 'LOG10', 'LOG25', 'LOG50'.
         """,
         validator=strict_discrete_set,
         values={'LINEAR': 'LIN', 'LOG10': 'L10',
@@ -776,50 +805,16 @@ class var1(Instrument):
     )
 
 
-class var2(Instrument):
+class var2(varx):
     """ Class to handle all the definitions needed for VAR2
     """
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
-            "Definitions for VAR2 sweep variable.",
+            "VAR2",
             **kwargs
         )
-
-    start = Instrument.control(
-        ":PAGE:MEAS:VAR2:START?",
-        ":PAGE:MEAS:VAR2:START %g",
-        """
-        This command sets the sweep START value of VAR2.
-        At *RST, this value is 0 V.
-        -200 to 200 V or -1 to 1 A. The range of this value
-        depends on the unit type of VAR2.
-        Input is only validated for voltages.
-        """,
-        validator=strict_range,
-        values=[-200, 200],
-        check_set_errors=True,
-        check_get_errors=True
-    )
-
-    step = Instrument.control(
-        ":PAGE:MEAS:VAR2:STEP?",
-        ":PAGE:MEAS:VAR2:STEP %g",
-        """
-        This command sets the sweep STEP value of VAR2 for the linear sweep.
-        This parameter is not used for logarithmic sweep.
-        -400 to 400 V or -2 to 2 A. Input is only validated for voltages.
-        The range of this value depends on the unit type of VAR2.
-        The polarity of step value is automatically determined by the relation between start
-        and stop values. So, for the step value you specify, only absolute value has meaning.
-        The polarity has no meaning.
-        """,
-        validator=strict_range,
-        values=[-400, 400],
-        check_set_errors=True,
-        check_get_errors=True
-    )
 
     points = Instrument.control(
         ":PAGE:MEAS:VAR2:POINTS?",
@@ -832,19 +827,6 @@ class var2(Instrument):
         """,
         validator=strict_discrete_set,
         values=range(1, 128),
-        check_set_errors=True,
-        check_get_errors=True
-    )
-
-    compliance = Instrument.control(
-        ":PAGE:MEAS:VAR2:COMP?",
-        ":PAGE:MEAS:VAR2:COMP %g",
-        """
-        This command sets the COMPLIANCE value of VAR2 in Volts/Ampsself. At *RST, this value is 100 mA.
-        Only current compliance is validated in function input.
-        """,
-        validator=strict_range,
-        values=[-1, 1],
         check_set_errors=True,
         check_get_errors=True
     )
@@ -862,47 +844,63 @@ class vard(Instrument):
             **kwargs
         )
 
-    offset = Instrument.control(
-        ":PAGE:MEAS:VARD:OFFSET?",
-        ":PAGE:MEAS:VARD:OFFSET %g",
+    @property
+    def channel_mode(self):
+        channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
+        for ch in channels:
+            ch_func = self.ask(":PAGE:CHAN:{}:FUNC?".format(ch))
+            if ch_func == "VARD":
+                ch_mode = self.ask(":PAGE:CHAN:{}:MODE?".format(ch))
+        return ch_mode
+
+    @property
+    def offset(self):
+        value = self.ask(":PAGE:MEAS:VARD:OFFSET?")
+        self.check_errors()
+        return value
+
+    @offset.setter
+    def offset(self, offset_value):
         """
         This command sets the OFFSET value of VAR1'.
-        For each step of sweep, the output values of VAR1' are determined by the following
-        equation: VAR1’ = VAR1 X RATio + OFFSet
-        You use this command only if there is an SMU or VSU whose function (FCTN) is
-        VAR1'. Only voltage input is validated.
-        """,
-        validator=strict_range,
-        values=[-400, 400],
-        check_set_errors=True,
-        check_get_errors=True
-    )
+        For each step of sweep, the output values of VAR1' are determined by the
+        following equation: VAR1’ = VAR1 X RATio + OFFSet
+        You use this command only if there is an SMU or VSU whose function
+        (FCTN) is VAR1'.
+        """
+        validator = strict_range
+        values = 2*valid_iv(self.channel_mode)
+        value = validator(offset_value, values)
+        self.write(":PAGE:MEAS:VARD:OFFSET {}".format(value))
+        self.check_errors()
 
     ratio = Instrument.control(
         ":PAGE:MEAS:VARD:RATIO?",
         ":PAGE:MEAS:VARD:RATIO %g",
         """
         This command sets the RATIO of VAR1'.
-        For each step of sweep, the output values of VAR1' are determined by the following
-        equation: VAR1’ = VAR1  RATio + OFFSet
-        You use this command only if there is an SMU or VSU whose function (FCTN) is
-        VAR1'. At *RST, this value is not defined.
+        For each step of sweep, the output values of VAR1' are determined by the
+        following equation: VAR1’ = VAR1 * RATio + OFFSet
+        You use this command only if there is an SMU or VSU whose function
+        (FCTN) is VAR1'. At *RST, this value is not defined.
         """,
     )
 
-    compliance = Instrument.control(
-        ":PAGE:MEAS:VARD:COMP?",
-        ":PAGE:MEAS:VARD:COMP %g",
+    @property
+    def compliance(self):
+        value = self.ask(":PAGE:MEAS:VARD:COMP?")
+        self.check_errors()
+        return value
+
+    @compliance.setter
+    def compliance(self, value):
+        """ This command sets the sweep COMPLIANCE value of VARD.
         """
-        This command sets the COMPLIANCE value of VAR1'.
-        You use this command only if there is an SMU whose function (FCTN) is VAR1'.
-        Only current compliance setting is validated.
-        """,
-        validator=strict_range,
-        values=[-1, 1],
-        check_set_errors=True,
-        check_get_errors=True
-    )
+        validator = strict_range
+        values = 2*valid_compliance(self.channel_mode)
+        set_value = validator(value, values)
+        self.write(":PAGE:MEAS:VARD:COMP {}".format(set_value))
+        self.check_errors()
 
 
 def check_current_voltage_name(name):
@@ -915,3 +913,31 @@ def check_current_voltage_name(name):
         log.info("Renaming %s to %s..." % (name, new_name))
         name = new_name
     return name
+
+
+def valid_iv(channel_mode):
+    """ Returns the valid range of voltage and current input depending on
+    channel mode.
+    """
+    if channel_mode == 'V':
+        values = [-200, 200]
+    elif channel_mode == 'I':
+        values = [-1, 1]
+    else:
+        raise ValueError(
+            'Channel is not in V or I mode. It might be disabled.')
+    return values
+
+
+def valid_compliance(channel_mode):
+    """ Returns the valid range of voltage and current compliance depending on
+    channel mode.
+    """
+    if channel_mode == 'I':
+        values = [-200, 200]
+    elif channel_mode == 'V':
+        values = [-1, 1]
+    else:
+        raise ValueError(
+            'Channel is not in V or I mode. It might be disabled.')
+    return values
