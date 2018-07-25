@@ -44,7 +44,85 @@ import json
 
 class Agilent4156(Instrument):
     """ Represents the Agilent 4155/4156 Semiconductor Parameter Analyzer
-    and provides a high-level interface for taking I-V measurements.
+    and provides a high-level interface for taking current-voltage (I-V) measurements.
+
+    .. code-block:: python
+
+        from pymeasure.instruments.agilent.agilent4156 import Agilent4156
+
+        # explicitly define r/w terminations; set sufficiently large timeout or None.
+        smu = Agilent4156("GPIB0::25", read_termination = '\\n', write_termination = '\\n', timeout=None)
+
+        # reset the instrument
+        smu.reset()
+
+        # define configuration file for instrument and load config
+        smu.configure("configuration_file.json")
+
+        # save data variables, some or all of which are defined in the json config file.
+        smu.save(['VC', 'IC', 'VB', 'IB'])
+
+        # take measurements
+        status = smu.measure()
+
+        # measured data is a pandas dataframe and can be exported to csv.
+        data = smu.get_data(path='./t1.csv')
+
+    The JSON file is an ascii text configuration file that defines the settings of each channel on the instrument. The JSON file is used to configure the instrument using the convenience function :meth:`~.Agilent4156.configure` as shown in the example above. For example, the instrument setup for a bipolar transistor measurement is shown below.
+
+    .. code-block:: json
+
+         {
+                "SMU1": {
+                    "voltage_name" : "VC",
+                    "current_name" : "IC",
+                    "channel_function" : "VAR1",
+                    "channel_mode" : "V",
+                    "series_resistance" : "0OHM"
+                },
+
+                "SMU2": {
+                    "voltage_name" : "VB",
+                    "current_name" : "IB",
+                    "channel_function" : "VAR2",
+                    "channel_mode" : "I",
+                    "series_resistance" : "0OHM"
+                },
+
+                "SMU3": {
+                    "voltage_name" : "VE",
+                    "current_name" : "IE",
+                    "channel_function" : "CONS",
+                    "channel_mode" : "V",
+                    "constant_value" : 0,
+                    "compliance" : 0.1
+                },
+
+                 "SMU4": {
+                    "voltage_name" : "VS",
+                    "current_name" : "IS",
+                    "channel_function" : "CONS",
+                    "channel_mode" : "V",
+                    "constant_value" : 0,
+                    "compliance" : 0.1
+                },
+
+                "VAR1": {
+                    "start" : 1,
+                    "stop" : 2,
+                    "step" : 0.1,
+                    "spacing" : "LINEAR",
+                    "compliance" : 0.1
+                },
+
+                "VAR2": {
+                    "start" : 0,
+                    "step" : 10e-6,
+                    "points" : 3,
+                    "compliance" : 2
+
+                }
+            }
     """
 
     def __init__(self, resourceName, **kwargs):
@@ -68,8 +146,13 @@ class Agilent4156(Instrument):
 
     analyzer_mode = Instrument.control(
         ":PAGE:CHAN:MODE?", ":PAGE:CHAN:MODE %s",
-        """ A string property that controls the analyzer's operating mode,
-        which can take the values 'SWEEP' or 'SAMPLING'.
+        """ A string property that controls the instrument operating mode.
+        
+        - Values: :code:`SWEEP`, :code:`SAMPLING`
+
+        .. code-block:: python
+
+            smu.analyzer_mode = "SWEEP"
         """,
         validator=strict_discrete_set,
         values={'SWEEP': 'SWE', 'SAMPLING': 'SAMP'},
@@ -80,8 +163,13 @@ class Agilent4156(Instrument):
 
     integration_time = Instrument.control(
         ":PAGE:MEAS:MSET:ITIM?", ":PAGE:MEAS:MSET:ITIM %s",
-        """ A string property that controls the integration time,
-        which can take the values 'SHORT', 'MEDIUM' or 'LONG'.
+        """ A string property that controls the integration time.
+        
+        - Values: :code:`SHORT`, :code:`MEDIUM`, :code:`LONG`
+
+        .. code-block:: python
+
+            instr.integration_time = "MEDIUM"
         """,
         validator=strict_discrete_set,
         values={'SHORT': 'SHOR', 'MEDIUM': 'MED', 'LONG': 'LONG'},
@@ -94,6 +182,10 @@ class Agilent4156(Instrument):
         ":PAGE:MEAS:DEL?", ":PAGE:MEAS:DEL %g",
         """ A floating point property that measurement delay time in seconds,
         which can take the values from 0 to 65s in 0.1s steps.
+
+        .. code-block:: python
+
+            instr.delay_time = 1 # delay time of 1-sec
         """,
         validator=truncated_discrete_set,
         values=np.arange(0, 65.1, 0.1),
@@ -105,6 +197,10 @@ class Agilent4156(Instrument):
         ":PAGE:MEAS:HTIME?", ":PAGE:MEAS:HTIME %g",
         """ A floating point property that measurement hold time in seconds,
         which can take the values from 0 to 655s in 1s steps.
+
+        .. code-block:: python
+
+            instr.hold_time = 2 # hold time of 2-secs.
         """,
         validator=truncated_discrete_set,
         values=np.arange(0, 655, 1),
@@ -113,26 +209,41 @@ class Agilent4156(Instrument):
     )
 
     def stop(self):
-        """Stops the ongoing measurement"""
+        """Stops the ongoing measurement
+
+        .. code-block:: python
+
+            instr.stop()
+        """
         self.write(":PAGE:SCON:STOP")
 
-    def measure(self):
+    def measure(self, period="INF", points=100):
         """
         Performs a single measurement and waits for completion in sweep mode.
-        In sampling mode:
-            - the measurement must be stopped using :method:~`stop`.
-            - the instrument is hardcoded to capture 25 data points.
+        In sampling mode, the measurement period and number of points can be specified.
+
+        :param period: Period of sampling measurement from 6E-6 to 1E11 seconds. Default setting is :code:`INF`.
+        :param points: Number of samples to be measured, from 1 to 10001. Default setting is :code:`100`.
+
+        .. code-block::python
+
+            instr.measure() #for sweep measurement
+            instr.measure(period=100, points=100) #for sampling measurement
         """
-        if self.analyzer_mode == 'SWE':
-            self.write(":PAGE:SCON:MEAS:SING; *OPC")
+        if self.analyzer_mode == "SWEEP":
+            self.write(":PAGE:SCON:MEAS:SING; *OPC?")
 
         else:
-            self.write(":PAGE:MEAS:SAMP:PER INF")
-            self.write(":PAGE:MEAS:SAMP:POIN 25")
-            self.write(":PAGE:SCON:MEAS:SING")
+            self.write(":PAGE:MEAS:SAMP:PER {}".format(period))
+            self.write(":PAGE:MEAS:SAMP:POIN {}".format(points))
+            self.write(":PAGE:SCON:MEAS:SING; *OPC?")
 
     def disable_all(self):
-        """ Disables all channels in the instrument
+        """ Disables all channels in the instrument.
+
+        .. code-block:: python
+
+            instr.disable_all()
         """
         self.smu1.disable
         time.sleep(0.1)
@@ -147,110 +258,16 @@ class Agilent4156(Instrument):
         self.vmu2.disable
         time.sleep(0.1)
 
-    def configure(self, settings_dict, use_json=False):
-        """ Convenience function to configure the channel setup and sweep.
-        :param settings_dict: A dictionary of {Instrument object : config_dict}
-        where the instrument object addresses the particular SMU or sweep
-        variable, and the config_dict is a dictionary containing the properties
-        of the instrument object as keys with their corresponding value setting
-        as dictionary values.
+    def configure(self, config_file):
+        """ Convenience function to configure the channel setup and sweep using a `JSON (JavaScript Object Notation)`_ configuration file.
 
-        Alternately, settings_dict can be a json configuration file.
-        This is the recommended approach.
+        .. _`JSON (JaVaScript Object Notation)`: https://www.json.org/
 
-        Manually creating dictionary of instrument settings.
+        :param config_file: JSON file to configure instrument channels.
+
         .. code-block:: python
-            instr = Agilent4156("GPIB0::25", read_termination='\n', timeout=10)
-            # configure settings and sweeps
-            smu1_setup = {'channel_mode' : 'V',
-                          'channel_function' : 'VAR1',
-                          'voltage_name' : 'VC',
-                          'current_name' : 'IC',
-                          'series_resistance' : '0OHM'
-                         }
 
-            smu1_sweep = {'start' : 1,
-                          'stop' : 2,
-                          'step' : 0.1,
-                          'spacing' : 'LINEAR',
-                          'compliance' : 0.1
-                          }
-
-            smu2_setup = {'channel_mode' : 'I',
-                          'channel_function' : 'VAR2',
-                          'voltage_name' : 'VB',
-                          'current_name' : 'IB',
-                          'series_resistance' : '0OHM'
-                          }
-
-            smu2_sweep = {'start' : 0,
-                          'step' : 10e-6,
-                          'points' : 3,
-                          'compliance' : 0.1
-                          }
-
-            smu3_setup = {'channel_mode' : 'V',
-                          'channel_function' : 'CONS',
-                          'constant_value' : 0,
-                          'voltage_name' : 'VE',
-                          'current_name' : 'IE',
-                          'compliance' : 0.1
-                          }
-
-            # create settings dictionary
-            all_settings = {instr.smu1 : smu1_setup,
-                        instr.var1 : smu1_sweep,
-                        instr.smu2 : smu2_setup,
-                        instr.var2 : smu2_sweep,
-                        instr.smu3 : smu3_setup,
-                        instr.smu4 : smu4_setup
-                        }
-
-            instr.configure(all_settings)
-
-        Example JSON file for the same setup:
-        .. code-block:: json
-            {
-                "SMU1": {
-                    "voltage_name" : "VC",
-                    "current_name" : "IC",
-                    "channel_function" : "VAR1",
-                    "channel_mode" : "V",
-                    "series_resistance" : "0OHM"
-                },
-                "VAR1": {
-                    "start" : 1,
-                    "stop" : 2,
-                    "step" : 0.1,
-                    "spacing" : "LINEAR",
-                    "compliance" : 0.5
-                },
-                "SMU2": {
-                    "voltage_name" : "VB",
-                    "current_name" : "IB",
-                    "channel_function" : "VAR2",
-                    "channel_mode" : "I",
-                    "series_resistance" : "0OHM"
-                },
-                "VAR2": {
-                    "start" : 0,
-                    "step" : 10e-6,
-                    "points" : 3,
-                    "compliance" : 0.1
-                },
-                "SMU3": {
-                    "voltage_name" : "VE",
-                    "current_name" : "IE",
-                    "channel_function" : "CONS",
-                    "channel_mode" : "V",
-                    "constant_value" : 0,
-                    "compliance" : 0.1
-                }
-            }
-
-        The instrument can then be configured using,
-        .. code-block:: python
-            instr.configure('config.json', use_json=True)
+            instr.configure('config.json')
         """
         self.disable_all()
         obj_dict = {'SMU1': self.smu1,
@@ -265,20 +282,16 @@ class Agilent4156(Instrument):
                     'VAR2': self.var2,
                     'VARD': self.vard
                     }
-        if use_json:
-            with open(settings_dict, 'r') as stream:
-                try:
-                    instr_settings = json.load(stream)
-                except json.JSONDecodeError as e:
-                    print(e)
+        with open(config_file, 'r') as stream:
+            try:
+                instr_settings = json.load(stream)
+            except json.JSONDecodeError as e:
+                print(e)
 
-            # replace dict keys with Instrument objects
-            new_settings_dict = {}
-            for key, value in instr_settings.items():
-                new_settings_dict[obj_dict[key]] = value
-
-        else:
-            new_settings_dict = settings_dict
+        # replace dict keys with Instrument objects
+        new_settings_dict = {}
+        for key, value in instr_settings.items():
+            new_settings_dict[obj_dict[key]] = value
 
         for obj, setup in new_settings_dict.items():
             for setting, value in setup.items():
@@ -287,6 +300,13 @@ class Agilent4156(Instrument):
 
     def save(self, trace_list):
         """ Save the voltage or current in the instrument display list
+
+        :param trace_list: A list of channel variables whose measured data should be saved. A maximum of 8 variables are allowed. If only one variable is being saved, a string can be specified.
+
+        .. code-block:: python
+
+            instr.save(['IC', 'IB', 'VC', 'VB']) #for list of variables
+            instr.save('IC')    #for single variable
         """
         self.write(":PAGE:DISP:MODE LIST")
         if isinstance(trace_list, list):
@@ -306,7 +326,13 @@ class Agilent4156(Instrument):
             )
 
     def save_var(self, trace_list):
-        """ Save the voltage or current in the instrument variable list
+        """ Save the voltage or current in the instrument variable list. This is useful if one or two more variables need to be saved in addition to the 8 variables allowed by :meth:`~.Agilent4156.save`.
+
+        :param trace_list: A list of channel variables whose measured data should be saved. A maximum of 2 variables are allowed. If only one variable is being saved, a string can be specified.
+
+        .. code-block:: python
+
+            instr.save_var(['VA', 'VB'])
         """
         self.write(":PAGE:DISP:MODE LIST")
         if isinstance(trace_list, list):
@@ -328,22 +354,30 @@ class Agilent4156(Instrument):
     @property
     def data_variables(self):
         """
-        Gets a string list of data variables for whom measured data
-        is available.
+        Gets a string list of data variables for which measured data
+        is available. This looks for all the variables saved by the :meth:`~.Agilent4156.save` and :meth:`~.Agilent4156.save_var` methods and returns it. This is useful for creation of dataframe headers.
+
+        :returns: List
+
+        .. code-block:: python
+
+            header = instr.data_variables
         """
         dlist = self.ask(":PAGE:DISP:LIST?").split(',')
         dvar = self.ask(":PAGE:DISP:DVAR?").split(',')
         varlist = dlist + dvar
         return list(filter(None, varlist))
 
-    def get_data(self, path=None, to_csv=False):
+    def get_data(self, path=None):
         """
-        Gets the measurement data from the instrument.
-        :param file: File name for data export
-        :param path: Path for data export. Default = None
-        :param to_csv: Boolean value that enables CSV export if True.
-        Default = False.
+        Gets the measurement data from the instrument after completion. If the measurement period is set to :code:`INF` in the :meth:`~.Agilent4156.measure` method, then the measurement must be stopped using :meth:`~.Agilent4156.stop` before getting valid data.
+
+        :param path: Path for optional data export to CSV.
         :returns: Pandas Dataframe
+
+        .. code-block:: python
+
+            df = instr.get_data(path='./datafolder/data1.csv')
         """
         if int(self.ask('*OPC?')):
             header = self.data_variables
@@ -359,16 +393,13 @@ class Agilent4156(Instrument):
                 lastdata = data
 
         df = pd.DataFrame(data=data, columns=header, index=None)
-        if to_csv:
+        if path is not None:
             _, ext = os.path.splitext(path)
             if ext != ".csv":
                 path = path + ".csv"
             df.to_csv(path, index=False)
-        if self.analyzer_mode == "SAMPLING":
-            df_mean = pd.DataFrame(df.mean(), index=None).transpose()
-            return df_mean
-        else:
-            return df
+
+        return df
 
 ##########
 # CHANNELS
@@ -386,16 +417,22 @@ class smu(Instrument):
 
     @property
     def channel_mode(self):
+        """ A string property that controls the SMU<n> channel mode.
+
+        - Values: :code:`V`, :code:`I` or :code:`COMM`
+
+        VPULSE AND IPULSE are not yet supported.
+
+        .. code-block:: python
+
+            instr.smu1.channel_mode = "V"
+        """
         value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
         self.check_errors()
         return value
 
     @channel_mode.setter
     def channel_mode(self, mode):
-        """ A string property that controls the SMU<n> channel mode.
-        :param mode: Set channel mode - 'V', 'I' or 'COMM'
-        VPULSE AND IPULSE are not yet supported.
-        """
         validator = strict_discrete_set
         values = ["V", "I", "COMM"]
         value = validator(mode, values)
@@ -404,15 +441,20 @@ class smu(Instrument):
 
     @property
     def channel_function(self):
+        """ A string property that controls the SMU<n> channel function.
+
+        - Values: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
+
+        .. code-block:: python
+
+            instr.smu1.channel_function = "VAR1"
+        """
         value = self.ask(":PAGE:CHAN:{}:FUNC?".format(self.channel))
         self.check_errors()
         return value
 
     @channel_function.setter
     def channel_function(self, function):
-        """ A string property that controls the SMU<n> channel function.
-        :param function: 'VAR1', 'VAR2', 'VARD' or 'CONS'.
-        """
         validator = strict_discrete_set
         values = ["VAR1", "VAR2", "VARD", "CONS"]
         value = validator(function, values)
@@ -421,16 +463,21 @@ class smu(Instrument):
 
     @property
     def series_resistance(self):
+        """ This command controls the series resistance of SMU<n>.
+
+        - Values: :code:`0OHM`, :code:`10KOHM`, :code:`100KOHM`, or :code:`1MOHM`
+
+        .. code-block:: python
+
+            instr.smu1.series_resistance = "10KOHM"
+
+        """
         value = self.ask(":PAGE:CHAN:{}:SRES?".format(self.channel))
         self.check_errors()
         return value
 
     @series_resistance.setter
     def series_resistance(self, sres):
-        """ This command controls the series resistance of SMU<n>.
-        :param sres: '0OHM', '10KOHM', '100KOHM', or '1MOHM'
-        At *RST, this value is 0 OHM.
-        """
         validator = strict_discrete_set
         values = ["0OHM", "10KOHM", "100KOHM", "1MOHM"]
         value = validator(sres, values)
@@ -439,12 +486,27 @@ class smu(Instrument):
 
     @property
     def disable(self):
-        """ This command deletes the settings of SMU<n>."""
+        """ This command deletes the settings of SMU<n>.
+
+        .. code-block:: python
+
+            instr.smu1.disable()
+        """
         self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
         self.check_errors()
 
     @property
     def constant_value(self):
+        """ This command sets the constant source value of SMU<n>. You use this command only if :meth:`~.smu.channel_function`
+        is :code:`CONS` and also :meth:`~.smu.channel_mode` should not be :code:`COMM`.
+
+        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A). Voltage or current depends on if :meth:`~.smu.channel_mode` is set to :code:`V` or :code:`I`.
+
+        .. code-block:: python
+
+            instr.smu1.constant_value = 1
+
+        """
         if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
         else:
@@ -454,13 +516,6 @@ class smu(Instrument):
 
     @constant_value.setter
     def constant_value(self, const_value):
-        """ This command sets the constant source value of SMU<n> for the sweep
-        measurement. You use this command only if :attr:`~channels.channel_function`
-        is `CONS` and :attr:`~.channels.channel_mode` is not `COMM`.
-        At *RST, this value is 0 V.
-        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
-        on :attr:`~.channels.channel_mode` setting.
-        """
         validator = strict_range
         values = self.__validate_cons()
         value = validator(const_value, values)
@@ -473,6 +528,15 @@ class smu(Instrument):
 
     @property
     def compliance(self):
+        """ This command sets the *constant* compliance value of SMU<n>. If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are set by the variable definition.
+
+        - Value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
+        on :meth:`~.smu.channel_mode`.
+
+        .. code-block:: python
+
+            instr.smu1.compliance = 0.1
+        """
         if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}:COMP?".format(self.channel))
         else:
@@ -483,12 +547,6 @@ class smu(Instrument):
 
     @compliance.setter
     def compliance(self, comp):
-        """ This command sets the constant COMPLIANCE value of SMU<n> for the
-        sweep measurement. You use this command only if :attr:`~channels.channel_function`
-        is `CONS` and :attr:`~.channels.channel_mode` is not `COMM`.
-        :param comp: Voltage in (-200V, 200V) and current in (-1A, 1A) based
-        on :attr:`~.channels.channel_mode` setting.
-        """
         validator = strict_range
         values = self.__validate_compl()
         value = validator(comp, values)
@@ -502,31 +560,39 @@ class smu(Instrument):
 
     @property
     def voltage_name(self):
+        """ Define the voltage name of the channel.
+
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
+
+        .. code-block:: python
+
+            instr.smu1.voltage_name = "Vbase"
+        """
         value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
         return value
 
     @voltage_name.setter
     def voltage_name(self, vname):
-        """ Controls the voltage name of the channel
-        :param vname: Voltage name of the channel.
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-        """
         value = check_current_voltage_name(vname)
         self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
 
     @property
     def current_name(self):
+        """ Define the current name of the channel.
+
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
+
+        .. code-block:: python
+
+            instr.smu1.current_name = "Ibase"
+        """
         value = self.ask("PAGE:CHAN:{}:INAME?".format(self.channel))
         return value
 
     @current_name.setter
     def current_name(self, iname):
-        """ Controls the current name of the channel
-        :param iname: Current name of the channel.
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-        """
         value = check_current_voltage_name(iname)
         self.write(":PAGE:CHAN:{0}:INAME \'{1}\'".format(self.channel, value))
 
@@ -570,36 +636,46 @@ class vmu(Instrument):
 
     @property
     def voltage_name(self):
+        """ Define the voltage name of the VMU channel.
+
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
+
+        .. code-block:: python
+
+            instr.vmu1.voltage_name = "Vanode"
+        """
         value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
         return value
 
     @voltage_name.setter
     def voltage_name(self, vname):
-        """ Controls the voltage name of the VMU channel
-        :param vname: Voltage name of the channel.
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-        """
         value = check_current_voltage_name(vname)
         self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
 
     @property
     def disable(self):
-        """ This command deletes the settings of VMU<n>."""
+        """ This command disables the settings of VMU<n>.
+
+        .. code-block:: python
+
+            instr.vmu1.disable()
+        """
         self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
         self.check_errors()
 
     @property
     def channel_mode(self):
+        """ A string property that controls the VMU<n> channel mode.
+
+        - Values: :code:`V`, :code:`DVOL`
+        """
         value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
         self.check_errors()
         return value
 
     @channel_mode.setter
     def channel_mode(self, mode):
-        """ A string property that controls the VMU<n> channel mode.
-        :param mode: Set channel mode - 'V', 'DVOL'
-        """
         validator = strict_discrete_set
         values = ["V", "DVOL"]
         value = validator(mode, values)
@@ -618,33 +694,49 @@ class vsu(Instrument):
 
     @property
     def voltage_name(self):
+        """ Define the voltage name of the VSU channel
+
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
+
+        .. code-block:: python
+
+            instr.vsu1.voltage_name = "Ve"
+        """
         value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
         return value
 
     @voltage_name.setter
     def voltage_name(self, vname):
-        """ Controls the voltage name of the VMU channel
-        :param vname: Voltage name of the channel.
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-        """
         value = check_current_voltage_name(vname)
         self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
 
     @property
     def disable(self):
-        """ This command deletes the settings of VMU<n>."""
+        """ This command deletes the settings of VSU<n>.
+
+        .. code-block:: python
+
+            instr.vsu1.disable()
+        """
         self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
         self.check_errors()
 
     @property
     def channel_mode(self):
+        """ Get channel mode of VSU<n>."""
         value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
         self.check_errors()
         return value
 
     @property
     def constant_value(self):
+        """ This command sets the constant source value of VSU<n>.
+
+        .. code-block:: python
+
+            instr.vsu1.constant_value = 0
+        """
         if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
             value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
         else:
@@ -654,13 +746,6 @@ class vsu(Instrument):
 
     @constant_value.setter
     def constant_value(self, const_value):
-        """ This command sets the constant source value of SMU<n> for the sweep
-        measurement. You use this command only if :attr:`~channels.channel_function`
-        is `CONS` and :attr:`~.channels.channel_mode` is not `COMM`.
-        At *RST, this value is 0 V.
-        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
-        on :attr:`~.channels.channel_mode` setting.
-        """
         validator = strict_range
         values = [-200, 200]
         value = validator(const_value, values)
@@ -673,15 +758,16 @@ class vsu(Instrument):
 
     @property
     def channel_function(self):
+        """ A string property that controls the VSU channel function.
+
+        - Value: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
+        """
         value = self.ask(":PAGE:CHAN:{}:FUNC?".format(self.channel))
         self.check_errors()
         return value
 
     @channel_function.setter
     def channel_function(self, function):
-        """ A string property that controls the VSU channel function.
-        :param function: 'VAR1', 'VAR2', 'VARD' or 'CONS'.
-        """
         validator = strict_discrete_set
         values = ["VAR1", "VAR2", "VARD", "CONS"]
         value = validator(function, values)
@@ -715,14 +801,18 @@ class varx(Instrument):
 
     @property
     def start(self):
+        """ Sets the sweep START value.
+
+        .. code-block:: python
+
+            instr.var1.start = 0
+        """
         value = self.ask(":PAGE:MEAS:{}:STAR?".format(self.var))
         self.check_errors()
         return value
 
     @start.setter
     def start(self, value):
-        """ Sets the sweep START value.
-        """
         validator = strict_range
         values = valid_iv(self.channel_mode)
         set_value = validator(value, values)
@@ -731,14 +821,18 @@ class varx(Instrument):
 
     @property
     def stop(self):
+        """ Sets the sweep STOP value.
+
+        .. code-block:: python
+
+            instr.var1.stop = 3
+        """
         value = self.ask(":PAGE:MEAS:{}:STOP?".format(self.var))
         self.check_errors()
         return value
 
     @stop.setter
     def stop(self, value):
-        """ Sets the sweep STOP value.
-        """
         validator = strict_range
         values = valid_iv(self.channel_mode)
         set_value = validator(value, values)
@@ -747,14 +841,18 @@ class varx(Instrument):
 
     @property
     def step(self):
+        """ Sets the sweep STEP value.
+
+        .. code-block:: python
+
+            instr.var1.step = 0.1
+        """
         value = self.ask(":PAGE:MEAS:{}:STEP?".format(self.var))
         self.check_errors()
         return value
 
     @step.setter
     def step(self, value):
-        """ Sets the sweep STEP value of VAR2.
-        """
         validator = strict_range
         values = 2*valid_iv(self.channel_mode)
         set_value = validator(value, values)
@@ -763,14 +861,18 @@ class varx(Instrument):
 
     @property
     def compliance(self):
+        """ Sets the sweep COMPLIANCE value.
+
+        .. code-block:: python
+
+            instr.var1.compliance = 0.1
+        """
         value = self.ask(":PAGE:MEAS:{}:COMP?")
         self.check_errors()
         return value
 
     @compliance.setter
     def compliance(self, value):
-        """ Sets the sweep COMPLIANCE value.
-        """
         validator = strict_range
         values = 2*valid_compliance(self.channel_mode)
         set_value = validator(value, values)
@@ -779,7 +881,8 @@ class varx(Instrument):
 
 
 class var1(varx):
-    """ Class to handle all the definitions needed for VAR1
+    """ Class to handle all the specific definitions needed for VAR1.
+    Most common methods are inherited from base class.
     """
 
     def __init__(self, resourceName, **kwargs):
@@ -793,9 +896,9 @@ class var1(varx):
         ":PAGE:MEAS:VAR1:SPAC?",
         ":PAGE:MEAS:VAR1:SPAC %s",
         """
-        This command selects the sweep type of VAR1:
-            linear staircase or logarithmic staircase.
-        Valid inputs are 'LINEAR', 'LOG10', 'LOG25', 'LOG50'.
+        This command selects the sweep type of VAR1.
+
+        - Values: :code:`LINEAR`, :code:`LOG10`, :code:`LOG25`, :code:`LOG50`.
         """,
         validator=strict_discrete_set,
         values={'LINEAR': 'LIN', 'LOG10': 'L10',
@@ -807,7 +910,8 @@ class var1(varx):
 
 
 class var2(varx):
-    """ Class to handle all the definitions needed for VAR2
+    """ Class to handle all the specific definitions needed for VAR2.
+    Common methods are imported from base class.
     """
 
     def __init__(self, resourceName, **kwargs):
@@ -824,7 +928,10 @@ class var2(varx):
         This command sets the number of sweep steps of VAR2.
         You use this command only if there is an SMU or VSU
         whose function (FCTN) is VAR2.
-        At *RST, this value is 5.
+
+        .. code-block:: python
+
+            instr.var2.points = 10
         """,
         validator=strict_discrete_set,
         values=range(1, 128),
@@ -856,19 +963,22 @@ class vard(Instrument):
 
     @property
     def offset(self):
+        """
+        This command sets the OFFSET value of VARD.
+        For each step of sweep, the output values of VAR1' are determined by the
+        following equation: VARD = VAR1 X RATio + OFFSet
+        You use this command only if there is an SMU or VSU whose function is VARD.
+
+        .. code-block:: python
+
+            instr.vard.offset = 1
+        """
         value = self.ask(":PAGE:MEAS:VARD:OFFSET?")
         self.check_errors()
         return value
 
     @offset.setter
     def offset(self, offset_value):
-        """
-        This command sets the OFFSET value of VAR1'.
-        For each step of sweep, the output values of VAR1' are determined by the
-        following equation: VAR1’ = VAR1 X RATio + OFFSet
-        You use this command only if there is an SMU or VSU whose function
-        (FCTN) is VAR1'.
-        """
         validator = strict_range
         values = 2*valid_iv(self.channel_mode)
         value = validator(offset_value, values)
@@ -883,20 +993,28 @@ class vard(Instrument):
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VAR1’ = VAR1 * RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function
-        (FCTN) is VAR1'. At *RST, this value is not defined.
+        (FCTN) is VAR1'. 
+        
+        .. code-block:: python
+
+            instr.vard.ratio = 1
         """,
     )
 
     @property
     def compliance(self):
+        """ This command sets the sweep COMPLIANCE value of VARD.
+
+        .. code-block:: python
+
+            instr.vard.compliance = 0.1
+        """
         value = self.ask(":PAGE:MEAS:VARD:COMP?")
         self.check_errors()
         return value
 
     @compliance.setter
     def compliance(self, value):
-        """ This command sets the sweep COMPLIANCE value of VARD.
-        """
         validator = strict_range
         values = 2*valid_compliance(self.channel_mode)
         set_value = validator(value, values)
@@ -905,10 +1023,6 @@ class vard(Instrument):
 
 
 def check_current_voltage_name(name):
-    """ Checks if current and voltage names specified for channel
-    conforms to the accepted naming scheme. Returns auto-corrected name
-    starting with 'a' if name is unsuitable.
-    """
     if (len(name) > 6) or not name[0].isalpha():
         new_name = 'a' + name[:5]
         log.info("Renaming %s to %s..." % (name, new_name))
@@ -917,9 +1031,6 @@ def check_current_voltage_name(name):
 
 
 def valid_iv(channel_mode):
-    """ Returns the valid range of voltage and current input depending on
-    channel mode.
-    """
     if channel_mode == 'V':
         values = [-200, 200]
     elif channel_mode == 'I':
@@ -931,9 +1042,6 @@ def valid_iv(channel_mode):
 
 
 def valid_compliance(channel_mode):
-    """ Returns the valid range of voltage and current compliance depending on
-    channel mode.
-    """
     if channel_mode == 'I':
         values = [-200, 200]
     elif channel_mode == 'V':
