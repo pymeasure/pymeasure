@@ -29,6 +29,7 @@ from .resources import list_resources
 from .validators import discreteTruncate
 
 from . import agilent
+from . import ametek
 from . import anritsu
 from . import danfysik
 from . import fwbell
