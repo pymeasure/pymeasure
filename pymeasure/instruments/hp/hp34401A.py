@@ -25,7 +25,7 @@
 from pymeasure.instruments import Instrument
 
 class HP34401A(Instrument):
-    """ Represents the imaginary Extreme 5000 instrument.
+    """ Represents the HP 34401A instrument.
     """
 
     voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
