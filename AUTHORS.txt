@@ -10,9 +10,6 @@ Ben Feinstein
 Neal Reynolds
 Christoph Buchner
 Julian Dlugosch
-<<<<<<< HEAD
-Vikram Sekar
-=======
 Sylvain Karlen
 Joseph Mittelstaedt
->>>>>>> fb8e6e18c6a93ad867b6638987a976e1061690f7
+Vikram Sekar

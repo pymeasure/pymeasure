@@ -48,7 +48,7 @@ class Agilent4156(Instrument):
 
     .. code-block:: python
 
-        from pymeasure.instruments.agilent.agilent4156 import Agilent4156
+        from pymeasure.instruments.agilent import Agilent4156
 
         # explicitly define r/w terminations; set sufficiently large timeout or None.
         smu = Agilent4156("GPIB0::25", read_termination = '\\n', write_termination = '\\n', timeout=None)
@@ -132,17 +132,17 @@ class Agilent4156(Instrument):
             **kwargs
         )
 
-        self.smu1 = smu(self.adapter, 'SMU1', **kwargs)
-        self.smu2 = smu(self.adapter, 'SMU2', **kwargs)
-        self.smu3 = smu(self.adapter, 'SMU3', **kwargs)
-        self.smu4 = smu(self.adapter, 'SMU4', **kwargs)
-        self.vmu1 = vmu(self.adapter, 'VMU1', **kwargs)
-        self.vmu2 = vmu(self.adapter, 'VMU2', **kwargs)
-        self.vsu1 = vsu(self.adapter, 'VSU1', **kwargs)
-        self.vsu2 = vsu(self.adapter, 'VSU2', **kwargs)
-        self.var1 = var1(self.adapter, **kwargs)
-        self.var2 = var2(self.adapter, **kwargs)
-        self.vard = vard(self.adapter, **kwargs)
+        self.smu1 = SMU(self.adapter, 'SMU1', **kwargs)
+        self.smu2 = SMU(self.adapter, 'SMU2', **kwargs)
+        self.smu3 = SMU(self.adapter, 'SMU3', **kwargs)
+        self.smu4 = SMU(self.adapter, 'SMU4', **kwargs)
+        self.vmu1 = VMU(self.adapter, 'VMU1', **kwargs)
+        self.vmu2 = VMU(self.adapter, 'VMU2', **kwargs)
+        self.vsu1 = VSU(self.adapter, 'VSU1', **kwargs)
+        self.vsu2 = VSU(self.adapter, 'VSU2', **kwargs)
+        self.var1 = VAR1(self.adapter, **kwargs)
+        self.var2 = VAR2(self.adapter, **kwargs)
+        self.vard = VARD(self.adapter, **kwargs)
 
     analyzer_mode = Instrument.control(
         ":PAGE:CHAN:MODE?", ":PAGE:CHAN:MODE %s",
@@ -406,7 +406,7 @@ class Agilent4156(Instrument):
 ##########
 
 
-class smu(Instrument):
+class SMU(Instrument):
     def __init__(self, resourceName, channel, **kwargs):
         super().__init__(
             resourceName,
@@ -497,10 +497,10 @@ class smu(Instrument):
 
     @property
     def constant_value(self):
-        """ This command sets the constant source value of SMU<n>. You use this command only if :meth:`~.smu.channel_function`
-        is :code:`CONS` and also :meth:`~.smu.channel_mode` should not be :code:`COMM`.
+        """ This command sets the constant source value of SMU<n>. You use this command only if :meth:`~.SMU.channel_function`
+        is :code:`CONS` and also :meth:`~.SMU.channel_mode` should not be :code:`COMM`.
 
-        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A). Voltage or current depends on if :meth:`~.smu.channel_mode` is set to :code:`V` or :code:`I`.
+        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A). Voltage or current depends on if :meth:`~.SMU.channel_mode` is set to :code:`V` or :code:`I`.
 
         .. code-block:: python
 
@@ -531,7 +531,7 @@ class smu(Instrument):
         """ This command sets the *constant* compliance value of SMU<n>. If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are set by the variable definition.
 
         - Value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
-        on :meth:`~.smu.channel_mode`.
+        on :meth:`~.SMU.channel_mode`.
 
         .. code-block:: python
 
@@ -625,7 +625,7 @@ class smu(Instrument):
         return values
 
 
-class vmu(Instrument):
+class VMU(Instrument):
     def __init__(self, resourceName, channel, **kwargs):
         super().__init__(
             resourceName,
@@ -683,7 +683,7 @@ class vmu(Instrument):
         self.check_errors()
 
 
-class vsu(Instrument):
+class VSU(Instrument):
     def __init__(self, resourceName, channel, **kwargs):
         super().__init__(
             resourceName,
@@ -779,7 +779,7 @@ class vsu(Instrument):
 #################
 
 
-class varx(Instrument):
+class VARX(Instrument):
     """ Base class to define sweep variable settings """
 
     def __init__(self, resourceName, var_name, **kwargs):
@@ -880,7 +880,7 @@ class varx(Instrument):
         self.check_errors()
 
 
-class var1(varx):
+class VAR1(VARX):
     """ Class to handle all the specific definitions needed for VAR1.
     Most common methods are inherited from base class.
     """
@@ -909,7 +909,7 @@ class var1(varx):
     )
 
 
-class var2(varx):
+class VAR2(VARX):
     """ Class to handle all the specific definitions needed for VAR2.
     Common methods are imported from base class.
     """
@@ -940,7 +940,7 @@ class var2(varx):
     )
 
 
-class vard(Instrument):
+class VARD(Instrument):
     """ Class to handle all the definitions needed for VARD.
     VARD is always defined in relation to VAR1.
     """
