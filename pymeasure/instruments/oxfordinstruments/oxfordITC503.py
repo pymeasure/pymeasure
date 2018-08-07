@@ -33,29 +33,41 @@ class OxfordITC503(Instrument):
     """Represents the Oxford Intelligent Temperature Controller 503
     """
 
-    control_mode = Instrument.setting(
-        "$C%d",
+    control_mode = Instrument.control(
+        "X", "$C%d",
         """ A string property that sets the ITC in LOCAL or REMOTE and LOCKES,
         or UNLOCKES, the LOC/REM button. Allowed values are:
         LL: LOCAL & LOCKED
         RL: REMOTE & LOCKED
         LU: LOCAL & UNLOCKED
-        RU: REMOTE & UNLOCKED""",
+        RU: REMOTE & UNLOCKED. """,
+        get_process=lambda v: int(v[5:6]),
         validator=strict_discrete_set,
         values={"LL": 0, "RL": 1, "LU": 2, "RU": 3},
         map_values=True,
     )
 
-    heater_gas_mode = Instrument.setting(
-        "$A%d",
+    heater_gas_mode = Instrument.control(
+        "X", "$A%d",
         """ A string property that sets the heater and gas flow control to
         AUTO or MANUAL. Allowed values are:
         MANUAL: HEATER MANUAL, GAS MANUAL
         AM: HEATER AUTO, GAS MANUAL
         MA: HEATER MANUAL, GAS AUTO
-        AUTO: HEATER AUTO, GAS AUTO""",
+        AUTO: HEATER AUTO, GAS AUTO. """,
+        get_process=lambda v: int(v[3:4]),
         validator=strict_discrete_set,
         values={"MANUAL": 0, "AM": 1, "MA": 2, "AUTO": 3},
+        map_values=True,
+    )
+
+    auto_pid = Instrument.control(
+        "X", "$L%d",
+        """ A boolean property that sets the Auto-PID mode on (True) or off (False).
+        """,
+        get_process=lambda v: int(v[12:13]),
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -86,6 +98,14 @@ class OxfordITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
+    temperature_error = Instrument.measurement(
+        "R4",
+        """ Reads the difference between the setpoint and the measured
+        temperature in Kelvin. Positive when setpoint is larger than
+        measured. """,
+        get_process=lambda v: float(v[1:]),
+    )
+
     def __init__(self, resourceName, **kwargs):
         super(OxfordITC503, self).__init__(
             resourceName,
@@ -96,17 +116,13 @@ class OxfordITC503(Instrument):
             **kwargs
         )
 
-    def wait_for_temperature(self, sensor=1, error=0.01, timeout=3600,
+    def wait_for_temperature(self, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
                              thermalize_interval=300,
                              should_stop=lambda: False):
 
-        sensor_name = 'temperature_{:d}'.format(sensor)
-
-        setpoint = self.temperature_setpoint
-
         def within_error():
-            return abs(getattr(self, sensor_name) - setpoint) < error
+            return abs(self.temperature_error) < error
 
         number_of_intervals = int(stability_interval / check_interval)
         attempt = 0
