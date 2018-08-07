@@ -22,10 +22,6 @@
 # THE SOFTWARE.
 #
 
-import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 from time import sleep, time
 
 from pymeasure.instruments import Instrument
@@ -102,11 +98,11 @@ class OxfordITC503(Instrument):
 
     def wait_for_temperature(self, sensor=1, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
-                             thermalize_interval=300):
+                             thermalize_interval=300,
+                             should_stop=lambda: False):
 
         sensor_name = 'temperature_{:d}'.format(sensor)
 
-        initial = getattr(self, sensor_name)
         setpoint = self.temperature_setpoint
 
         def within_error():
@@ -122,6 +118,9 @@ class OxfordITC503(Instrument):
             for idx in range(number_of_intervals):
                 sleep(check_interval)
                 stable_over_intervals.append(within_error())
+
+                if should_stop():
+                    return
 
             print(stable_over_intervals)
 
@@ -139,7 +138,10 @@ class OxfordITC503(Instrument):
         if attempt == 0:
             return
 
-        sleep(thermalize_interval)
+        t1 = time() + thermalize_interval
+        while time() < t1:
+            sleep(check_interval)
+            if should_stop():
+                return
 
-        log.info("Setpoint temperature {:.2f} K reached in {:.0f} s, \
-            starting from {:.2f} K".format(initial, time() - t0, setpoint))
+        return
