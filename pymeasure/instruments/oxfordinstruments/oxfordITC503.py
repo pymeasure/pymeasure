@@ -23,10 +23,11 @@
 #
 
 from time import sleep, time
+import numpy
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_range
+    truncated_range, strict_range
 
 
 class OxfordITC503(Instrument):
@@ -71,6 +72,18 @@ class OxfordITC503(Instrument):
         map_values=True,
     )
 
+    sweep_status = Instrument.control(
+        "X", "$S%d",
+        """ An integer property that sets the sweep status. Values are:
+        0: Sweep not running
+        1: Start sweep / sweeping to first setpoint
+        2P - 1: Sweeping to setpoint P
+        2P: Holding at setpoint P. """,
+        get_process=lambda v: int(v[7:9]),
+        validator=strict_range,
+        values=[0, 32]
+    )
+
     temperature_setpoint = Instrument.control(
         "R0", "$T%f",
         """ A floating point property that controls the temperature set-point of
@@ -106,6 +119,36 @@ class OxfordITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
+    xpointer = Instrument.setting(
+        "$x%d",
+        """ An integer property to set pointers into tables for loading and
+        examining values in the table. For programming the sweep table values
+        from 1 to 16 are allowed, corresponding to the maximum number of steps.
+        """,
+        validator=strict_range,
+        values=[0, 128]
+    )
+
+    ypointer = Instrument.setting(
+        "$y%d",
+        """ An integer property to set pointers into tables for loading and
+        examining values in the table. For programming the sweep table the
+        allowed values are:
+        1: Setpoint temperature,
+        2: Sweep-time to setpoint,
+        3: Hold-time at setpoint. """,
+        validator=strict_range,
+        values=[0, 128]
+    )
+
+    sweep_table = Instrument.control(
+        "r", "$s%f",
+        """ A property that sets values in the sweep table. Relies on the
+        xpointer and ypointer to point at the location in the table that
+        is to be set. """,
+        get_process=lambda v: float(v[1:]),
+    )
+
     def __init__(self, resourceName, **kwargs):
         super(OxfordITC503, self).__init__(
             resourceName,
@@ -120,7 +163,8 @@ class OxfordITC503(Instrument):
                              check_interval=0.5, stability_interval=10,
                              thermalize_interval=300,
                              should_stop=lambda: False):
-
+        """
+        """
         def within_error():
             return abs(self.temperature_error) < error
 
@@ -161,3 +205,64 @@ class OxfordITC503(Instrument):
                 return
 
         return
+
+    def program_sweep(self, temperatures, sweep_time, hold_time, steps=None):
+        """
+        Program a temperature sweep in the controller. First the sweep table
+        will be cleaned. After programming the sweep, it can be started using
+        OxfordITC503.sweep_status = 1.
+
+        :param temperatures: An array containing the temperatures for the sweep
+        :param sweep_time: The time (or an array of times) to sweep to a
+                           set-point in minutes (between 0 and 1339.9).
+        :param hold_time: The time (or an array of times) to holt at a
+                          set-point in minutes (between 0 and 1339.9).
+        :param steps: The number of steps in the sweep, if given, the
+                      temperatures, sweep_time and hold_time will be
+                      interpolated into (approximately) equal segments
+        """
+        # Check if in remote control
+        if not self.control_mode.startswith("R"):
+            raise AttributeError(
+                "Oxford ITC503 not in remote control mode"
+            )
+
+        # Convert input np.ndarrays
+        temperatures = numpy.array(temperatures, ndmin=1)
+        sweep_time = numpy.array(sweep_time, ndmin=1)
+        hold_time = numpy.array(hold_time, ndmin=1)
+
+        # Make steps array
+        if steps is None:
+            steps = temperatures.size
+        steps = numpy.linspace(1, steps, steps)
+
+        # Create interpolated arrays
+        interpolator = numpy.round(
+            numpy.linspace(1, steps.size, temperatures.size))
+        temperatures = numpy.interp(steps, interpolator, temperatures)
+
+        interpolator = numpy.round(
+            numpy.linspace(1, steps.size, sweep_time.size))
+        sweep_time = numpy.interp(steps, interpolator, sweep_time)
+
+        interpolator = numpy.round(
+            numpy.linspace(1, steps.size, hold_time.size))
+        hold_time = numpy.interp(steps, interpolator, hold_time)
+
+        # Wiping the current table
+        self.write("$w")
+
+        # Setting the arrays to the controller
+        for line, (setpoint, sweep, hold) in \
+                enumerate(zip(temperatures, sweep_time, hold_time), 1):
+            self.xpointer = line
+
+            self.ypointer = 1
+            self.sweep_table = setpoint
+
+            self.ypointer = 2
+            self.sweep_table = sweep
+
+            self.ypointer = 3
+            self.sweep_table = hold
