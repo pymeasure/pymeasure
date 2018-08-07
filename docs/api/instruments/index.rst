@@ -28,6 +28,7 @@ Instruments by manufacturer:
    keithley/index
    lakeshore/index
    newport/index
+   oxfordinstruments/index
    parker/index
    signalrecovery/index
    srs/index
