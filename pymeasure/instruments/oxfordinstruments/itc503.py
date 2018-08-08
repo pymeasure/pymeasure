@@ -208,8 +208,8 @@ class ITC503(Instrument):
 
     def program_sweep(self, temperatures, sweep_time, hold_time, steps=None):
         """
-        Program a temperature sweep in the controller. First the sweep table
-        will be cleaned. After programming the sweep, it can be started using
+        Program a temperature sweep in the controller. Stops any running sweep.
+        After programming the sweep, it can be started using
         OxfordITC503.sweep_status = 1.
 
         :param temperatures: An array containing the temperatures for the sweep
@@ -226,6 +226,9 @@ class ITC503(Instrument):
             raise AttributeError(
                 "Oxford ITC503 not in remote control mode"
             )
+
+        # Stop sweep if running to be able to write the program
+        self.sweep_status = 0
 
         # Convert input np.ndarrays
         temperatures = numpy.array(temperatures, ndmin=1)
@@ -250,8 +253,11 @@ class ITC503(Instrument):
             numpy.linspace(1, steps.size, hold_time.size))
         hold_time = numpy.interp(steps, interpolator, hold_time)
 
-        # Wiping the current table
-        self.write("$w")
+        # Pad with zeros to wipe unused steps (total 16) of the sweep program
+        padding = 16 - temperatures.size
+        temperatures = numpy.pad(temperatures, (0, padding), 'constant')
+        sweep_time = numpy.pad(sweep_time, (0, padding), 'constant')
+        hold_time = numpy.pad(hold_time, (0, padding), 'constant')
 
         # Setting the arrays to the controller
         for line, (setpoint, sweep, hold) in \
