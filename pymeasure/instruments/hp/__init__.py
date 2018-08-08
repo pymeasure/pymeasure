@@ -23,3 +23,4 @@
 #
 
 from .hp33120A import HP33120A
+from .hp34401A import HP34401A

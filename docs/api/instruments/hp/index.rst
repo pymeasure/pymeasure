@@ -10,3 +10,4 @@ This section contains specific documentation on the Hewlett Packard instruments 
    :maxdepth: 2
 
    hp33120A
+   hp34401A
