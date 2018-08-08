@@ -2,6 +2,6 @@
 Oxford Instrument Intelligent Temperature Controller 503
 #####################################
 
-.. autoclass:: pymeasure.instruments.oxfordinstruments.OxfordITC503
+.. autoclass:: pymeasure.instruments.oxfordinstruments.ITC503
     :members:
     :show-inheritance:

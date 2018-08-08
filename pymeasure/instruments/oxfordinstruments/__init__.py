@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .oxfordITC503 import OxfordITC503
+from .itc503 import ITC503

@@ -30,7 +30,7 @@ from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
 
 
-class OxfordITC503(Instrument):
+class ITC503(Instrument):
     """Represents the Oxford Intelligent Temperature Controller 503
     """
 
@@ -150,7 +150,7 @@ class OxfordITC503(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(OxfordITC503, self).__init__(
+        super(ITC503, self).__init__(
             resourceName,
             "Oxford ITC503",
             includeSCPI=False,

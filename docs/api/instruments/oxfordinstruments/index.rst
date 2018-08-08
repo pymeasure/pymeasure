@@ -9,4 +9,4 @@ This section contains specific documentation on the Oxford Instruments instrumen
 .. toctree::
    :maxdepth: 2
 
-   oxfordITC503
+   ITC503
