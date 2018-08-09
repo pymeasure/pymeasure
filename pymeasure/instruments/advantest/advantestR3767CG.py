@@ -27,43 +27,38 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 
 
 class AdvantestR3767CG(Instrument):
-    """ Represents the imaginary Extreme 5000 instrument.
+    """ Represents the Advantest R3767CG VNA. Implements controls to change the analysis
+    	range and to retreve the data for the trace. 
     """
 
     id = Instrument.measurement(
     	"*IDN?", """ Reads the instrument identification """
     )
 
-    center_frequency_MHz = Instrument.control(":FREQ:CENT?", ":FREQ:CENT %d MHz",
-		                                    "Center Frequency read in Hz set in MHz",
-		                                    validator=strict_range,
-		                                    values=[1, 8000])
+    center_frequency = Instrument.control(
+    	":FREQ:CENT?", ":FREQ:CENT %d",
+        """Center Frequency in Hz""",
+        validator=strict_range,
+        values=[300000, 8000000000]
+    )
 
-    center_frequency = Instrument.control(":FREQ:CENT?", ":FREQ:CENT %d",
-                                            "Center Frequency in Hz",
-                                            validator=strict_range,
-                                            values=[300000, 8000000000])
-
-    span_frequency_MHz = Instrument.control(":FREQ:SPAN?", ":FREQ:SPAN %d MHz",
-                                            "Span Frequency read in Hz set in MHz",
-                                            validator=strict_range,
-                                            values=[1, 8000])
-
-    span_frequency = Instrument.control(":FREQ:SPAN?", ":FREQ:SPAN %d",
-                                            "Span Frequency in Hz",
-                                            validator=strict_range,
-                                            values=[1, 8000000000])
+    span_frequency = Instrument.control(
+    	":FREQ:SPAN?", ":FREQ:SPAN %d",
+        """Span Frequency in Hz""",
+        validator=strict_range,
+        values=[1, 8000000000]
+    )
 
     start_frequency = Instrument.control(
         ":FREQ:STAR?", ":FREQ:STAR %d", 
-        " Starting frequency in Hz ",
+        """ Starting frequency in Hz """,
         validator=strict_range,
         values=[1, 8000000000]
     )
 
     stop_frequency  = Instrument.control(
         ":FREQ:STOP?",":FREQ:STOP %d", 
-        " Stoping frequency in Hz ",
+        """ Stoping frequency in Hz """,
         validator=strict_range,
         values=[1, 8000000000]
     )
@@ -79,5 +74,5 @@ class AdvantestR3767CG(Instrument):
             **kwargs
         )
 
-        self.write("OLDC OFF")
-        self.write("SWE:POIN 1201")
+        # Tell unit to operate in IEEE488.2-1987 command mode.
+        self.write("OLDC OFF") 
