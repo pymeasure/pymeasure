@@ -215,7 +215,7 @@ class ITC503(Instrument):
         :param temperatures: An array containing the temperatures for the sweep
         :param sweep_time: The time (or an array of times) to sweep to a
                            set-point in minutes (between 0 and 1339.9).
-        :param hold_time: The time (or an array of times) to holt at a
+        :param hold_time: The time (or an array of times) to hold at a
                           set-point in minutes (between 0 and 1339.9).
         :param steps: The number of steps in the sweep, if given, the
                       temperatures, sweep_time and hold_time will be
@@ -255,7 +255,8 @@ class ITC503(Instrument):
 
         # Pad with zeros to wipe unused steps (total 16) of the sweep program
         padding = 16 - temperatures.size
-        temperatures = numpy.pad(temperatures, (0, padding), 'constant')
+        temperatures = numpy.pad(temperatures, (0, padding), 'constant',
+                                 constant_values=temperatures[-1])
         sweep_time = numpy.pad(sweep_time, (0, padding), 'constant')
         hold_time = numpy.pad(hold_time, (0, padding), 'constant')
 
