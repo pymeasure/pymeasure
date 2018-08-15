@@ -84,16 +84,16 @@ class Ametek7270(Instrument):
         """ Reads the Y value in Volts """
     )
     x1 = Instrument.measurement("X1.",
-        """ Reads the X value in Volts """
+        """ Reads the first harmonic X value in Volts """
     )
     y1 = Instrument.measurement("Y1.",
-        """ Reads the Y value in Volts """
+        """ Reads the first harmonic Y value in Volts """
     )
     x2 = Instrument.measurement("X2.",
-        """ Reads the X value in Volts """
+        """ Reads the second harmonic X value in Volts """
     )
     y2 = Instrument.measurement("Y2.",
-        """ Reads the Y value in Volts """
+        """ Reads the second harmonic Y value in Volts """
     )
     xy = Instrument.measurement("XY.",
         """ Reads both the X and Y values in Volts """
