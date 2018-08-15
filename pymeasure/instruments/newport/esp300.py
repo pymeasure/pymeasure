@@ -77,7 +77,6 @@ class AxisError(Exception):
         return "Newport ESP300 axis %s reported the error: %s" % (
             self.axis, self.message)
 
-
 class GeneralError(Exception):
     """ Raised when the Newport ESP300 has a general error.
     """
@@ -176,7 +175,7 @@ class Axis(object):
         "MD?",
         """ Returns a boolean that is True if the motion is finished.
         """,
-        cast=bool
+        get_process=lambda x: bool(x) # JM: Changed this, it works now
     )
 
     def __init__(self, axis, controller):
@@ -203,11 +202,11 @@ class Axis(object):
         """ Disables motion for the axis. """
         self.write("MF")
 
-    def home(self, type=1):
+    def home(self, htype=1):
         """ Drives the axis to the home position, which may be the negative
         hardware limit for some actuators (e.g. LTA-HS).
         """
-        self.write("OR%d")
+        self.write("OR%d" % htype)
 
     def define_position(self, position):
         """ Overwrites the value of the current position with the given
@@ -223,7 +222,7 @@ class Axis(object):
         """ Blocks the program until the motion is completed. A further 
         delay can be specified in seconds.
         """
-        self.write("WS%g" % delay*1e3)
+        self.write("WS%d" % (delay*1e3))
         while not self.motion_done:
             sleep(interval)
 
