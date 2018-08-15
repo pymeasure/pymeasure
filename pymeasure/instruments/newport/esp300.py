@@ -70,8 +70,8 @@ class AxisError(Exception):
 
     def __init__(self, code):
         self.axis = str(code)[0]
-        self.error = str(code)[1:] 
-        self.message = self.MESSAGES[self.error]      
+        self.error = str(code)[1:]
+        self.message = self.MESSAGES[self.error]
 
     def __str__(self):
         return "Newport ESP300 axis %s reported the error: %s" % (
@@ -119,7 +119,7 @@ class GeneralError(Exception):
 
     def __init__(self, code):
         self.error = str(code)
-        self.message = self.MESSAGES[self.error]      
+        self.message = self.MESSAGES[self.error]
 
     def __str__(self):
         return "Newport ESP300 reported the error: %s" % (
@@ -175,7 +175,7 @@ class Axis(object):
         "MD?",
         """ Returns a boolean that is True if the motion is finished.
         """,
-        get_process=lambda x: bool(x) # JM: Changed this, it works now
+        get_process=lambda x: bool(x)
     )
 
     def __init__(self, axis, controller):
@@ -219,7 +219,7 @@ class Axis(object):
         self.write("DH")
 
     def wait_for_stop(self, delay=0, interval=0.05):
-        """ Blocks the program until the motion is completed. A further 
+        """ Blocks the program until the motion is completed. A further
         delay can be specified in seconds.
         """
         self.write("WS%d" % (delay*1e3))
@@ -313,4 +313,3 @@ class ESP300(Instrument):
         """ Shuts down the controller by disabling all of the axes.
         """
         self.disable()
-
