@@ -164,34 +164,45 @@ class ITC503(Instrument):
                              thermalize_interval=300,
                              should_stop=lambda: False):
         """
+        Wait for the ITC to reach the setpoint temperature.
+
+        :param error: The maximum error in Kelvin under which the temperature
+                      is considered at setpoint
+        :param timeout: The maximum time the waiting is allowed to take. If
+                        timeout is exceeded, a TimeoutError is raised. If
+                        timeout is set to zero, no timeout will be used.
+        :param check_interval: The time between temperature queries to the ITC.
+        :param stability_interval: The time over which the temperature_error is
+                                   to be below error to be considered stable.
+        :param thermalize_interval: The time to wait after stabilizing for the
+                                    system to thermalize.
+        :param should_stop: Optional function (returning a bool) to allow the
+                            waiting to be stopped before its end.
         """
-        def within_error():
-            return abs(self.temperature_error) < error
 
         number_of_intervals = int(stability_interval / check_interval)
+        stable_intervals = 0
         attempt = 0
 
         t0 = time()
         while True:
 
-            stable_over_intervals = [within_error()]
-            for idx in range(number_of_intervals):
-                sleep(check_interval)
-                stable_over_intervals.append(within_error())
+            if abs(self.temperature_error) < error:
+                stable_intervals += 1
+            else:
+                stable_intervals = 0
 
-                if should_stop():
-                    return
-
-            print(stable_over_intervals)
-
-            if all(stable_over_intervals):
+            if stable_intervals >= number_of_intervals:
                 break
 
-            if (time() - t0) > timeout:
+            if timeout >= 0 and (time() - t0) > timeout:
                 raise TimeoutError(
                     "Timeout expired while waiting for the Oxford ITC305 to \
                     reach the setpoint temperature"
                 )
+
+            if should_stop():
+                return
 
             attempt += 1
 
