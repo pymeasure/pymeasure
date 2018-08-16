@@ -19,6 +19,7 @@ Instruments by manufacturer:
 .. toctree::
    :maxdepth: 2
 
+   advantest/index
    agilent/index
    ami/index
    anritsu/index
