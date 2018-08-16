@@ -31,7 +31,21 @@ from pymeasure.instruments.validators import strict_discrete_set, \
 
 
 class ITC503(Instrument):
-    """Represents the Oxford Intelligent Temperature Controller 503
+    """Represents the Oxford Intelligent Temperature Controller 503.
+
+    .. code-block:: python
+
+        itc = ITC503("GPIB::24")        # Default channel for the ITC503
+
+        itc.control_mode = "RU"         # Set the control mode to remote
+        itc.heater_gas_mode = "AUTO"    # Turn on auto heater and flow
+        itc.auto_pid = True             # Turn on auto-pid
+
+        print(itc.temperature_setpoint) # Print the current set-point
+        itc.temperature_setpoint = 300  # Change the set-point to 300 K
+        itc.wait_for_temperature()      # Wait for the temperature to stabilize
+        print(itc.temperature_1)        # Print the temperature at sensor 1
+
     """
 
     control_mode = Instrument.control(
@@ -76,9 +90,9 @@ class ITC503(Instrument):
         "X", "$S%d",
         """ An integer property that sets the sweep status. Values are:
         0: Sweep not running
-        1: Start sweep / sweeping to first setpoint
-        2P - 1: Sweeping to setpoint P
-        2P: Holding at setpoint P. """,
+        1: Start sweep / sweeping to first set-point
+        2P - 1: Sweeping to set-point P
+        2P: Holding at set-point P. """,
         get_process=lambda v: int(v[7:9]),
         validator=strict_range,
         values=[0, 32]
@@ -113,8 +127,8 @@ class ITC503(Instrument):
 
     temperature_error = Instrument.measurement(
         "R4",
-        """ Reads the difference between the setpoint and the measured
-        temperature in Kelvin. Positive when setpoint is larger than
+        """ Reads the difference between the set-point and the measured
+        temperature in Kelvin. Positive when set-point is larger than
         measured. """,
         get_process=lambda v: float(v[1:]),
     )
@@ -135,8 +149,8 @@ class ITC503(Instrument):
         examining values in the table. For programming the sweep table the
         allowed values are:
         1: Setpoint temperature,
-        2: Sweep-time to setpoint,
-        3: Hold-time at setpoint. """,
+        2: Sweep-time to set-point,
+        3: Hold-time at set-point. """,
         validator=strict_range,
         values=[0, 128]
     )
@@ -164,10 +178,10 @@ class ITC503(Instrument):
                              thermalize_interval=300,
                              should_stop=lambda: False):
         """
-        Wait for the ITC to reach the setpoint temperature.
+        Wait for the ITC to reach the set-point temperature.
 
         :param error: The maximum error in Kelvin under which the temperature
-                      is considered at setpoint
+                      is considered at set-point
         :param timeout: The maximum time the waiting is allowed to take. If
                         timeout is exceeded, a TimeoutError is raised. If
                         timeout is set to zero, no timeout will be used.
@@ -198,7 +212,7 @@ class ITC503(Instrument):
             if timeout >= 0 and (time() - t0) > timeout:
                 raise TimeoutError(
                     "Timeout expired while waiting for the Oxford ITC305 to \
-                    reach the setpoint temperature"
+                    reach the set-point temperature"
                 )
 
             if should_stop():
