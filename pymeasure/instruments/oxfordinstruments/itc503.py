@@ -163,7 +163,7 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, resourceName, clear_buffer=True, **kwargs):
         super(ITC503, self).__init__(
             resourceName,
             "Oxford ITC503",
@@ -172,6 +172,10 @@ class ITC503(Instrument):
             read_termination="\r",
             **kwargs
         )
+
+        # Clear the buffer in order to prevent communication problems
+        if clear_buffer:
+            self.adapter.connection.clear()
 
     def wait_for_temperature(self, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
@@ -205,6 +209,7 @@ class ITC503(Instrument):
                 stable_intervals += 1
             else:
                 stable_intervals = 0
+                attempt += 1
 
             if stable_intervals >= number_of_intervals:
                 break
@@ -218,7 +223,7 @@ class ITC503(Instrument):
             if should_stop():
                 return
 
-            attempt += 1
+            sleep(check_interval)
 
         if attempt == 0:
             return
