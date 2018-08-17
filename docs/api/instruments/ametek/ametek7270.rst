@@ -2,6 +2,6 @@
 Ametek 7270 DSP Lockin Amplifier
 ################################
 
-.. autoclass:: pymeasure.instruments.danfysik.Danfysik8500
+.. autoclass:: pymeasure.instruments.ametek.Ametek7270
     :members:
     :show-inheritance:
