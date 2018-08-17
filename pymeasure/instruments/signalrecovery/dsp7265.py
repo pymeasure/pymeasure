@@ -134,7 +134,7 @@ class DSP7265(Instrument):
     )
     reference = Instrument.control(
         "IE", "IE %d",
-        """Controls the oscillator reference. Can be "internal", 
+        """Controls the oscillator reference. Can be "internal",
         "external rear" or "external front" """,
         validator=strict_discrete_set,
         values=REFERENCES,
@@ -159,7 +159,7 @@ class DSP7265(Instrument):
         map_values=True
     )
     time_constant = Instrument.control(
-        "TC.", "TC %d",
+        "TC", "TC %d",
         """ A floating point property that controls the time constant
         in seconds, which takes values from 10 microseconds to 50,000
         seconds. This property can be set. """,
