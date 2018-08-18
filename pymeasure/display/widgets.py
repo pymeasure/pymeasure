@@ -29,7 +29,7 @@ import re
 import pyqtgraph as pg
 
 from .browser import Browser
-from .curves import ResultsCurve, Crosshairs
+from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from .log import LogHandler
 from .Qt import QtCore, QtGui
@@ -229,6 +229,241 @@ class PlotWidget(QtGui.QWidget):
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
+# JM: #########################################################################
+
+class ImageFrame(QtGui.QFrame):
+    """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
+    the plot based on the refresh_time, and allows the axes
+    to be changed on the fly, which updates the plotted data
+    """
+
+    LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
+    updated = QtCore.QSignal()
+    x_axis_changed = QtCore.QSignal(str)
+    y_axis_changed = QtCore.QSignal(str)
+    z_axis_changed = QtCore.QSignal(str)
+
+    def __init__(self, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True, parent=None):
+        super().__init__(parent)
+        self.refresh_time = refresh_time
+        self.check_status = check_status
+        self._setup_ui()
+        # set axis labels
+        for item in self.plot.items:
+            if isinstance(item, ResultsImage):
+                item.x = x_axis
+                item.y = y_axis
+                item.update_img()
+        xlabel, xunits = self.parse_axis(x_axis)
+        self.plot.setLabel('bottom', xlabel, units=xunits, **self.LABEL_STYLE)
+        self.x_axis = x_axis
+        self.x_axis_changed.emit(x_axis) # JM: Not sure if this does anything now...
+        ylabel, yunits = self.parse_axis(y_axis)
+        self.plot.setLabel('left', ylabel, units=yunits, **self.LABEL_STYLE)
+        self.y_axis = y_axis
+        self.y_axis_changed.emit(y_axis) # JM: Not sure if this does anything now...
+        self.change_z_axis(z_axis)
+
+    def _setup_ui(self):
+        self.setAutoFillBackground(False)
+        self.setStyleSheet("background: #fff")
+        self.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.setMidLineWidth(1)
+
+        vbox = QtGui.QVBoxLayout(self)
+
+        self.plot_widget = pg.PlotWidget(self, background='#ffffff') # JM: NOTE: This is just pulling a base pg PlotWidget, so no infinite regress!
+        self.coordinates = QtGui.QLabel(self)
+        self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
+        self.coordinates.setStyleSheet("background: #fff")
+        self.coordinates.setText("")
+        self.coordinates.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+
+        vbox.addWidget(self.plot_widget)
+        vbox.addWidget(self.coordinates)
+        self.setLayout(vbox)
+
+        self.plot = self.plot_widget.getPlotItem()
+
+        self.crosshairs = Crosshairs(self.plot,
+                                     pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
+        self.crosshairs.coordinates.connect(self.update_coordinates)
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_curves)
+        self.timer.timeout.connect(self.crosshairs.update)
+        self.timer.timeout.connect(self.updated)
+        self.timer.start(int(self.refresh_time * 1e3))
+
+    def update_coordinates(self, x, y):
+        self.coordinates.setText("(%g, %g)" % (x, y))
+
+    def update_curves(self):
+        for item in self.plot.items:
+            if isinstance(item, ResultsImage):
+                if self.check_status:
+                    if item.results.procedure.status == Procedure.RUNNING:
+                        item.update_img()
+                else:
+                    item.update()
+
+    def parse_axis(self, axis):
+        """ Returns the units of an axis by searching the string
+        """
+        units_pattern = "\((?P<units>\w+)\)"
+        try:
+            match = re.search(units_pattern, axis)
+        except TypeError:
+            match = None
+            
+        if match:
+            if 'units' in match.groupdict():
+                label = re.sub(units_pattern, '', axis)
+                return label, match.groupdict()['units']
+        else:
+            return axis, None
+
+    # def change_x_axis(self, axis):
+    #     for item in self.plot.items:
+    #         if isinstance(item, ResultsCurve):
+    #             item.x = axis
+    #             item.update()
+    #     label, units = self.parse_axis(axis)
+    #     self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
+    #     self.x_axis = axis
+    #     self.x_axis_changed.emit(axis)
+
+    # def change_y_axis(self, axis):
+    #     for item in self.plot.items:
+    #         if isinstance(item, ResultsCurve):
+    #             item.y = axis
+    #             item.update()
+    #     label, units = self.parse_axis(axis)
+    #     self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
+    #     self.y_axis = axis
+    #     self.y_axis_changed.emit(axis)
+
+    def change_z_axis(self, axis):
+        for item in self.plot.items:
+            if isinstance(item, ResultsImage):
+                item.z = axis
+                item.update_img()
+        label, units = self.parse_axis(axis)
+        self.plot.setTitle(label + ' (%s)'%units) # TODO: Figure out better way of denoting this...
+        self.z_axis = axis
+        self.z_axis_changed.emit(axis)
+
+
+class ImageWidget(QtGui.QWidget):
+    """ Extends the PlotFrame to allow different columns
+    of the data to be dynamically choosen
+    """
+
+    def __init__(self, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
+                 parent=None):
+        super().__init__(parent)
+        self.columns = columns
+        self.refresh_time = refresh_time
+        self.check_status = check_status
+        self.x_axis = x_axis
+        self.y_axis = y_axis
+        self._setup_ui()
+        self._layout()
+        # if x_axis is not None:
+        #     # self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
+        #     self.image_frame.change_x_axis(x_axis)
+        # if y_axis is not None:
+        #     # self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
+        #     self.image_frame.change_y_axis(y_axis)
+        if z_axis is not None:
+            self.columns_z.setCurrentIndex(self.columns_z.findText(z_axis))
+            self.image_frame.change_z_axis(z_axis)
+
+    def _setup_ui(self):
+        # self.columns_x_label = QtGui.QLabel(self)
+        # self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        # self.columns_x_label.setText('X Axis:')
+        # self.columns_y_label = QtGui.QLabel(self)
+        # self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        # self.columns_y_label.setText('Y Axis:')
+        self.columns_z_label = QtGui.QLabel(self)
+        self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        self.columns_z_label.setText('Z Axis:')
+
+        # self.columns_x = QtGui.QComboBox(self)
+        # self.columns_y = QtGui.QComboBox(self)
+        self.columns_z = QtGui.QComboBox(self)
+        for column in self.columns:
+            # self.columns_x.addItem(column)
+            # self.columns_y.addItem(column)
+            self.columns_z.addItem(column)
+        # self.columns_x.activated.connect(self.update_x_column)
+        # self.columns_y.activated.connect(self.update_y_column)
+        self.columns_z.activated.connect(self.update_z_column)
+
+        self.image_frame = ImageFrame(
+            self.x_axis,
+            self.y_axis,
+            self.columns[0],
+            self.refresh_time,
+            self.check_status
+        )
+        self.updated = self.image_frame.updated
+        self.plot = self.image_frame.plot
+        # self.columns_x.setCurrentIndex(0)
+        # self.columns_y.setCurrentIndex(1)
+        self.columns_z.setCurrentIndex(2)
+
+    def _layout(self):
+        vbox = QtGui.QVBoxLayout(self)
+        vbox.setSpacing(0)
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.setSpacing(10)
+        hbox.setContentsMargins(-1, 6, -1, 6)
+        # hbox.addWidget(self.columns_x_label)
+        # hbox.addWidget(self.columns_x)
+        # hbox.addWidget(self.columns_y_label)
+        # hbox.addWidget(self.columns_y)
+        hbox.addWidget(self.columns_z_label)
+        hbox.addWidget(self.columns_z)
+
+
+        vbox.addLayout(hbox)
+        vbox.addWidget(self.image_frame)
+        self.setLayout(vbox)
+
+    def sizeHint(self):
+        return QtCore.QSize(300, 600)
+
+    # JM: Maybe should have a change image function, so that we know there is only ever one being displayed. 
+    # Other classes could have copies of ResultsImage's, but would just call a change_image functoin from
+    # here to change which experiment the image is tied to. (or something like that)
+    def new_image(self, results):
+        """ Creates a new image """
+        image = ResultsImage(results,
+                             x=self.image_frame.x_axis,
+                             y=self.image_frame.y_axis,
+                             z=self.image_frame.z_axis
+                             )
+        return image
+
+    # def update_x_column(self, index):
+    #     axis = self.columns_x.itemText(index)
+    #     self.plot_frame.change_x_axis(axis)
+
+    # def update_y_column(self, index):
+    #     axis = self.columns_y.itemText(index)
+    #     self.plot_frame.change_y_axis(axis)
+
+
+    def update_z_column(self, index):
+        axis = self.columns_z.itemText(index)
+        self.image_frame.change_z_axis(axis)
+
+#JM: ########################################################################
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):
