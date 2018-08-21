@@ -470,6 +470,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
 # JM: ############################################################################
 
+# QUESTION: Can we just inherit from ManagedWindow?
 class ManagedImageWindow(QtGui.QMainWindow):
     """
     Abstract base class.
@@ -499,8 +500,6 @@ class ManagedImageWindow(QtGui.QMainWindow):
 
     """
 
-    # NOTE: Maybe instead should add another tab for image plots instead of removing the regular plots.
-    # Should be something that is relatively easy to add in afterwards.
     EDITOR = 'gedit'
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),
@@ -518,7 +517,8 @@ class ManagedImageWindow(QtGui.QMainWindow):
         self.x_axis, self.y_axis, self.z_axis = x_axis, y_axis, z_axis
         self._setup_ui()
         self._layout()
-        self.setup_plot(self.im_plot)
+        self.setup_im_plot(self.im_plot)
+        self.setup_plot(self.plot)
 
     def _setup_ui(self):
         self.log_widget = LogWidget()
@@ -813,6 +813,18 @@ class ManagedImageWindow(QtGui.QMainWindow):
         :param plot: This window's PlotItem instance.
 
         .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+        """
+        pass
+        
+    def setup_im_plot(self, im_plot): # JM: Will need to change this probably.
+        """
+        This method does nothing by default, but can be overridden by the child
+        class in order to set up custom options for the image plot
+
+        This method is called during the constructor, after all other set up has
+        been completed, and is provided as a convenience method to parallel Plotter.
+
+        :param im_plot: This window's ImageItem instance.
         """
         pass
 
