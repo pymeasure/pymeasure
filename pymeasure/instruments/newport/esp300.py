@@ -175,7 +175,7 @@ class Axis(object):
         "MD?",
         """ Returns a boolean that is True if the motion is finished.
         """,
-        get_process=lambda x: bool(x)
+        cast=bool
     )
 
     def __init__(self, axis, controller):
