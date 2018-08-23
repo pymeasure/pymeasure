@@ -176,6 +176,50 @@ class Agilent8257D(Instrument):
         values=[0.1, 10e6]
     )
 
+    ########################
+    # Low-Frequency Output #
+    ########################
+
+    low_freq_out_amplitude = Instrument.control(
+        ":SOUR:LFO:AMPL? ", ":SOUR:LFO:AMPL %g VP",
+        """A floating point property that controls the peak voltage (amplitude) of the
+        low frequency output in volts, which can take values from 0-3.5V""",
+        validator=truncated_range,
+        values=[0,3.5]
+    )
+
+    LOW_FREQUENCY_SOURCES = {
+        'internal':'INT', 'internal 2':'INT2', 'function':'FUNC', 'function 2':'FUNC2'
+    }
+
+    low_freq_out_source = Instrument.control(
+        ":SOUR:LFO:SOUR?", ":SOUR:LFO:SOUR %s",
+        """A string property which controls the source of the low frequency output, which
+        can take the values 'internal [2]' for the inernal source, or 'function [2]' for an internal
+        function generator which can be configured.""",
+        validator=strict_discrete_set,
+        values=LOW_FREQUENCY_SOURCES,
+        map_values=True
+    )
+
+    def enable_low_freq_out(self):
+        """Enables low frequency output"""
+        self.write(":SOUR:LFO:STAT ON")
+
+    def disable_low_freq_out(self):
+        """Disables low frequency output"""
+        self.write(":SOUR:LFO:STAT OFF")
+
+    def config_low_freq_out(self, source='internal', amplitude=3):
+        """ Configures the low-frequency output signal.
+
+        :param source: The source for the low-frequency output signal.
+        :param amplitude: Amplitude of the low-frequency output
+        """
+        self.enable_low_freq_out()
+        self.low_freq_out_source = source
+        self.low_freq_out_amplitude = amplitude
+
     #######################
     # Internal Oscillator #
     #######################
@@ -233,7 +277,7 @@ class Agilent8257D(Instrument):
         self.enable_amplitude_modulation()
         self.amplitude_source = 'internal'
         self.internal_frequency = frequency
-        self.internal_shape = 'sine'
+        self.internal_shape = shape
         self.amplitude_depth = depth
 
     def enable_amplitude_modulation(self):
@@ -252,7 +296,7 @@ class Agilent8257D(Instrument):
         """
         self.enable_pulse_modulation()
         self.pulse_source = 'internal'
-        self.pulse_input = 'square'
+        self.pulse_input = input
         self.pulse_frequency = frequency
 
     def enable_pulse_modulation(self):

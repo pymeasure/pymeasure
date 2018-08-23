@@ -72,7 +72,12 @@ class Adapter(object):
         results = results.split(separator)
         for i, result in enumerate(results):
             try:
-                results[i] = cast(result)
+                if cast == bool:
+                    # Need to cast to float first since results are usually
+                    # strings and bool of a non-empty string is always True
+                    results[i] = bool(float(result))
+                else:
+                    results[i] = cast(result)
             except Exception:
                 pass  # Keep as string
         return results

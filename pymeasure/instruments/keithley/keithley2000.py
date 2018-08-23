@@ -58,9 +58,9 @@ class Keithley2000(Instrument, KeithleyBuffer):
     mode = Instrument.control(
         ":CONF?", ":CONF:%s",
         """ A string property that controls the configuration mode for measurements,
-        which can take the values: :code:'current' (DC), :code:'current ac', 
-        :code:'voltage' (DC),  :code:'voltage ac', :code:'resistance' (2-wire), 
-        :code:'resistance 4W' (4-wire), :code:'period', :code:'frequency', 
+        which can take the values: :code:'current' (DC), :code:'current ac',
+        :code:'voltage' (DC),  :code:'voltage ac', :code:'resistance' (2-wire),
+        :code:'resistance 4W' (4-wire), :code:'period', :code:'frequency',
         :code:'temperature', :code:'diode', and :code:'frequency'. """,
         validator=strict_discrete_set,
         values=MODES,
@@ -79,11 +79,11 @@ class Keithley2000(Instrument, KeithleyBuffer):
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
         """ A floating point property that controls the DC current range in
-        Amps, which can take values from 0 to 3.1 A. 
+        Amps, which can take values from 0 to 3.1 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 3.1]
-    )  
+    )
     current_reference = Instrument.control(
         ":SENS:CURR:REF?", ":SENS:CURR:REF %g",
         """ A floating point property that controls the DC current reference
@@ -94,7 +94,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC current measurements, which sets the integration period 
+        (NPLC) for the DC current measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -109,7 +109,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     current_ac_range = Instrument.control(
         ":SENS:CURR:AC:RANG?", ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %g",
         """ A floating point property that controls the AC current range in
-        Amps, which can take values from 0 to 3.1 A. 
+        Amps, which can take values from 0 to 3.1 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 3.1]
@@ -124,7 +124,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     current_ac_nplc = Instrument.control(
         ":SENS:CURR:AC:NPLC?", ":SENS:CURR:AC:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the AC current measurements, which sets the integration period 
+        (NPLC) for the AC current measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -170,7 +170,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     voltage_nplc = Instrument.control(
         ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC voltage measurements, which sets the integration period 
+        (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -185,7 +185,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     voltage_ac_range = Instrument.control(
         ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %g",
         """ A floating point property that controls the AC voltage range in
-        Volts, which can take values from 0 to 757.5 V. 
+        Volts, which can take values from 0 to 757.5 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 757.5]
@@ -200,7 +200,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     voltage_ac_nplc = Instrument.control(
         ":SENS:VOLT:AC:NPLC?", ":SENS:VOLT:AC:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the AC voltage measurements, which sets the integration period 
+        (NPLC) for the AC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -230,8 +230,8 @@ class Keithley2000(Instrument, KeithleyBuffer):
     )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
-        """ A floating point property that controls the 2-wire resistance range 
-        in Ohms, which can take values from 0 to 120 MOhms. 
+        """ A floating point property that controls the 2-wire resistance range
+        in Ohms, which can take values from 0 to 120 MOhms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 120e6]
@@ -246,7 +246,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?", ":SENS:RES:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 2-wire resistance measurements, which sets the integration period 
+        (NPLC) for the 2-wire resistance measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -261,7 +261,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     resistance_4W_range = Instrument.control(
         ":SENS:FRES:RANG?", ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %g",
         """ A floating point property that controls the 4-wire resistance range
-        in Ohms, which can take values from 0 to 120 MOhms. 
+        in Ohms, which can take values from 0 to 120 MOhms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 120e6]
@@ -276,7 +276,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     resistance_4W_nplc = Instrument.control(
         ":SENS:FRES:NPLC?", ":SENS:FRES:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 4-wire resistance measurements, which sets the integration period 
+        (NPLC) for the 4-wire resistance measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -387,7 +387,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     temperature_nplc = Instrument.control(
         ":SENS:TEMP:NPLC?", ":SENS:TEMP:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the temperature measurements, which sets the integration period 
+        (NPLC) for the temperature measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -512,7 +512,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ Configures the instrument to perform continuity testing. """
         self.mode = 'continuity'
 
-    def _mode_command(mode=None):
+    def _mode_command(self, mode=None):
         if mode is None:
             mode = self.mode
         return self.MODES[mode]
@@ -570,12 +570,12 @@ class Keithley2000(Instrument, KeithleyBuffer):
         self.write(":SENS:%s:AVER:STAT 0" % self._mode_command(mode))
 
     def local(self):
-        """ Returns control to the instrument panel, and enables 
+        """ Returns control to the instrument panel, and enables
         the panel if disabled. """
         self.write(":SYST:LOC")
 
     def remote(self):
-        """ Places the instrument in the remote state, which is 
+        """ Places the instrument in the remote state, which is
         does not need to be explicity called in general. """
         self.write(":SYST:REM")
 
@@ -588,7 +588,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     def reset(self):
         """ Resets the instrument state. """
         self.write(":STAT:QUEUE:CLEAR;*RST;:STAT:PRES;:*CLS;")
-        
+
     def beep(self, frequency, duration):
         """ Sounds a system beep.
 
