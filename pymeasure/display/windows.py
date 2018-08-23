@@ -636,10 +636,12 @@ class ManagedImageWindow(QtGui.QMainWindow):
                 # out. Not sure what is going on, but removing below made it
                 # stop. Axes zooming happened on both image and curve plots,
                 # so possibly some fighting between the two?
-                # xax = self.im_plot.getAxis('bottom')
-                # xax.setRange(experiment.image.xstart,experiment.image.xend)
-                # yax = self.im_plot.getAxis('left')
-                # yax.setRange(experiment.image.ystart,experiment.image.yend)
+                # UPDATE: after trying this again, I couldn't reproduce the 
+                # zooming out thing. Very strange.
+                xax = self.im_plot.getAxis('bottom')
+                xax.setRange(experiment.image.xstart,experiment.image.xend)
+                yax = self.im_plot.getAxis('left')
+                yax.setRange(experiment.image.ystart,experiment.image.yend)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
