@@ -23,16 +23,23 @@
 #
 
 import logging
+import sys
 
 import pyqtgraph as pg
 import numpy as np
-from matplotlib.cm import viridis  # JM: To make Neal happy ;)
+try:
+    from matplotlib.cm import viridis
+except ImportError:
+    log.warning("Matplotlib not found. Images will be greyscale")
 
 from .Qt import QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+def _greyscale_colormap(x):
+    """Simple greyscale colormap. Assumes x is already normalized."""
+    return np.array([x,x,x,1])
 
 class ResultsCurve(pg.PlotDataItem):
     """ Creates a curve loaded dynamically from a file through the Results
@@ -76,8 +83,6 @@ class ResultsCurve(pg.PlotDataItem):
 
 # TODO: Add method for changing x and y
 
-#############################################################################################
-
 class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
@@ -87,21 +92,26 @@ class ResultsImage(pg.ImageItem):
         self.x = x
         self.y = y
         self.z = z
-        # NOTE: Below we're making an assumption on the form of *any* procedure which we would use
-        # with an image. Seems reasonable, we need to make some compromise so that
-        # we know how to construct the resolution and so that we know what the heck the range is
-        self.xstart = getattr(self.results.procedure,self.x + '_start')
-        self.xend = getattr(self.results.procedure,self.x + '_end')
-        self.xstep = getattr(self.results.procedure,self.x + '_step')
+        # JM: NOTE: Below we're making an assumption on the form of *any* procedure 
+        # which we would use with an image. Seems reasonable, we need to make 
+        # some compromise so that we know how to construct the resolution and so
+        #  that we know what the heck the range is
+        self.xstart = getattr(self.results.procedure, self.x + '_start')
+        self.xend = getattr(self.results.procedure, self.x + '_end')
+        self.xstep = getattr(self.results.procedure, self.x + '_step')
         self.xsize = int(np.ceil((self.xend - self.xstart) / self.xstep)) + 1 # JM: add one since arange doesn't include bound, but maybe experiment will give it. Just defaults to empty pixels, not the end of the world.
-        self.ystart = getattr(self.results.procedure,self.y + '_start')
-        self.yend = getattr(self.results.procedure,self.y + '_end')
-        self.ystep = getattr(self.results.procedure,self.y + '_step')
+        self.ystart = getattr(self.results.procedure, self.y + '_start')
+        self.yend = getattr(self.results.procedure, self.y + '_end')
+        self.ystep = getattr(self.results.procedure, self.y + '_step')
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1 # JM: add one since arange doesn't include bound, but maybe experiment will give it. Just defaults to empty pixels, not the end of the world.
         self.img_data = np.zeros((self.ysize,self.xsize,4))
         self.force_reload = force_reload
-        self.colormap = viridis # JM: Hard coded for Neal
-        super().__init__(image = self.img_data)
+        if 'matplotlib.cm' in sys.modules:
+            self.colormap = viridis
+        else:
+            self.colormap = _greyscale_colormap
+
+        super().__init__(image=self.img_data)
 
     def update_img(self):
         if self.force_reload:
@@ -119,7 +129,7 @@ class ResultsImage(pg.ImageItem):
             self.img_data[yidx,xidx,:] = self.colormap((row[self.z] - zmin)/(zmax-zmin))
 
         # set image data, need to transpose since pyqtgraph assumes column-major order
-        self.setImage(image = np.transpose(self.img_data,axes=(1,0,2)))
+        self.setImage(image=np.transpose(self.img_data,axes=(1,0,2)))
 
     def find_img_index(self, x, y):
         """ Finds the integer image indices corresponding to the
@@ -143,8 +153,6 @@ class ResultsImage(pg.ImageItem):
 
     # TODO: colormap selection
 
-
-# JM: ###############################################################################################
 
 class BufferCurve(pg.PlotDataItem):
     """ Creates a curve based on a predefined buffer size and allows

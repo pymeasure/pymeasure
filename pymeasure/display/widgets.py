@@ -229,7 +229,6 @@ class PlotWidget(QtGui.QWidget):
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
-# JM: #########################################################################
 
 class ImageFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -325,26 +324,6 @@ class ImageFrame(QtGui.QFrame):
         else:
             return axis, None
 
-    # def change_x_axis(self, axis):
-    #     for item in self.plot.items:
-    #         if isinstance(item, ResultsCurve):
-    #             item.x = axis
-    #             item.update()
-    #     label, units = self.parse_axis(axis)
-    #     self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
-    #     self.x_axis = axis
-    #     self.x_axis_changed.emit(axis)
-
-    # def change_y_axis(self, axis):
-    #     for item in self.plot.items:
-    #         if isinstance(item, ResultsCurve):
-    #             item.y = axis
-    #             item.update()
-    #     label, units = self.parse_axis(axis)
-    #     self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
-    #     self.y_axis = axis
-    #     self.y_axis_changed.emit(axis)
-
     def change_z_axis(self, axis):
         for item in self.plot.items:
             if isinstance(item, ResultsImage):
@@ -371,36 +350,18 @@ class ImageWidget(QtGui.QWidget):
         self.y_axis = y_axis
         self._setup_ui()
         self._layout()
-        # if x_axis is not None:
-        #     # self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
-        #     self.image_frame.change_x_axis(x_axis)
-        # if y_axis is not None:
-        #     # self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
-        #     self.image_frame.change_y_axis(y_axis)
         if z_axis is not None:
             self.columns_z.setCurrentIndex(self.columns_z.findText(z_axis))
             self.image_frame.change_z_axis(z_axis)
 
     def _setup_ui(self):
-        # self.columns_x_label = QtGui.QLabel(self)
-        # self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        # self.columns_x_label.setText('X Axis:')
-        # self.columns_y_label = QtGui.QLabel(self)
-        # self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        # self.columns_y_label.setText('Y Axis:')
         self.columns_z_label = QtGui.QLabel(self)
         self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_z_label.setText('Z Axis:')
 
-        # self.columns_x = QtGui.QComboBox(self)
-        # self.columns_y = QtGui.QComboBox(self)
         self.columns_z = QtGui.QComboBox(self)
         for column in self.columns:
-            # self.columns_x.addItem(column)
-            # self.columns_y.addItem(column)
             self.columns_z.addItem(column)
-        # self.columns_x.activated.connect(self.update_x_column)
-        # self.columns_y.activated.connect(self.update_y_column)
         self.columns_z.activated.connect(self.update_z_column)
 
         self.image_frame = ImageFrame(
@@ -412,8 +373,6 @@ class ImageWidget(QtGui.QWidget):
         )
         self.updated = self.image_frame.updated
         self.plot = self.image_frame.plot
-        # self.columns_x.setCurrentIndex(0)
-        # self.columns_y.setCurrentIndex(1)
         self.columns_z.setCurrentIndex(2)
 
     def _layout(self):
@@ -423,10 +382,6 @@ class ImageWidget(QtGui.QWidget):
         hbox = QtGui.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
-        # hbox.addWidget(self.columns_x_label)
-        # hbox.addWidget(self.columns_x)
-        # hbox.addWidget(self.columns_y_label)
-        # hbox.addWidget(self.columns_y)
         hbox.addWidget(self.columns_z_label)
         hbox.addWidget(self.columns_z)
 
@@ -438,9 +393,10 @@ class ImageWidget(QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    # JM: Maybe should have a change image function, so that we know there is only ever one being displayed. 
-    # Other classes could have copies of ResultsImage's, but would just call a change_image functoin from
-    # here to change which experiment the image is tied to. (or something like that)
+    # JM: Maybe should have a change image function, so that we know there is 
+    # only ever one being displayed. Other classes could have copies of 
+    # ResultsImage's, but would just call a change_image function from here to 
+    # change which experiment the image is tied to. (or something like that)
     def new_image(self, results):
         """ Creates a new image """
         image = ResultsImage(results,
@@ -450,20 +406,10 @@ class ImageWidget(QtGui.QWidget):
                              )
         return image
 
-    # def update_x_column(self, index):
-    #     axis = self.columns_x.itemText(index)
-    #     self.plot_frame.change_x_axis(axis)
-
-    # def update_y_column(self, index):
-    #     axis = self.columns_y.itemText(index)
-    #     self.plot_frame.change_y_axis(axis)
-
-
     def update_z_column(self, index):
         axis = self.columns_z.itemText(index)
         self.image_frame.change_z_axis(axis)
 
-#JM: ########################################################################
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):

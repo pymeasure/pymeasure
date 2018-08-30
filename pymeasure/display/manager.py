@@ -301,7 +301,7 @@ class ImageExperimentQueue(ExperimentQueue):
         super().__init__()
 
     def __contains__(self, value):
-        if isinstance(value, ExperimentImg):
+        if isinstance(value, ImageExperiment):
             return value in self.queue
         if isinstance(value, str):
             for experiment in self.queue:
@@ -310,8 +310,6 @@ class ImageExperimentQueue(ExperimentQueue):
             return False
         return False
 
-# JM: QUESTION: Can this just inherit from Manager and add im_plot and override
-# appropriate things?
 class ImageManager(Manager):
     """
     Overwrites needed features from :class:`.Manager` to make image features

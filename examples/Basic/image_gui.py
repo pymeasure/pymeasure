@@ -1,3 +1,13 @@
+"""
+This example demonstrates how to make a graphical interface which contains an 
+image plotting tab, and uses a random number generator to simulate data so 
+that it does not require an instrument to use.
+
+Run the program by changing to the directory containing this file and calling:
+
+python image_gui.py
+"""
+
 import sys
 import logging
 log = logging.getLogger(__name__)
