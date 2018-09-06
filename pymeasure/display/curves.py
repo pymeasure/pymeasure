@@ -25,6 +25,9 @@
 import logging
 import sys
 
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 import pyqtgraph as pg
 import numpy as np
 try:
@@ -33,9 +36,6 @@ except ImportError:
     log.warning("Matplotlib not found. Images will be greyscale")
 
 from .Qt import QtCore
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 def _greyscale_colormap(x):
     """Simple greyscale colormap. Assumes x is already normalized."""
