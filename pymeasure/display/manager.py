@@ -342,13 +342,22 @@ class ImageManager(Manager):
         self.plot.removeItem(experiment.curve)
         
     def load(self, experiment): 
+        super().load(experiment)
+        self.im_plot.addItem(experiment.image)
+        # JM: FIXME: this will update the axes whenever a plot is queued, 
+        # meaning the one currently being displayed will have the wrong 
+        # coordinates on the axes unless the browser item is updated.
+        xax = self.im_plot.getAxis('bottom')
+        xax.setRange(experiment.image.xstart,experiment.image.xend)
+        yax = self.im_plot.getAxis('left')
+        yax.setRange(experiment.image.ystart,experiment.image.yend)
 
     def _finish(self):
         log.debug("Manager's running experiment has finished")
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)
-        experiment.image.update()
+        experiment.image.update_img()
         experiment.curve.update()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
