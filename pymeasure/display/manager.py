@@ -340,13 +340,15 @@ class ImageManager(Manager):
             self.browser.indexOfTopLevelItem(experiment.browser_item))
         self.im_plot.removeItem(experiment.image)
         self.plot.removeItem(experiment.curve)
+        
+    def load(self, experiment): 
 
     def _finish(self):
         log.debug("Manager's running experiment has finished")
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)
-        experiment.image.update_img()
+        experiment.image.update()
         experiment.curve.update()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures

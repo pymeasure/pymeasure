@@ -628,7 +628,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
                 experiment.curve.update()
                 self.plot.addItem(experiment.curve)
                 # add/update image plot
-                experiment.image.update_img()
+                experiment.image.update()
                 self.im_plot.addItem(experiment.image)
                 # JM: Below is very janky, but idk a better way to make axes display "data coordinates" it for now...
                 # JM: Removed below. After adding results curve to ManagedImageWindow
@@ -720,7 +720,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
                     experiment.curve.update() # QUESTION: will this work?
-                    experiment.image.update_img()
+                    experiment.image.update()
                     experiment.browser_item.progressbar.setValue(100.)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)

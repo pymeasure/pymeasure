@@ -252,7 +252,7 @@ class ImageFrame(QtGui.QFrame):
             if isinstance(item, ResultsImage):
                 item.x = x_axis
                 item.y = y_axis
-                item.update_img()
+                item.update()
         xlabel, xunits = self.parse_axis(x_axis)
         self.plot.setLabel('bottom', xlabel, units=xunits, **self.LABEL_STYLE)
         self.x_axis = x_axis
@@ -304,7 +304,7 @@ class ImageFrame(QtGui.QFrame):
             if isinstance(item, ResultsImage):
                 if self.check_status:
                     if item.results.procedure.status == Procedure.RUNNING:
-                        item.update_img()
+                        item.update()
                 else:
                     item.update()
 
@@ -328,7 +328,7 @@ class ImageFrame(QtGui.QFrame):
         for item in self.plot.items:
             if isinstance(item, ResultsImage):
                 item.z = axis
-                item.update_img()
+                item.update()
         label, units = self.parse_axis(axis)
         self.plot.setTitle(label + ' (%s)'%units) # TODO: Figure out better way of denoting this...
         self.z_axis = axis

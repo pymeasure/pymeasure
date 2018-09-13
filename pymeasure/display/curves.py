@@ -113,7 +113,7 @@ class ResultsImage(pg.ImageItem):
 
         super().__init__(image=self.img_data)
 
-    def update_img(self):
+    def update(self):
         if self.force_reload:
             self.results.reload()
 
