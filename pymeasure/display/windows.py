@@ -630,18 +630,6 @@ class ManagedImageWindow(QtGui.QMainWindow):
                 # add/update image plot
                 experiment.image.update_img()
                 self.im_plot.addItem(experiment.image)
-                # JM: Below is very janky, but idk a better way to make axes display "data coordinates" it for now...
-                # JM: Removed below. After adding results curve to ManagedImageWindow
-                # if you remove the first image plotted, the axes keep zooming
-                # out. Not sure what is going on, but removing below made it
-                # stop. Axes zooming happened on both image and curve plots,
-                # so possibly some fighting between the two?
-                # UPDATE: after trying this again, I couldn't reproduce the 
-                # zooming out thing. Very strange.
-                xax = self.im_plot.getAxis('bottom')
-                xax.setRange(experiment.image.xstart,experiment.image.xend)
-                yax = self.im_plot.getAxis('left')
-                yax.setRange(experiment.image.ystart,experiment.image.yend)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)

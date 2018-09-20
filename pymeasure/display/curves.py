@@ -87,7 +87,6 @@ class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
     def __init__(self, results, x, y, z, force_reload=False):
-
         self.results = results
         self.x = x
         self.y = y
@@ -112,6 +111,9 @@ class ResultsImage(pg.ImageItem):
             self.colormap = _greyscale_colormap
 
         super().__init__(image=self.img_data)
+        self.scale(self.xstep, self.ystep)
+        self.translate(int(self.xstart/self.xstep)-0.5,
+                       int(self.ystart/self.ystep)-0.5) # 0.5 so pixels centered
 
     def update_img(self):
         if self.force_reload:
