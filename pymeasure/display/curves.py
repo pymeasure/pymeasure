@@ -111,6 +111,9 @@ class ResultsImage(pg.ImageItem):
             self.colormap = _greyscale_colormap
 
         super().__init__(image=self.img_data)
+        
+        # Scale and translate image so that the pixels are in the coorect
+        # position in "data coordinates"
         self.scale(self.xstep, self.ystep)
         self.translate(int(self.xstart/self.xstep)-0.5,
                        int(self.ystart/self.ystep)-0.5) # 0.5 so pixels centered

@@ -30,14 +30,14 @@ class TestImageProcedure(Procedure):
     # We will be using X and Y as coordinates for our images. We must have 
     # parameters called X_start, X_end and X_step and similarly for Y. X and
     # Y can be replaced with other names, but the suffixes must remain.
-    X_start = FloatParameter("X Start Position", units="m", default=-2.)
+    X_start = FloatParameter("X Start Position", units="m", default=0.)
     X_end = FloatParameter("X End Position", units="m", default=2.)
     X_step = FloatParameter("X Scan Step Size", units="m", default=0.1)
-    Y_start = FloatParameter("X Start Position", units="m", default=-2.)
-    Y_end = FloatParameter("X End Position", units="m", default=2.)
-    Y_step = FloatParameter("X Scan Step Size", units="m", default=0.1)
+    Y_start = FloatParameter("Y Start Position", units="m", default=-1.)
+    Y_end = FloatParameter("Y End Position", units="m", default=1.)
+    Y_step = FloatParameter("Y Scan Step Size", units="m", default=0.1)
     
-    delay = FloatParameter("Delay", units="s", default=0.02)
+    delay = FloatParameter("Delay", units="s", default=0.01)
 
     # There must be two special data columns which correspond to the two things
     # which will act as coordinates for our image. If X and Y are changed 
