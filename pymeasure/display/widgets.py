@@ -330,7 +330,10 @@ class ImageFrame(QtGui.QFrame):
                 item.z = axis
                 item.update_img()
         label, units = self.parse_axis(axis)
-        self.plot.setTitle(label + ' (%s)'%units) # TODO: Figure out better way of denoting this...
+        if units is not None:
+            self.plot.setTitle(label + ' (%s)'%units)
+        else:
+            self.plot.setTitle(label)
         self.z_axis = axis
         self.z_axis_changed.emit(axis)
 
