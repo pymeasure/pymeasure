@@ -548,7 +548,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     @property
     def min_current(self):
         """ Returns the minimum current from the buffer """
-        return self.mininums[1]
+        return self.minimums[1]
 
     @property
     def std_current(self):
