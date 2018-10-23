@@ -31,7 +31,7 @@ class VXI11Adapter(Adapter):
         """ Wrapper function for the write command using the
         vxi11 interface.
 
-        :param: command: string with command the that will be transmitted
+        :param command: string with command the that will be transmitted
                          to the instrument.
         """
         self.connection.write(command)
@@ -41,7 +41,7 @@ class VXI11Adapter(Adapter):
         """ Wrapper function for the read command using the
         vx11 interface.
 
-        :return: string containing a response from the device.
+        :return string containing a response from the device.
         """
         return self.connection.read()
 
@@ -53,7 +53,7 @@ class VXI11Adapter(Adapter):
         :param command: string with the command that will be transmitted
                         to the instrument.
 
-        :returns: string containing a response from the device.
+        :returns string containing a response from the device.
         """
         return self.connection.ask(command)
 
@@ -72,7 +72,7 @@ class VXI11Adapter(Adapter):
         """ Wrapper function for the read_raw command using the
         vx11 interface.
 
-        :returns: binary string containing the response from the device.
+        :returns binary string containing the response from the device.
         """
         return self.connection.read_raw()
 
@@ -84,5 +84,5 @@ class VXI11Adapter(Adapter):
         :param command: binary string with the command that will be
                         transmitted to the instrument
 
-        :returns: binary string containing the response from the device.
+        :returns binary string containing the response from the device.
         """
