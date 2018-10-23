@@ -68,6 +68,15 @@ class Keithley2000(Instrument, KeithleyBuffer):
         get_process=lambda v: v.replace('"', '')
     )
 
+    beep_state = Instrument.control(
+        ":SYST:BEEP:STAT?",
+        ":SYST:BEEP:STAT %g",
+        """ A string property that enables or disables the system status beeper, which can take the values: :code:'enabled' and :code:'disabled'. """,
+        validator=strict_discrete_set,
+        values={'enabled':1, 'disabled':0},
+        map_values=True
+    )
+
     ###############
     # Current (A) #
     ###############
