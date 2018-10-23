@@ -10,6 +10,7 @@ dependencies:
 - pytest=3.1.1=py36_0
 - python=3.6.1=2
 - python-dateutil=2.6.0=py36_0
+- python-vxi11=0.9=py36_0
 - pytz=2017.2=py36_0
 - setuptools>27.3.0
 - sip=4.18=py36_0

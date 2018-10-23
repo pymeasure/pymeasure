@@ -42,6 +42,7 @@ setup(
         "pyvisa >= 1.8",
         "pyserial >= 2.7",
         "pyqtgraph >= 0.9.10"
+        "python-vxi11 >= 0.9"
     ],
     extras_require={
         'matplotlib': ['matplotlib >= 2.0.2'],
