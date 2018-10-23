@@ -110,3 +110,4 @@ class VXI11Adapter(Adapter):
 
         :returns binary string containing the response from the device.
         """
+        return self.connection.ask_raw(command)
