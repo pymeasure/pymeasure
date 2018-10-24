@@ -7,4 +7,3 @@ pytz==2016.3
 six==1.10.0
 pyvisa==1.8
 pyserial==2.7
-python-vxi11==0.9
