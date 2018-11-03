@@ -27,11 +27,11 @@ import logging
 import os
 import pyqtgraph as pg
 
-from .browser import BrowserItem
-from .curves import ResultsCurve # JM: only need to import another if we want a PlotterWindow equivalent
+from .browser import BrowserItem, ImageBrowserItem
+from .curves import ResultsCurve
 from .manager import Manager, Experiment, ImageExperiment, ImageManager
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog, ImageWidget
+from .widgets import PlotWidget, BrowserWidget, ImageBrowserWidget, InputsWidget, LogWidget, ResultsDialog, ImageWidget
 from ..experiment.results import Results
 
 log = logging.getLogger(__name__)
@@ -468,9 +468,6 @@ class ManagedWindow(QtGui.QMainWindow):
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
 
-# JM: ############################################################################
-
-# QUESTION: Can we just inherit from ManagedWindow?
 class ManagedImageWindow(QtGui.QMainWindow):
     """
     Abstract base class.
@@ -537,7 +534,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         self.im_plot = self.image_widget.plot
         self.plot = self.plot_widget.plot
 
-        self.browser_widget = BrowserWidget(
+        self.browser_widget = ImageBrowserWidget(
             self.procedure_class,
             self.displays,
             [self.x_axis, self.y_axis],
@@ -612,15 +609,13 @@ class ManagedImageWindow(QtGui.QMainWindow):
     def quit(self, evt=None):
         self.close()
 
-    def browser_item_changed(self, item, column): # JM: adds or removes item based on checkbox in browser item. Need to destroy old and add new.
-    # will probably need to check if something is already checked, and if so un-check the other ones. *should* probably change these to
-    # radio buttons for better UI, but for now we'll deal with it. Or maybe just override whatever's there for now.
+    def browser_item_changed(self, item, column):
         if column == 0:
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
             if state == 0:
                 self.im_plot.removeItem(experiment.image)
-                self.plot.removeItem(experiment.curve) # QUESTION: will this work?? probably need to modify experiment
+                self.plot.removeItem(experiment.curve)
             else:
                 # add regular plot
                 experiment.curve.x = self.plot_widget.plot_frame.x_axis
@@ -630,6 +625,11 @@ class ManagedImageWindow(QtGui.QMainWindow):
                 # add/update image plot
                 experiment.image.update_img()
                 self.im_plot.addItem(experiment.image)
+                # use "data coordinates"
+                xax = self.im_plot.getAxis('bottom')
+                xax.setRange(experiment.image.xstart,experiment.image.xend)
+                yax = self.im_plot.getAxis('left')
+                yax.setRange(experiment.image.ystart,experiment.image.yend)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -647,7 +647,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
             menu.addAction(action_open)
 
             # Change Color
-            action_change_color = QtGui.QAction(menu) # JM: probably remove this??
+            action_change_color = QtGui.QAction(menu)
             action_change_color.setText("Change Color")
             action_change_color.triggered.connect(
                 lambda: self.change_color(experiment))
@@ -743,13 +743,12 @@ class ManagedImageWindow(QtGui.QMainWindow):
         #     color = pg.intColor(self.browser.topLevelItemCount() % 8)
         return self.image_widget.new_image(results, **kwargs)
 
-    # TODO: make shure whatever calls this can supply both if needed
     def new_experiment(self, results, image=None, curve=None):
         if image is None:
             image = self.new_image(results)
         if curve is None:
             curve = self.new_curve(results)
-        browser_item = BrowserItem(results, curve)
+        browser_item = ImageBrowserItem(results, curve)
         return ImageExperiment(results, curve, image, browser_item)
 
     def set_parameters(self, parameters):
@@ -792,7 +791,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         raise NotImplementedError(
             "Abstract method ManagedWindow.queue not implemented")
 
-    def setup_plot(self, plot): # JM: Will need to change this probably.
+    def setup_plot(self, plot):
         """
         This method does nothing by default, but can be overridden by the child
         class in order to set up custom options for the plot
@@ -806,7 +805,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         """
         pass
         
-    def setup_im_plot(self, im_plot): # JM: Will need to change this probably.
+    def setup_im_plot(self, im_plot):
         """
         This method does nothing by default, but can be overridden by the child
         class in order to set up custom options for the image plot
