@@ -48,7 +48,8 @@ setup(
         'tcp': [
             'zmq >= 16.0.2',
             'cloudpickle >= 0.3.1'
-        ]
+        ],
+        'python-vxi11': ['python-vxi11 >= 0.9']
     },
     setup_requires=[
         'pytest-runner'

@@ -53,3 +53,13 @@ VISA adapter
     :undoc-members:
     :inherited-members:
     :show-inheritance: 
+
+==============
+VXI-11 adapter
+==============
+
+.. autoclass:: pymeasure.adapters.VXI11Adapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance: 
