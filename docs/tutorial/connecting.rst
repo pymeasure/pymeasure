@@ -57,4 +57,13 @@ For instruments using serial communication that have particular settings that ne
 
 Behind the scenes the :code:`/dev/lakeshore425` port is passed to the :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>`.
 
+Some equipment may require the vxi-11 protocol for communication. An example would be a Agilent E5810B ethernet to GPIB bridge.
+To use this type equipment the python-vxi11 library has to be installed which is part of the extras package requirements. ::
+
+   from pymeasure.adapters import VXI11Adapter
+   from pymeasure.instruments import Instrument
+
+   adapter = VXI11Adapter("TCPIP::192.168.0.100::inst0::INSTR")
+   instr = Instrument(adapter, "my_instrument")
+
 The above examples illustrate different methods for communicating with instruments, using adapters to keep instrument code independent from the communication protocols. Next we present the methods for setting up measurements.
