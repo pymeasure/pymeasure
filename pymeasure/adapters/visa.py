@@ -53,7 +53,7 @@ class VISAAdapter(Adapter):
         super(VISAAdapter, self).__init__()
         self.resource_name = resourceName
         self.manager = visa.ResourceManager()
-        safeKeywords = ['resource_name', 'timeout', 'term_chars',
+        safeKeywords = ['resource_name', 'timeout',
                         'chunk_size', 'lock', 'delay', 'send_end',
                         'values_format', 'read_termination']
         kwargsCopy = copy.deepcopy(kwargs)
