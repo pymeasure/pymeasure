@@ -44,7 +44,7 @@ class VISAAdapter(Adapter):
     :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, resourceName, visa_library='', **kwargs):
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
@@ -52,7 +52,7 @@ class VISAAdapter(Adapter):
             resourceName = "GPIB0::%d::INSTR" % resourceName
         super(VISAAdapter, self).__init__()
         self.resource_name = resourceName
-        self.manager = visa.ResourceManager()
+        self.manager = visa.ResourceManager(visa_library)
         safeKeywords = ['resource_name', 'timeout',
                         'chunk_size', 'lock', 'delay', 'send_end',
                         'values_format', 'read_termination', 'write_termination']
