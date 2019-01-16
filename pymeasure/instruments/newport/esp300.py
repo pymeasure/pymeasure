@@ -70,13 +70,12 @@ class AxisError(Exception):
 
     def __init__(self, code):
         self.axis = str(code)[0]
-        self.error = str(code)[1:] 
-        self.message = self.MESSAGES[self.error]      
+        self.error = str(code)[1:]
+        self.message = self.MESSAGES[self.error]
 
     def __str__(self):
         return "Newport ESP300 axis %s reported the error: %s" % (
             self.axis, self.message)
-
 
 class GeneralError(Exception):
     """ Raised when the Newport ESP300 has a general error.
@@ -120,7 +119,7 @@ class GeneralError(Exception):
 
     def __init__(self, code):
         self.error = str(code)
-        self.message = self.MESSAGES[self.error]      
+        self.message = self.MESSAGES[self.error]
 
     def __str__(self):
         return "Newport ESP300 reported the error: %s" % (
@@ -206,8 +205,10 @@ class Axis(object):
     def home(self, type=1):
         """ Drives the axis to the home position, which may be the negative
         hardware limit for some actuators (e.g. LTA-HS).
+        type can take integer values from 0 to 6.
         """
-        self.write("OR%d")
+        home_type = strict_discrete_set(type, [0,1,2,3,4,5,6])
+        self.write("OR%d" % home_type)
 
     def define_position(self, position):
         """ Overwrites the value of the current position with the given
@@ -220,10 +221,10 @@ class Axis(object):
         self.write("DH")
 
     def wait_for_stop(self, delay=0, interval=0.05):
-        """ Blocks the program until the motion is completed. A further 
+        """ Blocks the program until the motion is completed. A further
         delay can be specified in seconds.
         """
-        self.write("WS%g" % delay*1e3)
+        self.write("WS%d" % (delay*1e3))
         while not self.motion_done:
             sleep(interval)
 
@@ -314,4 +315,3 @@ class ESP300(Instrument):
         """ Shuts down the controller by disabling all of the axes.
         """
         self.disable()
-

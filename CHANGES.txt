@@ -1,3 +1,13 @@
+Version 0.6 -- released 1/14/19
+===============================
+- New VXI11 Adapter for ethernet instruments (@chweiser)
+- PyQt updates to 5.6.0
+- Added SRS SG380, Ametek 7270, Agilent 4156, HP 34401A, Advantest R3767CG, and
+  Oxford ITC503 instrustruments (@sylkar, @jmittelstaedt, @vik-s, @troylf, @CasperSchippers)
+- Updates to Keithley 2000, Agilent 8257D, ESP 300, and Keithley 2400 instruments
+  (@watersjason, @jmittelstaedt, @nup002)
+- Various minor bug fixes (@thosou)
+
 Version 0.5.1 -- released 4/14/18
 =================================
 - Minor versions of PyVISA are now properly handled

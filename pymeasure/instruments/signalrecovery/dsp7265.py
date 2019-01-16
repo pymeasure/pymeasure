@@ -22,8 +22,12 @@
 # THE SOFTWARE.
 #
 
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, modular_range
+from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, modular_range, modular_range_bidirectional, strict_discrete_set
 
 from time import sleep
 import numpy as np
@@ -31,6 +35,24 @@ import numpy as np
 
 class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
+    # TODO: add regultors on most of these
+
+    SENSITIVITIES = [
+            0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
+            200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
+            20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
+            2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+            200.0e-3, 500.0e-3, 1.0
+        ]
+
+    TIME_CONSTANTS = [
+            10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
+            640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+            200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
+            100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
+            20.0e3, 50.0e3
+        ]
+    REFERENCES = ['internal', 'external rear', 'external front']
 
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -86,7 +108,7 @@ class DSP7265(Instrument):
         "REFP.", "REFP. %g",
         """ A floating point property that represents the reference
         harmonic phase in degrees. This property can be set. """,
-        validator=modular_range,
+        validator=modular_range_bidirectional,
         values=[0,360]
     )
     x = Instrument.measurement("X.",
@@ -98,7 +120,7 @@ class DSP7265(Instrument):
     xy = Instrument.measurement("X.Y.",
         """ Reads both the X and Y values in Volts """
     )
-    mag = Instrument.measurement("Mag.", # TODO: Should be capitalized?
+    mag = Instrument.measurement("MAG.",
         """ Reads the magnitude in Volts """
     )
     adc1 = Instrument.measurement("ADC. 1",
@@ -110,19 +132,21 @@ class DSP7265(Instrument):
     id = Instrument.measurement("ID",
         """ Reads the instrument identification """
     )
+    reference = Instrument.control(
+        "IE", "IE %d",
+        """Controls the oscillator reference. Can be "internal",
+        "external rear" or "external front" """,
+        validator=strict_discrete_set,
+        values=REFERENCES,
+        map_values=True
+    )
     sensitivity = Instrument.control(
-        "SEN.", "SEN %d",
+        "SEN", "SEN %d",
         """ A floating point property that controls the sensitivity
         range in Volts, which can take discrete values from 2 nV to
         1 V. This property can be set. """,
         validator=truncated_discrete_set,
-        values=[
-            0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
-            200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
-            20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
-            2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0
-        ],
+        values=SENSITIVITIES,
         map_values=True
     )
     slope = Instrument.control(
@@ -135,18 +159,12 @@ class DSP7265(Instrument):
         map_values=True
     )
     time_constant = Instrument.control(
-        "TC.", "TC %d",
+        "TC", "TC %d",
         """ A floating point property that controls the time constant
         in seconds, which takes values from 10 microseconds to 50,000
         seconds. This property can be set. """,
         validator=truncated_discrete_set,
-        values=[
-            10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
-            640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
-            100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
-            20.0e3, 50.0e3
-        ],
+        values=TIME_CONSTANTS,
         map_values=True
     )
 
@@ -178,7 +196,12 @@ class DSP7265(Instrument):
         except:
             return result
 
+
+    def set_voltage_mode(self):
+        self.write("IMODE 0")
+
     def setDifferentialMode(self, lineFiltering=True):
+        """Sets lockin to differential mode, measuring A-B"""
         self.write("VMODE 3")
         self.write("LF %d 0" % 3 if lineFiltering else 0)
 
@@ -227,21 +250,6 @@ class DSP7265(Instrument):
     def gain(self, value):
         self.write("ACGAIN %d" % int(value/10.0))
 
-    @property
-    def reference(self):
-        return "external" if int(self.ask("IE")) == 2 else "internal"
-
-    @reference.setter
-    def reference(self, value):
-        if value == "internal":
-            val = 0
-        elif value == "external":
-            val = 2
-        else:
-            raise Exception("Incorrect value for reference type."
-                            " Must be either internal or extenal.")
-        self.write("IE %d" % val)
-
     def set_buffer(self, points, quantities=['x'], interval=10.0e-3):
         num = 0
         for q in quantities:
@@ -280,3 +288,8 @@ class DSP7265(Instrument):
                 return data
         else:
             return [0.0]
+
+    def shutdown(self):
+        log.info("Shutting down %s." % self.name)
+        self.voltage = 0.
+        self.isShutdown = True
