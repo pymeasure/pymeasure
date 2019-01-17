@@ -43,44 +43,55 @@ class Agilent33220A(Instrument):
     frequency = Instrument.control(
         "FREQ?", "FREQ %s",
         """ A floating point property that controls the frequency of the output
-        waveform in Hz, from ... to .... Can be set. """,
-        # validator=strict_range,
-        # values=[..., ...]
+        waveform in Hz, from 500e-6 (500 uHz) to 5e+6 (5 MHz). Can be set. """,
+        validator=strict_range,
+        values=[500e-6, 5e+6]
     )
 
     voltage = Instrument.control(
         "VOLT?", "VOLT %f",
-        """ A floating point property that controls the voltage amplitude of the output
-        waveform in V, from ... to .... Can be set. """,
-        # validator=strict_range,
-        # values=[..., ...]
+        """ A floating point property that controls the voltage amplitude of the
+        output waveform in V, from 1e-3 V to 10 V. Can be set. """,
+        validator=strict_range,
+        values=[10e-3, 10]
     )
 
     voltage_offset = Instrument.control(
         "VOLT:OFFS?", "VOLT:OFFS %f",
-        """ A floating point property that controls the voltage offset of the output
-        waveform in V, from ... to .... Can be set. """,
-        # validator=strict_range,
-        # values=[..., ...]
+        """ A floating point property that controls the voltage offset of the
+        output waveform in V, from 0 V to 4.995 V, depending on the set
+        voltage amplitude (maximum offset = (10 - voltage) / 2). Can be set.
+        """,
+        validator=strict_range,
+        values=[-4.995, +4.995]
     )
 
     voltage_high = Instrument.control(
         "VOLT:HIGH?", "VOLT:HIGH %f",
-        """ A floating point property that controls the upper voltage of the output
-        waveform in V, from ... to .... Can be set. """,
+        """ A floating point property that controls the upper voltage of the
+        output waveform in V, from -4.990 V to 5 V (must be higher than low
+        voltage). Can be set. """,
         # validator=strict_range,
         # values=[..., ...]
     )
 
     voltage_low = Instrument.control(
         "VOLT:LOW?", "VOLT:LOW %f",
-        """ A floating point property that controls the lower voltage of the output
-        waveform in V, from ... to .... Can be set. """,
+        """ A floating point property that controls the lower voltage of the
+        output waveform in V, from -5 V to 4.990 V (must be lower than high
+        voltage). Can be set. """,
         # validator=strict_range,
         # values=[..., ...]
     )
 
-# FUCNtion:SQUare:DCYCLe
+    square_dutycycle = Instrument.control(
+        "FUNC:SQU:DCYCL?", "FUNC:SQU:DCYCL %f",
+        """ A floating point property that controls the duty cycle of a square
+        waveform function in percent. Can be set. """,
+        validator=strict_range,
+        values=[0, 100],
+    )
+
 # FUNCtion:RAMP:SYMMetry
 # FUNCtion:PULSe:WIDTh <seconds>
 # FUNCtion:PULSe:DCYCLe <percent>
