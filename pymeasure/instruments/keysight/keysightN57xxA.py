@@ -48,10 +48,10 @@ class KeysightN57xxA(Instrument):
     current_range = Instrument.control(
         ":CURR?", ":CURR %g",
         """ A floating point property that controls the DC current range in
-        Amps, which can take values from 0 to 20 A.
+        Amps, which can take values from 0 to 25 A(refer N5767A).
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[0, 20],
+        values=[0, 25],
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
@@ -64,10 +64,10 @@ class KeysightN57xxA(Instrument):
     voltage_range = Instrument.control(
         ":VOLT?", ":VOLT %g V",
         """ A floating point property that controls the DC voltage range in
-        Volts, which can take values from 0 to 100 V.
+        Volts, which can take values from 0 to 60 V(refer N5767A).
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[0, 100]
+        values=[0, 60]
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
@@ -75,13 +75,11 @@ class KeysightN57xxA(Instrument):
      )
 
     ###############
-    # State (V) #
+    # State (OFF/ON) #
     ###############
     state = Instrument.control(
         ":OUTP?", ":OUTP %s",
-        """ A floating point property that controls the DC voltage range in
-        Volts, which can take values from 0 to 100 V.
-        Auto-range is disabled when this property is set. """,
+        """ Power supply output state, it can be set ON or OFF. """,
         validator= strict_discrete_set,
         values=['ON', 'OFF']
     )
