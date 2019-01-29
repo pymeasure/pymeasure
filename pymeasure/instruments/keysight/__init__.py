@@ -1,1 +1,1 @@
-from .keysightN57xxA import KeysightN57xxA
+from .keysightN5767A import KeysightN5767A
