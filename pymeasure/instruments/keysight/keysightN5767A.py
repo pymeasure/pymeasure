@@ -35,8 +35,8 @@ from pymeasure.instruments.validators import (
 
 from pymeasure.adapters import VISAAdapter
 
-class KeysightN57xxA(Instrument):
-    """ Represents the Keysight N57xxA series Power supply
+class KeysightN5767A(Instrument):
+    """ Represents the Keysight N5767A Power supply
     interface for interacting with the instrument.
 
     .. code-block:: python
@@ -48,10 +48,10 @@ class KeysightN57xxA(Instrument):
     current_range = Instrument.control(
         ":CURR?", ":CURR %g",
         """ A floating point property that controls the DC current range in
-        Amps, which can take values from 0 to 20 A.
+        Amps, which can take values from 0 to 25 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[0, 20],
+        values=[0, 25],
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
@@ -64,10 +64,10 @@ class KeysightN57xxA(Instrument):
     voltage_range = Instrument.control(
         ":VOLT?", ":VOLT %g V",
         """ A floating point property that controls the DC voltage range in
-        Volts, which can take values from 0 to 100 V.
+        Volts, which can take values from 0 to 60 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[0, 100]
+        values=[0, 60]
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
@@ -75,21 +75,19 @@ class KeysightN57xxA(Instrument):
      )
 
     ###############
-    # State (V) #
+    # State (OFF/ON) #
     ###############
     state = Instrument.control(
         ":OUTP?", ":OUTP %s",
-        """ A floating point property that controls the DC voltage range in
-        Volts, which can take values from 0 to 100 V.
-        Auto-range is disabled when this property is set. """,
+        """ Power supply output state, it can be set ON or OFF. """,
         validator= strict_discrete_set,
         values=['ON', 'OFF']
     )
 
 
     def __init__(self, adapter, **kwargs):
-        super(KeysightN57xxA, self).__init__(
-            adapter, "Keysight N57XXA power supply", **kwargs
+        super(KeysightN5767A, self).__init__(
+            adapter, "Keysight N5767A power supply", **kwargs
         )
         # Set up data transfer format
         if isinstance(self.adapter, VISAAdapter):
@@ -106,7 +104,7 @@ class KeysightN57xxA(Instrument):
         while True:
             err = self.values(":SYST:ERR?")
             if int(err[0]) != 0:
-                errmsg = "Keysight N57XXA: %s: %s" % (err[0],err[1])
+                errmsg = "Keysight N5767A: %s: %s" % (err[0],err[1])
                 log.error(errmsg + '\n')
             else:
                 break
