@@ -1,5 +1,5 @@
 ########################
-keysight N5767A power supply
+Keysight N5767A power supply
 ########################
 
 .. autoclass:: pymeasure.instruments.keysight.KeysightN5767A

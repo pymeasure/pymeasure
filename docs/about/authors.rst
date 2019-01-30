@@ -19,3 +19,4 @@ The following developers have contributed to the PyMeasure package:
 | Julian Dlugosch
 | Vikram Sekar
 | Casper Schippers
+| Sumatran Tiger
