@@ -28,6 +28,7 @@ Instruments by manufacturer:
    hp/index
    keithley/index
    lakeshore/index
+   lecroy/index
    newport/index
    oxfordinstruments/index
    parker/index
