@@ -29,10 +29,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (
-    truncated_range, truncated_discrete_set,
-    strict_discrete_set
-)
+from pymeasure.instruments.validators import truncated_range
+
 
 from pymeasure.adapters import VISAAdapter
 
@@ -57,8 +55,8 @@ class KeysightN5767A(Instrument):
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
-                                     """ Reads a setting current in Amps. """
-                                     )
+        """ Reads a setting current in Amps. """
+     )
 
     ###############
     # Voltage (V) #
@@ -73,14 +71,14 @@ class KeysightN5767A(Instrument):
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
-                                     """ Reads a DC voltage measurement in Volts. """
-                                     )
+        """ Reads a DC voltage measurement in Volts. """
+     )
 
-    ###############
-    # _status (0/1) #
-    ###############
-    _status = Instrument.measurement(
-        ":OUTP?", """Read power supply current output status""",
+    ##############
+    #_status (0/1) #
+    ##############
+    _status = Instrument.measurement(":OUTP?",
+        """ Read power supply current output status. """,
     )
 
     def enable(self):
@@ -96,7 +94,7 @@ class KeysightN5767A(Instrument):
     def is_enabled(self):
         """ Returns True if the current supply is enabled.
         """
-        return self._status == "1"
+        return bool(self._status)
 
     def __init__(self, adapter, **kwargs):
         super(KeysightN5767A, self).__init__(
@@ -110,3 +108,13 @@ class KeysightN5767A(Instrument):
                 converter='f',
                 separator=','
             )
+
+    def check_errors(self):
+        """ Read all errors from the instrument."""
+        while True:
+            err = self.values(":SYST:ERR?")
+            if int(err[0]) != 0:
+                errmsg = "Keysight N5767A: %s: %s" % (err[0],err[1])
+                log.error(errmsg + '\n')
+            else:
+                break
