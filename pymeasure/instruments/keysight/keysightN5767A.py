@@ -24,16 +24,16 @@
 
 
 import logging
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (
-    truncated_range, truncated_discrete_set,
-    strict_discrete_set
-)
+from pymeasure.instruments.validators import truncated_range
+
 
 from pymeasure.adapters import VISAAdapter
+
 
 class KeysightN5767A(Instrument):
     """ Represents the Keysight N5767A Power supply
@@ -56,7 +56,7 @@ class KeysightN5767A(Instrument):
 
     current = Instrument.measurement(":MEAS:CURR?",
         """ Reads a setting current in Amps. """
-    )
+     )
 
     ###############
     # Voltage (V) #
@@ -74,16 +74,27 @@ class KeysightN5767A(Instrument):
         """ Reads a DC voltage measurement in Volts. """
      )
 
-    ###############
-    # State (OFF/ON) #
-    ###############
-    state = Instrument.control(
-        ":OUTP?", ":OUTP %s",
-        """ Power supply output state, it can be set ON or OFF. """,
-        validator= strict_discrete_set,
-        values=['ON', 'OFF']
+    ##############
+    #_status (0/1) #
+    ##############
+    _status = Instrument.measurement(":OUTP?",
+        """ Read power supply current output status. """,
     )
 
+    def enable(self):
+        """ Enables the flow of current.
+        """
+        self.write(":OUTP 1")
+
+    def disable(self):
+        """ Disables the flow of current.
+        """
+        self.write(":OUTP 0")
+
+    def is_enabled(self):
+        """ Returns True if the current supply is enabled.
+        """
+        return bool(self._status)
 
     def __init__(self, adapter, **kwargs):
         super(KeysightN5767A, self).__init__(
@@ -98,7 +109,6 @@ class KeysightN5767A(Instrument):
                 separator=','
             )
 
-    # TODO: Clean up error checking
     def check_errors(self):
         """ Read all errors from the instrument."""
         while True:
@@ -108,4 +118,3 @@ class KeysightN5767A(Instrument):
                 log.error(errmsg + '\n')
             else:
                 break
-
