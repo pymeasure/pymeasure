@@ -22,25 +22,28 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .mock import Mock
-from .resources import list_resources
-from .validators import discreteTruncate
+from pymeasure.instruments import Instrument
 
-from . import advantest
-from . import agilent
-from . import ametek
-from . import anritsu
-from . import danfysik
-from . import fwbell
-from . import hp
-from . import keithley
-from . import lakeshore
-from . import lecroy
-from . import parker
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import thorlabs
-from . import yokogawa
+class Agilent34461A(Instrument):
+    """
+    Represent the HP/Agilent/Keysight 34410A and related multimeters.
+
+    Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance, resistance_4w
+    """
+    #only the most simple functions are implemented
+    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
+    
+    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
+    
+    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
+    
+    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
+    
+    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
+    
+    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
+    
+    def __init__(self, adapter, **kwargs):
+        super(Agilent34461A, self).__init__(
+            adapter, "HP/Agilent/Keysight 34461A Multimiter", **kwargs
+        )

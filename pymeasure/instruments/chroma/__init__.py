@@ -22,7 +22,4 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters import VISAAdapter
-
-def test_visa_version():
-  assert VISAAdapter.has_supported_version()
+from .chroma62000p import Chroma62024p6008

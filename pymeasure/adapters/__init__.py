@@ -38,3 +38,8 @@ try:
     from pymeasure.adapters.prologix import PrologixAdapter
 except ImportError:
     log.warning("PySerial library could not be loaded")
+
+try:
+    from pymeasure.adapters.activedso import ActiveDSOAdapter
+except ImportError:
+    log.warning("ActiveX DSO win32 library could not be loaded")

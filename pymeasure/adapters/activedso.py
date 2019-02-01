@@ -22,119 +22,87 @@
 # THE SOFTWARE.
 #
 
+
+import time
+
 import logging
 
-import serial
-import numpy as np
+import win32com.client  # imports the pywin32 library
 
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+DEFAULT_BUFFER_SIZE = 1000
 
-class SerialAdapter(Adapter):
-    """ Adapter class for using the Python Serial package to allow
-    serial communication to instrument
 
-    :param port: Serial port
-    :param kwargs: Any valid key-word argument for serial.Serial
+class ActiveDSOAdapter(Adapter):
+    """
+    Adapter for LeCroy scope implementations, it use and activeX layers for Visa communication
+    Only TCP implemented for the moment, ActiveX can be extended to GPIB
+
+    :param address: IP address
+    :param rw_delay: read/write delay
     """
 
-    def __init__(self, port, **kwargs):
-        if isinstance(port, serial.Serial):
-            self.connection = port
+    def __init__(self, address=None, rw_delay=None):
+        """The constructor.
+            initialize and configure activeX port class
+        """
+        self.connection = win32com.client.Dispatch("LeCroy.ActiveDSOCtrl.1")  # Load ActiveDSO control
+        self.address = address
+        if rw_delay:
+            self.rw_delay = rw_delay
         else:
-            self.connection = serial.Serial(port, **kwargs)
+            self.rw_delay = 0.1
 
     def __del__(self):
         """ Ensures the connection is closed upon deletion
         """
-        self.connection.close()
-
-    def write(self, command):
-        """ Writes a command to the instrument
-
-        :param command: SCPI command string to be sent to the instrument
-        """
-        self.connection.write(command.encode())  # encode added for Python 3
-
-    def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
-
-        :returns: String ASCII response of the instrument.
-        """
-        return b"\n".join(self.connection.readlines()).decode()
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
-
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
-        """
-        self.connection.write(command.encode())
-        binary = self.connection.read().decode()
-        header, data = binary[:header_bytes], binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
+        self.connection.Disconnect()
 
     def __repr__(self):
-        return "<SerialAdapter(port='%s')>" % self.connection.port
+        if self.address is not None:
+            return "<ActiveXLeCroyAdapter(address=%d)>" % (self.address)
+        else:
+            return False
 
+    def connect(self):
+        if self.address:
+            self.connection.MakeConnection("IP:" + self.address)  # open the stream
+        else:
+            return False
 
-class ActiveXLeCroyAdapter():
-"""
-Only TCP implemntend for the moment, ActiveX can be extended to GPIB
-"""
-    def __init__(self, protocol = "TCPIP", address = None, port = None,
-                 timeout = DEFAULT_TIMEOUT):
-        """The constructor.
-            initialize and configure activeX port class
+    def disconnect(self):
+        if self.address:
+            self.connection.Disconnect()  # close the stream
+        else:
+            return False
+
+    def ask(self, command):
+        """ Ask the method.
         """
-        self.protocol = protocol
-        self.address = address
-        self.port = port
-        self.timeout = timeout
-        # Load ActiveDSO control
-        self.tty = win32com.client.Dispatch("LeCroy.ActiveDSOCtrl.1")
-        self.set_timeout(timeout)
-    def about_port(self):
-        """ Present the ActiveX control's About box"""
-        self.tty.AboutBox()
-    def is_open(self):
-        """Documentation for a method."""
-        print(debug_msg.TBD_MSG)
-    def get_address(self):
-        """Documentation for a method."""
-        return self.address
-    def get_timeout(self):
-        """Documentation for a method."""
-        return self.timeout
-    def set_timeout(self, timeout):
-        """Documentation for a method."""
-        print(timeout)
-        print(debug_msg.TBD_MSG)
-    def open_stream(self):
-        """Substitute your choice of IP address here"""
-        self.tty.MakeConnection("IP:"+self.address)
-    def close_stream(self):
-        """Documentation for a method."""
-        self.tty.Disconnect()
-    def set_timeout_ms(self, timeout):
-        """Documentation for a method."""
-        print(timeout)
-        print(debug_msg.TBD_MSG)
-    def read_block(self, block_size):
-        """Documentation for a method."""
-        stream = self.tty.ReadString(block_size)
+        self.write(command)
+        if self.rw_delay is not None:
+            time.sleep(self.rw_delay)
+        return self.read()
+
+    def write(self, command):
+        """ Writes method
+        """
+        if self.address is not None:
+            self.connection.WriteString(command, 1)
+
+    def read(self):
+        """ Reads method
+        """
+        if self.address is not None:
+            stream = self.connection.ReadString(DEFAULT_BUFFER_SIZE)
         return stream
-    def write_string(self, stream):
-        """Documentation for a method."""
-        self.tty.WriteString(stream, 1)
-        time.sleep(DEFAULT_WAIT_TIME)
-    def query(self, cmd, read_buffer_size = DEFAULT_BUFFER_SIZE):
-        """Documentation for a method."""
-        self.write_string(cmd)
-        return self.read_block(read_buffer_size)
+
+    def aboutbox(self):
+        """ The AboutBox method displays a dialog showing the ActiveDSO version number..
+        """
+        self.connection.AboutBox()
+        return True

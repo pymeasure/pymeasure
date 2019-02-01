@@ -22,173 +22,23 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import ActiveDSOInstrument
 
 
-class WaveRunner606Zi(Instrument):
+class WaveRunner606Zi(ActiveDSOInstrument):
     """ Represents the WaveRunner 606Zi Oscilloscope
     and provides a high-level for interacting with the instrument
     """
-
-    id = Instrument.measurement(
-        "*IDN?", """ Reads the instrument identification """
-    )
-
-    query_options = Instrument.measurement(
-        "*OPT?", "" "Query the scope options. """
-    )
-
-    timespan = Instrument.control(
-        "TIME_DIV?", "TIME_DIV %g",
-        """ A floating point property that controls the timespan of the horizontal axis
-        This property can be set.
-        """
-    )
-
-    class Measurement(object):
-
-        SOURCE_VALUES = ['C1', 'C2', 'C3', 'C4', 'F1', 'F2', 'F3', 'F4']
-
-        UNIT_VALUES = ['V', 's', 'Hz']
-
-        def __init__(self, parent):
-            self.parent = parent
-
-        def amplitude(self, source):
-            """Get signal amplitude"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? AMPL'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def area(self, source):
-            """Get signal integral"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? area'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def cyclesnumber(self, source):
-            """Get the number of signal cycle"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? CYCL'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def falltime90to10(self, source):
-            """Get fall time from 90% to 10% """
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? FALL'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def frequency(self, source):
-            """Get signal frequency"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? FREQ'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def max(self, source):
-            """Get signal maximimum"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? MAX'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def mean(self, source):
-            """Get signal mean"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? MEAN'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def min(self, source):
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? MIN'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def peak2peak(self, source):
-            """Get signal peak to peak value"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? PKPK'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def period(self, source):
-            """Get signal period"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? PER'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def risetime10to90(self, source):
-            """Get rise time from 10% to 90% """
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? RISE'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def rms(self, source):
-            """Get signal RMS value"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? RMS'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def std_dev(self, source):
-            """Get signal stansard deviation"""
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? SDEV'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-            return value
-
-        def top(self, source):
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                value = self.parent.ask("%s" % (source + ':PAVA? TOP'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-            return value
-
-        def width(self, source):
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? WID'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-        def width_neg(self, source):
-            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
-                self.parent.ask("%s" % (source + ':PAVA? widthn'))
-            else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
-                    self.parent, source))
-
-
-
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, address):
         super(WaveRunner606Zi, self).__init__(
-            resourceName,
-            "LeCroy WaveRunner 606Zi Oscilloscope",
-            **kwargs
+            address=address,
+            name="LeCroy WaveRunner 606Zi Oscilloscope",
         )
+
         self.measurement = WaveRunner606Zi.Measurement(self)
+
+    def disconnect(self):
+        return super(WaveRunner606Zi, self).disconnect()
 
     def recall_setup_from_file(self, filename):
         """ Command to setup osci from file based on filename
@@ -199,4 +49,177 @@ class WaveRunner606Zi(Instrument):
         # TODO: must be new implemented self.port.tty.StoreHardcopyToFile('TIFF', '', filename)
         # WaveRunner606Zi.print_screen_tif= Instrument.control()
 
+    id = ActiveDSOInstrument.id
+
+    query_options = ActiveDSOInstrument.measurement(
+        "*OPT?", "" "Query the scope options. """
+    )
+
+    timespan = ActiveDSOInstrument.control(
+        "TIME_DIV?", "TIME_DIV %g",
+        """ A floating point property that controls the timespan of the horizontal axis
+        This property can be set.
+        """
+    )
+
+    def get_measurement_Px(self, num):
+        """Use special access to Lecroy with VBS
+        get the value of the ma"""
+        value = self.adapter.ask("VBS? 'return=app.Measure.P%d.Out.Result.Value' " % num)
+        return value
+
+    class Measurement(object):
+
+        SOURCE_VALUES = ['C1', 'C2', 'C3', 'C4', 'F1', 'F2', 'F3', 'F4']
+
+        def __init__(self, parent):
+            self.parent = parent
+
+        def amplitude(self, source):
+            """Get signal amplitude"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? AMPL'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def area(self, source):
+            """Get signal integral"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? area'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def cyclesnumber(self, source):
+            """Get the number of signal cycle"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? CYCL'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def falltime90to10(self, source):
+            """Get fall time from 90% to 10% """
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? FALL'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def frequency(self, source):
+            """Get signal frequency"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? FREQ'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def max(self, source):
+            """Get signal maximimum"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? MAX'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def mean(self, source):
+            """Get signal mean"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? MEAN'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def min(self, source):
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? MIN'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def peak2peak(self, source):
+            """Get signal peak to peak value"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? PKPK'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def period(self, source):
+            """Get signal period"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? PER'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def risetime10to90(self, source):
+            """Get rise time from 10% to 90% """
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? RISE'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def rms(self, source):
+            """Get signal RMS value"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? RMS'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def std_dev(self, source):
+            """Get signal stansard deviation"""
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? SDEV'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def top(self, source):
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? TOP'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def width(self, source):
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? WID'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def width_neg(self, source):
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? widthn'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
+
+        def duty(self, source):
+            if source in WaveRunner606Zi.Measurement.SOURCE_VALUES:
+                value = self.parent.ask("%s" % (source + ':PAVA? DUTY'))
+            else:
+                raise ValueError("Invalid source ('%s') provided to %s" % (
+                    self.parent, source))
+            return float(value.split(',')[1])
 

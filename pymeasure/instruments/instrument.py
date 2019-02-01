@@ -29,6 +29,7 @@ import numpy as np
 
 from pymeasure.adapters import FakeAdapter
 from pymeasure.adapters.visa import VISAAdapter
+from pymeasure.adapters import ActiveDSOAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -356,4 +357,219 @@ class FakeInstrument(Instrument):
                                   set_process=set_process,
                                   check_set_errors=check_set_errors,
                                   check_get_errors=check_get_errors,
-                                  **kwargs)
+                                 **kwargs)
+
+
+class ActiveDSOInstrument(object):
+    """ This provides the base class for all Instruments, which is
+    independent of the particular Adapter used to connect for
+    communication to the instrument. It provides basic SCPI commands
+    by default, but can be toggled with :code:`includeSCPI`.
+
+    :param name: A string name
+    :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    """
+
+    # noinspection PyPep8Naming
+    def __init__(self, address, name, includeSCPI=True):
+        if address is not None:
+            adapter = ActiveDSOAdapter(address=address, rw_delay=0.1)
+            self.adapter = adapter
+        else:
+            print("Invalid Adapter provided for Instrument since ActiveDSO is not present")
+
+        self.name = name
+        self.SCPI = includeSCPI
+
+        class Object(object):
+            pass
+
+        self.get = Object()
+
+        # TODO: Determine case basis for the addition of these methods
+        if includeSCPI:
+            # Basic SCPI commands
+            self.status = self.measurement("*STB?",
+                                           """ Returns the status of the instrument """)
+            self.complete = self.measurement("*OPC?",
+                                             """ TODO: Add this doc """)
+        self.adapter.connect()
+        self.isDisconnect = False
+        log.info("Initializing %s." % self.name)
+
+    @property
+    def id(self):
+        """ Requests and returns the identification of the instrument. """
+        if self.SCPI:
+            return self.adapter.ask("*IDN?").strip()
+        else:
+            return "Warning: Property not implemented."
+
+    # Wrapper functions for the Adapter object
+    def ask(self, command):
+        """ Writes the command to the instrument through the adapter
+        and returns the read response.
+
+        :param command: command string to be sent to the instrument
+        """
+        return self.adapter.ask(command)
+
+    def write(self, command):
+        """ Writes the command to the instrument through the adapter.
+
+        :param command: command string to be sent to the instrument
+        """
+        self.adapter.write(command)
+
+    def read(self):
+        """ Reads from the instrument through the adapter and returns the
+        response.
+        """
+        return self.adapter.read()
+
+
+    @staticmethod
+    def control(get_command, set_command, docs,
+                validator=lambda v, vs: v, values=(), map_values=False,
+                get_process=lambda v: v, set_process=lambda v: v,
+                check_set_errors=False, check_get_errors=False,
+                **kwargs):
+        """Returns a property for the class based on the supplied
+        commands. This property may be set and read from the
+        instrument.
+
+        :param get_command: A string command that asks for the value
+        :param set_command: A string command that writes the value
+        :param docs: A docstring that will be included in the documentation
+        :param validator: A function that takes both a value and a group of valid values
+                          and returns a valid value, while it otherwise raises an exception
+        :param values: A list, tuple, range, or dictionary of valid values, that can be used
+                       as to map values if :code:`map_values` is True.
+        :param map_values: A boolean flag that determines if the values should be
+                          interpreted as a map
+        :param get_process: A function that take a value and allows processing
+                            before value mapping, returning the processed value
+        :param set_process: A function that takes a value and allows processing
+                            before value mapping, returning the processed value
+        :param check_set_errors: Toggles checking errors after setting
+        :param check_get_errors: Toggles checking errors after getting
+        """
+
+        if map_values and isinstance(values, dict):
+            # Prepare the inverse values for performance
+            inverse = {v: k for k, v in values.items()}
+
+        def fget(self):
+            vals = self.values(get_command, **kwargs)
+            if check_get_errors:
+                self.check_errors()
+            if len(vals) == 1:
+                value = get_process(vals[0])
+                if not map_values:
+                    return value
+                elif isinstance(values, (list, tuple, range)):
+                    return values[int(value)]
+                elif isinstance(values, dict):
+                    return inverse[value]
+                else:
+                    raise ValueError(
+                        'Values of type `{}` are not allowed '
+                        'for Instrument.control'.format(type(values))
+                    )
+            else:
+                vals = get_process(vals)
+                return vals
+
+        def fset(self, value):
+            value = set_process(validator(value, values))
+            if not map_values:
+                pass
+            elif isinstance(values, (list, tuple, range)):
+                value = values.index(value)
+            elif isinstance(values, dict):
+                value = values[value]
+            else:
+                raise ValueError(
+                    'Values of type `{}` are not allowed '
+                    'for Instrument.control'.format(type(values))
+                )
+            self.write(set_command % value)
+            if check_set_errors:
+                self.check_errors()
+
+        # Add the specified document string to the getter
+        fget.__doc__ = docs
+
+        return property(fget, fset)
+
+    @staticmethod
+    def measurement(get_command, docs, values=(), map_values=None,
+                    get_process=lambda v: v, command_process=lambda c: c,
+                    check_get_errors=False, **kwargs):
+        """ Returns a property for the class based on the supplied
+        commands. This is a measurement quantity that may only be
+        read from the instrument, not set.
+
+        :param get_command: A string command that asks for the value
+        :param docs: A docstring that will be included in the documentation
+        :param values: A list, tuple, range, or dictionary of valid values, that can be used
+                       as to map values if :code:`map_values` is True.
+        :param map_values: A boolean flag that determines if the values should be
+                          interpreted as a map
+        :param get_process: A function that take a value and allows processing
+                            before value mapping, returning the processed value
+        :param command_process: A function that take a command and allows processing
+                            before executing the command, for both getting and setting
+        :param check_get_errors: Toggles checking errors after getting
+        """
+
+        if map_values and isinstance(values, dict):
+            # Prepare the inverse values for performance
+            inverse = {v: k for k, v in values.items()}
+
+        def fget(self):
+            vals = self.values(command_process(get_command), **kwargs)
+            if check_get_errors:
+                self.check_errors()
+            if len(vals) == 1:
+                value = get_process(vals[0])
+                if not map_values:
+                    return value
+                elif isinstance(values, (list, tuple, range)):
+                    return values[int(value)]
+                elif isinstance(values, dict):
+                    return inverse[value]
+                else:
+                    raise ValueError(
+                        'Values of type `{}` are not allowed '
+                        'for Instrument.measurement'.format(type(values))
+                    )
+            else:
+                return get_process(vals)
+
+        # Add the specified document string to the getter
+        fget.__doc__ = docs
+
+        return property(fget)
+
+    # TODO: Determine case basis for the addition of this method
+    def clear(self):
+        """ Clears the instrument status byte
+        """
+        self.write("*CLS")
+
+    # TODO: Determine case basis for the addition of this method
+    def reset(self):
+        """ Resets the instrument. """
+        self.write("*RST")
+
+    def disconnect(self):
+        """Brings the instrument to a safe and stable state"""
+        self.adapter.disconnect()
+        self.isDisconnect = True
+        log.info("Shutting down %s" % self.name)
+
+    def check_errors(self):
+        """Return any accumulated errors. Must be reimplemented by subclasses.
+        """
+        pass
