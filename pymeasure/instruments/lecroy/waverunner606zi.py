@@ -68,6 +68,12 @@ class WaveRunner606Zi(ActiveDSOInstrument):
         value = self.adapter.ask("VBS? 'return=app.Measure.P%d.Out.Result.Value' " % num)
         return value
 
+    def print_screen_autoname(self):
+        """this fucntion print the screen to HDD in Oscillo
+        I met some problem with StoreHardcopyToFile due to oscillo crash"""
+        #self.adapter.connection.StoreHardcopyToFile("TIFF", "", "D:\\HardCopy\\TIFFImage.tif")
+        self.adapter.write("VBS? 'app.Hardcopy.Print' ")
+
     class Measurement(object):
 
         SOURCE_VALUES = ['C1', 'C2', 'C3', 'C4', 'F1', 'F2', 'F3', 'F4']

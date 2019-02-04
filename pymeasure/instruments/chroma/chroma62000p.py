@@ -152,5 +152,5 @@ class Chroma62024p6008(Instrument):
         # ramps either the current or voltage to zero
         self.ramp_to_current(0.0, steps=25)
         self.output_voltage_level = 0.0
-        self.output_disable
+        self.output_disable()
         self.shutdown()
