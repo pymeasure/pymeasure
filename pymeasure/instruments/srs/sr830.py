@@ -23,7 +23,8 @@
 #
 
 from pymeasure.instruments import Instrument, discreteTruncate
-from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, \
+    truncated_discrete_set, truncated_range
 
 import numpy as np
 import time
@@ -125,6 +126,50 @@ class SR830(Instrument):
         values=FILTER_SLOPES,
         map_values=True
     )
+
+    aux1_out = Instrument.control(
+        "AUXV?1;", "AUXV1,%f;",
+        """ A floating point property that controls the output of Aux output 1 in
+        Volts, taking values between -10.5 V and +10.5 V.
+        This property can be set.""",
+        validator=truncated_range,
+        values=[-10.5, 10.5]
+    )
+    # For consistency with other lock-in instrument classes
+    dac1 = aux1_out
+
+    aux2_out = Instrument.control(
+        "AUXV?2;", "AUXV2,%f;",
+        """ A floating point property that controls the output of Aux output 2 in
+        Volts, taking values between -10.5 V and +10.5 V.
+        This property can be set.""",
+        validator=truncated_range,
+        values=[-10.5, 10.5]
+    )
+    # For consistency with other lock-in instrument classes
+    dac2 = aux2_out
+
+    aux3_out = Instrument.control(
+        "AUXV?3;", "AUXV3,%f;",
+        """ A floating point property that controls the output of Aux output 3 in
+        Volts, taking values between -10.5 V and +10.5 V.
+        This property can be set.""",
+        validator=truncated_range,
+        values=[-10.5, 10.5]
+    )
+    # For consistency with other lock-in instrument classes
+    dac3 = aux3_out
+
+    aux4_out = Instrument.control(
+        "AUXV?4;", "AUXV4,%f;",
+        """ A floating point property that controls the output of Aux output 4 in
+        Volts, taking values between -10.5 V and +10.5 V.
+        This property can be set.""",
+        validator=truncated_range,
+        values=[-10.5, 10.5]
+    )
+    # For consistency with other lock-in instrument classes
+    dac4 = aux4_out
 
     def __init__(self, resourceName, **kwargs):
         super(SR830, self).__init__(
