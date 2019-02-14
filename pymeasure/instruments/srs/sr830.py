@@ -127,7 +127,7 @@ class SR830(Instrument):
         map_values=True
     )
 
-    aux1_out = Instrument.control(
+    aux_out_1 = Instrument.control(
         "AUXV?1;", "AUXV1,%f;",
         """ A floating point property that controls the output of Aux output 1 in
         Volts, taking values between -10.5 V and +10.5 V.
@@ -136,9 +136,9 @@ class SR830(Instrument):
         values=[-10.5, 10.5]
     )
     # For consistency with other lock-in instrument classes
-    dac1 = aux1_out
+    dac1 = aux_out_1
 
-    aux2_out = Instrument.control(
+    aux_out_2 = Instrument.control(
         "AUXV?2;", "AUXV2,%f;",
         """ A floating point property that controls the output of Aux output 2 in
         Volts, taking values between -10.5 V and +10.5 V.
@@ -147,9 +147,9 @@ class SR830(Instrument):
         values=[-10.5, 10.5]
     )
     # For consistency with other lock-in instrument classes
-    dac2 = aux2_out
+    dac2 = aux_out_2
 
-    aux3_out = Instrument.control(
+    aux_out_3 = Instrument.control(
         "AUXV?3;", "AUXV3,%f;",
         """ A floating point property that controls the output of Aux output 3 in
         Volts, taking values between -10.5 V and +10.5 V.
@@ -158,9 +158,9 @@ class SR830(Instrument):
         values=[-10.5, 10.5]
     )
     # For consistency with other lock-in instrument classes
-    dac3 = aux3_out
+    dac3 = aux_out_3
 
-    aux4_out = Instrument.control(
+    aux_out_4 = Instrument.control(
         "AUXV?4;", "AUXV4,%f;",
         """ A floating point property that controls the output of Aux output 4 in
         Volts, taking values between -10.5 V and +10.5 V.
@@ -169,7 +169,8 @@ class SR830(Instrument):
         values=[-10.5, 10.5]
     )
     # For consistency with other lock-in instrument classes
-    dac4 = aux4_out
+    dac4 = aux_out_4
+
 
     def __init__(self, resourceName, **kwargs):
         super(SR830, self).__init__(
