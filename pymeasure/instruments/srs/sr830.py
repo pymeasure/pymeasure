@@ -171,6 +171,33 @@ class SR830(Instrument):
     # For consistency with other lock-in instrument classes
     dac4 = aux_out_4
 
+    aux_in_1 = Instrument.measurement(
+        "OAUX?1;",
+        """ Reads the Aux input 1 value in Volts with 1/3 mV resolution. """
+    )
+    # For consistency with other lock-in instrument classes
+    adc1 = aux_in_1
+
+    aux_in_2 = Instrument.measurement(
+        "OAUX?2;",
+        """ Reads the Aux input 2 value in Volts with 1/3 mV resolution. """
+    )
+    # For consistency with other lock-in instrument classes
+    adc2 = aux_in_2
+
+    aux_in_3 = Instrument.measurement(
+        "OAUX?3;",
+        """ Reads the Aux input 3 value in Volts with 1/3 mV resolution. """
+    )
+    # For consistency with other lock-in instrument classes
+    adc3 = aux_in_3
+
+    aux_in_4 = Instrument.measurement(
+        "OAUX?4;",
+        """ Reads the Aux input 4 value in Volts with 1/3 mV resolution. """
+    )
+    # For consistency with other lock-in instrument classes
+    adc4 = aux_in_4
 
     def __init__(self, resourceName, **kwargs):
         super(SR830, self).__init__(
