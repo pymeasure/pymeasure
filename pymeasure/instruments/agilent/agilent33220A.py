@@ -45,7 +45,7 @@ class Agilent33220A(Instrument):
         """ A floating point property that controls the frequency of the output
         waveform in Hz, from 500e-6 (500 uHz) to 5e+6 (5 MHz). Can be set. """,
         validator=strict_range,
-        values=[500e-6, 5e+6]
+        values=[500e-6, 5e+6],
     )
 
     voltage = Instrument.control(
@@ -53,7 +53,7 @@ class Agilent33220A(Instrument):
         """ A floating point property that controls the voltage amplitude of the
         output waveform in V, from 1e-3 V to 10 V. Can be set. """,
         validator=strict_range,
-        values=[10e-3, 10]
+        values=[10e-3, 10],
     )
 
     voltage_offset = Instrument.control(
@@ -63,7 +63,7 @@ class Agilent33220A(Instrument):
         voltage amplitude (maximum offset = (10 - voltage) / 2). Can be set.
         """,
         validator=strict_range,
-        values=[-4.995, +4.995]
+        values=[-4.995, +4.995],
     )
 
     voltage_high = Instrument.control(
@@ -71,8 +71,8 @@ class Agilent33220A(Instrument):
         """ A floating point property that controls the upper voltage of the
         output waveform in V, from -4.990 V to 5 V (must be higher than low
         voltage). Can be set. """,
-        # validator=strict_range,
-        # values=[..., ...]
+        validator=strict_range,
+        values=[-4.99, 5],
     )
 
     voltage_low = Instrument.control(
@@ -80,8 +80,8 @@ class Agilent33220A(Instrument):
         """ A floating point property that controls the lower voltage of the
         output waveform in V, from -5 V to 4.990 V (must be lower than high
         voltage). Can be set. """,
-        # validator=strict_range,
-        # values=[..., ...]
+        validator=strict_range,
+        values=[-5, 4.99],
     )
 
     square_dutycycle = Instrument.control(
@@ -92,11 +92,63 @@ class Agilent33220A(Instrument):
         values=[0, 100],
     )
 
-# FUNCtion:RAMP:SYMMetry
+    ramp_symmetry = Instrument.control(
+        "FUNC:RAMP:SYMM?", "FUNC:RAMP:SYMM %f",
+        """ A floating point property that controls the symmetry percentage
+        for the ramp waveform. Can be set. """,
+        validator=strict_range,
+        values=[0, 100],
+    )
+
+    pulse_period = Instrument.control(
+        "PULS:PER?", "PULS:PER %f",
+        """ A floating point property that controls the period of a pulse
+        waveform function in seconds, ranging from ... s to ... s. Can be set
+        and overwrites the frequency for *all* waveforms. """,
+        # validator=strict_range,
+        # values=[0, 100],
+    )
+
+    pulse_hold = Instrument.control(
+        "FUNC:PULS:HOLD?", "FUNC:PULS:HOLD %s",
+        """ A string property that controls if either the pulse width or the
+        duty cycle is retained when changing the period or frequency of the
+        waveform. Can be set to: WIDT<H> or DCYCL<E>. """,
+        validator=strict_discrete_set,
+        values=["WIDT", "WIDTH", "DCYCL", "DCYCLE"],
+    )
+
+    pulse_width = Instrument.control(
+        "FUNC:PULS:WIDT?", "FUNC:PULS:WIDT %f",
+        """ A floating point property that controls the width of a pulse
+        waveform function in seconds, ranging from ... s to ... s. Can be set.
+        """,
+        # validator=strict_range,
+        # values=[0, 100],
+    )
+
+    pulse_dutycycle = Instrument.control(
+        "FUNC:PULS:DCYCL?", "FUNC:PULS:DCYCL %f",
+        """ A floating point property that controls the duty cycle of a pulse
+        waveform function in percent. Can be set. """,
+        validator=strict_range,
+        values=[0, 100],
+    )
+
+    pulse_transition = Instrument.control(
+        "FUNC:PULS:TRAN?", "FUNC:PULS:TRAN %f",
+        """ A floating point property that controls the duty cycle of a pulse
+        waveform function in percent. Can be set. """,
+        # validator=strict_range,
+        # values=[0, 100],
+    )
+
+
+# PULSe:PERiod
+# FUNCtion:PULSe:HOLD {WIDTh/DCYCle}
 # FUNCtion:PULSe:WIDTh <seconds>
-# FUNCtion:PULSe:DCYCLe <percent>
 # FUNCtion:PULSe:TRANsition <seconds>
-# FUNCtion:PULSe:
+
 # OUTPut
 # OUTPut:LOAD ???
 # OUTPut:POLarity {NORMal / INVerted}
