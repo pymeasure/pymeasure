@@ -126,6 +126,13 @@ class SR830(Instrument):
         values=FILTER_SLOPES,
         map_values=True
     )
+    harmonic = Instrument.control(
+        "HARM?", "HARM%d",
+        """ An integer property that controls the harmonic that is measured.
+        Allowed values are 1 to 19999. Can be set. """,
+        validator=strict_discrete_set,
+        values=range(1, 20000),
+    )
 
     aux_out_1 = Instrument.control(
         "AUXV?1;", "AUXV1,%f;",
