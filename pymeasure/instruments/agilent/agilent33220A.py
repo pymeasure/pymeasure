@@ -147,21 +147,57 @@ class Agilent33220A(Instrument):
         values=[5e-9, 100e-9],
     )
 
-# OUTPut
-# OUTPut:LOAD ???
-# OUTPut:POLarity {NORMal / INVerted}
+# OUTPut {OFF / ON} / ? {0:OFF, 1:ON}
 
-# BURSt:MODE {TRIGgered / GATed}
-# BURSt:NCYCLes
+    output = Instrument.control(
+        "OUTP?", "OUTP %s",
+        """ A property that turns on or off the output of the function
+        generator. """)
 
-# TRIG
-# OUTput:TRIGger {OFF / ON}
+# BURSt:STATe {OFF / ON} / ? {0:OFF, 1:ON}
 
-# SYSTem:LOCal
-# SYSTem:REMote
+    burst_mode = Instrument.control(
+        "BURS:MODE?", "BURS:MODE %s",
+        """ A string property that controls the burst mode. Valid values
+        are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
+        validator=strict_discrete_set,
+        values=["TRIG", "TRIGGERED", "GAT", "GATED"],
+    )
+
+    burst_ncycles = Instrument.control(
+        "BURS:NCYCL?", "BURS:NCYCL %d",
+        """ An integer property that sets the number of cycles to be output
+        when a burst is triggered. Valid values are 1 to 50000. This can be
+        set. """,
+        validator=strict_discrete_set,
+        values=range(1, 50001),
+    )
+
+    def trigger(self):
+        """ Send a trigger signal to the function generator. """
+        self.write("TRIG")
+
+    trigger_source = Instrument.control(
+        "TRIG:SOUR?", "TRIG:SOUR %s",
+        """ A string property that controls the trigger source. Valid values
+        are: IMM<EDIATE>, EXT<ERNAL>, BUS. This setting can be set. """,
+        validator=strict_discrete_set,
+        values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
+    )
+
+# OUTput:TRIGger {OFF / ON} / ? {0:OFF, 1:ON}
+
+    remote_local_state = Instrument.setting(
+        "SYST:COMM:RLST %s",
+        """ A string property that controls the remote/local state of the
+        function generator. Valid values are: LOC<AL>, REM<OTE>, RWL<OCK>.
+        This setting can only be set. """,
+        validator=strict_discrete_set,
+        values=["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],
+    )
 
     def check_errors(self):
-        """ Read all errors from the instrument."""
+        """ Read all errors from the instrument. """
         while True:
             err = self.values("SYST:ERR?")
             if int(err[0]) != 0:
