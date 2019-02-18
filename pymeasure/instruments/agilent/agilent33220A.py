@@ -103,10 +103,12 @@ class Agilent33220A(Instrument):
     pulse_period = Instrument.control(
         "PULS:PER?", "PULS:PER %f",
         """ A floating point property that controls the period of a pulse
-        waveform function in seconds, ranging from ... s to ... s. Can be set
-        and overwrites the frequency for *all* waveforms. """,
-        # validator=strict_range,
-        # values=[0, 100],
+        waveform function in seconds, ranging from 200 ns to 2000 s. Can be set
+        and overwrites the frequency for *all* waveforms. If the period is
+        shorter than the pulse width + the edge time, the edge time and pulse
+        width will be adjusted accordingly. """,
+        validator=strict_range,
+        values=[2e-9, 2e3],
     )
 
     pulse_hold = Instrument.control(
@@ -121,10 +123,10 @@ class Agilent33220A(Instrument):
     pulse_width = Instrument.control(
         "FUNC:PULS:WIDT?", "FUNC:PULS:WIDT %f",
         """ A floating point property that controls the width of a pulse
-        waveform function in seconds, ranging from ... s to ... s. Can be set.
-        """,
-        # validator=strict_range,
-        # values=[0, 100],
+        waveform function in seconds, ranging from 20 ns to 2000 s, within a
+        set of restrictions depending on the period. Can be set. """,
+        validator=strict_range,
+        values=[2e-9, 2e3],
     )
 
     pulse_dutycycle = Instrument.control(
@@ -137,17 +139,13 @@ class Agilent33220A(Instrument):
 
     pulse_transition = Instrument.control(
         "FUNC:PULS:TRAN?", "FUNC:PULS:TRAN %f",
-        """ A floating point property that controls the duty cycle of a pulse
-        waveform function in percent. Can be set. """,
-        # validator=strict_range,
-        # values=[0, 100],
+        """ A floating point property that controls the the edge time in
+        seconds for both the rising and falling edges. It is defined as the
+        time between 0.1 and 0.9 of the threshold. Valid values are between
+        5 ns to 100 ns. Can be set. """,
+        validator=strict_range,
+        values=[5e-9, 100e-9],
     )
-
-
-# PULSe:PERiod
-# FUNCtion:PULSe:HOLD {WIDTh/DCYCle}
-# FUNCtion:PULSe:WIDTh <seconds>
-# FUNCtion:PULSe:TRANsition <seconds>
 
 # OUTPut
 # OUTPut:LOAD ???
