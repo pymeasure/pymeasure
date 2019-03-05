@@ -31,6 +31,25 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class Agilent33220A(Instrument):
+    """Represents the Agilent 33220A Arbitrary Waveform Generator.
+
+    .. code-block:: python
+
+        wfg = Agilent33220A("GPIB::10") # Default channel for the ITC503
+
+        wfg.function = "SINUSOID"       # Sets a sine waveform
+        wfg.frequency = 4.7e3           # Sets the frequency to 4.7 kHz
+        wfg.voltage = 1                 # Set amplitude of 1 V
+
+        wfg.burst = TRUE                # Enable burst mode
+        wfg.burst_ncycles = 10          # A burst will consist of 10 cycles
+        wfg.burst_mode = "TRIGGERED"    # A burst will be applied on a trigger
+        wfg.trigger_source = "BUS"      # A burst will be triggered on TRG*
+
+        wfg.output = TRUE               # Enable output of waveform generator
+        wfg.trigger()                   # Trigger a burst
+
+    """
     function = Instrument.control(
         "FUNC?", "FUNC %s",
         """ A string property that controls the output waveform. Can be set to:
@@ -43,9 +62,10 @@ class Agilent33220A(Instrument):
     frequency = Instrument.control(
         "FREQ?", "FREQ %s",
         """ A floating point property that controls the frequency of the output
-        waveform in Hz, from 500e-6 (500 uHz) to 5e+6 (5 MHz). Can be set. """,
+        waveform in Hz, from 1e-6 (1 uHz) to 20e+6 (20 MHz), depending on the
+        specified function. Can be set. """,
         validator=strict_range,
-        values=[500e-6, 5e+6],
+        values=[1e-6, 5e+6],
     )
 
     voltage = Instrument.control(
@@ -148,13 +168,17 @@ class Agilent33220A(Instrument):
     )
 
 # OUTPut {OFF / ON} / ? {0:OFF, 1:ON}
-
     output = Instrument.control(
         "OUTP?", "OUTP %s",
         """ A property that turns on or off the output of the function
         generator. """)
 
 # BURSt:STATe {OFF / ON} / ? {0:OFF, 1:ON}
+    burst = Instrument.control(
+        "BURSt:STAT?", "BURST:STAT %s",
+        """
+        """,
+    )
 
     burst_mode = Instrument.control(
         "BURS:MODE?", "BURS:MODE %s",
@@ -175,12 +199,13 @@ class Agilent33220A(Instrument):
 
     def trigger(self):
         """ Send a trigger signal to the function generator. """
-        self.write("TRIG")
+        self.write("TRG*;WAI*")
 
     trigger_source = Instrument.control(
         "TRIG:SOUR?", "TRIG:SOUR %s",
         """ A string property that controls the trigger source. Valid values
-        are: IMM<EDIATE>, EXT<ERNAL>, BUS. This setting can be set. """,
+        are: IMM<EDIATE> (internal), EXT<ERNAL> (rear input), BUS (via trigger
+        command). This setting can be set. """,
         validator=strict_discrete_set,
         values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
     )
