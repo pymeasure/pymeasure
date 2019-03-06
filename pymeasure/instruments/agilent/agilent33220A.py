@@ -34,8 +34,8 @@ class Agilent33220A(Instrument):
     """Represents the Agilent 33220A Arbitrary Waveform Generator.
 
     .. code-block:: python
-
-        wfg = Agilent33220A("GPIB::10") # Default channel for the ITC503
+        # Default channel for the ITC503
+        wfg = Agilent33220A("GPIB::10", "waveform generator")
 
         wfg.function = "SINUSOID"       # Sets a sine waveform
         wfg.frequency = 4.7e3           # Sets the frequency to 4.7 kHz
@@ -170,14 +170,21 @@ class Agilent33220A(Instrument):
 # OUTPut {OFF / ON} / ? {0:OFF, 1:ON}
     output = Instrument.control(
         "OUTP?", "OUTP %s",
-        """ A property that turns on or off the output of the function
-        generator. """)
+        """ A boolean property that turns on (True) or off (False) the output
+        of the function generator. Can be set. """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+    )
 
 # BURSt:STATe {OFF / ON} / ? {0:OFF, 1:ON}
-    burst = Instrument.control(
+    burst_state = Instrument.control(
         "BURSt:STAT?", "BURST:STAT %s",
-        """
-        """,
+        """ A boolean property that controls whether the burst mode is on
+        (True) or off (False). Can be set. """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
     )
 
     burst_mode = Instrument.control(
@@ -211,6 +218,14 @@ class Agilent33220A(Instrument):
     )
 
 # OUTput:TRIGger {OFF / ON} / ? {0:OFF, 1:ON}
+    trigger_state = Instrument.control(
+        "OUT:TRIG?", "OUT:TRIG %s",
+        """ A boolean property that controls whether the output is triggered
+        (True) or not (False). Can be set. """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+    )
 
     remote_local_state = Instrument.setting(
         "SYST:COMM:RLST %s",
