@@ -29,6 +29,8 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
+from time import time
+from pyvisa.errors import VisaIOError
 
 
 # Capitalize string arguments to allow for better conformity with other WFG's
@@ -224,6 +226,37 @@ class Agilent33220A(Instrument):
     def trigger(self):
         """ Send a trigger signal to the function generator. """
         self.write("*TRG;*WAI")
+
+    def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
+        """ Wait until the triggering has finished or timeout is reached.
+
+        :param timeout: The maximum time the waiting is allowed to take. If
+                        timeout is exceeded, a TimeoutError is raised. If
+                        timeout is set to zero, no timeout will be used.
+        :param should_stop: Optional function (returning a bool) to allow the
+                            waiting to be stopped before its end.
+
+        """
+        self.write("*OPC?")
+
+        t0 = time()
+        while True:
+            try:
+                ready = bool(self.read())
+            except VisaIOError:
+                ready = False
+
+            if ready:
+                return
+
+            if timeout != 0 and time() - t0 > timeout:
+                raise TimeoutError(
+                    "Timeout expired while waiting for the Agilent 33220A" +
+                    " to finish the triggering."
+                )
+
+            if should_stop:
+                return
 
     trigger_source = Instrument.control(
         "TRIG:SOUR?", "TRIG:SOUR %s",
