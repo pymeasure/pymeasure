@@ -124,11 +124,11 @@ class Agilent33220A(Instrument):
     )
 
     square_dutycycle = Instrument.control(
-        "FUNC:SQU:DCYCL?", "FUNC:SQU:DCYCL %f",
+        "FUNC:SQU:DCYC?", "FUNC:SQU:DCYC %f",
         """ A floating point property that controls the duty cycle of a square
         waveform function in percent. Can be set. """,
         validator=strict_range,
-        values=[0, 100],
+        values=[20, 80],
     )
 
     ramp_symmetry = Instrument.control(
@@ -147,16 +147,16 @@ class Agilent33220A(Instrument):
         shorter than the pulse width + the edge time, the edge time and pulse
         width will be adjusted accordingly. """,
         validator=strict_range,
-        values=[2e-9, 2e3],
+        values=[200e-9, 2e3],
     )
 
     pulse_hold = Instrument.control(
         "FUNC:PULS:HOLD?", "FUNC:PULS:HOLD %s",
         """ A string property that controls if either the pulse width or the
         duty cycle is retained when changing the period or frequency of the
-        waveform. Can be set to: WIDT<H> or DCYCL<E>. """,
-        values=["WIDT", "WIDTH", "DCYCL", "DCYCLE"],
+        waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
         validator=string_validator,
+        values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
     )
 
     pulse_width = Instrument.control(
@@ -165,11 +165,11 @@ class Agilent33220A(Instrument):
         waveform function in seconds, ranging from 20 ns to 2000 s, within a
         set of restrictions depending on the period. Can be set. """,
         validator=strict_range,
-        values=[2e-9, 2e3],
+        values=[20e-9, 2e3],
     )
 
     pulse_dutycycle = Instrument.control(
-        "FUNC:PULS:DCYCL?", "FUNC:PULS:DCYCL %f",
+        "FUNC:PULS:DCYC?", "FUNC:PULS:DCYC %f",
         """ A floating point property that controls the duty cycle of a pulse
         waveform function in percent. Can be set. """,
         validator=strict_range,
@@ -186,24 +186,22 @@ class Agilent33220A(Instrument):
         values=[5e-9, 100e-9],
     )
 
-# OUTPut {OFF / ON} / ? {0:OFF, 1:ON}
     output = Instrument.control(
-        "OUTP?", "OUTP %s",
+        "OUTP?", "OUTP %d",
         """ A boolean property that turns on (True) or off (False) the output
         of the function generator. Can be set. """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
     )
 
-# BURSt:STATe {OFF / ON} / ? {0:OFF, 1:ON}
     burst_state = Instrument.control(
-        "BURSt:STAT?", "BURST:STAT %s",
+        "BURS:STAT?", "BURS:STAT %d",
         """ A boolean property that controls whether the burst mode is on
         (True) or off (False). Can be set. """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
     )
 
     burst_mode = Instrument.control(
@@ -215,7 +213,7 @@ class Agilent33220A(Instrument):
     )
 
     burst_ncycles = Instrument.control(
-        "BURS:NCYCL?", "BURS:NCYCL %d",
+        "BURS:NCYC?", "BURS:NCYC %d",
         """ An integer property that sets the number of cycles to be output
         when a burst is triggered. Valid values are 1 to 50000. This can be
         set. """,
@@ -225,7 +223,7 @@ class Agilent33220A(Instrument):
 
     def trigger(self):
         """ Send a trigger signal to the function generator. """
-        self.write("TRG*;WAI*")
+        self.write("*TRG;*WAI")
 
     trigger_source = Instrument.control(
         "TRIG:SOUR?", "TRIG:SOUR %s",
@@ -236,14 +234,13 @@ class Agilent33220A(Instrument):
         values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
     )
 
-# OUTput:TRIGger {OFF / ON} / ? {0:OFF, 1:ON}
     trigger_state = Instrument.control(
-        "OUT:TRIG?", "OUT:TRIG %s",
+        "OUTP:TRIG?", "OUTP:TRIG %d",
         """ A boolean property that controls whether the output is triggered
         (True) or not (False). Can be set. """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
     )
 
     remote_local_state = Instrument.setting(
@@ -257,13 +254,18 @@ class Agilent33220A(Instrument):
 
     def check_errors(self):
         """ Read all errors from the instrument. """
+
+        errors = []
         while True:
             err = self.values("SYST:ERR?")
             if int(err[0]) != 0:
                 errmsg = "Agilent 33220A: %s: %s" % (err[0], err[1])
                 log.error(errmsg + '\n')
+                errors.append(errmsg)
             else:
                 break
+
+        return errors
 
     beeper_state = Instrument.control(
         "SYST:BEEP:STAT?", "SYST:BEEP:STAT %d",
