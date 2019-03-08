@@ -27,7 +27,17 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_discrete_set,\
+    strict_range, joined_validators
+
+
+# Capitalize string arguments to allow for better conformity with other WFG's
+def capitalize_string(string: str, *args, **kwargs):
+    return string.upper()
+
+
+# Combine the capitalize function and validator
+string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
 class Agilent33220A(Instrument):
@@ -50,11 +60,12 @@ class Agilent33220A(Instrument):
         wfg.trigger()                   # Trigger a burst
 
     """
-    function = Instrument.control(
+
+    shape = Instrument.control(
         "FUNC?", "FUNC %s",
         """ A string property that controls the output waveform. Can be set to:
         SIN<USOID>, SQU<ARE>, RAMP, PULS<E>, NOIS<E>, DC, USER. """,
-        validator=strict_discrete_set,
+        validator=string_validator,
         values=["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
                 "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"],
     )
@@ -68,15 +79,23 @@ class Agilent33220A(Instrument):
         values=[1e-6, 5e+6],
     )
 
-    voltage = Instrument.control(
+    amplitude = Instrument.control(
         "VOLT?", "VOLT %f",
         """ A floating point property that controls the voltage amplitude of the
-        output waveform in V, from 1e-3 V to 10 V. Can be set. """,
+        output waveform in V, from 10e-3 V to 10 V. Can be set. """,
         validator=strict_range,
         values=[10e-3, 10],
     )
 
-    voltage_offset = Instrument.control(
+    amplitude_unit = Instrument.control(
+        "VOLT:UNIT?", "VOLT:UNIT %s",
+        """ A string property that controls the units of the amplitude. Valid
+        values are Vpp (default), Vrms, and dBm. Can be set. """,
+        validator=string_validator,
+        values=["VPP", "VRMS", "DBM"],
+    )
+
+    offset = Instrument.control(
         "VOLT:OFFS?", "VOLT:OFFS %f",
         """ A floating point property that controls the voltage offset of the
         output waveform in V, from 0 V to 4.995 V, depending on the set
@@ -136,8 +155,8 @@ class Agilent33220A(Instrument):
         """ A string property that controls if either the pulse width or the
         duty cycle is retained when changing the period or frequency of the
         waveform. Can be set to: WIDT<H> or DCYCL<E>. """,
-        validator=strict_discrete_set,
         values=["WIDT", "WIDTH", "DCYCL", "DCYCLE"],
+        validator=string_validator,
     )
 
     pulse_width = Instrument.control(
@@ -191,7 +210,7 @@ class Agilent33220A(Instrument):
         "BURS:MODE?", "BURS:MODE %s",
         """ A string property that controls the burst mode. Valid values
         are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
-        validator=strict_discrete_set,
+        validator=string_validator,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
     )
 
@@ -213,7 +232,7 @@ class Agilent33220A(Instrument):
         """ A string property that controls the trigger source. Valid values
         are: IMM<EDIATE> (internal), EXT<ERNAL> (rear input), BUS (via trigger
         command). This setting can be set. """,
-        validator=strict_discrete_set,
+        validator=string_validator,
         values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
     )
 
@@ -232,7 +251,7 @@ class Agilent33220A(Instrument):
         """ A string property that controls the remote/local state of the
         function generator. Valid values are: LOC<AL>, REM<OTE>, RWL<OCK>.
         This setting can only be set. """,
-        validator=strict_discrete_set,
+        validator=string_validator,
         values=["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],
     )
 
@@ -245,3 +264,16 @@ class Agilent33220A(Instrument):
                 log.error(errmsg + '\n')
             else:
                 break
+
+    beeper_state = Instrument.control(
+        "SYST:BEEP:STAT?", "SYST:BEEP:STAT %d",
+        """ A boolean property that controls the state of the beeper. Can
+        be set. """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+    def beep(self):
+        """ Causes a system beep. """
+        self.write("SYST:BEEP")
