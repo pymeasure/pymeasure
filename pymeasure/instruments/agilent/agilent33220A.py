@@ -46,20 +46,25 @@ class Agilent33220A(Instrument):
     """Represents the Agilent 33220A Arbitrary Waveform Generator.
 
     .. code-block:: python
-        # Default channel for the ITC503
+        # Default channel for the Agilent 33220A
         wfg = Agilent33220A("GPIB::10", "waveform generator")
 
-        wfg.function = "SINUSOID"       # Sets a sine waveform
+        wfg.shape = "SINUSOID"          # Sets a sine waveform
         wfg.frequency = 4.7e3           # Sets the frequency to 4.7 kHz
-        wfg.voltage = 1                 # Set amplitude of 1 V
+        wfg.amplitude = 1               # Set amplitude of 1 V
+        wfg.offset = 0                  # Set the amplitude to 0 V
 
-        wfg.burst = TRUE                # Enable burst mode
-        wfg.burst_ncycles = 10          # A burst will consist of 10 cycles
+        wfg.burst = True                # Enable burst mode
+        wfg.burst_ncycles = 10e3        # A burst will consist of 10 cycles
         wfg.burst_mode = "TRIGGERED"    # A burst will be applied on a trigger
         wfg.trigger_source = "BUS"      # A burst will be triggered on TRG*
 
-        wfg.output = TRUE               # Enable output of waveform generator
+        wfg.output = True               # Enable output of waveform generator
         wfg.trigger()                   # Trigger a burst
+        wfg.wait_for_trigger()          # Wait until the triggering is finished
+        wfg.beep()                      # "beep"
+
+        wfg.check_errors()              # Get the error queue
 
     """
 
