@@ -61,8 +61,8 @@ class PrologixAdapter(SerialAdapter):
 
     """
 
-    def __init__(self, port, address=None, rw_delay=None, **kwargs):
-        super().__init__(port, timeout=0.5, **kwargs)
+    def __init__(self, port, address=None, rw_delay=None, serial_timeout = 0.5, **kwargs):
+        super().__init__(port, timeout = serial_timeout, **kwargs)
         self.address = address
         self.rw_delay = rw_delay
         if not isinstance(port, serial.Serial):
