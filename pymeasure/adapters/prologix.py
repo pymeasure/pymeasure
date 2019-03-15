@@ -104,7 +104,7 @@ class PrologixAdapter(SerialAdapter):
 
         :returns: String ASCII response of the instrument
         """
-        self.write("++read")
+        self.write("++read eoi")
         return b"\n".join(self.connection.readlines()).decode()
 
     def gpib(self, address, rw_delay=None):
