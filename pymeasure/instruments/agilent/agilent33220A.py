@@ -47,7 +47,7 @@ class Agilent33220A(Instrument):
 
     .. code-block:: python
         # Default channel for the Agilent 33220A
-        wfg = Agilent33220A("GPIB::10", "waveform generator")
+        wfg = Agilent33220A("GPIB::10")
 
         wfg.shape = "SINUSOID"          # Sets a sine waveform
         wfg.frequency = 4.7e3           # Sets the frequency to 4.7 kHz
@@ -67,6 +67,13 @@ class Agilent33220A(Instrument):
         wfg.check_errors()              # Get the error queue
 
     """
+
+    def __init__(self, adapter, **kwargs):
+        super(Agilent33220A, self).__init__(
+            adapter,
+            "Agilent 33220A Arbitrary Waveform generator",
+            **kwargs
+        )
 
     shape = Instrument.control(
         "FUNC?", "FUNC %s",
