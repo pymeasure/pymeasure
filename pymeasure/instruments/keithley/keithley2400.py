@@ -273,7 +273,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         :param auto_range: Enables auto_range if True, else uses the set resistance
         """
         log.info("%s is measuring resistance." % self.name)
-        self.write(":SENS:FUNC RES;"
+        self.write(":SENS:FUNC 'RES';"
                    ":SENS:RES:MODE MAN;"
                    ":SENS:RES:NPLC %f;:FORM:ELEM RES;" % nplc)
         if auto_range:

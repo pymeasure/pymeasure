@@ -87,7 +87,7 @@ class KeithleyBuffer(object):
             sleep(interval)
             if should_stop():
                 return
-            if (time()-t)>10:
+            if (time()-t)>timeout:
                 raise Exception("Timed out waiting for Keithley buffer to fill.")
 
     @property
