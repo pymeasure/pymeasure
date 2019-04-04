@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
 
 from time import sleep
 import numpy as np
@@ -30,46 +31,56 @@ import numpy as np
 
 class SM7045D(Instrument):
     """ This is the class for the SM 70-45 D power supply """
+    VOLTAGE_RANGE = [0, 70]
+    CURRENT_RANGE = [0, 45]
 
     voltage = Instrument.control(
         "SO:VO?", "SO:VO %g",
         """ A floating point property that represents the output voltage
-        setting of the power supply in Volts. This property can be set. """
+        setting of the power supply in Volts. This property can be set. """,
+        validator=strict_range,
+        values=VOLTAGE_RANGE
     )
 
     current = Instrument.control(
         "SO:CU?", "SO:CU %g",
         """ A floating point property that represents the output current of
-        the power supply in Amps. This property can be set. """
+        the power supply in Amps. This property can be set. """,
+        validator=strict_range,
+        values=CURRENT_RANGE
     )
 
     max_voltage = Instrument.control(
         "SO:VO:MA?", "SO:VO:MA %g",
         """ A floating point property that represents the maximum output
-        voltage of the power supply in Volts. This property can be set. """
+        voltage of the power supply in Volts. This property can be set. """,
+        validator=strict_range,
+        values=VOLTAGE_RANGE
     )
 
     max_current = Instrument.control(
         "SO:CU:MA?", "SO:VO:MA %g",
         """ A floating point property that represents the maximum output
-        current of the power supply in Amps. This property can be set. """
+        current of the power supply in Amps. This property can be set. """,
+        validator=strict_range,
+        values=CURRENT_RANGE
     )
 
     measure_voltage = Instrument.measurement(
         "ME:VO?",
         """ Measures the actual output voltage of the power supply in
-        Volts. """
+        Volts. """,
     )
 
     measure_current = Instrument.measurement(
         "ME:CU?",
-        """ Measures the actual output current of the power supply in Amps. """
+        """ Measures the actual output current of the power supply in Amps. """,
     )
 
     rsd = Instrument.measurement(
         "SO:FU:RSD?",
         """ Check whether remote shutdown is enabled/disabled and thus if the
-        output of the power supply is disabled/enabled. """
+        output of the power supply is disabled/enabled. """,
     )
 
     def __init__(self, resourceName, **kwargs):
