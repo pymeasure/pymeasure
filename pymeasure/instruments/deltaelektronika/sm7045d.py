@@ -30,7 +30,17 @@ import numpy as np
 
 
 class SM7045D(Instrument):
-    """ This is the class for the SM 70-45 D power supply """
+    """ This is the class for the SM 70-45 D power supply.
+
+    .. code-block:: python
+
+        source = SM7045D("GPIB::8")
+
+        source.ramp_to_zero(1)               # Set output to 0 before enabling
+        source.enable()                      # Enables the output
+        source.current = 1                   # Sets a current of 1 Amps
+
+    """
     VOLTAGE_RANGE = [0, 70]
     CURRENT_RANGE = [0, 45]
 
@@ -74,7 +84,8 @@ class SM7045D(Instrument):
 
     measure_current = Instrument.measurement(
         "ME:CU?",
-        """ Measures the actual output current of the power supply in Amps. """,
+        """ Measures the actual output current of the power supply in
+        Amps. """,
     )
 
     rsd = Instrument.measurement(
