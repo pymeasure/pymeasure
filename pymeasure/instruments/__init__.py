@@ -32,6 +32,7 @@ from . import advantest
 from . import agilent
 from . import ametek
 from . import anritsu
+from . import deltaelektronika
 from . import danfysik
 from . import fwbell
 from . import hp
