@@ -26,7 +26,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
 
 from time import sleep
-import numpy as np
+from numpy import linspace
 
 
 class SM7045D(Instrument):
@@ -102,24 +102,45 @@ class SM7045D(Instrument):
         )
 
     def enable(self):
-        # Disable remote shutdown, hence output will be enabled.
+        """
+        Disable remote shutdown, hence output will be enabled.
+        """
         self.write("SO:FU:RSD 0")
 
     def disable(self):
-        # Enables remote shutdown, hence input will be disabled.
+        """
+        Enables remote shutdown, hence input will be disabled.
+        """
         self.write("SO:FU:RSD 1")
 
-    def ramp_to_current(self, target_current, current_step):
-        # Gradually increase/decrease current to target current.
+    def ramp_to_current(self, target_current, current_step=0.1):
+        """
+        Gradually increase/decrease current to target current.
+
+        :param target_current: Float that sets the target current (in A)
+        :param current_step: Optional float that sets the current steps
+                             / ramp rate (in A/s)
+        """
+
         curr = self.current
         n = round(abs(curr - target_current) / current_step) + 1
-        for i in np.linspace(curr, target_current, n):
+        for i in linspace(curr, target_current, n):
             self.current = i
             sleep(0.1)
 
-    def ramp_to_zero(self, current_step):
+    def ramp_to_zero(self, current_step=0.1):
+        """
+        Gradually decrease the current to zero.
+
+        :param current_step: Optional float that sets the current steps
+                             / ramp rate (in A/s)
+        """
+
         self.ramp_to_current(0, current_step)
 
-    def shutdown(self, actual_current):
+    def shutdown(self):
+        """
+        Set the current to 0 A and disable the output of the power source.
+        """
         self.ramp_to_zero()
         self.disable()
