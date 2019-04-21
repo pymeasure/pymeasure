@@ -55,8 +55,8 @@ setup(
         'pytest-runner'
     ],
     tests_require=[
-        'pytest >= 2.9.1',
-        'pytest-qt'
+        'pytest == 4.4.1',
+        'pytest-qt == 3.2.2'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
