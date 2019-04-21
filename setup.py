@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,8 +55,8 @@ setup(
         'pytest-runner'
     ],
     tests_require=[
-        'pytest >= 2.9.1',
-        'pytest-qt'
+        'pytest == 4.4.1',
+        'pytest-qt == 3.2.2'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
