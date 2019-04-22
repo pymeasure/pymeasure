@@ -3,8 +3,8 @@ formats:
         - pdf
 
 conda:
-    file: requirements/conda-3.5.yml
+    file: requirements/conda-3.6.yml
 
 python:
-   version: 3
+   version: 3.6
    setup_py_install: true
