@@ -37,12 +37,6 @@ RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomP
 #from data.procedure_for_testing import RandomProcedure
 
 
-slow = pytest.mark.skipif(
-    not pytest.config.getoption("--runslow"),
-    reason="need --runslow option to run"
-)
-
-
 def test_procedure():
     """ Ensure that the loaded test procedure is properly functioning
     """
