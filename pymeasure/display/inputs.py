@@ -265,7 +265,7 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
 
     def textFromValue(self, value):
         string = "{:g}".format(value).replace("e+", "e")
-        string = re.sub("e(-?)0*(\d+)", r"e\1\2", string)
+        string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
         return string
 
     def stepEnabled(self):
