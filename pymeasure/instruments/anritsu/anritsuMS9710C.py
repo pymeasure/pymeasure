@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Analysis Results with Units, ie -24.5DBM -> (-24.5, 'DBM')
-r_value_units = re.compile("([-\d]*\.\d*)(.*)")
+r_value_units = re.compile(r"([-\d]*\.\d*)(.*)")
 
 # Join validators to allow for special sets of characters
 truncated_range_or_off = joined_validators(strict_discrete_set, truncated_range)

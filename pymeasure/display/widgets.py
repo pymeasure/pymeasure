@@ -107,12 +107,12 @@ class PlotFrame(QtGui.QFrame):
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
         """
-        units_pattern = "\((?P<units>\w+)\)"
+        units_pattern = r"\((?P<units>\w+)\)"
         try:
             match = re.search(units_pattern, axis)
         except TypeError:
             match = None
-            
+
         if match:
             if 'units' in match.groupdict():
                 label = re.sub(units_pattern, '', axis)
