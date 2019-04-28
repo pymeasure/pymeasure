@@ -18,6 +18,5 @@ dependencies:
 - sip=4.18=py34_0
 - six=1.10.0=py34_0
 - wheel=0.29.0=py34_0
-- pip:
-  - pyvisa==1.8
-  - pytest-qt==2.4.0
+- pyvisa==1.8
+- pytest-qt==2.4.0
