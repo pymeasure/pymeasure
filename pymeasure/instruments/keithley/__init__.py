@@ -24,3 +24,4 @@
 
 from .keithley2000 import Keithley2000
 from .keithley2400 import Keithley2400
+from .keithley2750 import Keithley2750
