@@ -29,7 +29,9 @@ class Keithley2750(Instrument):
     """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for interacting
     with the instrument.
     """
-    # TODO: add "measurement" for "closed_duts"
+    # TODO test closed_channels
+    closed_channels = Instrument.measurement(":ROUTe:CLOSe?",
+                                             "Reads the list of closed channels")
 
     def __init__(self, adapter, **kwargs) -> None:
         super().__init__(adapter, "Keithley 2750 Multimeter/Switch System", **kwargs)
