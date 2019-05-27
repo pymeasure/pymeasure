@@ -29,9 +29,8 @@ CHANNEL_NUMS = [1, 2, 3]
 
 
 class BKPrecision9130B(Instrument):
-    """
-    Represents the BK Precision 9130B DC Power Supply interface for interacting with the instrument.
-    """
+    """ Represents the BK Precision 9130B DC Power Supply interface for interacting with the instrument. """
+
     voltage = Instrument.control('MEASure:SCALar:VOLTage:DC?', 'SOURce:VOLTage:LEVel:IMMediate:AMPLitude %g',
                                  """Floating point property used to control voltage of the selected channel.""")
 
