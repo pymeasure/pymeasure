@@ -30,9 +30,9 @@ MIN_RAMP_TIME = 0.1  # seconds
 
 
 class YokogawaGS200(Instrument):
+    """ Represents the Yokogawa GS200 source and provides a high-level interface for interacting with the instrument.
     """
-    Represents the Yokogawa GS200 source and provides a high-level interface for interacting with the instrument.
-    """
+
     source_enabled = Instrument.control("OUTPut:STATe?", "OUTPut:STATe %d",
                                         """A boolean property that controls whether the source is enabled, takes """
                                         """values True or False. """,
