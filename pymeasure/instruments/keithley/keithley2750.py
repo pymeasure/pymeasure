@@ -70,7 +70,7 @@ class Keithley2750(Instrument):
         :param int channel: 3-digit number for the channel
         :return: None
         """
-        self.write(f":ROUTe:MULTiple:OPEN (@{channel})")
+        self.write(":ROUTe:MULTiple:OPEN (@{})".format(channel))
 
     def close(self, channel):
         """ Closes (connects) the specified channel.
@@ -79,7 +79,7 @@ class Keithley2750(Instrument):
         :return: None
         """
         # Note: if `MULTiple` is omitted, then the specified channel will close, but all other channels will open.
-        self.write(f":ROUTe:MULTiple:CLOSe (@{channel})")
+        self.write(":ROUTe:MULTiple:CLOSe (@{channel})".format(channel))
 
     def open_all(self):
         """ Opens (disconnects) all the channels on the switch matrix.
