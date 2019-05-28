@@ -64,10 +64,12 @@ class YokogawaGS200(Instrument):
                                        """mode (current is conjugate to voltage, and vice versa). Thus, current """
                                        """limit is only applicable when in 'voltage' mode""")
 
-    def __init__(self, adapter, **kwargs) -> None:
-        super().__init__(adapter, "Yokogawa GS200 Source", **kwargs)
+    def __init__(self, adapter, **kwargs):
+        super(YokogawaGS200, self).__init__(
+            adapter, "Yokogawa GS200 Source", **kwargs
+        )
 
-    def trigger_ramp_to_level(self, level: float, ramp_time: float) -> None:
+    def trigger_ramp_to_level(self, level, ramp_time):
         """
         Ramp the output level from its current value to "level" in time "ramp_time". This method will NOT wait until
         the ramp is finished (thus, it will not block further code evaluation).
