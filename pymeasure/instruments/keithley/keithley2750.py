@@ -45,7 +45,6 @@ def clean_closed_channels(output):
             else:
                 raise ValueError("Every entry must be a string, float, or int")
             assert isinstance(list_final[i], int)
-        print(list_final)
         return list_final
     else:
         raise ValueError("`output` must be a string or list.")
