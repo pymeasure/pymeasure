@@ -23,15 +23,43 @@
 #
 
 from pymeasure.instruments import Instrument
+from copy import deepcopy
+
+
+def clean_closed_channels(output):
+    """Cleans up the list returned by command ":ROUTe:CLOSe?", such that each entry is an integer denoting
+    the channel number.
+    """
+    if isinstance(output, str):
+        s = output.replace("(", "").replace(")", "").replace("@", "")
+        if s == "":
+            return []
+        else:
+            return [int(s)]
+    elif isinstance(output, list):
+        list_final = []
+        for i, entry in enumerate(output):
+            if isinstance(entry, float) or isinstance(entry, int):
+                list_final += [int(entry)]
+            elif isinstance(entry, str):
+                list_final += [int(entry.replace("(", "").replace(")", "").replace("@", ""))]
+            else:
+                raise ValueError("Every entry must be a string, float, or int")
+            assert isinstance(list_final[i], int)
+        print(list_final)
+        return list_final
+    else:
+        raise ValueError("`output` must be a string or list.")
 
 
 class Keithley2750(Instrument):
     """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for interacting
     with the instrument.
     """
-    # TODO test closed_channels
+
     closed_channels = Instrument.measurement(":ROUTe:CLOSe?",
-                                             "Reads the list of closed channels")
+                                             "Reads the list of closed channels",
+                                             get_process=clean_closed_channels)
 
     def __init__(self, adapter, **kwargs) -> None:
         super().__init__(adapter, "Keithley 2750 Multimeter/Switch System", **kwargs)
@@ -63,6 +91,5 @@ class Keithley2750(Instrument):
         # it seems that channel 133 exhibits close/open behavior opposite from expected. If switched "closed",
         # the connection will actually be open, and when switched "open" it will actually be shorted.
         self.close(133)  # Open channel 133. Read the above statement to explain this non-intuitive method call.
-
 
 
