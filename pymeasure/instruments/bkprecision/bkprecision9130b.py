@@ -47,7 +47,9 @@ class BKPrecision9130B(Instrument):
                                  f"""values {CHANNEL_NUMS}.""",
                                  validator=strict_discrete_set, values=CHANNEL_NUMS)
 
-    def __init__(self, adapter, **kwargs) -> None:
-        super().__init__(adapter, "BK Precision 9130B Source", **kwargs)
+    def __init__(self, adapter, **kwargs):
+        super(BKPrecision9130B, self).__init__(
+            adapter, "BK Precision 9130B Source", **kwargs
+        )
 
 
