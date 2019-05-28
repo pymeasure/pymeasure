@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument
-from copy import deepcopy
 
 
 def clean_closed_channels(output):
