@@ -24,7 +24,7 @@
 
 import warnings
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, truncated_range
 
 MIN_RAMP_TIME = 0.1  # seconds
 
@@ -44,25 +44,27 @@ class YokogawaGS200(Instrument):
                                      validator=strict_discrete_set, values={'current': 'CURR', 'voltage': 'VOLT'},
                                      map_values=True, get_process=lambda s: s.strip())
 
-    # source_level = Instrument.control(":SOURce:LEVel?", "SOURce:LEVel %g",
-    #                                   """Floating point number that controls the output level, either a voltage or a """
-    #                                   """current, depending on the source mode.""")
-
     source_range = Instrument.control(":SOURce:RANGe?", "SOURce:RANGe %g",
                                       """Floating point number that controls the range (either in voltage or """
-                                      """current) of the output. "Range" refers to the maximum source level.""")
+                                      """current) of the output. "Range" refers to the maximum source level.""",
+                                      validator=truncated_discrete_set,
+                                      values=[1e-3, 10e-3, 100e-3, 200e-3, 1, 10, 30])
 
     voltage_limit = Instrument.control("SOURce:PROTection:VOLTage?", "SOURce:PROTection:VOLTage %g",
                                        """Floating point number that controls the voltage limit. "Limit" refers to """
                                        """maximum value of the electrical value that is conjugate to the """
                                        """mode (current is conjugate to voltage, and vice versa). Thus, voltage """
-                                       """limit is only applicable when in 'current' mode""")
+                                       """limit is only applicable when in 'current' mode""",
+                                       validator=truncated_range,
+                                       values=[1, 30])
 
     current_limit = Instrument.control("SOURce:PROTection:CURRent?", "SOURce:PROTection:CURRent %g",
                                        """Floating point number that controls the current limit. "Limit" refers to """
                                        """maximum value of the electrical value that is conjugate to the """
                                        """mode (current is conjugate to voltage, and vice versa). Thus, current """
-                                       """limit is only applicable when in 'voltage' mode""")
+                                       """limit is only applicable when in 'voltage' mode""",
+                                       validator=truncated_range,
+                                       values=[1e-3, 200e-3])
 
     def __init__(self, adapter, **kwargs):
         super(YokogawaGS200, self).__init__(
