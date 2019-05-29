@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 CHANNEL_NUMS = [1, 2, 3]
 
@@ -32,7 +32,9 @@ class BKPrecision9130B(Instrument):
     """ Represents the BK Precision 9130B DC Power Supply interface for interacting with the instrument. """
 
     voltage = Instrument.control('MEASure:SCALar:VOLTage:DC?', 'SOURce:VOLTage:LEVel:IMMediate:AMPLitude %g',
-                                 """Floating point property used to control voltage of the selected channel.""")
+                                 """Floating point property used to control voltage of the selected channel.""",
+                                 validator=truncated_range,
+                                 values=[0])
 
     current = Instrument.control('MEASure:SCALar:CURRent:DC?', 'SOURce:CURRent:LEVel:IMMediate:AMPLitude %g',
                                  """Floating point property used to control current of the selected channel.""")
@@ -52,4 +54,15 @@ class BKPrecision9130B(Instrument):
             adapter, "BK Precision 9130B Source", **kwargs
         )
 
+    @property
+    def voltage(self):
+        return self.ask("MEASure:SCALar:VOLTage:DC?")
+
+    @reserve.setter
+    def voltage(self, level):
+        if reserve not in SR830.RESERVE_VALUES:
+            index = 1
+        else:
+            index = SR830.RESERVE_VALUES.index(reserve)
+        self.write("RMOD%d" % index)
 
