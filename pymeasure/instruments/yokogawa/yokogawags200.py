@@ -44,9 +44,9 @@ class YokogawaGS200(Instrument):
                                      validator=strict_discrete_set, values={'current': 'CURR', 'voltage': 'VOLT'},
                                      map_values=True, get_process=lambda s: s.strip())
 
-    source_level = Instrument.control(":SOURce:LEVel?", "SOURce:LEVel %g",
-                                      """Floating point number that controls the output level, either a voltage or a """
-                                      """current, depending on the source mode.""")
+    # source_level = Instrument.control(":SOURce:LEVel?", "SOURce:LEVel %g",
+    #                                   """Floating point number that controls the output level, either a voltage or a """
+    #                                   """current, depending on the source mode.""")
 
     source_range = Instrument.control(":SOURce:RANGe?", "SOURce:RANGe %g",
                                       """Floating point number that controls the range (either in voltage or """
@@ -69,6 +69,20 @@ class YokogawaGS200(Instrument):
             adapter, "Yokogawa GS200 Source", **kwargs
         )
 
+    @property
+    def source_level(self):
+        """ Floating point number that controls the output level, either a voltage or a current, depending on
+        the source mode.
+        """
+        return ":SOURce:LEVel?"
+
+    @source_level.setter
+    def source_level(self, level):
+        if level > self.source_range * 1.2:
+            raise ValueError("Level must be within 1.2 * source_range, otherwise the Yokogawa will produce an error.")
+        else:
+            self.write("SOURce:LEVel %g" % level)
+
     def trigger_ramp_to_level(self, level, ramp_time):
         """
         Ramp the output level from its current value to "level" in time "ramp_time". This method will NOT wait until
@@ -81,8 +95,6 @@ class YokogawaGS200(Instrument):
         if not self.source_enabled:
             raise ValueError("YokogawaGS200 source must be enabled in order to ramp to a specified level. Otherwise, "
                              "the Yokogawa will reject the ramp.")
-        if level > self.source_range * 1.2:
-            raise ValueError("Level must be within 1.2 * source_range, otherwise the Yokogawa will produce an error.")
         if ramp_time < MIN_RAMP_TIME:
             warnings.warn('Ramp time of {}s is below the minimum ramp time of {}s, so the Yokogawa will instead be '
                           'instantaneously set to the desired level.'.format(ramp_time, MIN_RAMP_TIME))
