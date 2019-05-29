@@ -52,7 +52,7 @@ class SR830(Instrument):
     EXPANSION_VALUES = [1, 10, 100]
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
     CHANNELS = ['X', 'Y', 'R']
-    INPUT_CONFIGS = ['A', 'B', 'A - B', 'I (1 MOhm)', 'I (100 MOhm)']
+    INPUT_CONFIGS = ['A', 'A - B', 'I (1 MOhm)', 'I (100 MOhm)']
     INPUT_GROUNDINGS = ['Float', 'Ground']
     INPUT_COUPLINGS = ['AC', 'DC']
     INPUT_NOTCH_CONFIGS = ['None', 'Line', '2 x Line', 'Both']
