@@ -56,17 +56,23 @@ class SR830(Instrument):
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
         """ A floating point property that represents the reference sine-wave
-        voltage in Volts. This property can be set. """
+        voltage in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[0.004, 5.0]
     )
     frequency = Instrument.control(
         "FREQ?", "FREQ%0.5e",
         """ A floating point property that represents the lock-in frequency
-        in Hz. This property can be set. """
+        in Hz. This property can be set. """,
+        validator=truncated_range,
+        values=[0.001, 102000]
     )
     phase = Instrument.control(
         "PHAS?", "PHAS%0.2f",
         """ A floating point property that represents the lock-in phase
-        in degrees. This property can be set. """
+        in degrees. This property can be set. """,
+        validator=truncated_range,
+        values=[-360, 729.99]
     )
     x = Instrument.measurement("OUTP?1",
         """ Reads the X value in Volts. """
@@ -131,7 +137,7 @@ class SR830(Instrument):
         """ An integer property that controls the harmonic that is measured.
         Allowed values are 1 to 19999. Can be set. """,
         validator=strict_discrete_set,
-        values=range(1, 20000),
+        values=range(1, 19999),
     )
 
     aux_out_1 = Instrument.control(
