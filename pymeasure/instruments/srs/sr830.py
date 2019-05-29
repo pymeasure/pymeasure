@@ -52,6 +52,11 @@ class SR830(Instrument):
     EXPANSION_VALUES = [1, 10, 100]
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
     CHANNELS = ['X', 'Y', 'R']
+    INPUT_CONFIGS = ['A', 'B', 'A - B', 'I (1 MOhm)', 'I (100 MOhm)']
+    INPUT_GROUNDINGS = ['Float', 'Ground']
+    INPUT_COUPLINGS = ['AC', 'DC']
+    INPUT_NOTCH_CONFIGS = ['None', 'Line', '2 x Line', 'Both']
+    REFERENCE_SOURCES = ['External', 'Internal']
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -138,6 +143,46 @@ class SR830(Instrument):
         Allowed values are 1 to 19999. Can be set. """,
         validator=strict_discrete_set,
         values=range(1, 19999),
+    )
+    input_config = Instrument.control(
+        "ISRC?", "ISRC %d",
+        """ An string property that controls the input configuration. Allowed
+        values are: {}""".format(INPUT_CONFIGS),
+        validator=strict_discrete_set,
+        values=INPUT_CONFIGS,
+        map_values=True
+    )
+    input_grounding = Instrument.control(
+        "IGND?", "IGND %d",
+        """ An string property that controls the input shield grounding. Allowed
+        values are: {}""".format(INPUT_GROUNDINGS),
+        validator=strict_discrete_set,
+        values=INPUT_GROUNDINGS,
+        map_values=True
+    )
+    input_coupling = Instrument.control(
+        "ICPL?", "ICPL %d",
+        """ An string property that controls the input coupling. Allowed
+        values are: {}""".format(INPUT_COUPLINGS),
+        validator=strict_discrete_set,
+        values=INPUT_COUPLINGS,
+        map_values=True
+    )
+    input_notch_config = Instrument.control(
+        "ILIN?", "ILIN %d",
+        """ An string property that controls the input line notch filter 
+        status. Allowed values are: {}""".format(INPUT_NOTCH_CONFIGS),
+        validator=strict_discrete_set,
+        values=INPUT_NOTCH_CONFIGS,
+        map_values=True
+    )
+    reference_source = Instrument.control(
+        "FMOD?", "FMOD %d",
+        """ An string property that controls the reference source. Allowed
+        values are: {}""".format(REFERENCE_SOURCES),
+        validator=strict_discrete_set,
+        values=REFERENCE_SOURCES,
+        map_values=True
     )
 
     aux_out_1 = Instrument.control(
