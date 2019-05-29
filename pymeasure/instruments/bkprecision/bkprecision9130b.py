@@ -32,7 +32,9 @@ class BKPrecision9130B(Instrument):
     """ Represents the BK Precision 9130B DC Power Supply interface for interacting with the instrument. """
 
     current = Instrument.control('MEASure:SCALar:CURRent:DC?', 'SOURce:CURRent:LEVel:IMMediate:AMPLitude %g',
-                                 """Floating point property used to control current of the selected channel.""")
+                                 """Floating point property used to control current of the selected channel.""",
+                                 validator=truncated_range,
+                                 values=[0, 3])
 
     source_enabled = Instrument.control('SOURce:CHANnel:OUTPut:STATe?', 'SOURce:CHANnel:OUTPut:STATe %d',
                                         """A boolean property that controls whether the source is enabled, takes """
