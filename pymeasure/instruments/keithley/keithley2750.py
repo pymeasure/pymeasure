@@ -79,7 +79,7 @@ class Keithley2750(Instrument):
         :return: None
         """
         # Note: if `MULTiple` is omitted, then the specified channel will close, but all other channels will open.
-        self.write(":ROUTe:MULTiple:CLOSe (@{channel})".format(channel))
+        self.write(":ROUTe:MULTiple:CLOSe (@{})".format(channel))
 
     def open_all(self):
         """ Opens (disconnects) all the channels on the switch matrix.
