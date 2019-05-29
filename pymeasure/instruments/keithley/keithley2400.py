@@ -117,7 +117,9 @@ class Keithley2400(Instrument, KeithleyBuffer):
     source_current = Instrument.control(
         ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
         """ A floating point property that controls the source current
-        in Amps. """
+        in Amps. """,
+        validator=truncated_range,
+        value=[-1.05, 1.05]
     )
     source_current_range = Instrument.control(
         ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
