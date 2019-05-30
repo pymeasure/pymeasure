@@ -44,7 +44,7 @@ class BKPrecision9130B(Instrument):
     channel = Instrument.control('INSTrument:SELect?', 'INSTrument:SELect CH%d',
                                  """An integer property used to control which channel is selected. Can only take""" 
                                  """values {}.""".format(CHANNEL_NUMS),
-                                 validator=strict_discrete_set, values=CHANNEL_NUMS)
+                                 validator=strict_discrete_set, values=CHANNEL_NUMS, get_process=lambda x: int(x[2]))
 
     def __init__(self, adapter, **kwargs):
         super(BKPrecision9130B, self).__init__(
