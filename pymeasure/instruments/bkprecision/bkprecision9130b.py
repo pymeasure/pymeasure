@@ -54,7 +54,7 @@ class BKPrecision9130B(Instrument):
     @property
     def voltage(self):
         """Floating point property used to control voltage of the selected channel."""
-        return self.ask("MEASure:SCALar:VOLTage:DC?")
+        return float(self.ask("MEASure:SCALar:VOLTage:DC?"))
 
     @voltage.setter
     def voltage(self, level):
