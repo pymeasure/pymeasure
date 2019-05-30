@@ -76,7 +76,7 @@ class YokogawaGS200(Instrument):
         """ Floating point number that controls the output level, either a voltage or a current, depending on
         the source mode.
         """
-        return self.ask(":SOURce:LEVel?")
+        return float(self.ask(":SOURce:LEVel?"))
 
     @source_level.setter
     def source_level(self, level):
