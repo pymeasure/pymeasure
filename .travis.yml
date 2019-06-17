@@ -12,7 +12,7 @@ matrix:
       dist: xenial
       env: PYTHON=3.5  CONDA_PY=35
       sudo: true
-      serivces:
+      services:
         - xvfb
     - os: linux
       dist: xenial
