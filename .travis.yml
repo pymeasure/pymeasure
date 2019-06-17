@@ -61,15 +61,6 @@ install:
     fi
   - conda info -a
 
-# test environment setup
-#before_script:
-  # GUI testing on Linux
-  #  - 'if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-  #      export DISPLAY=:99.0;
-  #      sh -e /etc/init.d/xvfb start;
-  #      sleep 3;
-  #  fi'
-
 # command to run tests
 script: 
   - python setup.py test
