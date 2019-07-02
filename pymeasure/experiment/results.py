@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -229,13 +229,13 @@ class Results(object):
                 raise ValueError("Parsing a header which contains "
                                  "uncommented sections")
             if line.startswith("Procedure"):
-                regex = "<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
+                regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
                 search = re.search(regex, line)
                 procedure_module = search.group("module")
                 procedure_class = search.group("class")
             elif line.startswith("\t"):
-                regex = ("\t(?P<name>[^:]+):\s(?P<value>[^\s]+)"
-                         "(?:\s(?P<units>.+))?")
+                regex = (r"\t(?P<name>[^:]+):\s(?P<value>[^\s]+)"
+                         r"(?:\s(?P<units>.+))?")
                 search = re.search(regex, line)
                 if search is None:
                     raise Exception("Error parsing header line %s." % line)

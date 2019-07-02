@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -107,12 +107,12 @@ class PlotFrame(QtGui.QFrame):
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
         """
-        units_pattern = "\((?P<units>\w+)\)"
+        units_pattern = r"\((?P<units>\w+)\)"
         try:
             match = re.search(units_pattern, axis)
         except TypeError:
             match = None
-            
+
         if match:
             if 'units' in match.groupdict():
                 label = re.sub(units_pattern, '', axis)
@@ -361,6 +361,7 @@ class ResultsDialog(QtGui.QFileDialog):
         super().__init__(parent)
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
+        self.setOption(QtGui.QFileDialog.DontUseNativeDialog, True)
         self._setup_ui()
 
     def _setup_ui(self):

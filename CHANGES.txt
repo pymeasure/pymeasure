@@ -1,3 +1,10 @@
+Version 0.6.1 -- release 4/21/19
+================================
+- Added Elektronica SM70-45D, Agilent 33220A, and Keysight N5767A instruments
+  (@CasperSchippers, @sumatrae)
+- Fixes for Prologix adapter and Keithley 2400 (@hlgirard, @ronan-sensome)
+- Improved support for SRS SR830 (@CasperSchippers)
+
 Version 0.6 -- released 1/14/19
 ===============================
 - New VXI11 Adapter for ethernet instruments (@chweiser)

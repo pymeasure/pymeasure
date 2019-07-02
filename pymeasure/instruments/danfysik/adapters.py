@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -41,8 +41,8 @@ class DanfysikAdapter(SerialAdapter):
         super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
 
     def write(self, command):
-        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>` 
-        method to automatically append a Unix-style linebreak at 
+        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
+        method to automatically append a Unix-style linebreak at
         the end of the command.
 
         :param command: SCPI command string to be sent to the instrument
@@ -51,9 +51,9 @@ class DanfysikAdapter(SerialAdapter):
         self.connection.write(command.encode())
 
     def read(self):
-        """ Overwrites the :func:`SerialAdapter.read <pymeasure.adapters.Adapter.read>` 
+        """ Overwrites the :func:`SerialAdapter.read <pymeasure.adapters.Adapter.read>`
         method to automatically raise exceptions if errors are reported by the instrument.
-        
+
         :returns: String ASCII response of the instrument
         :raises: An :code:`Exception` if the Danfysik raises an error
         """
@@ -61,7 +61,7 @@ class DanfysikAdapter(SerialAdapter):
         result = b"".join(self.connection.readlines())
         result = result.decode()
         result = result.replace("\r", "")
-        search = re.search("^\?\\x07\s(?P<name>.*)$", result, re.MULTILINE)
+        search = re.search(r"^\?\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
             raise Exception("Danfysik raised the error: %s" % (
                             search.groups()[0]))

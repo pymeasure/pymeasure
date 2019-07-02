@@ -20,4 +20,4 @@ dependencies:
 - wheel=0.29.0=py34_0
 - pip:
   - pyvisa==1.8
-  - pytest-qt==2.2.1
+  - pytest-qt==2.4.0

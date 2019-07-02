@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,3 @@
 #
 
 import pytest
-
-
-def pytest_addoption(parser):
-    parser.addoption("--runslow", action="store_true",
-                     help="run slow tests")

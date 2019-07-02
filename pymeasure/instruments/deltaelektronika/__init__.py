@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .adapters import DanfysikAdapter
-from .danfysik8500 import Danfysik8500
+from .sm7045d import SM7045D

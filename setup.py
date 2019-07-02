@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='PyMeasure',
-    version='0.6.0',
+    version='0.6.1',
     author='PyMeasure Developers',
     packages=find_packages(),
     scripts=[],
     url='https://github.com/ralph-group/pymeasure',
-    download_url='https://github.com/ralph-group/pymeasure/tarball/v0.6.0',
+    download_url='https://github.com/ralph-group/pymeasure/tarball/v0.6.1',
     license='MIT License',
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
@@ -56,7 +56,7 @@ setup(
     ],
     tests_require=[
         'pytest >= 2.9.1',
-        'pytest-qt'
+        'pytest-qt >= 2.4.0'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

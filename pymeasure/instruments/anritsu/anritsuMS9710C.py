@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Analysis Results with Units, ie -24.5DBM -> (-24.5, 'DBM')
-r_value_units = re.compile("([-\d]*\.\d*)(.*)")
+r_value_units = re.compile(r"([-\d]*\.\d*)(.*)")
 
 # Join validators to allow for special sets of characters
 truncated_range_or_off = joined_validators(strict_discrete_set, truncated_range)
