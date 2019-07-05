@@ -213,36 +213,40 @@ class Keithley2450(Instrument, KeithleyBuffer):
         2 or 4.
         """,
         validator=strict_discrete_set,
-        values={4:1, 2:2},
+        values={4:1, 2:0},
         map_values=True
     )
-
+    # TODO: test on instrument
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
         """ An integer property that controls the number of buffer points. This
         does not represent actual points in the buffer, but the configuration
         value instead. """,
         validator=truncated_range,
-        values=[1, 2500],
+        values=[1, 6875000],
         cast=int
     )
+    # TODO: test on instrument
     means = Instrument.measurement(
-        ":CALC3:FORM MEAN;:CALC3:DATA?;",
+        ":TRACe:STATistics:AVERage?",
         """ Reads the calculated means (averages) for voltage,
         current, and resistance from the buffer data  as a list. """
     )
+    # TODO: test on instrument
     maximums = Instrument.measurement(
-        ":CALC3:FORM MAX;:CALC3:DATA?;",
+        ":TRACe:STATistics:MAXimum?",
         """ Returns the calculated maximums for voltage, current, and
         resistance from the buffer data as a list. """
     )
+    # TODO: test on instrument
     minimums = Instrument.measurement(
-        ":CALC3:FORM MIN;:CALC3:DATA?;",
+        ":TRACe:STATistics:MINimum?",
         """ Returns the calculated minimums for voltage, current, and
         resistance from the buffer data as a list. """
     )
+    # TODO: test on instrument
     standard_devs = Instrument.measurement(
-        ":CALC3:FORM SDEV;:CALC3:DATA?;",
+        ":TRACe:STATistics:STDDev?",
         """ Returns the calculated standard deviations for voltage,
         current, and resistance from the buffer data as a list. """
     )
@@ -476,11 +480,11 @@ class Keithley2450(Instrument, KeithleyBuffer):
     def set_trigger_counts(self, arm, trigger):
         """ Sets the number of counts for both the sweeps (arm) and the
         points in those sweeps (trigger), where the total number of
-        points can not exceed 2500
+        points can not exceed 6875000
         """
-        if arm * trigger > 2500 or arm * trigger < 0:
+        if arm * trigger > 6875000 or arm * trigger < 0:
             raise RangeException("Keithley 2450 has a combined maximum "
-                                 "of 2500 counts")
+                                 "of 6875000 counts")
         if arm < trigger:
             self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
         else:
@@ -589,9 +593,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
     def std_resistance(self):
         """ Returns the resistance standard deviation from the buffer """
         return self.standard_devs[2]
-
-    def status(self):
-        return self.ask("status:queue?;")
 
     def RvsI(self, startI, stopI, stepI, compliance, delay=10.0e-3, backward=False):
         num = int(float(stopI-startI)/float(stepI)) + 1
