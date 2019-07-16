@@ -40,11 +40,6 @@ environment:
       #PYTHON: "C:\\Python36"
       PLATFORM: x86
 
-    - PYTHON_VERSION: "3.7"
-      MINICONDA: C:\Miniconda37
-      #PYTHON: "C:\\Python37"
-      PLATFORM: x86
-
 matrix:
   fast_finish: true  # immediately finish build once one of the jobs fails.
 
