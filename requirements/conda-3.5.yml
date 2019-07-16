@@ -1,20 +1,15 @@
 name: pymeasure
+channels:
+  - conda-forge
+  - defaults
 dependencies:
-- numpy=1.11.0=py35_1
-- pandas=0.18.1=np111py35_0
-- pip=8.1.2=py35_0
-- py=1.4.31=py35_0
-- pyqt=5.6.0=py35_2
-- pyqtgraph=0.10.0=py35_0
-- pyserial=2.7=py35_0
-- pytest=2.9.1=py35_0
-- python=3.5.1=0
-- python-dateutil=2.5.3=py35_0
-- pytz=2016.4=py35_0
-- setuptools>27.3.0
-- sip=4.18=py35_0
-- six=1.10.0=py35_0
-- wheel=0.29.0=py35_0
-- pip:
-  - pyvisa==1.8
-  - pytest-qt==2.4.0
+  - numpy=1.15.2=py35h99e49ec_0
+  - pandas=0.22.0=py35_1
+  - pyqt=5.6.0=py35h8210e8a_7
+  - pyqtgraph=0.10.0=py_5
+  - pyserial=3.4=py_2
+  - pytest=3.2.2=py_0
+  - pytest-qt=3.2.2=py_0
+  - python=3.5.6=hc3d631a_0
+  - pyvisa=1.9.1=py35_0
+  - qt=5.6.2=hbe13537_1012
