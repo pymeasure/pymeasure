@@ -1,9 +1,5 @@
-numpy==1.11.0
-pandas==0.18.0
-py==1.4.31
-pytest==2.9.1
-python-dateutil==2.5.2
-pytz==2016.3
-six==1.10.0
-pyvisa==1.8
-pyserial==2.7
+numpy==1.16.4
+pandas==0.24.2
+pytest==5.0.1
+pyvisa==1.9.0
+pyserial==3.4
