@@ -456,7 +456,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """
         return self.write("*TRG")
 
-
     @property
     def mean_voltage(self):
         """ Returns the mean voltage from the buffer """
