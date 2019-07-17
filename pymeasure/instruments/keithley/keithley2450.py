@@ -22,21 +22,19 @@
 # THE SOFTWARE.
 #
 
-import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from io import BytesIO
+import numpy as np
+import re
+import time
 
 from pymeasure.instruments import Instrument, RangeException
 from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-
 from .buffer import KeithleyBuffer
 
-import numpy as np
-import time
-from io import BytesIO
-import re
-
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 class Keithley2450(Instrument, KeithleyBuffer):
     """ Represents the Keithely 2450 SourceMeter and provides a
@@ -63,7 +61,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
     """
 
-    # FIXME: OK
     source_mode = Instrument.control(
         ":SOUR:FUNC?", ":SOUR:FUNC %s",
         """ A string property that controls the source mode, which can
@@ -75,7 +72,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         map_values=True
     )
 
-    # FIXME: OK
     source_enabled = Instrument.measurement("OUTPUT?",
         """ Reads a boolean value that is True if the source is enabled. """,
         cast=bool
@@ -85,11 +81,11 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Current (A) #
     ###############
 
-    # FIXME: OK
     current = Instrument.measurement(":READ?",
         """ Reads the current in Amps, if configured for this reading.
         """
     )
+
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
         """ A floating point property that controls the measurement current
@@ -98,7 +94,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-1.05, 1.05]
     )
-    # FIXME: OK
+
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
         """ A floating point property that controls the number of power line cycles
@@ -107,7 +103,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         Fast, Medium, and Slow respectively. """,
         values=[0.01, 10]
     )
-    # FIXME: Fixed
+
     compliance_current = Instrument.control(
         ":SOUR:VOLT:ILIM?", ":SOUR:VOLT:ILIM %g",
         """ A floating point property that controls the compliance current
@@ -115,13 +111,13 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-1.05, 1.05]
     )
-    # FIXME: Ok
+
     source_current = Instrument.control(
         ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
         """ A floating point property that controls the source current
         in Amps. """
     )
-    # FIXME: Ok
+
     source_current_range = Instrument.control(
         ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
         """ A floating point property that controls the source current
@@ -134,12 +130,12 @@ class Keithley2450(Instrument, KeithleyBuffer):
     ###############
     # Voltage (V) #
     ###############
-    # FIXME: Ok
+
     voltage = Instrument.measurement(":READ?",
         """ Reads the voltage in Volts, if configured for this reading.
         """
     )
-    # FIXME: Ok
+
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
         """ A floating point property that controls the measurement voltage
@@ -148,7 +144,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-210, 210]
     )
-    # FIXME: Fixed
+
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line cycles
@@ -156,7 +152,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
-    # FIXME: Fixed
+
     compliance_voltage = Instrument.control(
         ":SOUR:CURR:VLIM?", ":SOUR:CURR:VLIM %g",
         """ A floating point property that controls the compliance voltage
@@ -164,13 +160,13 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-210, 210]
     )
-    # FIXME: Ok
+
     source_voltage = Instrument.control(
         ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
         """ A floating point property that controls the source voltage
         in Volts. """
     )
-    # FIXME: Ok
+
     source_voltage_range = Instrument.control(
         ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
         """ A floating point property that controls the source voltage 
@@ -262,19 +258,19 @@ class Keithley2450(Instrument, KeithleyBuffer):
             adapter, "Keithley 2450 SourceMeter", **kwargs
         )
 
-    # FIXME: Ok
+
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT ON")
 
-    # FIXME: Ok
+
     def disable_source(self):
         """ Disables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT OFF")
 
-    # FIXME: Fixed
+
     def measure_resistance(self, nplc=1, resistance=2.1e5, auto_range=True):
         """ Configures the measurement of resistance.
 
@@ -291,7 +287,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.resistance_range = resistance
         self.check_errors()
 
-    # FIXME: Ok
+
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
 
@@ -308,7 +304,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.voltage_range = voltage
         self.check_errors()
 
-    # FIXME: Ok
+ 
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
         """ Configures the measurement of current.
 
@@ -325,7 +321,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.current_range = current
         self.check_errors()
 
-    # FIXME: Ok
+
     def auto_range_source(self):
         """ Configures the source to use an automatic range.
         """
@@ -334,7 +330,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         else:
             self.write(":SOUR:VOLT:RANG:AUTO 1")
 
-    # FIXME: Ok
+
     def apply_current(self, current_range=None, 
              compliance_voltage=0.1):
         """ Configures the instrument to apply a source current, and
@@ -354,7 +350,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.compliance_voltage = compliance_voltage
         self.check_errors()
 
-    # FIXME: Ok
+
     def apply_voltage(self, voltage_range=None, 
             compliance_current=0.1):
         """ Configures the instrument to apply a source voltage, and
@@ -374,7 +370,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.compliance_current = compliance_current
         self.check_errors()
 
-    # FIXME: Ok
+
     def beep(self, frequency, duration):
         """ Sounds a system beep.
 
@@ -383,7 +379,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """
         self.write(":SYST:BEEP %g, %g" % (frequency, duration))
 
-    # FIXME: Ok
+
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.
 
@@ -396,7 +392,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         time.sleep(duration)
         self.beep(base_frequency*6.0/4.0, duration)
 
-    # FIXME: Ok
+
     @property
     def error(self):
         """ Returns a tuple of an error code and message from a 
@@ -408,7 +404,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         message = err[1].replace('"', '')
         return (code, message)
 
-    # FIXME: Ok
+
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
         """
@@ -420,11 +416,12 @@ class Keithley2450(Instrument, KeithleyBuffer):
             if (time.time()-t)>10:
                 log.warning("Timed out for Keithley 2450 error retrieval.")
 
-    # FIXME: Fixed
+
     def reset(self):
         """ Resets the instrument and clears the queue.  """
         self.write("*RST;:stat:pres;:*CLS;")
 
+    # TODO: test
     def ramp_to_current(self, target_current, steps=30, pause=20e-3):
         """ Ramps to a target current from the set current value over 
         a certain number of linear steps, each separated by a pause duration.
@@ -442,6 +439,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.source_current = current
             time.sleep(pause)
 
+    # TODO: test
     def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
         """ Ramps to a target voltage from the set voltage value over 
         a certain number of linear steps, each separated by a pause duration.
@@ -459,24 +457,28 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.source_voltage = voltage
             time.sleep(pause)
 
+    # TODO: test
     def trigger(self):
         """ Executes a bus trigger, which can be used when 
         :meth:`~.trigger_on_bus` is configured. 
         """
         return self.write("*TRG")
 
+    # TODO: test
     def trigger_immediately(self):
         """ Configures measurements to be taken with the internal
         trigger at the maximum sampling rate.
         """
         self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
 
+    # TODO: test
     def trigger_on_bus(self):
         """ Configures the trigger to detect events based on the bus
         trigger, which can be activated by :code:`GET` or :code:`*TRG`.
         """
         self.write(":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;")
 
+    # TODO: test
     def set_trigger_counts(self, arm, trigger):
         """ Sets the number of counts for both the sweeps (arm) and the
         points in those sweeps (trigger), where the total number of
@@ -490,6 +492,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         else:
             self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
 
+    # TODO: test
     def sample_continuously(self):
         """ Causes the instrument to continuously read samples
         and turns off any buffer or output triggering
@@ -498,6 +501,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.disable_output_trigger()
         self.trigger_immediately()
 
+    # TODO: test
     def set_timed_arm(self, interval):
         """ Sets up the measurement to be taken with the internal
         trigger at a variable sampling rate defined by the interval
@@ -508,6 +512,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
                                  " triggered between 1 mS and 1 Ms")
         self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
 
+    # TODO: test
     def trigger_on_external(self, line=1):
         """ Configures the measurement trigger to be taken from a 
         specific line of an external trigger
@@ -518,6 +523,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         cmd += ":ARM:ILIN %d;:TRIG:ILIN %d;" % (line, line)
         self.write(cmd)
 
+    # TODO: test
     def output_trigger_on_external(self, line=1, after='DEL'):
         """ Configures the output trigger on the specified trigger link
         line number, with the option of supplying the part of the
@@ -529,6 +535,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """
         self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
 
+    # TODO: test
     def disable_output_trigger(self):
         """ Disables the output trigger for the Trigger layer
         """
@@ -594,6 +601,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """ Returns the resistance standard deviation from the buffer """
         return self.standard_devs[2]
 
+    # TODO: test
     def RvsI(self, startI, stopI, stepI, compliance, delay=10.0e-3, backward=False):
         num = int(float(stopI-startI)/float(stepI)) + 1
         currRange = 1.2*max(abs(stopI),abs(startI))
@@ -621,6 +629,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.check_errors()
         return zip(currents,data)
 
+    # TODO: test
     def RvsIaboutZero(self, minI, maxI, stepI, compliance, delay=10.0e-3):
         data = []
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay))
@@ -631,16 +640,19 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.disable_source()
         return data 
 
+    # TODO: test
     def use_rear_terminals(self):
         """ Enables the rear terminals for measurement, and 
         disables the front terminals. """
         self.write(":ROUT:TERM REAR")
 
+    # TODO: test
     def use_front_terminals(self):
         """ Enables the front terminals for measurement, and 
         disables the rear terminals. """
         self.write(":ROUT:TERM FRON")
 
+    # TODO: test
     def shutdown(self):
         """ Ensures that the current or voltage is turned to zero
         and disables the output. """
