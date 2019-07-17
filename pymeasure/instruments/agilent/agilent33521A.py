@@ -270,7 +270,7 @@ class Agilent33521A(Instrument):
         values=["NORM", "NORMAL", "STEP", "OFF"],
     )
 
-    # ToDo: This implementation is currently not working. Do not know why.
+    # TODO: This implementation is currently not working. Do not know why.
     # arb_period = Instrument.control(
     #     "FUNC:ARB:PER?", "FUNC:ARB:PER %e",
     #     """ A floating point property that controls the period of the arbitrary signal.
@@ -325,7 +325,7 @@ class Agilent33521A(Instrument):
         as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma separated floating
         point values (ranging from -1.0 to +1.0) or as a binary data stream. Check the manual for more
         information.
-        ToDo: *Binary is not yet implemented*
+        TODO: *Binary is not yet implemented*
 
         :param arb_name: The name of the trace in the volatile memory. This is used to access the
                          trace.
@@ -357,8 +357,7 @@ class Agilent33521A(Instrument):
             self.write("DATA:ARB {}, {}".format(arb_name, data_string))
             return
         elif data_format == 'binary':
-            pass
-            return
+            raise NotImplementedError('The binary format has not yet been implemented. Use "DAC" or "float" instead.')
         else:
             raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
 
