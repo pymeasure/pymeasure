@@ -22,17 +22,16 @@
 # THE SOFTWARE.
 #
 
-from io import BytesIO
-import numpy as np
-import re
+import logging
 import time
 
-from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
+import numpy as np
+
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from .buffer import KeithleyBuffer
 
-import logging
+# Setup logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -43,7 +42,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     .. code-block:: python
 
         keithley = Keithley2450("GPIB::1")
-        
+
         keithley.apply_current()                # Sets up to source current
         keithley.source_current_range = 10e-3   # Sets the source current range to 10 mA
         keithley.compliance_voltage = 10        # Sets the compliance voltage to 10 V
@@ -87,7 +86,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
         """ A floating point property that controls the measurement current
-        range in Amps, which can take values between -1.05 and +1.05 A. 
+        range in Amps, which can take values between -1.05 and +1.05 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-1.05, 1.05]
@@ -96,7 +95,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC current measurements, which sets the integration period 
+        (NPLC) for the DC current measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """,
         values=[0.01, 10]
@@ -119,7 +118,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     source_current_range = Instrument.control(
         ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
         """ A floating point property that controls the source current
-        range in Amps, which can take values between -1.05 and +1.05 A. 
+        range in Amps, which can take values between -1.05 and +1.05 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-1.05, 1.05]
@@ -137,7 +136,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
         """ A floating point property that controls the measurement voltage
-        range in Volts, which can take values from -210 to 210 V. 
+        range in Volts, which can take values from -210 to 210 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-210, 210]
@@ -146,7 +145,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC voltage measurements, which sets the integration period 
+        (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -167,8 +166,8 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
     source_voltage_range = Instrument.control(
         ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
-        """ A floating point property that controls the source voltage 
-        range in Volts, which can take values from -210 to 210 V. 
+        """ A floating point property that controls the source voltage
+        range in Volts, which can take values from -210 to 210 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-210, 210]
@@ -186,7 +185,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
         """ A floating point property that controls the resistance range
-        in Ohms, which can take values from 0 to 210 MOhms. 
+        in Ohms, which can take values from 0 to 210 MOhms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 210e6]
@@ -194,7 +193,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?", ":SENS:RES:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 2-wire resistance measurements, which sets the integration period 
+        (NPLC) for the 2-wire resistance measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -273,7 +272,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         :param resistance: Upper limit of resistance in Ohms, from -210 MOhms to 210 MOhms
         :param auto_range: Enables auto_range if True, else uses the set resistance
         """
-        log.info("%s is measuring resistance." % self.name)
+        log.info("%s is measuring resistance.", self.name)
         self.write(":SENS:FUNC 'RES';"
                    ":SENS:RES:NPLC %f;" % nplc)
         if auto_range:
@@ -290,7 +289,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
         :param auto_range: Enables auto_range if True, else uses the set voltage
         """
-        log.info("%s is measuring voltage." % self.name)
+        log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:FUNC 'VOLT';"
                    ":SENS:VOLT:NPLC %f;" % nplc)
         if auto_range:
@@ -299,7 +298,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.voltage_range = voltage
         self.check_errors()
 
- 
+
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
         """ Configures the measurement of current.
 
@@ -307,7 +306,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         :param current: Upper limit of current in Amps, from -1.05 A to 1.05 A
         :param auto_range: Enables auto_range if True, else uses the set current
         """
-        log.info("%s is measuring current." % self.name)
+        log.info("%s is measuring current.", self.name)
         self.write(":SENS:FUNC 'CURR';"
                    ":SENS:CURR:NPLC %f;" % nplc)
         if auto_range:
@@ -326,17 +325,17 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.write(":SOUR:VOLT:RANG:AUTO 1")
 
 
-    def apply_current(self, current_range=None, 
+    def apply_current(self, current_range=None,
              compliance_voltage=0.1):
         """ Configures the instrument to apply a source current, and
         uses an auto range unless a current range is specified.
-        The compliance voltage is also set. 
+        The compliance voltage is also set.
 
-        :param compliance_voltage: A float in the correct range for a 
+        :param compliance_voltage: A float in the correct range for a
                                    :attr:`~.Keithley2450.compliance_voltage`
         :param current_range: A :attr:`~.Keithley2450.current_range` value or None
         """
-        log.info("%s is sourcing current." % self.name)
+        log.info("%s is sourcing current.", self.name)
         self.source_mode = 'current'
         if current_range is None:
             self.auto_range_source()
@@ -346,17 +345,17 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.check_errors()
 
 
-    def apply_voltage(self, voltage_range=None, 
+    def apply_voltage(self, voltage_range=None,
             compliance_current=0.1):
         """ Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.
 
-        :param compliance_current: A float in the correct range for a 
+        :param compliance_current: A float in the correct range for a
                                    :attr:`~.Keithley2450.compliance_current`
         :param voltage_range: A :attr:`~.Keithley2450.voltage_range` value or None
         """
-        log.info("%s is sourcing voltage." % self.name)
+        log.info("%s is sourcing voltage.", self.name)
         self.source_mode = 'voltage'
         if voltage_range is None:
             self.auto_range_source()
@@ -390,7 +389,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
     @property
     def error(self):
-        """ Returns a tuple of an error code and message from a 
+        """ Returns a tuple of an error code and message from a
         single error. """
         err = self.values(":system:error?")
         if len(err) < 2:
@@ -406,9 +405,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
         code, message = self.error
         while code != 0:
             t = time.time()
-            log.info("Keithley 2450 reported error: %d, %s" % (code, message))
+            log.info("Keithley 2450 reported error: %d, %s", code, message)
             code, message = self.error
-            if (time.time()-t)>10:
+            if (time.time()-t) > 10:
                 log.warning("Timed out for Keithley 2450 error retrieval.")
 
 
@@ -417,7 +416,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.write("*RST;:stat:pres;:*CLS;")
 
     def ramp_to_current(self, target_current, steps=30, pause=20e-3):
-        """ Ramps to a target current from the set current value over 
+        """ Ramps to a target current from the set current value over
         a certain number of linear steps, each separated by a pause duration.
 
         :param target_current: A current in Amps
@@ -434,7 +433,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             time.sleep(pause)
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
-        """ Ramps to a target voltage from the set voltage value over 
+        """ Ramps to a target voltage from the set voltage value over
         a certain number of linear steps, each separated by a pause duration.
 
         :param target_voltage: A voltage in Amps
@@ -451,8 +450,8 @@ class Keithley2450(Instrument, KeithleyBuffer):
             time.sleep(pause)
 
     def trigger(self):
-        """ Executes a bus trigger, which can be used when 
-        :meth:`~.trigger_on_bus` is configured. 
+        """ Executes a bus trigger, which can be used when
+        :meth:`~.trigger_on_bus` is configured.
         """
         return self.write("*TRG")
 
@@ -517,19 +516,19 @@ class Keithley2450(Instrument, KeithleyBuffer):
         return self.standard_devs[2]
 
     def use_rear_terminals(self):
-        """ Enables the rear terminals for measurement, and 
+        """ Enables the rear terminals for measurement, and
         disables the front terminals. """
         self.write(":ROUT:TERM REAR")
 
     def use_front_terminals(self):
-        """ Enables the front terminals for measurement, and 
+        """ Enables the front terminals for measurement, and
         disables the rear terminals. """
         self.write(":ROUT:TERM FRON")
 
     def shutdown(self):
         """ Ensures that the current or voltage is turned to zero
         and disables the output. """
-        log.info("Shutting down %s." % self.name)
+        log.info("Shutting down %s.", self.name)
         if self.source_mode == 'current':
             self.ramp_to_current(0.0)
         else:
