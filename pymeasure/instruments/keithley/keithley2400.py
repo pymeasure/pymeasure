@@ -196,7 +196,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         2 or 4.
         """,
         validator=strict_discrete_set,
-        values={4:1, 2:2},
+        values={4:1, 2:0},
         map_values=True
     )
 
