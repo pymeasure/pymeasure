@@ -43,8 +43,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
     .. code-block:: python
 
         keithley = Keithley2450("GPIB::1")
-
-        # TODO: Make sure example commands work!
         
         keithley.apply_current()                # Sets up to source current
         keithley.source_current_range = 10e-3   # Sets the source current range to 10 mA
@@ -180,7 +178,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Resistance (Ohm) #
     ####################
 
-    # TODO: Check resistance mode
 
     resistance = Instrument.measurement(":READ?",
         """ Reads the resistance in Ohms, if configured for this reading.
@@ -201,7 +198,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
-    # TODO: Not changing mode
+
     wires = Instrument.control(
         ":SENS:RES:RSENSE?", ":SENS:RES:RSENSE %d",
         """ An integer property that controls the number of wires in
@@ -212,7 +209,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         values={4:1, 2:0},
         map_values=True
     )
-    # TODO: test on instrument
+
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
         """ An integer property that controls the number of buffer points. This
@@ -222,36 +219,34 @@ class Keithley2450(Instrument, KeithleyBuffer):
         values=[1, 6875000],
         cast=int
     )
-    # TODO: test on instrument
+
     means = Instrument.measurement(
         ":TRACe:STATistics:AVERage?",
         """ Reads the calculated means (averages) for voltage,
         current, and resistance from the buffer data  as a list. """
     )
-    # TODO: test on instrument
+
     maximums = Instrument.measurement(
         ":TRACe:STATistics:MAXimum?",
         """ Returns the calculated maximums for voltage, current, and
         resistance from the buffer data as a list. """
     )
-    # TODO: test on instrument
+
     minimums = Instrument.measurement(
         ":TRACe:STATistics:MINimum?",
         """ Returns the calculated minimums for voltage, current, and
         resistance from the buffer data as a list. """
     )
-    # TODO: test on instrument
+
     standard_devs = Instrument.measurement(
         ":TRACe:STATistics:STDDev?",
         """ Returns the calculated standard deviations for voltage,
         current, and resistance from the buffer data as a list. """
     )
 
-    ###########
-    # Trigger #
-    ###########
-
-    # TODO: Trigger system will need a complete reimplementation because the model has changed significantly from 2400    
+    ####################
+    # Methods        #
+    ####################
 
     def __init__(self, adapter, **kwargs):
         super(Keithley2450, self).__init__(
@@ -421,7 +416,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """ Resets the instrument and clears the queue.  """
         self.write("*RST;:stat:pres;:*CLS;")
 
-    # TODO: test
     def ramp_to_current(self, target_current, steps=30, pause=20e-3):
         """ Ramps to a target current from the set current value over 
         a certain number of linear steps, each separated by a pause duration.
@@ -439,7 +433,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.source_current = current
             time.sleep(pause)
 
-    # TODO: test
     def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
         """ Ramps to a target voltage from the set voltage value over 
         a certain number of linear steps, each separated by a pause duration.
@@ -457,89 +450,12 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.source_voltage = voltage
             time.sleep(pause)
 
-    # TODO: test
     def trigger(self):
         """ Executes a bus trigger, which can be used when 
         :meth:`~.trigger_on_bus` is configured. 
         """
         return self.write("*TRG")
 
-    # TODO: test
-    def trigger_immediately(self):
-        """ Configures measurements to be taken with the internal
-        trigger at the maximum sampling rate.
-        """
-        self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
-
-    # TODO: test
-    def trigger_on_bus(self):
-        """ Configures the trigger to detect events based on the bus
-        trigger, which can be activated by :code:`GET` or :code:`*TRG`.
-        """
-        self.write(":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;")
-
-    # TODO: test
-    def set_trigger_counts(self, arm, trigger):
-        """ Sets the number of counts for both the sweeps (arm) and the
-        points in those sweeps (trigger), where the total number of
-        points can not exceed 6875000
-        """
-        if arm * trigger > 6875000 or arm * trigger < 0:
-            raise RangeException("Keithley 2450 has a combined maximum "
-                                 "of 6875000 counts")
-        if arm < trigger:
-            self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
-        else:
-            self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
-
-    # TODO: test
-    def sample_continuously(self):
-        """ Causes the instrument to continuously read samples
-        and turns off any buffer or output triggering
-        """
-        self.disable_buffer()
-        self.disable_output_trigger()
-        self.trigger_immediately()
-
-    # TODO: test
-    def set_timed_arm(self, interval):
-        """ Sets up the measurement to be taken with the internal
-        trigger at a variable sampling rate defined by the interval
-        in seconds between sampling points
-        """
-        if interval > 99999.99 or interval < 0.001:
-            raise RangeException("Keithley 2450 can only be time"
-                                 " triggered between 1 mS and 1 Ms")
-        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
-
-    # TODO: test
-    def trigger_on_external(self, line=1):
-        """ Configures the measurement trigger to be taken from a 
-        specific line of an external trigger
-
-        :param line: A trigger line from 1 to 4
-        """
-        cmd = ":ARM:SOUR TLIN;:TRIG:SOUR TLIN;"
-        cmd += ":ARM:ILIN %d;:TRIG:ILIN %d;" % (line, line)
-        self.write(cmd)
-
-    # TODO: test
-    def output_trigger_on_external(self, line=1, after='DEL'):
-        """ Configures the output trigger on the specified trigger link
-        line number, with the option of supplying the part of the
-        measurement after which the trigger should be generated
-        (default to delay, which is right before the measurement)
-
-        :param line: A trigger line from 1 to 4
-        :param after: An event string that determines when to trigger
-        """
-        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
-
-    # TODO: test
-    def disable_output_trigger(self):
-        """ Disables the output trigger for the Trigger layer
-        """
-        self.write(":TRIG:OUTP NONE")
 
     @property
     def mean_voltage(self):
@@ -601,58 +517,16 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """ Returns the resistance standard deviation from the buffer """
         return self.standard_devs[2]
 
-    # TODO: test
-    def RvsI(self, startI, stopI, stepI, compliance, delay=10.0e-3, backward=False):
-        num = int(float(stopI-startI)/float(stepI)) + 1
-        currRange = 1.2*max(abs(stopI),abs(startI))
-        # self.write(":SOUR:CURR 0.0")
-        self.write(":SENS:VOLT:PROT %g" % compliance)
-        self.write(":SOUR:DEL %g" % delay)
-        self.write(":SOUR:CURR:RANG %g" % currRange )
-        self.write(":SOUR:SWE:RANG FIX")
-        self.write(":SOUR:CURR:MODE SWE")
-        self.write(":SOUR:SWE:SPAC LIN")
-        self.write(":SOUR:CURR:STAR %g" % startI)
-        self.write(":SOUR:CURR:STOP %g" % stopI)
-        self.write(":SOUR:CURR:STEP %g" % stepI)
-        self.write(":TRIG:COUN %d" % num)
-        if backward:
-            currents = np.linspace(stopI, startI, num)
-            self.write(":SOUR:SWE:DIR DOWN")
-        else:
-            currents = np.linspace(startI, stopI, num)
-            self.write(":SOUR:SWE:DIR UP")
-        self.connection.timeout = 30.0
-        self.enable_source()
-        data = self.values(":READ?") 
-
-        self.check_errors()
-        return zip(currents,data)
-
-    # TODO: test
-    def RvsIaboutZero(self, minI, maxI, stepI, compliance, delay=10.0e-3):
-        data = []
-        data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay))
-        data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay, backward=True))
-        self.disable_source()    
-        data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay))
-        data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay, backward=True))
-        self.disable_source()
-        return data 
-
-    # TODO: test
     def use_rear_terminals(self):
         """ Enables the rear terminals for measurement, and 
         disables the front terminals. """
         self.write(":ROUT:TERM REAR")
 
-    # TODO: test
     def use_front_terminals(self):
         """ Enables the front terminals for measurement, and 
         disables the rear terminals. """
         self.write(":ROUT:TERM FRON")
 
-    # TODO: test
     def shutdown(self):
         """ Ensures that the current or voltage is turned to zero
         and disables the output. """
