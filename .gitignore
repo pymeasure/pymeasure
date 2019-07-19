@@ -102,3 +102,6 @@ ENV/
 
 # PyPI
 .pypirc
+
+# Vim
+*.swp

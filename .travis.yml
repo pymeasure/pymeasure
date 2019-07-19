@@ -3,25 +3,37 @@ language: c
 matrix:
   include:
     - os: linux
-      env: PYTHON=3.4  CONDA_PY=34
-      sudo: true
-    - os: linux
+      dist: xenial
       env: PYTHON=3.5  CONDA_PY=35
       sudo: true
+      services:
+        - xvfb
     - os: linux
+      dist: xenial
       env: PYTHON=3.6  CONDA_PY=36
       sudo: true
+      services:
+        - xvfb
     - os: linux
+      dist: xenial
       env: PYTHON=3.6 DOCS=true
       sudo: true
-    - os: osx
-      env: PYTHON=3.4  CONDA_PY=34
-      sudo: false
+      services:
+        - xvfb
+    - os: linux
+      dist: xenial
+      env: PYTHON=3.7  CONDA_PY=37
+      sudo: true
+      services:
+        - xvfb
     - os: osx
       env: PYTHON=3.5  CONDA_PY=35
       sudo: false
     - os: osx
       env: PYTHON=3.6  CONDA_PY=36
+      sudo: false
+    - os: osx
+      env: PYTHON=3.7  CONDA_PY=37
       sudo: false
 
 # command to install dependencies
@@ -48,15 +60,6 @@ install:
         conda install --yes sphinx sphinx_rtd_theme;
     fi
   - conda info -a
-
-# test environment setup
-before_script:
-  # GUI testing on Linux
-  - 'if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        export DISPLAY=:99.0;
-        sh -e /etc/init.d/xvfb start;
-        sleep 3;
-    fi'
 
 # command to run tests
 script: 

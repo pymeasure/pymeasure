@@ -361,6 +361,7 @@ class ResultsDialog(QtGui.QFileDialog):
         super().__init__(parent)
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
+        self.setOption(QtGui.QFileDialog.DontUseNativeDialog, True)
         self._setup_ui()
 
     def _setup_ui(self):
