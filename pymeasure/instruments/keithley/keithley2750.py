@@ -87,9 +87,5 @@ class Keithley2750(Instrument):
         :return: None
         """
         self.write(":ROUTe:OPEN:ALL")
-        # Channel 133 is the switch between Mux 1 and Mux 2; we want it to be open. From testing the instrument,
-        # it seems that channel 133 exhibits close/open behavior opposite from expected. If switched "closed",
-        # the connection will actually be open, and when switched "open" it will actually be shorted.
-        self.close(133)  # Open channel 133. Read the above statement to explain this non-intuitive method call.
 
 
