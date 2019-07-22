@@ -61,11 +61,12 @@ install:
   #- "%PYTHON%\\python.exe -m pip install -r requirements/core.txt"
 
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - call %MINICONDA%\Scripts\activate.bat
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
   - "conda env create -f requirements/conda-%PYTHON_VERSION%.yml"
-  - activate pymeasure
+  - conda activate pymeasure
 
 build: off
 
