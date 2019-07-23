@@ -23,6 +23,13 @@ environment:
       #PYTHON_ARCH: "64"
       PLATFORM: x64
 
+    - PYTHON_VERSION: "3.7"
+      MINICONDA: C:\Miniconda37-x64
+      #PYTHON: "C:\\Python37-x64"
+      #DISTUTILS_USE_SDK: "1"
+      #PYTHON_ARCH: "64"
+      PLATFORM: x64
+
     - PYTHON_VERSION: "3.5"
       MINICONDA: C:\Miniconda35
       #PYTHON: "C:\\Python35"
@@ -54,6 +61,7 @@ install:
   #- "%PYTHON%\\python.exe -m pip install -r requirements/core.txt"
 
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - call %MINICONDA%\Scripts\activate.bat
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
