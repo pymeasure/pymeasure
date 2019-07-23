@@ -108,7 +108,7 @@ class TestResults:
             DATA_COLUMNS = ['Foo', 'Bar', 'Baz'] 
         procedure = DummyProcedure()
         procedure.par = np.linspace(1,100,17)
-        filename = os.path.join(tmpdir, 'header_linebreak_test.csv')
+        filename = os.path.join(str(tmpdir), 'header_linebreak_test.csv')
         result = Results(procedure, filename)
         result.reload() # assert no error
         pd.read_csv(filename, comment="#") # assert no error
