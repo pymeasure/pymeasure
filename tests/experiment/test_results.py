@@ -102,14 +102,14 @@ class TestResults:
         assert second_data.iloc[:,0].dtype is not object
         assert first_data.iloc[:,0].dtype is second_data.iloc[:,0].dtype
         
-    def test_regression_param_str_should_not_include_newlines(self):
+    def test_regression_param_str_should_not_include_newlines(self, tmpdir):
         class DummyProcedure(Procedure):
             par = Parameter('Generic Parameter with newline chars')           
             DATA_COLUMNS = ['Foo', 'Bar', 'Baz'] 
         procedure = DummyProcedure()
         procedure.par = np.linspace(1,100,17)
-        file = tempfile.mktemp()
-        result = Results(procedure, file)
+        filename = os.path.join(tmpdir, 'header_linebreak_test.csv')
+        result = Results(procedure, filename)
         result.reload() # assert no error
-        pd.read_csv(file, comment="#") # assert no error
+        pd.read_csv(filename, comment="#") # assert no error
         assert (result.parameters['par'].value == np.linspace(1,100,17)).all()
