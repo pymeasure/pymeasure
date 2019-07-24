@@ -27,7 +27,7 @@
 import logging
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,\
-    strict_range, joined_validators
+    strict_range
 from time import time
 from pyvisa.errors import VisaIOError
 
@@ -61,14 +61,18 @@ class Agilent33500(Instrument):
         generator.amplitude = 5                 # Sets the output amplitude to 5 Vpp
         generator.output = 'on'                 # Enables the output
 
+        generator.shape = 'ARB'                 # Set shape to arbitrary
+        generator.arb_srate = 1e6               # Set sample rate to 1MSa/s
+
+        generator.data_volatile_clear()         # Clear volatile internal memory
+        generator.data_arb(                     # Send data points of arbitrary waveform
+            'test',
+            range(-10000, 10000, +20),          # In this case a simple ramp
+            data_format='DAC'                   # Data format is set to 'DAC'
+        )
+        generator.arb_file = 'test'             # Select the transmitted waveform 'test'
+
     """
-
-    # Validation ranges - These can be overridden by the child class to implement different validation
-    # ranges for different devices from the Agilent 33500 family.
-    # They are named using <method>_validation_range.
-
-    frequency_validation_range = [1e-6, 120e+6]
-    arb_srate_validation_range = [1e-6, 250e6]
 
     id = Instrument.measurement(
         "*IDN?", """ Reads the instrument identification """
@@ -99,7 +103,7 @@ class Agilent33500(Instrument):
         waveform in Hz, from 1 uHz to 120 MHz (maximum range, can be lower depending
         on your device), depending on the specified function. Can be set. """,
         validator=strict_range,
-        values=frequency_validation_range,
+        values=[1e-6, 120e+6],
     )
 
     amplitude = Instrument.control(
@@ -329,7 +333,7 @@ class Agilent33500(Instrument):
         arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
         depending on your device). This can be set. """,
         validator=strict_range,
-        values=arb_srate_validation_range,
+        values=[1e-6, 250e6],
     )
 
     def data_volatile_clear(self):
