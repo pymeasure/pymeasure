@@ -62,6 +62,7 @@ class AFG3152C(Instrument):
     'haversine':'HAV'
     }
 
+
     #######
     # CH1 #
     #######
@@ -143,7 +144,13 @@ class AFG3152C(Instrument):
         map_values=True
     )
 
-    
+
+    def __init__(self, resourceName, **kwargs):
+        super(AFG3152C, self).__init__(
+            resourceName,
+            "Tektronix AFG3152C arbitrary function generator",
+            **kwargs
+        )
 
     def unit(self, source):
         source=strict_discrete_set(source,self.SOURCE_VALUES)
@@ -168,19 +175,13 @@ class AFG3152C(Instrument):
         else:
             raise ValueError("%s: invalid input source provided" %source)
 
-    def waveform(self,source,shape='SIN',amplitude=1,offset=0,units='VPP'):
+    def waveform(self,source,shape='SIN',frequency=1e6,units='VPP',amplitude=1,offset=0):
         """General setting method for a complete wavefunction"""
         if source in self.SOURCE_VALUES:
             self.write("source%s:function:shape %s" %(source,shape))
+            self.write("source%s:frequency:fixed %e" %(source,frequency))
             self.write("source%s:voltage:unit %s" %(source,units))
             self.write("source%s:voltage:amplitude %e%s" %(source,amplitude,units))
             self.write("source%s:voltage:offset %eV" %(source,offset))
         else:
             raise ValueError("%s: invalid input source provided" %source)
-
-    def __init__(self, resourceName, **kwargs):
-        super(AFG3152C, self).__init__(
-            resourceName,
-            "Tektronix AFG3152C arbitrary function generator",
-            **kwargs
-        )
