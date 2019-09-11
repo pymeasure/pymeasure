@@ -104,6 +104,12 @@ class Instrument(object):
         """
         return self.adapter.read()
 
+    def read_bytes(self, size):
+        """ Reads specified number of bytes from the instrument through
+        the adapter and returns the response.
+        """
+        return self.adapter.read_bytes(size)
+
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
