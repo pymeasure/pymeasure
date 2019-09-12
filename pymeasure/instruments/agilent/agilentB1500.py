@@ -1,0 +1,821 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2019 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+from pymeasure.instruments.validators import (strict_discrete_set,
+                                              truncated_discrete_set,
+                                              strict_range)
+from pymeasure.instruments import (Instrument,
+                                   RangeException)
+
+import pandas as pd
+import re
+import numpy as np
+
+
+######################################
+# Agilent B1500 Mainframe
+######################################
+
+class AgilentB1500(Instrument):
+    """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
+    and provides a high-level interface for taking current-voltage (I-V) measurements.
+
+        from pymeasure.instruments.agilent import AgilentB1500
+
+        # explicitly define r/w terminations; set sufficiently large timeout or None.
+        smu = AgilentB1500("GPIB0::25", read_termination = '\\n',
+                           write_termination = '\\n', timeout=None)
+
+        # reset the instrument
+        smu.reset()
+
+        # define configuration file for instrument and load config
+        smu.configure("configuration_file.json")
+
+        # save data variables, some or all of which are defined in the json config file.
+        smu.save(['VC', 'IC', 'VB', 'IB'])
+
+        # take measurements
+        status = smu.measure()
+
+        # measured data is a pandas dataframe and can be exported to csv.
+        data = smu.get_data(path='./t1.csv')
+    """
+
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "Agilent B1500 Semiconductor Parameter Analyzer",
+            **kwargs
+        )
+        self._smu_names = {}
+        #setting of data output format -> determines how to read measurement data
+        self._data_format = self.data_formatting("FMT1") #default setting of B1500
+
+#    def get_smu_names(self):
+#        """ Dictionary of Channel Number and SMU Names. """
+#        return self._smu_names
+
+    def add_smu_name(self, channel, name):
+        self._smu_names[channel] = name
+
+    def initialize_smu(self, channel, smu_type, name):
+        """ Initializes SMU """
+        channel = strict_discrete_set(channel,range(1,11)+range(101,1101,100)+range(102,1102,100))
+        if channel in range(1,11):
+            channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
+        self.add_smu_name(channel, name)
+        return SMU(self.adapter,channel,smu_type)
+
+    def pause(self, pause_seconds):
+        """ Pauses Command Excecution for given time in seconds."""
+        self.write("PA %d" % pause_seconds)
+
+    def start_meas(self):
+        """ Starts Measurement (except High Speed Spot). """
+        self.write("XE")
+    
+    def force_gnd(self):
+        """ Force 0V on all channels immediately. Current Settings can be restored with RZ."""
+        self.write("DZ")
+
+    def check_errors(self):
+        error = self.ask("ERRX?")
+        error = re.match(r'(?P<errorcode>[+-]?\d+(?:\.\d+)?),"(?P<errortext>[\w\s.]+)', error).groups()
+        if int(error[0]) == 0:
+            return
+        else:
+            raise IOError("Agilent B1500 Error {0}: {1}".format(error[0],error[1]))
+
+    def check_idle(self):
+        self.write("*OPC?")
+
+    def clear_buffer(self):
+        """ Clear output data buffer. """
+        self.write("BC")
+
+    def clear_timer(self):
+        """ Clear timer count. """
+        self.write("TSR")
+
+    def send_trigger(self):
+        """ Send trigger to start measurement. """
+        self.write("XE")
+
+    auto_calibration = Instrument.setting(
+        "CM %d",
+        """ Enable/Disable SMU auto-calibration every 30 minutes.""",
+        values={True:1,False:0},
+        validator=strict_discrete_set,
+        map_values=True
+    )
+
+    ######################################
+    # Data Formatting
+    ######################################
+
+    class data_formatting_generic():
+        def __init__(self, output_format_str,smu_names={}):
+            """ Stores parameters of the chosen output format
+            for later usage in reading and processing instrument data.
+            """
+            sizes={"FMT1":16,"FMT11":17,"FMT21":19}
+            try:
+                self.size = sizes[output_format_str]
+            except:
+                raise NotImplementedError(
+                "Data Format {0} is not implemented so far.".format(output_format_str)
+                )
+            self.format = output_format_str
+            data_names_C = {
+                "V":"Voltage (V)",
+                "I":"Current (A)",
+                "F":"Frequency (Hz)",
+            }
+            data_names_CG = {
+                "Z":"Impedance (Ohm)",
+                "Y":"Admittance (S)",
+                "C":"Capacitance (F)",
+                "L":"Inductance (H)",
+                "R":"Phase (rad)",
+                "P":"Phase (deg)",
+                "D":"Dissipation factor",
+                "Q":"Quality factor",
+                "X":"Sampling index",
+                "T":"Time (s)"
+            }
+            data_names_G = {
+                "V":"Voltage Measurement (V)",
+                "I":"Current Measurement (A)",
+                "v":"Voltage Output (V)",
+                "i":"Current Output (A)",
+                "f":"Frequency (Hz)",
+                "z":"invalid data"
+            }
+            if output_format_str in ['FMT1','FMT5','FMT11','FMT15']:
+                self.data_names={**data_names_C,**data_names_CG}
+            elif output_format_str in ['FMT21','FMT25']:
+                self.data_names={**data_names_G,**data_names_CG}
+            else:
+                self.data_names={} #no header
+            self.smu_names = smu_names
+
+        def format_channel(self, channel_string):
+            channels = {"A":101,"B":201,"C":301,"D":401,"E":501,"F":601,"G":701,"H":801,"I":901,"J":1001,
+                "a":102,"b":202,"c":302,"d":402,"e":502,"f":602,"g":702,"h":802,"i":902,"j":1002,
+                "V":"GNDU","Z":"MISC"}
+            channel = channels[channel_string]
+            try:
+                smu = self.smu_names[channel]
+                return smu
+            except:
+                return channel
+    
+    class data_formatting_FMT1(data_formatting_generic):
+        def __init__(self):
+            super().__init__("FMT1")
+
+        def format_single(self, element):
+            status = element[0]
+            channel = element[1]
+            data_name = element[2]
+            value = float(element[3:])
+            channel = self.format_channel(channel)
+            data_name = self.data_names[data_name]
+            return (status,channel,data_name,value)
+    
+    class data_formatting_FMT11(data_formatting_FMT1):
+        def __init__(self):
+            super().__init__("FMT11")
+    
+    class data_formatting_FMT21(data_formatting_generic):
+        def __init__(self):
+            super().__init__("FMT21")
+
+        def format_single(self, element):
+            status = element[0:3]
+            channel = element[3]
+            data_name = element[4]
+            value = float(element[5:])
+            channel = self.format_channel(channel)
+            data_name = self.data_names[data_name]
+            return (status,channel,data_name,value)
+
+    def data_formatting(self, output_format_str,smu_names={}):
+        classes = {
+            "FMT21":self.data_formatting_FMT21,
+            "FMT1":self.data_formatting_FMT1,
+            "FMT11":self.data_formatting_FMT11
+            }
+        try:
+            format_class = classes[output_format_str, smu_names]
+        except:
+            raise NotImplementedError(
+            "Data Format {0} is not implemented so far.".format(output_format_str)
+            )
+        return format_class()
+
+    def data_format(self,output_format,mode=0):
+        """ Specifies data output format. Check Documentation for parameters. """
+        output_format = strict_discrete_set(output_format,[1,2,3,4,5,11,12,13,14,15,21,22,25])
+        mode = strict_range(mode,range(0,11))      
+        self.write("FMT %d, %d" % (output_format,mode))
+        self.check_errors()
+        self._data_format = self.data_formatting("FMT%d" % output_format, self._smu_names)
+
+    ######################################
+    # Measurement Settings
+    ######################################
+
+    parallel_measurement = Instrument.setting(
+        "PAD %d",
+        """ Enable/Disable parallel measurements.
+            Effective for SMUs using HSADC and measurement modes 1,2,10,18
+        """,
+        values={True:1,False:0},
+        validator=strict_discrete_set,
+        map_values=True,
+        check_set_errors=True
+    )
+
+    def meas_mode(self, mode, *args):
+        """ Set Measurement Mode of Channel. Pass SMU references. 
+        Argument order defines measurement order.
+        """
+        mode_values = {"Spot":1,"Staircase Sweep":2,"Sampling":10}
+        # values = {1,2,3,4,5,9,10,13,14,15,16,17,18,19,20,22,23,26,27,28}
+        #mode = strict_discrete_set(mode,mode_values)
+        try:
+            mode = mode_values[mode]
+        except:
+            raise NotImplementedError("Measurement Mode {0} is not implemented yet.".format(mode))
+        cmd = "MM %d" % mode
+        for smu in args:
+            cmd += ", %d" %smu.channel
+        self.write(cmd)
+        self.check_errors()
+
+    # ADC Setup: AAD, AIT, AV, AZ
+
+    def adc_setup(self,adc_type,mode,N=''):
+        """ Set up operation mode and parameters of ADC for each ADC type. 
+            Check Documentation for meaning of N in each case.
+            Defaults:
+            HSADC: Auto N=1, Manual N=1, PLC N=1, Time N=0.000002(s)
+            HRADC: Auto N=6, Manual N=3, PLC N=1
+        """
+        adc_type_values={'HSADC':0,'HRADC':1,'HSADC pulsed':2}
+        adc_type = strict_discrete_set(adc_type,adc_type_values)
+        adc_type = adc_type_values[adc_type]
+        mode_values={'Auto':0,'Manual':1,'PLC':2,'Time':3}
+        mode = strict_discrete_set(mode,mode_values)
+        mode = mode_values[mode]
+        if (adc_type == 'HRADC') and (mode == 'Time'):
+            raise ValueError("Time ADC mode is not available for HRADC")
+        command = "AIT %d, %d" % (mode,adc_type)
+        if not N == '':
+            command += (", %f" % N)
+        self.write(command)
+        self.check_errors()
+
+    def adc_averaging(self,number,mode=''):
+        """ Set number of averaging samples of the HSADC.
+            Defaults: N=1, Auto
+        """
+        if number > 0:
+            number = strict_range(number,range(1,1024))
+            mode_values = {'Auto':0,'Manual':1}
+            mode = strict_discrete_set(mode,mode_values)
+            mode = mode_values[mode]
+            self.write("AV %d, %d" % (number,mode))
+        else:
+            number = strict_range(number,range(-1,-101,-1))
+            self.write("AV %d" % number)
+
+    adc_auto_zero = Instrument.setting(
+        "AZ %d",
+        """ Enable/Disable ADC zero function. Halfs the integration time, if off. """,
+        values={True:1,False:0},
+        validator=strict_discrete_set,
+        map_values=True,
+        check_set_errors=True
+    )
+
+    ######################################
+    # Sweep Setup
+    ######################################
+
+    def sweep_timing(self,hold,delay,step_delay=0,step_trigger_delay=0,measurement_trigger_delay=0):
+        """ Sets Hold Time, Delay Time and Step Delay Time for 
+            staircase or multi channel sweep measurement. 
+            If not set all parameters are 0. """
+        hold = strict_range(hold*100,range(0,65536))/100 # resolution 10ms
+        delay = strict_range(delay*10000,range(0,655351))/10000 # resolution 0.1ms
+        step_delay = strict_range(step_delay*10000,range(0,10001))/10000 # resolution 0.1ms
+        step_trigger_delay = strict_range(step_trigger_delay*10000,range(0,10001))/10000 # resolution 0.1ms
+        measurement_trigger_delay = strict_range(measurement_trigger_delay*10000,range(0,655351))/10000 # resolution 0.1ms
+        self.write("WT %f, %f, %f, %f, %f" % (hold, delay, step_delay,step_trigger_delay,measurement_trigger_delay))
+        self.check_errors()
+
+    def sweep_auto_abort(self,abort,post='Start'):
+        """ Enables/Disables the automatic abort function.
+            Also sets the post measurement condition. """
+        abort_values = {"ON":2,"OFF":1}
+        abort = strict_discrete_set(abort.upper(),abort_values)
+        abort = abort_values[abort.upper()]
+        post_values = {"START":1,"STOP":2}
+        post = strict_discrete_set(post.upper(),post_values)
+        post = post_values[post.upper()]
+        self.write("WM %d, %d" % (abort, post))
+        self.check_errors()
+
+    sampling_mode = Instrument.setting(
+        "ML %d",
+        """ Set linear or logarithmic sampling mode. """,
+        values={"Linear":1,
+        "Log 10 data/decade":2,"Log 25 data/decade":3,"Log 50 data/decade":4,
+        "Log 100 data/decade":5,"Log 250 data/decade":6,"Log 5000 data/decade":7},
+        validator=strict_discrete_set,
+        map_values=True,
+        check_set_errors=True
+    )
+
+    ######################################
+    # Sampling Setup
+    ######################################
+
+    def sampling_timing(self,hold_bias,interval,number,hold_base=0):
+        """ Sets Timing Parameters for the Sampling Measurement """
+        hold_bias = strict_range(hold_bias*100,range(0,65536))/100 # resolution 10ms
+        interval = strict_range(interval*10000,range(0,655351))/10000 # resolution 0.1ms, restrictions apply (number of measurement channels)
+        number = strict_range(number,range(0,100002)) # restrictions apply (number of measurement channels)
+        hold_base = strict_range(hold_base*100,range(0,65536))/100 # resolution 0.01s
+        self.write("MT %f, %f, %d, %f" % (hold_bias,interval,number,hold_base))
+        self.check_errors()
+
+    def sampling_auto_abort(self,abort,post='Bias'):
+        """ Enables/Disables the automatic abort function.
+            Also sets the post measurement condition. """
+        abort_values = {"ON":2,"OFF":1}
+        abort = strict_discrete_set(abort.upper(),abort_values)
+        abort = abort_values[abort.upper()]
+        post_values = {"BASE":1,"BIAS":2}
+        post = strict_discrete_set(post.upper(),post_values)
+        post = post_values[post.upper()]
+        self.write("MSC %d, %d" % (abort, post))
+        self.check_errors()
+
+    ######################################
+    # Read out of data
+    ######################################
+
+    def read_data(self,number_of_points):
+        """ Reads all data from buffer and returns Pandas DataFrame. 
+        Specify number of measurement points for correct splitting of the data list.
+        """
+        data = self.read()
+        data = data.split(',')
+        data = np.array(data)
+        data = np.split(data,number_of_points)
+        data = pd.DataFrame(data=data)
+        data = data.applymap(self._data_format.format_single)
+        heads = data.iloc[[0]].applymap(lambda x: ' '.join(x[1:3])) # channel & data_type
+        heads = heads.to_numpy().tolist() #2D List
+        heads = heads[0] #first row
+        data = data.applymap(lambda x: x[3])
+        data.columns = heads
+        return data
+
+
+    def read_channels(self,nchannels):
+        """ Reads data for 1 measurement point from the buffer. Specify number of 
+        measurement channels + sweep sources (depending on data output setting)
+        """
+        data = self.read_bytes(self._data_format.size * nchannels)
+        data = data.decode("ASCII")
+        data = data.rstrip('\r,') # ',' if more data in buffer, '\r' if last data point
+        data = data.split(',')
+        data = map(self._data_format.format_single, data)
+        data = tuple(data)
+        return data
+
+######################################        
+# SMU Setup
+######################################
+
+class SMU(Instrument):
+
+    def __init__(self, resourceName, channel, smu_type, **kwargs):
+        super().__init__(
+            resourceName,
+            "SMU of Agilent B1500 Semiconductor Parameter Analyzer",
+            **kwargs
+        )
+        channel = strict_discrete_set(channel,range(1,11)+range(101,1101,100)+range(102,1102,100))
+        if channel in range(1,11):
+            self.channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
+        else:
+            self.channel = channel
+        smu_type = strict_discrete_set(smu_type,['HRSMU','MPSMU','HPSMU','MCSMU',
+            'HCSMU','DHCSMU','HVSMU','UHCU','HVMCU','UHVU'])
+        self.ranging = self.smu_ranging(smu_type)
+
+        # Instrument settings need to be set up in __init__ 
+        # since self.channel is required
+
+        filter = Instrument.setting(
+            ("FL %d" % self.channel) + ", %d",
+            """ Enables/Disables SMU Filter.""",
+            values={"ON":1,"OFF":0},
+            validator=strict_discrete_set,
+            map_values=True,
+            check_set_errors=True
+        )
+
+        series_resistor = Instrument.setting(
+            ("SSR %d" % self.channel) + ", %d",
+            """ Enables/Disables 1MOhm series resistor. """,
+            values={"ON":1,"OFF":0},
+            validator=strict_discrete_set,
+            map_values=True,
+            check_set_errors=True
+        )
+
+        meas_type = Instrument.setting(
+            ("CMM %d" % self.channel) + ", %d",
+            """ Set SMU measurement operation mode. """,
+            values={"Compliance Side":0,"Current":1,"Voltage":2,"Force Side":3,"Compliance and Force Side":4},
+            validator=strict_discrete_set,
+            map_values=True,
+            check_set_errors=True
+        )
+        
+        adc_type = Instrument.setting(
+            ("AAD %d" % self.channel)+", %d",
+            """ Specify ADC type for each measurement channel.
+            """,
+            validator=strict_discrete_set,
+            values={'HSADC':0,'HRADC':1,'HSADC pulsed':2},
+            map_values=True,
+            check_set_errors=True)
+
+        meas_range_current = Instrument.setting(
+            ("RI %d" % self.channel) + ", %d",
+            """ Sets the current measurement range.
+            """,
+            validator=strict_discrete_set,
+            values=self.ranging.current_meas.ranges,
+            map_values=False,
+            check_set_errors=True
+            )
+
+        meas_range_voltage = Instrument.setting(
+            ("RV %d" % self.channel) + ", %d",
+            """ Sets the current measurement range.
+            """,
+            validator=strict_discrete_set,
+            values=self.ranging.voltage_meas.ranges,
+            map_values=False,
+            check_set_errors=True
+            )
+
+
+    def enable(self):
+        """ Enable Source/Measurement Channel """
+        self.write("CN %d" % self.channel)
+    
+    def disable(self):
+        """ Disable Source/Measurement Channel """
+        self.write("CL %d" % self.channel)
+
+    def force_gnd(self):
+        """ Force 0V immediately. Current Settings can be restored with RZ."""
+        self.write("DZ %d" % self.channel)
+    
+    class smu_ranging():
+        """ Transformation of available Voltage/Current Range Names to Index and back.
+            Checks for compatibility with specified SMU type.
+        """
+        def __init__(self, smu_type):
+            self.voltage_output = self.ranging(smu_type,source_type='Voltage',ranging_type='Output')
+            self.voltage_meas = self.ranging(smu_type,source_type='Voltage',ranging_type='Measurement')
+            self.current_output = self.ranging(smu_type,source_type='Current',ranging_type='Output')
+            self.current_meas = self.ranging(smu_type,source_type='Current',ranging_type='Measurement')
+
+        class ranging():
+            def __init__(self,smu_type,source_type='Voltage',ranging_type='Output'):
+                if source_type.upper() == 'VOLTAGE':
+                    smu = {
+                        'HRSMU': [0, 5, 20, 50, 200, 400, 1000],
+                        'MPSMU': [0, 5, 20, 50, 200, 400, 1000],
+                        'HPSMU': [0, 20, 200, 400, 1000, 2000],
+                        'MCSMU': [0, 2, 20, 200, 400],
+                        'HCSMU': [0, 2, 20, 200, 400],
+                        'DHCSMU': [0, 2, 20, 200, 400],
+                        'HVSMU': [0, 2000, 5000, 15000, 30000],
+                        'UHCU': [0, 1000],
+                        'HVMCU': [0, 15000, 30000],
+                        'UHVU': [0, 103]
+                        }
+                    if ranging_type.upper() == 'OUTPUT':
+                        names = {
+                            'Auto Ranging': 0,
+                            '0.2 V limited auto ranging': 2,
+                            '0.5 V limited auto ranging': 5,
+                            '2 V limited auto ranging': 11,
+                            '2 V limited auto ranging': 20,  # or 11
+                            '5 V limited auto ranging': 50,
+                            '20 V limited auto ranging': 12,
+                            '20 V limited auto ranging': 200,  # or 12
+                            '40 V limited auto ranging': 13,
+                            '40 V limited auto ranging': 400,  # or 13
+                            '100 V limited auto ranging': 14,
+                            '100 V limited auto ranging': 1000,  # or 14
+                            '200 V limited auto ranging': 15,
+                            '200 V limited auto ranging': 2000,  # or 15
+                            '500 V limited auto ranging': 5000,
+                            '1500 V limited auto ranging': 15000,
+                            '3000 V limited auto ranging': 30000,
+                            '10 kV limited auto ranging': 103
+                            }   
+                    elif ranging_type.upper() == 'MEASUREMENT':
+                        names = {
+                            'Auto Ranging': 0,
+                            '0.2 V': 2,
+                            '0.5 V': 5,
+                            '2 V': 11,
+                            '2 V': 20,  # or 11
+                            '5 V': 50,
+                            '20 V': 12,
+                            '20 V': 200,  # or 12
+                            '40 V': 13,
+                            '40 V': 400,  # or 13
+                            '100 V': 14,
+                            '100 V': 1000,  # or 14
+                            '200 V': 15,
+                            '200 V': 2000,  # or 15
+                            '500 V': 5000,
+                            '1500 V': 15000,
+                            '3000 V': 30000,
+                            '10 kV': 103
+                            }
+                    else:
+                        raise ValueError(
+                        'Specified Ranging Type is not valid (possible: Measurement or Output)'
+                        )
+                elif source_type.upper() == 'CURRENT':
+                    if ranging_type.upper() == 'OUTPUT':
+                        names = {
+                            'Auto Ranging': 0,
+                            '1 pA limited auto ranging': 8,  # for ASU
+                            '10 pA limited auto ranging': 9,
+                            '100 pA limited auto ranging': 10,
+                            '1 nA limited auto ranging': 11,
+                            '10 nA limited auto ranging': 12,
+                            '100 nA limited auto ranging': 13,
+                            '1 uA limited auto ranging': 14,
+                            '10 uA limited auto ranging': 15,
+                            '100 uA limited auto ranging': 16,
+                            '1 mA limited auto ranging': 17,
+                            '10 mA limited auto ranging': 18,
+                            '100 mA limited auto ranging': 19,
+                            '1 A limited auto ranging': 20,
+                            '2 A limited auto ranging': 21,
+                            '20 A limited auto ranging': 22,
+                            '40 A limited auto ranging': 23,
+                            '500 A limited auto ranging': 26,
+                            '2000 A limited auto ranging': 28
+                            }
+                        smu = {
+                            # in combination with ASU also 8
+                            'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+                            # in combination with ASU also 8,9,10
+                            'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+                            'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+                            'MCSMU': [0, 15, 16, 17, 18, 19, 20],
+                            'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
+                            'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
+                            'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
+                            'UHCU': [0, 26, 28],
+                            'HVMCU': [],
+                            'UHVU': []
+                            }
+                    elif ranging_type.upper() == 'MEASUREMENT':
+                        names = {
+                            'Auto Ranging': 0,
+                            '1 pA': 8,  # for ASU
+                            '10 pA': 9,
+                            '100 pA': 10,
+                            '1 nA': 11,
+                            '10 nA': 12,
+                            '100 nA': 13,
+                            '1 uA': 14,
+                            '10 uA': 15,
+                            '100 uA': 16,
+                            '1 mA': 17,
+                            '10 mA': 18,
+                            '100 mA': 19,
+                            '1 A': 20,
+                            '2 A': 21,
+                            '20 A': 22,
+                            '40 A': 23,
+                            '500 A': 26,
+                            '2000 A': 28
+                            }
+                        smu = {
+                            # in combination with ASU also 8
+                            'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+                            # in combination with ASU also 8,9,10
+                            'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+                            'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+                            'MCSMU': [0, 15, 16, 17, 18, 19, 20],
+                            'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
+                            'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
+                            'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
+                            'UHCU': [0, 26, 28],
+                            'HVMCU': [0, 19, 21],
+                            'UHVU': [0, 15, 16, 17, 18, 19]
+                            }
+                    else:
+                        raise ValueError(
+                        'Specified Ranging Type is not valid (possible: Measurement or Output)'
+                        )
+                else:
+                    raise ValueError(
+                        'Specified Source Type is not valid (possible: Voltage or Current)'
+                        )
+                inverse = {v: k for k, v in names.items()}
+                ranges = {}
+                indizes = {}
+                for i in smu[smu_type]:
+                    ranges[i] = inverse[i] # Index -> Name
+                    indizes[inverse[i]] = i # Name -> Index
+
+                self.indizes = indizes
+                self.ranges = ranges
+                self.ranging_type = ranging_type.upper()
+
+            def get_index(self, range_name, fixed=False):
+                """ Gives Index of given Range Name.
+                    Measurement: only give Range Name without "limited auto ranging"/"range fixed".
+                """
+                try:
+                    index = self.indizes[range_name]
+                except:
+                    raise ValueError(
+                        'Specified Range Name is not valid or not supported by this SMU'
+                    )
+                if self.ranging_type == 'MEASUREMENT':
+                    if fixed:
+                        index = -1 * index
+                return index
+
+            def get_name(self, index):
+                """ Gives Range Name of given Index.
+                """
+                try:
+                    range = self.ranges[abs(index)]
+                except:
+                    raise ValueError(
+                        'Specified Range is not supported by this SMU'
+                    )
+                if self.ranging_type == 'MEASUREMENT':
+                    ranging_type = ''  # auto ranging: 0
+                    if index < 0:
+                        ranging_type = ' range fixed'
+                    elif index > 0:
+                        ranging_type = ' limited auto ranging'
+                    range += ranging_type
+                return range
+
+
+    ######################################
+    # Force Constant Output
+    ######################################
+
+    def force_current(self, irange, current, Vcomp='', comp_polarity='', vrange=''):
+        """ Applies DC Current from SMU immediately (DI command). """
+        output = "DI " + self.channel + (", %d, %f" % (irange, current))
+        if not Vcomp == '':
+            output += ", %f" % Vcomp
+            if not comp_polarity == '':
+                output += ", %d" % comp_polarity
+                if not vrange == '':
+                    output += ", %d" % vrange
+        self.write(output)
+        self.check_errors()
+
+    def force_voltage(self, vrange, voltage, Icomp='', comp_polarity='', irange=''):
+        """ Applies DC Voltage from SMU immediately (DV command). """
+        output = "DV " + self.channel + (", %d, %f" % (vrange, voltage))
+        if not Icomp == '':
+            output += ", %f" % Icomp
+            if not comp_polarity == '':
+                output += ", %d" % comp_polarity
+                if not irange == '':
+                    output += ", %d" % irange
+        self.write(output)
+        self.check_errors()  
+
+    ######################################
+    # Measurement Range: RI, RV, (RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC)
+    ######################################
+
+    def meas_range_current_auto(self, mode, rate=50):
+        """ Specifies the auto range operation. Check Documentation."""
+        mode = strict_range(mode,range(1,4))
+        if mode == 1:
+            self.write("RM %d, %d" % (self.channel,mode))
+        else:
+            self.write("RM %d, %d, %d" % (self.channel,mode,rate))
+        self.write
+
+    ######################################
+    # Staircase Sweep Measurement: (WT, WM -> Instrument), WV, WI
+    ######################################
+
+    def staircase_sweep_source(self,source_type,mode,source_range,start,stop,step,comp,Pcomp=''):
+        """ Specifies Staircase Sweep Source (Current or Voltage) and its parameters."""
+        if source_type.upper() == "VOLTAGE":
+            cmd = "WV"
+        elif source_type.upper() == "CURRENT":
+            cmd = "WI"
+        else:
+            raise ValueError("Source Type must be Current or Voltage.")
+        mode_values={"LinearSingle":1,"LogSingle":2,"LinearDouble":3,"LogDouble":4}
+        mode=strict_discrete_set(mode,mode.values)
+        mode=mode_values[mode]
+        if mode in [2,4]:
+            if start >= 0 and stop >= 0:
+                pass
+            elif start <=0 and stop <= 0:
+                pass
+            else:
+                raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
+        step=strict_range(step,range(1,10002))
+        #check on comp value not yet implemented
+        if Pcomp == '':
+            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,step,comp)))
+        else:
+            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,step,comp,Pcomp)))
+        self.check_errors()
+
+    # Synchronous Output: WSI, WSV, BSSI, BSSV, LSSI, LSSV
+
+    def synchronous_sweep_source(self,source_type,source_range,start,stop,comp,Pcomp=''):
+        """ Specifies Staircase Sweep Source (Current or Voltage) and its parameters."""
+        if source_type.upper() == "VOLTAGE":
+            cmd = "WSV"
+        elif source_type.upper() == "CURRENT":
+            cmd = "WSI"
+        else:
+            raise ValueError("Source Type must be Current or Voltage.")
+        #check on comp value not yet implemented
+        if Pcomp == '':
+            self.write(cmd + ("%d, %d, %f, %f, %f" % (self.channel,source_range,start,stop,comp)))
+        else:
+            self.write(cmd + ("%d, %d, %f, %f, %f, %f" % (self.channel,source_range,start,stop,comp,Pcomp)))
+        self.check_errors()
+
+    ######################################
+    # Sampling Measurements: (ML, MT -> Instrument), MV, MI, MSP, MCC, MSC
+    ######################################
+    
+    def sampling_source(self,source_type,source_range,base,bias,comp):
+        """ Sets DC Source (Current or Voltage) for sampling measurement.
+            DV/DI commands on the same channel overwrite this setting.
+        """
+        if source_type.upper() == "VOLTAGE":
+            cmd = "MV"
+        elif source_type.upper() == "CURRENT":
+            cmd = "MI"
+        else:
+            raise ValueError("Source Type must be Current or Voltage.")
+        #check on comp value not yet implemented
+        self.write(cmd + ("%d, %d, %f, %f, %f" % (self.channel,source_range,base,bias,comp)))
+        self.check_errors()
