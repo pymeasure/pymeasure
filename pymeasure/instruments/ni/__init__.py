@@ -23,3 +23,4 @@
 #
 
 from .daqmx import DAQmx
+from .virtualbench import NIVirtualBench
