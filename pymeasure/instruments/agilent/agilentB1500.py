@@ -79,17 +79,14 @@ class AgilentB1500(Instrument):
 
 #    def get_smu_names(self):
 #        """ Dictionary of Channel Number and SMU Names. """
-#        return self._smu_names
-
-    def add_smu_name(self, channel, name):
-        self._smu_names[channel] = name
+#        return self._smu_names 
 
     def initialize_smu(self, channel, smu_type, name):
         """ Initializes SMU """
         channel = strict_discrete_set(channel,range(1,11)+range(101,1101,100)+range(102,1102,100))
         if channel in range(1,11):
             channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
-        self.add_smu_name(channel, name)
+        self._smu_names[channel] = name
         return SMU(self.adapter,channel,smu_type)
 
     def pause(self, pause_seconds):
@@ -759,7 +756,7 @@ class SMU(Instrument):
     # Staircase Sweep Measurement: (WT, WM -> Instrument), WV, WI
     ######################################
 
-    def staircase_sweep_source(self,source_type,mode,source_range,start,stop,step,comp,Pcomp=''):
+    def staircase_sweep_source(self,source_type,mode,source_range,start,stop,steps,comp,Pcomp=''):
         """ Specifies Staircase Sweep Source (Current or Voltage) and its parameters."""
         if source_type.upper() == "VOLTAGE":
             cmd = "WV"
@@ -777,12 +774,12 @@ class SMU(Instrument):
                 pass
             else:
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
-        step=strict_range(step,range(1,10002))
+        steps=strict_range(steps,range(1,10002))
         #check on comp value not yet implemented
         if Pcomp == '':
-            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,step,comp)))
+            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,steps,comp)))
         else:
-            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,step,comp,Pcomp)))
+            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,steps,comp,Pcomp)))
         self.check_errors()
 
     # Synchronous Output: WSI, WSV, BSSI, BSSV, LSSI, LSSV
