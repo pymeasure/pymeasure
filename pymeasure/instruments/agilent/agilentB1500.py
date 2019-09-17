@@ -640,7 +640,7 @@ class SMU(Instrument):
             Possible settings depend on SMU type, e.g. ``'Auto Ranging'`` or ``'2 V'``
             """,
             validator=strict_discrete_set,
-            values=self.ranging.current_meas.ranges,
+            values=self.current_meas_ranging.ranges,
             map_values=False,
             check_set_errors=True
             )
@@ -652,7 +652,7 @@ class SMU(Instrument):
             Possible settings depend on SMU type, e.g. ``'Auto Ranging'`` or ``'1 nA'``
             """,
             validator=strict_discrete_set,
-            values=self.ranging.voltage_meas.ranges,
+            values=self.voltage_meas_ranging.ranges,
             map_values=False,
             check_set_errors=True
             )
