@@ -22,5 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .daqmx import DAQmx
-from .virtualbench import NIVirtualBench
+#from .daqmx import DAQmx
+#from .virtualbench import VirtualBench_Direct #direct access to armstrap/pyvirtualbench wrapper
+#from .virtualbench import VirtualBench
