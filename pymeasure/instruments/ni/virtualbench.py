@@ -235,8 +235,6 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True,False])
-        if not (self.device_name + '/dig/') in lines:
-            raise ValueError("Lines has to be of form 'device_name/dig/0:7'")
         self.dio = self.DigitalInputOutput(self.vb, lines, reset)
 
     def acquire_power_supply(self, reset=False):
@@ -299,7 +297,7 @@ class VirtualBench():
             self._vb_handle = virtualbench
             self.name = virtualbench.name + " DIO"
             # Validate lines argument, store line names & numbers for future reference
-            (self._line_names, self._lines_numbers) = self.validate_lines(lines, add_device_name=True,return_single_lines=True,validate_init=False)
+            (self._line_names, self._lines_numbers) = self.validate_lines(lines,return_single_lines=True,validate_init=False)
             # Create DIO Instance
             log.info("Initializing %s." % self.name)
             self.dio = self._vb_handle.acquire_digital_input_output(self._line_names, reset)
@@ -309,20 +307,19 @@ class VirtualBench():
             """
             self.release()
 
-        def validate_lines(self, lines, add_device_name=True,return_single_lines=False,validate_init=False):
+        def validate_lines(self, lines,return_single_lines=False,validate_init=False):
             """ Validate lines string 
                 Allowed patterns: 
                 
                 - ``'VBxxxx-xxxxxxx/dig/0:7'``
                 - ``'VBxxxx-xxxxxxx/dig/0'``
                 - ``'dig/0'``
+                - ``'VBxxxx-xxxxxxx/trig'``
                 
-                Allowed Line Numbers: 0-7
+                Allowed Line Numbers: 0-7 or trig
             
             :param lines: Line string to test
             :type lines: str
-            :param add_device_name: Add device name to returned line names string, defaults to True
-            :type add_device_name: bool, optional
             :param return_single_lines: Return list of line numbers as well, defaults to False
             :type return_single_lines: bool, optional
             :param validate_init: Check if lines are initialized (in :code:`self._line_numbers`), defaults to False
@@ -344,32 +341,30 @@ class VirtualBench():
                     (device, line) = re.match(r'(.*)(?:/)(.+)', line).groups()
                 except:
                     error()
-                # validate numbers in range 0-7
-                #if len(lines) == 1: # assume single line
-                if not int(line) in range(0,8):
-                    error()
-                else:
+                if (line == 'trig') and (device == self._device_name):
+                    single_lines.append('trig')
+                    return_value += self._device_name + '/' + line
+                elif int(line) in range(0,8):
                     single_lines.append(int(line))
-                # validate device name: either 'dig' or 'device_name/dig'
-                if device == 'dig':
-                    pass
+                    # validate device name: either 'dig' or 'device_name/dig'
+                    if device == 'dig':
+                        pass
+                    else:
+                        try:
+                            device = re.match(r'(VB[0-9]{4}-[0-9a-zA-Z]{7})(?:/)(.+)',device).groups()[0]
+                        except:
+                            error()
+                        # device_name has to match
+                        if not device == self._device_name:
+                            error()
+                    # constructing line references for output
+                    return_value += self._device_name + '/dig/' + line
                 else:
-                    try:
-                        device = re.match(r'(VB[0-9]{4}-[0-9a-zA-Z]{7})(?:/)(.+)',device).groups()[0]
-                    except:
-                        error()
-                    # device_name has to match
-                    if not device == self._device_name:
-                        error()
+                    error()
                 # check if lines are initialized
                 if validate_init == True:
                     if not line in self._lines_numbers:
                         raise ValueError("Digital Line {0} is not initialized".format(line))
-                # constructing line references for output
-                if add_device_name == True:
-                    return_value += self._device_name + '/dig/' + line
-                else:
-                    return_value += 'dig/' + line
 
             return_value = self._vb_handle.collapse_channel_string(return_value)
             if return_single_lines == True:
@@ -448,7 +443,7 @@ class VirtualBench():
             :return: List of line states (HIGH/LOW)
             :rtype: list
             """
-            lines = self.validate_lines(lines, add_device_name=True, validate_init=False) # init not necessary for readout
+            lines = self.validate_lines(lines, validate_init=False) # init not necessary for readout
             return self.dio.read(lines)
 
         def reset_instrument(self):
