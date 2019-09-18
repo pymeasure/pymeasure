@@ -80,7 +80,12 @@ class AgilentB1500(Instrument):
 
 #    def get_smu_names(self):
 #        """ Dictionary of Channel Number and SMU Names. """
-#        return self._smu_names 
+#        return self._smu_names
+
+    def reset(self):
+        """ Resets the instrument to default settings (``*RST``)
+        """
+        self.write("*RST")
 
     def initialize_smu(self, channel, smu_type, name):
         """ Initializes SMU instance
@@ -94,7 +99,7 @@ class AgilentB1500(Instrument):
         :return: SMU instance
         :rtype: SMU
         """
-        channel = strict_discrete_set(channel,range(1,11)+range(101,1101,100)+range(102,1102,100))
+        channel = strict_discrete_set(channel,list(range(1,11))+list(range(101,1101,100))+list(range(102,1102,100)))
         if channel in range(1,11):
             channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
         self._smu_names[channel] = name
@@ -107,6 +112,11 @@ class AgilentB1500(Instrument):
         :type pause_seconds: int
         """
         self.write("PA %d" % pause_seconds)
+
+    def abort(self):
+        """ Aborts the present operation but channels may still output current/voltage (``AB``)
+        """
+        self.write("AB")
 
     def start_meas(self):
         """ Starts Measurement (except High Speed Spot) (``XE``)
@@ -231,8 +241,8 @@ class AgilentB1500(Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """ Data formatting for FMT1 format
         """
-        def __init__(self):
-            super().__init__("FMT1")
+        def __init__(self, smu_names={}):
+            super().__init__("FMT1", smu_names)
 
         def format_single(self, element):
             """ Format single measurement value
@@ -253,14 +263,14 @@ class AgilentB1500(Instrument):
     class _data_formatting_FMT11(_data_formatting_FMT1):
         """ Data formatting for FMT11 format
         """
-        def __init__(self):
-            super().__init__("FMT11")
+        def __init__(self, smu_names={}):
+            super().__init__("FMT11", smu_names)
     
     class _data_formatting_FMT21(_data_formatting_generic):
         """ Data formatting for FMT21 format
         """
-        def __init__(self):
-            super().__init__("FMT21")
+        def __init__(self, smu_names={}):
+            super().__init__("FMT21", smu_names)
 
         def format_single(self, element):
             """ Format single measurement value
@@ -294,12 +304,12 @@ class AgilentB1500(Instrument):
             "FMT11":self._data_formatting_FMT11
             }
         try:
-            format_class = classes[output_format_str, smu_names]
+            format_class = classes[output_format_str]
         except:
             raise NotImplementedError(
             "Data Format {0} is not implemented so far.".format(output_format_str)
             )
-        return format_class()
+        return format_class(smu_names)
 
     def data_format(self,output_format,mode=0):
         """ Specifies data output format. Check Documentation for parameters.
@@ -313,7 +323,7 @@ class AgilentB1500(Instrument):
         """
         output_format = strict_discrete_set(output_format,[1,2,3,4,5,11,12,13,14,15,21,22,25])
         mode = strict_range(mode,range(0,11))      
-        self.write("FMT %d, %d" % (output_format,mode))
+        self.write("FMT %d, %d" % (output_format, mode))
         self.check_errors()
         self._data_format = self._data_formatting("FMT%d" % output_format, self._smu_names)
 
@@ -551,7 +561,7 @@ class AgilentB1500(Instrument):
         :return: Measurement data
         :rtype: tuple
         """
-        data = self.read_bytes(self._data_format.size * nchannels)
+        data = self.adapter.read_bytes(self._data_format.size * nchannels)
         data = data.decode("ASCII")
         data = data.rstrip('\r,') # ',' if more data in buffer, '\r' if last data point
         data = data.split(',')
@@ -577,7 +587,7 @@ class SMU(Instrument):
             "SMU of Agilent B1500 Semiconductor Parameter Analyzer",
             **kwargs
         )
-        channel = strict_discrete_set(channel,range(1,11)+range(101,1101,100)+range(102,1102,100))
+        channel = strict_discrete_set(channel,list(range(1,11))+list(range(101,1101,100))+list(range(102,1102,100)))
         if channel in range(1,11):
             self.channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
         else:
@@ -981,7 +991,7 @@ class SMU(Instrument):
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         mode_values={"LinearSingle":1,"LogSingle":2,"LinearDouble":3,"LogDouble":4}
-        mode=strict_discrete_set(mode,mode.values)
+        mode=strict_discrete_set(mode,mode_values)
         mode=mode_values[mode]
         if mode in [2,4]:
             if start >= 0 and stop >= 0:
