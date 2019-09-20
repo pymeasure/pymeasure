@@ -1,0 +1,3 @@
+- "Delay Time", "arange(0.25, 1, 0.25)"
+-- "Random Seed", "arange(0, 10, 1)"
+-- "Random Seed", "arange(10, 100, 10)"
