@@ -36,12 +36,29 @@ import pandas as pd
 import re
 import numpy as np
 
+class AgilentB1500Instrument(Instrument):
+    def query_learn(self, query_type):
+        """ Issues *LRN? (learn) command to the instrument to read configuration.
+        Returns dictionary of commands and set values.
+        
+        :param query_type: Query type according to the programming guide
+        :type query_type: int
+        :return: Dictionary of command and set values
+        :rtype: dict
+        """
+        response = self.ask("*LRN? "+str(query_type))
+        #response.split(';')
+        response = re.findall(r'(?P<command>[A-Z]+)(?P<parameter>[0-9,]+)', response)
+        response_dict = {}
+        for element in response:
+            response_dict[element[0]] = element[1].split(',')
+        return response_dict
 
 ######################################
 # Agilent B1500 Mainframe
 ######################################
 
-class AgilentB1500(Instrument):
+class AgilentB1500(AgilentB1500Instrument):
     """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking current-voltage (I-V) measurements.
 
@@ -76,7 +93,7 @@ class AgilentB1500(Instrument):
         )
         self._smu_names = {}
         #setting of data output format -> determines how to read measurement data
-        self._data_format = self._data_formatting("FMT1") #default setting of B1500
+        self._data_format = self._data_formatting("FMT"+self.query_data_format()[0])
 
 #    def get_smu_names(self):
 #        """ Dictionary of Channel Number and SMU Names. """
@@ -86,6 +103,34 @@ class AgilentB1500(Instrument):
         """ Resets the instrument to default settings (``*RST``)
         """
         self.write("*RST")
+
+    def query_modules(self):
+        """ Queries module models from the instrument. 
+        Returns dictionary of channel and module type.
+        
+        :return: Channel:Module Type
+        :rtype: dict
+        """
+        modules = self.ask('UNT?')
+        modules = modules.split(';')
+        module_names = {
+            'B1525A':'SPGU',
+            'B1517A':'HRSMU',
+            'B1511A':'MPSMU',
+            'B1511B':'MPSMU',
+            'B1510A':'HPSMU',
+            'B1514A':'MCSMU',
+            'B1520A':'MFCMU'
+        }
+        out = {}
+        for i, module in enumerate(modules):
+            module = module.split(',')
+            if not module[0] == '0':
+                try:
+                    out[i] = module_names[module[0]]
+                except:
+                    raise NotImplementedError('Module {} is not implented yet!'.format(module[0]))
+        return out
 
     def initialize_smu(self, channel, smu_type, name):
         """ Initializes SMU instance
@@ -103,7 +148,18 @@ class AgilentB1500(Instrument):
         if channel in range(1,11):
             channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
         self._smu_names[channel] = name
-        return SMU(self.adapter,channel,smu_type)
+        return SMU(self.adapter, channel, smu_type, name)
+
+    def initialize_all_smus(self):
+        """ Initialize all SMUs by querying available modules and creating a SMU class instance for each.
+        SMUs are accessible via attributes ``.smu1`` etc.
+        """
+        modules = self.query_modules()
+        i=1
+        for channel, smu_type in modules.items():
+            if 'SMU' in smu_type:
+                setattr(self, 'smu'+str(i), self.initialize_smu(channel, smu_type, 'SMU'+str(i)))
+                i += 1
 
     def pause(self, pause_seconds):
         """ Pauses Command Excecution for given time in seconds (``PA``)
@@ -155,13 +211,15 @@ class AgilentB1500(Instrument):
         """ Send trigger to start measurement (``XE``) """
         self.write("XE")
 
-    auto_calibration = Instrument.setting(
-        "CM %d",
+    auto_calibration = Instrument.control(
+        "?LRN 31","CM %d",
         """ Enable/Disable SMU auto-calibration every 30 minutes. (``CM``)""",
         values={True:1,False:0},
         validator=strict_discrete_set,
-        map_values=True
+        map_values=True,
+        get_process=(lambda response: re.search('(CM)(?P<parameter>[0-9,]+)', response).groups()[1])
     )
+
 
     ######################################
     # Data Formatting
@@ -252,7 +310,7 @@ class AgilentB1500(Instrument):
             :return: Status, channel, data name, value
             :rtype: (str, str, str, float)
             """
-            status = element[0]
+            status = element[0] #one character
             channel = element[1]
             data_name = element[2]
             value = float(element[3:])
@@ -277,10 +335,10 @@ class AgilentB1500(Instrument):
             
             :param element: Single measurement value read from the instrument
             :type element: str
-            :return: Status, channel, data name, value
+            :return: Status (three digits), channel, data name, value
             :rtype: (str, str, str, float)
             """
-            status = element[0:3]
+            status = element[0:3] # three digits
             channel = element[3]
             data_name = element[4]
             value = float(element[5:])
@@ -326,6 +384,9 @@ class AgilentB1500(Instrument):
         self.write("FMT %d, %d" % (output_format, mode))
         self.check_errors()
         self._data_format = self._data_formatting("FMT%d" % output_format, self._smu_names)
+
+    def query_data_format(self):
+        return self.query_learn(31)['FMT']
 
     ######################################
     # Measurement Settings
@@ -573,7 +634,7 @@ class AgilentB1500(Instrument):
 # SMU Setup
 ######################################
 
-class SMU(Instrument):
+class SMU(AgilentB1500Instrument):
     """ Provides specific methods for the SMUs of the Agilent B1500 mainframe
     
     :param resourceName: Resource name of the B1500 mainframe
@@ -581,10 +642,10 @@ class SMU(Instrument):
     :param str smu_type: Type of the SMU
     """
 
-    def __init__(self, resourceName, channel, smu_type, **kwargs):
+    def __init__(self, resourceName, channel, smu_type, name, **kwargs):
         super().__init__(
             resourceName,
-            "SMU of Agilent B1500 Semiconductor Parameter Analyzer",
+            name, #"SMU of Agilent B1500 Semiconductor Parameter Analyzer"
             **kwargs
         )
         channel = strict_discrete_set(channel,list(range(1,11))+list(range(101,1101,100))+list(range(102,1102,100)))
@@ -666,7 +727,12 @@ class SMU(Instrument):
             map_values=False,
             check_set_errors=True
             )
-
+    
+    @property
+    def query_status(self):
+        channel = str(self.channel)[0:-2] #only first digits of channel 101 -> 1 / 1001 -> 10
+        channel = strict_range(int(channel),range(0,11))
+        return self.query_learn(channel)
 
     def enable(self):
         """ Enable Source/Measurement Channel (``CN``)"""
