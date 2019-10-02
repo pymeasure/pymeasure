@@ -983,6 +983,43 @@ class SMU(AgilentB1500Instrument):
         self.write(output)
         self.check_errors()
 
+    def ramp_to_current(self, irange, target_current, Vcomp='', comp_polarity='', vrange='', stepsize=0.001, pause=20e-3):
+        """ Ramps to a target current from the set current value with a given
+        step size, each separated by a pause duration.
+
+        :param target_current: A voltage in Amps
+        :param irange: Current output range index
+        :type irange: int
+        :param current: Current output in A
+        :type current: float
+        :param Vcomp: Voltage compliance, defaults to previous setting
+        :type Vcomp: float, optional
+        :param comp_polarity: Compliance polairty, defaults to auto
+        :type comp_polarity: int, optional
+        :param vrange: Voltage compliance ranging type, defaults to auto
+        :type vrange: int, optional
+        :param stepsize: Size of the steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
+        status = self.query_status
+        if 'CL' in status:
+            #SMU is OFF
+            start = 0
+        elif 'DI' in status:
+            start = status['DI'][2]
+        else:
+            log.info("SMU {} in different state. Changing to Current Source.".format(self.name))
+            start = 0
+
+        currents = np.arange(
+            start,
+            target_current,
+            stepsize
+        )
+        for current in currents:
+            self.force_current(irange, current, Vcomp, comp_polarity, vrange)
+            time.sleep(pause)
+
     def force_voltage(self, vrange, voltage, Icomp='', comp_polarity='', irange=''):
         """ Applies DC Voltage from SMU immediately. (``DV``)
         
@@ -1005,7 +1042,44 @@ class SMU(AgilentB1500Instrument):
                 if not irange == '':
                     output += ", %d" % irange
         self.write(output)
-        self.check_errors()  
+        self.check_errors()
+
+    def ramp_to_voltage(self, vrange, target_voltage, Icomp='', comp_polarity='', irange='', stepsize=0.1, pause=20e-3):
+        """ Ramps to a target voltage from the set voltage value with a given
+        step size, each separated by a pause duration.
+
+        :param target_voltage: A voltage in Amps
+        :param vrange: Voltage output range index
+        :type vrange: int
+        :param voltage: Voltage output in V
+        :type voltage: float
+        :param Icomp: Current compliance, defaults to previous setting
+        :type Icomp: float, optional
+        :param comp_polarity: Compliance polarity, defaults to auto
+        :type comp_polarity: str, optional
+        :param irange: Current compliance ranging type, defaults to auto
+        :type irange: int, optional
+        :param stepsize: Size of the steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
+        status = self.query_status
+        if 'CL' in status:
+            #SMU is OFF
+            start = 0
+        elif 'DV' in status:
+            start = status['DV'][2]
+        else:
+            log.info("SMU {} in different state. Changing to Voltage Source.".format(self.name))
+            start = 0
+
+        voltages = np.arange(
+            start,
+            target_voltage,
+            stepsize
+        )
+        for voltage in voltages:
+            self.force_voltage(vrange, voltage, Icomp, comp_polarity, irange)
+            time.sleep(pause)
 
     ######################################
     # Measurement Range: RI, RV, (RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC)
