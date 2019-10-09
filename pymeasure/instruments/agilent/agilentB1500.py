@@ -37,7 +37,7 @@ import re
 import numpy as np
 import time
 from enum import IntEnum
-from collections import Counter
+from collections import Counter, namedtuple
 
 class QueryLearn():
     @staticmethod
@@ -187,13 +187,13 @@ class QueryLearn():
     @classmethod
     def RI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [(smu.name + ' Current Measurement Range', lambda parameter: smu.current_meas_ranging.get_name(int(parameter)))]
+        names = [(smu.name + ' Current Measurement Range', lambda parameter: smu.current_ranging.meas(int(parameter)).name)]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def RV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [(smu.name + ' Voltage Measurement Range', lambda parameter: smu.voltage_meas_ranging.get_name(int(parameter)))]
+        names = [(smu.name + ' Voltage Measurement Range', lambda parameter: smu.voltage_ranging.meas(int(parameter)).name)]
         return cls.to_dict(parameters, names)
     
     #Sweep: 33
@@ -212,7 +212,7 @@ class QueryLearn():
     def WV(cls, key, parameters, smu_references={}):
         names = [
             ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
-            ("Voltage Range", lambda parameter, smu: smu.voltage_output_ranging.get_name(int(parameter))),
+            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)", "Number of Steps",
             "Current Compliance (A)", "Power Compliance (W)"]
         return cls.to_dict_channel(
@@ -222,7 +222,7 @@ class QueryLearn():
     def WI(cls, key, parameters, smu_references={}):
         names = [
             ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
-            ("Current Range", lambda parameter, smu: smu.current_output_ranging.get_name(int(parameter))),
+            ("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)", "Number of Steps",
             "Voltage Compliance (V)", "Power Compliance (W)"]
         return cls.to_dict_channel(
@@ -231,7 +231,7 @@ class QueryLearn():
     @classmethod
     def WSV(cls, key, parameters, smu_references={}):
         names = [
-            ("Voltage Range", lambda parameter, smu: smu.voltage_output_ranging.get_name(int(parameter))),
+            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)",
             "Current Compliance (A)", "Power Compliance (W)"]
         return cls.to_dict_channel(
@@ -239,7 +239,7 @@ class QueryLearn():
 
     @classmethod
     def WSI(cls, key, parameters, smu_references={}):
-        names = [("Current Range", lambda parameter, smu: smu.current_output_ranging.get_name(int(parameter))),
+        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)",
             "Voltage Compliance (V)", "Power Compliance (W)"]
         return cls.to_dict_channel(
@@ -271,14 +271,14 @@ class QueryLearn():
 
     @classmethod
     def MV(cls, key, parameters, smu_references={}):
-        names = [("Voltage Range", lambda parameter, smu: smu.voltage_output_ranging.get_name(int(parameter))),
+        names = [("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
             "Base Voltage (V)", "Bias Voltage (V)", "Current Compliance (A)"]
         return cls.to_dict_channel(
             key, parameters, names, key_string="{}: Voltage Source (MV)", smu_references=smu_references)
 
     @classmethod
     def MI(cls, key, parameters, smu_references={}):
-        names = [("Current Range", lambda parameter, smu: smu.current_output_ranging.get_name(int(parameter))),
+        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
             "Base Current (A)", "Bias Current (A)", "Voltage Compliance (V)"]
         return cls.to_dict_channel(
             key, parameters, names, key_string="{}: Current Source (MI)", smu_references=smu_references)
@@ -948,10 +948,8 @@ class SMU(object):
         self.channel = channel
         smu_type = strict_discrete_set(smu_type,['HRSMU','MPSMU','HPSMU','MCSMU',
             'HCSMU','DHCSMU','HVSMU','UHCU','HVMCU','UHVU'])
-        self.voltage_output_ranging = self.ranging(smu_type,source_type='Voltage',ranging_type='Output')
-        self.voltage_meas_ranging = self.ranging(smu_type,source_type='Voltage',ranging_type='Measurement')
-        self.current_output_ranging = self.ranging(smu_type,source_type='Current',ranging_type='Output')
-        self.current_meas_ranging = self.ranging(smu_type,source_type='Current',ranging_type='Measurement')
+        self.voltage_ranging = SMUVoltageRanging(smu_type)
+        self.current_ranging = SMUCurrentRanging(smu_type)
         self.name = name
 
     ##########################################
@@ -1077,11 +1075,13 @@ class SMU(object):
 
         Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging.
         """
-        return self.query_learn(32, 'RI')
+        response = self.query_learn(32, 'RI')
+        response = self.current_ranging.meas(response)
+        return response
 
     @meas_range_current.setter
-    def meas_range_current(self, meas_range_index):
-        meas_range_index = strict_discrete_set(meas_range_index, self.current_meas_ranging.ranges)
+    def meas_range_current(self, meas_range):
+        meas_range_index = self.current_ranging.meas(meas_range).index
         self.write("RI %d, %d" % (self.channel, meas_range_index))
         self.check_errors()
     
@@ -1091,221 +1091,17 @@ class SMU(object):
 
             Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging.
         """
-        return self.query_learn(32, 'RV')
+        response = self.query_learn(32, 'RV')
+        response = self.voltage_ranging.meas(response)
+        return response
 
     @meas_range_voltage.setter
-    def meas_range_voltage(self, meas_range_index):
-        meas_range_index = strict_discrete_set(meas_range_index, self.voltage_meas_ranging.ranges)
+    def meas_range_voltage(self, meas_range):
+        meas_range_index = self.voltage_ranging.meas(meas_range).index
         self.write("RV %d, %d" % (self.channel, meas_range_index))
         self.check_errors()
 
-    class ranging():
-        """ Possible Settings for SMU Current/Voltage Output/Measurement ranges.
-        Transformation of available Voltage/Current Range Names to Index and back.
-        Checks for compatibility with specified SMU type.
-        
-        :param str smu_type: SMU type
-        :param str source_type: Source type, defaults to 'Voltage'
-        :param str ranging_type: Ranging type, defaults to 'Output'
-        """
-        def __init__(self, smu_type, source_type='Voltage', ranging_type='Output'):
-            if source_type.upper() == 'VOLTAGE':
-                smu = {
-                    'HRSMU': [0, 5, 20, 50, 200, 400, 1000],
-                    'MPSMU': [0, 5, 20, 50, 200, 400, 1000],
-                    'HPSMU': [0, 20, 200, 400, 1000, 2000],
-                    'MCSMU': [0, 2, 20, 200, 400],
-                    'HCSMU': [0, 2, 20, 200, 400],
-                    'DHCSMU': [0, 2, 20, 200, 400],
-                    'HVSMU': [0, 2000, 5000, 15000, 30000],
-                    'UHCU': [0, 1000],
-                    'HVMCU': [0, 15000, 30000],
-                    'UHVU': [0, 103]
-                    }
-                if ranging_type.upper() == 'OUTPUT':
-                    names = {
-                        'Auto Ranging': 0,
-                        '0.2 V limited auto ranging': 2,
-                        '0.5 V limited auto ranging': 5,
-                        '2 V limited auto ranging': 11,
-                        '2 V limited auto ranging': 20,  # or 11
-                        '5 V limited auto ranging': 50,
-                        '20 V limited auto ranging': 12,
-                        '20 V limited auto ranging': 200,  # or 12
-                        '40 V limited auto ranging': 13,
-                        '40 V limited auto ranging': 400,  # or 13
-                        '100 V limited auto ranging': 14,
-                        '100 V limited auto ranging': 1000,  # or 14
-                        '200 V limited auto ranging': 15,
-                        '200 V limited auto ranging': 2000,  # or 15
-                        '500 V limited auto ranging': 5000,
-                        '1500 V limited auto ranging': 15000,
-                        '3000 V limited auto ranging': 30000,
-                        '10 kV limited auto ranging': 103
-                        }   
-                elif ranging_type.upper() == 'MEASUREMENT':
-                    names = {
-                        'Auto Ranging': 0,
-                        '0.2 V': 2,
-                        '0.5 V': 5,
-                        '2 V': 11,
-                        '2 V': 20,  # or 11
-                        '5 V': 50,
-                        '20 V': 12,
-                        '20 V': 200,  # or 12
-                        '40 V': 13,
-                        '40 V': 400,  # or 13
-                        '100 V': 14,
-                        '100 V': 1000,  # or 14
-                        '200 V': 15,
-                        '200 V': 2000,  # or 15
-                        '500 V': 5000,
-                        '1500 V': 15000,
-                        '3000 V': 30000,
-                        '10 kV': 103
-                        }
-                else:
-                    raise ValueError(
-                    'Specified Ranging Type is not valid (possible: Measurement or Output)'
-                    )
-            elif source_type.upper() == 'CURRENT':
-                if ranging_type.upper() == 'OUTPUT':
-                    names = {
-                        'Auto Ranging': 0,
-                        '1 pA limited auto ranging': 8,  # for ASU
-                        '10 pA limited auto ranging': 9,
-                        '100 pA limited auto ranging': 10,
-                        '1 nA limited auto ranging': 11,
-                        '10 nA limited auto ranging': 12,
-                        '100 nA limited auto ranging': 13,
-                        '1 uA limited auto ranging': 14,
-                        '10 uA limited auto ranging': 15,
-                        '100 uA limited auto ranging': 16,
-                        '1 mA limited auto ranging': 17,
-                        '10 mA limited auto ranging': 18,
-                        '100 mA limited auto ranging': 19,
-                        '1 A limited auto ranging': 20,
-                        '2 A limited auto ranging': 21,
-                        '20 A limited auto ranging': 22,
-                        '40 A limited auto ranging': 23,
-                        '500 A limited auto ranging': 26,
-                        '2000 A limited auto ranging': 28
-                        }
-                    smu = {
-                        # in combination with ASU also 8
-                        'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-                        # in combination with ASU also 8,9,10
-                        'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-                        'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-                        'MCSMU': [0, 15, 16, 17, 18, 19, 20],
-                        'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
-                        'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
-                        'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
-                        'UHCU': [0, 26, 28],
-                        'HVMCU': [],
-                        'UHVU': []
-                        }
-                elif ranging_type.upper() == 'MEASUREMENT':
-                    names = {
-                        'Auto Ranging': 0,
-                        '1 pA': 8,  # for ASU
-                        '10 pA': 9,
-                        '100 pA': 10,
-                        '1 nA': 11,
-                        '10 nA': 12,
-                        '100 nA': 13,
-                        '1 uA': 14,
-                        '10 uA': 15,
-                        '100 uA': 16,
-                        '1 mA': 17,
-                        '10 mA': 18,
-                        '100 mA': 19,
-                        '1 A': 20,
-                        '2 A': 21,
-                        '20 A': 22,
-                        '40 A': 23,
-                        '500 A': 26,
-                        '2000 A': 28
-                        }
-                    smu = {
-                        # in combination with ASU also 8
-                        'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-                        # in combination with ASU also 8,9,10
-                        'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-                        'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-                        'MCSMU': [0, 15, 16, 17, 18, 19, 20],
-                        'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
-                        'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
-                        'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
-                        'UHCU': [0, 26, 28],
-                        'HVMCU': [0, 19, 21],
-                        'UHVU': [0, 15, 16, 17, 18, 19]
-                        }
-                else:
-                    raise ValueError(
-                    'Specified Ranging Type is not valid (possible: Measurement or Output)'
-                    )
-            else:
-                raise ValueError(
-                    'Specified Source Type is not valid (possible: Voltage or Current)'
-                    )
-            inverse = {v: k for k, v in names.items()}
-            ranges = {}
-            indizes = {}
-            for i in smu[smu_type]:
-                ranges[i] = inverse[i] # Index -> Name
-                indizes[inverse[i]] = i # Name -> Index
-
-            self.indizes = indizes
-            self.ranges = ranges
-            self.ranging_type = ranging_type.upper()
-
-        def get_index(self, range_name, fixed=False):
-            """ Gives Index of given Range Name. 
-            Throws error if range is not supported by this SMU.
-            
-            Measurement: only give Range Name without "limited auto ranging"/"range fixed".
-            
-            :param range_name: Range name, e.g. '1 nA'
-            :type range_name: str
-            :param fixed: Fixed ranging, defaults to False
-            :type fixed: bool, optional
-            :return: Range index
-            :rtype: int
-            """
-            try:
-                index = self.indizes[range_name]
-            except:
-                raise ValueError(
-                    'Specified Range Name {} is not valid or not supported by this SMU'.format(range_name)
-                )
-            if self.ranging_type == 'MEASUREMENT':
-                if fixed:
-                    index = -1 * index
-            return index
-
-        def get_name(self, index):
-            """ Give range name of given index
-            
-            :param index: Range index
-            :type index: int
-            :return: Range name
-            :rtype: str
-            """
-            try:
-                range = self.ranges[abs(index)]
-            except:
-                raise ValueError(
-                    'Specified Range {} is not supported by this SMU'.format(abs(index))
-                )
-            if self.ranging_type == 'MEASUREMENT':
-                ranging_type = ''  # auto ranging: 0
-                if index < 0:
-                    ranging_type = ' range fixed'
-                elif index > 0:
-                    ranging_type = ' limited auto ranging'
-                range += ranging_type
-            return range
+    
 
 
     ######################################
@@ -1326,6 +1122,7 @@ class SMU(object):
         :param vrange: Voltage compliance ranging type, defaults to auto
         :type vrange: int, optional
         """
+        irange = self.current_ranging.output(irange).index
         output = "DI " + self.channel + (", %d, %f" % (irange, current))
         if not Vcomp == '':
             output += ", %f" % Vcomp
@@ -1333,6 +1130,7 @@ class SMU(object):
                 output += ", %d" % comp_polarity
                 if not vrange == '':
                     output += ", %d" % vrange
+                    vrange = self.voltage_ranging.output(vrange).index
         self.write(output)
         self.check_errors()
 
@@ -1354,6 +1152,7 @@ class SMU(object):
         :param stepsize: Size of the steps
         :param pause: A pause duration in seconds to wait between steps
         """
+        irange = self.current_ranging.output(irange).index
         status = self.query_status()
         if 'CL' in status:
             #SMU is OFF
@@ -1387,6 +1186,7 @@ class SMU(object):
         :param irange: Current compliance ranging type, defaults to auto
         :type irange: int, optional
         """
+        vrange = self.voltage_ranging.output(vrange).index
         output = "DV " + self.channel + (", %d, %f" % (vrange, voltage))
         if not Icomp == '':
             output += ", %f" % Icomp
@@ -1394,6 +1194,7 @@ class SMU(object):
                 output += ", %d" % comp_polarity
                 if not irange == '':
                     output += ", %d" % irange
+                    irange = self.current_ranging.output(irange).index
         self.write(output)
         self.check_errors()
 
@@ -1415,6 +1216,7 @@ class SMU(object):
         :param stepsize: Size of the steps
         :param pause: A pause duration in seconds to wait between steps
         """
+        vrange = self.voltage_ranging.output(vrange).index
         status = self.query_status()
         if 'CL' in status:
             #SMU is OFF
@@ -1479,8 +1281,10 @@ class SMU(object):
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WV"
+            source_range = self.voltage_ranging.output(source_range).index
         elif source_type.upper() == "CURRENT":
             cmd = "WI"
+            source_range = self.current_ranging.output(source_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         mode = SweepMode.get(mode).value
@@ -1519,8 +1323,10 @@ class SMU(object):
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WSV"
+            source_range = self.voltage_ranging.output(source_range).index
         elif source_type.upper() == "CURRENT":
             cmd = "WSI"
+            source_range = self.current_ranging.output(source_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         #check on comp value not yet implemented
@@ -1551,13 +1357,247 @@ class SMU(object):
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "MV"
+            source_range = self.voltage_ranging.output(source_range).index
         elif source_type.upper() == "CURRENT":
             cmd = "MI"
+            source_range = self.current_ranging.output(source_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         #check on comp value not yet implemented
         self.write(cmd + ("%d, %d, %f, %f, %f" % (self.channel,source_range,base,bias,comp)))
         self.check_errors()
+
+class Ranging():
+    """ Possible Settings for SMU Current/Voltage Output/Measurement ranges.
+    Transformation of available Voltage/Current Range Names to Index and back.
+    Checks for compatibility with specified SMU type.
+    
+    :param str smu_type: SMU type
+    :param str source_type: Source type, defaults to 'Voltage'
+    :param str ranging_type: Ranging type, defaults to 'Output'
+    """
+    
+    Range = namedtuple('Range','name index')
+
+    def __init__(self, supported_ranges, all_ranges, measurement=False):
+        inverse = {}
+        for k, v in all_ranges.items():
+            if isinstance(v, tuple):
+                for v2 in v:
+                    inverse[v2] = k
+            else:
+                inverse[v] = k
+        #inverse = {v: k for k, v in all_ranges.items()}
+        ranges = {}
+        indizes = {}
+        for i in supported_ranges:
+            ranges[i] = inverse[i] # Index -> Name, Name not unique
+            indizes[inverse[i]] = i # Name -> Index, only one Index per Name
+
+        self.indizes = indizes
+        self.ranges = ranges
+        self.ranging_type_measurement = measurement
+    
+    def __call__(self, input, fixed=False):
+        """Gives named tuple (name/index) of given Range. 
+        Throws error if range is not supported by this SMU.
+        
+        :param input: Range name or index
+        :type input: str or int
+        :param fixed: Fixed measurement range, defaults to False (limited auto ranging)
+        :type fixed: bool, optional
+        :return: named tuple (name/index) of range
+        :rtype: namedtuple
+        """
+        if isinstance(input, int):
+            index = input
+            name = self._get_name(index)
+        else:
+            name = input
+            index = self._get_index(name, fixed=fixed)
+        return self.Range(name=name, index=index)
+
+    def _get_index(self, range_name, fixed=False):
+        """ Gives Index of given Range Name. 
+        Throws error if range is not supported by this SMU.
+        
+        Measurement: only give Range Name without "limited auto ranging"/"range fixed".
+        
+        :param range_name: Range name, e.g. '1 nA'
+        :type range_name: str
+        :param fixed: Fixed ranging, defaults to False
+        :type fixed: bool, optional
+        :return: Range index
+        :rtype: int
+        """
+        try:
+            index = self.indizes[range_name]
+        except:
+            raise ValueError(
+                'Specified Range Name {} is not valid or not supported by this SMU'.format(range_name)
+            )
+        if self.ranging_type_measurement:
+            if fixed:
+                index = -1 * index
+        return index
+
+    def _get_name(self, index):
+        """ Give range name of given index
+        
+        :param index: Range index
+        :type index: int
+        :return: Range name
+        :rtype: str
+        """
+        try:
+            range_name = self.ranges[abs(index)]
+        except:
+            raise ValueError(
+                'Specified Range {} is not supported by this SMU'.format(abs(index))
+            )
+        if self.ranging_type_measurement:
+            ranging_type = ''  # auto ranging: 0
+            if index < 0:
+                ranging_type = ' range fixed'
+            elif index > 0:
+                ranging_type = ' limited auto ranging'
+            range_name += ranging_type
+        return range_name
+
+class SMUVoltageRanging():
+    def __init__(self, smu_type):
+        supported_ranges = {
+                'HRSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
+                'MPSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
+                'HPSMU': [0, 11, 20, 12, 200, 13, 400, 14, 1000, 15, 2000],
+                'MCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
+                'HCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
+                'DHCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
+                'HVSMU': [0, 15, 2000, 5000, 15000, 30000],
+                'UHCU': [0, 14, 1000],
+                'HVMCU': [0, 15000, 30000],
+                'UHVU': [0, 103]
+                }
+        supported_ranges = supported_ranges[smu_type]
+        output_ranges = {
+            'Auto Ranging': 0,
+            '0.2 V limited auto ranging': 2,
+            '0.5 V limited auto ranging': 5,
+            '2 V limited auto ranging': (11, 20),
+            #'2 V limited auto ranging': 20,  # or 11
+            '5 V limited auto ranging': 50,
+            '20 V limited auto ranging': (12, 200),
+            #'20 V limited auto ranging': 200,  # or 12
+            '40 V limited auto ranging': (13, 400),
+            #'40 V limited auto ranging': 400,  # or 13
+            '100 V limited auto ranging': (14, 1000),
+            #'100 V limited auto ranging': 1000,  # or 14
+            '200 V limited auto ranging': (15, 2000),
+            #'200 V limited auto ranging': 2000,  # or 15
+            '500 V limited auto ranging': 5000,
+            '1500 V limited auto ranging': 15000,
+            '3000 V limited auto ranging': 30000,
+            '10 kV limited auto ranging': 103
+            }   
+        meas_ranges = {
+            'Auto Ranging': 0,
+            '0.2 V': 2,
+            '0.5 V': 5,
+            '2 V': (11, 20),
+            #'2 V': 20,  # or 11
+            '5 V': 50,
+            '20 V': (12, 200),
+            #'20 V': 200,  # or 12
+            '40 V': (13, 400),
+            #'40 V': 400,  # or 13
+            '100 V': (14, 1000),
+            #'100 V': 1000,  # or 14
+            '200 V': (15, 2000),
+            #'200 V': 2000,  # or 15
+            '500 V': 5000,
+            '1500 V': 15000,
+            '3000 V': 30000,
+            '10 kV': 103
+            }
+        self.output = Ranging(supported_ranges, output_ranges)
+        self.meas = Ranging(supported_ranges, meas_ranges, measurement=True)
+
+class SMUCurrentRanging():
+    def __init__(self, smu_type):
+        supported_output_ranges = {
+            # in combination with ASU also 8
+            'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            # in combination with ASU also 8,9,10
+            'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+            'MCSMU': [0, 15, 16, 17, 18, 19, 20],
+            'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
+            'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
+            'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
+            'UHCU': [0, 26, 28],
+            'HVMCU': [],
+            'UHVU': []
+            }
+        supported_output_ranges = supported_output_ranges[smu_type]
+        output_ranges = {
+            'Auto Ranging': 0,
+            '1 pA limited auto ranging': 8,  # for ASU
+            '10 pA limited auto ranging': 9,
+            '100 pA limited auto ranging': 10,
+            '1 nA limited auto ranging': 11,
+            '10 nA limited auto ranging': 12,
+            '100 nA limited auto ranging': 13,
+            '1 uA limited auto ranging': 14,
+            '10 uA limited auto ranging': 15,
+            '100 uA limited auto ranging': 16,
+            '1 mA limited auto ranging': 17,
+            '10 mA limited auto ranging': 18,
+            '100 mA limited auto ranging': 19,
+            '1 A limited auto ranging': 20,
+            '2 A limited auto ranging': 21,
+            '20 A limited auto ranging': 22,
+            '40 A limited auto ranging': 23,
+            '500 A limited auto ranging': 26,
+            '2000 A limited auto ranging': 28
+            }   
+        supported_meas_ranges = {
+            # in combination with ASU also 8
+            'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            # in combination with ASU also 8,9,10
+            'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+            'MCSMU': [0, 15, 16, 17, 18, 19, 20],
+            'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
+            'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
+            'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
+            'UHCU': [0, 26, 28],
+            'HVMCU': [0, 19, 21],
+            'UHVU': [0, 15, 16, 17, 18, 19]
+            }
+        supported_meas_ranges = supported_meas_ranges[smu_type]
+        meas_ranges = {
+            'Auto Ranging': 0,
+            '1 pA': 8,  # for ASU
+            '10 pA': 9,
+            '100 pA': 10,
+            '1 nA': 11,
+            '10 nA': 12,
+            '100 nA': 13,
+            '1 uA': 14,
+            '10 uA': 15,
+            '100 uA': 16,
+            '1 mA': 17,
+            '10 mA': 18,
+            '100 mA': 19,
+            '1 A': 20,
+            '2 A': 21,
+            '20 A': 22,
+            '40 A': 23,
+            '500 A': 26,
+            '2000 A': 28
+            }
+        self.output = Ranging(supported_output_ranges, output_ranges)
+        self.meas = Ranging(supported_meas_ranges, meas_ranges, measurement=True)
 
 class CustomIntEnum(IntEnum):
     """Provides additional methods to IntEnum:
