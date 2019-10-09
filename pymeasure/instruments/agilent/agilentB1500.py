@@ -35,11 +35,7 @@ from pymeasure.instruments import (Instrument,
 import pandas as pd
 import re
 import numpy as np
-
-class AgilentB1500Instrument(Instrument):
-    def query_learn(self, query_type):
-        """ Issues *LRN? (learn) command to the instrument to read configuration.
-        Returns dictionary of commands and set values.
+import time
         
         :param query_type: Query type according to the programming guide
         :type query_type: int
@@ -58,7 +54,7 @@ class AgilentB1500Instrument(Instrument):
 # Agilent B1500 Mainframe
 ######################################
 
-class AgilentB1500(AgilentB1500Instrument):
+class AgilentB1500(Instrument):
     """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking current-voltage (I-V) measurements.
 
@@ -92,6 +88,7 @@ class AgilentB1500(AgilentB1500Instrument):
             **kwargs
         )
         self._smu_names = {}
+        self._smu_references = {}
         #setting of data output format -> determines how to read measurement data
         self._data_format = self._data_formatting("FMT"+self.query_data_format()[0])
 
@@ -127,7 +124,7 @@ class AgilentB1500(AgilentB1500Instrument):
             module = module.split(',')
             if not module[0] == '0':
                 try:
-                    out[i] = module_names[module[0]]
+                    out[i+1] = module_names[module[0]] # i+1: channels start at 1 not at 0
                 except:
                     raise NotImplementedError('Module {} is not implented yet!'.format(module[0]))
         return out
@@ -143,12 +140,14 @@ class AgilentB1500(AgilentB1500Instrument):
         :type name: str
         :return: SMU instance
         :rtype: SMU
-        """
-        channel = strict_discrete_set(channel,list(range(1,11))+list(range(101,1101,100))+list(range(102,1102,100)))
-        if channel in range(1,11):
-            channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
+        """  
+        if channel in list(range(101,1101,100))+list(range(102,1102,100)):
+            channel = int(str(channel)[0:-2]) #subchannels not relevant for SMU/CMU
+        channel = strict_discrete_set(channel,range(1,11))
         self._smu_names[channel] = name
-        return SMU(self.adapter, channel, smu_type, name)
+        smu_reference = SMU(self.adapter, channel, smu_type, name)
+        self._smu_references[channel] = smu_reference
+        return smu_reference
 
     def initialize_all_smus(self):
         """ Initialize all SMUs by querying available modules and creating a SMU class instance for each.
@@ -290,6 +289,7 @@ class AgilentB1500(AgilentB1500Instrument):
                 "a":102,"b":202,"c":302,"d":402,"e":502,"f":602,"g":702,"h":802,"i":902,"j":1002,
                 "V":"GNDU","Z":"MISC"}
             channel = channels[channel_string]
+            channel = channel[0:-2] # subchannels not relevant for SMU/CMU
             try:
                 smu = self.smu_names[channel]
                 return smu
@@ -634,7 +634,7 @@ class AgilentB1500(AgilentB1500Instrument):
 # SMU Setup
 ######################################
 
-class SMU(AgilentB1500Instrument):
+class SMU(object):
     """ Provides specific methods for the SMUs of the Agilent B1500 mainframe
     
     :param resourceName: Resource name of the B1500 mainframe
@@ -642,92 +642,38 @@ class SMU(AgilentB1500Instrument):
     :param str smu_type: Type of the SMU
     """
 
-    def __init__(self, resourceName, channel, smu_type, name, **kwargs):
-        super().__init__(
-            resourceName,
-            name, #"SMU of Agilent B1500 Semiconductor Parameter Analyzer"
-            **kwargs
-        )
-        channel = strict_discrete_set(channel,list(range(1,11))+list(range(101,1101,100))+list(range(102,1102,100)))
-        if channel in range(1,11):
-            self.channel = channel*100 + 1 #subchannel notation, first subchannel = channel for SMU/CMU
-        else:
-            self.channel = channel
+    def __init__(self, adapter, channel, smu_type, name, **kwargs):
+        self.adapter = adapter
+        channel = strict_discrete_set(channel,range(1,11))
+        self.channel = channel
         smu_type = strict_discrete_set(smu_type,['HRSMU','MPSMU','HPSMU','MCSMU',
             'HCSMU','DHCSMU','HVSMU','UHCU','HVMCU','UHVU'])
         self.voltage_output_ranging = self.ranging(smu_type,source_type='Voltage',ranging_type='Output')
         self.voltage_meas_ranging = self.ranging(smu_type,source_type='Voltage',ranging_type='Measurement')
         self.current_output_ranging = self.ranging(smu_type,source_type='Current',ranging_type='Output')
         self.current_meas_ranging = self.ranging(smu_type,source_type='Current',ranging_type='Measurement')
+        self.name = name
 
-        # Instrument settings need to be set up in __init__ 
-        # since self.channel is required
+    ##########################################
+    # Wrappers of B1500 communication methods
+    ##########################################
+    def write(self, string):
+        """Wraps ``write`` method of B1500.
+        """
+        self.adapter.write(string)
 
-        filter = Instrument.setting(
-            ("FL %d" % self.channel) + ", %d",
-            """ Enables/Disables SMU Filter. (``FL``)""",
-            values={True:1,False:0},
-            validator=strict_discrete_set,
-            map_values=True,
-            check_set_errors=True
-        )
+    def ask(self, string):
+        """Wraps ``ask`` method of B1500.
+        """
+        return self.adapter.ask(string)
 
-        series_resistor = Instrument.setting(
-            ("SSR %d" % self.channel) + ", %d",
-            """ Enables/Disables 1MOhm series resistor. (``SSR``)""",
-            values={True:1,False:0},
-            validator=strict_discrete_set,
-            map_values=True,
-            check_set_errors=True
-        )
 
-        meas_type = Instrument.setting(
-            ("CMM %d" % self.channel) + ", %d",
-            """ Set SMU measurement operation mode. (``CMM``)
-            
-            Possible values: ``"Compliance Side","Current","Voltage","Force Side","Compliance and Force Side"``
-            """,
-            values={"Compliance Side":0,"Current":1,"Voltage":2,"Force Side":3,"Compliance and Force Side":4},
-            validator=strict_discrete_set,
-            map_values=True,
-            check_set_errors=True
-        )
-        
-        adc_type = Instrument.setting(
-            ("AAD %d" % self.channel)+", %d",
-            """ Specify ADC type for each measurement channel individually. (``AAD``)
+    def check_errors(self):
+        """Wraps ``check_errors`` method of B1500.
+        """
+        return self.adapter.check_errors()
+    ##########################################
 
-            Possible values: ``'HSADC','HRADC','HSADC pulsed'``
-            """,
-            validator=strict_discrete_set,
-            values={'HSADC':0,'HRADC':1,'HSADC pulsed':2},
-            map_values=True,
-            check_set_errors=True)
-
-        meas_range_current = Instrument.setting(
-            ("RI %d" % self.channel) + ", %d",
-            """ Sets the current measurement range. (``RI``)
-
-            Possible settings depend on SMU type, e.g. ``'Auto Ranging'`` or ``'2 V'``
-            """,
-            validator=strict_discrete_set,
-            values=self.current_meas_ranging.ranges,
-            map_values=False,
-            check_set_errors=True
-            )
-
-        meas_range_voltage = Instrument.setting(
-            ("RV %d" % self.channel) + ", %d",
-            """ Sets the current measurement range. (``RV``)
-
-            Possible settings depend on SMU type, e.g. ``'Auto Ranging'`` or ``'1 nA'``
-            """,
-            validator=strict_discrete_set,
-            values=self.voltage_meas_ranging.ranges,
-            map_values=False,
-            check_set_errors=True
-            )
-    
     @property
     def query_status(self):
         channel = str(self.channel)[0:-2] #only first digits of channel 101 -> 1 / 1001 -> 10
@@ -924,7 +870,7 @@ class SMU(AgilentB1500Instrument):
                 index = self.indizes[range_name]
             except:
                 raise ValueError(
-                    'Specified Range Name is not valid or not supported by this SMU'
+                    'Specified Range Name {} is not valid or not supported by this SMU'.format(range_name)
                 )
             if self.ranging_type == 'MEASUREMENT':
                 if fixed:
@@ -943,7 +889,7 @@ class SMU(AgilentB1500Instrument):
                 range = self.ranges[abs(index)]
             except:
                 raise ValueError(
-                    'Specified Range is not supported by this SMU'
+                    'Specified Range {} is not supported by this SMU'.format(abs(index))
                 )
             if self.ranging_type == 'MEASUREMENT':
                 ranging_type = ''  # auto ranging: 0
@@ -1001,7 +947,7 @@ class SMU(AgilentB1500Instrument):
         :param stepsize: Size of the steps
         :param pause: A pause duration in seconds to wait between steps
         """
-        status = self.query_status
+        status = self.query_status()
         if 'CL' in status:
             #SMU is OFF
             start = 0
@@ -1062,7 +1008,7 @@ class SMU(AgilentB1500Instrument):
         :param stepsize: Size of the steps
         :param pause: A pause duration in seconds to wait between steps
         """
-        status = self.query_status
+        status = self.query_status()
         if 'CL' in status:
             #SMU is OFF
             start = 0
