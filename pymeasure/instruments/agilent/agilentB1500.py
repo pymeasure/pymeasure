@@ -38,6 +38,7 @@ import numpy as np
 import time
 from enum import IntEnum
 from collections import Counter, namedtuple
+import weakref
 
 class QueryLearn():
     @staticmethod
@@ -58,6 +59,7 @@ class QueryLearn():
             # responses that start with a channel number
             # the channel number should always be included in the key
             include_chnum = [
+                'DI', 'DV', # Sourcing
                 'RI','RV', # Ranging
                 'WV','WI','WSV','WSI', # Staircase Sweep
                 'PV','PI','PWV','PWI', # Pulsed Source
@@ -152,6 +154,28 @@ class QueryLearn():
         channel = key[len(command):]
         return smu_references[int(channel)]
 
+    #SMU Modes
+    @classmethod
+    def DI(cls, key, parameters, smu_references={}):
+        names = [('Current Range', lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+        'Current Output (A)', 'Compliance Voltage (V)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
+        ('Voltage Compliance Ranging Type', lambda parameter, smu: smu.voltage_ranging.meas(int(parameter)).name)]
+        return cls.to_dict_channel(
+            key, parameters, names, key_string="{}: Current Source (DI)", smu_references=smu_references)
+
+    @classmethod
+    def DV(cls, key, parameters, smu_references={}):
+        names = [('Voltage Range', lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+        'Voltage Output (V)', 'Compliance Current (A)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
+        ('Current Compliance Ranging Type', lambda parameter, smu: smu.current_ranging.meas(int(parameter)).name)]
+        return cls.to_dict_channel(
+            key, parameters, names, key_string="{}: Voltage Source (DV)", smu_references=smu_references)
+
+    @classmethod
+    def CL(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key + parameters, smu_references)
+        return {smu.name : 'OFF'}
+
     #Instrument Settings: 31
     @classmethod
     def TM(cls, key, parameters, smu_references={}):
@@ -160,12 +184,12 @@ class QueryLearn():
 
     @classmethod
     def AV(cls, key, parameters, smu_references={}):
-        names = ['ADC Averaging Number', ('ADC Averaging Mode', lambda parameter:str(AutoManual(int(parameter))))]
+        names = ['ADC Averaging Number', ('ADC Averaging Mode', lambda parameter: str(AutoManual(int(parameter))))]
         return cls.to_dict(parameters, names)
     
     @classmethod
     def CM(cls, key, parameters, smu_references={}):
-        names = ['Auto Calibration Mode'] #enum + setting not implemented yet
+        names = [('Auto Calibration Mode', lambda parameter: bool(int(parameter)))]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -332,21 +356,51 @@ class AgilentB1500(Instrument):
         from pymeasure.instruments.agilent import AgilentB1500
 
         # explicitly define r/w terminations; set sufficiently large timeout or None.
+        b1500=AgilentB1500("GPIB0::17::INSTR",read_termination='\r\n',write_termination='\r\n')
+        # query SMU config from instrument and initialize all SMU instances
+        b1500.initialize_all_smus()
+        b1500.data_format(21,mode=1) #call after SMUs are initialized
         
-
-        # reset the instrument
+        # choose measurement mode
+        b1500.meas_mode('STAIRCASE_SWEEP', *b1500.smu_references) #order in smu_references determines order of measurement
         
+        # settings for individual SMUs
+        for smu in b1500.smu_references:
+            smu.enable() #enable SMU
+            smu.adc_type = 'HRADC' #set ADC to high-resoultion ADC
+            smu.meas_range_current = '1 nA'
+            smu.meas_op_mode = 'COMPLIANCE_SIDE' # other choices: Current, Voltage, FORCE_SIDE, COMPLIANCE_AND_FORCE_SIDE
 
-        # define configuration file for instrument and load config
+        # General Instrument Settings
+        # b1500.adc_averaging = 1
+        # b1500.adc_auto_zero = True
+        b1500.adc_setup('HRADC','AUTO',6)
+        #b1500.adc_setup('HRADC','PLC',1)
+
+        #Sweep Settings
+        b1500.sweep_timing(0,5,step_delay=0.1) #hold,delay
+        b1500.sweep_auto_abort(False,post='STOP') #disable auto abort, set post measurement output condition to stop value of sweep
+        # Sweep Source
+        nop = 11
+        b1500.smu1.staircase_sweep_source('VOLTAGE','LINEAR_DOUBLE','Auto Ranging',0,1,nop,0.001) #type, mode, range, start, stop, steps, compliance
+        # Synchronous Sweep Source
+        b1500.smu2.synchronous_sweep_source('VOLTAGE','Auto Ranging',0,1,0.001) #type, range, start, stop, comp
+        # Constant Output (could also be done using synchronous sweep source with start=stop, but then the output is not ramped up)
+        b1500.smu3.ramp_to_voltage('Auto Ranging',-1,stepsize=0.1,pause=20e-3) #output starts immediately! (compared to sweeps)
         
+        #Start Measurement
+        b1500.check_errors()
+        b1500.clear_buffer()
+        b1500.clear_timer()
+        b1500.send_trigger()
 
-        # save data variables, some or all of which are defined in the json config file.
-        
+        # read measurement data
+        data = b1500.read_data(nop)
 
-        # take measurements
-        
+        #sweep constant source back to 0V
+        b1500.smu3.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3) 
 
-        # measured data is a pandas dataframe and can be exported to csv.
+
         
     """
 
@@ -363,16 +417,33 @@ class AgilentB1500(Instrument):
 
     @property
     def smu_references(self):
-        return self._smu_references
+        """Returns all SMU instances.
+        """
+        return self._smu_references.values()
 
     @property
     def smu_names(self):
+        """Returns all SMU names.
+        """
         return self._smu_names
 
     def query_learn(self, query_type):
+        """Queries settings from the instrument (``*LRN?``). 
+        Returns dict of settings.
+        
+        :param query_type: Query type (number according to manual)
+        :type query_type: int or str
+        """
         return QueryLearn.query_learn(self.ask, query_type)
 
     def query_learn_header(self, query_type, **kwargs):
+        """Queries settings from the instrument (``*LRN?``). 
+        Returns dict of settings in human readable format for debugging or file headers.
+        For optional arguments check the underlying definition of ``QueryLearn.query_learn_header``.
+        
+        :param query_type: Query type (number according to manual)
+        :type query_type: int or str
+        """
         return QueryLearn.query_learn_header(self.ask, query_type, self._smu_references, **kwargs)
 
     def reset(self):
@@ -424,7 +495,7 @@ class AgilentB1500(Instrument):
             channel = int(str(channel)[0:-2]) #subchannels not relevant for SMU/CMU
         channel = strict_discrete_set(channel,range(1,11))
         self._smu_names[channel] = name
-        smu_reference = SMU(self.adapter, channel, smu_type, name)
+        smu_reference = SMU(self, channel, smu_type, name)
         self._smu_references[channel] = smu_reference
         return smu_reference
 
@@ -451,11 +522,6 @@ class AgilentB1500(Instrument):
         """ Aborts the present operation but channels may still output current/voltage (``AB``)
         """
         self.write("AB")
-
-    def start_meas(self):
-        """ Starts Measurement (except High Speed Spot) (``XE``)
-        """
-        self.write("XE")
     
     def force_gnd(self):
         """ Force 0V on all channels immediately. Current Settings can be restored with RZ. (``DZ``)
@@ -486,7 +552,7 @@ class AgilentB1500(Instrument):
         self.write("TSR")
 
     def send_trigger(self):
-        """ Send trigger to start measurement (``XE``) """
+        """ Send trigger to start measurement (except High Speed Spot) (``XE``) """
         self.write("XE")
 
     @property
@@ -735,7 +801,7 @@ class AgilentB1500(Instrument):
         
         :param adc_type: ADC type (``'HSADC','HRADC','HSADC_PULSED'``)
         :type adc_type: str
-        :param mode: ADC mode (``'Auto','Manual','PLC','Time'``)
+        :param mode: ADC mode (``'AUTO','MANUAL','PLC','TIME'``)
         :type mode: str
         :param N: additional parameter, check documentation, defaults to ''
         :type N: str, optional
@@ -743,11 +809,14 @@ class AgilentB1500(Instrument):
         
         adc_type = ADCType.get(adc_type)
         mode = ADCMode.get(mode)
-        if (adc_type == ADCType['HRADC']) and (mode == ADCMode['Time']):
+        if (adc_type == ADCType['HRADC']) and (mode == ADCMode['TIME']):
             raise ValueError("Time ADC mode is not available for HRADC")
         command = "AIT %d, %d" % (mode.value, adc_type.value)
         if not N == '':
-            command += (", %f" % N)
+            if mode == ADCMode['TIME']:
+                command += (", %f" % N)
+            else:
+                command += (", %d" % N)
         self.write(command)
         self.check_errors()
 
@@ -938,6 +1007,20 @@ class AgilentB1500(Instrument):
         data = tuple(data)
         return data
 
+    # Queries on all SMUs
+
+    def query_series_resistor(self):
+        return self.query_learn_header(53)
+
+    def query_meas_range_current_auto(self):
+        return self.query_learn_header(54)
+    
+    def query_meas_op_mode(self):
+        return self.query_learn_header(46)
+
+    def query_meas_ranges(self):
+        return self.query_learn_header(32)
+
 ######################################        
 # SMU Setup
 ######################################
@@ -950,8 +1033,8 @@ class SMU(object):
     :param str smu_type: Type of the SMU
     """
 
-    def __init__(self, adapter, channel, smu_type, name, **kwargs):
-        self.adapter = adapter
+    def __init__(self, parent, channel, smu_type, name, **kwargs):
+        self._b1500 = weakref.proxy(parent) # to allow garbage collection for cyclic references
         channel = strict_discrete_set(channel,range(1,11))
         self.channel = channel
         smu_type = strict_discrete_set(smu_type,['HRSMU','MPSMU','HPSMU','MCSMU',
@@ -966,30 +1049,34 @@ class SMU(object):
     def write(self, string):
         """Wraps ``write`` method of B1500.
         """
-        self.adapter.write(string)
+        self._b1500.write(string)
 
     def ask(self, string):
         """Wraps ``ask`` method of B1500.
         """
-        return self.adapter.ask(string)
+        return self._b1500.ask(string)
 
     def query_learn(self, query_type, command):
         """Wraps ``query_learn`` method of B1500.
         """
-        response = QueryLearn.query_learn(self.ask, query_type)
+        response = self._b1500.query_learn(query_type)
         # query_learn returns settings of all smus
         # pick setting for this smu only
-        response = response[command + self.channel]
+        response = response[command + str(self.channel)]
         return response
 
     def check_errors(self):
         """Wraps ``check_errors`` method of B1500.
         """
-        return self.adapter.check_errors()
+        return self._b1500.check_errors()
     ##########################################
 
-    def query_status(self):
-        return QueryLearn.query_learn(self.ask, str(self.channel))
+    def _query_status_raw(self):
+        return self._b1500.query_learn(str(self.channel))
+
+    @property
+    def status(self):
+        return self._b1500.query_learn_header(str(self.channel))
 
     def enable(self):
         """ Enable Source/Measurement Channel (``CN``)"""
@@ -1049,10 +1136,7 @@ class SMU(object):
 
     @meas_op_mode.setter
     def meas_op_mode(self, op_mode):
-        if isinstance(op_mode, int):
-            op_mode = ADCType(op_mode)
-        else:
-            op_mode = ADCType[op_mode]
+        op_mode = MeasOpMode.get(op_mode)
         self.write("CMM %d, %d" % (self.channel, op_mode.value))
         self.check_errors()
 
@@ -1069,10 +1153,7 @@ class SMU(object):
 
     @adc_type.setter
     def adc_type(self, adc_type):
-        if isinstance(adc_type, int):
-            adc_type = ADCType(adc_type)
-        else:
-            adc_type = ADCType[adc_type]
+        adc_type = ADCType.get(adc_type)
         self.write("AAD %d, %d" % (self.channel, adc_type.value))
         self.check_errors()
 
@@ -1131,10 +1212,11 @@ class SMU(object):
         :type vrange: int, optional
         """
         irange = self.current_ranging.output(irange).index
-        output = "DI " + self.channel + (", %d, %f" % (irange, current))
+        output = "DI %d, %d, %f" % (self.channel, irange, current)
         if not Vcomp == '':
             output += ", %f" % Vcomp
             if not comp_polarity == '':
+                comp_polarity = CompliancePolarity.get(comp_polarity).value
                 output += ", %d" % comp_polarity
                 if not vrange == '':
                     output += ", %d" % vrange
@@ -1161,12 +1243,12 @@ class SMU(object):
         :param pause: A pause duration in seconds to wait between steps
         """
         irange = self.current_ranging.output(irange).index
-        status = self.query_status()
+        status = self._query_status_raw()
         if 'CL' in status:
             #SMU is OFF
             start = 0
-        elif 'DI' in status:
-            start = status['DI'][2]
+        elif ('DI%d' % self.channel) in status:
+            start = float(status['DI%d' % self.channel][1])
         else:
             log.info("SMU {} in different state. Changing to Current Source.".format(self.name))
             start = 0
@@ -1179,6 +1261,8 @@ class SMU(object):
         for current in currents:
             self.force_current(irange, current, Vcomp, comp_polarity, vrange)
             time.sleep(pause)
+        # targer_current is not included in currents
+        self.force_current(irange, target_current, Vcomp, comp_polarity, vrange)
 
     def force_voltage(self, vrange, voltage, Icomp='', comp_polarity='', irange=''):
         """ Applies DC Voltage from SMU immediately. (``DV``)
@@ -1195,10 +1279,11 @@ class SMU(object):
         :type irange: int, optional
         """
         vrange = self.voltage_ranging.output(vrange).index
-        output = "DV " + self.channel + (", %d, %f" % (vrange, voltage))
+        output = "DV %d, %d, %f" % (self.channel, vrange, voltage)
         if not Icomp == '':
             output += ", %f" % Icomp
             if not comp_polarity == '':
+                comp_polarity = CompliancePolarity.get(comp_polarity).value
                 output += ", %d" % comp_polarity
                 if not irange == '':
                     output += ", %d" % irange
@@ -1225,12 +1310,12 @@ class SMU(object):
         :param pause: A pause duration in seconds to wait between steps
         """
         vrange = self.voltage_ranging.output(vrange).index
-        status = self.query_status()
+        status = self._query_status_raw()
         if 'CL' in status:
             #SMU is OFF
             start = 0
-        elif 'DV' in status:
-            start = status['DV'][2]
+        elif ('DV%d' % self.channel) in status:
+            start = float(status['DV%d' % self.channel][1])
         else:
             log.info("SMU {} in different state. Changing to Voltage Source.".format(self.name))
             start = 0
@@ -1243,6 +1328,8 @@ class SMU(object):
         for voltage in voltages:
             self.force_voltage(vrange, voltage, Icomp, comp_polarity, irange)
             time.sleep(pause)
+        # target_voltage is not included in voltages array
+        self.force_voltage(vrange, target_voltage, Icomp, comp_polarity, irange)
 
     ######################################
     # Measurement Range: RI, RV, (RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC)
@@ -1258,9 +1345,9 @@ class SMU(object):
         """
         mode = strict_range(mode,range(1,4))
         if mode == 1:
-            self.write("RM %d, %d" % (self.channel,mode))
+            self.write("RM %d, %d" % (self.channel, mode))
         else:
-            self.write("RM %d, %d, %d" % (self.channel,mode,rate))
+            self.write("RM %d, %d, %d" % (self.channel, mode, rate))
         self.write
 
     ######################################
@@ -1305,10 +1392,10 @@ class SMU(object):
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
         steps=strict_range(steps,range(1,10002))
         #check on comp value not yet implemented
-        if Pcomp == '':
-            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,steps,comp)))
-        else:
-            self.write(cmd + ("%d, %d, %d, %f, %f, %f, %f, %f" % (self.channel,mode,source_range,start,stop,steps,comp,Pcomp)))
+        cmd += "%d, %d, %d, %f, %f, %f, %f" % (self.channel, mode, source_range, start, stop, steps, comp)
+        if not Pcomp == '':
+            cmd += ", %f" % Pcomp
+        self.write(cmd)
         self.check_errors()
 
     # Synchronous Output: WSI, WSV, BSSI, BSSV, LSSI, LSSV
@@ -1338,10 +1425,10 @@ class SMU(object):
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         #check on comp value not yet implemented
-        if Pcomp == '':
-            self.write(cmd + ("%d, %d, %f, %f, %f" % (self.channel,source_range,start,stop,comp)))
-        else:
-            self.write(cmd + ("%d, %d, %f, %f, %f, %f" % (self.channel,source_range,start,stop,comp,Pcomp)))
+        cmd += "%d, %d, %f, %f, %f" % (self.channel, source_range, start, stop, comp)
+        if not Pcomp == '':
+            cmd += ", %f" % Pcomp
+        self.write(cmd)
         self.check_errors()
 
     ######################################
@@ -1372,7 +1459,8 @@ class SMU(object):
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         #check on comp value not yet implemented
-        self.write(cmd + ("%d, %d, %f, %f, %f" % (self.channel,source_range,base,bias,comp)))
+        cmd += "%d, %d, %f, %f, %f" % (self.channel, source_range, base, bias, comp)
+        self.write(cmd)
         self.check_errors()
 
 class Ranging():
@@ -1614,7 +1702,7 @@ class CustomIntEnum(IntEnum):
     - get classmethod to get enum reference with name or integer
     """
     def __str__(self):
-        return self.name.replace("_", " ").title()
+        return str(self.name).replace("_", " ").title() #str() conversion just because of pylint bug
 
     @classmethod
     def get(cls, input_value):
@@ -1635,7 +1723,7 @@ class ADCType(CustomIntEnum):
     HSADC_PULSED =2
 
     def __str__(self):
-        return self.name.replace("_", " ") #.title()
+        return str(self.name).replace("_", " ") #.title() str() conversion just because of pylint bug
 
 class ADCMode(CustomIntEnum):
     AUTO = 0
@@ -1687,3 +1775,7 @@ class SamplingPostOutput(CustomIntEnum):
 class StaircaseSweepPostOutput(CustomIntEnum):
     START = 1
     STOP = 2
+
+class CompliancePolarity(CustomIntEnum):
+    AUTO = 0
+    MANUAL = 1
