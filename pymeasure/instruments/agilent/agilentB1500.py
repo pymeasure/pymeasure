@@ -361,6 +361,14 @@ class AgilentB1500(Instrument):
         #setting of data output format -> determines how to read measurement data
         self._data_format = self._data_formatting("FMT"+self.query_data_format()[0])
 
+    @property
+    def smu_references(self):
+        return self._smu_references
+
+    @property
+    def smu_names(self):
+        return self._smu_names
+
     def query_learn(self, query_type):
         return QueryLearn.query_learn(self.ask, query_type)
 
@@ -811,13 +819,13 @@ class AgilentB1500(Instrument):
         self.write("WT %f, %f, %f, %f, %f" % (hold, delay, step_delay,step_trigger_delay,measurement_trigger_delay))
         self.check_errors()
 
-    def sweep_auto_abort(self,abort,post='Start'):
+    def sweep_auto_abort(self,abort,post='START'):
         """ Enables/Disables the automatic abort function.
         Also sets the post measurement condition. (``WM``)
         
         :param abort: Enable/Disable automatic abort
         :type abort: bool
-        :param post: Output after measurement (``'Start','Stop'``), defaults to 'Start'
+        :param post: Output after measurement (``'START','STOP'``), defaults to 'Start'
         :type post: str, optional
         """
         abort_values = {True:2,False:1}
@@ -998,7 +1006,7 @@ class SMU(object):
     @property
     def filter(self):
         """ Enables/Disables SMU Filter. (``FL``)"""
-        response = self.adapter.query_learn(30)
+        response = QueryLearn.query_learn(self.ask, 30)
         if 'FL' in response.keys():
             #only present if filter of all channels are off
             return False
@@ -1259,12 +1267,12 @@ class SMU(object):
     # Staircase Sweep Measurement: (WT, WM -> Instrument), WV, WI
     ######################################
 
-    def staircase_sweep_source(self,source_type,mode,source_range,start,stop,steps,comp,Pcomp=''):
+    def staircase_sweep_source(self, source_type, mode, source_range, start, stop, steps, comp, Pcomp=''):
         """ Specifies Staircase Sweep Source (Current or Voltage) and its parameters. (``WV`` or ``WI``)
         
         :param source_type: Source type (``'Voltage','Current'``)
         :type source_type: str
-        :param mode: Sweep mode (``"LinearSingle","LogSingle","LinearDouble","LogDouble"``)
+        :param mode: Sweep mode (``"LINEAR_SINGLE","LOG_SINGLE","LINEAR_DOUBLE","LOG_DOUBLE"``)
         :type mode: str
         :param source_range: Source range index
         :type source_range: int
