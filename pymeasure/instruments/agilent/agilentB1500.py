@@ -1376,103 +1376,87 @@ class SMU(object):
         self.check_errors()
 
 class Ranging():
-    """ Possible Settings for SMU Current/Voltage Output/Measurement ranges.
+    """Possible Settings for SMU Current/Voltage Output/Measurement ranges.
     Transformation of available Voltage/Current Range Names to Index and back.
-    Checks for compatibility with specified SMU type.
-    
-    :param str smu_type: SMU type
-    :param str source_type: Source type, defaults to 'Voltage'
-    :param str ranging_type: Ranging type, defaults to 'Output'
     """
-    
+
     Range = namedtuple('Range','name index')
 
-    def __init__(self, supported_ranges, all_ranges, measurement=False):
-        inverse = {}
-        for k, v in all_ranges.items():
-            if isinstance(v, tuple):
-                for v2 in v:
-                    inverse[v2] = k
-            else:
-                inverse[v] = k
-        #inverse = {v: k for k, v in all_ranges.items()}
+    def __init__(self, supported_ranges, all_ranges, inverse_ranges='AUTO'):
+        """Initialize Ranging.
+        
+        :param supported_ranges: Ranges which are supported (list of range indizes)
+        :type supported_ranges: list
+        :param all_ranges: All ranges ``{Name: Indizes}``
+        :type all_ranges: dict
+        :param inverse_ranges: manually give inverse ranges ``{Index: (Name, Synonym)}, to select same range by multiple names; defaults to 'AUTO'
+        :type inverse_ranges: dict, optional
+        """
+        # create inverse dict to compare with supported_ranges
+        if inverse_ranges == 'AUTO':
+            # index is unique
+            inverse = {}
+            for k, v in all_ranges.items():
+                if isinstance(v, tuple):
+                    for v2 in v:
+                        inverse[v2] = k
+                else:
+                    inverse[v] = k
+        else:
+            # multiple possible names for the same index, given as inverse_ranges; first entry is main name
+            # {11:('1 nA limited auto ranging', '1 nA')}
+            inverse = inverse_ranges
         ranges = {}
         indizes = {}
+        #only take ranges supported by SMU
         for i in supported_ranges:
-            ranges[i] = inverse[i] # Index -> Name, Name not unique
-            indizes[inverse[i]] = i # Name -> Index, only one Index per Name
-
-        self.indizes = indizes
-        self.ranges = ranges
-        self.ranging_type_measurement = measurement
+            name = inverse[i]
+            # check if multiple names exist for index i
+            if isinstance(name, tuple):
+                ranges[i] = name[0] # first entry is main name (unique) and returned as .name attribute, 
+                # additional entries are just synonyms and can be used to get the range tuple
+                # e.g. '1 nA limited auto ranging' is identifier and returned as range name 
+                # but '1 nA' also works to get the range tuple
+                for name2 in name:
+                    indizes[name2] = i
+            else:
+                # only one name per index
+                ranges[i] = name # Index -> Name, Name not unique
+                indizes[name] = i # Name -> Index, only one Index per Name
+        
+        # convert all string type keys to uppercase, to avoid case-sensitivity
+        indizes = {key.upper():value for key, value in indizes.items()}
+        self.indizes = indizes # Name -> Index
+        self.ranges = ranges # Index -> Name
     
-    def __call__(self, input, fixed=False):
+    def __call__(self, input):
         """Gives named tuple (name/index) of given Range. 
         Throws error if range is not supported by this SMU.
         
         :param input: Range name or index
         :type input: str or int
-        :param fixed: Fixed measurement range, defaults to False (limited auto ranging)
-        :type fixed: bool, optional
         :return: named tuple (name/index) of range
         :rtype: namedtuple
         """
+        # set index
         if isinstance(input, int):
             index = input
-            name = self._get_name(index)
         else:
-            name = input
-            index = self._get_index(name, fixed=fixed)
+            try:
+                index = self.indizes[input.upper()]
+            except:
+                raise ValueError('Specified Range Name {} is not valid or not supported by this SMU'.format(input.upper()))
+        # get name
+        try:
+            name = self.ranges[index]
+        except:
+            raise ValueError('Specified Range {} is not supported by this SMU'.format(index))
         return self.Range(name=name, index=index)
 
-    def _get_index(self, range_name, fixed=False):
-        """ Gives Index of given Range Name. 
-        Throws error if range is not supported by this SMU.
-        
-        Measurement: only give Range Name without "limited auto ranging"/"range fixed".
-        
-        :param range_name: Range name, e.g. '1 nA'
-        :type range_name: str
-        :param fixed: Fixed ranging, defaults to False
-        :type fixed: bool, optional
-        :return: Range index
-        :rtype: int
-        """
-        try:
-            index = self.indizes[range_name]
-        except:
-            raise ValueError(
-                'Specified Range Name {} is not valid or not supported by this SMU'.format(range_name)
-            )
-        if self.ranging_type_measurement:
-            if fixed:
-                index = -1 * index
-        return index
-
-    def _get_name(self, index):
-        """ Give range name of given index
-        
-        :param index: Range index
-        :type index: int
-        :return: Range name
-        :rtype: str
-        """
-        try:
-            range_name = self.ranges[abs(index)]
-        except:
-            raise ValueError(
-                'Specified Range {} is not supported by this SMU'.format(abs(index))
-            )
-        if self.ranging_type_measurement:
-            ranging_type = ''  # auto ranging: 0
-            if index < 0:
-                ranging_type = ' range fixed'
-            elif index > 0:
-                ranging_type = ' limited auto ranging'
-            range_name += ranging_type
-        return range_name
-
 class SMUVoltageRanging():
+    """ Provides Range Name/Index transformation for voltage measurement/sourcing.
+    Validity of ranges is checked against the type of the SMU.
+    """
     def __init__(self, smu_type):
         supported_ranges = {
                 'HRSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
@@ -1528,9 +1512,16 @@ class SMUVoltageRanging():
             '10 kV': 103
             }
         self.output = Ranging(supported_ranges, output_ranges)
-        self.meas = Ranging(supported_ranges, meas_ranges, measurement=True)
+        self.meas = Ranging(supported_ranges, meas_ranges)
 
 class SMUCurrentRanging():
+    """ Provides Range Name/Index transformation for current measurement/sourcing.
+    Validity of ranges is checked against the type of the SMU.
+
+    Omitting the 'limited auto ranging'/'range fixed' specification in the range string for current measurement defaults to 'limited auto ranging'.
+    Full specification: '1 nA range fixed' or '1 nA limited auto ranging'
+    '1 nA' defaults to '1 nA limited auto ranging'
+    """
     def __init__(self, smu_type):
         supported_output_ranges = {
             # in combination with ASU also 8
@@ -1584,7 +1575,6 @@ class SMUCurrentRanging():
             }
         supported_meas_ranges = supported_meas_ranges[smu_type]
         meas_ranges = {
-            'Auto Ranging': 0,
             '1 pA': 8,  # for ASU
             '10 pA': 9,
             '100 pA': 10,
@@ -1604,8 +1594,19 @@ class SMUCurrentRanging():
             '500 A': 26,
             '2000 A': 28
             }
+        # distinguish between limited and fixed ranging
+        meas_ranges2 = {'Auto Ranging': 0}
+        for key, value in meas_ranges.items():
+            meas_ranges2[key + ' range fixed'] = -value
+            meas_ranges2[key + ' limited auto ranging'] = value
+        inverse_ranges ={0:'Auto Ranging'}
+        for key, value in meas_ranges.items():
+            # omitting the 'limited auto ranging'/'range fixed' defaults to 'limited auto ranging'
+            inverse_ranges[value] = (key + ' limited auto ranging', key)
+            inverse_ranges[-value] = (key + ' range fixed')
+        meas_ranges['Auto Ranging'] = 0
         self.output = Ranging(supported_output_ranges, output_ranges)
-        self.meas = Ranging(supported_meas_ranges, meas_ranges, measurement=True)
+        self.meas = Ranging(supported_meas_ranges, meas_ranges2, inverse_ranges=inverse_ranges)
 
 class CustomIntEnum(IntEnum):
     """Provides additional methods to IntEnum:
