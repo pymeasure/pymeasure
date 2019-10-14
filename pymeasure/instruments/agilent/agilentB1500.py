@@ -341,6 +341,13 @@ class QueryLearn():
         names = [('ADC Auto Zero', lambda parameter: str(bool(int(parameter))))]
         return cls.to_dict(parameters, names)
 
+    #Time Stamp: 60
+    @classmethod
+    def TSC(cls, key, parameters, smu_references={}):
+        names = [('Time Stamp', lambda parameter: str(bool(int(parameter))))]
+        return cls.to_dict(parameters, names)
+
+
 
 
 ######################################
@@ -351,7 +358,7 @@ class AgilentB1500(Instrument):
     """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking different kinds of measurements.
 
-    Example for a simple IV measurement with 4 SMUs:
+    Initialization of Instrument:
 
     .. code-block:: python
 
@@ -362,7 +369,12 @@ class AgilentB1500(Instrument):
         # query SMU config from instrument and initialize all SMU instances
         b1500.initialize_all_smus()
         b1500.data_format(21, mode=1) #call after SMUs are initialized to get names for the channels
-        
+
+
+    Example for a simple IV measurement with 4 SMUs:
+
+    .. code-block:: python
+
         # choose measurement mode
         b1500.meas_mode('STAIRCASE_SWEEP', *b1500.smu_references) #order in smu_references determines order of measurement
         
@@ -409,11 +421,53 @@ class AgilentB1500(Instrument):
             # data format for every channel (status code, channel name e.g. 'SMU1', data name e.g 'Current Measurement (A)', value)
             meas.append(read_data)
 
-        #sweep constant source back to 0V
+        #sweep constant sources back to 0V
         b1500.smu3.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3)
         b1500.smu4.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3) 
 
+    
+    Example for a sampling measurement with 4 SMUs:
 
+    .. code-block:: python
+
+        # choose measurement mode
+        b1500.meas_mode('SAMPLING', *b1500.smu_references) #order in smu_references determines order of measurement
+        number_of_channels = len(b1500.smu_references)
+
+        # settings for individual SMUs
+        for smu in b1500.smu_references:
+            smu.enable() #enable SMU
+            smu.adc_type = 'HSADC' #set ADC to high-speed ADC
+            smu.meas_range_current = '1 nA'
+            smu.meas_op_mode = 'COMPLIANCE_SIDE' # other choices: Current, Voltage, FORCE_SIDE, COMPLIANCE_AND_FORCE_SIDE
+
+        b1500.sampling_mode = 'LINEAR'
+        # b1500.adc_averaging = 1
+        # b1500.adc_auto_zero = True
+        b1500.adc_setup('HSADC','AUTO',1)
+        #b1500.adc_setup('HSADC','PLC',1)
+        nop=11
+        b1500.sampling_timing(2,0.005,nop) #MT: bias hold time, sampling interval, number of points
+        b1500.sampling_auto_abort(False,post='BIAS') #MSC: BASE/BIAS
+        b1500.time_stamp = True
+
+        # Sources
+        b1500.smu1.sampling_source('VOLTAGE','Auto Ranging',0,1,0.001) #MV/MI: type, range, base, bias, compliance
+        b1500.smu2.sampling_source('VOLTAGE','Auto Ranging',0,1,0.001)
+        b1500.smu3.ramp_to_voltage('Auto Ranging',-1,stepsize=0.1,pause=20e-3) #output starts immediately! (compared to sweeps)
+        b1500.smu4.ramp_to_voltage('Auto Ranging',-1,stepsize=0.1,pause=20e-3)
+
+        meas=[]
+        for i in range(nop):
+            read_data = b1500.read_channels(1+2*number_of_channels) #Sampling Index + (time stamp + measurement value) * number of channels
+            # process live data for plotting etc.
+            # data format for every channel (status code, channel name e.g. 'SMU1', data name e.g 'Current Measurement (A)', value)
+            meas.append(read_data)
+
+        #sweep constant sources back to 0V
+        b1500.smu3.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3)
+        b1500.smu4.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3)
+        
         
     """
 
@@ -968,6 +1022,22 @@ class AgilentB1500(Instrument):
         self.write('AZ %d' % setting)
         self.check_errors()
 
+    @property
+    def time_stamp(self):
+        """ Enable/Disable Time Stamp function. (``TSC``)"""
+        response = self.query_learn(60)['TSC']
+        response = bool(int(response))
+        return response
+
+    @time_stamp.setter
+    def time_stamp(self, setting):
+        setting = int(setting)
+        self.write('TSC %d' % setting)
+        self.check_errors()
+
+    def query_time_stamp_setting(self):
+        return self.query_learn_header(60)
+
     ######################################
     # Sweep Setup
     ######################################
@@ -1044,7 +1114,7 @@ class AgilentB1500(Instrument):
         self.write("ML %d" % mode)
         self.check_errors()
 
-    def sampling_timing(self,hold_bias,interval,number,hold_base=0):
+    def sampling_timing(self, hold_bias, interval, number, hold_base=0):
         """ Sets Timing Parameters for the Sampling Measurement (``MT``)
         
         :param hold_bias: Bias hold time
@@ -1056,14 +1126,14 @@ class AgilentB1500(Instrument):
         :param hold_base: Base hold time, defaults to 0
         :type hold_base: float, optional
         """
-        hold_bias = strict_range(hold_bias*100,range(0,65536))/100 # resolution 10ms
-        interval = strict_range(interval*10000,range(0,655351))/10000 # resolution 0.1ms, restrictions apply (number of measurement channels)
-        number = strict_range(number,range(0,100002)) # restrictions apply (number of measurement channels)
-        hold_base = strict_range(hold_base*100,range(0,65536))/100 # resolution 0.01s
-        self.write("MT %f, %f, %d, %f" % (hold_bias,interval,number,hold_base))
+        hold_bias = strict_range(hold_bias*100, range(0,65536))/100 # resolution 10ms
+        interval = strict_range(interval*10000, range(0,655351))/10000 # resolution 0.1ms, restrictions apply (number of measurement channels)
+        number = strict_range(number, range(0,100002)) # restrictions apply (number of measurement channels)
+        hold_base = strict_range(hold_base*100, range(0,65536))/100 # resolution 0.01s
+        self.write("MT %f, %f, %d, %f" % (hold_bias, interval, number, hold_base))
         self.check_errors()
 
-    def sampling_auto_abort(self,abort,post='Bias'):
+    def sampling_auto_abort(self, abort, post='Bias'):
         """ Enables/Disables the automatic abort function.
         Also sets the post measurement condition. (``MSC``)
         
@@ -1072,9 +1142,9 @@ class AgilentB1500(Instrument):
         :param post: Output after measurement (``'Base','Bias'``), defaults to 'Bias'
         :type post: str, optional
         """
-        abort_values = {True:2,False:1}
-        abort = strict_discrete_set(abort.upper(),abort_values)
-        abort = abort_values[abort.upper()]
+        abort_values = {True:2, False:1}
+        abort = strict_discrete_set(abort, abort_values)
+        abort = abort_values[abort]
         post = SamplingPostOutput.get(post).value
         self.write("MSC %d, %d" % (abort, post))
         self.check_errors()
@@ -1553,7 +1623,7 @@ class SMU(object):
     # Sampling Measurements: (ML, MT -> Instrument), MV, MI, MSP, MCC, MSC
     ######################################
     
-    def sampling_source(self,source_type,source_range,base,bias,comp):
+    def sampling_source(self, source_type, source_range, base, bias, comp):
         """ Sets DC Source (Current or Voltage) for sampling measurement.
         DV/DI commands on the same channel overwrite this setting. (``MV`` or ``MI``)
         
