@@ -591,6 +591,47 @@ class AgilentB1500(Instrument):
         :param str output_format_str: Format string of measurement value
         :param dict smu_names: Dictionary of channel and SMU name
         """
+
+        channels = {"A":101,"B":201,"C":301,"D":401,"E":501,"F":601,"G":701,"H":801,"I":901,"J":1001,
+                "a":102,"b":202,"c":302,"d":402,"e":502,"f":602,"g":702,"h":802,"i":902,"j":1002,
+                "V":"GNDU","Z":"MISC"}
+        status = {
+            'W':'First or intermediate sweep step data',
+            'E':'Last sweep step data',
+            'T':'Another channel reached its compliance setting.',
+            'C':'This channel reached its compliance setting',
+            'V':('Measurement data is over the measurement range/Sweep was aborted by automatic '
+                'stop function or power compliance. D will be 199.999E+99 (no meaning).'),
+            'X':'One or more channels are oscillating. Or source output did not settle before measurement.',
+            'F':'SMU is in the force saturation condition.',
+            'G':('Linear/Binary search measurement: Target value was not found within the search range. '
+                'Returns source output value. Quasi-pulsed spot measurement: The detection time was over the limit.'),
+            'S':('Linear/Binary search measurement: The search measurement was stopped. Returns source output value. '
+                'Quasi-pulsed spot measurement: Output slew rate was too slow to perform the settling detection. '
+                'Or quasi-pulsed source channel reached compliance before the source output voltage changed 10V '
+                'from the start voltage.'),
+            'U':'CMU is in the NULL loop unbalance condition.',
+            'D':'CMU is in the IV amplifier saturation condition.'
+            }
+        smu_status = {
+            1:'A/D converter overflowed.',
+            2:'Oscillation of force or saturation current.',
+            4:'Antoher unit reached its compliance setting.',
+            8:'This unit reached its compliance setting.',
+            16:'Target value was not found within the search range.',
+            32:'Search measurement was automatically stopped.',
+            64:'Invalid data is returned. D is not used.',
+            128:'End of data'
+            }
+        cmu_status = {
+            1:'A/D converter overflowed.',
+            2:'CMU is in the NULL loop unbalance condition.',
+            4:'CMU is in the IV amplifier saturation condition.',
+            64:'Invalid data is returned. D is not used.',
+            128:'End of data'
+            }
+        data_names_int = {"Sampling index"} #convert to int instead of float
+
         def __init__(self, output_format_str,smu_names={}):
             """ Stores parameters of the chosen output format
             for later usage in reading and processing instrument data.
@@ -638,23 +679,74 @@ class AgilentB1500(Instrument):
                 self.data_names={} #no header
             self.smu_names = smu_names
 
-        def format_channel(self, channel_string):
-            """ Returns channel number for given channel letter
+        # def format_channel(self, channel_string):
+        #     """ Returns channel number for given channel letter
             
-            :param channel_string: Channel letter out of measurement data head
-            :type channel_string: str
-            :return: If possible SMU name, otherwise channel number or GNDU or MISC
-            :rtype: int or str
+        #     :param channel_string: Channel letter out of measurement data head
+        #     :type channel_string: str
+        #     :return: If possible SMU name, otherwise channel number or GNDU or MISC
+        #     :rtype: int or str
+        #     """
+        #     channel = self.channels[channel_string]
+        #     if isinstance(channel, int):
+        #         channel = int(str(channel)[0:-2]) # subchannels not relevant for SMU/CMU
+        #     try:
+        #         smu_name = self.smu_names[channel]
+        #         return smu_name
+        #     except:
+        #         return channel
+
+        def check_status(self, status_string, cmu=False):
+            """Check returned status of instrument. If not null, message is written to log.info.
+            
+            :param status_string: Status string returned by the instrument when reading data.
+            :type status_string: str
+            :param cmu: If channel is CMU, defaults to False (SMU)
+            :type cmu: bool, optional
             """
-            channels = {"A":101,"B":201,"C":301,"D":401,"E":501,"F":601,"G":701,"H":801,"I":901,"J":1001,
-                "a":102,"b":202,"c":302,"d":402,"e":502,"f":602,"g":702,"h":802,"i":902,"j":1002,
-                "V":"GNDU","Z":"MISC"}
-            channel = channels[channel_string]
-            channel = channel[0:-2] # subchannels not relevant for SMU/CMU
+            status = re.search(r'(?P<number>[0-9]*)(?P<letter>[A-Z]*)', status_string)
+            if len(status.group('number')) > 0:
+                status = int(status.group('number'))
+                if not status in (0, 128):
+                    if cmu == False:
+                        status_dict = self.cmu_status
+                    else:
+                        status_dict = self.smu_status
+                    status = status_dict[status]
+                    log.info('Agilent B1500: ' + status)
+            elif len(status.group('letter')) > 0:
+                status = status.group('letter')
+                if not status == 'N':
+                    status = self.status[status]
+                    log.info('Agilent B1500: ' + status)
+            else:
+                log.info('Agilent B1500: check_status not possible for status {}'.format(status))
+
+            
+
+        def format_channel_check_status(self, status_string, channel_string):
+            """Returns channel number for given channel letter. 
+            Checks for not null status of the channel and writes according message to log.info.
+            
+            :param status_string: Status string returned by the instrument when reading data.
+            :type status_string: str
+            :param channel_string: Channel string returned by the instrument
+            :type channel_string: str
+            :return: Channel name
+            :rtype: str
+            """
+            channel = self.channels[channel_string]
+            if isinstance(channel, int):
+                channel = int(str(channel)[0:-2]) # subchannels not relevant for SMU/CMU
             try:
-                smu = self.smu_names[channel]
-                return smu
+                smu_name = self.smu_names[channel]
+                if 'SMU' in smu_name:
+                    self.check_status(status_string, cmu=False)
+                if 'CMU' in smu_name:
+                    self.check_status(status_string, cmu=True)
+                return smu_name
             except:
+                self.check_status(status_string)
                 return channel
     
     class _data_formatting_FMT1(_data_formatting_generic):
@@ -674,10 +766,14 @@ class AgilentB1500(Instrument):
             status = element[0] #one character
             channel = element[1]
             data_name = element[2]
-            value = float(element[3:])
-            channel = self.format_channel(channel)
             data_name = self.data_names[data_name]
-            return (status,channel,data_name,value)
+            if data_name in self.data_names_int:
+                value = int(float(element[3:]))
+            else:
+                value = float(element[3:])
+            channel = self.format_channel_check_status(status, channel)
+            
+            return (status, channel, data_name, value)
     
     class _data_formatting_FMT11(_data_formatting_FMT1):
         """ Data formatting for FMT11 format
@@ -702,10 +798,14 @@ class AgilentB1500(Instrument):
             status = element[0:3] # three digits
             channel = element[3]
             data_name = element[4]
-            value = float(element[5:])
-            channel = self.format_channel(channel)
             data_name = self.data_names[data_name]
-            return (status,channel,data_name,value)
+            if data_name in self.data_names_int:
+                value = int(float(element[5:]))
+            else:
+                value = float(element[5:])
+            channel = self.format_channel_check_status(status, channel)
+            
+            return (status, channel, data_name, value)
 
     def _data_formatting(self, output_format_str,smu_names={}):
         """ Return data formatting class for given data format string
@@ -744,6 +844,9 @@ class AgilentB1500(Instrument):
         mode = strict_range(mode,range(0,11))      
         self.write("FMT %d, %d" % (output_format, mode))
         self.check_errors()
+        if self._smu_names == {}:
+            print('No SMU names available for formatting, instead channel numbers will be used. Call data_format after initializing all SMUs.')
+            log.info('No SMU names available for formatting, instead channel numbers will be used. Call data_format after initializing all SMUs.')
         self._data_format = self._data_formatting("FMT%d" % output_format, self._smu_names)
 
     def query_data_format(self):
@@ -824,7 +927,7 @@ class AgilentB1500(Instrument):
         mode = ADCMode.get(mode)
         if (adc_type == ADCType['HRADC']) and (mode == ADCMode['TIME']):
             raise ValueError("Time ADC mode is not available for HRADC")
-        command = "AIT %d, %d" % (mode.value, adc_type.value)
+        command = "AIT %d, %d" % (adc_type.value, mode.value)
         if not N == '':
             if mode == ADCMode['TIME']:
                 command += (", %f" % N)
