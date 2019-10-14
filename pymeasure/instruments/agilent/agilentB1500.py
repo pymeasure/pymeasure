@@ -349,17 +349,19 @@ class QueryLearn():
 
 class AgilentB1500(Instrument):
     """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
-    and provides a high-level interface for taking current-voltage (I-V) measurements.
+    and provides a high-level interface for taking different kinds of measurements.
+
+    Example for a simple IV measurement with 4 SMUs:
 
     .. code-block:: python
 
         from pymeasure.instruments.agilent import AgilentB1500
 
-        # explicitly define r/w terminations; set sufficiently large timeout or None.
-        b1500=AgilentB1500("GPIB0::17::INSTR",read_termination='\r\n',write_termination='\r\n')
+        # explicitly define r/w terminations; set sufficiently large timeout in milliseconds or None.
+        b1500=AgilentB1500("GPIB0::17::INSTR", read_termination='\r\n', write_termination='\r\n', timeout=600000)
         # query SMU config from instrument and initialize all SMU instances
         b1500.initialize_all_smus()
-        b1500.data_format(21,mode=1) #call after SMUs are initialized
+        b1500.data_format(21, mode=1) #call after SMUs are initialized to get names for the channels
         
         # choose measurement mode
         b1500.meas_mode('STAIRCASE_SWEEP', *b1500.smu_references) #order in smu_references determines order of measurement
@@ -387,6 +389,7 @@ class AgilentB1500(Instrument):
         b1500.smu2.synchronous_sweep_source('VOLTAGE','Auto Ranging',0,1,0.001) #type, range, start, stop, comp
         # Constant Output (could also be done using synchronous sweep source with start=stop, but then the output is not ramped up)
         b1500.smu3.ramp_to_voltage('Auto Ranging',-1,stepsize=0.1,pause=20e-3) #output starts immediately! (compared to sweeps)
+        b1500.smu4.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3)
         
         #Start Measurement
         b1500.check_errors()
@@ -394,11 +397,21 @@ class AgilentB1500(Instrument):
         b1500.clear_timer()
         b1500.send_trigger()
 
-        # read measurement data
-        data = b1500.read_data(nop)
+        # read measurement data all at once
+        b1500.check_idle() #wait until measurement is finished
+        data = b1500.read_data(2*nop) #Factor 2 beacuse of double sweep
+
+        #alternatively: read measurement data live
+        meas = []
+        for i in range(nop*2):
+            read_data = b1500.read_channels(4+1) # 4 measurement channels, 1 sweep source (returned due to mode=1 of data_format)
+            # process live data for plotting etc.
+            # data format for every channel (status code, channel name e.g. 'SMU1', data name e.g 'Current Measurement (A)', value)
+            meas.append(read_data)
 
         #sweep constant source back to 0V
-        b1500.smu3.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3) 
+        b1500.smu3.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3)
+        b1500.smu4.ramp_to_voltage('Auto Ranging',0,stepsize=0.1,pause=20e-3) 
 
 
         
@@ -541,7 +554,7 @@ class AgilentB1500(Instrument):
     def check_idle(self):
         """ Check if instrument is idle (``*OPC?``)
         """
-        self.write("*OPC?")
+        self.ask("*OPC?")
 
     def clear_buffer(self):
         """ Clear output data buffer (``BC``) """
@@ -1007,7 +1020,9 @@ class AgilentB1500(Instrument):
         data = tuple(data)
         return data
 
+    ######################################
     # Queries on all SMUs
+    ######################################
 
     def query_series_resistor(self):
         return self.query_learn_header(53)
