@@ -25,6 +25,53 @@ from pymeasure.instruments import Instrument, RangeException
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 from math import sqrt,log10
 
+class Channel(object):
+
+        SOURCE_VALUES= [1,2]
+        FREQ_LIMIT=[1e-6,150e6] #Frequeny limit for sinusoidal function
+
+
+        amplitude=Instrument.control(
+            "voltage:amplitude?","voltage:amplitude %e"
+            """ A floating point property that read the output power
+            in Vpp, Vrms or dBm for ch1."""
+        )
+
+        offset=Instrument.control(
+            "source1:voltage:offset?","source1:voltage:offset %e",
+            """ A floating point property that represents the output power
+            in V for ch1. This property can be set."""
+        )
+
+        frequency=Instrument.control(
+            "source1:frequency:fixed?","source1:frequency:fixed %e",
+            """ A floating point property that represents the frequency of ch1.
+            This property can be set.""",
+            validator=strict_range,
+            values=FREQ_LIMIT
+        )
+
+        def __init__(self, instrument, number):
+            self.instrument=instrument
+            if number in self.SOURCE_VALUES:
+                self.number=number
+            else:
+                raise ValueError("%d: invalid input source provided" %number)
+
+        def write(self, command):
+            self.instrument.write("source%d:%s" %(self.number, command))
+
+        def ask(self, command):
+            self.instrument.ask("source%d:%s" %(self.number, command))
+
+        """def read(self, command):
+            self.instrument.read("source%d:%s?" %(self.number,command))"""
+        def enable(self):
+            self.instrument.write("output%d:state on" %self.number)
+
+        def disable(self):
+            self.instrument.write("output%d:state off" %self.number)
+
 class AFG3152C(Instrument):
     """Represents the Tektronix AFG 3000 series arbitrary function generator
     and provides a high-level for interacting with the instrument
@@ -38,150 +85,13 @@ class AFG3152C(Instrument):
         afg.enable(1)                  # Enables the output from CH1
 
     """
-    DELAY=0.2
-    SOURCE_VALUES= [1,2]
-    UNITS=['VPP','VRMS','DBM']
-    AMPLITUDE_LIMIT={
-        'VPP':[20e-3,10],
-        'VRMS':list(map(lambda x: round(x/2/sqrt(2),3),[20e-3,10])),
-        'DBM':list(map(lambda x: round(20*log10(x/2/sqrt(0.1)),2),[20e-3,10]))
-    } #Vpp, Vrms and dBm limits
-    FREQ_LIMIT=[1e-6,150e6] #Frequeny limit for sinusoidal function
-    SHAPES={
-    'sinusoidal':'SIN',
-    'square':'SQU',
-    'pulse':'PULS',
-    'ramp':'RAMP',
-    'prnoise':'PRN',
-    'dc':'DC',
-    'sinc':'SINC',
-    'gaussian':'GAUS',
-    'lorentz':'LOR',
-    'erise':'ERIS',
-    'edecay':'EDEC',
-    'haversine':'HAV'
-    }
 
-
-    #######
-    # CH1 #
-    #######
-    amplitude_ch1=Instrument.measurement(
-        "source1:voltage:amplitude?",
-        """ A floating point property that read the output power
-        in Vpp, Vrms or dBm for ch1."""
-    )
-
-    unit_ch1=Instrument.control(
-        "source1:voltage:unit?","source1:voltage:unit %s",
-        """ A string property that represents the units of ch1.
-        This property can be set.""",
-        validator=strict_discrete_set,
-        values=UNITS
-    )
-
-    offset_ch1=Instrument.control(
-        "source1:voltage:offset?","source1:voltage:offset %e",
-        """ A floating point property that represents the output power
-        in V for ch1. This property can be set."""
-    )
-
-    frequency_ch1=Instrument.control(
-        "source1:frequency:fixed?","source1:frequency:fixed %e",
-        """ A floating point property that represents the frequency of ch1.
-        This property can be set.""",
-        validator=strict_range,
-        values=FREQ_LIMIT
-    )
-
-    shape_ch1=Instrument.control(
-        "source1:function:shape?","source1:function:shape %s",
-        """ A string property that controls the shape of the CH1 output.
-        This property can be set.""",
-        validator=strict_discrete_set,
-        values=SHAPES,
-        map_values=True
-    )
-
-    #######
-    # CH2 #
-    #######
-
-    amplitude_ch2=Instrument.measurement(
-        "source2:voltage:amplitude?",
-        """ A floating point property that read the output power
-        in Vpp, Vrms or dBm for ch1."""
-    )
-
-    unit_ch2=Instrument.control(
-        "source2:voltage:unit?","source2:voltage:unit %s",
-        """ A string property that represents the units of ch1.
-        This property can be set.""",
-        validator=strict_discrete_set,
-        values=UNITS
-    )
-
-    offset_ch2=Instrument.control(
-        "source2:voltage:offset?","source2:voltage:offset %e",
-        """ A floating point property that represents the output power
-        in V for ch1. This property can be set."""
-    )
-
-    frequency_ch2=Instrument.control(
-        "source2:frequency:fixed?","source2:frequency:fixed %e",
-        """ A floating point property that represents the frequency of ch1.
-        This property can be set.""",
-        validator=strict_range,
-        values=FREQ_LIMIT
-    )
-
-    shape_ch2=Instrument.control(
-        "source2:function:shape?","source2:function:shape %s",
-        """ A string property that controls the shape of the CH1 output.
-        This property can be set.""",
-        validator=strict_discrete_set,
-        values=SHAPES,
-        map_values=True
-    )
-
-
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super(AFG3152C, self).__init__(
-            resourceName,
+            adapter,
             "Tektronix AFG3152C arbitrary function generator",
             **kwargs
         )
 
-    def unit(self, source):
-        source=strict_discrete_set(source,self.SOURCE_VALUES)
-        return self.ask("source%s:voltage:unit?" %source)[:-1]
-
-    def amplitude(self, source, value):
-        source=strict_discrete_set(source,self.SOURCE_VALUES)
-        value=strict_range(value,self.AMPLITUDE_LIMIT[self.unit(source)])
-        self.write("source%s:voltage:amplitude %e" %(source,value))
-
-    def enable(self,source):
-        """Enable channel output"""
-        if source in self.SOURCE_VALUES:
-            self.write("output%s:state on" %source)
-        else:
-            raise ValueError("%s: invalid input source provided" %source)
-
-    def disable(self,source):
-        """Disable channel output"""
-        if source in self.SOURCE_VALUES:
-            self.write("output%s:state off" %source)
-        else:
-            raise ValueError("%s: invalid input source provided" %source)
-
-    def waveform(self,source,shape='SIN',frequency=1e6,units='VPP',amplitude=1,offset=0):
-        """General setting method for a complete wavefunction"""
-        if source in self.SOURCE_VALUES:
-            self.write("source%s:function:shape %s" %(source,shape))
-            self.write("source%s:frequency:fixed %e" %(source,frequency))
-            self.write("source%s:voltage:unit %s" %(source,units))
-            self.write("source%s:voltage:amplitude %e%s" %(source,amplitude,units))
-            self.write("source%s:voltage:offset %eV" %(source,offset))
-        else:
-            raise ValueError("%s: invalid input source provided" %source)
+    self.ch1=Channel(self,1)
+    self.ch2=Channel(self,2)
