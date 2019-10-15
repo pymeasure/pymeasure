@@ -37,7 +37,7 @@ import re
 import numpy as np
 import time
 from enum import IntEnum
-from collections import Counter, namedtuple
+from collections import Counter, namedtuple, OrderedDict
 import weakref
 
 class QueryLearn():
@@ -118,7 +118,7 @@ class QueryLearn():
         :return: Parameter name and (processed) parameter
         :rtype: dict
         """
-        ret = {}
+        ret = OrderedDict()
         if isinstance(parameters, str):
             #otherwise string is enumerated
             parameters_iter = [(0, parameters)]
@@ -131,23 +131,6 @@ class QueryLearn():
                 ret[names[i]] = parameter
         return ret
 
-    @classmethod
-    def to_dict_channel(cls, key, parameters, names, key_string='{}', smu_references={}):
-        """ Extension of ``to_dict`` to extract channel from command and look
-        up corresponding SMU reference
-        
-        :param key: Command key of parameter dict, e.g. ``DI2``
-        :type key: str
-        :param key_string: String to construct key for return value, may contain ``{}`` to insert channel
-        :type names: str
-        :param smu_references: Dict of Channels and SMU references
-        :type smu_references: dict
-        :return: Dict of dict with ``key_string`` as key
-        """
-        smu = cls._get_smu(key, smu_references)
-        ret = cls.to_dict(parameters, names, smu)
-        return {key_string.format(smu.name):ret}
-    
     @staticmethod
     def _get_smu(key, smu_references):
         command = re.findall(r'(?P<command>[A-Z]+)', key)[0] #command without channel
@@ -157,19 +140,25 @@ class QueryLearn():
     #SMU Modes
     @classmethod
     def DI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [('Current Range', lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
         'Current Output (A)', 'Compliance Voltage (V)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
         ('Voltage Compliance Ranging Type', lambda parameter, smu: smu.voltage_ranging.meas(int(parameter)).name)]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Current Source (DI)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Constant Current'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
 
     @classmethod
     def DV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [('Voltage Range', lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
         'Voltage Output (V)', 'Compliance Current (A)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
         ('Current Compliance Ranging Type', lambda parameter, smu: smu.current_ranging.meas(int(parameter)).name)]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Voltage Source (DV)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Constant Voltage'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
 
     @classmethod
     def CL(cls, key, parameters, smu_references={}):
@@ -234,40 +223,52 @@ class QueryLearn():
 
     @classmethod
     def WV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [
             ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
             ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)", "Number of Steps",
             "Current Compliance (A)", "Power Compliance (W)"]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Voltage Sweep Source (WV)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Voltage Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
 
     @classmethod
     def WI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [
             ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
             ("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)", "Number of Steps",
             "Voltage Compliance (V)", "Power Compliance (W)"]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Current Sweep Source (WI)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Current Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
 
     @classmethod
     def WSV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [
             ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)",
             "Current Compliance (A)", "Power Compliance (W)"]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Synchronous Voltage Sweep Source (WSV)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Synchronous Voltage Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
 
     @classmethod
     def WSI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)",
             "Voltage Compliance (V)", "Power Compliance (W)"]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Synchronous Current Sweep Source (WSI)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Synchronous Current Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
     
     #SMU Measurement Operation Mode: 46
     @classmethod
@@ -295,17 +296,23 @@ class QueryLearn():
 
     @classmethod
     def MV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
             "Base Voltage (V)", "Bias Voltage (V)", "Current Compliance (A)"]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Voltage Source (MV)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Voltage Source Sampling'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
 
     @classmethod
     def MI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
         names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
             "Base Current (A)", "Bias Current (A)", "Voltage Compliance (V)"]
-        return cls.to_dict_channel(
-            key, parameters, names, key_string="{}: Current Source (MI)", smu_references=smu_references)
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Current Source Sampling'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
 
     #SMU Series Resistor: 53
     @classmethod
