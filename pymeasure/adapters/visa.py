@@ -87,11 +87,20 @@ class VISAAdapter(Adapter):
 
     def read(self):
         """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
+        ASCII response
 
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read()
+
+    def read_bytes(self, size):
+        """ Reads specified number of bytes from the buffer and returns
+        the resulting ASCII response
+
+        :param size: Number of bytes to read from the buffer
+        :returns: String ASCII response of the instrument.
+        """
+        return self.connection.read_bytes(size)
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
