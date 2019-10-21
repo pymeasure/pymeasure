@@ -40,322 +40,6 @@ from enum import IntEnum
 from collections import Counter, namedtuple, OrderedDict
 import weakref
 
-class QueryLearn():
-    """Methods to issue and process ``*LRN?`` (learn) command and response."""
-
-    @staticmethod
-    def query_learn(ask, query_type):
-        """ Issues ``*LRN?`` (learn) command to the instrument to read configuration.
-        Returns dictionary of commands and set values.
-        
-        :param query_type: Query type according to the programming guide
-        :type query_type: int
-        :return: Dictionary of command and set values
-        :rtype: dict
-        """
-        response = ask("*LRN? "+str(query_type))
-        #response.split(';')
-        response = re.findall(r'(?P<command>[A-Z]+)(?P<parameter>[0-9,\+\-\.E]+)', response)
-        # check if commands are unique -> suitable as keys for dict
-        counts = Counter([item[0] for item in response])
-        # responses that start with a channel number
-        # the channel number should always be included in the key
-        include_chnum = [
-            'DI', 'DV', # Sourcing
-            'RI','RV', # Ranging
-            'WV','WI','WSV','WSI', # Staircase Sweep
-            'PV','PI','PWV','PWI', # Pulsed Source
-            'MV','MI','MSP' # Sampling
-            'SSR','RM','AAD' # Series Resistor, Auto Ranging, ADC
-            ] #probably not complete yet...
-        response_dict = {}
-        for element in response:
-            parameters = element[1].split(',')
-            name = element[0]
-            if (counts[name] > 1) or (name in include_chnum):
-                # append channel (first parameter) to command as dict key
-                name += parameters[0]
-                parameters = parameters[1:]
-            if len(parameters) == 1:
-                parameters = parameters[0]
-            response_dict[name] = parameters
-        return response_dict
-        
-    @classmethod
-    def query_learn_header(cls, ask, query_type, smu_references, single_command=False):
-        """Issues ``*LRN?`` (learn) command to the instrument to read configuration.
-        Processes information to human readable values for debugging purposes or file headers.
-        
-        :param ask: ask method of the instrument
-        :type ask: Instrument.ask
-        :param query_type: Number according to Programming Guide
-        :type query_type: int or str
-        :param smu_references: SMU references by channel
-        :type smu_references: dict
-        :param single_command: if only a single command should be returned, defaults to False
-        :type single_command: str
-        :return: Read configuration
-        :rtype: dict
-        """
-        response = cls.query_learn(ask, query_type)
-        if not single_command == False:
-            response = response[single_command]
-        ret = {}
-        for key, value in response.items():
-            command = re.findall(r'(?P<command>[A-Z]+)', key)[0] #command without channel
-            new_dict = getattr(cls, command)(key, value, smu_references=smu_references)
-            ret = {**ret, **new_dict}
-        return ret
-
-    @staticmethod
-    def to_dict(parameters, names, *args):
-        """ Takes parameters returned by ``query_learn`` and ordered list 
-        of corresponding parameter names (optional function) and returns
-        dict of parameters including names.
-        
-        :param parameters: Parameters for one command returned by ``query_learn``
-        :type parameters: dict
-        :param names: list of names or (name, function) tuples, ordered
-        :type names: list
-        :return: Parameter name and (processed) parameter
-        :rtype: dict
-        """
-        ret = OrderedDict()
-        if isinstance(parameters, str):
-            #otherwise string is enumerated
-            parameters_iter = [(0, parameters)]
-        else:
-            parameters_iter = enumerate(parameters)
-        for i, parameter in parameters_iter:
-            if isinstance(names[i], tuple):
-                ret[names[i][0]] = names[i][1](parameter,*args)
-            else:
-                ret[names[i]] = parameter
-        return ret
-
-    @staticmethod
-    def _get_smu(key, smu_references):
-        command = re.findall(r'(?P<command>[A-Z]+)', key)[0] #command without channel
-        channel = key[len(command):]
-        return smu_references[int(channel)]
-
-    #SMU Modes
-    @classmethod
-    def DI(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [('Current Range', lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
-        'Current Output (A)', 'Compliance Voltage (V)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
-        ('Voltage Compliance Ranging Type', lambda parameter, smu: smu.voltage_ranging.meas(int(parameter)).name)]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Constant Current'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-
-    @classmethod
-    def DV(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [('Voltage Range', lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
-        'Voltage Output (V)', 'Compliance Current (A)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
-        ('Current Compliance Ranging Type', lambda parameter, smu: smu.current_ranging.meas(int(parameter)).name)]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Constant Voltage'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-
-    @classmethod
-    def CL(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key + parameters, smu_references)
-        return {smu.name : 'OFF'}
-
-    #Instrument Settings: 31
-    @classmethod
-    def TM(cls, key, parameters, smu_references={}):
-        names = ['Trigger Mode'] #enum + setting not implemented yet
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def AV(cls, key, parameters, smu_references={}):
-        names = ['ADC Averaging Number', ('ADC Averaging Mode', lambda parameter: str(AutoManual(int(parameter))))]
-        return cls.to_dict(parameters, names)
-    
-    @classmethod
-    def CM(cls, key, parameters, smu_references={}):
-        names = [('Auto Calibration Mode', lambda parameter: bool(int(parameter)))]
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def FMT(cls, key, parameters, smu_references={}):
-        names = ['Output Data Format','Output Data Mode'] #enum + setting not implemented yet
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def MM(cls, key, parameters, smu_references={}):
-        names = [('Measurement Mode', lambda parameter: str(MeasMode(int(parameter))))]
-        ret = cls.to_dict(parameters[0], names)
-        smu_names = []
-        for channel in parameters[1:]:
-            smu_names.append(smu_references[int(channel)].name)
-        ret['Measurement Channels'] = ', '.join(smu_names)
-        return ret
-
-    #Measurement Ranging: 32
-    @classmethod
-    def RI(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [(smu.name + ' Current Measurement Range', lambda parameter: smu.current_ranging.meas(int(parameter)).name)]
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def RV(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [(smu.name + ' Voltage Measurement Range', lambda parameter: smu.voltage_ranging.meas(int(parameter)).name)]
-        return cls.to_dict(parameters, names)
-    
-    #Sweep: 33
-    @classmethod
-    def WM(cls, key, parameters, smu_references={}):
-        names = [('Auto Abort Status', lambda parameter: {2:True,1:False}[int(parameter)]), 
-        ('Output after Measurement', lambda parameter: str(StaircaseSweepPostOutput(int(parameter))))]
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def WT(cls, key, parameters, smu_references={}):
-        names = ['Hold Time (s)', 'Delay Time (s)', 'Step Delay Time (s)', 'Step Source Trigger Delay Time (s)', 'Step Measurement Trigger Delay Time (s)']
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def WV(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [
-            ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
-            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
-            "Start Voltage (V)", "Stop Voltage (V)", "Number of Steps",
-            "Current Compliance (A)", "Power Compliance (W)"]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Voltage Sweep Source'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-
-    @classmethod
-    def WI(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [
-            ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
-            ("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
-            "Start Current (A)", "Stop Current (A)", "Number of Steps",
-            "Voltage Compliance (V)", "Power Compliance (W)"]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Current Sweep Source'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-
-    @classmethod
-    def WSV(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [
-            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
-            "Start Voltage (V)", "Stop Voltage (V)",
-            "Current Compliance (A)", "Power Compliance (W)"]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Synchronous Voltage Sweep Source'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-
-    @classmethod
-    def WSI(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
-            "Start Current (A)", "Stop Current (A)",
-            "Voltage Compliance (V)", "Power Compliance (W)"]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Synchronous Current Sweep Source'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-    
-    #SMU Measurement Operation Mode: 46
-    @classmethod
-    def CMM(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [(smu.name + ' Measurement Operation Mode', lambda parameter: str(MeasOpMode(int(parameter))))]
-        return cls.to_dict(parameters, names)
-
-    #Sampling: 47
-    @classmethod
-    def MSC(cls, key, parameters, smu_references={}):
-        names = [('Auto Abort Status', lambda parameter: {2:True,1:False}[int(parameter)]), 
-        ('Output after Measurement', lambda parameter: str(SamplingPostOutput(int(parameter))))]
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def MT(cls, key, parameters, smu_references={}):
-        names = ['Hold Bias Time (s)', 'Sampling Interval (s)', 'Number of Samples', 'Hold Base Time (s)']
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def ML(cls, key, parameters, smu_references={}):
-        names = [('Sampling Mode', lambda parameter: str(SamplingMode(int(parameter))))]
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def MV(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
-            "Base Voltage (V)", "Bias Voltage (V)", "Current Compliance (A)"]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Voltage Source Sampling'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-
-    @classmethod
-    def MI(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
-            "Base Current (A)", "Bias Current (A)", "Voltage Compliance (V)"]
-        ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Current Source Sampling'
-        ret.move_to_end('Source Type', last=False) #make first entry
-        return {smu.name:ret}
-
-    #SMU Series Resistor: 53
-    @classmethod
-    def SSR(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [(smu.name + ' Series Resistor', lambda parameter: bool(int(parameter)))]
-        return cls.to_dict(parameters, names)
-
-    #Auto Ranging Mode: 54
-    @classmethod
-    def RM(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [smu.name + ' Ranging Mode', smu.name + ' Ranging Mode Parameter']
-        return cls.to_dict(parameters, names)
-
-    #ADC: 55, 56
-    @classmethod
-    def AAD(cls, key, parameters, smu_references={}):
-        smu = cls._get_smu(key, smu_references)
-        names = [(smu.name + ' ADC', lambda parameter: str(ADCType(int(parameter))))]
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def AIT(cls, key, parameters, smu_references={}):
-        adc_type = key[3:]
-        adc_name = str(ADCType(int(adc_type)))
-        names = [(adc_name + ' Mode', lambda parameter:str(ADCMode(int(parameter)))),
-            adc_name + ' Parameter']
-        return cls.to_dict(parameters, names)
-
-    @classmethod
-    def AZ(cls, key, parameters, smu_references={}):
-        names = [('ADC Auto Zero', lambda parameter: str(bool(int(parameter))))]
-        return cls.to_dict(parameters, names)
-
-    #Time Stamp: 60
-    @classmethod
-    def TSC(cls, key, parameters, smu_references={}):
-        names = [('Time Stamp', lambda parameter: str(bool(int(parameter))))]
-        return cls.to_dict(parameters, names)
-        
 ######################################
 # Agilent B1500 Mainframe
 ######################################
@@ -1872,4 +1556,322 @@ class WaitTimeType(CustomIntEnum):
     SMU_MEASUREMENT = 2 #:
     CMU_MEASUREMENT = 3 #:
 
+###################################################################################
+# Query Learn: Parse Instrument settings into human readable format
+###################################################################################
+class QueryLearn():
+    """Methods to issue and process ``*LRN?`` (learn) command and response."""
 
+    @staticmethod
+    def query_learn(ask, query_type):
+        """ Issues ``*LRN?`` (learn) command to the instrument to read configuration.
+        Returns dictionary of commands and set values.
+        
+        :param query_type: Query type according to the programming guide
+        :type query_type: int
+        :return: Dictionary of command and set values
+        :rtype: dict
+        """
+        response = ask("*LRN? "+str(query_type))
+        #response.split(';')
+        response = re.findall(r'(?P<command>[A-Z]+)(?P<parameter>[0-9,\+\-\.E]+)', response)
+        # check if commands are unique -> suitable as keys for dict
+        counts = Counter([item[0] for item in response])
+        # responses that start with a channel number
+        # the channel number should always be included in the key
+        include_chnum = [
+            'DI', 'DV', # Sourcing
+            'RI','RV', # Ranging
+            'WV','WI','WSV','WSI', # Staircase Sweep
+            'PV','PI','PWV','PWI', # Pulsed Source
+            'MV','MI','MSP' # Sampling
+            'SSR','RM','AAD' # Series Resistor, Auto Ranging, ADC
+            ] #probably not complete yet...
+        response_dict = {}
+        for element in response:
+            parameters = element[1].split(',')
+            name = element[0]
+            if (counts[name] > 1) or (name in include_chnum):
+                # append channel (first parameter) to command as dict key
+                name += parameters[0]
+                parameters = parameters[1:]
+            if len(parameters) == 1:
+                parameters = parameters[0]
+            response_dict[name] = parameters
+        return response_dict
+        
+    @classmethod
+    def query_learn_header(cls, ask, query_type, smu_references, single_command=False):
+        """Issues ``*LRN?`` (learn) command to the instrument to read configuration.
+        Processes information to human readable values for debugging purposes or file headers.
+        
+        :param ask: ask method of the instrument
+        :type ask: Instrument.ask
+        :param query_type: Number according to Programming Guide
+        :type query_type: int or str
+        :param smu_references: SMU references by channel
+        :type smu_references: dict
+        :param single_command: if only a single command should be returned, defaults to False
+        :type single_command: str
+        :return: Read configuration
+        :rtype: dict
+        """
+        response = cls.query_learn(ask, query_type)
+        if not single_command == False:
+            response = response[single_command]
+        ret = {}
+        for key, value in response.items():
+            command = re.findall(r'(?P<command>[A-Z]+)', key)[0] #command without channel
+            new_dict = getattr(cls, command)(key, value, smu_references=smu_references)
+            ret = {**ret, **new_dict}
+        return ret
+
+    @staticmethod
+    def to_dict(parameters, names, *args):
+        """ Takes parameters returned by ``query_learn`` and ordered list 
+        of corresponding parameter names (optional function) and returns
+        dict of parameters including names.
+        
+        :param parameters: Parameters for one command returned by ``query_learn``
+        :type parameters: dict
+        :param names: list of names or (name, function) tuples, ordered
+        :type names: list
+        :return: Parameter name and (processed) parameter
+        :rtype: dict
+        """
+        ret = OrderedDict()
+        if isinstance(parameters, str):
+            #otherwise string is enumerated
+            parameters_iter = [(0, parameters)]
+        else:
+            parameters_iter = enumerate(parameters)
+        for i, parameter in parameters_iter:
+            if isinstance(names[i], tuple):
+                ret[names[i][0]] = names[i][1](parameter,*args)
+            else:
+                ret[names[i]] = parameter
+        return ret
+
+    @staticmethod
+    def _get_smu(key, smu_references):
+        command = re.findall(r'(?P<command>[A-Z]+)', key)[0] #command without channel
+        channel = key[len(command):]
+        return smu_references[int(channel)]
+
+    #SMU Modes
+    @classmethod
+    def DI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [('Current Range', lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+        'Current Output (A)', 'Compliance Voltage (V)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
+        ('Voltage Compliance Ranging Type', lambda parameter, smu: smu.voltage_ranging.meas(int(parameter)).name)]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Constant Current'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+
+    @classmethod
+    def DV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [('Voltage Range', lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+        'Voltage Output (V)', 'Compliance Current (A)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
+        ('Current Compliance Ranging Type', lambda parameter, smu: smu.current_ranging.meas(int(parameter)).name)]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Constant Voltage'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+
+    @classmethod
+    def CL(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key + parameters, smu_references)
+        return {smu.name : 'OFF'}
+
+    #Instrument Settings: 31
+    @classmethod
+    def TM(cls, key, parameters, smu_references={}):
+        names = ['Trigger Mode'] #enum + setting not implemented yet
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def AV(cls, key, parameters, smu_references={}):
+        names = ['ADC Averaging Number', ('ADC Averaging Mode', lambda parameter: str(AutoManual(int(parameter))))]
+        return cls.to_dict(parameters, names)
+    
+    @classmethod
+    def CM(cls, key, parameters, smu_references={}):
+        names = [('Auto Calibration Mode', lambda parameter: bool(int(parameter)))]
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def FMT(cls, key, parameters, smu_references={}):
+        names = ['Output Data Format','Output Data Mode'] #enum + setting not implemented yet
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def MM(cls, key, parameters, smu_references={}):
+        names = [('Measurement Mode', lambda parameter: str(MeasMode(int(parameter))))]
+        ret = cls.to_dict(parameters[0], names)
+        smu_names = []
+        for channel in parameters[1:]:
+            smu_names.append(smu_references[int(channel)].name)
+        ret['Measurement Channels'] = ', '.join(smu_names)
+        return ret
+
+    #Measurement Ranging: 32
+    @classmethod
+    def RI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [(smu.name + ' Current Measurement Range', lambda parameter: smu.current_ranging.meas(int(parameter)).name)]
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def RV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [(smu.name + ' Voltage Measurement Range', lambda parameter: smu.voltage_ranging.meas(int(parameter)).name)]
+        return cls.to_dict(parameters, names)
+    
+    #Sweep: 33
+    @classmethod
+    def WM(cls, key, parameters, smu_references={}):
+        names = [('Auto Abort Status', lambda parameter: {2:True,1:False}[int(parameter)]), 
+        ('Output after Measurement', lambda parameter: str(StaircaseSweepPostOutput(int(parameter))))]
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def WT(cls, key, parameters, smu_references={}):
+        names = ['Hold Time (s)', 'Delay Time (s)', 'Step Delay Time (s)', 'Step Source Trigger Delay Time (s)', 'Step Measurement Trigger Delay Time (s)']
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def WV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [
+            ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
+            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+            "Start Voltage (V)", "Stop Voltage (V)", "Number of Steps",
+            "Current Compliance (A)", "Power Compliance (W)"]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Voltage Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+
+    @classmethod
+    def WI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [
+            ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
+            ("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+            "Start Current (A)", "Stop Current (A)", "Number of Steps",
+            "Voltage Compliance (V)", "Power Compliance (W)"]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Current Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+
+    @classmethod
+    def WSV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [
+            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+            "Start Voltage (V)", "Stop Voltage (V)",
+            "Current Compliance (A)", "Power Compliance (W)"]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Synchronous Voltage Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+
+    @classmethod
+    def WSI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+            "Start Current (A)", "Stop Current (A)",
+            "Voltage Compliance (V)", "Power Compliance (W)"]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Synchronous Current Sweep Source'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+    
+    #SMU Measurement Operation Mode: 46
+    @classmethod
+    def CMM(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [(smu.name + ' Measurement Operation Mode', lambda parameter: str(MeasOpMode(int(parameter))))]
+        return cls.to_dict(parameters, names)
+
+    #Sampling: 47
+    @classmethod
+    def MSC(cls, key, parameters, smu_references={}):
+        names = [('Auto Abort Status', lambda parameter: {2:True,1:False}[int(parameter)]), 
+        ('Output after Measurement', lambda parameter: str(SamplingPostOutput(int(parameter))))]
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def MT(cls, key, parameters, smu_references={}):
+        names = ['Hold Bias Time (s)', 'Sampling Interval (s)', 'Number of Samples', 'Hold Base Time (s)']
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def ML(cls, key, parameters, smu_references={}):
+        names = [('Sampling Mode', lambda parameter: str(SamplingMode(int(parameter))))]
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def MV(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+            "Base Voltage (V)", "Bias Voltage (V)", "Current Compliance (A)"]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Voltage Source Sampling'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+
+    @classmethod
+    def MI(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+            "Base Current (A)", "Bias Current (A)", "Voltage Compliance (V)"]
+        ret = cls.to_dict(parameters, names)
+        ret['Source Type'] = 'Current Source Sampling'
+        ret.move_to_end('Source Type', last=False) #make first entry
+        return {smu.name:ret}
+
+    #SMU Series Resistor: 53
+    @classmethod
+    def SSR(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [(smu.name + ' Series Resistor', lambda parameter: bool(int(parameter)))]
+        return cls.to_dict(parameters, names)
+
+    #Auto Ranging Mode: 54
+    @classmethod
+    def RM(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [smu.name + ' Ranging Mode', smu.name + ' Ranging Mode Parameter']
+        return cls.to_dict(parameters, names)
+
+    #ADC: 55, 56
+    @classmethod
+    def AAD(cls, key, parameters, smu_references={}):
+        smu = cls._get_smu(key, smu_references)
+        names = [(smu.name + ' ADC', lambda parameter: str(ADCType(int(parameter))))]
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def AIT(cls, key, parameters, smu_references={}):
+        adc_type = key[3:]
+        adc_name = str(ADCType(int(adc_type)))
+        names = [(adc_name + ' Mode', lambda parameter:str(ADCMode(int(parameter)))),
+            adc_name + ' Parameter']
+        return cls.to_dict(parameters, names)
+
+    @classmethod
+    def AZ(cls, key, parameters, smu_references={}):
+        names = [('ADC Auto Zero', lambda parameter: str(bool(int(parameter))))]
+        return cls.to_dict(parameters, names)
+
+    #Time Stamp: 60
+    @classmethod
+    def TSC(cls, key, parameters, smu_references={}):
+        names = [('Time Stamp', lambda parameter: str(bool(int(parameter))))]
+        return cls.to_dict(parameters, names)
+        
