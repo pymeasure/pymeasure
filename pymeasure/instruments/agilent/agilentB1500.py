@@ -918,7 +918,7 @@ class AgilentB1500(Instrument):
     ######################################
 
     @property
-    def parallel_measurement(self):
+    def parallel_meas(self):
         """ Enable/Disable parallel measurements.
             Effective for SMUs using HSADC and measurement modes 1,2,10,18. (``PAD``)
         """
@@ -926,8 +926,8 @@ class AgilentB1500(Instrument):
         response = bool(int(response))
         return response
     
-    @parallel_measurement.setter
-    def parallel_measurement(self, setting):
+    @parallel_meas.setter
+    def parallel_meas(self, setting):
         setting = int(setting)
         self.write('PAD %d' % setting)
         self.check_errors()
@@ -1044,6 +1044,21 @@ class AgilentB1500(Instrument):
 
     def query_time_stamp_setting(self):
         return self.query_learn_header(60)
+
+    def wait_time(self, wait_type, N, offset=0):
+        """Configure wait time. (``WAT``)
+        
+        :param wait_type: Wait time type
+        :type wait_type: :class:`.WaitTimeType`
+        :param N: Coefficient for initial wait time, default: 1
+        :type N: float
+        :param offset: Offset for wait time, defaults to 0
+        :type offset: int, optional
+        """
+        wait_type = WaitTimeType.get(wait_type).value
+        self.write('WAT %d, %f, %d' % (wait_type, N, offset))
+        self.check_errors()
+
 
     ######################################
     # Sweep Setup
@@ -1974,3 +1989,9 @@ class StaircaseSweepPostOutput(CustomIntEnum):
 class CompliancePolarity(CustomIntEnum):
     AUTO = 0
     MANUAL = 1
+
+class WaitTimeType(CustomIntEnum):
+    """Wait time type"""
+    SMU_SOURCE = 1 #:
+    SMU_MEASUREMENT = 2 #:
+    CMU_MEASUREMENT = 3 #:
