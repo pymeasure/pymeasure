@@ -1407,139 +1407,98 @@ class SMU(object):
     # Force Constant Output
     ######################################
 
-    def force_current(self, irange, current, Vcomp='', comp_polarity='', vrange=''):
+    def force(self, source_type, source_range, output, comp='', comp_polarity='', comp_range=''):
         """ Applies DC Current from SMU immediately. (``DI``)
         
-        :param irange: Current output range index
-        :type irange: int
-        :param current: Current output in A
-        :type current: float
-        :param Vcomp: Voltage compliance, defaults to previous setting
-        :type Vcomp: float, optional
+        :param source_type: Source type (``'Voltage','Current'``)
+        :type source_type: str
+        :param source_range: Output range index or name
+        :type source_range: int or str
+        :param output: Source output value in A or V
+        :type outout: float
+        :param comp: Compliance value, defaults to previous setting
+        :type comp: float, optional
         :param comp_polarity: Compliance polairty, defaults to auto
-        :type comp_polarity: int, optional
-        :param vrange: Voltage compliance ranging type, defaults to auto
-        :type vrange: int, optional
+        :type comp_polarity: :class:`.CompliancePolarity`
+        :param comp_range: Compliance ranging type, defaults to auto
+        :type comp_range: int or str, optional
         """
-        irange = self.current_ranging.output(irange).index
-        output = "DI %d, %d, %f" % (self.channel, irange, current)
-        if not Vcomp == '':
-            output += ", %f" % Vcomp
+        if source_type.upper() == "VOLTAGE":
+            cmd = "DV"
+            source_range = self.voltage_ranging.output(source_range).index
+            if not comp_range == '':
+                comp_range = self.current_ranging.meas(comp_range).index
+        elif source_type.upper() == "CURRENT":
+            cmd = "DI"
+            source_range = self.current_ranging.output(source_range).index
+            if not comp_range == '':
+                comp_range = self.voltage_ranging.meas(comp_range).index
+        else:
+            raise ValueError("Source Type must be Current or Voltage.")
+        cmd += " %d, %d, %f" % (self.channel, source_range, output)
+        if not comp == '':
+            cmd += ", %f" % comp
             if not comp_polarity == '':
                 comp_polarity = CompliancePolarity.get(comp_polarity).value
-                output += ", %d" % comp_polarity
-                if not vrange == '':
-                    output += ", %d" % vrange
-                    vrange = self.voltage_ranging.output(vrange).index
-        self.write(output)
+                cmd += ", %d" % comp_polarity
+                if not comp_range == '':
+                    cmd += ", %d" % comp_range
+        self.write(cmd)
         self.check_errors()
 
-    def ramp_to_current(self, irange, target_current, Vcomp='', comp_polarity='', vrange='', stepsize=0.001, pause=20e-3):
-        """ Ramps to a target current from the set current value with a given
-        step size, each separated by a pause duration.
+    def ramp_source(self, source_type, source_range, target_output, comp='', comp_polarity='', comp_range='', stepsize=0.001, pause=20e-3):
+        """ Ramps to a target output from the set value with a given
+        step size, each separated by a pause.
 
-        :param target_current: A voltage in Amps
-        :param irange: Current output range index
+        :param source_type: Source type (``'Voltage'`` or ``'Current'``)
+        :type source_type: str
+        :param target_output: Target output voltage or current
+        :type: target_output: float
+        :param irange: Output range index
         :type irange: int
-        :param current: Current output in A
-        :type current: float
-        :param Vcomp: Voltage compliance, defaults to previous setting
-        :type Vcomp: float, optional
+        :param comp: Compliance, defaults to previous setting
+        :type comp: float, optional
         :param comp_polarity: Compliance polairty, defaults to auto
-        :type comp_polarity: int, optional
-        :param vrange: Voltage compliance ranging type, defaults to auto
-        :type vrange: int, optional
-        :param stepsize: Size of the steps
+        :type comp_polarity: :class:`.CompliancePolarity`
+        :param comp_range: Compliance ranging type, defaults to auto
+        :type comp_range: int or str, optional
+        :param stepsize: Size of steps
         :param pause: A pause duration in seconds to wait between steps
         """
-        irange = self.current_ranging.output(irange).index
+        if source_type.upper() == "VOLTAGE":
+            source_type = 'VOLTAGE'
+            cmd = "DV"
+            source_range = self.voltage_ranging.output(source_range).index
+            if not comp_range == '':
+                comp_range = self.current_ranging.meas(comp_range).index
+        elif source_type.upper() == "CURRENT":
+            source_type = 'CURRENT'
+            cmd = 'DI%d' % self.channel
+            source_range = self.current_ranging.output(source_range).index
+            if not comp_range == '':
+                comp_range = self.voltage_ranging.meas(comp_range).index
+        else:
+            raise ValueError("Source Type must be Current or Voltage.")
         status = self._query_status_raw()
         if 'CL' in status:
             #SMU is OFF
             start = 0
-        elif ('DI%d' % self.channel) in status:
-            start = float(status['DI%d' % self.channel][1])
+        elif cmd in status:
+            start = float(status[cmd][1])
         else:
-            log.info("SMU {} in different state. Changing to Current Source.".format(self.name))
+            log.info("SMU {0} in different state. Changing to {1} Source.".format(self.name, source_type))
             start = 0
 
-        currents = np.arange(
+        outputs = np.arange(
             start,
-            target_current,
+            target_output,
             stepsize
         )
-        for current in currents:
-            self.force_current(irange, current, Vcomp, comp_polarity, vrange)
+        for output in outputs:
+            self.force(source_type, source_range, output, comp, comp_polarity, comp_range)
             time.sleep(pause)
-        # targer_current is not included in currents
-        self.force_current(irange, target_current, Vcomp, comp_polarity, vrange)
-
-    def force_voltage(self, vrange, voltage, Icomp='', comp_polarity='', irange=''):
-        """ Applies DC Voltage from SMU immediately. (``DV``)
-        
-        :param vrange: Voltage output range index
-        :type vrange: int
-        :param voltage: Voltage output in V
-        :type voltage: float
-        :param Icomp: Current compliance, defaults to previous setting
-        :type Icomp: float, optional
-        :param comp_polarity: Compliance polarity, defaults to auto
-        :type comp_polarity: str, optional
-        :param irange: Current compliance ranging type, defaults to auto
-        :type irange: int, optional
-        """
-        vrange = self.voltage_ranging.output(vrange).index
-        output = "DV %d, %d, %f" % (self.channel, vrange, voltage)
-        if not Icomp == '':
-            output += ", %f" % Icomp
-            if not comp_polarity == '':
-                comp_polarity = CompliancePolarity.get(comp_polarity).value
-                output += ", %d" % comp_polarity
-                if not irange == '':
-                    output += ", %d" % irange
-                    irange = self.current_ranging.output(irange).index
-        self.write(output)
-        self.check_errors()
-
-    def ramp_to_voltage(self, vrange, target_voltage, Icomp='', comp_polarity='', irange='', stepsize=0.1, pause=20e-3):
-        """ Ramps to a target voltage from the set voltage value with a given
-        step size, each separated by a pause duration.
-
-        :param target_voltage: A voltage in Amps
-        :param vrange: Voltage output range index
-        :type vrange: int
-        :param voltage: Voltage output in V
-        :type voltage: float
-        :param Icomp: Current compliance, defaults to previous setting
-        :type Icomp: float, optional
-        :param comp_polarity: Compliance polarity, defaults to auto
-        :type comp_polarity: str, optional
-        :param irange: Current compliance ranging type, defaults to auto
-        :type irange: int, optional
-        :param stepsize: Size of the steps
-        :param pause: A pause duration in seconds to wait between steps
-        """
-        vrange = self.voltage_ranging.output(vrange).index
-        status = self._query_status_raw()
-        if 'CL' in status:
-            #SMU is OFF
-            start = 0
-        elif ('DV%d' % self.channel) in status:
-            start = float(status['DV%d' % self.channel][1])
-        else:
-            log.info("SMU {} in different state. Changing to Voltage Source.".format(self.name))
-            start = 0
-
-        voltages = np.arange(
-            start,
-            target_voltage,
-            stepsize
-        )
-        for voltage in voltages:
-            self.force_voltage(vrange, voltage, Icomp, comp_polarity, irange)
-            time.sleep(pause)
-        # target_voltage is not included in voltages array
-        self.force_voltage(vrange, target_voltage, Icomp, comp_polarity, irange)
+        # targer_output is not included in outputs
+        self.force(source_type, source_range, target_output, comp, comp_polarity, comp_range)
 
     ######################################
     # Measurement Range: RI, RV, (RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC)
