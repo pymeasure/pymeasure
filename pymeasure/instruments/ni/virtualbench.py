@@ -65,10 +65,7 @@ class VirtualBench_Direct(pyvb.PyVirtualBench):
         self.release()
 
 class VirtualBench():
-    """ Represents National Instruments Virtual Bench main frame. 
-    The `armstrap/pyvirtualbench <https://github.com/armstrap/armstrap-pyvirtualbench>`_ 
-    Python wrapper for the VirtualBench C-API is required.
-    This Instrument driver only interfaces the pyvirtualbench Python wrapper.
+    """ Represents National Instruments Virtual Bench main frame.
 
     Subclasses implement the functionalities of the different modules:
         
