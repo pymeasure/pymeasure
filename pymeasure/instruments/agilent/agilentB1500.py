@@ -336,7 +336,7 @@ class AgilentB1500(Instrument):
             :param cmu: If channel is CMU, defaults to False (SMU)
             :type cmu: bool, optional
             """
-            status = re.search(r'(?P<number>[0-9]*)(?P<letter>[A-Z]*)', status_string)
+            status = re.search(r'(?P<number>[0-9]*)(?P<letter>[ A-Z]*)', status_string)
             if len(status.group('number')) > 0:
                 status = int(status.group('number'))
                 if not status in (0, 128):
@@ -348,11 +348,12 @@ class AgilentB1500(Instrument):
                     log.info('Agilent B1500: ' + status)
             elif len(status.group('letter')) > 0:
                 status = status.group('letter')
-                if not status == 'N':
+                status = status.strip() #remove whitespaces
+                if not status in ['N','W','E']:
                     status = self.status[status]
                     log.info('Agilent B1500: ' + status)
             else:
-                log.info('Agilent B1500: check_status not possible for status {}'.format(status))
+                log.info('Agilent B1500: check_status not possible for status {}'.format(status_string))
 
         def format_channel_check_status(self, status_string, channel_string):
             """Returns channel number for given channel letter. 
@@ -1269,7 +1270,7 @@ class Ranging():
         self.indizes = indizes # Name -> Index
         self.ranges = ranges # Index -> Name
     
-    def __call__(self, input):
+    def __call__(self, input_value):
         """Gives named tuple (name/index) of given Range. 
         Throws error if range is not supported by this SMU.
         
@@ -1279,13 +1280,13 @@ class Ranging():
         :rtype: namedtuple
         """
         # set index
-        if isinstance(input, int):
-            index = input
+        if isinstance(input_value, int):
+            index = input_value
         else:
             try:
-                index = self.indizes[input.upper()]
+                index = self.indizes[input_value.upper()]
             except:
-                raise ValueError('Specified Range Name {} is not valid or not supported by this SMU'.format(input.upper()))
+                raise ValueError('Specified Range Name {} is not valid or not supported by this SMU'.format(input_value.upper()))
         # get name
         try:
             name = self.ranges[index]
@@ -1664,9 +1665,9 @@ class QueryLearn():
     @classmethod
     def DI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [('Current Range', lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
-        'Current Output (A)', 'Compliance Voltage (V)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
-        ('Voltage Compliance Ranging Type', lambda parameter, smu: smu.voltage_ranging.meas(int(parameter)).name)]
+        names = [('Current Range', lambda parameter: smu.current_ranging.output(int(parameter)).name),
+        'Current Output (A)', 'Compliance Voltage (V)', ('Compliance Polarity', lambda parameter: str(CompliancePolarity.get(int(parameter)))),
+        ('Voltage Compliance Ranging Type', lambda parameter: smu.voltage_ranging.meas(int(parameter)).name)]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Constant Current'
         ret.move_to_end('Source Type', last=False) #make first entry
@@ -1675,9 +1676,9 @@ class QueryLearn():
     @classmethod
     def DV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [('Voltage Range', lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
-        'Voltage Output (V)', 'Compliance Current (A)', ('Compliance Polarity', lambda parameter, smu: str(CompliancePolarity.get(int(parameter)))),
-        ('Current Compliance Ranging Type', lambda parameter, smu: smu.current_ranging.meas(int(parameter)).name)]
+        names = [('Voltage Range', lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
+        'Voltage Output (V)', 'Compliance Current (A)', ('Compliance Polarity', lambda parameter: str(CompliancePolarity.get(int(parameter)))),
+        ('Current Compliance Ranging Type', lambda parameter: smu.current_ranging.meas(int(parameter)).name)]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Constant Voltage'
         ret.move_to_end('Source Type', last=False) #make first entry
@@ -1748,8 +1749,8 @@ class QueryLearn():
     def WV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
-            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+            ("Sweep Mode", lambda parameter: str(SweepMode(int(parameter)))),
+            ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)", "Number of Steps",
             "Current Compliance (A)", "Power Compliance (W)"]
         ret = cls.to_dict(parameters, names)
@@ -1761,8 +1762,8 @@ class QueryLearn():
     def WI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Sweep Mode", lambda parameter, smu: str(SweepMode(int(parameter)))),
-            ("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+            ("Sweep Mode", lambda parameter: str(SweepMode(int(parameter)))),
+            ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)", "Number of Steps",
             "Voltage Compliance (V)", "Power Compliance (W)"]
         ret = cls.to_dict(parameters, names)
@@ -1774,7 +1775,7 @@ class QueryLearn():
     def WSV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+            ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)",
             "Current Compliance (A)", "Power Compliance (W)"]
         ret = cls.to_dict(parameters, names)
@@ -1785,7 +1786,7 @@ class QueryLearn():
     @classmethod
     def WSI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+        names = [("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)",
             "Voltage Compliance (V)", "Power Compliance (W)"]
         ret = cls.to_dict(parameters, names)
@@ -1820,7 +1821,7 @@ class QueryLearn():
     @classmethod
     def MV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [("Voltage Range", lambda parameter, smu: smu.voltage_ranging.output(int(parameter)).name),
+        names = [("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
             "Base Voltage (V)", "Bias Voltage (V)", "Current Compliance (A)"]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Voltage Source Sampling'
@@ -1830,7 +1831,7 @@ class QueryLearn():
     @classmethod
     def MI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [("Current Range", lambda parameter, smu: smu.current_ranging.output(int(parameter)).name),
+        names = [("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
             "Base Current (A)", "Bias Current (A)", "Voltage Compliance (V)"]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Current Source Sampling'
