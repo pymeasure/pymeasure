@@ -3,6 +3,8 @@ Agilent B1500 Semiconductor Parameter Analyzer
 ##############################################
 .. currentmodule:: pymeasure.instruments.agilent.agilentB1500
 
+.. contents::
+
 **********************************************
 General Information
 **********************************************
@@ -10,7 +12,11 @@ This instrument driver does not support all configuration options
 of the B1500 mainframe yet.
 So far, it is possible to interface multiple SMU modules and source/measure 
 currents and voltages, perform sampling and staircase sweep measurements.
-The implementation of further measurement functionalities is highly encouraged.
+The implementation of further measurement functionalities 
+is highly encouraged.
+Meanwhile the model is managed by Keysight, 
+see the corresponding "Programming Guide"
+for details on the control methods and their parameters
 
 Command Translation
 ===================
@@ -192,13 +198,27 @@ Sampling measurement with 4 SMUs
 Main Classes
 **********************************************
 
+Classes to communicate with the instrument:
+
+* :class:`AgilentB1500`: Main instrument class
+* :class:`SMU`: Instantiated by main instrument class for every SMU
+
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
     :members: AgilentB1500, SMU
     :show-inheritance:
 
 **********************************************
-Supporting Classes & Methods
+Supporting Classes
 **********************************************
+
+Classes that provide additional functionalities:
+
+* :class:`QueryLearn`: Process read out of instrument settings
+
+* :class:`SMUCurrentRanging`, :class:`SMUVoltageRanging`: Allowed 
+  ranges for different SMU types and transformation of 
+  range names to indices (base: :class:`Ranging`)
+
 
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
     :members: QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
@@ -206,6 +226,16 @@ Supporting Classes & Methods
 
 Enumerations
 =========================
+Enumerations are used for easy selection of the available 
+parameters (where it is applicable). 
+Methods accept member name or number as input, 
+but name is recommended for readability reasons. 
+The member number is passed to the instrument. 
+Converting an enumeration member into a string gives a title case, 
+whitespace separated string (:meth:`~.CustomIntEnum.__str__`)
+which is cannot be used to select an enumeration member again. 
+It's purpose is only logging or documentation.
+
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
     :members: 
     :exclude-members: AgilentB1500, SMU, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging

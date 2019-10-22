@@ -831,12 +831,12 @@ class SMU():
     # Wrappers of B1500 communication methods
     ##########################################
     def write(self, string):
-        """Wraps :meth:`~.AgilentB1500.write` method of B1500.
+        """Wraps :meth:`.Instrument.write` method of B1500.
         """
         self._b1500.write(string)
 
     def ask(self, string):
-        """Wraps :meth:`~.AgilentB1500.ask` method of B1500.
+        """Wraps :meth:`~.Instrument.ask` method of B1500.
         """
         return self._b1500.ask(string)
 
@@ -1359,7 +1359,9 @@ class SMUCurrentRanging():
     Validity of ranges is checked against the type of the SMU.
 
     Omitting the 'limited auto ranging'/'range fixed' specification in the range string for current measurement defaults to 'limited auto ranging'.
+    
     Full specification: '1 nA range fixed' or '1 nA limited auto ranging'
+    
     '1 nA' defaults to '1 nA limited auto ranging'
     """
     def __init__(self, smu_type):
@@ -1522,12 +1524,12 @@ class SweepMode(CustomIntEnum):
 class SamplingMode(CustomIntEnum):
     """Sampling Mode"""
     LINEAR = 1 #:
-    LOG_10 = 2 #: Log 10 data points/decade
-    LOG_25 = 3 #:
-    LOG_50 = 4 #:
-    LOG_100 = 5 #:
-    LOG_250 = 6 #:
-    LOG_5000 = 7 #:
+    LOG_10 = 2 #: Logarithmic 10 data points/decade
+    LOG_25 = 3 #: Logarithmic 25 data points/decade
+    LOG_50 = 4 #: Logarithmic 50 data points/decade
+    LOG_100 = 5 #: Logarithmic 100 data points/decade
+    LOG_250 = 6 #: Logarithmic 250 data points/decade
+    LOG_5000 = 7 #: Logarithmic 5000 data points/decade
 
     def __str__(self):
         names = {1:"Linear",
