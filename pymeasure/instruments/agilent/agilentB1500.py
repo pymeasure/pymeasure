@@ -1096,49 +1096,49 @@ class SMU():
         :type comp_polarity: :class:`.CompliancePolarity`
         :param comp_range: Compliance ranging type, defaults to auto
         :type comp_range: int or str, optional
-        :param stepsize: Size of steps
-        :param pause: A pause duration in seconds to wait between steps
+        :param stepsize: Maximum size of steps
+        :param pause: Duration in seconds to wait between steps
         """
         if source_type.upper() == "VOLTAGE":
             source_type = 'VOLTAGE'
-            cmd = "DV"
+            cmd = 'DV%d' % self.channel
             source_range = self.voltage_ranging.output(source_range).index
+            unit = 'V'
             if not comp_range == '':
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             source_type = 'CURRENT'
             cmd = 'DI%d' % self.channel
             source_range = self.current_ranging.output(source_range).index
+            unit = 'A'
             if not comp_range == '':
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
+
         status = self._query_status_raw()
-        if 'CL' in status:
-            # SMU is OFF
+        if 'CL' in status:  # SMU is OFF
             start = 0
         elif cmd in status:
-            start = float(status[cmd][1])
+            start = float(status[cmd][1])  # current output value
         else:
             log.info(
-                ("SMU {0} in different state. "
+                ("{0} in different state. "
                  "Changing to {1} Source.").format(self.name, source_type))
             start = 0
 
-        outputs = np.arange(
-            start,
-            target_output,
-            stepsize
-        )
+        # calculate number of points based on maximum stepsize
+        nop = np.ceil(abs((target_output - start) / stepsize))
+        log.info("{0} ramping from {1}{2} to {3}{2} in {4} steps".format(
+            self.name, start, unit, target_output, nop
+            ))
+        outputs = np.linspace(start, target_output, nop, endpoint=True)
+
         for output in outputs:
             self.force(
                 source_type, source_range, output,
                 comp, comp_polarity, comp_range)
             time.sleep(pause)
-        # targer_output is not included in outputs
-        self.force(
-            source_type, source_range, target_output,
-            comp, comp_polarity, comp_range)
 
     ######################################
     # Measurement Range: RI, RV, (RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC)
