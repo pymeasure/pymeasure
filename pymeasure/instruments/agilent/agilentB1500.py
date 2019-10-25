@@ -358,7 +358,7 @@ class AgilentB1500(Instrument):
             if len(status.group('number')) > 0:
                 status = int(status.group('number'))
                 if status not in (0, 128):
-                    if cmu is False:
+                    if cmu is True:
                         status_dict = self.cmu_status
                     else:
                         status_dict = self.smu_status
