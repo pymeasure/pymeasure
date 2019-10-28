@@ -23,9 +23,9 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
-from io import StringIO
+from time import sleep
 import numpy as np
 import pandas as pd
 
@@ -35,12 +35,13 @@ class AgilentN9320A(Instrument):
     high-frequency spectrums
     """
 
-	FREQ_LIMIT = [9e3, 3.08e9] #Frequency limit in Hz
+    FREQ_LIMIT = [9e3, 3.08e9] #Frequency limit in Hz
     SPAN_LIMIT = [0, 3e9]      #In zero span the X axis represents time
     REF_LIMIT = [-100, 50]     #Reference level limit in dBm
     ATT_LIMIT = [0, 70]        #Input attenuator limit in dB
-    RES_LIMIT = [10, 3e6]      #RBW limits
-    VID_LIMT = RES_LIMIT       #VBW limits
+    RES_LIMIT = [10, 30, 100, 300, 1000, 3000,
+                10000, 30000, 100000, 300000]      #RBW values
+    VID_LIMIT = RES_LIMIT       #VBW values
     PEAK_TH = -70.             #Peak threshold for peak recognition in dBm
 
     start_frequency = Instrument.control(
@@ -59,33 +60,16 @@ class AgilentN9320A(Instrument):
 		validator=strict_range,
 		values=FREQ_LIMIT
     )
-	'''
-    frequency_points = Instrument.control(
-        ":SENSe:SWEEp:POINts?", ":SENSe:SWEEp:POINts %d",
-        """ An integer property that represents the number of frequency
-        points in the sweep. This property can take values from 101 to 8192.
-        """,
-        validator=truncated_range,
-        values=[101, 8192],
-        cast=int
-    )
-    frequency_step = Instrument.control(
-        ":SENS:FREQ:CENT:STEP:INCR?", ":SENS:FREQ:CENT:STEP:INCR %g Hz",
-        """ A floating point property that represents the frequency step
-        in Hz. This property can be set.
-        """
-    )'''
-
     center_frequency = Instrument.control(
-        ":SENS:FREQ:CENT?", ":SENS:FREQ:CENT %e Hz",
+        ":SENS:FREQ:CENT?", ":SENS:FREQ:CENT %eHz",
         """ A floating point property that represents the center frequency
         in Hz. This property can be set.
         """,
 		validator=strict_range,
 		values=FREQ_LIMIT
     )
-	span = Instrument.control(
-        ":SENS:FREQ:SPAN?", ":SENS:FREQ:SPAN %e Hz",
+    span = Instrument.control(
+        ":SENS:FREQ:SPAN?", ":SENS:FREQ:SPAN %eHz",
         """ A floating point property that represents the frequency span
         in Hz. This property can be set.
         """,
@@ -115,19 +99,19 @@ class AgilentN9320A(Instrument):
         values=ATT_LIMIT
     )
     res_bw = Instrument.control(
-        ":SENS:BAND|BWID:RES?", ":SENS:BAND|BWID:RES %e",
+        ":SENS:BAND:RES?", ":SENS:BAND:RES %e",
         """ A floating point property that represents the reference level
         in dBm. This property can be set.
         """,
-        validator=strict_range,
+        validator=strict_discrete_set,
         values=RES_LIMIT
     )
     vid_bw = Instrument.control(
-        ":SENS:BAND|BWID:VID?", ":SENS:BAND|BWID:VID %e",
+        ":SENS:BAND:VID?", ":SENS:BAND:VID %e",
         """ A floating point property that represents the reference level
         in dBm. This property can be set.
         """,
-        validator=strict_range,
+        validator=strict_discrete_set,
         values=VID_LIMIT
     )
 
@@ -138,39 +122,36 @@ class AgilentN9320A(Instrument):
             **kwargs
         )
 
-    @property
     def opc(self):
         return self.ask("*OPC?")
 
     def peak(self, center=True, number=1):
         """ Returns the frequency and the intensity of the highest peak.
-        Up to 3 peaks can be detected.
         It can center the central frequency to the central peak.
         """
         self.write("CALC:MARK:PEAK:THR %f" % self.PEAK_TH)
+        sleep(2*self.sweep_time)
         self.write("CALC:MARK:MAX")
         if center:
             self.write("CALC:MARK:SET:CENT")
-        return self.write("CALC:MARK:Y?")
+        sleep(2*self.sweep_time)
+        return self.ask("CALC:MARK:Y?")
 
 
     def trace(self, number=1):
-        """ Returns a numpy array of the data for a particular trace
-        based on the trace number (1, 2, or 3).
+        """ Returns two numpy arrays, data and frequency, for a particular
+        trace based on the trace number (1, 2, or 3).
         """
-        self.write(":FORMat:TRACe:DATA ASCII")
-        data = np.loadtxt(
-            StringIO(self.ask(":TRACE:DATA? TRACE%d" % number)),
-            delimiter=',',
-            dtype=np.float64
-        )
+        data = [float(i) for i in self.ask(":TRACE:DATA? TRACE%d" %
+                number).split(',')[:-1]]
+
         frequency = np.linspace(
             self.start_frequency,
             self.stop_frequency,
             len(data),
             dtype=np.float64
         )
-        return data, frequency
+        return np.array(data), frequency
 
     def trace_df(self, number=1):
         """ Returns a pandas DataFrame containing the frequency
