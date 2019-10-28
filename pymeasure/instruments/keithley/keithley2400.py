@@ -73,15 +73,9 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values={'current':'CURR', 'voltage':'VOLT'},
         map_values=True
     )
-
-    source_enabled = Instrument.control(
-        "OUTPut?", "OUTPut %d",
-        """A boolean property that controls whether the source is enabled, takes
-        values True or False. The convenience methods :meth:`~.Keithley2400.enable_source` and 
-        :meth:`~.Keithley2400.disable_source` can also be used.""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True
+    source_enabled = Instrument.measurement("OUTPUT?",
+        """ Reads a boolean value that is True if the source is enabled. """,
+        cast=bool
     )
 
     ###############
@@ -117,9 +111,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     source_current = Instrument.control(
         ":SOUR:CURR?", ":SOUR:CURR:LEV %g",
         """ A floating point property that controls the source current
-        in Amps. """,
-        validator=truncated_range,
-        values=[-1.05, 1.05]
+        in Amps. """
     )
     source_current_range = Instrument.control(
         ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",

@@ -45,5 +45,5 @@ class Agilent34410A(Instrument):
     
     def __init__(self, adapter, delay=0.02, **kwargs):
         super(Agilent34410A, self).__init__(
-            adapter, "HP/Agilent/Keysight 34410A Multimeter", **kwargs
+            adapter, "HP/Agilent/Keysight 34410A Multimiter", **kwargs
         )
