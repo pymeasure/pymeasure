@@ -45,28 +45,39 @@ class SR830(Instrument):
     ]
     TIME_CONSTANTS = [
         10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
-        30e-3, 100e-3, 300e-3, 1, 3, 10, 100, 300, 1e3,
+        30e-3, 100e-3, 300e-3, 1, 3, 10, 30, 100, 300, 1e3,
         3e3, 10e3, 30e3
     ]
     FILTER_SLOPES = [6, 12, 18, 24]
     EXPANSION_VALUES = [1, 10, 100]
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
     CHANNELS = ['X', 'Y', 'R']
+    INPUT_CONFIGS = ['A', 'A - B', 'I (1 MOhm)', 'I (100 MOhm)']
+    INPUT_GROUNDINGS = ['Float', 'Ground']
+    INPUT_COUPLINGS = ['AC', 'DC']
+    INPUT_NOTCH_CONFIGS = ['None', 'Line', '2 x Line', 'Both']
+    REFERENCE_SOURCES = ['External', 'Internal']
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
         """ A floating point property that represents the reference sine-wave
-        voltage in Volts. This property can be set. """
+        voltage in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[0.004, 5.0]
     )
     frequency = Instrument.control(
         "FREQ?", "FREQ%0.5e",
         """ A floating point property that represents the lock-in frequency
-        in Hz. This property can be set. """
+        in Hz. This property can be set. """,
+        validator=truncated_range,
+        values=[0.001, 102000]
     )
     phase = Instrument.control(
         "PHAS?", "PHAS%0.2f",
         """ A floating point property that represents the lock-in phase
-        in degrees. This property can be set. """
+        in degrees. This property can be set. """,
+        validator=truncated_range,
+        values=[-360, 729.99]
     )
     x = Instrument.measurement("OUTP?1",
         """ Reads the X value in Volts. """
@@ -131,7 +142,47 @@ class SR830(Instrument):
         """ An integer property that controls the harmonic that is measured.
         Allowed values are 1 to 19999. Can be set. """,
         validator=strict_discrete_set,
-        values=range(1, 20000),
+        values=range(1, 19999),
+    )
+    input_config = Instrument.control(
+        "ISRC?", "ISRC %d",
+        """ An string property that controls the input configuration. Allowed
+        values are: {}""".format(INPUT_CONFIGS),
+        validator=strict_discrete_set,
+        values=INPUT_CONFIGS,
+        map_values=True
+    )
+    input_grounding = Instrument.control(
+        "IGND?", "IGND %d",
+        """ An string property that controls the input shield grounding. Allowed
+        values are: {}""".format(INPUT_GROUNDINGS),
+        validator=strict_discrete_set,
+        values=INPUT_GROUNDINGS,
+        map_values=True
+    )
+    input_coupling = Instrument.control(
+        "ICPL?", "ICPL %d",
+        """ An string property that controls the input coupling. Allowed
+        values are: {}""".format(INPUT_COUPLINGS),
+        validator=strict_discrete_set,
+        values=INPUT_COUPLINGS,
+        map_values=True
+    )
+    input_notch_config = Instrument.control(
+        "ILIN?", "ILIN %d",
+        """ An string property that controls the input line notch filter 
+        status. Allowed values are: {}""".format(INPUT_NOTCH_CONFIGS),
+        validator=strict_discrete_set,
+        values=INPUT_NOTCH_CONFIGS,
+        map_values=True
+    )
+    reference_source = Instrument.control(
+        "FMOD?", "FMOD %d",
+        """ An string property that controls the reference source. Allowed
+        values are: {}""".format(REFERENCE_SOURCES),
+        validator=strict_discrete_set,
+        values=REFERENCE_SOURCES,
+        map_values=True
     )
 
     aux_out_1 = Instrument.control(

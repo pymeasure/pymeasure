@@ -1,3 +1,15 @@
+Version 0.7 -- release 8/4/19
+=============================
+- Dropped support for Python 3.4, adding support for Python 3.7
+- Significant improvements to CI, dependencies, and conda environment (@bilderbuchi, @cjermain)
+- Fix for PyQT issue in ResultsDialog (@CasperSchippers)
+- Fix for wire validator in Keithley 2400 (@Fattotora)
+- Addition of source_enabled control for Keithley 2400 (@dennisfeng2)
+- Time constant fix and input controls for SR830 (@dennisfeng2)
+- Added Keithley 2450 and Agilent 33521A (@hlgirard, @Endever42)
+- Proper escaping support in CSV headers (@feph)
+- Minor updates (@dvase)
+
 Version 0.6.1 -- release 4/21/19
 ================================
 - Added Elektronica SM70-45D, Agilent 33220A, and Keysight N5767A instruments
