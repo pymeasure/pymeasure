@@ -190,4 +190,4 @@ class AFG3152C(Instrument):
         self.write("system:beep")
 
     def opc(self):
-        self.ask("*OPC?")
+        return int(self.ask("*OPC?"))
