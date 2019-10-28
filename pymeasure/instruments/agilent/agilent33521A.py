@@ -22,28 +22,41 @@
 # THE SOFTWARE.
 #
 
+import logging
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
+from .agilent33500 import Agilent33500
 
-class Agilent34410A(Instrument):
-    """
-    Represent the HP/Agilent/Keysight 34410A and related multimeters.
 
-    Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance, resistance_4w
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class Agilent33521A(Agilent33500):
+    """Represents the Agilent 33521A Function/Arbitrary Waveform Generator.
+    This documentation page shows only methods different from the parent class :doc:`Agilent33500 <agilent33500>`.
+
     """
-    #only the most simple functions are implemented
-    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
-    
-    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
-    
-    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
-    
-    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
-    
-    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
-    
-    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
-    
-    def __init__(self, adapter, delay=0.02, **kwargs):
-        super(Agilent34410A, self).__init__(
-            adapter, "HP/Agilent/Keysight 34410A Multimeter", **kwargs
+
+    def __init__(self, adapter, **kwargs):
+        super(Agilent33521A, self).__init__(
+            adapter,
+            **kwargs
         )
+
+    frequency = Instrument.control(
+        "FREQ?", "FREQ %f",
+        """ A floating point property that controls the frequency of the output
+        waveform in Hz, from 1 uHz to 30 MHz, depending on the specified function.
+        Can be set. """,
+        validator=strict_range,
+        values=[1e-6, 30e+6],
+    )
+
+    arb_srate = Instrument.control(
+        "FUNC:ARB:SRAT?", "FUNC:ARB:SRAT %f",
+        """ An floating point property that sets the sample rate of the currently selected 
+        arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s. This can be set. """,
+        validator=strict_range,
+        values=[1e-6, 250e6],
+    )

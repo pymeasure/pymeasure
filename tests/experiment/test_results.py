@@ -30,9 +30,9 @@ import tempfile
 import pickle
 from importlib.machinery import SourceFileLoader
 import pandas as pd
-
+import numpy as np
 from pymeasure.experiment.results import Results, CSVFormatter
-from pymeasure.experiment.procedure import Procedure
+from pymeasure.experiment.procedure import Procedure, Parameter
 
 # Load the procedure, without it being in a module
 #data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
@@ -101,3 +101,15 @@ class TestResults:
 
         assert second_data.iloc[:,0].dtype is not object
         assert first_data.iloc[:,0].dtype is second_data.iloc[:,0].dtype
+        
+    def test_regression_param_str_should_not_include_newlines(self, tmpdir):
+        class DummyProcedure(Procedure):
+            par = Parameter('Generic Parameter with newline chars')           
+            DATA_COLUMNS = ['Foo', 'Bar', 'Baz'] 
+        procedure = DummyProcedure()
+        procedure.par = np.linspace(1,100,17)
+        filename = os.path.join(str(tmpdir), 'header_linebreak_test.csv')
+        result = Results(procedure, filename)
+        result.reload() # assert no error
+        pd.read_csv(filename, comment="#") # assert no error
+        assert (result.parameters['par'].value == np.linspace(1,100,17)).all()
