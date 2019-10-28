@@ -129,13 +129,36 @@ class AgilentN9320A(Instrument):
         """ Returns the frequency and the intensity of the highest peak.
         It can center the central frequency to the central peak.
         """
+        peaks=[]
+
         self.write("CALC:MARK:PEAK:THR %f" % self.PEAK_TH)
         sleep(2*self.sweep_time)
         self.write("CALC:MARK:MAX")
         if center:
             self.write("CALC:MARK:SET:CENT")
         sleep(2*self.sweep_time)
-        return self.ask("CALC:MARK:Y?")
+        peaks.append(self.ask("CALC:MARK:Y?"))
+
+        try:
+            sleep(2*self.sweep_time)
+            self.write("CALC:MARK:MAX:LEFT")
+            sleep(2*self.sweep_time)
+            peaks.append(self.ask("CALC:MARK:Y?"))
+            break
+        except self.ask("SYST:ERR?")=='780 No Peak Found':
+            raise NameError('No peak at left')
+
+        try:
+            sleep(2*self.sweep_time)
+            self.write("CALC:MARK:MAX")
+            sleep(2*self.sweep_time)
+            self.write("CALC:MARK:MAX:RIGHT")
+            peaks.append(self.ask("CALC:MARK:Y?"))
+            break
+        except self.ask("SYST:ERR?")=='780 No Peak Found':
+            raise NameError('No peak at right')
+
+        return peaks
 
 
     def trace(self, number=1):
