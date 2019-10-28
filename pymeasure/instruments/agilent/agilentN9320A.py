@@ -100,16 +100,16 @@ class AgilentN9320A(Instrument):
     )
     res_bw = Instrument.control(
         ":SENS:BAND:RES?", ":SENS:BAND:RES %e",
-        """ A floating point property that represents the reference level
-        in dBm. This property can be set.
+        """ A floating point property that represents the resolution
+        bandwidth in Hz. This property can be set.
         """,
         validator=strict_discrete_set,
         values=RES_LIMIT
     )
     vid_bw = Instrument.control(
         ":SENS:BAND:VID?", ":SENS:BAND:VID %e",
-        """ A floating point property that represents the reference level
-        in dBm. This property can be set.
+        """ A floating point property that represents the video
+        bandwidth in Hz. This property can be set.
         """,
         validator=strict_discrete_set,
         values=VID_LIMIT
@@ -123,7 +123,7 @@ class AgilentN9320A(Instrument):
         )
 
     def opc(self):
-        return self.ask("*OPC?")
+        return int(self.ask("*OPC?"))
 
     def peak(self, center=True, number=1):
         """ Returns the frequency and the intensity of the highest peak.
