@@ -18,3 +18,4 @@ This section contains specific documentation on the Agilent instruments that are
    agilent33220A
    agilent33500
    agilent33521A
+   agilentN9320A
