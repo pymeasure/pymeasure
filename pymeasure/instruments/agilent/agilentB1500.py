@@ -342,19 +342,25 @@ class AgilentB1500(Instrument):
                 self.data_names = {}  # no header
             self.smu_names = smu_names
 
-        def check_status(self, status_string, cmu=False):
+        def check_status(self, status_string, name=False, cmu=False):
             """Check returned status of instrument. If not null, message is
             written to log.info.
 
             :param status_string: Status string returned by the instrument
                                   when reading data.
             :type status_string: str
-            :param cmu: If channel is CMU, defaults to False (SMU)
+            :param cmu: Whether or not channel is CMU, defaults to False (SMU)
             :type cmu: bool, optional
             """
+            if name is False:
+                name = ''
+            else:
+                name = ' {}'.format(name)
+
             status = re.search(
                 r'(?P<number>[0-9]*)(?P<letter>[ A-Z]*)',
                 status_string)
+            # depending on FMT, status may be a letter or up to 3 digits
             if len(status.group('number')) > 0:
                 status = int(status.group('number'))
                 if status not in (0, 128):
@@ -363,13 +369,13 @@ class AgilentB1500(Instrument):
                     else:
                         status_dict = self.smu_status
                     status = status_dict[status]
-                    log.info('Agilent B1500: ' + status)
+                    log.info('Agilent B1500{}: {}'.format(name, status))
             elif len(status.group('letter')) > 0:
                 status = status.group('letter')
                 status = status.strip()  # remove whitespaces
                 if status not in ['N', 'W', 'E']:
                     status = self.status[status]
-                    log.info('Agilent B1500: ' + status)
+                    log.info('Agilent B1500{}: {}'.format(name, status))
             else:
                 log.info(
                     ('Agilent B1500: check_status not '
@@ -395,11 +401,11 @@ class AgilentB1500(Instrument):
             try:
                 smu_name = self.smu_names[channel]
                 if 'SMU' in smu_name:
-                    self.check_status(status_string, cmu=False)
+                    self.check_status(status_string, name=smu_name, cmu=False)
                 if 'CMU' in smu_name:
-                    self.check_status(status_string, cmu=True)
+                    self.check_status(status_string, name=smu_name, cmu=True)
                 return smu_name
-            except Exception:
+            except KeyError:
                 self.check_status(status_string)
                 return channel
 
