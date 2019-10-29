@@ -1132,13 +1132,19 @@ class SMU():
         log.info("{0} ramping from {1}{2} to {3}{2} in {4} steps".format(
             self.name, start, unit, target_output, nop
             ))
-        outputs = np.linspace(start, target_output, nop, endpoint=True)
+        outputs = np.linspace(start, target_output, nop, endpoint=False)
 
         for output in outputs:
+            # loop is only executed if target_output != start
             self.force(
                 source_type, source_range, output,
                 comp, comp_polarity, comp_range)
             time.sleep(pause)
+        # call force even if start==target_output
+        # to set compliance
+        self.force(
+                source_type, source_range, target_output,
+                comp, comp_polarity, comp_range)
 
     ######################################
     # Measurement Range: RI, RV, (RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC)
