@@ -10,3 +10,4 @@ This section contains specific documentation on the Tektronix instruments that a
    :maxdepth: 2
 
    tds2000
+   afg3152c
