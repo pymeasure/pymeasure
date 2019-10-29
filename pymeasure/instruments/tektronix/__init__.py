@@ -23,3 +23,4 @@
 #
 
 from .tds2000 import TDS2000
+from .afg3152c import AFG3152C
