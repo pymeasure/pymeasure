@@ -1717,6 +1717,9 @@ class QueryLearn():
                 parameters = parameters[1:]
             if len(parameters) == 1:
                 parameters = parameters[0]
+            # skip second AAD entry for each channel -> contains no information
+            if 'AAD' in name and name in response_dict.keys():
+                continue
             response_dict[name] = parameters
         return response_dict
 
