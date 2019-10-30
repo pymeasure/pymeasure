@@ -29,6 +29,8 @@ from time import sleep
 import numpy as np
 import pandas as pd
 
+
+
 class AgilentN9320A(Instrument):
     """ Represents the AgilentN9320A Spectrum Analyzer
     and provides a high-level interface for taking scans of
@@ -43,6 +45,9 @@ class AgilentN9320A(Instrument):
                 10000, 30000, 100000, 300000]      #RBW values
     VID_LIMIT = RES_LIMIT       #VBW values
     PEAK_TH = -70.             #Peak threshold for peak recognition in dBm
+    PEAK_EXC = 3               #Peak excursion
+    D_FACTOR = 2              #A multiplicative factor for the sweep time
+                               #for the peak function.
 
     start_frequency = Instrument.control(
         ":SENS:FREQ:STAR?", ":SENS:FREQ:STAR %e Hz",
@@ -121,43 +126,110 @@ class AgilentN9320A(Instrument):
             "Agilent AgilentN9320A Spectrum Analyzer",
             **kwargs
         )
+    def init_imm(self):
+        self.write("INIT:IMM")
+
+    def init_cont(self):
+        self.write("INIT:CONT 1")
+
+    def init_single(self):
+        self.write("INIT:CONT 0")
 
     def opc(self):
         return int(self.ask("*OPC?"))
 
-    def peak(self, center=True, number=1):
+    def avg_set(self, value=10):
+        self.write("SENS:AVER:COUN %d" % strict_range(value, [1, 1000]))
+
+    def avg(self, command='ON'):
+        self.write("SENS:AVER:STAT %s" % strict_discrete_set(command,
+                                                             ['ON', 'OFF']))
+
+    def set_peak_th(self, number=1, threshold=PEAK_TH, excursion=PEAK_EXC):
+        """Peak search mehtod using threshold and excursion"""
+        self.write("CALC:MARK:PEAK:SEAR:MODE PAR")
+        self.write("CALC:MARK:PEAK:THR:EXC %.2f" % excursion)
+        self.write("CALC:MARK%s:PEAK:THR %.2f" % (number, threshold))
+        self.write("CALC:MARK:PEAK:THR:STATE 1")
+
+    def set_peak_max(self):
+        """Peak search method: the max value of the trace is taken"""
+        self.write("CALC:MARK:PEAK:SEAR:MODE MAX")
+
+    def max(self, number=1):
+        """Peak search"""
+        self.write("CALC:MARK%s:MAX" % number)
+
+    def max_x(self,number=1):
+        """Returns the frequency in Hz at marker position"""
+        return float(self.ask("CALC:MARK%s:X?" % number))
+
+    def max_y(self,number=1):
+        """Returns the amplitude in dBm at marker position"""
+        return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4f')
+
+    def peak(self, number=1, avg=1, center=False, lr=False):
         """ Returns the frequency and the intensity of the highest peak.
         It can center the central frequency to the central peak.
+        It can also look the first peaks at both left and right
+        around the highest one.
         """
-        peaks=[]
+        self.avg('ON')
+        self.avg_set(avg)
+        self.init_single()
+        self.init_imm()
 
-        self.write("CALC:MARK:PEAK:THR %f" % self.PEAK_TH)
-        sleep(2*self.sweep_time)
-        self.write("CALC:MARK:MAX")
-        if center:
-            self.write("CALC:MARK:SET:CENT")
-        sleep(2*self.sweep_time)
-        peaks.append(self.ask("CALC:MARK:Y?"))
+        print('Averaging for %.1f seconds' % (avg*self.sweep_time))
+        sleep(avg*self.D_FACTOR*self.sweep_time)
 
-        try:
-            sleep(2*self.sweep_time)
-            self.write("CALC:MARK:MAX:LEFT")
-            sleep(2*self.sweep_time)
-            peaks.append(self.ask("CALC:MARK:Y?"))
-            break
-        except self.ask("SYST:ERR?")=='780 No Peak Found':
-            raise NameError('No peak at left')
+        while True:
+            if self.opc() == 1:
+                break
+            sleep(2)
 
-        try:
-            sleep(2*self.sweep_time)
-            self.write("CALC:MARK:MAX")
-            sleep(2*self.sweep_time)
-            self.write("CALC:MARK:MAX:RIGHT")
-            peaks.append(self.ask("CALC:MARK:Y?"))
-            break
-        except self.ask("SYST:ERR?")=='780 No Peak Found':
-            raise NameError('No peak at right')
+        self.set_peak_th(number,self.PEAK_TH,self.PEAK_EXC)
+        self.max(number)
+        sleep(0.1)
+        if self.ask("SYST:ERR?") == '780 No Peak Found':
+            print('No peak found!')
+            peaks = [[float('NAN'),float('NAN')]]
+        else:
+            x = self.max_x(number)
+            y = self.max_y(number)
+            if center:
+                sleep(0.1)
+                self.write("CALC:MARK%s:SET:CENT" % number)
+            print('MAX founded at %s Hz, amplitude %s dBm' % (x, y))
+            peaks = [[x, y]]
 
+            if lr == True:
+                self.write("CALC:MARK%s:MAX:LEFT" % number)
+                sleep(0.1)
+                if self.ask("SYST:ERR?") == '780 No Peak Found':
+                    print('No peak at left')
+                    x = float('NAN')
+                    y = float('NAN')
+                else:
+                    #sleep(delay)
+                    x = self.max_x(number)
+                    y = self.max_y(number)
+                    print('LEFT founded at %s Hz, amplitude %s dBm' % (x, y))
+                peaks.append([x, y])
+
+                print('Back to max')
+                self.max(number)
+                print('Looking right')
+                self.write("CALC:MARK%s:MAX:RIGHT" % number)
+                sleep(0.1)
+                if self.ask("SYST:ERR?") == '780 No Peak Found':
+                    print('No peak at right')
+                    x = float('NAN')
+                    y = float('NAN')
+                else:
+                    x = self.max_x(number)
+                    y = self.max_y(number)
+                    print('RIGHT founded at %s Hz, amplitude %s dBm' % (x, y))
+                peaks.append([x, y])
         return peaks
 
 
