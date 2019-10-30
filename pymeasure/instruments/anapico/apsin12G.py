@@ -22,58 +22,45 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, discreteTruncate, RangeException
-
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
 
 class APSIN12G(Instrument):
     """ Represents the Anapico APSIN12G Signal Generator with option 9K,
     HP and GPIB.
     """
+    FREQ_LIMIT = [9e3, 12e9]
+    POW_LIMIT = [-30, 27]
+
     power = Instrument.control(
-        ":OU?;", ":POWER %g dBm;",
+        "SOUR:POW:LEV:IMM:AMPL?;", "SOUR:POW:LEV:IMM:AMPL %gdBm;",
         """ A floating point property that represents the output power
-        in dBm. This property can be set. """
+        in dBm. This property can be set. """,
+        validator=strict_range,
+        values=POW_LIMIT
     )
     frequency = Instrument.control(
-        ":FREQUENCY?;", ":FREQUENCY %e Hz;",
+        ":FREQ:CW?;", ":FREQ:CW %eHz;",
         """ A floating point property that represents the output frequency
-        in Hz. This property can be set. """
+        in Hz. This property can be set. """,
+        validator=strict_range,
+        values=FREQ_LIMIT
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, resourceName, **kwargs):
         super(APSIN12G, self).__init__(
-            adapter,
+            resourceName,
             "Anapico APSIN12G Signal Generator",
             **kwargs
         )
 
-    @property
-    def output(self):
-        """ A boolean property that represents the signal output state.
-        This property can be set to control the output.
+    def enableRF(self):
+        """ Enables the RF output.
         """
-        return int(self.ask(":OUTPUT?")) == 1
+        self.write("OUTP:STAT 1")
 
-    @output.setter
-    def output(self, value):
-        if value:
-            self.write(":OUTPUT ON;")
-        else:
-            self.write(":OUTPUT OFF;")
-
-    def enable(self):
-        """ Enables the signal output.
+    def disableRF(self):
+        """ Disables the RF output.
         """
-        self.output = True
+        self.write("OUTP:STAT 0")
 
-    def disable(self):
-        """ Disables the signal output.
-        """
-        self.output = False
-
-    def shutdown(self):
-        """ Shuts down the instrument, putting it in a safe state.
-        """
-        # TODO: Implement modulation
-        self.modulation = False
-        self.disable()
