@@ -46,8 +46,10 @@ class AgilentN9320A(Instrument):
     VID_LIMIT = RES_LIMIT       #VBW values
     PEAK_TH = -70.             #Peak threshold for peak recognition in dBm
     PEAK_EXC = 3               #Peak excursion
-    D_FACTOR = 2              #A multiplicative factor for the sweep time
-                               #for the peak function.
+    D_FACTOR = 2               #A multiplicative factor for the sweep time in
+                               #peak function
+    DELAY = 0.2                #A delay in second can be useful
+
 
     start_frequency = Instrument.control(
         ":SENS:FREQ:STAR?", ":SENS:FREQ:STAR %e Hz",
@@ -176,6 +178,7 @@ class AgilentN9320A(Instrument):
         """
         self.avg('ON')
         self.avg_set(avg)
+        sleep(self.DELAY)
         self.init_single()
         self.init_imm()
 
@@ -189,7 +192,7 @@ class AgilentN9320A(Instrument):
 
         self.set_peak_th(number,self.PEAK_TH,self.PEAK_EXC)
         self.max(number)
-        sleep(0.1)
+        sleep(self.DELAY)
         if self.ask("SYST:ERR?") == '780 No Peak Found':
             print('No peak found!')
             peaks = [[float('NAN'),float('NAN')]]
@@ -197,20 +200,19 @@ class AgilentN9320A(Instrument):
             x = self.max_x(number)
             y = self.max_y(number)
             if center:
-                sleep(0.1)
+                sleep(self.DELAY)
                 self.write("CALC:MARK%s:SET:CENT" % number)
             print('MAX founded at %s Hz, amplitude %s dBm' % (x, y))
             peaks = [[x, y]]
 
             if lr == True:
                 self.write("CALC:MARK%s:MAX:LEFT" % number)
-                sleep(0.1)
+                sleep(self.DELAY)
                 if self.ask("SYST:ERR?") == '780 No Peak Found':
                     print('No peak at left')
                     x = float('NAN')
                     y = float('NAN')
                 else:
-                    #sleep(delay)
                     x = self.max_x(number)
                     y = self.max_y(number)
                     print('LEFT founded at %s Hz, amplitude %s dBm' % (x, y))
@@ -220,7 +222,7 @@ class AgilentN9320A(Instrument):
                 self.max(number)
                 print('Looking right')
                 self.write("CALC:MARK%s:MAX:RIGHT" % number)
-                sleep(0.1)
+                sleep(self.DELAY)
                 if self.ask("SYST:ERR?") == '780 No Peak Found':
                     print('No peak at right')
                     x = float('NAN')
