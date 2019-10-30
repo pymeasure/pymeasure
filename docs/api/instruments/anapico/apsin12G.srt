@@ -1,0 +1,7 @@
+#############################
+Anapico Apsin12G RF generator
+#############################
+
+.. autoclass:: pymeasure.instruments.anapico.APSIN12G
+    :members:
+    :show-inheritance:
