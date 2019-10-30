@@ -162,11 +162,11 @@ class AgilentN9320A(Instrument):
         """Peak search"""
         self.write("CALC:MARK%s:MAX" % number)
 
-    def max_x(self,number=1):
+    def max_x(self, number=1):
         """Returns the frequency in Hz at marker position"""
         return float(self.ask("CALC:MARK%s:X?" % number))
 
-    def max_y(self,number=1):
+    def max_y(self, number=1):
         """Returns the amplitude in dBm at marker position"""
         return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4f')
 
@@ -185,6 +185,7 @@ class AgilentN9320A(Instrument):
         print('Averaging for %.1f seconds' % (avg*self.sweep_time))
         sleep(avg*self.D_FACTOR*self.sweep_time)
 
+        #I'm not sure about this part
         while True:
             if self.opc() == 1:
                 break
@@ -195,7 +196,7 @@ class AgilentN9320A(Instrument):
         sleep(self.DELAY)
         if self.ask("SYST:ERR?") == '780 No Peak Found':
             print('No peak found!')
-            peaks = [[float('NAN'),float('NAN')]]
+            peaks = [[float('NAN'), float('NAN')]]
         else:
             x = self.max_x(number)
             y = self.max_y(number)
