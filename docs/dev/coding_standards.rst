@@ -7,7 +7,7 @@ In order to maintain consistency across the different instruments in the PyMeasu
 Python style guides
 ===================
 
-Only Python 3 is used in PyMeasure. This prevents the maintaininace overhead of supporting Python 2.7,  which will loose official support in the future.
+Only Python 3 is used in PyMeasure. This prevents the maintaininace overhead of supporting Python 2.7,  which will lose official support in the future.
 
 The `PEP8 style guide`_ and `PEP257 docstring conventions`_ should be followed.
 
