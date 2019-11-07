@@ -24,6 +24,7 @@
 
 import logging
 import re
+# ctypes only required for VirtualBench_Direct class
 from ctypes import (c_bool, c_size_t, c_double, c_uint8, c_int32, c_uint32,
                     c_int64, c_uint64, c_wchar, c_wchar_p, Structure, c_int,
                     cdll, byref)
@@ -248,7 +249,7 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.dio = self.DigitalInputOutput(self.vb, lines, reset)
+        self.dio = self.DigitalInputOutput(self.vb, lines, reset, vb_name=self.name)
 
     def acquire_power_supply(self, reset=False):
         """ Establishes communication with the PS module. This method should be
@@ -258,7 +259,7 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.ps = self.PowerSupply(self.vb, reset)
+        self.ps = self.PowerSupply(self.vb, reset, vb_name=self.name)
 
     def acquire_function_generator(self, reset=False):
         """ Establishes communication with the FGEN module. This method should
@@ -268,7 +269,7 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.fgen = self.FunctionGenerator(self.vb, reset)
+        self.fgen = self.FunctionGenerator(self.vb, reset, vb_name=self.name)
 
     def acquire_mixed_signal_oscilloscope(self, reset=False):
         """ Establishes communication with the MSO module. This method should
@@ -278,7 +279,7 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.mso = self.MixedSignalOscilloscope(self.vb, reset)
+        self.mso = self.MixedSignalOscilloscope(self.vb, reset, vb_name=self.name)
 
     def acquire_digital_multimeter(self, reset=False):
         """ Establishes communication with the DMM module. This method should
@@ -288,14 +289,14 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.dmm = self.DigitalMultimeter(self.vb, reset=reset)
+        self.dmm = self.DigitalMultimeter(self.vb, reset=reset, vb_name=self.name)
 
     class DigitalInputOutput():
         """ Represents Digital Input Output (DIO) Module of Virtual Bench
         device. Allows to read/write digital channels and/or set channels
         to export the start signal of FGEN module or trigger of MSO module.
         """
-        def __init__(self, virtualbench, lines, reset):
+        def __init__(self, virtualbench, lines, reset, vb_name=''):
             """ Acquire DIO module
 
             :param virtualbench: VirtualBench Instance
@@ -308,10 +309,10 @@ class VirtualBench():
             # Parameters & Handle of VirtualBench Instance
             self._device_name = virtualbench.device_name
             self._vb_handle = virtualbench
-            self.name = virtualbench.name + " DIO"
+            self.name = vb_name + " DIO"
             # Validate lines argument
             # store line names & numbers for future reference
-            (self._line_names, self._lines_numbers) = self.validate_lines(
+            (self._line_names, self._line_numbers) = self.validate_lines(
                 lines, return_single_lines=True, validate_init=False)
             # Create DIO Instance
             log.info("Initializing %s." % self.name)
@@ -326,12 +327,13 @@ class VirtualBench():
         def validate_lines(self, lines, return_single_lines=False,
                            validate_init=False):
             """ Validate lines string
-                Allowed patterns:
+                Allowed patterns (case sensitive):
 
                 - ``'VBxxxx-xxxxxxx/dig/0:7'``
                 - ``'VBxxxx-xxxxxxx/dig/0'``
                 - ``'dig/0'``
                 - ``'VBxxxx-xxxxxxx/trig'``
+                - ``'trig'``
 
                 Allowed Line Numbers: 0-7 or trig
 
@@ -352,29 +354,33 @@ class VirtualBench():
                 raise ValueError(
                     "Line specification {0} is not valid!".format(lines))
 
-            (lines, number_of_lines) = self._vb_handle.expand_channel_string(
-                lines)
-            lines = lines.split(',')
-            return_value = ''
+            lines = self._vb_handle.expand_channel_string(lines)[0]
+            lines = lines.split(', ')
+            return_lines = []
             single_lines = []
             for line in lines:
-                # split off lines by last '/'
-                try:
-                    (device, line) = re.match(r'(.*)(?:/)(.+)', line).groups()
-                except IndexError:
-                    error()
+                if line == 'trig':
+                    device = self._device_name
+                # otherwise (device_name/)dig/line or device_name/trig
+                else:
+                    # split off line number by last '/'
+                    try:
+                        (device, line) = re.match(r'(.*)(?:/)(.+)', line).groups()
+                    except IndexError:
+                        error()
                 if (line == 'trig') and (device == self._device_name):
                     single_lines.append('trig')
-                    return_value += self._device_name + '/' + line
+                    return_lines.append(self._device_name + '/' + line)
                 elif int(line) in range(0, 8):
-                    single_lines.append(int(line))
+                    line = int(line)
+                    single_lines.append(line)
                     # validate device name: either 'dig' or 'device_name/dig'
                     if device == 'dig':
                         pass
                     else:
                         try:
                             device = re.match(
-                                r'(VB[0-9]{4}-[0-9a-zA-Z]{7})(?:/)(.+)',
+                                r'(VB[0-9]{4}-[0-9a-zA-Z]{7})(?:/dig)',
                                 device).groups()[0]
                         except (IndexError, KeyError):
                             error()
@@ -382,21 +388,24 @@ class VirtualBench():
                         if not device == self._device_name:
                             error()
                     # constructing line references for output
-                    return_value += self._device_name + '/dig/' + line
+                    return_lines.append((self._device_name + '/dig/%d') % line)
                 else:
                     error()
                 # check if lines are initialized
                 if validate_init is True:
-                    if line not in self._lines_numbers:
+                    if line not in self._line_numbers:
                         raise ValueError(
-                            "Digital Line {0} is not initialized".format(line))
+                            "Digital Line {} is not initialized".format(line))
 
-            return_value = self._vb_handle.collapse_channel_string(
-                return_value)
+            # create comma separated channel string
+            return_lines = ', '.join(return_lines)
+            # collapse string if possible
+            return_lines = self._vb_handle.collapse_channel_string(
+                return_lines)[0]  # drop number of lines
             if return_single_lines is True:
-                return return_value, single_lines
+                return return_lines, single_lines
             else:
-                return return_value
+                return return_lines
 
         def release(self):
             ''' Stops the session and deallocates any resources acquired during
@@ -490,7 +499,7 @@ class VirtualBench():
         device. Allows to measure either DC/AC voltage or current,
         Resistance or Diodes.
         """
-        def __init__(self, virtualbench, reset):
+        def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire DMM module
 
             :param virtualbench: Instance of the VirtualBench class
@@ -501,7 +510,7 @@ class VirtualBench():
             # Parameters & Handle of VirtualBench Instance
             self._device_name = virtualbench.device_name
             self._vb_handle = virtualbench
-            self.name = virtualbench.name + " DMM"
+            self.name = vb_name + " DMM"
             log.info("Initializing %s." % self.name)
             self.dmm = self._vb_handle.acquire_digital_multimeter(
                 self._device_name, reset)
@@ -689,7 +698,7 @@ class VirtualBench():
         """ Represents Function Generator (FGEN) Module of Virtual
         Bench device.
         """
-        def __init__(self, virtualbench, reset):
+        def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire FGEN module
 
             :param virtualbench: Instance of the VirtualBench class
@@ -700,7 +709,7 @@ class VirtualBench():
             # Parameters & Handle of VirtualBench Instance
             self._device_name = virtualbench.device_name
             self._vb_handle = virtualbench
-            self.name = virtualbench.name + " FGEN"
+            self.name = vb_name + " FGEN"
             log.info("Initializing %s." % self.name)
             self.fgen = self._vb_handle.acquire_function_generator(
                 self._device_name, reset)
@@ -893,7 +902,7 @@ class VirtualBench():
         device. Allows to measure oscilloscope data from analog and digital
         channels.
         """
-        def __init__(self, virtualbench, reset):
+        def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire FGEN module
 
             :param virtualbench: Instance of the VirtualBench class
@@ -904,7 +913,7 @@ class VirtualBench():
             # Parameters & Handle of VirtualBench Instance
             self._device_name = virtualbench.device_name
             self._vb_handle = virtualbench
-            self.name = virtualbench.name + " MSO"
+            self.name = vb_name + " MSO"
             log.info("Initializing %s." % self.name)
             self.mso = self._vb_handle.acquire_mixed_signal_oscilloscope(
                 self._device_name, reset)
@@ -957,9 +966,9 @@ class VirtualBench():
             def error(channel=channel):
                 raise ValueError(
                     "Channel specification {0} is not valid!".format(channel))
-            (channels, number_of_channels) = \
-                self._vb_handle.expand_channel_string(channel)
-            return_value = ''
+            channels = self._vb_handle.expand_channel_string(channel)[0]
+            channels = channels.split(', ')
+            return_value = []
             for channel in channels:
                 # split off lines by last '/'
                 try:
@@ -984,8 +993,9 @@ class VirtualBench():
                     if not device == self._device_name:
                         error()
                 # constructing line references for output
-                return_value += 'mso/' + channel
+                return_value.append('mso/' + channel)
 
+            return_value = ', '.join(return_value)
             return_value = self._vb_handle.collapse_channel_string(
                 return_value)
             return return_value
@@ -1460,10 +1470,10 @@ class VirtualBench():
             :return: Dataframe with time and measurement data
             :rtype: pd.DataFrame
             """
-            (analog_data_out, analog_data_stride, analog_t0,
-             digital_data_out, digital_timestamps_out, digital_t0,
-             trigger_timestamp,
-             trigger_reason) = self.read_analog_digital_u64()
+            (analog_data_out, analog_data_stride
+             # , analog_t0, digital_data_out, digital_timestamps_out,
+             # digital_t0, trigger_timestamp, trigger_reason
+             ) = self.read_analog_digital_u64()[0:1]
 
             number_of_samples = int(self.sample_rate *
                                     self.acquisition_time) + 1
@@ -1510,7 +1520,7 @@ class VirtualBench():
     class PowerSupply():
         """ Represents Power Supply (PS) Module of Virtual Bench device
         """
-        def __init__(self, virtualbench, reset):
+        def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire PS module
 
             :param virtualbench: Instance of the VirtualBench class
@@ -1521,7 +1531,7 @@ class VirtualBench():
             # Parameters & Handle of VirtualBench Instance
             self._device_name = virtualbench.device_name
             self._vb_handle = virtualbench
-            self.name = virtualbench.name + " PS"
+            self.name = vb_name + " PS"
             # Create DIO Instance
             reset = strict_discrete_set(reset, [True, False])
             log.info("Initializing %s." % self.name)
