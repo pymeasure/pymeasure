@@ -107,13 +107,15 @@ class VirtualBench():
     def __del__(self):
         """ Ensures the connection is closed upon deletion
         """
-        self.release()
+        if self.vb.library_handle is not None:
+            self.vb.release()
 
-    def release(self):
+    def shutdown(self):
         ''' Finalize the VirtualBench library.
         '''
-        log.info("Releasing %s." % self.name)
+        log.info("Shutting down %s" % self.name)
         self.vb.release()
+        self.isShutdown = True
 
     def get_library_version(self):
         ''' Return the version of the VirtualBench runtime library
@@ -318,11 +320,22 @@ class VirtualBench():
             log.info("Initializing %s." % self.name)
             self.dio = self._vb_handle.acquire_digital_input_output(
                 self._line_names, reset)
+            self.isShutdown = False
 
         def __del__(self):
             """ Ensures the connection is closed upon deletion
             """
-            self.release()
+            if self.isShutdown is not True:
+                self.dio.release()
+        
+        def shutdown(self):
+            ''' Stops the session and deallocates any resources acquired during
+                the session. If output is enabled on any channels, they remain
+                in their current state and continue to output data.
+            '''
+            log.info("Shutting down %s" % self.name)
+            self.dio.release()
+            self.isShutdown = True
 
         def validate_lines(self, lines, return_single_lines=False,
                            validate_init=False):
@@ -406,14 +419,6 @@ class VirtualBench():
                 return return_lines, single_lines
             else:
                 return return_lines
-
-        def release(self):
-            ''' Stops the session and deallocates any resources acquired during
-                the session. If output is enabled on any channels, they remain
-                in their current state and continue to output data.
-            '''
-            log.info("Releasing %s." % self.name)
-            self.dio.release()
 
         def tristate_lines(self, lines):
             ''' Sets all specified lines to a high-impedance state. (Default)
@@ -514,18 +519,21 @@ class VirtualBench():
             log.info("Initializing %s." % self.name)
             self.dmm = self._vb_handle.acquire_digital_multimeter(
                 self._device_name, reset)
+            self.isShutdown = False
 
         def __del__(self):
             """ Ensures the connection is closed upon deletion
             """
-            self.release()
+            if self.isShutdown is not True:
+                self.dmm.release()
 
-        def release(self):
+        def shutdown(self):
             """ Stops the DMM session and deallocates any resources
             acquired during the session.
             """
-            log.info("Releasing %s." % self.name)
+            log.info("Shutting down %s" % self.name)
             self.dmm.release()
+            self.isShutdown = True
 
         @staticmethod
         def validate_range(dmm_function, range):
@@ -720,19 +728,22 @@ class VirtualBench():
             # v: k for k, v in self._waveform_functions.items()}
             self._max_frequency = {"SINE": 20000000, "SQUARE": 5000000,
                                    "TRIANGLE/RAMP": 1000000, "DC": 20000000}
+            self.isShutdown = False
 
         def __del__(self):
             """ Ensures the connection is closed upon deletion
             """
-            self.release()
+            if self.isShutdown is not True:
+                self.fgen.release()
 
-        def release(self):
+        def shutdown(self):
             ''' Stops the session and deallocates any resources acquired during
             the session. If output is enabled on any channels, they remain
             in their current state and continue to output data.
             '''
-            log.info("Releasing %s." % self.name)
+            log.info("Shutting down %s" % self.name)
             self.fgen.release()
+            self.isShutdown = True
 
         def configure_standard_waveform(self, waveform_function, amplitude,
                                         dc_offset, frequency, duty_cycle):
@@ -917,11 +928,22 @@ class VirtualBench():
             log.info("Initializing %s." % self.name)
             self.mso = self._vb_handle.acquire_mixed_signal_oscilloscope(
                 self._device_name, reset)
+            self.isShutdown = False
 
         def __del__(self):
             """ Ensures the connection is closed upon deletion
             """
-            self.release()
+            if self.isShutdown is not True:
+                self.mso.release()
+        
+        def shutdown(self):
+            ''' Removes the session and deallocates any resources acquired
+            during the session. If output is enabled on any channels, they
+            remain in their current state.
+            '''
+            log.info("Shutting down %s" % self.name)
+            self.mso.release()
+            self.isShutdown = True
 
         @staticmethod
         def validate_trigger_instance(trigger_instance):
@@ -942,14 +964,6 @@ class VirtualBench():
                     raise ValueError(
                         "Trigger Instance may be 0, 1, 'A' or 'B'")
             return trigger_instance
-
-        def release(self):
-            ''' Removes the session and deallocates any resources acquired
-            during the session. If output is enabled on any channels, they
-            remain in their current state.
-            '''
-            log.info("Releasing %s." % self.name)
-            self.mso.release()
 
         def auto_setup(self):
             """ Automatically configure the instrument
@@ -1537,11 +1551,22 @@ class VirtualBench():
             log.info("Initializing %s." % self.name)
             self.ps = self._vb_handle.acquire_power_supply(
                 self._device_name, reset)
+            self.isShutdown = False
 
         def __del__(self):
             """ Ensures the connection is closed upon deletion
             """
-            self.release()
+            if self.isShutdown is not True:
+                self.ps.release()
+
+        def shutdown(self):
+            ''' Stops the session and deallocates any resources acquired during
+            the session. If output is enabled on any channels, they remain
+            in their current state and continue to output data.
+            '''
+            log.info("Releasing %s" % self.name)
+            self.ps.release()
+            self.isShutdown = True
 
         def validate_channel(self, channel, current=False, voltage=False):
             """ Check if channel string is valid and if output current/voltage
@@ -1575,14 +1600,6 @@ class VirtualBench():
                 current = strict_range(current, current_range)
                 voltage = strict_range(voltage, voltage_range)
                 return (channel, current, voltage)
-
-        def release(self):
-            ''' Stops the session and deallocates any resources acquired during
-            the session. If output is enabled on any channels, they remain
-            in their current state and continue to output data.
-            '''
-            log.info("Releasing %s." % self.name)
-            self.ps.release()
 
         def configure_voltage_output(self, channel, voltage_level,
                                      current_limit):
