@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
+import typing
 import logging
 
 import copy
@@ -123,18 +123,20 @@ class VISAAdapter(Adapter):
         """
         return self.connection.query_values(command)
 
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
+    def binary_values(self, command: str, header_bytes: typing.Union[str, int], dtype=np.float32):
         """ Returns a numpy array from a query for binary data
-
         :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
+        :param header_bytes: Either name of format of the header to parse and use (see header_fmt arg for query_binary_values in pyvisa) or integer number of bytes to ignore in header
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        self.connection.write(command)
-        binary = self.connection.read_raw()
-        header, data = binary[:header_bytes], binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
+        if isinstance(header_bytes, str):
+            return self.connection.query_binary_values(command, datatype=dtype.char, container=np.array, header_fmt=header_bytes)
+        else:
+            self.connection.write(command)
+            binary = self.connection.read_raw()
+            header, data = binary[:header_bytes], binary[header_bytes:]
+            return np.fromstring(data, dtype=dtype)
 
     def config(self, is_binary=False, datatype='str',
                container=np.array, converter='s',
