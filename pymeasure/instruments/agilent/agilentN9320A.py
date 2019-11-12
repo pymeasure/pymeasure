@@ -22,20 +22,20 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
-
 from time import sleep
 import numpy as np
 import pandas as pd
+import logging
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
-
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 class AgilentN9320A(Instrument):
     """ Represents the AgilentN9320A Spectrum Analyzer
     and provides a high-level interface for taking scans of
-    high-frequency spectrums
-    """
+    high-frequency spectrums."""
 
     FREQ_LIMIT = [9e3, 3.08e9] #Frequency limit in Hz
     SPAN_LIMIT = [0, 3e9]      #In zero span the X axis represents time
@@ -54,70 +54,61 @@ class AgilentN9320A(Instrument):
     start_frequency = Instrument.control(
         ":SENS:FREQ:STAR?", ":SENS:FREQ:STAR %e Hz",
         """ A floating point property that represents the start frequency
-        in Hz. This property can be set.
-        """,
+        in Hz. This property can be set.""",
 		validator=strict_range,
 		values=FREQ_LIMIT
     )
     stop_frequency = Instrument.control(
         ":SENS:FREQ:STOP?", ":SENS:FREQ:STOP %e Hz",
         """ A floating point property that represents the stop frequency
-        in Hz. This property can be set.
-        """,
+        in Hz. This property can be set.""",
 		validator=strict_range,
 		values=FREQ_LIMIT
     )
     center_frequency = Instrument.control(
         ":SENS:FREQ:CENT?", ":SENS:FREQ:CENT %eHz",
         """ A floating point property that represents the center frequency
-        in Hz. This property can be set.
-        """,
+        in Hz. This property can be set.""",
 		validator=strict_range,
 		values=FREQ_LIMIT
     )
     span = Instrument.control(
         ":SENS:FREQ:SPAN?", ":SENS:FREQ:SPAN %eHz",
         """ A floating point property that represents the frequency span
-        in Hz. This property can be set.
-        """,
+        in Hz. This property can be set.""",
 		validator=strict_range,
 		values=SPAN_LIMIT
     )
     sweep_time = Instrument.control(
         ":SENS:SWE:TIME?", ":SENS:SWE:TIME %.2e",
         """ A floating point property that represents the sweep time
-        in seconds. This property can be set.
-        """
+        in seconds. This property can be set."""
     )
     ref_level = Instrument.control(
         ":DISP:WIND:TRAC:Y:SCAL:RLEV?", ":DISP:WIND:TRAC:Y:SCAL:RLEV %.2f",
         """ A floating point property that represents the reference level
-        in dBm. This property can be set.
-        """,
+        in dBm. This property can be set.""",
         validator=strict_range,
         values=REF_LIMIT
     )
-    att = Instrument.control(
+    attenuation = Instrument.control(
         ":SENS:POW:RF:ATT?", ":SENS:POW:RF:ATT %d",
         """ A floating point property that represents the input attenuator
-        in dB. This property can be set.
-        """,
+        in dB. This property can be set.""",
         validator=strict_range,
         values=ATT_LIMIT
     )
-    res_bw = Instrument.control(
+    resolution_bandwidth = Instrument.control(
         ":SENS:BAND:RES?", ":SENS:BAND:RES %e",
         """ A floating point property that represents the resolution
-        bandwidth in Hz. This property can be set.
-        """,
+        bandwidth in Hz. This property can be set.""",
         validator=strict_discrete_set,
         values=RES_LIMIT
     )
-    vid_bw = Instrument.control(
+    video_bandwidth = Instrument.control(
         ":SENS:BAND:VID?", ":SENS:BAND:VID %e",
         """ A floating point property that represents the video
-        bandwidth in Hz. This property can be set.
-        """,
+        bandwidth in Hz. This property can be set.""",
         validator=strict_discrete_set,
         values=VID_LIMIT
     )
@@ -128,54 +119,79 @@ class AgilentN9320A(Instrument):
             "Agilent AgilentN9320A Spectrum Analyzer",
             **kwargs
         )
-    def init_imm(self):
+    def display_on(self):
+        """Switch on the display"""
+        self.write("DISP:ENAB 1")
+
+    def display_off(self):
+        """Switch off the display."""
+        self.write("DISP:ENAB 0")
+
+    def init_immediate(self):
+        """This method initiates a sweep if not in a measurement. If
+        in a measurement, it triggers the measurement."""
         self.write("INIT:IMM")
 
-    def init_cont(self):
+    def init_continuos(self):
+        """Trigger system is continuosly initiated."""
         self.write("INIT:CONT 1")
 
     def init_single(self):
+        """The sweep system remains in an idle state until init_continuos
+        is set or init_immediate is received. When init_immediate
+        command received, it will go through a single sweep cycle, and then
+        return to the idle state."""
         self.write("INIT:CONT 0")
 
     def opc(self):
+        """Operation complete? Returns 1 or 0."""
         return int(self.ask("*OPC?"))
 
-    def avg_set(self, value=10):
+    def average_number(self, value=10):
+        """Set the number of averages."""
         self.write("SENS:AVER:COUN %d" % strict_range(value, [1, 1000]))
 
-    def avg(self, command='ON'):
-        self.write("SENS:AVER:STAT %s" % strict_discrete_set(command,
-                                                             ['ON', 'OFF']))
+    def average_on(self):
+        self.write("SENS:AVER:STAT ON")
+        """Activate the averaging."""
+
+    def average_off(self):
+        """De-activate the averaging."""
+        self.write("SENS:AVER:STAT OFF")
+
+    def set_peak_max(self):
+        """Peak search method: the max value of the trace is taken. Next peak
+        commands always use threshold and excursion method."""
+        self.write("CALC:MARK:PEAK:SEAR:MODE MAX")
+
+    def set_peak_par(self):
+        """Peak search method: depends on peak threshold and excursion."""
+        self.write("CALC:MARK:PEAK:SEAR:MODE PAR")
+
+    def peak_search(self, number=1):
+        """Peak search."""
+        self.write("CALC:MARK%s:MAX" % number)
 
     def set_peak_th(self, number=1, threshold=PEAK_TH, excursion=PEAK_EXC):
-        """Peak search mehtod using threshold and excursion"""
-        self.write("CALC:MARK:PEAK:SEAR:MODE PAR")
+        """Peak search mehtod using threshold and excursion."""
+        self.set_peak_par()
         self.write("CALC:MARK:PEAK:THR:EXC %.2f" % excursion)
         self.write("CALC:MARK%s:PEAK:THR %.2f" % (number, threshold))
         self.write("CALC:MARK:PEAK:THR:STATE 1")
 
-    def set_peak_max(self):
-        """Peak search method: the max value of the trace is taken"""
-        self.write("CALC:MARK:PEAK:SEAR:MODE MAX")
-
-    def max(self, number=1):
-        """Peak search"""
-        self.write("CALC:MARK%s:MAX" % number)
-
-    def max_x(self, number=1):
-        """Returns the frequency in Hz at marker position"""
+    def marker_x(self, number=1):
+        """Returns the frequency in Hz at marker position."""
         return float(self.ask("CALC:MARK%s:X?" % number))
 
-    def max_y(self, number=1):
-        """Returns the amplitude in dBm at marker position"""
+    def marker_y(self, number=1):
+        """Returns the amplitude in dBm at marker position."""
         return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4f')
 
     def peak(self, number=1, avg=1, center=False, lr=False):
         """ Returns the frequency and the intensity of the highest peak.
         It can center the central frequency to the central peak.
         It can also look the first peaks at both left and right
-        around the highest one.
-        """
+        around the highest one."""
         self.avg('ON')
         self.avg_set(avg)
         sleep(self.DELAY)
