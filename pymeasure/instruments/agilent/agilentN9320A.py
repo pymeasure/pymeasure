@@ -32,6 +32,10 @@ from pymeasure.instruments.validators import strict_range, strict_discrete_set
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+class NoPeakError(Error):
+    """Raised when no peak is found"""
+    pass
+
 class AgilentN9320A(Instrument):
     """ Represents the AgilentN9320A Spectrum Analyzer
     and provides a high-level interface for taking scans of
@@ -113,12 +117,13 @@ class AgilentN9320A(Instrument):
         values=VID_LIMIT
     )
 
-    def __init__(self, resourceName, **kwargs):
-        super(AgilentN9320A, self).__init__(
-            resourceName,
+    def __init__(self, adapter, **kwargs):
+         (AgilentN9320A, self).__init__(
+            adapter,
             "Agilent AgilentN9320A Spectrum Analyzer",
             **kwargs
         )
+
     def display_on(self):
         """Switch on the display"""
         self.write("DISP:ENAB 1")
@@ -143,9 +148,35 @@ class AgilentN9320A(Instrument):
         return to the idle state."""
         self.write("INIT:CONT 0")
 
-    def opc(self):
-        """Operation complete? Returns 1 or 0."""
+    def set_opc_sqr(self, timeout=10):
+        """Set the instrument to generate SRQ when operation is complete:
+        remember to run a *CLS before the command that you want
+        to sync/wait for. Timeout in seconds."""
+        self.adapter.timeout=timeout*1000
+        self.write("*ESE 1;*SRE 32")
+
+    def opc(self, timeout=10):
+        """Operation complete? Returns 1 or 0. You may need to change the
+        visa timeout (in ms) for long lasting operations.
+        Timeout in seconds."""
+        self.adapter.timeout=timeout*1000
         return int(self.ask("*OPC?"))
+
+    def error_check(self, value=None):
+        """It look for the last entry in the error queue. If value is defined
+        it returns true if the last error corresponds to value."""
+        if value==None:
+            return self.ask("SYST:ERR?")
+        else:
+            return self.ask("SYST:ERR?")==value
+
+    def marker_x(self, number=1):
+        """Returns the frequency in Hz at marker position."""
+        return float(self.ask("CALC:MARK%s:X?" % number))
+
+    def marker_y(self, number=1):
+        """Returns the amplitude in dBm at marker position."""
+        return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4f')
 
     def average_number(self, value=10):
         """Set the number of averages."""
@@ -164,92 +195,102 @@ class AgilentN9320A(Instrument):
         commands always use threshold and excursion method."""
         self.write("CALC:MARK:PEAK:SEAR:MODE MAX")
 
-    def set_peak_par(self):
-        """Peak search method: depends on peak threshold and excursion."""
+    def set_peak_par(self, number=1, threshold=PEAK_TH, excursion=PEAK_EXC):
+        """Peak search method using threshold and excursion."""
         self.write("CALC:MARK:PEAK:SEAR:MODE PAR")
-
-    def peak_search(self, number=1):
-        """Peak search."""
-        self.write("CALC:MARK%s:MAX" % number)
-
-    def set_peak_th(self, number=1, threshold=PEAK_TH, excursion=PEAK_EXC):
-        """Peak search mehtod using threshold and excursion."""
-        self.set_peak_par()
         self.write("CALC:MARK:PEAK:THR:EXC %.2f" % excursion)
         self.write("CALC:MARK%s:PEAK:THR %.2f" % (number, threshold))
         self.write("CALC:MARK:PEAK:THR:STATE 1")
 
-    def marker_x(self, number=1):
-        """Returns the frequency in Hz at marker position."""
-        return float(self.ask("CALC:MARK%s:X?" % number))
+    def peak_search(self, number=1):
+        """Peak search: the search method can be set with set_peak_par or
+        set_peak_max."""
+        self.write("CALC:MARK%s:MAX" % number)
 
-    def marker_y(self, number=1):
-        """Returns the amplitude in dBm at marker position."""
-        return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4f')
+    def next_peak_right(self,number=1):
+        """Search the next peak on the right of the actual position of the
+        marker. It always use threshold and excursion. """
+        self.write("CALC:MARK%s:MAX:RIGHT" %number)
 
-    def peak(self, number=1, avg=1, center=False, lr=False):
+    def next_peak_left(self,number=1):
+        """Search the next peak on the left of the actual position of the
+        marker. It always use threshold and excursion. """
+        self.write("CALC:MARK%s:MAX:LEFT" %number)
+
+    def peak_exist(self,number=1):
+        """Check if there is a peak in the trace. It has to be used after
+        peak_search, next_peak_left or next_peak_right. If no error it returns
+        [freq, amplitude] of the cursor number-th. If error it returns
+        [NAN, NAN]."""
+        if self.error_check('780 No Peak Found'):
+            log.info('No peak found!')
+            return False, [[float('NAN'), float('NAN')]]
+        else:
+            x =  self.marker_x(number)
+            log.info('Peak found at %g Hz' %x)
+            return True, [[x ,self.marker_y(number)]]
+
+    def peak_output(self, number=1, avg=5, center=False, lr=False):
         """ Returns the frequency and the intensity of the highest peak.
         It can center the central frequency to the central peak.
         It can also look the first peaks at both left and right
         around the highest one."""
-        self.avg('ON')
-        self.avg_set(avg)
-        sleep(self.DELAY)
+        self.set_opc_sqr(self, timeout=self.D_FACTOR*self.sweep_time*avg)
         self.init_single()
-        self.init_imm()
+        self.average_on()
+        self.average_number(avg)
+        self.set_peak_par(number,self.PEAK_TH,self.PEAK_EXC)
 
-        print('Averaging for %.1f seconds' % (avg*self.sweep_time))
-        sleep(avg*self.D_FACTOR*self.sweep_time)
-
-        #I'm not sure about this part
-        while True:
-            if self.opc() == 1:
-                break
-            sleep(2)
-
-        self.set_peak_th(number,self.PEAK_TH,self.PEAK_EXC)
-        self.max(number)
         sleep(self.DELAY)
-        if self.ask("SYST:ERR?") == '780 No Peak Found':
-            print('No peak found!')
-            peaks = [[float('NAN'), float('NAN')]]
-        else:
-            x = self.max_x(number)
-            y = self.max_y(number)
+
+        self.write("*CLS")
+        self.init_immediate()
+        self.peak_search(number)
+        is_there, peaks = self.peak_exist(number)
+
+        if  is_there:
             if center:
                 sleep(self.DELAY)
                 self.write("CALC:MARK%s:SET:CENT" % number)
-            print('MAX founded at %s Hz, amplitude %s dBm' % (x, y))
-            peaks = [[x, y]]
-
             if lr == True:
-                self.write("CALC:MARK%s:MAX:LEFT" % number)
+                self.next_peak_left(number)
+                peaks.append(self.peak_exist(number)[1])
                 sleep(self.DELAY)
-                if self.ask("SYST:ERR?") == '780 No Peak Found':
-                    print('No peak at left')
-                    x = float('NAN')
-                    y = float('NAN')
-                else:
-                    x = self.max_x(number)
-                    y = self.max_y(number)
-                    print('LEFT founded at %s Hz, amplitude %s dBm' % (x, y))
-                peaks.append([x, y])
+                self.peak_search(number)
+                self.next_peak_right(number)
+                peaks.append(self.peak_exist(number)[1])
+        else:
+            log.info('No peak in the trace.')
 
-                print('Back to max')
-                self.max(number)
-                print('Looking right')
-                self.write("CALC:MARK%s:MAX:RIGHT" % number)
-                sleep(self.DELAY)
-                if self.ask("SYST:ERR?") == '780 No Peak Found':
-                    print('No peak at right')
-                    x = float('NAN')
-                    y = float('NAN')
-                else:
-                    x = self.max_x(number)
-                    y = self.max_y(number)
-                    print('RIGHT founded at %s Hz, amplitude %s dBm' % (x, y))
-                peaks.append([x, y])
         return peaks
+
+            # if lr == True:
+            #     self.write("CALC:MARK%s:MAX:LEFT" % number)
+            #     sleep(self.DELAY)
+            #     if self.ask("SYST:ERR?") == '780 No Peak Found':
+            #         print('No peak at left')
+            #         x = float('NAN')
+            #         y = float('NAN')
+            #     else:
+            #         x = self.max_x(number)
+            #         y = self.max_y(number)
+            #         print('LEFT founded at %s Hz, amplitude %s dBm' % (x, y))
+            #     peaks.append([x, y])
+            #
+            #     print('Back to max')
+            #     self.max(number)
+            #     print('Looking right')
+            #     self.write("CALC:MARK%s:MAX:RIGHT" % number)
+            #     sleep(self.DELAY)
+            #     if self.ask("SYST:ERR?") == '780 No Peak Found':
+            #         print('No peak at right')
+            #         x = float('NAN')
+            #         y = float('NAN')
+            #     else:
+            #         x = self.max_x(number)
+            #         y = self.max_y(number)
+            #         print('RIGHT founded at %s Hz, amplitude %s dBm' % (x, y))
+            #     peaks.append([x, y])
 
 
     def trace(self, number=1):
