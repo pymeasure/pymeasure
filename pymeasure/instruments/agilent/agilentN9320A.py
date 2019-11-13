@@ -262,36 +262,7 @@ class AgilentN9320A(Instrument):
         else:
             log.info('No peak in the trace.')
 
-        return peaks
-
-            # if lr == True:
-            #     self.write("CALC:MARK%s:MAX:LEFT" % number)
-            #     sleep(self.DELAY)
-            #     if self.ask("SYST:ERR?") == '780 No Peak Found':
-            #         print('No peak at left')
-            #         x = float('NAN')
-            #         y = float('NAN')
-            #     else:
-            #         x = self.max_x(number)
-            #         y = self.max_y(number)
-            #         print('LEFT founded at %s Hz, amplitude %s dBm' % (x, y))
-            #     peaks.append([x, y])
-            #
-            #     print('Back to max')
-            #     self.max(number)
-            #     print('Looking right')
-            #     self.write("CALC:MARK%s:MAX:RIGHT" % number)
-            #     sleep(self.DELAY)
-            #     if self.ask("SYST:ERR?") == '780 No Peak Found':
-            #         print('No peak at right')
-            #         x = float('NAN')
-            #         y = float('NAN')
-            #     else:
-            #         x = self.max_x(number)
-            #         y = self.max_y(number)
-            #         print('RIGHT founded at %s Hz, amplitude %s dBm' % (x, y))
-            #     peaks.append([x, y])
-
+        return peakss
 
     def trace(self, number=1):
         """ Returns two numpy arrays, data and frequency, for a particular
