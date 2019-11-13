@@ -32,10 +32,6 @@ from pymeasure.instruments.validators import strict_range, strict_discrete_set
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-class NoPeakError(Error):
-    """Raised when no peak is found"""
-    pass
-
 class AgilentN9320A(Instrument):
     """ Represents the AgilentN9320A Spectrum Analyzer
     and provides a high-level interface for taking scans of
@@ -118,7 +114,7 @@ class AgilentN9320A(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-         (AgilentN9320A, self).__init__(
+         super(AgilentN9320A, self).__init__(
             adapter,
             "Agilent AgilentN9320A Spectrum Analyzer",
             **kwargs
@@ -148,19 +144,16 @@ class AgilentN9320A(Instrument):
         return to the idle state."""
         self.write("INIT:CONT 0")
 
-    def set_opc_sqr(self, timeout=10):
+    def set_opc_sqr(self):
         """Set the instrument to generate SRQ when operation is complete:
         remember to run a *CLS before the command that you want
         to sync/wait for. Timeout in seconds."""
-        self.adapter.timeout=timeout*1000
         self.write("*ESE 1;*SRE 32")
 
-    def opc(self, timeout=10):
-        """Operation complete? Returns 1 or 0. You may need to change the
-        visa timeout (in ms) for long lasting operations.
-        Timeout in seconds."""
-        self.adapter.timeout=timeout*1000
-        return int(self.ask("*OPC?"))
+    def opc(self):
+        """It returns 1 when operation complete. You may need to change the
+        visa timeout (in ms) for long lasting operations."""
+        self.ask("*OPC?")
 
     def error_check(self, value=None):
         """It look for the last entry in the error queue. If value is defined
@@ -226,16 +219,17 @@ class AgilentN9320A(Instrument):
             log.info('No peak found!')
             return False, [[float('NAN'), float('NAN')]]
         else:
-            x =  self.marker_x(number)
-            log.info('Peak found at %g Hz' %x)
-            return True, [[x ,self.marker_y(number)]]
+            x = float(self.marker_x(number))
+            y = float(self.marker_y(number))
+            log.info('Peak found at %g Hz, amplitude %g dBm' % (x, y))
+            return True, [[x ,y]]
 
     def peak_output(self, number=1, avg=5, center=False, lr=False):
         """ Returns the frequency and the intensity of the highest peak.
         It can center the central frequency to the central peak.
         It can also look the first peaks at both left and right
         around the highest one."""
-        self.set_opc_sqr(self, timeout=self.D_FACTOR*self.sweep_time*avg)
+
         self.init_single()
         self.average_on()
         self.average_number(avg)
@@ -243,8 +237,11 @@ class AgilentN9320A(Instrument):
 
         sleep(self.DELAY)
 
-        self.write("*CLS")
+        if self.adapter.connection.timeout < avg*self.D_FACTOR*self.sweep_time:
+            self.adapter.connection.timeout = avg*self.D_FACTOR*self.sweep_time
+
         self.init_immediate()
+        self.opc()
         self.peak_search(number)
         is_there, peaks = self.peak_exist(number)
 
@@ -262,7 +259,7 @@ class AgilentN9320A(Instrument):
         else:
             log.info('No peak in the trace.')
 
-        return peakss
+        return peaks
 
     def trace(self, number=1):
         """ Returns two numpy arrays, data and frequency, for a particular
