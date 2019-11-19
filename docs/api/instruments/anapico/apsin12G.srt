@@ -1,5 +1,5 @@
 #############################
-Anapico Apsin12G RF generator
+Anapico APSIN12G RF generator
 #############################
 
 .. autoclass:: pymeasure.instruments.anapico.APSIN12G
