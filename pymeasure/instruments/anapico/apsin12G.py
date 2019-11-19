@@ -23,12 +23,11 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_range, discrete_strict_range
 
 class APSIN12G(Instrument):
     """ Represents the Anapico APSIN12G Signal Generator with option 9K,
-    HP and GPIB.
-    """
+    HP and GPIB."""
     FREQ_LIMIT = [9e3, 12e9]
     POW_LIMIT = [-30, 27]
 
@@ -40,11 +39,19 @@ class APSIN12G(Instrument):
         values=POW_LIMIT
     )
     frequency = Instrument.control(
-        ":FREQ:CW?;", ":FREQ:CW %eHz;",
+        "SOURC:FREQ:CW?;", "SOURC:FREQ:CW %eHz;",
         """ A floating point property that represents the output frequency
         in Hz. This property can be set. """,
         validator=strict_range,
         values=FREQ_LIMIT
+    )
+    blanking = Instrument.control(
+        ":OUTP:BLAN:STAT %s", ":OUTP:BLAN:STAT?",
+        """ A floating point property that represents the blanking of output power
+        when frequency is changed. ON makes the output to be blanked (off) while
+        changing frequency. This property can be set. """,
+        validator=discrete_strict_range,
+        values=['ON','OFF']
     )
 
     def __init__(self, resourceName, **kwargs):
@@ -54,13 +61,11 @@ class APSIN12G(Instrument):
             **kwargs
         )
 
-    def enableRF(self):
-        """ Enables the RF output.
-        """
+    def enable_rf(self):
+        """ Enables the RF output."""
         self.write("OUTP:STAT 1")
 
-    def disableRF(self):
-        """ Disables the RF output.
-        """
+    def disable_rf(self):
+        """ Disables the RF output."""
         self.write("OUTP:STAT 0")
 
