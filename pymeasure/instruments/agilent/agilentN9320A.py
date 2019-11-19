@@ -41,6 +41,7 @@ class AgilentN9320A(Instrument):
     SPAN_LIMIT = [0, 3e9]      #In zero span the X axis represents time
     REF_LIMIT = [-100, 50]     #Reference level limit in dBm
     ATT_LIMIT = [0, 70]        #Input attenuator limit in dB
+    UNITS = ['DBM', 'DBMV', 'DBUV', 'DBUA', 'V', 'W', 'A']
     RES_LIMIT = [10, 30, 100, 300, 1000, 3000,
                 10000, 30000, 100000, 300000]      #RBW values
     VID_LIMIT = RES_LIMIT       #VBW values
@@ -97,6 +98,13 @@ class AgilentN9320A(Instrument):
         in dB. This property can be set.""",
         validator=strict_range,
         values=ATT_LIMIT
+    )
+    unit = Instrument.control(
+        "UNIT:POW %s", "UNIT:POW?",
+        """ A floating point property that represents the amplitude unit.
+        This property can be set.""",
+        validator=strict_discrete_set,
+        values=UNITS
     )
     resolution_bandwidth = Instrument.control(
         ":SENS:BAND:RES?", ":SENS:BAND:RES %e",
@@ -226,6 +234,8 @@ class AgilentN9320A(Instrument):
 
     def peak_output(self, number=1, avg=5, center=False, lr=False):
         """ Returns the frequency and the intensity of the highest peak.
+        Search method can be set with  set_peak_par or set_peak_max,
+        before calling this method.
         It can center the central frequency to the central peak.
         It can also look the first peaks at both left and right
         around the highest one."""
@@ -233,13 +243,13 @@ class AgilentN9320A(Instrument):
         self.init_single()
         self.average_on()
         self.average_number(avg)
-        self.set_peak_par(number,self.PEAK_TH,self.PEAK_EXC)
 
         sleep(self.DELAY)
 
-        if self.adapter.connection.timeout < avg*self.D_FACTOR*self.sweep_time:
-            self.adapter.connection.timeout = avg*self.D_FACTOR*self.sweep_time
+        if self.adapter.connection.timeout < (avg*self.D_FACTOR*self.sweep_time)*1000:
+            self.adapter.connection.timeout = (avg*self.D_FACTOR*self.sweep_time)*1000
 
+        log.info('Timeout is : %f ms ' % self.adapter.connection.timeout)
         self.init_immediate()
         self.opc()
         self.peak_search(number)
