@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, discrete_strict_range
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 class APSIN12G(Instrument):
     """ Represents the Anapico APSIN12G Signal Generator with option 9K,
@@ -50,7 +50,7 @@ class APSIN12G(Instrument):
         """ A floating point property that represents the blanking of output power
         when frequency is changed. ON makes the output to be blanked (off) while
         changing frequency. This property can be set. """,
-        validator=discrete_strict_range,
+        validator=strict_discrete_set,
         values=['ON','OFF']
     )
 
