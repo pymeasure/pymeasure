@@ -39,6 +39,29 @@ def strict_range(value, values):
             value, min(values), max(values)
         ))
 
+def strict_discrete_range(value, values, step):
+    """ Provides a validator function that returns the value
+    if its value is less than the maximum and greater than the
+    minimum of the range and is a multiple of step. 
+    Otherwise it raises a ValueError.
+
+    :param value: A value to test
+    :param values: A range of values (range, list, etc.)
+    :param step: Minimum stepsize (resolution limit)
+    :raises: ValueError if the value is out of the range
+    """
+    if (min(values) <= value <= max(values)): 
+        if (value/step).is_integer():
+            return value
+        else:
+            raise ValueError('Value of {:g} is not a multiple of {:g}'.format(
+                value, step
+            ))
+    else:
+        raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
+            value, min(values), max(values)
+        ))
+
 
 def strict_discrete_set(value, values):
     """ Provides a validator function that returns the value
