@@ -604,7 +604,7 @@ class AgilentB1500(Instrument):
         command = "AIT %d, %d" % (adc_type.value, mode.value)
         if not N == '':
             if mode == ADCMode['TIME']:
-                command += (", %f" % N)
+                command += (", %g" % N)
             else:
                 command += (", %d" % N)
         self.write(command)
@@ -670,7 +670,7 @@ class AgilentB1500(Instrument):
         :type offset: int, optional
         """
         wait_type = WaitTimeType.get(wait_type).value
-        self.write('WAT %d, %f, %d' % (wait_type, N, offset))
+        self.write('WAT %d, %g, %d' % (wait_type, N, offset))
         self.check_errors()
 
     ######################################
@@ -702,7 +702,6 @@ class AgilentB1500(Instrument):
                                           defaults to 0
         :type measurement_trigger_delay: float, optional
         """
-        self.write("WT %f, %f, %f, %f, %f" %
         hold = strict_discrete_range(hold, (0, 655.35), 0.01)
         delay = strict_discrete_range(delay, (0, 65.535), 0.0001)
         step_delay = strict_discrete_range(step_delay, (0, 1), 0.0001)
@@ -710,6 +709,7 @@ class AgilentB1500(Instrument):
             step_trigger_delay, (0, delay), 0.0001)
         measurement_trigger_delay = strict_discrete_range(
             measurement_trigger_delay, (0, 65.535), 0.0001)
+        self.write("WT %g, %g, %g, %g, %g" %
                    (hold, delay, step_delay, step_trigger_delay,
                     measurement_trigger_delay))
         self.check_errors()
@@ -768,7 +768,6 @@ class AgilentB1500(Instrument):
         :param hold_base: Base hold time, defaults to 0
         :type hold_base: float, optional
         """
-        self.write("MT %f, %f, %d, %f" %
         n_channels = self.query_meas_settings()['Measurement Channels']
         n_channels = len(n_channels.split(', '))
         if interval >= 0.002:
@@ -783,11 +782,13 @@ class AgilentB1500(Instrument):
                     hold_bias = strict_discrete_range(
                         hold_bias, (0, 655.35), 0.01)
                 except ValueError as error2:
-                    raise ValueError('Bias hold time does not match either '
+                    raise ValueError(
+                        'Bias hold time does not match either '
                         + 'of the two possible specifications: '
                         + '{} {}'.format(error1, error2))
-            if interval >= 0.0001 + 0.00002 * (n_channels -1):
-                interval = strict_discrete_range(interval, (0, 0.00199), 0.00001)
+            if interval >= 0.0001 + 0.00002 * (n_channels - 1):
+                interval = strict_discrete_range(interval,
+                                                 (0, 0.00199), 0.00001)
             else:
                 raise ValueError(
                     'Sampling interval {} is too short.'.format(interval))
@@ -795,6 +796,7 @@ class AgilentB1500(Instrument):
         # ToDo: different restrictions apply for logarithmic sampling!
         hold_base = strict_discrete_range(hold_base, (0, 655.35), 0.01)
 
+        self.write("MT %g, %g, %d, %g" %
                    (hold_bias, interval, number, hold_base))
         self.check_errors()
 
@@ -1086,9 +1088,9 @@ class SMU():
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
-        cmd += " %d, %d, %f" % (self.channel, source_range, output)
+        cmd += " %d, %d, %g" % (self.channel, source_range, output)
         if not comp == '':
-            cmd += ", %f" % comp
+            cmd += ", %g" % comp
             if not comp_polarity == '':
                 comp_polarity = CompliancePolarity.get(comp_polarity).value
                 cmd += ", %d" % comp_polarity
@@ -1231,10 +1233,10 @@ class SMU():
                      "have the same polarity."))
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
-        cmd += ("%d, %d, %d, %f, %f, %f, %f" %
+        cmd += ("%d, %d, %d, %g, %g, %g, %g" %
                 (self.channel, mode, source_range, start, stop, steps, comp))
         if not Pcomp == '':
-            cmd += ", %f" % Pcomp
+            cmd += ", %g" % Pcomp
         self.write(cmd)
         self.check_errors()
 
@@ -1267,10 +1269,10 @@ class SMU():
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += ("%d, %d, %f, %f, %f" %
+        cmd += ("%d, %d, %g, %g, %g" %
                 (self.channel, source_range, start, stop, comp))
         if not Pcomp == '':
-            cmd += ", %f" % Pcomp
+            cmd += ", %g" % Pcomp
         self.write(cmd)
         self.check_errors()
 
@@ -1303,7 +1305,7 @@ class SMU():
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += ("%d, %d, %f, %f, %f" %
+        cmd += ("%d, %d, %g, %g, %g" %
                 (self.channel, source_range, base, bias, comp))
         self.write(cmd)
         self.check_errors()
