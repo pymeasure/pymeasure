@@ -39,10 +39,11 @@ def strict_range(value, values):
             value, min(values), max(values)
         ))
 
+
 def strict_discrete_range(value, values, step):
     """ Provides a validator function that returns the value
     if its value is less than the maximum and greater than the
-    minimum of the range and is a multiple of step. 
+    minimum of the range and is a multiple of step.
     Otherwise it raises a ValueError.
 
     :param value: A value to test
@@ -50,7 +51,7 @@ def strict_discrete_range(value, values, step):
     :param step: Minimum stepsize (resolution limit)
     :raises: ValueError if the value is out of the range
     """
-    if (min(values) <= value <= max(values)): 
+    if (min(values) <= value <= max(values)):
         if (value/step).is_integer():
             return value
         else:
@@ -139,7 +140,8 @@ def truncated_discrete_set(value, values):
 
 
 def joined_validators(*validators):
-    """ Join a list of validators together as a single.  Expects a list of validator functions and values.
+    """ Join a list of validators together as a single.
+    Expects a list of validator functions and values.
 
     :param validators: an iterable of other validators
     """
