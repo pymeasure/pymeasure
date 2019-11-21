@@ -32,7 +32,8 @@ from enum import IntEnum
 from collections import Counter, namedtuple, OrderedDict
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_discrete_set,
-                                              strict_range)
+                                              strict_range,
+                                              strict_discrete_range)
 from pymeasure.instruments import (Instrument,
                                    RangeException)
 
@@ -701,19 +702,14 @@ class AgilentB1500(Instrument):
                                           defaults to 0
         :type measurement_trigger_delay: float, optional
         """
-        hold = strict_range(hold*100, range(0, 65536)) / 100
-        # resolution 10ms
-        delay = strict_range(delay*10000, range(0, 655351)) / 10000
-        # resolution 0.1ms
-        step_delay = strict_range(step_delay*10000, range(0, 10001)) / 10000
-        # resolution 0.1ms
-        step_trigger_delay = strict_range(
-            step_trigger_delay*10000, range(0, 10001)) / 10000
-        # resolution 0.1ms
-        measurement_trigger_delay = strict_range(
-            measurement_trigger_delay*10000, range(0, 655351)) / 10000
-        # resolution 0.1ms
         self.write("WT %f, %f, %f, %f, %f" %
+        hold = strict_discrete_range(hold, (0, 655.35), 0.01)
+        delay = strict_discrete_range(delay, (0, 65.535), 0.0001)
+        step_delay = strict_discrete_range(step_delay, (0, 1), 0.0001)
+        step_trigger_delay = strict_discrete_range(
+            step_trigger_delay, (0, delay), 0.0001)
+        measurement_trigger_delay = strict_discrete_range(
+            measurement_trigger_delay, (0, 65.535), 0.0001)
                    (hold, delay, step_delay, step_trigger_delay,
                     measurement_trigger_delay))
         self.check_errors()
@@ -772,16 +768,33 @@ class AgilentB1500(Instrument):
         :param hold_base: Base hold time, defaults to 0
         :type hold_base: float, optional
         """
-        hold_bias = strict_range(hold_bias*100, range(0, 65536)) / 100
-        # resolution 10ms
-        interval = strict_range(interval*10000, range(0, 655351)) / 10000
-        # resolution 0.1ms
-        # restrictions apply (number of measurement channels)
-        number = strict_range(number, range(0, 100002))
-        # restrictions apply (number of measurement channels)
-        hold_base = strict_range(hold_base*100, range(0, 65536)) / 100
-        # resolution 0.01s
         self.write("MT %f, %f, %d, %f" %
+        n_channels = self.query_meas_settings()['Measurement Channels']
+        n_channels = len(n_channels.split(', '))
+        if interval >= 0.002:
+            hold_bias = strict_discrete_range(hold_bias, (0, 655.35), 0.01)
+            interval = strict_discrete_range(interval, (0, 65.535), 0.001)
+        else:
+            try:
+                hold_bias = strict_discrete_range(
+                    hold_bias, (-0.09, -0.0001), 0.0001)
+            except ValueError as error1:
+                try:
+                    hold_bias = strict_discrete_range(
+                        hold_bias, (0, 655.35), 0.01)
+                except ValueError as error2:
+                    raise ValueError('Bias hold time does not match either '
+                        + 'of the two possible specifications: '
+                        + '{} {}'.format(error1, error2))
+            if interval >= 0.0001 + 0.00002 * (n_channels -1):
+                interval = strict_discrete_range(interval, (0, 0.00199), 0.00001)
+            else:
+                raise ValueError(
+                    'Sampling interval {} is too short.'.format(interval))
+        number = strict_discrete_range(number, (0, int(100001/n_channels)), 1)
+        # ToDo: different restrictions apply for logarithmic sampling!
+        hold_base = strict_discrete_range(hold_base, (0, 655.35), 0.01)
+
                    (hold_bias, interval, number, hold_base))
         self.check_errors()
 
