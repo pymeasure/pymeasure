@@ -100,7 +100,7 @@ class AgilentN9320A(Instrument):
         values=ATT_LIMIT
     )
     unit = Instrument.control(
-        "UNIT:POW %s", "UNIT:POW?",
+        "UNIT:POW?", "UNIT:POW %s",
         """ A floating point property that represents the amplitude unit.
         This property can be set.""",
         validator=strict_discrete_set,
@@ -176,8 +176,8 @@ class AgilentN9320A(Instrument):
         return float(self.ask("CALC:MARK%s:X?" % number))
 
     def marker_y(self, number=1):
-        """Returns the amplitude in dBm at marker position."""
-        return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4f')
+        """Returns the amplitude in y-axis unit at marker position."""
+        return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4e')
 
     def average_number(self, value=10):
         """Set the number of averages."""
@@ -229,7 +229,7 @@ class AgilentN9320A(Instrument):
         else:
             x = float(self.marker_x(number))
             y = float(self.marker_y(number))
-            log.info('Peak found at %g Hz, amplitude %g dBm' % (x, y))
+            log.info('Peak found at %g Hz, amplitude %.4e %s' % (x, y, self.unit))
             return True, [[x ,y]]
 
     def peak_output(self, number=1, avg=5, center=False, lr=False):
