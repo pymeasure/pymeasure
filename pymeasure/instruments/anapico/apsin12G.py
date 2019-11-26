@@ -39,17 +39,24 @@ class APSIN12G(Instrument):
         values=POW_LIMIT
     )
     frequency = Instrument.control(
-        "SOURC:FREQ:CW?;", "SOURC:FREQ:CW %eHz;",
+        "SOUR:FREQ:CW?;", "SOUR:FREQ:CW %eHz;",
         """ A floating point property that represents the output frequency
         in Hz. This property can be set. """,
         validator=strict_range,
         values=FREQ_LIMIT
     )
     blanking = Instrument.control(
-        ":OUTP:BLAN:STAT %s", ":OUTP:BLAN:STAT?",
-        """ A floating point property that represents the blanking of output power
+        ":OUTP:BLAN:STAT?", ":OUTP:BLAN:STAT %s",
+        """ A string property that represents the blanking of output power
         when frequency is changed. ON makes the output to be blanked (off) while
         changing frequency. This property can be set. """,
+        validator=strict_discrete_set,
+        values=['ON','OFF']
+    )
+    reference_output = Instrument.control(
+        "SOUR:ROSC:OUTP:STAT?", "SOUR:ROSC:OUTP:STAT %s",
+        """A string property that represents the 10MHz reference output from
+        the synth. This property can be set.""",
         validator=strict_discrete_set,
         values=['ON','OFF']
     )
@@ -68,4 +75,3 @@ class APSIN12G(Instrument):
     def disable_rf(self):
         """ Disables the RF output."""
         self.write("OUTP:STAT 0")
-
