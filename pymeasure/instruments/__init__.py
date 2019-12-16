@@ -39,6 +39,7 @@ from . import hp
 from . import keithley
 from . import lakeshore
 from . import parker
+from . import regatron
 from . import signalrecovery
 from . import srs
 from . import tektronix
