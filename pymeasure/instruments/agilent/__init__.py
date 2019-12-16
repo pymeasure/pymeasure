@@ -31,3 +31,4 @@ from .agilent4156 import Agilent4156
 from .agilent33220A import Agilent33220A
 from .agilent33500 import Agilent33500
 from .agilent33521A import Agilent33521A
+from .agilent34970A import Agilent34970A
