@@ -23,7 +23,7 @@
 #
 
 import logging
-
+import time
 import serial
 import numpy as np
 
@@ -41,7 +41,8 @@ class SerialAdapter(Adapter):
     :param kwargs: Any valid key-word argument for serial.Serial
     """
 
-    def __init__(self, port, **kwargs):
+    def __init__(self, port, terminator="\n", **kwargs):
+        self.terminator = terminator
         if isinstance(port, serial.Serial):
             self.connection = port
         else:
@@ -51,13 +52,23 @@ class SerialAdapter(Adapter):
         """ Ensures the connection is closed upon deletion
         """
         self.connection.close()
+        
+    def reset(self):
+        """ Flush input and output buffer to prevent side effects for example
+        when the user interacts locally with the device while the serial connection 
+        is kept open
+        """
+        self.connection.reset_input_buffer()
+        self.connection.reset_output_buffer()
 
     def write(self, command):
         """ Writes a command to the instrument
 
         :param command: SCPI command string to be sent to the instrument
         """
+        command = command + self.terminator
         self.connection.write(command.encode())  # encode added for Python 3
+        time.sleep(0.1) # give the device time to process the commands
 
     def read(self):
         """ Reads until the buffer is empty and returns the resulting
@@ -65,7 +76,15 @@ class SerialAdapter(Adapter):
 
         :returns: String ASCII response of the instrument.
         """
-        return b"\n".join(self.connection.readlines()).decode()
+        buff = []
+        while self.connection.in_waiting > 0:
+            tmp = self.connection.readline().decode() # readlines replaces with readline
+            buff.append(tmp)
+        if len(buff) > 1:
+            return buff
+        if len(buff) == 1:
+            return buff[0]
+
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data 
@@ -75,6 +94,7 @@ class SerialAdapter(Adapter):
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
+        command = command + self.terminator
         self.connection.write(command.encode())
         binary = self.connection.read().decode()
         header, data = binary[:header_bytes], binary[header_bytes:]
