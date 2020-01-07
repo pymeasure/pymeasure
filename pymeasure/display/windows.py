@@ -31,7 +31,8 @@ from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog
+from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog, \
+    SequencerWidget
 from ..experiment.results import Results
 
 log = logging.getLogger(__name__)
@@ -143,7 +144,8 @@ class ManagedWindow(QtGui.QMainWindow):
     EDITOR = 'gedit'
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
-                 log_channel='', log_level=logging.INFO, parent=None):
+                 log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
+                 sequencer_inputs=None):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
@@ -158,6 +160,9 @@ class ManagedWindow(QtGui.QMainWindow):
         self._setup_ui()
         self._layout()
         self.setup_plot(self.plot)
+
+        if sequencer:
+            self.sequencer = SequencerWidget(self, sequencer_inputs)
 
     def _setup_ui(self):
         self.log_widget = LogWidget()

@@ -65,13 +65,13 @@ class MainWindow(ManagedWindow):
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
-            y_axis='Random Number'
+            y_axis='Random Number',
+            sequencer=True,
+            sequencer_inputs=['iterations', 'delay', 'seed'],
         )
         self.setWindowTitle('GUI Example')
 
-        self.sequencer = SequencerWidget(self)
-
-    def queue(self, procedure=None):
+    def queue(self, *, procedure=None):
         filename = tempfile.mktemp()
 
         if procedure is None:

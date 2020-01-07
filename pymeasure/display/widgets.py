@@ -462,10 +462,12 @@ SAFE_FUNCTIONS = {
 
 class SequencerWidget(QtGui.QWidget):
     """
-    Widget that allows to generate a sequence of measurements with varying parameters.
-    Moreover, one can write a simple text file to easily load a sequence.
+    Widget that allows to generate a sequence of measurements with varying
+    parameters. Moreover, one can write a simple text file to easily load a
+    sequence.
 
-    Currently requires a queue function of the ManagedWindow to have a "procedure" argument.
+    Currently requires a queue function of the ManagedWindow to have a
+    "procedure" argument.
     """
 
     MAXDEPTH = 10
@@ -474,6 +476,7 @@ class SequencerWidget(QtGui.QWidget):
         super().__init__(parent)
         self._parent = parent
 
+        # if no explicit inputs are given, use the displayed parameters
         if inputs is not None:
             self._inputs = inputs
         else:
