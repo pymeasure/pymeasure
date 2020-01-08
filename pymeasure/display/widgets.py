@@ -529,10 +529,12 @@ class SequencerWidget(QtGui.QWidget):
 
         queue_button = QtGui.QPushButton("Queue sequence")
         queue_button.clicked.connect(self.queue_sequence)
+        self.queue_button = QtGui.QPushButton("Queue sequence")
+        self.queue_button.clicked.connect(self.queue_sequence)
 
         btn_box_2 = QtGui.QHBoxLayout()
         btn_box_2.addWidget(load_seq_button)
-        btn_box_2.addWidget(queue_button)
+        btn_box_2.addWidget(self.queue_button)
 
         vbox = QtGui.QVBoxLayout(self)
         vbox.setSpacing(6)
@@ -629,21 +631,21 @@ class SequencerWidget(QtGui.QWidget):
         self._parent.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
 
     def queue_sequence(self):
+        self.queue_button.setEnabled(False)
         sequence = self._generate_sequence_from_tree()
-        n = 0
+        log.info(
+            "Queuing %d measurements based on the entered sequences." % len(sequence)
+        )
 
         for entry in sequence:
+            QtGui.QApplication.processEvents()
             parameters = dict(ChainMap(*entry[::-1]))
 
             procedure = self._parent.make_procedure()
             procedure.set_parameters(parameters)
             self._parent.queue(procedure=procedure)
-            n += 1
 
-        log.info(
-            "Queued {:d} measurements based on the entered sequences.".format(
-                n)
-        )
+        self.queue_button.setEnabled(True)
 
     def load_sequence(self, *, fileName=None):
         if fileName is None:
