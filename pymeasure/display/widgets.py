@@ -527,8 +527,6 @@ class SequencerWidget(QtGui.QWidget):
         load_seq_button.clicked.connect(self.load_sequence)
         load_seq_button.setToolTip("Load a sequence from a file.")
 
-        queue_button = QtGui.QPushButton("Queue sequence")
-        queue_button.clicked.connect(self.queue_sequence)
         self.queue_button = QtGui.QPushButton("Queue sequence")
         self.queue_button.clicked.connect(self.queue_sequence)
 
