@@ -258,10 +258,13 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
         self.lineEdit().setText(text.toLower())
 
     def valueFromText(self, text):
-        if self._parameter.units:
-            return float(str(text)[:-(len(self._parameter.units) + 1)])
-        else:
-            return float(str(text))
+        try:
+            if self._parameter.units:
+                return float(str(text)[:-(len(self._parameter.units) + 1)])
+            else:
+                return float(str(text))
+        except ValueError:
+            return self._parameter.default
 
     def textFromValue(self, value):
         string = "{:g}".format(value).replace("e+", "e")
