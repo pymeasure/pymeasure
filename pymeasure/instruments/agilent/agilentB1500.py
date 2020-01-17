@@ -344,8 +344,8 @@ class AgilentB1500(Instrument):
             self.smu_names = smu_names
 
         def check_status(self, status_string, name=False, cmu=False):
-            """Check returned status of instrument. If not null, message is
-            written to log.info.
+            """Check returned status of instrument. If not null or end of
+            data, message is written to log.info.
 
             :param status_string: Status string returned by the instrument
                                   when reading data.
@@ -353,6 +353,11 @@ class AgilentB1500(Instrument):
             :param cmu: Whether or not channel is CMU, defaults to False (SMU)
             :type cmu: bool, optional
             """
+            def log_failed():
+                log.info(
+                    ('Agilent B1500: check_status not '
+                     'possible for status {}').format(status_string))
+
             if name is False:
                 name = ''
             else:
@@ -364,23 +369,29 @@ class AgilentB1500(Instrument):
             # depending on FMT, status may be a letter or up to 3 digits
             if len(status.group('number')) > 0:
                 status = int(status.group('number'))
-                if status not in (0, 128):
-                    if cmu is True:
-                        status_dict = self.cmu_status
-                    else:
-                        status_dict = self.smu_status
-                    status = status_dict[status]
-                    log.info('Agilent B1500{}: {}'.format(name, status))
+                if status in (0, 128):
+                    # 0: no error; 128: End of data
+                    return
+                if cmu is True:
+                    status_dict = self.cmu_status
+                else:
+                    status_dict = self.smu_status
+                for index, digit in enumerate(bin(status)[2:]):
+                    # [2:] to chop off 0b
+                    if digit == '1':
+                        log.info('Agilent B1500{}: {}'.format(
+                            name, status_dict[2**index]))
             elif len(status.group('letter')) > 0:
                 status = status.group('letter')
                 status = status.strip()  # remove whitespaces
                 if status not in ['N', 'W', 'E']:
-                    status = self.status[status]
-                    log.info('Agilent B1500{}: {}'.format(name, status))
+                    try:
+                        status = self.status[status]
+                        log.info('Agilent B1500{}: {}'.format(name, status))
+                    except KeyError:
+                        log_failed()
             else:
-                log.info(
-                    ('Agilent B1500: check_status not '
-                     'possible for status {}').format(status_string))
+                log_failed()
 
         def format_channel_check_status(self, status_string, channel_string):
             """Returns channel number for given channel letter.
