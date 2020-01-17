@@ -10,12 +10,6 @@ The `armstrap/pyvirtualbench <https://github.com/armstrap/armstrap-pyvirtualbenc
 Python wrapper for the VirtualBench C-API is required.
 This Instrument driver only interfaces the pyvirtualbench Python wrapper.
 
-This wrapper was tested using
-this `pyvirtualbench fork <https://github.com/moritzj29/armstrap-pyvirtualbench>`_, which
-includes some bug-fixes and a more up-to-date driver. 
-A pull request to the original
-repository is pending, but it appears to be no longer maintained.
-
 **********************************************
 Examples
 **********************************************
