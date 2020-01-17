@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from decimal import Decimal
+
 
 def strict_range(value, values):
     """ Provides a validator function that returns the value
@@ -51,16 +53,14 @@ def strict_discrete_range(value, values, step):
     :param step: Minimum stepsize (resolution limit)
     :raises: ValueError if the value is out of the range
     """
-    if (min(values) <= value <= max(values)):
-        if (value/step).is_integer():
-            return value
-        else:
-            raise ValueError('Value of {:g} is not a multiple of {:g}'.format(
-                value, step
-            ))
+    # use Decimal type to provide correct decimal compatible floating
+    # point arithmetic compared to binary floating point arithmetic
+    if (strict_range(value, values) == value and
+            Decimal(str(value)) % Decimal(str(step)) == 0):
+        return value
     else:
-        raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
-            value, min(values), max(values)
+        raise ValueError('Value of {:g} is not a multiple of {:g}'.format(
+            value, step
         ))
 
 
