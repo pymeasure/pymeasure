@@ -24,7 +24,7 @@
 
 import pytest
 from pymeasure.instruments.validators import (
-    strict_range, strict_discrete_set,
+    strict_range, strict_discrete_range, strict_discrete_set,
     truncated_range, truncated_discrete_set,
     modular_range, modular_range_bidirectional,
     joined_validators
@@ -36,6 +36,20 @@ def test_strict_range():
     assert strict_range(5.1, range(10)) == 5.1
     with pytest.raises(ValueError) as e_info:
         strict_range(20, range(10))
+
+
+def test_strict_discrete_range():
+    assert strict_discrete_range(0.1, [0, 0.2], 0.001) == 0.1
+    assert strict_discrete_range(5, range(10), 0.1) == 5
+    assert strict_discrete_range(5.1, range(10), 0.1) == 5.1
+    assert strict_discrete_range(5.1, range(10), 0.001) == 5.1
+    assert strict_discrete_range(-5.1, [-20, 20], 0.001) == -5.1
+    with pytest.raises(ValueError) as e_info:
+        strict_discrete_range(5.1, range(5), 0.001)
+    with pytest.raises(ValueError) as e_info:
+        strict_discrete_range(5.01, range(5), 0.1)
+    with pytest.raises(ValueError) as e_info:
+        strict_discrete_range(0.003, [0, 0.2], 0.002)
 
 
 def test_strict_discrete_set():
@@ -58,6 +72,7 @@ def test_truncated_discrete_set():
     assert truncated_discrete_set(5.1, range(10)) == 6
     assert truncated_discrete_set(11, range(10)) == 9
     assert truncated_discrete_set(-10, range(10)) == 0
+
 
 def test_modular_range():
     assert modular_range(5, range(10)) == 5
