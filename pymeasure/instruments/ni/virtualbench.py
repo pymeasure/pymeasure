@@ -2,6 +2,7 @@
 # This file is part of the PyMeasure package.
 #
 # Copyright (c) 2013-2019 PyMeasure Developers
+# pyvirtualbench library: Copyright (c) 2015 Charles Armstrap <charles@armstrap.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -327,7 +328,7 @@ class VirtualBench():
             """
             if self.isShutdown is not True:
                 self.dio.release()
-        
+
         def shutdown(self):
             ''' Stops the session and deallocates any resources acquired during
                 the session. If output is enabled on any channels, they remain
@@ -935,7 +936,7 @@ class VirtualBench():
             """
             if self.isShutdown is not True:
                 self.mso.release()
-        
+
         def shutdown(self):
             ''' Removes the session and deallocates any resources acquired
             during the session. If output is enabled on any channels, they
