@@ -25,12 +25,23 @@
 # Most of this code originally from:
 # http://www.scipy.org/Cookbook/Data_Acquisition_with_NIDAQmx
 
+import logging
 import ctypes
 import numpy as np
 from sys import platform
 
-if platform == "win32":
-    nidaq = ctypes.windll.nicaiu
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+try:
+    if platform == "win32":
+        nidaq = ctypes.windll.nicaiu
+except OSError as err:
+    log.info('Failed loading the NI-DAQmx library. '
+             + 'Check the NI-DAQmx documentation on how to '
+             + 'install this external dependency. '
+             + 'OSError: {}'.format(err))
+    raise
 
 # Data Types
 int32 = ctypes.c_long

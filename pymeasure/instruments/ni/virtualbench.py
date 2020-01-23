@@ -22,6 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+# Requires 'pyvirtualbench' package:
+# https://github.com/armstrap/armstrap-pyvirtualbench
 
 import logging
 import re
@@ -32,7 +34,6 @@ from ctypes import (c_bool, c_size_t, c_double, c_uint8, c_int32, c_uint32,
 from datetime import datetime, timezone, timedelta
 import numpy as np
 import pandas as pd
-import pyvirtualbench as pyvb
 
 from pymeasure.instruments import Instrument, RangeException
 from pymeasure.instruments.validators import (strict_discrete_set,
@@ -41,6 +42,18 @@ from pymeasure.instruments.validators import (strict_discrete_set,
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+try:
+    # Requires 'pyvirtualbench' package:
+    # https://github.com/armstrap/armstrap-pyvirtualbench
+    import pyvirtualbench as pyvb
+except ModuleNotFoundError as err:
+    # catch here for logging
+    log.info('Failed loading the pyvirtualbench package. '
+             + 'Check the NI VirtualBench documentation on how to '
+             + 'install this external dependency. '
+             + 'ImportError: {}'.format(err))
+    raise
 
 
 class VirtualBench_Direct(pyvb.PyVirtualBench):

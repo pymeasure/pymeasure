@@ -22,7 +22,16 @@
 # THE SOFTWARE.
 #
 
-# from .daqmx import DAQmx
-# from .virtualbench import VirtualBench
-# direct access to armstrap/pyvirtualbench wrapper:
-# from .virtualbench import VirtualBench_Direct
+try:
+    from .daqmx import DAQmx
+except OSError:
+    # Error Logging is handled within package
+    pass
+
+try:
+    from .virtualbench import VirtualBench
+    # direct access to armstrap/pyvirtualbench wrapper:
+    # from .virtualbench import VirtualBench_Direct
+except ModuleNotFoundError:
+    # Error Logging is handled within package
+    pass
