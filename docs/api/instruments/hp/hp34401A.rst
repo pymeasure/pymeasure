@@ -1,7 +1,7 @@
 ################################
-HP 34410A Multimeter
+HP 34401A Multimeter
 ################################
 
-.. autoclass:: pymeasure.instruments.hp.HP34410A
+.. autoclass:: pymeasure.instruments.hp.HP34401A
     :members:
     :show-inheritance:
