@@ -230,5 +230,44 @@ It is also possible to access the :attr:`~pymeasure.display.windows.ManagedWindo
 
 See pyqtgraph's API documentation on PlotItem_ for further details.
 
+Using the sequencer
+~~~~~~~~~~~~~~~~~~~
+
+As an extension to the way of graphically inputting parameters and executing multiple measurements using the :class:`~pymeasure.display.windows.ManagedWindow`, :class:`~pymeasure.display.widgets.SequencerWidget` is provided which allows users to queue a series of measurements with varying one, or more, of the parameters. This sequencer thereby provides a convenient way to scan through the parameter space of the measurement procedure.
+
+To activate the sequencer, two additional keyword arguments are added to :class:`~pymeasure.display.windows.ManagedWindow`, namely :code:`sequencer` and :code:`sequencer_inputs`. :code:`sequencer` accepts a boolean stating whether or not the sequencer has to be included into the window and :code:`sequencer_inputs` accepts either :code:`None` or a list of the parameter names are to be scanned over. If no list of parameters is given, the parameters displayed in the manager queue are used.
+
+In order to be able to use the sequencer, the :class:`~pymeasure.display.windows.ManagedWindow` class is required to have a :code:`queue` method which takes a keyword (or better keyword-only for safety reasons) argument :code:`procedure`, where a procedure instance can be passed. The sequencer will use this method to queue the parameter scan. 
+
+In order to implement the sequencer into the previous example, only the :class:`MainWindow` has to be slightly modified (where modified lines are marked):
+::
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super(MainWindow, self).__init__(
+                procedure_class=TestProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number',
+                sequencer=True,  # Added line
+                sequencer_inputs=['iterations', 'delay', 'seed'],  # Added line
+            )
+            self.setWindowTitle('GUI Example')
+
+        def queue(self, *, procedure=None):  # Modified line
+            filename = tempfile.mktemp()
+
+            if procedure is None:  # Added line
+                procedure = self.make_procedure()  # Indented
+
+            results = Results(procedure, filename)
+            experiment = self.new_experiment(results)
+
+            self.manager.queue(experiment)
+
+
+
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
