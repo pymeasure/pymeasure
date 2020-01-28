@@ -35,7 +35,7 @@ import numpy as np
 
 
 
-class Chroma62024p6008(Instrument):
+class Chroma62024P6008 (Instrument):
     """ Represents the Chroma ATE 62000P Programmable DC Source
     and provides a high-level for interacting with the instrument.
 
@@ -72,7 +72,7 @@ class Chroma62024p6008(Instrument):
 
     output_voltage_level = Instrument.control(
         "SOUR:VOLT?", "SOUR:VOLT %g",
-        """This function control the output voltage limit of the instrument.
+        """This function controls the the output voltage limit of the instrument.
          """,
         validator=truncated_range,
         values=[0, 600]
@@ -80,7 +80,7 @@ class Chroma62024p6008(Instrument):
 
     output_ovp_limit = Instrument.control(
         "SOUR:VOLT:PROT:HIGH?", "SOUR:VOLT:PROT:HIGH %g",
-        """This function control the output current limit of the instrument.
+        """This function controls the the output current limit of the instrument.
          """,
         validator=truncated_range,
         values=[0, 660]
@@ -88,7 +88,7 @@ class Chroma62024p6008(Instrument):
 
     output_ocp_limit = Instrument.control(
         "SOUR:CURR:PROT:HIGH?", "SOUR:CURR:PROT:HIGH %ga",
-        """This function control the output current of the instrument.
+        """This function controls the the output current of the instrument.
          """,
         validator=truncated_range,
         values=[0, 8.8]
@@ -100,33 +100,35 @@ class Chroma62024p6008(Instrument):
 
     output_slew_rate = Instrument.control(
         "SOUR:VOLT:SLEW?", "SOUR:VOLT:SLEW %g",
-        """This function control the output voltage slew rate.
+        """This function controls the the output voltage slew rate.
          """,
         validator=truncated_range,
         values=[0.001, 10] # 62012P-600-8: 0.001V/ms - 10V/ms
     )
 
-    def output_enable(self):
+    def enable_output(self):
         self.write("CONF:OUTP ON")
 
-    def output_disable(self):
+    def disable_output(self):
         self.write("CONF:OUTP OFF")
 
-    def ramp_to_current(self, current, steps=25, duration=0.5):
-        """ Ramps the current to a value in Amps by traversing a linear spacing
-        of current steps over a duration, defined in seconds.
+    def ramp_to_current(self, target_current, steps=30, pause=20e-3): 
+        """ Ramps to a target current from the set current value over  
+        a certain number of linear steps, each separated by a pause duration. 
 
-        :param steps: A number of linear steps to traverse
-        :param duration: A time in seconds over which to ramp
-        """
-        start_current = self.output_current
-        stop_current = current
-        pause = duration/steps
-        if start_current != stop_current:
-            currents = np.linspace(start_current, stop_current, steps)
-            for current in currents:
-                self.output_current_limit = current
-                sleep(pause)
+        :param target_current: A current in Amps 
+        :param steps: An integer number of steps 
+        :param pause: A pause duration in seconds to wait between steps 
+        """ 
+        currents = np.linspace( 
+             self.output_current, 
+             target_current, 
+             steps 
+        )
+
+        for current in currents: 
+             self.output_current = current 
+             time.sleep(pause) 
 
     def ramp_to_voltage(self, voltage, steps=25, duration=0.5):
         """ Ramps the voltage to a value in Volts by traversing a linear spacing
