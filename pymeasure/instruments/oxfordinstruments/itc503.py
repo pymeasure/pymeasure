@@ -119,7 +119,7 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
-    temperature_2 = Instrument.measurement(
+    temperature_3 = Instrument.measurement(
         "R3",
         """ Reads the temperature of the sensor 3 in Kelvin. """,
         get_process=lambda v: float(v[1:]),
