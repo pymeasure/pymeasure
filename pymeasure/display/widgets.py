@@ -483,6 +483,7 @@ class SequencerWidget(QtGui.QWidget):
             self._inputs = self._parent.displays
 
         self._get_properties()
+        self._setup_ui()
         self._layout()
         self._add_to_interface()
 
@@ -497,7 +498,7 @@ class SequencerWidget(QtGui.QWidget):
                       in self.parameter_objects.items()}
         self.names_inv = {name: key for key, name in self.names.items()}
 
-    def _layout(self):
+    def _setup_ui(self):
         self.tree = QtGui.QTreeWidget(self)
         self.tree.setHeaderLabels(["Level", "Parameter", "Sequence"])
         width = self.tree.viewport().size().width()
@@ -505,33 +506,35 @@ class SequencerWidget(QtGui.QWidget):
         self.tree.setColumnWidth(1, int(0.9 * width))
         self.tree.setColumnWidth(2, int(0.9 * width))
 
-        add_root_item_btn = QtGui.QPushButton("Add root item")
-        add_root_item_btn.clicked.connect(
+        self.add_root_item_btn = QtGui.QPushButton("Add root item")
+        self.add_root_item_btn.clicked.connect(
             partial(self._add_tree_item, at_root=True)
         )
 
-        add_tree_item_btn = QtGui.QPushButton("Add item")
-        add_tree_item_btn.clicked.connect(
+        self.add_tree_item_btn = QtGui.QPushButton("Add item")
+        self.add_tree_item_btn.clicked.connect(
             partial(self._add_tree_item, at_root=False)
         )
 
-        remove_tree_item_btn = QtGui.QPushButton("Remove item")
-        remove_tree_item_btn.clicked.connect(self._remove_selected_tree_item)
+        self.remove_tree_item_btn = QtGui.QPushButton("Remove item")
+        self.remove_tree_item_btn.clicked.connect(self._remove_selected_tree_item)
 
-        btn_box = QtGui.QHBoxLayout()
-        btn_box.addWidget(add_root_item_btn)
-        btn_box.addWidget(add_tree_item_btn)
-        btn_box.addWidget(remove_tree_item_btn)
-
-        load_seq_button = QtGui.QPushButton("Load sequence")
-        load_seq_button.clicked.connect(self.load_sequence)
-        load_seq_button.setToolTip("Load a sequence from a file.")
+        self.load_seq_button = QtGui.QPushButton("Load sequence")
+        self.load_seq_button.clicked.connect(self.load_sequence)
+        self.load_seq_button.setToolTip("Load a sequence from a file.")
 
         self.queue_button = QtGui.QPushButton("Queue sequence")
         self.queue_button.clicked.connect(self.queue_sequence)
 
+
+    def _layout(self):
+        btn_box = QtGui.QHBoxLayout()
+        btn_box.addWidget(self.add_root_item_btn)
+        btn_box.addWidget(self.add_tree_item_btn)
+        btn_box.addWidget(self.remove_tree_item_btn)
+
         btn_box_2 = QtGui.QHBoxLayout()
-        btn_box_2.addWidget(load_seq_button)
+        btn_box_2.addWidget(self.load_seq_button)
         btn_box_2.addWidget(self.queue_button)
 
         vbox = QtGui.QVBoxLayout(self)

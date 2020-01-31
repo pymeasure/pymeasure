@@ -5,7 +5,7 @@ an instrument to use. It also demonstrates the use of the sequencer module.
 
 Run the program by changing to the directory containing this file and calling:
 
-python gui.py
+python gui_sequencer.py
 
 """
 
