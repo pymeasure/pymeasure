@@ -84,6 +84,33 @@ class Keithley2400(Instrument, KeithleyBuffer):
         map_values=True
     )
 
+    auto_output_off = Instrument.control(
+        ":SOUR:CLE:AUTO?", ":SOUR:CLE:AUTO %d",
+        """ A boolean property that enables or disables the auto output-off.
+        Valid values are True (output off after measurement) and False (output
+        stays on after measurement). """,
+        values={True: 1, False: 0},
+        map_values=True,
+        )
+
+    source_delay = Instrument.control(
+        ":SOUR:DEL?", ":SOUR:DEL %g",
+        """ A floating point property that sets a manual delay for the source
+        after the output is turned on before a measurement is taken. When this
+        property is set, the auto delay is turned off. Valid values are
+        between 0 [seconds] and 999.9999 [seconds].""",
+        validator=truncated_range,
+        values=[0, 999.9999],
+        )
+
+    source_delay_auto = Instrument.control(
+        "SOUR:DEL:AUTO?", "SOUR:DEL:AUTO %d",
+        """ A boolean property that enables or disables auto delay. Valid
+        values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
     ###############
     # Current (A) #
     ###############
@@ -387,6 +414,14 @@ class Keithley2400(Instrument, KeithleyBuffer):
         self.beep(base_frequency*5.0/4.0, duration)
         time.sleep(duration)
         self.beep(base_frequency*6.0/4.0, duration)
+
+    display_enabled = Instrument.control(
+        ":DISP:ENAB?", ":DISP:ENAB %d",
+        """ A boolean property that controls whether or not the display of the
+        sourcemeter is enabled. Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+        )
 
     @property
     def error(self):
