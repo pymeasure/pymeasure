@@ -45,7 +45,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     .. code-block:: python
 
         keithley = Keithley2400("GPIB::1")
-        
+
         keithley.apply_current()                # Sets up to source current
         keithley.source_current_range = 10e-3   # Sets the source current range to 10 mA
         keithley.compliance_voltage = 10        # Sets the compliance voltage to 10 V
@@ -70,14 +70,14 @@ class Keithley2400(Instrument, KeithleyBuffer):
         :meth:`~.Keithley2400.apply_current` and :meth:`~.Keithley2400.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
-        values={'current':'CURR', 'voltage':'VOLT'},
+        values={'current': 'CURR', 'voltage': 'VOLT'},
         map_values=True
     )
 
     source_enabled = Instrument.control(
         "OUTPut?", "OUTPut %d",
         """A boolean property that controls whether the source is enabled, takes
-        values True or False. The convenience methods :meth:`~.Keithley2400.enable_source` and 
+        values True or False. The convenience methods :meth:`~.Keithley2400.enable_source` and
         :meth:`~.Keithley2400.disable_source` can also be used.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -91,7 +91,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         stays on after measurement). """,
         values={True: 1, False: 0},
         map_values=True,
-        )
+    )
 
     source_delay = Instrument.control(
         ":SOUR:DEL?", ":SOUR:DEL %g",
@@ -101,7 +101,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         between 0 [seconds] and 999.9999 [seconds].""",
         validator=truncated_range,
         values=[0, 999.9999],
-        )
+    )
 
     source_delay_auto = Instrument.control(
         "SOUR:DEL:AUTO?", "SOUR:DEL:AUTO %d",
@@ -115,14 +115,15 @@ class Keithley2400(Instrument, KeithleyBuffer):
     # Current (A) #
     ###############
 
-    current = Instrument.measurement(":READ?",
+    current = Instrument.measurement(
+        ":READ?",
         """ Reads the current in Amps, if configured for this reading.
         """
     )
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
         """ A floating point property that controls the measurement current
-        range in Amps, which can take values between -1.05 and +1.05 A. 
+        range in Amps, which can take values between -1.05 and +1.05 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-1.05, 1.05]
@@ -130,7 +131,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC current measurements, which sets the integration period 
+        (NPLC) for the DC current measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -151,7 +152,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     source_current_range = Instrument.control(
         ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
         """ A floating point property that controls the source current
-        range in Amps, which can take values between -1.05 and +1.05 A. 
+        range in Amps, which can take values between -1.05 and +1.05 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-1.05, 1.05]
@@ -161,14 +162,15 @@ class Keithley2400(Instrument, KeithleyBuffer):
     # Voltage (V) #
     ###############
 
-    voltage = Instrument.measurement(":READ?",
+    voltage = Instrument.measurement(
+        ":READ?",
         """ Reads the voltage in Volts, if configured for this reading.
         """
     )
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
         """ A floating point property that controls the measurement voltage
-        range in Volts, which can take values from -210 to 210 V. 
+        range in Volts, which can take values from -210 to 210 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-210, 210]
@@ -176,7 +178,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     voltage_nplc = Instrument.control(
         ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC voltage measurements, which sets the integration period 
+        (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -194,8 +196,8 @@ class Keithley2400(Instrument, KeithleyBuffer):
     )
     source_voltage_range = Instrument.control(
         ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
-        """ A floating point property that controls the source voltage 
-        range in Volts, which can take values from -210 to 210 V. 
+        """ A floating point property that controls the source voltage
+        range in Volts, which can take values from -210 to 210 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-210, 210]
@@ -205,14 +207,15 @@ class Keithley2400(Instrument, KeithleyBuffer):
     # Resistance (Ohm) #
     ####################
 
-    resistance = Instrument.measurement(":READ?",
+    resistance = Instrument.measurement(
+        ":READ?",
         """ Reads the resistance in Ohms, if configured for this reading.
         """
     )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
         """ A floating point property that controls the resistance range
-        in Ohms, which can take values from 0 to 210 MOhms. 
+        in Ohms, which can take values from 0 to 210 MOhms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[0, 210e6]
@@ -220,7 +223,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?", ":SENS:RES:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 2-wire resistance measurements, which sets the integration period 
+        (NPLC) for the 2-wire resistance measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
@@ -231,7 +234,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         2 or 4.
         """,
         validator=strict_discrete_set,
-        values={4:1, 2:0},
+        values={4: 1, 2: 0},
         map_values=True
     )
 
@@ -268,7 +271,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     ###########
     # Trigger #
     ###########
-    
+
     trigger_count = Instrument.control(
         ":TRIG:COUN?", ":TRIG:COUN %d",
         """ An integer property that controls the trigger count,
@@ -357,13 +360,13 @@ class Keithley2400(Instrument, KeithleyBuffer):
         else:
             self.write(":SOUR:VOLT:RANG:AUTO 1")
 
-    def apply_current(self, current_range=None, 
-             compliance_voltage=0.1):
+    def apply_current(self, current_range=None,
+                      compliance_voltage=0.1):
         """ Configures the instrument to apply a source current, and
         uses an auto range unless a current range is specified.
-        The compliance voltage is also set. 
+        The compliance voltage is also set.
 
-        :param compliance_voltage: A float in the correct range for a 
+        :param compliance_voltage: A float in the correct range for a
                                    :attr:`~.Keithley2400.compliance_voltage`
         :param current_range: A :attr:`~.Keithley2400.current_range` value or None
         """
@@ -376,13 +379,13 @@ class Keithley2400(Instrument, KeithleyBuffer):
         self.compliance_voltage = compliance_voltage
         self.check_errors()
 
-    def apply_voltage(self, voltage_range=None, 
-            compliance_current=0.1):
+    def apply_voltage(self, voltage_range=None,
+                      compliance_current=0.1):
         """ Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.
 
-        :param compliance_current: A float in the correct range for a 
+        :param compliance_current: A float in the correct range for a
                                    :attr:`~.Keithley2400.compliance_current`
         :param voltage_range: A :attr:`~.Keithley2400.voltage_range` value or None
         """
@@ -411,9 +414,9 @@ class Keithley2400(Instrument, KeithleyBuffer):
         """
         self.beep(base_frequency, duration)
         time.sleep(duration)
-        self.beep(base_frequency*5.0/4.0, duration)
+        self.beep(base_frequency * 5.0 / 4.0, duration)
         time.sleep(duration)
-        self.beep(base_frequency*6.0/4.0, duration)
+        self.beep(base_frequency * 6.0 / 4.0, duration)
 
     display_enabled = Instrument.control(
         ":DISP:ENAB?", ":DISP:ENAB %d",
@@ -421,15 +424,15 @@ class Keithley2400(Instrument, KeithleyBuffer):
         sourcemeter is enabled. Valid values are True and False. """,
         values={True: 1, False: 0},
         map_values=True,
-        )
+    )
 
     @property
     def error(self):
-        """ Returns a tuple of an error code and message from a 
+        """ Returns a tuple of an error code and message from a
         single error. """
         err = self.values(":system:error?")
         if len(err) < 2:
-            err = self.read() # Try reading again
+            err = self.read()  # Try reading again
         code = err[0]
         message = err[1].replace('"', '')
         return (code, message)
@@ -442,7 +445,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
             t = time.time()
             log.info("Keithley 2400 reported error: %d, %s" % (code, message))
             code, message = self.error
-            if (time.time()-t)>10:
+            if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2400 error retrieval.")
 
     def reset(self):
@@ -450,7 +453,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
 
     def ramp_to_current(self, target_current, steps=30, pause=20e-3):
-        """ Ramps to a target current from the set current value over 
+        """ Ramps to a target current from the set current value over
         a certain number of linear steps, each separated by a pause duration.
 
         :param target_current: A current in Amps
@@ -467,7 +470,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
             time.sleep(pause)
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
-        """ Ramps to a target voltage from the set voltage value over 
+        """ Ramps to a target voltage from the set voltage value over
         a certain number of linear steps, each separated by a pause duration.
 
         :param target_voltage: A voltage in Amps
@@ -484,8 +487,8 @@ class Keithley2400(Instrument, KeithleyBuffer):
             time.sleep(pause)
 
     def trigger(self):
-        """ Executes a bus trigger, which can be used when 
-        :meth:`~.trigger_on_bus` is configured. 
+        """ Executes a bus trigger, which can be used when
+        :meth:`~.trigger_on_bus` is configured.
         """
         return self.write("*TRG")
 
@@ -533,7 +536,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
 
     def trigger_on_external(self, line=1):
-        """ Configures the measurement trigger to be taken from a 
+        """ Configures the measurement trigger to be taken from a
         specific line of an external trigger
 
         :param line: A trigger line from 1 to 4
@@ -622,12 +625,12 @@ class Keithley2400(Instrument, KeithleyBuffer):
         return self.ask("status:queue?;")
 
     def RvsI(self, startI, stopI, stepI, compliance, delay=10.0e-3, backward=False):
-        num = int(float(stopI-startI)/float(stepI)) + 1
-        currRange = 1.2*max(abs(stopI),abs(startI))
+        num = int(float(stopI - startI) / float(stepI)) + 1
+        currRange = 1.2 * max(abs(stopI), abs(startI))
         # self.write(":SOUR:CURR 0.0")
         self.write(":SENS:VOLT:PROT %g" % compliance)
         self.write(":SOUR:DEL %g" % delay)
-        self.write(":SOUR:CURR:RANG %g" % currRange )
+        self.write(":SOUR:CURR:RANG %g" % currRange)
         self.write(":SOUR:SWE:RANG FIX")
         self.write(":SOUR:CURR:MODE SWE")
         self.write(":SOUR:SWE:SPAC LIN")
@@ -643,28 +646,28 @@ class Keithley2400(Instrument, KeithleyBuffer):
             self.write(":SOUR:SWE:DIR UP")
         self.connection.timeout = 30.0
         self.enable_source()
-        data = self.values(":READ?") 
+        data = self.values(":READ?")
 
         self.check_errors()
-        return zip(currents,data)
+        return zip(currents, data)
 
     def RvsIaboutZero(self, minI, maxI, stepI, compliance, delay=10.0e-3):
         data = []
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay, backward=True))
-        self.disable_source()    
+        self.disable_source()
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay, backward=True))
         self.disable_source()
-        return data 
+        return data
 
     def use_rear_terminals(self):
-        """ Enables the rear terminals for measurement, and 
+        """ Enables the rear terminals for measurement, and
         disables the front terminals. """
         self.write(":ROUT:TERM REAR")
 
     def use_front_terminals(self):
-        """ Enables the front terminals for measurement, and 
+        """ Enables the front terminals for measurement, and
         disables the rear terminals. """
         self.write(":ROUT:TERM FRON")
 
