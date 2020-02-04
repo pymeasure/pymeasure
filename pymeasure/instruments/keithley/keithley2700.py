@@ -58,6 +58,7 @@ def clist_validator(value, values):
         raise ValueError("Type of value ({}) not valid".format(type(value)))
 
     # Pad numbers to length (if required)
+    clist = [c.rjust(2, "0") for c in clist]
     clist = [c.rjust(3, "1") for c in clist]
 
     # Check channels against valid channels
