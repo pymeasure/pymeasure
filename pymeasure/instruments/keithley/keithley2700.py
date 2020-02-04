@@ -52,8 +52,7 @@ def clist_validator(value, values):
     elif isinstance(value, (int, float)):
         clist = ["{:d}".format(value)]
     elif isinstance(value, (list, tuple, np.ndarray, range)):
-        clist = ["{:d}".format(x) for x in value
-                 if x in values]
+        clist = ["{:d}".format(x) for x in value]
     else:
         raise ValueError("Type of value ({}) not valid".format(type(value)))
 
