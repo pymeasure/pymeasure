@@ -46,22 +46,29 @@ def clist_validator(value, values):
     :param values: A range of values (range, list, etc.)
     :raises: ValueError if the value is out of the range
     """
+    # Convert value to list of strings
     if isinstance(value, str):
-        clist = value
+        clist = [value.strip(" @(),")]
     elif isinstance(value, (int, float)):
-        if value not in values:
-            raise ValueError(
-                "Channel number {:g} not valid.".format(value))
-        clist = "{:d}".format(value)
+        clist = ["{:d}".format(value)]
     elif isinstance(value, (list, tuple, np.ndarray, range)):
         clist = ["{:d}".format(x) for x in value
                  if x in values]
-        clist = ", ".join(clist)
     else:
         raise ValueError("Type of value ({}) not valid".format(type(value)))
 
-    clist = clist.strip(" @(),")
-    clist = "(@{:s})".format(clist)
+    # Pad numbers to length (if required)
+    clist = [c.rjust(3, "1") for c in clist]
+
+    # Check channels against valid channels
+    for c in clist:
+        if int(c) not in values:
+            raise ValueError(
+                "Channel number {:g} not valid.".format(value)
+            )
+
+    # Convert list of strings to clist format
+    clist = "(@{:s})".format(", ".join(clist))
 
     return clist
 
@@ -89,7 +96,9 @@ class Keithley2700(Instrument, KeithleyBuffer):
         check_get_errors=True,
         check_set_errors=True,
         separator=None,
-        get_process=lambda v: [int(vv) for vv in v.strip(" ()@,").split(",")],
+        get_process=lambda v: [
+            int(vv) for vv in (v.strip(" ()@,").split(",")) if not vv == ""
+        ],
     )
 
     open_channels = Instrument.setting(
@@ -100,7 +109,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
         check_set_errors=True
     )
 
-    def channels_closed(self, channels):
+    def get_state_of_channels(self, channels):
         clist = clist_validator(channels, self.CLIST_VALUES)
         state = self.ask("ROUTe:MULTiple:STATe? %s" % clist)
         print(state)
