@@ -110,11 +110,18 @@ class Keithley2700(Instrument, KeithleyBuffer):
     )
 
     def get_state_of_channels(self, channels):
+        """ Get the open or closed state of the specified channels
+
+        :param channels: a list of channel numbers, or single channel number
+        """
         clist = clist_validator(channels, self.CLIST_VALUES)
         state = self.ask("ROUTe:MULTiple:STATe? %s" % clist)
-        print(state)
+
+        return state
 
     def open_all_channels(self):
+        """ Open all channels of the Keithley 2700.
+        """
         self.write(":ROUTe:OPEN:ALL")
 
     def __init__(self, adapter, **kwargs):
@@ -126,24 +133,69 @@ class Keithley2700(Instrument, KeithleyBuffer):
         self.determine_valid_channels()
 
     def determine_valid_channels(self):
+        """ Determine what cards are installed into the Keithley 2700
+        and from that determine what channels are valid.
+        """
         self.CLIST_VALUES.clear()
 
-        for position, card in enumerate(self.options, 1):
+        self.cards = {slot: card for slot, card in enumerate(self.options, 1)}
+
+        for slot, card in self.cards.items():
 
             if card == "none":
                 continue
             elif card == "7709":
-                """The 7709 is a 6(rows) x 8(columns) matrix card that, with two
+                """The 7709 is a 6(rows) x 8(columns) matrix card, with two
                 additional switches (49 & 50) that allow row 1 and 2 to be
                 connected to the DMM backplane (input and sense respectively).
                 """
                 channels = range(1, 51)
             else:
-                continue
+                log.warning(
+                    "Card type %s at slot %s is not yet implemented." % (card, slot)
+                )
 
-            channels = [100 * position + ch for ch in channels]
+            channels = [100 * slot + ch for ch in channels]
 
             self.CLIST_VALUES.extend(channels)
+
+    def connect_rows_columns(self, rows, columns, state="close", slot=None):
+        """ Connect column(s) and row(s) of the 7709 connection matrix. Returns
+        a list of channel numbers.
+
+        :param rows: row number or list of numbers
+        :param columns: column number or list of numbers
+        :param state: string ('close' or 'open') or None to specify whether to
+                      close or open the channels, or only return the channels
+        :param slot: slot number (1 or 2) of the 7709 card to be used
+
+        """
+
+        if slot is not None and self.cards[slot] != "7709":
+            raise ValueError("No 7709 card installed in slot %g" % slot)
+
+        if isinstance(rows, (list, tuple, np.ndarray, range)) and \
+                isinstance(columns, (list, tuple, np.ndarray, range)) and \
+                len(rows) != len(columns):
+            raise ValueError("The length of the rows and columns do not match")
+
+        # Determine channel number from rows and columns number.
+        rows = np.array(rows)
+        columns = np.array(columns)
+
+        channels = (rows - 1) * 8 + columns
+
+        if slot is not None:
+            channels += 100 * slot
+
+        if state is None or state.lower() == "none":
+            pass
+        elif state.lower() == "close":
+            self.closed_channels = channels
+        elif state.lower() == "open":
+            self.open_channels = channels
+
+        return channels
 
     # system, some taken from Keithley 2400
     def beep(self, frequency, duration):
