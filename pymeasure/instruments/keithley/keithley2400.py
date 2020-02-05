@@ -61,8 +61,6 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
     """
 
-    # TODO: Add measurement mode property
-
     source_mode = Instrument.control(
         ":SOUR:FUNC?", ":SOUR:FUNC %s",
         """ A string property that controls the source mode, which can
@@ -104,9 +102,26 @@ class Keithley2400(Instrument, KeithleyBuffer):
     )
 
     source_delay_auto = Instrument.control(
-        "SOUR:DEL:AUTO?", "SOUR:DEL:AUTO %d",
+        ":SOUR:DEL:AUTO?", ":SOUR:DEL:AUTO %d",
         """ A boolean property that enables or disables auto delay. Valid
         values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    auto_zero = Instrument.control(
+        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %d",
+        """ A property that controls the auto zero option. Valid values are
+        True (enabled) and False (disabled) and 'ONCE' (force immediate). """,
+        values={True: 1, False: 0, "ONCE": "ONCE"},
+        map_values=True,
+    )
+
+    measure_concurent_functions = Instrument.control(
+        ":SENS:FUNC:CONC?", ":SENS:FUNC:CONC %d",
+        """ A boolean property that enables or disables the ability to measure
+        more than one function simultaneously. When disabled, volts function
+        is enabled. Valid values are True and False. """,
         values={True: 1, False: 0},
         map_values=True,
     )
