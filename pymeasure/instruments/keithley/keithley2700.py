@@ -159,20 +159,52 @@ class Keithley2700(Instrument, KeithleyBuffer):
 
             self.CLIST_VALUES.extend(channels)
 
-    def connect_rows_columns(self, rows, columns, state="close", slot=None):
-        """ Connect column(s) and row(s) of the 7709 connection matrix. Returns
-        a list of channel numbers.
+    def close_rows_to_columns(self, rows, columns, slot=None):
+        """ Closes (connects) the channels between column(s) and row(s)
+        of the 7709 connection matrix.
+        Only one of the parameters `rows' or 'columns' can be "all"
 
-        :param rows: row number or list of numbers
-        :param columns: column number or list of numbers
-        :param state: string ('close' or 'open') or None to specify whether to
-                      close or open the channels, or only return the channels
+        :param rows: row number or list of numbers; can also be "all"
+        :param columns: column number or list of numbers; can also be "all"
+        :param slot: slot number (1 or 2) of the 7709 card to be used
+        """
+
+        channels = self.channels_from_rows_columns(rows, columns, slot)
+        self.closed_channels = channels
+
+    def open_rows_to_columns(self, rows, columns, slot=None):
+        """ Opens (disconnects) the channels between column(s) and row(s)
+        of the 7709 connection matrix.
+        Only one of the parameters `rows' or 'columns' can be "all"
+
+        :param rows: row number or list of numbers; can also be "all"
+        :param columns: column number or list of numbers; can also be "all"
+        :param slot: slot number (1 or 2) of the 7709 card to be used
+        """
+
+        channels = self.channels_from_rows_columns(rows, columns, slot)
+        self.open_channels = channels
+
+    def channels_from_rows_columns(self, rows, columns, slot=None):
+        """ Determine the channel numbers between column(s) and row(s) of the
+        7709 connection matrix. Returns a list of channel numbers.
+        Only one of the parameters `rows' or 'columns' can be "all"
+
+        :param rows: row number or list of numbers; can also be "all"
+        :param columns: column number or list of numbers; can also be "all"
         :param slot: slot number (1 or 2) of the 7709 card to be used
 
         """
 
         if slot is not None and self.cards[slot] != "7709":
             raise ValueError("No 7709 card installed in slot %g" % slot)
+
+        if isinstance(rows, str) and isinstance(columns, str):
+            raise ValueError("Only one parameter can be 'all'")
+        elif isinstance(rows, str) and rows == "all":
+            rows = list(range(1, 7))
+        elif isinstance(columns, str) and columns == "all":
+            columns = list(range(1, 9))
 
         if isinstance(rows, (list, tuple, np.ndarray, range)) and \
                 isinstance(columns, (list, tuple, np.ndarray, range)) and \
@@ -187,13 +219,6 @@ class Keithley2700(Instrument, KeithleyBuffer):
 
         if slot is not None:
             channels += 100 * slot
-
-        if state is None or state.lower() == "none":
-            pass
-        elif state.lower() == "close":
-            self.closed_channels = channels
-        elif state.lower() == "open":
-            self.open_channels = channels
 
         return channels
 
