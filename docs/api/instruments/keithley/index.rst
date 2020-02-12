@@ -12,3 +12,4 @@ This section contains specific documentation on the Keithley instruments that ar
    keithley2000
    keithley2400
    keithley2700
+   keithley6221
