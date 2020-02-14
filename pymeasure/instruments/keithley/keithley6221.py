@@ -157,7 +157,6 @@ class Keithley6221(Instrument):
         validator=truncated_range,
         values=[0, 100]
     )
-    # TODO: implement INF
     waveform_duration_time = Instrument.control(
         ":SOUR:WAVE:DUR:TIME?", ":SOUR:WAVE:DUR:TIME %g",
         """A floating point property that controls the duration of the
@@ -166,7 +165,6 @@ class Keithley6221(Instrument):
         validator=truncated_range,
         values=[100e-9, 999999.999]
     )
-    # TODO: implement INF
     waveform_duration_cycles = Instrument.control(
         ":SOUR:WAVE:DUR:CYCL?", ":SOUR:WAVE:DUR:CYCL %g",
         """A floating point property that controls the duration of the
@@ -175,6 +173,12 @@ class Keithley6221(Instrument):
         validator=truncated_range,
         values=[1e-3, 99999999900]
     )
+
+    def waveform_duration_set_infinity(self):
+        """ Set the waveform duration to infinity.
+        """
+        self.write(":SOUR:WAVE:DUR:TIME INF")
+
     waveform_ranging = Instrument.control(
         ":SOUR:WAVE:RANG?", ":SOUR:WAVE:RANG %s",
         """ A string property that controls the source ranging of the
