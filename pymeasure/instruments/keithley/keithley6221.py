@@ -364,3 +364,107 @@ class Keithley6221(Instrument):
         """ Disables the output. """
         log.info("Shutting down %s." % self.name)
         self.disable_source()
+
+    ###############
+    # Status bits #
+    ###############
+
+    measurement_event_enabled = Instrument.control(
+        ":STAT:MEAS:ENAB?", ":STAT:MEAS:ENAB %d",
+        """ An integer value that controls which measurement events are
+        registered in the Measurement Summary Bit (MSB) status bit. Refer to
+        the Model 6220/6221 Reference Manual for more information about
+        programming the status bits.
+        """,
+        cast=int,
+        validator=truncated_range,
+        values=[0, 65535],
+    )
+
+    operation_event_enabled = Instrument.control(
+        ":STAT:OPER:ENAB?", ":STAT:OPER:ENAB %d",
+        """ An integer value that controls which operation events are
+        registered in the Operation Summary Bit (OSB) status bit. Refer to
+        the Model 6220/6221 Reference Manual for more information about
+        programming the status bits.
+        """,
+        cast=int,
+        validator=truncated_range,
+        values=[0, 65535],
+    )
+
+    questionable_event_enabled = Instrument.control(
+        ":STAT:QUES:ENAB?", ":STAT:QUES:ENAB %d",
+        """ An integer value that controls which questionable events are
+        registered in the Questionable Summary Bit (QSB) status bit. Refer to
+        the Model 6220/6221 Reference Manual for more information about
+        programming the status bits.
+        """,
+        cast=int,
+        validator=truncated_range,
+        values=[0, 65535],
+    )
+
+    standard_event_enabled = Instrument.control(
+        "ESE?", "ESE %d",
+        """ An integer value that controls which standard events are
+        registered in the Event Summary Bit (ESB) status bit. Refer to
+        the Model 6220/6221 Reference Manual for more information about
+        programming the status bits.
+        """,
+        cast=int,
+        validator=truncated_range,
+        values=[0, 65535],
+    )
+
+    srq_event_enabled = Instrument.control(
+        "*SRE?", "*SRE %d",
+        """ An integer value that controls which event registers trigger the
+        Service Request (SRQ) status bit. Refer to the Model 6220/6221
+        Reference Manual for more information about programming the status
+        bits.
+        """,
+        cast=int,
+        validator=truncated_range,
+        values=[0, 255],
+    )
+
+    measurement_events = Instrument.measurement(
+        ":STAT:MEAS?",
+        """ An integer value that reads which measurement events have been
+        registered in the Measurement event registers. Refer to the Model
+        6220/6221 Reference Manual for more information about programming
+        the status bits. Reading this value clears the register.
+        """,
+        cast=int,
+    )
+
+    operation_events = Instrument.measurement(
+        ":STAT:OPER?",
+        """ An integer value that reads which operation events have been
+        registered in the Operation event registers. Refer to the Model
+        6220/6221 Reference Manual for more information about programming
+        the status bits. Reading this value clears the register.
+        """,
+        cast=int,
+    )
+
+    questionable_events = Instrument.measurement(
+        ":STAT:QUES?",
+        """ An integer value that reads which questionable events have been
+        registered in the Questionable event registers. Refer to the Model
+        6220/6221 Reference Manual for more information about programming
+        the status bits. Reading this value clears the register.
+        """,
+        cast=int,
+    )
+
+    standard_events = Instrument.measurement(
+        "*ESR?",
+        """ An integer value that reads which standard events have been
+        registered in the Standard event registers. Refer to the Model
+        6220/6221 Reference Manual for more information about programming
+        the status bits. Reading this value clears the register.
+        """,
+        cast=int,
+    )
