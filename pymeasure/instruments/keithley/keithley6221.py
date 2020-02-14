@@ -38,7 +38,7 @@ from io import BytesIO
 import re
 
 
-class Keithley6221(Instrument):
+class Keithley6221(Instrument, KeithleyBuffer):
     """ Represents the Keithely 6221 AC and DC current source and provides a
     high-level interface for interacting with the instrument.
 
