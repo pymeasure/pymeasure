@@ -207,27 +207,31 @@ class Keithley2700(Instrument, KeithleyBuffer):
             columns = list(range(1, 9))
 
         if isinstance(rows, (list, tuple, np.ndarray)) and \
-                isinstance(columns, (list, tuple, np.ndarray)) and \
-                len(rows) != len(columns):
-            raise ValueError("The length of the rows and columns do not match")
+                isinstance(columns, (list, tuple, np.ndarray)):
 
-        # Flatten (were necessary) the arrays
-        new_rows = []
-        new_columns = []
-        for row, column in zip(rows, columns):
-            if isinstance(row, int) and isinstance(column, int):
-                new_rows.append(row)
-                new_columns.append(column)
-            elif isinstance(row, (list, tuple, np.ndarray)) and isinstance(column, int):
-                new_columns.extend(len(row) * [column])
-                new_rows.extend(list(row))
-            elif isinstance(column, (list, tuple, np.ndarray)) and isinstance(row, int):
-                new_columns.extend(list(column))
-                new_rows.extend(len(column) * [row])
+            if len(rows) != len(columns):
+                raise ValueError("The length of the rows and columns do not match")
+
+            # Flatten (were necessary) the arrays
+            new_rows = []
+            new_columns = []
+            for row, column in zip(rows, columns):
+                if isinstance(row, int) and isinstance(column, int):
+                    new_rows.append(row)
+                    new_columns.append(column)
+                elif isinstance(row, (list, tuple, np.ndarray)) and isinstance(column, int):
+                    new_columns.extend(len(row) * [column])
+                    new_rows.extend(list(row))
+                elif isinstance(column, (list, tuple, np.ndarray)) and isinstance(row, int):
+                    new_columns.extend(list(column))
+                    new_rows.extend(len(column) * [row])
+
+            rows = new_rows
+            columns = new_columns
 
         # Determine channel number from rows and columns number.
-        rows = np.array(new_rows)
-        columns = np.array(new_columns)
+        rows = np.array(rows)
+        columns = np.array(columns)
 
         channels = (rows - 1) * 8 + columns
 
