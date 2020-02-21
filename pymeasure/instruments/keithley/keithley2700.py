@@ -297,5 +297,38 @@ class Keithley2700(Instrument, KeithleyBuffer):
         cast=False
     )
 
+    ###########
+    # DISPLAY #
+    ###########
 
-# if __name__ == '__main__':
+    text_top_enabled = Instrument.control(
+        "DISP:WIND1:TEXT:STATE?", "DISP:WIND1:TEXT:STATE %d",
+        """ A boolean property that controls whether a text message can be
+        shown on the top line of the display of the Keithley 2700.
+        """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+    text_bottom_enabled = Instrument.control(
+        "DISP:WIND2:TEXT:STATE?", "DISP:WIND2:TEXT:STATE %d",
+        """ A boolean property that controls whether a text message can be
+        shown on the bottom line of the display of the Keithley 2700.
+        """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+    text_top = Instrument.control(
+        "DISP:WIND1:TEXT?", "DISP:WIND1:TEXT %s",
+        """ A string property that controls the text shown on the top line
+        of the display of the Keithley 2700. Text can be up to 20 ASCII
+        characters and must be enabled to show.
+        """,
+    )
+    text_bottom = Instrument.control(
+        "DISP:WIND2:TEXT?", "DISP:WIND2:TEXT %s",
+        """ A string property that controls the text shown on the bottom line
+        of the display of the Keithley 2700. Text can be up to 32 ASCII
+        characters and must be enabled to show.
+        """,
+    )
+
