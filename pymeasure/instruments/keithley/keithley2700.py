@@ -73,6 +73,21 @@ def clist_validator(value, values):
     return clist
 
 
+def text_length_validator(value, values):
+    """ Provides a validator function that a valid string for the display
+    commands of the Keithley. Raises a TypeError if value is not a string.
+    If the string is too long, it is truncated to the correct length.
+
+    :param value: A value to test
+    :param values: The allowed length of the text
+    """
+
+    if not isinstance(value, str):
+        raise TypeError("Value is not a string.")
+
+    return value[:values]
+
+
 class Keithley2700(Instrument, KeithleyBuffer):
     """ Represents the Keithely 2700 Multimeter/Switch System and provides a
     high-level interface for interacting with the instrument.
@@ -323,6 +338,8 @@ class Keithley2700(Instrument, KeithleyBuffer):
         of the display of the Keithley 2700. Text can be up to 20 ASCII
         characters and must be enabled to show.
         """,
+        validator=text_length_validator,
+        values=20
     )
     text_bottom = Instrument.control(
         "DISP:WIND2:TEXT?", "DISP:WIND2:TEXT %s",
@@ -330,5 +347,43 @@ class Keithley2700(Instrument, KeithleyBuffer):
         of the display of the Keithley 2700. Text can be up to 32 ASCII
         characters and must be enabled to show.
         """,
+        validator=text_length_validator,
+        values=32
     )
 
+    def display_closed_channels(self, bottom_line=True,):
+        """ Show the presently closed channels on the display of the Keithley
+        2700. By default it is written on the bottom line of the display, but
+        can also be displayed on the top line.
+
+        :param bottom_line: A boolean property to select the top (False) or
+            bottom (True) line to display the channels.
+        """
+
+        # Get the closed channels and make a string of the list
+        channels = self.closed_channels
+        channel_string = ", ".join([
+            str(channel) for channel in channels
+        ])
+
+        # Prepend "Closed: " or "C: " to the string, depending on the length
+        str_length = 32 if bottom_line else 20
+        if len(channel_string) < str_length - 8:
+            channel_string = "Closed: " + channel_string
+        elif len(channel_string) < str_length - 3:
+            channel_string = "C: " + channel_string
+
+        # Display the string
+        if bottom_line:
+            # enable displaying text-messages
+            self.text_bottom_enabled = True
+
+            # write the string to the display
+            self.text_bottom = channel_string
+
+        else:
+            # enable displaying text-messages
+            self.text_top_enabled = True
+
+            # write the string to the display
+            self.text_top = channel_string
