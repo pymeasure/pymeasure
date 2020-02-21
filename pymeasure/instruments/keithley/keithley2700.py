@@ -103,7 +103,9 @@ class Keithley2700(Instrument, KeithleyBuffer):
 
     open_channels = Instrument.setting(
         "ROUTe:MULTiple:OPEN %s",
-        """dd""",
+        """ A parameter that opens the specified list of channels. Can only
+        be set.
+        """,
         validator=clist_validator,
         values=CLIST_VALUES,
         check_set_errors=True
