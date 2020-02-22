@@ -316,74 +316,47 @@ class Keithley2700(Instrument, KeithleyBuffer):
     # DISPLAY #
     ###########
 
-    text_top_enabled = Instrument.control(
-        "DISP:WIND1:TEXT:STATE?", "DISP:WIND1:TEXT:STATE %d",
+    text_enabled = Instrument.control(
+        "DISP:TEXT:STAT?", "DISP:TEXT:STAT %d",
         """ A boolean property that controls whether a text message can be
-        shown on the top line of the display of the Keithley 2700.
+        shown on the display of the Keithley 2700.
         """,
         values={True: 1, False: 0},
         map_values=True,
     )
-    text_bottom_enabled = Instrument.control(
-        "DISP:WIND2:TEXT:STATE?", "DISP:WIND2:TEXT:STATE %d",
-        """ A boolean property that controls whether a text message can be
-        shown on the bottom line of the display of the Keithley 2700.
-        """,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-    text_top = Instrument.control(
-        "DISP:WIND1:TEXT?", "DISP:WIND1:TEXT %s",
-        """ A string property that controls the text shown on the top line
-        of the display of the Keithley 2700. Text can be up to 20 ASCII
-        characters and must be enabled to show.
+    display_text = Instrument.control(
+        "DISP:TEXT:DATA?", "DISP:TEXT:DATA '%s'",
+        """ A string property that controls the text shown on the display of
+        the Keithley 2700. Text can be up to 12 ASCII characters and must be
+        enabled to show.
         """,
         validator=text_length_validator,
-        values=20
-    )
-    text_bottom = Instrument.control(
-        "DISP:WIND2:TEXT?", "DISP:WIND2:TEXT %s",
-        """ A string property that controls the text shown on the bottom line
-        of the display of the Keithley 2700. Text can be up to 32 ASCII
-        characters and must be enabled to show.
-        """,
-        validator=text_length_validator,
-        values=32
+        values=12,
+        cast=str,
+        separator="NO_SEPARATOR",
+        get_process=lambda v: v.strip("'\""),
     )
 
-    def display_closed_channels(self, bottom_line=True,):
+    def display_closed_channels(self):
         """ Show the presently closed channels on the display of the Keithley
-        2700. By default it is written on the bottom line of the display, but
-        can also be displayed on the top line.
-
-        :param bottom_line: A boolean property to select the top (False) or
-            bottom (True) line to display the channels.
+        2700.
         """
 
         # Get the closed channels and make a string of the list
         channels = self.closed_channels
-        channel_string = ", ".join([
-            str(channel) for channel in channels
+        channel_string = " ".join([
+            str(channel % 100) for channel in channels
         ])
 
         # Prepend "Closed: " or "C: " to the string, depending on the length
-        str_length = 32 if bottom_line else 20
+        str_length = 12
         if len(channel_string) < str_length - 8:
             channel_string = "Closed: " + channel_string
         elif len(channel_string) < str_length - 3:
             channel_string = "C: " + channel_string
 
-        # Display the string
-        if bottom_line:
-            # enable displaying text-messages
-            self.text_bottom_enabled = True
+        # enable displaying text-messages
+        self.text_enabled = True
 
-            # write the string to the display
-            self.text_bottom = channel_string
-
-        else:
-            # enable displaying text-messages
-            self.text_top_enabled = True
-
-            # write the string to the display
-            self.text_top = channel_string
+        # write the string to the display
+        self.display_text = channel_string
