@@ -5,8 +5,8 @@ sphinx:
 
 formats: all
 
-conda:
-    environment: requirements/conda-3.6.yml
-
 python:
    version: 3.6
+   system_packages: true
+   install:
+       - requirements: requirements/core.txt
