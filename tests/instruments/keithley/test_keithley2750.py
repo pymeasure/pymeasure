@@ -22,7 +22,18 @@
 # THE SOFTWARE.
 #
 
-from .keithley2000 import Keithley2000
-from .keithley2400 import Keithley2400
-from .keithley2450 import Keithley2450
-from .keithley2750 import Keithley2750
+import pytest
+from pymeasure.instruments.keithley.keithley2750 import clean_closed_channels
+
+
+def test_clean_closed_channels():
+    # Example outputs from `self.ask(":ROUTe:CLOSe?")`
+    example_outputs = ["(@)",  # if no channels are open. Note that it's a string and not a list
+                       "(@101)",  # if only 1 channel is open. Note that it's a string and not a list
+                       ["(@101", "105)"],  # if only 2 channels are open
+                       ["(@101", 102.0, 103.0, 104.0, "105)"]]  # if more than 2 channels are open
+
+    assert clean_closed_channels(example_outputs[0]) == []
+    assert clean_closed_channels(example_outputs[1]) == [101]
+    assert clean_closed_channels(example_outputs[2]) == [101, 105]
+    assert clean_closed_channels(example_outputs[3]) == [101, 102, 103, 104, 105]
