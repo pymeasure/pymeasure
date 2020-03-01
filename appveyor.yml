@@ -5,39 +5,38 @@ environment:
   matrix:
 
     # For Python versions available on Appveyor, see
-    # http://www.appveyor.com/docs/installed-software#python
-    # The list here is complete (excluding Python 2.6, which
-    # isn't covered by this document) at the time of writing.
+    # https://www.appveyor.com/docs/windows-images-software/
 
     - PYTHON_VERSION: "3.5"
       MINICONDA: C:\Miniconda35-x64
-      #PYTHON: "C:\\Python35-x64"
-      #DISTUTILS_USE_SDK: "1"
-      #PYTHON_ARCH: "64"
       PLATFORM: x64
 
     - PYTHON_VERSION: "3.6"
       MINICONDA: C:\Miniconda36-x64
-      #PYTHON: "C:\\Python36-x64"
-      #DISTUTILS_USE_SDK: "1"
-      #PYTHON_ARCH: "64"
       PLATFORM: x64
 
     - PYTHON_VERSION: "3.7"
       MINICONDA: C:\Miniconda37-x64
-      #PYTHON: "C:\\Python37-x64"
-      #DISTUTILS_USE_SDK: "1"
-      #PYTHON_ARCH: "64"
+      PLATFORM: x64
+
+    - PYTHON_VERSOIN: "3.8"
+      MINICONDA: C:\Miniconda37-x64 # using the 3.7 version of Miniconda
       PLATFORM: x64
 
     - PYTHON_VERSION: "3.5"
       MINICONDA: C:\Miniconda35
-      #PYTHON: "C:\\Python35"
       PLATFORM: x86
 
     - PYTHON_VERSION: "3.6"
       MINICONDA: C:\Miniconda36
-      #PYTHON: "C:\\Python36"
+      PLATFORM: x86
+
+    - PYTHON_VERSION: "3.7"
+      MINICONDA: C:\Miniconda37
+      PLATFORM: x86
+
+    - PYTHON_VERSION: "3.8"
+      MINICONDA: C:\Miniconda37 # using the 3.7 version of Miniconda
       PLATFORM: x86
 
 matrix:
