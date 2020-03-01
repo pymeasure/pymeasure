@@ -80,7 +80,7 @@ class Input(object):
         return self._parameter
 
 
-class StringInput(QtGui.QLineEdit, Input):
+class StringInput(QtGui.QLineEdit, Input, metaclass=type(QtGui.QLineEdit)):
     """
     String input box connected to a :class:`Parameter`. Parameter subclasses
     that are string-based may also use this input, but non-string parameters
