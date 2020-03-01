@@ -1,10 +1,12 @@
-formats:
-        - epub
-        - pdf
+version: 2
+
+sphinx:
+    configuration: docs/conf.py
+
+formats: all
 
 conda:
-    file: requirements/conda-3.6.yml
+    environment: requirements/conda-3.6.yml
 
 python:
    version: 3.6
-   setup_py_install: true
