@@ -65,5 +65,7 @@ def test_worker_finish():
     worker.start()
     worker.join(timeout=5)
 
+    assert not worker.is_alive()
+
     new_results = Results.load(file, procedure_class=RandomProcedure)
     assert new_results.data.shape == (100, 2)
