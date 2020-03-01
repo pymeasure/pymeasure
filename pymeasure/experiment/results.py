@@ -183,7 +183,7 @@ class Results(object):
         h.append("Procedure: <%s>" % procedure)
         h.append("Parameters:")
         for name, parameter in self.parameters.items():
-            h.append("\t%s: %s" % (parameter.name, str(parameter)))
+            h.append("\t%s: %s" % (parameter.name, str(parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
         h = [Results.COMMENT + l for l in h]  # Comment each line
