@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Input(object):
+class Input(QtCore.QObject):
     """
     Mix-in class that connects a :mod:`Parameter <.parameters>` object to a GUI
     input box.
@@ -80,7 +80,7 @@ class Input(object):
         return self._parameter
 
 
-class StringInput(QtGui.QLineEdit, Input, metaclass=type(QtGui.QLineEdit)):
+class StringInput(QtGui.QLineEdit, Input):
     """
     String input box connected to a :class:`Parameter`. Parameter subclasses
     that are string-based may also use this input, but non-string parameters
