@@ -123,6 +123,7 @@ class Agilent4156(Instrument):
 
                 }
             }
+
     """
 
     def __init__(self, resourceName, **kwargs):
