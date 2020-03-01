@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Input(QtCore.QObject):
+class Input(object):
     """
     Mix-in class that connects a :mod:`Parameter <.parameters>` object to a GUI
     input box.
