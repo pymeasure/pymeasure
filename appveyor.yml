@@ -19,7 +19,7 @@ environment:
       MINICONDA: C:\Miniconda37-x64
       PLATFORM: x64
 
-    - PYTHON_VERSOIN: "3.8"
+    - PYTHON_VERSION: "3.8"
       MINICONDA: C:\Miniconda37-x64 # using the 3.7 version of Miniconda
       PLATFORM: x64
 
