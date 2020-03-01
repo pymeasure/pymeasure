@@ -7,7 +7,7 @@ sphinx:
 formats: all
 
 python:
-   version: 3.6
+   version: 3.7
    system_packages: true
    install:
        - requirements: requirements/core.txt
