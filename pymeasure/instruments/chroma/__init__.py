@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .chroma62000p import Chroma62024p6008
+from .chroma62000p import Chroma62024P6008
