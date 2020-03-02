@@ -239,8 +239,10 @@ To activate the sequencer, two additional keyword arguments are added to :class:
 
 In order to be able to use the sequencer, the :class:`~pymeasure.display.windows.ManagedWindow` class is required to have a :code:`queue` method which takes a keyword (or better keyword-only for safety reasons) argument :code:`procedure`, where a procedure instance can be passed. The sequencer will use this method to queue the parameter scan. 
 
-In order to implement the sequencer into the previous example, only the :class:`MainWindow` has to be slightly modified (where modified lines are marked):
-::
+In order to implement the sequencer into the previous example, only the :class:`MainWindow` has to be modified slightly (where modified lines are marked):
+
+.. code-block:: python
+   :emphasize-lines: 10,11,12,16,19,20
 
     class MainWindow(ManagedWindow):
 
@@ -251,22 +253,51 @@ In order to implement the sequencer into the previous example, only the :class:`
                 displays=['iterations', 'delay', 'seed'],
                 x_axis='Iteration',
                 y_axis='Random Number',
-                sequencer=True,  # Added line
-                sequencer_inputs=['iterations', 'delay', 'seed'],  # Added line
+                sequencer=True,                                      # Added line
+                sequencer_inputs=['iterations', 'delay', 'seed'],    # Added line
+                sequence_file="gui_sequencer_example_sequence.txt",  # Added line, optional
             )
             self.setWindowTitle('GUI Example')
 
-        def queue(self, *, procedure=None):  # Modified line
+        def queue(self, *, procedure=None):                          # Modified line
             filename = tempfile.mktemp()
 
-            if procedure is None:  # Added line
-                procedure = self.make_procedure()  # Indented
+            if procedure is None:                                    # Added line
+                procedure = self.make_procedure()                    # Indented
 
             results = Results(procedure, filename)
             experiment = self.new_experiment(results)
 
             self.manager.queue(experiment)
 
+This adds the sequencer underneath the the input panel.
+
+.. image:: pymeasure-sequencer.png
+    :alt: Example of the sequencer widget
+
+The widget contains a tree-view where you can build the sequence.
+It has three columns: :code:`level` (indicated how deep an item is nested), :code:`parameter` (a drop-down menu to select which parameter is being sequenced by that item), and :code:`sequence` (the text-box where you can define the sequence).
+While the two former columns are rather straightforward, filling in the later requires some explanation.
+
+In order to maintain flexibility, the sequence is defined in a text-box, allowing the user to enter any list-generating single-line piece of code.
+To assist in this, a number of functions is supported, either from the main python library (namely :code:`range`, :code:`sorted`, and :code:`list`) or the numpy library.
+The supported numpy functions (prepending :code:`numpy.` or any abbreviation is not required) are: :code:`arange`, :code:`linspace`, :code:`arccos`, :code:`arcsin`, :code:`arctan`, :code:`arctan2`, :code:`ceil`, :code:`cos`, :code:`cosh`, :code:`degrees`, :code:`e`, :code:`exp`, :code:`fabs`, :code:`floor`, :code:`fmod`, :code:`frexp`, :code:`hypot`, :code:`ldexp`, :code:`log`, :code:`log10`, :code:`modf`, :code:`pi`, :code:`power`, :code:`radians`, :code:`sin`, :code:`sinh`, :code:`sqrt`, :code:`tan`, and :code:`tanh`.
+
+As an example, :code:`arange(0, 10, 1)` generates a list increasing with steps of 1, while using :code:`exp(arange(0, 10, 1))` generates an exponentially increasing list.
+This way complex sequences can be entered easily.
+
+The sequences can be extended and shortened using the buttons :code:`Add root item`, :code:`Add item`, and :code:`Remove item`.
+The later two either add a item as a child of the currently selected item or remove the selected item, respectively.
+To queue the entered sequence the button :code:`Queue` sequence can be used.
+If an error occurs in evaluating the sequence text-boxes, this is mentioned in the logger, and nothing is queued.
+
+Finally, it is possible to write a simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button, such that the user does not need to write the sequence again each time.
+In the sequence file each line adds one item to the sequence tree, starting with a number of dashes (:code:`-`) to indicate the level of the item (starting with 1 dash for top level), followed by the name of the parameter and the sequence string, both as a python string between parentheses.
+An example of such a sequence file is given below, resulting in the sequence shown in the figure above.
+
+.. literalinclude:: gui_sequencer_example_sequence.txt
+
+This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super(MainWindow, self).__init__` call, as was done in the example.
 
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
