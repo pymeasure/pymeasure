@@ -461,6 +461,11 @@ SAFE_FUNCTIONS = {
 }
 
 
+class SequenceEvaluationException(Exception):
+    """Raised when the evaluation of a sequence string goes wrong."""
+    pass
+
+
 class SequencerWidget(QtGui.QWidget):
     """
     Widget that allows to generate a sequence of measurements with varying
@@ -634,20 +639,26 @@ class SequencerWidget(QtGui.QWidget):
         """
 
         self.queue_button.setEnabled(False)
-        sequence = self._generate_sequence_from_tree()
-        log.info(
-            "Queuing %d measurements based on the entered sequences." % len(sequence)
-        )
 
-        for entry in sequence:
-            QtGui.QApplication.processEvents()
-            parameters = dict(ChainMap(*entry[::-1]))
+        try:
+            sequence = self._generate_sequence_from_tree()
+        except SequenceEvaluationException:
+            log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
+        else:
+            log.info(
+                "Queuing %d measurements based on the entered sequences." % len(sequence)
+            )
 
-            procedure = self._parent.make_procedure()
-            procedure.set_parameters(parameters)
-            self._parent.queue(procedure=procedure)
+            for entry in sequence:
+                QtGui.QApplication.processEvents()
+                parameters = dict(ChainMap(*entry[::-1]))
 
-        self.queue_button.setEnabled(True)
+                procedure = self._parent.make_procedure()
+                procedure.set_parameters(parameters)
+                self._parent.queue(procedure=procedure)
+
+        finally:
+            self.queue_button.setEnabled(True)
 
     def load_sequence(self, *, fileName=None):
         """
@@ -795,15 +806,19 @@ class SequencerWidget(QtGui.QWidget):
                           "functions for parameter {}, depth {}".format(
                               name, depth
                           ))
+                raise SequenceEvaluationException()
             except SyntaxError:
                 log.error("SyntaxError, likely unbalanced brackets " +
                           "for parameter {}, depth {}".format(name, depth))
+                raise SequenceEvaluationException()
             except ValueError:
                 log.error("ValueError, likely wrong function argument " +
                           "for parameter {}, depth {}".format(name, depth))
+                raise SequenceEvaluationException()
         else:
             log.error("No sequence entered for " +
                       "for parameter {}, depth {}".format(name, depth))
+            raise SequenceEvaluationException()
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
