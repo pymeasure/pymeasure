@@ -46,6 +46,7 @@ class Agilent33220A(Instrument):
     """Represents the Agilent 33220A Arbitrary Waveform Generator.
 
     .. code-block:: python
+
         # Default channel for the Agilent 33220A
         wfg = Agilent33220A("GPIB::10")
 
