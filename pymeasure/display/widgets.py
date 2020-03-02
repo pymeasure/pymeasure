@@ -472,7 +472,7 @@ class SequencerWidget(QtGui.QWidget):
 
     MAXDEPTH = 10
 
-    def __init__(self, parent, inputs=None):
+    def __init__(self, inputs=None, parent=None):
         super().__init__(parent)
         self._parent = parent
 
@@ -485,7 +485,6 @@ class SequencerWidget(QtGui.QWidget):
         self._get_properties()
         self._setup_ui()
         self._layout()
-        self._add_to_interface()
 
     def _get_properties(self):
         parameter_objects = self._parent.procedure_class().parameter_objects()
@@ -525,7 +524,6 @@ class SequencerWidget(QtGui.QWidget):
 
         self.queue_button = QtGui.QPushButton("Queue sequence")
         self.queue_button.clicked.connect(self.queue_sequence)
-
 
     def _layout(self):
         btn_box = QtGui.QHBoxLayout()
@@ -611,25 +609,6 @@ class SequencerWidget(QtGui.QWidget):
             selected_item.setSelected(False)
 
         parent.setSelected(True)
-
-    def _add_to_interface(self):
-        sequencer_dock = QtGui.QWidget()
-        sequencer_vbox = QtGui.QVBoxLayout()
-
-        hbox = QtGui.QHBoxLayout()
-        hbox.setSpacing(10)
-        hbox.setContentsMargins(-1, 6, -1, 6)
-        hbox.addStretch()
-
-        sequencer_vbox.addWidget(self)
-        sequencer_vbox.addLayout(hbox)
-        sequencer_vbox.addStretch()
-        sequencer_dock.setLayout(sequencer_vbox)
-
-        dock = QtGui.QDockWidget('Sequencer')
-        dock.setWidget(sequencer_dock)
-        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        self._parent.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
 
     def queue_sequence(self):
         self.queue_button.setEnabled(False)

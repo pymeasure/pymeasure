@@ -152,6 +152,8 @@ class ManagedWindow(QtGui.QMainWindow):
         self.procedure_class = procedure_class
         self.inputs = inputs
         self.displays = displays
+        self.use_sequencer = sequencer
+        self.sequencer_inputs = sequencer_inputs
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -160,9 +162,6 @@ class ManagedWindow(QtGui.QMainWindow):
         self._setup_ui()
         self._layout()
         self.setup_plot(self.plot)
-
-        if sequencer:
-            self.sequencer = SequencerWidget(self, sequencer_inputs)
 
     def _setup_ui(self):
         self.log_widget = LogWidget()
@@ -208,6 +207,12 @@ class ManagedWindow(QtGui.QMainWindow):
         self.manager.finished.connect(self.finished)
         self.manager.log.connect(self.log.handle)
 
+        if self.use_sequencer:
+            self.sequencer = SequencerWidget(
+                self.sequencer_inputs,
+                parent=self
+            )
+
     def _layout(self):
         self.main = QtGui.QWidget(self)
 
@@ -230,6 +235,13 @@ class ManagedWindow(QtGui.QMainWindow):
         dock.setWidget(inputs_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+
+        if self.use_sequencer:
+            sequencer_dock = QtGui.QDockWidget('Sequencer')
+            sequencer_dock.setWidget(self.sequencer)
+            sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
+
 
         tabs = QtGui.QTabWidget(self.main)
         tabs.addTab(self.plot_widget, "Results Graph")
