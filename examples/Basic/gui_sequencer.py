@@ -68,6 +68,7 @@ class MainWindow(ManagedWindow):
             y_axis='Random Number',
             sequencer=True,
             sequencer_inputs=['iterations', 'delay', 'seed'],
+            sequence_file="gui_sequencer_example_sequence.txt",
         )
         self.setWindowTitle('GUI Example')
 

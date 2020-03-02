@@ -473,7 +473,7 @@ class SequencerWidget(QtGui.QWidget):
 
     MAXDEPTH = 10
 
-    def __init__(self, inputs=None, parent=None):
+    def __init__(self, inputs=None, sequence_file=None, parent=None):
         super().__init__(parent)
         self._parent = parent
 
@@ -486,6 +486,10 @@ class SequencerWidget(QtGui.QWidget):
         self._get_properties()
         self._setup_ui()
         self._layout()
+
+        # Load the sequence file if supplied.
+        if sequence_file is not None:
+            self.load_sequence(fileName=sequence_file)
 
     def _get_properties(self):
         """

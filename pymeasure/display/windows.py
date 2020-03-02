@@ -145,7 +145,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None):
+                 sequencer_inputs=None, sequence_file=None):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
@@ -154,6 +154,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.displays = displays
         self.use_sequencer = sequencer
         self.sequencer_inputs = sequencer_inputs
+        self.sequence_file = sequence_file
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -210,6 +211,7 @@ class ManagedWindow(QtGui.QMainWindow):
         if self.use_sequencer:
             self.sequencer = SequencerWidget(
                 self.sequencer_inputs,
+                self.sequence_file,
                 parent=self
             )
 
