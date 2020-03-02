@@ -219,16 +219,6 @@ class ManagedWindow(QtGui.QMainWindow):
     def _layout(self):
         self.main = QtGui.QWidget(self)
 
-        if False:
-            widget = QtGui.QWidget()
-            widget.setLayout(vbox)
-
-            scrollArea = QtGui.QScrollArea()
-            scrollArea.setWidget(widget)
-
-            vbox = QtGui.QVBoxLayout()
-            vbox.addWidget(scrollArea)
-
         inputs_dock = QtGui.QWidget(self)
         inputs_vbox = QtGui.QVBoxLayout(self.main)
 
@@ -241,16 +231,18 @@ class ManagedWindow(QtGui.QMainWindow):
 
         if self.inputs_in_scrollarea:
             inputs_scroll = QtGui.QScrollArea()
-            inputs_scroll.setWidget(self.inputs)
+            inputs_scroll.setWidgetResizable(True)
             inputs_scroll.setFrameStyle(QtGui.QScrollArea.NoFrame)
 
-            inputs_vbox.addWidget(inputs_scroll)
+            self.inputs.setSizePolicy(1, 0)
+            inputs_scroll.setWidget(self.inputs)
+            inputs_vbox.addWidget(inputs_scroll, 1)
 
         else:
             inputs_vbox.addWidget(self.inputs)
 
         inputs_vbox.addLayout(hbox)
-        inputs_vbox.addStretch()
+        inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
 
         dock = QtGui.QDockWidget('Input Parameters')
@@ -263,7 +255,6 @@ class ManagedWindow(QtGui.QMainWindow):
             sequencer_dock.setWidget(self.sequencer)
             sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
-
 
         tabs = QtGui.QTabWidget(self.main)
         tabs.addTab(self.plot_widget, "Results Graph")
