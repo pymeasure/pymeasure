@@ -22,8 +22,18 @@
 # THE SOFTWARE.
 #
 
+import logging
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+try:
+    import vxi11
+except ImportError:
+    log.warning('Failed to import vxi11 package, which is required for the VXI11Adapter')
+
 from .adapter import Adapter
-import vxi11
+
 
 class VXI11Adapter(Adapter):
     """ VXI11 Adapter class. Provides a adapter object that

@@ -65,7 +65,7 @@ def readAI(device, channel, range=None, count=1):
     """
     ai = getAI(device, channel, range)
     converter = ai.get_converter()
-    if count is 1:
+    if count == 1:
         return converter.to_physical(ai.data_read())
     else:
         return converter.to_physical(ai.data_read_n(count))

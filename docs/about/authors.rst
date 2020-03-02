@@ -21,3 +21,5 @@ The following developers have contributed to the PyMeasure package:
 | Casper Schippers
 | Sumatran Tiger
 | Dennis Feng
+| Stefano Pirotta
+| Moritz Jung

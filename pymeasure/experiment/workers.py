@@ -123,7 +123,7 @@ class Worker(StoppableThread):
             self.update_status(Procedure.FINISHED)
             self.emit('progress', 100.)
 
-        self.recorder.enqueue_sentinel()
+        self.recorder.stop()
         self.monitor_queue.put(None)
 
     def run(self):
