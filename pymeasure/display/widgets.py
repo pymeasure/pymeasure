@@ -488,13 +488,12 @@ class SequencerWidget(QtGui.QWidget):
 
     def _get_properties(self):
         parameter_objects = self._parent.procedure_class().parameter_objects()
-        self.parameter_objects = {key: parameter
-                                  for key, parameter
-                                  in parameter_objects.items()
-                                  if key in self._inputs}
 
-        self.names = {key: obj.name for key, obj
-                      in self.parameter_objects.items()}
+        self.names = {key: parameter.name
+                      for key, parameter
+                      in parameter_objects.items()
+                      if key in self._inputs}
+
         self.names_inv = {name: key for key, name in self.names.items()}
 
     def _setup_ui(self):
@@ -507,13 +506,11 @@ class SequencerWidget(QtGui.QWidget):
 
         self.add_root_item_btn = QtGui.QPushButton("Add root item")
         self.add_root_item_btn.clicked.connect(
-            partial(self._add_tree_item, at_root=True)
+            partial(self._add_tree_item, level=0)
         )
 
         self.add_tree_item_btn = QtGui.QPushButton("Add item")
-        self.add_tree_item_btn.clicked.connect(
-            partial(self._add_tree_item, at_root=False)
-        )
+        self.add_tree_item_btn.clicked.connect(self._add_tree_item)
 
         self.remove_tree_item_btn = QtGui.QPushButton("Remove item")
         self.remove_tree_item_btn.clicked.connect(self._remove_selected_tree_item)
@@ -542,14 +539,11 @@ class SequencerWidget(QtGui.QWidget):
         vbox.addLayout(btn_box_2)
         self.setLayout(vbox)
 
-    def _add_tree_item(self, at_root=False,
-                       level=None, parameter=None, sequence=None):
+    def _add_tree_item(self, *, level=None, parameter=None, sequence=None):
+
         selected = self.tree.selectedItems()
 
-        if level == 0:
-            at_root = True
-
-        if len(selected) >= 1 and not at_root:
+        if len(selected) >= 1 and level != 0:
             parent = selected[0]
         else:
             parent = self.tree.invisibleRootItem()
@@ -655,9 +649,11 @@ class SequencerWidget(QtGui.QWidget):
             parameter = match.group(2)
             sequence = match.group(3)
 
-            at_root = False
-
-            self._add_tree_item(at_root, level, parameter, sequence)
+            self._add_tree_item(
+                level=level, 
+                parameter=parameter, 
+                sequence=sequence,
+            )
 
     def _generate_sequence_from_tree(self):
         iterator = QtGui.QTreeWidgetItemIterator(self.tree)
