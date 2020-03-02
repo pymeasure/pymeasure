@@ -424,6 +424,7 @@ class ResultsDialog(QtGui.QFileDialog):
             self.preview_param.sortItems(0, QtCore.Qt.AscendingOrder)
 
 
+""" This defines a list of functions that can be used to generate a sequence. """
 SAFE_FUNCTIONS = {
     'range': range,
     'sorted': sorted,
@@ -487,6 +488,10 @@ class SequencerWidget(QtGui.QWidget):
         self._layout()
 
     def _get_properties(self):
+        """
+        Obtain the names of the input parameters.
+        """
+
         parameter_objects = self._parent.procedure_class().parameter_objects()
 
         self.names = {key: parameter.name
@@ -540,6 +545,16 @@ class SequencerWidget(QtGui.QWidget):
         self.setLayout(vbox)
 
     def _add_tree_item(self, *, level=None, parameter=None, sequence=None):
+        """
+        Add an item to the sequence tree. An item will be added as a child
+        to the selected (existing) item, except when level is given.
+
+        :param level: An integer value determining the level at which an
+            item is added. If level is 0, a root item will be added.
+
+        :param parameter: If given, the parameter field is pre-filled
+        :param sequence: If given, the sequence field is pre-filled
+        """
 
         selected = self.tree.selectedItems()
 
@@ -587,6 +602,10 @@ class SequencerWidget(QtGui.QWidget):
         item.setSelected(True)
 
     def _remove_selected_tree_item(self):
+        """
+        Remove the selected item (and any child items) from the sequence tree.
+        """
+
         selected = self.tree.selectedItems()
         if len(selected) == 0:
             return
@@ -605,6 +624,11 @@ class SequencerWidget(QtGui.QWidget):
         parent.setSelected(True)
 
     def queue_sequence(self):
+        """
+        Obtain a list of parameters from the sequence tree, enter these into
+        procedures, and queue these procedures.
+        """
+
         self.queue_button.setEnabled(False)
         sequence = self._generate_sequence_from_tree()
         log.info(
@@ -622,6 +646,12 @@ class SequencerWidget(QtGui.QWidget):
         self.queue_button.setEnabled(True)
 
     def load_sequence(self, *, fileName=None):
+        """
+        Load a sequence from a .txt file.
+
+        :param fileName: Filename (string) of the to-be-loaded file.
+        """
+
         if fileName is None:
             fileName, _ = QtGui.QFileDialog.getOpenFileName(self, 'OpenFile')
 
@@ -656,6 +686,10 @@ class SequencerWidget(QtGui.QWidget):
             )
 
     def _generate_sequence_from_tree(self):
+        """
+        Generate a list of parameters from the sequence tree.
+        """
+
         iterator = QtGui.QTreeWidgetItemIterator(self.tree)
         sequences = []
         current_sequence = [[] for i in range(self.MAXDEPTH)]
@@ -721,6 +755,10 @@ class SequencerWidget(QtGui.QWidget):
 
     @staticmethod
     def _depth_of_child(item):
+        """
+        Determine the level / depth of a child item in the sequence tree.
+        """
+
         depth = -1
         while item:
             item = item.parent()
@@ -729,6 +767,19 @@ class SequencerWidget(QtGui.QWidget):
 
     @staticmethod
     def eval_string(string, name=None, depth=None):
+        """
+        Evaluate the given string. The string is evaluated using a list of
+        pre-defined functions that are deemed safe to use, to prevent the
+        execution of malicious code. For this purpose, also any built-in
+        functions or global variables are not available.
+
+        :param string: String to be interpreted.
+        :param name: Name of the to-be-interpreted string, only used for
+            error messages.
+        :param depth: Depth of the to-be-interpreted string, only used
+            for error messages.
+        """
+
         evaluated_string = None
         if len(string) > 0:
             try:
