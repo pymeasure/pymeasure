@@ -145,7 +145,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
@@ -155,6 +155,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.use_sequencer = sequencer
         self.sequencer_inputs = sequencer_inputs
         self.sequence_file = sequence_file
+        self.inputs_in_scrollarea = inputs_in_scrollarea
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -218,6 +219,16 @@ class ManagedWindow(QtGui.QMainWindow):
     def _layout(self):
         self.main = QtGui.QWidget(self)
 
+        if False:
+            widget = QtGui.QWidget()
+            widget.setLayout(vbox)
+
+            scrollArea = QtGui.QScrollArea()
+            scrollArea.setWidget(widget)
+
+            vbox = QtGui.QVBoxLayout()
+            vbox.addWidget(scrollArea)
+
         inputs_dock = QtGui.QWidget(self)
         inputs_vbox = QtGui.QVBoxLayout(self.main)
 
@@ -228,7 +239,16 @@ class ManagedWindow(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
-        inputs_vbox.addWidget(self.inputs)
+        if self.inputs_in_scrollarea:
+            inputs_scroll = QtGui.QScrollArea()
+            inputs_scroll.setWidget(self.inputs)
+            inputs_scroll.setFrameStyle(QtGui.QScrollArea.NoFrame)
+
+            inputs_vbox.addWidget(inputs_scroll)
+
+        else:
+            inputs_vbox.addWidget(self.inputs)
+
         inputs_vbox.addLayout(hbox)
         inputs_vbox.addStretch()
         inputs_dock.setLayout(inputs_vbox)
