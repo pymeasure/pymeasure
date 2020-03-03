@@ -450,8 +450,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             time.sleep(pause)
 
     def trigger(self):
-        """ Executes a bus trigger, which can be used when
-        :meth:`~.trigger_on_bus` is configured.
+        """ Executes a bus trigger.
         """
         return self.write("*TRG")
 
