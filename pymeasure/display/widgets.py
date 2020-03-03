@@ -742,17 +742,17 @@ class SequencerWidget(QtGui.QWidget):
                         temp_sequence[depth_idx]
                     ))
 
-                    try:
-                        element = sequence_products[0][1]
-                    except IndexError:
-                        log.error(
-                            "IndexError, likely empty nested parameter"
-                        )
-                    else:
-                        if isinstance(element, tuple):
-                            sequence_products = [
-                                (v1, *v2) for (v1, v2) in sequence_products
-                            ]
+                    for i in range(len(sequence_products)):
+                        try:
+                            element = sequence_products[i][1]
+                        except IndexError:
+                            log.error(
+                                "IndexError, likely empty nested parameter"
+                            )
+                        else:
+                            if isinstance(element, tuple):
+                                sequence_products[i] = (
+                                    sequence_products[i][0], *element)
 
                     temp_sequence[depth_idx - 1].extend(sequence_products)
                     temp_sequence[depth_idx] = []
