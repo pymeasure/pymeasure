@@ -803,21 +803,21 @@ class SequencerWidget(QtGui.QWidget):
                 )
             except TypeError:
                 log.error("TypeError, likely a typo in one of the " +
-                          "functions for parameter {}, depth {}".format(
+                          "functions for parameter '{}', depth {}".format(
                               name, depth
                           ))
                 raise SequenceEvaluationException()
             except SyntaxError:
                 log.error("SyntaxError, likely unbalanced brackets " +
-                          "for parameter {}, depth {}".format(name, depth))
+                          "for parameter '{}', depth {}".format(name, depth))
                 raise SequenceEvaluationException()
             except ValueError:
                 log.error("ValueError, likely wrong function argument " +
-                          "for parameter {}, depth {}".format(name, depth))
+                          "for parameter '{}', depth {}".format(name, depth))
                 raise SequenceEvaluationException()
         else:
             log.error("No sequence entered for " +
-                      "for parameter {}, depth {}".format(name, depth))
+                      "for parameter '{}', depth {}".format(name, depth))
             raise SequenceEvaluationException()
 
         evaluated_string = numpy.array(evaluated_string)
