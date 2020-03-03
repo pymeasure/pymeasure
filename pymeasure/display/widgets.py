@@ -760,6 +760,10 @@ class SequencerWidget(QtGui.QWidget):
                 current_sequence[depth_idx] = []
                 current_sequence[depth_idx - 1] = []
 
+            if depth == next_depth:
+                temp_sequence[depth].extend(current_sequence[depth])
+                current_sequence[depth] = []
+
         sequences = temp_sequence[0]
 
         for idx in range(len(sequences)):
