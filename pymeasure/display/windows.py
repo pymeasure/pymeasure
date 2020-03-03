@@ -31,7 +31,8 @@ from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog
+from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog, \
+    SequencerWidget
 from ..experiment.results import Results
 
 log = logging.getLogger(__name__)
@@ -143,13 +144,18 @@ class ManagedWindow(QtGui.QMainWindow):
     EDITOR = 'gedit'
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
-                 log_channel='', log_level=logging.INFO, parent=None):
+                 log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
         self.procedure_class = procedure_class
         self.inputs = inputs
         self.displays = displays
+        self.use_sequencer = sequencer
+        self.sequencer_inputs = sequencer_inputs
+        self.sequence_file = sequence_file
+        self.inputs_in_scrollarea = inputs_in_scrollarea
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -203,6 +209,13 @@ class ManagedWindow(QtGui.QMainWindow):
         self.manager.finished.connect(self.finished)
         self.manager.log.connect(self.log.handle)
 
+        if self.use_sequencer:
+            self.sequencer = SequencerWidget(
+                self.sequencer_inputs,
+                self.sequence_file,
+                parent=self
+            )
+
     def _layout(self):
         self.main = QtGui.QWidget(self)
 
@@ -216,15 +229,32 @@ class ManagedWindow(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
-        inputs_vbox.addWidget(self.inputs)
+        if self.inputs_in_scrollarea:
+            inputs_scroll = QtGui.QScrollArea()
+            inputs_scroll.setWidgetResizable(True)
+            inputs_scroll.setFrameStyle(QtGui.QScrollArea.NoFrame)
+
+            self.inputs.setSizePolicy(1, 0)
+            inputs_scroll.setWidget(self.inputs)
+            inputs_vbox.addWidget(inputs_scroll, 1)
+
+        else:
+            inputs_vbox.addWidget(self.inputs)
+
         inputs_vbox.addLayout(hbox)
-        inputs_vbox.addStretch()
+        inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
 
         dock = QtGui.QDockWidget('Input Parameters')
         dock.setWidget(inputs_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+
+        if self.use_sequencer:
+            sequencer_dock = QtGui.QDockWidget('Sequencer')
+            sequencer_dock.setWidget(self.sequencer)
+            sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
 
         tabs = QtGui.QTabWidget(self.main)
         tabs.addTab(self.plot_widget, "Results Graph")
