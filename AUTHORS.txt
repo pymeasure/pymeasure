@@ -20,3 +20,4 @@ Michael Schneider
 Dennis Feng
 Stefano Pirotta
 Moritz Jung
+Richard Schlitz

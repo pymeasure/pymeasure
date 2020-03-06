@@ -24,62 +24,72 @@
 
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
-from pyvisa.errors import VisaIOError
+from pymeasure.instruments.validators import (strict_discrete_set,
+                                              strict_range)
 
 
 class razorbillRP100(Instrument):
-    """Represents LCR meter E4980A/AL"""
+    """Represents Razorbill RP100 strain cell controller
+
+    .. code-block:: python
+
+        scontrol = razorbillRP100("ASRL/dev/ttyACM0::INSTR")
+
+        scontrol.output_1 = True      # turns output on
+        scontrol.slew_rate_1 = 1      # sets slew rate to 1V/s
+        scontrol.voltage_1 = 10       # sets voltage on output 1 to 10V
+
+    """
 
     output_1 = Instrument.control("OUTP1?", "OUTP1 %d",
-                                    """Turns output of channel 1 on or off""",
-                                    validator=strict_discrete_set,
-                                    values={True: 1, False: 0},
-                                    map_values=True)
+                                  """Turns output of channel 1 on or off""",
+                                  validator=strict_discrete_set,
+                                  values={True: 1, False: 0},
+                                  map_values=True)
 
     output_2 = Instrument.control("OUTP2?", "OUTP2 %d",
-                                    """Turns output of channel 2 on or off""",
-                                    validator=strict_discrete_set,
-                                    values={True: 1, False: 0},
-                                    map_values=True)
+                                  """Turns output of channel 2 on or off""",
+                                  validator=strict_discrete_set,
+                                  values={True: 1, False: 0},
+                                  map_values=True)
 
     voltage_1 = Instrument.control("SOUR1:VOLT?", "SOUR1:VOLT %g",
-                                    """Sets or queries the output voltage of channel 1""",
-                                    validator=strict_range,
-                                    values=[-230,230])
+                                   """Sets or queries the output voltage of channel 1""",
+                                   validator=strict_range,
+                                   values=[-230, 230])
 
     voltage_2 = Instrument.control("SOUR2:VOLT?", "SOUR2:VOLT %g",
-                                    """Sets or queries the output voltage of channel 2""",
-                                    validator=strict_range,
-                                    values=[-230,230])
+                                   """Sets or queries the output voltage of channel 2""",
+                                   validator=strict_range,
+                                   values=[-230, 230])
 
     slew_rate_1 = Instrument.control("SOUR1:VOLT:SLEW?", "SOUR1:VOLT:SLEW %g",
-                                    """Sets or queries the source slew rate in volts/sec of channel 1""",
-                                    validator=strict_range,
-                                    values=[0.1*10e-3,100*10e3])
+                                     """Sets or queries the source slew rate in volts/sec of channel 1""",
+                                     validator=strict_range,
+                                     values=[0.1*10e-3, 100*10e3])
 
     slew_rate_2 = Instrument.control("SOUR2:VOLT:SLEW?", "SOUR2:VOLT:SLEW %g",
-                                    """Sets or queries the source slew rate in volts/sec of channel 2""",
-                                    validator=strict_range,
-                                    values=[0.1*10e-3,100*10e3])
+                                     """Sets or queries the source slew rate in volts/sec of channel 2""",
+                                     validator=strict_range,
+                                     values=[0.1*10e-3, 100*10e3])
 
     instant_voltage_1 = Instrument.measurement("SOUR1:VOLT:NOW?",
-                                    """Retutns the instantaneous output of source one in volts""")
+        """Returns the instantaneous output of source one in volts""")
 
     instant_voltage_2 = Instrument.measurement("SOUR2:VOLT:NOW?",
-                                    """Returns the instanteneous output of source two in volts""")
+        """Returns the instanteneous output of source two in volts""")
 
     contact_voltage_1 = Instrument.measurement("MEAS1:VOLT?",
-                                    """Returns the Voltage in volts present at the front panel output of channel 1""")
+        """Returns the Voltage in volts present at the front panel output of channel 1""")
 
     contact_voltage_2 = Instrument.measurement("MEAS2:VOLT?",
-                                    """Returns the Voltage in volts present at the front panel output of channel 2""")
+        """Returns the Voltage in volts present at the front panel output of channel 2""")
 
     contact_current_1 = Instrument.measurement("MEAS1:CURR?",
-                                    """Returns the current in amps present at the front panel output of channel one""")
+        """Returns the current in amps present at the front panel output of channel 1""")
 
     contact_current_2 = Instrument.measurement("MEAS2:CURR?",
-                                    """Returns the current in amps present at the front panel output of channel one""")
+        """Returns the current in amps present at the front panel output of channel 2""")
 
     def __init__(self, adapter, **kwargs):
         super(razorbillRP100, self).__init__(
