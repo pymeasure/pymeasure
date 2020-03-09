@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -258,14 +258,17 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
         self.lineEdit().setText(text.toLower())
 
     def valueFromText(self, text):
-        if self._parameter.units:
-            return float(str(text)[:-(len(self._parameter.units) + 1)])
-        else:
-            return float(str(text))
+        try:
+            if self._parameter.units:
+                return float(str(text)[:-(len(self._parameter.units) + 1)])
+            else:
+                return float(str(text))
+        except ValueError:
+            return self._parameter.default
 
     def textFromValue(self, value):
         string = "{:g}".format(value).replace("e+", "e")
-        string = re.sub("e(-?)0*(\d+)", r"e\1\2", string)
+        string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
         return string
 
     def stepEnabled(self):

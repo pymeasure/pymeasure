@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -64,8 +64,8 @@ class Yokogawa7651(Instrument):
         called directly by the user.
         """
         status = ''.join(v.split("\r\n\n")[1:-1])
-        keys = re.findall('[^\dE+.-]+', status)
-        values = re.findall('[\dE+.-]+', status)
+        keys = re.findall(r'[^\dE+.-]+', status)
+        values = re.findall(r'[\dE+.-]+', status)
         if key not in keys:
             raise ValueError("Invalid key used to search for status of Yokogawa 7561")
         else:
@@ -134,17 +134,17 @@ class Yokogawa7651(Instrument):
         super(Yokogawa7651, self).__init__(
             adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
         )
-        
+
         self.write("H0;E") # Set no header in output data
-        
+
     @property
     def id(self):
         """ Returns the identification of the instrument """
         return self.ask("OS;E").split('\r\n\n')[0]
-        
+
     @property
     def source_enabled(self):
-        """ Reads a boolean value that is True if the source is enabled, 
+        """ Reads a boolean value that is True if the source is enabled,
         determined by checking if the 5th bit of the OC flag is a binary 1.
         """
         oc = int(self.ask("OC;E")[5:])
@@ -159,7 +159,7 @@ class Yokogawa7651(Instrument):
         """ Disables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("O0;E")
-        
+
     def apply_current(self, max_current=1e-3, complinance_voltage=1):
         """ Configures the instrument to apply a source current, which can
         take optional parameters that defer to the :attr:`~.Yokogawa7651.source_current_range`

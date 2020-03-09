@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from decimal import Decimal
+
 
 def strict_range(value, values):
     """ Provides a validator function that returns the value
@@ -37,6 +39,28 @@ def strict_range(value, values):
     else:
         raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
             value, min(values), max(values)
+        ))
+
+
+def strict_discrete_range(value, values, step):
+    """ Provides a validator function that returns the value
+    if its value is less than the maximum and greater than the
+    minimum of the range and is a multiple of step.
+    Otherwise it raises a ValueError.
+
+    :param value: A value to test
+    :param values: A range of values (range, list, etc.)
+    :param step: Minimum stepsize (resolution limit)
+    :raises: ValueError if the value is out of the range
+    """
+    # use Decimal type to provide correct decimal compatible floating
+    # point arithmetic compared to binary floating point arithmetic
+    if (strict_range(value, values) == value and
+            Decimal(str(value)) % Decimal(str(step)) == 0):
+        return value
+    else:
+        raise ValueError('Value of {:g} is not a multiple of {:g}'.format(
+            value, step
         ))
 
 
@@ -116,7 +140,8 @@ def truncated_discrete_set(value, values):
 
 
 def joined_validators(*validators):
-    """ Join a list of validators together as a single.  Expects a list of validator functions and values.
+    """ Join a list of validators together as a single.
+    Expects a list of validator functions and values.
 
     :param validators: an iterable of other validators
     """

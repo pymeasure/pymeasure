@@ -1,0 +1,4 @@
+- "Delay Time", "arange(0.25, 1, 0.25)"
+-- "Random Seed", "[1, 4, 8]"
+--- "Loop Iterations", "exp(linspace(1, 5, 3))"
+-- "Random Seed", "arange(10, 100, 10)"

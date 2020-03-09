@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,8 +61,8 @@ class PrologixAdapter(SerialAdapter):
 
     """
 
-    def __init__(self, port, address=None, rw_delay=None, **kwargs):
-        super().__init__(port, timeout=0.5, **kwargs)
+    def __init__(self, port, address=None, rw_delay=None, serial_timeout = 0.5, **kwargs):
+        super().__init__(port, timeout = serial_timeout, **kwargs)
         self.address = address
         self.rw_delay = rw_delay
         if not isinstance(port, serial.Serial):
@@ -104,7 +104,7 @@ class PrologixAdapter(SerialAdapter):
 
         :returns: String ASCII response of the instrument
         """
-        self.write("++read")
+        self.write("++read eoi")
         return b"\n".join(self.connection.readlines()).decode()
 
     def gpib(self, address, rw_delay=None):

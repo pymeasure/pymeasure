@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -41,10 +41,12 @@ class VISAAdapter(Adapter):
     with instruments.
 
     :param resource: VISA resource name that identifies the address
+    :param visa_library: VisaLibrary Instance, path of the VISA library or VisaLibrary spec string (@py or @ni).
+                         if not given, the default for the platform will be used.
     :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, resourceName, visa_library='', **kwargs):
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
@@ -52,10 +54,10 @@ class VISAAdapter(Adapter):
             resourceName = "GPIB0::%d::INSTR" % resourceName
         super(VISAAdapter, self).__init__()
         self.resource_name = resourceName
-        self.manager = visa.ResourceManager()
-        safeKeywords = ['resource_name', 'timeout', 'term_chars',
+        self.manager = visa.ResourceManager(visa_library)
+        safeKeywords = ['resource_name', 'timeout',
                         'chunk_size', 'lock', 'delay', 'send_end',
-                        'values_format', 'read_termination']
+                        'values_format', 'read_termination', 'write_termination']
         kwargsCopy = copy.deepcopy(kwargs)
         for key in kwargsCopy:
             if key not in safeKeywords:
@@ -85,11 +87,20 @@ class VISAAdapter(Adapter):
 
     def read(self):
         """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
+        ASCII response
 
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read()
+
+    def read_bytes(self, size):
+        """ Reads specified number of bytes from the buffer and returns
+        the resulting ASCII response
+
+        :param size: Number of bytes to read from the buffer
+        :returns: String ASCII response of the instrument.
+        """
+        return self.connection.read_bytes(size)
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
