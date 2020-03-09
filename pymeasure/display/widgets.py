@@ -28,7 +28,7 @@ import os
 import re
 import pyqtgraph as pg
 
-from .browser import Browser, ImageBrowser
+from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from .log import LogHandler
@@ -412,42 +412,6 @@ class ImageWidget(QtGui.QWidget):
     def update_z_column(self, index):
         axis = self.columns_z.itemText(index)
         self.image_frame.change_z_axis(axis)
-
-
-class ImageBrowserWidget(QtGui.QWidget):
-    def __init__(self, *args, parent=None):
-        super().__init__(parent)
-        self.browser_args = args
-        self._setup_ui()
-        self._layout()
-
-    def _setup_ui(self):
-        self.browser = ImageBrowser(*self.browser_args, parent=self)
-        self.clear_button = QtGui.QPushButton('Clear all', self)
-        self.clear_button.setEnabled(False)
-        self.hide_button = QtGui.QPushButton('Hide all', self)
-        self.hide_button.setEnabled(False)
-        self.show_button = QtGui.QPushButton('Show all', self)
-        self.show_button.setEnabled(False)
-        self.open_button = QtGui.QPushButton('Open', self)
-        self.open_button.setEnabled(True)
-
-    def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
-        vbox.setSpacing(0)
-
-        hbox = QtGui.QHBoxLayout()
-        hbox.setSpacing(10)
-        hbox.setContentsMargins(-1, 6, -1, 6)
-        hbox.addWidget(self.show_button)
-        hbox.addWidget(self.hide_button)
-        hbox.addWidget(self.clear_button)
-        hbox.addStretch()
-        hbox.addWidget(self.open_button)
-
-        vbox.addLayout(hbox)
-        vbox.addWidget(self.browser)
-        self.setLayout(vbox)
 
 
 class BrowserWidget(QtGui.QWidget):
