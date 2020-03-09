@@ -614,7 +614,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
             if state == 0:
-                # self.im_plot.removeItem(experiment.image)
+                self.im_plot.removeItem(experiment.image)
                 self.plot.removeItem(experiment.curve)
             else:
                 # add regular plot
@@ -622,26 +622,6 @@ class ManagedImageWindow(QtGui.QMainWindow):
                 experiment.curve.y = self.plot_widget.plot_frame.y_axis
                 experiment.curve.update()
                 self.plot.addItem(experiment.curve)
-                # # add/update image plot
-                # experiment.image.update_img()
-                # self.im_plot.addItem(experiment.image)
-                # # use "data coordinates"
-                # xax = self.im_plot.getAxis('bottom')
-                # xax.setRange(experiment.image.xstart,experiment.image.xend)
-                # yax = self.im_plot.getAxis('left')
-                # yax.setRange(experiment.image.ystart,experiment.image.yend)
-
-    # JM: NOTE: This will be called twice each time a new radiobutton is selected
-    # since it is linked to toggling. So the one selected calls it once, and the
-    # other deselected calls it again.
-    def image_toggled(self): # JM: added
-        """ Changes the displayed image when a radiobutton is changed """
-        root = self.browser.invisibleRootItem()
-        for i in range(root.childCount()):
-            pass
-            item = root.child(i)
-            experiment = self.manager.experiments.with_browser_item(item)
-            if item.radiobutton.isChecked():
                 # add/update image plot
                 experiment.image.update_img()
                 self.im_plot.addItem(experiment.image)
@@ -650,8 +630,6 @@ class ManagedImageWindow(QtGui.QMainWindow):
                 xax.setRange(experiment.image.xstart,experiment.image.xend)
                 yax = self.im_plot.getAxis('left')
                 yax.setRange(experiment.image.ystart,experiment.image.yend)
-            else:
-                self.im_plot.removeItem(experiment.image)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -771,7 +749,6 @@ class ManagedImageWindow(QtGui.QMainWindow):
         if curve is None:
             curve = self.new_curve(results)
         browser_item = ImageBrowserItem(results, curve)
-        browser_item.radiobutton.toggled.connect(self.image_toggled) # JM: Connecting image switching here
         return ImageExperiment(results, curve, image, browser_item)
 
     def set_parameters(self, parameters):
