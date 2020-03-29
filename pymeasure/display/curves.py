@@ -23,15 +23,23 @@
 #
 
 import logging
-
-import pyqtgraph as pg
-import numpy as np
-
-from .Qt import QtCore
+import sys
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+import pyqtgraph as pg
+import numpy as np
+try:
+    from matplotlib.cm import viridis
+except ImportError:
+    log.warning("Matplotlib not found. Images will be greyscale")
+
+from .Qt import QtCore
+
+def _greyscale_colormap(x):
+    """Simple greyscale colormap. Assumes x is already normalized."""
+    return np.array([x,x,x,1])
 
 class ResultsCurve(pg.PlotDataItem):
     """ Creates a curve loaded dynamically from a file through the Results
@@ -74,6 +82,77 @@ class ResultsCurve(pg.PlotDataItem):
 
 
 # TODO: Add method for changing x and y
+
+class ResultsImage(pg.ImageItem):
+    """ Creates an image loaded dynamically from a file through the Results
+    object."""
+    def __init__(self, results, x, y, z, force_reload=False):
+        self.results = results
+        self.x = x
+        self.y = y
+        self.z = z
+        self.xstart = getattr(self.results.procedure, self.x + '_start')
+        self.xend = getattr(self.results.procedure, self.x + '_end')
+        self.xstep = getattr(self.results.procedure, self.x + '_step')
+        self.xsize = int(np.ceil((self.xend - self.xstart) / self.xstep)) + 1
+        self.ystart = getattr(self.results.procedure, self.y + '_start')
+        self.yend = getattr(self.results.procedure, self.y + '_end')
+        self.ystep = getattr(self.results.procedure, self.y + '_step')
+        self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
+        self.img_data = np.zeros((self.ysize,self.xsize,4))
+        self.force_reload = force_reload
+        if 'matplotlib.cm' in sys.modules:
+            self.colormap = viridis
+        else:
+            self.colormap = _greyscale_colormap
+
+        super().__init__(image=self.img_data)
+        
+        # Scale and translate image so that the pixels are in the coorect
+        # position in "data coordinates"
+        self.scale(self.xstep, self.ystep)
+        self.translate(int(self.xstart/self.xstep)-0.5,
+                       int(self.ystart/self.ystep)-0.5) # 0.5 so pixels centered
+
+    def update_img(self):
+        if self.force_reload:
+            self.results.reload()
+
+        data = self.results.data
+        zmin = data[self.z].min()
+        zmax = data[self.z].max()
+
+        # populate the image array with the new data
+        for idx, row in data.iterrows():
+            xdat = row[self.x]
+            ydat = row[self.y]
+            xidx, yidx = self.find_img_index(xdat, ydat)
+            self.img_data[yidx,xidx,:] = self.colormap((row[self.z] - zmin)/(zmax-zmin))
+
+        # set image data, need to transpose since pyqtgraph assumes column-major order
+        self.setImage(image=np.transpose(self.img_data,axes=(1,0,2)))
+
+    def find_img_index(self, x, y):
+        """ Finds the integer image indices corresponding to the
+        closest x and y points of the data given some x and y data.
+        """
+
+        indices = [self.xsize-1,self.ysize-1] # default to the final pixel
+        if self.xstart <= x <= self.xend: # only change if within reasonable range
+            indices[0] = self.round_up((x - self.xstart)/self.xstep)
+        if self.ystart <= y <= self.yend:
+            indices[1] = self.round_up((y - self.ystart)/self.ystep)
+
+        return indices
+
+    def round_up(self, x):
+        """Convenience function since numpy rounds to even"""
+        if x%1 >= 0.5:
+            return int(x) + 1
+        else:
+            return int(x)
+
+    # TODO: colormap selection
 
 
 class BufferCurve(pg.PlotDataItem):

@@ -74,10 +74,9 @@ class BrowserItem(QtGui.QTreeWidgetItem):
     def setProgress(self, progress):
         self.progressbar.setValue(progress)
 
-
 class Browser(QtGui.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
-    objects allowing the user to view the status of queued Experiments as well as 
+    objects allowing the user to view the status of queued Experiments as well as
     loading and displaying data from previous runs.
 
     In order that different Experiments be displayed within the same Browser,
@@ -108,8 +107,8 @@ class Browser(QtGui.QTreeWidget):
     def add(self, experiment):
         """Add a :class:`Experiment<pymeasure.display.manager.Experiment>` object
         to the Browser. This function checks to make sure that the Experiment
-        measures the appropriate quantities to warrant its inclusion, and then 
-        adds a BrowserItem to the Browser, filling all relevant columns with 
+        measures the appropriate quantities to warrant its inclusion, and then
+        adds a BrowserItem to the Browser, filling all relevant columns with
         Parameter data.
         """
         experiment_parameters = experiment.procedure.parameter_objects()
