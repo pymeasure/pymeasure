@@ -506,24 +506,24 @@ class ManagedWindow(QtGui.QMainWindow):
             self.browser_widget.clear_button.setEnabled(True)
 
 
-# QUESTION: Can we just inherit from ManagedWindow?
+# TODO: Inheret from ManagedWindow to share code and features
 class ManagedImageWindow(QtGui.QMainWindow):
     """
     Abstract base class.
 
-    The ManagedWindow provides an interface for inputting experiment
+    The MangedImageWindow provides an interface for inputting experiment
     parameters, running several experiments
     (:class:`~pymeasure.experiment.procedure.Procedure`), plotting
     result curves, and listing the experiments conducted during a session.
 
-    The ManagedWindow uses a Manager to control Workers in a Queue,
+    The MangedImageWindow uses a Manager to control Workers in a Queue,
     and provides a simple interface. The :meth:`~.queue` method must be
     overridden by the child class.
 
     .. seealso::
 
         Tutorial :ref:`tutorial-managedwindow`
-            A tutorial and example on the basic configuration and usage of ManagedWindow.
+            A tutorial and example on the basic configuration and usage of MangedImageWindow.
 
     .. attribute:: plot
 
