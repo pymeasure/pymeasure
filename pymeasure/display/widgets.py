@@ -260,11 +260,11 @@ class ImageFrame(QtGui.QFrame):
         xlabel, xunits = self.parse_axis(x_axis)
         self.plot.setLabel('bottom', xlabel, units=xunits, **self.LABEL_STYLE)
         self.x_axis = x_axis
-        self.x_axis_changed.emit(x_axis) # JM: Not sure if this does anything now...
+        self.x_axis_changed.emit(x_axis)
         ylabel, yunits = self.parse_axis(y_axis)
         self.plot.setLabel('left', ylabel, units=yunits, **self.LABEL_STYLE)
         self.y_axis = y_axis
-        self.y_axis_changed.emit(y_axis) # JM: Not sure if this does anything now...
+        self.y_axis_changed.emit(y_axis)
         self.change_z_axis(z_axis)
 
     def _setup_ui(self):
@@ -276,7 +276,7 @@ class ImageFrame(QtGui.QFrame):
 
         vbox = QtGui.QVBoxLayout(self)
 
-        self.plot_widget = pg.PlotWidget(self, background='#ffffff') # JM: NOTE: This is just pulling a base pg PlotWidget, so no infinite regress!
+        self.plot_widget = pg.PlotWidget(self, background='#ffffff')
         self.coordinates = QtGui.QLabel(self)
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
         self.coordinates.setStyleSheet("background: #fff")
@@ -400,10 +400,6 @@ class ImageWidget(QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    # JM: Maybe should have a change image function, so that we know there is 
-    # only ever one being displayed. Other classes could have copies of 
-    # ResultsImage's, but would just call a change_image function from here to 
-    # change which experiment the image is tied to. (or something like that)
     def new_image(self, results):
         """ Creates a new image """
         image = ResultsImage(results,

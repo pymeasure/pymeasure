@@ -279,7 +279,6 @@ class Manager(QtCore.QObject):
 
             self.aborted.emit(self._running_experiment)
 
-# JM: ####################################################################
 
 class ImageExperiment(Experiment):
     """ 
@@ -290,6 +289,7 @@ class ImageExperiment(Experiment):
         super().__init__(results, curve, browser_item, parent=None)
 
         self.image = image
+
 
 class ImageExperimentQueue(ExperimentQueue):
     """ 

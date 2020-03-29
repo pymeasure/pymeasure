@@ -28,7 +28,7 @@ import os
 import pyqtgraph as pg
 
 from .browser import BrowserItem
-from .curves import ResultsCurve # JM: only need to import another if we want a PlotterWindow equivalent
+from .curves import ResultsCurve
 from .manager import Manager, Experiment, ImageExperiment, ImageManager
 from .Qt import QtCore, QtGui
 from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog, \
@@ -498,7 +498,6 @@ class ManagedWindow(QtGui.QMainWindow):
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
 
-# JM: ############################################################################
 
 # QUESTION: Can we just inherit from ManagedWindow?
 class ManagedImageWindow(QtGui.QMainWindow):
@@ -642,9 +641,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
     def quit(self, evt=None):
         self.close()
 
-    def browser_item_changed(self, item, column): # JM: adds or removes item based on checkbox in browser item. Need to destroy old and add new.
-    # will probably need to check if something is already checked, and if so un-check the other ones. *should* probably change these to
-    # radio buttons for better UI, but for now we'll deal with it. Or maybe just override whatever's there for now.
+    def browser_item_changed(self, item, column):
         if column == 0:
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
@@ -677,7 +674,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
             menu.addAction(action_open)
 
             # Change Color
-            action_change_color = QtGui.QAction(menu) # JM: probably remove this??
+            action_change_color = QtGui.QAction(menu)
             action_change_color.setText("Change Color")
             action_change_color.triggered.connect(
                 lambda: self.change_color(experiment))
@@ -769,8 +766,6 @@ class ManagedImageWindow(QtGui.QMainWindow):
         return self.plot_widget.new_curve(results, color=color, **kwargs)
 
     def new_image(self, results, **kwargs):
-        # if color is None: # JM: I guess we could extend this to colormaps?
-        #     color = pg.intColor(self.browser.topLevelItemCount() % 8)
         return self.image_widget.new_image(results, **kwargs)
 
     # TODO: make shure whatever calls this can supply both if needed
@@ -822,7 +817,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         raise NotImplementedError(
             "Abstract method ManagedWindow.queue not implemented")
 
-    def setup_plot(self, plot): # JM: Will need to change this probably.
+    def setup_plot(self, plot):
         """
         This method does nothing by default, but can be overridden by the child
         class in order to set up custom options for the plot
@@ -836,7 +831,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         """
         pass
         
-    def setup_im_plot(self, im_plot): # JM: Will need to change this probably.
+    def setup_im_plot(self, im_plot):
         """
         This method does nothing by default, but can be overridden by the child
         class in order to set up custom options for the image plot

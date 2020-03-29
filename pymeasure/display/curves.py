@@ -91,18 +91,14 @@ class ResultsImage(pg.ImageItem):
         self.x = x
         self.y = y
         self.z = z
-        # JM: NOTE: Below we're making an assumption on the form of *any* procedure 
-        # which we would use with an image. Seems reasonable, we need to make 
-        # some compromise so that we know how to construct the resolution and so
-        #  that we know what the heck the range is
         self.xstart = getattr(self.results.procedure, self.x + '_start')
         self.xend = getattr(self.results.procedure, self.x + '_end')
         self.xstep = getattr(self.results.procedure, self.x + '_step')
-        self.xsize = int(np.ceil((self.xend - self.xstart) / self.xstep)) + 1 # JM: add one since arange doesn't include bound, but maybe experiment will give it. Just defaults to empty pixels, not the end of the world.
+        self.xsize = int(np.ceil((self.xend - self.xstart) / self.xstep)) + 1
         self.ystart = getattr(self.results.procedure, self.y + '_start')
         self.yend = getattr(self.results.procedure, self.y + '_end')
         self.ystep = getattr(self.results.procedure, self.y + '_step')
-        self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1 # JM: add one since arange doesn't include bound, but maybe experiment will give it. Just defaults to empty pixels, not the end of the world.
+        self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
         self.img_data = np.zeros((self.ysize,self.xsize,4))
         self.force_reload = force_reload
         if 'matplotlib.cm' in sys.modules:
