@@ -31,8 +31,15 @@ from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment, ImageExperiment, ImageManager
 from .Qt import QtCore, QtGui
-from .widgets import PlotWidget, BrowserWidget, InputsWidget, LogWidget, ResultsDialog, \
-    SequencerWidget
+from .widgets import (
+    PlotWidget,
+    BrowserWidget,
+    InputsWidget,
+    LogWidget,
+    ResultsDialog,
+    SequencerWidget,
+    ImageWidget,
+)
 from ..experiment.results import Results
 
 log = logging.getLogger(__name__)
