@@ -32,6 +32,7 @@ Instruments by manufacturer:
    keysight/index
    lakeshore/index
    newport/index
+   ni/index
    oxfordinstruments/index
    parker/index
    signalrecovery/index
