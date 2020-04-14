@@ -76,6 +76,16 @@ class ITC503(Instrument):
         map_values=True,
     )
 
+    heater = Instrument.control(
+        "R5", "$O%f",
+        """ A floating point property that sets the required heater output when
+        in manual mode. The parameter is expressed as a percentage of the
+        maximum voltage. Valid values are in range 0 [off] to 99.9 [%]. """,
+        get_process=lambda v: float(v[1:]),
+        validator=truncated_range,
+        values=[0, 99.9]
+    )
+
     auto_pid = Instrument.control(
         "X", "$L%d",
         """ A boolean property that sets the Auto-PID mode on (True) or off (False).
