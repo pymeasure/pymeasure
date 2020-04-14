@@ -86,6 +86,16 @@ class ITC503(Instrument):
         values=[0, 99.9]
     )
 
+    gasflow = Instrument.control(
+        "R7", "$G%f",
+        """ A floating point property that controls gas flow when in manual
+        mode. The value is expressed as a percentage of the maximum gas flow.
+        Valid values are in range 0 [off] to 99.9 [%]. """,
+        get_process=lambda v: float(v[1:]),
+        validator=truncated_range,
+        values=[0, 99.9]
+    )
+
     auto_pid = Instrument.control(
         "X", "$L%d",
         """ A boolean property that sets the Auto-PID mode on (True) or off (False).
