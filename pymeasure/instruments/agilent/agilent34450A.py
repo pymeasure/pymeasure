@@ -36,7 +36,17 @@ class Agilent34450A(Instrument):
     """
     Represent the HP/Agilent/Keysight 34450A and related multimeters.
 
-    #TODO: Complete documentation, add implementation example.
+    .. code-block:: python
+
+        dmm = Agilent34450A("USB0::...")
+        dmm.reset()
+
+        dmm.configure_voltage()
+        print(dmm.voltage)
+
+        dmm.shutdown()
+
+    #TODO: Complete documentation
     """
 
     # Implementation based on current keithley2000 implementation.
@@ -53,8 +63,30 @@ class Agilent34450A(Instrument):
              'temperature': 'TEMP',
              'capacitance': 'CAP'}
 
-    # TODO: Consider making individual control methods private to force access
-    #  through configure_xxxxx methods.
+    @property
+    def mode(self):
+        get_command = ":configure?"
+        vals = self._conf_parser(self.values(get_command))
+        # Return only the mode parameter
+        invMODES = {v: k for k, v in self.MODES.items()}
+        mode = invMODES[vals[0]]
+        return mode
+
+    @mode.setter
+    # TODO: Add docstring
+    def mode(self, value):
+        if value in self.MODES:
+            if value not in ['current frequency', 'voltage frequency']:
+                self.write(':configure:' + self.MODES[value])
+            else:
+                if value == 'current frequency':
+                    self.mode = 'ac current'
+                else:
+                    self.mode = 'ac voltage'
+                self.write(":configure:freq")
+        else:
+            raise ValueError(f'Value {value} is not a supported mode for this device.')
+
     ###############
     # Current (A) #
     ###############
@@ -362,100 +394,75 @@ class Agilent34450A(Instrument):
             else:
                 break
 
-    @property
-    def mode(self):
-        get_command = ":configure?"
-        vals = self._conf_parser(self.values(get_command))
-        # Return only the mode parameter
-        invMODES = {v: k for k, v in self.MODES.items()}
-        mode = invMODES[vals[0]]
-        return mode
-
-    @mode.setter
-    # TODO: Add docstring
-    def mode(self, value):
-        if value in self.MODES:
-            if value not in ['current frequency', 'voltage frequency']:
-                self.write(':configure:'+self.MODES[value])
-            else:
-                if value == 'current frequency':
-                    self.mode = 'ac current'
-                else:
-                    self.mode = 'ac voltage'
-                self.write(":configure:freq")
-        else:
-            raise ValueError(f'Value {value} is not a supported mode for this device.')
-
-
-    def configure_voltage(self, range="AUTO", ac=False, resolution="DEF"):
+    def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
         """ Configures the instrument to measure voltage.
 
-        :param range: A voltage in Volts to set the voltage range or "AUTO"
+        :param voltage_range: A voltage in Volts to set the voltage range or "AUTO"
         :param ac: False for DC voltage, True for AC voltage
         :param resolution: Desired resolution
         """
         if ac is True:
             self.mode = 'ac voltage'
             self.voltage_ac_resolution = resolution
-            if range == "AUTO":
+            if voltage_range == "AUTO":
                 self.voltage_ac_auto_range = True
             else:
-                self.voltage_ac_range = range
+                self.voltage_ac_range = voltage_range
         elif ac is False:
             self.mode = 'voltage'
             self.voltage_resolution = resolution
-            if range == "AUTO":
+            if voltage_range == "AUTO":
                 self.voltage_auto_range = True
             else:
-                self.voltage_range = range
+                self.voltage_range = voltage_range
         else:
             raise TypeError('Value of ac should be a boolean.')
 
-    def configure_current(self, range="AUTO", ac=False, resolution="DEF"):
+    def configure_current(self, current_range="AUTO", ac=False, resolution="DEF"):
         """ Configures the instrument to measure current.
 
-        :param range: A current in Amps to set the current range, or "AUTO"
+        :param current_range: A current in Amps to set the current range, or "AUTO"
         :param ac: False for DC current, and True for AC current
         :param resolution: Desired resolution
         """
         if ac is True:
             self.mode = 'ac current'
             self.current_ac_resolution = resolution
-            if range == "AUTO":
+            if current_range == "AUTO":
                 self.current_ac_auto_range = True
             else:
-                self.current_ac_range = range
+                self.current_ac_range = current_range
         elif ac is False:
             self.mode = 'current'
             self.current_resolution = resolution
-            if range == "AUTO":
+            if current_range == "AUTO":
                 self.current_auto_range = True
             else:
-                self.current_range = range
+                self.current_range = current_range
         else:
             raise TypeError('Value of ac should be a boolean.')
 
-    def configure_resistance(self, range="AUTO", wires=2, resolution="DEF"):
+    def configure_resistance(self, resistance_range="AUTO", wires=2, resolution="DEF"):
         """ Configures the instrument to measure resistance.
 
-        :param range: A resistance in Ohms to set the resistance range, or"AUTO"
+        :param resistance_range: A resistance in Ohms to set the resistance range, or"AUTO"
         :param wires: Number of wires used for measurement
         :param resolution: Desired resolution
         """
         if wires == 2:
             self.mode = 'resistance'
             self.resistance_resolution = resolution
-            if range == "AUTO":
+            if resistance_range == "AUTO":
                 self.resistance_auto_range = True
             else:
-                self.resistance_range = range
+                self.resistance_range = resistance_range
         elif wires == 4:
             self.mode = '4w resistance'
             self.resistance_4W_resolution = resolution
-            if range == "AUTO":
+            if resistance_range == "AUTO":
                 self.resistance_4W_auto_range = True
             else:
-                self.resistance_4W_range = range
+                self.resistance_4W_range = resistance_range
         else:
             raise ValueError("Incorrect wires value, Agilent 34450A only supports 2 or 4 wire"
                              "resistance meaurement.")
@@ -495,16 +502,16 @@ class Agilent34450A(Instrument):
         """
         self.mode = 'diode'
 
-    def configure_capacitance(self, range="AUTO"):
+    def configure_capacitance(self, capacitance_range="AUTO"):
         """ Configures the instrument to measure capacitance.
 
-        :param range: A capacitance in Farads to set the capacitance range, or "AUTO"
+        :param capacitance_range: A capacitance in Farads to set the capacitance range, or "AUTO"
         """
         self.mode = 'capacitance'
-        if range == "AUTO":
+        if capacitance_range == "AUTO":
             self.capacitance_auto_range = True
         else:
-            self.capacitance_range = range
+            self.capacitance_range = capacitance_range
 
     def configure_continuity(self):
         """ Configures the instrument to measure continuity.
@@ -547,8 +554,9 @@ class Agilent34450A(Instrument):
         for i, v in enumerate(list_without_empty_elements):
             try:
                 list_without_empty_elements[i] = float(v)
-            except Exception:
-                pass
+            except OverflowError as e:
+                print(e)
+                list_without_empty_elements[i] = 0
 
         return list_without_empty_elements
 

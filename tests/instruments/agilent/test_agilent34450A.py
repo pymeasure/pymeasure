@@ -170,21 +170,21 @@ class TestAgilent34450A:
         assert dmm.current_resolution == 1.50E-6
 
         # Four possible paths
-        dmm.configure_current(range=1, ac=True, resolution="MAX")
+        dmm.configure_current(current_range=1, ac=True, resolution="MAX")
         assert dmm.mode == "ac current"
         assert dmm.current_ac_range == 1
         assert dmm.current_ac_auto_range == 0
         assert dmm.current_ac_resolution == 3.00E-5
-        dmm.configure_current(range="AUTO", ac=True, resolution="MIN")
+        dmm.configure_current(current_range="AUTO", ac=True, resolution="MIN")
         assert dmm.mode == "ac current"
         assert dmm.current_ac_auto_range == 1
         assert dmm.current_ac_resolution == 1.50E-6
-        dmm.configure_current(range=1, ac=False, resolution="MAX")
+        dmm.configure_current(current_range=1, ac=False, resolution="MAX")
         assert dmm.mode == "current"
         assert dmm.current_range == 1
         assert dmm.current_auto_range == 0
         assert dmm.current_resolution == 3.00E-5
-        dmm.configure_current(range="AUTO", ac=False, resolution="MIN")
+        dmm.configure_current(current_range="AUTO", ac=False, resolution="MIN")
         assert dmm.mode == "current"
         assert dmm.current_auto_range == 1
         assert dmm.current_resolution == 1.50E-6
@@ -304,21 +304,21 @@ class TestAgilent34450A:
         assert dmm.voltage_resolution == 1.50E-6
 
         # Four possible paths
-        dmm.configure_voltage(range=100, ac=True, resolution="MAX")
+        dmm.configure_voltage(voltage_range=100, ac=True, resolution="MAX")
         assert dmm.mode == "ac voltage"
         assert dmm.voltage_ac_range == 100
         assert dmm.voltage_ac_auto_range == 0
         assert dmm.voltage_ac_resolution == 3.00E-5
-        dmm.configure_voltage(range="AUTO", ac=True, resolution="MIN")
+        dmm.configure_voltage(voltage_range="AUTO", ac=True, resolution="MIN")
         assert dmm.mode == "ac voltage"
         assert dmm.voltage_ac_auto_range == 1
         assert dmm.voltage_ac_resolution == 1.50E-6
-        dmm.configure_voltage(range=100, ac=False, resolution="MAX")
+        dmm.configure_voltage(voltage_range=100, ac=False, resolution="MAX")
         assert dmm.mode == "voltage"
         assert dmm.voltage_range == 100
         assert dmm.voltage_auto_range == 0
         assert dmm.voltage_resolution == 3.00E-5
-        dmm.configure_voltage(range="AUTO", ac=False, resolution="MIN")
+        dmm.configure_voltage(voltage_range="AUTO", ac=False, resolution="MIN")
         assert dmm.mode == "voltage"
         assert dmm.voltage_auto_range == 1
         assert dmm.voltage_resolution == 1.50E-6
@@ -437,21 +437,21 @@ class TestAgilent34450A:
         assert dmm.resistance_resolution == 1.50E-6
 
         # Four possible paths
-        dmm.configure_resistance(range=10E3, wires=2, resolution="MAX")
+        dmm.configure_resistance(resistance_range=10E3, wires=2, resolution="MAX")
         assert dmm.mode == "resistance"
         assert dmm.resistance_range == 10E3
         assert dmm.resistance_auto_range == 0
         assert dmm.resistance_resolution == 3.00E-5
-        dmm.configure_resistance(range="AUTO", wires=2, resolution="MIN")
+        dmm.configure_resistance(resistance_range="AUTO", wires=2, resolution="MIN")
         assert dmm.mode == "resistance"
         assert dmm.resistance_auto_range == 1
         assert dmm.resistance_resolution == 1.50E-6
-        dmm.configure_resistance(range=10E3, wires=4, resolution="MAX")
+        dmm.configure_resistance(resistance_range=10E3, wires=4, resolution="MAX")
         assert dmm.mode == "4w resistance"
         assert dmm.resistance_4W_range == 10E3
         assert dmm.resistance_4W_auto_range == 0
         assert dmm.resistance_4W_resolution == 3.00E-5
-        dmm.configure_resistance(range="AUTO", wires=4, resolution="MIN")
+        dmm.configure_resistance(resistance_range="AUTO", wires=4, resolution="MIN")
         assert dmm.mode == "4w resistance"
         assert dmm.resistance_4W_auto_range == 1
         assert dmm.resistance_4W_resolution == 1.50E-6
@@ -669,11 +669,11 @@ class TestAgilent34450A:
         assert dmm.capacitance_auto_range == 1
 
         # Two possible paths
-        dmm.configure_capacitance(range=1E-2)
+        dmm.configure_capacitance(capacitance_range=1E-2)
         assert dmm.mode == "capacitance"
         assert dmm.capacitance_range == 1E-2
         assert dmm.capacitance_auto_range == 0
-        dmm.configure_capacitance(range="AUTO")
+        dmm.configure_capacitance(capacitance_range="AUTO")
         assert dmm.mode == "capacitance"
         assert dmm.capacitance_auto_range == 1
 
