@@ -25,7 +25,7 @@
 from time import sleep
 
 import pytest
-from pymeasure.instruments.agilent.agilent34450A import Agilent34450A, _conf_parser
+from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
 from pyvisa.errors import VisaIOError
 
 
@@ -44,18 +44,6 @@ class TestAgilent34450A:
     default_resolution_cases = [[3.00E-5, 3.00E-5], [2.00E-5, 2.00E-5], [1.50E-6, 1.50E-6],
                                 ["MIN", 1.50E-6], ["MAX", 3.00E-5], ["DEF", 1.50E-6]]
 
-    def test_conf_parser(self):
-        expected = ["CURR", +1.000000E-01, +1.500000E-06]
-        usecases = [['"CURR +1.000000E-01', '+1.500000E-06"'],
-                    '"CURR +1.000000E-01,+1.500000E-06"\n']
-        
-        for case in usecases:
-            assert _conf_parser(case) == expected
-
-        case = ['"TEMP THER', 5000.0, 1.0, '+3.000000E-05"']
-        expected = ["TEMP", "THER", 5000, 1, +3.000000E-5]
-        assert _conf_parser(case) == expected
-
     def test_dmm_initialization_bad(self):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
         with pytest.raises(VisaIOError):
@@ -67,12 +55,8 @@ class TestAgilent34450A:
 
     def test_reset(self):
         dmm = Agilent34450A(self.resource)
-        # Main function is set to DCV after reset
-        dmm.write(":configure:primary:voltage:ac")
-        tt = dmm.ask(":configure?")
-        assert _conf_parser(dmm.ask(":configure?"))[0] == "VOLT:AC"
+        # No error is raised
         dmm.reset()
-        assert _conf_parser(dmm.ask(":configure?"))[0] == "VOLT"
         dmm.shutdown()
 
     def test_beep(self):
@@ -85,36 +69,13 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = 'CURR'
-        assert dmm.mode[0] == 'CURR'
-        dmm.mode = 'CURR:DC'
-        assert dmm.mode[0] == 'CURR'
-        dmm.mode = 'CURR:AC'
-        assert dmm.mode[0] == 'CURR:AC'
-        dmm.mode = 'VOLT'
-        assert dmm.mode[0] == 'VOLT'
-        dmm.mode = 'VOLT:DC'
-        assert dmm.mode[0] == 'VOLT'
-        dmm.mode = 'VOLT:AC'
-        assert dmm.mode[0] == 'VOLT:AC'
-        dmm.mode = 'RES'
-        assert dmm.mode[0] == 'RES'
-        dmm.mode = 'FRES'
-        assert dmm.mode[0] == 'FRES'
-        dmm.mode = "VOLT:AC"
-        dmm.mode = 'FREQ'
-        assert dmm.mode[0] == 'FREQ:ACV'
-        dmm.mode = "CURR:AC"
-        dmm.mode = 'FREQ'
-        assert dmm.mode[0] == 'FREQ:ACI'
-        dmm.mode = 'CONT'
-        assert dmm.mode[0] == 'CONT'
-        dmm.mode = 'DIOD'
-        assert dmm.mode[0] == 'DIOD'
-        dmm.mode = 'TEMP'
-        assert dmm.mode[0] == 'TEMP'
-        dmm.mode = 'CAP'
-        assert dmm.mode[0] == 'CAP'
+        cases = ['current', 'ac current', 'voltage', 'ac voltage', 'resistance',
+                 '4w resistance', 'current frequency', 'voltage frequency',
+                 'continuity', 'diode', 'temperature', 'capacitance']
+
+        for case in cases:
+            dmm.mode = case
+            assert dmm.mode == case
 
         with pytest.raises(ValueError):
             dmm.mode = 'AAA'
@@ -204,29 +165,29 @@ class TestAgilent34450A:
 
         # No parameters specified
         dmm.configure_current()
-        assert dmm.mode == "CURR"
+        assert dmm.mode == "current"
         assert dmm.current_auto_range == 1
         assert dmm.current_resolution == 1.50E-6
 
         # Four possible paths
         dmm.configure_current(range=1, ac=True, resolution="MAX")
-        assert dmm.mode == "CURR:AC"
+        assert dmm.mode == "ac current"
         assert dmm.current_ac_range == 1
         assert dmm.current_ac_auto_range == 0
-        assert dmm.current_ac_resolution == 1.50E-6
-        dmm.configure_current(range="AUTO", ac=True, resolution="MIN")
-        assert dmm.mode == "CURR:AC"
-        assert dmm.current_ac_auto_range == 1
         assert dmm.current_ac_resolution == 3.00E-5
+        dmm.configure_current(range="AUTO", ac=True, resolution="MIN")
+        assert dmm.mode == "ac current"
+        assert dmm.current_ac_auto_range == 1
+        assert dmm.current_ac_resolution == 1.50E-6
         dmm.configure_current(range=1, ac=False, resolution="MAX")
-        assert dmm.mode == "CURR"
+        assert dmm.mode == "current"
         assert dmm.current_range == 1
         assert dmm.current_auto_range == 0
-        assert dmm.current_resolution == 1.50E-6
-        dmm.configure_current(range="AUTO", ac=False, resolution="MIN")
-        assert dmm.mode == "CURR"
-        assert dmm.current_auto_range == 1
         assert dmm.current_resolution == 3.00E-5
+        dmm.configure_current(range="AUTO", ac=False, resolution="MIN")
+        assert dmm.mode == "current"
+        assert dmm.current_auto_range == 1
+        assert dmm.current_resolution == 1.50E-6
 
         # Should raise TypeError
         with pytest.raises(TypeError):
@@ -238,7 +199,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "CURR"
+        dmm.mode = "current"
         value = dmm.current
         assert type(value) is float
 
@@ -248,7 +209,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "CURR:AC"
+        dmm.mode = "ac current"
         value = dmm.current_ac
         assert type(value) is float
 
@@ -338,29 +299,29 @@ class TestAgilent34450A:
 
         # No parameters specified
         dmm.configure_voltage()
-        assert dmm.mode == "VOLT"
+        assert dmm.mode == "voltage"
         assert dmm.voltage_auto_range == 1
         assert dmm.voltage_resolution == 1.50E-6
 
         # Four possible paths
         dmm.configure_voltage(range=100, ac=True, resolution="MAX")
-        assert dmm.mode == "VOLT:AC"
+        assert dmm.mode == "ac voltage"
         assert dmm.voltage_ac_range == 100
         assert dmm.voltage_ac_auto_range == 0
-        assert dmm.voltage_ac_resolution == 1.50E-6
-        dmm.configure_voltage(range="AUTO", ac=True, resolution="MIN")
-        assert dmm.mode == "VOLT:AC"
-        assert dmm.voltage_ac_auto_range == 1
         assert dmm.voltage_ac_resolution == 3.00E-5
+        dmm.configure_voltage(range="AUTO", ac=True, resolution="MIN")
+        assert dmm.mode == "ac voltage"
+        assert dmm.voltage_ac_auto_range == 1
+        assert dmm.voltage_ac_resolution == 1.50E-6
         dmm.configure_voltage(range=100, ac=False, resolution="MAX")
-        assert dmm.mode == "VOLT"
+        assert dmm.mode == "voltage"
         assert dmm.voltage_range == 100
         assert dmm.voltage_auto_range == 0
-        assert dmm.voltage_resolution == 1.50E-6
-        dmm.configure_voltage(range="AUTO", ac=False, resolution="MIN")
-        assert dmm.mode == "VOLT"
-        assert dmm.voltage_auto_range == 1
         assert dmm.voltage_resolution == 3.00E-5
+        dmm.configure_voltage(range="AUTO", ac=False, resolution="MIN")
+        assert dmm.mode == "voltage"
+        assert dmm.voltage_auto_range == 1
+        assert dmm.voltage_resolution == 1.50E-6
 
         # Should raise TypeError
         with pytest.raises(TypeError):
@@ -372,7 +333,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "VOLT"
+        dmm.mode = "voltage"
         value = dmm.voltage
         assert type(value) is float
 
@@ -382,7 +343,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "VOLT:AC"
+        dmm.mode = "ac voltage"
         value = dmm.voltage_ac
         assert type(value) is float
 
@@ -471,29 +432,29 @@ class TestAgilent34450A:
         # Test includes only what has not been tested in previous setter methods
         # No parameters specified
         dmm.configure_resistance()
-        assert dmm.mode == "RES"
+        assert dmm.mode == "resistance"
         assert dmm.resistance_auto_range == 1
         assert dmm.resistance_resolution == 1.50E-6
 
         # Four possible paths
         dmm.configure_resistance(range=10E3, wires=2, resolution="MAX")
-        assert dmm.mode == "RES"
+        assert dmm.mode == "resistance"
         assert dmm.resistance_range == 10E3
         assert dmm.resistance_auto_range == 0
-        assert dmm.resistance_resolution == 1.50E-6
-        dmm.configure_resistance(range="AUTO", wires=2, resolution="MIN")
-        assert dmm.mode == "RES"
-        assert dmm.resistance_auto_range == 1
         assert dmm.resistance_resolution == 3.00E-5
+        dmm.configure_resistance(range="AUTO", wires=2, resolution="MIN")
+        assert dmm.mode == "resistance"
+        assert dmm.resistance_auto_range == 1
+        assert dmm.resistance_resolution == 1.50E-6
         dmm.configure_resistance(range=10E3, wires=4, resolution="MAX")
-        assert dmm.mode == "FRES"
+        assert dmm.mode == "4w resistance"
         assert dmm.resistance_4W_range == 10E3
         assert dmm.resistance_4W_auto_range == 0
-        assert dmm.resistance_4W_resolution == 1.50E-6
-        dmm.configure_resistance(range="AUTO", wires=4, resolution="MIN")
-        assert dmm.mode == "FRES"
-        assert dmm.resistance_4W_auto_range == 1
         assert dmm.resistance_4W_resolution == 3.00E-5
+        dmm.configure_resistance(range="AUTO", wires=4, resolution="MIN")
+        assert dmm.mode == "4w resistance"
+        assert dmm.resistance_4W_auto_range == 1
+        assert dmm.resistance_4W_resolution == 1.50E-6
 
         # Should raise ValueError
         with pytest.raises(ValueError):
@@ -505,7 +466,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "RES"
+        dmm.mode = "resistance"
         value = dmm.resistance
         assert type(value) is float
 
@@ -515,7 +476,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "FRES"
+        dmm.mode = "4w resistance"
         value = dmm.resistance_4W
         assert type(value) is float
 
@@ -593,31 +554,31 @@ class TestAgilent34450A:
         # Test includes only what has not been tested in previous setter methods
         # No parameters specified
         dmm.configure_frequency()
-        assert dmm.mode == "FREQ"
+        assert dmm.mode == "voltage frequency"
         assert dmm.frequency_voltage_auto_range == 1
         assert dmm.frequency_aperture == 1
 
         # Four possible paths
         dmm.configure_frequency(measured_from="voltage_ac", measured_from_range=1,
                                 aperture=1E-1)
-        assert dmm.mode == "FREQ"
+        assert dmm.mode == "voltage frequency"
         assert dmm.frequency_voltage_range == 1
         assert dmm.frequency_voltage_auto_range == 0
         assert dmm.frequency_aperture == 1E-1
         dmm.configure_frequency(measured_from="voltage_ac",
                                 measured_from_range="AUTO", aperture=1)
-        assert dmm.mode == "FREQ"
+        assert dmm.mode == "voltage frequency"
         assert dmm.frequency_voltage_auto_range == 1
         assert dmm.frequency_aperture == 1
         dmm.configure_frequency(measured_from="current_ac", measured_from_range=1E-1,
                                 aperture=1E-1)
-        assert dmm.mode == "FREQ"
+        assert dmm.mode == "current frequency"
         assert dmm.frequency_current_range == 1E-1
         assert dmm.frequency_current_auto_range == 0
         assert dmm.frequency_aperture == 1E-1
         dmm.configure_frequency(measured_from="current_ac",
                                 measured_from_range="AUTO", aperture=1)
-        assert dmm.mode == "FREQ"
+        assert dmm.mode == "current frequency"
         assert dmm.frequency_current_auto_range == 1
         assert dmm.frequency_aperture == 1
 
@@ -631,7 +592,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "FREQ"
+        dmm.mode = "voltage frequency"
         value = dmm.frequency
         assert type(value) is float
 
@@ -641,14 +602,14 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
         dmm.configure_temperature()
-        assert dmm.mode == "TEMP"
+        assert dmm.mode == "temperature"
         dmm.shutdown()
 
     def test_temperature_reading(self):
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "TEMP"
+        dmm.mode = "temperature"
         value = dmm.temperature
         assert type(value) is float
 
@@ -658,14 +619,14 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
         dmm.configure_diode()
-        assert dmm.mode == "DIOD"
+        assert dmm.mode == "diode"
         dmm.shutdown()
 
     def test_diode_reading(self):
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "DIOD"
+        dmm.mode = "diode"
         value = dmm.diode
         assert type(value) is float
 
@@ -704,16 +665,16 @@ class TestAgilent34450A:
         # Test includes only what has not been tested in previous setter methods
         # No parameters specified
         dmm.configure_capacitance()
-        assert dmm.mode == "CAP"
+        assert dmm.mode == "capacitance"
         assert dmm.capacitance_auto_range == 1
 
         # Two possible paths
         dmm.configure_capacitance(range=1E-2)
-        assert dmm.mode == "CAP"
+        assert dmm.mode == "capacitance"
         assert dmm.capacitance_range == 1E-2
         assert dmm.capacitance_auto_range == 0
         dmm.configure_capacitance(range="AUTO")
-        assert dmm.mode == "CAP"
+        assert dmm.mode == "capacitance"
         assert dmm.capacitance_auto_range == 1
 
         dmm.shutdown()
@@ -722,7 +683,7 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "CAP"
+        dmm.mode = "capacitance"
         value = dmm.capacitance
         assert type(value) is float
 
@@ -732,14 +693,14 @@ class TestAgilent34450A:
         dmm = Agilent34450A(self.resource)
         dmm.reset()
         dmm.configure_continuity()
-        assert dmm.mode == "CONT"
+        assert dmm.mode == "continuity"
         dmm.shutdown()
 
     def test_continuity_reading(self):
         dmm = Agilent34450A(self.resource)
         dmm.reset()
 
-        dmm.mode = "CONT"
+        dmm.mode = "continuity"
         value = dmm.continuity
         assert type(value) is float
 

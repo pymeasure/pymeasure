@@ -32,43 +32,6 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 
-def _conf_parser(conf_values):
-    """
-    Parse the string of configuration parameters read from Agilent34450A with
-    command ":configure?" and returns a list of parameters.
-
-    Use cases:
-
-    ['"CURR +1.000000E-01', '+1.500000E-06"']   ** Obtained from Instrument.measurement or Instrument.control
-    '"CURR +1.000000E-01,+1.500000E-06"'        ** Obtained from Instrument.ask
-
-    becomes
-
-    ["CURR", +1000000E-01, +1.500000E-06]
-    """
-    # If not already one string, get one string
-
-    if isinstance(conf_values, list):
-        one_long_string = ', '.join(map(str, conf_values))
-    else:
-        one_long_string = conf_values
-
-    # Split string in elements
-    list_of_elements = re.split('["\s,]', one_long_string)
-
-    # Eliminate empty string elements
-    list_without_empty_elements = list(filter(lambda v: v != '', list_of_elements))
-
-    # Convert numbers from str to float, where applicable
-    for i, v in enumerate(list_without_empty_elements):
-        try:
-            list_without_empty_elements[i] = float(v)
-        except Exception:
-            pass
-
-    return list_without_empty_elements
-
-
 class Agilent34450A(Instrument):
     """
     Represent the HP/Agilent/Keysight 34450A and related multimeters.
@@ -81,19 +44,14 @@ class Agilent34450A(Instrument):
     # TODO: Verify that all docstrings indicate both the possible numerical values and MAX, MIN,
     #  and DEF as supported param inputs.
 
-    # TODO: Update docstring, add capacitance
-    mode = Instrument.control(
-        ":CONF?", ":CONF:%s",
-        """ A string property that controls the configuration mode for measurements,
-        which can take the values: :code:'current' (DC), :code:'current ac',
-        :code:'voltage' (DC),  :code:'voltage ac', :code:'resistance' (2-wire),
-        :code:'resistance 4W' (4-wire), :code:'frequency', :code:'continuity',
-        :code:'diode', and :code:'temperature'. """,
-        validator=strict_discrete_set,
-        values=['CURR', 'CURR:DC', 'CURR:AC', 'VOLT', 'VOLT:DC', 'VOLT:AC',
-                'RES', 'FRES', 'FREQ', 'CONT', 'DIOD', 'TEMP', 'CAP'],
-        get_process=_conf_parser
-    )
+    MODES = {'current': 'CURR', 'ac current': 'CURR:AC',
+             'voltage': 'VOLT', 'ac voltage': 'VOLT:AC',
+             'resistance': 'RES', '4w resistance': 'FRES',
+             'current frequency': 'FREQ:ACI', 'voltage frequency': 'FREQ:ACV',
+             'continuity': 'CONT',
+             'diode': 'DIOD',
+             'temperature': 'TEMP',
+             'capacitance': 'CAP'}
 
     # TODO: Consider making individual control methods private to force access
     #  through configure_xxxxx methods.
@@ -404,6 +362,31 @@ class Agilent34450A(Instrument):
             else:
                 break
 
+    @property
+    def mode(self):
+        get_command = ":configure?"
+        vals = self._conf_parser(self.values(get_command))
+        # Return only the mode parameter
+        invMODES = {v: k for k, v in self.MODES.items()}
+        mode = invMODES[vals[0]]
+        return mode
+
+    @mode.setter
+    # TODO: Add docstring
+    def mode(self, value):
+        if value in self.MODES:
+            if value not in ['current frequency', 'voltage frequency']:
+                self.write(':configure:'+self.MODES[value])
+            else:
+                if value == 'current frequency':
+                    self.mode = 'ac current'
+                else:
+                    self.mode = 'ac voltage'
+                self.write(":configure:freq")
+        else:
+            raise ValueError(f'Value {value} is not a supported mode for this device.')
+
+
     def configure_voltage(self, range="AUTO", ac=False, resolution="DEF"):
         """ Configures the instrument to measure voltage.
 
@@ -412,14 +395,14 @@ class Agilent34450A(Instrument):
         :param resolution: Desired resolution
         """
         if ac is True:
-            self.mode = 'VOLT:AC'
+            self.mode = 'ac voltage'
             self.voltage_ac_resolution = resolution
             if range == "AUTO":
                 self.voltage_ac_auto_range = True
             else:
                 self.voltage_ac_range = range
         elif ac is False:
-            self.mode = 'VOLT'
+            self.mode = 'voltage'
             self.voltage_resolution = resolution
             if range == "AUTO":
                 self.voltage_auto_range = True
@@ -436,19 +419,19 @@ class Agilent34450A(Instrument):
         :param resolution: Desired resolution
         """
         if ac is True:
-            self.mode = 'CURR:AC'
+            self.mode = 'ac current'
             self.current_ac_resolution = resolution
             if range == "AUTO":
-                self.voltage_ac_auto_range = True
+                self.current_ac_auto_range = True
             else:
-                self.voltage_ac_range = range
+                self.current_ac_range = range
         elif ac is False:
-            self.mode = 'CURR:DC'
+            self.mode = 'current'
             self.current_resolution = resolution
             if range == "AUTO":
-                self.voltage_auto_range = True
+                self.current_auto_range = True
             else:
-                self.voltage_range = range
+                self.current_range = range
         else:
             raise TypeError('Value of ac should be a boolean.')
 
@@ -460,14 +443,14 @@ class Agilent34450A(Instrument):
         :param resolution: Desired resolution
         """
         if wires == 2:
-            self.mode = 'RES'
+            self.mode = 'resistance'
             self.resistance_resolution = resolution
             if range == "AUTO":
                 self.resistance_auto_range = True
             else:
                 self.resistance_range = range
         elif wires == 4:
-            self.mode = 'FRES'
+            self.mode = '4w resistance'
             self.resistance_4W_resolution = resolution
             if range == "AUTO":
                 self.resistance_4W_auto_range = True
@@ -486,13 +469,13 @@ class Agilent34450A(Instrument):
         :param aperture: Aperture time in Seconds
         """
         if measured_from == "voltage_ac":
-            self.mode = "VOLT:AC"
+            self.mode = "voltage frequency"
             if measured_from_range == "AUTO":
                 self.frequency_voltage_auto_range = True
             else:
                 self.frequency_voltage_range = measured_from_range
         elif measured_from == "current_ac":
-            self.mode = "CURR:AC"
+            self.mode = "current frequency"
             if measured_from_range == "AUTO":
                 self.frequency_current_auto_range = True
             else:
@@ -500,25 +483,24 @@ class Agilent34450A(Instrument):
         else:
             raise ValueError('Incorrect value for measured_from parameter. Use '
                              '"voltage_ac" or "current_ac".')
-        self.mode = 'FREQ'
         self.frequency_aperture = aperture
 
     def configure_temperature(self):
         """ Configures the instrument to measure temperature.
         """
-        self.mode = 'TEMP'
+        self.mode = 'temperature'
 
     def configure_diode(self):
         """ Configures the instrument to measure diode voltage.
         """
-        self.mode = 'DIOD'
+        self.mode = 'diode'
 
     def configure_capacitance(self, range="AUTO"):
         """ Configures the instrument to measure capacitance.
 
         :param range: A capacitance in Farads to set the capacitance range, or "AUTO"
         """
-        self.mode = 'CAP'
+        self.mode = 'capacitance'
         if range == "AUTO":
             self.capacitance_auto_range = True
         else:
@@ -527,12 +509,48 @@ class Agilent34450A(Instrument):
     def configure_continuity(self):
         """ Configures the instrument to measure continuity.
         """
-        self.mode = 'CONT'
+        self.mode = 'continuity'
 
     def beep(self):
         """ Sounds a system beep.
         """
         self.write(":SYST:BEEP")
+
+    def _conf_parser(self, conf_values):
+        """
+        Parse the string of configuration parameters read from Agilent34450A with
+        command ":configure?" and returns a list of parameters.
+
+        Use cases:
+
+        ['"CURR +1.000000E-01', '+1.500000E-06"']   ** Obtained from Instrument.measurement or Instrument.control
+        '"CURR +1.000000E-01,+1.500000E-06"'        ** Obtained from Instrument.ask
+
+        becomes
+
+        ["CURR", +1000000E-01, +1.500000E-06]
+        """
+        # If not already one string, get one string
+
+        if isinstance(conf_values, list):
+            one_long_string = ', '.join(map(str, conf_values))
+        else:
+            one_long_string = conf_values
+
+        # Split string in elements
+        list_of_elements = re.split('["\s,]', one_long_string)
+
+        # Eliminate empty string elements
+        list_without_empty_elements = list(filter(lambda v: v != '', list_of_elements))
+
+        # Convert numbers from str to float, where applicable
+        for i, v in enumerate(list_without_empty_elements):
+            try:
+                list_without_empty_elements[i] = float(v)
+            except Exception:
+                pass
+
+        return list_without_empty_elements
 
 
 
