@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-from time import sleep
-
 import pytest
 from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
 from pyvisa.errors import VisaIOError
@@ -34,42 +32,51 @@ class TestAgilent34450A:
     Unit tests for Agilent34450A class.
 
     An Agilent34450A device should be connected to the computer.
-    Indicate the resource address below.
     """
 
-    # Resource address goes here:
+    ###############################################################
+    # Agilent34450A device goes here:
     resource = "USB0::10893::45848::MY56511723::0::INSTR" # EQ0017
+    ###############################################################
 
-    # Fixtures
+    ############
+    # FIXTURES #
+    ############
     @pytest.fixture
     def make_reseted_dmm(self):
         dmm = Agilent34450A(self.resource)
         dmm.reset()
         return dmm
 
-    # Parametrizations
-    pBooleans = [False, True]
-    pResolution = [[3.00E-5, 3.00E-5], [2.00E-5, 2.00E-5], [1.50E-6, 1.50E-6],
-                                ["MIN", 1.50E-6], ["MAX", 3.00E-5], ["DEF", 1.50E-6]]
-    pModes = ['current', 'ac current', 'voltage', 'ac voltage', 'resistance',
-              '4w resistance', 'current frequency', 'voltage frequency',
-              'continuity', 'diode', 'temperature', 'capacitance']
-    pCurrentRanges = [[100E-6, 100E-6], [1E-3, 1E-3], [10E-3, 10E-3], [100E-3, 100E-3],
+    #########################
+    # PARAMETRIZATION CASES #
+    #########################
+    BOOLEANS = [False, True]
+    RESOLUTIONS = [[3.00E-5, 3.00E-5], [2.00E-5, 2.00E-5], [1.50E-6, 1.50E-6],
+                   ["MIN", 1.50E-6], ["MAX", 3.00E-5], ["DEF", 1.50E-6]]
+    MODES = ["current", "ac current", "voltage", "ac voltage", "resistance",
+              "4w resistance", "current frequency", "voltage frequency",
+              "continuity", "diode", "temperature", "capacitance"]
+    CURRENT_RANGES = [[100E-6, 100E-6], [1E-3, 1E-3], [10E-3, 10E-3], [100E-3, 100E-3],
                       [1, 1], ["MIN", 100E-6], ["MAX", 10], ["DEF", 100E-3]]
-    pCurrentAcRanges = [[10E-3, 10E-3], [100E-3, 100E-3], [1, 1], ["MIN", 10E-3],
-                        ["MAX", 10], ["DEF", 100E-3]]
-    pVoltageRanges = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100], [1000, 1000],
+    CURRENT_AC_RANGES = [[10E-3, 10E-3], [100E-3, 100E-3], [1, 1], ["MIN", 10E-3],
+                         ["MAX", 10], ["DEF", 100E-3]]
+    VOLTAGE_RANGES = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100], [1000, 1000],
                       ["MIN", 100E-3], ["MAX", 1000], ["DEF", 10]]
-    pVoltageAcRanges = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100], [750, 750],
-                        ["MIN", 100E-3], ["MAX", 750], ["DEF", 10]]
-    pResistanceRanges = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5], [1E6, 1E6],
+    VOLTAGE_AC_RANGES = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100], [750, 750],
+                         ["MIN", 100E-3], ["MAX", 750], ["DEF", 10]]
+    RESISTANCE_RANGES = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5], [1E6, 1E6],
                          [1E7, 1E7], [1E8, 1E8], ["MIN", 1E2], ["MAX", 1E8], ["DEF", 1E3]]
-    pResistance4wRanges = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5], [1E6, 1E6],
-                           [1E7, 1E7], [1E8, 1E8], ["MIN", 1E2], ["MAX", 1E8], ["DEF", 1E3]]
-    pFrequencyApertures = [[100E-3, 100E-3], [1, 1], ["MIN", 100E-3], ["MAX", 1], ["DEF", 1]]
-    pCapacitanceRanges = [[1E-9, 1E-9], [1E-8, 1E-8], [1E-7, 1E-7], [1E-6, 1E-6], [1E-5, 1E-5],
+    RESISTANCE_4W_RANGES = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5], [1E6, 1E6],
+                            [1E7, 1E7], [1E8, 1E8], ["MIN", 1E2], ["MAX", 1E8], ["DEF", 1E3]]
+    FREQUENCY_APERTURES = [[100E-3, 100E-3], [1, 1], ["MIN", 100E-3], ["MAX", 1], ["DEF", 1]]
+    CAPACITANCE_RANGES = [[1E-9, 1E-9], [1E-8, 1E-8], [1E-7, 1E-7], [1E-6, 1E-6], [1E-5, 1E-5],
                           [1E-4, 1E-4], [1E-3, 1E-3], [1E-2, 1E-2], ["MIN", 1E-9], ["MAX", 1E-2],
                           ["DEF", 1E-6]]
+
+    #########
+    # TESTS #
+    #########
 
     def test_dmm_initialization_bad(self):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
@@ -88,43 +95,44 @@ class TestAgilent34450A:
         # Assert that a beep is audible
         dmm.beep()
 
-    @pytest.mark.parametrize("case", pModes)
+    @pytest.mark.parametrize("case", MODES)
     def test_modes(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.mode = case
         assert dmm.mode == case
 
-    @pytest.mark.parametrize("case, expected", pCurrentRanges)
+    # Current
+    @pytest.mark.parametrize("case, expected", CURRENT_RANGES)
     def test_current_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.current_range = case
         assert dmm.current_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_current_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.current_auto_range = case
         assert dmm.current_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pResolution)
+    @pytest.mark.parametrize("case, expected", RESOLUTIONS)
     def test_current_resolution(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.current_resolution = case
         assert dmm.current_resolution == expected
 
-    @pytest.mark.parametrize("case, expected", pCurrentAcRanges)
+    @pytest.mark.parametrize("case, expected", CURRENT_AC_RANGES)
     def test_current_ac_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.current_ac_range = case
         assert dmm.current_ac_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_current_ac_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.current_ac_auto_range = case
         assert dmm.current_ac_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pResolution)
+    @pytest.mark.parametrize("case, expected", RESOLUTIONS)
     def test_current_ac_resolution(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.current_ac_resolution = case
@@ -171,37 +179,38 @@ class TestAgilent34450A:
         value = dmm.current_ac
         assert type(value) is float
 
-    @pytest.mark.parametrize("case, expected", pVoltageRanges)
+    # Voltage
+    @pytest.mark.parametrize("case, expected", VOLTAGE_RANGES)
     def test_voltage_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.voltage_range = case
         assert dmm.voltage_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_voltage_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.voltage_auto_range = case
         assert dmm.voltage_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pResolution)
+    @pytest.mark.parametrize("case, expected", RESOLUTIONS)
     def test_voltage_resolution(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.voltage_resolution = case
         assert dmm.voltage_resolution == expected
 
-    @pytest.mark.parametrize("case, expected", pVoltageAcRanges)
+    @pytest.mark.parametrize("case, expected", VOLTAGE_AC_RANGES)
     def test_voltage_ac_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.voltage_ac_range = case
         assert dmm.voltage_ac_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_voltage_ac_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.voltage_ac_auto_range = case
         assert dmm.voltage_ac_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pResolution)
+    @pytest.mark.parametrize("case, expected", RESOLUTIONS)
     def test_voltage_ac_resolution(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.voltage_ac_resolution = case
@@ -248,37 +257,38 @@ class TestAgilent34450A:
         value = dmm.voltage_ac
         assert type(value) is float
 
-    @pytest.mark.parametrize("case, expected", pResistanceRanges)
+    # Resistance
+    @pytest.mark.parametrize("case, expected", RESISTANCE_RANGES)
     def test_resistance_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.resistance_range = case
         assert dmm.resistance_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_resistance_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.resistance_auto_range = case
         assert dmm.resistance_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pResolution)
+    @pytest.mark.parametrize("case, expected", RESOLUTIONS)
     def test_resistance_resolution(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.resistance_resolution = case
         assert dmm.resistance_resolution == expected
 
-    @pytest.mark.parametrize("case, expected", pResistance4wRanges)
+    @pytest.mark.parametrize("case, expected", RESISTANCE_4W_RANGES)
     def test_resistance_4w_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.resistance_4w_range = case
         assert dmm.resistance_4w_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_resistance_4w_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.resistance_4w_auto_range = case
         assert dmm.resistance_4w_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pResolution)
+    @pytest.mark.parametrize("case, expected", RESOLUTIONS)
     def test_resistance_4w_resolution(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.resistance_4w_resolution = case
@@ -329,31 +339,32 @@ class TestAgilent34450A:
         value = dmm.resistance_4w
         assert type(value) is float
 
-    @pytest.mark.parametrize("case, expected", pCurrentAcRanges)
+    # Frequency
+    @pytest.mark.parametrize("case, expected", CURRENT_AC_RANGES)
     def test_frequency_current_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.frequency_current_range = case
         assert dmm.frequency_current_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_frequency_current_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.frequency_current_auto_range = case
         assert dmm.frequency_current_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pVoltageAcRanges)
+    @pytest.mark.parametrize("case, expected", VOLTAGE_AC_RANGES)
     def test_frequency_voltage_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.frequency_voltage_range = case
         assert dmm.frequency_voltage_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_frequency_voltage_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.frequency_voltage_auto_range = case
         assert dmm.frequency_voltage_auto_range == case
 
-    @pytest.mark.parametrize("case, expected", pFrequencyApertures)
+    @pytest.mark.parametrize("case, expected", FREQUENCY_APERTURES)
     def test_frequency_aperture(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.frequency_aperture = case
@@ -402,6 +413,7 @@ class TestAgilent34450A:
         value = dmm.frequency
         assert type(value) is float
 
+    # Temperature
     def test_configure_temperature(self, make_reseted_dmm):
         dmm = make_reseted_dmm
         dmm.configure_temperature()
@@ -413,6 +425,7 @@ class TestAgilent34450A:
         value = dmm.temperature
         assert type(value) is float
 
+    # Diode
     def test_configure_diode(self, make_reseted_dmm):
         dmm = make_reseted_dmm
         dmm.configure_diode()
@@ -424,13 +437,14 @@ class TestAgilent34450A:
         value = dmm.diode
         assert type(value) is float
 
-    @pytest.mark.parametrize("case, expected", pCapacitanceRanges)
+    # Capacitance
+    @pytest.mark.parametrize("case, expected", CAPACITANCE_RANGES)
     def test_capacitance_range(self, make_reseted_dmm, case, expected):
         dmm = make_reseted_dmm
         dmm.capacitance_range = case
         assert dmm.capacitance_range == expected
 
-    @pytest.mark.parametrize("case", pBooleans)
+    @pytest.mark.parametrize("case", BOOLEANS)
     def test_capacitance_auto_range(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm
         dmm.capacitance_auto_range = case
@@ -459,6 +473,7 @@ class TestAgilent34450A:
         value = dmm.capacitance
         assert type(value) is float
 
+    # Continuity
     def test_configure_continuity(self, make_reseted_dmm):
         dmm = make_reseted_dmm
         dmm.configure_continuity()
