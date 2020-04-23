@@ -54,6 +54,8 @@ class Agilent34450A(Instrument):
     # TODO: Verify that all docstrings indicate both the possible numerical values and MAX, MIN,
     #  and DEF as supported param inputs.
 
+    BOOLS = {True: 1, False: 0}
+
     MODES = {'current': 'CURR', 'ac current': 'CURR:AC',
              'voltage': 'VOLT', 'ac voltage': 'VOLT:AC',
              'resistance': 'RES', '4w resistance': 'FRES',
@@ -112,7 +114,7 @@ class Agilent34450A(Instrument):
         ":SENS:CURR:RANG:AUTO?", ":SENS:CURR:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for DC current. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
     current_resolution = Instrument.control(
@@ -136,7 +138,7 @@ class Agilent34450A(Instrument):
         ":SENS:CURR:AC:RANG:AUTO?", ":SENS:CURR:AC:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for AC current. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
     current_ac_resolution = Instrument.control(
@@ -173,7 +175,7 @@ class Agilent34450A(Instrument):
         ":SENS:VOLT:RANG:AUTO?", ":SENS:VOLT:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for DC voltage. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
     voltage_resolution = Instrument.control(
@@ -197,7 +199,7 @@ class Agilent34450A(Instrument):
         ":SENS:VOLT:AC:RANG:AUTO?", ":SENS:VOLT:AC:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for AC voltage. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
     voltage_ac_resolution = Instrument.control(
@@ -218,7 +220,7 @@ class Agilent34450A(Instrument):
                                         configuration, based on the active 
                                         :attr:`~.Agilent34450A.mode`. """
                                         )
-    resistance_4W = Instrument.measurement(":READ?",
+    resistance_4w = Instrument.measurement(":READ?",
                                            """ Reads a resistance measurement in Ohms for 
                                            4-wire configuration, based on the active 
                                            :attr:`~.Agilent34450A.mode`. """
@@ -236,7 +238,7 @@ class Agilent34450A(Instrument):
         ":SENS:RES:RANG:AUTO?", ":SENS:RES:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for 2-wire resistance. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
     resistance_resolution = Instrument.control(
@@ -247,7 +249,7 @@ class Agilent34450A(Instrument):
         validator=strict_discrete_set,
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
     )
-    resistance_4W_range = Instrument.control(
+    resistance_4w_range = Instrument.control(
         ":SENS:FRES:RANG?", ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %s",
         """ A property that controls the 4-wire resistance range
         in Ohms, which can take values 100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, 
@@ -256,14 +258,14 @@ class Agilent34450A(Instrument):
         validator=strict_discrete_set,
         values=[100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, "MAX", "MIN", "DEF"]
     )
-    resistance_4W_auto_range = Instrument.control(
+    resistance_4w_auto_range = Instrument.control(
         ":SENS:FRES:RANG:AUTO?", ":SENS:FRES:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for 4-wire resistance. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
-    resistance_4W_resolution = Instrument.control(
+    resistance_4w_resolution = Instrument.control(
         ":SENS:FRES:RES?", ":SENS:FRES:RES %s",
         """ A property that controls the resolution in the 4-wire
         resistance readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits), 
@@ -293,7 +295,7 @@ class Agilent34450A(Instrument):
         ":SENS:FREQ:CURR:RANG:AUTO?", ":SENS:FREQ:CURR:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for AC current in frequency measurements. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
     frequency_voltage_range = Instrument.control(
@@ -309,7 +311,7 @@ class Agilent34450A(Instrument):
         ":SENS:FREQ:VOLT:RANG:AUTO?", ":SENS:FREQ:VOLT:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for AC voltage in frequency measurements. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
     frequency_aperture = Instrument.control(
@@ -360,7 +362,7 @@ class Agilent34450A(Instrument):
         ":SENS:CAP:RANG:AUTO?", ":SENS:CAP:RANG:AUTO %d",
         """ A boolean property that toggles auto ranging for capacitance. """,
         validator=strict_discrete_set,
-        values=[False, True],
+        values=BOOLS,
         map_values=True
     )
 
@@ -458,11 +460,11 @@ class Agilent34450A(Instrument):
                 self.resistance_range = resistance_range
         elif wires == 4:
             self.mode = '4w resistance'
-            self.resistance_4W_resolution = resolution
+            self.resistance_4w_resolution = resolution
             if resistance_range == "AUTO":
-                self.resistance_4W_auto_range = True
+                self.resistance_4w_auto_range = True
             else:
-                self.resistance_4W_range = resistance_range
+                self.resistance_4w_range = resistance_range
         else:
             raise ValueError("Incorrect wires value, Agilent 34450A only supports 2 or 4 wire"
                              "resistance meaurement.")
@@ -554,9 +556,8 @@ class Agilent34450A(Instrument):
         for i, v in enumerate(list_without_empty_elements):
             try:
                 list_without_empty_elements[i] = float(v)
-            except OverflowError as e:
+            except ValueError as e:
                 print(e)
-                list_without_empty_elements[i] = 0
 
         return list_without_empty_elements
 

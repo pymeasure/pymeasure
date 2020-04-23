@@ -40,9 +40,36 @@ class TestAgilent34450A:
     # Resource address goes here:
     resource = "USB0::10893::45848::MY56511723::0::INSTR" # EQ0017
 
-    # Test cases shared by multiple methods
-    default_resolution_cases = [[3.00E-5, 3.00E-5], [2.00E-5, 2.00E-5], [1.50E-6, 1.50E-6],
+    # Fixtures
+    @pytest.fixture
+    def make_reseted_dmm(self):
+        dmm = Agilent34450A(self.resource)
+        dmm.reset()
+        return dmm
+
+    # Parametrizations
+    pBooleans = [False, True]
+    pResolution = [[3.00E-5, 3.00E-5], [2.00E-5, 2.00E-5], [1.50E-6, 1.50E-6],
                                 ["MIN", 1.50E-6], ["MAX", 3.00E-5], ["DEF", 1.50E-6]]
+    pModes = ['current', 'ac current', 'voltage', 'ac voltage', 'resistance',
+              '4w resistance', 'current frequency', 'voltage frequency',
+              'continuity', 'diode', 'temperature', 'capacitance']
+    pCurrentRanges = [[100E-6, 100E-6], [1E-3, 1E-3], [10E-3, 10E-3], [100E-3, 100E-3],
+                      [1, 1], ["MIN", 100E-6], ["MAX", 10], ["DEF", 100E-3]]
+    pCurrentAcRanges = [[10E-3, 10E-3], [100E-3, 100E-3], [1, 1], ["MIN", 10E-3],
+                        ["MAX", 10], ["DEF", 100E-3]]
+    pVoltageRanges = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100], [1000, 1000],
+                      ["MIN", 100E-3], ["MAX", 1000], ["DEF", 10]]
+    pVoltageAcRanges = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100], [750, 750],
+                        ["MIN", 100E-3], ["MAX", 750], ["DEF", 10]]
+    pResistanceRanges = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5], [1E6, 1E6],
+                         [1E7, 1E7], [1E8, 1E8], ["MIN", 1E2], ["MAX", 1E8], ["DEF", 1E3]]
+    pResistance4wRanges = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5], [1E6, 1E6],
+                           [1E7, 1E7], [1E8, 1E8], ["MIN", 1E2], ["MAX", 1E8], ["DEF", 1E3]]
+    pFrequencyApertures = [[100E-3, 100E-3], [1, 1], ["MIN", 100E-3], ["MAX", 1], ["DEF", 1]]
+    pCapacitanceRanges = [[1E-9, 1E-9], [1E-8, 1E-8], [1E-7, 1E-7], [1E-6, 1E-6], [1E-5, 1E-5],
+                          [1E-4, 1E-4], [1E-3, 1E-3], [1E-2, 1E-2], ["MIN", 1E-9], ["MAX", 1E-2],
+                          ["DEF", 1E-6]]
 
     def test_dmm_initialization_bad(self):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
@@ -51,117 +78,60 @@ class TestAgilent34450A:
 
     def test_good_address(self):
         dmm = Agilent34450A(self.resource)
-        dmm.shutdown()
 
     def test_reset(self):
         dmm = Agilent34450A(self.resource)
-        # No error is raised
         dmm.reset()
-        dmm.shutdown()
 
-    def test_beep(self):
+    def test_beep(self, make_reseted_dmm):
         dmm = Agilent34450A(self.resource)
         # Assert that a beep is audible
         dmm.beep()
-        dmm.shutdown()
 
-    def test_modes(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pModes)
+    def test_modes(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.mode = case
+        assert dmm.mode == case
 
-        cases = ['current', 'ac current', 'voltage', 'ac voltage', 'resistance',
-                 '4w resistance', 'current frequency', 'voltage frequency',
-                 'continuity', 'diode', 'temperature', 'capacitance']
+    @pytest.mark.parametrize("case, expected", pCurrentRanges)
+    def test_current_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.current_range = case
+        assert dmm.current_range == expected
 
-        for case in cases:
-            dmm.mode = case
-            assert dmm.mode == case
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_current_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.current_auto_range = case
+        assert dmm.current_auto_range == case
 
-        with pytest.raises(ValueError):
-            dmm.mode = 'AAA'
+    @pytest.mark.parametrize("case, expected", pResolution)
+    def test_current_resolution(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.current_resolution = case
+        assert dmm.current_resolution == expected
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case, expected", pCurrentAcRanges)
+    def test_current_ac_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.current_ac_range = case
+        assert dmm.current_ac_range == expected
 
-    def test_current_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_current_ac_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.current_ac_auto_range = case
+        assert dmm.current_ac_auto_range == case
 
-        current_dc_range_cases = [[100E-6, 100E-6], [1E-3, 1E-3], [10E-3, 10E-3],
-                                  [100E-3, 100E-3], [1, 1], ["MIN", 100E-6],
-                                  ["MAX", 10], ["DEF", 100E-3]]
-        for value, expected in current_dc_range_cases:
-            dmm.current_range = value
-            assert dmm.current_range == expected
-        with pytest.raises(ValueError):
-            dmm.current_range = "AAA"
+    @pytest.mark.parametrize("case, expected", pResolution)
+    def test_current_ac_resolution(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.current_ac_resolution = case
+        assert dmm.current_ac_resolution == expected
 
-        dmm.shutdown()
-
-    def test_current_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        dmm.current_auto_range = True
-        assert dmm.current_auto_range == 1
-        dmm.current_auto_range = False
-        assert dmm.current_auto_range == 0
-
-        dmm.shutdown()
-
-    def test_current_resolution(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        for value, expected in self.default_resolution_cases:
-            dmm.current_resolution = value
-            assert dmm.current_resolution == expected
-        with pytest.raises(ValueError):
-            dmm.current_resolution = "AAA"
-
-        dmm.shutdown()
-
-    def test_current_ac_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        cases = [[10E-3, 10E-3], [100E-3, 100E-3], [1, 1],
-                 ["MIN", 10E-3], ["MAX", 10], ["DEF", 100E-3]]
-        for value, expected in cases:
-            dmm.current_ac_range = value
-            assert dmm.current_ac_range == expected
-        with pytest.raises(ValueError):
-            dmm.current_ac_range = "AAA"
-
-        dmm.shutdown()
-
-    def test_current_ac_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        dmm.current_ac_auto_range = True
-        assert dmm.current_ac_auto_range == 1
-        dmm.current_ac_auto_range = False
-        assert dmm.current_ac_auto_range == 0
-
-        dmm.shutdown()
-
-    def test_current_ac_resolution(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        for value, expected in self.default_resolution_cases:
-            dmm.current_ac_resolution = value
-            assert dmm.current_ac_resolution == expected
-        with pytest.raises(ValueError):
-            dmm.current_ac_resolution = "AAA"
-
-        dmm.shutdown()
-
-    def test_configure_current(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        # Test includes only what has not been tested in previous setter methods
+    def test_configure_current(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
 
         # No parameters specified
         dmm.configure_current()
@@ -189,113 +159,56 @@ class TestAgilent34450A:
         assert dmm.current_auto_range == 1
         assert dmm.current_resolution == 1.50E-6
 
-        # Should raise TypeError
-        with pytest.raises(TypeError):
-            dmm.configure_current(ac="AAA")
-
-        dmm.shutdown()
-
-    def test_current_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_current_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "current"
         value = dmm.current
         assert type(value) is float
 
-        dmm.shutdown()
-
-    def test_current_ac_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_current_ac_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "ac current"
         value = dmm.current_ac
         assert type(value) is float
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case, expected", pVoltageRanges)
+    def test_voltage_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.voltage_range = case
+        assert dmm.voltage_range == expected
 
-    def test_voltage_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_voltage_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.voltage_auto_range = case
+        assert dmm.voltage_auto_range == case
 
-        voltage_dc_range_cases = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100],
-                                  [1000, 1000], ["MIN", 100E-3], ["MAX", 1000],
-                                  ["DEF", 10]]
-        for value, expected in voltage_dc_range_cases:
-            dmm.voltage_range = value
-            assert dmm.voltage_range == expected
-        with pytest.raises(ValueError):
-            dmm.voltage_range = "AAA"
+    @pytest.mark.parametrize("case, expected", pResolution)
+    def test_voltage_resolution(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.voltage_resolution = case
+        assert dmm.voltage_resolution == expected
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case, expected", pVoltageAcRanges)
+    def test_voltage_ac_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.voltage_ac_range = case
+        assert dmm.voltage_ac_range == expected
 
-    def test_voltage_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_voltage_ac_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.voltage_ac_auto_range = case
+        assert dmm.voltage_ac_auto_range == case
 
-        dmm.voltage_auto_range = True
-        assert dmm.voltage_auto_range == 1
-        dmm.voltage_auto_range = False
-        assert dmm.voltage_auto_range == 0
+    @pytest.mark.parametrize("case, expected", pResolution)
+    def test_voltage_ac_resolution(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.voltage_ac_resolution = case
+        assert dmm.voltage_ac_resolution == expected
 
-        dmm.shutdown()
-
-    def test_voltage_resolution(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        for value, expected in self.default_resolution_cases:
-            dmm.voltage_resolution = value
-            assert dmm.voltage_resolution == expected
-        with pytest.raises(ValueError):
-            dmm.voltage_resolution = "AAA"
-
-        dmm.shutdown()
-
-    def test_voltage_ac_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        voltage_ac_range_cases = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100],
-                                  [750, 750], ["MIN", 100E-3], ["MAX", 750],
-                                  ["DEF", 10]]
-        for value, expected in voltage_ac_range_cases:
-            dmm.voltage_ac_range = value
-            assert dmm.voltage_ac_range == expected
-        with pytest.raises(ValueError):
-            dmm.voltage_ac_range = "AAA"
-
-        dmm.shutdown()
-
-    def test_voltage_ac_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        dmm.voltage_ac_auto_range = True
-        assert dmm.voltage_ac_auto_range == 1
-        dmm.voltage_ac_auto_range = False
-        assert dmm.voltage_ac_auto_range == 0
-
-        dmm.shutdown()
-
-    def test_voltage_ac_resolution(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        for value, expected in self.default_resolution_cases:
-            dmm.voltage_ac_resolution = value
-            assert dmm.voltage_ac_resolution == expected
-        with pytest.raises(ValueError):
-            dmm.voltage_ac_resolution = "AAA"
-
-        dmm.shutdown()
-
-    def test_configure_voltage(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        # Test includes only what has not been tested in previous setter methods
+    def test_configure_voltage(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
 
         # No parameters specified
         dmm.configure_voltage()
@@ -323,113 +236,57 @@ class TestAgilent34450A:
         assert dmm.voltage_auto_range == 1
         assert dmm.voltage_resolution == 1.50E-6
 
-        # Should raise TypeError
-        with pytest.raises(TypeError):
-            dmm.configure_voltage(ac="AAA")
-
-        dmm.shutdown()
-
-    def test_voltage_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_voltage_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "voltage"
         value = dmm.voltage
         assert type(value) is float
 
-        dmm.shutdown()
-
-    def test_voltage_ac_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_voltage_ac_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "ac voltage"
         value = dmm.voltage_ac
         assert type(value) is float
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case, expected", pResistanceRanges)
+    def test_resistance_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.resistance_range = case
+        assert dmm.resistance_range == expected
 
-    def test_resistance_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_resistance_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.resistance_auto_range = case
+        assert dmm.resistance_auto_range == case
 
-        resistance_range_cases = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5],
-                                  [1E6, 1E6], [1E7, 1E7], [1E8, 1E8], ["MIN", 1E2],
-                                  ["MAX", 1E8], ["DEF", 1E3]]
-        for value, expected in resistance_range_cases:
-            dmm.resistance_range = value
-            assert dmm.resistance_range == expected
-        with pytest.raises(ValueError):
-            dmm.resistance_range = "AAA"
+    @pytest.mark.parametrize("case, expected", pResolution)
+    def test_resistance_resolution(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.resistance_resolution = case
+        assert dmm.resistance_resolution == expected
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case, expected", pResistance4wRanges)
+    def test_resistance_4w_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.resistance_4w_range = case
+        assert dmm.resistance_4w_range == expected
 
-    def test_resistance_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_resistance_4w_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.resistance_4w_auto_range = case
+        assert dmm.resistance_4w_auto_range == case
 
-        dmm.resistance_auto_range = True
-        assert dmm.resistance_auto_range == 1
-        dmm.resistance_auto_range = False
-        assert dmm.resistance_auto_range == 0
+    @pytest.mark.parametrize("case, expected", pResolution)
+    def test_resistance_4w_resolution(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.resistance_4w_resolution = case
+        assert dmm.resistance_4w_resolution == expected
 
-        dmm.shutdown()
+    def test_configure_resistance(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
 
-    def test_resistance_resolution(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        for value, expected in self.default_resolution_cases:
-            dmm.resistance_resolution = value
-            assert dmm.resistance_resolution == expected
-        with pytest.raises(ValueError):
-            dmm.resistance_resolution = "AAA"
-
-        dmm.shutdown()
-
-    def test_resistance_4W_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        resistance_4W_range_cases = [[1E2, 1E2], [1E3, 1E3], [1E4, 1E4], [1E5, 1E5],
-                                     [1E6, 1E6], [1E7, 1E7], [1E8, 1E8], ["MIN", 1E2],
-                                     ["MAX", 1E8], ["DEF", 1E3]]
-        for value, expected in resistance_4W_range_cases:
-            dmm.resistance_4W_range = value
-            assert dmm.resistance_4W_range == expected
-        with pytest.raises(ValueError):
-            dmm.resistance_4W_range = "AAA"
-
-        dmm.shutdown()
-
-    def test_resistance_4W_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        dmm.resistance_4W_auto_range = True
-        assert dmm.resistance_4W_auto_range == 1
-        dmm.resistance_4W_auto_range = False
-        assert dmm.resistance_4W_auto_range == 0
-
-        dmm.shutdown()
-
-    def test_resistance_4W_resolution(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        for value, expected in self.default_resolution_cases:
-            dmm.resistance_4W_resolution = value
-            assert dmm.resistance_4W_resolution == expected
-        with pytest.raises(ValueError):
-            dmm.resistance_4W_resolution = "AAA"
-
-        dmm.shutdown()
-
-    def test_configure_resistance(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        # Test includes only what has not been tested in previous setter methods
         # No parameters specified
         dmm.configure_resistance()
         assert dmm.mode == "resistance"
@@ -448,110 +305,63 @@ class TestAgilent34450A:
         assert dmm.resistance_resolution == 1.50E-6
         dmm.configure_resistance(resistance_range=10E3, wires=4, resolution="MAX")
         assert dmm.mode == "4w resistance"
-        assert dmm.resistance_4W_range == 10E3
-        assert dmm.resistance_4W_auto_range == 0
-        assert dmm.resistance_4W_resolution == 3.00E-5
+        assert dmm.resistance_4w_range == 10E3
+        assert dmm.resistance_4w_auto_range == 0
+        assert dmm.resistance_4w_resolution == 3.00E-5
         dmm.configure_resistance(resistance_range="AUTO", wires=4, resolution="MIN")
         assert dmm.mode == "4w resistance"
-        assert dmm.resistance_4W_auto_range == 1
-        assert dmm.resistance_4W_resolution == 1.50E-6
+        assert dmm.resistance_4w_auto_range == 1
+        assert dmm.resistance_4w_resolution == 1.50E-6
 
         # Should raise ValueError
         with pytest.raises(ValueError):
             dmm.configure_resistance(wires=3)
 
-        dmm.shutdown()
-
-    def test_resistance_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_resistance_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "resistance"
         value = dmm.resistance
         assert type(value) is float
 
-        dmm.shutdown()
-
-    def test_resistance_4W_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_resistance_4w_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "4w resistance"
-        value = dmm.resistance_4W
+        value = dmm.resistance_4w
         assert type(value) is float
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case, expected", pCurrentAcRanges)
+    def test_frequency_current_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.frequency_current_range = case
+        assert dmm.frequency_current_range == expected
 
-    def test_frequency_current_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_frequency_current_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.frequency_current_auto_range = case
+        assert dmm.frequency_current_auto_range == case
 
-        frequency_current_range_cases = [[10E-3, 10E-3], [100E-3, 100E-3], [1, 1],
-                                         ["MIN", 10E-3], ["MAX", 10], ["DEF", 100E-3]]
-        for value, expected in frequency_current_range_cases:
-            dmm.frequency_current_range = value
-            assert dmm.frequency_current_range == expected
-        with pytest.raises(ValueError):
-            dmm.frequency_current_range = "AAA"
+    @pytest.mark.parametrize("case, expected", pVoltageAcRanges)
+    def test_frequency_voltage_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.frequency_voltage_range = case
+        assert dmm.frequency_voltage_range == expected
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_frequency_voltage_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.frequency_voltage_auto_range = case
+        assert dmm.frequency_voltage_auto_range == case
 
-    def test_frequency_current_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case, expected", pFrequencyApertures)
+    def test_frequency_aperture(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.frequency_aperture = case
+        assert dmm.frequency_aperture == expected
 
-        dmm.frequency_current_auto_range = True
-        assert dmm.frequency_current_auto_range == 1
-        dmm.frequency_current_auto_range = False
-        assert dmm.frequency_current_auto_range == 0
+    def test_configure_frequency(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
 
-        dmm.shutdown()
-
-    def test_frequency_voltage_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        frequency_voltage_range_cases = [[100E-3, 100E-3], [1, 1], [10, 10], [100, 100],
-                                         [750, 750], ["MIN", 100E-3], ["MAX", 750],
-                                         ["DEF", 10]]
-        for value, expected in frequency_voltage_range_cases:
-            dmm.frequency_voltage_range = value
-            assert dmm.frequency_voltage_range == expected
-        with pytest.raises(ValueError):
-            dmm.frequency_voltage_range = "AAA"
-
-        dmm.shutdown()
-
-    def test_frequency_voltage_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        dmm.frequency_voltage_auto_range = True
-        assert dmm.frequency_voltage_auto_range == 1
-        dmm.frequency_voltage_auto_range = False
-        assert dmm.frequency_voltage_auto_range == 0
-
-        dmm.shutdown()
-
-    def test_frequency_aperture(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        frequency_aperture_cases = [[100E-3, 100E-3], [1, 1], ["MIN", 100E-3],
-                                    ["MAX", 1], ["DEF", 1]]
-        for value, expected in frequency_aperture_cases:
-            dmm.frequency_aperture = value
-            assert dmm.frequency_aperture == expected
-        with pytest.raises(ValueError):
-            dmm.frequency_aperture = "AAA"
-
-        dmm.shutdown()
-
-    def test_configure_frequency(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        # Test includes only what has not been tested in previous setter methods
         # No parameters specified
         dmm.configure_frequency()
         assert dmm.mode == "voltage frequency"
@@ -586,83 +396,49 @@ class TestAgilent34450A:
         with pytest.raises(ValueError):
             dmm.configure_frequency(measured_from="")
 
-        dmm.shutdown()
-
-    def test_frequency_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_frequency_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "voltage frequency"
         value = dmm.frequency
         assert type(value) is float
 
-        dmm.shutdown()
-
-    def test_configure_temperature(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    def test_configure_temperature(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.configure_temperature()
         assert dmm.mode == "temperature"
-        dmm.shutdown()
 
-    def test_temperature_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_temperature_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "temperature"
         value = dmm.temperature
         assert type(value) is float
 
-        dmm.shutdown()
-
-    def test_configure_diode(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    def test_configure_diode(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.configure_diode()
         assert dmm.mode == "diode"
-        dmm.shutdown()
 
-    def test_diode_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_diode_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "diode"
         value = dmm.diode
         assert type(value) is float
 
-        dmm.shutdown()
+    @pytest.mark.parametrize("case, expected", pCapacitanceRanges)
+    def test_capacitance_range(self, make_reseted_dmm, case, expected):
+        dmm = make_reseted_dmm
+        dmm.capacitance_range = case
+        assert dmm.capacitance_range == expected
 
-    def test_capacitance_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    @pytest.mark.parametrize("case", pBooleans)
+    def test_capacitance_auto_range(self, make_reseted_dmm, case):
+        dmm = make_reseted_dmm
+        dmm.capacitance_auto_range = case
+        assert dmm.capacitance_auto_range == case
 
-        capacitance_range_cases = [[1E-9, 1E-9], [1E-8, 1E-8], [1E-7, 1E-7], [1E-6, 1E-6],
-                                   [1E-5, 1E-5], [1E-4, 1E-4], [1E-3, 1E-3], [1E-2, 1E-2],
-                                   ["MIN", 1E-9], ["MAX", 1E-2], ["DEF", 1E-6]]
-        for value, expected in capacitance_range_cases:
-            dmm.capacitance_range = value
-            assert dmm.capacitance_range == expected
-        with pytest.raises(ValueError):
-            dmm.capacitance_range = "AAA"
+    def test_configure_capacitance(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
 
-        dmm.shutdown()
-
-    def test_capacitance_auto_range(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        dmm.capacitance_auto_range = True
-        assert dmm.capacitance_auto_range == 1
-        dmm.capacitance_auto_range = False
-        assert dmm.capacitance_auto_range == 0
-
-        dmm.shutdown()
-
-    def test_configure_capacitance(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
-        # Test includes only what has not been tested in previous setter methods
         # No parameters specified
         dmm.configure_capacitance()
         assert dmm.mode == "capacitance"
@@ -677,31 +453,19 @@ class TestAgilent34450A:
         assert dmm.mode == "capacitance"
         assert dmm.capacitance_auto_range == 1
 
-        dmm.shutdown()
-
-    def test_capacitance_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_capacitance_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "capacitance"
         value = dmm.capacitance
         assert type(value) is float
 
-        dmm.shutdown()
-
-    def test_configure_continuity(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
+    def test_configure_continuity(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.configure_continuity()
         assert dmm.mode == "continuity"
-        dmm.shutdown()
 
-    def test_continuity_reading(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-
+    def test_continuity_reading(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.mode = "continuity"
         value = dmm.continuity
         assert type(value) is float
-
-        dmm.shutdown()
