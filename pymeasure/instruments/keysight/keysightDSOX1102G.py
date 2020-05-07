@@ -509,7 +509,6 @@ class KeysightDSOX1102G(Instrument):
         :return data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict format.
         """
         # TODO: Consider downloading from multiple sources at the same time.
-        self.digitize(source)
         self.waveform_source = source
         self.waveform_points_mode = "normal"
         self.waveform_points = points
