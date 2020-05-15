@@ -1161,6 +1161,7 @@ class SMU():
 
         # calculate number of points based on maximum stepsize
         nop = np.ceil(abs((target_output - start) / stepsize))
+        nop = int(nop)
         log.info("{0} ramping from {1}{2} to {3}{2} in {4} steps".format(
             self.name, start, unit, target_output, nop
             ))
