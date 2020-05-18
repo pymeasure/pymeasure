@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,6 @@ class Experiment(QtCore.QObject):
         self.procedure = self.results.procedure
         self.curve = curve
         self.browser_item = browser_item
-
 
 class ExperimentQueue(QtCore.QObject):
     """ Represents a Queue of Experiments and allows queries to
@@ -279,3 +278,80 @@ class Manager(QtCore.QObject):
             self._worker.stop()
 
             self.aborted.emit(self._running_experiment)
+
+
+class ImageExperiment(Experiment):
+    """ 
+    Adds saving of the experiments image to :class:`.Experiment`. Needed to 
+    make image features work
+    """
+    def __init__(self, results, curve, image, browser_item, parent=None):
+        super().__init__(results, curve, browser_item, parent=None)
+
+        self.image = image
+
+
+class ImageExperimentQueue(ExperimentQueue):
+    """ 
+    Overwrites needed features from :class:`.ExperimentQueue` to make image 
+    features work
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def __contains__(self, value):
+        if isinstance(value, ImageExperiment):
+            return value in self.queue
+        if isinstance(value, str):
+            for experiment in self.queue:
+                if basename(experiment.data_filename) == basename(value):
+                    return True
+            return False
+        return False
+
+class ImageManager(Manager):
+    """
+    Overwrites needed features from :class:`.Manager` to make image features
+    work
+    """
+    _is_continuous = True
+    _start_on_add = True
+    queued = QtCore.QSignal(object)
+    running = QtCore.QSignal(object)
+    finished = QtCore.QSignal(object)
+    failed = QtCore.QSignal(object)
+    aborted = QtCore.QSignal(object)
+    abort_returned = QtCore.QSignal(object)
+    log = QtCore.QSignal(object)
+
+    def __init__(self, plot, im_plot, browser, port=5888, log_level=logging.INFO, parent=None):
+        super().__init__(plot, browser, port=5888, log_level=logging.INFO, parent=None)
+        # overrides necessary variables to make image features work
+        self.experiments = ImageExperimentQueue()
+
+        self.im_plot = im_plot
+
+    def remove(self, experiment):
+        """ Removes an Experiment
+        """
+        self.experiments.remove(experiment)
+        self.browser.takeTopLevelItem(
+            self.browser.indexOfTopLevelItem(experiment.browser_item))
+        self.im_plot.removeItem(experiment.image)
+        self.plot.removeItem(experiment.curve)
+        
+    def load(self, experiment): 
+        super().load(experiment)
+        self.im_plot.addItem(experiment.image)
+
+    def _finish(self):
+        log.debug("Manager's running experiment has finished")
+        experiment = self._running_experiment
+        self._clean_up()
+        experiment.browser_item.setProgress(100.)
+        experiment.image.update_img()
+        experiment.curve.update()
+        self.finished.emit(experiment)
+        if self._is_continuous:  # Continue running procedures
+            self.next()
