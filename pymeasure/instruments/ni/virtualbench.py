@@ -1025,7 +1025,7 @@ class VirtualBench():
 
             return_value = ', '.join(return_value)
             return_value = self._vb_handle.collapse_channel_string(
-                return_value)
+                return_value)[0]  # drop number of channels
             return return_value
 
         def configure_analog_channel(self, channel, enable_channel,
