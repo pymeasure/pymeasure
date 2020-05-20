@@ -950,7 +950,7 @@ class VirtualBench():
             except Exception:
                 try:
                     trigger_instance = pyvb.MsoTriggerInstance[
-                        trigger_instance.Upper()]
+                        trigger_instance.upper()]
                 except Exception:
                     raise ValueError(
                         "Trigger Instance may be 0, 1, 'A' or 'B'")
