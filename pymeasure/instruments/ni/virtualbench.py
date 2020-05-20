@@ -265,7 +265,8 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.dio = self.DigitalInputOutput(self.vb, lines, reset, vb_name=self.name)
+        self.dio = self.DigitalInputOutput(self.vb, lines, reset,
+                                           vb_name=self.name)
 
     def acquire_power_supply(self, reset=False):
         """ Establishes communication with the PS module. This method should be
@@ -295,7 +296,8 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.mso = self.MixedSignalOscilloscope(self.vb, reset, vb_name=self.name)
+        self.mso = self.MixedSignalOscilloscope(self.vb, reset,
+                                                vb_name=self.name)
 
     def acquire_digital_multimeter(self, reset=False):
         """ Establishes communication with the DMM module. This method should
@@ -305,9 +307,50 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.dmm = self.DigitalMultimeter(self.vb, reset=reset, vb_name=self.name)
+        self.dmm = self.DigitalMultimeter(self.vb, reset=reset,
+                                          vb_name=self.name)
 
-    class DigitalInputOutput():
+    class VirtualBenchInstrument():
+        def __init__(self, acquire_instr, reset,
+                     instr_identifier, vb_name=''):
+            """Initialize instrument of VirtualBench device.
+            Sets class variables and provides basic methods
+            common to all VB instruments.
+
+            :param acquire_instr: Method to acquire the instrument
+            :type acquire_instr: method
+            :param reset: Resets the instrument
+            :type reset: bool
+            :param instr_identifier: Shorthand identifier, e.g. mso or fgen
+            :type instr_identifier: str
+            :param vb_name: Name of VB device for logging, defaults to ''
+            :type vb_name: str, optional
+            """
+            # Parameters & Handle of VirtualBench Instance
+            self._vb_handle = acquire_instr.__self__
+            self._device_name = self._vb_handle.device_name
+            self.name = (vb_name + " " + instr_identifier.upper()).strip()
+            log.info("Initializing %s." % self.name)
+            self._instrument_handle = acquire_instr(self._device_name, reset)
+            self.isShutdown = False
+
+        def __del__(self):
+            """ Ensures the connection is closed upon deletion
+            """
+            if self.isShutdown is not True:
+                self._instrument_handle.release()
+
+        def shutdown(self):
+            ''' Removes the session and deallocates any resources acquired
+            during the session. If output is enabled on any channels, they
+            remain in their current state.
+            '''
+            log.info("Shutting down %s" % self.name)
+            self._instrument_handle.release()
+            self.isShutdown = True
+
+
+    class DigitalInputOutput(VirtualBenchInstrument):
         """ Represents Digital Input Output (DIO) Module of Virtual Bench
         device. Allows to read/write digital channels and/or set channels
         to export the start signal of FGEN module or trigger of MSO module.
@@ -334,22 +377,9 @@ class VirtualBench():
             log.info("Initializing %s." % self.name)
             self.dio = self._vb_handle.acquire_digital_input_output(
                 self._line_names, reset)
+            # for methods provided by super class
+            self._instrument_handle = self.dio
             self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.dio.release()
-
-        def shutdown(self):
-            ''' Stops the session and deallocates any resources acquired during
-                the session. If output is enabled on any channels, they remain
-                in their current state and continue to output data.
-            '''
-            log.info("Shutting down %s" % self.name)
-            self.dio.release()
-            self.isShutdown = True
 
         def validate_lines(self, lines, return_single_lines=False,
                            validate_init=False):
@@ -392,7 +422,9 @@ class VirtualBench():
                 else:
                     # split off line number by last '/'
                     try:
-                        (device, line) = re.match(r'(.*)(?:/)(.+)', line).groups()
+                        (device, line) = re.match(
+                            r'(.*)(?:/)(.+)',
+                            line).groups()
                     except IndexError:
                         error()
                 if (line == 'trig') and (device == self._device_name):
@@ -513,7 +545,7 @@ class VirtualBench():
             '''
             self.dio.reset_instrument()
 
-    class DigitalMultimeter():
+    class DigitalMultimeter(VirtualBenchInstrument):
         """ Represents Digital Multimeter (DMM) Module of Virtual Bench
         device. Allows to measure either DC/AC voltage or current,
         Resistance or Diodes.
@@ -526,28 +558,10 @@ class VirtualBench():
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " DMM"
-            log.info("Initializing %s." % self.name)
-            self.dmm = self._vb_handle.acquire_digital_multimeter(
-                self._device_name, reset)
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.dmm.release()
-
-        def shutdown(self):
-            """ Stops the DMM session and deallocates any resources
-            acquired during the session.
-            """
-            log.info("Shutting down %s" % self.name)
-            self.dmm.release()
-            self.isShutdown = True
+            super().__init__(
+                virtualbench.acquire_digital_multimeter,
+                reset, 'dmm', vb_name)
+            self.dmm = self._instrument_handle
 
         @staticmethod
         def validate_range(dmm_function, range):
@@ -716,7 +730,7 @@ class VirtualBench():
             """
             self.dmm.reset_instrument()
 
-    class FunctionGenerator():
+    class FunctionGenerator(VirtualBenchInstrument):
         """ Represents Function Generator (FGEN) Module of Virtual
         Bench device.
         """
@@ -728,13 +742,10 @@ class VirtualBench():
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " FGEN"
-            log.info("Initializing %s." % self.name)
-            self.fgen = self._vb_handle.acquire_function_generator(
-                self._device_name, reset)
+            super().__init__(
+                virtualbench.acquire_function_generator,
+                reset, 'fgen', vb_name)
+            self.fgen = self._instrument_handle
 
             self._waveform_functions = {"SINE": 0, "SQUARE": 1,
                                         "TRIANGLE/RAMP": 2, "DC": 3}
@@ -742,22 +753,6 @@ class VirtualBench():
             # v: k for k, v in self._waveform_functions.items()}
             self._max_frequency = {"SINE": 20000000, "SQUARE": 5000000,
                                    "TRIANGLE/RAMP": 1000000, "DC": 20000000}
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.fgen.release()
-
-        def shutdown(self):
-            ''' Stops the session and deallocates any resources acquired during
-            the session. If output is enabled on any channels, they remain
-            in their current state and continue to output data.
-            '''
-            log.info("Shutting down %s" % self.name)
-            self.fgen.release()
-            self.isShutdown = True
 
         def configure_standard_waveform(self, waveform_function, amplitude,
                                         dc_offset, frequency, duty_cycle):
@@ -922,42 +917,24 @@ class VirtualBench():
             '''
             self.fgen.reset_instrument()
 
-    class MixedSignalOscilloscope():
+    class MixedSignalOscilloscope(VirtualBenchInstrument):
         """ Represents Mixed Signal Oscilloscope (MSO) Module of Virtual Bench
         device. Allows to measure oscilloscope data from analog and digital
         channels.
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
-            """ Acquire FGEN module
+            """ Acquire MSO module
 
             :param virtualbench: Instance of the VirtualBench class
             :type virtualbench: VirtualBench
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " MSO"
-            log.info("Initializing %s." % self.name)
-            self.mso = self._vb_handle.acquire_mixed_signal_oscilloscope(
-                self._device_name, reset)
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.mso.release()
-
-        def shutdown(self):
-            ''' Removes the session and deallocates any resources acquired
-            during the session. If output is enabled on any channels, they
-            remain in their current state.
-            '''
-            log.info("Shutting down %s" % self.name)
-            self.mso.release()
-            self.isShutdown = True
+            super().__init__(
+                virtualbench.acquire_mixed_signal_oscilloscope,
+                reset, 'mso', vb_name)
+            self.mso = self._instrument_handle
 
         @staticmethod
         def validate_trigger_instance(trigger_instance):
@@ -1545,7 +1522,7 @@ class VirtualBench():
         #         files created from MSO Export Configuration.
         #     '''
 
-    class PowerSupply():
+    class PowerSupply(VirtualBenchInstrument):
         """ Represents Power Supply (PS) Module of Virtual Bench device
         """
         def __init__(self, virtualbench, reset, vb_name=''):
@@ -1556,31 +1533,10 @@ class VirtualBench():
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " PS"
-            # Create DIO Instance
-            reset = strict_discrete_set(reset, [True, False])
-            log.info("Initializing %s." % self.name)
-            self.ps = self._vb_handle.acquire_power_supply(
-                self._device_name, reset)
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.ps.release()
-
-        def shutdown(self):
-            ''' Stops the session and deallocates any resources acquired during
-            the session. If output is enabled on any channels, they remain
-            in their current state and continue to output data.
-            '''
-            log.info("Releasing %s" % self.name)
-            self.ps.release()
-            self.isShutdown = True
+            super().__init__(
+                virtualbench.acquire_power_supply,
+                reset, 'ps', vb_name)
+            self.ps = self._instrument_handle
 
         def validate_channel(self, channel, current=False, voltage=False):
             """ Check if channel string is valid and if output current/voltage
