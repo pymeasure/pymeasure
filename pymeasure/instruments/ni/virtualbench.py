@@ -36,9 +36,10 @@ import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import (
+    strict_discrete_set, strict_discrete_range,
+    truncated_discrete_set, strict_range
+)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -602,7 +603,7 @@ class VirtualBench():
                 pyvb.DmmFunction(dmm_function)
             except Exception:
                 try:
-                    dmm_function = pyvb.DmmFunction[dmm_function.Upper()]
+                    dmm_function = pyvb.DmmFunction[dmm_function.upper()]
                 except Exception:
                     raise ValueError(
                         "DMM Function may be 0-5, 'DC_VOLTS'," +
@@ -626,7 +627,7 @@ class VirtualBench():
             except Exception:
                 try:
                     auto_range_terminal = pyvb.DmmCurrentTerminal[
-                        auto_range_terminal.Upper()]
+                        auto_range_terminal.upper()]
                 except Exception:
                     raise ValueError(
                         "Current Auto Range Terminal may be 0, 1," +
@@ -667,7 +668,7 @@ class VirtualBench():
             except Exception:
                 try:
                     dmm_input_resistance = pyvb.DmmInputResistance[
-                        dmm_input_resistance.Upper()]
+                        dmm_input_resistance.upper()]
                 except Exception:
                     raise ValueError(
                         "Input Resistance may be 0, 1," +
@@ -956,11 +957,6 @@ class VirtualBench():
                         "Trigger Instance may be 0, 1, 'A' or 'B'")
             return trigger_instance
 
-        def auto_setup(self):
-            """ Automatically configure the instrument
-            """
-            self.mso.auto_setup()
-
         def validate_channel(self, channel):
             """ Check if ``channel`` is a correct specification
 
@@ -1005,6 +1001,15 @@ class VirtualBench():
                 return_value)[0]  # drop number of channels
             return return_value
 
+        # --------------------------
+        # Configure Instrument
+        # --------------------------
+
+        def auto_setup(self):
+            """ Automatically configure the instrument
+            """
+            self.mso.auto_setup()
+
         def configure_analog_channel(self, channel, enable_channel,
                                      vertical_range, vertical_offset,
                                      probe_attenuation, vertical_coupling):
@@ -1012,10 +1017,13 @@ class VirtualBench():
 
             :param str channel: Channel string
             :param bool enable_channel: Enable/Disable channel
-            :param float vertical_range: Vertical measurement range (0V - 20V)
+            :param float vertical_range: Vertical measurement range (0V - 20V),
+                the instrument discretizes to these ranges:
+                ``[20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05]``
+                which are 5x the values shown in the native UI.
             :param float vertical_offset: Vertical offset to correct for
                                           (inverted compared to VB native UI,
-                                          -20V - +20V)
+                                          -20V - +20V, resolution 0.1mV)
             :param probe_attenuation: Probe attenuation (``'ATTENUATION_10X'``
                                       or ``'ATTENUATION_1X'``)
             :type probe_attenuation: int or str
@@ -1027,14 +1035,15 @@ class VirtualBench():
                 enable_channel, [True, False])
             if (vertical_range < 0) or (vertical_range > 20):
                 raise ValueError("Vertical Range takes value 0 to 20V")
-            if (vertical_offset < -20) or (vertical_offset > 20):
-                raise ValueError("Vertical Offset takes value -20 to +20V")
+            vertical_offset = strict_discrete_range(
+                vertical_offset, [-20*10000, 20*10000], 1
+            )
             try:
                 pyvb.MsoProbeAttenuation(probe_attenuation)
             except Exception:
                 try:
                     probe_attenuation = pyvb.MsoProbeAttenuation[
-                        probe_attenuation.Upper()]
+                        probe_attenuation.upper()]
                 except Exception:
                     raise ValueError(
                         "Probe Attenuation may be 1, 10," +
@@ -1044,7 +1053,7 @@ class VirtualBench():
             except Exception:
                 try:
                     vertical_coupling = pyvb.MsoCoupling[
-                        vertical_coupling.Upper()]
+                        vertical_coupling.upper()]
                 except Exception:
                     raise ValueError(
                         "Probe Attenuation may be 0, 1, 'AC' or 'DC'")
@@ -1070,7 +1079,7 @@ class VirtualBench():
             except Exception:
                 try:
                     input_impedance = pyvb.MsoInputImpedance[
-                        input_impedance.Upper()]
+                        input_impedance.upper()]
                 except Exception:
                     raise ValueError(
                         "Probe Attenuation may be 0, 1," +
@@ -1111,7 +1120,7 @@ class VirtualBench():
                 pyvb.MsoSamplingMode(sampling_mode)
             except Exception:
                 try:
-                    sampling_mode = pyvb.MsoSamplingMode[sampling_mode.Upper()]
+                    sampling_mode = pyvb.MsoSamplingMode[sampling_mode.upper()]
                 except Exception:
                     raise ValueError(
                         "Sampling Mode may be 0, 1, 'SAMPLE' or 'PEAK_DETECT'")
@@ -1159,7 +1168,7 @@ class VirtualBench():
                 pyvb.EdgeWithEither(trigger_slope)
             except Exception:
                 try:
-                    trigger_slope = pyvb.EdgeWithEither[trigger_slope.Upper()]
+                    trigger_slope = pyvb.EdgeWithEither[trigger_slope.upper()]
                 except Exception:
                     raise ValueError(
                         "Trigger Slope may be 0, 1, 2, 'RISING'," +
@@ -1229,7 +1238,7 @@ class VirtualBench():
             except Exception:
                 try:
                     trigger_polarity = pyvb.MsoTriggerPolarity[
-                        trigger_polarity.Upper()]
+                        trigger_polarity.upper()]
                 except Exception:
                     raise ValueError(
                         "Comparison Mode may be 0, 1, 2, 3," +
@@ -1241,7 +1250,7 @@ class VirtualBench():
             except Exception:
                 try:
                     comparison_mode = pyvb.MsoComparisonMode[
-                        comparison_mode.Upper()]
+                        comparison_mode.upper()]
                 except Exception:
                     raise ValueError(
                         "Trigger Polarity may be 0, 1," +
@@ -1251,15 +1260,15 @@ class VirtualBench():
                 trigger_source, trigger_polarity, trigger_level,
                 comparison_mode, lower_limit, upper_limit, trigger_instance)
 
-        def configure_digital_pulse_width_trigger(self, trigger_source,
-                                                  trigger_polarity,
-                                                  comparison_mode,
-                                                  lower_limit, upper_limit,
-                                                  trigger_instance):
-            ''' Configures a trigger to activate on the specified source when
-            the digital edge reaches the specified levels within a specified
-            window of time.
-            '''
+        # def configure_digital_pulse_width_trigger(self, trigger_source,
+        #                                           trigger_polarity,
+        #                                           comparison_mode,
+        #                                           lower_limit, upper_limit,
+        #                                           trigger_instance):
+        #     ''' Configures a trigger to activate on the specified source when
+        #     the digital edge reaches the specified levels within a specified
+        #     window of time.
+        #     '''
 
         def configure_trigger_delay(self, trigger_delay):
             """ Configures the amount of time to wait after a trigger condition
@@ -1408,6 +1417,10 @@ class VirtualBench():
             """
             return self.mso.query_acquisition_status()
 
+        # --------------------------
+        # Measurement Control
+        # --------------------------
+
         def run(self, autoTrigger=True):
             """ Transitions the acquisition from the Stopped state to the
             Running state. If the current state is Triggered, the
@@ -1478,7 +1491,7 @@ class VirtualBench():
             (analog_data_out, analog_data_stride
              # , analog_t0, digital_data_out, digital_timestamps_out,
              # digital_t0, trigger_timestamp, trigger_reason
-             ) = self.read_analog_digital_u64()[0:1]
+             ) = self.read_analog_digital_u64()[0:2]
 
             number_of_samples = int(self.sample_rate *
                                     self.acquisition_time) + 1
@@ -1493,10 +1506,11 @@ class VirtualBench():
                     raise ValueError(
                         "Length of Analog Data does not match" +
                         " Timing Parameters")
+            
             pretrigger_samples = int(self.sample_rate * self.pretrigger_time)
             times = (
                 list(range(-pretrigger_samples, 0))
-                + list(range(0, number_of_samples - pretrigger_samples + 1)))
+                + list(range(0, number_of_samples - pretrigger_samples)))
             times = [list(map(lambda x: x*1/self.sample_rate, times))]
 
             np_array = np.array(analog_data_out)
