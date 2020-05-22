@@ -777,16 +777,13 @@ class VirtualBench():
             max_frequency = self._max_frequency[waveform_function.upper()]
             waveform_function = self._waveform_functions[
                 waveform_function.upper()]
-            amplitude = strict_range(
-                amplitude, [x/100 for x in range(0, 2401)])
-            dc_offset = strict_range(
-                dc_offset, [x/100 for x in range(-1201, 1201)])
+            amplitude = strict_range(amplitude, (0, 24))
+            dc_offset = strict_range(dc_offset, (-12, 12))
             if (amplitude/2 + abs(dc_offset)) > 12:
                 raise ValueError(
                     "Amplitude and DC Offset may not exceed +/-12V")
-            duty_cycle = strict_range(duty_cycle, range(0, 101))
-            frequency = strict_range(
-                frequency, [x/1000 for x in range(0, max_frequency*1000 + 1)])
+            duty_cycle = strict_range(duty_cycle, (0, 100))
+            frequency = strict_range(frequency, (0, max_frequency))
             self.fgen.configure_standard_waveform(
                 waveform_function, amplitude, dc_offset, frequency, duty_cycle)
 
@@ -801,10 +798,8 @@ class VirtualBench():
                                   (maximum of 125MS/s, which equals 80ns)
             :type sample_period: float
             """
-            strict_range(len(waveform), range(1, 1000001))  # 1MS
-            if not ((sample_period >= 8e-8) and (sample_period <= 1)):
-                raise ValueError(
-                    "Sample Period allows a maximum of 125MS/s (80ns)")
+            strict_range(len(waveform), (1, 1e6))  # 1MS
+            sample_period = strict_range(sample_period, (8e-8, 1))
             self.fgen.configure_arbitrary_waveform(waveform, sample_period)
 
         def configure_arbitrary_waveform_gain_and_offset(self, gain,
@@ -819,8 +814,7 @@ class VirtualBench():
             :param dc_offset: DC offset in volts
             :type dc_offset: float
             """
-            dc_offset = strict_range(
-                dc_offset, [x/100 for x in range(-1201, 1201)])
+            dc_offset = strict_range(dc_offset, (-12, 12))
             self.fgen.configure_arbitrary_waveform_gain_and_offset(
                 gain, dc_offset)
 
@@ -1033,10 +1027,9 @@ class VirtualBench():
             channel = self.validate_channel(channel)
             enable_channel = strict_discrete_set(
                 enable_channel, [True, False])
-            if (vertical_range < 0) or (vertical_range > 20):
-                raise ValueError("Vertical Range takes value 0 to 20V")
+            vertical_range = strict_range(vertical_range, (0, 20))
             vertical_offset = strict_discrete_range(
-                vertical_offset, [-20*10000, 20*10000], 1
+                vertical_offset, [-20, 20], 1e-4
             )
             try:
                 pyvb.MsoProbeAttenuation(probe_attenuation)
@@ -1101,21 +1094,18 @@ class VirtualBench():
                              pretrigger_time, sampling_mode):
             """ Configure timing settings of the MSO
 
-            :param int sample_rate: Sample rate (15.26kS - 1MS)
+            :param int sample_rate: Sample rate (15.26kS - 1GS)
             :param float acquisition_time: Acquisition time (1ns - 68.711s)
             :param float pretrigger_time: Pretrigger time (0s - 10s)
             :param sampling_mode: Sampling mode (``'SAMPLE'`` or
                                   ``'PEAK_DETECT'``)
             """
-            sample_rate = strict_range(sample_rate, range(15260, 1000000001))
-            if not ((acquisition_time >= 1e-09) and
-                    (acquisition_time <= 68.711)):
-                raise ValueError(
-                    "Acquisition Time must be between 1ns and 68.7s")
+            sample_rate = strict_range(sample_rate, (15260, 1e9))
+            acquisition_time = strict_discrete_range(
+                acquisition_time, (1e-09, 68.711), 1e-09)
             # acquisition is also limited by buffer size,
             # which depends on sample rate as well as acquisition time
-            if not ((pretrigger_time >= 0) and (pretrigger_time <= 10)):
-                raise ValueError("Pretrigger Time must be between 1ns and 10s")
+            pretrigger_time = strict_range(pretrigger_time, (0, 10))
             try:
                 pyvb.MsoSamplingMode(sampling_mode)
             except Exception:
@@ -1506,7 +1496,7 @@ class VirtualBench():
                     raise ValueError(
                         "Length of Analog Data does not match" +
                         " Timing Parameters")
-            
+
             pretrigger_samples = int(self.sample_rate * self.pretrigger_time)
             times = (
                 list(range(-pretrigger_samples, 0))
@@ -1572,17 +1562,15 @@ class VirtualBench():
                 channel = strict_discrete_set(
                     channel, ["ps/+6V", "ps/+25V", "ps/-25V"])
                 if channel == "ps/+6V":
-                    current_range = range(0, 1001)
-                    voltage_range = range(0, 6001)
+                    current_range = (0, 1)
+                    voltage_range = (0, 6)
                 else:
-                    current_range = range(0, 501)
-                    voltage_range = range(0, 25001)
+                    current_range = (0, 5)
+                    voltage_range = (0, 25)
                     if channel == "ps/-25V":
-                        voltage_range = map(lambda x: -x, voltage_range)
-                current_range = map(lambda x: x/1000, current_range)
-                voltage_range = map(lambda x: x/1000, voltage_range)
-                current = strict_range(current, current_range)
-                voltage = strict_range(voltage, voltage_range)
+                        voltage_range = (0, -25)
+                current = strict_discrete_range(current, current_range, 1e-3)
+                voltage = strict_discrete_range(voltage, voltage_range, 1e-3)
                 return (channel, current, voltage)
 
         def configure_voltage_output(self, channel, voltage_level,
