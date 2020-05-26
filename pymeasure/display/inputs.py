@@ -237,14 +237,18 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
-        self.setMinimum(parameter.minimum)
-        self.setMaximum(parameter.maximum)
+        self._parameter = parameter  # required before super().set_parameter
+        # for self.validate which is called when setting self.decimals()
         self.validator = QtGui.QDoubleValidator(
             parameter.minimum,
             parameter.maximum,
-            10, self)
+            parameter.decimals,
+            self)
+        self.setDecimals(parameter.decimals)
+        self.setMinimum(parameter.minimum)
+        self.setMaximum(parameter.maximum)
         self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
-        super().set_parameter(parameter) # default gets set here, after min/max
+        super().set_parameter(parameter)  # default gets set here, after min/max
 
     def validate(self, text, pos):
         if self._parameter.units:
