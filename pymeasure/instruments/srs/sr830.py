@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -313,7 +313,7 @@ class SR830(Instrument):
     def sample_frequency(self):
         """ Gets the sample frequency in Hz """
         index = int(self.ask("SRAT?"))
-        if index is 14:
+        if index == 14:
             return None  # Trigger
         else:
             return SR830.SAMPLE_FREQUENCIES[index]
@@ -347,7 +347,7 @@ class SR830(Instrument):
     def is_out_of_range(self):
         """ Returns True if the magnitude is out of range
         """
-        return int(self.ask("LIAS?2")) is 1
+        return int(self.ask("LIAS?2")) == 1
 
     def quick_range(self):
         """ While the magnitude is out of range, increase

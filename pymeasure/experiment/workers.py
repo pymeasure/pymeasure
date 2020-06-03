@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -123,7 +123,7 @@ class Worker(StoppableThread):
             self.update_status(Procedure.FINISHED)
             self.emit('progress', 100.)
 
-        self.recorder.enqueue_sentinel()
+        self.recorder.stop()
         self.monitor_queue.put(None)
 
     def run(self):
