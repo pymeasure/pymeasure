@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,12 @@ import re
 import numpy as np
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import truncated_range
 from .buffer import KeithleyBuffer
 
-# Setup logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
 
 class Keithley6517B(Instrument, KeithleyBuffer):
     """ Represents the Keithely 6517B ElectroMeter and provides a
@@ -44,28 +44,31 @@ class Keithley6517B(Instrument, KeithleyBuffer):
 
         keithley = Keithley6517B("GPIB::1")
 
-        keithley.apply_voltage()                # Sets up to source current
-        keithley.source_voltage_range = 200     # Sets the source voltage range to 200 V
-        keithley.source_voltage = 20            # Sets the source voltage to 20 V
-        keithley.enable_source()                # Enables the source output
+        keithley.apply_voltage()              # Sets up to source current
+        keithley.source_voltage_range = 200   # Sets the source voltage
+                                              # range to 200 V
+        keithley.source_voltage = 20          # Sets the source voltage to 20 V
+        keithley.enable_source()              # Enables the source output
 
-        keithley.measure_resistance()           # Sets up to measure resistance
+        keithley.measure_resistance()         # Sets up to measure resistance
 
-        keithley.ramp_to_voltage(50)            # Ramps the voltage to 50 V
-        print(keithley.resistance)              # Prints the resistance in Ohms
+        keithley.ramp_to_voltage(50)          # Ramps the voltage to 50 V
+        print(keithley.resistance)            # Prints the resistance in Ohms
 
-        keithley.shutdown()                     # Ramps the voltage to 0 V and disables output
+        keithley.shutdown()                   # Ramps the voltage to 0 V
+                                              # and disables output
 
     """
 
-    source_enabled = Instrument.measurement("OUTPUT?",
+    source_enabled = Instrument.measurement(
+        "OUTPUT?",
         """ Reads a boolean value that is True if the source is enabled. """,
         cast=bool
     )
 
-
-    def extract_value(result):
-        """ extracts the physical value from a result object returned by the instrument """
+    def extract_value(self, result):
+        """ extracts the physical value from a result object returned
+            by the instrument """
         m = re.fullmatch('([+\-0-9E\.]+)[A-Z]{4}', result[0])
         if m:
             return float(m.group(1))
@@ -75,7 +78,8 @@ class Keithley6517B(Instrument, KeithleyBuffer):
     # Current (A) #
     ###############
 
-    current = Instrument.measurement(":MEAS?",
+    current = Instrument.measurement(
+        ":MEAS?",
         """ Reads the current in Amps, if configured for this reading.
         """, get_process=extract_value
     )
@@ -91,10 +95,10 @@ class Keithley6517B(Instrument, KeithleyBuffer):
 
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC current measurements, which sets the integration period
-        and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
-        Fast, Medium, and Slow respectively. """,
+        """ A floating point property that controls the number of power
+        line cycles (NPLC) for the DC current measurements, which sets the
+        integration period and measurement speed. Takes values from 0.01 to
+        10, where 0.1, 1, and 10 are Fast, Medium, and Slow respectively. """,
         values=[0.01, 10]
     )
 
@@ -102,7 +106,8 @@ class Keithley6517B(Instrument, KeithleyBuffer):
     # Voltage (V) #
     ###############
 
-    voltage = Instrument.measurement(":MEAS:VOLT?",
+    voltage = Instrument.measurement(
+        ":MEAS:VOLT?",
         """ Reads the voltage in Volts, if configured for this reading.
         """, get_process=extract_value
     )
@@ -118,10 +123,10 @@ class Keithley6517B(Instrument, KeithleyBuffer):
 
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC voltage measurements, which sets the integration period
-        and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
-        Fast, Medium, and Slow respectively. """
+        """ A floating point property that controls the number of power
+        line cycles (NPLC) for the DC voltage measurements, which sets the
+        integration period and measurement speed. Takes values from 0.01 to
+        10, where 0.1, 1, and 10 are Fast, Medium, and Slow respectively. """
     )
 
     source_voltage = Instrument.control(
@@ -147,13 +152,12 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         values=[0, 210e12]
     )
 
-
     ####################
     # Resistance (Ohm) #
     ####################
 
-
-    resistance = Instrument.measurement(":READ?",
+    resistance = Instrument.measurement(
+        ":READ?",
         """ Reads the resistance in Ohms, if configured for this reading.
         """, get_process=extract_value
     )
@@ -168,9 +172,10 @@ class Keithley6517B(Instrument, KeithleyBuffer):
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?", ":SENS:RES:NPLC %g",
         """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 2-wire resistance measurements, which sets the integration period
-        and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
-        Fast, Medium, and Slow respectively. """
+        (NPLC) for the 2-wire resistance measurements, which sets the
+        integration period and measurement speed. Takes values from 0.01
+        to 10, where 0.1, 1, and 10 are Fast, Medium, and Slow respectively.
+        """
     )
 
     buffer_points = Instrument.control(
@@ -189,28 +194,28 @@ class Keithley6517B(Instrument, KeithleyBuffer):
 
     def __init__(self, adapter, **kwargs):
         super(Keithley6517B, self).__init__(
-            adapter, "Keithley 6517B Electrometer/High Resistance Meter", **kwargs
+            adapter, "Keithley 6517B Electrometer/High Resistance Meter",
+            **kwargs
         )
-
 
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT ON")
 
-
     def disable_source(self):
         """ Disables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT OFF")
 
-
     def measure_resistance(self, nplc=1, resistance=2.1e5, auto_range=True):
         """ Configures the measurement of resistance.
 
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param resistance: Upper limit of resistance in Ohms, from -210 POhms to 210 POhms
-        :param auto_range: Enables auto_range if True, else uses the set resistance
+        :param resistance: Upper limit of resistance in Ohms,
+                           from -210 POhms to 210 POhms
+        :param auto_range: Enables auto_range if True, else uses the
+                           resistance_range attribut
         """
         log.info("%s is measuring resistance.", self.name)
         self.write(":SENS:FUNC 'RES';"
@@ -221,13 +226,13 @@ class Keithley6517B(Instrument, KeithleyBuffer):
             self.resistance_range = resistance
         self.check_errors()
 
-
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
 
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param voltage: Upper limit of voltage in Volts, from -1000 V to 1000 V
-        :param auto_range: Enables auto_range if True, else uses the set voltage
+        :param auto_range: Enables auto_range if True, else uses the
+                           voltage_range attribut
         """
         log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:FUNC 'VOLT';"
@@ -238,13 +243,13 @@ class Keithley6517B(Instrument, KeithleyBuffer):
             self.voltage_range = voltage
         self.check_errors()
 
-
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
         """ Configures the measurement of current.
 
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param current: Upper limit of current in Amps, from -21 mA to 21 mA
-        :param auto_range: Enables auto_range if True, else uses the set current
+        :param auto_range: Enables auto_range if True, else uses the
+                           current_range attribut
         """
         log.info("%s is measuring current.", self.name)
         self.write(":SENS:FUNC 'CURR';"
@@ -255,22 +260,21 @@ class Keithley6517B(Instrument, KeithleyBuffer):
             self.current_range = current
         self.check_errors()
 
-
     def auto_range_source(self):
         """ Configures the source to use an automatic range.
         """
         self.write(":SOUR:VOLT:RANG:AUTO 1")
 
-
     def apply_voltage(self, voltage_range=None,
-            compliance_current=1e-5):
+                      compliance_current=1e-5):
         """ Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.
 
         :param compliance_current: A float in the correct range for a
                                    :attr:`~.Keithley6517B.compliance_current`
-        :param voltage_range: A :attr:`~.Keithley6517B.voltage_range` value or None
+        :param voltage_range: A :attr:`~.Keithley6517B.voltage_range` value
+                              or None (activates auto range)
         """
         log.info("%s is sourcing voltage.", self.name)
         self.source_mode = 'voltage'
@@ -281,18 +285,16 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         self.compliance_current = compliance_current
         self.check_errors()
 
-
     @property
     def error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
         err = self.values(":system:error?")
         if len(err) < 2:
-            err = self.read() # Try reading again
+            err = self.read()  # Try reading again
         code = err[0]
         message = err[1].replace('"', '')
         return (code, message)
-
 
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
@@ -305,11 +307,9 @@ class Keithley6517B(Instrument, KeithleyBuffer):
             if (time.time()-t) > 10:
                 log.warning("Timed out for Keithley 2450 error retrieval.")
 
-
     def reset(self):
         """ Resets the instrument and clears the queue.  """
         self.write("*RST;:stat:pres;:*CLS;")
-
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
         """ Ramps to a target voltage from the set voltage value over
