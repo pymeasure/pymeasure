@@ -22,12 +22,19 @@
 # THE SOFTWARE.
 #
 
+
+import logging
 from time import sleep, time
 import numpy
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
+
+
+# Setup logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class ITC503(Instrument):
@@ -205,7 +212,8 @@ class ITC503(Instrument):
     def wait_for_temperature(self, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
                              thermalize_interval=300,
-                             should_stop=lambda: False):
+                             should_stop=lambda: False,
+                             max_comm_errors=0):
         """
         Wait for the ITC to reach the set-point temperature.
 
@@ -221,28 +229,45 @@ class ITC503(Instrument):
                                     system to thermalize.
         :param should_stop: Optional function (returning a bool) to allow the
                             waiting to be stopped before its end.
+        :param max_comm_errors: The maximum number of communication errors that
+                                are allowed before the wait is stopped. if set
+                                to zero, no maximum will be used.
         """
 
         number_of_intervals = int(stability_interval / check_interval)
         stable_intervals = 0
         attempt = 0
+        comm_errors = 0
 
         t0 = time()
         while True:
-
-            if abs(self.temperature_error) < error:
-                stable_intervals += 1
+            try:
+                temp_error = self.temperature_error
+            except ValueError:
+                comm_errors += 1
+                log.error(
+                    "No temperature-error returned. "
+                    f"Communication error # {comm_errors}."
+                )
             else:
-                stable_intervals = 0
-                attempt += 1
+                if abs(temp_error) < error:
+                    stable_intervals += 1
+                else:
+                    stable_intervals = 0
+                    attempt += 1
 
             if stable_intervals >= number_of_intervals:
                 break
 
-            if timeout >= 0 and (time() - t0) > timeout:
+            if timeout > 0 and (time() - t0) > timeout:
                 raise TimeoutError(
                     "Timeout expired while waiting for the Oxford ITC305 to \
                     reach the set-point temperature"
+                )
+
+            if max_comm_errors > 0 and comm_errors > max_comm_errors:
+                raise ValueError(
+                    "Too many communication errors have occurred."
                 )
 
             if should_stop():
