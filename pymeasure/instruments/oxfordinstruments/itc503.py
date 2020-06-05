@@ -47,6 +47,7 @@ class ITC503(Instrument):
         print(itc.temperature_1)        # Print the temperature at sensor 1
 
     """
+    _T_RANGE = [0, 301]
 
     control_mode = Instrument.control(
         "X", "$C%d",
@@ -124,7 +125,7 @@ class ITC503(Instrument):
         the ITC in kelvin. """,
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
-        values=[0, 301]
+        values=_T_RANGE
     )
 
     temperature_1 = Instrument.measurement(
@@ -183,7 +184,8 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
-    def __init__(self, resourceName, clear_buffer=True, **kwargs):
+    def __init__(self, resourceName, clear_buffer=True,
+                 max_temperature=301, min_temperature=0, **kwargs):
         super(ITC503, self).__init__(
             resourceName,
             "Oxford ITC503",
@@ -196,6 +198,9 @@ class ITC503(Instrument):
         # Clear the buffer in order to prevent communication problems
         if clear_buffer:
             self.adapter.connection.clear()
+
+        self._T_RANGE[0] = min_temperature
+        self._T_RANGE[1] = max_temperature
 
     def wait_for_temperature(self, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
