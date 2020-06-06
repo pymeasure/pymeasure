@@ -23,8 +23,13 @@
 #
 
 import time
+import sys
+from unittest import mock
+
+import pytest
+
 from pymeasure.process import context
-from pymeasure.log import Scribe
+from pymeasure.log import Scribe, setup_logging
 
 
 # TODO: Add tests for logging convenience functions and TopicQueueHandler
@@ -46,3 +51,12 @@ def test_scribe_finish():
     q.put(None)
     time.sleep(0.1)
     assert s.is_alive() is False
+
+
+@pytest.mark.skipif(sys.version_info < (3, 6), reason='Mock.assert_called_once requires python 3.6')
+def test_setup_file_logging():
+    with mock.patch('pymeasure.log.file_log') as mocked_file_log:
+        setup_logging()
+        mocked_file_log.assert_not_called()
+        setup_logging(filename='log.txt')
+        mocked_file_log.assert_called_once()
