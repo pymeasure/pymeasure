@@ -245,7 +245,7 @@ class Agilent8257D(Instrument):
         map_values=True
     )
 
-    def __init__(self, adapter, delay=0.02, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super(Agilent8257D, self).__init__(
             adapter, "Agilent 8257D RF Signal Generator", **kwargs
         )
