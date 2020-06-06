@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-import visa
+import pyvisa
 
 
 def list_resources():
@@ -38,7 +38,7 @@ def list_resources():
         dmm = Agilent34410(resources[0])
     
     """
-    rm = visa.ResourceManager()
+    rm = pyvisa.ResourceManager()
     instrs = rm.list_resources()
     for n, instr in enumerate(instrs):
         # trying to catch errors in comunication
@@ -48,12 +48,12 @@ def list_resources():
             try:
                 # noinspection PyUnresolvedReferences
                 idn = res.ask('*idn?')[:-1]
-            except visa.Error:
+            except pyvisa.Error:
                 idn = "Not known"
             finally:
                 res.close()
                 print(n, ":", instr, ":", idn)
-        except visa.VisaIOError as e:
+        except pyvisa.VisaIOError as e:
             print(n, ":", instr, ":", "Visa IO Error: check connections")
             print(e)
     rm.close()

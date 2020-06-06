@@ -25,7 +25,7 @@
 import logging
 
 import copy
-import visa
+import pyvisa
 import numpy as np
 from pkg_resources import parse_version
 
@@ -54,7 +54,7 @@ class VISAAdapter(Adapter):
             resourceName = "GPIB0::%d::INSTR" % resourceName
         super(VISAAdapter, self).__init__()
         self.resource_name = resourceName
-        self.manager = visa.ResourceManager(visa_library)
+        self.manager = pyvisa.ResourceManager(visa_library)
         safeKeywords = ['resource_name', 'timeout',
                         'chunk_size', 'lock', 'query_delay', 'send_end',
                         'values_format', 'read_termination', 'write_termination']
@@ -70,8 +70,8 @@ class VISAAdapter(Adapter):
     @staticmethod
     def has_supported_version():
         """ Returns True if the PyVISA version is greater than 1.8 """
-        if hasattr(visa, '__version__'):
-            return parse_version(visa.__version__) >= parse_version('1.8')
+        if hasattr(pyvisa, '__version__'):
+            return parse_version(pyvisa.__version__) >= parse_version('1.8')
         else:
             return False
 
