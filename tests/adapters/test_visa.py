@@ -21,8 +21,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from pytest import approx
 
 from pymeasure.adapters import VISAAdapter
+from pymeasure.instruments import Instrument
+
 
 def test_visa_version():
-  assert VISAAdapter.has_supported_version()
+    assert VISAAdapter.has_supported_version()
+
+
+def test_correct_visa_kwarg():
+    """Confirm that the query_delay kwargs gets passed through to the VISA connection."""
+    instr = Instrument(adapter='ASRL1::INSTR', name='delayed', query_delay=0.5, visa_library='@sim')
+    assert instr.adapter.connection.query_delay == approx(0.5)
