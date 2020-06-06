@@ -21,16 +21,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import importlib.util
+
+import pytest
 from pytest import approx
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
+
+pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa-sim'))
 
 
 def test_visa_version():
     assert VISAAdapter.has_supported_version()
 
 
+@pytest.mark.skipif(not pyvisa_sim_installed, reason='pyvisa-sim required but not found.')
 def test_correct_visa_kwarg():
     """Confirm that the query_delay kwargs gets passed through to the VISA connection."""
     instr = Instrument(adapter='ASRL1::INSTR', name='delayed', query_delay=0.5, visa_library='@sim')
