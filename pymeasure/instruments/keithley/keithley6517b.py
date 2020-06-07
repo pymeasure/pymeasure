@@ -264,24 +264,18 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         """
         self.write(":SOUR:VOLT:RANG:AUTO 1")
 
-    def apply_voltage(self, voltage_range=None,
-                      compliance_current=1e-5):
+    def apply_voltage(self, voltage_range=None):
         """ Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
-        The compliance current is also set.
 
-        :param compliance_current: A float in the correct range for a
-                                   :attr:`~.Keithley6517B.compliance_current`
         :param voltage_range: A :attr:`~.Keithley6517B.voltage_range` value
                               or None (activates auto range)
         """
         log.info("%s is sourcing voltage.", self.name)
-        self.source_mode = 'voltage'
         if voltage_range is None:
             self.auto_range_source()
         else:
             self.source_voltage_range = voltage_range
-        self.compliance_current = compliance_current
         self.check_errors()
 
     @property
