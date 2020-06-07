@@ -102,6 +102,13 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         values=[0.01, 10]
     )
 
+    source_current_resistance_limit = Instrument.control(
+        ":SOUR:CURR:RLIM?", ":SOUR:CURR:RLIM %g",
+        """ Boolean property which enables or disables resistance
+        current limit """,
+        cast=bool
+    )
+
     ###############
     # Voltage (V) #
     ###############
@@ -142,14 +149,6 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-1000, 1000]
-    )
-
-    source_voltage_limit = Instrument.control(
-        ":SOUR:CURR:RLIM?", ":SOUR:CURR:RLIM %g",
-        """ A floating point property that controls the compliance resistance
-        in Ohms. """,
-        validator=truncated_range,
-        values=[0, 210e12]
     )
 
     ####################
