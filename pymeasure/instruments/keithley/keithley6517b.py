@@ -301,10 +301,10 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         code, message = self.error
         while code != 0:
             t = time.time()
-            log.info("Keithley 2450 reported error: %d, %s", code, message)
+            log.info("Keithley 6517B reported error: %d, %s", code, message)
             code, message = self.error
             if (time.time()-t) > 10:
-                log.warning("Timed out for Keithley 2450 error retrieval.")
+                log.warning("Timed out for Keithley 6517B error retrieval.")
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """
