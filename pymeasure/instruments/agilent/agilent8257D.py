@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -245,7 +245,7 @@ class Agilent8257D(Instrument):
         map_values=True
     )
 
-    def __init__(self, adapter, delay=0.02, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super(Agilent8257D, self).__init__(
             adapter, "Agilent 8257D RF Signal Generator", **kwargs
         )
