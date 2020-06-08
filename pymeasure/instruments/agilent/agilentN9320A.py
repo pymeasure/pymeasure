@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -122,61 +122,61 @@ class AgilentN9320A(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-         super(AgilentN9320A, self).__init__(
+        super(AgilentN9320A, self).__init__(
             adapter,
             "Agilent AgilentN9320A Spectrum Analyzer",
             **kwargs
         )
 
     def display_on(self):
-        """Switch on the display"""
+        """ Switch on the display. """
         self.write("DISP:ENAB 1")
 
     def display_off(self):
-        """Switch off the display."""
+        """ Switch off the display. """
         self.write("DISP:ENAB 0")
 
     def init_immediate(self):
-        """This method initiates a sweep if not in a measurement. If
-        in a measurement, it triggers the measurement."""
+        """ This method initiates a sweep if not in a measurement. If
+        in a measurement, it triggers the measurement. """
         self.write("INIT:IMM")
 
     def init_continuos(self):
-        """Trigger system is continuosly initiated."""
+        """ Trigger system is continuosly initiated. """
         self.write("INIT:CONT 1")
 
     def init_single(self):
-        """The sweep system remains in an idle state until init_continuos
+        """ The sweep system remains in an idle state until init_continuos
         is set or init_immediate is received. When init_immediate
         command received, it will go through a single sweep cycle, and then
-        return to the idle state."""
+        return to the idle state. """
         self.write("INIT:CONT 0")
 
     def set_opc_sqr(self):
-        """Set the instrument to generate SRQ when operation is complete:
+        """ Set the instrument to generate SRQ when operation is complete:
         remember to run a *CLS before the command that you want
-        to sync/wait for. Timeout in seconds."""
+        to sync/wait for. Timeout in seconds. """
         self.write("*ESE 1;*SRE 32")
 
     def opc(self):
-        """It returns 1 when operation complete. You may need to change the
-        visa timeout (in ms) for long lasting operations."""
+        """ It returns 1 when operation complete. You may need to change the
+        visa timeout (in ms) for long lasting operations. """
         self.ask("*OPC?")
 
     def error_check(self, value=None):
-        """It look for the last entry in the error queue. If value is defined
-        it returns true if the last error corresponds to value."""
+        """ It look for the last entry in the error queue. If value is defined
+        it returns true if the last error corresponds to value. """
         if value==None:
             return self.ask("SYST:ERR?")
         else:
             return self.ask("SYST:ERR?")==value
 
     def marker_x(self, number=1):
-        """Returns the frequency in Hz at marker position."""
+        """ Returns the frequency in Hz at marker position. """
         return float(self.ask("CALC:MARK%s:X?" % number))
 
     def marker_y(self, number=1):
-        """Returns the amplitude in y-axis unit at marker position."""
+        """ Returns the amplitude in y-axis unit at marker position. """
         return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4e')
 
     def average_number(self, value=10):
@@ -209,20 +209,20 @@ class AgilentN9320A(Instrument):
         self.write("CALC:MARK%s:MAX" % number)
 
     def next_peak_right(self,number=1):
-        """Search the next peak on the right of the actual position of the
+        """ Search the next peak on the right of the actual position of the
         marker. It always use threshold and excursion. """
         self.write("CALC:MARK%s:MAX:RIGHT" %number)
 
     def next_peak_left(self,number=1):
-        """Search the next peak on the left of the actual position of the
+        """ Search the next peak on the left of the actual position of the
         marker. It always use threshold and excursion. """
         self.write("CALC:MARK%s:MAX:LEFT" %number)
 
     def peak_exist(self,number=1):
-        """Check if there is a peak in the trace. It has to be used after
+        """ Check if there is a peak in the trace. It has to be used after
         peak_search, next_peak_left or next_peak_right. If no error it returns
         [freq, amplitude] of the cursor number-th. If error it returns
-        [NAN, NAN]."""
+        [NAN, NAN]. """
         if self.error_check('780 No Peak Found'):
             log.info('No peak found!')
             return False, [[float('NAN'), float('NAN')]]
@@ -238,7 +238,7 @@ class AgilentN9320A(Instrument):
         before calling this method.
         It can center the central frequency to the central peak.
         It can also look the first peaks at both left and right
-        around the highest one."""
+        around the highest one. """
 
         self.init_single()
         self.average_on()
@@ -273,8 +273,7 @@ class AgilentN9320A(Instrument):
 
     def trace(self, number=1):
         """ Returns two numpy arrays, data and frequency, for a particular
-        trace based on the trace number (1, 2, or 3).
-        """
+        trace based on the trace number (1, 2, or 3). """
         data = [float(i) for i in self.ask(":TRACE:DATA? TRACE%d" %
                 number).split(',')[:-1]]
 
@@ -289,8 +288,7 @@ class AgilentN9320A(Instrument):
     def trace_df(self, number=1):
         """ Returns a pandas DataFrame containing the frequency
         and peak data for a particular trace, based on the
-        trace number (1, 2, or 3).
-        """
+        trace number (1, 2, or 3). """
         return pd.DataFrame({
             'Frequency (Hz)': self.trace(number)[1],
             'Amplitude (dBm)': self.trace(number)[0]
