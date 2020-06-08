@@ -27,7 +27,7 @@ from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 class APSIN12G(Instrument):
     """ Represents the Anapico APSIN12G Signal Generator with option 9K,
-    HP and GPIB."""
+    HP and GPIB. """
     FREQ_LIMIT = [9e3, 12e9]
     POW_LIMIT = [-30, 27]
 
@@ -55,8 +55,8 @@ class APSIN12G(Instrument):
     )
     reference_output = Instrument.control(
         "SOUR:ROSC:OUTP:STAT?", "SOUR:ROSC:OUTP:STAT %s",
-        """A string property that represents the 10MHz reference output from
-        the synth. This property can be set.""",
+        """ A string property that represents the 10MHz reference output from
+        the synth. This property can be set. """,
         validator=strict_discrete_set,
         values=['ON','OFF']
     )
@@ -69,9 +69,9 @@ class APSIN12G(Instrument):
         )
 
     def enable_rf(self):
-        """ Enables the RF output."""
+        """ Enables the RF output. """
         self.write("OUTP:STAT 1")
 
     def disable_rf(self):
-        """ Disables the RF output."""
+        """ Disables the RF output. """
         self.write("OUTP:STAT 0")
