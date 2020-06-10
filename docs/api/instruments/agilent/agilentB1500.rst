@@ -203,9 +203,20 @@ Classes to communicate with the instrument:
 * :class:`AgilentB1500`: Main instrument class
 * :class:`SMU`: Instantiated by main instrument class for every SMU
 
-.. automodule:: pymeasure.instruments.agilent.agilentB1500
-    :members: AgilentB1500, SMU
+All `query` commands return a human readable dict of settings. These are intended for debugging/logging/file headers, not for passing to the accompanying setting commands.
+
+.. autoclass:: AgilentB1500
+    :members:
     :show-inheritance:
+    :member-order: bysource
+.. autoclass:: SMU
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+
+.. .. automodule:: pymeasure.instruments.agilent.agilentB1500
+..     :members: AgilentB1500, SMU
+..     :show-inheritance:
 
 **********************************************
 Supporting Classes
@@ -219,10 +230,22 @@ Classes that provide additional functionalities:
   ranges for different SMU types and transformation of 
   range names to indices (base: :class:`Ranging`)
 
-
-.. automodule:: pymeasure.instruments.agilent.agilentB1500
-    :members: QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
+.. autoclass:: QueryLearn
+    :members:
     :show-inheritance:
+.. autoclass:: Ranging
+    :members:
+    :show-inheritance:
+.. autoclass:: SMUCurrentRanging
+    :members:
+    :show-inheritance:
+.. autoclass:: SMUVoltageRanging
+    :members:
+    :show-inheritance:
+
+.. .. automodule:: pymeasure.instruments.agilent.agilentB1500
+..     :members: QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
+..     :show-inheritance:
 
 Enumerations
 =========================
@@ -233,8 +256,11 @@ but name is recommended for readability reasons.
 The member number is passed to the instrument. 
 Converting an enumeration member into a string gives a title case, 
 whitespace separated string (:meth:`~.CustomIntEnum.__str__`)
-which is cannot be used to select an enumeration member again. 
+which cannot be used to select an enumeration member again. 
 It's purpose is only logging or documentation.
+
+.. call automodule with full module path only once to avoid duplicate index warnings
+.. autodoc other classes via currentmodule:: and autoclass::
 
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
     :members: 

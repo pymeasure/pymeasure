@@ -62,7 +62,7 @@ class AgilentB1500(Instrument):
         # setting of data output format
         # determines how to read measurement data
         self._data_format = self._data_formatting(
-            "FMT"+self.query_data_format()[0])
+            "FMT" + self.query_learn(31)['FMT'][0])
 
     @property
     def smu_references(self):
@@ -90,7 +90,7 @@ class AgilentB1500(Instrument):
         Returns dict of settings in human readable format for debugging
         or file headers.
         For optional arguments check the underlying definition of
-        ``QueryLearn.query_learn_header``.
+        :meth:`QueryLearn.query_learn_header`.
 
         :param query_type: Query type (number according to manual)
         :type query_type: int or str
@@ -223,7 +223,10 @@ class AgilentB1500(Instrument):
 
     @property
     def auto_calibration(self):
-        """ Enable/Disable SMU auto-calibration every 30 minutes. (``CM``)"""
+        """ Enable/Disable SMU auto-calibration every 30 minutes. (``CM``)
+        
+        :type: bool
+        """
         response = self.query_learn(31)['CM']
         response = bool(int(response))
         return response
@@ -506,7 +509,8 @@ class AgilentB1500(Instrument):
     def data_format(self, output_format, mode=0):
         """ Specifies data output format. Check Documentation for parameters.
         Should be called once per session to set the data format for
-        interpreting the read measurement values. (``FMT``)
+        interpreting the measurement values read from the instrument.
+        (``FMT``)
 
         :param output_format: Output format string, e.g. ``FMT21``
         :type output_format: str
@@ -531,8 +535,6 @@ class AgilentB1500(Instrument):
         self._data_format = self._data_formatting(
             "FMT%d" % output_format, self._smu_names)
 
-    def query_data_format(self):
-        return self.query_learn(31)['FMT']
 
     ######################################
     # Measurement Settings
@@ -543,6 +545,8 @@ class AgilentB1500(Instrument):
         """ Enable/Disable parallel measurements.
             Effective for SMUs using HSADC and measurement modes 1,2,10,18.
             (``PAD``)
+        
+        :type: bool
         """
         response = self.query_learn(110)['PAD']
         response = bool(int(response))
@@ -556,11 +560,13 @@ class AgilentB1500(Instrument):
 
     def query_meas_settings(self):
         """Read settings for ``TM``, ``AV``, ``CM``, ``FMT`` and ``MM``
-        commands from the isntrument.
+        commands (31) from the instrument.
         """
         return self.query_learn_header(31)
 
     def query_meas_mode(self):
+        """Read settings for ``MM`` command (part of 31) from the instrument.
+        """
         return self.query_learn_header(31, single_command='MM')
 
     def meas_mode(self, mode, *args):
@@ -588,7 +594,7 @@ class AgilentB1500(Instrument):
     # ADC Setup: AAD, AIT, AV, AZ
 
     def query_adc_setup(self):
-        """Read ADC settings from the intrument.
+        """Read ADC settings (55, 56) from the intrument.
         """
         return {**self.query_learn_header(55), **self.query_learn_header(56)}
 
@@ -643,7 +649,10 @@ class AgilentB1500(Instrument):
     @property
     def adc_auto_zero(self):
         """ Enable/Disable ADC zero function. Halfs the
-        integration time, if off. (``AZ``)"""
+        integration time, if off. (``AZ``)
+        
+        :type: bool
+        """
         response = self.query_learn(56)['AZ']
         response = bool(int(response))
         return response
@@ -656,7 +665,10 @@ class AgilentB1500(Instrument):
 
     @property
     def time_stamp(self):
-        """ Enable/Disable Time Stamp function. (``TSC``)"""
+        """ Enable/Disable Time Stamp function. (``TSC``)
+        
+        :type: bool
+        """
         response = self.query_learn(60)['TSC']
         response = bool(int(response))
         return response
@@ -668,6 +680,8 @@ class AgilentB1500(Instrument):
         self.check_errors()
 
     def query_time_stamp_setting(self):
+        """Read time stamp settings (60) from the instrument.
+        """
         return self.query_learn_header(60)
 
     def wait_time(self, wait_type, N, offset=0):
@@ -689,9 +703,8 @@ class AgilentB1500(Instrument):
     ######################################
 
     def query_staircase_sweep_settings(self):
-        """Reads Staircase Sweep Measurement settings from the instrument.
-        Returns dict, values may not be used to set up measurement, but for
-        information/documentation purposes. (Human Readable)
+        """Reads Staircase Sweep Measurement settings (33)
+        from the instrument.
         """
         return self.query_learn_header(33)
 
@@ -746,16 +759,15 @@ class AgilentB1500(Instrument):
     ######################################
 
     def query_sampling_settings(self):
-        """Reads Sampling Measurement settings from the instrument.
-        Returns dict, values may not be used to set up measurement, but for
-        information/documentation purposes. (Human Readable)
+        """Reads Sampling Measurement settings (47) from the instrument.
         """
         return self.query_learn_header(47)
 
     @property
     def sampling_mode(self):
         """ Set linear or logarithmic sampling mode. (``ML``)
-        :rtype: :class:`.SamplingMode`
+
+        :type: :class:`.SamplingMode`
         """
         response = self.query_learn(47)
         response = response['ML']
@@ -879,15 +891,19 @@ class AgilentB1500(Instrument):
     ######################################
 
     def query_series_resistor(self):
+        """Read series resistor status (53) for all SMUs."""
         return self.query_learn_header(53)
 
     def query_meas_range_current_auto(self):
+        """Read auto ranging mode status (54) for all SMUs."""
         return self.query_learn_header(54)
 
     def query_meas_op_mode(self):
+        """Read SMU measurement operation mode (46) for all SMUs."""
         return self.query_learn_header(46)
 
     def query_meas_ranges(self):
+        """Read measruement ranging status (32) for all SMUs."""
         return self.query_learn_header(32)
 
 ######################################
@@ -964,13 +980,18 @@ class SMU():
 
     def force_gnd(self):
         """ Force 0V immediately. Current Settings can be restored with
-        ``RZ``. (``DZ``)"""
+        ``RZ`` (not implemented). (``DZ``)"""
         self.write("DZ %d" % self.channel)
 
     @property
     def filter(self):
-        """ Enables/Disables SMU Filter. (``FL``)"""
-        response = QueryLearn.query_learn(self.ask, 30)
+        """ Enables/Disables SMU Filter. (``FL``)
+        
+        :type: bool
+        """
+        # different than other SMU specific settings (grouped by setting)
+        # read via raw command
+        response = self._b1500.query_learn(30)
         if 'FL' in response.keys():
             # only present if filters of all channels are off
             return False
@@ -990,7 +1011,10 @@ class SMU():
 
     @property
     def series_resistor(self):
-        """ Enables/Disables 1MOhm series resistor. (``SSR``)"""
+        """ Enables/Disables 1MOhm series resistor. (``SSR``)
+        
+        :type: bool
+        """
         response = self.query_learn(53, 'SSR')
         response = bool(int(response))
         return response
@@ -1005,7 +1029,7 @@ class SMU():
     def meas_op_mode(self):
         """ Set SMU measurement operation mode. (``CMM``)
 
-        :type meas_op_mode: :class:`.MeasOpMode`
+        :type: :class:`.MeasOpMode`
         """
         response = self.query_learn(46, 'CMM')
         response = int(response)
@@ -1021,7 +1045,7 @@ class SMU():
     def adc_type(self):
         """ADC type of individual measurement channel. (``AAD``)
 
-        :type adc_type: :class:`.ADCType`
+        :type: :class:`.ADCType`
         """
         response = self.query_learn(55, 'AAD')
         response = int(response)
@@ -1033,46 +1057,13 @@ class SMU():
         self.write("AAD %d, %d" % (self.channel, adc_type.value))
         self.check_errors()
 
-    @property
-    def meas_range_current(self):
-        """ Current measurement range index. (``RI``)
-
-        Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging.
-        :class:`.SMUCurrentRanging`
-        """
-        response = self.query_learn(32, 'RI')
-        response = self.current_ranging.meas(response)
-        return response
-
-    @meas_range_current.setter
-    def meas_range_current(self, meas_range):
-        meas_range_index = self.current_ranging.meas(meas_range).index
-        self.write("RI %d, %d" % (self.channel, meas_range_index))
-        self.check_errors()
-
-    @property
-    def meas_range_voltage(self):
-        """ Voltage measurement range index. (``RV``)
-
-        Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging.
-        :class:`.SMUVoltageRanging`
-        """
-        response = self.query_learn(32, 'RV')
-        response = self.voltage_ranging.meas(response)
-        return response
-
-    @meas_range_voltage.setter
-    def meas_range_voltage(self, meas_range):
-        meas_range_index = self.voltage_ranging.meas(meas_range).index
-        self.write("RV %d, %d" % (self.channel, meas_range_index))
-        self.check_errors()
-
     ######################################
     # Force Constant Output
     ######################################
     def force(self, source_type, source_range, output, comp='',
               comp_polarity='', comp_range=''):
-        """ Applies DC Current from SMU immediately. (``DI``)
+        """ Applies DC Current or Voltage from SMU immediately.
+        (``DI``, ``DV``)
 
         :param source_type: Source type (``'Voltage','Current'``)
         :type source_type: str
@@ -1180,8 +1171,44 @@ class SMU():
                 comp, comp_polarity, comp_range)
 
     ######################################
-    # Measurement Range: RI, RV, (RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC)
+    # Measurement Range
+    # implemented: RI, RV
+    # not implemented: RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC
     ######################################
+    
+    @property
+    def meas_range_current(self):
+        """ Current measurement range index. (``RI``)
+
+        Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging:
+        :class:`.SMUCurrentRanging`
+        """
+        response = self.query_learn(32, 'RI')
+        response = self.current_ranging.meas(response)
+        return response
+
+    @meas_range_current.setter
+    def meas_range_current(self, meas_range):
+        meas_range_index = self.current_ranging.meas(meas_range).index
+        self.write("RI %d, %d" % (self.channel, meas_range_index))
+        self.check_errors()
+
+    @property
+    def meas_range_voltage(self):
+        """ Voltage measurement range index. (``RV``)
+
+        Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging:
+        :class:`.SMUVoltageRanging`
+        """
+        response = self.query_learn(32, 'RV')
+        response = self.voltage_ranging.meas(response)
+        return response
+
+    @meas_range_voltage.setter
+    def meas_range_voltage(self, meas_range):
+        meas_range_index = self.voltage_ranging.meas(meas_range).index
+        self.write("RV %d, %d" % (self.channel, meas_range_index))
+        self.check_errors()
 
     def meas_range_current_auto(self, mode, rate=50):
         """ Specifies the auto range operation. Check Documentation. (``RM``)
@@ -1200,7 +1227,11 @@ class SMU():
         self.write
 
     ######################################
-    # Staircase Sweep Measurement: (WT, WM -> Instrument), WV, WI
+    # Staircase Sweep Measurement: (WT, WM -> Instrument)
+    # implemented: 
+    #   WV, WI, 
+    #   WSI, WSV (synchronous output)
+    # not implemented: BSSI, BSSV, LSSI, LSSV
     ######################################
 
     def staircase_sweep_source(self, source_type, mode, source_range,
@@ -1289,7 +1320,9 @@ class SMU():
         self.check_errors()
 
     ######################################
-    # Sampling Measurements: (ML, MT -> Instrument), MV, MI, MSP, MCC, MSC
+    # Sampling Measurements: (ML, MT -> Instrument)
+    # implemented: MV, MI
+    # not implemented: MSP, MCC, MSC
     ######################################
 
     def sampling_source(self, source_type, source_range, base, bias, comp):
@@ -1346,10 +1379,6 @@ class Ranging():
     _Range = namedtuple('Range', 'name index')
 
     def __init__(self, supported_ranges, all_ranges, inverse_ranges='AUTO'):
-        """Possible Settings for SMU Current/Voltage Output/Measurement ranges.
-        Transformation of available Voltage/Current Range Names to
-        Index and back.
-        """
         # create inverse dict to compare with supported_ranges
         if inverse_ranges == 'AUTO':
             # index is unique
@@ -1743,7 +1772,7 @@ class QueryLearn():
             'RI', 'RV',  # Ranging
             'WV', 'WI', 'WSV', 'WSI',  # Staircase Sweep
             'PV', 'PI', 'PWV', 'PWI',  # Pulsed Source
-            'MV', 'MI', 'MSP'  # Sampling
+            'MV', 'MI', 'MSP',  # Sampling
             'SSR', 'RM', 'AAD'  # Series Resistor, Auto Ranging, ADC
             ]  # probably not complete yet...
         response_dict = {}
@@ -1796,12 +1825,12 @@ class QueryLearn():
 
     @staticmethod
     def to_dict(parameters, names, *args):
-        """ Takes parameters returned by ``query_learn`` and ordered list
+        """ Takes parameters returned by :meth:`query_learn` and ordered list
         of corresponding parameter names (optional function) and returns
         dict of parameters including names.
 
         :param parameters: Parameters for one command returned
-                           by ``query_learn``
+                           by :meth:`query_learn`
         :type parameters: dict
         :param names: list of names or (name, function) tuples, ordered
         :type names: list
