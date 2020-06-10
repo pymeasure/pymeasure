@@ -32,6 +32,6 @@ try:
     from .virtualbench import VirtualBench
     # direct access to armstrap/pyvirtualbench wrapper:
     # from .virtualbench import VirtualBench_Direct
-except ModuleNotFoundError:
+except ImportError:  # when we drop python 3.5 support, we can use ModuleNotFoundError
     # Error Logging is handled within package
     pass

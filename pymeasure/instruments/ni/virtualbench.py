@@ -47,7 +47,7 @@ try:
     # Requires 'pyvirtualbench' package:
     # https://github.com/armstrap/armstrap-pyvirtualbench
     import pyvirtualbench as pyvb
-except ModuleNotFoundError as err:
+except ImportError as err:  # when we drop python 3.5 support, we can use ModuleNotFoundError
     # catch here for logging
     log.info('Failed loading the pyvirtualbench package. '
              + 'Check the NI VirtualBench documentation on how to '
