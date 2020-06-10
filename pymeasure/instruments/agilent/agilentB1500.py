@@ -224,7 +224,7 @@ class AgilentB1500(Instrument):
     @property
     def auto_calibration(self):
         """ Enable/Disable SMU auto-calibration every 30 minutes. (``CM``)
-        
+
         :type: bool
         """
         response = self.query_learn(31)['CM']
@@ -535,7 +535,6 @@ class AgilentB1500(Instrument):
         self._data_format = self._data_formatting(
             "FMT%d" % output_format, self._smu_names)
 
-
     ######################################
     # Measurement Settings
     ######################################
@@ -545,7 +544,7 @@ class AgilentB1500(Instrument):
         """ Enable/Disable parallel measurements.
             Effective for SMUs using HSADC and measurement modes 1,2,10,18.
             (``PAD``)
-        
+
         :type: bool
         """
         response = self.query_learn(110)['PAD']
@@ -650,7 +649,7 @@ class AgilentB1500(Instrument):
     def adc_auto_zero(self):
         """ Enable/Disable ADC zero function. Halfs the
         integration time, if off. (``AZ``)
-        
+
         :type: bool
         """
         response = self.query_learn(56)['AZ']
@@ -666,7 +665,7 @@ class AgilentB1500(Instrument):
     @property
     def time_stamp(self):
         """ Enable/Disable Time Stamp function. (``TSC``)
-        
+
         :type: bool
         """
         response = self.query_learn(60)['TSC']
@@ -986,7 +985,7 @@ class SMU():
     @property
     def filter(self):
         """ Enables/Disables SMU Filter. (``FL``)
-        
+
         :type: bool
         """
         # different than other SMU specific settings (grouped by setting)
@@ -1012,7 +1011,7 @@ class SMU():
     @property
     def series_resistor(self):
         """ Enables/Disables 1MOhm series resistor. (``SSR``)
-        
+
         :type: bool
         """
         response = self.query_learn(53, 'SSR')
@@ -1175,7 +1174,7 @@ class SMU():
     # implemented: RI, RV
     # not implemented: RC, TI, TTI, TV, TTV, TIV, TTIV, TC, TTC
     ######################################
-    
+
     @property
     def meas_range_current(self):
         """ Current measurement range index. (``RI``)
@@ -1228,8 +1227,8 @@ class SMU():
 
     ######################################
     # Staircase Sweep Measurement: (WT, WM -> Instrument)
-    # implemented: 
-    #   WV, WI, 
+    # implemented:
+    #   WV, WI,
     #   WSI, WSV (synchronous output)
     # not implemented: BSSI, BSSV, LSSI, LSSV
     ######################################
