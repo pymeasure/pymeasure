@@ -180,7 +180,8 @@ class AgilentN9320A(Instrument):
         return format(float(self.ask("CALC:MARK%s:Y?" % number)), '.4e')
 
     def average_number(self, value=10):
-        """Set the number of averages."""
+        """Set the number of averages. In order to change this value
+        average mode should be on."""
         self.write("SENS:AVER:COUN %d" % strict_range(value, [1, 1000]))
 
     def average_on(self):
