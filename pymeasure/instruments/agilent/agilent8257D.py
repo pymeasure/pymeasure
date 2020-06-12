@@ -77,7 +77,7 @@ class Agilent8257D(Instrument):
         in dBm. This property can be set.
         """
     )
-    start_power = Instrument.control(
+    stop_power = Instrument.control(
         ":SOUR:POW:STOP?", ":SOUR:POW:STOP %e dBm",
         """ A floating point property that represents the stop power
         in dBm. This property can be set.
