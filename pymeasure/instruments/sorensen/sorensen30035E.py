@@ -39,7 +39,10 @@ import re
 
 class Sorensen30035E(Instrument):
     """ Represents the Sorensen300-3.5E power supply with GPIB option and provides a
-    high-level interface for interacting with the instrument.
+    high-level interface for interacting with the instrument. Use good judgement and
+    protect the power supply outputs with flyback and blocking diodes if you have an
+    inductive load. See the Sorensen manual for advice.
+
 
     .. code-block:: python
 
@@ -54,20 +57,20 @@ class Sorensen30035E(Instrument):
 
     """
 
-    source_enable = Instrument.control(
+    _source_enable = Instrument.control(
         "OUTPut:PROTection:STATe?", "OUTPut:PROTection:STATe %d",
-        """A boolean property that sets the ouput to zero or the programmed value,
-        openning or closing the isolation relay. *RST value is ON. CAUTION: Ensure
+        """DO NOT ACCESS DIRECTLY UNLESS YOU ARE CERTAIN. A boolean property that sets the ouput to zero
+        or the programmed value, openning or closing the isolation relay. *RST value is ON. CAUTION: Ensure
         that suitable delays are incorporated to preclude hot switching of the isolation relay.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
     )
 
-    source_isolation = Instrument.control(
+    _source_isolation = Instrument.control(
         "OUTPut:ISOLation?", "OUTPut:ISOLation %d",
-        """A boolean property that controls whether the isolation relay is enabled. 
-        DO NOT disable if the current is non-zero, i.e. no hot-switching""",
+        """DO NOT ACCESS DIRECTLY UNLESS YOU ARE CERTAIN. A boolean property that controls whether the 
+        isolation relay is enabled. DO NOT disable if the current is non-zero, i.e. no hot-switching""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -147,8 +150,8 @@ class Sorensen30035E(Instrument):
 
 
     def __init__(self, adapter, **kwargs):
-        super(Sorenson30035E, self).__init__(
-            adapter, "Sorenson 300-3.5E DC Power Supply", **kwargs
+        super(Sorensen30035E, self).__init__(
+            adapter, "Sorensen 300-3.5E DC Power Supply", **kwargs
         )
 
     def ramp_to_voltage(self, value, time=10):
@@ -178,21 +181,13 @@ class Sorensen30035E(Instrument):
         """ Enables the output of the power supply (switch isolation relays on) """
         if self.source_enable == False:
             self.source_enable = True
-        else:
-            pass
 
-    def disable_source(self):
-        """ Disables the  output in an unprotected way. DO NOT use this carelessly, use shutdown,
-        it's safer."""
-        if self.source_enable == True:
-            self.source_enable = False
-        else:
-            pass
 
     def shutdown(self):
         """ Disables the  output after ramping down at 1 V/s if voltage is non-zero."""
-        if abs(self.voltage) >0.01 or abs(self.current) >0.0001:
-            voltage = self.voltage
+        voltage = self.voltage
+        current = self.current
+        if abs(voltage) >0.01 or abs(current) >0.0001:
             self.ramp_to_voltage(0,voltage)
             i = 0
         while self.voltage >0.01:

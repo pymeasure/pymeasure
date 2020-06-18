@@ -46,6 +46,7 @@ from . import ni
 from . import oxfordinstruments
 from . import parker
 from . import signalrecovery
+from . import sorensen
 from . import srs
 from . import tektronix
 from . import thorlabs
