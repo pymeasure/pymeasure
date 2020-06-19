@@ -102,7 +102,8 @@ class VirtualBench():
     These methods are not wrapped so far, checkout the pyvirtualbench file.
 
     All calibration methods and classes are not wrapped so far, since these
-    are not required on a very regular basis.
+    are not required on a very regular basis. Also the connections via network
+    are not yet implemented.
     Check the pyvirtualbench file, if you need the functionality.
 
     :param str device_name: Full unique device name
@@ -204,47 +205,6 @@ class VirtualBench():
         :rtype: (str, int)
         """
         return self.vb.expand_channel_string(names_in)
-
-    """
-    Wrappers not implented yet:
-    -   Handling Network Device
-    -   Setting Calibration Information
-
-    def add_network_device(self, ip_or_hostname, timeout_in_ms):
-        ''' Adds a networked device to the system.
-        '''
-
-    def remove_device(self, device_name = ''):
-        ''' Removes a device from the system. The device must not be connected
-            via USB to be removed.
-        '''
-
-    def login(self, device_name = '', username = 'admin', password = ''):
-        ''' Attempts to log in to a networked device. Logging in to
-        a device grants access to the permissions set for the
-        specified user in NI Web-Based Monitoring and Configuration.
-        '''
-
-    def logout(self, device_name = ''):
-        ''' Logs out of a networked device that you are logged in to.
-        Logging out of a device revokes access to the permissions set
-        for the specified user in NI Web-Based Monitoring and
-        Configuration.
-        '''
-
-    def set_calibration_information(self, calibration_date,
-                                    calibration_interval, device_name = '',
-                                    password = ''):
-        ''' Sets calibration information for the specified device.
-        '''
-
-    def set_calibration_password(self, current_password, new_password,
-                                 device_name = ''):
-        ''' Sets a new calibration password for the specified device. This
-            method requires the current password for the device, and returns an
-            error if the specified password is incorrect.
-        '''
-    """
 
     def get_calibration_information(self):
         """ Returns calibration information for the specified device,
@@ -350,7 +310,6 @@ class VirtualBench():
             self._instrument_handle.release()
             self.isShutdown = True
 
-
     class DigitalInputOutput(VirtualBenchInstrument):
         """ Represents Digital Input Output (DIO) Module of Virtual Bench
         device. Allows to read/write digital channels and/or set channels
@@ -384,8 +343,8 @@ class VirtualBench():
 
         def validate_lines(self, lines, return_single_lines=False,
                            validate_init=False):
-            """ Validate lines string
-                Allowed patterns (case sensitive):
+            """Validate lines string
+            Allowed patterns (case sensitive):
 
                 - ``'VBxxxx-xxxxxxx/dig/0:7'``
                 - ``'VBxxxx-xxxxxxx/dig/0'``
@@ -831,17 +790,6 @@ class VirtualBench():
             enable_filter = strict_discrete_set(enable_filter, [True, False])
             self.fgen.enable_filter(enable_filter)
 
-        # def enable_filter(self, enable_filter):
-        #     ''' Enables or disables the filter on the instrument.
-        #     '''
-        #     enable_filter = strict_discrete_set(enable_filter,[True,False])
-        #     self.fgen.enable_filter(enable_filter)
-
-        # def query_filter(self):
-        #     ''' Indicates whether the filter is enabled on the instrument.
-        #     '''
-        #     self.fgen.query_filter()
-
         def query_waveform_mode(self):
             """ Indicates whether the waveform output by the instrument is a
             standard or arbitrary waveform.
@@ -916,6 +864,27 @@ class VirtualBench():
         """ Represents Mixed Signal Oscilloscope (MSO) Module of Virtual Bench
         device. Allows to measure oscilloscope data from analog and digital
         channels.
+
+        Methods from pyvirtualbench not implemented in pymeasure yet:
+
+            - ``enable_digital_channels``
+            - ``configure_digital_threshold``
+            - ``configure_advanced_digital_timing``
+            - ``configure_state_mode``
+            - ``configure_digital_edge_trigger``
+            - ``configure_digital_pattern_trigger``
+            - ``configure_digital_glitch_trigger``
+            - ``configure_digital_pulse_width_trigger``
+            - ``query_digital_channel``
+            - ``query_enabled_digital_channels``
+            - ``query_digital_threshold``
+            - ``query_advanced_digital_timing``
+            - ``query_state_mode``
+            - ``query_digital_edge_trigger``
+            - ``query_digital_pattern_trigger``
+            - ``query_digital_glitch_trigger``
+            - ``query_digital_pulse_width_trigger``
+            - ``read_digital_u64``
         """
 
         def __init__(self, virtualbench, reset, vb_name=''):
@@ -1082,14 +1051,6 @@ class VirtualBench():
             self.mso.configure_analog_channel_characteristics(
                 channel, input_impedance, bandwidth_limit)
 
-        # def enable_digital_channels(self, channel, enable_channel):
-        #     ''' Enables or disables the specified digital channels.
-        #     '''
-
-        # def configure_digital_threshold(self, threshold):
-        #     ''' Configures the threshold level for logic analyzer lines.
-        #     '''
-
         def configure_timing(self, sample_rate, acquisition_time,
                              pretrigger_time, sampling_mode):
             """ Configure timing settings of the MSO
@@ -1117,20 +1078,6 @@ class VirtualBench():
 
             self.mso.configure_timing(
                 sample_rate, acquisition_time, pretrigger_time, sampling_mode)
-
-        # def configure_advanced_digital_timing(self,
-        #   digital_sample_rate_control,
-        #   digital_sample_rate, buffer_control, buffer_pretrigger_percent):
-        #     ''' Configures the rate and buffer settings of the logic
-        #     analyzer.
-        #         This method allows for more advanced configuration options
-        #     than MSO Configure Timing.
-        #     '''
-
-        # def configure_state_mode(self, enable, clock_channel, clock_edge):
-        #     ''' Configures how to clock data on the logic analyzer channels
-        #         that are enabled.
-        #     '''
 
         def configure_immediate_trigger(self):
             """ Configures a trigger to immediately activate on the specified
@@ -1167,34 +1114,6 @@ class VirtualBench():
             self.mso.configure_analog_edge_trigger(
                 trigger_source, trigger_slope, trigger_level,
                 trigger_hysteresis, trigger_instance)
-
-        # def configure_digital_edge_trigger(self, trigger_source,
-        #   trigger_slope, trigger_instance):
-        #     ''' Configures a trigger to activate on the specified source when
-        #         the digital edge reaches the specified levels.
-        #     '''
-
-        # def configure_digital_pattern_trigger(self, trigger_source,
-        #   trigger_pattern, trigger_instance):
-        #     ''' Configures a trigger to activate on the specified channels
-        #         when
-        #         a digital pattern is matched. A trigger is produced when
-        #         every
-        #         level (high/low) requirement specified in Trigger Pattern is
-        #         met, and when at least one toggling (toggle/fall/rise)
-        #         requirement is met. If no toggling requirements are set, then
-        #         only the level requirements must be met to produce a trigger.
-        #     '''
-
-        # def configure_digital_glitch_trigger(self, trigger_source,
-        #   trigger_instance):
-        #     ''' Configures a trigger to activate on the specified channels
-        #         when
-        #         a digital glitch occurs. A glitch occurs when a channel in
-        #         Trigger Source toggles between two edges of the sample clock,
-        #         but has the same state for both samples. This may happen when
-        #         the sampling rate is less than 1 GHz.
-        #     '''
 
         def configure_analog_pulse_width_trigger(self, trigger_source,
                                                  trigger_polarity,
@@ -1250,16 +1169,6 @@ class VirtualBench():
                 trigger_source, trigger_polarity, trigger_level,
                 comparison_mode, lower_limit, upper_limit, trigger_instance)
 
-        # def configure_digital_pulse_width_trigger(self, trigger_source,
-        #                                           trigger_polarity,
-        #                                           comparison_mode,
-        #                                           lower_limit, upper_limit,
-        #                                           trigger_instance):
-        #     ''' Configures a trigger to activate on the specified source when
-        #     the digital edge reaches the specified levels within a specified
-        #     window of time.
-        #     '''
-
         def configure_trigger_delay(self, trigger_delay):
             """ Configures the amount of time to wait after a trigger condition
             is met before triggering.
@@ -1297,19 +1206,6 @@ class VirtualBench():
             """
             return self.mso.query_analog_channel_characteristics(channel)
 
-        # def query_digital_channel(self):
-        #     ''' Indicates whether the specified digital channel is enabled.
-        #     '''
-
-        # def query_enabled_digital_channels(self):
-        #     ''' No documentation
-        #     '''
-
-        # def query_digital_threshold(self):
-        #     ''' Indicates the threshold configuration of the logic analyzer
-        #         channels.
-        #     '''
-
         def query_timing(self):
             """ Indicates the timing configuration of the MSO.
             Call directly before measurement to read the actual timing
@@ -1326,14 +1222,6 @@ class VirtualBench():
              self.sampling_mode) = self.mso.query_timing()
             return (self.sample_rate, self.acquisition_time,
                     self.pretrigger_time, self.sampling_mode)
-
-        # def query_advanced_digital_timing(self):
-        #     ''' Indicates the buffer configuration of the logic analyzer.
-        #     '''
-
-        # def query_state_mode(self, clockChannelSize):
-        #     ''' Indicates the clock configuration of the logic analyzer.
-        #     '''
 
         def query_trigger_type(self, trigger_instance):
             """ Indicates the trigger type of the specified instance.
@@ -1355,29 +1243,6 @@ class VirtualBench():
             trigger_instance = self.validate_trigger_instance(trigger_instance)
             return self.mso.query_analog_edge_trigger(trigger_instance)
 
-        # def query_digital_edge_trigger(self, trigger_instance):
-        #     ''' Indicates the digital trigger configuration of the specified
-        #         instance.
-        #     '''
-
-        # def query_digital_pattern_trigger(self, trigger_instance):
-        #     ''' Indicates the digital pattern trigger configuration of the
-        #         specified instance. A trigger is produced when every level
-        #         (high/low) requirement specified in Trigger Pattern is met,
-        #         and
-        #         when at least one toggling (toggle/fall/rise) requirement is
-        #         met. If no toggling requirements are set, then only the level
-        #         requirements must be met to produce a trigger.
-        #     '''
-
-        # def query_digital_glitch_trigger(self, trigger_instance):
-        #     ''' Indicates the digital glitch trigger configuration of the
-        #         specified instance. A glitch occurs when a channel in Trigger
-        #         Source toggles between two edges of the sample clock. This
-        #         may
-        #         happen when the sampling rate is less than 1 GHz.
-        #     '''
-
         def query_trigger_delay(self):
             """ Indicates the trigger delay setting of the MSO.
 
@@ -1396,11 +1261,6 @@ class VirtualBench():
             """
             trigger_instance = self.validate_trigger_instance(trigger_instance)
             return self.mso.query_analog_pulse_width_trigger(trigger_instance)
-
-        # def query_digital_pulse_width_trigger(self, trigger_instance):
-        #     ''' Indicates the digital pulse width trigger configuration of
-        #         the specified instance.
-        #     '''
 
         def query_acquisition_status(self):
             """ Returns the status of a completed or ongoing acquisition.
@@ -1433,27 +1293,6 @@ class VirtualBench():
             Running state to the Stopped state.
             """
             self.mso.stop()
-
-        # def read_analog(self, data_size):
-        #     ''' Transfers data from the instrument as long as the acquisition
-        #     state is Acquisition Complete. If the state is either Running or
-        #     Triggered, this method will wait until the state transitions to
-        #     Acquisition Complete. If the state is Stopped, this method
-        #     returns an error.
-        #     '''
-        #     #return (data.value, data_stride.value, initial_timestamp,
-        #              trigger_timestamp,
-        #              MsoTriggerReason(trigger_reason.value))
-
-        # def read_digital_u64(self, data_size, sample_timestamps_size):
-        #     ''' Transfers data from the instrument as long as the acquisition
-        #         state is Acquisition Complete. If the state is either
-        #         Running or
-        #         Triggered, this method will wait until the state transitions
-        #         to
-        #         Acquisition Complete. If the state is Stopped, this method
-        #         returns an error.
-        #     '''
 
         def read_analog_digital_u64(self):
             """ Transfers data from the instrument as long as the acquisition
@@ -1514,17 +1353,6 @@ class VirtualBench():
             the device and driver software to a known state.
             """
             self.mso.reset()
-
-        # def export_configuration(self, configuration_filename):
-        #     ''' Exports a configuration file for use with the MSO.
-        #     '''
-
-        # def import_configuration(self, configuration_filename):
-        #     ''' Imports a configuration file for use with the MSO. You can
-        #         import PNG files exported from the VirtualBench Application
-        #         or
-        #         files created from MSO Export Configuration.
-        #     '''
 
     class PowerSupply(VirtualBenchInstrument):
         """ Represents Power Supply (PS) Module of Virtual Bench device
@@ -1623,19 +1451,6 @@ class VirtualBench():
             log.info("%s Output %s." % (self.name, enable_outputs))
             self.ps.enable_all_outputs(enable_outputs)
 
-        # def enable_all_outputs(self, enable_outputs):
-        #     ''' Enables or disables all outputs on all channels of the
-        #         instrument.
-        #     '''
-        #     enable_outputs = strict_discrete_set(
-        #       enable_outputs, [True,False])
-        #     self.ps.enable_all_outputs(enable_outputs)
-
-        # def query_outputs_enabled(self):
-        #     ''' Indicates whether the outputs are enabled for the instrument.
-        #     '''
-        #     self.ps.query_outputs_enabled()
-
         @property
         def tracking(self):
             ''' Enables or disables tracking between the positive and negative
@@ -1652,23 +1467,6 @@ class VirtualBench():
             enable_tracking = strict_discrete_set(
                 enable_tracking, [True, False])
             self.ps.enable_tracking(enable_tracking)
-
-        # def query_tracking(self):
-        #     ''' Indicates whether voltage tracking is enabled on
-        #       the instrument.
-        #     '''
-        #     self.ps.query_tracking()
-
-        # def enable_tracking(self, enable_tracking):
-        #     ''' Enables or disables tracking between the positive and
-        #           negative
-        #         25V channels. If enabled, any configuration change on the
-        #         positive 25V channel is mirrored to the negative 25V channel,
-        #         and any writes to the negative 25V channel are ignored.
-        #     '''
-        #     enable_tracking = strict_discrete_set(
-        #       enable_tracking,[True,False])
-        #     self.ps.enable_tracking(enable_tracking)
 
         def read_output(self, channel):
             ''' Reads the voltage and current levels and outout mode of the

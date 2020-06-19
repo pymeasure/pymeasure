@@ -18,6 +18,7 @@ To be documented. Check the examples in the pyvirtualbench repository to get an 
 Simple Example to switch digital lines of the DIO module.
 
 .. code-block:: python
+
     from pymeasure.instruments.ni import VirtualBench
     
     vb = VirtualBench(device_name='VB8012-3057E1C')
