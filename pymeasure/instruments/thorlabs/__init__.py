@@ -23,4 +23,4 @@
 #
 
 from .thorlabspm100usb import ThorlabsPM100USB
-from .thorlabspro8000 import thorlabsPro8000
+from .thorlabspro8000 import ThorlabsPro8000
