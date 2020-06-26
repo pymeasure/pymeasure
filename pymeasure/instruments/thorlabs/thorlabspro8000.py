@@ -69,7 +69,7 @@ class ThorlabsPro8000(Instrument):
                                 values=STATUS,
                                 map_values=False)
 
-    # Code for TED-xxxx daughter boards (laser driver)
+    # Code for TED-xxxx daughter boards (TEC driver)
     TEDStatus = Instrument.control(":TEC?", ":TEC %s",
                                 """Set TEC status. Allowed values are: {}""".format(STATUS),
                                 validator=strict_discrete_set,
