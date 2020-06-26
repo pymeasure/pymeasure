@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -450,8 +450,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             time.sleep(pause)
 
     def trigger(self):
-        """ Executes a bus trigger, which can be used when
-        :meth:`~.trigger_on_bus` is configured.
+        """ Executes a bus trigger.
         """
         return self.write("*TRG")
 
@@ -503,7 +502,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     @property
     def max_resistance(self):
         """ Returns the maximum resistance from the buffer """
-        return self.maximums()[2]
+        return self.maximums[2]
 
     @property
     def min_resistance(self):

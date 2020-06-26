@@ -16,13 +16,19 @@ matrix:
         - xvfb
     - os: linux
       dist: xenial
-      env: PYTHON=3.6 DOCS=true
+      env: PYTHON=3.7 DOCS=true
       sudo: true
       services:
         - xvfb
     - os: linux
       dist: xenial
       env: PYTHON=3.7  CONDA_PY=37
+      sudo: true
+      services:
+        - xvfb
+    - os: linux
+      dist: xenial
+      env: PYTHON=3.8  CONDA_PY=38
       sudo: true
       services:
         - xvfb
@@ -34,6 +40,9 @@ matrix:
       sudo: false
     - os: osx
       env: PYTHON=3.7  CONDA_PY=37
+      sudo: false
+    - os: osx
+      env: PYTHON=3.8  CONDA_PY=38
       sudo: false
 
 # command to install dependencies
