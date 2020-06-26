@@ -11,7 +11,7 @@
 # furnished to do so, subject to the following conditions:
 #
 # The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# all copies or @@substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -31,7 +31,7 @@ import time
 import re
 
 
-class thorlabsPro8000(Instrument):
+class ThorlabsPro8000(Instrument):
     """Represents Thorlabs Pro 8000 modular laser driver"""
     SLOTS = range(1,9)
     LDC_POLARITIES = ['AG', 'CG']
@@ -39,7 +39,7 @@ class thorlabsPro8000(Instrument):
 
 
     def __init__(self, resourceName, **kwargs):
-        super(thorlabsPro8000, self).__init__(
+        super(ThorlabsPro8000, self).__init__(
             resourceName,
             "Thorlabs Pro 8000",
             **kwargs
