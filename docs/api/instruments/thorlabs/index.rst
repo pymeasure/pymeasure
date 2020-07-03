@@ -9,4 +9,5 @@ This section contains specific documentation on the Thorlabs instruments that ar
 .. toctree::
    :maxdepth: 2
 
+   thorlabsChrolis
    thorlabspm100usb

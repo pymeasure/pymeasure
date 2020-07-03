@@ -23,3 +23,4 @@
 #
 
 from .thorlabspm100usb import ThorlabsPM100USB
+from .thorlabsChrolis import ThorlabsChrolisAdapter, ThorlabsChrolis
