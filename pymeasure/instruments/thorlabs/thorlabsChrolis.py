@@ -437,7 +437,7 @@ class ThorlabsChrolis(Instrument):
 
     @brightness.setter
     def brightness(self, led_brightness):
-        led_brightness = tuple(x*10 for x in led_brightness)
+        led_brightness = tuple(int(x*10) for x in led_brightness)
         self._set_LED_parameters(
             'TL6WL_setLED_HeadBrightness', led_brightness, c_uint16,
             validator=lambda v: strict_range(v, (0, 1000)))
