@@ -56,11 +56,6 @@ class Microtest8761(Instrument):
 
         # self.data = self.query_binary_values(":KEY TEST")
 
-    def info(self):
-        """ Dsiplay system information.
-        """
-        self.write(":SYSTEM :INFO X1")
-
     def dataFormat(self, data):
         """Convert binary string to list.
             returm list of name, resistance and unit.
@@ -69,7 +64,7 @@ class Microtest8761(Instrument):
         data = data.replace(b'\xea', b' ohm ')
         data = data.replace(b'X ', b'')
         data = data.replace(b'>', b'')
-        data = data.replace(b'\00', b'').decode('ascii')
+        data = data.replace(b'\00', b'').decode('ascii').strip()
 
         # split string to list by \s
         datalist = re.split(r'[\s]+', data)
