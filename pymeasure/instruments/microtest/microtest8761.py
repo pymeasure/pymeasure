@@ -40,15 +40,18 @@ class Microtest8761(Instrument):
     It can also be used for microtest 8740 8751 and 8700
     """
 
-    def __init__(self, adapter=VISAAdapter, **kwargs):
-        super().__init__(adapter, "microtest 8761", **kwargs)
+    def __init__(self, adapter, **kwargs):
+        super(Microtest8761, self).__init__(
+            adapter,
+            "microtest 8761",
+            **kwargs
+        )
 
-    def test(self, timeout=2000):
-        """ Read Conductance data.
-            timeout unit: ms
+    def test(self):
+        """ Start test and return conductance string.
         """
         self.adapter.write(":KEY TEST")
-        self.adapter.connection.timeout = timeout
+        # self.adapter.connection.timeout = timeout
         data = self.adapter.connection.read_raw()
         self.adapter.connection.read_raw()
 
@@ -58,7 +61,7 @@ class Microtest8761(Instrument):
 
     def dataFormat(self, data):
         """Convert binary string to list.
-            returm list of name, resistance and unit.
+            Return list of name, resistance and unit.
         """
         # replace useless characters.
         data = data.replace(b'\xea', b' ohm ')
