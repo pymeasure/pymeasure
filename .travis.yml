@@ -16,7 +16,7 @@ matrix:
         - xvfb
     - os: linux
       dist: xenial
-      env: PYTHON=3.6 DOCS=true
+      env: PYTHON=3.7 DOCS=true
       sudo: true
       services:
         - xvfb
