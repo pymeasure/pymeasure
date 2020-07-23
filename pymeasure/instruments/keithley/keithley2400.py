@@ -624,7 +624,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     @property
     def max_resistance(self):
         """ Returns the maximum resistance from the buffer """
-        return self.maximums()[2]
+        return self.maximums[2]
 
     @property
     def min_resistance(self):
