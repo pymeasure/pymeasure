@@ -302,6 +302,17 @@ class TestKeysightDSOX1102G:
         assert len(value) > 0
         assert all(isinstance(n, float) for n in value)
 
+    def test_system_setup(self, make_reseted_cleared_scope):
+        scope = make_reseted_cleared_scope
+        initial_setup = scope.system_setup
+        scope.ch1_display = not scope.ch1_display
+        scope.ch2_display = not scope.ch2_display
+        # Assert that setup block is different
+        assert scope.system_setup != initial_setup
+        # Assert that the setup was successful
+        scope.system_setup = initial_setup
+        assert scope.system_setup == initial_setup
+
     # Setup methods
     def test_channel_setup(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope

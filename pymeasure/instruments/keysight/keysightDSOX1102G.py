@@ -389,6 +389,20 @@ class KeysightDSOX1102G(Instrument):
         data[0] = float(data[0][10:])
         return data
 
+    ################
+    # System Setup #
+    ################
+
+    @property
+    def system_setup(self):
+        """ A string parameter that sets up the oscilloscope. Must be in IEEE 488.2 format.
+        It is recommended to only set a string previously obtained from this command."""
+        return self.ask(":system:setup?")
+
+    @system_setup.setter
+    def system_setup(self, s):
+        self.write(":system:setup " + s)
+
     def __init__(self, adapter, **kwargs):
         super(KeysightDSOX1102G, self).__init__(
             adapter, "Keysight DSOX1102G Oscilloscope", **kwargs
