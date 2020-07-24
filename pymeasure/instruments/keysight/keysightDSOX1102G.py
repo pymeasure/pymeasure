@@ -308,6 +308,20 @@ class KeysightDSOX1102G(Instrument):
         values={"realtime": "RTIM", "segmented": "SEGM"},
         map_values=True
     )
+
+    def run(self):
+        """ Starts repetitive acquisitions. This is the same as pressing the Run key on the front panel."""
+        self.write(":run")
+
+    def stop(self):
+        """  Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
+        self.write(":stop")
+
+    def single(self):
+        """ Causes the instrument to acquire a single trigger of data.
+        This is the same as pressing the Single key on the front panel. """
+        self.write(":single")
+
     _digitize = Instrument.setting(
         ":DIGitize %s",
         """ Acquire waveforms according to the settings of the :ACQuire commands and specified source,
