@@ -32,8 +32,6 @@ from pymeasure.instruments.validators import (
     strict_discrete_set
 )
 from pymeasure.adapters import VISAAdapter
-from .buffer import KeithleyBuffer
-
 
 
 class RigolDG4000(Instrument):
