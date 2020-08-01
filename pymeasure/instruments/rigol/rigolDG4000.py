@@ -29,7 +29,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     truncated_range, truncated_discrete_set,
-    strict_discrete_set
+    strict_discrete_set, strict_range
 )
 from pymeasure.adapters import VISAAdapter
 
@@ -37,6 +37,34 @@ from pymeasure.adapters import VISAAdapter
 class RigolDG4000(Instrument):
     """Represents any Rigol DG4000 series function generator
     """
+
+    NVM_LOCATIONS = ['USER'+str(x) for x in range(1,11)]
+
+    id = Instrument.measurement(
+        "*IDN?", """ Query the ID character string of the instrument. """
+    )
+
+    reset = Instrument.measurement(
+        "*RST", """ Restore the instrument to its default state """
+    )
+
+    trigger = Instrument.measurement(
+        "*TRG", """ Trigger the instrument to generate an output """
+    )
+
+    save_settings = Instrument.control(
+        "", "*SAV %s",
+        """Save the current instrument state to the specified storage location in NVM""",
+        validator=strict_discrete_set,
+        values=NVM_LOCATIONS
+    )
+
+    restore_settings = Instrument.control(
+        "", "*RCL %s",
+        """Restore instrument settings based on data in specified NVM storage location""",
+        validator=strict_discrete_set,
+        values=NVM_LOCATIONS
+    )
 
     def __init__(self, resourceName,**kwargs):
         super(RigolDG4000, self).__init__(
