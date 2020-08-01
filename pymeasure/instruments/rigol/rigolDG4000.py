@@ -29,7 +29,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     truncated_range, truncated_discrete_set,
-    strict_discrete_set, strict_range
+    strict_discrete_set, strict_range, joined_validators
 )
 from pymeasure.adapters import VISAAdapter
 
@@ -39,6 +39,7 @@ class RigolDG4000(Instrument):
     """
 
     NVM_LOCATIONS = ['USER'+str(x) for x in range(1,11)]
+    list_or_floats = joined_validators(strict_discrete_set,strict_range)
 
     id = Instrument.measurement(
         "*IDN?", """ Query the ID character string of the instrument. """
@@ -66,9 +67,26 @@ class RigolDG4000(Instrument):
         values=NVM_LOCATIONS
     )
 
+    display_brightness = Instrument.control(
+        ":DISPlay:BRIGhtness?",":DISPlay:BRIGhtness %s",
+        """Set the brightness of the instruments display screen""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[1,100]]
+    )
+
+    display_screen_saver = Instrument.control(
+        "DISPlay:SAVer:STATe?","DISPlay:SAVer:STATe %s",
+        """Enable/Disable the instruments display screen saver""",
+        validator=strict_discrete_set,
+        values=["ON","OFF"]
+    )
+
     def __init__(self, resourceName,**kwargs):
         super(RigolDG4000, self).__init__(
             resourceName,
             "Rigol DG4000",
             **kwargs
         )
+
+    def display_sreen_saver_now(self):
+        self.write(":DISPlay:SAVer:IMMediate")
