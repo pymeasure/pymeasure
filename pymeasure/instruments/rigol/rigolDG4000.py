@@ -125,13 +125,13 @@ class RigolDG4000(Instrument):
         allowed_waveforms = ['CUSTom', 'HARMonic', 'NOISe', 'PULSe', 'RAMP', 'SINusoid', 'SQUare', 'USER','CUST', 'HARM', 'NOIS', 'PULS', 'SIN', 'SQU']
         if 'waveform' in kwargs:
             waveform = strict_discrete_set(kwargs['waveform'],allowed_waveforms)
-            command = f":SOURce{channel}:APPLy:{kwargs['waveform']} "
+            command = 'SOURce{channel}:APPLy:{shape} '.format(channel=channel, shape=kwargs['waveform'])
             for parameter in allowed_waveform_parameters[waveform]:
                 if parameter in kwargs:
                     parameter_value = list_or_floats(kwargs[parameter],[["MIN","MAX"] ,allowed_parameter_values[parameter]])
-                    command = command +f"{parameter_value},"
+                    command = command +'{parameter_value},'.format(parameter_value=parameter_value)
                 else:
-                    command = command + f"{self.current_settings[parameter]},"
+                    command = command + '{current_setting},'.format(current_setting=self.current_settings[parameter])
         command = command[0:-1]
         self.write(command)
 
