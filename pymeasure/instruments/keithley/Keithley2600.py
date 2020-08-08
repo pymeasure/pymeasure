@@ -30,7 +30,7 @@ from pymeasure.instruments import Instrument
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-class keithley2600(Instrument):
+class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
     def __init__(self, adapter, **kwargs):
         super(keithley2600, self).__init__(
