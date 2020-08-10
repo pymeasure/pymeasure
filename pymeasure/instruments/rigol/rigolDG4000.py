@@ -38,13 +38,22 @@ from pymeasure.adapters import VISAAdapter
 class RigolDG4000(Instrument):
     """Represents any Rigol DG4000 series function generator
     """
-    current_settings = ({
-        'frequency':1000,
-        'amplitude':5,
-        'offset':0,
-        'phase':0,
-        'delay':0
-        })
+    channel_settings = ({
+                        1:({
+                            'frequency':1000,
+                            'amplitude':5,
+                            'offset':0,
+                            'phase':0,
+                            'delay':0
+                            }),
+                        2:({
+                            'frequency':1000,
+                            'amplitude':5,
+                            'offset':0,
+                            'phase':0,
+                            'delay':0
+                            })
+                        })
 
     NVM_LOCATIONS = ['USER'+str(x) for x in range(1,11)]
     list_or_floats = joined_validators(strict_discrete_set,strict_range)
@@ -100,40 +109,91 @@ class RigolDG4000(Instrument):
         self.write(":DISPlay:SAVer:IMMediate")
 
     def source_apply(self,channel,**kwargs):
-        std_parameters = ['frequency','amplitude','offset','phase']
-
-        # Need to accomodate different limits vs function and instrument.
-        allowed_parameter_values =({
-            'frequency':[1e-6,60e6],
-            'amplitude':[1e-3,10],
-            'offset':[-5,5],
-            'phase':[0,360],
-            'delay':[0,360]
-        })
-
         allowed_waveform_parameters = ({
-            'CUSTom':std_parameters,
-            'HARMonic':std_parameters,
-            'NOISe':['amplitude','offset'],
-            'PULSe':['frequency','amplitude','offset','delay'],
-            'RAMP':std_parameters,
-            'SINusoid':std_parameters,
-            'SQUare':std_parameters,
-            'USER':std_parameters
+            'CUSTom':(
+                {
+                'frequency':[["MIN","Minimum","MAX","MAXimum"],[1e-6,15e6]],
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]],
+                'phase':[["MIN","Minimum","MAX","MAXimum"],[0,360]]
+                }),
+            'HARMonic':(
+                {
+                'frequency':[["MIN","Minimum","MAX","MAXimum"],[1e-6,30e6]],
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]],
+                'phase':[["MIN","Minimum","MAX","MAXimum"],[0,360]]
+                }),
+            'NOISe':(
+                {
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]]
+                }),
+            'PULSe':(
+                {
+                'frequency':[["MIN","Minimum","MAX","MAXimum"],[1e-6,15e6]],
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]],
+                'delay':[["MIN","Minimum","MAX","MAXimum"],[1e-6,4e6]]
+                }),
+            'RAMP':(
+                {
+                'frequency':[["MIN","Minimum","MAX","MAXimum"],[1e-6,1e6]],
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]],
+                'phase':[["MIN","Minimum","MAX","MAXimum"],[0,360]]
+                }),
+            'SINusoid':(
+                {
+                'frequency':[["MIN","Minimum","MAX","MAXimum"],[1e-6,60e6]],
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]],
+                'phase':[["MIN","Minimum","MAX","MAXimum"],[0,360]]
+                }),
+            'SQUare':(
+                {
+                'frequency':[["MIN","Minimum","MAX","MAXimum"],[1e-6,25e6]],
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]],
+                'phase':[["MIN","Minimum","MAX","MAXimum"],[0,360]]
+                }),
+            'USER':(
+                {
+                'frequency':[["MIN","Minimum","MAX","MAXimum"],[1e-6,15e6]],
+                'amplitude':[["MIN","Minimum","MAX","MAXimum"],[1e-3,10]],
+                'offset':[["MIN","Minimum","MAX","MAXimum"],[-5,5]],
+                'phase':[["MIN","Minimum","MAX","MAXimum"],[0,360]]
+                })
         })
+
         list_or_floats = joined_validators(strict_discrete_set, strict_range)
-        allowed_waveforms = ['CUSTom', 'HARMonic', 'NOISe', 'PULSe', 'RAMP', 'SINusoid', 'SQUare', 'USER','CUST', 'HARM', 'NOIS', 'PULS', 'SIN', 'SQU']
+        allowed_waveforms =   ({'CUSTom':'CUSTom',
+                                'CUST':'CUSTom', 
+                                'HARMonic':'HARMonic', 
+                                'HARM':'HARMonic', 
+                                'NOISe':'NOISe', 
+                                'NOIS':'NOISe', 
+                                'PULSe':'PULSe', 
+                                'PULS':'PULSe', 
+                                'RAMP':'RAMP', 
+                                'SINusoid':'SINusoid',
+                                'SIN':'SINusoid',  
+                                'SQUare':'SQUare', 
+                                'SQU':'SQUare',
+                                'USER':'USER'
+                                })
         if 'waveform' in kwargs:
             waveform = strict_discrete_set(kwargs['waveform'],allowed_waveforms)
-            command = 'SOURce{channel}:APPLy:{shape} '.format(channel=channel, shape=kwargs['waveform'])
-            for parameter in allowed_waveform_parameters[waveform]:
+            # Convert the user supplied waveform (1 of 2 ways to specify it) into 1 common type for internal use
+            waveform_internal = allowed_waveforms[waveform]
+            command = 'SOURce{channel}:APPLy:{shape} '.format(channel=channel, shape=waveform_internal)
+            for parameter in allowed_waveform_parameters[waveform_internal]:
                 if parameter in kwargs:
-                    parameter_value = list_or_floats(kwargs[parameter],[["MIN","MAX"] ,allowed_parameter_values[parameter]])
+                    allowed_parameter_values = allowed_waveform_parameters[waveform_internal][parameter]
+                    parameter_value = list_or_floats(kwargs[parameter], allowed_parameter_values)
                     command = command +'{parameter_value},'.format(parameter_value=parameter_value)
+                    self.channel_settings[channel][parameter] = parameter_value
                 else:
-                    command = command + '{current_setting},'.format(current_setting=self.current_settings[parameter])
+                    command = command + '{current_setting},'.format(current_setting=self.channel_settings[channel][parameter])
         command = command[0:-1]
         self.write(command)
-
-        for parameter in allowed_waveform_parameters[waveform]:
-            self.current_settings[parameter] = kwargs[parameter]
