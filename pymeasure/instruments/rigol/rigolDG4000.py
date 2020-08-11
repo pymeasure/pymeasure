@@ -33,6 +33,7 @@ from pymeasure.instruments.validators import (
     joined_validators
 )
 
+
 class Output(object):
     list_or_floats = joined_validators(strict_discrete_set, strict_range)
 
@@ -93,104 +94,126 @@ class Output(object):
         values = ["ON","OFF"]
     )
 
-    def __init__(self, instrument, number):
+    def __init__(self, instrument, channel):
         self.instrument = instrument
-        self.number = number
+        self.channel = channel
     
     def ask(self,command):
-        return self.instrument.ask("OUTPut{number}:{cmd}".format(number = self.number, cmd=command))
+        return self.instrument.ask(":OUTPut{channel}:{cmd}".format(channel = self.channel, cmd=command))
         
     def write(self, command):
-        self.instrument.write(":OUTPut{number}:{cmd}".format(number = self.number,cmd=command))
+        self.instrument.write(":OUTPut{channel}:{cmd}".format(channel = self.channel,cmd=command))
 
     def read(self, command):
-        return self.instrument.read("OUTPut{number}:{cmd}".format(number = self.number, cmd=command))
+        return self.instrument.read(":OUTPut{channel}:{cmd}".format(channel = self.channel, cmd=command))
 
     def values(self, command, **kwargs):
-        return self.instrument.values(":OUTPut{number}:{cmd}".format(number = self.number, cmd=command),**kwargs)
+        return self.instrument.values(":OUTPut{channel}:{cmd}".format(channel = self.channel, cmd=command),**kwargs)
 class Channel(object):
-    def __init__(self, instrument,number):
-        self.instrument = instrument
-        self.number = number
-        self.output = Output(instrument, number)
+    list_or_floats = joined_validators(strict_discrete_set, strict_range)
+##### BURST MODES START ##################
 
-
-class RigolDG4000(Instrument):
-    """Represents any Rigol DG4000 series function generator"""
-
-    NVM_LOCATIONS = ['USER'+str(x) for x in range(1,11)]
-    list_or_floats = joined_validators(strict_discrete_set,strict_range)
-
-    id = Instrument.measurement(
-        "*IDN?", """ Query the ID character string of the instrument. """
-    )
-
-    reset = Instrument.measurement(
-        "*RST", """ Restore the instrument to its default state """
-    )
-
-    trigger = Instrument.measurement(
-        "*TRG", """ Trigger the instrument to generate an output """
-    )
-
-    save_settings = Instrument.control(
-        "", "*SAV %s",
-        """Save the current instrument state to the specified storage location in NVM""",
+    burst_gate_polarity = Instrument.control(
+        "BURSt:GATE:POLarity?","BURSt:GATE:POLarity %s",
+        """Set the channel to output a busrt when gated by the signal on the instruments Mod/FSK/Trig rear connector""",
         validator=strict_discrete_set,
-        values=NVM_LOCATIONS
+        values=["NORMal","NORM","INVerted","INV"]
     )
 
-    restore_settings = Instrument.control(
-        "", "*RCL %s",
-        """Restore instrument settings based on data in specified NVM storage location""",
-        validator=strict_discrete_set,
-        values=NVM_LOCATIONS
-    )
-
-    display_brightness = Instrument.control(
-        ":DISPlay:BRIGhtness?",":DISPlay:BRIGhtness %s",
-        """Set the brightness of the instruments display screen""",
+    burst_internal_period = Instrument.control(
+        "BURSt:INTernal:PERiod?","BURSt:INTernal:PERiod %s",
+        """Set the occurance rate of an N cycle burst of what ever the current waveform is""",
         validator=list_or_floats,
-        values=[["MIN","MAX","MINimum","MAXimum"],[1,100]]
-    )
+        values=[["MIN","MAX","MINimum","MAXimum"],[0,50]]
+    ) #TODO: Set proper range limit > 1us + waveform period * N
 
-    display_screen_saver = Instrument.control(
-        "DISPlay:SAVer:STATe?","DISPlay:SAVer:STATe %s",
-        """Enable/Disable the instruments display screen saver""",
+    burst_mode = Instrument.control(
+        "BURSt:MODE?","BURSt:MODE %s",
+        """Set the burst type to N Cycle, gated or infinite""",
         validator=strict_discrete_set,
-        values=["ON","OFF"]
+        values=["TRIGgered","TRIG","GATed","GAT","INFinity","INF"]
     )
 
-    def __init__(self, resourceName,**kwargs):
-        super(RigolDG4000, self).__init__(
-            resourceName,
-            "Rigol DG4000",
-            **kwargs
-        )
+    burst_cycles = Instrument.control(
+        "BURSt:NCYCles?","BURSt:NCYCles %s",
+        """Set/Query the number of cycles in the burst""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[1,5e5]]
+    ) #TODO: Get range as a function of trigger source (int vs ext)
+
+    burst_phase = Instrument.control(
+        "BURSt:PHASe?","BURSt:PHASe %s",
+        """Set/Query the phase angle for when to start the burst""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[0,360]]
+    )
+
+    burst_state = Instrument.control(
+        "BURSt:STATe?","BURSt:STATe %s",
+        """Enable/Disable/Query Burst functionality""",
+        validator=strict_discrete_set,
+        values = ["ON","OFF"]
+    )
+
+    burst_delay = Instrument.control(
+        "BURSt:DELay?","BURSt:DELay %s",
+        """Set/Query the delay between tigger and start of burst""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[0,85]]
+    )#TODO: Upper limit is also constrained by waveform period when on internal trigger
+
+    def burst_trigger_immediate(self):
+        self.write("BURSt:TRIGger:IMMediate")
+
+    burst_trigger_slope = Instrument.control(
+        "BURSt:TIGger:SLOPe?","BURSt:TIGger:SLOPe %s",
+        """Set/Query which edge of the external trigger signal should be used""",
+        validator=strict_discrete_set,
+        values=["POSitive","POS","NEGative","NEG"]
+    )
+
+    burst_trigger_source = Instrument.control(
+        "BURSt:TRIGger:SOURce?","BURSt:TRIGger:SOURce %s",
+        """Set/Query the trigger source""",
+        validator=strict_discrete_set,
+        values=["INTernal","INT","EXTernal","EXT","MANual","MAN"]
+    )
+
+    burst_trigger_out = Instrument.control(
+        "BURSt:TRIGger:TRIGOut?","BURSt:TRIGger:TRIGOut %s",
+        """Set/Query the edge type of the trigger output signal""",
+        validator=strict_discrete_set,
+        values=["OFF","POSitive","POS","NEGative","NEG"]
+    )
+
+##### BURST MODES END ####################
+
+
+    def __init__(self, instrument,channel):
+        self.instrument = instrument
+        self.channel = channel
+        self.output = Output(instrument, channel)
         self.channel_settings = ({
-                        1:({
-                            'frequency':1000,
-                            'amplitude':5,
-                            'offset':0,
-                            'phase':0,
-                            'delay':0
-                            }),
-                        2:({
                             'frequency':1000,
                             'amplitude':5,
                             'offset':0,
                             'phase':0,
                             'delay':0
                             })
-                        })
-        self.current_channel = 1
-        self.ch1 = Channel(self,1)
-        self.ch2 = Channel(self,2)
 
-    def display_sreen_saver_now(self):
-        self.write(":DISPlay:SAVer:IMMediate")
+    def ask(self,command):
+        return self.instrument.ask(":SOURce{channel}:{cmd}".format(channel = self.channel, cmd=command))
+        
+    def write(self, command):
+        self.instrument.write(":SOURce{channel}:{cmd}".format(channel = self.channel,cmd=command))
 
-    def source_apply(self,channel,**kwargs):
+    def read(self, command):
+        return self.instrument.read(":SOURce{channel}:{cmd}".format(channel = self.channel, cmd=command))
+
+    def values(self, command, **kwargs):
+        return self.instrument.values(":SOURce{channel}:{cmd}".format(channel = self.channel, cmd=command),**kwargs)
+
+    def source_apply(self,**kwargs):
         allowed_waveform_parameters = ({
             'CUSTom':(
                 {
@@ -264,20 +287,99 @@ class RigolDG4000(Instrument):
                                 'SQU':'SQUare',
                                 'USER':'USER'
                                 })
+        if len(kwargs) == 0:
+            return self.ask('APPLy?')
+
         if 'waveform' in kwargs:
             waveform = strict_discrete_set(kwargs['waveform'],allowed_waveforms)
             # Convert the user supplied waveform (1 of 2 ways to specify it) into 1 common type for internal use
             waveform_internal = allowed_waveforms[waveform]
-            command = 'SOURce{channel}:APPLy:{shape} '.format(channel=channel, shape=waveform_internal)
+            command = 'APPLy:{shape} '.format(shape=waveform_internal)
             for parameter in allowed_waveform_parameters[waveform_internal]:
                 if parameter in kwargs:
                     allowed_parameter_values = allowed_waveform_parameters[waveform_internal][parameter]
                     parameter_value = list_or_floats(kwargs[parameter], allowed_parameter_values)
                     command = command +'{parameter_value},'.format(parameter_value=parameter_value)
-                    self.channel_settings[channel][parameter] = parameter_value
+                    self.channel_settings[parameter] = parameter_value
                 else:
-                    command = command + '{current_setting},'.format(current_setting=self.channel_settings[channel][parameter])
+                    command = command + '{current_setting},'.format(current_setting=self.channel_settings[parameter])
         
-        self.current_channel = channel
         command = command[0:-1]
         self.write(command)
+
+
+class RigolDG4000(Instrument):
+    """Represents any Rigol DG4000 series function generator"""
+
+    NVM_LOCATIONS = ['USER'+str(x) for x in range(1,11)]
+    list_or_floats = joined_validators(strict_discrete_set,strict_range)
+
+    id = Instrument.measurement(
+        "*IDN?", """ Query the ID character string of the instrument. """
+    )
+
+    reset = Instrument.measurement(
+        "*RST", """ Restore the instrument to its default state """
+    )
+
+    trigger = Instrument.measurement(
+        "*TRG", """ Trigger the instrument to generate an output """
+    )
+
+    save_settings = Instrument.control(
+        "", "*SAV %s",
+        """Save the current instrument state to the specified storage location in NVM""",
+        validator=strict_discrete_set,
+        values=NVM_LOCATIONS
+    )
+
+    restore_settings = Instrument.control(
+        "", "*RCL %s",
+        """Restore instrument settings based on data in specified NVM storage location""",
+        validator=strict_discrete_set,
+        values=NVM_LOCATIONS
+    )
+
+    display_brightness = Instrument.control(
+        ":DISPlay:BRIGhtness?",":DISPlay:BRIGhtness %s",
+        """Set the brightness of the instruments display screen""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[1,100]]
+    )
+
+    display_screen_saver = Instrument.control(
+        "DISPlay:SAVer:STATe?","DISPlay:SAVer:STATe %s",
+        """Enable/Disable the instruments display screen saver""",
+        validator=strict_discrete_set,
+        values=["ON","OFF"]
+    )
+
+    def __init__(self, resourceName,**kwargs):
+        super(RigolDG4000, self).__init__(
+            resourceName,
+            "Rigol DG4000",
+            **kwargs
+        )
+        self.channel_settings = ({
+                        1:({
+                            'frequency':1000,
+                            'amplitude':5,
+                            'offset':0,
+                            'phase':0,
+                            'delay':0
+                            }),
+                        2:({
+                            'frequency':1000,
+                            'amplitude':5,
+                            'offset':0,
+                            'phase':0,
+                            'delay':0
+                            })
+                        })
+        self.ch1 = Channel(self,1)
+        self.ch2 = Channel(self,2)
+
+    def display_sreen_saver_now(self):
+        self.write(":DISPlay:SAVer:IMMediate")
+
+    
