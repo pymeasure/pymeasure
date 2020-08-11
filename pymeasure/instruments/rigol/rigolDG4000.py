@@ -201,21 +201,21 @@ class Channel(object):
         "FREQuency:SPAN?","FREQuency:SPAN %s",
         """Set/Query the sweep span""",
         validator= list_or_floats,
-        values = [["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]
+        values = [["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]]
     ) #TODO: Instrument dependent limit
 
     frequency_sweep_start_freq = Instrument.control(
         "FREQuency:STARt?","FREQuency:STARt %s",
         """Set/Query the start frequency""",
         validator=list_or_floats,
-        values=[["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]
+        values=[["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]]
     ) #TODO: Instrument & waveform dependent limit
 
     frequency_sweep_stop_freq = Instrument.control(
         "FREQuency:STOP?","FREQuency:STOP %s",
         """Set/Query the stop frequency""",
         validator=list_or_floats,
-        values=[["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]
+        values=[["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]]
     ) #TODO: Instrument & waveform dependent limit
 
     frequency = Instrument.control(
@@ -234,7 +234,7 @@ class Channel(object):
         self.channel = channel
         self.output = Output(instrument, channel)
         self.channel_settings = ({
-                            'waveform':'SINusoid'
+                            'waveform':'SINusoid',
                             'frequency':1000,
                             'amplitude':5,
                             'offset':0,
