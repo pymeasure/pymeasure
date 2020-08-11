@@ -32,28 +32,91 @@ from pymeasure.instruments.validators import (
     strict_range,
     joined_validators
 )
-from pymeasure.adapters import VISAAdapter
+
+class Output(object):
+    list_or_floats = joined_validators(strict_discrete_set, strict_range)
+
+    impedance = Instrument.control(
+        'IMPedance?','IMPedance %s',
+        """Set output impedance between 1 to 10k Ohms""",
+        validator=strict_range,
+        values=[1,10000]
+    )
+
+    #This seems to be the same as impedance
+    load = Instrument.control(
+        'LOAD?','LOAD %s',
+        """Set output load between 1 to 10k Ohms""",
+        validator=strict_range,
+        values=[1,10000]
+    )
+
+    noise_scale = Instrument.control(
+        "NOISe:SCALe?","NOISe:SCALe %s",
+        """Set/Query the scale of the noise superimposed on the output""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[0,50]]
+    )
+
+    noise_state = Instrument.control(
+        "NOISe:STATe?","NOISe:STATe %s",
+        """ Enable/Disable the noise super imposed on the output channel""",
+        validator=strict_discrete_set,
+        values=["ON","OFF"]
+    )
+
+    polarity = Instrument.control(
+        "POLarity?","POLarity %s",
+        """Set/Query the signal polarity on the output""",
+        validator=strict_discrete_set,
+        values = ["NORMal","NORM","INVerted","INV"]
+    )
+
+    state = Instrument.control(
+        "STATe?","STATe %s",
+        """ Enable/Disable the output channel""",
+        validator=strict_discrete_set,
+        values=["ON","OFF"]
+    )
+
+    sync_polarity = Instrument.control(
+        "SYNC:POLarity?","SYNC:POLarity %s",
+        """Set/Query the signal polarity of the outputs SYNC connector""",
+        validator=strict_discrete_set,
+        values=["POSitive", "POS","NEGative","NEG"]
+    )
+
+    sync_state = Instrument.control(
+        "SYNC:STATe?","SYNC:STATe %s",
+        """Set/Query the state of the outputs SYNC signal""",
+        validator=strict_discrete_set,
+        values = ["ON","OFF"]
+    )
+
+    def __init__(self, instrument, number):
+        self.instrument = instrument
+        self.number = number
+    
+    def ask(self,command):
+        return self.instrument.ask("OUTPut{number}:{cmd}".format(number = self.number, cmd=command))
+        
+    def write(self, command):
+        self.instrument.write(":OUTPut{number}:{cmd}".format(number = self.number,cmd=command))
+
+    def read(self, command):
+        return self.instrument.read("OUTPut{number}:{cmd}".format(number = self.number, cmd=command))
+
+    def values(self, command, **kwargs):
+        return self.instrument.values(":OUTPut{number}:{cmd}".format(number = self.number, cmd=command),**kwargs)
+class Channel(object):
+    def __init__(self, instrument,number):
+        self.instrument = instrument
+        self.number = number
+        self.output = Output(instrument, number)
 
 
 class RigolDG4000(Instrument):
-    """Represents any Rigol DG4000 series function generator
-    """
-    channel_settings = ({
-                        1:({
-                            'frequency':1000,
-                            'amplitude':5,
-                            'offset':0,
-                            'phase':0,
-                            'delay':0
-                            }),
-                        2:({
-                            'frequency':1000,
-                            'amplitude':5,
-                            'offset':0,
-                            'phase':0,
-                            'delay':0
-                            })
-                        })
+    """Represents any Rigol DG4000 series function generator"""
 
     NVM_LOCATIONS = ['USER'+str(x) for x in range(1,11)]
     list_or_floats = joined_validators(strict_discrete_set,strict_range)
@@ -104,6 +167,25 @@ class RigolDG4000(Instrument):
             "Rigol DG4000",
             **kwargs
         )
+        self.channel_settings = ({
+                        1:({
+                            'frequency':1000,
+                            'amplitude':5,
+                            'offset':0,
+                            'phase':0,
+                            'delay':0
+                            }),
+                        2:({
+                            'frequency':1000,
+                            'amplitude':5,
+                            'offset':0,
+                            'phase':0,
+                            'delay':0
+                            })
+                        })
+        self.current_channel = 1
+        self.ch1 = Channel(self,1)
+        self.ch2 = Channel(self,2)
 
     def display_sreen_saver_now(self):
         self.write(":DISPlay:SAVer:IMMediate")
@@ -195,5 +277,7 @@ class RigolDG4000(Instrument):
                     self.channel_settings[channel][parameter] = parameter_value
                 else:
                     command = command + '{current_setting},'.format(current_setting=self.channel_settings[channel][parameter])
+        
+        self.current_channel = channel
         command = command[0:-1]
         self.write(command)
