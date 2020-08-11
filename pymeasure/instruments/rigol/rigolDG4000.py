@@ -228,6 +228,76 @@ class Channel(object):
 
 #endregion
 
+#region SOURce:FUNCtion MODES
+    def arbitary_waveform_step_by_step_enable(self):
+        self.write("FUNCtion:ARB:STEP")
+
+    ramp_symmetry = Instrument.control(
+        "FUNCtion:RAMP:SYMMetry?","FUNCtion:RAMP:SYMMetry %s",
+        """Set/Query the symmetry of the ramp""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[0,100]]
+    )
+
+    waveform_shape = Instrument.control(
+        "FUNCtion:SHAPe?","FUNCtion:SHAPe %s",
+        """Set/Query the waveform shape""",
+        validator = strict_discrete_set,
+        values = ([
+            "SINusoid","SQUare","RAMP","PULSe","NOISe","USER","HARMonic","CUSTom","DC","ABSSINE","ABSSINEHALF","AMPALT","ATTALT","GAUSSPULSE","NEGRAMP",
+            "NPULSE","PPULSE","SINETRA","SINEVER","STAIRDN","STAIRUD","STAIRUP","TRAPEZIA","BANDLIMITED","BUTTERWORTH","CHEBYSHEV1","CHEBYSHEV2",
+            "COMBIN","CPULSE","CWPULSE","DAMPEDOSC","DUALTONE","GAMMA","GATEVIBR","LFMPULSE","MCNOSIE","NIMHDISCHARGE","PAHCUR","QUAKE","RADAR",
+            "RIPPLE","ROUNDHALF","ROUNDPM","STEPRESP","SWINGOSC","TV","VOICE","THREEAM","THREEFM","THREEPM","THREEPWM","THREEPFM","CARDIAC","EOG",
+            "EEG","EMG","PULSILOGRAM","RESSPEED","LFPULSE","TENS1","TENS2","TENS3","IGNITION","ISO167502SP","ISO167502VR","ISO76372TP1","ISO76372TP2A",
+            "ISO76372TP2B","ISO76372TP3A","ISO76372TP3B","ISO76372TP4","ISO76372TP5A","ISO76372TP5B","SCR","SURGE","AIRY","BESSELJ","BESSELY","CAUCHY",
+            "CUBIC","DIRICHLET","ERF","ERFC","ERFCINV","ERFINV","EXPFALL","EXPRISE","GAUSS","HAVERSINE","LAGUERRE","LAPLACE","LEGEND","LOG","LOGNORMAL",
+            "LORENTZ","MAXWELL","RAYLEIGH","VERSIERA","WEIBULL","X2DATA","COSH","COSINT","COT","COTHCON","COTHPRO","CSCCON","CSCPRO","CSCHCON",
+            "CSCHPRO","RECIPCON","RECIPPRO","SECCON","SECPRO","SECH","SINC","SINH","SININT","SQRT","TAN","TANH","ACOS","ACOSH","ACOTCON","ACOTPRO",
+            "ACOTHCON","ACOTHPRO","ACSCCON","ACSCPRO","ACSCHCON","ACSCHPRO","ASECCON","ASECPRO","ASECH","ASIN","ASINH","ATAN","ATANH","BARLETT",
+            "BARTHANN","BLACKMAN","BLACKMANH","BOHMANWIN","BOXCAR","CHEBWIN","FLATTOPWIN","HAMMING","HANNING","KAISER","NUTTALLWIN",
+            "PARZENWIN","TAYLORWIN","TRIANG","TUKEYWIN"
+            ])
+    )
+
+    square_wave_duty_cycle = Instrument.control(
+        "FUNCtion:SQUare:DCYCLe?","FUNCtion:SQUare:DCYCLe %s",
+        """Set/Query the Duty Cycle of the square wave""",
+        validator=list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[20,80]]
+    ) #TODO: frequency dependent limits
+
+#endregion
+    
+#region SOURce:HARMonic MODES
+
+    def harmonic_amplitude(self, harmonic, amplitude):
+        list_or_floats = joined_validators(strict_discrete_set, strict_range)
+        harmonic_number = strict_discrete_set(harmonic,[x for x in range(2,17)])
+        amplitude_value = list_or_floats(amplitude,[["MIN","MINimum","MAX","MAXimum"],[-5,5]])
+        self.write("HARMonic:AMPL {harmonic_number},{amplitude}".format(harmonic_number = harmonic_number,amplitude=amplitude_value))
+
+    harmonic_order = Instrument.control(
+        "HARMonic:ORDer?","HARMonic:ORDer %s",
+        """Set/Query the order of the harmonic""",
+        validator = strict_discrete_set,
+        values = [x for x in range(2,17)]
+    )
+
+    def harmonic_phase(self, harmonic, phase):
+        list_or_floats = joined_validators(strict_discrete_set, strict_range)
+        harmonic_number = strict_discrete_set(harmonic,[x for x in range(2,17)])
+        phase_value = list_or_floats(phase,[["MIN","MINimum","MAX","MAXimum"],[0,360]])
+        self.write("HARMonic:AMPL {harmonic_number},{phase}".format(harmonic_number = harmonic_number,phase=phase_value))
+
+    harmonic_type = Instrument.control(
+        "HARMonic:TYPe?","HARMonic:TYPe %s",
+        """Set/Query the harmonic type to EVEN|ODD|ALL|USER""",
+        validator=strict_discrete_set,
+        values=["EVEN","ODD","ALL","USER"]
+    )
+
+#endregion
+
 
     def __init__(self, instrument,channel):
         self.instrument = instrument
