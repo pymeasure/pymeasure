@@ -111,7 +111,9 @@ class Output(object):
         return self.instrument.values(":OUTPut{channel}:{cmd}".format(channel = self.channel, cmd=command),**kwargs)
 class Channel(object):
     list_or_floats = joined_validators(strict_discrete_set, strict_range)
-##### BURST MODES START ##################
+
+
+#region SOURce:BURSt MODES
 
     burst_gate_polarity = Instrument.control(
         "BURSt:GATE:POLarity?","BURSt:GATE:POLarity %s",
@@ -185,8 +187,46 @@ class Channel(object):
         validator=strict_discrete_set,
         values=["OFF","POSitive","POS","NEGative","NEG"]
     )
+#endregion
 
-##### BURST MODES END ####################
+#region SOURce:FREQuency MODES
+    frequency_sweep_center = Instrument.control(
+        "FREQuency:CENTer?","FREQuency:CENTer %s",
+        """Set/Query the center frequency of the sweep""",
+        validator=strict_range,
+        values=[1e-6,60e6]
+    ) #TODO: Limits for other instruments in DG4000 family
+
+    frequency_sweep_span = Instrument.control(
+        "FREQuency:SPAN?","FREQuency:SPAN %s",
+        """Set/Query the sweep span""",
+        validator= list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]
+    ) #TODO: Instrument dependent limit
+
+    frequency_sweep_start_freq = Instrument.control(
+        "FREQuency:STARt?","FREQuency:STARt %s",
+        """Set/Query the start frequency""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]
+    ) #TODO: Instrument & waveform dependent limit
+
+    frequency_sweep_stop_freq = Instrument.control(
+        "FREQuency:STOP?","FREQuency:STOP %s",
+        """Set/Query the stop frequency""",
+        validator=list_or_floats,
+        values=[["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]
+    ) #TODO: Instrument & waveform dependent limit
+
+    frequency = Instrument.control(
+        "FREQuency:FIXed?","FREQuency:FIXed %s",
+        """Set/Query the frequency of the base waveform""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]]
+    ) #TODO: Waveform dependent limits
+
+
+#endregion
 
 
     def __init__(self, instrument,channel):
@@ -194,6 +234,7 @@ class Channel(object):
         self.channel = channel
         self.output = Output(instrument, channel)
         self.channel_settings = ({
+                            'waveform':'SINusoid'
                             'frequency':1000,
                             'amplitude':5,
                             'offset':0,
