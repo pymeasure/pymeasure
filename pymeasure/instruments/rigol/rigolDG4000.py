@@ -298,6 +298,22 @@ class Channel(object):
 
 #endregion
 
+#region SOURce:MARKer MODES
+    marker_frequency = Instrument.control(
+        "MARKer:FREQuency?","MARKer:FREQuency %s",
+        """Set/Query the mark frequency""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[1e-6,60e6]]
+    ) #TODO: Actually limited by start/stop frequency
+
+    marker_state = Instrument.control(
+        "MARKer:STATe?","MARKer:STATe %s",
+        """Set/Query the frequency mark function of the sweep""",
+        validator = strict_discrete_set,
+        values = ["ON","OFF"]
+    )
+#endregion
+
 
     def __init__(self, instrument,channel):
         self.instrument = instrument
@@ -471,22 +487,6 @@ class RigolDG4000(Instrument):
             "Rigol DG4000",
             **kwargs
         )
-        self.channel_settings = ({
-                        1:({
-                            'frequency':1000,
-                            'amplitude':5,
-                            'offset':0,
-                            'phase':0,
-                            'delay':0
-                            }),
-                        2:({
-                            'frequency':1000,
-                            'amplitude':5,
-                            'offset':0,
-                            'phase':0,
-                            'delay':0
-                            })
-                        })
         self.ch1 = Channel(self,1)
         self.ch2 = Channel(self,2)
 
