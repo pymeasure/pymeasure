@@ -29,6 +29,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
+    strict_discrete_range,
     strict_range,
     joined_validators
 )
@@ -298,7 +299,7 @@ class Channel(object):
 
 #endregion
 
-#region SOURce:MARKer MODES
+#region SOURce:MARKer MODES (Sweep)
     marker_frequency = Instrument.control(
         "MARKer:FREQuency?","MARKer:FREQuency %s",
         """Set/Query the mark frequency""",
@@ -312,6 +313,181 @@ class Channel(object):
         validator = strict_discrete_set,
         values = ["ON","OFF"]
     )
+#endregion
+
+    period = Instrument.control(
+        "PERiod:FIXed?","PERiod:FIXed %s",
+        """Set the period of the basic waveform""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[6.2e-9,1e6]]
+    )
+
+    phase = Instrument.control(
+        "PHAse:ADJust?","PHAse:ADJust %s",
+        "Set/Query the start phase of the base waveform",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,360]]
+    )
+
+    def phase_align(self):
+        self.write("PHAse:INITiate")
+
+#region PULSE Modes
+    pulse_duty_cycle = Instrument.control(
+        "PULSe:DCYCle?","PULSe:DCYCle %s",
+        """Set/Query the pulse duty cycle in %""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,100]]
+    ) # TODO: Rules
+
+    pulse_delay = Instrument.control(
+        "PULse:DELay?","PULse:DELay %s",
+        """Set/Query the delay of the pulse""",
+        validator=list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,10]]
+    ) # TODO: limit is actualy pulse period.
+
+    pulse_hold = Instrument.control(
+        "PULSe:HOLD?","PULSe:HOLD %s",
+        """Set/Query the pulse hold mode (WIDTH|DUTY)""",
+        validator = strict_discrete_set,
+        values = ["WIDTH","DUTY"]
+    )
+
+    pulse_rise_time = Instrument.control(
+        "PULse:TRANsition:LEADing?","PULse:TRANsition:LEADing %s",
+        """Set/Query the leading (rising edge) time of the pulse""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,360]]
+    )    # TODO: Limits
+
+    pulse_fall_time = Instrument.control(
+        "PULse:TRANsition:TRAiling?","PULse:TRANsition:TRAiling %s",
+        """Set/Query the trailing (falling edge) time of the pulse""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,360]]
+    )    # TODO: Limits
+
+    pulse_width = Instrument.control(
+        "PULse:WIDTh?","PULse:WIDTh %s",
+        """Set/Query the trailing (falling edge) time of the pulse""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,360]]
+    )    # TODO: Limits
+
+#endregion
+    
+#region SWEep Modes
+    sweep_start_hold_time = Instrument.control(
+        "SWEep:HTIMe:STARt?","SWEep:HTIMe:STARt %s",
+        """Set/Query the start hold of the sweep""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,300]]
+    )
+
+    sweep_stop_hold_time = Instrument.control(
+        "SWEep:HTIMe:STOP?","SWEep:HTIMe:STOP %s",
+        """Set/Query the end hold of the sweep""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,300]]
+    )
+
+    sweep_return_time = Instrument.control(
+        "SWEep:HTIMe:RTIMe?","SWEep:HTIMe:RTIMe %s",
+        """Set/Query the return time of the sweep""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,300]]
+    )
+
+    sweep_type = Instrument.control(
+        "SWEep:SPACing?","SWEep:SPACing %s",
+        """Set/Query type of sweep""",
+        validator = strict_discrete_set,
+        values = ["LINear","LIN","LOGarithmic","LOG","STEp","STE"]
+    )
+
+    sweep_state = Instrument.control(
+        "SWEep:STATe?","SWEep:STATe %s",
+        """Enable/Disable/Query the sweep function""",
+        validator = strict_discrete_set,
+        values = ["ON","OFF"]
+    )
+
+    sweep_step = Instrument.control(
+        "SWEep:STEP?","SWEep:STEP %s",
+        """Set/Query the number of steps in a sweep""",
+        validator = strict_discrete_set,
+        values = range(2,2048+1) 
+    )
+
+    sweep_return_time = Instrument.control(
+        "SWEep:TIMe?","SWEep:TIMe %s",
+        """Set/Query the sweep time""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[1e-3,300]]
+    )
+
+    def sweep_trigger(self):
+        self.write("SWEep:TIGger:IMMediate")
+    
+    sweep_trigger_edge = Instrument.control(
+        "SWEep:TRIGger:SLOPe?","SWEep:TRIGger:SLOPe %s",
+        """Set/Query the trigger edge""",
+        validator = strict_discrete_set,
+        values = ["POSitive","POS","NEG","NEGative"]
+    )
+
+    sweep_trigger_source = Instrument.control(
+        "SWEep:TRIGger:SOURce?","SWEep:TRIGger:SOURce %s",
+        """Set/Query the source of the trigger signal""",
+        validator = strict_discrete_set,
+        values = ["INTernal","INT","EXTernal","EXT","MAN","MANual"]
+    )
+
+    sweep_trigger_out = Instrument.control(
+        "SWEep:TRIGger:TRIGOut?","SWEep:TRIGger:TRIGOut %s",
+        """Enable/Disable/Query the sweeps trigger out signal""",
+        validator = strict_discrete_set,
+        values = ["POSitive","POS","NEG","NEGative","OFF"]
+    )
+#endregion
+
+#region VOTLage Modes
+    voltage = Instrument.control(
+        "VOLTage?","VOLTage %s",
+        """Set/Query the output voltage""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[-10,10]]
+    )
+
+    voltage_peak = Instrument.control(
+        "VOLTage:HIGH?","VOLTage:HIGH %s",
+        """Set/Query the voltage peak""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[-10,10]]
+    )
+
+    voltage_min = Instrument.control(
+        "VOLTage:LOW?","VOLTage:LOW %s",
+        """Set/Query the voltage min""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[-10,10]]
+    )
+
+    voltage_offset = Instrument.control(
+        "VOLTage:OFFSet?","VOLTage:OFFSet %s",
+        """Set/Query the offset voltage""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[-5,5]]
+    )
+
+    voltage_units = Instrument.control(
+        "VOLTage:UNIT?","VOLTage:UNIT %s",
+        """Set/Query the output amplitude units""",
+        validator = strict_discrete_set,
+        values=["VPP","VRMS","DBM"]
+    )
+
 #endregion
 
 
