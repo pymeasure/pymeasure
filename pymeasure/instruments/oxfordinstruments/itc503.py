@@ -247,7 +247,7 @@ class ITC503(Instrument):
                 comm_errors += 1
                 log.error(
                     "No temperature-error returned. "
-                    f"Communication error # {comm_errors}."
+                    "Communication error # %d." % comm_errors
                 )
             else:
                 if abs(temp_error) < error:
