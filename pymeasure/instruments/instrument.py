@@ -72,7 +72,7 @@ class Instrument(object):
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
 
     @property
     def status(self):
@@ -80,7 +80,7 @@ class Instrument(object):
         if self.SCPI:
             return int(self.adapter.ask("*STB?"))
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
 
     @property
     def complete(self):
@@ -88,7 +88,7 @@ class Instrument(object):
         if self.SCPI:
             return int(self.adapter.ask("*OPC?"))
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
 
     def clear(self):
         """ Clears the instrument status byte
@@ -96,14 +96,14 @@ class Instrument(object):
         if self.SCPI:
             self.write("*CLS")
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
 
     def reset(self):
         """ Resets the instrument. """
         if self.SCPI:
             self.write("*RST")
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
 
     # Wrapper functions for the Adapter object
     def ask(self, command):
