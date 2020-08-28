@@ -127,7 +127,6 @@ class Instrument(object):
         """
         return self.adapter.read()
 
-
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
@@ -323,6 +322,10 @@ class Instrument(object):
         self.isShutdown = True
         log.info("Shutting down %s" % self.name)
 
+    def close(self):
+        """Close the instrument session"""
+        self.adapter.connection.close()
+
     def check_errors(self):
         """Return any accumulated errors. Must be reimplemented by subclasses.
         """
@@ -394,4 +397,4 @@ if __name__ == "__main__":
 
     log.info(type(inst).__name__)
 
-    inst.adapter.connection.close()
+    inst.close()
