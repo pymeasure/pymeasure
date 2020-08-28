@@ -490,6 +490,116 @@ class Channel(object):
 
 #endregion
 
+#region MODulation Modes
+
+    #region AM Modulation
+    modulation_state = Instrument.control(
+        "MOD:STATe?","MOD:STATe %s",
+        """Enable/Disable/Query Output modoulation""",
+        validators = strict_discrete_set,
+        values = ["ON","OFF"]
+    )
+
+    modulation_type = Instrument.control(
+        "MOD:TYPe?","MOD:TYPe %s",
+        """Select/Query the modulation method""",
+        validator = strict_discrete_set,
+        values = ["AM","FM","PM","ASK","FSK","PSK","PWM","BPSK","QPSK","3FSK","4FSK","OSK"]
+    )
+
+    modulation_am_depth = Instrument.control(
+        "MOD:AM:DEPTh?","MOD:AM:DEPTh %s",
+        """Set/Query the modulation depth %""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,120]]
+    )
+
+    modulation_am_internal_frequency = Instrument.control(
+        "MOD:AM:INTernal:FREQuency?","MOD:AM:INTernal:FREQuency %s",
+        """Set/Query the frequency of the modulation signal""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[2e-3,50e3]]
+    )
+
+    modulation_am_internal_function = Instrument.control(
+        "MOD:AM:INTernal:FUNCtion?","MOD:AM:INTernal:FUNCtion %s",
+        """Set/Query the modulation waveform""",
+        validator = strict_discrete_set,
+        values = ["SIN","SINusoid","SQU","SQUare","TRI","TRIangle","RAMP","NRAM","NRAMp","NOIS","NOISe","USER"]
+    )
+
+    modulation_am_source = Instrument.contol(
+        "MOD:AM:SOURce?","MOD:AM:SOURce %s",
+        """Set the AM modulation signal source""",
+        validator = strict_discrete_set,
+        values = ["INT","INTernal","EXT","EXTernal"]
+    )
+    #endregion
+
+    #region FM Modulation
+    modulation_fm_deviation = Instrument.control(
+        "MOD:FM:DEViation?","MOD:FM:DEViation %s",
+        """Set/Query the amount of FM modulation deviation""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,1e3]]
+    ) # TODO:RULES
+
+    modulation_fm_internal_frequency = Instrument.control(
+        "MOD:FM:INTernal:FREQuency?","MOD:FM:INTernal:FREQuency %s",
+        """Set the frequency of the modulating waveform""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[2e-3,50e3]]
+    )
+
+    modulation_fm_internal_function = Instrument.control(
+        "MOD:FM:INTernal:FUNCtion?","MOD:FM:INTernal:FUNCtion %s",
+        """Set the FM modulating waveform""",
+        validator = strict_discrete_set,
+        values = ["SIN","SINusoid","SQU","SQUare","TRI","TRIangle","RAMP","NRAM","NRAMp","NOIS","NOISe","USER"]
+    )
+
+    modulation_fm_source = Instrument.contol(
+        "MOD:FM:SOURce?","MOD:FM:SOURce %s",
+        """Set the AM modulation signal source""",
+        validator = strict_discrete_set,
+        values = ["INT","INTernal","EXT","EXTernal"]
+    )
+    #endregion
+
+    #region PM Modulation
+    modulation_pm_deviation = Instrument.control(
+        "MOD:PM:DEViation?","MOD:PM:DEViation %s",
+        """Set/Query the amount of PM modulation deviation""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[0,1e3]]
+    ) # TODO:RULES
+
+    modulation_pm_internal_frequency = Instrument.control(
+        "MOD:PM:INTernal:FREQuency?","MOD:PM:INTernal:FREQuency %s",
+        """Set the frequency of the modulating waveform""",
+        validator = list_or_floats,
+        values = [["MIN","MAX","MINimum","MAXimum"],[2e-3,50e3]]
+    )
+
+    modulation_pm_internal_function = Instrument.control(
+        "MOD:PM:INTernal:FUNCtion?","MOD:PM:INTernal:FUNCtion %s",
+        """Set the PM modulating waveform""",
+        validator = strict_discrete_set,
+        values = ["SIN","SINusoid","SQU","SQUare","TRI","TRIangle","RAMP","NRAM","NRAMp","NOIS","NOISe","USER"]
+    )
+
+    modulation_pm_source = Instrument.contol(
+        "MOD:PM:SOURce?","MOD:PM:SOURce %s",
+        """Set the AM modulation signal source""",
+        validator = strict_discrete_set,
+        values = ["INT","INTernal","EXT","EXTernal"]
+    )
+    
+    #endregion
+
+
+
+#endregion
 
     def __init__(self, instrument,channel):
         self.instrument = instrument
@@ -668,5 +778,3 @@ class RigolDG4000(Instrument):
 
     def display_sreen_saver_now(self):
         self.write(":DISPlay:SAVer:IMMediate")
-
-    
