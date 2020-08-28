@@ -63,14 +63,6 @@ class Instrument(object):
 
         self.get = Object()
 
-        # TODO: Determine case basis for the addition of these methods
-        if includeSCPI:
-            # Basic SCPI commands
-            self.status = self.measurement("*STB?",
-                                           """ Returns the status of the instrument """)
-            self.complete = self.measurement("*OPC?",
-                                             """ TODO: Add this doc """)
-
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
 
@@ -80,7 +72,38 @@ class Instrument(object):
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
         else:
-            return "Warning: Property not implemented."
+            raise NotImplementedError
+
+    @property
+    def status(self):
+        """ Returns the status of the instrument"""
+        if self.SCPI:
+            return int(self.adapter.ask("*STB?"))
+        else:
+            raise NotImplementedError
+
+    @property
+    def complete(self):
+        """ Return 1 when all pending selected device operations have been completed."""
+        if self.SCPI:
+            return int(self.adapter.ask("*OPC?"))
+        else:
+            raise NotImplementedError
+
+    def clear(self):
+        """ Clears the instrument status byte
+        """
+        if self.SCPI:
+            self.write("*CLS")
+        else:
+            raise NotImplementedError
+
+    def reset(self):
+        """ Resets the instrument. """
+        if self.SCPI:
+            self.write("*RST")
+        else:
+            raise NotImplementedError
 
     # Wrapper functions for the Adapter object
     def ask(self, command):
@@ -103,6 +126,7 @@ class Instrument(object):
         response.
         """
         return self.adapter.read()
+
 
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
@@ -289,17 +313,6 @@ class Instrument(object):
 
         return property(fget, fset)
 
-    # TODO: Determine case basis for the addition of this method
-    def clear(self):
-        """ Clears the instrument status byte
-        """
-        self.write("*CLS")
-
-    # TODO: Determine case basis for the addition of this method
-    def reset(self):
-        """ Resets the instrument. """
-        self.write("*RST")
-
     def shutdown(self):
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
@@ -309,6 +322,7 @@ class Instrument(object):
         """Return any accumulated errors. Must be reimplemented by subclasses.
         """
         pass
+
 
 
 class FakeInstrument(Instrument):
@@ -357,3 +371,21 @@ class FakeInstrument(Instrument):
                                   check_set_errors=check_set_errors,
                                   check_get_errors=check_get_errors,
                                   **kwargs)
+
+if __name__ == "__main__":
+    from pymeasure.log import console_log
+
+    class Test(Instrument):
+        pass
+
+    console_log(log)
+    inst = Test(
+        "TCPIP::A-34461A-00000::hislip0::INSTR", name="My Instrument", includeSCPI=True
+    )
+    log.info(inst.id)
+    log.info(inst.status)
+    log.info(inst.complete)
+
+    log.info(type(inst).__name__)
+
+    inst.adapter.connection.close()
