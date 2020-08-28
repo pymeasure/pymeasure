@@ -137,6 +137,11 @@ class Instrument(object):
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
+    def read_stb(self):
+        """ Reads a status byte of the service request by calling read_stb() from Pyvisa. This corresponds
+         to viReadSTB function of the VISA library."""
+        return self.adapter.connection.read_stb()
+
     @staticmethod
     def control(get_command, set_command, docs,
                 validator=lambda v, vs: v, values=(), map_values=False,
@@ -385,6 +390,7 @@ if __name__ == "__main__":
     log.info(inst.id)
     log.info(inst.status)
     log.info(inst.complete)
+    log.info(inst.read_stb())
 
     log.info(type(inst).__name__)
 
