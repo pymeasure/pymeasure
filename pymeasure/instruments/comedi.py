@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ def readAI(device, channel, range=None, count=1):
     """
     ai = getAI(device, channel, range)
     converter = ai.get_converter()
-    if count is 1:
+    if count == 1:
         return converter.to_physical(ai.data_read())
     else:
         return converter.to_physical(ai.data_read_n(count))

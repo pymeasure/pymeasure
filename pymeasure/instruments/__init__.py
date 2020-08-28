@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,12 +31,19 @@ from .validators import discreteTruncate
 from . import advantest
 from . import agilent
 from . import ametek
+from . import ami
+from . import anapico
 from . import anritsu
 from . import danfysik
+from . import deltaelektronika
 from . import fwbell
 from . import hp
 from . import keithley
+from . import keysight
 from . import lakeshore
+from . import newport
+from . import ni
+from . import oxfordinstruments
 from . import parker
 from . import signalrecovery
 from . import srs

@@ -102,3 +102,10 @@ ENV/
 
 # PyPI
 .pypirc
+
+
+# VSCode
+settings.json
+
+# Vim
+*.swp

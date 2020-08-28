@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-import visa
+import pyvisa
 
 
 def list_resources():
@@ -38,7 +38,7 @@ def list_resources():
         dmm = Agilent34410(resources[0])
     
     """
-    rm = visa.ResourceManager()
+    rm = pyvisa.ResourceManager()
     instrs = rm.list_resources()
     for n, instr in enumerate(instrs):
         # trying to catch errors in comunication
@@ -48,12 +48,12 @@ def list_resources():
             try:
                 # noinspection PyUnresolvedReferences
                 idn = res.ask('*idn?')[:-1]
-            except visa.Error:
+            except pyvisa.Error:
                 idn = "Not known"
             finally:
                 res.close()
                 print(n, ":", instr, ":", idn)
-        except visa.VisaIOError as e:
+        except pyvisa.VisaIOError as e:
             print(n, ":", instr, ":", "Visa IO Error: check connections")
             print(e)
     rm.close()

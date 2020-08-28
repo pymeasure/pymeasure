@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,18 @@
 # THE SOFTWARE.
 #
 
+import logging
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+try:
+    import vxi11
+except ImportError:
+    log.warning('Failed to import vxi11 package, which is required for the VXI11Adapter')
+
 from .adapter import Adapter
-import vxi11
+
 
 class VXI11Adapter(Adapter):
     """ VXI11 Adapter class. Provides a adapter object that

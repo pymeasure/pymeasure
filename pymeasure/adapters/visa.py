@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2017 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 import logging
 
 import copy
-import visa
+import pyvisa
 import numpy as np
 from pkg_resources import parse_version
 
@@ -54,9 +54,9 @@ class VISAAdapter(Adapter):
             resourceName = "GPIB0::%d::INSTR" % resourceName
         super(VISAAdapter, self).__init__()
         self.resource_name = resourceName
-        self.manager = visa.ResourceManager(visa_library)
+        self.manager = pyvisa.ResourceManager(visa_library)
         safeKeywords = ['resource_name', 'timeout',
-                        'chunk_size', 'lock', 'delay', 'send_end',
+                        'chunk_size', 'lock', 'query_delay', 'send_end',
                         'values_format', 'read_termination', 'write_termination']
         kwargsCopy = copy.deepcopy(kwargs)
         for key in kwargsCopy:
@@ -70,8 +70,8 @@ class VISAAdapter(Adapter):
     @staticmethod
     def has_supported_version():
         """ Returns True if the PyVISA version is greater than 1.8 """
-        if hasattr(visa, '__version__'):
-            return parse_version(visa.__version__) >= parse_version('1.8')
+        if hasattr(pyvisa, '__version__'):
+            return parse_version(pyvisa.__version__) >= parse_version('1.8')
         else:
             return False
 
@@ -87,11 +87,20 @@ class VISAAdapter(Adapter):
 
     def read(self):
         """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
+        ASCII response
 
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read()
+
+    def read_bytes(self, size):
+        """ Reads specified number of bytes from the buffer and returns
+        the resulting ASCII response
+
+        :param size: Number of bytes to read from the buffer
+        :returns: String ASCII response of the instrument.
+        """
+        return self.connection.read_bytes(size)
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
