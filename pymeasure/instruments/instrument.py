@@ -332,7 +332,6 @@ class Instrument(object):
         pass
 
 
-
 class FakeInstrument(Instrument):
     """ Provides a fake implementation of the Instrument class
     for testing purposes.
