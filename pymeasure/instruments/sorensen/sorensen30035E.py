@@ -33,8 +33,7 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 
 import numpy as np
 import time
-from io import BytesIO
-import re
+
 
 
 class Sorensen30035E(Instrument):
@@ -49,41 +48,13 @@ class Sorensen30035E(Instrument):
         sorensen = Sorensen30035E("GPIB::1")
 
         sorensen.enable_source()                # Enables output of current
-        sorensen.ramp_to_current(200,200)       # Ramp to 200 V in 200 seconds nominally
+        sorensen.ramp_to_voltage(200,200)       # Ramp to 200 V in 200 seconds nominally
         
         print(sorensen.current)                 # Prints the actual current output in Amps
 
         sorensen.shutdown()                     # Ramps the current to 0 mA and disables output
 
     """
-
-    _source_enable = Instrument.control(
-        "OUTPut:PROTection:STATe?", "OUTPut:PROTection:STATe %d",
-        """DO NOT ACCESS DIRECTLY UNLESS YOU ARE CERTAIN. A boolean property that sets the ouput to zero
-        or the programmed value, openning or closing the isolation relay. *RST value is ON. CAUTION: Ensure
-        that suitable delays are incorporated to preclude hot switching of the isolation relay.""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True
-    )
-
-    _source_isolation = Instrument.control(
-        "OUTPut:ISOLation?", "OUTPut:ISOLation %d",
-        """DO NOT ACCESS DIRECTLY UNLESS YOU ARE CERTAIN. A boolean property that controls whether the 
-        isolation relay is enabled. DO NOT disable if the current is non-zero, i.e. no hot-switching""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True
-    )
-
-    polarity = Instrument.control(
-        "OUTPut:POLarity?", "OUTPut:POLarity %d",
-        """ A boolean property that enables switches the polarity of the power supply
-        via a relay. source_enable (the isolation relay) must be False when switching this parameter or else
-        an error will be generated. """,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
 
     source_delay = Instrument.control(
         "OUTPut:PROTection:DELay?", "OUTPut:PROTection:DELay %g",
@@ -101,16 +72,17 @@ class Sorensen30035E(Instrument):
 
     current = Instrument.measurement(
         "MEASure:CURRent?",
-        """ Returns the actual current in Amps.
+        """ Returns the actual current in Amps. Note that this is subject to the precision
+        and calibration of the internal DMM.
         """
     )
 
     current_setpoint = Instrument.control(
         "SOUR:CURR?", "SOUR:CURR %g",
         """ A floating point property that immediately sets the desired current output 
-        in Amps, which can take floating point values between -3.5 and +3.5 A. """,
+        in Amps, which can take floating point values between 0 and +3.5 A. """,
         validator=truncated_range,
-        values=[-3.5, 3.5]
+        values=[0, 3.5]
     )
 
     current_limit = Instrument.control(
@@ -129,7 +101,8 @@ class Sorensen30035E(Instrument):
 
     voltage = Instrument.measurement(
         "MEAS:VOLT?",
-        """ Returns the actual voltage in Volts.
+        """ Returns the actual voltage in Volts. Note that this is subject to the precision
+        and calibration of the internal DMM.
         """
     )
     voltage_setpoint = Instrument.control(
@@ -159,7 +132,7 @@ class Sorensen30035E(Instrument):
          to the specified value in the requested time. The large capacitance used to
          suppress ripple in the power supply may affect charging/discharging times for
          low currents/high impedance samples. """
-         if abs(value) > 300:
+         if value > 300:
             raise ValueError("Requested voltage too large, |V| must be 300 V or less")
          self.write("SOUR:VOLT:RAMP %g %g" % (value, time))
 
@@ -168,7 +141,7 @@ class Sorensen30035E(Instrument):
          to the specified value in the requested time. The large capacitance used to
          suppress ripple in the power supply may affect charging/discharging times for
          low currents/high impedance samples. """
-         if abs(value) > 3.5:
+         if value > 3.5:
             raise ValueError("Requested current too large, |I| must be 3.5 A or less")
          self.write("SOUR:CURR:RAMP %g %g" % (value, time))
 
@@ -176,21 +149,33 @@ class Sorensen30035E(Instrument):
         """ Aborts all in-progress ramps
         """
         self.write("SOUR:CURR:RAMP:ABOR")
+        self.write("SOUR:VOLT:RAMP:ABOR")
 
-    def enable_source(self):
-        """ Enables the output of the power supply (switch isolation relays on) """
-        if self.source_enable == False:
-            self.source_enable = True
+    @property
+    def source_enabled(self):
+        return self.query("OUTPut:ISOLation?")
 
+    @source_enabled.setter
+    def source_enabled(self, state):
+        if state:
+            if not self.source_enabled:
+                self.write("OUTPut:ISOLation 1")
+        elif not state:
+            if self.source_enabled:
+                if self.current_setpoint > 0:
+                    self.ramp_to_current(0,int(self.current_setpoint)*20)
+                    while self.current>0.01:
+                        time.sleep(.1)
+                    self.write("OUTPut:ISOLation 0")
 
     def shutdown(self):
         """ Disables the  output after ramping down at 1 V/s if voltage is non-zero."""
         voltage = self.voltage
         current = self.current
-        if abs(voltage) >0.01 or abs(current) >0.0001:
+        if voltage >0.1 or current >0.008:
             self.ramp_to_voltage(0,voltage)
             i = 0
-        while self.voltage >0.01:
+        while self.voltage >0.1:
             time.sleep(1)
             i = i+1
             if i > 3*voltage:
@@ -216,10 +201,10 @@ class Sorensen30035E(Instrument):
         code, message = self.error
         while code != 0:
             t = time.time()
-            log.info("Keithley 2400 reported error: %d, %s" % (code, message))
+            log.info("Sorensen 30035E reported error: %d, %s" % (code, message))
             code, message = self.error
             if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 2400 error retrieval.")
+                log.warning("Timed out for Sorensen 30035E error retrieval.")
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """
