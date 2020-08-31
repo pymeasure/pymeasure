@@ -379,22 +379,3 @@ class FakeInstrument(Instrument):
                                   check_set_errors=check_set_errors,
                                   check_get_errors=check_get_errors,
                                   **kwargs)
-
-if __name__ == "__main__":
-    from pymeasure.log import console_log
-
-    class Test(Instrument):
-        pass
-
-    console_log(log)
-    inst = Test(
-        "TCPIP::A-34461A-00000::hislip0::INSTR", name="My Instrument", includeSCPI=True
-    )
-    log.info(inst.id)
-    log.info(inst.status)
-    log.info(inst.complete)
-    log.info(inst.read_stb())
-
-    log.info(type(inst).__name__)
-
-    inst.close()
