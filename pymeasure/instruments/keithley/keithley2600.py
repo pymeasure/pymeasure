@@ -109,8 +109,8 @@ class Channel(object):
     def source_current_range(self):
         return float(self.instrument.ask('print(smu%s.source.rangei' % self.channel))
     @source_current_range.setter
-    def source_current_range(self, range):
-        if npln in range(-1.5,1.5):
+    def source_current_range(self, rng):
+        if rng in range(-1.5,1.5):
             self.instrument.write('smu%s.source.rangei=%f' % (self.channel, range))
         else:
             raise ValueError('Source current range has to be in the interval [-1.5,1.5]!')
