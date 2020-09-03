@@ -132,7 +132,7 @@ class Sorensen30035E(Instrument):
          to the specified value in the requested time. The large capacitance used to
          suppress ripple in the power supply may affect charging/discharging times for
          low currents/high impedance samples. """
-         if value > 300:
+        if value > 300:
             raise ValueError("Requested voltage too large, |V| must be 300 V or less")
          self.write("SOUR:VOLT:RAMP %g %g" % (value, time))
 
@@ -141,7 +141,7 @@ class Sorensen30035E(Instrument):
          to the specified value in the requested time. The large capacitance used to
          suppress ripple in the power supply may affect charging/discharging times for
          low currents/high impedance samples. """
-         if value > 3.5:
+        if value > 3.5:
             raise ValueError("Requested current too large, |I| must be 3.5 A or less")
          self.write("SOUR:CURR:RAMP %g %g" % (value, time))
 
