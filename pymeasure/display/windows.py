@@ -153,7 +153,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, , directory_input=False):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
