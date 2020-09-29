@@ -25,18 +25,14 @@
 import os
 import logging
 import weakref
-import numpy as np
 import pandas as pd
 from ctypes import (cdll, create_string_buffer, c_uint8, c_uint16, c_uint32,
                     c_int16, c_int32, c_char_p, c_wchar_p, c_bool, c_double,
                     byref)
-from enum import IntEnum
 from pymeasure.instruments.thorlabs import ThorlabsDLLInstrument
 from pymeasure.instruments.validators import (strict_range,
                                               strict_discrete_set,
                                               strict_discrete_range)
-from pyvisa.errors import completion_and_error_messages, VisaIOError
-from pyvisa.constants import _to_int
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -240,6 +236,9 @@ class ThorlabsChrolis(ThorlabsDLLInstrument):
     @brightness.setter
     def brightness(self, led_brightness):
         led_brightness = tuple(int(x*10) for x in led_brightness)
+        log.info(
+            '{0}: Set LED Brightnesses (0-1000) to {1}'.format(
+                self.name, led_brightness))
         self._set_LED_parameters(
             'setLED_HeadBrightness', led_brightness, c_uint16,
             validator=lambda v: strict_range(v, (0, 1000)))
@@ -252,6 +251,8 @@ class ThorlabsChrolis(ThorlabsDLLInstrument):
 
     @power_state.setter
     def power_state(self, power):
+        log.info('{0}: Set LED power states to {1}'.format(
+            self.name, power))
         self._set_LED_parameters(
             'setLED_HeadPowerStates', power, c_bool,
             validator=lambda v: strict_discrete_set(v, (True, False, 0, 1)))
