@@ -23,3 +23,6 @@
 #
 
 from .thorlabspm100usb import ThorlabsPM100USB
+from .thorlabsdll import ThorlabsDLLAdapter, ThorlabsDLLInstrument
+from .thorlabspm import ThorlabsPowermeter
+from .thorlabsChrolis import ThorlabsChrolis
