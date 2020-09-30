@@ -491,13 +491,19 @@ class ThorlabsPowermeter(ThorlabsDLLInstrument, _ThorlabsPowermeterBase):
         Remark:
 
             1. You have to darken the input before
-                starting dark/zero adjustment.
+            starting dark/zero adjustment.
+
             2. You can get the state of dark/zero adjustment
-                with <Get Dark Adjustment State>
+            with <Get Dark Adjustment State>
+
             3. You can stop dark/zero adjustment with
-                <Cancel Dark Adjustment>
-            4. You get the dark/zero value with <Get Dark Offset>
-            5. Energy sensors do not support this function
+            <Cancel Dark Adjustment>
+
+            4. You get the dark/zero value
+            with <Get Dark Offset>
+
+            5. Energy sensors do not support
+            this function
         """
         self.dll('startDarkAdjust')
         start = time.time()
