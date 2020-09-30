@@ -237,7 +237,7 @@ class ThorlabsChrolis(ThorlabsDLLInstrument):
     @brightness.setter
     def brightness(self, led_brightness):
         led_brightness = tuple(int(x*10) for x in led_brightness)
-        log.info(
+        log.debug(
             '{0}: Set LED Brightnesses (0-1000) to {1}'.format(
                 self.name, led_brightness))
         self._set_LED_parameters(
