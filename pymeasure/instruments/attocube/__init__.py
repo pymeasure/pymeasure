@@ -21,27 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
 
-from .adapter import Adapter, FakeAdapter
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-try:
-    from pymeasure.adapters.visa import VISAAdapter
-except ImportError:
-    log.warning("PyVISA library could not be loaded")
-
-try:
-    from pymeasure.adapters.serial import SerialAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
-except ImportError:
-    log.warning("PySerial library could not be loaded")
-
-try:
-    from pymeasure.adapters.vxi11 import VXI11Adapter
-except ImportError:
-    log.warning("VXI-11 library could not be loaded")
-
-from pymeasure.adapters.telnet import TelnetAdapter
+from .adapters import AttocubeConsoleAdapter
+from .anc300 import ANC300Controller
