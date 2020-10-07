@@ -423,6 +423,14 @@ class KeysightDSOX1102G(Instrument):
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
 
+    def ch(self, channel_number):
+        if channel_number == 1:
+            return self.ch1
+        elif channel_number == 2:
+            return self.ch2
+        else:
+            raise ValueError("Invalid channel number. Must be 1 or 2.")
+
     def check_errors(self):
         """ Read all errors from the instrument."""
         while True:
