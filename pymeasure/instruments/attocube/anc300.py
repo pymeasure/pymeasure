@@ -78,9 +78,9 @@ class Axis(object):
 
     frequency = Instrument.control(
             "getf", "setf %.3f",
-            """ Frequency of the stepping motion in Hertz from 0 to 10000 Hz.
+            """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
             This property can be set. """,
-            validator=strict_range, values=[0, 10000],
+            validator=strict_range, values=[1, 10000],
             get_process=extract_int)
 
     mode = Instrument.control(
