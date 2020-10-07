@@ -21,3 +21,4 @@ Dennis Feng
 Stefano Pirotta
 Moritz Jung
 Mikhaël Myara
+Dominik Kriegner
