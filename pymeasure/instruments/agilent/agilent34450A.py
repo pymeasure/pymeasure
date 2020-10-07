@@ -562,7 +562,7 @@ class Agilent34450A(Instrument):
             try:
                 list_without_empty_elements[i] = float(v)
             except ValueError as e:
-                print(e)
+                log.error(e)
 
         return list_without_empty_elements
 
