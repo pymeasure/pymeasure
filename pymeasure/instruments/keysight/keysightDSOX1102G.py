@@ -32,6 +32,181 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
+class Channel(object):
+    """ Implementation of a Keysight DSOX1102G Oscilloscope channel.
+
+    Implementation modeled on Channel object of Tektronix AFG3152C instrument. """
+
+    BOOLS = {True: 1, False: 0}
+
+    bwlimit = Instrument.control(
+        "BWLimit?", "BWLimit %d",
+        """ A boolean parameter that toggles 25 MHz internal low-pass filter.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    coupling = Instrument.control(
+        "COUPling?", "COUPling %s",
+        """ A string parameter that determines the coupling ("ac" or "dc").""",
+        validator=strict_discrete_set,
+        values={"ac": "AC", "dc": "DC"},
+        map_values=True
+    )
+
+    display = Instrument.control(
+        "DISPlay?", "DISPlay %d",
+        """ A boolean parameter that toggles the display.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    invert = Instrument.control(
+        "INVert?", "INVert %d",
+        """ A boolean parameter that toggles the inversion of the input signal.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    label = Instrument.control(
+        "LABel?", 'LABel "%s"',
+        """ A string to label the channel. Labels with more than 10 characters are truncated to 10 
+        characters. May contain commonly used ASCII characters. Lower case characters are converted 
+        to upper case.""",
+        get_process=lambda v: str(v[1:-1])
+    )
+
+    offset = Instrument.control(
+        "OFFSet?", "OFFSet %f",
+        """ A float parameter to set value that is represented at center of screen in 
+        Volts. The range of legal values varies depending on range and scale. If the specified value 
+        is outside of the legal range, the offset value is automatically set to the nearest legal value. """
+    )
+
+    probe_attenuation = Instrument.control(
+        "PROBe?", "PROBe %f",
+        """ A float parameter that specifies the probe attenuation. The probe attenuation
+        may be from 0.1 to 10000.""",
+        validator=strict_range,
+        values=[0.1, 10000]
+    )
+
+    range = Instrument.control(
+        "RANGe?", "RANGe %f",
+        """ A float parameter that specifies the full-scale vertical axis in Volts. 
+        When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V."""
+    )
+
+    scale = Instrument.control(
+        "SCALe?", "SCALe %f",
+        """ A float parameter that specifies the vertical scale, or units per division, in Volts."""
+    )
+
+    def __init__(self, instrument, number):
+        self.instrument = instrument
+        self.number = number
+
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values(":channel%d:%s" % (
+            self.number, command), **kwargs)
+
+    def ask(self, command):
+        self.instrument.ask(":channel%d:%s" % (self.number, command))
+
+    def write(self, command):
+        self.instrument.write(":channel%d:%s" % (self.number, command))
+
+    def setup(self, bwlimit: bool = None, coupling: str = None,
+                    display: bool = None, invert: bool = None, label: str = None,
+                    offset: float = None, probe_attenuation: float = None,
+                    vertical_range: float = None, scale=None):
+        """ Setup channel. Unspecified settings are not modified. Modifying values such as
+        probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and make
+        multiple consecutive calls to setup() if needed.
+
+        :param bwlimit: Enable 25 MHz internal low-pass filter.
+        :param coupling: "ac" or "dc".
+        :param display: Enable channel display.
+        :param invert: Enable input signal inversion.
+        :param label: Label string with max. 10 characters, may contain commonly used ASCII characters.
+        :param offset: Value represented at center of screen, must be inside the legal range.
+        :param probe_attenuation: Probe attenuation values from 0.1 to 1000.
+        :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1 probe
+                                attenuation, legal values for the range are  from 8mV to 40 V. If the
+                                probe attenuation is changed, the range value is multiplied by the
+                                probe attenuation factor.
+        :param scale: Units per division. """
+
+        if vertical_range is not None and scale is not None:
+            raise Warning("Both vertical_range and scale are specified. Specified scale has priority.")
+
+        if probe_attenuation is not None: self.probe_attenuation = probe_attenuation
+        if bwlimit is not None: self.bwlimit = bwlimit
+        if coupling is not None: self.coupling = coupling
+        if display is not None: self.display = display
+        if invert is not None: self.invert = invert
+        if label is not None: self.label = label
+        if offset is not None: self.offset = offset
+        if vertical_range is not None: self.range = vertical_range
+        if scale is not None: self.scale = scale
+
+    @property
+    def current_configuration(self):
+        """ Read channel configuration as a dict containing the following keys:
+            - "CHAN": channel number (int)
+            - "OFFS": vertical offset (float)
+            - "RANG": vertical range (float)
+            - "COUP": "dc" or "ac" coupling (str)
+            - "IMP": input impedance (str)
+            - "DISP": currently displayed (bool)
+            - "BWL": bandwidth limiting enabled (bool)
+            - "INV": inverted (bool)
+            - "UNIT": unit (str)
+            - "PROB": probe attenuation (float)
+            - "PROB:SKEW": skew factor (float)
+            - "STYP": probe signal type (str)
+        """
+
+        ch_setup_raw = self.ask("?").strip("\n")
+        ch_setup_splitted = ch_setup_raw.split(";")
+
+        # Create dict of setup parameters
+        ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
+
+        # Add "CHAN" key
+        ch_setup_dict["CHAN"] = self.number
+
+        # Clean up badly named key
+        key_to_pop = None
+        for key in ch_setup_dict:
+            if "RANG" in key:
+                key_to_pop = key
+        ch_setup_dict["RANG"] = ch_setup_dict.pop(key_to_pop)
+
+        # Convert values to specific type
+        to_str = ["COUP", "IMP", "UNIT", "STYP"]
+        to_bool = ["DISP", "BWL", "INV"]
+        to_float = ["OFFS", "PROB", "PROB:SKEW", "RANG"]
+        to_int = ["CHAN"]
+        for key in ch_setup_dict:
+            if key in to_str:
+                ch_setup_dict[key] = str(ch_setup_dict[key])
+            elif key in to_bool:
+                ch_setup_dict[key] = (ch_setup_dict[key] == "1")
+            elif key in to_float:
+                ch_setup_dict[key] = float(ch_setup_dict[key])
+            elif key in to_int:
+                ch_setup_dict[key] = int(ch_setup_dict[key])
+        return ch_setup_dict
+
+
+
 class KeysightDSOX1102G(Instrument):
     """ Represents the Keysight DSOX1102G Oscilloscope interface for interacting
     with the instrument.
@@ -63,184 +238,6 @@ class KeysightDSOX1102G(Instrument):
     def autoscale(self):
         """ Autoscale displayed channels. """
         self.write(":autoscale")
-
-    #############
-    # Channel 1 #
-    #############
-
-    @property
-    def ch1(self):
-        """ Read channel 1 setup as a dict containing the following keys:
-            - "CHAN": channel number (int)
-            - "OFFS": vertical offset (float)
-            - "RANG": vertical range (float)
-            - "COUP": "dc" or "ac" coupling (str)
-            - "IMP": input impedance (str)
-            - "DISP": currently displayed (bool)
-            - "BWL": bandwidth limiting enabled (bool)
-            - "INV": inverted (bool)
-            - "UNIT": unit (str)
-            - "PROB": probe attenuation (float)
-            - "PROB:SKEW": skew factor (float)
-            - "STYP": probe signal type (str)
-        """
-        return self._ch(1)
-
-    ch1_bwlimit = Instrument.control(
-        ":channel1:BWLimit?", ":channel1:BWLimit %d",
-        """ A boolean parameter that toggles 25 MHz internal low-pass filter for channel 1.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
-    )
-
-    ch1_coupling = Instrument.control(
-        ":channel1:COUPling?", ":channel1:COUPling %s",
-        """ A string parameter that determines the coupling ("ac" or "dc") for channel 1.""",
-        validator=strict_discrete_set,
-        values={"ac": "AC", "dc": "DC"},
-        map_values=True
-    )
-
-    ch1_display = Instrument.control(
-        ":channel1:DISPlay?", ":channel1:DISPlay %d",
-        """ A boolean parameter that toggles the display of channel 1.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
-    )
-
-    ch1_invert = Instrument.control(
-        ":channel1:INVert?", ":channel1:INVert %d",
-        """ A boolean parameter that toggles the inversion of the input signal for channel 1.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
-    )
-
-    ch1_label = Instrument.control(
-        ":channel1:LABel?", ':channel1:LABel "%s"',
-        """ A string to label channel 1. Labels with more than 10 characters are truncated to 10 
-        characters. May contain commonly used ASCII characters. Lower case characters are converted 
-        to upper case.""",
-        get_process=lambda v: str(v[1:-1])
-    )
-
-    ch1_offset = Instrument.control(
-        ":channel1:OFFSet?", ":channel1:OFFSet %f",
-        """ A float parameter to set value that is represented at center of screen for channel 1 in 
-        Volts. The range of legal values varies depending on range and scale. If the specified value 
-        is outside of the legal range, the offset value is automatically set to the nearest legal value. """
-    )
-
-    ch1_probe_attenuation = Instrument.control(
-        ":channel1:PROBe?", ":channel1:PROBe %f",
-        """ A float parameter that specifies the probe attenuation for channel 1. The probe attenuation
-        may be from 0.1 to 10000.""",
-        validator=strict_range,
-        values=[0.1, 10000]
-    )
-
-    ch1_range = Instrument.control(
-        ":channel1:RANGe?", ":channel1:RANGe %f",
-        """ A float parameter that specifies the full-scale vertical axis for channel 1 in Volts. 
-        When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V."""
-    )
-
-    ch1_scale = Instrument.control(
-        ":channel1:SCALe?", ":channel1:SCALe %f",
-        """ A float parameter that specifies the vertical scale, or units per division, for 
-        channel 1 in Volts."""
-    )
-
-    #############
-    # Channel 2 #
-    #############
-    @property
-    def ch2(self):
-        """ Read channel 2 setup as a dict containing the following keys:
-            - "CHAN": channel number (int)
-            - "OFFS": vertical offset (float)
-            - "RANG": vertical range (float)
-            - "COUP": "dc" or "ac" coupling (str)
-            - "IMP": input impedance (str)
-            - "DISP": currently displayed (bool)
-            - "BWL": bandwidth limiting enabled (bool)
-            - "INV": inverted (bool)
-            - "UNIT": unit (str)
-            - "PROB": probe attenuation (float)
-            - "PROB:SKEW": skew factor (float)
-            - "STYP": probe signal type (str)
-        """
-        return self._ch(2)
-
-    ch2_bwlimit = Instrument.control(
-        "channel2:BWLimit?", "channel2:BWLimit %d",
-        """ A boolean parameter that toggles 25 MHz internal low-pass filter for channel 2.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
-    )
-
-    ch2_coupling = Instrument.control(
-        "channel2:COUPling?", ":channel2:COUPling %s",
-        """ A string parameter that determines the coupling ("ac" or "dc") for channel 2.""",
-        validator=strict_discrete_set,
-        values={"ac": "AC", "dc": "DC"},
-        map_values=True
-    )
-
-    ch2_display = Instrument.control(
-        ":channel2:DISPlay?", ":channel2:DISPlay %d",
-        """ A boolean parameter that toggles the display of channel 2.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
-    )
-
-    ch2_invert = Instrument.control(
-        ":channel2:INVert?", ":channel2:INVert %d",
-        """ A boolean parameter that toggles the inversion of the input signal for channel 2.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
-    )
-
-    ch2_label = Instrument.control(
-        ":channel2:LABel?", ':channel2:LABel "%s"',
-        """ A string to label channel 2. Labels with more than 10 characters are truncated to 
-        10 characters. May contain commonly used ASCII characters. Lower case characters are 
-        converted to upper case.""",
-        get_process=lambda v: str(v[1:-1])
-    )
-
-    ch2_offset = Instrument.control(
-        ":channel2:OFFSet?", ":channel2:OFFSet %f",
-        """ A float parameter to set value that is represented at center of screen for channel 2 
-        in Volts. The range of legal values varies depending on range and scale. If the specified 
-        value is outside of the legal range, the offset value is automatically set to the nearest 
-        legal value. """
-    )
-
-    ch2_probe_attenuation = Instrument.control(
-        ":channel2:PROBe?", ":channel2:PROBe %f",
-        """ A float parameter that specifies the probe attenuation for channel 2. The probe attenuation
-        may be from 0.1 to 10000. """,
-        validator=strict_range,
-        values=[0.1, 10000]
-    )
-
-    ch2_range = Instrument.control(
-        ":channel2:RANGe?", ":channel2:RANGe %f",
-        """ A float parameter that specifies the full-scale vertical axis for channel 2 in Volts. 
-        When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V."""
-    )
-
-    ch2_scale = Instrument.control(
-        ":channel2:SCALe?", ":channel2:SCALe %f",
-        """ A float parameter that specifies the vertical scale, or units per division, for 
-        channel 2 in Volts."""
-    )
 
     ##################
     # Timebase Setup #
@@ -414,8 +411,8 @@ class KeysightDSOX1102G(Instrument):
         return self.ask(":system:setup?")
 
     @system_setup.setter
-    def system_setup(self, s):
-        self.write(":system:setup " + s)
+    def system_setup(self, setup_string):
+        self.write(":system:setup " + setup_string)
 
     def __init__(self, adapter, **kwargs):
         super(KeysightDSOX1102G, self).__init__(
@@ -423,6 +420,8 @@ class KeysightDSOX1102G(Instrument):
         )
         # Account for setup time for timebase_mode, waveform_points_mode
         self.adapter.connection.timeout = 6000
+        self.ch1 = Channel(self, 1)
+        self.ch2 = Channel(self, 2)
 
     def check_errors(self):
         """ Read all errors from the instrument."""
@@ -445,54 +444,6 @@ class KeysightDSOX1102G(Instrument):
     def default_setup(self):
         """ Default setup, some user settings (like preferences) remain unchanged. """
         self.write(":SYSTem:PRESet")
-
-    def channel_setup(self, channel: int, bwlimit: bool = None, coupling: str = None,
-                      display: bool = None, invert: bool = None, label: str = None,
-                      offset: float = None, probe_attenuation: float = None,
-                      vertical_range: float = None, scale=None):
-        """ Setup specified channels. Unspecified settings are not modified. Modifying values such as
-        probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and make
-        multiple consecutive calls to channel_setup if needed.
-
-        :param channel: Channel nb, can be 1 or 2.
-        :param bwlimit: Enable 25 MHz internal low-pass filter.
-        :param coupling: "ac" or "dc".
-        :param display: Enable channel display.
-        :param invert: Enable input signal inversion.
-        :param label: Label string with max. 10 characters, may contain commonly used ASCII characters.
-        :param offset: Value represented at center of screen, must be inside the legal range.
-        :param probe_attenuation: Probe attenuation values from 0.1 to 1000.
-        :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1 probe
-                                attenuation, legal values for the range are  from 8mV to 40 V. If the
-                                probe attenuation is changed, the range value is multiplied by the
-                                probe attenuation factor.
-        :param scale: Units per division. """
-
-        if vertical_range is not None and scale is not None:
-            raise Warning("Both vertical_range and scale are specified. Specified scale has priority.")
-
-        if channel is 1:
-            if probe_attenuation is not None: self.ch1_probe_attenuation = probe_attenuation
-            if bwlimit is not None: self.ch1_bwlimit = bwlimit
-            if coupling is not None: self.ch1_coupling = coupling
-            if display is not None: self.ch1_display = display
-            if invert is not None: self.ch1_invert = invert
-            if label is not None: self.ch1_label = label
-            if offset is not None: self.ch1_offset = offset
-            if vertical_range is not None: self.ch1_range = vertical_range
-            if scale is not None: self.ch1_scale = scale
-        elif channel is 2:
-            if probe_attenuation is not None: self.ch2_probe_attenuation = probe_attenuation
-            if bwlimit is not None: self.ch2_bwlimit = bwlimit
-            if coupling is not None: self.ch2_coupling = coupling
-            if display is not None: self.ch2_display = display
-            if invert is not None: self.ch2_invert = invert
-            if label is not None: self.ch2_label = label
-            if offset is not None: self.ch2_offset = offset
-            if vertical_range is not None: self.ch2_range = vertical_range
-            if scale is not None: self.ch2_scale = scale
-        else:
-            raise ValueError("Invalid channel number. Must be 1 or 2.")
 
     def timebase_setup(self, mode: str = None, offset: float = None, horizontal_range: float = None,
                        scale: float = None):
@@ -544,54 +495,6 @@ class KeysightDSOX1102G(Instrument):
         preamble = self.waveform_preamble
         data_bytes = self.waveform_data
         return np.array(data_bytes), preamble
-
-    def _ch(self, chNb):
-        """
-        Reads setup data from channel and converts it to a more convenient dict of values.
-        """
-        if chNb == 1:
-            ch_prefix = ":channel1"
-        elif chNb == 2:
-            ch_prefix = ":channel2"
-        else:
-            raise ValueError("Bad channel nb.")
-
-        ch_setup_raw = self.ask(ch_prefix + "?").strip("\n")
-        ch_setup_splitted = ch_setup_raw.split(";")
-
-        # Create dict of setup parameters
-        ch_setup = dict(map(lambda v: v.split(" "), ch_setup_splitted))
-
-        # Add "CHAN" key
-        ch_nb = None
-        for key in ch_setup:
-            if key[1:5] == "CHAN":
-                ch_nb = key[5]
-
-        ch_setup["CHAN"] = ch_nb
-
-        # Clean up badly named key
-        key_to_pop = None
-        for key in ch_setup:
-            if "RANG" in key:
-                key_to_pop = key
-        ch_setup["RANG"] = ch_setup.pop(key_to_pop)
-
-        # Convert values to specific type
-        to_str = ["COUP", "IMP", "UNIT", "STYP"]
-        to_bool = ["DISP", "BWL", "INV"]
-        to_float = ["OFFS", "PROB", "PROB:SKEW", "RANG"]
-        to_int = ["CHAN"]
-        for key in ch_setup:
-            if key in to_str:
-                ch_setup[key] = str(ch_setup[key])
-            elif key in to_bool:
-                ch_setup[key] = (ch_setup[key] == "1")
-            elif key in to_float:
-                ch_setup[key] = float(ch_setup[key])
-            elif key in to_int:
-                ch_setup[key] = int(ch_setup[key])
-        return ch_setup
 
     def _timebase(self):
         """
