@@ -1006,3 +1006,17 @@ class SequencerWidget(QtGui.QWidget):
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
+
+
+class TimeEstimatorWidget(QtGui.QWidget):
+    """
+    Widget that allows to display up-front estimates of the measurement
+    procedure.
+
+    Currently, the 
+
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+
