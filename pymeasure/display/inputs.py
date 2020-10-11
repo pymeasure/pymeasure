@@ -55,7 +55,9 @@ class Input(object):
         """
         self._parameter = parameter
 
-        if parameter.default is not None:
+        if parameter is not None:
+            self.setValue(parameter.value)
+        elif parameter.default is not None:
             self.setValue(parameter.default)
 
         if hasattr(parameter, 'units') and parameter.units:
