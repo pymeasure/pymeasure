@@ -37,7 +37,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
     :param kwargs: Any valid key-word argument for TelnetAdapter
     """
     def __init__(self, host, port, passwd, **kwargs):
-        self.terminator = '\r\n'
+        self.read_termination = '\r\n'
+        self.write_termination = self.read_termination
         super(AttocubeConsoleAdapter, self).__init__(host, port, **kwargs)
         # clear the initial messages from the controller
         time.sleep(self.query_delay)
@@ -46,7 +47,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         self.write(passwd, checkAck=False)
         time.sleep(self.query_delay)
         ret = super(AttocubeConsoleAdapter, self).read()
-        authmsg = ret.split(self.terminator)[1]
+        authmsg = ret.split(self.read_termination)[1]
         if authmsg != 'Authorization success':
             raise Exception("Attocube authorization failed ('%s')" % authmsg)
         # switch console echo off
@@ -60,9 +61,9 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         :param msg: optional message for the eventual error
         :returns: String ASCII response of the instrument.
         """
-        if reply.strip() != 'OK':
+        if reply != 'OK':
             if msg == "":  # clear buffer
-                msg = reply.strip()
+                msg = reply
                 super(AttocubeConsoleAdapter, self).read()
             raise ValueError("AttocubeConsoleAdapter: Error after command '%s'"
                              " with message '%s'" % (self.lastcommand, msg))
@@ -75,7 +76,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
 
         :returns: String ASCII response of the instrument.
         """
-        raw = super(AttocubeConsoleAdapter, self).read().strip()
+        raw = super(AttocubeConsoleAdapter,
+                self).read().strip(self.read_termination)
         lines = raw.split('\n')  # line endings inconsistent '\n', or '\r\n'
         ret = '\n'.join(line.strip() for line in lines[:-1])
         self.check_acknowledgement(lines[-1], ret)
@@ -87,10 +89,12 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         :param command: command string to be sent to the instrument
         """
         self.lastcommand = command
-        super(AttocubeConsoleAdapter, self).write(command + self.terminator)
+        super(AttocubeConsoleAdapter, self).write(command +
+                                                  self.write_termination)
         if checkAck:
-            reply = self.connection.read_until(self.terminator.encode())
-            self.check_acknowledgement(reply.decode())
+            reply = self.connection.read_until(self.read_termination.encode())
+            msg = reply.decode().strip(self.read_termination)
+            self.check_acknowledgement(msg)
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
