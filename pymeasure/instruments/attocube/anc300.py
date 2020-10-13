@@ -98,14 +98,15 @@ class Axis(object):
             validator=strict_range, values=[0, 150],
             get_process=extract_float)
 
-    output_voltage = Instrument.measurement("geto",
-                                            """ Output voltage in volts.""",
-                                            get_process=extract_float)
+    output_voltage = Instrument.measurement(
+            "geto",
+            """ Output voltage in volts.""",
+            get_process=extract_float)
 
-    capacity = Instrument.measurement("getc",
-                                      """ Saved capacity value in nF of the
-                                      axis.""",
-                                      get_process=extract_float)
+    capacity = Instrument.measurement(
+            "getc",
+            """ Saved capacity value in nF of the axis.""",
+            get_process=extract_float)
 
     stepu = Instrument.setting(
             "stepu %d",
@@ -119,7 +120,7 @@ class Axis(object):
             positive.""",
             validator=strict_range, values=[0, inf])
 
-    def __init__(self, axis, controller):
+    def __init__(self, controller, axis):
         self.axis = str(axis)
         self.controller = controller
 
@@ -210,7 +211,7 @@ class ANC300Controller(Instrument):
             **kwargs
         )
         for i, axis in enumerate(axisnames):
-            setattr(self, axis, Axis(i+1, self))
+            setattr(self, axis, Axis(self, i+1))
 
     def ground_all(self):
         """ Grounds all axis of the controller. """
