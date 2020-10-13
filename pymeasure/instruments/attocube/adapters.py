@@ -39,14 +39,14 @@ class AttocubeConsoleAdapter(TelnetAdapter):
     def __init__(self, host, port, passwd, **kwargs):
         self.read_termination = '\r\n'
         self.write_termination = self.read_termination
-        super(AttocubeConsoleAdapter, self).__init__(host, port, **kwargs)
+        super().__init__(host, port, **kwargs)
         # clear the initial messages from the controller
         time.sleep(self.query_delay)
-        super(AttocubeConsoleAdapter, self).read()
+        super().read()
         # send password and check authorization
         self.write(passwd, checkAck=False)
         time.sleep(self.query_delay)
-        ret = super(AttocubeConsoleAdapter, self).read()
+        ret = super().read()
         authmsg = ret.split(self.read_termination)[1]
         if authmsg != 'Authorization success':
             raise Exception("Attocube authorization failed ('%s')" % authmsg)
@@ -64,7 +64,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         if reply != 'OK':
             if msg == "":  # clear buffer
                 msg = reply
-                super(AttocubeConsoleAdapter, self).read()
+                super().read()
             raise ValueError("AttocubeConsoleAdapter: Error after command '%s'"
                              " with message '%s'" % (self.lastcommand, msg))
 
@@ -76,8 +76,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
 
         :returns: String ASCII response of the instrument.
         """
-        raw = super(AttocubeConsoleAdapter,
-                self).read().strip(self.read_termination)
+        raw = super().read().strip(self.read_termination)
         lines = raw.split('\n')  # line endings inconsistent '\n', or '\r\n'
         ret = '\n'.join(line.strip() for line in lines[:-1])
         self.check_acknowledgement(lines[-1], ret)
@@ -89,7 +88,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         :param command: command string to be sent to the instrument
         """
         self.lastcommand = command
-        super(AttocubeConsoleAdapter, self).write(command +
+        super().write(command +
                                                   self.write_termination)
         if checkAck:
             reply = self.connection.read_until(self.read_termination.encode())

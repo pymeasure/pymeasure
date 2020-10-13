@@ -204,7 +204,7 @@ class ANC300Controller(Instrument):
     def __init__(self, host, axisnames, passwd, **kwargs):
         if 'query_delay' not in kwargs:
             kwargs['query_delay'] = 0.05
-        super(ANC300Controller, self).__init__(
+        super().__init__(
             AttocubeConsoleAdapter(host, 7230, passwd, **kwargs),
             "attocube ANC300 Piezo Controller",
             includeSCPI = False,
