@@ -213,7 +213,7 @@ class ITC503(Instrument):
                              check_interval=0.5, stability_interval=10,
                              thermalize_interval=300,
                              should_stop=lambda: False,
-                             max_comm_errors=0):
+                             max_comm_errors=None):
         """
         Wait for the ITC to reach the set-point temperature.
 
@@ -231,7 +231,7 @@ class ITC503(Instrument):
                             waiting to be stopped before its end.
         :param max_comm_errors: The maximum number of communication errors that
                                 are allowed before the wait is stopped. if set
-                                to zero, no maximum will be used.
+                                to None (default), no maximum will be used.
         """
 
         number_of_intervals = int(stability_interval / check_interval)
@@ -265,7 +265,7 @@ class ITC503(Instrument):
                     reach the set-point temperature"
                 )
 
-            if max_comm_errors > 0 and comm_errors > max_comm_errors:
+            if max_comm_errors is not None and comm_errors > max_comm_errors:
                 raise ValueError(
                     "Too many communication errors have occurred."
                 )
