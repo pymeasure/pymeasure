@@ -39,7 +39,7 @@ class TelnetAdapter(Adapter):
     :param kwargs: Any valid key-word argument for telnetlib.Telnet
     """
 
-    def __init__(self, host, port, query_delay=0, **kwargs):
+    def __init__(self, host, port=0, query_delay=0, **kwargs):
         self.query_delay = query_delay
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
