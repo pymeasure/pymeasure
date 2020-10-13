@@ -162,3 +162,7 @@ class VISAAdapter(Adapter):
         :param delay: Time delay between checking SRQ in seconds
         """
         self.connection.wait_for_srq(timeout * 1000)
+
+    def flush(self):
+        """ Flush the input buffer """
+        self.connection.flush(pyvisa.constants.VI_READ_BUF)
