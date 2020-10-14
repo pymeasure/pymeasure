@@ -40,9 +40,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         self.read_termination = '\r\n'
         self.write_termination = self.read_termination
         super().__init__(host, port, **kwargs)
-        # clear the initial messages from the controller
         time.sleep(self.query_delay)
-        super().read()
+        super().read()  # clear messages sent upon opening the connection
         # send password and check authorization
         self.write(passwd, checkAck=False)
         time.sleep(self.query_delay)
@@ -51,7 +50,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         if authmsg != 'Authorization success':
             raise Exception("Attocube authorization failed ('%s')" % authmsg)
         # switch console echo off
-        self.ask('echo off')
+        _ = self.ask('echo off')
 
     def check_acknowledgement(self, reply, msg=""):
         """ checks the last reply of the instrument to be 'OK', otherwise a
