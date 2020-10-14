@@ -191,6 +191,7 @@ class ANC300Controller(Instrument):
     :param axisnames: a list of axis names which will be used to create
                       properties with these names
     :param passwd: password for the attocube standard console
+    :param query_delay: delay between sending and reading (default 0.05 sec)
     :param kwargs: Any valid key-word argument for TelnetAdapter
     """
     version = Instrument.measurement(
@@ -201,9 +202,8 @@ class ANC300Controller(Instrument):
            "getcser", """ Serial number of the controller board """
            )
 
-    def __init__(self, host, axisnames, passwd, **kwargs):
-        if 'query_delay' not in kwargs:
-            kwargs['query_delay'] = 0.05
+    def __init__(self, host, axisnames, passwd, query_delay=0.05, **kwargs):
+        kwargs['query_delay'] = query_delay
         super().__init__(
             AttocubeConsoleAdapter(host, 7230, passwd, **kwargs),
             "attocube ANC300 Piezo Controller",
