@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,4 +22,16 @@
 # THE SOFTWARE.
 #
 
-from .daqmx import DAQmx
+try:
+    from .daqmx import DAQmx
+except OSError:
+    # Error Logging is handled within package
+    pass
+
+try:
+    from .virtualbench import VirtualBench
+    # direct access to armstrap/pyvirtualbench wrapper:
+    # from .virtualbench import VirtualBench_Direct
+except ImportError:  # when we drop python 3.5 support, we can use ModuleNotFoundError
+    # Error Logging is handled within package
+    pass

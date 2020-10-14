@@ -20,7 +20,7 @@ Your new instrument should be placed in the directory corresponding to the manuf
 Updating the init file
 **********************
 
-The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported. For a new manufacturer, the manufacturer should also be added to :code:`pymeasure/pymeasure/instruments/__init__.py`. In this case, you also need to add the new package to the :code:`pymeasure/setup.py` file in the :code:`packages` argument.
+The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported. For a new manufacturer, the manufacturer should also be added to :code:`pymeasure/pymeasure/instruments/__init__.py`.
 
 Adding documentation
 ********************
@@ -47,7 +47,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     #
     # This file is part of the PyMeasure package.
     #
-    # Copyright (c) 2013-2019 PyMeasure Developers
+    # Copyright (c) 2013-2020 PyMeasure Developers
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
     # of this software and associated documentation files (the "Software"), to deal
