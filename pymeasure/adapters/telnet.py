@@ -36,11 +36,18 @@ class TelnetAdapter(Adapter):
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
                         method
-    :param kwargs: Any valid key-word argument for telnetlib.Telnet
+    :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
+    this is only 'timeout'
     """
 
     def __init__(self, host, port=0, query_delay=0, **kwargs):
         self.query_delay = query_delay
+        safe_keywords = ['timeout']
+        for kw in kwargs:
+            if kw not in safe_keywords:
+                raise TypeError(
+                    f"TelnetAdapter: unexpected keyword argument '{kw}', "
+                    f"allowed are: {str(safe_keywords)}")
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
     def __del__(self):
