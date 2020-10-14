@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,19 @@
 # THE SOFTWARE.
 #
 
+
+import logging
 from time import sleep, time
 import numpy
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
+
+
+# Setup logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class ITC503(Instrument):
@@ -47,6 +54,7 @@ class ITC503(Instrument):
         print(itc.temperature_1)        # Print the temperature at sensor 1
 
     """
+    _T_RANGE = [0, 301]
 
     control_mode = Instrument.control(
         "X", "$C%d",
@@ -74,6 +82,26 @@ class ITC503(Instrument):
         validator=strict_discrete_set,
         values={"MANUAL": 0, "AM": 1, "MA": 2, "AUTO": 3},
         map_values=True,
+    )
+
+    heater = Instrument.control(
+        "R5", "$O%f",
+        """ A floating point property that sets the required heater output when
+        in manual mode. The parameter is expressed as a percentage of the
+        maximum voltage. Valid values are in range 0 [off] to 99.9 [%]. """,
+        get_process=lambda v: float(v[1:]),
+        validator=truncated_range,
+        values=[0, 99.9]
+    )
+
+    gasflow = Instrument.control(
+        "R7", "$G%f",
+        """ A floating point property that controls gas flow when in manual
+        mode. The value is expressed as a percentage of the maximum gas flow.
+        Valid values are in range 0 [off] to 99.9 [%]. """,
+        get_process=lambda v: float(v[1:]),
+        validator=truncated_range,
+        values=[0, 99.9]
     )
 
     auto_pid = Instrument.control(
@@ -104,7 +132,7 @@ class ITC503(Instrument):
         the ITC in kelvin. """,
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
-        values=[0, 301]
+        values=_T_RANGE
     )
 
     temperature_1 = Instrument.measurement(
@@ -119,7 +147,7 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
-    temperature_2 = Instrument.measurement(
+    temperature_3 = Instrument.measurement(
         "R3",
         """ Reads the temperature of the sensor 3 in Kelvin. """,
         get_process=lambda v: float(v[1:]),
@@ -163,7 +191,8 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
-    def __init__(self, resourceName, clear_buffer=True, **kwargs):
+    def __init__(self, resourceName, clear_buffer=True,
+                 max_temperature=301, min_temperature=0, **kwargs):
         super(ITC503, self).__init__(
             resourceName,
             "Oxford ITC503",
@@ -177,10 +206,14 @@ class ITC503(Instrument):
         if clear_buffer:
             self.adapter.connection.clear()
 
+        self._T_RANGE[0] = min_temperature
+        self._T_RANGE[1] = max_temperature
+
     def wait_for_temperature(self, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
                              thermalize_interval=300,
-                             should_stop=lambda: False):
+                             should_stop=lambda: False,
+                             max_comm_errors=None):
         """
         Wait for the ITC to reach the set-point temperature.
 
@@ -196,28 +229,45 @@ class ITC503(Instrument):
                                     system to thermalize.
         :param should_stop: Optional function (returning a bool) to allow the
                             waiting to be stopped before its end.
+        :param max_comm_errors: The maximum number of communication errors that
+                                are allowed before the wait is stopped. if set
+                                to None (default), no maximum will be used.
         """
 
         number_of_intervals = int(stability_interval / check_interval)
         stable_intervals = 0
         attempt = 0
+        comm_errors = 0
 
         t0 = time()
         while True:
-
-            if abs(self.temperature_error) < error:
-                stable_intervals += 1
+            try:
+                temp_error = self.temperature_error
+            except ValueError:
+                comm_errors += 1
+                log.error(
+                    "No temperature-error returned. "
+                    "Communication error # %d." % comm_errors
+                )
             else:
-                stable_intervals = 0
-                attempt += 1
+                if abs(temp_error) < error:
+                    stable_intervals += 1
+                else:
+                    stable_intervals = 0
+                    attempt += 1
 
             if stable_intervals >= number_of_intervals:
                 break
 
-            if timeout >= 0 and (time() - t0) > timeout:
+            if timeout > 0 and (time() - t0) > timeout:
                 raise TimeoutError(
                     "Timeout expired while waiting for the Oxford ITC305 to \
                     reach the set-point temperature"
+                )
+
+            if max_comm_errors is not None and comm_errors > max_comm_errors:
+                raise ValueError(
+                    "Too many communication errors have occurred."
                 )
 
             if should_stop():

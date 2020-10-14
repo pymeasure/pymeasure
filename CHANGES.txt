@@ -1,5 +1,19 @@
-Version 0.7 -- release 8/4/19
-=============================
+Version 0.8 -- released 3/29/19
+===============================
+- Python 3.8 is now supported
+- New Measurement Sequencer allows for running over a large parameter space (@CasperSchippers)
+- New image plotting feature for live image measurements (@jmittelstaedt)
+- Improvements to VISA adapter (@moritzj29)
+- Added Tektronix AFG 3000, Keithley 2750 (@StePhanino, @dennisfeng2)
+- Documentation improvements (@mivade)
+- Fix to ScientificInput for float strings (@moritzj29)
+- New validator: strict_discrete_range (@moritzj29)
+- Improvements to Recorder thread joining
+- Migrating the ReadtheDocs configuration to version 2
+- National Instruments Virtual Bench initial support (@moritzj29)
+
+Version 0.7 -- released 8/4/19
+==============================
 - Dropped support for Python 3.4, adding support for Python 3.7
 - Significant improvements to CI, dependencies, and conda environment (@bilderbuchi, @cjermain)
 - Fix for PyQT issue in ResultsDialog (@CasperSchippers)
@@ -10,8 +24,8 @@ Version 0.7 -- release 8/4/19
 - Proper escaping support in CSV headers (@feph)
 - Minor updates (@dvase)
 
-Version 0.6.1 -- release 4/21/19
-================================
+Version 0.6.1 -- released 4/21/19
+=================================
 - Added Elektronica SM70-45D, Agilent 33220A, and Keysight N5767A instruments
   (@CasperSchippers, @sumatrae)
 - Fixes for Prologix adapter and Keithley 2400 (@hlgirard, @ronan-sensome)

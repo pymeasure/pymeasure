@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +64,8 @@ def test_worker_finish():
     worker = Worker(results)
     worker.start()
     worker.join(timeout=5)
+
+    assert not worker.is_alive()
 
     new_results = Results.load(file, procedure_class=RandomProcedure)
     assert new_results.data.shape == (100, 2)
