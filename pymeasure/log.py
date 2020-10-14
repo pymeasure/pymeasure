@@ -99,7 +99,7 @@ def setup_logging(logger=None, console=False, console_level='INFO', filename=Non
     if console:
         console_log(logger, level=getattr(logging, console_level))
         logger.info('Set up console logging')
-    if filename is not filename:
+    if filename is not None:
         file_log(logger, filename, level=getattr(logging, file_level), **file_kwargs)
         logger.info('Set up file logging')
 
