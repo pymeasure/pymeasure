@@ -76,9 +76,11 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         :returns: String ASCII response of the instrument.
         """
         raw = super().read().strip(self.read_termination)
-        lines = raw.split('\n')  # line endings inconsistent '\n', or '\r\n'
-        ret = '\n'.join(line.strip() for line in lines[:-1])
-        self.check_acknowledgement(lines[-1], ret)
+        # one would want to use self.read_termination as 'sep' below, but this
+        # is not possible because of a firmware bug resulting in inconsistent
+        # line endings
+        ret, ack = raw.rsplit(sep='\n', maxsplit=1)
+        self.check_acknowledgement(ack, ret)
         return ret
 
     def write(self, command, checkAck=True):
