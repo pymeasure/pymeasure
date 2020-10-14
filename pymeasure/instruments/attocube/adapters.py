@@ -79,6 +79,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         # is not possible because of a firmware bug resulting in inconsistent
         # line endings
         ret, ack = raw.rsplit(sep='\n', maxsplit=1)
+        ret = ret.strip('\r')  # strip possible CR char
         self.check_acknowledgement(ack, ret)
         return ret
 
