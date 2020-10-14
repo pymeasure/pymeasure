@@ -54,12 +54,11 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         self.ask('echo off')
 
     def check_acknowledgement(self, reply, msg=""):
-        """ Reads the reply of the instrument until the termination sequence.
-        The returned string is check to be 'OK' and otherwise a ValueError is
-        raised.
+        """ checks the last reply of the instrument to be 'OK', otherwise a
+        ValueError is raised.
 
+        :param reply: last reply string of the instrument
         :param msg: optional message for the eventual error
-        :returns: String ASCII response of the instrument.
         """
         if reply != 'OK':
             if msg == "":  # clear buffer
@@ -86,10 +85,12 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         """ Writes a command to the instrument
 
         :param command: command string to be sent to the instrument
+        :param checkAck: boolean flag to decide if the acknowledgement is read
+        back from the instrument. This should be True for set pure commands and
+        False otherwise.
         """
         self.lastcommand = command
-        super().write(command +
-                                                  self.write_termination)
+        super().write(command + self.write_termination)
         if checkAck:
             reply = self.connection.read_until(self.read_termination.encode())
             msg = reply.decode().strip(self.read_termination)
