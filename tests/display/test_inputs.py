@@ -136,7 +136,9 @@ class TestScientificInput:
     @pytest.mark.parametrize("min_,max_,default_value", [
         [0, 20, 12],
         [0, 1000, 200], # regression #118: default above default max 99.99
-        [-1000, 1000, -10] # regression #118: default below default min 0
+        [-1000, 1000, -10], # regression #118: default below default min 0
+        [0.004, 5.5, 3.3],  # minimum #225: 0 < minimum < 0.005
+        [0, 0.01, 0.002]  # default #233: default <0.01 changes to 0
     ])
     def test_init_from_param(self, qtbot, min_, max_, default_value):
         float_param = FloatParameter('potato',
