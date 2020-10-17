@@ -1008,12 +1008,12 @@ class SequencerWidget(QtGui.QWidget):
         return evaluated_string
 
 
-class TimeEstimatorWidget(QtGui.QWidget):
+class EstimatorWidget(QtGui.QWidget):
     """
     Widget that allows to display up-front estimates of the measurement
     procedure.
 
-    Currently, this widget relies on a get_time_estimates method of the Procedure class.
+    Currently, this widget relies on a get_estimates method of the Procedure class.
 
     """
     # TODO: add an unimplemented function to the Procedure class

@@ -39,7 +39,7 @@ from .widgets import (
     ResultsDialog,
     SequencerWidget,
     ImageWidget,
-    TimeEstimatorWidget,
+    EstimatorWidget,
 )
 from ..experiment.results import Results
 

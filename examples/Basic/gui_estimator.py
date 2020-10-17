@@ -25,7 +25,7 @@ from pymeasure.log import console_log
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
-from pymeasure.display.windows import ManagedWindow, TimeEstimatorWidget
+from pymeasure.display.windows import ManagedWindow, EstimatorWidget
 
 
 class TestProcedure(Procedure):
@@ -55,8 +55,8 @@ class TestProcedure(Procedure):
                 log.warning("Catch stop command in procedure")
                 break
 
-    def get_time_estimates(self):
-        # TODO: add docstring to clarify the working and requirements of the get_time_estimates function
+    def get_estimates(self):
+        # TODO: add docstring to clarify the working and requirements of the get_estimates function
         """"""
         estimates = list()
 
@@ -85,7 +85,7 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
         # TODO: implement auto-detection of the get_time_estimates function such that an explicit import (or switch) is not required
-        self.time_estimator = TimeEstimatorWidget(self)
+        self.time_estimator = EstimatorWidget(self)
 
     def queue(self):
         filename = tempfile.mktemp()
