@@ -1026,6 +1026,7 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_timer = QtCore.QTimer(self)
         self.update_timer.timeout.connect(self.update_estimates)
 
+        # TODO: implement check for output of the get_estimates function
         self._get_fields()
 
         self._setup_ui()
