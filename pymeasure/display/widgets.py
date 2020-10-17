@@ -1006,3 +1006,13 @@ class SequencerWidget(QtGui.QWidget):
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
+
+
+class InstrumentControlWidget(QtGui.QWidget):
+    """
+    TODO: Write docstrings
+
+    """
+
+    def __init__(self, instrument, parent=None):
+        super().__init__(parent)
