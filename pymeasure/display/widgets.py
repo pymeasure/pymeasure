@@ -1039,7 +1039,7 @@ class EstimatorWidget(QtGui.QWidget):
 
     def _get_fields(self):
         proc = self._parent.make_procedure()
-        self.number_of_lines = len(proc.get_time_estimates())
+        self.number_of_lines = len(proc.get_estimates())
 
     def _setup_ui(self):
 
@@ -1052,7 +1052,6 @@ class EstimatorWidget(QtGui.QWidget):
             qle.setAlignment(QtCore.Qt.AlignRight)
 
             self.line_edits.append((qlb, qle))
-
 
         # Add a checkbox for continuous updating
         self.update_box = QtGui.QCheckBox(self)
@@ -1075,7 +1074,7 @@ class EstimatorWidget(QtGui.QWidget):
 
     def update_estimates(self):
         proc = self._parent.make_procedure()
-        estimates = proc.get_time_estimates()
+        estimates = proc.get_estimates()
 
         for idx, estimate in enumerate(estimates):
             self.line_edits[idx][0].setText(estimate[0])
