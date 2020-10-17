@@ -1027,7 +1027,7 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_timer.timeout.connect(self.update_estimates)
 
         # TODO: implement check for output of the get_estimates function
-        self._get_fields()
+        self._check_get_estimates_output()
 
         self._setup_ui()
         self._layout()
@@ -1037,14 +1037,34 @@ class EstimatorWidget(QtGui.QWidget):
         if auto_update:
             self.update_box.setCheckState(1)
 
-    def _get_fields(self):
+    def _check_get_estimates_output(self):
+        """ Function that checks if the output of the get_estimates function
+        is correct for the EstimatorWidget. Also the number of estimates is
+        extracted.
+        """
         proc = self._parent.make_procedure()
-        self.number_of_lines = len(proc.get_estimates())
+        estimates = proc.get_estimates()
+
+        raise_error = True
+        if isinstance(estimates, (list, tuple)):
+            if all([isinstance(est, (tuple, list)) for est in estimates]):
+                if all([len(est) == 2 for est in estimates]):
+                    raise_error = False
+
+        if raise_error:
+            raise TypeError(
+                "if implemented, return a list of tuples, where each tuple "
+                "represents an estimate containing two string: the first is "
+                "a label for the estimate, the second is the estimate itself."
+            )
+
+        self.number_of_estimates = len(estimates)
+
 
     def _setup_ui(self):
 
         self.line_edits = list()
-        for idx in range(self.number_of_lines):
+        for idx in range(self.number_of_estimates):
             qlb = QtGui.QLabel(self)
 
             qle = QtGui.QLineEdit(self)
