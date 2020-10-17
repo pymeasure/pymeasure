@@ -1031,7 +1031,6 @@ class EstimatorWidget(QtGui.QWidget):
 
         self._setup_ui()
         self._layout()
-        self._add_to_interface()
 
         self.update_estimates()
 
@@ -1080,12 +1079,6 @@ class EstimatorWidget(QtGui.QWidget):
         for idx, estimate in enumerate(estimates):
             self.line_edits[idx][0].setText(estimate[0])
             self.line_edits[idx][1].setText(estimate[1])
-
-    def _add_to_interface(self):
-        dock = QtGui.QDockWidget('Time estimator')
-        dock.setWidget(self)
-        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        self._parent.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
 
     def _set_continuous_updating(self):
         state = self.update_box.checkState()

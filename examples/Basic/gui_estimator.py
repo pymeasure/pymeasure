@@ -84,9 +84,6 @@ class MainWindow(ManagedWindow):
         )
         self.setWindowTitle('GUI Example')
 
-        # TODO: implement auto-detection of the get_time_estimates function such that an explicit import (or switch) is not required
-        self.time_estimator = EstimatorWidget(self)
-
     def queue(self):
         filename = tempfile.mktemp()
 
