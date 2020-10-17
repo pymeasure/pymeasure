@@ -1016,8 +1016,6 @@ class EstimatorWidget(QtGui.QWidget):
     Currently, this widget relies on a get_estimates method of the Procedure class.
 
     """
-    # TODO: add an unimplemented function to the Procedure class
-    # TODO: automatically add the widget if the get_time_estimate method is implemented in the Procedure class
 
     def __init__(self, parent=None, auto_update=True):
         super().__init__(parent)
@@ -1026,7 +1024,6 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_timer = QtCore.QTimer(self)
         self.update_timer.timeout.connect(self.update_estimates)
 
-        # TODO: implement check for output of the get_estimates function
         self._check_get_estimates_output()
 
         self._setup_ui()
