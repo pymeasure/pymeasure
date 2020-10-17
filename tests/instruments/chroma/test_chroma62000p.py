@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2019 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +22,18 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .mock import Mock
-from .resources import list_resources
-from .validators import discreteTruncate
+import pytest
+from pymeasure.instruments.chroma.chroma62000p import Chroma62024P6008
+from time import sleep
 
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anapico
-from . import anritsu
-from . import chroma
-from . import deltaelektronika
-from . import danfysik
-from . import deltaelektronika
-from . import fwbell
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import thorlabs
-from . import yokogawa
+@pytest.mark.skip(reason="no way of currently testing this just in SW")
+def test_Chroma_current_limit_turn_on_and_off():
+    psu=Chroma62024P6008('USB0::0x1698::0x0837::007000000446::0::INSTR')
+    print(psu.id)
+    psu.output_current_limit = 1
+    psu.output_voltage_level = 5
+    psu.output_enable()
+    sleep(2)
+    print(psu.output_voltage)
+    psu.output_disable()
+
