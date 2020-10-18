@@ -1019,6 +1019,9 @@ class InstrumentWidget(QtGui.QWidget):
 
         self.instrument = instrument
 
+        self.update_timer = QtCore.QTimer(self)
+        self.update_timer.timeout.connect(self.update_values)
+
         if hasattr(self.instrument, 'name'):
             self.instrument_name = self.instrument.name
         else:
@@ -1037,8 +1040,58 @@ class InstrumentWidget(QtGui.QWidget):
         self._setup_ui()
         self._layout()
 
+        self.update_box.setCheckState(1)
+
     def _setup_ui(self):
-        pass
+        self.displays = dict()
+        for name in self.readings:
+            element = QtGui.QLCDNumber(self)
+            setattr(self, name, element)
+
+        for name in self.settings:
+            # TODO: Move to using scientific inputs
+            element = QtGui.QDoubleSpinBox(self)
+            setattr(self, name, element)
+
+        # Add a checkbox for continuous updating
+        self.update_box = QtGui.QCheckBox(self)
+        self.update_box.setTristate(True)
+        self.update_box.stateChanged.connect(self._set_continuous_updating)
 
     def _layout(self):
+        f_layout = QtGui.QFormLayout(self)
+
+        for name in [*self.readings, *self.settings]:
+            f_layout.addRow(name, getattr(self, name))
+
+        f_layout.addRow("Update continuously", self.update_box)
+
+    def update_values(self):
+        for name in self.readings:
+            value = getattr(self.instrument, name)
+            element = getattr(self, name)
+            element.display(value)
+
+        for name in self.settings:
+            value = getattr(self.instrument, name)
+            element = getattr(self, name)
+
+            if element.value != value:
+                element.setValue(value)
+
+
+    def apply_settings(self):
         pass
+
+
+    def _set_continuous_updating(self):
+        state = self.update_box.checkState()
+
+        if state == 0:
+            self.update_timer.stop()
+        elif state == 1:
+            self.update_timer.setInterval(1000)
+            self.update_timer.start()
+        elif state == 2:
+            self.update_timer.setInterval(100)
+            self.update_timer.start()
