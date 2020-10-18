@@ -1008,11 +1008,37 @@ class SequencerWidget(QtGui.QWidget):
         return evaluated_string
 
 
-class InstrumentControlWidget(QtGui.QWidget):
+class InstrumentWidget(QtGui.QWidget):
     """
     TODO: Write docstrings
 
     """
 
-    def __init__(self, instrument, parent=None):
+    def __init__(self, instrument, readings=None, settings=None, parent=None):
         super().__init__(parent)
+
+        self.instrument = instrument
+
+        if hasattr(self.instrument, 'name'):
+            self.name = self.instrument.name
+        else:
+            self.name = 'Instrument'
+
+        if isinstance(readings, str):
+            readings = [readings]
+
+        self.readings = readings
+
+        if isinstance(settings, str):
+            settings = [settings]
+
+        self.settings = settings
+
+        self._setup_ui()
+        self._layout()
+
+    def _setup_ui(self):
+        pass
+
+    def _layout(self):
+        pass
