@@ -1020,9 +1020,9 @@ class InstrumentWidget(QtGui.QWidget):
         self.instrument = instrument
 
         if hasattr(self.instrument, 'name'):
-            self.name = self.instrument.name
+            self.instrument_name = self.instrument.name
         else:
-            self.name = 'Instrument'
+            self.instrument_name = 'Instrument'
 
         if isinstance(readings, str):
             readings = [readings]

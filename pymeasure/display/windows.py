@@ -518,7 +518,7 @@ class ManagedWindow(QtGui.QMainWindow):
             parent=self
         )
 
-        sequencer_dock = QtGui.QDockWidget(widget.name)
+        sequencer_dock = QtGui.QDockWidget(widget.instrument_name)
         sequencer_dock.setWidget(widget)
         # TODO: consider whether dock-widget-features might be useful (e.g. large panel for better sight)
         sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
