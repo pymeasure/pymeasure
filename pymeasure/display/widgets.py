@@ -1078,7 +1078,7 @@ class InstrumentWidget(QtGui.QWidget):
             value = getattr(self.instrument, name)
             element = getattr(self, name)
 
-            if element.value != value:
+            if not element.hasFocus():
                 element.setValue(value)
 
 
