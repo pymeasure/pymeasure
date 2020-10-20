@@ -144,7 +144,7 @@ class Channel(object):
         :param scale: Units per division. """
 
         if vertical_range is not None and scale is not None:
-            raise Warning("Both vertical_range and scale are specified. Specified scale has priority.")
+            raise Warning('Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
 
         if probe_attenuation is not None: self.probe_attenuation = probe_attenuation
         if bwlimit is not None: self.bwlimit = bwlimit
@@ -173,7 +173,9 @@ class Channel(object):
             - "STYP": probe signal type (str)
         """
 
-        ch_setup_raw = self.ask("?").strip("\n")
+        # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and to query the
+        # configuration details, we actually need to adl ":channelX?", without a second ":"
+        ch_setup_raw = self.instrument.ask(":channel%d?" % self.number).strip("\n")
         ch_setup_splitted = ch_setup_raw.split(";")
 
         # Create dict of setup parameters
