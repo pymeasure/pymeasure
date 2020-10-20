@@ -174,7 +174,7 @@ class Channel(object):
         """
 
         # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and to query the
-        # configuration details, we actually need to adl ":channelX?", without a second ":"
+        # configuration details, we actually need to ask ":channelX?", without a second ":"
         ch_setup_raw = self.instrument.ask(":channel%d?" % self.number).strip("\n")
         ch_setup_splitted = ch_setup_raw.split(";")
 
@@ -206,7 +206,6 @@ class Channel(object):
             elif key in to_int:
                 ch_setup_dict[key] = int(ch_setup_dict[key])
         return ch_setup_dict
-
 
 
 class KeysightDSOX1102G(Instrument):

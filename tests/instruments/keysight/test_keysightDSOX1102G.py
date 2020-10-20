@@ -29,6 +29,8 @@ import numpy as np
 from pymeasure.instruments.keysight.keysightDSOX1102G import KeysightDSOX1102G
 from pyvisa.errors import VisaIOError
 
+pytest.skip('Only work with connected hardware', allow_module_level=True)
+
 
 class TestKeysightDSOX1102G:
     """

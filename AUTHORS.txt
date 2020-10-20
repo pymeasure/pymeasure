@@ -20,4 +20,8 @@ Michael Schneider
 Dennis Feng
 Stefano Pirotta
 Moritz Jung
+Richard Schlitz
+Manuel Zahn
+Mikhaël Myara
+John McMaster
 Jonathan Larochelle
