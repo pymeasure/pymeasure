@@ -94,13 +94,13 @@ class TestKeysightDSOX1102G:
 
     # Channel
 
-    @pytest.mark.parametrize("ch_number", CHANNELS)
-    def test_ch_current_configuration(self, make_reseted_cleared_scope, ch_number):
+    #@pytest.mark.parametrize("ch_number", CHANNELS)
+    def test_ch_current_configuration(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
         expected = {"OFFS": 0.0, "COUP": "DC", "IMP": "ONEM", "DISP": True,
                     "BWL": False, "INV": False, "UNIT": "VOLT", "PROB": 10.0,
                     "PROB:SKEW": 0.0, "STYP": "SING", "CHAN": 1, "RANG": 40.0}
-        actual = scope.ch(ch_number).current_configuration
+        actual = scope.ch(1).current_configuration
         assert actual == expected
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
@@ -258,8 +258,8 @@ class TestKeysightDSOX1102G:
     def test_system_setup(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
         initial_setup = scope.system_setup
-        scope.ch1_display = not scope.ch1_display
-        scope.ch2_display = not scope.ch2_display
+        scope.ch(1).display = not scope.ch(1).display
+        scope.ch(2).display = not scope.ch(2).display
         # Assert that setup block is different
         assert scope.system_setup != initial_setup
         # Assert that the setup was successful
