@@ -1092,8 +1092,8 @@ class InstrumentWidget(QtGui.QWidget):
         if state == 0:
             self.update_timer.stop()
         elif state == 1:
-            self.update_timer.setInterval(1000)
+            self.update_timer.setInterval(500)
             self.update_timer.start()
         elif state == 2:
-            self.update_timer.setInterval(100)
+            self.update_timer.setInterval(50)
             self.update_timer.start()
