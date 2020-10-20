@@ -1040,6 +1040,8 @@ class InstrumentWidget(QtGui.QWidget):
         self._setup_ui()
         self._layout()
 
+        self.update_values()
+
         self.update_box.setCheckState(1)
 
     def _setup_ui(self):
