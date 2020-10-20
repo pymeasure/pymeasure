@@ -39,6 +39,7 @@ from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
 from ..experiment.results import Results
+from functools import partial
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -1053,6 +1054,8 @@ class InstrumentWidget(QtGui.QWidget):
         for name in self.settings:
             # TODO: Move to using scientific inputs
             element = QtGui.QDoubleSpinBox(self)
+            element.valueChanged.connect(partial(self.apply_setting, name))
+            element.editingFinished.connect(partial(self.finished_changing_setting, name))
             setattr(self, name, element)
 
         # Add a checkbox for continuous updating
@@ -1081,10 +1084,16 @@ class InstrumentWidget(QtGui.QWidget):
             if not element.hasFocus():
                 element.setValue(value)
 
+    def apply_setting(self, name):
+        print("value-changed:", name)
+        element = getattr(self, name)
+        setattr(self.instrument, name, element.value())
 
-    def apply_settings(self):
-        pass
-
+    def finished_changing_setting(self, name):
+        element = getattr(self, name)
+        setattr(self.instrument, name, element.value())
+        actual_value = getattr(self.instrument, name)
+        element.setValue(actual_value)
 
     def _set_continuous_updating(self):
         state = self.update_box.checkState()
