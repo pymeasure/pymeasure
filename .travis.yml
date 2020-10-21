@@ -22,12 +22,19 @@ jobs:
       env: PYTHON=3.8  CONDA_PY=38
       services:
         - xvfb
+    - os: linux
+      dist: xenial
+      env: PYTHON=3.9  CONDA_PY=39
+      services:
+        - xvfb
     - os: osx
       env: PYTHON=3.6  CONDA_PY=36
     - os: osx
       env: PYTHON=3.7  CONDA_PY=37
     - os: osx
       env: PYTHON=3.8  CONDA_PY=38
+    - os: osx
+      env: PYTHON=3.9  CONDA_PY=39
 
 # command to install dependencies
 install:

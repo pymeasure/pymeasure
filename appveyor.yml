@@ -20,6 +20,10 @@ environment:
       MINICONDA: C:\Miniconda38-x64
       PLATFORM: x64
 
+    - PYTHON_VERSION: "3.9"
+      MINICONDA: C:\Miniconda38-x64  # TODO: replace by 39-x64 when available
+      PLATFORM: x64
+
 matrix:
   fast_finish: true  # immediately finish build once one of the jobs fails.
 
