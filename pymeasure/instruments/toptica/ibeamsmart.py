@@ -23,9 +23,14 @@
 #
 
 import time
+import re
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+
+# compiled regular expression for finding numerical values in reply strings
+reg_value = re.compile("\w+ = ([-+]?[0-9]*\.?[0-9]+)")
 
 
 def extract_value(reply):
@@ -34,7 +39,11 @@ def extract_value(reply):
     :param reply: reply string
     :returns: string with only the numerical value
     """
-    return reply.split('=')[1].split()[0]
+    r = reg_value.search(reply)
+    if r:
+        return r.groups()[0]
+    else:
+        return reply
 
 
 class IBeamSmart(Instrument):
@@ -133,7 +142,7 @@ class IBeamSmart(Instrument):
                 f"message '{self.lastreply}'")
 
     def _read_stripped(self):
-        """ read a reply from the instrument and stip the termination sequence
+        """ read a reply from the instrument and strip the termination sequence
         """
         return super().read().strip(self.adapter.connection.read_termination)
 
