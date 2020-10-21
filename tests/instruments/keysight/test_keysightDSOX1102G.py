@@ -88,15 +88,19 @@ class TestKeysightDSOX1102G:
         with pytest.raises(VisaIOError):
             scope = KeysightDSOX1102G(bad_resource)
 
+        # Successful if VisaIOError is not raised
         scope = KeysightDSOX1102G(self.RESOURCE)
 
     def test_autoscale(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
+        scope.write(":timebase:position 1")
+        # Actual max position depends on the range settings, so here we only expect the position to have changed
+        assert scope.ask(":timebase:position?") != 0
+        # Autoscale always resets the delay to 0.
         scope.autoscale()
+        assert scope.ask(":timebase:position?") == 0
 
     # Channel
-
-    #@pytest.mark.parametrize("ch_number", CHANNELS)
     def test_ch_current_configuration(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
         expected = {"OFFS": 0.0, "COUP": "DC", "IMP": "ONEM", "DISP": True,
@@ -244,6 +248,8 @@ class TestKeysightDSOX1102G:
     @pytest.mark.parametrize("case", DIGITIZE_SOURCES)
     def test_digitize(self, make_reseted_cleared_scope, case):
         scope = make_reseted_cleared_scope
+        # Here, we only assert that no error arrises when using the expected parameters.
+        # Success of digitize operation is evaluated through test_waveform_data
         scope.digitize(case)
         sleep(2) # Account for Digitize operation duration
 
