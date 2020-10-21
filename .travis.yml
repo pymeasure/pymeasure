@@ -4,11 +4,6 @@ jobs:
   include:
     - os: linux
       dist: xenial
-      env: PYTHON=3.5  CONDA_PY=35
-      services:
-        - xvfb
-    - os: linux
-      dist: xenial
       env: PYTHON=3.6  CONDA_PY=36
       services:
         - xvfb
@@ -27,8 +22,6 @@ jobs:
       env: PYTHON=3.8  CONDA_PY=38
       services:
         - xvfb
-    - os: osx
-      env: PYTHON=3.5  CONDA_PY=35
     - os: osx
       env: PYTHON=3.6  CONDA_PY=36
     - os: osx
