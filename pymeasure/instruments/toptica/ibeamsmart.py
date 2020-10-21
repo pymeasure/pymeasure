@@ -30,7 +30,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 # compiled regular expression for finding numerical values in reply strings
-reg_value = re.compile("\w+ = ([-+]?[0-9]*\.?[0-9]+)")
+reg_value = re.compile("\w+\s+=\s+([-+]?[0-9]*\.?[0-9]+)")
 
 
 def extract_value(reply):
