@@ -86,11 +86,15 @@ class TestAgilent34450A:
             dmm = Agilent34450A(bad_resource)
 
     def test_good_address(self):
+        # Considered successful if VisaIOError is not raised.
         dmm = Agilent34450A(self.resource)
 
     def test_reset(self):
         dmm = Agilent34450A(self.resource)
+        dmm.write(":configure:current")
+        # Instrument should return to DCV once reseted
         dmm.reset()
+        assert dmm.ask(":configure?") == "VOLT +1.000000E+01,+3.000000E-05"
 
     def test_beep(self, make_reseted_dmm):
         dmm = Agilent34450A(self.resource)

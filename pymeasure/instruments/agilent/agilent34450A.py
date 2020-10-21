@@ -81,7 +81,7 @@ class Agilent34450A(Instrument):
                     self.mode = 'ac voltage'
                 self.write(":configure:freq")
         else:
-            raise ValueError(f'Value {value} is not a supported mode for this device.')
+            raise ValueError('Value %s is not a supported mode for this device.'.format(value))
 
     ###############
     # Current (A) #
