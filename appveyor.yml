@@ -16,11 +16,11 @@ environment:
       PLATFORM: x64
 
     - PYTHON_VERSION: "3.8"
-      MINICONDA: C:\Miniconda37-x64 # using the 3.7 version of Miniconda
+      MINICONDA: C:\Miniconda38-x64
       PLATFORM: x64
 
-    - PYTHON_VERSION: "3.6"
-      MINICONDA: C:\Miniconda36
+    - PYTHON_VERSION: "3.8"
+      MINICONDA: C:\Miniconda38
       PLATFORM: x86
 
 matrix:
