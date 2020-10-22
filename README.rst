@@ -12,11 +12,8 @@ PyMeasure is currently under active development, so please report any issues you
 
 PyMeasure runs on Python 3.6, 3.7, 3.8 and 3.9, and is tested with continous-integration on Linux, macOS, and Windows.
 
-.. image:: https://ci.appveyor.com/api/projects/status/hcj2n2a7l97wfbb8/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/cjermain/pymeasure
-
-.. image:: https://travis-ci.org/ralph-group/pymeasure.svg?branch=master
-    :target: https://travis-ci.org/ralph-group/pymeasure
+.. image:: https://github.com/ralph-group/pymeasure/workflows/Pymeasure%20CI/badge.svg
+    :target: https://github.com/ralph-group/pymeasure/actions
 
 .. image:: http://readthedocs.org/projects/pymeasure/badge/?version=latest
     :target: http://pymeasure.readthedocs.io/en/latest/?badge=latest
