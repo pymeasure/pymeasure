@@ -7,7 +7,7 @@ on:
 
 jobs:
   docs:
-    name: Docs
+    name: Docs and Linting
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: true
@@ -20,12 +20,19 @@ jobs:
         run: |
           pip install wheel
           pip install -r requirements/pymeasure_readthedocs.txt
-          pip install sphinx sphinx_rtd_theme
+          pip install sphinx sphinx_rtd_theme flake8
       - name: Generate and test docs
         run: |
           cd docs;
           make doctest
           make html
+      - name: Lint with flake8
+        continue-on-error: true
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   test:
     name: Python ${{ matrix.python-version }}, ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -36,11 +43,20 @@ jobs:
         python-version: ["3.6", "3.7", "3.8"]
     steps:    
       - uses: actions/checkout@v2
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: py${{ matrix.python-version }}-${{ matrix.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('requirements/pymeasure.yml') }}
       - uses: conda-incubator/setup-miniconda@v1
         with:
           python-version: ${{ matrix.python-version }}
           environment-file: requirements/pymeasure.yml
           activate-environment: pymeasure
+          use-only-tar-bz2: true  # for caching to work properly
       - name: Install CI dependencies
         shell: bash -l {0}
         run: conda install conda-build flake8
@@ -61,11 +77,3 @@ jobs:
         shell: bash -l {0}
         if: runner.os != 'Linux'
         run: pytest
-      - name: Lint with flake8
-        continue-on-error: true
-        shell: bash -l {0}
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
