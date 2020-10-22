@@ -49,7 +49,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - "conda env create -f requirements/conda-%PYTHON_VERSION%.yml"
+  - "conda env create -f requirements/pymeasure.yml"
   - activate pymeasure
 
 build: off
