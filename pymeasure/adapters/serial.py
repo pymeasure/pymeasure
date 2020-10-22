@@ -41,7 +41,8 @@ class SerialAdapter(Adapter):
     :param kwargs: Any valid key-word argument for serial.Serial
     """
 
-    def __init__(self, port, **kwargs):
+    def __init__(self, port, preprocess_reply=None, **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply)
         if isinstance(port, serial.Serial):
             self.connection = port
         else:

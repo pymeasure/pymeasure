@@ -37,3 +37,9 @@ def test_adapter_values():
     assert a.values("X,Y,Z") == ['X', 'Y', 'Z']
     assert a.values("X,Y,Z", cast=str) == ['X', 'Y', 'Z']
     assert a.values("X.Y.Z", separator='.') == ['X', 'Y', 'Z']
+
+
+def test_adapter_preprocess_reply():
+    a = FakeAdapter(preprocess_reply=lambda v: v[1:])
+    assert a.values("R42.1") == [42.1]
+    assert a.values("A4,3,2") == [4, 3, 2]

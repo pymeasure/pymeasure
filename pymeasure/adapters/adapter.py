@@ -32,7 +32,12 @@ class Adapter(object):
     techniques.
 
     This class should only be inhereted from.
+
+    :param preprocess_reply: optional callable used to preprocess strings
+    received from the instrument
     """
+    def __init__(self, preprocess_reply=None, **kwargs):
+        self.preprocess_reply = preprocess_reply
 
     def write(self, command):
         """ Writes a command to the instrument
@@ -59,16 +64,23 @@ class Adapter(object):
         """
         raise NameError("Adapter (sub)class has not implemented reading")
 
-    def values(self, command, separator=',', cast=float):
+    def values(self, command, separator=',', cast=float, preprocess_reply=None):
         """ Writes a command to the instrument and returns a list of formatted
         values from the result 
 
         :param command: SCPI command to be sent to the instrument
         :param separator: A separator character to split the string into a list
         :param cast: A type to cast the result
+        :param preprocess_reply: optional callable used to preprocess values
+        received from the instrument. If not specified the Adapter default is
+        used.
         :returns: A list of the desired type, or strings where the casting fails
         """
         results = str(self.ask(command)).strip()
+        if callable(preprocess_reply):
+            results = preprocess_reply(results)
+        elif callable(self.preprocess_reply):
+            results = self.preprocess_reply(results)
         results = results.split(separator)
         for i, result in enumerate(results):
             try:

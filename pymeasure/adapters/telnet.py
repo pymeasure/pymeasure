@@ -40,7 +40,9 @@ class TelnetAdapter(Adapter):
     this is only 'timeout'
     """
 
-    def __init__(self, host, port=0, query_delay=0, **kwargs):
+    def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
+                 **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
         safe_keywords = ['timeout']
         for kw in kwargs:

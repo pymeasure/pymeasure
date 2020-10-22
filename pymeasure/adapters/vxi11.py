@@ -44,8 +44,8 @@ class VXI11Adapter(Adapter):
 
     """
 
-    def __init__(self, host, **kwargs):
-
+    def __init__(self, host, preprocess_reply=None, **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply)
         # Filter valid arguments that can be passed to vxi instrument
         valid_args = ["name", "client_id", "term_char"]
         self.conn_kwargs = {}
