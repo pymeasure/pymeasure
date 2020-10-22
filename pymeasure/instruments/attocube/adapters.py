@@ -28,7 +28,7 @@ import time
 from pymeasure.adapters import TelnetAdapter
 
 # compiled regular expression for finding numerical values in reply strings
-_reg_value = re.compile(r"\w+\s+=\s+([-+]?[0-9]*\.?[0-9]+)")
+_reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
 
 def extract_value(reply):
