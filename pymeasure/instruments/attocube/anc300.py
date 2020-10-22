@@ -29,7 +29,45 @@ from pymeasure.instruments.attocube.adapters import (AttocubeConsoleAdapter,
                                                      extract_float,
                                                      extract_int,
                                                      extract_value)
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import (joined_validators,
+                                              strict_discrete_set,
+                                              strict_range)
+
+
+def strict_length(value, values):
+    if len(value) != values:
+        raise ValueError(
+            'Value {} does not have an appropriate length of {}'.format(
+            value, values))
+    return value
+
+
+def truncated_int_array(value, values):
+    """ validator function to check if the supplied value is an iterable-object
+    with appropriate values.
+    """
+    ret = []
+    for i, v in enumerate(value):
+        if v < values[0]:
+            ret.append(values[0])
+        elif v > values[1]:
+            ret.append(values[1])
+        elif isinstance(v, float):
+            if v.is_integer():
+                ret.append(int(v))
+            else:
+                raise ValueError(
+                    'Entry {} at index {} has no integer value'.format(v, i))
+        elif isinstance(v, int):
+            ret.append(v)
+        else:
+            raise TypeError(
+                "Entry {} at index {} has the wrong data type".format(v, i))
+    return ret
+
+
+truncated_int_array_strict_length = joined_validators(strict_length,
+                                                      truncated_int_array)
 
 
 class Axis(object):
@@ -70,6 +108,28 @@ class Axis(object):
             This property can be set. """,
             validator=strict_range, values=[0, 150],
             get_process=extract_float)
+
+    pattern_up = Instrument.control(
+            "getpu", "setpu %s",
+            """ step up pattern of the piezo drive. 256 values ranging from 0
+            to 255 representing the the sequence of output voltages within one
+            step of the piezo drive. This property can be set, the set value
+            needs to be an array with 256 integer values. """,
+            validator=truncated_int_array_strict_length,
+            values=[256, [0, 255]],
+            set_process=lambda a: " ".join("%d" % v for v in a),
+            separator='\r\n', cast=int)
+
+    pattern_down = Instrument.control(
+            "getpd", "setpd %s",
+            """ step down pattern of the piezo drive. 256 values ranging from 0
+            to 255 representing the the sequence of output voltages within one
+            step of the piezo drive. This property can be set, the set value
+            needs to be an array with 256 integer values. """,
+            validator=truncated_int_array_strict_length,
+            values=[256, [0, 255]],
+            set_process=lambda a: " ".join("%d" % v for v in a),
+            separator='\r\n', cast=int)
 
     output_voltage = Instrument.measurement(
             "geto",
