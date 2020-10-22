@@ -30,7 +30,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 # compiled regular expression for finding numerical values in reply strings
-reg_value = re.compile("\w+\s+=\s+([-+]?[0-9]*\.?[0-9]+)")
+_reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
 
 def extract_value(reply):
@@ -39,7 +39,7 @@ def extract_value(reply):
     :param reply: reply string
     :returns: string with only the numerical value
     """
-    r = reg_value.search(reply)
+    r = _reg_value.search(reply)
     if r:
         return r.groups()[0]
     else:
@@ -163,12 +163,12 @@ class IBeamSmart(Instrument):
         self.lastreply = self._read_stripped()
         return reply
 
-    def write(self, command, readAck=True):
+    def write(self, command, read_ack=True):
         """ Writes a command to the instrument. Also reads back a LF+CR which
         is always sent back.
 
         :param command: command string to be sent to the instrument
-        :param readAck: flag to decide if also an acknowledgement from the
+        :param read_ack: flag to decide if also an acknowledgement from the
         device is expected. This is the case for set commands.
         """
         self.lastcommand = command
@@ -178,7 +178,7 @@ class IBeamSmart(Instrument):
             raise ValueError(
                 f"IBeamSmart.write: Error after command '{command}' with "
                 f"message '{reply}'")
-        if readAck:
+        if read_ack:
             self.lastreply = self._read_stripped()
 
     def ask(self, command):
