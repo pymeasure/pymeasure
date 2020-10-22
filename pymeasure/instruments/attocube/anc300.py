@@ -25,38 +25,11 @@
 from math import inf
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.attocube.adapters import (AttocubeConsoleAdapter,
+                                                     extract_float,
+                                                     extract_int,
+                                                     extract_value)
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.instruments.attocube.adapters import AttocubeConsoleAdapter
-
-
-def extract_value(reply):
-    """ get_process function for the Attocube console which for numerical
-    values typically return 'name = X.YZ unit'
-
-    :param reply: reply string
-    :returns: string with only the numerical value
-    """
-    return reply.split('=')[1].split()[0]
-
-
-def extract_float(reply):
-    """ get_process function for the Attocube console to obtain a float from
-    the reply
-
-    :param reply: reply string
-    :returns: string with only the numerical value
-    """
-    return float(extract_value(reply))
-
-
-def extract_int(reply):
-    """ get_process function for the Attocube console to obtain an integer from
-    the reply
-
-    :param reply: reply string
-    :returns: string with only the numerical value
-    """
-    return int(extract_value(reply))
 
 
 class Axis(object):

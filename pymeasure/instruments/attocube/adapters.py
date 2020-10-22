@@ -22,9 +22,47 @@
 # THE SOFTWARE.
 #
 
+import re
 import time
 
 from pymeasure.adapters import TelnetAdapter
+
+# compiled regular expression for finding numerical values in reply strings
+reg_value = re.compile("\w+\s+=\s+([-+]?[0-9]*\.?[0-9]+)")
+
+
+def extract_value(reply):
+    """ get_process function for the Attocube console which for numerical
+    values typically return 'name = X.YZ unit'
+
+    :param reply: reply string
+    :returns: string with only the numerical value
+    """
+    r = reg_value.search(reply)
+    if r:
+        return r.groups()[0]
+    else:
+        return reply
+
+
+def extract_float(reply):
+    """ get_process function for the Attocube console to obtain a float from
+    the reply
+
+    :param reply: reply string
+    :returns: string with only the numerical value
+    """
+    return float(extract_value(reply))
+
+
+def extract_int(reply):
+    """ get_process function for the Attocube console to obtain an integer from
+    the reply
+
+    :param reply: reply string
+    :returns: string with only the numerical value
+    """
+    return int(extract_value(reply))
 
 
 class AttocubeConsoleAdapter(TelnetAdapter):
@@ -43,7 +81,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         time.sleep(self.query_delay)
         super().read()  # clear messages sent upon opening the connection
         # send password and check authorization
-        self.write(passwd, checkAck=False)
+        self.write(passwd, check_ack=False)
         time.sleep(self.query_delay)
         ret = super().read()
         authmsg = ret.split(self.read_termination)[1]
@@ -83,17 +121,17 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         self.check_acknowledgement(ack, ret)
         return ret
 
-    def write(self, command, checkAck=True):
+    def write(self, command, check_ack=True):
         """ Writes a command to the instrument
 
         :param command: command string to be sent to the instrument
-        :param checkAck: boolean flag to decide if the acknowledgement is read
+        :param check_ack: boolean flag to decide if the acknowledgement is read
         back from the instrument. This should be True for set pure commands and
         False otherwise.
         """
         self.lastcommand = command
         super().write(command + self.write_termination)
-        if checkAck:
+        if check_ack:
             reply = self.connection.read_until(self.read_termination.encode())
             msg = reply.decode().strip(self.read_termination)
             self.check_acknowledgement(msg)
@@ -105,6 +143,6 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        self.write(command, checkAck=False)
+        self.write(command, check_ack=False)
         time.sleep(self.query_delay)
         return self.read()
