@@ -46,8 +46,8 @@ class TelnetAdapter(Adapter):
         for kw in kwargs:
             if kw not in safe_keywords:
                 raise TypeError(
-                    "TelnetAdapter: unexpected keyword argument '%s', "
-                    "allowed are: %s" % (kw, str(safe_keywords)))
+                    f"TelnetAdapter: unexpected keyword argument '{kw}', "
+                    f"allowed are: {str(safe_keywords)}")
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
     def __del__(self):
