@@ -37,8 +37,7 @@ from pymeasure.instruments.validators import (joined_validators,
 def strict_length(value, values):
     if len(value) != values:
         raise ValueError(
-            'Value {} does not have an appropriate length of {}'.format(
-            value, values))
+            f"Value {value} does not have an appropriate length of {values}")
     return value
 
 
@@ -57,12 +56,11 @@ def truncated_int_array(value, values):
                 ret.append(int(v))
             else:
                 raise ValueError(
-                    'Entry {} at index {} has no integer value'.format(v, i))
+                        f"Entry {v} at index {i} has no integer value")
         elif isinstance(v, int):
             ret.append(v)
         else:
-            raise TypeError(
-                "Entry {} at index {} has the wrong data type".format(v, i))
+            raise TypeError(f"Entry {v} at index {i} has the wrong data type")
     return ret
 
 

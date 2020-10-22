@@ -86,7 +86,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         ret = super().read()
         authmsg = ret.split(self.read_termination)[1]
         if authmsg != 'Authorization success':
-            raise Exception("Attocube authorization failed ('%s')" % authmsg)
+            raise Exception(f"Attocube authorization failed '{authmsg}'")
         # switch console echo off
         _ = self.ask('echo off')
 
@@ -101,8 +101,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
             if msg == "":  # clear buffer
                 msg = reply
                 super().read()
-            raise ValueError("AttocubeConsoleAdapter: Error after command '%s'"
-                             " with message '%s'" % (self.lastcommand, msg))
+            raise ValueError("AttocubeConsoleAdapter: Error after command "
+                             f"{self.lastcommand} with message {msg}")
 
     def read(self):
         """ Reads a reply of the instrument which consists of two or more
