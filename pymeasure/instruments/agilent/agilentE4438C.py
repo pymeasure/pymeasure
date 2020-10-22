@@ -25,53 +25,17 @@
 from pymeasure.instruments.signal_generator import SignalGenerator
 
 class AgilentE4438C(SignalGenerator):
-    REFERENCE_LEVEL_RANGE_MIN_dBm = -170
-    REFERENCE_LEVEL_RANGE_MAX_dBm = 30
-    REFERENCE_LEVEL_RANGE_dBm = [REFERENCE_LEVEL_RANGE_MIN_dBm, REFERENCE_LEVEL_RANGE_MAX_dBm]
+    POWER_RANGE_MIN_dBm = -130.0
+    POWER_RANGE_MAX_dBm = 30.0
+    POWER_RANGE_dBm = [POWER_RANGE_MIN_dBm, POWER_RANGE_MAX_dBm]
 
-    FREQUENCY_MIN_Hz = 1
-    FREQUENCY_MAX_Hz = 26.5e9
-    FREQUENCY_SPAN_RANGE_Hz = [10, FREQUENCY_MAX_Hz]
-
-    RESOLUTION_BW_RANGE_MIN_Hz = 1
-    RESOLUTION_BW_RANGE_MAX_Hz = 8e6
-    RESOLUTION_BW_RANGE_Hz = [RESOLUTION_BW_RANGE_MIN_Hz, RESOLUTION_BW_RANGE_MAX_Hz]
-
-    INPUT_ATTENUATION_RANGE_dB = [0, 70]
-
-    SWEEP_POINTS_RANGE = [101, 8192]
-    DETECTOR_VALUES=["NORM", "AVER", "POS", "SAMP", "NEG", "QPE", "EAV", "EPOS", "MPOS", "RMS"],
+    FREQUENCY_MIN_Hz = 250e3
+    FREQUENCY_MAX_Hz = 6e9
+    FREQUENCY_RANGE_Hz = [FREQUENCY_MIN_Hz, FREQUENCY_MAX_Hz]
 
     def __init__(self, resourceName, **kwargs):
         super(AgilentE4440A, self).__init__(
             resourceName,
-            "(Agilent E4440A Spectrum Analyzer",
-            **kwargs
-        )
-
-
-class AgilentE4445A(SpectrumAnalyzer):
-    REFERENCE_LEVEL_RANGE_MIN_dBm = -170
-    REFERENCE_LEVEL_RANGE_MAX_dBm = 30
-    REFERENCE_LEVEL_RANGE_dBm = [REFERENCE_LEVEL_RANGE_MIN_dBm, REFERENCE_LEVEL_RANGE_MAX_dBm]
-
-    FREQUENCY_MIN_Hz = 1
-    FREQUENCY_MAX_Hz = 13.2e9
-    FREQUENCY_SPAN_RANGE_Hz = [10, FREQUENCY_MAX_Hz]
-
-    RESOLUTION_BW_RANGE_MIN_Hz = 1
-    RESOLUTION_BW_RANGE_MAX_Hz = 8e6
-    RESOLUTION_BW_RANGE_Hz = [RESOLUTION_BW_RANGE_MIN_Hz, RESOLUTION_BW_RANGE_MAX_Hz]
-
-    INPUT_ATTENUATION_RANGE_dB = [0, 70]
-
-    SWEEP_POINTS_RANGE = [101, 8192]
-
-    DETECTOR_VALUES=["NORM", "AVER", "POS", "SAMP", "NEG", "QPE", "EAV", "EPOS", "MPOS", "RMS"],
-
-    def __init__(self, resourceName, **kwargs):
-        super(AgilentE4445A, self).__init__(
-            resourceName,
-            "(Agilent E4445A Spectrum Analyzer",
+            "Agilent E4438C Signal Generator",
             **kwargs
         )
