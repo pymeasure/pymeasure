@@ -42,25 +42,18 @@ def strict_length(value, values):
 
 
 def truncated_int_array(value, values):
-    """ validator function to check if the supplied value is an iterable-object
-    with appropriate values.
-    """
     ret = []
     for i, v in enumerate(value):
-        if v < values[0]:
-            ret.append(values[0])
-        elif v > values[1]:
-            ret.append(values[1])
-        elif isinstance(v, float):
-            if v.is_integer():
-                ret.append(int(v))
+        if values[0] <= v <= values[1]:
+            if float(v).is_integer():
+               ret.append(int(v))
             else:
-                raise ValueError(
-                        f"Entry {v} at index {i} has no integer value")
-        elif isinstance(v, int):
-            ret.append(v)
+               raise ValueError(f"Entry {v} at index {i} has no integer value")
+        elif float(v).is_integer():
+            ret.append(max(min(values[1], v), values[0]))
         else:
-            raise TypeError(f"Entry {v} at index {i} has the wrong data type")
+            raise ValueError(f"Entry {v} at index {i} has no integer value and"
+                             f"is out of the boundaries {values}")
     return ret
 
 
