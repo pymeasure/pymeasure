@@ -25,3 +25,4 @@ Manuel Zahn
 Mikhaël Myara
 John McMaster
 Jonathan Larochelle
+Dominic Caron

@@ -36,9 +36,10 @@ class TestKeysightDSOX1102G:
     """
     Unit tests for KeysightDSOX1102G class.
 
-    A KeysightDSOX1102G device should be connected to the computer.
-
-    Indicate the device address with the RESOURCE constant.
+    This test suite, needs the following setup to work properly:
+        - A KeysightDSOX1102G device should be connected to the computer;
+        - The device's address must be set in the RESOURCE constant;
+        - A probe on Channel 1 must be connected to the Demo output of the oscilloscope.
     """
 
     ##################################################
@@ -68,16 +69,17 @@ class TestKeysightDSOX1102G:
     DOWNLOAD_SOURCES = ["channel1", "channel2", "function", "fft", "ext"]
     CHANNELS = [1, 2]
 
+    SCOPE = KeysightDSOX1102G(RESOURCE)
+
     ############
     # FIXTURES #
     ############
 
     @pytest.fixture
     def make_reseted_cleared_scope(self):
-        scope = KeysightDSOX1102G(self.RESOURCE)
-        scope.reset()
-        scope.clear_status()
-        return scope
+        self.SCOPE.reset()
+        self.SCOPE.clear_status()
+        return self.SCOPE
 
     #########
     # TESTS #
@@ -85,20 +87,17 @@ class TestKeysightDSOX1102G:
 
     def test_scope_connection(self, make_reseted_cleared_scope):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
-        with pytest.raises(VisaIOError):
+        # The pure python VISA library (pyvisa-py) raises a ValueError while the PyVISA library raises a VisaIOError.
+        with pytest.raises((ValueError, VisaIOError)):
             scope = KeysightDSOX1102G(bad_resource)
-
-        # Successful if VisaIOError is not raised
-        scope = KeysightDSOX1102G(self.RESOURCE)
 
     def test_autoscale(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
         scope.write(":timebase:position 1")
-        # Actual max position depends on the range settings, so here we only expect the position to have changed
-        assert scope.ask(":timebase:position?") != 0
-        # Autoscale always resets the delay to 0.
+        # Autoscale should turn off the zoomed (delayed) time mode
+        assert scope.ask(":timebase:position?") == "+1.000000000000E+00\n"
         scope.autoscale()
-        assert scope.ask(":timebase:position?") == 0
+        assert scope.ask(":timebase:position?") != "+1.000000000000E+00\n"
 
     # Channel
     def test_ch_current_configuration(self, make_reseted_cleared_scope):
@@ -181,7 +180,7 @@ class TestKeysightDSOX1102G:
         scope = make_reseted_cleared_scope
         scope.timebase_mode = case
         assert scope.timebase_mode == case
-        
+
     def test_timebase_offset(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
         scope.timebase_offset = 1
@@ -251,12 +250,12 @@ class TestKeysightDSOX1102G:
         # Here, we only assert that no error arrises when using the expected parameters.
         # Success of digitize operation is evaluated through test_waveform_data
         scope.digitize(case)
-        sleep(2) # Account for Digitize operation duration
+        sleep(2)  # Account for Digitize operation duration
 
     def test_waveform_data(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
         scope.digitize("channel1")
-        sleep(2) # Account for Digitize operation duration
+        sleep(2)  # Account for Digitize operation duration
         scope.waveform_format = "ascii"
         value = scope.waveform_data
         assert type(value) is list
@@ -322,4 +321,3 @@ class TestKeysightDSOX1102G:
         # Returned length is not always as specified. Problem seems to be from scope itself.
         # assert len(data) == case2
         assert type(preamble) is dict
-
