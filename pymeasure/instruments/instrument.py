@@ -318,7 +318,7 @@ class FakeInstrument(Instrument):
 
     def __init__(self, adapter=None, name=None, includeSCPI=False, **kwargs):
         super().__init__(
-            FakeAdapter(),
+            adapter or FakeAdapter(),
             name or "Fake Instrument",
             includeSCPI=includeSCPI,
             **kwargs
