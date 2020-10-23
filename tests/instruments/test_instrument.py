@@ -23,6 +23,7 @@
 #
 
 import pytest
+from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -141,6 +142,41 @@ def test_control_get_process():
             validator=strict_range,
             values=[0, 10],
             get_process=lambda v: int(v.replace('JUNK', '')),
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == 'JUNK5'
+    fake.x = 5
+    assert fake.x == 5
+
+
+def test_control_preprocess_reply():
+    # test setting preprocess_reply at property-level
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "JUNK%d", "",
+            preprocess_reply=lambda v: v.replace('JUNK', ''),
+            cast=int
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == 'JUNK5'
+    fake.x = 5
+    assert fake.x == 5
+    fake.x = 5
+    assert type(fake.x) == int
+
+    # test setting preprocess_reply at Adapter-level
+    class Fake(FakeInstrument):
+        def __init__(self):
+            super().__init__(FakeAdapter(preprocess_reply=lambda v:
+                                         v.replace('JUNK', '')))
+
+        x = Instrument.control(
+            "", "JUNK%d", "",
+            cast=int
         )
 
     fake = Fake()
