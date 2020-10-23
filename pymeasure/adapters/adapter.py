@@ -34,7 +34,7 @@ class Adapter(object):
     This class should only be inhereted from.
 
     :param preprocess_reply: optional callable used to preprocess strings
-    received from the instrument
+    received from the instrument. The callable returns the processed string.
     """
     def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
@@ -72,8 +72,9 @@ class Adapter(object):
         :param separator: A separator character to split the string into a list
         :param cast: A type to cast the result
         :param preprocess_reply: optional callable used to preprocess values
-        received from the instrument. If not specified the Adapter default is
-        used.
+        received from the instrument. The callable returns the processed string.
+        If not specified, the Adapter default is used if available, otherwise no
+        preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
         results = str(self.ask(command)).strip()
