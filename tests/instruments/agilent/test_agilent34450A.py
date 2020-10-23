@@ -26,6 +26,7 @@ import pytest
 from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
 from pyvisa.errors import VisaIOError
 
+
 pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
@@ -33,22 +34,15 @@ class TestAgilent34450A:
     """
     Unit tests for Agilent34450A class.
 
-    An Agilent34450A device should be connected to the computer.
+    This test suite, needs the following setup to work properly:
+        - A Agilent34450A device should be connected to the computer;
+        - The device's address must be set in the RESOURCE constant.
     """
 
     ###############################################################
     # Agilent34450A device goes here:
-    resource = "USB0::10893::45848::MY56511723::0::INSTR" # EQ0017
+    RESOURCE = "USB0::10893::45848::MY56511723::0::INSTR"
     ###############################################################
-
-    ############
-    # FIXTURES #
-    ############
-    @pytest.fixture
-    def make_reseted_dmm(self):
-        dmm = Agilent34450A(self.resource)
-        dmm.reset()
-        return dmm
 
     #########################
     # PARAMETRIZATION CASES #
@@ -57,8 +51,8 @@ class TestAgilent34450A:
     RESOLUTIONS = [[3.00E-5, 3.00E-5], [2.00E-5, 2.00E-5], [1.50E-6, 1.50E-6],
                    ["MIN", 1.50E-6], ["MAX", 3.00E-5], ["DEF", 1.50E-6]]
     MODES = ["current", "ac current", "voltage", "ac voltage", "resistance",
-              "4w resistance", "current frequency", "voltage frequency",
-              "continuity", "diode", "temperature", "capacitance"]
+             "4w resistance", "current frequency", "voltage frequency",
+             "continuity", "diode", "temperature", "capacitance"]
     CURRENT_RANGES = [[100E-6, 100E-6], [1E-3, 1E-3], [10E-3, 10E-3], [100E-3, 100E-3],
                       [1, 1], ["MIN", 100E-6], ["MAX", 10], ["DEF", 100E-3]]
     CURRENT_AC_RANGES = [[10E-3, 10E-3], [100E-3, 100E-3], [1, 1], ["MIN", 10E-3],
@@ -76,28 +70,35 @@ class TestAgilent34450A:
                           [1E-4, 1E-4], [1E-3, 1E-3], [1E-2, 1E-2], ["MIN", 1E-9], ["MAX", 1E-2],
                           ["DEF", 1E-6]]
 
+    DMM = Agilent34450A(RESOURCE)
+
+    ############
+    # FIXTURES #
+    ############
+    @pytest.fixture
+    def make_reseted_dmm(self):
+        self.DMM.reset()
+        return self.DMM
+
     #########
     # TESTS #
     #########
 
     def test_dmm_initialization_bad(self):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
-        with pytest.raises(VisaIOError):
+        # The pure python VISA library (pyvisa-py) raises a ValueError while the PyVISA library raises a VisaIOError.
+        with pytest.raises((ValueError, VisaIOError)):
             dmm = Agilent34450A(bad_resource)
 
-    def test_good_address(self):
-        # Considered successful if VisaIOError is not raised.
-        dmm = Agilent34450A(self.resource)
-
-    def test_reset(self):
-        dmm = Agilent34450A(self.resource)
+    def test_reset(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
         dmm.write(":configure:current")
         # Instrument should return to DCV once reseted
         dmm.reset()
-        assert dmm.ask(":configure?") == "VOLT +1.000000E+01,+3.000000E-05"
+        assert dmm.ask(":configure?") == '"VOLT +1.000000E+01,+1.500000E-06"\n'
 
     def test_beep(self, make_reseted_dmm):
-        dmm = Agilent34450A(self.resource)
+        dmm = make_reseted_dmm
         # Assert that a beep is audible
         dmm.beep()
 
