@@ -6,10 +6,10 @@ dependencies:
   - numpy=1.16.4
   - pandas=0.24.2
   - pyqt=5.9.2
-  - pyqtgraph=0.10.0
+  - pyqtgraph=0.11.0
   - pyserial=3.4
   - pytest=5.0.1
   - pytest-qt=3.2.2
-  - python=3.7.3
+  - python=3.7
   - pyvisa=1.9.1
   - qt=5.9.7

@@ -22,16 +22,5 @@
 # THE SOFTWARE.
 #
 
-try:
-    from .daqmx import DAQmx
-except OSError:
-    # Error Logging is handled within package
-    pass
-
-try:
-    from .virtualbench import VirtualBench
-    # direct access to armstrap/pyvirtualbench wrapper:
-    # from .virtualbench import VirtualBench_Direct
-except ModuleNotFoundError:
-    # Error Logging is handled within package
-    pass
+from .adapters import AttocubeConsoleAdapter
+from .anc300 import ANC300Controller

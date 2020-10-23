@@ -1,4 +1,5 @@
 # References: https://packaging.python.org/en/latest/appveyor/#appveyor-yml
+image: Visual Studio 2019
 
 environment:
 
@@ -6,10 +7,6 @@ environment:
 
     # For Python versions available on Appveyor, see
     # https://www.appveyor.com/docs/windows-images-software/
-
-    - PYTHON_VERSION: "3.5"
-      MINICONDA: C:\Miniconda35-x64
-      PLATFORM: x64
 
     - PYTHON_VERSION: "3.6"
       MINICONDA: C:\Miniconda36-x64
@@ -20,16 +17,12 @@ environment:
       PLATFORM: x64
 
     - PYTHON_VERSION: "3.8"
-      MINICONDA: C:\Miniconda37-x64 # using the 3.7 version of Miniconda
+      MINICONDA: C:\Miniconda38-x64
       PLATFORM: x64
 
-    - PYTHON_VERSION: "3.5"
-      MINICONDA: C:\Miniconda35
-      PLATFORM: x86
-
-    - PYTHON_VERSION: "3.6"
-      MINICONDA: C:\Miniconda36
-      PLATFORM: x86
+    - PYTHON_VERSION: "3.9"
+      MINICONDA: C:\Miniconda38-x64  # TODO: replace by 39-x64 when available
+      PLATFORM: x64
 
 matrix:
   fast_finish: true  # immediately finish build once one of the jobs fails.
