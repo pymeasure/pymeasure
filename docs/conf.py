@@ -270,4 +270,4 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 # Automatically mock optional packages
-autodoc_mock_imports = ['pyqtgraph', 'zmq', 'cloudpickle', 'vxi11']
+autodoc_mock_imports = ['pyqtgraph', 'zmq', 'cloudpickle', 'vxi11', 'pyvirtualbench']
