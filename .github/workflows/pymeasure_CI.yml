@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  docs:
+  docs_lint:
     name: Docs and Linting
     runs-on: "ubuntu-latest"
     strategy:
@@ -24,8 +24,11 @@ jobs:
       - name: Generate and test docs
         run: |
           cd docs;
+          echo "::add-matcher::.github/sphinx.json"
           make doctest
+          echo "::remove-matcher owner=sphinx-doctest::"
           make html
+          echo "::remove-matcher owner=sphinx::"
       - name: Lint with flake8
         continue-on-error: true
         run: |
@@ -35,6 +38,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   test:
     name: Python ${{ matrix.python-version }}, ${{ matrix.os }}
+    needs: docs_lint  # no need to continue if the docs/lint job fails
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true

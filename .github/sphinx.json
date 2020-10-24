@@ -1,0 +1,27 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "sphinx",
+            "pattern": [
+                {
+                    "regexp": "^(?<path>.+?)(?<location>:.*?|): (?<severity>WARNING|ERROR): (?<message>.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 4
+                }
+            ]
+        },
+        {
+            "owner": "sphinx-doctest",
+            "pattern": [
+                {
+                    "regexp": "\\nFile \"(?<path>.+?)\", line (?<line>\\d+).*\\n(?<message>(.|\\n)+?)\\*+",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                }
+            ]
+        }
+    ]
+}
