@@ -1015,7 +1015,7 @@ class InstrumentWidget(QtGui.QWidget):
 
     """
 
-    def __init__(self, instrument, readings=None, settings=None, parent=None):
+    def __init__(self, instrument, measurements=None, controls=None, settings=None, functions=None, parent=None):
         super().__init__(parent)
 
         self.instrument = instrument
@@ -1028,15 +1028,15 @@ class InstrumentWidget(QtGui.QWidget):
         else:
             self.instrument_name = 'Instrument'
 
-        if isinstance(readings, str):
-            readings = [readings]
+        if isinstance(measurements, str):
+            measurements = [measurements]
 
-        self.readings = readings
+        self.measurements = measurements
 
-        if isinstance(settings, str):
-            settings = [settings]
+        if isinstance(controls, str):
+            controls = [controls]
 
-        self.settings = settings
+        self.controls = controls
 
         self._setup_ui()
         self._layout()
@@ -1047,12 +1047,12 @@ class InstrumentWidget(QtGui.QWidget):
 
     def _setup_ui(self):
         self.displays = dict()
-        for param in self.readings:
+        for param in self.measurements:
             name = param.name
             element = ScientificInput(parameter=param, parent=self)
             setattr(self, name, element)
 
-        for param in self.settings:
+        for param in self.controls:
             name = param.name
             # TODO: Move to using scientific inputs
             element = ScientificInput(parameter=param, parent=self)
@@ -1068,20 +1068,20 @@ class InstrumentWidget(QtGui.QWidget):
     def _layout(self):
         f_layout = QtGui.QFormLayout(self)
 
-        for param in [*self.readings, *self.settings]:
+        for param in [*self.measurements, *self.controls]:
             name = param.name
             f_layout.addRow(name, getattr(self, name))
 
         f_layout.addRow("Update continuously", self.update_box)
 
     def update_values(self):
-        for param in self.readings:
+        for param in self.measurements:
             name = param.name
             value = getattr(self.instrument, name)
             element = getattr(self, name)
             element.setValue(value)
 
-        for param in self.settings:
+        for param in self.controls:
             name = param.name
             value = getattr(self.instrument, name)
             element = getattr(self, name)

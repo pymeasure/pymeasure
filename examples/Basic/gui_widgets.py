@@ -75,8 +75,10 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
         self.add_instrument_widget(MockInstrument(),
-                                   readings=["wave", "voltage"],
-                                   settings=["time", "output_voltage"],
+                                   measurements=["wave", "voltage"],
+                                   controls=["time", "output_voltage"],
+                                   settings=None,
+                                   functions=["reset_time"],
                                    )
 
     def queue(self, *, procedure=None):

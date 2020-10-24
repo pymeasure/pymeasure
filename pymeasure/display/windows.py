@@ -506,16 +506,14 @@ class ManagedWindow(QtGui.QMainWindow):
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
 
-    def add_instrument_widget(self, instrument,
-                              readings=None, settings=None):
+    def add_instrument_widget(self, instrument, **kwargs):
         """ Method that adds an InstrumentWidget to the ManagedWindow.
         TODO: finish docstring
         """
         widget = InstrumentWidget(
             instrument,
-            readings=readings,
-            settings=settings,
-            parent=self
+            parent=self,
+            **kwargs
         )
 
         sequencer_dock = QtGui.QDockWidget(widget.instrument_name)
