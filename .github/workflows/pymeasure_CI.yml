@@ -22,9 +22,9 @@ jobs:
           pip install -r requirements/pymeasure_readthedocs.txt
           pip install sphinx sphinx_rtd_theme flake8
       - name: Generate and test docs
+        working-directory: ./docs
         run: |
-          cd docs;
-          echo "::add-matcher::.github/sphinx.json"
+          echo "::add-matcher::../.github/sphinx.json"
           make doctest
           echo "::remove-matcher owner=sphinx-doctest::"
           make html
