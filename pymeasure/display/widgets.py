@@ -1047,13 +1047,15 @@ class InstrumentWidget(QtGui.QWidget):
 
     def _setup_ui(self):
         self.displays = dict()
-        for name in self.readings:
-            element = QtGui.QLCDNumber(self)
+        for param in self.readings:
+            name = param.name
+            element = ScientificInput(parameter=param, parent=self)
             setattr(self, name, element)
 
-        for name in self.settings:
+        for param in self.settings:
+            name = param.name
             # TODO: Move to using scientific inputs
-            element = QtGui.QDoubleSpinBox(self)
+            element = ScientificInput(parameter=param, parent=self)
             element.valueChanged.connect(partial(self.apply_setting, name))
             element.editingFinished.connect(partial(self.finished_changing_setting, name))
             setattr(self, name, element)
@@ -1066,18 +1068,21 @@ class InstrumentWidget(QtGui.QWidget):
     def _layout(self):
         f_layout = QtGui.QFormLayout(self)
 
-        for name in [*self.readings, *self.settings]:
+        for param in [*self.readings, *self.settings]:
+            name = param.name
             f_layout.addRow(name, getattr(self, name))
 
         f_layout.addRow("Update continuously", self.update_box)
 
     def update_values(self):
-        for name in self.readings:
+        for param in self.readings:
+            name = param.name
             value = getattr(self.instrument, name)
             element = getattr(self, name)
-            element.display(value)
+            element.setValue(value)
 
-        for name in self.settings:
+        for param in self.settings:
+            name = param.name
             value = getattr(self.instrument, name)
             element = getattr(self, name)
 
