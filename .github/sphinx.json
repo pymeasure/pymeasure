@@ -15,10 +15,14 @@
             "owner": "sphinx-doctest",
             "pattern": [
                 {
-                    "regexp": "\\nFile \\\"(?<path>.+?)\\\", line (?<line>\\d+|\\?).*\\n(?<message>(?:.|\\n)+?)\\*+",
+                    "regexp": "^File \\\"(?<path>.+?)\\\", line (?<line>\\d+|\\?), .*$",
                     "file": 1,
-                    "line": 2,
-                    "message": 3
+                    "line": 2
+                },
+                {
+                    "regexp": "^(?<message>[^*]*)$",
+                    "message": 1,
+                    "loop": true
                 }
             ]
         }
