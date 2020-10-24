@@ -24,7 +24,7 @@ jobs:
       - name: Generate and test docs
         working-directory: ./docs
         run: |
-          echo "::add-matcher::../.github/sphinx.json"
+          echo "::add-matcher::.github/sphinx.json"
           make doctest
           echo "::remove-matcher owner=sphinx-doctest::"
           make html
