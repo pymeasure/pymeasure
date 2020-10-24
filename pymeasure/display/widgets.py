@@ -1030,7 +1030,12 @@ class InstrumentWidget(QtGui.QWidget):
 
     """
 
-    def __init__(self, instrument, measurements=None, controls=None, settings=None, functions=None, parent=None):
+    def __init__(self, instrument,
+                 measurements=None, controls=None,
+                 settings=None, functions=None,
+                 set_settings_continuously=False,
+                 get_settings_continuously=False,
+                 parent=None):
         super().__init__(parent)
 
         self.instrument = instrument
