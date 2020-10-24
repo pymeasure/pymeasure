@@ -7,14 +7,15 @@ In order to maintain consistency across the different instruments in the PyMeasu
 Python style guides
 ===================
 
-Only Python 3 is used in PyMeasure. This prevents the maintaininace overhead of supporting Python 2.7,  which will lose official support in the future.
-
 The `PEP8 style guide`_ and `PEP257 docstring conventions`_ should be followed.
 
 .. _PEP8 style guide: https://www.python.org/dev/peps/pep-0008/
 .. _PEP257 docstring conventions: https://www.python.org/dev/peps/pep-0257/
 
 Function and variable names should be lower case with underscores as needed to seperate words. CamelCase should only be used for class names, unless working with Qt, where its use is common.
+
+There are no plans to support type hinting in PyMeasure code. This adds a lot of additional code to manage, without a clear advantage for this project. 
+Type documentation should be placed in the docstring where not clear from the variable name.
 
 Documentation
 =============
