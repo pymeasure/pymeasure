@@ -13,6 +13,7 @@
         },
         {
             "owner": "sphinx-doctest",
+            "fileLocation": "relative",
             "pattern": [
                 {
                     "regexp": "^File \\\"(?<path>.+?)\\\", line (?<line>\\d+|\\?), (?<msg>.*$)",
