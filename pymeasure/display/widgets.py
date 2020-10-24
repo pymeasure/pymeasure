@@ -1019,24 +1019,20 @@ class InstrumentWidget(QtGui.QWidget):
         super().__init__(parent)
 
         self.instrument = instrument
+        self.measurements = self.check_parameter_list(measurements)
+        self.controls = self.check_parameter_list(controls)
+        self.settings = self.check_parameter_list(settings)
+        # TODO: implement settings
 
         self.update_timer = QtCore.QTimer(self)
         self.update_timer.timeout.connect(self.update_values)
 
+        # Get name of the instrument
         if hasattr(self.instrument, 'name'):
             self.instrument_name = self.instrument.name
         else:
             self.instrument_name = 'Instrument'
 
-        if isinstance(measurements, str):
-            measurements = [measurements]
-
-        self.measurements = measurements
-
-        if isinstance(controls, str):
-            controls = [controls]
-
-        self.controls = controls
 
         self._setup_ui()
         self._layout()
@@ -1111,3 +1107,26 @@ class InstrumentWidget(QtGui.QWidget):
         elif state == 2:
             self.update_timer.setInterval(50)
             self.update_timer.start()
+
+    @staticmethod
+    def check_parameter_list(params):
+        # Ensure the parameters is a list
+        if isinstance(params, (list, tuple)):
+            params = list(params)
+        elif params is None:
+            params = []
+        else:
+            params = [params]
+
+        # Convert all elements to FloatParameter whenever given as a string
+        for idx in range(len(params)):
+            if isinstance(params[idx], parameters.Parameter):
+                pass
+            elif isinstance(params[idx], str):
+                params[idx] = parameters.FloatParameter(params[idx])
+            else:
+                raise TypeError("All parameters (measurements, controls, & "
+                                "settings) should be given as a Parameter, a "
+                                "Parameter subclass, or a string.")
+
+        return params
