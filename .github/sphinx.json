@@ -4,11 +4,10 @@
             "owner": "sphinx",
             "pattern": [
                 {
-                    "regexp": "^(?<path>.+?)(?<location>:.*?|): (?<severity>WARNING|ERROR): (?<message>.+)$",
+                    "regexp": "^(?<path>.+?):(?<message>.*? (?<severity>WARNING|ERROR): .+)$",
                     "file": 1,
-                    "line": 2,
                     "severity": 3,
-                    "message": 4
+                    "message": 2
                 }
             ]
         },
@@ -16,7 +15,7 @@
             "owner": "sphinx-doctest",
             "pattern": [
                 {
-                    "regexp": "\\nFile \"(?<path>.+?)\", line (?<line>\\d+).*\\n(?<message>(.|\\n)+?)\\*+",
+                    "regexp": "\\nFile \\\"(?<path>.+?)\\\", line (?<line>\\d+|\\?).*\\n(?<message>(?:.|\\n)+?)\\*+",
                     "file": 1,
                     "line": 2,
                     "message": 3
