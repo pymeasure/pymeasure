@@ -1,11 +1,12 @@
 """
 This example demonstrates how to make a graphical interface, and uses
 a random number generator to simulate data so that it does not require
-an instrument to use. It also demonstrates the use of the sequencer module.
+an instrument to use. It also demonstrates the use of the additional optional
+widgets, including the sequencer-widget and the instrument-widget.
 
 Run the program by changing to the directory containing this file and calling:
 
-python gui_sequencer.py
+python gui_widgets.py
 
 """
 
@@ -23,7 +24,7 @@ from pymeasure.experiment import Procedure, IntegerParameter, Parameter, \
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.display.widgets import SequencerWidget
+from pymeasure.instruments.mock import Mock as MockInstrument
 
 
 class TestProcedure(Procedure):
@@ -68,10 +69,15 @@ class MainWindow(ManagedWindow):
             y_axis='Random Number',
             sequencer=True,
             sequencer_inputs=['iterations', 'delay', 'seed'],
-            sequence_file="gui_sequencer_example_sequence.txt",
+            sequence_file="sequencer_example_sequence.txt",
             inputs_in_scrollarea=True
         )
         self.setWindowTitle('GUI Example')
+
+        self.add_instrument_widget(MockInstrument(),
+                                   readings=["wave", "voltage"],
+                                   settings=["time", "output_voltage"],
+                                   )
 
     def queue(self, *, procedure=None):
         filename = tempfile.mktemp()
