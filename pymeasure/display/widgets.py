@@ -45,6 +45,37 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def input_from_parameter(parameter):
+    """ Get the corresponding type of input for a given parameter.
+
+    :param parameter: A parameter
+    """
+
+    if parameter.ui_class is not None:
+        element = parameter.ui_class(parameter)
+
+    elif isinstance(parameter, parameters.FloatParameter):
+        element = ScientificInput(parameter)
+
+    elif isinstance(parameter, parameters.IntegerParameter):
+        element = IntegerInput(parameter)
+
+    elif isinstance(parameter, parameters.BooleanParameter):
+        element = BooleanInput(parameter)
+
+    elif isinstance(parameter, parameters.ListParameter):
+        element = ListInput(parameter)
+
+    elif isinstance(parameter, parameters.Parameter):
+        element = StringInput(parameter)
+
+    else:
+        raise TypeError("parameter has to be an instance of Parameter or one "
+                        "of its subclasses.")
+
+    return element
+
+
 class PlotFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
     the plot based on the refresh_time, and allows the axes
@@ -467,23 +498,7 @@ class InputsWidget(QtGui.QWidget):
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
-            if parameter.ui_class is not None:
-                element = parameter.ui_class(parameter)
-
-            elif isinstance(parameter, parameters.FloatParameter):
-                element = ScientificInput(parameter)
-
-            elif isinstance(parameter, parameters.IntegerParameter):
-                element = IntegerInput(parameter)
-
-            elif isinstance(parameter, parameters.BooleanParameter):
-                element = BooleanInput(parameter)
-
-            elif isinstance(parameter, parameters.ListParameter):
-                element = ListInput(parameter)
-
-            elif isinstance(parameter, parameters.Parameter):
-                element = StringInput(parameter)
+            element = input_from_parameter(parameter)
 
             setattr(self, name, element)
 
@@ -1042,16 +1057,15 @@ class InstrumentWidget(QtGui.QWidget):
         self.update_box.setCheckState(1)
 
     def _setup_ui(self):
-        self.displays = dict()
         for param in self.measurements:
             name = param.name
-            element = ScientificInput(parameter=param, parent=self)
+            element = input_from_parameter(param)
+            element.setEnabled(False)
             setattr(self, name, element)
 
         for param in self.controls:
             name = param.name
-            # TODO: Move to using scientific inputs
-            element = ScientificInput(parameter=param, parent=self)
+            element = input_from_parameter(param)
             element.valueChanged.connect(partial(self.apply_setting, name))
             element.editingFinished.connect(partial(self.finished_changing_setting, name))
             setattr(self, name, element)
