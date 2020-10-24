@@ -321,7 +321,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     >>> extreme = Extreme5000("GPIB::1")
     >>> extreme.channel = 'X'
     >>> extreme.read()
-    '1'
+    '2'
     >>> extreme.channel = 'Y'
     >>> extreme.channel
     'Y'

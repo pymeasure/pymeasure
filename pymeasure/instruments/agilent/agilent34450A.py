@@ -36,9 +36,9 @@ class Agilent34450A(Instrument):
     """
     Represent the HP/Agilent/Keysight 34450A and related multimeters.
 
-    .. code-block:: python
+    .. doctest::
 
-        dmm = Agilent34450A("USB0::...")
+        >>> dmm = Agilent34450A("USB0::...")
         dmm.reset()
         dmm.configure_voltage()
         print(dmm.voltage)
