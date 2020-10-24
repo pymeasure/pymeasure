@@ -3,13 +3,12 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - numpy=1.18.1
-  - pandas=1.0.1
+  - numpy=1.19.2
+  - pandas=1.1.3
   - pyqt=5.12.3
-  - pyqtgraph=0.10.0
+  - pyqtgraph=0.11.0
   - pyserial=3.4
-  - pytest=5.3.5
+  - pytest=6.1.1
   - pytest-qt=3.3.0
-  - python=3.8.1
   - pyvisa=1.10.1
-  - qt=5.12.5
+  - qt=5.12.9

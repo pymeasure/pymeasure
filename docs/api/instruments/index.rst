@@ -23,6 +23,7 @@ Instruments by manufacturer:
    agilent/index
    ametek/index
    ami/index
+   anapico/index
    anritsu/index
    danfysik/index
    deltaelektronica/index
