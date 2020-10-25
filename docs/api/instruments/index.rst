@@ -25,6 +25,7 @@ Instruments by manufacturer:
    ami/index
    anapico/index
    anritsu/index
+   attocube/index
    danfysik/index
    deltaelektronica/index
    fwbell/index
