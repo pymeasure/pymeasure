@@ -126,8 +126,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
 
         :param command: command string to be sent to the instrument
         :param check_ack: boolean flag to decide if the acknowledgement is read
-        back from the instrument. This should be True for set pure commands and
-        False otherwise.
+            back from the instrument. This should be True for set pure commands
+            and False otherwise.
         """
         self.lastcommand = command
         super().write(command + self.write_termination)

@@ -35,9 +35,9 @@ class TelnetAdapter(Adapter):
     :param host: host address of the instrument
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
-                        method
+        method
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
-    this is only 'timeout'
+        this is only 'timeout'
     """
 
     def __init__(self, host, port=0, query_delay=0, **kwargs):
