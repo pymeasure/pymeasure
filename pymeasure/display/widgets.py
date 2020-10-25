@@ -1090,8 +1090,12 @@ class InstrumentWidget(QtGui.QWidget):
                 if self.set_settings_continuously:
                     element.valueChanged.connect(partial(self.apply_setting, name))
 
-                elif param.field_type == "setting":
-                    pass
+            elif param.field_type == "setting":
+                # connect to update functions
+                element.editingFinished.connect(partial(self.apply_setting, name))
+
+                if self.set_settings_continuously:
+                    element.valueChanged.connect(partial(self.apply_setting, name))
 
         # Add a checkbox for continuous updating
         self.update_box = QtGui.QCheckBox(self)
