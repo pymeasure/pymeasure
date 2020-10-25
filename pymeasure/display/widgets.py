@@ -29,8 +29,8 @@ import re
 import pyqtgraph as pg
 from functools import partial
 import numpy
-from collections import ChainMap
-from itertools import product
+from collections import ChainMap, OrderedDict
+from itertools import product, cycle
 
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
@@ -1038,13 +1038,23 @@ class InstrumentWidget(QtGui.QWidget):
         super().__init__(parent)
 
         self.instrument = instrument
-        self.measurements = self.check_parameter_list(measurements)
-        self.controls = self.check_parameter_list(controls)
-        self.settings = self.check_parameter_list(settings)
+
+        measurements = self.check_parameter_list(measurements, "measurement")
+        controls = self.check_parameter_list(controls, "control")
+        settings = self.check_parameter_list(settings, "setting")
+
+        self.params = OrderedDict(list(measurements.items()) + list(controls.items()) + list(settings.items()))
+
+        update_list = list(measurements.keys())
+        if get_settings_continuously:
+            update_list.extend(controls.keys())
+        self.update_cycler = cycle(update_list)
+
+        self.set_settings_continuously = set_settings_continuously
         # TODO: implement settings
 
         self.update_timer = QtCore.QTimer(self)
-        self.update_timer.timeout.connect(self.update_values)
+        self.update_timer.timeout.connect(self.update_value)
 
         # Get name of the instrument
         if hasattr(self.instrument, 'name'):
@@ -1056,63 +1066,67 @@ class InstrumentWidget(QtGui.QWidget):
         self._setup_ui()
         self._layout()
 
-        self.update_values()
+        self.update_all_values()
 
         self.update_box.setCheckState(1)
 
     def _setup_ui(self):
-        for param in self.measurements:
-            name = param.name
+        for name, param in self.params.items():
             element = input_from_parameter(param)
-            element.setEnabled(False)
             setattr(self, name, element)
 
-        for param in self.controls:
-            name = param.name
-            element = input_from_parameter(param)
-            element.valueChanged.connect(partial(self.apply_setting, name))
-            element.editingFinished.connect(partial(self.finished_changing_setting, name))
-            setattr(self, name, element)
+            if param.field_type == "measurement":
+                element.setEnabled(False)
+
+            elif param.field_type == "control":
+                element.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+                element.stepEnabled = lambda: QtGui.QAbstractSpinBox.StepDownEnabled | \
+                                              QtGui.QAbstractSpinBox.StepUpEnabled
+                element.stepType = lambda: QtGui.QAbstractSpinBox.AdaptiveDecimalStepType
+
+                # connect to update functions
+                element.editingFinished.connect(partial(self.apply_setting, name))
+
+                if self.set_settings_continuously:
+                    element.valueChanged.connect(partial(self.apply_setting, name))
+
+                elif param.field_type == "setting":
+                    pass
 
         # Add a checkbox for continuous updating
         self.update_box = QtGui.QCheckBox(self)
         self.update_box.setTristate(True)
         self.update_box.stateChanged.connect(self._set_continuous_updating)
 
+        # Add a button for instant updating
+        self.update_button = QtGui.QPushButton("Update", self)
+        self.update_button.clicked.connect(self.update_all_values)
+
     def _layout(self):
         f_layout = QtGui.QFormLayout(self)
 
-        for param in [*self.measurements, *self.controls]:
-            name = param.name
+        for name in self.params:
             f_layout.addRow(name, getattr(self, name))
 
         f_layout.addRow("Update continuously", self.update_box)
 
-    def update_values(self):
-        for param in self.measurements:
-            name = param.name
-            value = getattr(self.instrument, name)
-            element = getattr(self, name)
+    def update_value(self, name=None):
+        if name is None:
+            name = next(self.update_cycler)
+
+        value = getattr(self.instrument, name)
+        element = getattr(self, name)
+
+        if not element.hasFocus():
             element.setValue(value)
 
-        for param in self.controls:
-            name = param.name
-            value = getattr(self.instrument, name)
-            element = getattr(self, name)
-
-            if not element.hasFocus():
-                element.setValue(value)
+    def update_all_values(self):
+        for name in self.params:
+            self.update_value(name)
 
     def apply_setting(self, name):
-        print("value-changed:", name)
         element = getattr(self, name)
         setattr(self.instrument, name, element.value())
-
-    def finished_changing_setting(self, name):
-        element = getattr(self, name)
-        setattr(self.instrument, name, element.value())
-        actual_value = getattr(self.instrument, name)
-        element.setValue(actual_value)
 
     def _set_continuous_updating(self):
         state = self.update_box.checkState()
@@ -1127,7 +1141,7 @@ class InstrumentWidget(QtGui.QWidget):
             self.update_timer.start()
 
     @staticmethod
-    def check_parameter_list(params):
+    def check_parameter_list(params, field_type=None):
         # Ensure the parameters is a list
         if isinstance(params, (list, tuple)):
             params = list(params)
@@ -1146,5 +1160,9 @@ class InstrumentWidget(QtGui.QWidget):
                 raise TypeError("All parameters (measurements, controls, & "
                                 "settings) should be given as a Parameter, a "
                                 "Parameter subclass, or a string.")
+
+            params[idx].field_type = field_type
+
+        params = OrderedDict((param.name, param) for param in params)
 
         return params
