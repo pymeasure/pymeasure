@@ -39,7 +39,6 @@ from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
 from ..experiment.results import Results
-from functools import partial
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
