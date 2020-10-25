@@ -21,17 +21,6 @@ jobs:
           pip install wheel
           pip install -r requirements/pymeasure_readthedocs.txt
           pip install sphinx sphinx_rtd_theme flake8
-      - name: Generate docs
-        working-directory: ./docs
-        run: |
-          echo "::add-matcher::.github/sphinx.json"
-          make html
-          echo "::remove-matcher owner=sphinx::"
-      - name: Run doctests
-        working-directory: ./docs
-        run: |
-          echo "::add-matcher::.github/sphinx.json"
-          make doctest
       - name: Lint with flake8
         continue-on-error: true
         run: |
@@ -39,6 +28,16 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Generate docs
+        working-directory: ./docs
+        run: |
+          echo "::add-matcher::.github/sphinx.json"
+          make html
+      - name: Run doctests
+        working-directory: ./docs
+        run: |
+          echo "::add-matcher::.github/sphinx.json"
+          make doctest
   test:
     name: Python ${{ matrix.python-version }}, ${{ matrix.os }}
     needs: docs_lint  # no need to continue if the docs/lint job fails
