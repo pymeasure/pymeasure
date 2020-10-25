@@ -1108,7 +1108,10 @@ class InstrumentWidget(QtGui.QWidget):
         for name in self.params:
             f_layout.addRow(name, getattr(self, name))
 
-        f_layout.addRow("Update continuously", self.update_box)
+        update_hbox = QtGui.QHBoxLayout()
+        update_hbox.addWidget(self.update_box)
+        update_hbox.addWidget(self.update_button)
+        f_layout.addRow("Update continuously", update_hbox)
 
     def update_value(self, name=None):
         if name is None:
