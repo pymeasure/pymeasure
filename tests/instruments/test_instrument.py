@@ -176,8 +176,7 @@ def test_control_preprocess_reply_adapter():
     # test setting preprocess_reply at Adapter-level
     class Fake(FakeInstrument):
         def __init__(self):
-            super().__init__(FakeAdapter(preprocess_reply=lambda v:
-                                         v.replace('JUNK', '')))
+            super().__init__(preprocess_reply=lambda v: v.replace('JUNK', ''))
 
         x = Instrument.control(
             "", "JUNK%d", "",
