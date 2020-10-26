@@ -32,7 +32,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
-class Channel(object):
+class Channel():
     """ Implementation of a Keysight DSOX1102G Oscilloscope channel.
 
     Implementation modeled on Channel object of Tektronix AFG3152C instrument. """
@@ -144,7 +144,7 @@ class Channel(object):
         :param scale: Units per division. """
 
         if vertical_range is not None and scale is not None:
-            raise Warning('Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
+            log.warning('Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
 
         if probe_attenuation is not None: self.probe_attenuation = probe_attenuation
         if bwlimit is not None: self.bwlimit = bwlimit
@@ -176,20 +176,19 @@ class Channel(object):
         # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and to query the
         # configuration details, we actually need to ask ":channelX?", without a second ":"
         ch_setup_raw = self.instrument.ask(":channel%d?" % self.number).strip("\n")
-        ch_setup_splitted = ch_setup_raw.split(";")
+
+        # ch_setup_raw hat the following format:
+        # :CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;
+        # INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING
+
+        # Cut out the ":CHANx:" at beginning and split string
+        ch_setup_splitted = ch_setup_raw[7:-1].split(";")
 
         # Create dict of setup parameters
         ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
 
         # Add "CHAN" key
-        ch_setup_dict["CHAN"] = self.number
-
-        # Clean up badly named key
-        key_to_pop = None
-        for key in ch_setup_dict:
-            if "RANG" in key:
-                key_to_pop = key
-        ch_setup_dict["RANG"] = ch_setup_dict.pop(key_to_pop)
+        ch_setup_dict["CHAN"] = ch_setup_raw[5]
 
         # Convert values to specific type
         to_str = ["COUP", "IMP", "UNIT", "STYP"]
@@ -227,10 +226,18 @@ class KeysightDSOX1102G(Instrument):
             VI_ERROR_TMO (timeout) occuring when sending commands immediately after digitize.
             Current fix: if deemed necessary, add delay between digitize and follow-up command
             to scope.
-
     """
 
     BOOLS = {True: 1, False: 0}
+
+    def __init__(self, adapter, **kwargs):
+        super(KeysightDSOX1102G, self).__init__(
+            adapter, "Keysight DSOX1102G Oscilloscope", **kwargs
+        )
+        # Account for setup time for timebase_mode, waveform_points_mode
+        self.adapter.connection.timeout = 6000
+        self.ch1 = Channel(self, 1)
+        self.ch2 = Channel(self, 2)
 
     #################
     # Channel setup #
@@ -279,12 +286,6 @@ class KeysightDSOX1102G(Instrument):
         """ A float parameter that sets the horizontal scale (units per division) in seconds 
         for the main window."""
     )
-
-    #################
-    # Trigger setup #
-    #################
-
-    # TODO: Implement Trigger functionality
 
     ###############
     # Acquisition #
@@ -415,15 +416,6 @@ class KeysightDSOX1102G(Instrument):
     def system_setup(self, setup_string):
         self.write(":system:setup " + setup_string)
 
-    def __init__(self, adapter, **kwargs):
-        super(KeysightDSOX1102G, self).__init__(
-            adapter, "Keysight DSOX1102G Oscilloscope", **kwargs
-        )
-        # Account for setup time for timebase_mode, waveform_points_mode
-        self.adapter.connection.timeout = 6000
-        self.ch1 = Channel(self, 1)
-        self.ch2 = Channel(self, 2)
-
     def ch(self, channel_number):
         if channel_number == 1:
             return self.ch1
@@ -510,17 +502,15 @@ class KeysightDSOX1102G(Instrument):
         Reads setup data from timebase and converts it to a more convenient dict of values.
         """
         tb_setup_raw = self.ask(":timebase?").strip("\n")
-        tb_setup_splitted = tb_setup_raw.split(";")
+
+        # tb_setup_raw hat the following format:
+        # :TIM:MODE MAIN;REF CENT;MAIN:RANG +1.00E-03;POS +0.0E+00
+
+        # Cut out the ":TIM:" at beginning and split string
+        tb_setup_splitted = tb_setup_raw[5:-1].split(";")
 
         # Create dict of setup parameters
         tb_setup = dict(map(lambda v: v.split(" "), tb_setup_splitted))
-
-        # Clean up badly named key
-        key_to_pop = None
-        for key in tb_setup:
-            if "TIM" in key:
-                key_to_pop = key
-        tb_setup["MODE"] = tb_setup.pop(key_to_pop)
 
         # Convert values to specific type
         to_str = ["MODE", "REF"]

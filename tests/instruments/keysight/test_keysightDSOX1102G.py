@@ -23,6 +23,7 @@
 #
 
 from time import sleep
+import logging
 
 import pytest
 import numpy as np
@@ -275,7 +276,9 @@ class TestKeysightDSOX1102G:
 
     # Setup methods
     @pytest.mark.parametrize("ch_number", CHANNELS)
-    def test_channel_setup(self, make_reseted_cleared_scope, ch_number):
+    def test_channel_setup(self, make_reseted_cleared_scope, ch_number, caplog):
+        # Using caplog to check content of log.
+        caplog.set_level(logging.WARNING)
         scope = make_reseted_cleared_scope
 
         # Not testing the actual values assignment since different combinations of
@@ -285,8 +288,8 @@ class TestKeysightDSOX1102G:
         assert scope.ch(ch_number).current_configuration == expected
         with pytest.raises(ValueError):
             scope.ch(3)
-        with pytest.raises(Warning):
-            scope.ch(ch_number).setup(1, vertical_range=1, scale=1)
+        scope.ch(ch_number).setup(1, vertical_range=1, scale=1)
+        assert 'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.' in caplog.text
 
     def test_timebase_setup(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
