@@ -66,13 +66,11 @@ class IBeamSmart(Instrument):
     temp = Instrument.measurement(
             "sh temp",
             """ temperature of the laser diode in degree centigrade.""",
-            get_process=lambda v: float(extract_value(v)),
             check_get_errors=True)
 
     system_temp = Instrument.measurement(
             "sh temp sys",
             """ base plate (heatsink) temperature in degree centigrade.""",
-            get_process=lambda v: float(extract_value(v)),
             check_get_errors=True)
 
     laser = Instrument.control(
@@ -111,17 +109,19 @@ class IBeamSmart(Instrument):
             one.""",
             validator=strict_range,
             values=[0, 200000],
-            get_process=lambda v: float(extract_value(v)),
             check_set_errors=True, check_get_errors=True)
 
     def __init__(self, adapter, baud_rate=115200, **kwargs):
+        kwargs.setdefault('preprocess_reply', extract_value)
         super().__init__(
             adapter,
             "toptica IBeam Smart laser diode",
-            includeSCPI = False
+            includeSCPI = False,
+            **kwargs
         )
         # hack to set baud_rate since VISAAdapter would filter it out!
-        self.adapter.connection.baud_rate = baud_rate
+        if hasattr(self.adapter.connection, 'baud_rate'):
+            self.adapter.connection.baud_rate = baud_rate
         # configure communication mode
         self.adapter.write('echo off')
         self.adapter.write('prom off')
@@ -188,14 +188,42 @@ class IBeamSmart(Instrument):
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        self.write(command, readAck=False)
+        self.write(command, read_ack=False)
         time.sleep(self.adapter.connection.query_delay)
         return self.read()
 
-    def values(self, command, **kwargs):
-        """ It seems wrong I have to reimplement this, but my ask method above is
-        otherwise bypassed. """
-        return self.ask(command)
+    def values(self, command, separator=',', cast=float, preprocess_reply=None):
+        """ It is wrong that I have to reimplement this, but my ask method above is
+        otherwise bypassed. WHAT FOLLOWS IS basically Adapter.values()!!!!!!
+
+        Writes a command to the instrument and returns a list of formatted
+        values from the result
+
+        :param command: SCPI command to be sent to the instrument
+        :param separator: A separator character to split the string into a list
+        :param cast: A type to cast the result
+        :param preprocess_reply: optional callable used to preprocess values
+        received from the instrument. If not specified the Adapter default is
+        used.
+        :returns: A list of the desired type, or strings where the casting fails
+        """
+        results = str(self.ask(command)).strip()
+        if callable(preprocess_reply):
+            results = preprocess_reply(results)
+        else:
+            results = self.adapter.preprocess_reply(results)
+        results = results.split(separator)
+        for i, result in enumerate(results):
+            try:
+                if cast == bool:
+                    # Need to cast to float first since results are usually
+                    # strings and bool of a non-empty string is always True
+                    results[i] = bool(float(result))
+                else:
+                    results[i] = cast(result)
+            except Exception:
+                pass  # Keep as string
+        return results
 
     def enable_continous(self):
         """ enable countinous emmission mode """
