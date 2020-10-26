@@ -79,6 +79,7 @@ class MainWindow(ManagedWindow):
                                    controls=["time", "output_voltage"],
                                    settings=None,
                                    functions=["reset_time"],
+                                   get_settings_continuously=True
                                    )
 
     def queue(self, *, procedure=None):

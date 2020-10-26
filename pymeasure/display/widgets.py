@@ -351,7 +351,7 @@ class ImageFrame(QtGui.QFrame):
             match = re.search(units_pattern, axis)
         except TypeError:
             match = None
-            
+
         if match:
             if 'units' in match.groupdict():
                 label = re.sub(units_pattern, '', axis)
@@ -366,7 +366,7 @@ class ImageFrame(QtGui.QFrame):
                 item.update_img()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + ' (%s)'%units)
+            self.plot.setTitle(label + ' (%s)' % units)
         else:
             self.plot.setTitle(label)
         self.z_axis = axis
@@ -422,7 +422,6 @@ class ImageWidget(QtGui.QWidget):
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_z_label)
         hbox.addWidget(self.columns_z)
-
 
         vbox.addLayout(hbox)
         vbox.addWidget(self.image_frame)
@@ -890,8 +889,8 @@ class SequencerWidget(QtGui.QWidget):
             sequence = match.group(3)
 
             self._add_tree_item(
-                level=level, 
-                parameter=parameter, 
+                level=level,
+                parameter=parameter,
                 sequence=sequence,
             )
 
@@ -1043,15 +1042,18 @@ class InstrumentWidget(QtGui.QWidget):
         controls = self.check_parameter_list(controls, "control")
         settings = self.check_parameter_list(settings, "setting")
 
-        self.params = OrderedDict(list(measurements.items()) + list(controls.items()) + list(settings.items()))
+        self.params = OrderedDict((*measurements.items(),
+                                   *controls.items(),
+                                   *settings.items()))
 
         update_list = list(measurements.keys())
         if get_settings_continuously:
             update_list.extend(controls.keys())
         self.update_cycler = cycle(update_list)
 
+        self.instrument_functions = functions if isinstance(functions, list) else [functions]
+
         self.set_settings_continuously = set_settings_continuously
-        # TODO: implement settings
 
         self.update_timer = QtCore.QTimer(self)
         self.update_timer.timeout.connect(self.update_value)
@@ -1061,7 +1063,6 @@ class InstrumentWidget(QtGui.QWidget):
             self.instrument_name = self.instrument.name
         else:
             self.instrument_name = 'Instrument'
-
 
         self._setup_ui()
         self._layout()
@@ -1097,6 +1098,14 @@ class InstrumentWidget(QtGui.QWidget):
                 if self.set_settings_continuously:
                     element.valueChanged.connect(partial(self.apply_setting, name))
 
+        for name in self.instrument_functions:
+            element = QtGui.QPushButton()
+            setattr(self, name, element)
+
+            element.setText(name)
+
+            element.clicked.connect(getattr(self.instrument, name))
+
         # Add a checkbox for continuous updating
         self.update_box = QtGui.QCheckBox(self)
         self.update_box.setTristate(True)
@@ -1112,10 +1121,13 @@ class InstrumentWidget(QtGui.QWidget):
         for name in self.params:
             f_layout.addRow(name, getattr(self, name))
 
+        for name in self.instrument_functions:
+            f_layout.addRow(name, getattr(self, name))
+
         update_hbox = QtGui.QHBoxLayout()
         update_hbox.addWidget(self.update_box)
         update_hbox.addWidget(self.update_button)
-        f_layout.addRow("Update continuously", update_hbox)
+        f_layout.addRow("Auto-update (off / slow / fast)", update_hbox)
 
     def update_value(self, name=None):
         if name is None:
@@ -1144,7 +1156,7 @@ class InstrumentWidget(QtGui.QWidget):
             self.update_timer.setInterval(500)
             self.update_timer.start()
         elif state == 2:
-            self.update_timer.setInterval(50)
+            self.update_timer.setInterval(10)
             self.update_timer.start()
 
     @staticmethod
