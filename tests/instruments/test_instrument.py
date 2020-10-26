@@ -155,7 +155,8 @@ def test_control_preprocess_reply():
     # test setting preprocess_reply at property-level
     class Fake(FakeInstrument):
         x = Instrument.control(
-            "", "JUNK%d", "",
+            "", "JUNK%d",
+            "",
             preprocess_reply=lambda v: v.replace('JUNK', ''),
             cast=int
         )

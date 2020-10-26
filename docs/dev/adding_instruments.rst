@@ -344,7 +344,7 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :
         """,
         validator=strict_range,
         values=[0, 10],
-        set_process=lambda v: 1e3*v  # convert current to mA
+        set_process=lambda v: 1e3*v,  # convert current to mA
     )
 
 .. doctest::
@@ -365,8 +365,8 @@ Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.In
         """,
         validator=strict_range,
         values=[0, 10],
-        set_process=lambda v: 1e3*v  # convert to mA
-        get_process=lambda v: 1e-3*v  # convert to A
+        set_process=lambda v: 1e3*v,  # convert to mA
+        get_process=lambda v: 1e-3*v,  # convert to A
     )
 
 .. doctest::
@@ -396,9 +396,10 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         """ A measurement returning a capacity in nF in the format '<cap> nF'
         """,
         preprocess_reply=lambda v: v.replace('nF', '')
+        # notice how we don't need to cast to float anymore
     )
 
-The real purpose `preprocess_reply` is, however, for instruments where many/all properties need similar reply processing. `preprocess_reply` can be applied to all :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` properties. For example if all quantities are returned with a unit as in the example above. To avoid running into troubles for other properties this `preprocess_reply` should be clever enough to skip the processing in case for example some identification string is replied. Typically this can be achieved by regular expression matching. In case of no match the reply is returned unchanged:
+The real purpose of `preprocess_reply` is, however, for instruments where many/all properties need similar reply processing. `preprocess_reply` can be applied to all :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` properties, for example if all quantities are returned with a unit as in the example above. To avoid running into troubles for other properties this `preprocess_reply` should be clever enough to skip the processing in case it is not appropriate, for example if some identification string is returned. Typically this can be achieved by regular expression matching. In case of no match the reply is returned unchanged:
 
 .. testcode::
     import re
@@ -419,7 +420,7 @@ The real purpose `preprocess_reply` is, however, for instruments where many/all 
 
     class Extreme5001(Instrument):
         """ Represents the imaginary Extreme 5001 instrument. This instrument
-        sends numerical values including there units in an format "<value>
+        sends numerical values including their units in an format "<value>
         <unit>".
         """
         capacity = Instrument.measurement(
@@ -442,7 +443,7 @@ The real purpose `preprocess_reply` is, however, for instruments where many/all 
                 resourceName,
                 "Extreme 5000",
                 preprocess_reply=extract_value,
-                **kwargs
+                **kwargs,
             )
 
 In cases where the general `preprocess_reply` function should not run it can be also overwritten in the property definition:
@@ -456,7 +457,7 @@ In cases where the general `preprocess_reply` function should not run it can be 
         """,
         validator=strict_discrete_set,
         values=[1,2,3],
-        preprocess_reply=lambda v: v
+        preprocess_reply=lambda v: v,
     )
 
 Using a combination of the decribed abilities also complex communication schemes can be achieved.
