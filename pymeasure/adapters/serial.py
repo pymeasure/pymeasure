@@ -38,6 +38,8 @@ class SerialAdapter(Adapter):
     serial communication to instrument
 
     :param port: Serial port
+    :param preprocess_reply: optional callable used to preprocess strings
+        received from the instrument. The callable returns the processed string.
     :param kwargs: Any valid key-word argument for serial.Serial
     """
 

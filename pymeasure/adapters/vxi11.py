@@ -41,7 +41,8 @@ class VXI11Adapter(Adapter):
         of the vxi11 library.
 
     :param host: string containing the visa connection information.
-
+    :param preprocess_reply: optional callable used to preprocess strings
+        received from the instrument. The callable returns the processed string.
     """
 
     def __init__(self, host, preprocess_reply=None, **kwargs):

@@ -31,10 +31,11 @@ class Adapter(object):
     object and the connection, to allow flexible use of different connection 
     techniques.
 
-    This class should only be inhereted from.
+    This class should only be inherited from.
 
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
+    :param kwargs: all other keyword arguments are ignored.
     """
     def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
