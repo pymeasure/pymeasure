@@ -41,6 +41,8 @@ class PrologixAdapter(SerialAdapter):
     :param port: The Serial port name or a serial.Serial object
     :param address: Integer GPIB address of the desired instrument
     :param rw_delay: An optional delay to set between a write and read call for slow to respond instruments.
+    :param preprocess_reply: optional callable used to preprocess strings
+        received from the instrument. The callable returns the processed string.
     :param kwargs: Key-word arguments if constructing a new serial object
 
     :ivar address: Integer GPIB address of the desired instrument
@@ -61,8 +63,10 @@ class PrologixAdapter(SerialAdapter):
 
     """
 
-    def __init__(self, port, address=None, rw_delay=None, serial_timeout = 0.5, **kwargs):
-        super().__init__(port, timeout = serial_timeout, **kwargs)
+    def __init__(self, port, address=None, rw_delay=None, serial_timeout=0.5,
+                 preprocess_reply=None, **kwargs):
+        super().__init__(port, timeout=serial_timeout,
+                         preprocess_reply=preprocess_reply, **kwargs)
         self.address = address
         self.rw_delay = rw_delay
         if not isinstance(port, serial.Serial):
