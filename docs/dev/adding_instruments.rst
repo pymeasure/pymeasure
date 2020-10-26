@@ -402,6 +402,7 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
 The real purpose of `preprocess_reply` is, however, for instruments where many/all properties need similar reply processing. `preprocess_reply` can be applied to all :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` properties, for example if all quantities are returned with a unit as in the example above. To avoid running into troubles for other properties this `preprocess_reply` should be clever enough to skip the processing in case it is not appropriate, for example if some identification string is returned. Typically this can be achieved by regular expression matching. In case of no match the reply is returned unchanged:
 
 .. testcode::
+
     import re
     _reg_value = re.compile(r"([-+]?[0-9]*\.?[0-9]+)\s+\w+")
 
@@ -424,19 +425,22 @@ The real purpose of `preprocess_reply` is, however, for instruments where many/a
         <unit>".
         """
         capacity = Instrument.measurement(
-        ":CAP?",
-        """ A measurement returning a capacity in nF in the format '<cap> nF'
-        """)
+            ":CAP?",
+            """ A measurement returning a capacity in nF in the format '<cap> nF'
+            """
+        )
 
         voltage = Instrument.measurement(
-        ":VOLT?",
-        """ A measurement returning a voltage in V in the format '<volt> V'
-        """)
+            ":VOLT?",
+            """ A measurement returning a voltage in V in the format '<volt> V'
+            """
+        )
 
         id = Instrument.measurement(
-        "*idn?",
-        """ The identification of the instrument.
-        """)
+            "*idn?",
+            """ The identification of the instrument.
+            """
+        )
 
         def __init__(self, resourceName, **kwargs):
             super().__init__(
