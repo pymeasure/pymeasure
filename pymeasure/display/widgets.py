@@ -1075,6 +1075,8 @@ class InstrumentWidget(QtGui.QWidget):
         for name, param in self.params.items():
             element = input_from_parameter(param)
             setattr(self, name, element)
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
 
             if param.field_type == "measurement":
                 element.setEnabled(False)
@@ -1101,9 +1103,9 @@ class InstrumentWidget(QtGui.QWidget):
         for name in self.instrument_functions:
             element = QtGui.QPushButton()
             setattr(self, name, element)
-
             element.setText(name)
-
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
             element.clicked.connect(getattr(self.instrument, name))
 
         # Add a checkbox for continuous updating
@@ -1114,20 +1116,37 @@ class InstrumentWidget(QtGui.QWidget):
         # Add a button for instant updating
         self.update_button = QtGui.QPushButton("Update", self)
         self.update_button.clicked.connect(self.update_all_values)
+        self.update_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                         QtGui.QSizePolicy.MinimumExpanding)
 
     def _layout(self):
-        f_layout = QtGui.QFormLayout(self)
+        layout = QtGui.QGridLayout(self)
+        layout.setColumnStretch(0, 0)
+        layout.setColumnStretch(1, 0)
+        layout.setColumnStretch(2, 1)
 
-        for name in self.params:
-            f_layout.addRow(name, getattr(self, name))
+        for idx, name in enumerate(self.params):
+            layout.addWidget(QtGui.QLabel(name), idx, 0, 1, 2)
+            layout.addWidget(getattr(self, name), idx, 2, 1, 1)
 
-        for name in self.instrument_functions:
-            f_layout.addRow(name, getattr(self, name))
+            if self.params[name].field_type == "measurement":
+                layout.setRowStretch(idx, 4)
+            elif self.params[name].field_type == "control":
+                layout.setRowStretch(idx, 2)
+            elif self.params[name].field_type == "setting":
+                layout.setRowStretch(idx, 2)
 
-        update_hbox = QtGui.QHBoxLayout()
-        update_hbox.addWidget(self.update_box)
-        update_hbox.addWidget(self.update_button)
-        f_layout.addRow("Auto-update (off / slow / fast)", update_hbox)
+        for idx, name in enumerate(self.instrument_functions, len(self.params)):
+            layout.addWidget(QtGui.QLabel(name), idx, 0, 1, 2)
+            layout.addWidget(getattr(self, name), idx, 2, 1, 1)
+            layout.setRowStretch(idx, 1)
+
+        idx = len(self.params) + len(self.instrument_functions)
+
+        layout.addWidget(QtGui.QLabel("Auto-update (off / slow / fast)"), idx, 0)
+        layout.addWidget(self.update_box, idx, 1)
+        layout.addWidget(self.update_button, idx, 2)
+        layout.setRowStretch(idx, 1)
 
     def change_size_for_floating(self):
         print(self.parent().isFloating())
