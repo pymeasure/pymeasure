@@ -179,9 +179,10 @@ class Axis(object):
         only when the movement is finished.
 
         :param steps: finite integer value of steps to be performed. A positive
-        sign corresponds to upwards steps, a negative sign to downwards steps.
+            sign corresponds to upwards steps, a negative sign to downwards
+            steps.
         :param gnd: bool, flag to decide if the axis should be grounded after
-        completion of the movement
+            completion of the movement
         """
         self.mode = 'stp'
         # perform the movement

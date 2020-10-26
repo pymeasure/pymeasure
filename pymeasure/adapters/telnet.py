@@ -39,7 +39,7 @@ class TelnetAdapter(Adapter):
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
-    this is only 'timeout'
+        this is only 'timeout'
     """
 
     def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
