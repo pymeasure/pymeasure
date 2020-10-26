@@ -76,7 +76,7 @@ jobs:
         run: conda list
       - name: Install pymeasure
         shell: bash -l {0}
-        run: python setup.py
+        run: python setup.py install
       - name: Pytest with xvfb
         shell: bash -l {0}
         if: runner.os == 'Linux'
