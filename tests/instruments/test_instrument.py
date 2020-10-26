@@ -151,7 +151,7 @@ def test_control_get_process():
     assert fake.x == 5
 
 
-def test_control_preprocess_reply():
+def test_control_preprocess_reply_property():
     # test setting preprocess_reply at property-level
     class Fake(FakeInstrument):
         x = Instrument.control(
@@ -164,11 +164,15 @@ def test_control_preprocess_reply():
     fake = Fake()
     fake.x = 5
     assert fake.read() == 'JUNK5'
+    # notice that read returns the full reply since preprocess_reply is only
+    # called inside Adapter.values()
     fake.x = 5
     assert fake.x == 5
     fake.x = 5
     assert type(fake.x) == int
 
+
+def test_control_preprocess_reply_adapter():
     # test setting preprocess_reply at Adapter-level
     class Fake(FakeInstrument):
         def __init__(self):
@@ -183,6 +187,8 @@ def test_control_preprocess_reply():
     fake = Fake()
     fake.x = 5
     assert fake.read() == 'JUNK5'
+    # notice that read returns the full reply since preprocess_reply is only
+    # called inside Adapter.values()
     fake.x = 5
     assert fake.x == 5
 
