@@ -27,7 +27,7 @@ import re
 
 import numpy as np
 
-from pymeasure.adapters import FakeAdapter
+from pymeasure.adapters import Adapter, FakeAdapter
 from pymeasure.adapters.visa import VISAAdapter
 
 log = logging.getLogger(__name__)
@@ -317,6 +317,8 @@ class FakeInstrument(Instrument):
     """
 
     def __init__(self, adapter=None, name=None, includeSCPI=False, **kwargs):
+        if not isinstance(adapter, Adapter):
+            adapter = None
         super().__init__(
             adapter or FakeAdapter(),
             name or "Fake Instrument",
