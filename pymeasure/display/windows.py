@@ -512,15 +512,19 @@ class ManagedWindow(QtGui.QMainWindow):
         """
         widget = InstrumentWidget(
             instrument,
-            parent=self,
             **kwargs
         )
 
         instrument_dock = QtGui.QDockWidget(widget.instrument_name)
+        widget.setParent(instrument_dock)
         instrument_dock.setWidget(widget)
+
         instrument_dock.setFeatures(QtGui.QDockWidget.DockWidgetFloatable |
                                    QtGui.QDockWidget.DockWidgetMovable)
         instrument_dock.setAllowedAreas(QtCore.Qt.TopDockWidgetArea)
+
+        instrument_dock.topLevelChanged.connect(widget.change_size_for_floating)
+
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea, instrument_dock)
 
 

@@ -1129,6 +1129,10 @@ class InstrumentWidget(QtGui.QWidget):
         update_hbox.addWidget(self.update_button)
         f_layout.addRow("Auto-update (off / slow / fast)", update_hbox)
 
+    def change_size_for_floating(self):
+        print(self.parent().isFloating())
+        print("implement this function")
+
     def update_value(self, name=None):
         if name is None:
             name = next(self.update_cycler)
