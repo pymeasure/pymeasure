@@ -516,11 +516,12 @@ class ManagedWindow(QtGui.QMainWindow):
             **kwargs
         )
 
-        sequencer_dock = QtGui.QDockWidget(widget.instrument_name)
-        sequencer_dock.setWidget(widget)
-        # TODO: consider whether dock-widget-features might be useful (e.g. large panel for better sight)
-        sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.TopDockWidgetArea, sequencer_dock)
+        instrument_dock = QtGui.QDockWidget(widget.instrument_name)
+        instrument_dock.setWidget(widget)
+        instrument_dock.setFeatures(QtGui.QDockWidget.DockWidgetFloatable |
+                                   QtGui.QDockWidget.DockWidgetMovable)
+        instrument_dock.setAllowedAreas(QtCore.Qt.TopDockWidgetArea)
+        self.addDockWidget(QtCore.Qt.TopDockWidgetArea, instrument_dock)
 
 
 
