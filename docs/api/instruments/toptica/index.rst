@@ -9,4 +9,5 @@ This section contains specific documentation on the Toptica Photonics instrument
 .. toctree::
    :maxdepth: 2
 
+   adapters
    ibeamsmart
