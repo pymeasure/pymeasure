@@ -31,6 +31,7 @@ from functools import partial
 import numpy
 from collections import ChainMap, OrderedDict
 from itertools import product, cycle
+from types import MethodType
 
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
@@ -1022,6 +1023,19 @@ class SequencerWidget(QtGui.QWidget):
         return evaluated_string
 
 
+class ResizableQLabel(QtGui.QLabel):
+    def __init__(self, *args, sizefactor=0.6, **kwargs):
+        QtGui.QLabel.__init__(self, *args, **kwargs)
+        self.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Ignored)
+
+        self.sizefactor = sizefactor
+
+    def resizeEvent(self, evt):
+        font = self.font()
+        font.setPixelSize(self.height() * self.sizefactor)
+        self.setFont(font)
+
+
 class InstrumentWidget(QtGui.QWidget):
     """
     TODO: Write docstrings
@@ -1121,13 +1135,12 @@ class InstrumentWidget(QtGui.QWidget):
 
     def _layout(self):
         layout = QtGui.QGridLayout(self)
-        layout.setColumnStretch(0, 0)
-        layout.setColumnStretch(1, 0)
-        layout.setColumnStretch(2, 1)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 3)
 
         for idx, name in enumerate(self.params):
-            layout.addWidget(QtGui.QLabel(name), idx, 0, 1, 2)
-            layout.addWidget(getattr(self, name), idx, 2, 1, 1)
+            layout.addWidget(ResizableQLabel(name), idx, 0)
+            layout.addWidget(getattr(self, name), idx, 1)
 
             if self.params[name].field_type == "measurement":
                 layout.setRowStretch(idx, 4)
@@ -1137,15 +1150,18 @@ class InstrumentWidget(QtGui.QWidget):
                 layout.setRowStretch(idx, 2)
 
         for idx, name in enumerate(self.instrument_functions, len(self.params)):
-            layout.addWidget(QtGui.QLabel(name), idx, 0, 1, 2)
-            layout.addWidget(getattr(self, name), idx, 2, 1, 1)
+            layout.addWidget(ResizableQLabel(name, sizefactor=0.5), idx, 0)
+            layout.addWidget(getattr(self, name), idx, 1)
             layout.setRowStretch(idx, 1)
 
         idx = len(self.params) + len(self.instrument_functions)
 
-        layout.addWidget(QtGui.QLabel("Auto-update (off / slow / fast)"), idx, 0)
-        layout.addWidget(self.update_box, idx, 1)
-        layout.addWidget(self.update_button, idx, 2)
+        box = QtGui.QHBoxLayout()
+        box.addWidget(self.update_box)
+        box.addWidget(self.update_button)
+
+        layout.addWidget(ResizableQLabel("Auto-update (off / slow / fast)", sizefactor=0.5), idx, 0)
+        layout.addLayout(box, idx, 1)
         layout.setRowStretch(idx, 1)
 
     def change_size_for_floating(self):
