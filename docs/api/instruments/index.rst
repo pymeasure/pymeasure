@@ -42,4 +42,5 @@ Instruments by manufacturer:
    srs/index
    tektronix/index
    thorlabs/index
+   toptica/index
    yokogawa/index
