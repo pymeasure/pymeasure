@@ -1149,8 +1149,8 @@ class InstrumentWidget(QtGui.QWidget):
         layout.setRowStretch(idx, 1)
 
     def change_size_for_floating(self):
-        print(self.parent().isFloating())
-        print("implement this function")
+        if self.parent().isFloating():
+            self.parent().resize(3 * self.parent().sizeHint())
 
     def update_value(self, name=None):
         if name is None:
