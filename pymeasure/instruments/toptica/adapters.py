@@ -29,13 +29,12 @@ from pymeasure.adapters import VISAAdapter
 
 
 class TopticaAdapter(VISAAdapter):
-    """ Adapter class for connecting to the Attocube Standard Console. This
-    console is a Telnet prompt with password authentication.
+    """ Adapter class for connecting to Toptica Console via a serial
+    connection.
 
-    :param host: host address of the instrument
-    :param port: TCPIP port
-    :param passwd: password required to open the connection
-    :param kwargs: Any valid key-word argument for TelnetAdapter
+    :param port: pyvisa resource name of the instrument
+    :param baud_rate: communication speed, defaults to 115200
+    :param kwargs: Any valid key-word argument for VISAAdapter
     """
     # compiled regular expression for finding numerical values in reply strings
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
@@ -43,7 +42,8 @@ class TopticaAdapter(VISAAdapter):
     def __init__(self, port, baud_rate, **kwargs):
         kwargs.setdefault('preprocess_reply', self.extract_value)
         super().__init__(port, **kwargs)
-        # hack to set baud_rate since VISAAdapter would filter it out!
+        # hack to set baud_rate since VISAAdapter filters it out when spcified
+        # as keyword argument. issue #334
         self.connection.baud_rate = baud_rate
         # configure communication mode
         super().write('echo off')
@@ -89,14 +89,13 @@ class TopticaAdapter(VISAAdapter):
         """ Reads a reply of the instrument which consists of two lines. The
         first one is the reply to the command while the last one should be
         '[OK]' which acknowledges that the device is ready to receive more
-        commands. The last line of the reply is saved in self.lastreply for
-        potential error checking.
+        commands.
 
         Note: This command only understands replies with one data line. More
         complicated replies have to be parsed by using the underlying adapter
         methods!
 
-        :returns: String ASCII response of the instrument.
+        :returns: string containing the ASCII response of the instrument.
         """
         reply = self._read_stripped()
         self.check_acknowledgement(self._read_stripped())
@@ -112,6 +111,7 @@ class TopticaAdapter(VISAAdapter):
         """
         self.lastcommand = command
         super().write(command)
+        # read back the LF+CR which is always sent back.
         reply = self._read_stripped()
         if reply != '':
             raise ValueError(
