@@ -41,6 +41,8 @@ class TopticaAdapter(VISAAdapter):
 
     def __init__(self, port, baud_rate, **kwargs):
         kwargs.setdefault('preprocess_reply', self.extract_value)
+        kwargs.setdefault('read_termination', '\r\n')
+        kwargs.setdefault('write_termination', '\r\n')
         super().__init__(port, **kwargs)
         # hack to set baud_rate since VISAAdapter filters it out when spcified
         # as keyword argument. issue #334
@@ -80,11 +82,6 @@ class TopticaAdapter(VISAAdapter):
                 f"TopticaAdapter: Error after command '{self.lastcommand}' "
                 f"with message '{reply}'")
 
-    def _read_stripped(self):
-        """ read a reply from the instrument and strip the termination sequence
-        """
-        return super().read().strip(self.connection.read_termination)
-
     def read(self):
         """ Reads a reply of the instrument which consists of two lines. The
         first one is the reply to the command while the last one should be
@@ -97,8 +94,8 @@ class TopticaAdapter(VISAAdapter):
 
         :returns: string containing the ASCII response of the instrument.
         """
-        reply = self._read_stripped()
-        self.check_acknowledgement(self._read_stripped())
+        reply = super().read()
+        self.check_acknowledgement(super().read())
         return reply
 
     def write(self, command, check_ack=True):
@@ -112,13 +109,13 @@ class TopticaAdapter(VISAAdapter):
         self.lastcommand = command
         super().write(command)
         # read back the LF+CR which is always sent back.
-        reply = self._read_stripped()
+        reply = super().read()
         if reply != '':
             raise ValueError(
                 f"TopticaAdapter.write: Error after command '{command}' with "
                 f"message '{reply}'")
         if check_ack:
-                self.check_acknowledgement(self._read_stripped())
+                self.check_acknowledgement(super().read())
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
