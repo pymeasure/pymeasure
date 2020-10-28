@@ -29,7 +29,7 @@ import pyqtgraph as pg
 
 from .browser import BrowserItem
 from .curves import ResultsCurve
-from .manager import Manager, Experiment, ImageExperiment, ImageManager
+from .manager import Manager, Managerv2, Experiment, Experimentv2, ImageExperiment, ImageManager
 from .Qt import QtCore, QtGui
 from .widgets import (
     PlotWidget,
@@ -924,7 +924,7 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
     """
     EDITOR = 'gedit'
 
-    def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
+    def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None, x2_axis=None, y2_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
                  sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False):
         super().__init__(parent)
@@ -933,18 +933,17 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
         self.procedure_class = procedure_class
         self.inputs = inputs
         self.displays = displays
-        self.use_sequencer = sequencer
-        self.sequencer_inputs = sequencer_inputs
-        self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.x_axis, self.y_axis = x_axis, y_axis
+        self.x2_axis, self.y2_axis = x2_axis, y_axis
         self._setup_ui()
         self._layout()
-        self.setup_plot(self.plot)
+        #self._layout2()
+        #self.setup_plot(self.plot)
 
     def _setup_ui(self):
         self.log_widget = LogWidget()
@@ -960,6 +959,9 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
 
         self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
         self.plot = self.plot_widget.plot
+
+        self.plot_widget2 = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x2_axis, self.y2_axis)
+        self.plot2 = self.plot_widget2.plot
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
@@ -983,22 +985,18 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
             parent=self
         )
 
-        self.manager = Manager(self.plot, self.browser, log_level=self.log_level, parent=self)
+        self.manager = Managerv2(self.plot, self.plot2, self.browser, log_level=self.log_level, parent=self)
         self.manager.abort_returned.connect(self.abort_returned)
         self.manager.queued.connect(self.queued)
         self.manager.running.connect(self.running)
         self.manager.finished.connect(self.finished)
         self.manager.log.connect(self.log.handle)
 
-        if self.use_sequencer:
-            self.sequencer = SequencerWidget(
-                self.sequencer_inputs,
-                self.sequence_file,
-                parent=self
-            )
 
     def _layout(self):
         self.main = QtGui.QWidget(self)
+        self.main2 = QtGui.QWidget(self)
+
 
         inputs_dock = QtGui.QWidget(self)
         inputs_vbox = QtGui.QVBoxLayout(self.main)
@@ -1031,29 +1029,60 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
 
-        if self.use_sequencer:
-            sequencer_dock = QtGui.QDockWidget('Sequencer')
-            sequencer_dock.setWidget(self.sequencer)
-            sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
+##        if self.use_sequencer:
+##            sequencer_dock = QtGui.QDockWidget('Sequencer')
+##            sequencer_dock.setWidget(self.sequencer)
+##            sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+##            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
 
         tabs = QtGui.QTabWidget(self.main)
         tabs.addTab(self.plot_widget, "Results Graph")
         tabs.addTab(self.log_widget, "Experiment Log")
+
+        tabs2 = QtGui.QTabWidget(self.main2)
+        tabs2.addTab(self.plot_widget2, "Results Graph")
 
         splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
         splitter.addWidget(tabs)
         splitter.addWidget(self.browser_widget)
         self.plot_widget.setMinimumSize(100, 200)
 
+        splitter2 = QtGui.QSplitter(QtCore.Qt.Vertical)
+        splitter2.addWidget(tabs2)
+        #splitter2.addWidget(self.browser_widget)
+        self.plot_widget2.setMinimumSize(100, 200)
+
+
         vbox = QtGui.QVBoxLayout(self.main)
         vbox.setSpacing(0)
         vbox.addWidget(splitter)
+        vbox.addWidget(splitter2)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)
         self.main.show()
         self.resize(1000, 800)
+
+    def _layout2(self):
+        self.main2 = QtGui.QWidget(self)
+
+        tabs2 = QtGui.QTabWidget(self.main2)
+        tabs2.addTab(self.plot_widget2, "Results Graph")
+
+        splitter2 = QtGui.QSplitter(QtCore.Qt.Vertical)
+        splitter2.addWidget(tabs2)
+        #splitter2.addWidget(self.browser_widget2)
+        self.plot_widget2.setMinimumSize(100, 200)
+
+        vbox2 = QtGui.QVBoxLayout(self.main2)
+        vbox2.setSpacing(0)
+        vbox2.addWidget(splitter2)
+
+        #self.main2.setLayout(vbox2)
+        #self.setCentralWidget(self.main2)
+        self.main2.show()
+        self.resize(1000, 800)
+
 
     def quit(self, evt=None):
         self.close()
@@ -1064,11 +1093,14 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
             experiment = self.manager.experiments.with_browser_item(item)
             if state == 0:
                 self.plot.removeItem(experiment.curve)
+                self.plot2.removeItem(experiment.curve2)
             else:
                 experiment.curve.x = self.plot_widget.plot_frame.x_axis
                 experiment.curve.y = self.plot_widget.plot_frame.y_axis
                 experiment.curve.update()
                 self.plot.addItem(experiment.curve)
+                self.plot2.addItem(experiment.curve2)
+
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -1109,6 +1141,7 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
             menu.addAction(action_use)
             menu.exec_(self.browser.viewport().mapToGlobal(position))
 
+
     def remove_experiment(self, experiment):
         reply = QtGui.QMessageBox.question(self, 'Remove Graph',
                                            "Are you sure you want to remove the graph?",
@@ -1117,20 +1150,39 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
         if reply == QtGui.QMessageBox.Yes:
             self.manager.remove(experiment)
 
+
     def show_experiments(self):
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
             item.setCheckState(0, QtCore.Qt.Checked)
+      
+
+    def show_experiments2(self):
+        root2 = self.browser2.invisibleRootItem()
+        for i in range(root2.childCount()):
+            item2 = root2.child(i)
+            item2.setCheckState(0, QtCore.Qt.Checked) 
+
 
     def hide_experiments(self):
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
             item.setCheckState(0, QtCore.Qt.Unchecked)
+        
+
+    def hide_experiments2(self):
+        root2 = self.browser2.invisibleRootItem()
+        for i in range(root2.childCount()):
+            item2 = root2.child(i)
+            item2.setCheckState(0, QtCore.Qt.Unchecked)
+
+
 
     def clear_experiments(self):
         self.manager.clear()
+
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
@@ -1159,6 +1211,9 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
             pixelmap.fill(color)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
             experiment.curve.setPen(pg.mkPen(color=color, width=2))
+            experiment.curve2.setPen(pg.mkPen(color=color, width=2))
+
+            
 
     def open_file_externally(self, filename):
         # TODO: Make this function OS-agnostic
@@ -1176,11 +1231,20 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
         return self.plot_widget.new_curve(results, color=color, **kwargs)
 
-    def new_experiment(self, results, curve=None):
+    def new_curve2(self, results, color=None, **kwargs):
+        if color is None:
+            color = pg.intColor(self.browser.topLevelItemCount() % 8)
+        return self.plot_widget2.new_curve(results, color=color, **kwargs)
+
+    def new_experiment(self, results, curve=None, curve2=None):
         if curve is None:
             curve = self.new_curve(results)
+        if curve2 is None:
+            curve2 = self.new_curve2(results)
+        
         browser_item = BrowserItem(results, curve)
-        return Experiment(results, curve, browser_item)
+        return Experimentv2(results, curve, curve2, browser_item)
+
 
     def set_parameters(self, parameters):
         """ This method should be overwritten by the child class. The
