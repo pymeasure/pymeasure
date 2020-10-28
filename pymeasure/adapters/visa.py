@@ -78,7 +78,7 @@ class VISAAdapter(Adapter):
             return False
 
     def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
+        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
 
     def write(self, command):
         """ Writes a command to the instrument
