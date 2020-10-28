@@ -52,33 +52,34 @@ class IBeamSmart(Instrument):
             """ base plate (heatsink) temperature in degree centigrade.""",
     )
 
-    laser = Instrument.control(
+    laser_enabled = Instrument.control(
             "sta la", "la %s",
             """ Status of the laser diode driver.
-                This can be 'on', or 'off'.""",
+                This can be True if the laser is on or False otherwise""",
             validator=strict_discrete_set,
-            values=['on', 'off'],
-            get_process=lambda s: s.lower(),
+            values=[True, False],
+            get_process=lambda s: True if s == 'ON' else False,
+            set_process=lambda v: "on" if v else "off",
     )
 
-    channel1 = Instrument.control(
+    channel1_enabled = Instrument.control(
             "sta ch 1", "%s",
             """ Status of Channel 1 of the laser.
-                This can be 'on', or 'off'.""",
+                This can be True if the laser is on or False otherwise""",
             validator=strict_discrete_set,
-            values=['on', 'off'],
-            get_process=lambda s: s.lower(),
-            set_process=lambda v: "en 1" if v == 'on' else "di 1",
+            values=[True, False],
+            get_process=lambda s: True if s == 'ON' else False,
+            set_process=lambda v: "en 1" if v else "di 1",
     )
 
-    channel2 = Instrument.control(
+    channel2_enabled = Instrument.control(
             "sta ch 2", "%s",
             """ Status of Channel 2 of the laser.
-                This can be 'on', or 'off'.""",
+                This can be True if the laser is on or False otherwise""",
             validator=strict_discrete_set,
-            values=['on', 'off'],
-            get_process=lambda s: s.lower(),
-            set_process=lambda v: "en 2" if v == 'on' else "di 2",
+            values=[True, False],
+            get_process=lambda s: True if s == 'ON' else False,
+            set_process=lambda v: "en 2" if v else "di 2",
     )
 
     power = Instrument.control(
@@ -100,18 +101,18 @@ class IBeamSmart(Instrument):
     def enable_continous(self):
         """ enable countinous emmission mode """
         self.write('di ext')
-        self.laser = 'on'
-        self.channel2 = 'on'
+        self.laser_enabled = True
+        self.channel2_enabled = True
 
     def enable_pulsing(self):
         """ enable pulsing mode. The optical output is controlled by a digital
         input signal on a dedicated connnector on the device """
-        self.laser = 'on'
-        self.channel2 = 'on'
+        self.laser_enabled = True
+        self.channel2_enabled = True
         self.write('en ext')
 
     def disable(self):
         """ shutdown all laser operation """
         self.write('di ext')
-        self.channel2 = 'off'
-        self.laser = 'off'
+        self.channel2_enabled = False
+        self.laser_enabled = False
