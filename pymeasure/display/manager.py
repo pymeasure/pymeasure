@@ -383,6 +383,7 @@ class Managerv2(QtCore.QObject):
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
         self.plot.removeItem(experiment.curve)
+        self.plot2.removeItem(experiment.curve2)
 
     def clear(self):
         """ Remove all Experiments
