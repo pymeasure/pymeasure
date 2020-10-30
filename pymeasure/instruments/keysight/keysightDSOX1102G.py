@@ -182,7 +182,7 @@ class Channel():
         # INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING
 
         # Cut out the ":CHANx:" at beginning and split string
-        ch_setup_splitted = ch_setup_raw[7:-1].split(";")
+        ch_setup_splitted = ch_setup_raw[7:].split(";")
 
         # Create dict of setup parameters
         ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
@@ -470,7 +470,7 @@ class KeysightDSOX1102G(Instrument):
         """
         query = f":DISPlay:DATA? {format_}, {color_palette}"
         # Using binary_values query because default interface does not support binary transfer
-        img = self.adapter.connection.query_binary_values(query, datatype="s")
+        img = self.binary_values(query, header_bytes=10, dtype=np.uint8)
         return bytearray(img[0])
 
     def download_data(self, source: str, points: int = 62500):
@@ -507,7 +507,7 @@ class KeysightDSOX1102G(Instrument):
         # :TIM:MODE MAIN;REF CENT;MAIN:RANG +1.00E-03;POS +0.0E+00
 
         # Cut out the ":TIM:" at beginning and split string
-        tb_setup_splitted = tb_setup_raw[5:-1].split(";")
+        tb_setup_splitted = tb_setup_raw[5:].split(";")
 
         # Create dict of setup parameters
         tb_setup = dict(map(lambda v: v.split(" "), tb_setup_splitted))
