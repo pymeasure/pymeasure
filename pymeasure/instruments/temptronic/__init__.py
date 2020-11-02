@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .temptronic import TemptronicBase, TemptronicATS525, TemptronicATS545, TemptronicATS515, TemptronicATS615
+from .temptronic import TemptronicATS525, TemptronicATS545, TemptronicATS515, TemptronicATS615
