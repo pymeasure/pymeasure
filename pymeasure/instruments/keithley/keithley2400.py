@@ -307,53 +307,37 @@ class Keithley2400(Instrument, KeithleyBuffer):
     # Filters #
     ###########
 
-    current_filter_type = Instrument.control(
-        ":SENS:CURR:AVER:TCON?", ":SENS:CURR:AVER:TCON %s",
-        """ A String property that controls the filter's type for the current.
+    filter_type = Instrument.control(
+        ":SENS:AVER:TCON?", ":SENS:AVER:TCON %s",
+        """ A String property that controls the filter's type.
         REP : Repeating filter
         MOV : Moving filter""",
         validator=strict_discrete_set,
         values=['REP', 'MOV'],
         map_values=False)
 
-    current_filter_count = Instrument.control(
-        ":SENS:CURR:AVER:COUNT?", ":SENS:CURR:AVER:COUNT %d",
+    filter_count = Instrument.control(
+        ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
         """ A integer property that controls the number of readings that are 
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
         values=[1, 2500],
         cast=int)
 
-    current_filter_state = Instrument.control(
-        ":SENS:CURR:AVER?", ":SENS:CURR:AVER %s",
+    filter_state = Instrument.control(
+        ":SENS:AVER?", ":SENS:AVER %s",
         """ A string property that controls if the filter is active.""",
         validator=strict_discrete_set,
         values=['ON', 'OFF'],
         map_values=False)
 
-    voltage_filter_type = Instrument.control(
-        ":SENS:VOLT:AVER:TCON?", ":SENS:VOLT:AVER:TCON %s",
-        """ A String property that controls the filter's type for the current.
-        REP : Repeating filter
-        MOV : Moving filter""",
-        validator=strict_discrete_set,
-        values=['REP', 'MOV'],
-        map_values=False)
-
-    voltage_filter_count = Instrument.control(
-        ":SENS:VOLT:AVER:COUNT?", ":SENS:VOLT:AVER:COUNT %d",
-        """ A integer property that controls the number of readings that are 
-        acquired and stored in the filter buffer for the averaging""",
-        validator=truncated_range,
-        values=[1, 2500],
-        cast=int)
 
     #####################
     # Output subsystem #
     #####################
 
-    current_output_off_state = Instrument.control(
-        ":OUTP:CURR:SMOD?", ":OUTP:CURR:SMOD %s",
+    output_off_state = Instrument.control(
+        ":OUTP:SMOD?", ":OUTP:SMOD %s",
         """ Select the output-off state of the SourceMeter.
         HIMP : output relay is open, disconnects external circuitry.
         NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
@@ -366,20 +350,11 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
         map_values=False)
 
-    voltage_output_off_state = Instrument.control(
-        ":OUTP:VOLT:SMOD?", ":OUTP:VOLT:SMOD %s",
-        """ Select the output-off state of the SourceMeter.
-        HIMP : output relay is open, disconnects external circuitry.
-        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
-        full scale of the present current range.
-        ZERO : V-Source is selected and set to 0V, compliance is set to the 
-        programmed Source I value or to 0.5% full scale of the present current
-        range, whichever is greater.
-        GUAR : I-Source is selected and set to 0A""",
-        validator=strict_discrete_set,
-        values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
-        map_values=False)
-
+    
+    ####################
+    # Methods        #
+    ####################
+    
     def __init__(self, adapter, **kwargs):
         super(Keithley2400, self).__init__(
             adapter, "Keithley 2400 SourceMeter", **kwargs
