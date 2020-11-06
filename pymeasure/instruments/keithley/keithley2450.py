@@ -123,6 +123,24 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-1.05, 1.05]
     )
+    
+    source_current_delay = Instrument.control(
+        ":SOUR:CURR:DEL?", ":SOUR:CURR:DEL %g",
+        """ A floating point property that sets a manual delay for the source
+        after the output is turned on before a measurement is taken. When this
+        property is set, the auto delay is turned off. Valid values are
+        between 0 [seconds] and 999.9999 [seconds].""",
+        validator=truncated_range,
+        values=[0, 999.9999],
+    )
+
+    source_current_delay_auto = Instrument.control(
+        ":SOUR:CURR:DEL:AUTO?", ":SOUR:CURR:DEL:AUTO %d",
+        """ A boolean property that enables or disables auto delay. Valid
+        values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
 
     ###############
     # Voltage (V) #
@@ -171,6 +189,24 @@ class Keithley2450(Instrument, KeithleyBuffer):
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-210, 210]
+    )
+    
+    source_voltage_delay = Instrument.control(
+        ":SOUR:VOLT:DEL?", ":SOUR:VOLT:DEL %g",
+        """ A floating point property that sets a manual delay for the source
+        after the output is turned on before a measurement is taken. When this
+        property is set, the auto delay is turned off. Valid values are
+        between 0 [seconds] and 999.9999 [seconds].""",
+        validator=truncated_range,
+        values=[0, 999.9999],
+    )
+
+    source_voltage_delay_auto = Instrument.control(
+        ":SOUR:VOLT:DEL:AUTO?", ":SOUR:VOLT:DEL:AUTO %d",
+        """ A boolean property that enables or disables auto delay. Valid
+        values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     ####################
