@@ -62,7 +62,7 @@ class VISAAdapter(Adapter):
         for key in kwargsCopy:
             if key not in safeKeywords:
                 kwargs.pop(key)
-        self.connection = self.manager.get_instrument(
+        self.connection = self.manager.open_resource(
             resourceName,
             **kwargs
         )
@@ -76,7 +76,7 @@ class VISAAdapter(Adapter):
             return False
 
     def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
+        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
 
     def write(self, command):
         """ Writes a command to the instrument
@@ -129,10 +129,24 @@ class VISAAdapter(Adapter):
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
+        # TODO Should use query_binary_values ??? (see line below)
+        # binary = self.connection.query_binary_values(command, datatype='B')
+
         self.connection.write(command)
         binary = self.connection.read_raw()
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
+
+    def write_binary_values(self, command, values, format='B'):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :format: "struct module" format character for each list item (see struct documentation)
+.       :returns: number of bytes written
+        """
+
+        return self.connection.write_binary_values(command, values, datatype=format, is_big_endian = True)
 
     def config(self, is_binary=False, datatype='str',
                container=np.array, converter='s',
@@ -146,6 +160,7 @@ class VISAAdapter(Adapter):
         :param separator: Delimiter of a series of data in ASCII.
         :param is_big_endian: Endianness.
         """
+        # TODO: These settings are no logner supported by PyVISA
         self.connection.values_format.is_binary = is_binary
         self.connection.values_format.datatype = datatype
         self.connection.values_format.container = container

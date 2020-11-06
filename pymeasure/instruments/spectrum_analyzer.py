@@ -65,8 +65,8 @@ reference level) in dBm. This property can be set.
         """ A floating point property that represents the instrument resolution bandwidth (RBW) in Hz.
         This property can be set.
         """,
-        validator=truncated_range,
-        values=RESOLUTION_BW_RANGE_Hz,
+        #validator=truncated_range,
+        #values=RESOLUTION_BW_RANGE_Hz,
         cast=int
     )
 
@@ -75,8 +75,8 @@ reference level) in dBm. This property can be set.
         """ An integer property that represents the instrument the input attenuation in dB.
         This property can be set.
         """,
-        validator=truncated_range,
-        values=INPUT_ATTENUATION_RANGE_dB,
+        #validator=truncated_range,
+        #values=INPUT_ATTENUATION_RANGE_dB,
         cast=int
     )
 
@@ -85,8 +85,8 @@ reference level) in dBm. This property can be set.
         """ An integer property that represents the frequency span
         in Hz. This property can be set.
         """,
-        validator=truncated_range,
-        values=FREQUENCY_SPAN_RANGE_Hz,
+        #validator=truncated_range,
+        #values=FREQUENCY_SPAN_RANGE_Hz,
         cast=int
     )
 
@@ -107,8 +107,8 @@ reference level) in dBm. This property can be set.
         """ An integer property that represents the number of frequency
         points in the sweep. This property can take values from 101 to 8192.
         """,
-        validator=truncated_range,
-        values=SWEEP_POINTS_RANGE,
+        #validator=truncated_range,
+        #values=SWEEP_POINTS_RANGE,
         cast=int
     )
     frequency_step = Instrument.control(
@@ -135,8 +135,8 @@ reference level) in dBm. This property can be set.
         """ A string property that allows you to select a specific type of detector
         in seconds. This property can be set.
         """,
-        validator=strict_discrete_set,
-        values=DETECTOR_VALUES,
+        #validator=strict_discrete_set,
+        #values=DETECTOR_VALUES,
         cast=str
     )
 
@@ -149,9 +149,9 @@ reference level) in dBm. This property can be set.
         values=[0, 1],
         cast=int
     )
-
+    TRACE_MODE_COMMAND = ":TRACe:MODE"
     trace_mode = Instrument.control(
-        ":TRACe1:MODE?;", ":TRACe1:MODE %s;",
+        TRACE_MODE_COMMAND + "?;",  TRACE_MODE_COMMAND + " %s;",
         """ A string property that enable you to set how trace information is stored and displayed.
         allowed values are "WRITE", "MAXHOLD", "MINHOLD", "VIEW", "BLANK"
         This property can be set.
@@ -207,5 +207,5 @@ reference level) in dBm. This property can be set.
 
     def sweep_single(self):
         self.write("INIT:IMM")
-        self.ask("*OPC?")
+        self.complete
         

@@ -65,11 +65,13 @@ class Instrument(object):
 
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
-            # Basic SCPI commands
-            self.status = self.measurement("*STB?",
-                                           """ Returns the status of the instrument """)
-            self.complete = self.measurement("*OPC?",
-                                             """ TODO: Add this doc """)
+            # Basic SCPI commands TODO: This does not work
+            #self.status = self.measurement("*STB?",
+            #                               """ Returns the status of the instrument """)
+            #self.complete = self.measurement("*OPC?",
+            #                                 """ TODO: Add this doc """)
+            #setattr(Instrument, 'complete', self.measurement("*OPC?", """ TODO: Add this doc """))
+            pass
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
@@ -79,6 +81,30 @@ class Instrument(object):
         """ Requests and returns the identification of the instrument. """
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
+        else:
+            return "Warning: Property not implemented."
+
+    @property
+    def complete(self):
+        """ The Operation Complete query places an ASCII character '1' into the device's Output Queue when all pending selected device operations have been finished. """
+        if self.SCPI:
+            return self.adapter.ask("*OPC?").strip()
+        else:
+            return "Warning: Property not implemented."
+
+    @property
+    def status(self):
+        """ Prperty that implements the Read Status Byte query allows the programmer to read the status byte and Master Summary Status bit. """
+        if self.SCPI:
+            return self.adapter.ask("*STB?").strip()
+        else:
+            return "Warning: Property not implemented."
+
+    @property
+    def options(self):
+        """ Prperty that implements the Option Identification query for identifying reportable device options over the system interface."""
+        if self.SCPI:
+            return self.adapter.ask("*OPT?").strip()
         else:
             return "Warning: Property not implemented."
 
@@ -113,6 +139,20 @@ class Instrument(object):
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
+    def write_binary_values(self, command, values, format='B'):
+        """ Writes the command to the instrument through the adapter.
+
+        :param command: command string to be sent to the instrument
+        :param values: list of values to be packed in binary format
+        :format: "struct module" format character for each list item (see struct documentation)
+        """
+        return self.adapter.write_binary_values(command, values, format)
+
+    @staticmethod
+    def property_not_supported():
+        """ Not supported/not implemented property """
+        return property()
+        
     @staticmethod
     def control(get_command, set_command, docs,
                 validator=lambda v, vs: v, values=(), map_values=False,

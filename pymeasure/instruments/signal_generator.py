@@ -23,7 +23,14 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range, joined_validators
+
+# Capitalize string arguments to allow for better conformity with other WFG's
+def capitalize_string(string: str, *args, **kwargs):
+    return string.upper()
+
+# Combine the capitalize function and validator
+string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
 class SignalGenerator(Instrument):
@@ -36,7 +43,7 @@ class SignalGenerator(Instrument):
     POWER_RANGE_dBm = [POWER_RANGE_MIN_dBm, POWER_RANGE_MAX_dBm]
 
     FREQUENCY_MIN_Hz = 1
-    FREQUENCY_MAX_Hz = 26.5e9
+    FREQUENCY_MAX_Hz = 1e9
     FREQUENCY_RANGE_Hz = [FREQUENCY_MIN_Hz, FREQUENCY_MAX_Hz]
 
     power = Instrument.control(
@@ -44,8 +51,8 @@ class SignalGenerator(Instrument):
         """ A floating point property that represents the output power
         in dBm. This property can be set.
         """,
-        validator=strict_range,
-        values=POWER_RANGE_dBm
+        #validator=strict_range,
+        #values=lambda x: (getattr(x, 'POWER_RANGE_MIN_dBm'), getattr(x, 'POWER_RANGE_MAX_dBm'))
     )
     frequency = Instrument.control(
         ":FREQ?;", ":FREQ %e Hz;",
@@ -85,40 +92,34 @@ class SignalGenerator(Instrument):
         in dBm. This property can be set.
         """
     )
-    dwell_time = Instrument.control(
-        ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f",
-        """ A floating point property that represents the settling time
-        in seconds at the current frequency or power setting. 
-        This property can be set.
-        """
-    )
     step_points = Instrument.control(
         ":SOUR:SWE:POIN?", ":SOUR:SWE:POIN %d",
         """ An integer number of points in a step sweep. This property
         can be set.
         """
     )
-    is_enabled = Instrument.measurement(":OUTPUT?",
-        """ Reads a boolean value that is True if the output is on. """,
-        cast=bool
-    )
-    has_modulation = Instrument.measurement(":OUTPUT:MOD?",
-        """ Reads a boolean value that is True if the modulation is enabled. """,
-        cast=bool
+    rf_enable = Instrument.control(
+        ":OUTPUT?", ":OUTPUT %d", 
+        """ A boolean property that tell if RF output is enabled or not. 
+        This property can be set. """,
+        cast=int
     )
 
     ########################
     # Amplitude modulation #
     ########################
 
-    has_amplitude_modulation = Instrument.measurement(":SOUR:AM:STAT?",
-        """ Reads a boolean value that is True if the amplitude modulation is enabled. """,
-        cast=bool
+    amplitude_modulation_enable = Instrument.control(
+        ":SOUR:AM:STAT?", ":SOUR:AM:STAT %s", 
+        """ A boolean property that enables or disables the amplitude modulation for the selected path. 
+        This property can be set. """,
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
     )
     amplitude_depth = Instrument.control(
         ":SOUR:AM:DEPT?", ":SOUR:AM:DEPT %g",
         """ A floating point property that controls the amplitude modulation
-        in precent, which can take values from 0 to 100 %. """,
+        in percent, which can take values from 0 to 100 %. """,
         validator=truncated_range,
         values=[0, 100]
     )
@@ -140,9 +141,12 @@ class SignalGenerator(Instrument):
     # Pulse modulation #
     ####################
 
-    has_pulse_modulation = Instrument.measurement(":SOUR:PULM:STAT?",
-        """ Reads a boolean value that is True if the pulse modulation is enabled. """,
-        cast=bool
+    pulse_modulation_enable = Instrument.control(
+        ":SOUR:PULM:STAT?", ":SOUR:PULM:STAT %s",
+        """ A boolean property that enables or disables the operating state of the pulse modulation source.
+        This property can be set. """,
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
     )
     PULSE_SOURCES = {
         'internal':'INT', 'external':'EXT', 'scalar':'SCAL'
@@ -182,6 +186,13 @@ class SignalGenerator(Instrument):
     # Low-Frequency Output #
     ########################
 
+    low_freq_out_enable = Instrument.control(
+        ":SOUR:LFO:STAT? ", ":SOUR:LFO:STAT %d",
+        """ A boolean property that tell if RF modulation output is enabled or not. 
+        This property can be set. """,
+        cast=int
+    )
+
     low_freq_out_amplitude = Instrument.control(
         ":SOUR:LFO:AMPL? ", ":SOUR:LFO:AMPL %g VP",
         """A floating point property that controls the peak voltage (amplitude) of the
@@ -204,21 +215,13 @@ class SignalGenerator(Instrument):
         map_values=True
     )
 
-    def enable_low_freq_out(self):
-        """Enables low frequency output"""
-        self.write(":SOUR:LFO:STAT ON")
-
-    def disable_low_freq_out(self):
-        """Disables low frequency output"""
-        self.write(":SOUR:LFO:STAT OFF")
-
     def config_low_freq_out(self, source='internal', amplitude=3):
         """ Configures the low-frequency output signal.
 
         :param source: The source for the low-frequency output signal.
         :param amplitude: Amplitude of the low-frequency output
         """
-        self.enable_low_freq_out()
+        self.low_freq_out_enable = 1
         self.low_freq_out_source = source
         self.low_freq_out_amplitude = amplitude
 
@@ -247,27 +250,20 @@ class SignalGenerator(Instrument):
         map_values=True
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, description, **kwargs):
         super(SignalGenerator, self).__init__(
-            adapter, "Generic RF Signal Generator", **kwargs
+            adapter, description, **kwargs
         )
 
-    def enable(self):
-        """ Enables the output of the signal. """
-        self.write(":OUTPUT ON;")
-
-    def disable(self):
-        """ Disables the output of the signal. """
-        self.write(":OUTPUT OFF;")
-
     def enable_modulation(self):
-        self.write(":OUTPUT:MOD ON;")
-        self.write(":lfo:sour int; :lfo:ampl 2.0vp; :lfo:stat on;")
+        self.low_freq_out_source = 'internal'
+        self.low_freq_out_amplitude = 2.0
+        self.low_freq_out_enable = 1
 
     def disable_modulation(self):
         """ Disables the signal modulation. """
-        self.write(":OUTPUT:MOD OFF;")
-        self.write(":lfo:stat off;")
+        self.modulation_enable = 0
+        self.low_freq_out_enable = 0
 
     def config_amplitude_modulation(self, frequency=1e3, depth=100.0, shape='sine'):
         """ Configures the amplitude modulation of the output signal.
@@ -276,19 +272,11 @@ class SignalGenerator(Instrument):
         :param depth: A linear depth precentage
         :param shape: A string that describes the shape for the internal oscillator
         """
-        self.enable_amplitude_modulation()
+        self.amplitude_modulation_enable = 1
         self.amplitude_source = 'internal'
         self.internal_frequency = frequency
         self.internal_shape = shape
         self.amplitude_depth = depth
-
-    def enable_amplitude_modulation(self):
-        """ Enables amplitude modulation of the output signal. """
-        self.write(":SOUR:AM:STAT ON")
-
-    def disable_amplitude_modulation(self):
-        """ Disables amplitude modulation of the output signal. """
-        self.write(":SOUR:AM:STAT OFF")
 
     def config_pulse_modulation(self, frequency=1e3, input='square'):
         """ Configures the pulse modulation of the output signal.
@@ -296,41 +284,38 @@ class SignalGenerator(Instrument):
         :param frequency: A pulse rate frequency in Hertz
         :param input: A string that describes the internal pulse input
         """
-        self.enable_pulse_modulation()
+        self.pulse_modulation_enable = 1
         self.pulse_source = 'internal'
         self.pulse_input = input
         self.pulse_frequency = frequency
 
-    def enable_pulse_modulation(self):
-        """ Enables pulse modulation of the output signal. """
-        self.write(":SOUR:PULM:STAT ON")
+    def data_load_repeated(self, bitsequence, spacing, repetitions):
+        """ Load digital data into signal generator for transmission, the parameters are:
+        bitsequence: string of '1' or '0' in transmission order
+        repetitions: integer, how many times the bit sequence is repeated
+        spacing: integer, gap between repetition expressed in number of bit
+        """
+        self.data_load((bitsequence,)*repetitions, (spacing,)*repetitions)
 
-    def disable_pulse_modulation(self):
-        """ Disables pulse modulation of the output signal. """
-        self.write(":SOUR:PULM:STAT OFF")
+    def data_load(self, bitsequences, spacings):
+        """ Load data into signal generator for transmission, the parameters are:
+        bitsequences: list of items. Each item is a string of '1' or '0' in transmission order
+        spacings: integer list, gap to be inserted between each bitsequence  expressed in number of bit
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
 
-    def config_step_sweep(self):
-        """ Configures a step sweep through frequency """
-        self.write(":SOUR:FREQ:MODE SWE;"
-                   ":SOUR:SWE:GEN STEP;"
-                   ":SOUR:SWE:MODE AUTO;")
+    def data_trigger_setup(self, mode='SINGLE'):
+        """ Configure the trigger system for bitsequence transmission
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
 
-    def enable_retrace(self):
-        self.write(":SOUR:LIST:RETR 1")
-
-    def disable_retrace(self):
-        self.write(":SOUR:LIST:RETR 0")
-
-    def single_sweep(self):
-        self.write(":SOUR:TSW")
-
-    def start_step_sweep(self):
-        """ Starts a step sweep. """
-        self.write(":SOUR:SWE:CONT:STAT ON")
-
-    def stop_step_sweep(self):
-        """ Stops a step sweep. """
-        self.write(":SOUR:SWE:CONT:STAT OFF")
+    def data_trigger(self):
+        """ Trigger a bitsequence transmission
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
 
     def shutdown(self):
         """ Shuts down the instrument by disabling any modulation
@@ -338,3 +323,18 @@ class SignalGenerator(Instrument):
         """
         self.disable_modulation()
         self.disable()
+ 
+    def check_errors(self):
+        """Return any accumulated errors.
+        """
+        retVal = []
+        while True:
+            error = self.ask("SYSTEM:ERROR?")
+            f = error.split(",")
+            errorCode = int(f[0])
+            if errorCode == 0:
+                break
+            else:
+                retVal.append(error)
+        return retVal
+        

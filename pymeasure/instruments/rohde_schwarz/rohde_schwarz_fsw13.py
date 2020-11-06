@@ -44,7 +44,20 @@ class RS_FSW13(SpectrumAnalyzer):
 
     DETECTOR_VALUES=["APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS"],
 
-    input_attentuation = SpectrumAnalyzer.control(
+
+    TRACE_MODE_COMMAND = "DISPLAY:TRACe:MODE"
+    trace_mode = SpectrumAnalyzer.control(
+        TRACE_MODE_COMMAND + "?;",  TRACE_MODE_COMMAND + " %s;",
+        """ A string property that enable you to set how trace information is stored and displayed.
+        allowed values are "WRITE", "MAXHOLD", "MINHOLD", "VIEW", "BLANK"
+        This property can be set.
+        """,
+        validator=strict_discrete_set,
+        values=["WRITE", "MAXHOLD", "MINHOLD", "VIEW", "BLANK"],
+        cast=str
+    )
+
+    input_attenuation = SpectrumAnalyzer.control(
         ":INPut:ATTenuation?;", ":INPut:ATTenuation %d;",
         """ An integer property that represents the instrument the input attenuation in dB.
         This property can be set.
@@ -55,7 +68,7 @@ class RS_FSW13(SpectrumAnalyzer):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(RSFSW13, self).__init__(
+        super(RS_FSW13, self).__init__(
             resourceName,
             "R&S FSW Spectrum Analyzer FSW-13",
             **kwargs
