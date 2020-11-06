@@ -261,7 +261,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """ A integer property that controls the number of readings that are 
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
-        values=[1, 2500],
+        values=[1, 100],
         cast=int)
 
     current_filter_state = Instrument.control(
@@ -285,7 +285,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """ A integer property that controls the number of readings that are 
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
-        values=[1, 2500],
+        values=[1, 100],
         cast=int)
 
     #####################
