@@ -66,7 +66,7 @@ class TestKeysightDSOX1102G:
                        62500]
     WAVEFORM_SOURCES = ["channel1", "channel2", "function", "fft", "wmemory1",
                         "wmemory2", "ext"]
-    WAVEFORM_FORMATS = ["ascii"]
+    WAVEFORM_FORMATS = ["ascii", "word", "byte"]
     DOWNLOAD_SOURCES = ["channel1", "channel2", "function", "fft", "ext"]
     CHANNELS = [1, 2]
 

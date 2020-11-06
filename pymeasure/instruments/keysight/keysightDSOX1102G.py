@@ -370,11 +370,12 @@ class KeysightDSOX1102G(Instrument):
     waveform_format = Instrument.control(
         ":waveform:format?", ":waveform:format %s",
         """ A string parameter that controls how the data is formatted when sent from the 
-        oscilloscope. Can be "ascii".""",
+        oscilloscope. Can be "ascii", "word" or "byte". Words are transmitted in big endian by default.""",
         validator=strict_discrete_set,
-        values={"ascii": "ASC"},
+        values={"ascii": "ASC", "word": "WORD", "byte": "BYTE"},
         map_values=True
     )
+
     @property
     def waveform_preamble(self):
         """ Get preamble information for the selected waveform source as a dict with the following keys:
@@ -395,11 +396,13 @@ class KeysightDSOX1102G(Instrument):
         """ Get the binary block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format."""
         # Other waveform formats raise UnicodeDecodeError
-        self.waveform_format = "ascii"
+        if self.waveform_format != "ascii":
+            raise NotImplementedError("")
 
         data = self.values(":waveform:data?")
         # Strip header from first data element
         data[0] = float(data[0][10:])
+
         return data
 
     ################
@@ -471,7 +474,7 @@ class KeysightDSOX1102G(Instrument):
         query = f":DISPlay:DATA? {format_}, {color_palette}"
         # Using binary_values query because default interface does not support binary transfer
         img = self.binary_values(query, header_bytes=10, dtype=np.uint8)
-        return bytearray(img[0])
+        return bytearray(img)
 
     def download_data(self, source: str, points: int = 62500):
         """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of data
