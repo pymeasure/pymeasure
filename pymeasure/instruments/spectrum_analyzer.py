@@ -209,3 +209,16 @@ reference level) in dBm. This property can be set.
         self.write("INIT:IMM")
         self.complete
         
+    def check_errors(self):
+        """Return any accumulated errors.
+        """
+        retVal = []
+        while True:
+            error = self.ask("SYSTEM:ERROR?")
+            f = error.split(",")
+            errorCode = int(f[0])
+            if errorCode == 0:
+                break
+            else:
+                retVal.append(error)
+        return retVal
