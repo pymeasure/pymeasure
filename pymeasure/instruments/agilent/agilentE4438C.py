@@ -177,13 +177,10 @@ class AgilentE4438C(SignalGenerator):
         if (self.data_ramping_workaround):
             self.data_ramping_workaround = False
             self.write("RADIO:CUSTOM:DATA:PRAM \"RampingWorkaround\"")
-            self.data_trigger_setup(mode="CONT")
+            self.complete
             self.write("*TRG")
             time.sleep(0.1)
-            self.write(":ABORT")
-            self.complete
             self.write("RADIO:CUSTOM:DATA:PRAM \"PacketsToTransmit\"")
-            self.data_trigger_setup()
             self.complete
 
         self.write("*TRG")
