@@ -55,8 +55,8 @@ class Input(object):
         """
         self._parameter = parameter
 
-        if parameter.default is not None:
-            self.setValue(parameter.default)
+        if parameter.value is not None:
+            self.setValue(parameter.value)
 
         if hasattr(parameter, 'units') and parameter.units:
             self.setSuffix(" %s" % parameter.units)
