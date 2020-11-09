@@ -57,7 +57,7 @@ jobs:
           path: ~/conda_pkgs_dir
           key: py${{ matrix.python-version }}-${{ matrix.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('requirements/pymeasure.yml') }}
       - name: Install pymeasure requirements
-        uses: conda-incubator/setup-miniconda@v1
+        uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: ${{ matrix.python-version }}
           environment-file: requirements/pymeasure.yml
