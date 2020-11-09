@@ -396,8 +396,7 @@ class KeysightDSOX1102G(Instrument):
         """ Get the binary block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format."""
         # Other waveform formats raise UnicodeDecodeError
-        if self.waveform_format != "ascii":
-            raise NotImplementedError("")
+        self.waveform_format = "ascii"
 
         data = self.values(":waveform:data?")
         # Strip header from first data element
