@@ -69,7 +69,7 @@ class Keithley6517B(Instrument, KeithleyBuffer):
     def extract_value(self, result):
         """ extracts the physical value from a result object returned
             by the instrument """
-        m = re.fullmatch('([+\-0-9E\.]+)[A-Z]{4}', result[0])
+        m = re.fullmatch(r'([+\-0-9E.]+)[A-Z]{4}', result[0])
         if m:
             return float(m.group(1))
         return None

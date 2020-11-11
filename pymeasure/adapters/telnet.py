@@ -22,33 +22,37 @@
 # THE SOFTWARE.
 #
 
-import logging
-
-import serial
-import numpy as np
+import telnetlib
+import time
 
 from .adapter import Adapter
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
+class TelnetAdapter(Adapter):
+    """ Adapter class for using the Python telnetlib package to allow
+    communication to instruments
 
-class SerialAdapter(Adapter):
-    """ Adapter class for using the Python Serial package to allow
-    serial communication to instrument
-
-    :param port: Serial port
+    :param host: host address of the instrument
+    :param port: TCPIP port
+    :param query_delay: delay in seconds between write and read in the ask
+        method
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
-    :param kwargs: Any valid key-word argument for serial.Serial
+    :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
+        this is only 'timeout'
     """
 
-    def __init__(self, port, preprocess_reply=None, **kwargs):
+    def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
+                 **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
-        if isinstance(port, serial.Serial):
-            self.connection = port
-        else:
-            self.connection = serial.Serial(port, **kwargs)
+        self.query_delay = query_delay
+        safe_keywords = ['timeout']
+        for kw in kwargs:
+            if kw not in safe_keywords:
+                raise TypeError(
+                    f"TelnetAdapter: unexpected keyword argument '{kw}', "
+                    f"allowed are: {str(safe_keywords)}")
+        self.connection = telnetlib.Telnet(host, port, **kwargs)
 
     def __del__(self):
         """ Ensures the connection is closed upon deletion
@@ -58,30 +62,30 @@ class SerialAdapter(Adapter):
     def write(self, command):
         """ Writes a command to the instrument
 
-        :param command: SCPI command string to be sent to the instrument
+        :param command: command string to be sent to the instrument
         """
-        self.connection.write(command.encode())  # encode added for Python 3
+        self.connection.write(command.encode())
 
     def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
+        """ Read something even with blocking the I/O. After something is
+        received check again to obtain a full reply.
 
         :returns: String ASCII response of the instrument.
         """
-        return b"\n".join(self.connection.readlines()).decode()
+        return self.connection.read_some().decode() + \
+                self.connection.read_very_eager().decode()
 
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
+    def ask(self, command):
+        """ Writes a command to the instrument and returns the resulting ASCII
+        response
 
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
+        :param command: command string to be sent to the instrument
+        :returns: String ASCII response of the instrument
         """
-        self.connection.write(command.encode())
-        binary = self.connection.read().decode()
-        header, data = binary[:header_bytes], binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
+        self.write(command)
+        time.sleep(self.query_delay)
+        return self.read()
 
     def __repr__(self):
-        return "<SerialAdapter(port='%s')>" % self.connection.port
+        return "<TelnetAdapter(host=%s, port=%d)>" % (self.connection.host, self.connection.port)
+

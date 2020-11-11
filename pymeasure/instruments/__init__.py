@@ -34,6 +34,7 @@ from . import ametek
 from . import ami
 from . import anapico
 from . import anritsu
+from . import attocube
 from . import danfysik
 from . import deltaelektronika
 from . import fwbell
