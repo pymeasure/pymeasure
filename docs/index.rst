@@ -19,13 +19,13 @@ PyMeasure is currently under active development, so please report any issues you
 .. image:: https://ci.appveyor.com/api/projects/status/hcj2n2a7l97wfbb8/branch/master?svg=true
     :target: https://ci.appveyor.com/project/cjermain/pymeasure
 
-.. image:: https://travis-ci.org/ralph-group/pymeasure.svg?branch=master
-    :target: https://travis-ci.org/ralph-group/pymeasure
+.. image:: https://travis-ci.org/pymeasure/pymeasure.svg?branch=master
+    :target: https://travis-ci.org/pymeasure/pymeasure
 
 .. image:: https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat
     :target: http://pymeasure.readthedocs.org/en/latest/
 
-.. _Issues page: https://github.com/ralph-group/pymeasure/issues
+.. _Issues page: https://github.com/pymeasure/pymeasure/issues
 
 
 The main documentation for the site is organized into a couple sections:
