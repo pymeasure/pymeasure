@@ -27,7 +27,6 @@ Implementation of an interface class for ThermoStream® Systems devices.
 
 Contributors:
     - Markus Roeleke (markus.roeleke@bosch.com)
-    - Florian Juenger (florian.juenger@bosch.com)
 
 Reference Document for implementation:
 
