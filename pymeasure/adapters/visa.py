@@ -78,7 +78,7 @@ class VISAAdapter(Adapter):
             return False
 
     def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
+        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
 
     def write(self, command):
         """ Writes a command to the instrument
@@ -135,6 +135,17 @@ class VISAAdapter(Adapter):
         binary = self.connection.read_raw()
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
+
+    def write_binary_values(self, command, values, format='B'):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :format: "struct module" format character for each list item (see struct documentation)
+.       :returns: number of bytes written
+        """
+
+        return self.connection.write_binary_values(command, values, datatype=format, is_big_endian = True)
 
     def config(self, is_binary=False, datatype='str',
                container=np.array, converter='s',
