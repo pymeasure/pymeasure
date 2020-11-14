@@ -32,6 +32,7 @@ from pymeasure.experiment.parameters import BooleanParameter, ListParameter, Flo
 @pytest.mark.parametrize("default_value", [True, False])
 class TestBooleanInput:
     def test_init_from_param(self, qtbot, default_value):
+        # First test is with value = default value
         # set up BooleanInput
         bool_param = BooleanParameter('potato', default=default_value)
         bool_input = BooleanInput(bool_param)
@@ -41,6 +42,16 @@ class TestBooleanInput:
         assert bool_input.text() == bool_param.name
         assert bool_input.value() == default_value
 
+        # Second test is with value = not default_value
+        # change current value of parameter
+        bool_param.value = not default_value
+
+        bool_input = BooleanInput(bool_param)
+        qtbot.addWidget(bool_input)
+
+        # Check that the value in the widget is the current value
+        assert bool_input.text() == bool_param.name
+        assert bool_input.value() == (not default_value)
 
     def test_setValue_should_update_value(self, qtbot, default_value):
 
@@ -61,6 +72,10 @@ class TestBooleanInput:
                 new_callable=mock.PropertyMock,
                 return_value=default_value) as p:
             bool_input = BooleanInput(bool_param)
+
+            # Clear any call to property 'value' during initialization
+            p.reset_mock()
+
             qtbot.addWidget(bool_input)
             bool_input.show()
 
@@ -80,6 +95,7 @@ class TestListInput:
         (["abc", "def", "ghi"], "def") # default not first value
     ])
     def test_init_from_param(self, qtbot, choices, default_value):
+        # First test is with value = default value
         list_param = ListParameter('potato',
                 choices=choices,
                 default=default_value,
@@ -89,6 +105,13 @@ class TestListInput:
 
         assert list_input.isEditable() == False
         assert list_input.value() == default_value
+        
+        # Second test is with value = choices[2]
+        list_param.value = choices[2]
+        list_input = ListInput(list_param)
+        qtbot.addWidget(list_input)
+        assert list_input.isEditable() == False
+        assert list_input.value() == choices[2]
 
     def test_setValue_should_update_value(self, qtbot):
         # Test write-read loop: verify value -> index -> value conversion
@@ -141,6 +164,7 @@ class TestScientificInput:
         [0, 0.01, 0.002]  # default #233: default <0.01 changes to 0
     ])
     def test_init_from_param(self, qtbot, min_, max_, default_value):
+        # First test is with value = default value
         float_param = FloatParameter('potato',
                 minimum=min_,
                 maximum=max_,
@@ -152,6 +176,17 @@ class TestScientificInput:
         assert sci_input.minimum() == min_
         assert sci_input.maximum() == max_
         assert sci_input.value() == default_value
+        assert sci_input.suffix() == ' m'
+
+        # Second test is with value = min_
+        float_param.value = min_
+
+        sci_input = ScientificInput(float_param)
+        qtbot.addWidget(sci_input)
+
+        assert sci_input.minimum() == min_
+        assert sci_input.maximum() == max_
+        assert sci_input.value() == min_
         assert sci_input.suffix() == ' m'
 
     def test_setValue_within_range_should_set(self, qtbot):

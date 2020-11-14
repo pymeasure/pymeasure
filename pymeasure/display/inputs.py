@@ -55,7 +55,7 @@ class Input(object):
         """
         self._parameter = parameter
 
-        if parameter.value is not None:
+        if parameter.is_set():
             self.setValue(parameter.value)
 
         if hasattr(parameter, 'units') and parameter.units:
@@ -191,15 +191,14 @@ class ListInput(QtGui.QComboBox, Input):
         # Override from :class:`Input`
         try:
             self._stringChoices = tuple(str(choice) for choice in parameter.choices)
+            if hasattr(parameter, 'units') and parameter.units:
+                self._addSuffix(parameter.units)
         except TypeError: # choices is None
             self._stringChoices = tuple()
-        super().set_parameter(parameter)
         self.clear()
         self.addItems(self._stringChoices)
 
-        # can't be set in super().set_parameter: addItems not yet called there
-        if parameter.default is not None:
-            self.setValue(parameter.default)
+        super().set_parameter(parameter)
 
 
     def setValue(self, value):
@@ -210,8 +209,12 @@ class ListInput(QtGui.QComboBox, Input):
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._parameter.choices)) from e
 
+    def _addSuffix(self, value):
+        """ Private API to add suffix to each choice entry of the list """
+        self._stringChoices = tuple(choice + " " + str(value) for choice in self._stringChoices)
+
     def setSuffix(self, value):
-        self._stringChoices = tuple(choice + str(value) for choice in self._stringChoices)
+        pass
 
     def value(self):
         return self._parameter.choices[self.currentIndex()]
