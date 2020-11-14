@@ -190,9 +190,12 @@ class ListInput(QtGui.QComboBox, Input):
     def set_parameter(self, parameter):
         # Override from :class:`Input`
         try:
-            self._stringChoices = tuple(str(choice) for choice in parameter.choices)
             if hasattr(parameter, 'units') and parameter.units:
-                self._addSuffix(parameter.units)
+                suffix = " %s"%parameter.units
+            else:
+                suffix = ""
+
+            self._stringChoices = tuple((str(choice) + suffix) for choice in parameter.choices)
         except TypeError: # choices is None
             self._stringChoices = tuple()
         self.clear()
@@ -208,10 +211,6 @@ class ListInput(QtGui.QComboBox, Input):
         except (TypeError, ValueError) as e: # no choices or choice invalid
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._parameter.choices)) from e
-
-    def _addSuffix(self, value):
-        """ Private API to add suffix to each choice entry of the list """
-        self._stringChoices = tuple(choice + " " + str(value) for choice in self._stringChoices)
 
     def setSuffix(self, value):
         pass
