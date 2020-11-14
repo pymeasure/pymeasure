@@ -30,12 +30,13 @@ import pyqtgraph as pg
 from functools import partial
 import numpy
 from collections import ChainMap, OrderedDict
-from itertools import product, cycle
+from itertools import product
 from types import MethodType
 
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
+from .thread import StoppableQThread
 from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
@@ -1036,6 +1037,37 @@ class ResizableQLabel(QtGui.QLabel):
         self.setFont(font)
 
 
+class InstrumentThread(StoppableQThread):
+    new_value = QtCore.QSignal(str, object)
+
+    def __init__(self, instrument, update_list):
+        StoppableQThread.__init__(self)
+        self.instrument = instrument
+        self.update_list = update_list
+
+        self.delay = 0.01
+
+    def __del__(self):
+        self.wait()
+
+    def _get_value(self, name):
+        value = getattr(self.instrument, name)
+        self.new_value.emit(name, value)
+
+    def _get_values(self):
+        for name in self.update_list:
+            self._get_value(name)
+            if self.should_stop():
+                break
+
+    def run(self):
+        self._should_stop.clear()
+
+        while not self.should_stop():
+            self._get_values()
+            self._should_stop.wait(self.delay)
+
+
 class InstrumentWidget(QtGui.QWidget):
     """
     TODO: Write docstrings
@@ -1063,14 +1095,13 @@ class InstrumentWidget(QtGui.QWidget):
         update_list = list(measurements.keys())
         if get_settings_continuously:
             update_list.extend(controls.keys())
-        self.update_cycler = cycle(update_list)
+
+        self.update_thread = InstrumentThread(self.instrument, update_list)
+        self.update_thread.new_value.connect(self.update_value)
 
         self.instrument_functions = functions if isinstance(functions, list) else [functions]
 
         self.set_settings_continuously = set_settings_continuously
-
-        self.update_timer = QtCore.QTimer(self)
-        self.update_timer.timeout.connect(self.update_value)
 
         # Get name of the instrument
         if hasattr(self.instrument, 'name'):
@@ -1081,7 +1112,7 @@ class InstrumentWidget(QtGui.QWidget):
         self._setup_ui()
         self._layout()
 
-        self.update_all_values()
+        self.get_and_update_all_values()
 
         self.update_box.setCheckState(1)
 
@@ -1129,7 +1160,7 @@ class InstrumentWidget(QtGui.QWidget):
 
         # Add a button for instant updating
         self.update_button = QtGui.QPushButton("Update", self)
-        self.update_button.clicked.connect(self.update_all_values)
+        self.update_button.clicked.connect(self.get_and_update_all_values)
         self.update_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
                                          QtGui.QSizePolicy.MinimumExpanding)
 
@@ -1168,19 +1199,17 @@ class InstrumentWidget(QtGui.QWidget):
         if self.parent().isFloating():
             self.parent().resize(3 * self.parent().sizeHint())
 
-    def update_value(self, name=None):
-        if name is None:
-            name = next(self.update_cycler)
-
-        value = getattr(self.instrument, name)
+    def update_value(self, name, value):
+        QtGui.QGuiApplication.processEvents()
         element = getattr(self, name)
 
         if not element.hasFocus():
             element.setValue(value)
 
-    def update_all_values(self):
+    def get_and_update_all_values(self):
         for name in self.params:
-            self.update_value(name)
+            value = getattr(self.instrument, name)
+            self.update_value(name, value)
 
     def apply_setting(self, name):
         element = getattr(self, name)
@@ -1189,14 +1218,17 @@ class InstrumentWidget(QtGui.QWidget):
     def _set_continuous_updating(self):
         state = self.update_box.checkState()
 
+        self.update_thread.stop()
+        self.update_thread.join()
+
         if state == 0:
-            self.update_timer.stop()
+            pass
         elif state == 1:
-            self.update_timer.setInterval(500)
-            self.update_timer.start()
+            self.update_thread.delay = 2
+            self.update_thread.start()
         elif state == 2:
-            self.update_timer.setInterval(10)
-            self.update_timer.start()
+            self.update_thread.delay = 0
+            self.update_thread.start()
 
     @staticmethod
     def check_parameter_list(params, field_type=None):
