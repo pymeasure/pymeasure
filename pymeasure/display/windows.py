@@ -894,7 +894,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
             self.browser_widget.clear_button.setEnabled(True)
 
 
-class ManagedWindowMultiWidgets(QtGui.QMainWindow):
+class ManagedWindowv2(QtGui.QMainWindow):
     """
     Abstract base class.
 
@@ -1042,26 +1042,24 @@ class ManagedWindowMultiWidgets(QtGui.QMainWindow):
         tabs2 = QtGui.QTabWidget(self.main2)
         tabs2.addTab(self.plot_widget2, "Results Graph")
 
+        #split vertically the widgets added
         splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
         splitter.addWidget(tabs)
+        splitter.addWidget(tabs2)
         splitter.addWidget(self.browser_widget)
         self.plot_widget.setMinimumSize(100, 200)
-
-        splitter2 = QtGui.QSplitter(QtCore.Qt.Vertical)
-        splitter2.addWidget(tabs2)
-        #splitter2.addWidget(self.browser_widget)
         self.plot_widget2.setMinimumSize(100, 200)
 
 
         vbox = QtGui.QVBoxLayout(self.main)
         vbox.setSpacing(0)
         vbox.addWidget(splitter)
-        vbox.addWidget(splitter2)
 
         self.main.setLayout(vbox)
         self.setCentralWidget(self.main)
         self.main.show()
-        self.resize(1000, 800)
+        #self.main2.show()
+        #self.resize(1000, 800)
 
     def _layout2(self):
         self.main2 = QtGui.QWidget(self)
