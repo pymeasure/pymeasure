@@ -387,9 +387,13 @@ class ManagedWindow(QtGui.QMainWindow):
             experiment.curve.setPen(pg.mkPen(color=color, width=2))
 
     def open_file_externally(self, filename):
-        # TODO: Make this function OS-agnostic
-        import subprocess
-        proc = subprocess.Popen([self.EDITOR, filename])
+        import subprocess, platform
+
+        system = platform.system()
+        if (system == 'Windows'):
+            proc = subprocess.Popen(['start',  '', filename], shell=True)
+        elif (platform.system() == 'Linux'):
+            proc = subprocess.Popen([self.EDITOR, filename])
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
@@ -757,9 +761,13 @@ class ManagedImageWindow(QtGui.QMainWindow):
             experiment.curve.setPen(pg.mkPen(color=color, width=2))
 
     def open_file_externally(self, filename):
-        # TODO: Make this function OS-agnostic
-        import subprocess
-        proc = subprocess.Popen([self.EDITOR, filename])
+        import subprocess, platform
+
+        system = platform.system()
+        if (system == 'Windows'):
+            proc = subprocess.Popen(['start', '', filename], shell=True)
+        elif (platform.system() == 'Linux'):
+            proc = subprocess.Popen([self.EDITOR, filename])
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
