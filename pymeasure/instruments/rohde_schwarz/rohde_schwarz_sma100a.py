@@ -65,7 +65,7 @@ class RS_SMA100A(SignalGenerator):
     INTERNAL_SHAPES = {} # Unsupported ?
 
     def __init__(self, resourceName, **kwargs):
-        super(RS_SMA100A, self).__init__(
+        super().__init__(
             resourceName,
             "Rohde & Schwarz SMA100A Signal Generator",
             **kwargs

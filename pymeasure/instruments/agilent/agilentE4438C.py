@@ -140,7 +140,7 @@ class AgilentE4438C(SignalGenerator):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(AgilentE4438C, self).__init__(
+        super().__init__(
             resourceName,
             "Agilent E4438C Signal Generator",
             **kwargs

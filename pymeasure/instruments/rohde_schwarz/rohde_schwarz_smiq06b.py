@@ -162,7 +162,7 @@ class RS_SMIQ06B(SignalGenerator):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(RS_SMIQ06B, self).__init__(
+        super().__init__(
             resourceName,
             "Rohde & Schwarz SMIQ06B Signal Generator",
             **kwargs

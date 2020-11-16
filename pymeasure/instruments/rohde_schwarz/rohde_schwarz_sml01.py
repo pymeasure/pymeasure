@@ -25,7 +25,7 @@
 from pymeasure.instruments.signal_generator import SignalGenerator
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 
-class RS_SMA100A(SignalGenerator):
+class RS_SML01(SignalGenerator):
     POWER_RANGE_MIN_dBm = -140.0
     POWER_RANGE_MAX_dBm = 13.0
 
@@ -65,7 +65,7 @@ class RS_SMA100A(SignalGenerator):
     INTERNAL_SHAPES = {} # Unsupported ?
 
     def __init__(self, resourceName, **kwargs):
-        super(RS_SML01, self).__init__(
+        super().__init__(
             resourceName,
             "Rohde & Schwarz SML01 Signal Generator",
             **kwargs

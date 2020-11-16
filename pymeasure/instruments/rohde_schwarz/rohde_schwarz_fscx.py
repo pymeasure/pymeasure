@@ -63,7 +63,7 @@ class RS_FSCx(SpectrumAnalyzer):
 class RS_FSC6(RS_FSCx):
     FREQUENCY_MAX_Hz = 6e9
     def __init__(self, resourceName, **kwargs):
-        super(RS_FSC6, self).__init__(
+        super().__init__(
             resourceName,
             "R&S FSC6 Spectrum Analyzer",
             **kwargs
@@ -72,7 +72,7 @@ class RS_FSC6(RS_FSCx):
 class RS_FSC3(RS_FSCx):
     FREQUENCY_MAX_Hz = 3e9
     def __init__(self, resourceName, **kwargs):
-        super(RS_FSC3, self).__init__(
+        super().__init__(
             resourceName,
             "R&S FSC3 Spectrum Analyzer",
             **kwargs

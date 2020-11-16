@@ -43,7 +43,7 @@ class AgilentE4440A(SpectrumAnalyzer):
     DETECTOR_VALUES=["NORM", "AVER", "POS", "SAMP", "NEG", "QPE", "EAV", "EPOS", "MPOS", "RMS"],
 
     def __init__(self, resourceName, **kwargs):
-        super(AgilentE4440A, self).__init__(
+        super().__init__(
             resourceName,
             "Agilent E4440A Spectrum Analyzer",
             **kwargs
@@ -70,7 +70,7 @@ class AgilentE4445A(SpectrumAnalyzer):
     DETECTOR_VALUES=["NORM", "AVER", "POS", "SAMP", "NEG", "QPE", "EAV", "EPOS", "MPOS", "RMS"],
 
     def __init__(self, resourceName, **kwargs):
-        super(AgilentE4445A, self).__init__(
+        super().__init__(
             resourceName,
             "Agilent E4445A Spectrum Analyzer",
             **kwargs

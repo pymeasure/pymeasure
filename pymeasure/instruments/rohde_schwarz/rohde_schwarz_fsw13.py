@@ -68,7 +68,7 @@ class RS_FSW13(SpectrumAnalyzer):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(RS_FSW13, self).__init__(
+        super().__init__(
             resourceName,
             "R&S FSW Spectrum Analyzer FSW-13",
             **kwargs
