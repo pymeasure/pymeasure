@@ -1008,9 +1008,14 @@ class SequencerWidget(QtGui.QWidget):
         return evaluated_string
 
 class DirectoryLineEdit(QtGui.QLineEdit):
+    """
+    Widget that allows to choose a directory path.
+    A completer is implemented for quick completion.
+    A browse button is available.
+    """
 
     def __init__(self, parent=None):
-        super(DirectoryLineEdit, self).__init__(parent=parent)
+        super().__init__(parent=parent)
 
         completer = QtGui.QCompleter(self)
         completer.setCompletionMode(QtGui.QCompleter.PopupCompletion)
