@@ -237,6 +237,7 @@ class TestKeysightDSOX1102G:
 
     def test_waveform_preamble(self, make_reseted_cleared_scope):
         scope = make_reseted_cleared_scope
+        scope.waveform_format = "ascii"
         scope.waveform_source = "channel1"
         expected_preamble = {"count": 1, "format": "ASCII", "points": 62500,
                              "type": "NORMAL", "xincrement": 1.6e-08, "xorigin": -0.0005,
