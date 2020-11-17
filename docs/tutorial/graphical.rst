@@ -302,12 +302,12 @@ This file can also be automatically loaded at the start of the program by adding
 Using the directory input
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.ManagedWindow` init. The value of the directory can be retrieved using the property :code:`directory`
+It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.ManagedWindow` init. The value of the directory can be retrieved using the property :code:`directory`.
 
-Only the MainWindow needs to be modified in order to use this option (modified lines are marled).
+Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
 
 .. code-block:: python
-   :emphasize-lines: 10,15
+   :emphasize-lines: 10,15,16
 
     class MainWindow(ManagedWindow):
 
