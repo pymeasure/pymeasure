@@ -29,12 +29,14 @@ import re
 import pyqtgraph as pg
 from functools import partial
 import numpy
-from collections import ChainMap
+from collections import ChainMap, OrderedDict
 from itertools import product
+from types import MethodType
 
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
+from .thread import StoppableQThread
 from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
@@ -42,6 +44,37 @@ from ..experiment.results import Results
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+def input_from_parameter(parameter):
+    """ Get the corresponding type of input for a given parameter.
+
+    :param parameter: A parameter
+    """
+
+    if parameter.ui_class is not None:
+        element = parameter.ui_class(parameter)
+
+    elif isinstance(parameter, parameters.FloatParameter):
+        element = ScientificInput(parameter)
+
+    elif isinstance(parameter, parameters.IntegerParameter):
+        element = IntegerInput(parameter)
+
+    elif isinstance(parameter, parameters.BooleanParameter):
+        element = BooleanInput(parameter)
+
+    elif isinstance(parameter, parameters.ListParameter):
+        element = ListInput(parameter)
+
+    elif isinstance(parameter, parameters.Parameter):
+        element = StringInput(parameter)
+
+    else:
+        raise TypeError("parameter has to be an instance of Parameter or one "
+                        "of its subclasses.")
+
+    return element
 
 
 class PlotFrame(QtGui.QFrame):
@@ -320,7 +353,7 @@ class ImageFrame(QtGui.QFrame):
             match = re.search(units_pattern, axis)
         except TypeError:
             match = None
-            
+
         if match:
             if 'units' in match.groupdict():
                 label = re.sub(units_pattern, '', axis)
@@ -335,7 +368,7 @@ class ImageFrame(QtGui.QFrame):
                 item.update_img()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + ' (%s)'%units)
+            self.plot.setTitle(label + ' (%s)' % units)
         else:
             self.plot.setTitle(label)
         self.z_axis = axis
@@ -391,7 +424,6 @@ class ImageWidget(QtGui.QWidget):
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_z_label)
         hbox.addWidget(self.columns_z)
-
 
         vbox.addLayout(hbox)
         vbox.addWidget(self.image_frame)
@@ -466,23 +498,7 @@ class InputsWidget(QtGui.QWidget):
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
-            if parameter.ui_class is not None:
-                element = parameter.ui_class(parameter)
-
-            elif isinstance(parameter, parameters.FloatParameter):
-                element = ScientificInput(parameter)
-
-            elif isinstance(parameter, parameters.IntegerParameter):
-                element = IntegerInput(parameter)
-
-            elif isinstance(parameter, parameters.BooleanParameter):
-                element = BooleanInput(parameter)
-
-            elif isinstance(parameter, parameters.ListParameter):
-                element = ListInput(parameter)
-
-            elif isinstance(parameter, parameters.Parameter):
-                element = StringInput(parameter)
+            element = input_from_parameter(parameter)
 
             setattr(self, name, element)
 
@@ -875,8 +891,8 @@ class SequencerWidget(QtGui.QWidget):
             sequence = match.group(3)
 
             self._add_tree_item(
-                level=level, 
-                parameter=parameter, 
+                level=level,
+                parameter=parameter,
                 sequence=sequence,
             )
 
@@ -1006,3 +1022,236 @@ class SequencerWidget(QtGui.QWidget):
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
+
+
+class ResizableQLabel(QtGui.QLabel):
+    def __init__(self, *args, sizefactor=0.6, **kwargs):
+        QtGui.QLabel.__init__(self, *args, **kwargs)
+        self.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Ignored)
+
+        self.sizefactor = sizefactor
+
+    def resizeEvent(self, evt):
+        font = self.font()
+        font.setPixelSize(self.height() * self.sizefactor)
+        self.setFont(font)
+
+
+class InstrumentThread(StoppableQThread):
+    new_value = QtCore.QSignal(str, object)
+
+    def __init__(self, instrument, update_list):
+        StoppableQThread.__init__(self)
+        self.instrument = instrument
+        self.update_list = update_list
+
+        self.delay = 0.01
+
+    def __del__(self):
+        self.wait()
+
+    def _get_value(self, name):
+        value = getattr(self.instrument, name)
+        self.new_value.emit(name, value)
+
+    def _get_values(self):
+        for name in self.update_list:
+            self._get_value(name)
+            if self.should_stop():
+                break
+
+    def run(self):
+        self._should_stop.clear()
+
+        while not self.stoppable_sleep(self.delay):
+            self._get_values()
+
+
+class InstrumentWidget(QtGui.QWidget):
+    """
+    TODO: Write docstrings
+
+    """
+
+    def __init__(self, instrument,
+                 measurements=None, controls=None,
+                 settings=None, functions=None,
+                 set_settings_continuously=False,
+                 get_settings_continuously=False,
+                 parent=None):
+        super().__init__(parent)
+
+        self.instrument = instrument
+
+        measurements = self.check_parameter_list(measurements, "measurement")
+        controls = self.check_parameter_list(controls, "control")
+        settings = self.check_parameter_list(settings, "setting")
+
+        self.params = OrderedDict((*measurements.items(),
+                                   *controls.items(),
+                                   *settings.items()))
+
+        update_list = list(measurements.keys())
+        if get_settings_continuously:
+            update_list.extend(controls.keys())
+
+        self.update_thread = InstrumentThread(self.instrument, update_list)
+        self.update_thread.new_value.connect(self.update_value)
+
+        self.instrument_functions = functions if isinstance(functions, list) else [functions]
+
+        self.set_settings_continuously = set_settings_continuously
+
+        # Get name of the instrument
+        if hasattr(self.instrument, 'name'):
+            self.instrument_name = self.instrument.name
+        else:
+            self.instrument_name = 'Instrument'
+
+        self._setup_ui()
+        self._layout()
+
+        self.get_and_update_all_values()
+
+        self.update_box.setCheckState(1)
+
+    def _setup_ui(self):
+        for name, param in self.params.items():
+            element = input_from_parameter(param)
+            setattr(self, name, element)
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
+
+            if param.field_type == "measurement":
+                element.setEnabled(False)
+
+            elif param.field_type == "control":
+                element.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+                element.stepEnabled = lambda: QtGui.QAbstractSpinBox.StepDownEnabled | \
+                                              QtGui.QAbstractSpinBox.StepUpEnabled
+                element.stepType = lambda: QtGui.QAbstractSpinBox.AdaptiveDecimalStepType
+
+                # connect to update functions
+                element.editingFinished.connect(partial(self.apply_setting, name))
+
+                if self.set_settings_continuously:
+                    element.valueChanged.connect(partial(self.apply_setting, name))
+
+            elif param.field_type == "setting":
+                # connect to update functions
+                element.editingFinished.connect(partial(self.apply_setting, name))
+
+                if self.set_settings_continuously:
+                    element.valueChanged.connect(partial(self.apply_setting, name))
+
+        for name in self.instrument_functions:
+            element = QtGui.QPushButton()
+            setattr(self, name, element)
+            element.setText(name)
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
+            element.clicked.connect(getattr(self.instrument, name))
+
+        # Add a checkbox for continuous updating
+        self.update_box = QtGui.QCheckBox(self)
+        self.update_box.setTristate(True)
+        self.update_box.stateChanged.connect(self._set_continuous_updating)
+
+        # Add a button for instant updating
+        self.update_button = QtGui.QPushButton("Update", self)
+        self.update_button.clicked.connect(self.get_and_update_all_values)
+        self.update_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                         QtGui.QSizePolicy.MinimumExpanding)
+
+    def _layout(self):
+        layout = QtGui.QGridLayout(self)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 3)
+
+        for idx, name in enumerate(self.params):
+            layout.addWidget(ResizableQLabel(name), idx, 0)
+            layout.addWidget(getattr(self, name), idx, 1)
+
+            if self.params[name].field_type == "measurement":
+                layout.setRowStretch(idx, 4)
+            elif self.params[name].field_type == "control":
+                layout.setRowStretch(idx, 2)
+            elif self.params[name].field_type == "setting":
+                layout.setRowStretch(idx, 2)
+
+        for idx, name in enumerate(self.instrument_functions, len(self.params)):
+            layout.addWidget(ResizableQLabel(name, sizefactor=0.5), idx, 0)
+            layout.addWidget(getattr(self, name), idx, 1)
+            layout.setRowStretch(idx, 1)
+
+        idx = len(self.params) + len(self.instrument_functions)
+
+        box = QtGui.QHBoxLayout()
+        box.addWidget(self.update_box)
+        box.addWidget(self.update_button)
+
+        layout.addWidget(ResizableQLabel("Auto-update (off / slow / fast)", sizefactor=0.5), idx, 0)
+        layout.addLayout(box, idx, 1)
+        layout.setRowStretch(idx, 1)
+
+    def change_size_for_floating(self):
+        if self.parent().isFloating():
+            self.parent().resize(3 * self.parent().sizeHint())
+
+    def update_value(self, name, value):
+        QtGui.QGuiApplication.processEvents()
+        element = getattr(self, name)
+
+        if not element.hasFocus():
+            element.setValue(value)
+
+    def get_and_update_all_values(self):
+        for name in self.params:
+            value = getattr(self.instrument, name)
+            self.update_value(name, value)
+
+    def apply_setting(self, name):
+        element = getattr(self, name)
+        setattr(self.instrument, name, element.value())
+
+    def _set_continuous_updating(self):
+        state = self.update_box.checkState()
+
+        self.update_thread.stop()
+        self.update_thread.join()
+
+        if state == 0:
+            pass
+        elif state == 1:
+            self.update_thread.delay = 2
+            self.update_thread.start()
+        elif state == 2:
+            self.update_thread.delay = 0
+            self.update_thread.start()
+
+    @staticmethod
+    def check_parameter_list(params, field_type=None):
+        # Ensure the parameters is a list
+        if isinstance(params, (list, tuple)):
+            params = list(params)
+        elif params is None:
+            params = []
+        else:
+            params = [params]
+
+        # Convert all elements to FloatParameter whenever given as a string
+        for idx in range(len(params)):
+            if isinstance(params[idx], parameters.Parameter):
+                pass
+            elif isinstance(params[idx], str):
+                params[idx] = parameters.FloatParameter(params[idx])
+            else:
+                raise TypeError("All parameters (measurements, controls, & "
+                                "settings) should be given as a Parameter, a "
+                                "Parameter subclass, or a string.")
+
+            params[idx].field_type = field_type
+
+        params = OrderedDict((param.name, param) for param in params)
+
+        return params

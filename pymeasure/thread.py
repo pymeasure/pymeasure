@@ -57,6 +57,9 @@ class StoppableThread(Thread):
     def should_stop(self):
         return self._should_stop.is_set()
 
+    def stoppable_sleep(self, timeout=None):
+        return self._should_stop.wait(timeout=timeout)
+
     def __repr__(self):
         return "<%s(should_stop=%s)>" % (
             self.__class__.__name__, self.should_stop())

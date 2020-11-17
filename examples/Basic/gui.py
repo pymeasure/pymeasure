@@ -12,7 +12,6 @@ python gui.py
 import sys
 import random
 import tempfile
-from time import sleep
 import pyqtgraph as pg
 
 import logging
@@ -48,8 +47,8 @@ class TestProcedure(Procedure):
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
             self.emit('progress', 100*i/self.iterations)
-            sleep(self.delay)
-            if self.should_stop():
+
+            if self.stoppable_sleep(self.delay):
                 log.warning("Catch stop command in procedure")
                 break
 

@@ -205,6 +205,9 @@ class Procedure(object):
     def should_stop(self):
         raise NotImplementedError('should be monkey patched by a worker')
 
+    def sleep(self):
+        raise NotImplementedError('should be monkey patched by a worker')
+
     def __str__(self):
         result = repr(self) + "\n"
         for parameter in self._parameters.items():

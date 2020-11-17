@@ -39,6 +39,7 @@ from .widgets import (
     ResultsDialog,
     SequencerWidget,
     ImageWidget,
+    InstrumentWidget,
 )
 from ..experiment.results import Results
 
@@ -504,6 +505,28 @@ class ManagedWindow(QtGui.QMainWindow):
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
+
+    def add_instrument_widget(self, instrument, **kwargs):
+        """ Method that adds an InstrumentWidget to the ManagedWindow.
+        TODO: finish docstring
+        """
+        widget = InstrumentWidget(
+            instrument,
+            **kwargs
+        )
+
+        instrument_dock = QtGui.QDockWidget(widget.instrument_name)
+        widget.setParent(instrument_dock)
+        instrument_dock.setWidget(widget)
+
+        instrument_dock.setFeatures(QtGui.QDockWidget.DockWidgetFloatable |
+                                   QtGui.QDockWidget.DockWidgetMovable)
+        instrument_dock.setAllowedAreas(QtCore.Qt.TopDockWidgetArea)
+
+        instrument_dock.topLevelChanged.connect(widget.change_size_for_floating)
+
+        self.addDockWidget(QtCore.Qt.TopDockWidgetArea, instrument_dock)
+
 
 
 # TODO: Inheret from ManagedWindow to share code and features
