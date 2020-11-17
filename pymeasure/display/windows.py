@@ -525,7 +525,7 @@ class ManagedWindow(QtGui.QMainWindow):
     @property
     def directory(self):
         if not self.directory_input:
-            raise Exception("No directory input in the ManagedWindow")
+            raise ValueError("No directory input in the ManagedWindow")
         return self.directory_line.text()
 
 # TODO: Inheret from ManagedWindow to share code and features
