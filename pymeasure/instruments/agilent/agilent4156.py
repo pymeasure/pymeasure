@@ -532,7 +532,7 @@ class SMU(Instrument):
         """ This command sets the *constant* compliance value of SMU<n>. If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are set by the variable definition.
 
         - Value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
-        on :meth:`~.SMU.channel_mode`.
+          on :meth:`~.SMU.channel_mode`.
 
         .. code-block:: python
 

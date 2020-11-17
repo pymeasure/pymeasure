@@ -1,4 +1,4 @@
-.. image:: https://raw.githubusercontent.com/ralph-group/pymeasure/master/docs/images/PyMeasure.png
+.. image:: https://raw.githubusercontent.com/pymeasure/pymeasure/master/docs/images/PyMeasure.png
     :alt: PyMeasure Scientific package
 
 PyMeasure scientific package
@@ -8,22 +8,19 @@ PyMeasure makes scientific measurements easy to set up and run. The package cont
 
 PyMeasure is currently under active development, so please report any issues you experience to our `Issues page`_.
 
-.. _Issues page: https://github.com/ralph-group/pymeasure/issues
+.. _Issues page: https://github.com/pymeasure/pymeasure/issues
 
 PyMeasure runs on Python 3.6, 3.7, 3.8 and 3.9, and is tested with continous-integration on Linux, macOS, and Windows.
 
-.. image:: https://ci.appveyor.com/api/projects/status/hcj2n2a7l97wfbb8/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/cjermain/pymeasure
-
-.. image:: https://travis-ci.org/ralph-group/pymeasure.svg?branch=master
-    :target: https://travis-ci.org/ralph-group/pymeasure
+.. image:: https://github.com/pymeasure/pymeasure/workflows/Pymeasure%20CI/badge.svg
+    :target: https://github.com/pymeasure/pymeasure/actions
 
 .. image:: http://readthedocs.org/projects/pymeasure/badge/?version=latest
     :target: http://pymeasure.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://zenodo.org/badge/23569/ralph-group/pymeasure.svg
-   :target: https://zenodo.org/badge/latestdoi/23569/ralph-group/pymeasure
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3732545.svg
+   :target: https://doi.org/10.5281/zenodo.3732545
 
 .. image:: https://anaconda.org/conda-forge/pymeasure/badges/version.svg
    :target: https://anaconda.org/conda-forge/pymeasure
@@ -41,4 +38,4 @@ There are a number of examples in the `examples`_ directory that can help you ge
 
 .. _the documentation: http://pymeasure.readthedocs.org/en/latest/
 .. _quick start guide: http://pymeasure.readthedocs.io/en/latest/quick_start.html
-.. _examples: https://github.com/ralph-group/pymeasure/tree/master/examples
+.. _examples: https://github.com/pymeasure/pymeasure/tree/master/examples

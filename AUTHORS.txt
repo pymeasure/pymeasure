@@ -25,3 +25,7 @@ Manuel Zahn
 Mikhaël Myara
 John McMaster
 Dominik Kriegner
+Jonathan Larochelle
+Dominic Caron
+Mathieu Plante
+Michele Sardo

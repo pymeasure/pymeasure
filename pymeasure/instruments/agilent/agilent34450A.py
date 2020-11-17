@@ -81,7 +81,7 @@ class Agilent34450A(Instrument):
                     self.mode = 'ac voltage'
                 self.write(":configure:freq")
         else:
-            raise ValueError(f'Value {value} is not a supported mode for this device.')
+            raise ValueError('Value %s is not a supported mode for this device.'.format(value))
 
     ###############
     # Current (A) #
@@ -181,8 +181,8 @@ class Agilent34450A(Instrument):
     voltage_ac_range = Instrument.control(
         ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %s",
         """ A property that controls the AC voltage range in Volts, which can 
-        take values 100E-3, 1, 10, 100, 750, as well as "MIN", "MAX", or "DEF"
-         (10 V).
+        take values 100E-3, 1, 10, 100, 750, as well as "MIN", "MAX", or "DEF" 
+        (10 V).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
         values=[100E-3, 1, 10, 100, 750, "MAX", "MIN", "DEF"]
@@ -390,8 +390,8 @@ class Agilent34450A(Instrument):
 
         :param voltage_range: A voltage in Volts to set the voltage range.
                 DC values can be 100E-3, 1, 10, 100, 1000, as well as "MIN", "MAX",
-                 "DEF" (10 V), or "AUTO". AC values can be 100E-3, 1, 10, 100, 750,
-                 as well as "MIN", "MAX", "DEF" (10 V), or "AUTO".
+                "DEF" (10 V), or "AUTO". AC values can be 100E-3, 1, 10, 100, 750,
+                as well as "MIN", "MAX", "DEF" (10 V), or "AUTO".
         :param ac: False for DC voltage, True for AC voltage
         :param resolution: Desired resolution, can be 3.00E-5, 2.00E-5,
                 1.50E-6 (5 1/2 digits), as well as "MIN", "MAX", or "DEF" (1.50E-6).
@@ -562,7 +562,7 @@ class Agilent34450A(Instrument):
             try:
                 list_without_empty_elements[i] = float(v)
             except ValueError as e:
-                print(e)
+                log.error(e)
 
         return list_without_empty_elements
 

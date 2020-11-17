@@ -1623,7 +1623,6 @@ class CustomIntEnum(IntEnum):
     * get classmethod to get enum reference with name or integer
 
     .. automethod:: __str__
-    .. automethod:: get
     """
 
     def __str__(self):

@@ -35,12 +35,16 @@ class TelnetAdapter(Adapter):
     :param host: host address of the instrument
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
-                        method
+        method
+    :param preprocess_reply: optional callable used to preprocess strings
+        received from the instrument. The callable returns the processed string.
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
-    this is only 'timeout'
+        this is only 'timeout'
     """
 
-    def __init__(self, host, port=0, query_delay=0, **kwargs):
+    def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
+                 **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
         safe_keywords = ['timeout']
         for kw in kwargs:
