@@ -25,10 +25,7 @@
 from math import inf
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.attocube.adapters import (AttocubeConsoleAdapter,
-                                                     extract_float,
-                                                     extract_int,
-                                                     extract_value)
+from pymeasure.instruments.attocube.adapters import AttocubeConsoleAdapter
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
@@ -75,30 +72,27 @@ class Axis(object):
             "getv", "setv %.3f",
             """ Amplitude of the stepping voltage in volts from 0 to 150 V. This
             property can be set. """,
-            validator=strict_range, values=[0, 150],
-            get_process=extract_float)
+            validator=strict_range, values=[0, 150])
 
     frequency = Instrument.control(
             "getf", "setf %.3f",
             """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
             This property can be set. """,
             validator=strict_range, values=[1, 10000],
-            get_process=extract_int)
+            cast=int)
 
     mode = Instrument.control(
             "getm", "setm %s",
             """ Axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
             'stp+', 'stp-'. Available modes depend on the actual axis model""",
             validator=strict_discrete_set,
-            values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
-            get_process=extract_value)
+            values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'])
 
     offset_voltage = Instrument.control(
             "geta", "seta %.3f",
             """ Offset voltage in Volts from 0 to 150 V.
             This property can be set. """,
-            validator=strict_range, values=[0, 150],
-            get_process=extract_float)
+            validator=strict_range, values=[0, 150])
 
     pattern_up = Instrument.control(
             "getpu", "setpu %s",
@@ -124,13 +118,11 @@ class Axis(object):
 
     output_voltage = Instrument.measurement(
             "geto",
-            """ Output voltage in volts.""",
-            get_process=extract_float)
+            """ Output voltage in volts.""")
 
     capacity = Instrument.measurement(
             "getc",
-            """ Saved capacity value in nF of the axis.""",
-            get_process=extract_float)
+            """ Saved capacity value in nF of the axis.""")
 
     stepu = Instrument.setting(
             "stepu %d",
@@ -179,9 +171,10 @@ class Axis(object):
         only when the movement is finished.
 
         :param steps: finite integer value of steps to be performed. A positive
-        sign corresponds to upwards steps, a negative sign to downwards steps.
+            sign corresponds to upwards steps, a negative sign to downwards
+            steps.
         :param gnd: bool, flag to decide if the axis should be grounded after
-        completion of the movement
+            completion of the movement
         """
         self.mode = 'stp'
         # perform the movement

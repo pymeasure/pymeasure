@@ -27,43 +27,6 @@ import time
 
 from pymeasure.adapters import TelnetAdapter
 
-# compiled regular expression for finding numerical values in reply strings
-_reg_value = re.compile(r"\w+\s+=\s+(\w+)")
-
-
-def extract_value(reply):
-    """ get_process function for the Attocube console which for numerical
-    values typically return 'name = X.YZ unit'
-
-    :param reply: reply string
-    :returns: string with only the numerical value
-    """
-    r = _reg_value.search(reply)
-    if r:
-        return r.groups()[0]
-    else:
-        return reply
-
-
-def extract_float(reply):
-    """ get_process function for the Attocube console to obtain a float from
-    the reply
-
-    :param reply: reply string
-    :returns: string with only the numerical value
-    """
-    return float(extract_value(reply))
-
-
-def extract_int(reply):
-    """ get_process function for the Attocube console to obtain an integer from
-    the reply
-
-    :param reply: reply string
-    :returns: string with only the numerical value
-    """
-    return int(extract_value(reply))
-
 
 class AttocubeConsoleAdapter(TelnetAdapter):
     """ Adapter class for connecting to the Attocube Standard Console. This
@@ -74,9 +37,13 @@ class AttocubeConsoleAdapter(TelnetAdapter):
     :param passwd: password required to open the connection
     :param kwargs: Any valid key-word argument for TelnetAdapter
     """
+    # compiled regular expression for finding numerical values in reply strings
+    _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
+
     def __init__(self, host, port, passwd, **kwargs):
         self.read_termination = '\r\n'
         self.write_termination = self.read_termination
+        kwargs.setdefault('preprocess_reply', self.extract_value)
         super().__init__(host, port, **kwargs)
         time.sleep(self.query_delay)
         super().read()  # clear messages sent upon opening the connection
@@ -89,6 +56,20 @@ class AttocubeConsoleAdapter(TelnetAdapter):
             raise Exception(f"Attocube authorization failed '{authmsg}'")
         # switch console echo off
         _ = self.ask('echo off')
+
+    def extract_value(self, reply):
+        """ preprocess_reply function for the Attocube console. This function
+        tries to extract <value> from 'name = <value> [unit]'. If <value> can
+        not be identified the original string is returned.
+
+        :param reply: reply string
+        :returns: string with only the numerical value, or the original string
+        """
+        r = self._reg_value.search(reply)
+        if r:
+            return r.groups()[0]
+        else:
+            return reply
 
     def check_acknowledgement(self, reply, msg=""):
         """ checks the last reply of the instrument to be 'OK', otherwise a
@@ -126,8 +107,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
 
         :param command: command string to be sent to the instrument
         :param check_ack: boolean flag to decide if the acknowledgement is read
-        back from the instrument. This should be True for set pure commands and
-        False otherwise.
+            back from the instrument. This should be True for set pure commands
+            and False otherwise.
         """
         self.lastcommand = command
         super().write(command + self.write_termination)

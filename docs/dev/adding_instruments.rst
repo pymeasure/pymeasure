@@ -86,7 +86,7 @@ This is a minimal instrument definition:
         """
 
         def __init__(self, resourceName, **kwargs):
-            super(Extreme5000, self).__init__(
+            super().__init__(
                 resourceName,
                 "Extreme 5000",
                 **kwargs
@@ -154,7 +154,7 @@ We can use this property to set the voltage to 100 mV, which will execute the co
     >>> extreme.voltage              # Reads ":VOLT?"
     0.1
 
-Using both of these functions, you can create a number of properties for basic measurements and controls. The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command.
+Using both of these functions, you can create a number of properties for basic measurements and controls. The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
 .. _advanced-properties:
 
@@ -169,6 +169,8 @@ In the examples below we assume you have imported the validators.
     :hide:
 
     from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
+
+In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function also provide means to achieve this.
 
 In a restricted range
 *********************
@@ -327,3 +329,139 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     'Y'
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be significantly extended by using validators and maps.
+
+Processing of set values
+************************
+
+The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` allow a keyword argument `set_process` which must be a function that takes a value after validation and performs processing before value mapping. This function must return the processed value. This can be typically used for unit conversions as in the following example:
+
+
+.. testcode::
+
+    Extreme5000.current = Instrument.setting(
+        ":CURR %g",
+        """ A floating point property that takes the measurement current in A
+        """,
+        validator=strict_range,
+        values=[0, 10],
+        set_process=lambda v: 1e3*v,  # convert current to mA
+    )
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.current = 1  # set current to 1000 mA
+
+Processing of return values
+***************************
+
+Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` functions allow a `get_process` argument which if specified must be a function that takes a value and performs processing before value mapping. The function must return the processed value. In analogy to the example above this can be used for example for unit conversion:
+
+.. testcode::
+
+    Extreme5000.current = Instrument.control(
+        ":CURR?", ":CURR %g",
+        """ A floating point property representing the measurement current in A
+        """,
+        validator=strict_range,
+        values=[0, 10],
+        set_process=lambda v: 1e3*v,  # convert to mA
+        get_process=lambda v: 1e-3*v,  # convert to A
+    )
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.current = 3.1
+    >>> extreme.current
+    3.1
+
+`get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit which has to be removed. This could be achieved by the following code:
+
+.. testcode::
+
+    Extreme5000.capacity = Instrument.measurement(
+        ":CAP?",
+        """ A measurement returning a capacity in nF in the format '<cap> nF'
+        """,
+        get_process=lambda v: float(v.replace('nF', ''))
+    )
+
+The same can be also achieved by the `preprocess_reply` keyword argument to :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`. This function is forwarded to :func:`Adapter.values <pymeasure.adapters.values>` and runs directly after receiving the reply from the device. One can therefore take advantage of the built in casting abilities and simplify the code accordingly:
+
+.. testcode::
+
+    Extreme5000.capacity = Instrument.measurement(
+        ":CAP?",
+        """ A measurement returning a capacity in nF in the format '<cap> nF'
+        """,
+        preprocess_reply=lambda v: v.replace('nF', '')
+        # notice how we don't need to cast to float anymore
+    )
+
+The real purpose of `preprocess_reply` is, however, for instruments where many/all properties need similar reply processing. `preprocess_reply` can be applied to all :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` properties, for example if all quantities are returned with a unit as in the example above. To avoid running into troubles for other properties this `preprocess_reply` should be clever enough to skip the processing in case it is not appropriate, for example if some identification string is returned. Typically this can be achieved by regular expression matching. In case of no match the reply is returned unchanged:
+
+.. testcode::
+
+    import re
+    _reg_value = re.compile(r"([-+]?[0-9]*\.?[0-9]+)\s+\w+")
+
+    def extract_value(reply):
+        """ extract numerical value from reply. If none can be found the reply
+        is returned unchanged.
+
+        :param reply: reply string
+        :returns: string with only the numerical value
+        """
+        r = _reg_value.search(reply)
+        if r:
+            return r.groups()[0]
+        else:
+            return reply
+
+    class Extreme5001(Instrument):
+        """ Represents the imaginary Extreme 5001 instrument. This instrument
+        sends numerical values including their units in an format "<value>
+        <unit>".
+        """
+        capacity = Instrument.measurement(
+            ":CAP?",
+            """ A measurement returning a capacity in nF in the format '<cap> nF'
+            """
+        )
+
+        voltage = Instrument.measurement(
+            ":VOLT?",
+            """ A measurement returning a voltage in V in the format '<volt> V'
+            """
+        )
+
+        id = Instrument.measurement(
+            "*idn?",
+            """ The identification of the instrument.
+            """
+        )
+
+        def __init__(self, resourceName, **kwargs):
+            super().__init__(
+                resourceName,
+                "Extreme 5000",
+                preprocess_reply=extract_value,
+                **kwargs,
+            )
+
+In cases where the general `preprocess_reply` function should not run it can be also overwritten in the property definition:
+
+.. testcode::
+
+    Extreme5001.channel = Instrument.control(
+        ":CHAN?", ":CHAN %d",
+        """ A string property that controls the measurement channel,
+        which can take the values X, Y, or Z.
+        """,
+        validator=strict_discrete_set,
+        values=[1,2,3],
+        preprocess_reply=lambda v: v,
+    )
+
+Using a combination of the decribed abilities also complex communication schemes can be achieved.
