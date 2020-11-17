@@ -144,6 +144,7 @@ class Worker(StoppableThread):
 
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop
+        self.procedure.stoppable_sleep = self.stoppable_sleep
         self.procedure.emit = self.emit
 
         if self.port is not None and zmq is not None:

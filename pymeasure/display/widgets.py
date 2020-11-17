@@ -1063,9 +1063,8 @@ class InstrumentThread(StoppableQThread):
     def run(self):
         self._should_stop.clear()
 
-        while not self.should_stop():
+        while not self.stoppable_sleep(self.delay):
             self._get_values()
-            self._should_stop.wait(self.delay)
 
 
 class InstrumentWidget(QtGui.QWidget):
