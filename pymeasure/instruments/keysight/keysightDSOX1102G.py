@@ -122,20 +122,18 @@ class Channel():
     def write(self, command):
         self.instrument.write(":channel%d:%s" % (self.number, command))
 
-    def setup(self, bwlimit: bool = None, coupling: str = None,
-                    display: bool = None, invert: bool = None, label: str = None,
-                    offset: float = None, probe_attenuation: float = None,
-                    vertical_range: float = None, scale=None):
+    def setup(self, bwlimit=None, coupling=None, display=None, invert=None, label=None, offset=None,
+              probe_attenuation=None, vertical_range=None, scale=None):
         """ Setup channel. Unspecified settings are not modified. Modifying values such as
         probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and make
         multiple consecutive calls to setup() if needed.
 
-        :param bwlimit: Enable 25 MHz internal low-pass filter.
+        :param bwlimit: A boolean, which enables 25 MHz internal low-pass filter.
         :param coupling: "ac" or "dc".
-        :param display: Enable channel display.
-        :param invert: Enable input signal inversion.
+        :param display: A boolean, which enables channel display.
+        :param invert: A boolean, which enables input signal inversion.
         :param label: Label string with max. 10 characters, may contain commonly used ASCII characters.
-        :param offset: Value represented at center of screen, must be inside the legal range.
+        :param offset: Numerical value represented at center of screen, must be inside the legal range.
         :param probe_attenuation: Probe attenuation values from 0.1 to 1000.
         :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1 probe
                                 attenuation, legal values for the range are  from 8mV to 40 V. If the
@@ -450,8 +448,7 @@ class KeysightDSOX1102G(Instrument):
         """ Default setup, some user settings (like preferences) remain unchanged. """
         self.write(":SYSTem:PRESet")
 
-    def timebase_setup(self, mode: str = None, offset: float = None, horizontal_range: float = None,
-                       scale: float = None):
+    def timebase_setup(self, mode=None, offset=None, horizontal_range=None, scale=None):
         """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter might
         impact other parameters. Refer to oscilloscope documentation and make multiple consecutive calls
         to channel_setup if needed.
@@ -466,7 +463,7 @@ class KeysightDSOX1102G(Instrument):
         if horizontal_range is not None: self.timebase_range = horizontal_range
         if scale is not None: self.timebase_scale = scale
 
-    def download_image(self, format_: str = "png", color_palette: str = "color"):
+    def download_image(self, format_="png", color_palette="color"):
         """ Get image of oscilloscope screen in bytearray of specified file format.
 
         :param format_: "bmp", "bmp8bit", or "png"
@@ -477,7 +474,7 @@ class KeysightDSOX1102G(Instrument):
         img = self.binary_values(query, header_bytes=10, dtype=np.uint8)
         return bytearray(img)
 
-    def download_data(self, source: str, points: int = 62500):
+    def download_data(self, source, points=62500):
         """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of data
         values (no temporal axis) and a dict of the waveform preamble, which can be used to build the
         corresponding time values for all data points.
@@ -486,7 +483,7 @@ class KeysightDSOX1102G(Instrument):
 
         :param source: measurement source, can be "channel1", "channel2", "function", "fft", "wmemory1",
                         "wmemory2", or "ext".
-        :param points: nb of points to acquire. Note that oscilloscope may return less points than
+        :param points: integer number of points to acquire. Note that oscilloscope may return less points than
                         specified, this is not an issue of this library. Can be 100, 250, 500, 1000,
                         2000, 5000, 10000, 20000, 50000, or 62500.
 
