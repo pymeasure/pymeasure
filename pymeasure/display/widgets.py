@@ -36,6 +36,7 @@ from inspect import signature
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
+from .thread import StoppableQThread
 from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
@@ -1009,6 +1010,29 @@ class SequencerWidget(QtGui.QWidget):
         return evaluated_string
 
 
+class EstimatorThread(StoppableQThread):
+    new_estimates = QtCore.QSignal(list)
+
+    def __init__(self, get_estimates_callable):
+        StoppableQThread.__init__(self)
+
+        self._get_estimates = get_estimates_callable
+
+        self.delay = 2
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        self._should_stop.clear()
+        log.info("doing something")
+
+        while not self._should_stop.wait(self.delay):
+            log.info("doing something again")
+            estimates = self._get_estimates()
+            self.new_estimates.emit(estimates)
+
+
 class EstimatorWidget(QtGui.QWidget):
     """
     Widget that allows to display up-front estimates of the measurement
@@ -1020,15 +1044,17 @@ class EstimatorWidget(QtGui.QWidget):
     provide_sequence = False
     provide_sequence_length = False
     number_of_estimates = 0
+    sequencer = None
 
     def __init__(self, parent=None, auto_update=True):
         super().__init__(parent)
         self._parent = parent
-
-        self.update_timer = QtCore.QTimer(self)
-        self.update_timer.timeout.connect(self.update_estimates)
+        log.info("doing nothing")
 
         self.check_get_estimates_signature()
+
+        self.update_thread = EstimatorThread(self.get_estimates)
+        self.update_thread.new_estimates.connect(self.display_estimates)
 
         self._setup_ui()
         self._layout()
@@ -1134,22 +1160,30 @@ class EstimatorWidget(QtGui.QWidget):
 
     def update_estimates(self):
         estimates = self.get_estimates()
+        self.display_estimates(estimates)
 
+    def display_estimates(self, estimates):
         for idx, estimate in enumerate(estimates):
             self.line_edits[idx][0].setText(estimate[0])
             self.line_edits[idx][1].setText(estimate[1])
 
+    def display_estimatess(self, estimates):
+        print(estimates)
+        self.line_edits[0][0].setText(estimates)
+
     def _set_continuous_updating(self):
         state = self.update_box.checkState()
 
+        self.update_thread.stop()
+        self.update_thread.join()
+
         if state == 0:
-            self.update_timer.stop()
+            pass
         elif state == 1:
-            self.update_timer.setInterval(2000)
-            self.update_timer.start()
+            self.update_thread.delay = 2
+            self.update_thread.start()
         elif state == 2:
-            self.update_timer.setInterval(100)
-            self.update_timer.start()
+            self.update_thread.delay = 0.1
+            self.update_thread.start()
 
-
-
+        print()

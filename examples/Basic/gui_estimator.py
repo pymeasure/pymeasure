@@ -64,7 +64,7 @@ class TestProcedure(Procedure):
         estimates.append(("Number of lines", "%d" % int(self.iterations)))
 
         estimates.append(("Sequence length", str(sequence_length)))
-        estimates.append(("Sequence length", str(sequence)))
+        # estimates.append(("Sequence length", str(sequence)))
 
         duration = self.iterations * self.delay
         estimates.append(('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))[:-7]))
