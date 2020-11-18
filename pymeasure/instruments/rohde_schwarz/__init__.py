@@ -22,16 +22,8 @@
 # THE SOFTWARE.
 #
 
-from .agilent8257D import Agilent8257D
-from .agilent8722ES import Agilent8722ES
-from .agilentE4408B import AgilentE4408B
-from .agilentE4980 import AgilentE4980
-from .agilent34410A import Agilent34410A
-from .agilent34450A import Agilent34450A
-from .agilent4156 import Agilent4156
-from .agilent33220A import Agilent33220A
-from .agilent33500 import Agilent33500
-from .agilent33521A import Agilent33521A
-from .agilentB1500 import AgilentB1500
-from .agilentE444xA import AgilentE4440A, AgilentE4445A
-from .agilentE4438C import AgilentE4438C
+from .rohde_schwarz_fscx import RS_FSC6, RS_FSC3
+from .rohde_schwarz_fsw13 import RS_FSW13
+from .rohde_schwarz_sma100a import RS_SMA100A
+from .rohde_schwarz_smiq06b import RS_SMIQ06B
+from .rohde_schwarz_sml01 import RS_SML01
