@@ -1076,7 +1076,7 @@ class EstimatorWidget(QtGui.QWidget):
     number_of_estimates = 0
     sequencer = None
 
-    def __init__(self, parent=None, auto_update=True):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self._parent = parent
         log.info("doing nothing")
@@ -1091,8 +1091,7 @@ class EstimatorWidget(QtGui.QWidget):
 
         self.update_estimates()
 
-        if auto_update:
-            self.update_box.setCheckState(1)
+        self.update_box.setCheckState(1)
 
     def check_get_estimates_signature(self):
         """ Function that checks the signature of the get_estimates function.
