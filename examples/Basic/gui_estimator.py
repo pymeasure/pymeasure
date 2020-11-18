@@ -56,18 +56,37 @@ class TestProcedure(Procedure):
                 break
 
     def get_estimates(self, sequence_length=None, sequence=None):
-        # TODO: add docstring to clarify the working and requirements of the get_estimates function
-        """"""
+        """ Function that returns estimates for the EstimatorWidget. If this function
+        is implemented (and does not return a NotImplementedError) the widget is
+        automatically activated.
+
+        The function is expected to return a list of tuples. Each tuple containing two
+        strings, a label and the estimate itself:
+        estimates = [
+            ("label 1", "estimate 1"),
+            ("label 2", "estimate 2"),
+        ]
+        The length of the number of estimates is not limited but has to remain unchanged after
+        initialisation. Not that also the label can be altered after initialisation.
+
+        The keyword arguments `sequence_length` and `sequence` are optional and return
+        (if asked for) the length of the current sequence (of the `SequencerWidget`) or
+        the full sequence.
+
+        """
+        duration = self.iterations * self.delay
+
         estimates = list()
 
         estimates.append(("Duration", "%d s" % int(self.iterations * self.delay)))
         estimates.append(("Number of lines", "%d" % int(self.iterations)))
 
         estimates.append(("Sequence length", str(sequence_length)))
-        # estimates.append(("Sequence length", str(sequence)))
 
-        duration = self.iterations * self.delay
-        estimates.append(('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))[:-7]))
+        estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
+            seconds=duration))[:-7]))
+        estimates.append(('Sequence finished at', str(datetime.now() + timedelta(
+            seconds=duration * sequence_length))[:-7]))
 
         return estimates
 
