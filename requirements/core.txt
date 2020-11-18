@@ -1,5 +1,0 @@
-numpy==1.16.4
-pandas==0.24.2
-pytest==5.0.1
-pyvisa==1.9.0
-pyserial==3.4

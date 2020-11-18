@@ -9,4 +9,5 @@ This section contains specific documentation on the keysight instruments that ar
 .. toctree::
    :maxdepth: 2
 
+   keysightDSOX1102G
    keysightN5767A

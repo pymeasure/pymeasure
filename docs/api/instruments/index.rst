@@ -23,7 +23,9 @@ Instruments by manufacturer:
    agilent/index
    ametek/index
    ami/index
+   anapico/index
    anritsu/index
+   attocube/index
    danfysik/index
    deltaelektronica/index
    fwbell/index
@@ -35,6 +37,7 @@ Instruments by manufacturer:
    ni/index
    oxfordinstruments/index
    parker/index
+   razorbill/index
    signalrecovery/index
    srs/index
    tektronix/index
