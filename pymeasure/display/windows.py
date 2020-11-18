@@ -179,6 +179,7 @@ class ManagedWindow(QtGui.QMainWindow):
         except NotImplementedError:
             self.use_estimator = False
         except TypeError:
+            # Raised if arguments are asked by the get_estimates method.
             self.use_estimator = True
         else:
             self.use_estimator = True

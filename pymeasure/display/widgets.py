@@ -1068,7 +1068,14 @@ class EstimatorWidget(QtGui.QWidget):
     Widget that allows to display up-front estimates of the measurement
     procedure.
 
-    Currently, this widget relies on a get_estimates method of the Procedure class.
+    This widget relies on a `get_estimates` method of the `Procedure` class.
+    `get_estimates` is expected to return a list of tuples, where each tuple
+    contains two strings: a label and the estimate.
+
+    If the `SequencerWidget` is also used, it is possible to ask for the
+    current sequencer or its length by asking for two keyword arguments in the
+    Implementation of the `get_estimates` function: `sequence` and
+    `sequence_length`, respectively.
 
     """
     provide_sequence = False
@@ -1094,7 +1101,7 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_box.setCheckState(1)
 
     def check_get_estimates_signature(self):
-        """ Function that checks the signature of the get_estimates function.
+        """ Method that checks the signature of the get_estimates function.
         It checks which input arguments are allowed, if the output of the is
         correct for the EstimatorWidget, stores the number of estimates.
         """
@@ -1159,6 +1166,9 @@ class EstimatorWidget(QtGui.QWidget):
         f_layout.addRow("Update continuously", update_hbox)
 
     def get_estimates(self):
+        """ Method that makes a procedure with the currently entered
+        parameters and returns the estimates for these parameters.
+        """
         # Make a procedure
         proc = self._parent.make_procedure()
 
@@ -1188,10 +1198,19 @@ class EstimatorWidget(QtGui.QWidget):
         return estimates
 
     def update_estimates(self):
+        """ Method that gets and displays the estimates.
+        Implemented for connecting to the 'update'-button.
+        """
         estimates = self.get_estimates()
         self.display_estimates(estimates)
 
     def display_estimates(self, estimates):
+        """ Method that updates the shown estimates for the given set of
+        estimates.
+
+        :param estimates: The set of estimates to be shown in the form of a
+            list of tuples of (2) strings
+        """
         if len(estimates) != self.number_of_estimates:
             raise ValueError(
                 "Number of estimates changed after initialisation "
