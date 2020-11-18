@@ -1193,6 +1193,12 @@ class EstimatorWidget(QtGui.QWidget):
         self.display_estimates(estimates)
 
     def display_estimates(self, estimates):
+        if len(estimates) != self.number_of_estimates:
+            raise ValueError(
+                "Number of estimates changed after initialisation "
+                "(from %d to %d)." % (self.number_of_estimates, len(estimates))
+            )
+
         for idx, estimate in enumerate(estimates):
             self.line_edits[idx][0].setText(estimate[0])
             self.line_edits[idx][1].setText(estimate[1])
