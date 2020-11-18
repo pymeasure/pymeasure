@@ -55,13 +55,16 @@ class TestProcedure(Procedure):
                 log.warning("Catch stop command in procedure")
                 break
 
-    def get_estimates(self):
+    def get_estimates(self, sequence_length=None, sequence=None):
         # TODO: add docstring to clarify the working and requirements of the get_estimates function
         """"""
         estimates = list()
 
         estimates.append(("Duration", "%d s" % int(self.iterations * self.delay)))
         estimates.append(("Number of lines", "%d" % int(self.iterations)))
+
+        estimates.append(("Sequence length", str(sequence_length)))
+        estimates.append(("Sequence length", str(sequence)))
 
         duration = self.iterations * self.delay
         estimates.append(('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))[:-7]))
@@ -80,14 +83,18 @@ class MainWindow(ManagedWindow):
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
-            y_axis='Random Number'
+            y_axis='Random Number',
+            sequencer=True,
+            sequence_file="gui_sequencer_example_sequence.txt"
         )
         self.setWindowTitle('GUI Example')
 
-    def queue(self):
+    def queue(self, procedure=None):
         filename = tempfile.mktemp()
 
-        procedure = self.make_procedure()
+        if procedure is None:
+            procedure = self.make_procedure()
+
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
 

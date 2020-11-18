@@ -31,6 +31,7 @@ from functools import partial
 import numpy
 from collections import ChainMap
 from itertools import product
+from inspect import signature
 
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
@@ -821,7 +822,7 @@ class SequencerWidget(QtGui.QWidget):
         self.queue_button.setEnabled(False)
 
         try:
-            sequence = self._generate_sequence_from_tree()
+            sequence = self.get_sequence_from_tree()
         except SequenceEvaluationException:
             log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
         else:
@@ -880,7 +881,7 @@ class SequencerWidget(QtGui.QWidget):
                 sequence=sequence,
             )
 
-    def _generate_sequence_from_tree(self):
+    def get_sequence_from_tree(self):
         """
         Generate a list of parameters from the sequence tree.
         """
@@ -1016,6 +1017,9 @@ class EstimatorWidget(QtGui.QWidget):
     Currently, this widget relies on a get_estimates method of the Procedure class.
 
     """
+    provide_sequence = False
+    provide_sequence_length = False
+    number_of_estimates = 0
 
     def __init__(self, parent=None, auto_update=True):
         super().__init__(parent)
@@ -1024,7 +1028,7 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_timer = QtCore.QTimer(self)
         self.update_timer.timeout.connect(self.update_estimates)
 
-        self._check_get_estimates_output()
+        self.check_get_estimates_signature()
 
         self._setup_ui()
         self._layout()
@@ -1034,14 +1038,25 @@ class EstimatorWidget(QtGui.QWidget):
         if auto_update:
             self.update_box.setCheckState(1)
 
-    def _check_get_estimates_output(self):
-        """ Function that checks if the output of the get_estimates function
-        is correct for the EstimatorWidget. Also the number of estimates is
-        extracted.
+    def check_get_estimates_signature(self):
+        """ Function that checks the signature of the get_estimates function.
+        It checks which input arguments are allowed, if the output of the is
+        correct for the EstimatorWidget, stores the number of estimates.
         """
-        proc = self._parent.make_procedure()
-        estimates = proc.get_estimates()
 
+        # Check function arguments
+        proc = self._parent.make_procedure()
+        call_signature = signature(proc.get_estimates)
+
+        if "sequence" in call_signature.parameters:
+            self.provide_sequence = True
+
+        if "sequence_length" in call_signature.parameters:
+            self.provide_sequence_length = True
+
+        estimates = self.get_estimates()
+
+        # Check if the output of the function is acceptable
         raise_error = True
         if isinstance(estimates, (list, tuple)):
             if all([isinstance(est, (tuple, list)) for est in estimates]):
@@ -1055,11 +1070,10 @@ class EstimatorWidget(QtGui.QWidget):
                 "a label for the estimate, the second is the estimate itself."
             )
 
+        # Store the number of estimates
         self.number_of_estimates = len(estimates)
 
-
     def _setup_ui(self):
-
         self.line_edits = list()
         for idx in range(self.number_of_estimates):
             qlb = QtGui.QLabel(self)
@@ -1089,9 +1103,37 @@ class EstimatorWidget(QtGui.QWidget):
         update_hbox.addWidget(self.update_button)
         f_layout.addRow("Update continuously", update_hbox)
 
-    def update_estimates(self):
+    def get_estimates(self):
+        # Make a procedure
         proc = self._parent.make_procedure()
-        estimates = proc.get_estimates()
+
+        kwargs = dict()
+
+        sequence = None
+        sequence_length = None
+        if hasattr(self._parent, "sequencer") and any((
+            self.provide_sequence,
+            self.provide_sequence_length
+        )):
+            try:
+                sequence = self._parent.sequencer.get_sequence_from_tree()
+            except SequenceEvaluationException:
+                pass
+            else:
+                sequence_length = len(sequence)
+
+        if self.provide_sequence:
+            kwargs["sequence"] = sequence
+
+        if self.provide_sequence_length:
+            kwargs["sequence_length"] = sequence_length
+
+        estimates = proc.get_estimates(**kwargs)
+
+        return estimates
+
+    def update_estimates(self):
+        estimates = self.get_estimates()
 
         for idx, estimate in enumerate(estimates):
             self.line_edits[idx][0].setText(estimate[0])
