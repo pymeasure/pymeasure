@@ -338,5 +338,48 @@ This adds the input line above the Queue and Abort buttons.
 
 A completer is implemented allowing to quickly select an existing folder, and a button on the right side of the input widget opens a browse dialog.
 
+Using the estimator widget
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to provide estimates of the measurement procedure, an EstimatorWidget is provided that allows the user to define and calculate estimates.
+The widget is automatically activated when the :code:`get_estimates` method is added in the :code:`Procedure`.
+
+For the maximum flexibility in both the types of estimates (e.g. duration, filesize, ending-time) and the measurement procedures, this method is expected to return a list of tuples.
+Each of these tuple consists of two strings: the first is the name (label) of the estimate, the second is the estimate itself.
+
+As an example, in the example provided in the ManagedWindow section, the :code:`Procedure` is changed to:
+
+.. code-block:: python
+
+   class RandomProcedure(Procedure):
+
+       # ...
+
+       def get_estimates(self, sequence_length=None, sequence=None):
+
+           duration = self.iterations * self.delay
+
+           estimates = [
+               ("Duration", "%d s" % int(duration)),
+               ("Number of lines", "%d" % int(self.iterations)),
+               ("Sequence length", str(sequence_length)),
+               ('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))),
+           ]
+
+           return estimates
+
+This will add the estimator widget at the dock on the left.
+
+.. image:: pymeasure-estimator.png
+    :alt: Example of the estimator widget
+
+Note that after the initialisation of the widget both the label of the estimate as of course the estimate itself can be modified, but the amount of estimates is fixed.
+
+The keyword arguments are not required in the implementation of the function, but are passed if asked for (i.e. :code:`def get_estimates(self)` does also works).
+Keyword arguments that are accepted are :code:`sequence`, which contains the full sequence of the sequencer (if present), and :code:`sequence_length`, which gives the length of the sequence as integer (if present).
+If the sequencer is not present or the sequence cannot be parsed, both :code:`sequence` and :code:`sequence_length` will contain :code:`None`.
+
+
+
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html

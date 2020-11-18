@@ -299,7 +299,7 @@ class ManagedWindow(QtGui.QMainWindow):
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
 
         if self.use_estimator:
-            estimator_dock = QtGui.QDockWidget('Time estimator')
+            estimator_dock = QtGui.QDockWidget('Estimator')
             estimator_dock.setWidget(self.estimator)
             estimator_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, estimator_dock)
