@@ -1203,10 +1203,6 @@ class EstimatorWidget(QtGui.QWidget):
             self.line_edits[idx][0].setText(estimate[0])
             self.line_edits[idx][1].setText(estimate[1])
 
-    def display_estimatess(self, estimates):
-        print(estimates)
-        self.line_edits[0][0].setText(estimates)
-
     def _set_continuous_updating(self):
         state = self.update_box.checkState()
 
