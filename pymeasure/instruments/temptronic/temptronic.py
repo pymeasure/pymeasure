@@ -677,7 +677,6 @@ class TemptronicBase(Instrument):
         when the register is read.
         """,
         validator=truncated_range,
-        values=[0, 255],
         values={'operation complete' : 1,   # not implemented
                 'request control' : 2,      # not used
                 'query error (qye)' : 4,
@@ -706,7 +705,6 @@ class TemptronicBase(Instrument):
         ead the service request enable (mask) register.
         """,
         validator=truncated_range,
-        values=[0, 255],
         values={'ready' : 128,
                 'request for service' : 64,
                 'standard event status' : 32,
