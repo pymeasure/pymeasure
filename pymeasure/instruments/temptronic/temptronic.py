@@ -374,7 +374,7 @@ WNDW?        |     | Read the currently selected setpoint's temperature window.
 """
 
 from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, truncated_discrete_set
+from pymeasure.instruments.validators import *
 import time
 
 import functools
