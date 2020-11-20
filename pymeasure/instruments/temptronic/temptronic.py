@@ -1279,7 +1279,7 @@ class TemptronicATS515(TemptronicBase):
         values=[-45, 25]
         )
 
-class TemptronicATS615(TemptronicATS615): 
+class TemptronicATS615(TemptronicATS515): 
     """Represent the TemptronicATS615 instruments.
    
     Methods
