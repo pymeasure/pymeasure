@@ -128,8 +128,9 @@ class Instrument(object):
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
-        :param values: A list, tuple, range, or dictionary of valid values, that can be used
-                       as to map values if :code:`map_values` is True.
+        :param values: A list, tuple, range, or dictionary of valid values, or a string
+                       containing the name of an attribute, that can be used as to map
+                       values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
         :param get_process: A function that take a value and allows processing
@@ -140,43 +141,53 @@ class Instrument(object):
         :param check_get_errors: Toggles checking errors after getting
         """
 
+        inverse = None
         if map_values and isinstance(values, dict):
             # Prepare the inverse values for performance
             inverse = {v: k for k, v in values.items()}
 
         def fget(self):
+            values_local = values
+            inverse_local = inverse
             vals = self.values(get_command, **kwargs)
             if check_get_errors:
                 self.check_errors()
+            if isinstance(values_local, str):
+                values_local = getattr(self, values_local)
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
                     return value
-                elif isinstance(values, (list, tuple, range)):
-                    return values[int(value)]
-                elif isinstance(values, dict):
-                    return inverse[value]
+                elif isinstance(values_local, (list, tuple, range)):
+                    return values_local[int(value)]
+                elif isinstance(values_local, dict):
+                    if inverse_local is None:
+                        inverse_local = {v: k for k, v in values_local.items()}
+                    return inverse_local[value]
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values))
+                        'for Instrument.control'.format(type(inverse_local))
                     )
             else:
                 vals = get_process(vals)
                 return vals
 
         def fset(self, value):
-            value = set_process(validator(value, values))
+            values_local = values
+            if isinstance(values_local, str):
+                values_local = getattr(self, values_local)
+            value = set_process(validator(value, values_local))
             if not map_values:
                 pass
-            elif isinstance(values, (list, tuple, range)):
-                value = values.index(value)
-            elif isinstance(values, dict):
-                value = values[value]
+            elif isinstance(values_local, (list, tuple, range)):
+                value = values_local.index(value)
+            elif isinstance(values_local, dict):
+                value = values_local[value]
             else:
                 raise ValueError(
                     'Values of type `{}` are not allowed '
-                    'for Instrument.control'.format(type(values))
+                    'for Instrument.control'.format(type(values_local))
                 )
             self.write(set_command % value)
             if check_set_errors:
@@ -197,8 +208,9 @@ class Instrument(object):
 
         :param get_command: A string command that asks for the value
         :param docs: A docstring that will be included in the documentation
-        :param values: A list, tuple, range, or dictionary of valid values, that can be used
-                       as to map values if :code:`map_values` is True.
+        :param values: A list, tuple, range, or dictionary of valid values, or a string
+                       containing the name of an attribute, that can be used as to map
+                       values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
         :param get_process: A function that take a value and allows processing
@@ -208,26 +220,33 @@ class Instrument(object):
         :param check_get_errors: Toggles checking errors after getting
         """
 
+        inverse = None
         if map_values and isinstance(values, dict):
             # Prepare the inverse values for performance
             inverse = {v: k for k, v in values.items()}
 
         def fget(self):
+            values_local = values
+            inverse_local = inverse
             vals = self.values(command_process(get_command), **kwargs)
             if check_get_errors:
                 self.check_errors()
+            if isinstance(values_local, str):
+                values_local = getattr(self, values_local)
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
                     return value
-                elif isinstance(values, (list, tuple, range)):
-                    return values[int(value)]
-                elif isinstance(values, dict):
-                    return inverse[value]
+                elif isinstance(values_local, (list, tuple, range)):
+                    return values_local[int(value)]
+                elif isinstance(values_local, dict):
+                    if inverse_local is None:
+                        inverse_local = {v: k for k, v in values_local.items()}
+                    return inverse_local[value]
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
-                        'for Instrument.measurement'.format(type(values))
+                        'for Instrument.measurement'.format(type(values_local))
                     )
             else:
                 return get_process(vals)
@@ -251,8 +270,9 @@ class Instrument(object):
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
-        :param values: A list, tuple, range, or dictionary of valid values, that can be used
-                       as to map values if :code:`map_values` is True.
+        :param values: A list, tuple, range, or dictionary of valid values, or a string
+                       containing the name of an attribute, that can be used as to map
+                       values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
                           interpreted as a map
         :param set_process: A function that takes a value and allows processing
@@ -260,6 +280,7 @@ class Instrument(object):
         :param check_set_errors: Toggles checking errors after setting
         """
 
+        inverse = None
         if map_values and isinstance(values, dict):
             # Prepare the inverse values for performance
             inverse = {v: k for k, v in values.items()}
@@ -268,17 +289,20 @@ class Instrument(object):
             raise LookupError("Instrument.setting properties can not be read.")
 
         def fset(self, value):
-            value = set_process(validator(value, values))
+            values_local = values
+            if isinstance(values_local, str):
+                values_local = getattr(self, values_local)
+            value = set_process(validator(value, values_local))
             if not map_values:
                 pass
-            elif isinstance(values, (list, tuple, range)):
-                value = values.index(value)
-            elif isinstance(values, dict):
-                value = values[value]
+            elif isinstance(values_local, (list, tuple, range)):
+                value = values_local.index(value)
+            elif isinstance(values_local, dict):
+                value = values_local[value]
             else:
                 raise ValueError(
                     'Values of type `{}` are not allowed '
-                    'for Instrument.control'.format(type(values))
+                    'for Instrument.control'.format(type(values_local))
                 )
             self.write(set_command % value)
             if check_set_errors:
