@@ -903,7 +903,7 @@ class TemptronicBase(Instrument):
         Read the setting of RAMP.
         """,
         validator=strict_discrete_set,
-        values={i/10 for i in range(1000)} + {i for i in range(100, 10000)}
+        values={i/10 for i in range(1000)} | {i for i in range(100, 10000)}
         )
 
     dynamic_temperature_setpoint = Instrument.measurement(
