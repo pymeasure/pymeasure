@@ -69,3 +69,16 @@ def test_worker_finish():
 
     new_results = Results.load(file, procedure_class=RandomProcedure)
     assert new_results.data.shape == (100, 2)
+
+def test_worker_closes_file_after_finishing():
+    procedure = RandomProcedure()
+    procedure.iterations = 100
+    procedure.delay = 0.001
+    file = tempfile.mktemp()
+    results = Results(procedure, file)
+    worker = Worker(results)
+    worker.start()
+    worker.join(timeout=5)
+
+    # Test if the file has been properly closed by removing the file
+    os.remove(file)
