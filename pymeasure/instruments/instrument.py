@@ -45,6 +45,41 @@ class Instrument(object):
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     """
 
+    class InstrumentParameter(object):
+        """ This class is used to allow the possibility to redefines 'values' parameter in property defined
+        with staticmethods 'control', 'measurement', 'setting'.
+        This class will be supported in addition to list, tuple, range and dict.
+        This class will identify the parameter by name provided as a string and the paramaters will be read from class
+        instance whenever it is needed. This will add some flexibility to modify properties in
+        subclasses without redefining the entire property.
+ 
+        :param name: A string name
+
+        .. code-block:: python
+        
+            class GenericInstrument(Instrument):
+                  __frequency_range = Instrument.InstrumentParameter("FREQUENCY_RANGE_Hz")
+                  FREQUENCY_RANGE_Hz = (1, 26.5e9) # Redefine this in subclasses to reflect actual instrument value
+
+                center_frequency = Instrument.control(
+                    ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e Hz;",
+                    " A floating point property that represents the frequency ... ",
+                    validator=strict_range,
+                    values=__frequency_range,
+                )
+
+            class SpecificInstrument(Instrument): # Identical to GenericInstrument, except for frequency range
+                FREQUENCY_RANGE_Hz = (1, 13e9)
+
+        """
+
+
+        def __init__(self, name):
+            self.name = name
+
+        def get_value(self, instance):
+            return getattr(instance, self.name)
+
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
@@ -145,6 +180,15 @@ class Instrument(object):
             inverse = {v: k for k, v in values.items()}
 
         def fget(self):
+            if isinstance(values, Instrument.InstrumentParameter):
+                values_local = values.get_value(self)
+                if map_values and isinstance(values_local, dict):
+                    inverse_local = {v: k for k, v in values_local.items()}
+            else:
+                values_local = values
+                if map_values and isinstance(values, dict):
+                    inverse_local = inverse
+
             vals = self.values(get_command, **kwargs)
             if check_get_errors:
                 self.check_errors()
@@ -152,31 +196,36 @@ class Instrument(object):
                 value = get_process(vals[0])
                 if not map_values:
                     return value
-                elif isinstance(values, (list, tuple, range)):
-                    return values[int(value)]
-                elif isinstance(values, dict):
-                    return inverse[value]
+                elif isinstance(values_local, (list, tuple, range)):
+                    return values_local[int(value)]
+                elif isinstance(values_local, dict):
+                    return inverse_local[value]
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values))
+                        'for Instrument.control'.format(type(values_local))
                     )
             else:
                 vals = get_process(vals)
                 return vals
 
         def fset(self, value):
-            value = set_process(validator(value, values))
+            if isinstance(values, Instrument.InstrumentParameter):
+                values_local = values.get_value(self)
+            else:
+                values_local = values
+
+            value = set_process(validator(value, values_local))
             if not map_values:
                 pass
-            elif isinstance(values, (list, tuple, range)):
-                value = values.index(value)
-            elif isinstance(values, dict):
-                value = values[value]
+            elif isinstance(values_local, (list, tuple, range)):
+                value = values_local.index(value)
+            elif isinstance(values_local, dict):
+                value = values_local[value]
             else:
                 raise ValueError(
                     'Values of type `{}` are not allowed '
-                    'for Instrument.control'.format(type(values))
+                    'for Instrument.control'.format(type(values_local))
                 )
             self.write(set_command % value)
             if check_set_errors:
@@ -213,6 +262,16 @@ class Instrument(object):
             inverse = {v: k for k, v in values.items()}
 
         def fget(self):
+            if isinstance(values, Instrument.InstrumentParameter):
+                values_local = values.get_value(self)
+                if map_values and isinstance(values_local, dict):
+                    # Prepare the inverse values for performance
+                    inverse_local = {v: k for k, v in values_local.items()}
+            else:
+                values_local = values
+                if map_values and isinstance(values, dict):
+                    inverse_local = inverse
+
             vals = self.values(command_process(get_command), **kwargs)
             if check_get_errors:
                 self.check_errors()
@@ -220,14 +279,14 @@ class Instrument(object):
                 value = get_process(vals[0])
                 if not map_values:
                     return value
-                elif isinstance(values, (list, tuple, range)):
-                    return values[int(value)]
-                elif isinstance(values, dict):
-                    return inverse[value]
+                elif isinstance(values_local, (list, tuple, range)):
+                    return values_local[int(value)]
+                elif isinstance(values_local, dict):
+                    return inverse_local[value]
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
-                        'for Instrument.measurement'.format(type(values))
+                        'for Instrument.measurement'.format(type(values_local))
                     )
             else:
                 return get_process(vals)
@@ -268,17 +327,22 @@ class Instrument(object):
             raise LookupError("Instrument.setting properties can not be read.")
 
         def fset(self, value):
-            value = set_process(validator(value, values))
+            if isinstance(values, Instrument.InstrumentParameter):
+                values_local = values.get_value(self)
+            else:
+                values_local = values
+
+            value = set_process(validator(value, values_local))
             if not map_values:
                 pass
-            elif isinstance(values, (list, tuple, range)):
-                value = values.index(value)
-            elif isinstance(values, dict):
-                value = values[value]
+            elif isinstance(values_local, (list, tuple, range)):
+                value = values_local.index(value)
+            elif isinstance(values_local, dict):
+                value = values_local[value]
             else:
                 raise ValueError(
                     'Values of type `{}` are not allowed '
-                    'for Instrument.control'.format(type(values))
+                    'for Instrument.setting'.format(type(values_local))
                 )
             self.write(set_command % value)
             if check_set_errors:
