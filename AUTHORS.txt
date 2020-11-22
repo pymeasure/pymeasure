@@ -24,4 +24,10 @@ Richard Schlitz
 Manuel Zahn
 Mikhaël Myara
 Domenic Prete
+Paul Goulain
 John McMaster
+Dominik Kriegner
+Jonathan Larochelle
+Dominic Caron
+Mathieu Plante
+Michele Sardo

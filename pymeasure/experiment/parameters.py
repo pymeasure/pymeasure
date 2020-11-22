@@ -155,15 +155,18 @@ class FloatParameter(Parameter):
     :param units: The units of measure for the parameter
     :param minimum: The minimum allowed value (default: -1e9)
     :param maximum: The maximum allowed value (default: 1e9)
+    :param decimals: The number of decimals considered (default: 15)
     :param default: The default floating point value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
+    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
+                 decimals=15, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = minimum
         self.maximum = maximum
+        self.decimals = decimals
 
     @property
     def value(self):

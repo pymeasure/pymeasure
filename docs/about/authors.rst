@@ -24,3 +24,8 @@ The following developers have contributed to the PyMeasure package:
 | Stefano Pirotta
 | Moritz Jung
 | Manuel Zahn
+| Dominik Kriegner
+| Jonathan Larochelle
+| Dominic Caron
+| Mathieu Plante
+| Michele Sardo
