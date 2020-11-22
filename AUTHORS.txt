@@ -30,3 +30,4 @@ Jonathan Larochelle
 Dominic Caron
 Mathieu Plante
 Michele Sardo
+Yang Ting
