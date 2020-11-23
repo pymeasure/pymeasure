@@ -167,7 +167,7 @@ class Instrument(object):
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(inverse_local))
+                        'for Instrument.control'.format(type(values_local))
                     )
             else:
                 vals = get_process(vals)
