@@ -93,7 +93,7 @@ class Agilent33220A(Instrument):
         waveform in Hz, from 1e-6 (1 uHz) to 20e+6 (20 MHz), depending on the
         specified function. Can be set. """,
         validator=strict_range,
-        values=[1e-6, 5e+6],
+        values=[1e-6, 20e+6],
     )
 
     amplitude = Instrument.control(
