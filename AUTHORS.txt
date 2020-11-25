@@ -20,3 +20,5 @@ Michael Schneider
 Dennis Feng
 Stefano Pirotta
 Moritz Jung
+Steven Siegl
+Benjamin Klebel-Knobloch
