@@ -264,7 +264,7 @@ ERRORS = {
     }
 
 
-class ThorlabsDLLInstrument(Instrument):
+class ThorlabsDLLInstrument():
     """Base class for instruments connected with the
     :class:`~pymeasure.instruments.thorlabs.ThorlabsDLLAdapter`.
 
