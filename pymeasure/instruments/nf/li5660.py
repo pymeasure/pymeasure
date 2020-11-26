@@ -709,12 +709,31 @@ class LI5660(Instrument):
     )
 
     voltage_ac_range = Instrument.control(
-        ":VOLT:AC:RANG?", "::VOLT:AC:RANG %g",
-        """ A property that control the current sensitivity (primary PSD), range from 10E-15, 20E-15, ... 1E-6,
-            rounding is applied to arbitrary values specified. Current sensitivity is the product of the current-voltage
-            conversion gain and the voltage sensitivity.""",
+        ":VOLT:AC:RANG?", ":VOLT:AC:RANG %g",
+        """ Sets/queries the voltage sensitivity (primary PSD).
+            Input the numeric value, range see below, unit Vrms}
+            Rounding is applied to arbitrary values specified.
+            The range depends on the input connector as follows.
+            Input connector Range
+            A, A-B {10E-9|20E-9|50E-9|..|1}
+            C {1E-3|2E-3|5E-3|..|10}
+            HF {1E-3|2E-3|5E-3|..|1} """,
         validator=truncated_range,
-        values=[10e-15, 1e-6]
+        values=[10E-9, 10]
+    )
+
+    voltage2_ac_range = Instrument.control(
+        ":VOLT2:AC:RANG?", ":VOLT2:AC:RANG %g",
+        """ Sets/queries the voltage sensitivity (primary PSD).
+            Input the numeric value, range see below, unit Vrms}
+            Rounding is applied to arbitrary values specified.
+            The range depends on the input connector as follows.
+            Input connector Range
+            A, A-B {10E-9|20E-9|50E-9|..|1}
+            C {1E-3|2E-3|5E-3|..|10}
+            HF {1E-3|2E-3|5E-3|..|1} """,
+        validator=truncated_range,
+        values=[10E-9, 10]
     )
 
     ##########
@@ -1335,3 +1354,27 @@ class LI5660(Instrument):
         
         self.write(":VOLT:AC:RANG:AUTO:ONCE")
         log.info("Automatic voltage sensitivity set to one time.")
+
+    def primary_voltage_sensitivity(self, range=10E-3):
+        """ Sets/queries the voltage sensitivity (primary PSD).
+            Input the numeric value, range see below, unit Vrms}
+            Rounding is applied to arbitrary values specified.
+            The range depends on the input connector as follows.
+            Input connector Range
+            A, A-B {10E-9|20E-9|50E-9|..|1}
+            C {1E-3|2E-3|5E-3|..|10}
+            HF {1E-3|2E-3|5E-3|..|1} """
+        self.voltage_ac_range = range
+        log.info("Primary voltage sensitivity is set to {}".format(self.voltage_ac_range))
+
+    def secondary_voltage_sensitivity(self, range=10E-3):
+        """ Sets/queries the voltage sensitivity (primary PSD).
+            Input the numeric value, range see below, unit Vrms}
+            Rounding is applied to arbitrary values specified.
+            The range depends on the input connector as follows.
+            Input connector Range
+            A, A-B {10E-9|20E-9|50E-9|..|1}
+            C {1E-3|2E-3|5E-3|..|10}
+            HF {1E-3|2E-3|5E-3|..|1} """
+        self.voltage2_ac_range = range
+        log.info("Secondary voltage sensitivity is set to {}".format(self.voltage2_ac_range))
