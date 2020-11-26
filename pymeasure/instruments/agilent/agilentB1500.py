@@ -500,12 +500,18 @@ class AgilentB1500(Instrument):
             }
         try:
             format_class = classes[output_format_str]
-        except Exception:
-            raise NotImplementedError(
-                ("Data Format {0} is not implemented "
-                 "so far.").format(output_format_str)
-            )
-        return format_class(smu_names)
+        except KeyError:
+            print((
+                "Data Format {0} is not implemented "
+                "so far. Please set appropriate Data Format."
+                ).format(output_format_str))
+            log.error((
+                "Data Format {0} is not implemented "
+                "so far. Please set appropriate Data Format."
+                ).format(output_format_str))
+            return None
+        else:
+            return format_class(smu_names)
 
     def data_format(self, output_format, mode=0):
         """ Specifies data output format. Check Documentation for parameters.
