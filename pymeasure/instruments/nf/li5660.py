@@ -49,105 +49,6 @@ class LI5660(Instrument):
         "*IDN?", """Reads the instrument identification """
     )
 
-    ###################
-    # Reference Sigal #
-    ###################
-    signal_termainal = Instrument.control(
-        ":ROUT?", ":ROUT %s",
-        """ A property that control the input connector """,
-        validator=strict_discrete_set,
-        values={"A": "A",
-                "AB": "AB",
-                "C": "C",
-                "Current": "I",
-                "HF": "HF"},
-        map_values=True
-
-    )
-
-    reference_signal_source = Instrument.control(
-        ":ROUT2?", "ROUT2 %s",
-        """ A property that control the reference signal source """,
-        validator=strict_discrete_set,
-        values={"Ref In": "RINP",
-                "Internal": "IOSC",
-                "Signal": "SINP"},
-        map_values=True
-    )
-
-    reference_frequency_source = Instrument.control(
-        ":ROSC:SOUR?",":ROSC:SOUR %s",
-        """ A property that control the reference frequency source for frequency synthesis.""",
-        validator=strict_discrete_set,
-        values={"Internal": "INT", "External": "EXT"},
-        map_values=True
-    )
-
-    ###############
-    # Sensitivity #
-    ###############
-    auto = Instrument.measurement(
-        ":AUTO:ONCE",
-        """ a property that automatically set the sensitivity and time constant once to match the
-        reference signal for the signal being measured at the time. Performs auto setting one time """
-    )
-
-    auto_current = Instrument.control(
-        "CURR:AC:RANG:AUTO?", "CURR:AC:RANG %d",
-        """ A property that continuous automatic selection current sensitivity function.
-        On(enabled), Off(disabled) and Once(auto sets current sensitivity one time).""",
-        values={"On": 1 , "Off": 0, "ONCE": "ONCE"},
-        map_values=True
-    )
-
-    currnet_range = Instrument.control(
-        ":CURR:AC:RANG?", ":CUR:AC:RANG:AUTO 0; :CURR:AC:RANG %g",
-        """ A property that control the current sensitivity (primary PSD) """,
-        validator=truncated_range,
-        values=[10e-15, 1e-6]
-    )
-
-    dynamic_reserve = Instrument.control(
-        "DRES?", "DRES %s",
-        """ A property that control the dynamic reserver sensitivity.
-            High dynamic reserve when noise level is high
-            Low dynamic reserve when noise level is low
-        """,
-        validator=strict_discrete_set,
-        values={"High": "HIGH", "Medium": "MED", "Low": "LOW"},
-        map_values=True
-    )
-
-    filter_slope = Instrument.control(
-        ":FILT:SLOP?", ":FILT:SLOP %d",
-        """ A property that control the filter attenuation slope (primary PSD). """,
-        validator=strict_discrete_set,
-        values=[6, 12, 18,24],
-        map_values=False
-    )
-
-    time_constant = Instrument.control(
-        ":FILT:TCON?",":FILT:TCON %g",
-        """ A property that control the filter time constant (primary PSD). """,
-        validator=truncated_range,
-        values=[1e-6, 50e+3]
-    )
-
-    filter_type = Instrument.control(
-        ":FILT:TYPE?",":FILT:TYPE %s",
-        """ A property that control the filter type (primary PSD). """,
-        validator=strict_discrete_set,
-        values={"Time Constant": "EXP", "Synchronous": "MOV"},
-        map_values=True
-    )
-
-    smoothing = Instrument.control(
-        ":NOIS?",":NOIS %d",
-        """ A property that control the output smoothing coefficient for noise density measurement. """,
-        validator=strict_discrete_set,
-        values=[1, 4, 16, 64]
-    )
-
     ####################################
     # Calculate subsystem, 23 Nov 2020 #
     ####################################
@@ -501,15 +402,226 @@ class LI5660(Instrument):
         map_values=True
     )
 
-    #############
-    # Frequency #
-    #############
-    frequency = Instrument.measurement(
-        ":FREQ?",
-        """ Return the fundamental wave, primary frequency. """
+    #################################
+    # Output subsystem, 26 Nov 2020 #
+    #################################
+    output1_state = Instrument.control(
+        ":OUTP?", ":OUTP %d",
+        """ A property that allow user to set the output state of the DATA1 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal.""",
+        validator=strict_discrete_set,
+        values={"On": 1, "Off": 0},
+        map_values=True
     )
 
-    harmonics_pre_enable = Instrument.control(
+    output2_state = Instrument.control(
+        ":OUTP2?", ":OUTP2 %d",
+        """ A property that allow user to set the output state of the DATA2 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal.""",
+        validator=strict_discrete_set,
+        values={"On": 1, "Off": 0},
+        map_values=True
+    )
+
+    output3_state = Instrument.control(
+        ":OUTP3?", ":OUTP3 %d",
+        """ A property that allow user to set the output state of the DATA3 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal.""",
+        validator=strict_discrete_set,
+        values={"On": 1, "Off": 0},
+        map_values=True
+    )
+
+    output4_state = Instrument.control(
+        ":OUTP4?", ":OUTP4 %d",
+        """ A property that allow user to set the output state of the DATA4 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal.""",
+        validator=strict_discrete_set,
+        values={"On": 1, "Off": 0},
+        map_values=True
+    )
+
+    ################################
+    # Route subsystem, 26 Nov 2020 #
+    ################################
+    route_terminals = Instrument.control(
+        ":ROUT?", ":ROUT %s",
+        """ A property that control the input connector.
+            A: Single end voltage (terminal A, 1 V max).
+            AB: Differential voltage (terminal A-B, 1 V max).
+            C: Large amplitude voltage (terminal C, 10 V max).
+            I: Current(terminal I, 1 \u03BCAmax when conversion gain is 1 MV/A,
+                                   10 nAmax when conversion gain is 100MV/A).
+            HF: High frequency voltage (terminal HF, 1 V max). """,
+        validator=strict_discrete_set,
+        values=["A", "AB", "C", "I", "HF"],
+        map_values=False
+    )
+
+    route2_terminals = Instrument.control(
+        ":ROUT2?", "ROUT2 %s",
+        """ A property that control the reference signal source.
+            Ref In: Reference input connector.
+            Internal: Internal oscillator.
+            Signal In: Signal input connector. """,
+        validator=strict_discrete_set,
+        values={"Ref In": "RINP",
+                "Internal": "IOSC",
+                "Signal In": "SINP"},
+        map_values=True
+    )
+
+    ######################################
+    # Sensitivity subsystem, 26 Nov 2020 #
+    ######################################
+    current_ac_range_auto = Instrument.control(
+        ":CURR:AC:RANG:AUTO?", ":CURR:AC:RANG:AUTO %d",
+        """ A property that allow user to set the current sensitivity continuous automatic selection function.
+            When current sensitivity is set automatically, dynamic reserve is also set automatically.
+            On: Enables continuous automatic selection of current sensitivity.
+            Off: Disable continuous automatic selection of current sensitivity.""",
+        validator=strict_discrete_set,
+        values={"On": 1, "Off": 0},
+        map_values=True
+    )
+
+    current_ac_range = Instrument.control(
+        ":CURR:AC:RANG?", ":ROUT I; :CURR:AC:RANG %g",
+        """ A property that control the current sensitivity (primary PSD), range from 10E-15, 20E-15, ... 1E-6,
+            rounding is applied to arbitrary values specified. Current sensitivity is the product of the current-voltage
+            conversion gain and the voltage sensitivity.""",
+        validator=truncated_range,
+        values=[10e-15, 1e-6]
+    )
+
+    current2_ac_range = Instrument.control(
+        ":CURR2:AC:RANG?", ":ROUT I; :CURR2:AC:RANG %g",
+        """ A property that control the current sensitivity (secondary PSD), range from 10E-15, 20E-15, ... 1E-6,
+            rounding is applied to arbitrary values specified. Current sensitivity is the product of the current-voltage
+            conversion gain and the voltage sensitivity.""",
+        validator=truncated_range,
+        values=[10e-15, 1e-6]
+    )
+
+    data = Instrument.control(
+        ":DATA?", ":DATA %d",
+        """ A property that allow user to set measurement data sets. The data sets will be able to read by the :FETC? query.
+            1: STATUS (16 bits), reads the measurement status.
+            2: DATA1 (16 bits), reads the value of DATA1.
+            4: DATA2 (16 bits), reads the value of DATA2.
+            8: DATA3 (16 bits), reads the value of DATA3.
+            16: DATA4 (16 bits), reads the value of DATA4.
+            32: FREQ (32 bits), records the frequency value.
+            Nothing is read if 0 is set.""",
+        validator=truncated_range,
+        values=[0, 63],
+        map_values=False
+    )
+
+    detector = Instrument.control(
+        ":DET?", ":DET %s",
+        """ A property that allow user to set the detection mode.
+            Single: 1 frequency x 2 phase (single mode). Only the primary PSD is used. Measure at fundamental wave F 
+                    or harmonic (n/m) F of fundamental wave. 
+            Dual1: 2 frequencies × 2 phases (2-frequency harmonic mode).
+                   Primary PSD: Fundamental wave F or fundamental wave harmonic (n/m) F
+                   Secondary PSD: Fundamental wave F or fundamental wave harmonic nF.
+            DUAL2: 2 frequencies × 2 phases (2-frequency independent mode).
+                   primary PSD: primary frequency Fp
+                   Secondary PSD: secondary frequency Fs
+            CASCade: 2-frequency cascade connection (2-frequency cascade mode)
+                     primary PSD: primary frequency Fp
+                     Secondary PSD: secondary frequency Fs
+                     Further detection on the detection result Xp of Fp is performed using secondary frequency Fs.""",
+        validator=strict_discrete_set,
+        values={"Single": "SING",
+                "Dual1": "DUAL1",
+                "Dual2": "DUAL2",
+                "Cascade": "CASC"},
+        map_values=True
+    )
+
+    dynamic_reserve = Instrument.control(
+        "DRES?", "DRES %s",
+        """ A property that control the dynamic reserver sensitivity.
+            High: High dynamic reserve when noise level is high.
+            Medium: Medium dynamic reserve.
+            Low: Low dynamic reserve when noise level is low. """,
+        validator=strict_discrete_set,
+        values={"High": "HIGH", 
+                "Medium": "MED", 
+                "Low": "LOW"},
+        map_values=True
+    )
+
+    filter_slope = Instrument.control(
+        ":FILT:SLOP?", ":FILT:SLOP %d",
+        """ A property that control the filter attenuation slope (primary PSD).
+            Range {6|12|18|24}, unit dB/oct}. """,
+        validator=strict_discrete_set,
+        values=[6, 12, 18,24],
+        map_values=False
+    )
+
+    time_constant = Instrument.control(
+        ":FILT:TCON?",":FILT:TCON %g",
+        """ A property that control the filter time constant (primary PSD). 
+            Range 1E-6 to 50E+3 1-2-5 sequence, unit s.
+            Rounding is applied to arbitrary values specified. """,
+        validator=truncated_range,
+        values=[1e-6, 50e+3]
+    )
+
+    filter_type = Instrument.control(
+        ":FILT:TYPE?",":FILT:TYPE %s",
+        """ A property that control the filter type (primary PSD). 
+            Exponential: Time constant filter
+            Moving: Synchronous filter (moving average type)""",
+        validator=strict_discrete_set,
+        values={"Exponential": "EXP", "Moving": "MOV"},
+        map_values=True
+    )
+
+    filter2_slope = Instrument.control(
+        ":FILT2:SLOP?", ":FILT2:SLOP %d",
+        """ A property that control the filter attenuation slope (secondary PSD).
+            Range {6|12|18|24}, unit dB/oct}. """,
+        validator=strict_discrete_set,
+        values=[6, 12, 18,24],
+        map_values=False
+    )
+
+    time_constant2 = Instrument.control(
+        ":FILT2:TCON?",":FILT2:TCON %g",
+        """ A property that control the filter time constant (secondary PSD). 
+            Range 1E-6 to 50E+3 1-2-5 sequence, unit s.
+            Rounding is applied to arbitrary values specified. """,
+        validator=truncated_range,
+        values=[1e-6, 50e+3]
+    )
+
+    filter2_type = Instrument.control(
+        ":FILT2:TYPE?",":FILT2:TYPE %s",
+        """ A property that control the filter type (secondary PSD). 
+            Exponential: Time constant filter
+            Moving: Synchronous filter (moving average type)""",
+        validator=strict_discrete_set,
+        values={"Exponential": "EXP", "Moving": "MOV"},
+        map_values=True
+    )
+
+    primary_frequency = Instrument.measurement(
+        ":FREQ?",
+        """ Return the fundamental wave, primary frequency. 
+            For instrument LI5660, this property will returen a numeric value,
+            in the NR3 format, from range 3.0E-1 to 1.15E+7, resolution 7 digits, unit Hz"""
+    )
+
+    frequency_harmonic = Instrument.control(
         ":FREQ:HARM?", ":FREQ:HARM %d",
         """ A property that enable/disable the harmonics measurement. """,
         validator=strict_discrete_set,
@@ -517,14 +629,14 @@ class LI5660(Instrument):
         map_values=True
     )
 
-    harmonics_pre_order = Instrument.control(
+    frequency_harmonics_multiplier = Instrument.control(
         ":FREQ:MULT?", ":FREQ:HARM ON; :FREQ:MULT %d",
         """ A property that control the harmonic order n for measurement (Primary PSD) """,
         validator=truncated_range,
         values=[1, 63]
     )
     
-    subharmonic_order = Instrument.control(
+    frequency_subharmonic_multiplier = Instrument.control(
         "FREQ:SMUL?", ":FREQ:HARM ON; :FREQ:MULT %d",
         """ A property that control the subharmonic order m for measurement (Primary PSD) """,
         validator=truncated_range,
@@ -536,7 +648,7 @@ class LI5660(Instrument):
         """ Return the secondary frequency used with detection modes DUAL2 and CASCADE. """
     )
 
-    harmonics_sec_enable = Instrument.control(
+    frequency2_harmonics = Instrument.control(
         ":FREQ2:HARM?",":FREQ2:HARM %d",
         """ A property that control the harmonic measurement (enabled or disabled) (secondary PSD)""",
         validator=strict_discrete_set,
@@ -544,18 +656,65 @@ class LI5660(Instrument):
         map_values=True
     )
 
-    harmonics_sec_order = Instrument.control(
-        ":FREQ2:MULT?", ":FREQ2:HARM ON; :FREQ:MULT %d",
+    frequency2_harmonic_multiplier = Instrument.control(
+        ":FREQ2:MULT?", ":FREQ2:HARM ON; :FREQ2:MULT %d",
         """ A property that control the harmonic order n for measurement (secondary PSD) """,
         validator=truncated_range,
         values=[1, 63]
     )
 
-    phase_shift = Instrument.control(
+    smoothing = Instrument.control(
+        ":NOIS?",":NOIS %d",
+        """ A property that control the output smoothing coefficient for noise density measurement. """,
+        validator=strict_discrete_set,
+        values=[1, 4, 16, 64]
+    )
+
+    phase = Instrument.control(
         ":PHAS?", ":PHAS %g",
         """ A property that control the phase shift amount (primary PSD). """,
         validator=truncated_range,
         values=[-180.000, 179.000]
+    )
+
+    phase2 = Instrument.control(
+        ":PHAS2?", ":PHAS %g",
+        """ A property that control the phase shift amount (primary PSD). """,
+        validator=truncated_range,
+        values=[-180.000, 179.000]
+    )
+
+    reference_frequency_source = Instrument.control(
+        ":ROSC:SOUR?",":ROSC:SOUR %s",
+        """ A property that control the reference frequency source for frequency synthesis.
+            Internal: Internal frequency source
+            External: External frequency source (10 MHz IN terminal).
+
+            Even when the reference frequency source is set to external, operation continues with
+            the internal reference frequency source until a 10 MHz signal is applied to the 10 MHz IN terminal. """,
+        validator=strict_discrete_set,
+        values={"Internal": "INT", "External": "EXT"},
+        map_values=True
+    )
+
+    voltage_ac_range_auto = Instrument.control(
+        ":VOLT:AC:RANG:AUTO?", ":VOLT:AC:RANG:AUTO %d",
+        """ A property that allow user to set the voltage sensitivity continuous automatic selection function.
+            When voltage sensitivity is set automatically, dynamic reserve is also set automatically.
+            On: Enables continuous automatic selection of voltage sensitivity.
+            Off: Disable continuous automatic selection of voltage sensitivity.""",
+        validator=strict_discrete_set,
+        values={"On": 1, "Off": 0},
+        map_values=True
+    )
+
+    voltage_ac_range = Instrument.control(
+        ":VOLT:AC:RANG?", "::VOLT:AC:RANG %g",
+        """ A property that control the current sensitivity (primary PSD), range from 10E-15, 20E-15, ... 1E-6,
+            rounding is applied to arbitrary values specified. Current sensitivity is the product of the current-voltage
+            conversion gain and the voltage sensitivity.""",
+        validator=truncated_range,
+        values=[10e-15, 1e-6]
     )
 
     ##########
@@ -578,89 +737,6 @@ class LI5660(Instrument):
     ############
     # Methods  #
     ############
-
-    def default_dynamic_reserve(self):
-        """ Configure the dynamic reserve Sensitivity. """
-        self.dynamic_reserve = "Medium"
-
-    def dr(self, DR=None):
-        """ A property allow user to set the sensitivity of the dynamic reserve. """
-        log.info("The dynamic reserve is set to {}".format(self.name))
-        
-        if DR is None:
-            self.default_dynamic_reserve()
-        else:
-            self.dynamic_reserve = DR
-
-    def slope(self, SLOPE=6):
-        """ A property allow user to set the filter attenuation slope (primary PSD). """
-        log.info("The filter attenuation slope is set to {}".format(self.name))
-
-        if SLOPE==6:
-            self.filter_slope = SLOPE
-        elif SLOPE==12:
-            self.filter_slope = SLOPE
-        elif SLOPE==18:
-            self.filter_slope = SLOPE
-        elif SLOPE==24:
-            self.filter_slope = SLOPE
-        else:
-            return "The value is not in the range, please keyin the vaild value."
-        return "The filter attenuation slope is set to {} dB/oct".format(SLOPE)
-
-    def tc(self, TC=1e-6):
-        """ A property allow user to set the filter time constant (primary PSD). """
-        log.info("The filter time constant is set to {}".format(self.name))
-
-        self.time_constant = TC
-
-    def set_filter_type(self, TYPE="Time Constant"):
-        """ A property allow user to set the filter type. """
-        log.info("The filter type is set to {}".format(self.name))
-
-        self.filter_type = TYPE
-
-    def primary_harmonic_order(self, ORDER=1):
-        """ A property allow user to set the harmonic order n for measurement (promary PSD). """
-        log.info("The primary harmonic order is set to {}".format(self.name))
-
-        self.harmonics_pre_order = ORDER
-    
-    def primary_harmonic(self, STATUS="On"):
-        """ A property allow user to turn off the primary harmonic measurement. """
-        self.harmonics_pre_enable = STATUS
-
-    def smoothing_coefficient(self, COEFFICIENT=1):
-        """ A property allow user to set the output smoothing coefficient for noise density measurement.
-            Setting the coefficient to 4 roughly halves variations in output, but roughly quadruples response time."""
-        log.info("The smoothing coefficient is set to {}".format(self.name))
-
-        self.smoothing = COEFFICIENT
-
-    def set_phase_shift(self, SHIFT=0):
-        """ A property that allow user to set the phase shift amount (primary PSD). """
-        log.info("The primary frequency phase shift amount is set to {}".format(self.name))
-
-        self.phase_shift = SHIFT
-        
-    def reference_source(self, SOURCE="Internal"):
-        """ A property that allow user to set the reference frequency source for frequency synthesis. """
-        log.info("The reference frequency source is set to {}".format(self.name))
-
-        self.reference_frequency_source = SOURCE
-
-    def reference_signal(self, SIGNAL="Internal"):
-        """ A property that allow user to set the reference signal source. """
-        log.info("The reference signal source is set to {}".format(self.name))
-
-        self.reference_signal_source = SIGNAL
-
-    def termainal(self, INPUT="A"):
-        """ A property that allow user to set the signal input terminal. """
-        log.info("The signal input terminal is set to {}".format(self.name))
-
-        self.signal_termainal = INPUT
-####################################################################################################################################################
     def abort(self):
         """ A property that allow user to abort recording to the measurement data buffer and puts the trigger system in the idle state. """
         log.info("Recording abort.")
@@ -911,8 +987,8 @@ class LI5660(Instrument):
 
     def gain(self, GAIN=1):
         """ A property that allow user to set the current-voltage conversion gain for current input.
-            IE6 Conversion gain 1 MV/A, 1uAmax
-            IE8 Conversion gain 100 MV/A, 10nAmax """
+            1: IE6 Conversion gain 1 MV/A, 1uAmax
+            100: IE8 Conversion gain 100 MV/A, 10nAmax """
         self.input_gain = GAIN
         log.info("The current-voltage conversion gain is set to {}".format(self.input_gain))
 
@@ -969,3 +1045,293 @@ class LI5660(Instrument):
             return "Please specified the name and memory number."
         else:
             self.write(":MEM:STAT:DEF '{}', {}".format(NAME, N))
+
+    def data1_output(self, state="On"):
+        """ A property that allow user to set the output state of the DATA1 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal."""
+
+        self.output1_state = state
+        log.info("DATA1 output is set to {}".format(self.output1_state))
+
+    def data2_output(self, state="On"):
+        """ A property that allow user to set the output state of the DATA1 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal."""
+
+        self.output2_state = state
+        log.info("DATA1 output is set to {}".format(self.output2_state))
+
+    def data3_output(self, state="On"):
+        """ A property that allow user to set the output state of the DATA1 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal."""
+
+        self.output3_state = state
+        log.info("DATA1 output is set to {}".format(self.output3_state))
+
+    def data4_output(self, state="On"):
+        """ A property that allow user to set the output state of the DATA1 terminal. 
+            On: Enables output of the DATA1 terminal.
+            Off: Disables output of the DATA1 terminal."""
+
+        self.output4_state = state
+        log.info("DATA1 output is set to {}".format(self.output4_state))
+
+    def input_terminal(self, terminal="A"):
+        """ A property that control the input connector.
+            A: Single end voltage (terminal A, 1 V max).
+            AB: Differential voltage (terminal A-B, 1 V max).
+            C: Large amplitude voltage (terminal C, 10 V max).
+            I: Current(terminal I, 1 \u03BCAmax when conversion gain is 1 MV/A,
+                                   10 nAmax when conversion gain is 100MV/A).
+            HF: High frequency voltage (terminal HF, 1 V max). """
+
+        self.route_terminals = terminal
+        log.info("The input signal terminal is set to {}".format(self.route_terminals))
+
+    def reference_signal(self, source="Internal"):
+        """ A property that control the reference signal source.
+            Ref In: Reference input connector.
+            Internal: Internal oscillator.
+            Signal In: Signal input connector. """
+
+        self.route2_terminals = source
+        log.info("The reference signal source is set to {}".format(self.name))
+
+    def auto_measurement(self):
+        """ A property that automatically set the sensitivity and time constant once to match the
+            reference signal for the signal being measured at the time. This corresponds to the
+            panel operation [AUTO]-->[MEASURE]. """
+
+        self.write(":AUTO:ONCE")
+        log.info("Auto measurement activated.")
+
+    def auto_current_range(self, state="Off"):
+        """ A property that allow user to set the current sensitivity continuous automatic selection function.
+            When current sensitivity is set automatically, dynamic reserve is also set automatically.
+            On: Enables continuous automatic selection of current sensitivity.
+            Off: Disable continuous automatic selection of current sensitivity."""
+        
+        self.current_ac_range_auto = state
+        log.info("The current sensitivity is set to {}".format(self.current_ac_range_auto))
+
+    def auto_current_measurement(self):
+        """ A property that allow user to automatically set current sensitivity one time.
+            When current senitivity is set automatically, dynamic reserve is also set automatically. """
+        
+        self.write(":CURR:AC:RANG:AUTO:ONCE")
+        log.info("Automatic current sensitivity set to one time.")
+
+    def primary_current_sensitivity(self, range=10E-15):
+        """ A property that control the current sensitivity (primary PSD), range from 10E-15, 20E-15, ... 1E-6,
+            rounding is applied to arbitrary values specified. Current sensitivity is the product of the current-voltage
+            conversion gain and the voltage sensitivity.
+            The range of current sensitivity that can be selected is dependent on the current-voltage conversion gain
+            that :ROUT command. """
+        self.current_ac_range = range
+        log.info("Primary current sensitivity is set to {}".format(self.currnet_ac_range))
+
+    def secondary_current_sensitivity(self, range=10E-15):
+        """ A property that control the current sensitivity (secondary PSD), range from 10E-15, 20E-15, ... 1E-6,
+            rounding is applied to arbitrary values specified. Current sensitivity is the product of the current-voltage
+            conversion gain and the voltage sensitivity.
+            The range of current sensitivity that can be selected is dependent on the current-voltage conversion gain
+            that :ROUT command. """
+        self.current2_ac_range = range
+        log.info("Secondary current sensitivity is set to {}".format(self.current2_ac_range))      
+
+    def data_sets(self, sets=30):
+        """ A property that allow user to set measurement data sets. The data sets will be able to read by the :FETC? query.
+            1: STATUS (16 bits), reads the measurement status.
+            2: DATA1 (16 bits), reads the value of DATA1.
+            4: DATA2 (16 bits), reads the value of DATA2.
+            8: DATA3 (16 bits), reads the value of DATA3.
+            16: DATA4 (16 bits), reads the value of DATA4.
+            32: FREQ (32 bits), records the frequency value.
+            Nothing is read if 0 is set."""
+        self.data = sets
+        log.info("Sets the measurement data set to {}".format(self.data))
+    
+    def detection_mode(self, mode="Single"):
+        """ A property that allow user to set the detection mode.
+            Single: 1 frequency x 2 phase (single mode). Only the primary PSD is used. Measure at fundamental wave F 
+                    or harmonic (n/m) F of fundamental wave. 
+            Dual1: 2 frequencies × 2 phases (2-frequency harmonic mode).
+                   Primary PSD: Fundamental wave F or fundamental wave harmonic (n/m) F
+                   Secondary PSD: Fundamental wave F or fundamental wave harmonic nF.
+            DUAL2: 2 frequencies × 2 phases (2-frequency independent mode).
+                   primary PSD: primary frequency Fp
+                   Secondary PSD: secondary frequency Fs
+            CASCade: 2-frequency cascade connection (2-frequency cascade mode)
+                     primary PSD: primary frequency Fp
+                     Secondary PSD: secondary frequency Fs
+                     Further detection on the detection result Xp of Fp is performed using secondary frequency Fs."""
+
+        self.detector = mode
+        log.info("The detection mode is set to {}".format(self.detector))
+
+    def default_dynamic_reserve(self):
+        """ Configure the dynamic reserve Sensitivity. """
+        self.dynamic_reserve = "Medium"
+
+    def dynamic_reserve_level(self, dr=None):
+        """ A property that control the dynamic reserver sensitivity.
+            High: High dynamic reserve when noise level is high.
+            Medium: Medium dynamic reserve.
+            Low: Low dynamic reserve when noise level is low. """
+        
+        if dr is None:
+            self.default_dynamic_reserve()
+        else:
+            self.dynamic_reserve = dr
+
+        log.info("The dynamic reserve is set to {}".format(self.dynamic_reserve))
+
+    def filter_auto_once(self):
+        """Automatically sets the filter time constant according to frequency.
+            When the synchronous filter is selected, switching to the time constant filter
+            takes place automatically. """
+        log.info("Automatically sets the filter time constant.")
+        self.write(":FILT:AUTO:ONCE")
+
+    def primary_slope(self, db=6):
+        """ A property allow user to set the filter attenuation slope (primary PSD). 
+            Range {6|12|18|24}, unit dB/oct}. """
+
+        self.filter_slope = db
+        log.info("The filter attenuation slope is set to {}".format(self.filter1_type))
+
+    def primary_time_constant(self, tc=1e-6):
+        """ A property allow user to set the filter time constant (primary PSD). 
+            Range 1E-6 to 50E+3 1-2-5 sequence, unit s.
+            Rounding is applied to arbitrary values specified."""
+
+        self.time_constant = tc
+        log.info("The filter time constant is set to {}".format(self.time_constant))
+
+    def primary_filter_type(self, filtertype="Exponential"):
+        """ A property that control the filter type (primary PSD). 
+            Exponential: Time constant filter
+            Moving: Synchronous filter (moving average type)"""
+
+        self.filter_type = filtertype
+        log.info("The primary filter type is set to {}".format(self.filter_type))
+
+    def secondary_slope(self, db=6):
+        """ A property allow user to set the filter attenuation slope (primary PSD). 
+            Range {6|12|18|24}, unit dB/oct}. """
+
+        self.filter2_slope = db
+        log.info("The filter attenuation slope is set to {}".format(self.filter2_slope))
+
+    def secondary_time_constant(self, tc=1e-6):
+        """ A property allow user to set the filter time constant (primary PSD). 
+            Range 1E-6 to 50E+3 1-2-5 sequence, unit s.
+            Rounding is applied to arbitrary values specified."""
+
+        self.time_constant2 = tc
+        log.info("The filter time constant is set to {}".format(self.time_constant2))
+
+    def secondary_filter_type(self, filtertype="Exponential"):
+        """ A property that control the filter type (primary PSD). 
+            Exponential: Time constant filter
+            Moving: Synchronous filter (moving average type)"""
+
+        self.filter2_type = filtertype
+        log.info("The primary filter type is set to {}".format(self.filter2_type))
+    
+    def primary_harmonic(self, state="On"):
+        """ A property allow user to turn off the primary harmonic measurement.
+            ON: Enables harmonics measurement.
+            OFF: Disables harmonics measurement. """
+        self.frequency_harmonic = state
+        log.info("Primary harmonics measurement is set to {}".format(self.frequency_harmonic))
+
+    def primary_harmonic_multipliter(self, order=1):
+        """ A property allow user to set the harmonic order n for measurement (promary PSD).
+            The signal that has n times frequency of the reference signal can be measured. """
+
+        self.frequency_harmonics_multiplier = order
+        log.info("The primary harmonic order is set to {}".format(self.frequency_harmonics_multiplier))
+
+    def primary_subharmonic_multipliter(self, order=1):
+        """ A property allow user to set the harmonic order n for measurement (promary PSD).
+            The signal that has n times frequency of the reference signal can be measured. """
+
+        self.frequency_subharmonic_multiplier = order
+        log.info("The primary harmonic order is set to {}".format(self.frequency_subharmonic_multiplier))
+
+    def secondary_harmonic(self, state="Off"):
+        """ A property allow user to turn off the secondary harmonic measurement.
+            ON: Enables harmonics measurement.
+            OFF: Disables harmonics measurement. """
+        self.frequency2_harmonic = state
+        log.info("Secondary harmonic measurement is set to {}".format(self.frequency2_harmonic))
+
+    def secondary_harmonic_multipliter(self, order=1):
+        """ A property allow user to set the harmonic order n for measurement (secondary PSD).
+            Secondary PSD harmonic measurement is forcibly disabled in detection modes other than DUAL1. """
+
+        self.frequency2_harmonic_multiplier = order
+        log.info("The primary harmonic order is set to {}".format(self.frequency2_harmonic_multiplier))
+
+    def noise(self, coefficient=1):
+        """ A property allow user to set the output smoothing coefficient for noise density measurement.
+            Setting the coefficient to 4 roughly halves variations in output, but roughly quadruples response time."""
+
+        self.smoothing = coefficient
+        log.info("The smoothing coefficient is set to {}".format(self.smoothing))
+
+    def primary_phase_shift(self, shift=0):
+        """ A property that allow user to set the phase shift amount (primary PSD). 
+            Numeric value, range from -180.000 to +179.999, resolution 0.001, unit °."""
+        
+        self.phase = shift        
+        log.info("The primary frequency phase shift amount is set to {}".format(self.phase))
+
+    def primary_phase_shift_auto(self):
+        """Automatically adjusts the phase shift amount so that phase θ (primary PSD) becomes zero."""
+
+        self.write(":PHAS:AUTO:ONCE")
+        log.info("Automatically adjusts the phase shift amount.")
+
+    def secondary_phase_shift(self, shift=0):
+        """ A property that allow user to set the phase shift amount (primary PSD). 
+            Numeric value, range from -180.000 to +179.999, resolution 0.001, unit °."""
+        
+        self.phase2 = shift        
+        log.info("The primary frequency phase shift amount is set to {}".format(self.phase2))
+
+    def secondary_phase_shift_auto(self):
+        """Automatically adjusts the phase shift amount so that phase θ (primary PSD) becomes zero."""
+
+        self.write(":PHAS2:AUTO:ONCE")
+        log.info("Automatically adjusts the phase shift amount.")
+
+    def reference_frequency(self, SOURCE="Internal"):
+        """ A property that control the reference frequency source for frequency synthesis.
+            Internal: Internal frequency source
+            External: External frequency source (10 MHz IN terminal).
+
+            Even when the reference frequency source is set to external, operation continues with
+            the internal reference frequency source until a 10 MHz signal is applied to the 10 MHz IN terminal. """
+
+        self.reference_frequency_source = SOURCE
+        log.info("The reference frequency source is set to {}".format(self.reference_frequency_source))
+
+    def auto_voltage_range(self, state="Off"):
+        """ A property that allow user to set the voltage sensitivity continuous automatic selection function.
+            When voltage sensitivity is set automatically, dynamic reserve is also set automatically.
+            On: Enables continuous automatic selection of voltage sensitivity.
+            Off: Disable continuous automatic selection of voltage sensitivity."""
+        
+        self.voltage_ac_range_auto = state
+        log.info("The current sensitivity is set to {}".format(self.voltage_ac_range_auto))
+
+    def auto_voltage_measurement(self):
+        """ A property that allow user to automatically set current sensitivity one time.
+            When current senitivity is set automatically, dynamic reserve is also set automatically. """
+        
+        self.write(":VOLT:AC:RANG:AUTO:ONCE")
+        log.info("Automatic voltage sensitivity set to one time.")
