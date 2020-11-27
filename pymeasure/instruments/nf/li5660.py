@@ -26,14 +26,9 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from pymeasure.instruments import Instrument #, RangeException
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from pyvisa.errors import VisaIOError
-
-# import numpy as np
-# import time
-# from io import BytesIO
-# import re
 
 class LI5660(Instrument):
 
@@ -43,10 +38,9 @@ class LI5660(Instrument):
             "NF Lock-In Amplifier LI5600",
             **kwargs
         )
-    
-    amplifier_id = Instrument.measurement(
-        "*IDN?", """Reads the instrument identification """
-    )
+        self.buffers = {"Buffer1": "BUF1",
+                        "Buffer2": "BUF2",
+                        "Buffer3": "BUF3"}
 
     ####################################
     # Calculate subsystem, 23 Nov 2020 #
@@ -303,7 +297,7 @@ class LI5660(Instrument):
     #################################
     # Format subsystem, 25 Nov 2020 #
     #################################
-    format = Instrument.control(
+    form = Instrument.control(
         ":FORM?", ":FORM %s",
         """ A property that allow user to set the data transfer format. """,
         validator=strict_discrete_set,
@@ -781,7 +775,6 @@ class LI5660(Instrument):
         map_values=False
     )
 
-
     #################################
     # Source subsystem, 27 Nov 2020 #
     #################################
@@ -949,60 +942,60 @@ class LI5660(Instrument):
 
         self.calculate1_math_voltage = value
 
-    def primaryRX_multiplier(self, MULTIPLIER=1):
+    def primaryRX_multiplier(self, order=1):
         """ A property that allow user to set the primary PSD's R, X output common expand multiplier.
             Display and output of expand results also requires enabling expand calculation with the
             :CALCulate5:MATH EXP command. """
         log.info("The primary PSD's R, X output common expand multiplier is set to {}".format(self.name))
 
-        self.calculate1_multiplier = MULTIPLIER
+        self.calculate1_multiplier = order
 
-    def primaryY_multiplier(self, MULTIPLIER=1):
+    def primaryY_multiplier(self, order=1):
         """ A property that allow user to set the primary PSD's R, X output common expand multiplier.
             Display and output of expand results also requires enabling expand calculation with the
             :CALCulate5:MATH EXP command. """
         log.info("The primary PSD's R, X output common expand multiplier is set to {}".format(self.name))
 
-        self.calculate2_multiplier = MULTIPLIER
+        self.calculate2_multiplier = order
 
-    def secondaryRX_multiplier(self, MULTIPLIER=1):
+    def secondaryRX_multiplier(self, order=1):
         """ A property that allow user to set the secondary PSD's R, X output common expand multiplier.
             Display and output of expand results also requires enabling expand calculation with the
             :CALCulate5:MATH EXP command. """
         log.info("The primary PSD's R, X output common expand multiplier is set to {}".format(self.name))
 
-        self.calculate3_multiplier = MULTIPLIER
+        self.calculate3_multiplier = order
 
-    def secondaryY_multiplier(self, MULTIPLIER=1):
+    def secondaryY_multiplier(self, order=1):
         """ A property that allow user to set the primary PSD's R, X output common expand multiplier.
             Display and output of expand results also requires enabling expand calculation with the
             :CALCulate5:MATH EXP command. """
         log.info("The primary PSD's R, X output common expand multiplier is set to {}".format(self.name))
 
-        self.calculate4_multiplier = MULTIPLIER
+        self.calculate4_multiplier = order
 
-    def primaryX_offset(self, OFFSET=0):
+    def primaryX_offset(self, offset=0):
         """ A property that allow user to offset for the primary PSD's X output. """
 
-        self.calculate1_offset = OFFSET
+        self.calculate1_offset = offset
         log.info("The offset with respect to secondary PSD's X output to {} of sensitivity full scale.".format(self.calculate1_offset))
 
-    def primaryY_offset(self, OFFSET=0):
+    def primaryY_offset(self, offset=0):
         """ A property that allow user to offset for the primary PSD's X output. """
 
-        self.calculate2_offset = OFFSET
+        self.calculate2_offset = offset
         log.info("The offset with respect to secondary PSD's X output to {} of sensitivity full scale.".format(self.calculate2_offset))
 
-    def secondaryX_offset(self, OFFSET=0):
+    def secondaryX_offset(self, offset=0):
         """ A property that allow user to offset for the primary PSD's X output. """
 
-        self.calculate3_offset = OFFSET
+        self.calculate3_offset = offset
         log.info("The offset with respect to secondary PSD's X output to {} of sensitivity full scale.".format(self.calculate3_offset))
 
-    def secondaryY_offset(self, OFFSET=0):
+    def secondaryY_offset(self, offset=0):
         """ A property that allow user to offset for the primary PSD's X output. """
 
-        self.calculate4_offset = OFFSET
+        self.calculate4_offset = offset
         log.info("The offset with respect to secondary PSD's X output to {} of sensitivity full scale.".format(self.calculate4_offset))
 
     def primaryXY_offset_auto(self):
@@ -1019,196 +1012,188 @@ class LI5660(Instrument):
         log.info("Auto offset secondary PSD's X and Y.")
         self.write(":CALC3:OFFS:AUTO:ONCE")
 
-    def primaryX_offset_state(self, STATUS="Off"):
+    def primaryX_offset_state(self, state="Off"):
         """ A property that allow user to enable/disable offset for the primary PSD's X output. """
         log.info("The offset adjustment is set to {}".format(self.name))
 
-        self.calculate1_offset_state = STATUS
+        self.calculate1_offset_state = state
 
-    def primaryY_offset_state(self, STATUS="Off"):
+    def primaryY_offset_state(self, state="Off"):
         """ A property that allow user to enable/disable offset for the primary PSD's X output. """
         log.info("The offset adjustment is set to {}".format(self.name))
 
-        self.calculate2_offset_state = STATUS
+        self.calculate2_offset_state = state
 
-    def secondaryX_offset_state(self, STATUS="Off"):
+    def secondaryX_offset_state(self, state="Off"):
         """ A property that allow user to enable/disable offset for the primary PSD's X output. """
         log.info("The offset adjustment is set to {}".format(self.name))
 
-        self.calculate3_offset_state = STATUS
+        self.calculate3_offset_state = state
 
-    def secondaryY_offset_state(self, STATUS="Off"):
+    def secondaryY_offset_state(self, state="Off"):
         """ A property that allow user to enable/disable offset for the primary PSD's X output. """
         log.info("The offset adjustment is set to {}".format(self.name))
 
-        self.calculate4_offset_state = STATUS
+        self.calculate4_offset_state = state
 
-    def set_calculation_method(self, METHOD="Off"):
+    def set_calculation_method(self, method="Off"):
         """ A property that allow user to set the calculation method for measurement value to be displayed and output. """
         log.info("The calculation method for measurement value is set to {}".format(self.name))
 
-        self.calculation_method = METHOD
+        self.calculation_method = method
 
-    def get_buffer(self, BUFFER="Buffer1", LENGTH=1, START=0):
+    def get_buffer(self, buffer="Buffer1", lenght=1, start=0):
         """ A aquire the floating point data through binary transfer. """
-        buffer = {"Buffer1": "BUF1",
-                  "Buffer2": "BUF2",
-                  "Buffer3": "BUF3"}
-        return self.values(":DATA:DATA? {}, {}, {}".format(buffer[BUFFER], LENGTH, START))
 
-    def clere_buffer(self, BUFFER="Buffer1"):
+        return self.values(":DATA:DATA? {}, {}, {}".format(self.buffers[buffer], lenght, start))
+
+    def clere_buffer(self, buffer="Buffer1"):
         """ Clears the specified measurement data buffer. """
-        buffer = {"Buffer1": "BUF1",
-                  "Buffer2": "BUF2",
-                  "Buffer3": "BUF3"}
-        self.write(":DATA:DEL {}".format(buffer[BUFFER]))
+
+        self.write(":DATA:DEL {}".format(self.buffers[buffer]))
 
     def clear_all_buffer(self):
         """ Clear all measurement data buffers. """
         self.write(":DATA:DEL:ALL")
 
-    def data_feed(self, BUFFER="Buffer1", DATA=30):
+    def data_feed(self, buffer="Buffer1", data=30):
         """ Set measurement data sets recorded in measurement data buffer 1, 2 or 3. """
         buffer = {"Buffer1": "BUF1",
                   "Buffer2": "BUF2",
                   "Buffer3": "BUF3"}
-        self.write(":DATA:FEED {}, {}".format(buffer[BUFFER], DATA))
+        self.write(":DATA:FEED {}, {}".format(self.buffers[buffer], data))
 
-    def data_feed_control(self, BUFFER="Buffer1", STATUS="Always"):
+    def data_feed_control(self, buffer="Buffer1", state="Always"):
         """ Set whether measurement data is to be recorded in a measurement data buffer. """
-        buffer = {"Buffer1": "BUF1",
-                  "Buffer2": "BUF2",
-                  "Buffer3": "BUF3"}
+
         status = {"Always": "ALW",
                   "Never": "NEV"}
-        self.write(":DATA:FEED:CONT {}, {}".format(buffer[BUFFER], status[STATUS]))
+        self.write(":DATA:FEED:CONT {}, {}".format(self.buffers[buffer], status[state]))
 
-    def data_points(self, BUFFER="Buffer1", SIZE=16):
+    def data_points(self, buffer="Buffer1", size=16):
         """ Set measurement data buffer size. """
-        buffer = {"Buffer1": "BUF1",
-                  "Buffer2": "BUF2",
-                  "Buffer3": "BUF3"}
-        self.write(":DATA:POIN {}, {}".format(buffer[BUFFER], SIZE))
 
-    def interval(self, TIME=10E-3):
+        self.write(":DATA:POIN {}, {}".format(self.buffers[buffer], size))
+
+    def interval(self, time=10E-3):
         """ A property that allow user to set the internal timer time interval. """
-        self.data_timer = TIME
+        self.data_timer = time
 
-    def timer_state(self, STATE="Off"):
+    def timer_state(self, state="Off"):
         """ A property that allow user to enable or disable the internal timer. """
-        self.data_timer_state = STATE  
+        self.data_timer_state = state  
 
     def default_display(self):
         """ Configures the measurement screen. """
         self.screen = "Fine"
 
-    def display(self, DISPLAY=None):
+    def display(self, display=None):
         """ A property that allows user to switch between the 'Standard', 'Expanded', 'Detail' screens. """
         log.info("Screen is display in {}".format(self.name))
         
-        if DISPLAY is None:
+        if display is None:
             self.default_display()
         else:
-            self.screen = DISPLAY   
+            self.screen = display   
 
-    def display_state(self, STATE="On"):
+    def display_state(self, state="On"):
         """ A property that allow user to enable/disable the display screen. """
         log.info("Screen display change")
 
-        self.display_window = STATE
+        self.display_window = state
 
-    def data_format(self, FORMAT="ASCII"):
+    def data_format(self, form="ASCII"):
         """ A property that allow user to set the data transfer format. """
-        self.format = FORMAT
-        log.info("The data format is set to {}".format(self.format))
+        self.form = form
+        log.info("The data format is set to {}".format(self.form))
 
     def initiate(self):
         """ A property that allow user to set the awaiting trigger state. """
         self.write(":INIT")
 
-    def coupling(self, INPUT="AC"):
+    def coupling(self, method="AC"):
         """ A property that allow user to set the signal input result method. """
         
-        self.input_coupling = INPUT
+        self.input_coupling = method
         log.info("The input coupling is set to {}".format(self.input_coupling))
 
-    def notch_frequency(self, FREQUENCY=50):
+    def notch_frequency(self, frequency=50):
         """ A property that allow user to removes power supply frequency noise. """
-        self.input_filter_notch_frequency = FREQUENCY
+        self.input_filter_notch_frequency = frequency
         log.info("Power supply frequency is set to {}".format(self.input_filter_notch_frequency))
 
-    def primary_notch_state(self, STATE="On"):
+    def primary_notch_state(self, state="On"):
         """ A property that allow user to enable/disable the notch1 filter.
             The notch1 filter removes power supply frequency (50 or 60 Hz) noise. """
-        self.input_filter_notch1_state = STATE
+        self.input_filter_notch1_state = state
         log.info("The power supply frequency is set")
 
-    def secondary_notch_state(self, STATE="On"):
+    def secondary_notch_state(self, state="On"):
         """ A property that allow user to enable/disable the notch2 filter.
             The notch2 filter removes power supply secondary harmonic (100 or 120 Hz) noise. """
-        self.input_filter_notch2_state = STATE
+        self.input_filter_notch2_state =state
         log.info("The power supply secondary harmonic is set")
 
-    def gain(self, GAIN=1):
+    def gain(self, g=1):
         """ A property that allow user to set the current-voltage conversion gain for current input.
             1: IE6 Conversion gain 1 MV/A, 1uAmax
             100: IE8 Conversion gain 100 MV/A, 10nAmax """
-        self.input_gain = GAIN
+        self.input_gain = g
         log.info("The current-voltage conversion gain is set to {}".format(self.input_gain))
 
-    def impedance(self, Z=50):
+    def impedance(self, z=50):
         """ A property that allow user to set HF terminal input impedance.
             Rounding is applied to arbitrary values specified. """
-        self.input_impedance = Z
+        self.input_impedance = z
         log.info("The HF terminal input impedance is set to {}".format(self.input_impedance))
 
-    def grounding(self, GROUND="Ground"):
+    def grounding(self, gud="Ground"):
         """ A property that allow user to set grounding of the signal input connectedor's outer conductor. """
-        self.input_low = GROUND
+        self.input_low = gud
         log.info("The grounding of the signal input connector's outer conductor is set to {}".format(self.input_low))
 
-    def input_offset(self, OFFSET="Once"):
+    def input_offset(self, offset="Once"):
         """ A property that allow user to set the PSD input offset. 
             On: Enables continuius automatic adjustment of PSD input offset.
             Off: Disable continuous automatic adjustment of PSD input offset.
             Once: PSD input offset is autumatically adjusted just once.
             Resotre: Disables PSD input offset adjustment and restores the factory default setting. """
-        if OFFSET=="Once":
+        if offset=="Once":
             self.write(":INP:OFFS:AUTO:ONCE")
-        elif OFFSET == "Restore":
+        elif offset == "Restore":
             self.write(":INP:OFFS:RST")
         else:
-            self.input_offset_auto = OFFSET
+            self.input_offset_auto = offset
         log.info("The input PSD offset is set to {}".format(self.input_offset_auto))
 
-    def response(self, TIME=200E-3):
+    def response(self, time=200E-3):
         """ A property that allow user to set response time for the PSD input offset continuous auto adjustment function.
             Rounding is applied to arbitrary values specified. """
-        self.input_offset_stime = TIME
+        self.input_offset_stime = time
         log.info("The response time is set to {}".format(self.input_offset_stime))
 
-    def signal_type(self, TYPE="Sine"):
+    def signal_type(self, reference="Sine"):
         """ A property that allow user to set the reference signal wavefrom.
             Sine: Sinusoid wave.
             TTL Rising: TTL level rising edge.
             TTL Falling: TTL level falling edge. """
-        self.input_type = TYPE
+        self.input_type = reference
         log.info("The input signal type is set to {}".format(self.input_type))
 
-    def delete_memory(self, N=None):
+    def delete_memory(self, num=None):
         """ A property that allow user to clears the contents of the specified configuration memory. """
-        if N is None:
+        if num is None:
             return "Please specified whick memory you want to clear."
         else:
-            self.write(":MEM:STAT:DEL {}".format(N))
+            self.write(":MEM:STAT:DEL {}".format(num))
         log.info("{} memory has been cleared.")
 
-    def name_memory(self, NAME:str, N:int):
+    def name_memory(self, name:str, num:int):
         """ A property that allow uset to changes the name of the specified configuration memory. """
-        if NAME is None or N is None:
+        if name is None or num is None:
             return "Please specified the name and memory number."
         else:
-            self.write(":MEM:STAT:DEF '{}', {}".format(NAME, N))
+            self.write(":MEM:STAT:DEF '{}', {}".format(name, num))
 
     def data1_output(self, state="On"):
         """ A property that allow user to set the output state of the DATA1 terminal. 
@@ -1294,7 +1279,7 @@ class LI5660(Instrument):
             The range of current sensitivity that can be selected is dependent on the current-voltage conversion gain
             that :ROUT command. """
         self.current_ac_range = range
-        log.info("Primary current sensitivity is set to {}".format(self.currnet_ac_range))
+        log.info("Primary current sensitivity is set to {}".format(self.current_ac_range))
 
     def secondary_current_sensitivity(self, range=10E-15):
         """ A property that control the current sensitivity (secondary PSD), range from 10E-15, 20E-15, ... 1E-6,
@@ -1364,7 +1349,7 @@ class LI5660(Instrument):
             Range {6|12|18|24}, unit dB/oct}. """
 
         self.filter_slope = db
-        log.info("The filter attenuation slope is set to {}".format(self.filter1_type))
+        log.info("The filter attenuation slope is set to {}".format(self.filter_type))
 
     def primary_time_constant(self, tc=1e-6):
         """ A property allow user to set the filter time constant (primary PSD). 
@@ -1579,39 +1564,31 @@ class LI5660(Instrument):
         """ A property that control the internal oscillator output voltage AC amplitude.
             Range 0.00000 to 1.000, setting resolution 4 digits (at output voltage range full scale), unit Vrms. """
         self.source_voltage = output
-        log.info("The oscillator output voltage AC amplitude is set to ", self.source_voltage)
+        log.info("The oscillator output voltage AC amplitude is set to {}".format(self.source_voltage))
 
     def oscillator_voltage_range(self, max=100E-3):
         """ A property that allow user to set the internal oscillator output voltage range. 
             The range is {10E-3|100E-3|1}, unit V.
             Rounding is applied to arbitrary values specified."""
         self.source_voltage_range = max
-        log.info("The output voltage range is set to ", self.source_voltage_range)
+        log.info("The output voltage range is set to {}".format(self.source_voltage_range))
 
     def aux1_offset(self, offset=0):
         """ A property that allow the user to sets/queries the AUX OUT 1 output voltage. 
             THe range from -10.5 to +10.5, resolution 0.001 digits, unit V."""
         self.source5_voltage_offset = offset
-        log.info("The AUX OUT 1 output voltage offset is set to ", self.source5_voltage_offset)
+        log.info("The AUX OUT 1 output voltage offset is set to {}".format(self.source5_voltage_offset))
 
     def aux2_offset(self, offset=0):
         """ A property that allow the user to sets/queries the AUX OUT 2 output voltage. 
             THe range from -10.5 to +10.5, resolution 0.001 digits, unit V."""
         self.source6_voltage_offset = offset
-        log.info("The AUX OUT 1 output voltage offset is set to ", self.source6_voltage_offset)
+        log.info("The AUX OUT 1 output voltage offset is set to {}".format(self.source6_voltage_offset))
 
     def operation_status(self):
         """ A property that allow the user to queries the operation condition register (OPCT). 
             Response a numeric value, format NR1, range from 0 to 65535."""
         return self.write(":STAT:OPER:COND?")
-
-    # def operation_status_enable(self, enable=0):
-    #     """ Sets/queries the Operation Event Enable register (OPEE).
-    #         Numeric, range 0 to 65535.
-    #         Regardless of the value specified, the uppermost bit of the 16-bit binary value is 0.
-    #         The Operation Condition register contains 0 (all disabled)."""
-    #     self.status_operation_enable = enable
-    #     log.info("The operation event enable register is set to ", self.status_operation_enable)
 
     def system_error(self):
         """ Queried the error content. """
@@ -1632,7 +1609,7 @@ class LI5660(Instrument):
             Off: Disables key lock (enables key operation)."""
 
         self.system_key_lock = lock
-        log.info("The system key lock is set to ", self.system_key_lock)
+        log.info("The system key lock is set to {}".format(self.system_key_lock))
 
     def initializers(self):
         """ Initializes settings.
@@ -1646,7 +1623,7 @@ class LI5660(Instrument):
             execution and recording of data or starting of the internal timer. 
             Numeric, range 0 to 100, unit s, resolution 640ns"""
         self.triger_delay = delaytime
-        log.info("The delay the trigering at ", self.triger_delay)
+        log.info("The delay the trigering at {}".format(self.triger_delay))
 
     def triger(self):
         """ When the measurement data buffer is enabled, executes a trigger and records data in the measurement buffer.
@@ -1664,4 +1641,4 @@ class LI5660(Instrument):
             External: Rear panel TRIG IN signal
             Bus: Remote control *TRG or :TRIGger[:IMMediate] command, or the GET message """
         self.triger_source = source
-        log.info("The triger source is set to ", self.triger_source)
+        log.info("The triger source is set to {}".format(self.triger_source))
