@@ -59,10 +59,6 @@ class AgilentB1500(Instrument):
         )
         self._smu_names = {}
         self._smu_references = {}
-        # setting of data output format
-        # determines how to read measurement data
-        self._data_format = self._data_formatting(
-            "FMT" + self.query_learn(31)['FMT'][0])
 
     @property
     def smu_references(self):
