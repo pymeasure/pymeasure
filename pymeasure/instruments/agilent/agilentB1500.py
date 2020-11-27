@@ -423,7 +423,7 @@ class AgilentB1500(Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """ Data formatting for FMT1 format
         """
-        def __init__(self, output_format_string="FMT1", smu_names={}):
+        def __init__(self, smu_names={}, output_format_string="FMT1"):
             super().__init__(output_format_string, smu_names=smu_names)
 
         def format_single(self, element):
@@ -457,7 +457,7 @@ class AgilentB1500(Instrument):
         """ Data formatting for FMT21 format
         """
         def __init__(self, smu_names={}):
-            super().__init__("FMT21", smu_names)
+            super().__init__("FMT21", smu_names=smu_names)
 
         def format_single(self, element):
             """ Format single measurement value
@@ -503,7 +503,7 @@ class AgilentB1500(Instrument):
                 ).format(output_format_str))
             return
         else:
-            return format_class(smu_names)
+            return format_class(smu_names=smu_names)
 
     def data_format(self, output_format, mode=0):
         """ Specifies data output format. Check Documentation for parameters.
