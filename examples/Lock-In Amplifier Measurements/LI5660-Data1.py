@@ -14,7 +14,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
 
-        self.nf = LI5660(instrument[0])
+        self.nf = LI5660("GPIB0::1")
 
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
