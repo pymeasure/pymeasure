@@ -28,8 +28,7 @@ log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument #, RangeException
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-# from pymeasure.adapters import PrologixAdapter
-# from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pyvisa.errors import VisaIOError
 
 # import numpy as np
 # import time
@@ -736,21 +735,167 @@ class LI5660(Instrument):
         values=[10E-9, 10]
     )
 
-    ##########
-    # Source #
-    ##########
-    source_frequency = Instrument.control(
-        ":SOUR:FREQ?", "SOUR:FREQ %d",
-        """ A property that control the internal oscillator (primary PSD) frequency. """,
+    voltage5_dc_state = Instrument.control(
+        ":VOLT5:STAT?", ":VOLT5:STAT %s",
+        """ A property that allow user to sets/queries the AUX IN 1 terminal state (enabled or disabled).
+            On: Enables voltage measurement for the AUX IN 1 terminal.
+            Off: Disables voltage measurement for the AUX IN 1 terminal. """,
+        validator=strict_discrete_set,
+        values={"On": 1,
+                "Off": 0},
+        map_values=True
+    )
+
+    voltage5_dc_timeconstant = Instrument.control(
+        ":VOLT5:TCON?", ":VOLT5:TCON %g",
+        """ A property that allow user to sets/queries the AUX IN 1 filter time constant.
+            THRU: Sets the filter OFF.
+            This is numeric value, range: 2E-3|500E-6|125E-6, unit s.
+            Rounding is applied to arbitrary values specified.
+            Cutoff frequencies are, respectively, about 80 Hz, 320 Hz, and 1.27 kHz. """,
         validator=truncated_range,
-        values=[300e-3, 1.15e+7]
+        values=[2E-3, 500E-6, 125E-6],
+        map_values=False
+    )
+
+    voltage6_dc_state = Instrument.control(
+        ":VOLT6:STAT?", ":VOLT6:STAT %s",
+        """ A property that allow user to sets/queries the AUX IN 2 terminal state (enabled or disabled).
+            On: Enables voltage measurement for the AUX IN 2 terminal.
+            Off: Disables voltage measurement for the AUX IN 2 terminal. """,
+        validator=strict_discrete_set,
+        values={"On": 1,
+                "Off": 0},
+        map_values=True
+    )
+
+    voltage6_dc_timeconstant = Instrument.control(
+        ":VOLT6:TCON?", ":VOLT6:TCON %g",
+        """ A property that allow user to sets/queries the AUX IN 2 filter time constant.
+            THRU: Sets the filter OFF.
+            This is numeric value, range: 2E-3|500E-6|125E-6, unit s.
+            Rounding is applied to arbitrary values specified.
+            Cutoff frequencies are, respectively, about 80 Hz, 320 Hz, and 1.27 kHz. """,
+        validator=truncated_range,
+        values=[2E-3, 500E-6, 125E-6],
+        map_values=False
+    )
+
+
+    #################################
+    # Source subsystem, 27 Nov 2020 #
+    #################################
+    source_frequency = Instrument.control(
+        ":SOUR:FREQ?", "SOUR:FREQ %g",
+        """ A property that control the internal oscillator (primary PSD) frequency. 
+            range from 300E-3 to 1.15E+7, resolution 6 digits (0.1 mHz under 100 Hz), unit Hz. """,
+        validator=truncated_range,
+        values=[300E-3, 1.15E+7]
+    )
+
+    source_frequency2 = Instrument.control(
+        ":SOUR:FREQ2?", ":SOUR:FREQ2 %g",
+        """ A property that sets/queries the internal oscillator (secondary PSD) frequency used with 
+            detection modes DUAL2 and CASCADE. 
+            range from 300E-3 to 1.15E+7, resolution 6 digits (0.1 mHz under 100 Hz), unit Hz.""",
+        validator=truncated_range,
+        values=[300E-3, 1.15E+7]
+    )
+
+    source_ioscillator = Instrument.control(
+        ":SOUR:IOSC?", ":SOUR:IOSC %s",
+        """ Sets/queries the oscillator output from the OSC OUT terminal.
+        Primary: Sets the primary PSD oscillator.
+        Secondary: Sets the secondary PSD oscillator. Setting takes effect when detection mode is DUAL2, CASCADE. """,
+        validator=strict_discrete_set,
+        values={"Primary": "PRI",
+                "Secondary": "SEC"},
+        map_values=True
     )
 
     source_voltage = Instrument.control(
-        ":SOUR:VOLT?", ":SOUR:VOLT %d",
-        """ A property that control the internal oscillator output voltage AC amplitude. """,
+        ":SOUR:VOLT?", ":SOUR:VOLT %g",
+        """ A property that control the internal oscillator output voltage AC amplitude.
+            Range 0.00000 to 1.000, setting resolution 4 digits (at output voltage range full scale), unit Vrms. """,
         validator=truncated_range,
         values=[0, 1]
+    )
+
+    source_voltage_range = Instrument.control(
+        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %g",
+        """ A property that allow user to set the internal oscillator output voltage range. 
+            The range is {10E-3|100E-3|1}, unit V.
+            Rounding is applied to arbitrary values specified.""",
+        validator=truncated_range,
+        values=[10E-3, 100E-3, 1]
+    )
+
+    source5_voltage_offset = Instrument.control(
+        ":SOUR5:VOLT:OFFS?", ":SOUR5:VOLT:OFFS %g",
+        """ A property that allow the user to sets/queries the AUX OUT 1 output voltage. 
+            THe range from -10.5 to +10.5, resolution 0.001 digits, unit V.""",
+        validator=truncated_range,
+        values=[-10.5, 10.5]
+    )
+
+    source6_voltage_offset = Instrument.control(
+        ":SOUR5:VOLT:OFFS?", ":SOUR5:VOLT:OFFS %g",
+        """ A property that allow the user to sets/queries the AUX OUT 2 output voltage. 
+            THe range from -10.5 to +10.5, resolution 0.001 digits, unit V.""",
+        validator=truncated_range,
+        values=[-10.5, 10.5]
+    )
+
+    #################################
+    # Status subsystem, 27 Nov 2020 #
+    #################################
+    status_operation_enable = Instrument.control(
+        ":STAT:OPER:ENAB?", ":STAT:OPER:ENAB %g",
+        """ Sets/queries the Operation Event Enable register (OPEE).
+            Numeric, range 0 to 65535.
+            Regardless of the value specified, the uppermost bit of the 16-bit binary value is 0.
+            The Operation Condition register contains 0 (all disabled).""",
+        validator=truncated_range,
+        values=[0, 65535]
+    )
+
+    #################################
+    # System subsystem, 27 Nov 2020 #
+    #################################
+    system_key_lock = Instrument.control(
+        ":SYST:KLOC?", ":SYST:KLOC %d",
+        """ Sets/queries the front panel key lock function.
+            On: Enables key lock (disables key operation).
+            Off: Disables key lock (enables key operation).""",
+        validator=strict_discrete_set,
+        values={"On": 1,
+                "Off": 0},
+        map_values=True
+    )
+
+    #################################
+    # Triger subsystem, 27 Nov 2020 #
+    #################################
+    triger_delay = Instrument.control(
+        ":TRIG:DEL?", ":TRIG:DEL %g",
+        """ Sets/queries the trigger delay time. Trigger delay time: Time that elapses between trigger 
+            execution and recording of data or starting of the internal timer. 
+            Numeric, range 0 to 100, unit s, resolution 640ns""",
+        validator=truncated_range,
+        values=[0, 100]
+    )
+
+    triger_source = Instrument.control(
+        ":TRIG:SOUR?", ":TRIG:SOUR %s",
+        """ Sets/queries the trigger source.
+            Manual: Front panel --> TRIG key
+            External: Rear panel TRIG IN signal
+            Bus: Remote control *TRG or :TRIGger[:IMMediate] command, or the GET message """,
+        validator=strict_discrete_set,
+        values={"Manual": "MAN",
+                "External": "EXT",
+                "Bus": "BUS"},
+        map_values=True
     )
 
     ############
@@ -762,47 +907,47 @@ class LI5660(Instrument):
 
         self.write(":ABOR")
 
-    def data1_format(self, FORMAT="Real"):
+    def data1_format(self, display="Real"):
         """ A property that allow user to set the measurement parameters to be displayed and output as DATA1. """
         log.info("The display format is set to {}".format(self.name))
 
-        self.calculate1_format = FORMAT
+        self.calaulate1_format = display
 
-    def data2_format(self, FORMAT="Imaginary"):
+    def data2_format(self, display="Imaginary"):
         """ A property that allow user to set the measurement parameters to be displayed and outpout as DATA2. """
         log.info("The display format is set to {}".format(self.name))
 
-        self.calculate2_format = FORMAT
+        self.calculate2_format = display
 
-    def data3_format(self, FORMAT="Real"):
+    def data3_format(self, display="Real"):
         """ A property that allow user to set the measurement parameters to be displayed and outpout as DATA3. """
         log.info("The display format is set to {}".format(self.name))
 
-        self.calculate3_format = FORMAT
+        self.calculate3_format = display
 
-    def data4_format(self, FORMAT="Imaginary"):
+    def data4_format(self, display="Imaginary"):
         """ A property that allow user to set the measurement parameters to be displayed and outpout as DATA4. """
         log.info("The display format is set to {}".format(self.name))
 
-        self.calculate4_format = FORMAT
+        self.calculate4_format = display
 
-    def current_reference(self, VALUE=1e-15):
+    def current_reference(self, value=1e-15):
         """ A property that allow user to set the current reference value for normalize calculation. """
         log.info("The current reference value for normalize calculation is set to {}".format(self.name))
 
-        self.calculate1_math_current = VALUE
+        self.calculate1_math_current = value
 
-    def calculation_format(self, FORMAT="Reference"):
+    def calculation_format(self, format="Reference"):
         """ A property that allow user to set the normalize calculation format. """
         log.info("The calculation format is set to {}".format(self.name))
 
-        self.calculation1_math_expression_name = FORMAT
+        self.calculation1_math_expression_name = format
 
-    def voltage_reference(self, VALUE=1e-9):
+    def voltage_reference(self, value=1e-9):
         """ A property that allow user to set the voltage reference value for normalize calculation. """
         log.info("The voltage reference value for normalize calculation is set to {}".format(self.name))
 
-        self.calculate1_math_voltage = VALUE
+        self.calculate1_math_voltage = value
 
     def primaryRX_multiplier(self, MULTIPLIER=1):
         """ A property that allow user to set the primary PSD's R, X output common expand multiplier.
@@ -1378,3 +1523,145 @@ class LI5660(Instrument):
             HF {1E-3|2E-3|5E-3|..|1} """
         self.voltage2_ac_range = range
         log.info("Secondary voltage sensitivity is set to {}".format(self.voltage2_ac_range))
+
+    def aux1(self, state="Off"):
+        """ A property that allow user to sets/queries the AUX IN 1 terminal state (enabled or disabled).
+            On: Enables voltage measurement for the AUX IN 1 terminal.
+            Off: Disables voltage measurement for the AUX IN 1 terminal. """
+        self.voltage5_dc_state = state
+        log.info("AUX IN 1 is set to {}".format(self.voltage5_dc_state))
+
+    def aux1_time_constant(self, tc=2E-3):
+        """ A property that allow user to sets/queries the AUX IN 1 filter time constant.
+            THRU: Sets the filter OFF.
+            This is numeric value, range: 2E-3|500E-6|125E-6, unit s.
+            Rounding is applied to arbitrary values specified.
+            Cutoff frequencies are, respectively, about 80 Hz, 320 Hz, and 1.27 kHz. """
+        self.voltage5_dc_timeconstant = tc
+        log.info("AUX IN 1 time constant is set to {}".format(self.voltage5_dc_timeconstant))
+
+    def aux2(self, state="Off"):
+        """ A property that allow user to sets/queries the AUX IN 2 terminal state (enabled or disabled).
+            On: Enables voltage measurement for the AUX IN 2 terminal.
+            Off: Disables voltage measurement for the AUX IN 2 terminal. """
+        self.voltage6_dc_state = state
+        log.info("AUX IN 1 is set to {}".format(self.voltage6_dc_state))
+
+    def aux2_time_constant(self, tc=2E-3):
+        """ A property that allow user to sets/queries the AUX IN 2 filter time constant.
+            THRU: Sets the filter OFF.
+            This is numeric value, range: 2E-3|500E-6|125E-6, unit s.
+            Rounding is applied to arbitrary values specified.
+            Cutoff frequencies are, respectively, about 80 Hz, 320 Hz, and 1.27 kHz. """
+        self.voltage6_dc_timeconstant = tc
+        log.info("AUX IN 1 time constant is set to {}".format(self.voltage6_dc_timeconstant))
+
+    def primary_oscillator(self, hz=300E-3):
+        """ A property that control the internal oscillator (primary PSD) frequency. 
+            range from 300E-3 to 1.15E+7, resolution 6 digits (0.1 mHz under 100 Hz), unit Hz. """
+        self.source_frequency = hz
+        log.info("The internal primary PSD oscillator frequency is set to {}".format(self.source_frequency))
+
+    def secondary_oscillator(self, hz=300E-3):
+        """ A property that control the internal oscillator (primary PSD) frequency. 
+            range from 300E-3 to 1.15E+7, resolution 6 digits (0.1 mHz under 100 Hz), unit Hz. """
+        self.source_frequency2 = hz
+        log.info("The internal primary PSD oscillator frequency is set to {}".format(self.source_frequency2))
+
+    def oscillator(self, source="Primary"):
+        """ Sets/queries the oscillator output from the OSC OUT terminal.
+            Primary: Sets the primary PSD oscillator.
+            Secondary: Sets the secondary PSD oscillator. Setting takes effect when detection mode is DUAL2, CASCADE. """
+        self.source_ioscillator = source
+        log.info("The oscillator output from the OSC OUT terminal is set to {}".format(self.source_ioscillator))
+
+    def oscillator_amplitude(self, output=0.5):
+        """ A property that control the internal oscillator output voltage AC amplitude.
+            Range 0.00000 to 1.000, setting resolution 4 digits (at output voltage range full scale), unit Vrms. """
+        self.source_voltage = output
+        log.info("The oscillator output voltage AC amplitude is set to ", self.source_voltage)
+
+    def oscillator_voltage_range(self, max=100E-3):
+        """ A property that allow user to set the internal oscillator output voltage range. 
+            The range is {10E-3|100E-3|1}, unit V.
+            Rounding is applied to arbitrary values specified."""
+        self.source_voltage_range = max
+        log.info("The output voltage range is set to ", self.source_voltage_range)
+
+    def aux1_offset(self, offset=0):
+        """ A property that allow the user to sets/queries the AUX OUT 1 output voltage. 
+            THe range from -10.5 to +10.5, resolution 0.001 digits, unit V."""
+        self.source5_voltage_offset = offset
+        log.info("The AUX OUT 1 output voltage offset is set to ", self.source5_voltage_offset)
+
+    def aux2_offset(self, offset=0):
+        """ A property that allow the user to sets/queries the AUX OUT 2 output voltage. 
+            THe range from -10.5 to +10.5, resolution 0.001 digits, unit V."""
+        self.source6_voltage_offset = offset
+        log.info("The AUX OUT 1 output voltage offset is set to ", self.source6_voltage_offset)
+
+    def operation_status(self):
+        """ A property that allow the user to queries the operation condition register (OPCT). 
+            Response a numeric value, format NR1, range from 0 to 65535."""
+        return self.write(":STAT:OPER:COND?")
+
+    # def operation_status_enable(self, enable=0):
+    #     """ Sets/queries the Operation Event Enable register (OPEE).
+    #         Numeric, range 0 to 65535.
+    #         Regardless of the value specified, the uppermost bit of the 16-bit binary value is 0.
+    #         The Operation Condition register contains 0 (all disabled)."""
+    #     self.status_operation_enable = enable
+    #     log.info("The operation event enable register is set to ", self.status_operation_enable)
+
+    def system_error(self):
+        """ Queried the error content. """
+        errors = []
+        while True:
+            err = self.values(":SYST:ERR?")
+            if int(err[0]) != 0:
+                errmsg = "NF LI5660: {}, {}".format(err[0], err[1])
+                log.error(errmsg + "\n")
+                errors.append(errmsg)
+            else:
+                break
+        return errors
+
+    def key_lock(self, lock="On"):
+        """ Sets/queries the front panel key lock function.
+            On: Enables key lock (disables key operation).
+            Off: Disables key lock (enables key operation)."""
+
+        self.system_key_lock = lock
+        log.info("The system key lock is set to ", self.system_key_lock)
+
+    def initializers(self):
+        """ Initializes settings.
+            Unlike the *RST command, this command also clears the contents of configuration memories 1 to 9. """
+        
+        self.write(":SYST:RST")
+        log.info("Initializes settings.")
+
+    def delay(self, delaytime=0):
+        """ Sets/queries the trigger delay time. Trigger delay time: Time that elapses between trigger 
+            execution and recording of data or starting of the internal timer. 
+            Numeric, range 0 to 100, unit s, resolution 640ns"""
+        self.triger_delay = delaytime
+        log.info("The delay the trigering at ", self.triger_delay)
+
+    def triger(self):
+        """ When the measurement data buffer is enabled, executes a trigger and records data in the measurement buffer.
+            When the internal timer is disabled, measurement data is recorded only once.
+            When the internal timer is enabled, starts recording measurement data according to the internal timer.
+            Enable the measurement data buffer.
+            Set the internal timer.
+            Before using triggers, the awaiting trigger state must be set with the :INITiate[:IMMediate] command. An error 
+            will result if the awaiting trigger state has not been set. """
+        self.write(":TRIG")
+
+    def source_triger(self, source="Bus"):
+        """ Sets/queries the trigger source.
+            Manual: Front panel --> TRIG key
+            External: Rear panel TRIG IN signal
+            Bus: Remote control *TRG or :TRIGger[:IMMediate] command, or the GET message """
+        self.triger_source = source
+        log.info("The triger source is set to ", self.triger_source)
