@@ -28,6 +28,7 @@ from pymeasure.experiment.parameters import Parameter
 from pymeasure.experiment.parameters import IntegerParameter
 from pymeasure.experiment.parameters import BooleanParameter
 from pymeasure.experiment.parameters import FloatParameter
+from pymeasure.experiment.parameters import ListParameter
 
 
 def test_parameter_default():
@@ -98,5 +99,15 @@ def test_float_bounds():
         p.value = 10  # above maximum
     with pytest.raises(ValueError):
         p.value = -10  # below minimum
+
+def test_list_type():
+    # no choices set
+    p = ListParameter('Test')
+    with pytest.raises(ValueError):
+        p.value = 1 # choices not set
+    
+    # choices have same string representation
+    with pytest.raises(ValueError):
+        p = ListParameter('Test', choices=[1., 1.0])
 
 # TODO: Add tests for VectorParameter, ListParamter, and Measurable

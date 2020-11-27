@@ -265,6 +265,7 @@ class VectorParameter(Parameter):
 
 class ListParameter(Parameter):
     """ :class:`.Parameter` sub-class that stores the value as a list.
+    String representation of value must be unique.
 
     :param name: The parameter name
     :param choices: An explicit list of choices, which is disregarded if None
@@ -275,7 +276,15 @@ class ListParameter(Parameter):
 
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
-        self._choices = tuple(choices) if choices is not None else None
+        if choices is not None:
+            self._choices = tuple(choices)
+            self._choices_dict = {str(i): i for i in self._choices}
+            if len(self._choices) != len(self._choices_dict.keys()):
+                raise ValueError(
+                    "Choices of ListParameter %s are not unique" % name)
+        else:
+            self._choices = None
+            self._choices_dict = None
         self.units = units
 
     @property
@@ -287,8 +296,8 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        if self._choices is not None and value in self._choices:
-            self._value = value
+        if self._choices is not None and str(value) in self._choices_dict.keys():
+            self._value = self._choices_dict[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
