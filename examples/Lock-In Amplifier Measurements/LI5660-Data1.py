@@ -19,9 +19,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.graphWidget = pg.PlotWidget()
         self.setCentralWidget(self.graphWidget)
 
-        # self.x = list(range(100))  # 100 time points
-        # self.y = [randint(0,100) for _ in range(100)]  # 100 data points
-
         self.fetchData = self.nf.fetch_data
 
         self.x = [0, 0]
@@ -33,7 +30,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_line =  self.graphWidget.plot(self.x, self.y, pen=pen)
         self.graphWidget.setYRange(min=0.324, max=0.335)
 
-        # ... init continued ...
         self.timer = QtCore.QTimer()
         self.timer.setInterval(50)
         self.timer.timeout.connect(self.update_plot_data)
