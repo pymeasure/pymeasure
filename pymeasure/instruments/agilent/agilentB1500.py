@@ -490,22 +490,18 @@ class AgilentB1500(Instrument):
         :rtype: class
         """
         classes = {
-            "FMT21": self._data_formatting_FMT21,
             "FMT1": self._data_formatting_FMT1,
-            "FMT11": self._data_formatting_FMT11
+            "FMT11": self._data_formatting_FMT11,
+            "FMT21": self._data_formatting_FMT21
             }
         try:
             format_class = classes[output_format_str]
         except KeyError:
-            print((
-                "Data Format {0} is not implemented "
-                "so far. Please set appropriate Data Format."
-                ).format(output_format_str))
             log.error((
                 "Data Format {0} is not implemented "
                 "so far. Please set appropriate Data Format."
                 ).format(output_format_str))
-            return None
+            return
         else:
             return format_class(smu_names)
 
@@ -515,14 +511,18 @@ class AgilentB1500(Instrument):
         interpreting the measurement values read from the instrument.
         (``FMT``)
 
+        Currently implemented are format 1, 11, and 21.
+
         :param output_format: Output format string, e.g. ``FMT21``
         :type output_format: str
         :param mode: Data output mode, defaults to 0 (only measurement
                      data is returned)
         :type mode: int, optional
         """
+        # restrict to implemented formats
         output_format = strict_discrete_set(
-            output_format, [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25])
+            output_format, [1, 11, 21])
+        # possible: [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25]
         mode = strict_range(mode, range(0, 11))
         self.write("FMT %d, %d" % (output_format, mode))
         self.check_errors()
