@@ -275,22 +275,7 @@ class ListParameter(Parameter):
 
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
-        if choices is None:
-            self._choices = None
-            self._choices_type = type(None)
-        else:
-            self._choices = tuple(choices)
-            choices_type = set([type(choice) for choice in self._choices])
-            if len(choices_type) == 1:
-                self._choices_type = choices_type.pop()
-            else:
-                for choice_type in choices_type:
-                    # check if only different numeric types -> OK
-                    if choice_type not in [int, float]:
-                        raise TypeError(
-                            "Parameter choices are supposed to have the same type."
-                        )
-                self._choices_type = float  # for str conversion from CSV
+        self._choices = tuple(choices) if choices is not None else None
         self.units = units
 
     @property
@@ -302,23 +287,11 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        if self._choices is not None:
-            if isinstance(value, str) and self._choices_type == str:
-                # string value and list of strings -> no conversion
-                pass
-            elif isinstance(value, str) and callable(self._choices_type):
-                # string value but no list of strings -> conversion
-                value = self._choices_type(value)
-
-            if value in self._choices:
-                self._value = value
-            else:
-                raise ValueError(
-                    "Invalid choice for parameter. "
-                    "Must be one of %s" % str(self._choices)
-                )
+        if self._choices is not None and value in self._choices:
+            self._value = value
         else:
-            raise ValueError("List of choices is not set.")
+            raise ValueError("Invalid choice for parameter. "
+                             "Must be one of %s" % str(self._choices))
 
     @property
     def choices(self):

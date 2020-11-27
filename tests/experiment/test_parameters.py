@@ -28,7 +28,6 @@ from pymeasure.experiment.parameters import Parameter
 from pymeasure.experiment.parameters import IntegerParameter
 from pymeasure.experiment.parameters import BooleanParameter
 from pymeasure.experiment.parameters import FloatParameter
-from pymeasure.experiment.parameters import ListParameter
 
 
 def test_parameter_default():
@@ -99,55 +98,5 @@ def test_float_bounds():
         p.value = 10  # above maximum
     with pytest.raises(ValueError):
         p.value = -10  # below minimum
-
-def test_list_type():
-    # no choices set
-    p = ListParameter('Test')
-    with pytest.raises(ValueError):
-        p.value = 1 # choices not set
-    
-    # choices have different types
-    with pytest.raises(TypeError):
-        p = ListParameter('Test', choices=[1, 1.5, '2'])
-
-    # choices: int and float
-    p = ListParameter('Test', choices=[1, 1.5, 2])
-    assert p._choices_type == float
-    p.value = 2
-    assert p.value == 2
-    p.value = '2' # reading from file
-    assert p.value == 2
-    p.value = 1.5
-    assert p.value == 1.5
-    p.value = '1.5' # reading from file
-    assert p.value == 1.5
-    with pytest.raises(ValueError):
-        p.value = 1.7 # not in list
-    with pytest.raises(ValueError):
-        p.value = '1.7' # not in list
-
-    # choices: int
-    p = ListParameter('Test', choices=[1, 2, 3])
-    assert p._choices_type == int
-    p.value = 2
-    assert p.value == 2
-    p.value = '2' # reading from file
-    assert p.value == 2
-    with pytest.raises(ValueError):
-        p.value = 1.7 # no int
-    with pytest.raises(ValueError):
-        p.value = '1.7' # no int
-
-    # choices: str
-    p = ListParameter('Test', choices=['ab', 'bc', 'cd', '1'])
-    assert p._choices_type == str
-    p.value = 'bc'
-    assert p.value == 'bc'
-    with pytest.raises(ValueError):
-        p.value = 1 # wrong type from code
-    with pytest.raises(ValueError):
-        p.value = 'b' # not in list
-    with pytest.raises(ValueError):
-        p.value = 2 # not in list
 
 # TODO: Add tests for VectorParameter, ListParamter, and Measurable
