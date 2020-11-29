@@ -391,8 +391,8 @@ class ManagedWindow(QtGui.QMainWindow):
 
         system = platform.system()
         if (system == 'Windows'):
-            proc = subprocess.Popen(['start',  '', filename], shell=True)
-        elif (platform.system() == 'Linux'):
+            proc = subprocess.Popen(['start', '', filename], shell=True)
+        elif (system == 'Linux'):
             proc = subprocess.Popen([self.EDITOR, filename])
 
     def make_procedure(self):
@@ -766,7 +766,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         system = platform.system()
         if (system == 'Windows'):
             proc = subprocess.Popen(['start', '', filename], shell=True)
-        elif (platform.system() == 'Linux'):
+        elif (system == 'Linux'):
             proc = subprocess.Popen([self.EDITOR, filename])
 
     def make_procedure(self):
