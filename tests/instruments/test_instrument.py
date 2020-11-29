@@ -221,3 +221,63 @@ def test_setting_process():
     assert fake.read() == 'OUT 0'
     fake.x = 2
     assert fake.read() == 'OUT 1'
+
+def test_instrument_parameter():
+    class GenericInstrument(FakeInstrument):
+        __param_range = Instrument.InstrumentParameter("PARAM_RANGE")
+        PARAM_RANGE = (1, 10) # Redefine this in subclasses to reflect actual instrument value
+
+        __param1_range = Instrument.InstrumentParameter("PARAM1_RANGE")
+        PARAM1_RANGE = (1, 10) # Redefine this in subclasses to reflect actual instrument value
+
+        __values_map = Instrument.InstrumentParameter("VALUES_MAP")
+        VALUES_MAP={'X': 1, 'Y': 2, 'Z': 3}
+            
+        fake_ctrl = Instrument.control(
+            ":PARAM?;", ":PARAM %e Hz;",
+            """ A property that represents ...
+            """,
+            validator=strict_range,
+            values=__param_range
+        )
+        fake_setting = Instrument.setting(
+            ":PARAM1 %e Hz;",
+            """ A property that represents ...
+            """,
+            validator=strict_range,
+            values=__param1_range
+        )
+        fake_measurement = Instrument.measurement(
+            "",
+            """ A property that represents ...
+            """,
+            values=__values_map,
+            map_values = True
+        )
+    class SpecificInstrument1(GenericInstrument):
+        PARAM_RANGE = (1, 10)
+        PARAM1_RANGE = (1, 10)
+        VALUES_MAP={'X': 1, 'Y': 2, 'Z': 3}
+
+    class SpecificInstrument2(GenericInstrument):
+        PARAM_RANGE = (10, 20)
+        PARAM1_RANGE = (10, 20)
+        VALUES_MAP={'X': 4, 'Y': 5, 'Z': 6}
+    
+    s1 = SpecificInstrument1()
+    s2 = SpecificInstrument2()
+    
+    s2.fake_ctrl = 15
+    with pytest.raises(ValueError) as e_info:
+        s1.fake_ctrl = 15
+
+    s2.fake_setting = 15
+    with pytest.raises(ValueError) as e_info:
+        s1.fake_setting = 15
+
+    s1.read()
+    s2.read()
+    s1.write('1')
+    s2.write('4')
+    assert s1.fake_measurement == 'X'
+    assert s2.fake_measurement == 'X'

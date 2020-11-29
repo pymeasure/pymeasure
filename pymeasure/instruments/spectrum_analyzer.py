@@ -35,26 +35,38 @@ class SpectrumAnalyzer(Instrument):
     and provides a high-level interface for taking scans of
     high-frequency spectrums
     """
-    REFERENCE_LEVEL_RANGE_MIN_dBm = -170
-    REFERENCE_LEVEL_RANGE_MAX_dBm = 30
 
-    FREQUENCY_MIN_Hz = 1
-    FREQUENCY_MAX_Hz = 26.5e9
+    __reference_level_range = Instrument.InstrumentParameter("REFERENCE_LEVEL_RANGE_dBm")
+    REFERENCE_LEVEL_RANGE_dBm = (-170, 30) # Redefine this in subclasses to reflect actual instrument value
 
-    RESOLUTION_BW_RANGE_MIN_Hz = 1
-    RESOLUTION_BW_RANGE_MAX_Hz = 8e6
+    __frequency_range = Instrument.InstrumentParameter("FREQUENCY_RANGE_Hz")
+    FREQUENCY_RANGE_Hz = (1, 26.5e9) # Redefine this in subclasses to reflect actual instrument value
 
-    INPUT_ATTENUATION_RANGE_dB = [0, 70]
+    __resolution_bw_range = Instrument.InstrumentParameter("RESOLUTION_BW_RANGE_Hz")
+    RESOLUTION_BW_RANGE_Hz = (1, 8e6) # Redefine this in subclasses to reflect actual instrument value
 
-    SWEEP_POINTS_RANGE = [101, 8192]
+    __input_attenuation_range = Instrument.InstrumentParameter("INPUT_ATTENUATION_RANGE_dB")
+    INPUT_ATTENUATION_RANGE_dB = [0, 70] # Redefine this in subclasses to reflect actual instrument value
 
-    DETECTOR_VALUES=["NORM", "AVER", "POS", "SAMP", "NEG", "QPE", "EAV", "EPOS", "MPOS", "RMS"],
+    __span_frequency_range = Instrument.InstrumentParameter("SPAN_FREQUENCY_RANGE_Hz")
+    SPAN_FREQUENCY_RANGE_Hz = (0, 26.5e9) # Redefine this in subclasses to reflect actual instrument value
+
+    __sweep_points_range = Instrument.InstrumentParameter("SWEEP_POINTS_RANGE")
+    SWEEP_POINTS_RANGE = [101, 8192] # Redefine this in subclasses to reflect actual instrument value
+
+    __detectors = Instrument.InstrumentParameter("DETECTORS")
+    DETECTORS=["NORM", "AVER", "POS", "SAMP", "NEG", "RMS"] # Redefine this in subclasses to reflect actual instrument value
+
+    __trace_modes = Instrument.InstrumentParameter("TRACE_MODES")
+    TRACE_MODES = ("WRITE", "MAXHOLD", "MINHOLD", "VIEW", "BLANK") # Redefine this in subclasses to reflect actual instrument value
 
     reference_level = Instrument.control(
         ":DISPlay:WINDow:TRACe:Y:RLEVel?;", ":DISPlay:WINDow:TRACe:Y:RLEVel %e dBm;",
         """ A floating point property that represents the absolute amplitude of the top graticule line on the display (the
-reference level) in dBm. This property can be set.
-        """
+        reference level) in dBm. This property can be set.
+        """,
+        validator=truncated_range,
+        values=__reference_level_range
     )
 
     resolution_bw = Instrument.control(
@@ -62,9 +74,8 @@ reference level) in dBm. This property can be set.
         """ A floating point property that represents the instrument resolution bandwidth (RBW) in Hz.
         This property can be set.
         """,
-        #validator=truncated_range,
-        #values=RESOLUTION_BW_RANGE_Hz,
-        cast=int
+        validator=truncated_range,
+        values=__resolution_bw_range,
     )
 
     input_attenuation = Instrument.control(
@@ -72,9 +83,8 @@ reference level) in dBm. This property can be set.
         """ An integer property that represents the instrument the input attenuation in dB.
         This property can be set.
         """,
-        #validator=truncated_range,
-        #values=INPUT_ATTENUATION_RANGE_dB,
-        cast=int
+        validator=truncated_range,
+        values=__input_attenuation_range,
     )
 
     frequency_span = Instrument.control(
@@ -82,9 +92,8 @@ reference level) in dBm. This property can be set.
         """ An integer property that represents the frequency span
         in Hz. This property can be set.
         """,
-        #validator=truncated_range,
-        #values=FREQUENCY_SPAN_RANGE_Hz,
-        cast=int
+        validator=truncated_range,
+        values=__span_frequency_range,
     )
 
     start_frequency = Instrument.control(
@@ -104,9 +113,8 @@ reference level) in dBm. This property can be set.
         """ An integer property that represents the number of frequency
         points in the sweep. This property can take values from 101 to 8192.
         """,
-        #validator=truncated_range,
-        #values=SWEEP_POINTS_RANGE,
-        cast=int
+        validator=truncated_range,
+        values=__sweep_points_range,
     )
     frequency_step = Instrument.control(
         ":SENS:FREQ:CENT:STEP:INCR?;", ":SENS:FREQ:CENT:STEP:INCR %g Hz;",
@@ -132,20 +140,19 @@ reference level) in dBm. This property can be set.
         """ A string property that allows you to select a specific type of detector
         in seconds. This property can be set.
         """,
-        #validator=strict_discrete_set,
-        #values=DETECTOR_VALUES,
-        cast=str
+        validator=strict_discrete_set,
+        values=__detectors,
     )
 
-    sweep_mode = Instrument.control(
+    sweep_mode_continuous = Instrument.control(
         ":INITiate:CONTinuous?;", ":INITiate:CONTinuous %d;",
         """ A boolean property that allows you to switches the analyzer between continuous-sweep and single-sweep mode.
         This property can be set.
         """,
         validator=strict_discrete_set,
-        values=[0, 1],
-        cast=int
+        values=["ON", "OFF"],
     )
+
     TRACE_MODE_COMMAND = ":TRACe:MODE"
     trace_mode = Instrument.control(
         TRACE_MODE_COMMAND + "?;",  TRACE_MODE_COMMAND + " %s;",
@@ -154,7 +161,7 @@ reference level) in dBm. This property can be set.
         This property can be set.
         """,
         validator=strict_discrete_set,
-        values=["WRITE", "MAXHOLD", "MINHOLD", "VIEW", "BLANK"],
+        values=__trace_modes,
         cast=str
     )
 
@@ -199,10 +206,8 @@ reference level) in dBm. This property can be set.
             'Peak (dB)': self.trace(number)
         })
 
-    def sweep_start(self):
-        pass
-
     def sweep_single(self):
+        """ Perform a single sweep and wait for completion. 'sweep_mode_continuous' must be OFF """
         self.write("INIT:IMM")
         self.complete
         

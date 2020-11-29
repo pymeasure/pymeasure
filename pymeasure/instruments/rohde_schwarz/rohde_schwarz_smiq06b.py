@@ -39,29 +39,18 @@ class RS_SMIQ06B(SignalGenerator):
         'external':'EXT',
     }
 
-    PULSE_SOURCES = {
-    }
-
     pulse_source = Instrument.property_not_supported()
 
-    PULSE_INPUTS = {
-    }
     pulse_input = Instrument.property_not_supported()
     pulse_frequency = Instrument.property_not_supported()
 
     low_freq_out_enable = Instrument.property_not_supported()
     low_freq_out_amplitude = Instrument.property_not_supported()
-
-    LOW_FREQUENCY_SOURCES = {
-    }
-
     low_freq_out_source = Instrument.property_not_supported()
 
     def config_low_freq_out(self, source='internal', amplitude=3):
         raise Exception ("Not available")
 
-    INTERNAL_SHAPES = {
-    }
     internal_shape = Instrument.property_not_supported()
 
     ####################################################################

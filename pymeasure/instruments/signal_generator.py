@@ -34,25 +34,54 @@ string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
 class SignalGenerator(Instrument):
-    """Represents a generic analog Signal Generator and 
+    """Represents a generic Signal Generator and 
     provides a high-level interface for interacting with 
     the instrument.
     """
+    __power_range = Instrument.InstrumentParameter("POWER_RANGE_dBm")
     POWER_RANGE_MIN_dBm = -130.0
     POWER_RANGE_MAX_dBm = 30.0
-    POWER_RANGE_dBm = [POWER_RANGE_MIN_dBm, POWER_RANGE_MAX_dBm]
+    POWER_RANGE_dBm = (POWER_RANGE_MIN_dBm, POWER_RANGE_MAX_dBm) # Redefine this in subclasses to reflect actual instrument value
 
-    FREQUENCY_MIN_Hz = 1
-    FREQUENCY_MAX_Hz = 1e9
-    FREQUENCY_RANGE_Hz = [FREQUENCY_MIN_Hz, FREQUENCY_MAX_Hz]
+    __frequency_range = Instrument.InstrumentParameter("FREQUENCY_RANGE_Hz")
+    FREQUENCY_RANGE_Hz = (1, 26.5e9) # Redefine this in subclasses to reflect actual instrument value
+
+    __amplitude_sources = Instrument.InstrumentParameter("AMPLITUDE_SOURCES")
+    AMPLITUDE_SOURCES = {
+        'internal':'INT', 'internal 2':'INT2', 
+        'external':'EXT', 'external 2':'EXT2'
+    }
+
+    __pulse_sources = Instrument.InstrumentParameter("PULSE_SOURCES")
+    PULSE_SOURCES = {
+        'internal':'INT', 'external':'EXT', 'scalar':'SCAL'
+    }
+
+    __pulse_inputs = Instrument.InstrumentParameter("PULSE_INPUTS")
+
+    PULSE_INPUTS = {
+        'square':'SQU', 'free-run':'FRUN',
+        'triggered':'TRIG', 'doublet':'DOUB', 'gated':'GATE'
+    }
+
+    __low_frequency_sources = Instrument.InstrumentParameter("LOW_FREQUENCY_SOURCES")
+    LOW_FREQUENCY_SOURCES = {
+        'internal':'INT', 'internal 2':'INT2', 'function':'FUNC', 'function 2':'FUNC2'
+    }
+
+    __internal_shapes = Instrument.InstrumentParameter("INTERNAL_SHAPES")
+    INTERNAL_SHAPES = {
+        'sine':'SINE', 'triangle':'TRI', 'square':'SQU', 'ramp':'RAMP', 
+        'noise':'NOIS', 'dual-sine':'DUAL', 'swept-sine':'SWEP'
+    }
 
     power = Instrument.control(
         ":POW?;", ":POW %g dBm;",
         """ A floating point property that represents the output power
         in dBm. This property can be set.
         """,
-        #validator=strict_range,
-        #values=lambda x: (getattr(x, 'POWER_RANGE_MIN_dBm'), getattr(x, 'POWER_RANGE_MAX_dBm'))
+        validator=strict_range,
+        values=POWER_RANGE_dBm
     )
     frequency = Instrument.control(
         ":FREQ?;", ":FREQ %e Hz;",
@@ -123,17 +152,13 @@ class SignalGenerator(Instrument):
         validator=truncated_range,
         values=[0, 100]
     )
-    AMPLITUDE_SOURCES = {
-        'internal':'INT', 'internal 2':'INT2', 
-        'external':'EXT', 'external 2':'EXT2'
-    }
     amplitude_source = Instrument.control(
         ":SOUR:AM:SOUR?", ":SOUR:AM:SOUR %s",
         """ A string property that controls the source of the amplitude modulation
         signal, which can take the values: 'internal', 'internal 2', 'external', and
         'external 2'. """,
         validator=strict_discrete_set,
-        values=AMPLITUDE_SOURCES,
+        values=__amplitude_sources,
         map_values=True
     )
 
@@ -148,22 +173,17 @@ class SignalGenerator(Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
     )
-    PULSE_SOURCES = {
-        'internal':'INT', 'external':'EXT', 'scalar':'SCAL'
-    }
+
     pulse_source = Instrument.control(
         ":SOUR:PULM:SOUR?", ":SOUR:PULM:SOUR %s",
         """ A string property that controls the source of the pulse modulation
         signal, which can take the values: 'internal', 'external', and
         'scalar'. """,
         validator=strict_discrete_set,
-        values=PULSE_SOURCES,
+        values=__pulse_sources,
         map_values=True
     )
-    PULSE_INPUTS = {
-        'square':'SQU', 'free-run':'FRUN',
-        'triggered':'TRIG', 'doublet':'DOUB', 'gated':'GATE'
-    }
+
     pulse_input = Instrument.control(
         ":SOUR:PULM:SOUR:INT?", ":SOUR:PULM:SOUR:INT %s",
         """ A string property that controls the internally generated modulation
@@ -171,7 +191,7 @@ class SignalGenerator(Instrument):
         'triggered', 'doublet', and 'gated'.
         """,
         validator=strict_discrete_set,
-        values=PULSE_INPUTS,
+        values=__pulse_inputs,
         map_values=True
     )
     pulse_frequency = Instrument.control(
@@ -201,17 +221,13 @@ class SignalGenerator(Instrument):
         values=[0,3.5]
     )
 
-    LOW_FREQUENCY_SOURCES = {
-        'internal':'INT', 'internal 2':'INT2', 'function':'FUNC', 'function 2':'FUNC2'
-    }
-
     low_freq_out_source = Instrument.control(
         ":SOUR:LFO:SOUR?", ":SOUR:LFO:SOUR %s",
         """A string property which controls the source of the low frequency output, which
         can take the values 'internal [2]' for the inernal source, or 'function [2]' for an internal
         function generator which can be configured.""",
         validator=strict_discrete_set,
-        values=LOW_FREQUENCY_SOURCES,
+        values=__low_frequency_sources,
         map_values=True
     )
 
@@ -236,17 +252,13 @@ class SignalGenerator(Instrument):
         validator=truncated_range,
         values=[0.5, 1e6]
     )
-    INTERNAL_SHAPES = {
-        'sine':'SINE', 'triangle':'TRI', 'square':'SQU', 'ramp':'RAMP', 
-        'noise':'NOIS', 'dual-sine':'DUAL', 'swept-sine':'SWEP'
-    }
     internal_shape = Instrument.control(
         ":SOUR:AM:INT:FUNC:SHAP?", ":SOUR:AM:INT:FUNC:SHAP %s",
         """ A string property that controls the shape of the internal oscillations,
         which can take the values: 'sine', 'triangle', 'square', 'ramp', 'noise',
         'dual-sine', and 'swept-sine'. """,
         validator=strict_discrete_set,
-        values=INTERNAL_SHAPES,
+        values=__internal_shapes,
         map_values=True
     )
 
