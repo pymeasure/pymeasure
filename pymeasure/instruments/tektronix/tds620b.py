@@ -130,11 +130,11 @@ class TDS620B(Instrument):
         self.data_source = source
         return self.ask('WFMPre:'+source+'?')
 
-    def get_binary_curve(self, source='CH1', hires='False'):
+    def get_binary_curve(self, source='CH1', encoding='RIPBINARY', hires=False):
         """
         Convenience function to get the curve data from the sources available in self.data_source using binary encoding.
         """
-        self.data_encoding = 'RIPBINARY'
+        self.data_encoding = encoding
         self.data_source = source
         if not hires:
             self.data_width = 1
