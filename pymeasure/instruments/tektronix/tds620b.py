@@ -138,10 +138,10 @@ class TDS620B(Instrument):
         self.data_source = source
         if not hires:
             self.data_width = 1
-            out = self.binary_values('CURVe', dtype=np.int8)
+            out = self.binary_values('CURVe?', dtype=np.int8)
         else:
             self.data_width = 2
-            out = self.binary_values('CURVe', dtype=np.int16)
+            out = self.binary_values('CURVe?', dtype=np.int16)
 
         return out
 
@@ -155,7 +155,7 @@ class TDS620B(Instrument):
             self.data_width = 1
         else:
             self.data_width = 2
-        out = self.ask('CURVe')
+        out = self.ask('CURVe?')
         return out
 
 
