@@ -29,7 +29,7 @@ from pytest import approx
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 
-pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa-sim'))
+pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa_sim'))
 
 
 def test_visa_version():
