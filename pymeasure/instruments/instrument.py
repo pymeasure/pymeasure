@@ -72,9 +72,7 @@ class DynamicProperty(property):
                 kwargs[attr]=getattr(obj, attr1)
         self.fset(obj, value, **kwargs)
 
-    def set_name(self, name):
-        """ This method is used to set the name of the property, that is the
-            the class attribute name defined as property. """
+    def __set_name__(self, owner, name):
         self.name = name
 
 class Instrument(object):
@@ -90,12 +88,6 @@ class Instrument(object):
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
-        # Associate property name to each DynamicProperty class attribute
-        for obj in [self] + self.__class__.mro():
-            for attr in obj.__dict__:
-                if isinstance(obj.__dict__[attr], DynamicProperty):
-                    obj.__dict__[attr].set_name(attr)
-
         try:
             if isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
