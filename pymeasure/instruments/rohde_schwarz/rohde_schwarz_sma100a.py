@@ -29,8 +29,12 @@ class RS_SMA100A(SignalGenerator):
     POWER_RANGE_MIN_dBm = -147.0
     POWER_RANGE_MAX_dBm = 18.0
 
+    POWER_RANGE_dBm = (POWER_RANGE_MIN_dBm, POWER_RANGE_MAX_dBm)
+
     FREQUENCY_MIN_Hz = 9e3
     FREQUENCY_MAX_Hz = 6e9
+
+    FREQUENCY_RANGE_Hz = (FREQUENCY_MIN_Hz, FREQUENCY_MAX_Hz)
 
     has_modulation = SignalGenerator.measurement(":MOD?",
         """ Reads a boolean value that is True if the modulation is enabled. """,
