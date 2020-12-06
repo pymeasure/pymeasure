@@ -155,139 +155,6 @@ class Instrument(object):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
     @staticmethod
-    def _general_control(get_command,
-                         set_command,
-                         docs,
-                         validator=lambda v, vs: v,
-                         values=(),
-                         map_values=False,
-                         get_process=lambda v: v,
-                         set_process=lambda v: v,
-                         command_process=lambda c: c,
-                         check_set_errors=False,
-                         check_get_errors=False,
-                         no_getting = False,
-                         no_setting = False,
-                         dynamic=False,
-                         **kwargs):
-        """Returns a property for the class based on the supplied
-        commands. This static method is internal and it should  not be called directly.
-        The methods to be called by users are control/measurement/setting
-
-        :param get_command: A string command that asks for the value
-        :param set_command: A string command that writes the value
-        :param docs: A docstring that will be included in the documentation
-        :param validator: A function that takes both a value and a group of valid values
-                          and returns a valid value, while it otherwise raises an exception
-        :param values: A list, tuple, range, or dictionary of valid values, that can be used
-                       as to map values if :code:`map_values` is True.
-        :param map_values: A boolean flag that determines if the values should be
-                          interpreted as a map
-        :param get_process: A function that take a value and allows processing
-                            before value mapping, returning the processed value
-        :param set_process: A function that takes a value and allows processing
-                            before value mapping, returning the processed value
-        :param command_process: A function that take a command and allows processing
-                            before executing the command, for getting
-        :param check_set_errors: Toggles checking errors after setting
-        :param check_get_errors: Toggles checking errors after getting
-        :param no_getting: Disable fget
-        :param no_setting: Disable fset
-        :param dynamic: boolean to indicate whether property is dynamic
-        """
-
-        if dynamic:
-            dyn_list = list(vars().keys())
-            for element in ["dynamic", "no_setting", "no_getting"]:
-                 dyn_list.remove(element)
-
-        def fget(self,
-                 get_command=get_command, 
-                 values=values,
-                 map_values=map_values,
-                 get_process = get_process,
-                 command_process=command_process,
-                 check_get_errors=check_get_errors,
-        ):
-            vals = self.values(command_process(get_command), **kwargs)
-            if check_get_errors:
-                self.check_errors()
-            if len(vals) == 1:
-                value = get_process(vals[0])
-                if not map_values:
-                    return value
-                elif isinstance(values, (list, tuple, range)):
-                    return values[int(value)]
-                elif isinstance(values, dict):
-                    for k,v in values.items():
-                        if v == value:
-                            return k
-                else:
-                    raise ValueError(
-                        'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values))
-                    )
-            else:
-                vals = get_process(vals)
-                return vals
-
-        def fset(self,
-                 value,
-                 set_command=set_command, 
-                 validator=validator,
-                 values=values, 
-                 map_values=map_values,
-                 set_process=set_process,
-                 check_set_errors=check_set_errors,
-        ):
-
-            value = set_process(validator(value, values))
-            if not map_values:
-                pass
-            elif isinstance(values, (list, tuple, range)):
-                value = values.index(value)
-            elif isinstance(values, dict):
-                value = values[value]
-            else:
-                raise ValueError(
-                    'Values of type `{}` are not allowed '
-                    'for Instrument.control'.format(type(values))
-                )
-            self.write(set_command % value)
-            if check_set_errors:
-                self.check_errors()
-
-        if no_getting:
-            def fgetError():
-                raise LookupError("Instrument property can not be read.")
-            fget = fgetError
-
-        if no_setting:
-            def fsetError():
-                raise LookupError("Instrument property can not be set.")
-            fset = fsetError
-
-        # Add the specified document string to the getter
-        fget.__doc__ = docs
-
-        if dynamic:
-            # Compute list of parameters supporting dynamic value
-            fget_list = []
-            for var in fget.__code__.co_varnames:
-                if var in dyn_list:
-                    fget_list.append(var)
-
-            # Compute list of parameters supporting dynamic value
-            fset_list = []
-            for var in fset.__code__.co_varnames:
-                if var in dyn_list:
-                    fset_list.append(var)
-
-            return DynamicProperty(fget_list, fset_list, fget, fset)
-        else:
-            return property(fget, fset)
-
-    @staticmethod
     def control(get_command,
                 set_command,
                 docs,
@@ -303,7 +170,7 @@ class Instrument(object):
                 **kwargs):
         """Returns a property for the class based on the supplied
         commands. This property may be set and read from the
-        instrument.
+        instrument. See also :meth:`measurement` and :meth:`setting`.
 
         :param get_command: A string command that asks for the value
         :param set_command: A string command that writes the value
@@ -343,21 +210,105 @@ class Instrument(object):
             instrument = SpecificInstrument()
             instrument.center_frequency_values = (1, 6e9) # Redefined at instance level
 
-        """
+        .. warning:: Unexepected side effects when using dynamic properties
 
-        return Instrument._general_control(get_command=get_command,
-                                           set_command=set_command,
-                                           docs=docs,
-                                           validator=validator,
-                                           values=values,
-                                           map_values=map_values,
-                                           get_process=get_process,
-                                           set_process=set_process,
-                                           command_process=command_process,
-                                           check_set_errors=check_set_errors,
-                                           check_get_errors=check_get_errors,
-                                           dynamic=dynamic,
-                                           **kwargs)
+        Users must pay attention when using dynamic properties, since definition of class and/or instance 
+        attributes matching specific patterns could have unwanted side effect.
+        The attribute name pattern `property_param`, where `property` is the name of the dynamic property (e.g. `center_frequency` in the example)
+        and `param` is any of this method parameters name except `dynamic` (e.g. `values` in the example) has to be considered reserved for
+        dynamic property control.
+        """
+        
+        
+
+        if dynamic:
+            dyn_list = list(vars().keys())
+            dyn_list.remove("dynamic")
+
+        if get_command is None:
+            def fget(self):
+                raise LookupError("Instrument property can not be read.")
+        else:
+            def fget(self,
+                     get_command=get_command, 
+                     values=values,
+                     map_values=map_values,
+                     get_process = get_process,
+                     command_process=command_process,
+                     check_get_errors=check_get_errors,
+            ):
+                vals = self.values(command_process(get_command), **kwargs)
+                if check_get_errors:
+                    self.check_errors()
+                if len(vals) == 1:
+                    value = get_process(vals[0])
+                    if not map_values:
+                        return value
+                    elif isinstance(values, (list, tuple, range)):
+                        return values[int(value)]
+                    elif isinstance(values, dict):
+                        for k,v in values.items():
+                            if v == value:
+                                return k
+                    else:
+                        raise ValueError(
+                            'Values of type `{}` are not allowed '
+                            'for Instrument.control'.format(type(values))
+                        )
+                else:
+                    vals = get_process(vals)
+                    return vals
+
+        if set_command is None:
+            def fset(self, value):
+                raise LookupError("Instrument property can not be set.")
+        else:
+            def fset(self,
+                     value,
+                     set_command=set_command, 
+                     validator=validator,
+                     values=values, 
+                     map_values=map_values,
+                     set_process=set_process,
+                     check_set_errors=check_set_errors,
+            ):
+
+                value = set_process(validator(value, values))
+                if not map_values:
+                    pass
+                elif isinstance(values, (list, tuple, range)):
+                    value = values.index(value)
+                elif isinstance(values, dict):
+                    value = values[value]
+                else:
+                    raise ValueError(
+                        'Values of type `{}` are not allowed '
+                        'for Instrument.control'.format(type(values))
+                    )
+                self.write(set_command % value)
+                if check_set_errors:
+                    self.check_errors()
+
+        # Add the specified document string to the getter
+        fget.__doc__ = docs
+
+        if dynamic:
+            # Compute list of parameters supporting dynamic value
+            fget_list = []
+            for var in fget.__code__.co_varnames:
+                if var in dyn_list:
+                    fget_list.append(var)
+
+            # Compute list of parameters supporting dynamic value
+            fset_list = []
+            for var in fset.__code__.co_varnames:
+                if var in dyn_list:
+                    fset_list.append(var)
+
+            return DynamicProperty(fget_list, fset_list, fget, fset)
+        else:
+            return property(fget, fset)
+
     @staticmethod
     def measurement(get_command, docs, values=(), map_values=None,
                     get_process=lambda v: v, command_process=lambda c: c,
@@ -381,17 +332,16 @@ class Instrument(object):
 
         """
 
-        return Instrument._general_control(get_command=get_command,
-                                           set_command=None,
-                                           docs=docs,
-                                           values=values,
-                                           map_values=map_values,
-                                           get_process=get_process,
-                                           command_process=command_process,
-                                           check_get_errors=check_get_errors,
-                                           dynamic=dynamic,
-                                           no_setting=True,
-                                           **kwargs)
+        return Instrument.control(get_command=get_command,
+                                  set_command=None,
+                                  docs=docs,
+                                  values=values,
+                                  map_values=map_values,
+                                  get_process=get_process,
+                                  command_process=command_process,
+                                  check_get_errors=check_get_errors,
+                                  dynamic=dynamic,
+                                  **kwargs)
 
     @staticmethod
     def setting(set_command, docs,
@@ -417,17 +367,16 @@ class Instrument(object):
         :param dynamic: Specify whether the property parameters are meant to be changed in instances or subclasses. See :meth:`control` for an usage example.
         """
 
-        return Instrument._general_control(get_command=None,
-                                           set_command=set_command,
-                                           docs=docs,
-                                           validator=validator,
-                                           values=values,
-                                           map_values=map_values,
-                                           set_process=set_process,
-                                           check_set_errors=check_set_errors,
-                                           dynamic=dynamic,
-                                           no_getting=True,
-                                           **kwargs)
+        return Instrument.control(get_command=None,
+                                  set_command=set_command,
+                                  docs=docs,
+                                  validator=validator,
+                                  values=values,
+                                  map_values=map_values,
+                                  set_process=set_process,
+                                  check_set_errors=check_set_errors,
+                                  dynamic=dynamic,
+                                  **kwargs)
 
 
     # TODO: Determine case basis for the addition of this method
