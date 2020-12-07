@@ -24,7 +24,7 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
-    strict_range, joined_validators
+    strict_range, joined_validators, truncated_range
 import numpy as np
 
 def capitalize_string(string: str, *args, **kwargs):
@@ -104,7 +104,9 @@ class TDS620B(Instrument):
 
     data_encoding = Instrument.control(
         "DATa:ENCdg?", "DATa:ENCdg %s",
-        """A string property that sets the data encoding for transfer. """,
+        """A string property that sets the data encoding for transfer. 
+        Options are 'RIPBINARY', 'RPBINARY', 'SRIBINARY', 'SRPBINARY'. The 'SRIBINARY' is the default, tested, value
+         for the defaults of pymeasure's get_binary_values""",
         validator=string_validator,
         values=['ASCII', 'RIPBINARY', 'RPBINARY', 'SRIBINARY', 'SRPBINARY']
     )
@@ -123,6 +125,71 @@ class TDS620B(Instrument):
         values=[1, 2]
     )
 
+    trigger_details = Instrument.measurement(
+        "TRIGGER?",
+        """Outputs a semicolon-delimited list of the current trigger parameters of the scope""",
+    )
+
+    trigger_main_details = Instrument.measurement(
+        "TRIGGER:MAIn:EDGE?",
+        """Outputs a semicolon-delimited list of the main trigger parameters of the scope""",
+    )
+
+    trigger_main_edge_coupling = Instrument.control(
+        "TRIGger:MAIn:EDGE:COUPling?", "TRIGger:MAIn:EDGE:COUPling %s",
+        """A string property that sets the main coupling. Options are: 'AC', 'DC', 'HFRej', 'LFRej', 'NOISErej' """,
+        validator=string_validator,
+        values=['AC', 'DC', 'HFRej', 'LFRej', 'NOISErej']
+    )
+
+    trigger_main_edge_slope = Instrument.control(
+        "TRIGger:MAIn:EDGE:SLOpe?", "TRIGger:MAIn:EDGE:SLOpe %s",
+        """A string property that sets the trigger slope to look at the rising ('RISe') or falling ('FALL') edge  """,
+        validator=string_validator,
+        values=['FALL', 'RISe']
+    )
+
+    trigger_main_edge_source = Instrument.control(
+        "TRIGger:MAIn:EDGE:SOUrce?", "TRIGger:MAIn:EDGE:SOUrce %s",
+        """A string property that sets the main trigger source. Options are 'CH1', 'CH2', 'CH3', 'CH4', 'LINE' """,
+        validator=string_validator,
+        values=['CH1', 'CH2', 'CH3', 'CH4', 'LINE']
+    )
+
+    trigger_main_holdoff_time = Instrument.control(
+        "TRIGger:MAIn:HOLDOff:TIMe?", "TRIGger:MAIn:HOLDOff:TIMe %g",
+        """A float property setting the holdoff time in seconds. Limits are 250 ns to 12 s.
+          """,
+        validator=truncated_range,
+        values=[250e-9,12]
+    )
+
+    trigger_main_level = Instrument.control(
+        "DATa:SOUrce?", "DATa:SOUrce %g",
+        """A float property that sets the main trigger level. """,
+        validator=truncated_range,
+        values=[-10.0,10.0]
+    )
+
+    trigger_main_type = Instrument.control(
+        "TRIGger:MAIn:TYPe?", "TRIGger:MAIn:TYPe %s",
+        """A string property that sets the main trigger type. 'EDGE' is the normal, classic trigger. 
+         PULse and LOGIc are also included but untested.""",
+        validator=string_validator,
+        values=['EDGE', 'LOGIc', 'PULse']
+    )
+
+
+
+
+    def force_trigger(self):
+        """
+        Forces a trigger event to occur
+        """
+        self.write('TRIGGER FORCe')
+
+
+
     def get_waveform_parameters(self, source):
         """
         Get the waveform parameters for a given waveform source.
@@ -130,7 +197,7 @@ class TDS620B(Instrument):
         self.data_source = source
         return self.ask('WFMPre:'+source+'?')
 
-    def get_binary_curve(self, source='CH1', encoding='RIPBINARY', hires=False):
+    def get_binary_curve(self, source='CH1', encoding='SRIBINARY', hires=False):
         """
         Convenience function to get the curve data from the sources available in self.data_source using binary encoding.
         """
