@@ -165,7 +165,7 @@ class TDS620B(Instrument):
     )
 
     trigger_main_level = Instrument.control(
-        "DATa:SOUrce?", "DATa:SOUrce %g",
+        "TRIGger:MAIn:LEVel?", "TRIGger:MAIn:LEVel %g",
         """A float property that sets the main trigger level. """,
         validator=truncated_range,
         values=[-10.0,10.0]
