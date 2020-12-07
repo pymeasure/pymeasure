@@ -202,6 +202,7 @@ class TDS620B(Instrument):
         values=['EDGE', 'LOGIc', 'PULse']
     )
 
+
     horizontal_secperdiv = Instrument.control(
         "HORizontal:SECdiv?", "HORizontal:SECdiv %g",
         """A float property that sets seconds per division. Ranges from 200 ps/div to 10 s/div,
@@ -339,6 +340,7 @@ class TDS620B(Instrument):
         validator=truncated_range,
         values=[1e-3, 10]
     )
+
 
 
     def force_trigger(self):
