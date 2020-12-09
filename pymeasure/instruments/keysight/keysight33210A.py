@@ -69,7 +69,7 @@ class Keysight33210A(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
-        super Keysight33210A, self).__init__(
+        super (Keysight33210A, self).__init__(
             adapter,
             "Keysight 33210A Arbitrary Waveform generator",
             **kwargs

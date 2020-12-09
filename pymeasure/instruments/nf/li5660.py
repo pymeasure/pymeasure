@@ -30,6 +30,8 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from pyvisa.errors import VisaIOError
 
+buffers = {"Buffer1": "BUF1", "Buffer2": "BUF2", "Buffer3": "BUF3"}
+
 class LI5660(Instrument):
 
     def __init__(self, resourceName, **kwargs):
@@ -38,9 +40,6 @@ class LI5660(Instrument):
             "NF Lock-In Amplifier LI5600",
             **kwargs
         )
-        self.buffers = {"Buffer1": "BUF1",
-                        "Buffer2": "BUF2",
-                        "Buffer3": "BUF3"}
 
     ####################################
     # Calculate subsystem, 23 Nov 2020 #
@@ -842,6 +841,11 @@ class LI5660(Instrument):
     #################################
     # Status subsystem, 27 Nov 2020 #
     #################################
+    status_operation_condition = Instrument.measurement(
+        ":STAT:OPER:COND?",
+        """ Queries the operation condition register (OPCR). """
+    )
+
     status_operation_enable = Instrument.control(
         ":STAT:OPER:ENAB?", ":STAT:OPER:ENAB %g",
         """ Sets/queries the Operation Event Enable register (OPEE).
@@ -878,7 +882,7 @@ class LI5660(Instrument):
         values=[0, 100]
     )
 
-    triger_source = Instrument.control(
+    trigger_source = Instrument.control(
         ":TRIG:SOUR?", ":TRIG:SOUR %s",
         """ Sets/queries the trigger source.
             Manual: Front panel --> TRIG key
@@ -1042,15 +1046,23 @@ class LI5660(Instrument):
 
         self.calculation_method = method
 
+    def buffers(self, buffer):
+        buffer_list = {"Buffer1": "BUF1", "Buffer2": "BUF2", "Buffer3": "BUF3"}
+        return buffer_list[buffer]
+
     def get_buffer(self, buffer="Buffer1", lenght=1, start=0):
         """ A aquire the floating point data through binary transfer. """
-
-        return self.values(":DATA:DATA? {}, {}, {}".format(self.buffers[buffer], lenght, start))
+        buffers = {"Buffer1": "BUF1",
+                  "Buffer2": "BUF2",
+                  "Buffer3": "BUF3"}
+        return self.values(":DATA:DATA? {}, {}, {}".format(buffers[buffer], lenght, start))
 
     def clere_buffer(self, buffer="Buffer1"):
         """ Clears the specified measurement data buffer. """
-
-        self.write(":DATA:DEL {}".format(self.buffers[buffer]))
+        buffers = {"Buffer1": "BUF1",
+                  "Buffer2": "BUF2",
+                  "Buffer3": "BUF3"}
+        self.write(":DATA:DEL {}".format(buffers[buffer]))
 
     def clear_all_buffer(self):
         """ Clear all measurement data buffers. """
@@ -1058,22 +1070,26 @@ class LI5660(Instrument):
 
     def data_feed(self, buffer="Buffer1", data=30):
         """ Set measurement data sets recorded in measurement data buffer 1, 2 or 3. """
-        buffer = {"Buffer1": "BUF1",
+        buffers = {"Buffer1": "BUF1",
                   "Buffer2": "BUF2",
                   "Buffer3": "BUF3"}
-        self.write(":DATA:FEED {}, {}".format(self.buffers[buffer], data))
+        self.write(":DATA:FEED {}, {}".format(buffers[buffer], data))
 
     def data_feed_control(self, buffer="Buffer1", state="Always"):
         """ Set whether measurement data is to be recorded in a measurement data buffer. """
-
+        buffers = {"Buffer1": "BUF1",
+                  "Buffer2": "BUF2",
+                  "Buffer3": "BUF3"}
         status = {"Always": "ALW",
                   "Never": "NEV"}
-        self.write(":DATA:FEED:CONT {}, {}".format(self.buffers[buffer], status[state]))
+        self.write(":DATA:FEED:CONT {}, {}".format(buffers[buffer], status[state]))
 
     def data_points(self, buffer="Buffer1", size=16):
         """ Set measurement data buffer size. """
-
-        self.write(":DATA:POIN {}, {}".format(self.buffers[buffer], size))
+        buffers = {"Buffer1": "BUF1",
+                  "Buffer2": "BUF2",
+                  "Buffer3": "BUF3"}
+        self.write(":DATA:POIN {}, {}".format(buffers[buffer], size))
 
     def interval(self, time=10E-3):
         """ A property that allow user to set the internal timer time interval. """
@@ -1625,7 +1641,7 @@ class LI5660(Instrument):
         self.triger_delay = delaytime
         log.info("The delay the trigering at {}".format(self.triger_delay))
 
-    def triger(self):
+    def trigger(self):
         """ When the measurement data buffer is enabled, executes a trigger and records data in the measurement buffer.
             When the internal timer is disabled, measurement data is recorded only once.
             When the internal timer is enabled, starts recording measurement data according to the internal timer.
@@ -1635,10 +1651,10 @@ class LI5660(Instrument):
             will result if the awaiting trigger state has not been set. """
         self.write(":TRIG")
 
-    def source_triger(self, source="Bus"):
+    def source_trigger(self, source="Bus"):
         """ Sets/queries the trigger source.
             Manual: Front panel --> TRIG key
             External: Rear panel TRIG IN signal
             Bus: Remote control *TRG or :TRIGger[:IMMediate] command, or the GET message """
-        self.triger_source = source
-        log.info("The triger source is set to {}".format(self.triger_source))
+        self.trigger_source = source
+        log.info("The triger source is set to {}".format(self.trigger_source))
