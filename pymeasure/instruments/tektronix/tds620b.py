@@ -221,7 +221,7 @@ class TDS620B(Instrument):
     )
 
     CH1 = Instrument.measurement(
-        "CH1?"
+        "CH1?",
         """A property that returns all vertical paramters associated with CH1""",
     )
 
@@ -281,7 +281,7 @@ class TDS620B(Instrument):
     )
 
     CH2 = Instrument.measurement(
-        "CH2?"
+        "CH2?",
         """A property that returns all vertical paramters associated with CH2""",
     )
 
