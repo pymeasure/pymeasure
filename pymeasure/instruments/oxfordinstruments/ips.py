@@ -53,6 +53,11 @@ class IPS(Instrument):
     _MAX_CURRENT = 120  # Ampere
     _MAX_VOLTAGE = 10  # Volts
 
+    version = Instrument.measurement(
+        "V",
+        """ A string property that returns the version of the IPS. """
+    )
+
     control_mode = Instrument.control(
         "X", "$C%d",
         """ A string property that sets the IPS in LOCAL or REMOTE and LOCKEd,
