@@ -23,3 +23,4 @@
 #
 
 from .itc503 import ITC503
+from .ips import IPS
