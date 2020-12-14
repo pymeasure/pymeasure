@@ -92,21 +92,21 @@ class IPS(Instrument):
         "X",
         """ A integer property that returns the magnet polarity of 
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[13]),
+        get_process=lambda v: int(v[13]),
     )
 
     polarity_contactor = Instrument.measurement(
         "X",
         """ A integer property that returns the contactor status of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[14]),
+        get_process=lambda v: int(v[14]),
     )
 
     switch_heater_status = Instrument.measurement(
         "X",
         """ A integer property that returns the switch heater status of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[8]),
+        get_process=lambda v: int(v[8]),
     )
 
     current_setpoint = Instrument.control(
