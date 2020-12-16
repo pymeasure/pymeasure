@@ -402,6 +402,44 @@ class SR860(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
+    def snap(self, val1="X", val2="Y", val3=None):
+        """retrieve 2 or 3 parameters at once
+        parameters can be chosen by index, or enumeration as follows:
+
+        j enumeration parameter     j enumeration parameter
+
+        0 X           X output      9 YNOise      Ynoise
+        1 Y           Youtput      10 OUT1        Aux Out1
+        2 R           R output     11 OUT2        Aux Out2
+        3 THeta       θ output     12 PHAse       Reference Phase
+        4 IN1         Aux In1      13 SAMp        Sine Out Amplitude
+        5 IN2         Aux In2      14 LEVel       DC Level
+        6 IN3         Aux In3      15 FInt        Int. Ref. Frequency
+        7 IN4         Aux In4      16 FExt        Ext. Ref. Frequency
+        8 XNOise      Xnoise
+        
+        :param val1: parameter enumeration/index
+        :param val2: parameter enumeration/index
+        :param val3: parameter enumeration/index (optional)
+
+        Defaults:
+            val1 = "X"
+            val2 = "Y"
+            val3 = None
+        """
+        if val3 is None:
+            return self.adapter.values(
+                command=f"SNAP? {val1}, {val2}",
+                separator=",",
+                cast=float,
+            )
+        else:
+            return self.adapter.values(
+                command=f"SNAP? {val1}, {val2}, {val3}",
+                separator=",",
+                cast=float,
+            )
+
     gettimebase = Instrument.measurement(
         "TBSTAT?",
         """Returns the current 10 MHz timebase source."""
