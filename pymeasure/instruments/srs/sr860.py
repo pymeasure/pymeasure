@@ -478,6 +478,11 @@ class SR860(Instrument):
     )
 
     def screenshot(self):
+        """Take screenshot on device
+        The DCAP command saves a screenshot to a USB memory stick.
+        This command is the same as pressing the [Screen Shot] key.
+        A USB memory stick must be present in the front panel USB port.
+        """
         self.write("DCAP")
 
     parameter_DAT1 = Instrument.control(
