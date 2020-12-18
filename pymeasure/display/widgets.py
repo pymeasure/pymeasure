@@ -1055,10 +1055,8 @@ class EstimatorThread(StoppableQThread):
 
     def run(self):
         self._should_stop.clear()
-        log.info("doing something")
 
         while not self._should_stop.wait(self.delay):
-            log.info("doing something again")
             estimates = self._get_estimates()
             self.new_estimates.emit(estimates)
 
