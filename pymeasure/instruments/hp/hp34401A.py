@@ -34,7 +34,7 @@ class HP34401A(Instrument):
     
     current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
     
-    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
+    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF, DEF", "AC current, in Amps")
     
     resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
     
@@ -47,3 +47,5 @@ class HP34401A(Instrument):
             **kwargs
         )
 
+    def get_current(self):
+        return self.values("MEAS:CURR:AC? DEF, DEF")
