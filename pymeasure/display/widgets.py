@@ -104,9 +104,9 @@ class PlotFrame(QtGui.QFrame):
             if isinstance(item, ResultsCurve):
                 if self.check_status:
                     if item.results.procedure.status == Procedure.RUNNING:
-                        item.update()
+                        item.update_data()
                 else:
-                    item.update()
+                    item.update_data()
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
@@ -128,7 +128,7 @@ class PlotFrame(QtGui.QFrame):
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
                 item.x = axis
-                item.update()
+                item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
@@ -138,21 +138,45 @@ class PlotFrame(QtGui.QFrame):
         for item in self.plot.items:
             if isinstance(item, ResultsCurve):
                 item.y = axis
-                item.update()
+                item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
 
+class TabWidget(object):
+    """ Utility class to define default implementation for some basic methods """
+    def __init__(self, name, index):
+        self.name = name
+        self.set_index(index)
 
-class PlotWidget(QtGui.QWidget):
+    def new_curve(self, *args, **kwargs):
+        """ Create a new curve """
+        return None
+
+    def load(self, curve):
+        """ Add curve to widget """
+        pass
+
+    def remove(self, curve):
+        """ Remove curve from widget """
+        pass
+
+    def get_index(self):
+        return self.index
+
+    def set_index(self, value):
+        self.index = value
+
+class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True,
+    def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True,
                  parent=None):
-        super().__init__(parent)
+        super().__init__(name, None)
+        super(TabWidget, self).__init__(parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -233,6 +257,11 @@ class PlotWidget(QtGui.QWidget):
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
+    def load(self, curve):
+        self.plot.addItem(curve[self.index])
+
+    def remove(self, curve):
+        self.plot.removeItem(curve[self.index])
 
 class ImageFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -256,7 +285,7 @@ class ImageFrame(QtGui.QFrame):
             if isinstance(item, ResultsImage):
                 item.x = x_axis
                 item.y = y_axis
-                item.update_img()
+                item.update_data()
         xlabel, xunits = self.parse_axis(x_axis)
         self.plot.setLabel('bottom', xlabel, units=xunits, **self.LABEL_STYLE)
         self.x_axis = x_axis
@@ -308,9 +337,9 @@ class ImageFrame(QtGui.QFrame):
             if isinstance(item, ResultsImage):
                 if self.check_status:
                     if item.results.procedure.status == Procedure.RUNNING:
-                        item.update_img()
+                        item.update_data()
                 else:
-                    item.update()
+                    item.update_data()
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
@@ -332,7 +361,7 @@ class ImageFrame(QtGui.QFrame):
         for item in self.plot.items:
             if isinstance(item, ResultsImage):
                 item.z = axis
-                item.update_img()
+                item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
             self.plot.setTitle(label + ' (%s)'%units)
@@ -342,14 +371,15 @@ class ImageFrame(QtGui.QFrame):
         self.z_axis_changed.emit(axis)
 
 
-class ImageWidget(QtGui.QWidget):
+class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
+    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
                  parent=None):
-        super().__init__(parent)
+        super().__init__(name, None)
+        super(TabWidget, self).__init__(parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -400,7 +430,7 @@ class ImageWidget(QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    def new_image(self, results):
+    def new_curve(self, results, color=pg.intColor(0), **kwargs):
         """ Creates a new image """
         image = ResultsImage(results,
                              x=self.image_frame.x_axis,
@@ -413,6 +443,11 @@ class ImageWidget(QtGui.QWidget):
         axis = self.columns_z.itemText(index)
         self.image_frame.change_z_axis(axis)
 
+    def load(self, curve):
+        self.plot.addItem(curve[self.index])
+
+    def remove(self, curve):
+        self.plot.removeItem(curve[self.index])
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):
@@ -448,7 +483,6 @@ class BrowserWidget(QtGui.QWidget):
         vbox.addLayout(hbox)
         vbox.addWidget(self.browser)
         self.setLayout(vbox)
-
 
 class InputsWidget(QtGui.QWidget):
     # tuple of Input classes that do not need an external label
@@ -515,10 +549,10 @@ class InputsWidget(QtGui.QWidget):
         self._procedure.set_parameters(parameter_values)
         return self._procedure
 
-
-class LogWidget(QtGui.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+class LogWidget(TabWidget, QtGui.QWidget):
+    def __init__(self, name, parent=None):
+        super().__init__(name, None)
+        super(TabWidget, self).__init__(parent)
         self._setup_ui()
         self._layout()
 
@@ -538,7 +572,6 @@ class LogWidget(QtGui.QWidget):
 
         vbox.addWidget(self.view)
         self.setLayout(vbox)
-
 
 class ResultsDialog(QtGui.QFileDialog):
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
@@ -593,7 +626,7 @@ class ResultsDialog(QtGui.QFileDialog):
                                  pen=pg.mkPen(color=(255, 0, 0), width=1.75),
                                  antialias=True
                                  )
-            curve.update()
+            curve.update_data()
 
             self.plot.addItem(curve)
 
