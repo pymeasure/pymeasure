@@ -28,6 +28,7 @@ from pyvisa import VisaIOError
 import numpy as np
 import re
 from io import BytesIO
+import warnings
 
 
 class Agilent8722ES(Instrument):
@@ -63,7 +64,7 @@ class Agilent8722ES(Instrument):
         """ An integer representing the number of averages to take. Note that
         averaging must be enabled for this to take effect. This property can be set.
         """,
-        get_process=int
+        cast=int
     )
 
     def __init__(self, resourceName, **kwargs):
@@ -81,7 +82,6 @@ class Agilent8722ES(Instrument):
 
     @property
     def parameter(self):
-        """The S parameter to measure, one of S11, S12, S21, or S22"""
         for parameter in Agilent8722ES.SCATTERING_PARAMETERS:
             if int(self.values("%s?" % parameter)) == 1:
                 return parameter
@@ -89,7 +89,6 @@ class Agilent8722ES(Instrument):
 
     @parameter.setter
     def parameter(self, value):
-        """The S parameter to measure, one of S11, S12, S21, or S22"""
         if value in Agilent8722ES.SCATTERING_PARAMETERS:
             self.write("%s" % value)
         else:
@@ -131,10 +130,11 @@ class Agilent8722ES(Instrument):
                                  "8722ES exceeded")
 
     def set_averaging(self, averages):
-        """Sets the number of averages and enables/disables averaging"""
+        """Sets the number of averages and enables/disables averaging. Should be
+        between 1 and 999"""
         averages = int(averages)
         if not 1 <= averages <= 999:
-            assert RangeException("Invalid number of averages -", averages)
+            assert RangeException("Set", averages, "must be in the range 1 to 999")
         self.averages = averages
         if averages > 1:
             self.enable_averaging()
@@ -153,14 +153,24 @@ class Agilent8722ES(Instrument):
         """ Returns True if averaging is enabled """
         return self.ask("AVERO?") == '1\n'
 
-    def scan(self):
+    def restart_averaging(self, averages):
+        warnings.warn("Don't use restart_averaging(), use scan_single() instead", FutureWarning)
+        
+        if int(averages) > 999 or int(averages) < 0:
+            raise RangeException("Averaging must be in the range 0 to 999")
+        else:
+            self.write("NUMG%d" % averages)
+
+    def scan(self, averages=None, blocking=None, timeout=None, delay=None):
         """ Initiates a scan with the number of averages specified and
-        blocks until the operation is complete
+        blocks until the operation is complete.
         """
+        if averages is not None or blocking is not None or timeout is not None or delay is not None:
+            warnings.warn("averages, blocking, timeout, and delay arguments are no longer used by scan()", FutureWarning)
         self.write("*CLS")
         self.scan_single()
         # All queries will block until the scan is done, so use NOOP? to check.
-        # These queries will time out after several seconds though,
+        # These queries will time out after several seconds though, 
         # so query repeatedly until the scan finishes.
         while True:
             try:
@@ -169,6 +179,10 @@ class Agilent8722ES(Instrument):
             except VisaIOError as e:
                 if e.abbreviation != "VI_ERROR_TMO":
                     raise e
+
+    def is_scan_complete(self):
+        warnings.warn("Don't use is_scan_complete(), it doesn't do anything and will be removed", FutureWarning)
+        # Unless someone finds a way to identify if a scan is done or not without blocking.
 
     def scan_single(self):
         """ Initiates a single scan """
@@ -206,18 +220,52 @@ class Agilent8722ES(Instrument):
 
     @property
     def data_log_magnitude(self):
-        """ Returns the magnitude in dB from the last scan
+        """ Returns the absolute magnitude values in dB from the last scan
         """
-        return 20*np.log10(self.data_magnitude())
+        return 20*np.log10(self.data_magnitude)
 
     @property
     def data_magnitude(self):
-        """ Returns the absolute magnitude from the last scan
+        """ Returns the absolute magnitude values from the last scan
         """
-        return np.sqrt(np.abs(self.data_complex()))
+        return np.abs(self.data_complex)
 
     @property
     def data_phase(self):
         """ Returns the phase in degrees from the last scan
         """
-        return np.angle(self.data_complex())*180/np.pi
+        return np.degrees(np.angle(self.data_complex))
+    
+    @property
+    def data(self):
+        """ Returns the real and imaginary data from the last scan
+        """
+        warnings.warn("Don't use this function, use data_complex instead", FutureWarning)
+        # TODO: Implement binary transfer instead of ASCII
+        data = np.loadtxt(
+            BytesIO(self.ask("FORM4;OUTPDATA")),
+            delimiter=',',
+            dtype=np.float32
+        )
+        return data[:, 0], data[:, 1]
+
+    def log_magnitude(self, real, imaginary):
+        """ Returns the magnitude in dB from a real and imaginary
+        number or numpy arrays
+        """
+        warnings.warn("Don't use log_magnitude(), use data_log_magnitude instead", FutureWarning)
+        return 20*np.log10(self.magnitude(real, imaginary))
+
+    def magnitude(self, real, imaginary):
+        """ Returns the magnitude from a real and imaginary
+        number or numpy arrays
+        """
+        warnings.warn("Don't use magnitude(), use data_magnitude", FutureWarning)
+        return np.sqrt(real**2 + imaginary**2)
+
+    def phase(self, real, imaginary):
+        """ Returns the phase in degrees from a real and imaginary
+        number or numpy arrays
+        """
+        warnings.warn("Don't use phase(), use data_phase instead", FutureWarning)
+        return np.arctan2(imaginary, real)*180/np.pi
