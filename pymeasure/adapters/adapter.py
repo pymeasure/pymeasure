@@ -90,6 +90,9 @@ class Adapter(object):
                     # Need to cast to float first since results are usually
                     # strings and bool of a non-empty string is always True
                     results[i] = bool(float(result))
+                elif cast == int:
+                    # int() can't handle strings with decimals or scientific notation
+                    results[i] = int(float(result))
                 else:
                     results[i] = cast(result)
             except Exception:
