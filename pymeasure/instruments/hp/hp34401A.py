@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 class HP34401A(Instrument):
     """ Represents the HP 34401A instrument.
