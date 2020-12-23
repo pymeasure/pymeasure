@@ -64,7 +64,13 @@ class Agilent8722ES(Instrument):
         """ An integer representing the number of averages to take. Note that
         averaging must be enabled for this to take effect. This property can be set.
         """,
-        cast=int
+        cast=lambda x: int(float(x))  # int() doesn't like converting scientific notation values directly from strings
+    )
+    averaging_enabled = Instrument.control(
+        "AVERO?", "AVERO%d",
+        """ A bool that indicates whether or not averaging is enabled. This property
+        can be set.""",
+        cast=bool
     )
 
     def __init__(self, resourceName, **kwargs):
@@ -136,30 +142,26 @@ class Agilent8722ES(Instrument):
         if not 1 <= averages <= 999:
             assert RangeException("Set", averages, "must be in the range 1 to 999")
         self.averages = averages
-        if averages > 1:
-            self.enable_averaging()
-        else:
-            self.disable_averaging()
+        self.averaging_enabled = (averages > 1)
 
     def disable_averaging(self):
         """Disables averaging"""
-        self.write("AVERO0")
+        warnings.warn("Don't use disable_averaging(), use averaging_enabled = False instead", FutureWarning)
+        self.averaging_enabled = False
 
     def enable_averaging(self):
         """Enables averaging"""
-        self.write("AVERO1")
+        warnings.warn("Don't use enable_averaging(), use averaging_enabled = True instead", FutureWarning)
+        self.averaging_enabled = True
 
     def is_averaging(self):
         """ Returns True if averaging is enabled """
-        return self.ask("AVERO?") == '1\n'
+        warnings.warn("Don't use is_averaging(), use averaging_enabled instead", FutureWarning)
+        return self.averaging_enabled
 
     def restart_averaging(self, averages):
         warnings.warn("Don't use restart_averaging(), use scan_single() instead", FutureWarning)
-        
-        if int(averages) > 999 or int(averages) < 0:
-            raise RangeException("Averaging must be in the range 0 to 999")
-        else:
-            self.write("NUMG%d" % averages)
+        self.scan_single()
 
     def scan(self, averages=None, blocking=None, timeout=None, delay=None):
         """ Initiates a scan with the number of averages specified and
@@ -175,18 +177,15 @@ class Agilent8722ES(Instrument):
         while True:
             try:
                 self.ask("NOOP?")
-                break
             except VisaIOError as e:
                 if e.abbreviation != "VI_ERROR_TMO":
                     raise e
-
-    def is_scan_complete(self):
-        warnings.warn("Don't use is_scan_complete(), it doesn't do anything and will be removed", FutureWarning)
-        # Unless someone finds a way to identify if a scan is done or not without blocking.
+            else:
+                break
 
     def scan_single(self):
         """ Initiates a single scan """
-        if self.is_averaging():
+        if self.averaging_enabled:
             self.write("NUMG%d" % self.averages)
         else:
             self.write("SING")
@@ -241,13 +240,8 @@ class Agilent8722ES(Instrument):
         """ Returns the real and imaginary data from the last scan
         """
         warnings.warn("Don't use this function, use data_complex instead", FutureWarning)
-        # TODO: Implement binary transfer instead of ASCII
-        data = np.loadtxt(
-            BytesIO(self.ask("FORM4;OUTPDATA")),
-            delimiter=',',
-            dtype=np.float32
-        )
-        return data[:, 0], data[:, 1]
+        data_complex = self.data_complex
+        return data_complex.real, data_complex.complex
 
     def log_magnitude(self, real, imaginary):
         """ Returns the magnitude in dB from a real and imaginary
