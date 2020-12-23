@@ -40,6 +40,21 @@ class HP34401A(Instrument):
     
     resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
 
+    trigger_source = Instrument.control(
+        ":TRIG:SOUR?", ":TRIG:SOUR %s",
+        """ Sets/queries the trigger source.
+            Immediate: In the internal trigger mode (remote interface only), the trigger signal is always present. 
+                        When you place the multimeter in the wait-for-trigger state, the trigger is issued immediately.
+            External: Accept a hardware trigger applied to the Ext Trig terminal
+            Bus: This mode is similar to the single trigger mode from the front panel, but you trigger the multimeter 
+                by sending a bus trigger command. """,
+        validator=strict_discrete_set,
+        values={"Immediate": "IMM",
+                "External": "EXT",
+                "Bus": "BUS"},
+        map_values=True
+    )
+
     def __init__(self, resourceName, **kwargs):
         super(HP34401A, self).__init__(
             resourceName,
@@ -47,5 +62,22 @@ class HP34401A(Instrument):
             **kwargs
         )
 
-    def get_current(self):
-        return self.values("MEAS:CURR:AC? DEF, DEF")
+    def ac_current_configure(self):
+        """ Preset and configure the multimeter for ac current measurements with
+            the specified range and resolution.
+            This command does not initiate the measurement.
+            For ac measurements, resolution is actually fixed at 6(1/2) digits.
+            The resolution parameter only affects the front-panel display."""
+        self.write("CONF:CURR:AC {range}, {resolution}".format(range="MAX", resolution="MAX"))
+
+    def initiate(self):
+        """ Use the INITiate command after you have configured the multimeter for the measurement. 
+            This changes the state of the triggering system from the “idle” state to the 
+            “wait-for-trigger” state."""
+
+        self.write("INIT")
+
+    def source_tigger(self, source="Immediate"):
+        """ Set the trigger source. """
+        self.trigger_source = source
+
