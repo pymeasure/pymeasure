@@ -33,7 +33,7 @@ from pymeasure.adapters.visa import VISAAdapter
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-
+reserved_prefix = "___"
 class DynamicProperty(property):
     """ This property redefines get and set in a "dynamic" fashion
     :param fget_list: List of parameter's names that are dynamically configurable
@@ -51,13 +51,14 @@ class DynamicProperty(property):
 
     def __get__(self, obj, objtype=None):
         if obj is None:
-            return self
+            # Property return itself when invocad from a class
+            return self 
         if self.fget is None:
             raise AttributeError("unreadable attribute")
 
         kwargs = {}
         for attr in self.fget_list:
-            attr1 = "_".join([self.name,attr])
+            attr1 = reserved_prefix + "_".join([self.name,attr])
             if hasattr(obj, attr1):
                 kwargs[attr]=getattr(obj, attr1)
         return self.fget(obj, **kwargs)
@@ -67,7 +68,7 @@ class DynamicProperty(property):
             raise AttributeError("can't set attribute")
         kwargs = {}
         for attr in self.fset_list:
-            attr1 = "_".join([self.name,attr])
+            attr1 = reserved_prefix + "_".join([self.name,attr])
             if hasattr(obj, attr1):
                 kwargs[attr]=getattr(obj, attr1)
         self.fset(obj, value, **kwargs)
@@ -85,6 +86,20 @@ class Instrument(object):
     :param name: A string name
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     """
+
+    # Variable holding the list of DynamicProperty parameters that are configurable
+    # by users
+    special_keys = ('get_command',
+                    'set_command',
+                    'docs',
+                    'validator',
+                    'values',
+                    'map_values',
+                    'get_process',
+                    'set_process=',
+                    'command_process',
+                    'check_set_errors',
+                    'check_get_errors')
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
@@ -113,7 +128,45 @@ class Instrument(object):
                                              """ TODO: Add this doc """)
 
         self.isShutdown = False
+        self._special_names = self._compute_special_names()
+
         log.info("Initializing %s." % self.name)
+
+    def _compute_special_names(self):
+        """ Internal method, not intended to be accessed at user level.
+        Compute the list of special names based on the list of 
+        class variable names defined as DynamicProperty. Check also for class variables
+        with special name and copy them at instance level """
+        special_names = []
+        # Check if class variable of DynamicProperty type are present
+        for obj in [self] + self.__class__.mro():
+            for attr in obj.__dict__:
+                if isinstance(obj.__dict__[attr], DynamicProperty):
+                    special_names += [attr + "_" + key for key in Instrument.special_keys]
+        # Check if special variables are defined at class level
+        for obj in [self] + self.__class__.mro():
+            for attr in obj.__dict__:
+                if attr in special_names:
+                    # Copy class special variable at instance level, prefixing reserved_prefix
+                    setattr(self,reserved_prefix + attr, obj.__dict__[attr])
+        return special_names
+
+    def __setattr__(self, name, value):
+        """ Add reserved_prefix in front of special variables """
+        if '_special_names' in self.__dict__:
+            if name in self._special_names:
+                name = reserved_prefix + name
+        super().__setattr__(name, value)
+
+    def __getattribute__(self, name):
+        """ Allow to refuse access to variables with special names used to
+        support dynamic property behaviour """
+        if name in ('_special_names', '__dict__'):
+            return super().__getattribute__(name)
+        if '_special_names' in self.__dict__:
+            if name in self._special_names:
+                raise AttributeError("{} is a reserved variable name and it cannot be read".format(name))
+        return super().__getattribute__(name)
 
     @property
     def id(self):
@@ -218,12 +271,6 @@ class Instrument(object):
         and `param` is any of this method parameters name except `dynamic` (e.g. `values` in the example) has to be considered reserved for
         dynamic property control.
         """
-        
-        
-
-        if dynamic:
-            dyn_list = list(vars().keys())
-            dyn_list.remove("dynamic")
 
         if get_command is None:
             def fget(self):
@@ -250,6 +297,7 @@ class Instrument(object):
                         for k,v in values.items():
                             if v == value:
                                 return k
+                        raise KeyError("Value {} not found in mapped values".format(value))
                     else:
                         raise ValueError(
                             'Values of type `{}` are not allowed '
@@ -296,13 +344,13 @@ class Instrument(object):
             # Compute list of parameters supporting dynamic value
             fget_list = []
             for var in fget.__code__.co_varnames:
-                if var in dyn_list:
+                if var in Instrument.special_keys:
                     fget_list.append(var)
 
             # Compute list of parameters supporting dynamic value
             fset_list = []
             for var in fset.__code__.co_varnames:
-                if var in dyn_list:
+                if var in Instrument.special_keys:
                     fset_list.append(var)
 
             return DynamicProperty(fget_list, fset_list, fget, fset)

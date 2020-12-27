@@ -299,6 +299,10 @@ def test_instrument_dynamic_parameter():
     assert s2.fake_measurement == 'X'
 
     s1.fake_ctrl_validator=truncated_range # Try truncated range
+    with pytest.raises(AttributeError) as e_info:
+        # Reading a special variable is not allowed
+        s1.fake_ctrl_validator
+        
     s1.fake_ctrl = 15
     s1.fake_ctrl_validator=strict_range # Back to strict_range
     with pytest.raises(ValueError) as e_info:
