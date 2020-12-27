@@ -16,14 +16,21 @@ Installing Python and PyMeasure are demonstrated in the :doc:`Quick Start guide 
 
 PyMeasure is currently under active development, so please report any issues you experience on our `Issues page`_.
 
-.. image:: https://ci.appveyor.com/api/projects/status/hcj2n2a7l97wfbb8/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/cjermain/pymeasure
+.. image:: https://github.com/pymeasure/pymeasure/workflows/Pymeasure%20CI/badge.svg
+    :target: https://github.com/pymeasure/pymeasure/actions
 
-.. image:: https://travis-ci.org/pymeasure/pymeasure.svg?branch=master
-    :target: https://travis-ci.org/pymeasure/pymeasure
+.. image:: http://readthedocs.org/projects/pymeasure/badge/?version=latest
+    :target: http://pymeasure.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
-.. image:: https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat
-    :target: http://pymeasure.readthedocs.org/en/latest/
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3732545.svg
+   :target: https://doi.org/10.5281/zenodo.3732545
+
+.. image:: https://anaconda.org/conda-forge/pymeasure/badges/version.svg
+   :target: https://anaconda.org/conda-forge/pymeasure
+
+.. image:: https://anaconda.org/conda-forge/pymeasure/badges/downloads.svg
+   :target: https://anaconda.org/conda-forge/pymeasure
 
 .. _Issues page: https://github.com/pymeasure/pymeasure/issues
 

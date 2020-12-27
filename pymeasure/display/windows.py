@@ -39,6 +39,7 @@ from .widgets import (
     ResultsDialog,
     SequencerWidget,
     ImageWidget,
+    DirectoryLineEdit,
 )
 from ..experiment.results import Results
 
@@ -161,7 +162,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  sequencer=False,
                  sequencer_inputs=None,
                  sequence_file=None,
-                 inputs_in_scrollarea=False):
+                 inputs_in_scrollarea=False,
+                 directory_input=False):
 
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
@@ -173,6 +175,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.sequencer_inputs = sequencer_inputs
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
+        self.directory_input = directory_input
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -183,6 +186,11 @@ class ManagedWindowBase(QtGui.QMainWindow):
         #??? self.setup_plot(self.plot)
 
     def _setup_ui(self):
+        if self.directory_input:
+            self.directory_label = QtGui.QLabel(self)
+            self.directory_label.setText('Directory')
+            self.directory_line = DirectoryLineEdit(parent=self)
+
         self.queue_button = QtGui.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self.queue)
 
@@ -243,6 +251,12 @@ class ManagedWindowBase(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
+        if self.directory_input:
+            vbox = QtGui.QVBoxLayout()
+            vbox.addWidget(self.directory_label)
+            vbox.addWidget(self.directory_line)
+            vbox.addLayout(hbox)
+
         if self.inputs_in_scrollarea:
             inputs_scroll = QtGui.QScrollArea()
             inputs_scroll.setWidgetResizable(True)
@@ -255,7 +269,11 @@ class ManagedWindowBase(QtGui.QMainWindow):
         else:
             inputs_vbox.addWidget(self.inputs)
 
-        inputs_vbox.addLayout(hbox)
+        if self.directory_input:
+            inputs_vbox.addLayout(vbox)
+        else:
+            inputs_vbox.addLayout(hbox)
+
         inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
 
@@ -563,7 +581,7 @@ class ManagedWindow(ManagedWindowBase):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, wdg_list=()):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False, wdg_list=()):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
@@ -575,11 +593,12 @@ class ManagedWindow(ManagedWindowBase):
             widget_list=wdg_list+(self.plot_widget, self.log_widget),
             inputs=inputs,
             displays=displays,
-            parent=None,
-            sequencer=False,
-            sequencer_inputs=None,
-            sequence_file=None,
-            inputs_in_scrollarea=False)
+            parent=parent,
+            sequencer=sequencer,
+            sequencer_inputs=sequencer_inputs,
+            sequence_file=sequence_file,
+            inputs_in_scrollarea=inputs_in_scrollarea,
+            directory_input=directory_input)
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(log_level)
         log.info("ManagedWindow connected to logging")
@@ -617,7 +636,7 @@ class ManagedImageWindow(ManagedWindow):
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False):
         self.z_axis = z_axis
         self.image_widget = ImageWidget("Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
         wdg_list = (self.image_widget, )
@@ -633,5 +652,6 @@ class ManagedImageWindow(ManagedWindow):
                          sequencer_inputs=sequencer_inputs,
                          sequence_file=sequence_file,
                          inputs_in_scrollarea=inputs_in_scrollarea,
+                         directory_input=directory_input,
                          wdg_list=wdg_list)
         # ??? self.setup_im_plot(self.im_plot)

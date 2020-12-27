@@ -1039,3 +1039,33 @@ class SequencerWidget(QtGui.QWidget):
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
+
+class DirectoryLineEdit(QtGui.QLineEdit):
+    """
+    Widget that allows to choose a directory path.
+    A completer is implemented for quick completion.
+    A browse button is available.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        completer = QtGui.QCompleter(self)
+        completer.setCompletionMode(QtGui.QCompleter.PopupCompletion)
+
+        model = QtGui.QDirModel(completer)
+        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+        completer.setModel(model)
+
+        self.setCompleter(completer)
+
+        browse_action = QtGui.QAction(self)
+        browse_action.setIcon(self.style().standardIcon(getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
+        browse_action.triggered.connect(self.browse_triggered)
+
+        self.addAction(browse_action, QtGui.QLineEdit.TrailingPosition)
+
+    def browse_triggered(self):
+        path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
+        if path is not '':
+            self.setText(path)
