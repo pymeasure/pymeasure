@@ -86,6 +86,7 @@ class Instrument(object):
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     """
 
+    special_keys = ('get_command',
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
