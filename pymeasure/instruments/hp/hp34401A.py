@@ -67,7 +67,7 @@ class HP34401A(Instrument):
         "TRIG:COUN?", "TRIG:COUN %g",
         """ The selected number of triggers is stored in volatile memory;
             The multimeter sets the trigger count to 1 when power has been off or after a remote interface reset.""",
-        validator=strict_discrete_set,
+        validator=truncated_range,
         values=[1, 50000]
     )    
 
