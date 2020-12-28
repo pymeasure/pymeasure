@@ -97,3 +97,11 @@ class HP34401A(Instrument):
         """ Set the trigger source. """
         self.trigger_source = source
 
+    def get_data(self):
+        """ Transfer readings stored in the multimeter’s internal memory by the
+            INITiate command to the multimeter’s output buffer where you can
+            read them into your bus controller. """
+        datas = self.values(":FETC?")
+
+        return datas
+
