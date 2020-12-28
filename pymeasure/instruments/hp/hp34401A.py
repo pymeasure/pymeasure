@@ -58,10 +58,18 @@ class HP34401A(Instrument):
     
     sample_count = Instrument.control(
         "SAMP:COUN?", "SAMP:COUN %g",
-        """ Set measurement data point size """,
+        """ Set measurement sample count """,
         validator=truncated_range,
         values=[1, 50000]
     )
+
+    trigger_count = Instrument.control(
+        "TRIG:COUN?", "TRIG:COUN %g",
+        """ The selected number of triggers is stored in volatile memory;
+            The multimeter sets the trigger count to 1 when power has been off or after a remote interface reset.""",
+        validator=strict_discrete_set,
+        values=[1, 50000]
+    )    
 
     def __init__(self, resourceName, **kwargs):
         super(HP34401A, self).__init__(
