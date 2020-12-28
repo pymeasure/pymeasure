@@ -55,6 +55,13 @@ class HP34401A(Instrument):
                 "Bus": "BUS"},
         map_values=True
     )
+    
+    sample_count = Instrument.control(
+        "SAMP:COUN?", "SAMP:COUN %g",
+        """ Set measurement data point size """,
+        validator=truncated_range,
+        values=[1, 50000]
+    )
 
     def __init__(self, resourceName, **kwargs):
         super(HP34401A, self).__init__(
