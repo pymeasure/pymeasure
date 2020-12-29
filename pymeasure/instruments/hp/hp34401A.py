@@ -93,7 +93,7 @@ class HP34401A(Instrument):
 
         self.write("INIT")
 
-    def source_tigger(self, source="Immediate"):
+    def source_tigger(self, source="BUS"):
         """ Set the trigger source. """
         self.trigger_source = source
 
@@ -105,3 +105,6 @@ class HP34401A(Instrument):
 
         return datas
 
+    def trigger(self):
+        """ Send trigger command"""
+        self.write("*TRG")
