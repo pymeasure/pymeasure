@@ -269,7 +269,7 @@ class Results(object):
             if parameter.name in parameters:
                 value, units = parameters[parameter.name]
 
-                if units_found(parameter, units):
+                if units_found(parameter, units) or (type(parameter) == Parameter and units is not None):
                     # Force full string to be matched
                     value = value + " " + str(units)
                 setattr(procedure, name, value)
