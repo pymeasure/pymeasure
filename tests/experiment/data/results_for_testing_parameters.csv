@@ -1,6 +1,6 @@
 #Procedure: <test_results.test_parameter_reading.<locals>.DummyProcedure>
 #Parameters:
-#	Directory string: //test directory with space/test_filename.csv
+#	Directory string: /test directory with space/test_filename.csv
 #	checkbox False: False
 #	checkbox True: True
 #	Delay Time: 0.0005 s

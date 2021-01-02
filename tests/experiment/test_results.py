@@ -118,7 +118,7 @@ class TestResults:
 
 def test_parameter_reading():
     data_path = os.path.join(os.path.dirname(__file__), "data/results_for_testing_parameters.csv")
-    test_string = "//test directory with space/test_filename.csv"
+    test_string = "/test directory with space/test_filename.csv"
     iterations = 101
     delay = 0.0005
     seed = '54321'
