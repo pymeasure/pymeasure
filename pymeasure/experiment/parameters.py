@@ -139,7 +139,7 @@ class BooleanParameter(Parameter):
     @value.setter
     def value(self, value):
         if isinstance(value, str):
-            if value.lower() in "true":
+            if value.lower() == "true":
                 value = True
             elif value.lower() == "false":
                 value = False
