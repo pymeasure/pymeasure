@@ -51,7 +51,7 @@ class DynamicProperty(property):
 
     def __get__(self, obj, objtype=None):
         if obj is None:
-            # Property return itself when invocad from a class
+            # Property return itself when invoked from a class
             return self 
         if self.fget is None:
             raise AttributeError("unreadable attribute")
@@ -91,12 +91,11 @@ class Instrument(object):
     # by users
     special_keys = ('get_command',
                     'set_command',
-                    'docs',
                     'validator',
                     'values',
                     'map_values',
                     'get_process',
-                    'set_process=',
+                    'set_process',
                     'command_process',
                     'check_set_errors',
                     'check_get_errors')
@@ -225,8 +224,10 @@ class Instrument(object):
         commands. This property may be set and read from the
         instrument. See also :meth:`measurement` and :meth:`setting`.
 
-        :param get_command: A string command that asks for the value
-        :param set_command: A string command that writes the value
+        :param get_command: A string command that asks for the value, set to `None`
+                            if get is not supported (see also :meth:`setting`).
+        :param set_command: A string command that writes the value, set to `None`
+                            if set is not supported (see also :meth:`measurement`).
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
