@@ -68,8 +68,16 @@ def test_boolean_value():
     p = BooleanParameter('Test')
     with pytest.raises(ValueError):
         v = p.value  # not set
-    p.value = 'a'  # a string
+    with pytest.raises(ValueError):
+        p.value = 'a'  # a string
+    p.value = "True"
     assert p.value == True
+    p.value = "False"
+    assert p.value == False
+    p.value = "true"
+    assert p.value == True
+    p.value = "false"
+    assert p.value == False
     p.value = 10  # a number
     assert p.value == True
     p.value = 0  # zero

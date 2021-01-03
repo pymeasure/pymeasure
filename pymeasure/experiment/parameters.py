@@ -140,15 +140,17 @@ class BooleanParameter(Parameter):
     def value(self, value):
         if isinstance(value, str):
             if value.lower() == "true":
-                value = True
+                self._value = True
             elif value.lower() == "false":
-                value = False
-
-        try:
-            self._value = bool(value)
-        except ValueError:
-            raise ValueError("BooleanParameter given non-boolean value of "
-                             "type '%s'" % type(value))
+                self._value = False
+            else:
+                raise ValueError("BooleanParameter given string value of '%s'" % value)
+        else:
+            try:
+                self._value = bool(value)
+            except ValueError:
+                raise ValueError("BooleanParameter given non-boolean value of "
+                                 "type '%s'" % type(value))
 
 
 class FloatParameter(Parameter):
