@@ -389,6 +389,10 @@ class ManagedWindow(QtGui.QMainWindow):
             experiment.curve.setPen(pg.mkPen(color=color, width=2))
 
     def open_file_externally(self, filename):
+        """ Method to open the datafile using an external editor or viewer. Uses the default
+        application to open a datafile of this filetype, but can be overridden by the child
+        class in order to open the file in another application of choice.
+        """
         system = platform.system()
         if (system == 'Windows'):
             # The empty argument after the start is needed to be able to cope correctly with filenames with spaces
@@ -764,6 +768,10 @@ class ManagedImageWindow(QtGui.QMainWindow):
             experiment.curve.setPen(pg.mkPen(color=color, width=2))
 
     def open_file_externally(self, filename):
+        """ Method to open the datafile using an external editor or viewer. Uses the default
+        application to open a datafile of this filetype, but can be overridden by the child
+        class in order to open the file in another application of choice.
+        """
         system = platform.system()
         if (system == 'Windows'):
             # The empty argument after the start is needed to be able to cope correctly with filenames with spaces
