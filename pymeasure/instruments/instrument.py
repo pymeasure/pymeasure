@@ -103,6 +103,12 @@ class Instrument(object):
         response.
         """
         return self.adapter.read()
+    
+    def read_bytes(self):
+        """ Read bytes from the instrument through the adapter and returns the
+        response.
+        """
+        return self.adapter.read_bytes(size = 100)
 
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
