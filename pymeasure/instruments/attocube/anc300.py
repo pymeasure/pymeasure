@@ -25,7 +25,7 @@
 from math import inf
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.attocube.adapters import (AttocubeConsoleAdapter,
+from jdsypymeasure.pymeasure.instruments.attocube.adapters import (AttocubeConsoleAdapter,
                                                      extract_float,
                                                      extract_int,
                                                      extract_value)
