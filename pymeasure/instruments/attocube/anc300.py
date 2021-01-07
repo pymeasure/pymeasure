@@ -25,14 +25,7 @@
 from math import inf
 
 from pymeasure.instruments import Instrument
-<<<<<<< HEAD
-from jdsypymeasure.pymeasure.instruments.attocube.adapters import (AttocubeConsoleAdapter,
-                                                     extract_float,
-                                                     extract_int,
-                                                     extract_value)
-=======
 from pymeasure.instruments.attocube.adapters import AttocubeConsoleAdapter
->>>>>>> upstream/master
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
