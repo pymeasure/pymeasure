@@ -94,7 +94,7 @@ class IntegerParameter(Parameter):
     @value.setter
     def value(self, value):
         if isinstance(value, str):
-            value, _, units = value.partition(" ")
+            value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
                 raise ValueError("Units included in string (%s) do not match"
                                  "the units of the IntegerParameter (%s)" % (units, self.units))
@@ -192,7 +192,7 @@ class FloatParameter(Parameter):
     @value.setter
     def value(self, value):
         if isinstance(value, str):
-            value, _, units = value.partition(" ")
+            value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
                 raise ValueError("Units included in string (%s) do not match"
                                  "the units of the FloatParameter (%s)" % (units, self.units))
