@@ -360,8 +360,12 @@ class PhysicalParameter(VectorParameter):
 
     @value.setter
     def value(self, value):
-        # Strip initial and final brackets
         if isinstance(value, str):
+            # strip units if included
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+            # Strip initial and final brackets
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
