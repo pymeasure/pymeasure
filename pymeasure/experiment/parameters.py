@@ -310,6 +310,11 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        # strip units if included
+        if isinstance(value, str):
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
         if self._choices is not None and value in self._choices:
             self._value = value
         else:
