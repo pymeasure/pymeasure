@@ -29,6 +29,7 @@ from pymeasure.experiment.parameters import IntegerParameter
 from pymeasure.experiment.parameters import BooleanParameter
 from pymeasure.experiment.parameters import FloatParameter
 from pymeasure.experiment.parameters import ListParameter
+from pymeasure.experiment.parameters import VectorParameter
 
 
 def test_parameter_default():
@@ -147,4 +148,22 @@ def test_list_value_with_units():
     assert p.value == 'and four'
 
 
-# TODO: Add tests for VectorParameter, and Measurable
+def test_vector():
+    p = VectorParameter('test', length=3, units='tests')
+    p.value = [1, 2, 3]
+    assert p.value == [1, 2, 3]
+    p.value = '[4, 5, 6]'
+    assert p.value == [4, 5, 6]
+    p.value = '[7, 8, 9] tests'
+    assert p.value == [7, 8, 9]
+    with pytest.raises(ValueError):
+        p.value = '[0, 1, 2] wrong unit'
+    with pytest.raises(ValueError):
+        p.value = [1, 2]
+    with pytest.raises(ValueError):
+        p.value = ['a', 'b']
+    with pytest.raises(ValueError):
+        p.value = '0, 1, 2'
+
+
+# TODO: Add tests for Measurable
