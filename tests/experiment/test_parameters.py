@@ -41,7 +41,7 @@ def test_integer_units():
 
 
 def test_integer_value():
-    p = IntegerParameter('Test')
+    p = IntegerParameter('Test', units='tests')
     with pytest.raises(ValueError):
         v = p.value  # not set
     with pytest.raises(ValueError):
@@ -52,6 +52,13 @@ def test_integer_value():
     assert p.value == 0
     p.value = 10
     assert p.value == 10
+    p.value = '5'
+    assert p.value == 5
+    p.value = '11 tests'
+    assert p.value == 11
+    assert p.units == 'tests'
+    with pytest.raises(ValueError):
+        p.value = '31 incorrect units'  # not the correct units
 
 
 def test_integer_bounds():
@@ -87,7 +94,7 @@ def test_boolean_value():
 
 
 def test_float_value():
-    p = FloatParameter('Test')
+    p = FloatParameter('Test', units='tests')
     with pytest.raises(ValueError):
         v = p.value  # not set
     with pytest.raises(ValueError):
@@ -96,6 +103,13 @@ def test_float_value():
     assert p.value == 0.0
     p.value = 100
     assert p.value == 100.0
+    p.value = '1.06'
+    assert p.value == 1.06
+    p.value = '11.3 tests'
+    assert p.value == 11.3
+    assert p.units == 'tests'
+    with pytest.raises(ValueError):
+        p.value = '31.3 incorrect units'  # not the correct units
 
 
 def test_float_bounds():
