@@ -28,6 +28,7 @@ from pymeasure.experiment.parameters import Parameter
 from pymeasure.experiment.parameters import IntegerParameter
 from pymeasure.experiment.parameters import BooleanParameter
 from pymeasure.experiment.parameters import FloatParameter
+from pymeasure.experiment.parameters import ListParameter
 
 
 def test_parameter_default():
@@ -121,4 +122,29 @@ def test_float_bounds():
     with pytest.raises(ValueError):
         p.value = -10  # below minimum
 
-# TODO: Add tests for VectorParameter, ListParamter, and Measurable
+
+def test_list_value():
+    # TODO: check against setting the string version of the numeric choices
+    p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'])
+    p.value = 1
+    assert p.value == 1
+    p.value = 2.2
+    assert p.value == 2.2
+    p.value = 'three'
+    assert p.value == 'three'
+    p.value = 'and four'
+    assert p.value == 'and four'
+    with pytest.raises(ValueError):
+        p.value = 5
+
+
+def test_list_value_with_units():
+    # TODO: check against setting the string version (with units) of the numeric choices
+    p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'], units='tests')
+    p.value = 'three tests'
+    assert p.value == 'three'
+    p.value = 'and four tests'
+    assert p.value == 'and four'
+
+
+# TODO: Add tests for VectorParameter, and Measurable
