@@ -58,3 +58,7 @@ def test_visa_adapter():
 
     adapter.write("?IDN")
     assert adapter.read() == "LSG Serial #1234\n"
+
+def test_visa_adapter_ask_values():
+    adapter = make_visa_adapter()
+    assert adapter.ask_values("?FREQ", separator=",") == [100]

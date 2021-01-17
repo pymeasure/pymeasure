@@ -114,15 +114,16 @@ class VISAAdapter(Adapter):
         """
         return self.connection.query(command)
 
-    def ask_values(self, command):
+    def ask_values(self, command, **kwargs):
         """ Writes a command to the instrument and returns a list of formatted
-        values from the result. The format of the return is configurated by
-        self.config().
+        values from the result. This leverages the `query_ascii_values` method
+        in PyVISA.
 
         :param command: SCPI command to be sent to the instrument
+        :param kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
-        return self.connection.query_values(command)
+        return self.connection.query_ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
