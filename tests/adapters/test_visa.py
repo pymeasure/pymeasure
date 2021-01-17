@@ -63,3 +63,8 @@ def test_visa_adapter():
 def test_visa_adapter_ask_values():
     adapter = make_visa_adapter()
     assert adapter.ask_values("?FREQ", separator=",") == [100]
+
+
+def test_visa_adapter_write_binary_values():
+    adapter = make_visa_adapter()
+    adapter.write_binary_values("!OUT", [1], datatype='B')

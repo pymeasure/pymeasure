@@ -138,16 +138,16 @@ class VISAAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def write_binary_values(self, command, values, format='B'):
+    def write_binary_values(self, command, values, **kwargs):
         """ Write binary data to the instrument, e.g. waveform for signal generators
 
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
-        :format: "struct module" format character for each list item (see struct documentation)
+        :param kwargs: Key-word arguments to pass onto `write_binary_values`
         :returns: number of bytes written
         """
 
-        return self.connection.write_binary_values(command, values, datatype=format, is_big_endian = True)
+        return self.connection.write_binary_values(command, values, **kwargs)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
