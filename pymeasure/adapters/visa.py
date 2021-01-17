@@ -48,14 +48,14 @@ class VISAAdapter(Adapter):
     :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
     """
 
-    def __init__(self, resourceName, visa_library='', preprocess_reply=None, **kwargs):
+    def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
-        if isinstance(resourceName, int):
-            resourceName = "GPIB0::%d::INSTR" % resourceName
-        self.resource_name = resourceName
+        if isinstance(resource_name, int):
+            resource_name = "GPIB0::%d::INSTR" % resource_name
+        self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
         safeKeywords = ['resource_name', 'timeout',
                         'chunk_size', 'lock', 'query_delay', 'send_end',
@@ -65,7 +65,7 @@ class VISAAdapter(Adapter):
             if key not in safeKeywords:
                 kwargs.pop(key)
         self.connection = self.manager.open_resource(
-            resourceName,
+            resource_name,
             **kwargs
         )
 
@@ -78,7 +78,7 @@ class VISAAdapter(Adapter):
             return False
 
     def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
+        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
 
     def write(self, command):
         """ Writes a command to the instrument
