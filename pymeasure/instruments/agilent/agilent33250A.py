@@ -55,7 +55,7 @@ class Agilent33250A(Agilent33220A):
 
     pulse_width = Instrument.control(
         "PULS:WIDT?", "PULS:WIDT %f",
-       """ A floating point property that controls the width of a pulse
+        """ A floating point property that controls the width of a pulse
         waveform function in seconds, ranging from 20 ns to 2000 s, within a
         set of restrictions depending on the period. Can be set. """,
         validator=strict_range,
@@ -63,7 +63,7 @@ class Agilent33250A(Agilent33220A):
     )
 
     pulse_transition = Instrument.control(
-        "PULS:TRAN?", "PULS:TRAN %f",
+        "PULS:TRAN?", "PULS:TRAN %g",
         """ A floating point property that controls the the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between 0.1 and 0.9 of the threshold. Valid values are between

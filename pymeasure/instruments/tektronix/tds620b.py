@@ -217,7 +217,7 @@ class TDS620B(Instrument):
          Longer records will extend past the end of the scope screen and take longer to transfer. 
          There are 50 points/div""",
         validator=strict_discrete_set,
-        values=[500,1000,2500,5000,15000]
+        values=[500,1000,2000, 2500,5000,15000]
     )
 
     CH1 = Instrument.measurement(
@@ -277,7 +277,7 @@ class TDS620B(Instrument):
         Float parameter that sets the channel scale (V/div), range is 100 mV to 1 mV
         """,
         validator=truncated_range,
-        values=[1e-3, 1e-1]
+        values=[1e-3, 10]
     )
 
     CH2 = Instrument.measurement(
