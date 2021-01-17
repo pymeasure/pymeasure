@@ -137,25 +137,6 @@ class VISAAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def config(self, is_binary=False, datatype='str',
-               container=np.array, converter='s',
-               separator=',', is_big_endian=False):
-        """ Configurate the format of data transfer to and from the instrument.
-
-        :param is_binary: If True, data is in binary format, otherwise ASCII.
-        :param datatype: Data type.
-        :param container: Return format. Any callable/type that takes an iterable.
-        :param converter: String converter, used in dealing with ASCII data.
-        :param separator: Delimiter of a series of data in ASCII.
-        :param is_big_endian: Endianness.
-        """
-        self.connection.values_format.is_binary = is_binary
-        self.connection.values_format.datatype = datatype
-        self.connection.values_format.container = container
-        self.connection.values_format.converter = converter
-        self.connection.values_format.separator = separator
-        self.connection.values_format.is_big_endian = is_big_endian
-
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
 
