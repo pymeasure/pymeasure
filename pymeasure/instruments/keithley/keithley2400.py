@@ -303,6 +303,58 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=[0, 999.9999]
     )
 
+    ###########
+    # Filters #
+    ###########
+
+    filter_type = Instrument.control(
+        ":SENS:AVER:TCON?", ":SENS:AVER:TCON %s",
+        """ A String property that controls the filter's type.
+        REP : Repeating filter
+        MOV : Moving filter""",
+        validator=strict_discrete_set,
+        values=['REP', 'MOV'],
+        map_values=False)
+
+    filter_count = Instrument.control(
+        ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
+        """ A integer property that controls the number of readings that are 
+        acquired and stored in the filter buffer for the averaging""",
+        validator=truncated_range,
+        values=[1, 100],
+        cast=int)
+
+    filter_state = Instrument.control(
+        ":SENS:AVER?", ":SENS:AVER %s",
+        """ A string property that controls if the filter is active.""",
+        validator=strict_discrete_set,
+        values=['ON', 'OFF'],
+        map_values=False)
+
+
+    #####################
+    # Output subsystem #
+    #####################
+
+    output_off_state = Instrument.control(
+        ":OUTP:SMOD?", ":OUTP:SMOD %s",
+        """ Select the output-off state of the SourceMeter.
+        HIMP : output relay is open, disconnects external circuitry.
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
+        full scale of the present current range.
+        ZERO : V-Source is selected and set to 0V, compliance is set to the 
+        programmed Source I value or to 0.5% full scale of the present current
+        range, whichever is greater.
+        GUAR : I-Source is selected and set to 0A""",
+        validator=strict_discrete_set,
+        values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
+        map_values=False)
+
+    
+    ####################
+    # Methods        #
+    ####################
+    
     def __init__(self, adapter, **kwargs):
         super(Keithley2400, self).__init__(
             adapter, "Keithley 2400 SourceMeter", **kwargs
@@ -624,7 +676,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     @property
     def max_resistance(self):
         """ Returns the maximum resistance from the buffer """
-        return self.maximums()[2]
+        return self.maximums[2]
 
     @property
     def min_resistance(self):

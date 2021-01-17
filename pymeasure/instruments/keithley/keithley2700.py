@@ -171,6 +171,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
                 log.warning(
                     "Card type %s at slot %s is not yet implemented." % (card, slot)
                 )
+                continue
 
             channels = [100 * slot + ch for ch in channels]
 
@@ -179,7 +180,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
     def close_rows_to_columns(self, rows, columns, slot=None):
         """ Closes (connects) the channels between column(s) and row(s)
         of the 7709 connection matrix.
-        Only one of the parameters `rows' or 'columns' can be "all"
+        Only one of the parameters 'rows' or 'columns' can be "all"
 
         :param rows: row number or list of numbers; can also be "all"
         :param columns: column number or list of numbers; can also be "all"
@@ -192,7 +193,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
     def open_rows_to_columns(self, rows, columns, slot=None):
         """ Opens (disconnects) the channels between column(s) and row(s)
         of the 7709 connection matrix.
-        Only one of the parameters `rows' or 'columns' can be "all"
+        Only one of the parameters 'rows' or 'columns' can be "all"
 
         :param rows: row number or list of numbers; can also be "all"
         :param columns: column number or list of numbers; can also be "all"
@@ -205,7 +206,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
     def channels_from_rows_columns(self, rows, columns, slot=None):
         """ Determine the channel numbers between column(s) and row(s) of the
         7709 connection matrix. Returns a list of channel numbers.
-        Only one of the parameters `rows' or 'columns' can be "all"
+        Only one of the parameters 'rows' or 'columns' can be "all"
 
         :param rows: row number or list of numbers; can also be "all"
         :param columns: column number or list of numbers; can also be "all"
