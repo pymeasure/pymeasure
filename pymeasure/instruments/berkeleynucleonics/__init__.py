@@ -22,7 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .tds2000 import TDS2000
-from .afg3152c import AFG3152C
-from .tds620b import TDS620B
-from .tds6604 import TDS6604
+from .bn765 import BN765

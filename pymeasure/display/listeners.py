@@ -99,13 +99,14 @@ class Monitor(QtCore.QThread):
     def __init__(self, queue):
         super().__init__()
         self.queue = queue
+        self.stop = False
 
     def run(self):
-        while True:
-            data = self.queue.get()
-            if data is None:
+        while not self.stop:
+            self.data = self.queue.get()
+            if self.data is None:
                 break
-            topic, data = data
+            topic, data = self.data
             if topic == 'status':
                 self.status.emit(data)
                 if data == Procedure.RUNNING:
