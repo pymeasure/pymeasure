@@ -113,6 +113,15 @@ class Instrument(object):
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
+    def write_binary_values(self, command, values, format='B'):
+        """ Writes the command to the instrument through the adapter.
+
+        :param command: command string to be sent to the instrument
+        :param values: list of values to be packed in binary format
+        :format: "struct module" format character for each list item (see struct documentation)
+        """
+        return self.adapter.write_binary_values(command, values, format)
+
     @staticmethod
     def control(get_command, set_command, docs,
                 validator=lambda v, vs: v, values=(), map_values=False,

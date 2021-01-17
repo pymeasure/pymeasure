@@ -107,6 +107,16 @@ class Adapter(object):
         raise NameError("Adapter (sub)class has not implemented the "
                         "binary_values method")
 
+    def write_binary_values(self, command, values, format='B'):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :format: "struct module" format character for each list item (see struct documentation)
+.       :returns: number of bytes written
+        """
+        raise NameError("Adapter (sub)class has not implemented the "
+                        "write_binary_values method")
 
 class FakeAdapter(Adapter):
     """Provides a fake adapter for debugging purposes,
