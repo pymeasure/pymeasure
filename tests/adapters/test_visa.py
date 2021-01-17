@@ -53,4 +53,8 @@ def test_correct_visa_kwarg():
 def test_visa_adapter():
     adapter = make_visa_adapter()
     assert repr(adapter) == "<VISAAdapter(resource='ASRL1::INSTR')>"
+
     adapter.ask("?IDN") == "LSG Serial #1234\n"
+
+    adapter.write("?IDN")
+    assert adapter.read() == "LSG Serial #1234\n"
