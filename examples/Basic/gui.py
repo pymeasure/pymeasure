@@ -14,7 +14,7 @@ import random
 import tempfile
 from time import sleep
 import pyqtgraph as pg
-
+sys.modules['cloudpickle'] = None
 import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())

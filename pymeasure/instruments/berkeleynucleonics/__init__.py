@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .tds2000 import TDS2000
-from .afg3152c import AFG3152C
-from .tds620b import TDS620B
-from .tds6604 import TDS6604
+from .bn765 import BN765

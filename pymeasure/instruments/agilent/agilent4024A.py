@@ -35,39 +35,50 @@ def capitalize_string(string: str, *args, **kwargs):
 string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
-class TDS620B(Instrument):
-    """ Represents the Tektronix TDS 620B Oscilloscope
+class Agilent4024A(Instrument):
+    """ Represents the Agilent4024A Digital sampling oscilloscope
     and provides a high-level for interacting with the instrument
 
     .. code-block:: python
 
         osc= TDS620B("GPIB0::...")
-        osc.pretrigger = 1 # set pretrigger to 1% of recorded waveform
-        osc.acquire_mode = 'SAMPLE' # the default
+        osc.timebase_reference = 'LEFT' # set pretrigger to 10% of recorded waveform
+        osc.acquire_mode = 'RTIMe' # the default
         osc.acquire_stop_after = 'SEQUENCE' # Stop recording after 1 waveform after trigger
         osc.data_source = 'CH1' # set data source to channel 1
         #emit trigger somehow
         data = osc.get_binary_curve() # get curve data from channel 1 with default binary encoding
 
     """
+    timebase_reference = Instrument.control(
+        ":TIMebase:REFerence?", ":TIMebase:REFerence %s",
+        """A string control that sets the timebase reference location. Also called 'pretrigger' on other scopes.
+        Options are 'LEFT', 1 div from left; 'CENT',5 divs from left and right; 'RIGH', 1 div from the right; 
+        and 'CUST', where the position is set by timebase_reference_loc.""",
+        validator=strict_discrete_set(),
+        values=['LEFT', 'RIGH', 'CENT', 'CUST']
+    )
 
-    pretrigger = Instrument.control(
-        "HORizontal:TRIGger:POSition?", "HORizontal:TRIGger:POSition %d",
-        """A integer property that controls the percent of the recorded
-         waveform that occurs before the trigger event. O is no pretrigger,
-         100 is all pretrigger.""",
+    timebase_reference_loc = Instrument.control(
+        ":TIMebase:REFerence:LOCation?", ":TIMebase:REFerence CUST;:TIMebase:REFerence:LOCation %g",
+        """A decimal property that explicitly sets the timebase reference location (also called pretrigger).
+        Can take any value between 0 (trigger is left of record) to 1 (trigger is right of record).
+        Sets timebase_reference to custom to produce expected behavior.""",
         validator=strict_range,
-        values=[0, 100]
+        values=[0, 1]
     )
 
     acquire_mode = Instrument.control(
-        "ACQuire:MODe?", "ACQuire:MODe %s",
-        """A string property that controls how the final value of the acquisition
-        interval is generated from the many data samples. Can be set to:
-        SAMPLE, PEAKDETECT, AVERAGE, ENVELOPE""",
+        ":ACQuire:MODe?", ":ACQuire:MODe %s",
+        """A string property that controls how data are acquired. Can be set to:
+        ['RTIMe', 'ETIMe', 'SEGmented']""",
         validator=string_validator,
-        values=['SAMPLE', 'PEAKDETECT', 'AVERAGE', 'ENVELOPE']
+        values=['RTIMe', 'ETIMe', 'SEGmented']
     )
+
+
+
+
 
     acquire_naverages = Instrument.control(
         "ACQuire:NUMAVg?", "ACQuire:NUMAVg %d",
@@ -277,7 +288,7 @@ class TDS620B(Instrument):
         Float parameter that sets the channel scale (V/div), range is 100 mV to 1 mV
         """,
         validator=truncated_range,
-        values=[1e-3, 10]
+        values=[1e-3, 1e-1]
     )
 
     CH2 = Instrument.measurement(
@@ -337,7 +348,7 @@ class TDS620B(Instrument):
         Float parameter that sets the channel scale (V/div), range is 100 mV to 1 mV
         """,
         validator=truncated_range,
-        values=[1e-3, 10]
+        values=[1e-3, 1e-1]
     )
 
 

@@ -206,10 +206,9 @@ class Manager(QtCore.QObject):
         else:
             if self.experiments.has_next():
                 log.debug("Manager is initiating the next experiment")
-                experiment = self.experiments.next()
-                self._running_experiment = experiment
+                self._running_experiment = self.experiments.next()
 
-                self._worker = Worker(experiment.results, port=self.port, log_level=self.log_level)
+                self._worker = Worker(self._running_experiment.results, port=self.port, log_level=self.log_level)
 
                 self._monitor = Monitor(self._worker.monitor_queue)
                 self._monitor.worker_running.connect(self._running)
@@ -229,6 +228,12 @@ class Manager(QtCore.QObject):
 
     def _clean_up(self):
         self._worker.join()
+        self._monitor.stop = True
+        success = self._monitor.wait(100)
+        if not success:
+            raise ValueError('Monitor did not properly exit')
+        else:
+            self._monitor.terminate()
         del self._worker
         self._monitor.wait()
         del self._monitor
