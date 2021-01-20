@@ -29,3 +29,5 @@ The following developers have contributed to the PyMeasure package:
 | Dominic Caron
 | Mathieu Plante
 | Michele Sardo
+| Steven Siegl
+| Benjamin Klebel-Knobloch

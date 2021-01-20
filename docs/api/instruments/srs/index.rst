@@ -10,3 +10,4 @@ This section contains specific documentation on the Stanford Research Systems (S
    :maxdepth: 2
 
    sr830
+   sr860
