@@ -130,7 +130,7 @@ class Manager(QtCore.QObject):
     abort_returned = QtCore.QSignal(object)
     log = QtCore.QSignal(object)
 
-    def __init__(self, plot, browser, port=5888, log_level=logging.INFO, parent=None):
+    def __init__(self, widget_list, browser, port=5888, log_level=logging.INFO, parent=None):
         super().__init__(parent)
 
         self.experiments = ExperimentQueue()
@@ -139,7 +139,7 @@ class Manager(QtCore.QObject):
         self._monitor = None
         self.log_level = log_level
 
-        self.plot = plot
+        self.widget_list = widget_list
         self.browser = browser
 
         self.port = port
@@ -170,7 +170,9 @@ class Manager(QtCore.QObject):
     def load(self, experiment):
         """ Load a previously executed Experiment
         """
-        self.plot.addItem(experiment.curve)
+        for wdg in self.widget_list:
+            wdg.load(experiment.curve)
+
         self.browser.add(experiment)
         self.experiments.append(experiment)
 
@@ -188,7 +190,8 @@ class Manager(QtCore.QObject):
         self.experiments.remove(experiment)
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
-        self.plot.removeItem(experiment.curve)
+        for wdg in self.widget_list:
+            wdg.remove(experiment.curve)
 
     def clear(self):
         """ Remove all Experiments
@@ -252,7 +255,9 @@ class Manager(QtCore.QObject):
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)
-        experiment.curve.update()
+        for curve in experiment.curve:
+            if curve:
+                curve.update_data()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()
@@ -278,80 +283,3 @@ class Manager(QtCore.QObject):
             self._worker.stop()
 
             self.aborted.emit(self._running_experiment)
-
-
-class ImageExperiment(Experiment):
-    """ 
-    Adds saving of the experiments image to :class:`.Experiment`. Needed to 
-    make image features work
-    """
-    def __init__(self, results, curve, image, browser_item, parent=None):
-        super().__init__(results, curve, browser_item, parent=None)
-
-        self.image = image
-
-
-class ImageExperimentQueue(ExperimentQueue):
-    """ 
-    Overwrites needed features from :class:`.ExperimentQueue` to make image 
-    features work
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    def __contains__(self, value):
-        if isinstance(value, ImageExperiment):
-            return value in self.queue
-        if isinstance(value, str):
-            for experiment in self.queue:
-                if basename(experiment.data_filename) == basename(value):
-                    return True
-            return False
-        return False
-
-class ImageManager(Manager):
-    """
-    Overwrites needed features from :class:`.Manager` to make image features
-    work
-    """
-    _is_continuous = True
-    _start_on_add = True
-    queued = QtCore.QSignal(object)
-    running = QtCore.QSignal(object)
-    finished = QtCore.QSignal(object)
-    failed = QtCore.QSignal(object)
-    aborted = QtCore.QSignal(object)
-    abort_returned = QtCore.QSignal(object)
-    log = QtCore.QSignal(object)
-
-    def __init__(self, plot, im_plot, browser, port=5888, log_level=logging.INFO, parent=None):
-        super().__init__(plot, browser, port=5888, log_level=logging.INFO, parent=None)
-        # overrides necessary variables to make image features work
-        self.experiments = ImageExperimentQueue()
-
-        self.im_plot = im_plot
-
-    def remove(self, experiment):
-        """ Removes an Experiment
-        """
-        self.experiments.remove(experiment)
-        self.browser.takeTopLevelItem(
-            self.browser.indexOfTopLevelItem(experiment.browser_item))
-        self.im_plot.removeItem(experiment.image)
-        self.plot.removeItem(experiment.curve)
-        
-    def load(self, experiment): 
-        super().load(experiment)
-        self.im_plot.addItem(experiment.image)
-
-    def _finish(self):
-        log.debug("Manager's running experiment has finished")
-        experiment = self._running_experiment
-        self._clean_up()
-        experiment.browser_item.setProgress(100.)
-        experiment.image.update_img()
-        experiment.curve.update()
-        self.finished.emit(experiment)
-        if self._is_continuous:  # Continue running procedures
-            self.next()
