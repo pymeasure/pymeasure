@@ -93,6 +93,12 @@ class IntegerParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        if isinstance(value, str):
+            value, _, units = value.strip().partition(" ")
+            if units != "" and units != self.units:
+                raise ValueError("Units included in string (%s) do not match"
+                                 "the units of the IntegerParameter (%s)" % (units, self.units))
+
         try:
             value = int(value)
         except ValueError:
@@ -138,11 +144,19 @@ class BooleanParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        try:
-            self._value = bool(value)
-        except ValueError:
-            raise ValueError("BooleanParameter given non-boolean value of "
-                             "type '%s'" % type(value))
+        if isinstance(value, str):
+            if value.lower() == "true":
+                self._value = True
+            elif value.lower() == "false":
+                self._value = False
+            else:
+                raise ValueError("BooleanParameter given string value of '%s'" % value)
+        else:
+            try:
+                self._value = bool(value)
+            except ValueError:
+                raise ValueError("BooleanParameter given non-boolean value of "
+                                 "type '%s'" % type(value))
 
 
 class FloatParameter(Parameter):
@@ -177,6 +191,12 @@ class FloatParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        if isinstance(value, str):
+            value, _, units = value.strip().partition(" ")
+            if units != "" and units != self.units:
+                raise ValueError("Units included in string (%s) do not match"
+                                 "the units of the FloatParameter (%s)" % (units, self.units))
+
         try:
             value = float(value)
         except ValueError:
@@ -229,8 +249,12 @@ class VectorParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        # Strip initial and final brackets
         if isinstance(value, str):
+            # strip units if included
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+            # Strip initial and final brackets
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
@@ -290,6 +314,11 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        # strip units if included
+        if isinstance(value, str):
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
         if self._choices is not None and value in self._choices:
             self._value = value
         else:
@@ -331,8 +360,12 @@ class PhysicalParameter(VectorParameter):
 
     @value.setter
     def value(self, value):
-        # Strip initial and final brackets
         if isinstance(value, str):
+            # strip units if included
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+            # Strip initial and final brackets
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
