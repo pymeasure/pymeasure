@@ -33,6 +33,48 @@ from pymeasure.adapters.visa import VISAAdapter
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+reserved_prefix = "___"
+class DynamicProperty(property):
+    """ This property redefines get and set in a "dynamic" fashion
+    :param fget_list: List of parameter's names that are dynamically configurable
+    :param fset_list: List of parameter's names that are dynamically configurable
+    :param fget: class property fget parameter with added parameters as in fget_list
+    :param fset: class property fget parameter with added parameters as in fget_list
+    :param fdel: class property fdel parameter
+    :param doc: class property doc parameter
+    """
+    def __init__(self, fget_list, fset_list, fget=None, fset=None, fdel=None, doc=None):
+        super().__init__(fget, fset, fdel, doc)
+        self.fget_list = fget_list
+        self.fset_list = fset_list
+        self.name = ""
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            # Property return itself when invoked from a class
+            return self 
+        if self.fget is None:
+            raise AttributeError("unreadable attribute")
+
+        kwargs = {}
+        for attr in self.fget_list:
+            attr1 = reserved_prefix + "_".join([self.name,attr])
+            if hasattr(obj, attr1):
+                kwargs[attr]=getattr(obj, attr1)
+        return self.fget(obj, **kwargs)
+
+    def __set__(self, obj, value):
+        if self.fset is None:
+            raise AttributeError("can't set attribute")
+        kwargs = {}
+        for attr in self.fset_list:
+            attr1 = reserved_prefix + "_".join([self.name,attr])
+            if hasattr(obj, attr1):
+                kwargs[attr]=getattr(obj, attr1)
+        self.fset(obj, value, **kwargs)
+
+    def __set_name__(self, owner, name):
+        self.name = name
 
 class Instrument(object):
     """ This provides the base class for all Instruments, which is
@@ -45,42 +87,19 @@ class Instrument(object):
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     """
 
-    class InstrumentParameter(object):
-        """ This class is used to allow the possibility to redefines 'values' parameter in property defined
-        with staticmethods 'control', 'measurement', 'setting'.
-        This class will be supported in addition to list, tuple, range and dict.
-        This class will identify the parameter by name provided as a string and the paramaters will be read from class
-        instance whenever it is needed. This will add some flexibility to modify properties in
-        subclasses without redefining the entire property.
- 
-        :param name: A string name
+    # Variable holding the list of DynamicProperty parameters that are configurable
+    # by users
+    special_keys = ('get_command',
+                    'set_command',
+                    'validator',
+                    'values',
+                    'map_values',
+                    'get_process',
+                    'set_process',
+                    'command_process',
+                    'check_set_errors',
+                    'check_get_errors')
 
-        .. code-block:: python
-        
-            class GenericInstrument(Instrument):
-                  __frequency_range = Instrument.InstrumentParameter("FREQUENCY_RANGE_Hz")
-                  FREQUENCY_RANGE_Hz = (1, 26.5e9) # Redefine this in subclasses to reflect actual instrument value
-
-                center_frequency = Instrument.control(
-                    ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e Hz;",
-                    " A floating point property that represents the frequency ... ",
-                    validator=strict_range,
-                    values=__frequency_range,
-                )
-            .
-            .
-            .
-            class SpecificInstrument(Instrument): # Identical to GenericInstrument, except for frequency range
-                FREQUENCY_RANGE_Hz = (1, 13e9)
-
-        """
-
-
-        def __init__(self, name):
-            self.name = name
-
-        def get_value(self, instance):
-            return getattr(instance, self.name)
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
@@ -102,46 +121,58 @@ class Instrument(object):
 
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
-            # Basic SCPI commands TODO: This does not work
-            #self.status = self.measurement("*STB?",
-            #                               """ Returns the status of the instrument """)
-            #self.complete = self.measurement("*OPC?",
-            #                                 """ TODO: Add this doc """)
-            #setattr(Instrument, 'complete', self.measurement("*OPC?", """ TODO: Add this doc """))
-            pass
+            # Basic SCPI commands
+            self.status = self.measurement("*STB?",
+                                           """ Returns the status of the instrument """)
+            self.complete = self.measurement("*OPC?",
+                                             """ TODO: Add this doc """)
 
         self.isShutdown = False
+        self._special_names = self._compute_special_names()
+
         log.info("Initializing %s." % self.name)
+
+    def _compute_special_names(self):
+        """ Internal method, not intended to be accessed at user level.
+        Compute the list of special names based on the list of 
+        class variable names defined as DynamicProperty. Check also for class variables
+        with special name and copy them at instance level """
+        special_names = []
+        # Check if class variable of DynamicProperty type are present
+        for obj in [self] + self.__class__.mro():
+            for attr in obj.__dict__:
+                if isinstance(obj.__dict__[attr], DynamicProperty):
+                    special_names += [attr + "_" + key for key in Instrument.special_keys]
+        # Check if special variables are defined at class level
+        for obj in [self] + self.__class__.mro():
+            for attr in obj.__dict__:
+                if attr in special_names:
+                    # Copy class special variable at instance level, prefixing reserved_prefix
+                    setattr(self,reserved_prefix + attr, obj.__dict__[attr])
+        return special_names
+
+    def __setattr__(self, name, value):
+        """ Add reserved_prefix in front of special variables """
+        if '_special_names' in self.__dict__:
+            if name in self._special_names:
+                name = reserved_prefix + name
+        super().__setattr__(name, value)
+
+    def __getattribute__(self, name):
+        """ Allow to refuse access to variables with special names used to
+        support dynamic property behaviour """
+        if name in ('_special_names', '__dict__'):
+            return super().__getattribute__(name)
+        if '_special_names' in self.__dict__:
+            if name in self._special_names:
+                raise AttributeError("{} is a reserved variable name and it cannot be read".format(name))
+        return super().__getattribute__(name)
 
     @property
     def id(self):
         """ Requests and returns the identification of the instrument. """
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
-        else:
-            return "Warning: Property not implemented."
-
-    @property
-    def complete(self):
-        """ The Operation Complete query places an ASCII character '1' into the device's Output Queue when all pending selected device operations have been finished. """
-        if self.SCPI:
-            return self.adapter.ask("*OPC?").strip()
-        else:
-            return "Warning: Property not implemented."
-
-    @property
-    def status(self):
-        """ Prperty that implements the Read Status Byte query allows the programmer to read the status byte and Master Summary Status bit. """
-        if self.SCPI:
-            return self.adapter.ask("*STB?").strip()
-        else:
-            return "Warning: Property not implemented."
-
-    @property
-    def options(self):
-        """ Prperty that implements the Option Identification query for identifying reportable device options over the system interface."""
-        if self.SCPI:
-            return self.adapter.ask("*OPT?").strip()
         else:
             return "Warning: Property not implemented."
 
@@ -176,32 +207,28 @@ class Instrument(object):
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
-    def write_binary_values(self, command, values, format='B'):
-        """ Writes the command to the instrument through the adapter.
-
-        :param command: command string to be sent to the instrument
-        :param values: list of values to be packed in binary format
-        :format: "struct module" format character for each list item (see struct documentation)
-        """
-        return self.adapter.write_binary_values(command, values, format)
-
     @staticmethod
-    def property_not_supported():
-        """ Not supported/not implemented property """
-        return property()
-        
-    @staticmethod
-    def control(get_command, set_command, docs,
-                validator=lambda v, vs: v, values=(), map_values=False,
-                get_process=lambda v: v, set_process=lambda v: v,
-                check_set_errors=False, check_get_errors=False,
+    def control(get_command,
+                set_command,
+                docs,
+                validator=lambda v, vs: v,
+                values=(),
+                map_values=False,
+                get_process=lambda v: v,
+                set_process=lambda v: v,
+                command_process=lambda c: c,
+                check_set_errors=False,
+                check_get_errors=False,
+                dynamic=False,
                 **kwargs):
         """Returns a property for the class based on the supplied
         commands. This property may be set and read from the
-        instrument.
+        instrument. See also :meth:`measurement` and :meth:`setting`.
 
-        :param get_command: A string command that asks for the value
-        :param set_command: A string command that writes the value
+        :param get_command: A string command that asks for the value, set to `None`
+                            if get is not supported (see also :meth:`setting`).
+        :param set_command: A string command that writes the value, set to `None`
+                            if set is not supported (see also :meth:`measurement`).
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
                           and returns a valid value, while it otherwise raises an exception
@@ -213,75 +240,129 @@ class Instrument(object):
                             before value mapping, returning the processed value
         :param set_process: A function that takes a value and allows processing
                             before value mapping, returning the processed value
+        :param command_process: A function that take a command and allows processing
+                            before executing the command, for getting
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting
+        :param dynamic: Specify whether the property parameters are meant to be changed in instances or subclasses.
+
+        Example of usage of dynamic parameter is as follow:
+
+        .. code-block:: python
+        
+            class GenericInstrument(Instrument):
+                center_frequency = Instrument.control(
+                    ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e Hz;",
+                    " A floating point property that represents the frequency ... ",
+                    validator=strict_range,
+                    values=(1, 26.5e9), # Redefine this in subclasses to reflect actual instrument value
+                    dynamic=True # declare property dynamic
+                )
+
+            class SpecificInstrument(Instrument): # Identical to GenericInstrument, except for frequency range
+                center_frequency_values = (1, 13e9) # Redefined at subclass level
+
+            instrument = SpecificInstrument()
+            instrument.center_frequency_values = (1, 6e9) # Redefined at instance level
+
+        .. warning:: Unexepected side effects when using dynamic properties
+
+        Users must pay attention when using dynamic properties, since definition of class and/or instance 
+        attributes matching specific patterns could have unwanted side effect.
+        The attribute name pattern `property_param`, where `property` is the name of the dynamic property (e.g. `center_frequency` in the example)
+        and `param` is any of this method parameters name except `dynamic` (e.g. `values` in the example) has to be considered reserved for
+        dynamic property control.
         """
 
-        if map_values and isinstance(values, dict):
-            # Prepare the inverse values for performance
-            inverse = {v: k for k, v in values.items()}
+        if get_command is None:
+            def fget(self):
+                raise LookupError("Instrument property can not be read.")
+        else:
+            def fget(self,
+                     get_command=get_command, 
+                     values=values,
+                     map_values=map_values,
+                     get_process = get_process,
+                     command_process=command_process,
+                     check_get_errors=check_get_errors,
+            ):
+                vals = self.values(command_process(get_command), **kwargs)
+                if check_get_errors:
+                    self.check_errors()
+                if len(vals) == 1:
+                    value = get_process(vals[0])
+                    if not map_values:
+                        return value
+                    elif isinstance(values, (list, tuple, range)):
+                        return values[int(value)]
+                    elif isinstance(values, dict):
+                        for k,v in values.items():
+                            if v == value:
+                                return k
+                        raise KeyError("Value {} not found in mapped values".format(value))
+                    else:
+                        raise ValueError(
+                            'Values of type `{}` are not allowed '
+                            'for Instrument.control'.format(type(values))
+                        )
+                else:
+                    vals = get_process(vals)
+                    return vals
 
-        def fget(self):
-            if isinstance(values, Instrument.InstrumentParameter):
-                values_local = values.get_value(self)
-                if map_values and isinstance(values, dict):
-                    inverse_local = {v: k for k, v in values.items()}
-            else:
-                values_local = values
-                if map_values and isinstance(values, dict):
-                    inverse_local = inverse
+        if set_command is None:
+            def fset(self, value):
+                raise LookupError("Instrument property can not be set.")
+        else:
+            def fset(self,
+                     value,
+                     set_command=set_command, 
+                     validator=validator,
+                     values=values, 
+                     map_values=map_values,
+                     set_process=set_process,
+                     check_set_errors=check_set_errors,
+            ):
 
-            vals = self.values(get_command, **kwargs)
-            if check_get_errors:
-                self.check_errors()
-            if len(vals) == 1:
-                value = get_process(vals[0])
+                value = set_process(validator(value, values))
                 if not map_values:
-                    return value
-                elif isinstance(values_local, (list, tuple, range)):
-                    return values_local[int(value)]
-                elif isinstance(values_local, dict):
-                    return inverse_local[value]
+                    pass
+                elif isinstance(values, (list, tuple, range)):
+                    value = values.index(value)
+                elif isinstance(values, dict):
+                    value = values[value]
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values_local))
+                        'for Instrument.control'.format(type(values))
                     )
-            else:
-                vals = get_process(vals)
-                return vals
-
-        def fset(self, value):
-            if isinstance(values, Instrument.InstrumentParameter):
-                values_local = values.get_value(self)
-            else:
-                values_local = values
-
-            value = set_process(validator(value, values_local))
-            if not map_values:
-                pass
-            elif isinstance(values_local, (list, tuple, range)):
-                value = values_local.index(value)
-            elif isinstance(values_local, dict):
-                value = values_local[value]
-            else:
-                raise ValueError(
-                    'Values of type `{}` are not allowed '
-                    'for Instrument.control'.format(type(values_local))
-                )
-            self.write(set_command % value)
-            if check_set_errors:
-                self.check_errors()
+                self.write(set_command % value)
+                if check_set_errors:
+                    self.check_errors()
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
 
-        return property(fget, fset)
+        if dynamic:
+            # Compute list of parameters supporting dynamic value
+            fget_list = []
+            for var in fget.__code__.co_varnames:
+                if var in Instrument.special_keys:
+                    fget_list.append(var)
+
+            # Compute list of parameters supporting dynamic value
+            fset_list = []
+            for var in fset.__code__.co_varnames:
+                if var in Instrument.special_keys:
+                    fset_list.append(var)
+
+            return DynamicProperty(fget_list, fset_list, fget, fset)
+        else:
+            return property(fget, fset)
 
     @staticmethod
     def measurement(get_command, docs, values=(), map_values=None,
                     get_process=lambda v: v, command_process=lambda c: c,
-                    check_get_errors=False, **kwargs):
+                    check_get_errors=False, dynamic=False, **kwargs):
         """ Returns a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
@@ -295,54 +376,28 @@ class Instrument(object):
         :param get_process: A function that take a value and allows processing
                             before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
-                            before executing the command, for both getting and setting
+                            before executing the command, for getting
         :param check_get_errors: Toggles checking errors after getting
+        :param dynamic: Specify whether the property parameters are meant to be changed in instances or subclasses. See :meth:`control` for an usage example.
+
         """
 
-        if map_values and isinstance(values, dict):
-            # Prepare the inverse values for performance
-            inverse = {v: k for k, v in values.items()}
-
-        def fget(self):
-            if isinstance(values, Instrument.InstrumentParameter):
-                values_local = values.get_value(self)
-                if map_values and isinstance(values_local, dict):
-                    # Prepare the inverse values for performance
-                    inverse_local = {v: k for k, v in values_local.items()}
-            else:
-                values_local = values
-                if map_values and isinstance(values, dict):
-                    inverse_local = inverse
-
-            vals = self.values(command_process(get_command), **kwargs)
-            if check_get_errors:
-                self.check_errors()
-            if len(vals) == 1:
-                value = get_process(vals[0])
-                if not map_values:
-                    return value
-                elif isinstance(values_local, (list, tuple, range)):
-                    return values_local[int(value)]
-                elif isinstance(values_local, dict):
-                    return inverse_local[value]
-                else:
-                    raise ValueError(
-                        'Values of type `{}` are not allowed '
-                        'for Instrument.measurement'.format(type(values_local))
-                    )
-            else:
-                return get_process(vals)
-
-        # Add the specified document string to the getter
-        fget.__doc__ = docs
-
-        return property(fget)
+        return Instrument.control(get_command=get_command,
+                                  set_command=None,
+                                  docs=docs,
+                                  values=values,
+                                  map_values=map_values,
+                                  get_process=get_process,
+                                  command_process=command_process,
+                                  check_get_errors=check_get_errors,
+                                  dynamic=dynamic,
+                                  **kwargs)
 
     @staticmethod
     def setting(set_command, docs,
                 validator=lambda x, y: x, values=(), map_values=False,
                 set_process=lambda v: v,
-                check_set_errors=False,
+                check_set_errors=False, dynamic=False,
                 **kwargs):
         """Returns a property for the class based on the supplied
         commands. This property may be set, but raises an exception
@@ -359,41 +414,20 @@ class Instrument(object):
         :param set_process: A function that takes a value and allows processing
                             before value mapping, returning the processed value
         :param check_set_errors: Toggles checking errors after setting
+        :param dynamic: Specify whether the property parameters are meant to be changed in instances or subclasses. See :meth:`control` for an usage example.
         """
 
-        if map_values and isinstance(values, dict):
-            # Prepare the inverse values for performance
-            inverse = {v: k for k, v in values.items()}
+        return Instrument.control(get_command=None,
+                                  set_command=set_command,
+                                  docs=docs,
+                                  validator=validator,
+                                  values=values,
+                                  map_values=map_values,
+                                  set_process=set_process,
+                                  check_set_errors=check_set_errors,
+                                  dynamic=dynamic,
+                                  **kwargs)
 
-        def fget(self):
-            raise LookupError("Instrument.setting properties can not be read.")
-
-        def fset(self, value):
-            if isinstance(values, Instrument.InstrumentParameter):
-                values_local = values.get_value(self)
-            else:
-                values_local = values
-
-            value = set_process(validator(value, values_local))
-            if not map_values:
-                pass
-            elif isinstance(values_local, (list, tuple, range)):
-                value = values_local.index(value)
-            elif isinstance(values_local, dict):
-                value = values_local[value]
-            else:
-                raise ValueError(
-                    'Values of type `{}` are not allowed '
-                    'for Instrument.setting'.format(type(values_local))
-                )
-            self.write(set_command % value)
-            if check_set_errors:
-                self.check_errors()
-
-        # Add the specified document string to the getter
-        fget.__doc__ = docs
-
-        return property(fget, fset)
 
     # TODO: Determine case basis for the addition of this method
     def clear(self):

@@ -25,7 +25,7 @@
 import pytest
 from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 
 def test_fake_instrument():
@@ -36,23 +36,27 @@ def test_fake_instrument():
     assert fake.values("5") == [5]
 
 
-def test_control_doc():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_doc(dynamic):
     doc = """ X property """
 
     class Fake(Instrument):
         x = Instrument.control(
-            "", "%d", doc
+            "", "%d", doc,
+            dynamic=dynamic
         )
 
     assert Fake.x.__doc__ == doc
 
 
-def test_control_validator():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_validator(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
             values=range(10),
+            dynamic=dynamic
         )
 
     fake = Fake()
@@ -64,13 +68,15 @@ def test_control_validator():
         fake.x = 20
 
 
-def test_control_validator_map():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_validator_map(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
             values=[4, 5, 6, 7],
             map_values=True,
+            dynamic=dynamic
         )
 
     fake = Fake()
@@ -82,13 +88,15 @@ def test_control_validator_map():
         fake.x = 20
 
 
-def test_control_dict_map():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_dict_map(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
             values={5: 1, 10: 2, 20: 3},
             map_values=True,
+            dynamic=dynamic
         )
 
     fake = Fake()
@@ -100,13 +108,15 @@ def test_control_dict_map():
     assert fake.read() == '3'
 
 
-def test_control_dict_str_map():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_dict_str_map(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
             values={'X': 1, 'Y': 2, 'Z': 3},
             map_values=True,
+            dynamic=dynamic,
         )
 
     fake = Fake()
@@ -118,7 +128,8 @@ def test_control_dict_str_map():
     assert fake.read() == '3'
 
 
-def test_control_process():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_process(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
@@ -126,6 +137,7 @@ def test_control_process():
             values=[5e-3, 120e-3],
             get_process=lambda v: v * 1e-3,
             set_process=lambda v: v * 1e3,
+            dynamic=dynamic,
         )
 
     fake = Fake()
@@ -135,13 +147,15 @@ def test_control_process():
     assert fake.x == 30e-3
 
 
-def test_control_get_process():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_process(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "JUNK%d", "",
             validator=strict_range,
             values=[0, 10],
             get_process=lambda v: int(v.replace('JUNK', '')),
+            dynamic=dynamic,
         )
 
     fake = Fake()
@@ -151,14 +165,16 @@ def test_control_get_process():
     assert fake.x == 5
 
 
-def test_control_preprocess_reply_property():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_preprocess_reply_property(dynamic):
     # test setting preprocess_reply at property-level
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "JUNK%d",
             "",
             preprocess_reply=lambda v: v.replace('JUNK', ''),
-            cast=int
+            dynamic=dynamic,
+            cast=int,
         )
 
     fake = Fake()
@@ -172,7 +188,8 @@ def test_control_preprocess_reply_property():
     assert type(fake.x) == int
 
 
-def test_control_preprocess_reply_adapter():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_preprocess_reply_adapter(dynamic):
     # test setting preprocess_reply at Adapter-level
     class Fake(FakeInstrument):
         def __init__(self):
@@ -180,6 +197,7 @@ def test_control_preprocess_reply_adapter():
 
         x = Instrument.control(
             "", "JUNK%d", "",
+            dynamic=dynamic,
             cast=int
         )
 
@@ -192,12 +210,14 @@ def test_control_preprocess_reply_adapter():
     assert fake.x == 5
 
 
-def test_measurement_dict_str_map():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_measurement_dict_str_map(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.measurement(
             "", "",
             values={'X': 1, 'Y': 2, 'Z': 3},
             map_values=True,
+            dynamic=dynamic,
         )
 
     fake = Fake()
@@ -209,11 +229,13 @@ def test_measurement_dict_str_map():
     assert fake.x == 'Z'
 
 
-def test_setting_process():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_setting_process(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.setting(
             "OUT %d", "",
             set_process=lambda v: int(bool(v)),
+            dynamic=dynamic,
         )
 
     fake = Fake()
@@ -222,47 +244,41 @@ def test_setting_process():
     fake.x = 2
     assert fake.read() == 'OUT 1'
 
-def test_instrument_parameter():
+def test_instrument_dynamic_parameter():
     class GenericInstrument(FakeInstrument):
-        __param_range = Instrument.InstrumentParameter("PARAM_RANGE")
-        PARAM_RANGE = (1, 10) # Redefine this in subclasses to reflect actual instrument value
-
-        __param1_range = Instrument.InstrumentParameter("PARAM1_RANGE")
-        PARAM1_RANGE = (1, 10) # Redefine this in subclasses to reflect actual instrument value
-
-        __values_map = Instrument.InstrumentParameter("VALUES_MAP")
-        VALUES_MAP={'X': 1, 'Y': 2, 'Z': 3}
-            
         fake_ctrl = Instrument.control(
             ":PARAM?;", ":PARAM %e Hz;",
             """ A property that represents ...
             """,
             validator=strict_range,
-            values=__param_range
+            values=(1, 10),
+            dynamic = True
         )
         fake_setting = Instrument.setting(
             ":PARAM1 %e Hz;",
             """ A property that represents ...
             """,
             validator=strict_range,
-            values=__param1_range
+            values=(1, 10),
+            dynamic = True
         )
         fake_measurement = Instrument.measurement(
             "",
             """ A property that represents ...
             """,
-            values=__values_map,
-            map_values = True
+            values={'X': 1, 'Y': 2, 'Z': 3},
+            map_values = True,
+            dynamic = True
         )
     class SpecificInstrument1(GenericInstrument):
-        PARAM_RANGE = (1, 10)
-        PARAM1_RANGE = (1, 10)
-        VALUES_MAP={'X': 1, 'Y': 2, 'Z': 3}
+        fake_ctrl_values = (1, 10) # Set values parameter for SpecificInstrument1
+        fake_setting_values = (1, 10) # Set values parameter for SpecificInstrument1
+        fake_measurement_values={'X': 1, 'Y': 2, 'Z': 3} # Set values parameter for SpecificInstrument1
 
     class SpecificInstrument2(GenericInstrument):
-        PARAM_RANGE = (10, 20)
-        PARAM1_RANGE = (10, 20)
-        VALUES_MAP={'X': 4, 'Y': 5, 'Z': 6}
+        fake_ctrl_values = (10, 20) # Set values parameter for SpecificInstrument2
+        fake_setting_values = (10, 20) # Set values parameter for SpecificInstrument2
+        fake_measurement_values={'X': 4, 'Y': 5, 'Z': 6} # Set values parameter for SpecificInstrument2
     
     s1 = SpecificInstrument1()
     s2 = SpecificInstrument2()
@@ -281,3 +297,13 @@ def test_instrument_parameter():
     s2.write('4')
     assert s1.fake_measurement == 'X'
     assert s2.fake_measurement == 'X'
+
+    s1.fake_ctrl_validator=truncated_range # Try truncated range
+    with pytest.raises(AttributeError) as e_info:
+        # Reading a special variable is not allowed
+        s1.fake_ctrl_validator
+        
+    s1.fake_ctrl = 15
+    s1.fake_ctrl_validator=strict_range # Back to strict_range
+    with pytest.raises(ValueError) as e_info:
+        s1.fake_ctrl = 15
