@@ -136,6 +136,17 @@ class VISAAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
+    def write_binary_values(self, command, values, **kwargs):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :param kwargs: Key-word arguments to pass onto `write_binary_values`
+        :returns: number of bytes written
+        """
+
+        return self.connection.write_binary_values(command, values, **kwargs)
+
     def config(self, is_binary=False, datatype='str',
                container=np.array, converter='s',
                separator=',', is_big_endian=False):
