@@ -25,34 +25,24 @@
 from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
-class RS_FSCx(SpectrumAnalyzer):
-    REFERENCE_LEVEL_RANGE_MIN_dBm = -80
-    REFERENCE_LEVEL_RANGE_MAX_dBm = 30
-    REFERENCE_LEVEL_RANGE_dBm = [REFERENCE_LEVEL_RANGE_MIN_dBm, REFERENCE_LEVEL_RANGE_MAX_dBm]
+class RS_FSC6(SpectrumAnalyzer):
+    """ This class represent an Rohde&Schwarz FSC6 Spectrum Analyzer """
 
-    FREQUENCY_MIN_Hz = 1
-    FREQUENCY_MAX_Hz = 6e9
-    FREQUENCY_SPAN_RANGE_Hz = [10, FREQUENCY_MAX_Hz]
+    # Customize parameters with values taken from datasheet/user manual 
+    reference_level_values = (-80, 30)
 
-    RESOLUTION_BW_RANGE_MIN_Hz = 10
-    RESOLUTION_BW_RANGE_MAX_Hz = 3e6
-    RESOLUTION_BW_RANGE_Hz = [RESOLUTION_BW_RANGE_MIN_Hz, RESOLUTION_BW_RANGE_MAX_Hz]
+    frequency_span_values = (10, 6e9)
 
-    INPUT_ATTENUATION_RANGE_dB = [0, 40]
+    resolution_bw_values = (10, 3e6)
 
-    SWEEP_POINTS_RANGE = [631, 631]
+    input_attenuation_values = (0, 40)
 
-    DETECTOR_VALUES=["APE", "NEG", "POS", "SAMP", "RMS"],
+    frequency_points_values = (631, 631)
 
-    input_attenuation = SpectrumAnalyzer.control(
-        ":INPut:ATTenuation?;", ":INPut:ATTenuation %d;",
-        """ An integer property that represents the instrument the input attenuation in dB.
-        This property can be set.
-        """,
-        validator=truncated_range,
-        values=INPUT_ATTENUATION_RANGE_dB,
-        cast=int
-    )
+    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS"),
+
+    input_attenuation_get_command = ":INPut:ATTenuation?;"
+    input_attenuation_set_command = ":INPut:ATTenuation %d;"
 
     def __init__(self, resourceName, description, **kwargs):
         super(RS_FSCx, self).__init__(
@@ -60,17 +50,12 @@ class RS_FSCx(SpectrumAnalyzer):
             description,
             **kwargs
         )
-class RS_FSC6(RS_FSCx):
-    FREQUENCY_MAX_Hz = 6e9
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-            "R&S FSC6 Spectrum Analyzer",
-            **kwargs
-        )
 
-class RS_FSC3(RS_FSCx):
-    FREQUENCY_MAX_Hz = 3e9
+
+class RS_FSC3(RS_FSC6):
+    """ Variant of FSC6 covering up to 3 GHz """
+
+    frequency_span_values = (10, 3e9)
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,

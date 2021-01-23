@@ -26,45 +26,27 @@ from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 class RS_FSW13(SpectrumAnalyzer):
-    REFERENCE_LEVEL_RANGE_MIN_dBm = -40
-    REFERENCE_LEVEL_RANGE_MAX_dBm = 27
-    REFERENCE_LEVEL_RANGE_dBm = (REFERENCE_LEVEL_RANGE_MIN_dBm, REFERENCE_LEVEL_RANGE_MAX_dBm)
+    """ Rohde&Schwarz FSW13 spectrum analyzer """
 
-    FREQUENCY_MIN_Hz = 1
-    FREQUENCY_MAX_Hz = 13.6e9
-    FREQUENCY_SPAN_RANGE_Hz = (0, FREQUENCY_MAX_Hz)
+    # Customize parameters with values taken from datasheet/user manual 
+    reference_level_values = (-40, 27)
 
-    RESOLUTION_BW_RANGE_MIN_Hz = 1
-    RESOLUTION_BW_RANGE_MAX_Hz = 10e6
-    RESOLUTION_BW_RANGE_Hz = (RESOLUTION_BW_RANGE_MIN_Hz, RESOLUTION_BW_RANGE_MAX_Hz)
+    frequency_span_values = (0, 13.6e9)
 
-    INPUT_ATTENUATION_RANGE_dB = [0, 70] # This limit is not clear in the datasheet
+    resolution_bw_values = (10, 10e6)
 
-    SWEEP_POINTS_RANGE = (101, 100001)
+    input_attenuation_values = (0, 70) # This limit is not clear in the datasheet
 
-    DETECTOR_VALUES=["APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS"],
+    frequency_points_values = (101, 100001)
 
-    TRACE_MODE_COMMAND = "DISPLAY:TRACe:MODE"
-    trace_mode = SpectrumAnalyzer.control(
-        TRACE_MODE_COMMAND + "?;",  TRACE_MODE_COMMAND + " %s;",
-        """ A string property that enable you to set how trace information is stored and displayed.
-        allowed values are "WRITE", "MAXHOLD", "MINHOLD", "VIEW", "BLANK"
-        This property can be set.
-        """,
-        validator=strict_discrete_set,
-        values=["WRITE", "MAXHOLD", "MINHOLD", "VIEW", "BLANK"],
-        cast=str
-    )
+    detector_values = ("APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS"),
 
-    input_attenuation = SpectrumAnalyzer.control(
-        ":INPut:ATTenuation?;", ":INPut:ATTenuation %d;",
-        """ An integer property that represents the instrument the input attenuation in dB.
-        This property can be set.
-        """,
-        validator=truncated_range,
-        values=INPUT_ATTENUATION_RANGE_dB,
-        cast=int
-    )
+    trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
+    trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"
+
+    input_attenuation_get_command = ":INPut:ATTenuation?;"
+    input_attenuation_set_command = ":INPut:ATTenuation %d;"
+
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
