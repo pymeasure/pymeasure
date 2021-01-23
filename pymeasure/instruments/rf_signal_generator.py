@@ -83,7 +83,8 @@ Generate a tone at 868MHz
         in dBm. This property can be set.
         """,
         validator=strict_range,
-        values=POWER_RANGE_dBm
+        values=POWER_RANGE_dBm,
+        dynamic=True
     )
     frequency = Instrument.control(
         ":FREQ?;", ":FREQ %e Hz;",
@@ -91,13 +92,15 @@ Generate a tone at 868MHz
         in Hz. This property can be set.
         """,
         validator=strict_range,
-        values=FREQUENCY_RANGE_Hz
+        values=FREQUENCY_RANGE_Hz,
+        dynamic=True
     )
     rf_enable = Instrument.control(
         ":OUTPUT?", ":OUTPUT %d", 
         """ A boolean property that tell if RF output is enabled or not. 
         This property can be set. """,
-        cast=int
+        cast=int,
+        dynamic=True
     )
 
     def __init__(self, adapter, description, **kwargs):
