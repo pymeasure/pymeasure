@@ -29,15 +29,42 @@ from pytest import approx
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 
-pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa_sim'))
+SIM_RESOURCE = 'ASRL1::INSTR'
+
+is_pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa_sim'))
+if not is_pyvisa_sim_installed:
+    pytest.skip('PyVISA tests require the pyvisa-sim library', allow_module_level=True)
+
+
+def make_visa_adapter(**kwargs):
+    return VISAAdapter(SIM_RESOURCE, visa_library='@sim', **kwargs)
 
 
 def test_visa_version():
     assert VISAAdapter.has_supported_version()
 
 
-@pytest.mark.skipif(not pyvisa_sim_installed, reason='pyvisa-sim required but not found.')
 def test_correct_visa_kwarg():
     """Confirm that the query_delay kwargs gets passed through to the VISA connection."""
-    instr = Instrument(adapter='ASRL1::INSTR', name='delayed', query_delay=0.5, visa_library='@sim')
+    instr = Instrument(adapter=SIM_RESOURCE, name='delayed', query_delay=0.5, visa_library='@sim')
     assert instr.adapter.connection.query_delay == approx(0.5)
+
+
+def test_visa_adapter():
+    adapter = make_visa_adapter()
+    assert repr(adapter) == "<VISAAdapter(resource='ASRL1::INSTR')>"
+
+    adapter.ask("?IDN") == "LSG Serial #1234\n"
+
+    adapter.write("?IDN")
+    assert adapter.read() == "LSG Serial #1234\n"
+
+
+def test_visa_adapter_ask_values():
+    adapter = make_visa_adapter()
+    assert adapter.ask_values("?FREQ", separator=",") == [100]
+
+
+def test_visa_adapter_write_binary_values():
+    adapter = make_visa_adapter()
+    adapter.write_binary_values("!OUT", [1], datatype='B')
