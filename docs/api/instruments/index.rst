@@ -13,6 +13,7 @@ This section contains documentation on the instrument classes.
    validators
    comedi
    resources
+   spectrum_analyzer
    rf_signal_generator
 
 Instruments by manufacturer:

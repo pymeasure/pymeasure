@@ -9,6 +9,8 @@ This section contains specific documentation on the Rohde&Schwarz instruments th
 .. toctree::
    :maxdepth: 2
 
+   rohde_schwarz_fscx
+   rohde_schwarz_fsw13
    rohde_schwarz_sma100a
    rohde_schwarz_smiq06b
    rohde_schwarz_sml01
