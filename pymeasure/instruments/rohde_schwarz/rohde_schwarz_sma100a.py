@@ -22,52 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.signal_generator import SignalGenerator
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments.rf_signal_generator import RFSignalGenerator
 
-class RS_SMA100A(SignalGenerator):
-    POWER_RANGE_MIN_dBm = -147.0
-    POWER_RANGE_MAX_dBm = 18.0
+class RS_SMA100A(RFSignalGenerator):
+    """ Class representing R&S SMA100A RF signal generator """
 
-    POWER_RANGE_dBm = (POWER_RANGE_MIN_dBm, POWER_RANGE_MAX_dBm)
-
-    FREQUENCY_MIN_Hz = 9e3
-    FREQUENCY_MAX_Hz = 6e9
-
-    FREQUENCY_RANGE_Hz = (FREQUENCY_MIN_Hz, FREQUENCY_MAX_Hz)
-
-    has_modulation = SignalGenerator.measurement(":MOD?",
-        """ Reads a boolean value that is True if the modulation is enabled. """,
-        cast=bool
-    )
-    AMPLITUDE_SOURCES = {
-        'internal':'INT',
-        'external':'EXT'
-    }
-    PULSE_SOURCES = {
-        'internal':'INT', 'external':'EXT'
-    }
-    PULSE_INPUTS = {} # This parameter has no counterpart on SMA100A, needs to be checked
-
-    low_freq_out_amplitude = SignalGenerator.control(
-        ":SOUR:LFO:VOLT? ", ":SOUR:LFO:VOLT %g V",
-        """A floating point property that controls the peak voltage (amplitude) of the
-        low frequency output in volts, which can take values from 0-3.5V""",
-        validator=truncated_range,
-        values=[0,4.0]
-    )
-
-    LOW_FREQUENCY_SOURCES = {
-        'internal':'LF1', 
-        'internal 2':'LF2', 
-        'both': 'LF12',
-        'noise':'NOIS',
-        'noise LF1':'LF1Noise',
-        'noise LF2':'LF2Noise'
-    }
-
-    INTERNAL_SHAPES = {} # Unsupported ?
-
+    # Define instrument limits according to datasheet
+    power_values = (-147.0, 18.0)
+    frequency_values = (9e3, 6e9)
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
@@ -75,11 +37,3 @@ class RS_SMA100A(SignalGenerator):
             **kwargs
         )
 
-    def enable_modulation(self):
-        self.write(":MOD ON;")
-        self.write(":lfo:sour int; :lfo:ampl 2.0v; :lfo:stat on;")
-
-    def disable_modulation(self):
-        """ Disables the signal modulation. """
-        self.write(":MOD OFF;")
-        self.write(":lfo:stat off;")

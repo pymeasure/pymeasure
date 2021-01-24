@@ -22,54 +22,25 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.signal_generator import SignalGenerator
+from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorDM
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 import struct
 
-class RS_SMIQ06B(SignalGenerator):
-    POWER_RANGE_MIN_dBm = -144.0
-    POWER_RANGE_MAX_dBm = 16.0
-
-    FREQUENCY_MIN_Hz = 300e3
-    FREQUENCY_MAX_Hz = 6.4e9
-
-    AMPLITUDE_SOURCES = {
-        'internal':'INT',
-        'external':'EXT',
-    }
-
-    pulse_source = Instrument.property_not_supported()
-
-    pulse_input = Instrument.property_not_supported()
-    pulse_frequency = Instrument.property_not_supported()
-
-    low_freq_out_enable = Instrument.property_not_supported()
-    low_freq_out_amplitude = Instrument.property_not_supported()
-    low_freq_out_source = Instrument.property_not_supported()
-
-    def config_low_freq_out(self, source='internal', amplitude=3):
-        raise Exception ("Not available")
-
-    internal_shape = Instrument.property_not_supported()
+class RS_SMIQ06B(RFSignalGeneratorDM):
+    # Define instrument limits according to datasheet
+    power_values = (-144.0, 16.0)
+    frequency_values = (300e3, 6.4e9)
 
     ####################################################################
     # 3.5.14.5 SOURce:DM (Digital Modulation) Subsystem ([:SOURce]:DM)
     ####################################################################
-    CUSTOM_MODULATION_TYPES = ("BPSK", "GFSK", "GMSK", "QPSK", "QIS95", "QINMarsat", "QICO", "QWCDma",
-                               "OQPSk", "OIS95", "P4QPsk", "P4DQpsk", "PSK8", "PSKE8", "ASK", "FSK2",
-                               "FSK4", "AFSK4", "QAM16", "QAM32", "QAM64", "QAM256", "USER")
-
-    CUSTOM_MODULATION_FILTERS = ("SCOSine", "COSine", "GAUSs", "LGAUss", "BESS1", "BESS2", "IS95", "EIS95", "APCO", "TETRa", "WCDMa", "RECTangle", "SPHase", "USER")
-
     CUSTOM_MODULATION_DATA = {
+        'Pattern0011' : None, # Not supported
+        'Pattern0101' : "PATT;PATT ALT",
+        'PatternPN9' :  "PRBS;PRBS 9",
         'DATA' : "DLIST",
-        'External' : "SER",
-        'Pattern' : "PATT",
-        'Random' : "PRBS",
     }
-    # TODO: map all natives data sources
-    # CUSTOM_MODULATION_DATA = ("PRBS", "PATTern", "DLISt", "SERial", "PARallel", "SDATa")
 
     CUSTOM_MODULATION_ENABLE_MAP = {
         1: "ON",
@@ -90,7 +61,7 @@ class RS_SMIQ06B(SignalGenerator):
         """ A string property that allow to selects the modulation. QWCDma is only available with option SMIQB47.
         """,
         validator=strict_discrete_set,
-        values=CUSTOM_MODULATION_TYPES
+        values=RFSignalGeneratorDM.MODULATION_TYPES
     )
 
     custom_modulation_filter = Instrument.setting(
@@ -98,7 +69,7 @@ class RS_SMIQ06B(SignalGenerator):
         """ A string property that allow to set the type of filter.
         """,
         validator=strict_discrete_set,
-        values=CUSTOM_MODULATION_FILTERS
+        values=RFSignalGeneratorDM.MODULATION_FILTERS
     )
 
     custom_modulation_bbt = Instrument.setting(
@@ -191,8 +162,7 @@ class RS_SMIQ06B(SignalGenerator):
         for i in range(0, length, 8):
             values.append(int(val[i:i+8], 2))
         
-        #print ("DLIST size", len(values))
-        self.write_binary_values("SOURce:DM:DLISt:DATA ", values)
+        self.adapter.write_binary_values("SOURce:DM:DLISt:DATA ", values, datatype='B')
         self.complete
 
         # Write control list
@@ -202,14 +172,12 @@ class RS_SMIQ06B(SignalGenerator):
         self.write("SOURce:DM:CLISt:SELect 'datactrl'")
         self.complete
 
-        #print ("CLIST size", len(ctrls))
-        #ctrls = ctrls[:2300] # Test
         values = []
         index_mask = (1 << 26) - 1 # 26 bits
         for i,v in enumerate(ctrls):
             # Swtich on the power at the beginning of eache sequence and switch it off at tend of the sequences
             values.append( (((i+1)%2) << 31) + (v & index_mask))
-        self.write_binary_values("SOURce:DM:CLISt:DATA ", values, "I")
+        self.adapter.write_binary_values("SOURce:DM:CLISt:DATA ", values, datatype="I")
         self.complete
 
         # Switch back to normal mode
@@ -234,7 +202,6 @@ class RS_SMIQ06B(SignalGenerator):
     def data_trigger_setup(self, mode='SINGLE'):
         """ Configure the trigger system for bitsequence transmission
         """
-        # Subclasses should implement this
         self.write(":SOUR:DM:TRIGger:SOURce INT")
         self.write(":SOUR:DM:SEQ %s"%mode)
 

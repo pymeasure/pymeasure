@@ -13,6 +13,7 @@ This section contains documentation on the instrument classes.
    validators
    comedi
    resources
+   rf_signal_generator
 
 Instruments by manufacturer:
 
@@ -38,6 +39,7 @@ Instruments by manufacturer:
    oxfordinstruments/index
    parker/index
    razorbill/index
+   rohde_schwarz/index
    signalrecovery/index
    srs/index
    tektronix/index

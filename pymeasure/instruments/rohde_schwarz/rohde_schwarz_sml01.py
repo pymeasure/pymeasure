@@ -22,47 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.signal_generator import SignalGenerator
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments.rf_signal_generator import RFSignalGenerator
 
-class RS_SML01(SignalGenerator):
-    POWER_RANGE_MIN_dBm = -140.0
-    POWER_RANGE_MAX_dBm = 13.0
+class RS_SML01(RFSignalGenerator):
+    """ Class representing R&S SML01 RF signal generator """
 
-    FREQUENCY_MIN_Hz = 9e3
-    FREQUENCY_MAX_Hz = 1.1e9
-
-    has_modulation = SignalGenerator.measurement(":MOD:STAT?",
-        """ Reads a boolean value that is True if the modulation is enabled. """,
-        cast=bool
-    )
-    AMPLITUDE_SOURCES = {
-        'internal':'INT',
-        'external':'EXT'
-    }
-    PULSE_SOURCES = {
-        'internal':'INT', 'external':'EXT'
-    }
-    PULSE_INPUTS = {} # This parameter has no counterpart on SMA100A, needs to be checked
-
-    low_freq_out_amplitude = SignalGenerator.control(
-        ":SOUR:LFO:VOLT? ", ":SOUR:LFO:VOLT %g V",
-        """A floating point property that controls the peak voltage (amplitude) of the
-        low frequency output in volts, which can take values from 0-3.5V""",
-        validator=truncated_range,
-        values=[0,4.0]
-    )
-
-    LOW_FREQUENCY_SOURCES = {
-        'internal':'LF1', 
-        'internal 2':'LF2', 
-        'both': 'LF12',
-        'noise':'NOIS',
-        'noise LF1':'LF1Noise',
-        'noise LF2':'LF2Noise'
-    }
-
-    INTERNAL_SHAPES = {} # Unsupported ?
+    # Define instrument limits according to datasheet
+    power_values = (-140.0, 13.0)
+    frequency_values = (9e3, 1.1e9)
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
@@ -70,10 +37,3 @@ class RS_SML01(SignalGenerator):
             "Rohde & Schwarz SML01 Signal Generator",
             **kwargs
         )
-
-    def enable_modulation(self):
-        self.write(":MOD STAT ON;")
-
-    def disable_modulation(self):
-        """ Disables the signal modulation. """
-        self.write(":OUTPUT:MOD OFF;")
