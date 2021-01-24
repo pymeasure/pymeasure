@@ -167,5 +167,3 @@ class AgilentE4438C(RFSignalGeneratorDM):
     def disable_modulation(self):
         """ Disables the signal modulation. """
         self.write(":OUTPUT:MOD 0")
-
-

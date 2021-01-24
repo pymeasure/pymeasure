@@ -177,7 +177,7 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         for i,v in enumerate(ctrls):
             # Swtich on the power at the beginning of eache sequence and switch it off at tend of the sequences
             values.append( (((i+1)%2) << 31) + (v & index_mask))
-        self.adapter.write_binary_values("SOURce:DM:CLISt:DATA ", values, datatype="I")
+        self.adapter.write_binary_values("SOURce:DM:CLISt:DATA ", values, datatype="I", is_big_endian=True)
         self.complete
 
         # Switch back to normal mode
