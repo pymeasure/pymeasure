@@ -53,7 +53,7 @@ class RS_FSC6(SpectrumAnalyzer):
 
 
 class RS_FSC3(RS_FSC6):
-    """ Variant of FSC6 covering up to 3 GHz """
+    """ Variant of Rohde&Schwarz FSC6 Spectrum Analyzer covering up to 3 GHz """
 
     frequency_span_values = (10, 3e9)
     def __init__(self, resourceName, **kwargs):

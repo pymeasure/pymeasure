@@ -22,40 +22,6 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from .rohde_schwarz_fscx import RS_FSC3, RS_FSC6
+from .rohde_schwarz_fsw13 import RS_FSW13
 
-class AgilentE4440A(SpectrumAnalyzer):
-    """ This class represent an Agilent E4440A Spectrum Analyzer """
-
-    # Customize parameters with values taken from datasheet/user manual 
-    reference_level_values = (-170, 30)
-
-    frequency_span_values = (10, 26.5e9)
-
-    resolution_bw_values = (1, 8e6)
-
-    input_attenuation_values = (0, 70)
-
-    frequency_points_values = (101, 8192)
-
-    detector_values = ("NORM", "AVER", "POS", "SAMP", "NEG", "QPE", "EAV", "EPOS", "MPOS", "RMS")
-
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-            "Agilent E4440A Spectrum Analyzer",
-            **kwargs
-        )
-
-
-class AgilentE4445A(AgilentE4440A):
-    """ Spectrum analyzer similar to E4440A, but with more limited frequency span """
-
-    frequency_span_values = (10, 13.2e9)
-
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-            "Agilent E4445A Spectrum Analyzer",
-            **kwargs
-        )

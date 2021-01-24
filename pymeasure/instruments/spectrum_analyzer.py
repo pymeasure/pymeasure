@@ -31,12 +31,50 @@ import pandas as pd
 
 
 class SpectrumAnalyzer(Instrument):
-    """ Represents a generic SCPI Spectrum Analyzer and provides a high-level interface for controlling basic instrument
-    parameters and caputring traces.
+    """ Represents a generic SCPI Spectrum Analyzer and provides a high-level interface for controlling basic instrument parameters and caputring traces.
 
-    The interface is intentionally simple to be adapted to wide range of spectrum analyzers.
-    This class is normally subclassed to implement specific instruments. Other use case include the basic management of spectrum analyzer not
-    yet implemented.
+    The interface is intentionally simple in order to be adapted to wide range
+    of spectrum analyzers.
+    This class is normally subclassed to implement specific instruments. Other use case include the basic management of spectrum analyzer not yet implemented.
+
+Example of initialization
+
+.. code-block:: python
+
+    # Example for Agilent E4440A Spectrum Analyzer
+    from pymeasure.instruments.agilent import AgilentE4440A
+
+    sa = AgilentE4440A('GPIB0::18::INSTR')
+    # Read instrument ID
+    sa.id
+    # 'Agilent Technologies, E4440A, MY44022480, A.11.13'
+
+
+Single sweep acquisition and peak value calculation
+
+.. code-block:: python
+
+    sa.reset()
+    sa.reference_level = 0.0
+    sa.resolution_bw = 100000
+    sa.center_frequency = 868e6
+    sa.frequency_span = 100e6
+    sa.sweep_mode = 0
+    sa.trace_mode = "WRITE"
+    
+    # Make a single sweep
+    sa.sweep_single()
+
+    # Acquire trace
+    trace = sa.trace()
+
+    # Find peak in the trace
+    peak = max(trace)
+
+    # check if any error occurred
+    sa.check_errors()
+
+
     """
 
     reference_level = Instrument.control(
