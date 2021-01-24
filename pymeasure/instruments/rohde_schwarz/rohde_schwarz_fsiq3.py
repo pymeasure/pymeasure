@@ -22,7 +22,35 @@
 # THE SOFTWARE.
 #
 
-from .rohde_schwarz_fscx import RS_FSC3, RS_FSC6
-from .rohde_schwarz_fsw13 import RS_FSW13
-from .rohde_schwarz_fsiq3 import RS_FSIQ3
+from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
+class RS_FSIQ3(SpectrumAnalyzer):
+    """ Rohde&Schwarz FSIQ3 spectrum analyzer """
+
+    # Customize parameters with values taken from datasheet/user manual 
+    reference_level_values = (-200, 200)
+
+    frequency_span_values = (0, 3e9)
+
+    resolution_bw_values = (10, 10e6)
+
+    input_attenuation_values = (0, 70) # This limit is not clear in the datasheet
+
+    frequency_points_values = (500, 500) # TODO: The command to get the sweep points is not available
+
+    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS", "AVER"),
+
+    trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
+    trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"
+
+    input_attenuation_get_command = ":INPut:ATTenuation?;"
+    input_attenuation_set_command = ":INPut:ATTenuation %d;"
+
+
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "R&S FSW Spectrum Analyzer FSIQ 3",
+            **kwargs
+        )
