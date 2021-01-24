@@ -1,5 +1,5 @@
 ##########################################################
-Rohde&Schwarzt SML01 RF Signal Generator
+Rohde&Schwarz SML01 RF Signal Generator
 ##########################################################
 
 .. autoclass:: pymeasure.instruments.rohde_schwarz.RS_SML01
