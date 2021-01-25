@@ -174,16 +174,18 @@ Single sweep acquisition and peak value calculation
     )
 
     sweep_mode_continuous = Instrument.control(
-        ":INITiate:CONTinuous?;", ":INITiate:CONTinuous %d;",
+        ":INITiate:CONTinuous?;", ":INITiate:CONTinuous %s;",
         """ A boolean property that allows you to switches the analyzer between continuous-sweep and single-sweep mode.
         This property can be set.
         """,
         validator=strict_discrete_set,
-        values=("ON", "OFF"),
+        values={"ON" : 1,
+                "OFF" : 0},
+        cast = int,
+        map_values = True,
         dynamic=True
     )
 
-    TRACE_MODE_COMMAND = ":TRACe:MODE"
     trace_mode = Instrument.control(
         ":TRACe:MODE?;",  ":TRACe:MODE %s;",
         """ A string property that enable you to set how trace information is stored and displayed.
