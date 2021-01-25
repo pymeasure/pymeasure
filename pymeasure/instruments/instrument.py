@@ -66,13 +66,41 @@ class Instrument(object):
         # TODO: Determine case basis for the addition of these methods
         if includeSCPI:
             # Basic SCPI commands
-            self.status = self.measurement("*STB?",
-                                           """ Returns the status of the instrument """)
-            self.complete = self.measurement("*OPC?",
-                                             """ TODO: Add this doc """)
+            #self.status = self.measurement("*STB?",
+            #                               """ Returns the status of the instrument """)
+            #self.complete = self.measurement("*OPC?",
+            #                                 """ TODO: Add this doc """)
+            pass
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
+
+    @property
+    def complete(self):
+        """ This property allows synchronization between a controller and a device. The Operation Complete 
+        query places an ASCII character 1 into the device's Output Queue when all pending
+        selected device operations have been finished.
+        """
+        if self.SCPI:
+            return self.adapter.ask("*OPC?").strip()
+        else:
+            return "Warning: Property not implemented."
+
+    @property
+    def status(self):
+        """ Requests and returns the status byte and Master Summary Status bit. """
+        if self.SCPI:
+            return self.adapter.ask("*STB?").strip()
+        else:
+            return "Warning: Property not implemented."
+
+    @property
+    def options(self):
+        """ Requests and returns the device options installed. """
+        if self.SCPI:
+            return self.adapter.ask("*OPT?").strip()
+        else:
+            return "Warning: Property not implemented."
 
     @property
     def id(self):
