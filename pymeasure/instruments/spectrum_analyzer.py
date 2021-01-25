@@ -138,6 +138,7 @@ Single sweep acquisition and peak value calculation
         """,
         validator=truncated_range,
         values=(101, 8192),
+        cast=int,
         dynamic=True
     )
     frequency_step = Instrument.control(
