@@ -59,7 +59,7 @@ Single sweep acquisition and peak value calculation
     sa.resolution_bw = 100000
     sa.center_frequency = 868e6
     sa.frequency_span = 100e6
-    sa.sweep_mode = 0
+    sa.sweep_mode_continuous = "OFF"
     sa.trace_mode = "WRITE"
     
     # Make a single sweep
