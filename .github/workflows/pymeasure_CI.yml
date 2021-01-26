@@ -10,6 +10,9 @@ jobs:
   docs_lint:
     name: Docs and Linting
     runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v2
       - name: Install pymeasure requirements
@@ -19,13 +22,14 @@ jobs:
           environment-file: requirements/pymeasure.yml
           activate-environment: pymeasure
           auto-update-conda: true
+      - name: Install pymeasure dev requirements
+        run: conda env update -f requirements/pymeasure_dev.yml
+      - name: Conda info & list
         run: |
-          conda env update -f requirements/pymeasure_dev.yml
           conda info
           conda list
       - name: Lint with flake8
         continue-on-error: true
-        shell: bash -l {0}
         run: |
           # stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -33,13 +37,11 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Generate docs
         working-directory: ./docs
-        shell: bash -l {0}
         run: |
           echo "::add-matcher::.github/sphinx.json"
           make html
       - name: Run doctests
         working-directory: ./docs
-        shell: bash -l {0}
         run: |
           echo "::add-matcher::.github/sphinx.json"
           make doctest
