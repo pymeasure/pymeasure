@@ -21,7 +21,7 @@ jobs:
           auto-update-conda: true
       - name: Install dev dependencies
         shell: bash -l {0}
-        name: conda env update -f requirements/pymeasure_dev.yml
+        run: conda env update -f requirements/pymeasure_dev.yml
       - name: Lint with flake8
         continue-on-error: true
         run: |
@@ -68,7 +68,7 @@ jobs:
           use-only-tar-bz2: true  # for caching to work properly
       - name: Install dev dependencies
         shell: bash -l {0}
-        name: conda env update -f requirements/pymeasure_dev.yml
+        run: conda env update -f requirements/pymeasure_dev.yml
       - name: Conda info
         shell: bash -l {0}
         run: conda info
