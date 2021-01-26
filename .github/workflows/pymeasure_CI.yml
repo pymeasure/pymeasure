@@ -22,6 +22,12 @@ jobs:
       - name: Install dev dependencies
         shell: bash -l {0}
         run: conda env update -f requirements/pymeasure_dev.yml
+      - name: Conda info
+        shell: bash -l {0}
+        run: conda info
+      - name: Conda list
+        shell: bash -l {0}
+        run: conda list
       - name: Lint with flake8
         continue-on-error: true
         run: |
