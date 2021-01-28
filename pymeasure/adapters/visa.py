@@ -69,10 +69,6 @@ class VISAAdapter(Adapter):
             **kwargs
         )
 
-    def __del__(self):
-        """close connection upon device deletion"""
-        self.connection.close()
-
     @staticmethod
     def has_supported_version():
         """ Returns True if the PyVISA version is greater than 1.8 """
