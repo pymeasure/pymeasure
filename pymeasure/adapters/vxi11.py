@@ -56,6 +56,9 @@ class VXI11Adapter(Adapter):
 
         self.connection = vxi11.Instrument(host, **self.conn_kwargs)
 
+    def __repr__(self):
+        return '<VXI11Adapter(host={})>'.format(self.connection.host)
+
     def write(self, command):
         """ Wrapper function for the write command using the
         vxi11 interface.
