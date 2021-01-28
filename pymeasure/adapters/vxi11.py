@@ -114,10 +114,3 @@ class VXI11Adapter(Adapter):
         :returns binary string containing the response from the device.
         """
         return self.connection.ask_raw(command)
-
-    def __repr__(self):
-        return '<VXI11Adapter(host={})>'.format(self.connection.host)
-
-    def __del__(self):
-        """close connection upon device deletion"""
-        self.connection.close()

@@ -54,6 +54,11 @@ class TelnetAdapter(Adapter):
                     f"allowed are: {str(safe_keywords)}")
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
+    def __del__(self):
+        """ Ensures the connection is closed upon deletion
+        """
+        self.connection.close()
+
     def write(self, command):
         """ Writes a command to the instrument
 
@@ -84,7 +89,3 @@ class TelnetAdapter(Adapter):
     def __repr__(self):
         return "<TelnetAdapter(host=%s, port=%d)>" % (self.connection.host, self.connection.port)
 
-    def __del__(self):
-        """ Ensures the connection is closed upon deletion
-        """
-        self.connection.close()
