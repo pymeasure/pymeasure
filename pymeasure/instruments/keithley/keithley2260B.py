@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2260B(Instrument, KeithleyBuffer):
+class Keithley2260B(Instrument):
     """ Represents the Keithley 2260B Power Supply (minimal implementation)
     and provides a high-level interface for interacting with the instrument.
 
