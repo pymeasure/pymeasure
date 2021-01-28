@@ -69,10 +69,6 @@ class VISAAdapter(Adapter):
             **kwargs
         )
 
-    def __del__(self):
-        """close connection upon device deletion"""
-        self.connection.close()
-
     @staticmethod
     def has_supported_version():
         """ Returns True if the PyVISA version is greater than 1.8 """
@@ -80,9 +76,6 @@ class VISAAdapter(Adapter):
             return parse_version(pyvisa.__version__) >= parse_version('1.8')
         else:
             return False
-
-    def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
 
     def write(self, command):
         """ Writes a command to the instrument
@@ -166,3 +159,10 @@ class VISAAdapter(Adapter):
         :param delay: Time delay between checking SRQ in seconds
         """
         self.connection.wait_for_srq(timeout * 1000)
+
+    def __repr__(self):
+        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
+
+    def __del__(self):
+        """close connection upon device deletion"""
+        self.connection.close()
