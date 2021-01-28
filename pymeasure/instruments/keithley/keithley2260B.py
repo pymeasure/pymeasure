@@ -64,9 +64,7 @@ class Keithley2260B(Instrument, KeithleyBuffer):
     )
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Keithley 2260B DC Power Supply", **kwargs)
-        # TODO: implement the read termination in the proper way, if there is a proper way
-        self.adapter.connection.read_termination = "\n"
+        super().__init__(adapter, "Keithley 2260B DC Power Supply", read_termination="\n", **kwargs)
 
     def apply(self, voltage, current):
         """convenience function to set voltage (volts) and current (amps) at once."""
