@@ -162,7 +162,3 @@ class VISAAdapter(Adapter):
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
-
-    def __del__(self):
-        """close connection upon device deletion"""
-        self.connection.close()

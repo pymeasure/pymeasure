@@ -83,8 +83,3 @@ class TelnetAdapter(Adapter):
 
     def __repr__(self):
         return "<TelnetAdapter(host=%s, port=%d)>" % (self.connection.host, self.connection.port)
-
-    def __del__(self):
-        """ Ensures the connection is closed upon deletion
-        """
-        self.connection.close()

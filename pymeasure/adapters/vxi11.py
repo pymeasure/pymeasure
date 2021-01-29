@@ -114,7 +114,3 @@ class VXI11Adapter(Adapter):
 
     def __repr__(self):
         return '<VXI11Adapter(host={})>'.format(self.connection.host)
-
-    def __del__(self):
-        """close connection upon device deletion"""
-        self.connection.close()
