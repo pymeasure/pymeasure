@@ -50,11 +50,6 @@ class SerialAdapter(Adapter):
         else:
             self.connection = serial.Serial(port, **kwargs)
 
-    def __del__(self):
-        """ Ensures the connection is closed upon deletion
-        """
-        self.connection.close()
-
     def write(self, command):
         """ Writes a command to the instrument
 

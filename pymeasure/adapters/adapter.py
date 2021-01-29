@@ -39,6 +39,11 @@ class Adapter(object):
     """
     def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
+        self.connection = None
+
+    def __del__(self):
+        """close connection upon garbage collection of the device"""
+        self.connection.close()
 
     def write(self, command):
         """ Writes a command to the instrument

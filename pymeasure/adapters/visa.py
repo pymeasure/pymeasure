@@ -77,9 +77,6 @@ class VISAAdapter(Adapter):
         else:
             return False
 
-    def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
-
     def write(self, command):
         """ Writes a command to the instrument
 
@@ -162,3 +159,6 @@ class VISAAdapter(Adapter):
         :param delay: Time delay between checking SRQ in seconds
         """
         self.connection.wait_for_srq(timeout * 1000)
+
+    def __repr__(self):
+        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
