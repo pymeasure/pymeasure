@@ -301,6 +301,9 @@ class ManagedWindow(QtGui.QMainWindow):
         self.resize(1000, 800)
 
     def quit(self, evt=None):
+        if self.manager.is_running():
+            self.abort()
+
         self.close()
 
     def browser_item_changed(self, item, column):
@@ -679,6 +682,9 @@ class ManagedImageWindow(QtGui.QMainWindow):
         self.resize(1000, 800)
 
     def quit(self, evt=None):
+        if self.manager.is_running():
+            self.abort()
+
         self.close()
 
     def browser_item_changed(self, item, column):
