@@ -25,9 +25,21 @@
 import logging
 
 from threading import Thread, Event
+from time import time
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class InterruptableEvent(Event):
+    def wait(self, timeout=None):
+        if timeout is None:
+            while not super().wait(0.01):
+                pass
+        else:
+            timeout_start = time()
+            while not super().wait(0.01) and time() <= timeout_start + timeout:
+                pass
 
 
 class StoppableThread(Thread):
@@ -37,7 +49,7 @@ class StoppableThread(Thread):
 
     def __init__(self):
         super().__init__()
-        self._should_stop = Event()
+        self._should_stop = InterruptableEvent()
         self._should_stop.clear()
 
     def join(self, timeout=0):
