@@ -32,6 +32,12 @@ log.addHandler(logging.NullHandler())
 
 
 class InterruptableEvent(Event):
+    """
+    This subclass solves the problem indicated in bug
+    https://bugs.python.org/issue35935 that prevents the
+    wait of an Event to be interrupted by a KeyboardInterrupt.
+    """
+
     def wait(self, timeout=None):
         if timeout is None:
             while not super().wait(0.01):
