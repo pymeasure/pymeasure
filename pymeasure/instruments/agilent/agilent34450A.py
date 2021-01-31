@@ -552,7 +552,7 @@ class Agilent34450A(Instrument):
             one_long_string = conf_values
 
         # Split string in elements
-        list_of_elements = re.split('["\s,]', one_long_string)
+        list_of_elements = re.split(r'["\s,]', one_long_string)
 
         # Eliminate empty string elements
         list_without_empty_elements = list(filter(lambda v: v != '', list_of_elements))
