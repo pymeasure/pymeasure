@@ -42,8 +42,9 @@ class Adapter(object):
         self.connection = None
 
     def __del__(self):
-        """close connection upon garbage collection of the device"""
-        self.connection.close()
+        """Close connection upon garbage collection of the device"""
+        if self.connection is not None:
+            self.connection.close()
 
     def write(self, command):
         """ Writes a command to the instrument
