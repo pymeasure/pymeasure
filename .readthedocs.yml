@@ -1,13 +1,10 @@
 version: 2
 
+conda:
+    environment: requirements/pymeasure.yml
+
 sphinx:
     configuration: docs/conf.py
     fail_on_warning: false
 
 formats: all
-
-python:
-   version: 3.7
-   system_packages: true
-   install:
-       - requirements: requirements/pymeasure_readthedocs.txt
