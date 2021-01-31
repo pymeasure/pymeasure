@@ -30,7 +30,7 @@ from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
-SIM_RESOURCE = 'ASRL3::INSTR'
+SIM_RESOURCE = 'ASRL2::INSTR'
 
 is_pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa_sim'))
 if not is_pyvisa_sim_installed:
@@ -53,7 +53,7 @@ def test_correct_visa_kwarg():
 
 def test_visa_adapter():
     adapter = make_visa_adapter()
-    assert repr(adapter) == "<VISAAdapter(resource='ASRL3::INSTR')>"
+    assert repr(adapter) == f"<VISAAdapter(resource='{SIM_RESOURCE}')>"
 
     assert adapter.ask("*IDN?") == "SCPI,MOCK,VERSION_1.0\n"
 
