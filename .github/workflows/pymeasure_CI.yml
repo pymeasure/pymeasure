@@ -30,8 +30,6 @@ jobs:
           activate-environment: pymeasure
           auto-update-conda: true
           use-only-tar-bz2: true  # for caching to work properly
-      - name: Install dev requirements
-        run: conda env update -f requirements/pymeasure_dev.yml
       - name: Conda info & list
         run: |
           conda info
@@ -82,8 +80,6 @@ jobs:
           activate-environment: pymeasure
           auto-update-conda: true 
           use-only-tar-bz2: true  # for caching to work properly
-      - name: Install dev requirements
-        run: conda env update -f requirements/pymeasure_dev.yml
       - name: Conda info & list
         run: |
           conda info
