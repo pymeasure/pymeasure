@@ -29,7 +29,8 @@ from pytest import approx
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 
-SIM_RESOURCE = 'ASRL1::INSTR'
+# This uses a pyvisa-sim default instrument, we could also define our own.
+SIM_RESOURCE = 'ASRL3::INSTR'
 
 is_pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa_sim'))
 if not is_pyvisa_sim_installed:
@@ -52,19 +53,19 @@ def test_correct_visa_kwarg():
 
 def test_visa_adapter():
     adapter = make_visa_adapter()
-    assert repr(adapter) == "<VISAAdapter(resource='ASRL1::INSTR')>"
+    assert repr(adapter) == "<VISAAdapter(resource='ASRL3::INSTR')>"
 
-    assert adapter.ask("?IDN") == "LSG Serial #1234\n"
+    assert adapter.ask("*IDN?") == "SCPI,MOCK,VERSION_1.0\n"
 
-    adapter.write("?IDN")
-    assert adapter.read() == "LSG Serial #1234\n"
+    adapter.write("*IDN?")
+    assert adapter.read() == "SCPI,MOCK,VERSION_1.0\n"
 
 
 def test_visa_adapter_ask_values():
     adapter = make_visa_adapter()
-    assert adapter.ask_values("?FREQ", separator=",") == [100]
+    assert adapter.ask_values(":VOLT:IMM:AMPL?", separator=",") == [1.0]
 
 
 def test_visa_adapter_write_binary_values():
     adapter = make_visa_adapter()
-    adapter.write_binary_values("!OUT", [1], datatype='B')
+    adapter.write_binary_values("OUTP", [1], datatype='B')
