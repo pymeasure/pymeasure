@@ -182,7 +182,7 @@ Another example for user data loading
 
     """
     
-    MODULATION_TYPES = ('BPSK', 'FSK2', 'FSK4', 'PSK8', 'QAM16', 'QAM256', 'QAM32', 'QAM64', 'QPSK')
+    MODULATION_TYPES = ('ASK', 'BPSK', 'FSK2', 'FSK4', 'PSK8', 'QAM16', 'QAM256', 'QAM32', 'QAM64', 'QPSK')
     """ Define some basic digital modulation types """
 
     MODULATION_FILTERS = ('RECT', 'GAUS')
