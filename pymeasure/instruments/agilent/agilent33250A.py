@@ -54,7 +54,7 @@ class Agilent33250A(Agilent33220A):
     )
 
     pulse_width = Instrument.control(
-        "PULS:WIDT?", "PULS:WIDT %f",
+        "PULS:WIDT?", "PULS:WIDT %g",
         """ A floating point property that controls the width of a pulse
         waveform function in seconds, ranging from 20 ns to 2000 s, within a
         set of restrictions depending on the period. Can be set. """,
