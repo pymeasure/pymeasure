@@ -80,7 +80,7 @@ class AgilentE4438C(RFSignalGeneratorDM):
     )
 
     custom_modulation_ask_depth = Instrument.control(
-        ":RADio:CUSTom:ASK?", ":RADio:CUSTom:ASK %e", 
+        ":RADio:CUSTom:MODULATION:ASK:DEPTH?", ":RADio:CUSTom:MODULATION:ASK:DEPTH %e",
         """ An integer property that allow to set and read the depth for the amplitude shift keying (ASK) modulation.
         Depth is set as a percentage of the full power on level.
         This property can be set. """,
