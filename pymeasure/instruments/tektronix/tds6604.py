@@ -35,7 +35,7 @@ def capitalize_string(string: str, *args, **kwargs):
 string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
-class TDS620B(Instrument):
+class TDS6604(Instrument):
     """ Represents the Tektronix TDS 620B Oscilloscope
     and provides a high-level for interacting with the instrument
 
@@ -114,7 +114,7 @@ class TDS620B(Instrument):
         "DATa:STARt?", "DATa:STARt %d",
         """An integer proper that sets the record start point""",
         validator=truncated_range,
-        values=[0,5000]
+        values=[0,124000]
     )
 
 
@@ -122,7 +122,7 @@ class TDS620B(Instrument):
         "DATa:STOP?", "DATa:STOP %d",
         """An interger property that sets the data record stop""",
         validator=truncated_range,
-        values=[0,5000]
+        values=[0,124000]
     )
 
     data_encoding = Instrument.control(
@@ -208,7 +208,7 @@ class TDS620B(Instrument):
         range is not continuous, and I was too lazy to figure out the values. The scope picks the next smallest
         sec/div if you specify one that is not a allowed.""",
         validator=truncated_range,
-        values=[.2e-9,10]
+        values=[500e-12,10]
     )
 
     horizontal_recordlength = Instrument.control(
@@ -217,7 +217,7 @@ class TDS620B(Instrument):
          Longer records will extend past the end of the scope screen and take longer to transfer. 
          There are 50 points/div""",
         validator=strict_discrete_set,
-        values=[500,1000,2000, 2500,5000,15000]
+        values=[500, 2000, 5000, 10000, 25000, 50000, 100000, 124000, 200000]
     )
 
     CH1 = Instrument.measurement(
@@ -277,7 +277,7 @@ class TDS620B(Instrument):
         Float parameter that sets the channel scale (V/div), range is 100 mV to 1 mV
         """,
         validator=truncated_range,
-        values=[1e-3, 1e-1]
+        values=[1e-3, 1]
     )
 
     CH2 = Instrument.measurement(
@@ -337,7 +337,7 @@ class TDS620B(Instrument):
         Float parameter that sets the channel scale (V/div), range is 100 mV to 1 mV
         """,
         validator=truncated_range,
-        values=[1e-3, 1e-1]
+        values=[1e-3, 1]
     )
 
 
@@ -412,7 +412,7 @@ class TDS620B(Instrument):
 
         @source.setter
         def source(self, value):
-            if value in TDS620B.Measurement.SOURCE_VALUES:
+            if value in TDS6604.Measurement.SOURCE_VALUES:
                 self.parent.write("%sSOU %s" % (self.preamble, value))
             else:
                 raise ValueError("Invalid source ('%s') provided to %s" % (
@@ -424,7 +424,7 @@ class TDS620B(Instrument):
 
         @type.setter
         def type(self, value):
-            if value in TDS620B.Measurement.TYPE_VALUES:
+            if value in TDS6604.Measurement.TYPE_VALUES:
                 self.parent.write("%sTYP %s" % (self.preamble, value))
             else:
                 raise ValueError("Invalid type ('%s') provided to %s" % (
@@ -436,16 +436,16 @@ class TDS620B(Instrument):
 
         @unit.setter
         def unit(self, value):
-            if value in TDS620B.Measurement.UNIT_VALUES:
+            if value in TDS6604.Measurement.UNIT_VALUES:
                 self.parent.write("%sUNI %s" % (self.preamble, value))
             else:
                 raise ValueError("Invalid unit ('%s') provided to %s" % (
                                  self.parent, value))
 
     def __init__(self, resourceName, **kwargs):
-        super(TDS620B, self).__init__(
+        super(TDS6604, self).__init__(
             resourceName,
             "Tektronix TDS 620B Oscilliscope",
             **kwargs
         )
-        self.measurement = TDS620B.Measurement(self)
+        self.measurement = TDS6604.Measurement(self)
