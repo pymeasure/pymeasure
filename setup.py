@@ -31,8 +31,8 @@ setup(
     author='PyMeasure Developers',
     packages=find_packages(),
     scripts=[],
-    url='https://github.com/ralph-group/pymeasure',
-    download_url='https://github.com/ralph-group/pymeasure/tarball/v0.8.0',
+    url='https://github.com/pymeasure/pymeasure',
+    download_url='https://github.com/pymeasure/pymeasure/tarball/v0.8.0',
     license='MIT License',
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
@@ -56,7 +56,8 @@ setup(
     ],
     tests_require=[
         'pytest >= 2.9.1',
-        'pytest-qt >= 2.4.0'
+        'pytest-qt >= 2.4.0',
+        'pyvisa-sim >= 0.4.0',
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -67,10 +68,10 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: Unix",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering",
     ],
     keywords="measure instrument experiment control automate graph plot"

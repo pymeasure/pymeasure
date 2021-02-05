@@ -230,6 +230,7 @@ class Manager(QtCore.QObject):
     def _clean_up(self):
         self._worker.join()
         del self._worker
+        self._monitor.wait()
         del self._monitor
         self._worker = None
         self._running_experiment = None

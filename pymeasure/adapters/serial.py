@@ -38,19 +38,17 @@ class SerialAdapter(Adapter):
     serial communication to instrument
 
     :param port: Serial port
+    :param preprocess_reply: optional callable used to preprocess strings
+        received from the instrument. The callable returns the processed string.
     :param kwargs: Any valid key-word argument for serial.Serial
     """
 
-    def __init__(self, port, **kwargs):
+    def __init__(self, port, preprocess_reply=None, **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply)
         if isinstance(port, serial.Serial):
             self.connection = port
         else:
             self.connection = serial.Serial(port, **kwargs)
-
-    def __del__(self):
-        """ Ensures the connection is closed upon deletion
-        """
-        self.connection.close()
 
     def write(self, command):
         """ Writes a command to the instrument
