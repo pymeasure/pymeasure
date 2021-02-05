@@ -171,6 +171,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
                 log.warning(
                     "Card type %s at slot %s is not yet implemented." % (card, slot)
                 )
+                continue
 
             channels = [100 * slot + ch for ch in channels]
 
