@@ -163,7 +163,6 @@ class Results(object):
                 delimiter=self.DELIMITER,
                 line_break=self.LINE_BREAK
             )
-
         else:  # default to CSV
             self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 

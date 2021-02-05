@@ -41,13 +41,8 @@ class TDS6604(Instrument):
 
     .. code-block:: python
 
-        osc= TDS6604("GPIB0::...")
-        osc.pretrigger = 1 # set pretrigger to 1% of recorded waveform
-        osc.acquire_mode = 'SAMPLE' # the default
-        osc.acquire_stop_after = 'SEQUENCE' # Stop recording after 1 waveform after trigger
-        osc.data_source = 'CH1' # set data source to channel 1
-        #emit trigger somehow
-        data = osc.get_binary_curve() # get curve data from channel 1 with default binary encoding
+        osc= TDS620B("GPIB0::...")
+
 
     """
 
@@ -277,7 +272,7 @@ class TDS6604(Instrument):
         Float parameter that sets the channel scale (V/div), range is 100 mV to 1 mV
         """,
         validator=truncated_range,
-        values=[1e-3, 1e-1]
+        values=[1e-3, 1]
     )
 
     CH2 = Instrument.measurement(
@@ -337,7 +332,8 @@ class TDS6604(Instrument):
         Float parameter that sets the channel scale (V/div), range is 100 mV to 1 mV
         """,
         validator=truncated_range,
-        values=[1e-3, 1e-1]
+        values=[1e-3, 1]
+
     )
 
 
