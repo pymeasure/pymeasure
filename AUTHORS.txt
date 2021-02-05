@@ -23,8 +23,10 @@ Moritz Jung
 Richard Schlitz
 Manuel Zahn
 Mikhaël Myara
+Paul Goulain
 John McMaster
 Dominik Kriegner
 Jonathan Larochelle
 Dominic Caron
 Mathieu Plante
+Michele Sardo
