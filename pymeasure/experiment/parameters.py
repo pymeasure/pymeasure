@@ -151,12 +151,13 @@ class BooleanParameter(Parameter):
                 self._value = False
             else:
                 raise ValueError("BooleanParameter given string value of '%s'" % value)
+        elif isinstance(value, (int, float)) and value in [0, 1]:
+            self._value = bool(value)
+        elif isinstance(value, bool):
+            self._value = value
         else:
-            try:
-                self._value = bool(value)
-            except ValueError:
-                raise ValueError("BooleanParameter given non-boolean value of "
-                                 "type '%s'" % type(value))
+            raise ValueError("BooleanParameter given non-boolean value of "
+                             "type '%s'" % type(value))
 
 
 class FloatParameter(Parameter):
