@@ -40,11 +40,11 @@ class InterruptableEvent(Event):
 
     def wait(self, timeout=None):
         if timeout is None:
-            while not super().wait(0.01):
+            while not super().wait(0.1):
                 pass
         else:
             timeout_start = time()
-            while not super().wait(0.01) and time() <= timeout_start + timeout:
+            while not super().wait(0.1) and time() <= timeout_start + timeout:
                 pass
 
 
