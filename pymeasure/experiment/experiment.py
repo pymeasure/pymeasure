@@ -223,6 +223,7 @@ class Experiment(object):
         diff = shape[0] * shape[1] - len(z)
         Z = np.concatenate((z.values, np.zeros(diff))).reshape(shape)
         df = pd.DataFrame(Z, index=y.unique(), columns=x.unique())
+        # TODO: Remove seaborn dependencies
         ax = sns.heatmap(df)
         pl.title(title)
         pl.xlabel(xname)
@@ -243,6 +244,7 @@ class Experiment(object):
         Z = np.concatenate((z.values, np.zeros(diff))).reshape(shape)
         df = pd.DataFrame(Z, index=y.unique(), columns=x.unique())
         cbar_ax = ax.get_figure().axes[1]
+        # TODO: Remove seaborn dependencies
         sns.heatmap(df, ax=ax, cbar_ax=cbar_ax)
         ax.set_xlabel(xname)
         ax.set_ylabel(yname)
