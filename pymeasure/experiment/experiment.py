@@ -39,6 +39,7 @@ from pymeasure.experiment import Results, Worker
 from .parameters import Measurable
 import time, signal
 import numpy as np
+import pandas as pd
 import tempfile
 import gc
 
