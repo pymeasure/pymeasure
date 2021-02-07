@@ -203,7 +203,7 @@ class Experiment(object):
                         self.update_line(ax, line, x, yname)
                 if plot['type'] == 'pcolor':
                     x, y, z = plot['x'], plot['y'], plot['z']
-                    update_pcolor(ax, x, y, z)
+                    self.update_pcolor(ax, x, y, z)
 
             display.clear_output(wait=True)
             display.display(*self.figs)
