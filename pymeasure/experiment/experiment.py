@@ -181,6 +181,7 @@ class Experiment(object):
         """Clear the figures and plot lists."""
         for fig in self.figs:
             fig.clf()
+        for pl in self.plots:
             pl.close()
         self.figs = []
         self.plots = []
