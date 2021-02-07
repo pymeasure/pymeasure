@@ -22,7 +22,7 @@ Version 0.9 -- released 2/7/21
 - Improvments to Inputs and open_file_externally (@msmttchr)
 - Fixes to Agilent 8722ES (@alexmcnabb)
 - Fixes to QThread cleanup (@neal-kepler, @msmttchr)
-- Fixes to Keyboard interrupt (@CasperSchippers)
+- Fixes to Keyboard interrupt, and parameters (@CasperSchippers)
 
 Version 0.8 -- released 3/29/19
 ===============================
