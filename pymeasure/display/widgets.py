@@ -1034,5 +1034,5 @@ class DirectoryLineEdit(QtGui.QLineEdit):
 
     def browse_triggered(self):
         path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
-        if path is not '':
+        if path != '':
             self.setText(path)
