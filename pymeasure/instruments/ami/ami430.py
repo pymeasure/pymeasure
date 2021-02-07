@@ -65,7 +65,7 @@ class AMI430(Instrument):
     """
     def __init__(self, resourceName, **kwargs):
         adapter = VISAAdapter(resourceName, read_termination='\n')
-        super(ami430, self).__init__(
+        super(AMI430, self).__init__(
             adapter,
             "AMI superconducting magnet power supply.",
             includeSCPI=True,
