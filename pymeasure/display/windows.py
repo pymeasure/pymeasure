@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -326,6 +326,9 @@ class ManagedWindow(QtGui.QMainWindow):
         self.resize(1000, 800)
 
     def quit(self, evt=None):
+        if self.manager.is_running():
+            self.abort()
+
         self.close()
 
     def browser_item_changed(self, item, column):
@@ -704,6 +707,9 @@ class ManagedImageWindow(QtGui.QMainWindow):
         self.resize(1000, 800)
 
     def quit(self, evt=None):
+        if self.manager.is_running():
+            self.abort()
+
         self.close()
 
     def browser_item_changed(self, item, column):

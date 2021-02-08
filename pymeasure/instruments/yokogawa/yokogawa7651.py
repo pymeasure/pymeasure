@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -160,21 +160,21 @@ class Yokogawa7651(Instrument):
         configuration of the instrument. """
         self.write("O0;E")
 
-    def apply_current(self, max_current=1e-3, complinance_voltage=1):
+    def apply_current(self, max_current=1e-3, compliance_voltage=1):
         """ Configures the instrument to apply a source current, which can
         take optional parameters that defer to the :attr:`~.Yokogawa7651.source_current_range`
         and :attr:`~.Yokogawa7651.compliance_voltage` properties. """
         self.source_mode = 'current'
         self.source_current_range = max_current
-        self.complinance_voltage = complinance_voltage
+        self.compliance_voltage = compliance_voltage
 
-    def apply_voltage(self, max_voltage=1, complinance_current=10e-3):
+    def apply_voltage(self, max_voltage=1, compliance_current=10e-3):
         """ Configures the instrument to apply a source voltage, which can
         take optional parameters that defer to the :attr:`~.Yokogawa7651.source_voltage_range`
         and :attr:`~.Yokogawa7651.compliance_current` properties. """
         self.source_mode = 'voltage'
         self.source_voltage_range = max_voltage
-        self.complinance_current = compliance_current
+        self.compliance_current = compliance_current
 
     def ramp_to_current(self, current, steps=25, duration=0.5):
         """ Ramps the current to a value in Amps by traversing a linear spacing
