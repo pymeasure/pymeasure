@@ -1036,3 +1036,12 @@ class DirectoryLineEdit(QtGui.QLineEdit):
         path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
         if path is not '':
             self.setText(path)
+
+class FilenameLineEdit(QtGui.QLineEdit):
+    """
+    Widget that allows to choose a filename for the result file.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        

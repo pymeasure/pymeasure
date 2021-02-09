@@ -43,6 +43,7 @@ from .widgets import (
     SequencerWidget,
     ImageWidget,
     DirectoryLineEdit,
+    FilenameLineEdit,
 )
 from ..experiment.results import Results
 
@@ -155,7 +156,8 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, 
+                 directory_input=False, filename_input=False):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
@@ -167,6 +169,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
         self.directory_input = directory_input
+        self.filename_input = filename_input
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -185,6 +188,11 @@ class ManagedWindow(QtGui.QMainWindow):
             self.directory_label = QtGui.QLabel(self)
             self.directory_label.setText('Directory')
             self.directory_line = DirectoryLineEdit(parent=self)
+
+        if self.filename_input:
+            self.filename_label = QtGui.QLabel(self)
+            self.filename_label.setText('Filename')
+            self.filename_line = FilenameLineEdit(parent=self)
 
         self.queue_button = QtGui.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self.queue)
@@ -245,10 +253,17 @@ class ManagedWindow(QtGui.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
-        if self.directory_input:
+        if self.directory_input or self.filename_input:
             vbox = QtGui.QVBoxLayout()
-            vbox.addWidget(self.directory_label)
-            vbox.addWidget(self.directory_line)
+
+            if self.directory_input:
+                vbox.addWidget(self.directory_label)
+                vbox.addWidget(self.directory_line)
+
+            if self.filename_input:
+                vbox.addWidget(self.filename_label)
+                vbox.addWidget(self.filename_line)
+
             vbox.addLayout(hbox)
 
         if self.inputs_in_scrollarea:
@@ -540,6 +555,13 @@ class ManagedWindow(QtGui.QMainWindow):
         if not self.directory_input:
             raise ValueError("No directory input in the ManagedWindow")
         return self.directory_line.text()
+
+    @property
+    def filename(self):
+        if not self.filename_input:
+            raise ValueError("No filename input in the ManagedWindow")
+        return self.filename_line.text()
+
 
 # TODO: Inheret from ManagedWindow to share code and features
 class ManagedImageWindow(QtGui.QMainWindow):
