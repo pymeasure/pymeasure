@@ -56,8 +56,8 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         map_values=True
     )
 
-    custom_modulation = Instrument.setting(
-        ":DM:FORMat %s", 
+    custom_modulation = Instrument.control(
+        ":DM:FORMat?", ":DM:FORMat %s", 
         """ A string property that allow to selects the modulation. QWCDma is only available with option SMIQB47.
         """,
         validator=strict_discrete_set,
@@ -128,12 +128,22 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
             **kwargs
         )
 
+    def _get_symbol_length(self):
+        modulation = self.custom_modulation
+        symbol_length = 1
+        if modulation in ["FSK4", "QPSK", "PSK4", "P4QPsk", "AFSK4"]:
+            symbol_length = 2
+        elif modulation == "USER":
+            symbol_length = int(float(self.ask("DM:MLIST:DATA?").split(",")[1]))
+        return symbol_length
+            
     def data_load(self, bitsequences, spacings):
         """ Load data into signal generator for transmission, the parameters are:
         bitsequences: list of items. Each item is a string of '1' or '0' in transmission order
         spacings: integer list, gap to be inserted between each bitsequence  expressed in number of bit
         """
-
+        # Check if bitsequences are compatible with bit per symbol
+        
         # Switch line terminator to EOI to send data in packed format
         self.write(":SYST:COMM:GPIB:LTER EOI")
         # Select data list
@@ -142,15 +152,16 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
 
         # Write data list and store positions when switch between sequence and spacing occurs
         # for bitseq, spacing in zip(bitsequences, spacings):
-        bitpos = 0
+        sympos = 0
         ctrls = []
         val = ''
+        symbol_length = self._get_symbol_length()
         for bitseq, spacing in zip(bitsequences, spacings):
-            ctrls.append(bitpos)
+            ctrls.append(sympos)
             val += bitseq + "0"*spacing
-            bitpos += len(bitseq)
-            ctrls.append(bitpos)
-            bitpos += spacing
+            sympos += (len(bitseq)//symbol_length)
+            ctrls.append(sympos)
+            sympos += (spacing//symbol_length)
         length = len(val)
 
         # Pad to have size multiple of 8
@@ -175,7 +186,7 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         values = []
         index_mask = (1 << 26) - 1 # 26 bits
         for i,v in enumerate(ctrls):
-            # Swtich on the power at the beginning of eache sequence and switch it off at tend of the sequences
+            # Switch on the power at the beginning of each sequence and switch it off at end of the sequences
             values.append( (((i+1)%2) << 31) + (v & index_mask))
         self.adapter.write_binary_values("SOURce:DM:CLISt:DATA ", values, datatype="I", is_big_endian=True)
         self.complete
@@ -209,3 +220,20 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         """ Trigger a bitsequence transmission
         """
         self.write(":TRIG:DM:IMM")
+
+    def set_fsk_constellation(self, constellation, fsk_dev):
+        """ For multi level FSK modulation, we need to define the constellation mapping.
+
+        For R&S SMIQ06B, there is a dedicated user modulation to define FSK constellation.
+        """
+        self.bit_per_symbol = len(format(max(constellation.keys()), "b"))
+        if (self.bit_per_symbol > 8):
+            raise Exception("Multi level FSK is dupported up to 256 levels, i.e 8bit per symbol")
+
+        cmd_params = "3,{},0,0,0,0".format(self.bit_per_symbol)
+        for val in sorted(constellation.keys()):
+            cmd_params += ",{:.3f},0".format(1/constellation[val])
+        self.write("SOURce:DM:MLISt:DELete 'datamod'")
+        self.write("SOURce:DM:MLISt:SELect 'datamod'")
+        self.write(":SOUR:DM:MLIS:DATA {}".format(cmd_params))
+        self.write(":DM:FORMat USER")

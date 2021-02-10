@@ -167,3 +167,18 @@ class AgilentN5172B(RFSignalGeneratorDM):
     def disable_modulation(self):
         """ Disables the signal modulation. """
         self.write(":OUTPUT:MOD 0")
+
+    def set_fsk_constellation(self, constellation, fsk_dev):
+        """ For multi level FSK modulation, we need to define the constellation mapping.
+
+        For E4438C we are using the user defined UFSK modulation
+        """
+        self.bit_per_symbol = len(format(max(constellation.keys()), "b"))
+        if (self.bit_per_symbol > 8):
+            raise Exception("Multi level FSK is dupported up to 256 levels, i.e 8bit per symbol")
+
+        cmd_params = "{}".format(1<<self.bit_per_symbol)
+        for val in sorted(constellation.keys()):
+            cmd_params += ",{:.3f}".format(fsk_dev/constellation[val])
+        self.write(":MEM:DATA:FSK \"USER_FSK\",{},OFF".format(cmd_params))
+        self.write(':RADio:CUSTom:MODulation:UFSK "USER_FSK"')

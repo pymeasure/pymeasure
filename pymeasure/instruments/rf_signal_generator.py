@@ -233,7 +233,8 @@ Another example for user data loading
         self.data_load((bitsequence,)*repetitions, (spacing,)*repetitions)
 
     def data_load(self, bitsequences, spacings):
-        """ Load data into signal generator for transmission, the parameters are:
+        """ Load data into signal generator for transmission.
+
         :param bitsequences: items list. Each item is a string of '1' or '0' in transmission order
         :param spacings: integer list, gap to be inserted between each bitsequence  expressed in number of bit
         """
@@ -248,6 +249,21 @@ Another example for user data loading
 
     def data_trigger(self):
         """ Trigger a bitsequence transmission
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
+
+    def set_fsk_constellation(self, constellation, fdev):
+        """ For multi level FSK modulation, allow to define the constellation mapping.
+
+        :param constellation: a dictonary which maps to fdev dividers, eg for an hypothetical 4-FSK:
+        {
+        0: 1, # Symbol 00 -> fdev
+        1: 3, # Symbol 01 -> fdev/3
+        2: -1,# Symbol 10 -> -fdev
+        3: -3,# Symbol 11 -> -fdev/3
+        }
+        :param fdev: Outer frequency deviation
         """
         # Subclasses should implement this
         raise Exception ("Not supported/implemented")
