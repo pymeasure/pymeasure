@@ -182,3 +182,4 @@ class AgilentN5172B(RFSignalGeneratorDM):
             cmd_params += ",{:.3f}".format(fsk_dev/constellation[val])
         self.write(":MEM:DATA:FSK \"USER_FSK\",{},OFF".format(cmd_params))
         self.write(':RADio:CUSTom:MODulation:UFSK "USER_FSK"')
+        self.write(':RADio:CUSTom:MODulation UFSK')
