@@ -120,7 +120,8 @@ harmonics and spurious.""",
         'SINE: Selects the standard sine waveform
         'TRIANGLE': Selects the standard triangle waveform
         'SQUARE': Selects the square waveform output
-        'PULSE': selects the pulse waveform
+        'PULSE': Selects the pulse standard waveform. NOTE: the auxiliary pulse mode may be more suited depending on 
+        application. Square may also work if you do not need control over rise times.
         'RAMP': selects the ramp waveform.
         'SINC': selects the sinc waveform
         'EXPONENTIAL': selects the exponential waveform
@@ -156,31 +157,86 @@ harmonics and spurious.""",
 
     pulse_delay = Instrument.control(
         "PULSe:DELay?", "PULSe:DELay %g",
-        """ A float parameter that sets the delay of the pulse in percent. Range = [0, 99.999]""",
+        """
+        A float parameter that sets the delay of the pulse from the start of the sync transition to go to the pulse high
+        level. Range = [0, 99.999] percent""",
         validator=strict_range,
         values=[0, 99.999]
     )
 
     pulse_width = Instrument.control(
         "PULSe:WIDth?", "PULSe:WIDth %g",
-        """ A float parameter that sets the width of the pulse in percent. Range = [0, 99.999]""",
+        """A float parameter that sets the width of the pulse in percent. Range = [0, 99.999]""",
         validator=strict_range,
         values=[0, 99.999]
     )
 
     pulse_transition_rise = Instrument.control(
         "PULSe:TRANsition?", "PULSe:TRANsition %g",
-        """ A float parameter that sets the rise time of the pulse in percent. Range = [0, 99.999]""",
+        """ AUXILIARY PULSE FUNCTION: A float parameter that sets the rise time of the pulse in percent. Range = [0, 99.999]""",
         validator=strict_range,
         values=[0, 99.999]
     )
 
     pulse_transition_fall = Instrument.control(
         "PULSe:TRANsition:TRAiling?", "PULSe:TRANsition:TRAiling %g",
-        """ A float parameter that sets the fall time of the pulse in percent. Range = [0, 99.999]""",
+        """ AUXILIARY PULSE FUNCTION: A float parameter that sets the fall time of the pulse in percent. Range = [0, 99.999]""",
         validator=strict_range,
         values=[0, 99.999]
     )
+
+    aux_pulse_delay = Instrument.control(
+        "AUXiliary:PULSe:DELay?", "AUXiliary:PULSe:DELay %g",
+        """ AUXILIARY PULSE FUNCTION: 
+        A float parameter that sets the delay of the pulse from the start of the sync transition to go to the pulse high
+        level. Range = [0, 10] seconds""",
+        validator=strict_range,
+        values=[0, 10]
+    )
+
+    aux_pulse_double = Instrument.control(
+        "AUXiliary::PULse:DOUBle?", "AUXiliary::PULse:DOUBle %d",
+        """ AUXILIARY PULSE FUNCTION: A boolean parameter turns the double pulse on or off""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    aux_pulse_double_delay = Instrument.control(
+        "AUXiliary:PULSe:DOUBle:DELay?", "AUXiliary:PULSe:DOUBle:DELay %g",
+        """ AUXILIARY PULSE FUNCTION: 
+        A float parameter that sets the delay between the two pulse in double pulse mode. Range = [0, 1000] seconds""",
+        validator=strict_range,
+        values=[0, 1000]
+    )
+
+    aux_pulse_hightime = Instrument.control(
+        "AUXiliary:PULSe:HIGH?", "AUXiliary:PULSe:HIGH %g",
+        """ AUXILIARY PULSE FUNCTION: 
+        A float parameter that sets then length of high time of the pulse (does NOT include rise/fall times)
+         Range = [0, 1000] seconds""",
+        validator=strict_range,
+        values=[0, 1000]
+    )
+
+    aux_pulse_highlevel = Instrument.control(
+        "AUXiliary:PULSe:LEVel:HIGH?", "AUXiliary:PULSe:LEVel:HIGH %g",
+        """ AUXILIARY PULSE FUNCTION: 
+        A float parameter that sets the pulse high level.
+         Range = [-4.990,5] V""",
+        validator=strict_range,
+        values=[-4.990, 5]
+    )
+
+    aux_pulse_lowlevel = Instrument.control(
+        "AUXiliary:PULSe:LEVel:LOW?", "AUXiliary:PULSe:LEVel:LOW %g",
+        """ AUXILIARY PULSE FUNCTION: 
+        A float parameter that sets the pulse low level.
+         Range = [-4.990,5] V""",
+        validator=strict_range,
+        values=[-5, 4.990]
+    )
+
 
     ramp_delay = Instrument.control(
         "RAMP:DELay?", "RAMP:DELay %g",
@@ -207,6 +263,12 @@ harmonics and spurious.""",
         self.instrument = instrument
         self.number = number
 
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        self.instrument.write(f'Instrument {self.number}')
+        return self.instrument.values(command, **kwargs)
 
     def ask(self, command):
         self.instrument.write(f'Instrument {self.number}')
@@ -281,7 +343,7 @@ class WS8104A(Instrument):
 
     def trigger(self):
         """ Send a trigger signal to the function generator. """
-        self.write("*TRG;*WAI")
+        self.write("*TRG")
 
     def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
         """ Wait until the triggering has finished or timeout is reached.
