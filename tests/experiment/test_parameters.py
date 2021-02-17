@@ -155,6 +155,10 @@ def test_list_value_with_units():
     p.value = 'and four tests'
     assert p.value == 'and four'
 
+def test_list_order():
+    p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'])
+    # check if order is preserved, choices are internally stored as dict
+    assert p.choices == (1, 2.2, 'three', 'and four')
 
 def test_vector():
     p = VectorParameter('test', length=3, units='tests')
