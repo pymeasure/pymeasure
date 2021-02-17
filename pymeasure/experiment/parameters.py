@@ -305,7 +305,6 @@ class ListParameter(Parameter):
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
         if choices is not None:
-            #self._choices = tuple(choices)
             self._choices = {str(i): i for i in choices}
         else:
             self._choices = None
