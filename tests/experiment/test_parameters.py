@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,8 @@ from pymeasure.experiment.parameters import Parameter
 from pymeasure.experiment.parameters import IntegerParameter
 from pymeasure.experiment.parameters import BooleanParameter
 from pymeasure.experiment.parameters import FloatParameter
+from pymeasure.experiment.parameters import ListParameter
+from pymeasure.experiment.parameters import VectorParameter
 
 
 def test_parameter_default():
@@ -41,7 +43,7 @@ def test_integer_units():
 
 
 def test_integer_value():
-    p = IntegerParameter('Test')
+    p = IntegerParameter('Test', units='tests')
     with pytest.raises(ValueError):
         v = p.value  # not set
     with pytest.raises(ValueError):
@@ -52,6 +54,13 @@ def test_integer_value():
     assert p.value == 0
     p.value = 10
     assert p.value == 10
+    p.value = '5'
+    assert p.value == 5
+    p.value = '11 tests'
+    assert p.value == 11
+    assert p.units == 'tests'
+    with pytest.raises(ValueError):
+        p.value = '31 incorrect units'  # not the correct units
 
 
 def test_integer_bounds():
@@ -68,9 +77,19 @@ def test_boolean_value():
     p = BooleanParameter('Test')
     with pytest.raises(ValueError):
         v = p.value  # not set
-    p.value = 'a'  # a string
+    with pytest.raises(ValueError):
+        p.value = 'a'  # a string
+    with pytest.raises(ValueError):
+        p.value = 10  # a number other than 0 or 1
+    p.value = "True"
     assert p.value == True
-    p.value = 10  # a number
+    p.value = "False"
+    assert p.value == False
+    p.value = "true"
+    assert p.value == True
+    p.value = "false"
+    assert p.value == False
+    p.value = 1  # a number
     assert p.value == True
     p.value = 0  # zero
     assert p.value == False
@@ -79,7 +98,7 @@ def test_boolean_value():
 
 
 def test_float_value():
-    p = FloatParameter('Test')
+    p = FloatParameter('Test', units='tests')
     with pytest.raises(ValueError):
         v = p.value  # not set
     with pytest.raises(ValueError):
@@ -88,6 +107,13 @@ def test_float_value():
     assert p.value == 0.0
     p.value = 100
     assert p.value == 100.0
+    p.value = '1.06'
+    assert p.value == 1.06
+    p.value = '11.3 tests'
+    assert p.value == 11.3
+    assert p.units == 'tests'
+    with pytest.raises(ValueError):
+        p.value = '31.3 incorrect units'  # not the correct units
 
 
 def test_float_bounds():
@@ -99,4 +125,47 @@ def test_float_bounds():
     with pytest.raises(ValueError):
         p.value = -10  # below minimum
 
-# TODO: Add tests for VectorParameter, ListParamter, and Measurable
+
+def test_list_value():
+    # TODO: check against setting the string version of the numeric choices
+    p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'])
+    p.value = 1
+    assert p.value == 1
+    p.value = 2.2
+    assert p.value == 2.2
+    p.value = 'three'
+    assert p.value == 'three'
+    p.value = 'and four'
+    assert p.value == 'and four'
+    with pytest.raises(ValueError):
+        p.value = 5
+
+
+def test_list_value_with_units():
+    # TODO: check against setting the string version (with units) of the numeric choices
+    p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'], units='tests')
+    p.value = 'three tests'
+    assert p.value == 'three'
+    p.value = 'and four tests'
+    assert p.value == 'and four'
+
+
+def test_vector():
+    p = VectorParameter('test', length=3, units='tests')
+    p.value = [1, 2, 3]
+    assert p.value == [1, 2, 3]
+    p.value = '[4, 5, 6]'
+    assert p.value == [4, 5, 6]
+    p.value = '[7, 8, 9] tests'
+    assert p.value == [7, 8, 9]
+    with pytest.raises(ValueError):
+        p.value = '[0, 1, 2] wrong unit'
+    with pytest.raises(ValueError):
+        p.value = [1, 2]
+    with pytest.raises(ValueError):
+        p.value = ['a', 'b']
+    with pytest.raises(ValueError):
+        p.value = '0, 1, 2'
+
+
+# TODO: Add tests for Measurable

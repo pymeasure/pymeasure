@@ -63,3 +63,13 @@ VXI-11 adapter
     :undoc-members:
     :inherited-members:
     :show-inheritance: 
+
+==============
+Telnet adapter
+==============
+
+.. autoclass:: pymeasure.adapters.TelnetAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:

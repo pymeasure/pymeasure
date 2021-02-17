@@ -14,7 +14,7 @@
 7. Merge the PR
 8. Build the source packages
     - `python setup.py bdist_wheel`
-    - `pthon setup.py`
+    - `python setup.py sdist`
 9. Create a tagged release on GitHub
 
 ## conda-forge feedstock
@@ -22,7 +22,7 @@
 1. Pull the latest `master` branch
 2. `git checkout -b v<version>_release`
 3. Download the tarball and determine the sha256 checksum
-    - `wget -qO- https://github.com/ralph-group/pymeasure/archive/<version>.tar.gz | sha256sum`
+    - `wget -qO- https://github.com/pymeasure/pymeasure/archive/<version>.tar.gz | sha256sum`
 4. Update recipe/meta.yml with the checksum and version number
 5. Push the changes up as a PR
 6. Verify that the builds complete

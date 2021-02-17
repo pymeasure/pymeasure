@@ -79,12 +79,12 @@ Now you are ready to write your new feature and make changes to the code. To ens
 Making a pull-request
 =====================
 
-While you are working, its helpful to start a pull-request (PR) on the :code:`master` branch of :code:`ralph-group/pymeasure`. This will allow you to discuss your feature with other contributors. We encourage you to start this pull-request after your first commit.
+While you are working, its helpful to start a pull-request (PR) on the :code:`master` branch of :code:`pymeasure/pymeasure`. This will allow you to discuss your feature with other contributors. We encourage you to start this pull-request after your first commit.
 
 `Start a pull-request`_ on the `PyMeasure GitHub page`_.
 
 .. _`Start a pull-request`: https://help.github.com/articles/using-pull-requests/
-.. _PyMeasure GitHub page: https://github.com/ralph-group/pymeasure
+.. _PyMeasure GitHub page: https://github.com/pymeasure/pymeasure
 
 Your pull-request will be merged by the PyMeasure maintainers once it meets the coding standards and passes unit tests. You will notice that your pull-request is automatically checked with the unit tests.
 
