@@ -338,7 +338,7 @@ class ListParameter(Parameter):
     @property
     def choices(self):
         """ Returns an immutable iterable of choices, or None if not set. """
-        return self._choices.values()
+        return tuple(self._choices.values())
 
 
 class PhysicalParameter(VectorParameter):
