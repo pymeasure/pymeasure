@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -315,7 +315,7 @@ class ImageFrame(QtGui.QFrame):
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
         """
-        units_pattern = "\((?P<units>\w+)\)"
+        units_pattern = r"\((?P<units>\w+)\)"
         try:
             match = re.search(units_pattern, axis)
         except TypeError:
@@ -1006,3 +1006,33 @@ class SequencerWidget(QtGui.QWidget):
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
+
+class DirectoryLineEdit(QtGui.QLineEdit):
+    """
+    Widget that allows to choose a directory path.
+    A completer is implemented for quick completion.
+    A browse button is available.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        completer = QtGui.QCompleter(self)
+        completer.setCompletionMode(QtGui.QCompleter.PopupCompletion)
+
+        model = QtGui.QDirModel(completer)
+        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+        completer.setModel(model)
+
+        self.setCompleter(completer)
+
+        browse_action = QtGui.QAction(self)
+        browse_action.setIcon(self.style().standardIcon(getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
+        browse_action.triggered.connect(self.browse_triggered)
+
+        self.addAction(browse_action, QtGui.QLineEdit.TrailingPosition)
+
+    def browse_triggered(self):
+        path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
+        if path != '':
+            self.setText(path)

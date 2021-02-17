@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -353,12 +353,16 @@ class SR830(Instrument):
         """ While the magnitude is out of range, increase
         the sensitivity by one setting
         """
+        self.write('LIAE 2,1')
         while self.is_out_of_range():
             self.write("SENS%d" % (int(self.ask("SENS?"))+1))
             time.sleep(5.0*self.time_constant)
             self.write("*CLS")
         # Set the range as low as possible
-        self.sensitivity(1.15*abs(self.R))
+        newsensitivity = 1.15*abs(self.magnitude)
+        if self.input_config in('I (1 MOhm)','I (100 MOhm)'):
+            newsensitivity = newsensitivity*1e6
+        self.sensitivity = newsensitivity
 
     @property
     def buffer_count(self):

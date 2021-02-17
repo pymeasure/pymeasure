@@ -299,6 +299,44 @@ An example of such a sequence file is given below, resulting in the sequence sho
 
 This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super(MainWindow, self).__init__` call, as was done in the example.
 
+Using the directory input
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.ManagedWindow` init. The value of the directory can be retrieved using the property :code:`directory`.
+
+Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
+
+.. code-block:: python
+   :emphasize-lines: 10,15,16
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super(MainWindow, self).__init__(
+                procedure_class=TestProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number',
+                directory_input=True,                                # Added line
+            )
+            self.setWindowTitle('GUI Example')
+
+        def queue(self):
+            directory = self.directory
+            filename = unique_filename(directory)                    # Modified line
+
+            results = Results(procedure, filename)
+            experiment = self.new_experiment(results)
+
+            self.manager.queue(experiment)
+
+This adds the input line above the Queue and Abort buttons.
+
+.. image:: pymeasure-directoryinput.png
+    :alt: Example of the directory input widget
+
+A completer is implemented allowing to quickly select an existing folder, and a button on the right side of the input widget opens a browse dialog.
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html

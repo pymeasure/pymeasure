@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -532,7 +532,7 @@ class SMU(Instrument):
         """ This command sets the *constant* compliance value of SMU<n>. If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are set by the variable definition.
 
         - Value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
-        on :meth:`~.SMU.channel_mode`.
+          on :meth:`~.SMU.channel_mode`.
 
         .. code-block:: python
 

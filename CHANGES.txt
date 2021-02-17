@@ -1,3 +1,29 @@
+Version 0.9 -- released 2/7/21
+==============================
+- PyMeasure is now officially at github.com/pymeasure/pymeasure
+- Python 3.9 is now supported, Python 3.5 removed due to EOL
+- Move to GitHub Actions from TravisCI and Appveyor for CI (@bilderbuchi)
+- New additions to Oxford Instruments ITC 503 (@CasperSchippers)
+- New Agilent 34450A and Keysight DSOX1102G instruments (@theMashUp, @jlarochelle)
+- Improvements to NI VirtualBench (@moritzj29)
+- New Agilent B1500 instrument (@moritzj29)
+- New Keithley 6517B instrument (@wehlgrundspitze)
+- Major improvements to PyVISA compatbility (@bilderbuchi, @msmttchr, @CasperSchippers, @cjermain)
+- New Anapico APSIN12G instrument (@StePhanino)
+- Improvements to Thorelabs Pro 8000 and SR830 (@Mike-HubGit)
+- New SR860 instrument (@StevenSiegl, @bklebel)
+- Fix to escape sequences (@tirkarthi)
+- New directory input for ManagedWindow (@paulgoulain)
+- New TelnetAdapter and Attocube ANC300 Piezo controller (@dkriegner)
+- New Agilent 34450A (@theMashUp)
+- New Razorbill RP100 strain cell controller (@pheowl)
+- Fixes to precision and default value of ScientificInput and FloatParameter (@moritzj29)
+- Fixes for Keithly 2400 and 2450 controls (@pyMatJ)
+- Improvments to Inputs and open_file_externally (@msmttchr)
+- Fixes to Agilent 8722ES (@alexmcnabb)
+- Fixes to QThread cleanup (@neal-kepler, @msmttchr)
+- Fixes to Keyboard interrupt, and parameters (@CasperSchippers)
+
 Version 0.8 -- released 3/29/19
 ===============================
 - Python 3.8 is now supported
