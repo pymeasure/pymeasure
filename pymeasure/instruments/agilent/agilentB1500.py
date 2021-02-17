@@ -1008,7 +1008,7 @@ class SMU():
     @filter.setter
     def filter(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write("FL %d, %d" % (self.channel, setting))
+        self.write("FL %d, %d" % (setting, self.channel))
         self.check_errors()
 
     @property
