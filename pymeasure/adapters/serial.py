@@ -26,7 +26,7 @@ import logging
 
 import serial
 import numpy as np
-
+from pyvisa.util import to_ieee_block
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)
@@ -77,6 +77,32 @@ class SerialAdapter(Adapter):
         binary = self.connection.read().decode()
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
+
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False):
+        """Format values in binary format in order to be used with instrument commands.
+
+        :param values: data to be writen to the device.
+        :param datatype: the format string for a single element. See struct module.
+        :param is_big_endian: boolean indicating endianess.
+        :return: binary string.
+        :rtype: bytes
+        """
+
+        block = to_ieee_block(values, datatype, is_big_endian)
+
+        return block
+
+    def write_binary_values(self, command, values, **kwargs):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :param kwargs: Key-word arguments to pass onto `write_binary_values`
+        :returns: number of bytes written
+        """
+
+        block = self._format_binary_values(values, **kwargs)
+        return self.connection.write(command.encode() + block) 
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port
