@@ -295,7 +295,7 @@ class AgilentB1500(Instrument):
             }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
-        def __init__(self, output_format_str, smu_names={}):
+        def __init__(self, smu_names, output_format_str):
             """ Stores parameters of the chosen output format
             for later usage in reading and processing instrument data.
 
@@ -424,7 +424,7 @@ class AgilentB1500(Instrument):
         """ Data formatting for FMT1 format
         """
         def __init__(self, smu_names={}, output_format_string="FMT1"):
-            super().__init__(output_format_string, smu_names=smu_names)
+            super().__init__(smu_names, output_format_string)
 
         def format_single(self, element):
             """ Format single measurement value
@@ -447,17 +447,16 @@ class AgilentB1500(Instrument):
             return (status, channel, data_name, value)
 
     class _data_formatting_FMT11(_data_formatting_FMT1):
-        """ Data formatting for FMT11 format
+        """ Data formatting for FMT11 format (based on FMT1)
         """
         def __init__(self, smu_names={}):
-            super().__init__(
-                output_format_string="FMT11", smu_names=smu_names)
+            super().__init__(smu_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
         """ Data formatting for FMT21 format
         """
         def __init__(self, smu_names={}):
-            super().__init__("FMT21", smu_names=smu_names)
+            super().__init__(smu_names, "FMT21")
 
         def format_single(self, element):
             """ Format single measurement value
