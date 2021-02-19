@@ -103,6 +103,44 @@ class PrologixAdapter(SerialAdapter):
         command += "\n"
         self.connection.write(command.encode())
 
+    def format_binary_values(self, values, datatype='f', is_big_endian=False):
+        """Format values in binary format in order to be used with instrument commands.
+
+        :param values: data to be writen to the device.
+        :param datatype: the format string for a single element. See struct module.
+        :param is_big_endian: boolean indicating endianess.
+        :return: binary string.
+        :rtype: bytes
+        """
+
+        block = super().format_binary_values(values, datatype, is_big_endian)
+        # Prologix needs certian characters to be escaped.
+        # Special care must be taken when sending binary data to instruments. If any of the
+        # following characters occur in the binary data -- CR (ASCII 13), LF (ASCII 10), ESC
+        # (ASCII 27), '+' (ASCII 43) - they must be escaped by preceding them with an ESC
+        # character.
+        special_chars = b'\x0d\x0a\x1b\x2b'
+        new_block = b''
+        for b in block:
+            escape = b''
+            if b in special_chars:
+                escape = b'\x1b'
+            new_block += (escape + bytes((b,)))
+
+        return new_block
+
+    def write_binary_values(self, command, values, **kwargs):
+        """ Writes the command to the GPIB address stored in the
+        :attr:`.address`
+
+        :param command: SCPI command string to be sent to the instrument
+        """
+        if self.address is not None:
+            address_command = "++addr %d\n" % self.address
+            self.connection.write(address_command.encode())
+        super().write_binary_values(command, values, **kwargs)
+        self.connection.write('\n'.encode())
+
     def read(self):
         """ Reads the response of the instrument until timeout
 
