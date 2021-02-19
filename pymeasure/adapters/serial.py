@@ -78,7 +78,7 @@ class SerialAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False):
+    def format_binary_values(self, values, datatype='f', is_big_endian=False):
         """Format values in binary format in order to be used with instrument commands.
 
         :param values: data to be writen to the device.
@@ -101,7 +101,7 @@ class SerialAdapter(Adapter):
         :returns: number of bytes written
         """
 
-        block = self._format_binary_values(values, **kwargs)
+        block = self.format_binary_values(values, **kwargs)
         return self.connection.write(command.encode() + block) 
 
     def __repr__(self):
