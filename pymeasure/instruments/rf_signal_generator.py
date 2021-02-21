@@ -103,6 +103,19 @@ Generate a tone at 868MHz
         dynamic=True
     )
 
+    alc = Instrument.control(
+        ":SOURCE:POWER:ALC?;", ":SOURCE:POWER:ALC %s;",
+        """ A boolean property that enables or disables the automatic leveling control (ALC) circuit.
+        This property can be set.
+        """,
+        validator=strict_discrete_set,
+        values={"ON" : 1,
+                "OFF" : 0},
+        cast = int,
+        map_values = True,
+        dynamic=True
+    )
+
     def __init__(self, adapter, description, **kwargs):
         super().__init__(
             adapter, description, **kwargs

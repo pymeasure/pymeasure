@@ -32,6 +32,12 @@ class AgilentE4438C(RFSignalGeneratorDM):
     # Define instrument limits according to datasheet
     power_values = (-136.0, 10.0)
     frequency_values = (100e3, 6e9)
+
+    # Allow mapping of values for ALC command
+    alc_values = {"ON" : 1,
+                  "OFF" : 0}
+    alc_map_values = True
+    
     ####################################################################
     # Custom Subsystem-Option 001/601or 002/602 ([:SOURce]:RADio:CUSTom)
     ####################################################################
@@ -112,11 +118,11 @@ class AgilentE4438C(RFSignalGeneratorDM):
         """ This property returns free volatile memory value in bytes """,
         get_process=lambda v: int(v[1]),
     )
-
+    name = "Agilent E4438C Signal Generator"
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
-            "Agilent E4438C Signal Generator",
+            self.name,
             **kwargs
         )
         self.data_ramping_workaround = True
