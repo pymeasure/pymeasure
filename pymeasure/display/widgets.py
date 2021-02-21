@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1067,5 +1067,5 @@ class DirectoryLineEdit(QtGui.QLineEdit):
 
     def browse_triggered(self):
         path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
-        if path is not '':
+        if path != '':
             self.setText(path)

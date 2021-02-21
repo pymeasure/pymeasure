@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,10 +59,6 @@ class AgilentB1500(Instrument):
         )
         self._smu_names = {}
         self._smu_references = {}
-        # setting of data output format
-        # determines how to read measurement data
-        self._data_format = self._data_formatting(
-            "FMT" + self.query_learn(31)['FMT'][0])
 
     @property
     def smu_references(self):
@@ -299,7 +295,7 @@ class AgilentB1500(Instrument):
             }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
-        def __init__(self, output_format_str, smu_names={}):
+        def __init__(self, smu_names, output_format_str):
             """ Stores parameters of the chosen output format
             for later usage in reading and processing instrument data.
 
@@ -427,8 +423,8 @@ class AgilentB1500(Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """ Data formatting for FMT1 format
         """
-        def __init__(self, output_format_string="FMT1", smu_names={}):
-            super().__init__(output_format_string, smu_names=smu_names)
+        def __init__(self, smu_names={}, output_format_string="FMT1"):
+            super().__init__(smu_names, output_format_string)
 
         def format_single(self, element):
             """ Format single measurement value
@@ -451,17 +447,16 @@ class AgilentB1500(Instrument):
             return (status, channel, data_name, value)
 
     class _data_formatting_FMT11(_data_formatting_FMT1):
-        """ Data formatting for FMT11 format
+        """ Data formatting for FMT11 format (based on FMT1)
         """
         def __init__(self, smu_names={}):
-            super().__init__(
-                output_format_string="FMT11", smu_names=smu_names)
+            super().__init__(smu_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
         """ Data formatting for FMT21 format
         """
         def __init__(self, smu_names={}):
-            super().__init__("FMT21", smu_names)
+            super().__init__(smu_names, "FMT21")
 
         def format_single(self, element):
             """ Format single measurement value
@@ -494,18 +489,20 @@ class AgilentB1500(Instrument):
         :rtype: class
         """
         classes = {
-            "FMT21": self._data_formatting_FMT21,
             "FMT1": self._data_formatting_FMT1,
-            "FMT11": self._data_formatting_FMT11
+            "FMT11": self._data_formatting_FMT11,
+            "FMT21": self._data_formatting_FMT21
             }
         try:
             format_class = classes[output_format_str]
-        except Exception:
-            raise NotImplementedError(
-                ("Data Format {0} is not implemented "
-                 "so far.").format(output_format_str)
-            )
-        return format_class(smu_names)
+        except KeyError:
+            log.error((
+                "Data Format {0} is not implemented "
+                "so far. Please set appropriate Data Format."
+                ).format(output_format_str))
+            return
+        else:
+            return format_class(smu_names=smu_names)
 
     def data_format(self, output_format, mode=0):
         """ Specifies data output format. Check Documentation for parameters.
@@ -513,14 +510,18 @@ class AgilentB1500(Instrument):
         interpreting the measurement values read from the instrument.
         (``FMT``)
 
+        Currently implemented are format 1, 11, and 21.
+
         :param output_format: Output format string, e.g. ``FMT21``
         :type output_format: str
         :param mode: Data output mode, defaults to 0 (only measurement
                      data is returned)
         :type mode: int, optional
         """
+        # restrict to implemented formats
         output_format = strict_discrete_set(
-            output_format, [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25])
+            output_format, [1, 11, 21])
+        # possible: [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25]
         mode = strict_range(mode, range(0, 11))
         self.write("FMT %d, %d" % (output_format, mode))
         self.check_errors()
@@ -1006,7 +1007,7 @@ class SMU():
     @filter.setter
     def filter(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write("FL %d, %d" % (self.channel, setting))
+        self.write("FL %d, %d" % (setting, self.channel))
         self.check_errors()
 
     @property

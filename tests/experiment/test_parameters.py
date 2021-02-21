@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -79,6 +79,8 @@ def test_boolean_value():
         v = p.value  # not set
     with pytest.raises(ValueError):
         p.value = 'a'  # a string
+    with pytest.raises(ValueError):
+        p.value = 10  # a number other than 0 or 1
     p.value = "True"
     assert p.value == True
     p.value = "False"
@@ -87,7 +89,7 @@ def test_boolean_value():
     assert p.value == True
     p.value = "false"
     assert p.value == False
-    p.value = 10  # a number
+    p.value = 1  # a number
     assert p.value == True
     p.value = 0  # zero
     assert p.value == False
