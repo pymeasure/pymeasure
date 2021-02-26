@@ -347,7 +347,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
 
     def trigger_on_bus(self):
         """ Configures the trigger to detect events based on the bus
-        trigger, which can be activated by :code:`GET` or :code:`*TRG`.
+        trigger, which can be activated by :meth:`~.trigger`.
         """
         self.write(":ARM:SOUR BUS;:TRIG:SOUR BUS;")
 
