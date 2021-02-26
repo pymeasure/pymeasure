@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -49,11 +49,6 @@ class SerialAdapter(Adapter):
             self.connection = port
         else:
             self.connection = serial.Serial(port, **kwargs)
-
-    def __del__(self):
-        """ Ensures the connection is closed upon deletion
-        """
-        self.connection.close()
 
     def write(self, command):
         """ Writes a command to the instrument

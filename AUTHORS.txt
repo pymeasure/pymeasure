@@ -31,3 +31,5 @@ Dominic Caron
 Mathieu Plante
 Michele Sardo
 Yang Ting
+Steven Siegl
+Benjamin Klebel-Knobloch

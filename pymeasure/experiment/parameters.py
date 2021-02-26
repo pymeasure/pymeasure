@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -93,6 +93,12 @@ class IntegerParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        if isinstance(value, str):
+            value, _, units = value.strip().partition(" ")
+            if units != "" and units != self.units:
+                raise ValueError("Units included in string (%s) do not match"
+                                 "the units of the IntegerParameter (%s)" % (units, self.units))
+
         try:
             value = int(value)
         except ValueError:
@@ -138,9 +144,18 @@ class BooleanParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        try:
+        if isinstance(value, str):
+            if value.lower() == "true":
+                self._value = True
+            elif value.lower() == "false":
+                self._value = False
+            else:
+                raise ValueError("BooleanParameter given string value of '%s'" % value)
+        elif isinstance(value, (int, float)) and value in [0, 1]:
             self._value = bool(value)
-        except ValueError:
+        elif isinstance(value, bool):
+            self._value = value
+        else:
             raise ValueError("BooleanParameter given non-boolean value of "
                              "type '%s'" % type(value))
 
@@ -177,6 +192,12 @@ class FloatParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        if isinstance(value, str):
+            value, _, units = value.strip().partition(" ")
+            if units != "" and units != self.units:
+                raise ValueError("Units included in string (%s) do not match"
+                                 "the units of the FloatParameter (%s)" % (units, self.units))
+
         try:
             value = float(value)
         except ValueError:
@@ -229,8 +250,12 @@ class VectorParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        # Strip initial and final brackets
         if isinstance(value, str):
+            # strip units if included
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+            # Strip initial and final brackets
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
@@ -290,6 +315,11 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        # strip units if included
+        if isinstance(value, str):
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
         if self._choices is not None and value in self._choices:
             self._value = value
         else:
@@ -331,8 +361,12 @@ class PhysicalParameter(VectorParameter):
 
     @value.setter
     def value(self, value):
-        # Strip initial and final brackets
         if isinstance(value, str):
+            # strip units if included
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+            # Strip initial and final brackets
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
