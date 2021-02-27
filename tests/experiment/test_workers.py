@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -69,3 +69,16 @@ def test_worker_finish():
 
     new_results = Results.load(file, procedure_class=RandomProcedure)
     assert new_results.data.shape == (100, 2)
+
+def test_worker_closes_file_after_finishing():
+    procedure = RandomProcedure()
+    procedure.iterations = 100
+    procedure.delay = 0.001
+    file = tempfile.mktemp()
+    results = Results(procedure, file)
+    worker = Worker(results)
+    worker.start()
+    worker.join(timeout=5)
+
+    # Test if the file has been properly closed by removing the file
+    os.remove(file)

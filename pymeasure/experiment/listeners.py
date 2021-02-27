@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -107,3 +107,9 @@ class Recorder(QueueListener):
             handlers.append(fh)
 
         super().__init__(queue, *handlers)
+
+    def stop(self):
+        for handler in self.handlers:
+            handler.close()
+
+        super().stop()
