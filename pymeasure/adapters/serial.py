@@ -45,7 +45,7 @@ class SerialAdapter(Adapter):
 
     def __init__(self, port, preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
-        if isinstance(port, serial.Serial):
+        if isinstance(port, serial.SerialBase):
             self.connection = port
         else:
             self.connection = serial.Serial(port, **kwargs)
@@ -78,10 +78,10 @@ class SerialAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def format_binary_values(self, values, datatype='f', is_big_endian=False):
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False):
         """Format values in binary format in order to be used with instrument commands.
 
-        :param values: data to be writen to the device.
+        :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
         :param is_big_endian: boolean indicating endianess.
         :return: binary string.
@@ -97,11 +97,11 @@ class SerialAdapter(Adapter):
 
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto `write_binary_values`
+        :param kwargs: Key-word arguments to pass onto `_format_binary_values`
         :returns: number of bytes written
         """
 
-        block = self.format_binary_values(values, **kwargs)
+        block = self._format_binary_values(values, **kwargs)
         return self.connection.write(command.encode() + block) 
 
     def __repr__(self):
