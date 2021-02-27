@@ -103,7 +103,7 @@ class PrologixAdapter(SerialAdapter):
         command += "\n"
         self.connection.write(command.encode())
 
-    def format_binary_values(self, values, datatype='f', is_big_endian=False):
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False):
         """Format values in binary format in order to be used with instrument commands.
 
         :param values: data to be writen to the device.
@@ -113,7 +113,7 @@ class PrologixAdapter(SerialAdapter):
         :rtype: bytes
         """
 
-        block = super().format_binary_values(values, datatype, is_big_endian)
+        block = super()._format_binary_values(values, datatype, is_big_endian)
         # Prologix needs certian characters to be escaped.
         # Special care must be taken when sending binary data to instruments. If any of the
         # following characters occur in the binary data -- CR (ASCII 13), LF (ASCII 10), ESC
@@ -130,10 +130,15 @@ class PrologixAdapter(SerialAdapter):
         return new_block
 
     def write_binary_values(self, command, values, **kwargs):
-        """ Writes the command to the GPIB address stored in the
-        :attr:`.address`
+        """ Write binary data to the instrument, e.g. waveform for signal generators.
 
-        :param command: SCPI command string to be sent to the instrument
+        values are encoded in a binary format according to
+        IEEE 488.2 Definite Length Arbitrary Block Response Data block.
+
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :param kwargs: Key-word arguments to pass onto `_format_binary_values`
+        :returns: number of bytes written
         """
         if self.address is not None:
             address_command = "++addr %d\n" % self.address
