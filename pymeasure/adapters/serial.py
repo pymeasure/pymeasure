@@ -26,7 +26,7 @@ import logging
 
 import serial
 import numpy as np
-from pyvisa.util import to_ieee_block
+from pyvisa.util import to_ieee_block, to_hp_block, to_binary_block
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)
@@ -78,17 +78,25 @@ class SerialAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False):
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt = "ieee"):
         """Format values in binary format in order to be used with instrument commands.
 
         :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
         :param is_big_endian: boolean indicating endianess.
+        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
         :return: binary string.
         :rtype: bytes
         """
 
-        block = to_ieee_block(values, datatype, is_big_endian)
+        if header_fmt == "ieee":
+            block = to_ieee_block(values, datatype, is_big_endian)
+        elif header_fmt == "hp":
+            block = to_hp_block(values, datatype, is_big_endian)
+        elif header_fmt == "empty":
+            block = to_binary_block(values, b"", datatype, is_big_endian)
+        else:
+            raise ValueError("Unsupported header_fmt: %s" % header_fmt)
 
         return block
 
@@ -97,7 +105,7 @@ class SerialAdapter(Adapter):
 
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto `_format_binary_values`
+        :param kwargs: Key-word arguments to pass onto :meth:`~._format_binary_values`
         :returns: number of bytes written
         """
 

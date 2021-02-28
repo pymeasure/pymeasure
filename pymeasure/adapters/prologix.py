@@ -103,17 +103,18 @@ class PrologixAdapter(SerialAdapter):
         command += "\n"
         self.connection.write(command.encode())
 
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False):
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt = "ieee"):
         """Format values in binary format in order to be used with instrument commands.
 
         :param values: data to be writen to the device.
         :param datatype: the format string for a single element. See struct module.
         :param is_big_endian: boolean indicating endianess.
+        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
         :return: binary string.
         :rtype: bytes
         """
 
-        block = super()._format_binary_values(values, datatype, is_big_endian)
+        block = super()._format_binary_values(values, datatype, is_big_endian, header_fmt)
         # Prologix needs certian characters to be escaped.
         # Special care must be taken when sending binary data to instruments. If any of the
         # following characters occur in the binary data -- CR (ASCII 13), LF (ASCII 10), ESC
@@ -137,7 +138,7 @@ class PrologixAdapter(SerialAdapter):
 
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto `_format_binary_values`
+        :param kwargs: Key-word arguments to pass onto :meth:`~._format_binary_values`
         :returns: number of bytes written
         """
         if self.address is not None:

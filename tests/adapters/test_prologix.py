@@ -34,7 +34,7 @@ def make_adapter(**kwargs):
 
 
 @pytest.mark.parametrize("test_input,expected", [("OUTP", prefix + "OUTP\n"),
-                                                 ("POWER 22 dBm", prefix+ "POWER 22 dBm\n")])
+                                                 ("POWER 22 dBm", prefix + "POWER 22 dBm\n")])
 def test_adapter_write(test_input, expected):
     adapter = make_adapter(timeout=0.2)
     adapter.write(test_input)
