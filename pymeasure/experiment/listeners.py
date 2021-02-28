@@ -78,7 +78,10 @@ class Listener(StoppableThread):
         self.timeout = timeout
 
     def receive(self, flags=0):
-        topic, record = self.subscriber.recv_serialized(deserialize=cloudpickle.loads, flags=flags)
+        topic, record = self.subscriber.recv_serialized(
+            deserialize=lambda x: cloudpickle.loads(x[0]),
+            flags=flags
+        )
         return topic, record
 
     def message_waiting(self):

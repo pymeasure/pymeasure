@@ -21,6 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import importlib
+import logging
 
 import pytest
 import os
@@ -28,6 +30,7 @@ import tempfile
 from time import sleep
 from importlib.machinery import SourceFileLoader
 
+from pymeasure.experiment import Listener
 from pymeasure.experiment.workers import Worker
 from pymeasure.experiment.results import Results
 
@@ -82,3 +85,21 @@ def test_worker_closes_file_after_finishing():
 
     # Test if the file has been properly closed by removing the file
     os.remove(file)
+
+
+@pytest.mark.skipif(not importlib.util.find_spec('cloudpickle'),
+                    reason='Cloudpickle not installed')
+def test_zmq_does_not_crash_worker(caplog):
+    """Check that a ZMQ serialisation usage error does not cause a crash.
+
+    See https://github.com/ralph-group/pymeasure/issues/168
+    """
+    procedure = RandomProcedure()
+    file = tempfile.mktemp()
+    results = Results(procedure, file)
+    # If we define a port here we get ZMQ communication
+    # if cloudpickle is installed
+    worker = Worker(results, port=5888, log_level=logging.DEBUG)
+    worker.start()
+    worker.join(timeout=1.0)  # give it some time to finish the procedure
+    assert procedure.status == procedure.FINISHED

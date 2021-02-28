@@ -92,7 +92,10 @@ class Worker(StoppableThread):
         log.debug("Emitting message: %s %s", topic, record)
 
         try:
-            self.publisher.send_serialized((topic, record), serialize=cloudpickle.dumps)
+            self.publisher.send_serialized(
+                (topic, record),
+                serialize=lambda x: [cloudpickle.dumps(x)]
+            )
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
