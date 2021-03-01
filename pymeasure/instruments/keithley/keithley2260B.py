@@ -24,7 +24,6 @@ class Keithley2260B(Instrument):
         print(source.current)
         print(source.power)
         print(source.applied)
-
     """
 
     def __init__(self, adapter, read_termination="\n", **kwargs):
@@ -34,13 +33,15 @@ class Keithley2260B(Instrument):
             read_termination=read_termination,
             **kwargs
         )
+
     enabled = Instrument.control(
-        "OUTPut?", "OUTPut %d",
+        "OUTPut?",
+        "OUTPut %d",
         """A boolean property that controls whether the source is enabled, takes
-        values True or False (1 or 0). """,
+        values True or False.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
-        map_values=True
+        map_values=True,
     )
 
     current = Instrument.control(
@@ -62,8 +63,7 @@ class Keithley2260B(Instrument):
     )
 
     power = Instrument.measurement(
-        ":MEAS:POW?",
-        """ Reads the power (in watts) the dc power supply is putting out.  """
+        ":MEAS:POW?", """Reads the power (in watts) the dc power supply is putting out."""
     )
 
     applied = Instrument.control(
