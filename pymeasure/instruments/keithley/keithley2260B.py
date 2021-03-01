@@ -37,15 +37,21 @@ class Keithley2260B(Instrument):
     )
 
     current = Instrument.control(
-        ":SOUR:CURR?", ":SOUR:CURR %g",
-        """ A floating point property that controls the source current
-        in amps. The allowed range is not fixed. """,
+        ":SOUR:CURR?",
+        ":SOUR:CURR %g",
+        """A floating point property that controls the source current
+        in amps. This is not checked against the allowed range. Depending on
+        whether the device is in constant current or constant voltage mode,
+        it will set/read the current limit, or the actual current achieved.""",
     )
 
     voltage = Instrument.control(
-        ":SOUR:VOLT?", ":SOUR:VOLT %g",
-        """ A floating point property that controls the source voltage
-        in volts. The allowed range is not fixed. """,
+        ":SOUR:VOLT?",
+        ":SOUR:VOLT %g",
+        """A floating point property that controls the source voltage
+        in volts. This is not checked against the allowed range. Depending on
+        whether the device is in constant current or constant voltage mode,
+        it will set/read the voltage limit, or the actual voltage achieved.""",
     )
 
     power = Instrument.measurement(
