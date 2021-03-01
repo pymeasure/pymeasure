@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,8 +42,9 @@ class Adapter(object):
         self.connection = None
 
     def __del__(self):
-        """close connection upon garbage collection of the device"""
-        self.connection.close()
+        """Close connection upon garbage collection of the device"""
+        if self.connection is not None:
+            self.connection.close()
 
     def write(self, command):
         """ Writes a command to the instrument
