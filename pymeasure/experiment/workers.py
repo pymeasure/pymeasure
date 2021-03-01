@@ -128,6 +128,12 @@ class Worker(StoppableThread):
 
         self.recorder.stop()
         self.monitor_queue.put(None)
+        if self.context is not None:
+            # Cleanly close down ZMQ context and associated socket
+            # For some reason, we need to close the socket before the
+            # context, otherwise context termination hangs.
+            self.publisher.close()
+            self.context.term()
 
     def run(self):
         global log
