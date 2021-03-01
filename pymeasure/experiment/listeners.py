@@ -85,7 +85,8 @@ class Listener(StoppableThread):
         return topic, record
 
     def message_waiting(self):
-        return self.poller.poll(self.timeout)
+        """Check if we have a message, wait at most until timeout."""
+        return self.poller.poll(self.timeout * 1000)  # poll timeout is in ms
 
     def __repr__(self):
         return "<%s(port=%s,topic=%s,should_stop=%s)>" % (
