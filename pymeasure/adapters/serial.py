@@ -79,7 +79,7 @@ class SerialAdapter(Adapter):
         return np.fromstring(data, dtype=dtype)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt = "ieee"):
-        """Format values in binary format in order to be used with instrument commands.
+        """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
         :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
@@ -105,7 +105,7 @@ class SerialAdapter(Adapter):
 
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto :meth:`~._format_binary_values`
+        :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
         :returns: number of bytes written
         """
 
