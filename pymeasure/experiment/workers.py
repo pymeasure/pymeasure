@@ -76,8 +76,26 @@ class Worker(StoppableThread):
         self.log_queue = log_queue
         self.log_level = log_level
 
+        global log
+        log = logging.getLogger()
+        log.setLevel(self.log_level)
+        # log.handlers = []  # Remove all other handlers
+        # log.addHandler(TopicQueueHandler(self.monitor_queue))
+        # log.addHandler(QueueHandler(self.log_queue))
+
         self.context = None
         self.publisher = None
+        if self.port is not None and zmq is not None:
+            try:
+                self.context = zmq.Context()
+                log.debug("Worker ZMQ Context: %r" % self.context)
+                self.publisher = self.context.socket(zmq.PUB)
+                self.publisher.bind('tcp://*:%d' % self.port)
+                log.info("Worker connected to tcp://*:%d" % self.port)
+                time.sleep(0.3)  # wait so that the socket will be ready before starting to emit messages
+            except Exception:
+                log.exception("couldn't connect to ZMQ context")
+                # FIXME: this happily continues even if connecting to the context fails!
 
     def join(self, timeout=0):
         try:
@@ -136,12 +154,6 @@ class Worker(StoppableThread):
             self.context.term()
 
     def run(self):
-        global log
-        log = logging.getLogger()
-        log.setLevel(self.log_level)
-        # log.handlers = []  # Remove all other handlers
-        # log.addHandler(TopicQueueHandler(self.monitor_queue))
-        # log.addHandler(QueueHandler(self.log_queue))
         log.info("Worker thread started")
 
         self.procedure = self.results.procedure
@@ -154,18 +166,6 @@ class Worker(StoppableThread):
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
-
-        if self.port is not None and zmq is not None:
-            try:
-                self.context = zmq.Context()
-                log.debug("Worker ZMQ Context: %r" % self.context)
-                self.publisher = self.context.socket(zmq.PUB)
-                self.publisher.bind('tcp://*:%d' % self.port)
-                log.info("Worker connected to tcp://*:%d" % self.port)
-                time.sleep(0.3)  # wait so that the socket will be ready before starting to emit messages
-            except Exception:
-                log.exception("couldn't connect to ZMQ context")
-                # FIXME: this happily continues even if connecting to the context fails!
 
         log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
         self.update_status(Procedure.RUNNING)
