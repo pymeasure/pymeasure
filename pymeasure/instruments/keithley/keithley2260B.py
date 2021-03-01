@@ -58,14 +58,9 @@ class Keithley2260B(Instrument):
         """ Reads the power (in watts) the dc power supply is putting out.  """
     )
 
-    applied = Instrument.measurement(
+    applied = Instrument.control(
         ":APPly?",
-        """ Reads the applied voltage (volts) and current (amps), returns as list."""
+        ":APPly %g,%g",
+        """Simultaneous control of voltage (volts) and current (amps).
+        Values need to be supplied as tuple of (voltage, current)""",
     )
-
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Keithley 2260B DC Power Supply", read_termination="\n", **kwargs)
-
-    def apply(self, voltage, current):
-        """convenience function to set voltage (volts) and current (amps) at once."""
-        self.write("apply {:g},{:g}".format(voltage, current))
