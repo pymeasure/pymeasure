@@ -156,9 +156,10 @@ class Worker(StoppableThread):
                 self.publisher = self.context.socket(zmq.PUB)
                 self.publisher.bind('tcp://*:%d' % self.port)
                 log.info("Worker connected to tcp://*:%d" % self.port)
-                time.sleep(0.01)
+                time.sleep(0.3)  # wait so that the socket will be ready before starting to emit messages
             except Exception:
                 log.exception("couldn't connect to ZMQ context")
+                # FIXME: this happily continues even if connecting to the context fails!
 
         log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
         self.update_status(Procedure.RUNNING)
