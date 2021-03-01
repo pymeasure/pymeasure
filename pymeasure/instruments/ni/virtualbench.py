@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 # pyvirtualbench library: Copyright (c) 2015 Charles Armstrap <charles@armstrap.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy

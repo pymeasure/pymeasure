@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,9 +55,6 @@ class VXI11Adapter(Adapter):
                 self.conn_kwargs[key] = kwargs[key]
 
         self.connection = vxi11.Instrument(host, **self.conn_kwargs)
-
-    def __repr__(self):
-        return '<VXI11Adapter(host={})>'.format(self.connection.host)
 
     def write(self, command):
         """ Wrapper function for the write command using the
@@ -114,3 +111,6 @@ class VXI11Adapter(Adapter):
         :returns binary string containing the response from the device.
         """
         return self.connection.ask_raw(command)
+
+    def __repr__(self):
+        return '<VXI11Adapter(host={})>'.format(self.connection.host)

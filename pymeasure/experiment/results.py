@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -234,16 +234,13 @@ class Results(object):
                 procedure_module = search.group("module")
                 procedure_class = search.group("class")
             elif line.startswith("\t"):
-                regex = (r"\t(?P<name>[^:]+):\s(?P<value>[^\s]+)"
-                         r"(?:\s(?P<units>.+))?")
-                search = re.search(regex, line)
-                if search is None:
-                    raise Exception("Error parsing header line %s." % line)
+                separator = ": "
+                partitioned_line = line[1:].partition(separator)
+                if partitioned_line[1] != separator:
+                    raise Exception("Error partitioning header line %s." % line)
                 else:
-                    parameters[search.group("name")] = (
-                        search.group("value"),
-                        search.group("units")
-                    )
+                    parameters[partitioned_line[0]] = partitioned_line[2]
+
         if procedure is None:
             if procedure_class is None:
                 raise ValueError("Header does not contain the Procedure class")
@@ -258,24 +255,15 @@ class Results(object):
             except Exception as e:
                 raise e
 
-        def units_found(parameter, units):
-            return (hasattr(parameter, 'units') and
-                    parameter.units is None and
-                    isinstance(parameter, Parameter) and
-                    units is not None)
-
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
             if parameter.name in parameters:
-                value, units = parameters[parameter.name]
-
-                if units_found(parameter, units):
-                    # Force full string to be matched
-                    value = value + " " + str(units)
+                value = parameters[parameter.name]
                 setattr(procedure, name, value)
             else:
                 raise Exception("Missing '%s' parameter when loading '%s' class" % (
                     parameter.name, procedure_class))
+
         procedure.refresh_parameters()  # Enforce update of meta data
         return procedure
 
