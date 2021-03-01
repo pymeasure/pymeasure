@@ -27,6 +27,13 @@ class Keithley2260B(Instrument):
 
     """
 
+    def __init__(self, adapter, read_termination="\n", **kwargs):
+        super().__init__(
+            adapter,
+            "Keithley 2260B DC Power Supply",
+            read_termination=read_termination,
+            **kwargs
+        )
     enabled = Instrument.control(
         "OUTPut?", "OUTPut %d",
         """A boolean property that controls whether the source is enabled, takes
