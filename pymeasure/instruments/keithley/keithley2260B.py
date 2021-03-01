@@ -11,9 +11,10 @@ class Keithley2260B(Instrument):
     """ Represents the Keithley 2260B Power Supply (minimal implementation)
     and provides a high-level interface for interacting with the instrument.
 
-    For a connection through tcpip, the socket is hardcoded to 2268,
+    For a connection through tcpip, the device only accepts
+    connections at port 2268, which cannot be configured otherwise.
         example connection string: 'TCPIP::xxx.xxx.xxx.xxx::2268::SOCKET'
-        the read termination is \n
+        the read termination for this interface is \n
 
     .. code-block:: python
 
