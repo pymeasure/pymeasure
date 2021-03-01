@@ -93,8 +93,8 @@ class Worker(StoppableThread):
 
         try:
             self.publisher.send_serialized(
-                (topic, record),
-                serialize=lambda x: [cloudpickle.dumps(x)]
+                record,
+                serialize=lambda rec: (topic.encode(), cloudpickle.dumps(rec)),
             )
         except (NameError, AttributeError):
             pass  # No dumps defined

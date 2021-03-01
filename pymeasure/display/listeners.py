@@ -72,7 +72,7 @@ class QListener(StoppableQThread):
 
     def receive(self, flags=0):
         topic, record = self.subscriber.recv_serialized(
-            deserialize=lambda x: cloudpickle.loads(x[0]),
+            deserialize=lambda msg: (msg[0].decode(), cloudpickle.loads(msg[1])),
             flags=flags
         )
         return topic, record
