@@ -14,7 +14,7 @@
 7. Merge the PR
 8. Build the source packages
     - `python setup.py bdist_wheel`
-    - `python setup.py sdist`
+    - `pthon setup.py`
 9. Create a tagged release on GitHub
 
 ## conda-forge feedstock
