@@ -1,6 +1,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
+import time
 import logging
 
 log = logging.getLogger(__name__)
@@ -72,3 +73,25 @@ class Keithley2260B(Instrument):
         """Simultaneous control of voltage (volts) and current (amps).
         Values need to be supplied as tuple of (voltage, current)""",
     )
+
+    @property
+    def error(self):
+        """ Returns a tuple of an error code and message from a
+        single error. """
+        err = self.values(":system:error?")
+        if len(err) < 2:
+            err = self.read()  # Try reading again
+        code = err[0]
+        message = err[1].replace('"', "")
+        return (code, message)
+
+    def check_errors(self):
+        """ Logs any system errors reported by the instrument.
+        """
+        code, message = self.error
+        while code != 0:
+            t = time.time()
+            log.info("Keithley 2260B reported error: %d, %s" % (code, message))
+            code, message = self.error
+            if (time.time() - t) > 10:
+                log.warning("Timed out for Keithley 2260B error retrieval.")
