@@ -14,8 +14,8 @@ class Keithley2260B(Instrument):
 
     For a connection through tcpip, the device only accepts
     connections at port 2268, which cannot be configured otherwise.
-        example connection string: 'TCPIP::xxx.xxx.xxx.xxx::2268::SOCKET'
-        the read termination for this interface is \n
+    example connection string: 'TCPIP::xxx.xxx.xxx.xxx::2268::SOCKET'
+    the read termination for this interface is \n
 
     .. code-block:: python
 
