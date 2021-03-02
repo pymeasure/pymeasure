@@ -45,33 +45,50 @@ class Keithley2260B(Instrument):
         map_values=True,
     )
 
-    current = Instrument.control(
+    current_limit = Instrument.control(
         ":SOUR:CURR?",
         ":SOUR:CURR %g",
         """A floating point property that controls the source current
         in amps. This is not checked against the allowed range. Depending on
-        whether the device is in constant current or constant voltage mode,
-        it will set/read the current limit, or the actual current achieved.""",
+        whether the instrument is in constant current or constant voltage mode,
+        this might differ from the actual current achieved.""",
     )
 
-    voltage = Instrument.control(
+    voltage_setpoint = Instrument.control(
         ":SOUR:VOLT?",
         ":SOUR:VOLT %g",
         """A floating point property that controls the source voltage
         in volts. This is not checked against the allowed range. Depending on
-        whether the device is in constant current or constant voltage mode,
-        it will set/read the voltage limit, or the actual voltage achieved.""",
+        whether the instrument is in constant current or constant voltage mode,
+        this might differ from the actual voltage achieved.""",
     )
 
     power = Instrument.measurement(
-        ":MEAS:POW?", """Reads the power (in watts) the dc power supply is putting out."""
+        ":MEAS:POW?",
+        """Reads the power (in Watt) the dc power supply is putting out.
+        """,
+    )
+
+    voltage = Instrument.measurement(
+        ":MEAS:VOLT?",
+        """Reads the voltage (in Volt) the dc power supply is putting out.
+        """,
+    )
+
+    current = Instrument.measurement(
+        ":MEAS:CURR?",
+        """Reads the current (in Ampere) the dc power supply is putting out.
+        """,
     )
 
     applied = Instrument.control(
         ":APPly?",
         ":APPly %g,%g",
         """Simultaneous control of voltage (volts) and current (amps).
-        Values need to be supplied as tuple of (voltage, current)""",
+        Values need to be supplied as tuple of (voltage, current). Depending on
+        whether the instrument is in constant current or constant voltage mode,
+        the values achieved by the instrument will differ from the ones set.
+        """,
     )
 
     @property
