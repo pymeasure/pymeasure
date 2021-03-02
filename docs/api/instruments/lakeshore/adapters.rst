@@ -6,4 +6,5 @@ Lake Shore Adapters
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:
+    :private-members: _format_binary_values
