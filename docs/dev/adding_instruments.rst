@@ -174,7 +174,7 @@ In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and rea
     >>> extreme = Extreme5000("GPIB::1")
     >>> extreme.combination = (0.2, 931)        # Executes ":VOLTFREQ 0.2,931"
     >>> extreme.combination                     # Reads ":VOLTFREQ?"
-    [0.2, 931]
+    [0.2, 931.0]
 
 The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
