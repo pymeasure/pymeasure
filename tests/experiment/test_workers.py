@@ -101,8 +101,10 @@ def test_zmq_does_not_crash_worker(caplog):
     # if cloudpickle is installed
     worker = Worker(results, port=5888, log_level=logging.DEBUG)
     worker.start()
-    worker.join(timeout=1.0)  # give it some time to finish the procedure
+    worker.join(timeout=4.0)  # give it enough time to finish the procedure
     assert procedure.status == procedure.FINISHED
+    del worker  # make sure to clean up, reduce the possibility of test
+    # dependencies via left-over sockets
 
 
 @pytest.mark.skipif(not importlib.util.find_spec('cloudpickle'),
@@ -123,14 +125,15 @@ def test_zmq_topic_filtering_works(caplog):
     results = Results(procedure, file)
     received = []
     worker = Worker(results, port=5888, log_level=logging.DEBUG)
-    listener = Listener(port=5888, topic='results', timeout=1.0)
+    listener = Listener(port=5888, topic='results', timeout=0.1)
+    sleep(0.5)  # leave time for subscriber and publisher to establish a connection
     worker.start()
     while True:
         if not listener.message_waiting():
             break
         topic, record = listener.receive()
         received.append((topic, record))
-    worker.join(timeout=0.5)  # give it some time to finish the procedure
+    worker.join(timeout=4.0)  # give it enough time to finish the procedure
     assert procedure.status == procedure.FINISHED
     assert len(received) == 3
     assert all([item[0] == 'results' for item in received])
