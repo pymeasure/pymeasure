@@ -94,8 +94,9 @@ class Worker(StoppableThread):
                 log.info("Worker connected to tcp://*:%d" % self.port)
                 time.sleep(0.3)  # wait so that the socket will be ready before starting to emit messages
             except Exception:
-                log.exception("couldn't connect to ZMQ context")
-                # FIXME: this happily continues even if connecting to the context fails!
+                log.exception("Couldn't establish ZMQ publisher!")
+                self.context = None
+                self.publisher = None
 
     def join(self, timeout=0):
         try:
