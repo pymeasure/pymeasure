@@ -34,6 +34,9 @@ from pymeasure.experiment import Listener, Procedure
 from pymeasure.experiment.workers import Worker
 from pymeasure.experiment.results import Results
 
+tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
+                          and importlib.util.find_spec('zmq'))
+
 # Load the procedure, without it being in a module
 data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
 RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
@@ -87,8 +90,8 @@ def test_worker_closes_file_after_finishing():
     os.remove(file)
 
 
-@pytest.mark.skipif(not importlib.util.find_spec('cloudpickle'),
-                    reason='Cloudpickle not installed')
+@pytest.mark.skipif(not tcp_libs_available,
+                    reason='TCP communication packages not installed')
 def test_zmq_does_not_crash_worker(caplog):
     """Check that a ZMQ serialisation usage error does not cause a crash.
 
@@ -107,8 +110,8 @@ def test_zmq_does_not_crash_worker(caplog):
     # dependencies via left-over sockets
 
 
-@pytest.mark.skipif(not importlib.util.find_spec('cloudpickle'),
-                    reason='Cloudpickle not installed')
+@pytest.mark.skipif(not tcp_libs_available,
+                    reason='TCP communication packages not installed')
 def test_zmq_topic_filtering_works(caplog):
 
     class ThreeEmitsProcedure(Procedure):
