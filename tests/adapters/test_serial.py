@@ -22,11 +22,26 @@
 # THE SOFTWARE.
 #
 
-from .keithley2000 import Keithley2000
-from .keithley2260B import Keithley2260B
-from .keithley2400 import Keithley2400
-from .keithley2450 import Keithley2450
-from .keithley2700 import Keithley2700
-from .keithley6221 import Keithley6221
-from .keithley2750 import Keithley2750
-from .keithley6517b import Keithley6517B
+import pytest
+import serial
+
+from pymeasure.adapters import SerialAdapter
+
+def make_adapter(**kwargs):
+    return SerialAdapter(serial.serial_for_url("loop://", **kwargs))
+
+
+@pytest.mark.parametrize("msg", ["OUTP\n", "POWER 22 dBm\n"])
+def test_adapter_write(msg):
+    adapter = make_adapter(timeout=0.2)
+    adapter.write(msg)
+    assert(adapter.read() == msg)
+
+@pytest.mark.parametrize("test_input,expected", [([1,2,3], b'OUTP#13\x01\x02\x03'),
+                                                 (range(100), b'OUTP#3100'+bytes(range(100)))])
+def test_adapter_write_binary_values(test_input, expected):
+    adapter = make_adapter(timeout=0.2)
+    adapter.write_binary_values("OUTP", test_input, datatype='B')
+    # Add 10 bytes more, just to check that no extra bytes are present
+    assert(adapter.connection.read(len(expected)+10) == expected)
+
