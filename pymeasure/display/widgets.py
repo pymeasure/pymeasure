@@ -146,9 +146,9 @@ class PlotFrame(QtGui.QFrame):
 
 class TabWidget(object):
     """ Utility class to define default implementation for some basic methods """
-    def __init__(self, name, index):
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.name = name
-        self.set_index(index)
 
     def new_curve(self, *args, **kwargs):
         """ Create a new curve """
@@ -162,21 +162,18 @@ class TabWidget(object):
         """ Remove curve from widget """
         pass
 
-    def get_index(self):
-        return self.index
-
-    def set_index(self, value):
-        self.index = value
+    def set_color(self, curve, color):
+        """ Remove curve from widget """
+        pass
 
 class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True,
-                 parent=None):
-        super().__init__(name, None)
-        super(TabWidget, self).__init__(parent)
+    def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
+                 check_status=True, parent=None):
+        super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -258,10 +255,14 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.plot_frame.change_y_axis(axis)
 
     def load(self, curve):
-        self.plot.addItem(curve[self.index])
+        self.plot.addItem(curve)
 
     def remove(self, curve):
-        self.plot.removeItem(curve[self.index])
+        self.plot.removeItem(curve)
+
+    def set_color(self, curve, color):
+        """ Remove curve from widget """
+        curve.setPen(pg.mkPen(color=color, width=2))
 
 class ImageFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -378,8 +379,7 @@ class ImageWidget(TabWidget, QtGui.QWidget):
 
     def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
                  parent=None):
-        super().__init__(name, None)
-        super(TabWidget, self).__init__(parent)
+        super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -444,10 +444,10 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         self.image_frame.change_z_axis(axis)
 
     def load(self, curve):
-        self.plot.addItem(curve[self.index])
+        self.plot.addItem(curve)
 
     def remove(self, curve):
-        self.plot.removeItem(curve[self.index])
+        self.plot.removeItem(curve)
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):
@@ -551,8 +551,7 @@ class InputsWidget(QtGui.QWidget):
 
 class LogWidget(TabWidget, QtGui.QWidget):
     def __init__(self, name, parent=None):
-        super().__init__(name, None)
-        super(TabWidget, self).__init__(parent)
+        super().__init__(name, parent)
         self._setup_ui()
         self._layout()
 

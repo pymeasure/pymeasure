@@ -41,16 +41,16 @@ class Experiment(QtCore.QObject):
     is only a convenient container.
 
     :param results: :class:`.Results` object
-    :param curve: :class:`.ResultsCurve` object
+    :param curve_list: :class:`.ResultsCurve` list. List of curves associated with an experiment. They could represent different views of the same experiment.
     :param browser_item: :class:`.BrowserItem` object
     """
 
-    def __init__(self, results, curve, browser_item, parent=None):
+    def __init__(self, results, curve_list, browser_item, parent=None):
         super().__init__(parent)
         self.results = results
         self.data_filename = self.results.data_filename
         self.procedure = self.results.procedure
-        self.curve = curve
+        self.curve_list = curve_list
         self.browser_item = browser_item
 
 class ExperimentQueue(QtCore.QObject):
@@ -170,8 +170,8 @@ class Manager(QtCore.QObject):
     def load(self, experiment):
         """ Load a previously executed Experiment
         """
-        for wdg in self.widget_list:
-            wdg.load(experiment.curve)
+        for wdg, curve in zip(self.widget_list, experiment.curve_list):
+            wdg.load(curve)
 
         self.browser.add(experiment)
         self.experiments.append(experiment)
@@ -190,8 +190,8 @@ class Manager(QtCore.QObject):
         self.experiments.remove(experiment)
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
-        for wdg in self.widget_list:
-            wdg.remove(experiment.curve)
+        for wdg, curve in zip(self.widget_list, experiment.curve_list):
+            wdg.remove(curve)
 
     def clear(self):
         """ Remove all Experiments
@@ -256,7 +256,7 @@ class Manager(QtCore.QObject):
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)
-        for curve in experiment.curve:
+        for curve in experiment.curve_list:
             if curve:
                 curve.update_data()
         self.finished.emit(experiment)

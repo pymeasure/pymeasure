@@ -185,7 +185,6 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.widget_list = widget_list
         self._setup_ui()
         self._layout()
-        #??? self.setup_plot(self.plot)
 
     def _setup_ui(self):
         if self.directory_input:
@@ -291,8 +290,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
 
         self.tabs = QtGui.QTabWidget(self.main)
-        for index, wdg in enumerate(self.widget_list):
-            wdg.set_index(index)
+        for wdg in self.widget_list:
             self.tabs.addTab(wdg, wdg.name)
 
         splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
@@ -319,15 +317,15 @@ class ManagedWindowBase(QtGui.QMainWindow):
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
             if state == 0:
-                for wdg in self.widget_list:
-                    wdg.remove(experiment.curve)
+                for wdg, curve in zip(self.widget_list, experiment.curve_list):
+                    wdg.remove(curve)
             else:
                 # ??? experiment.curve.x = self.plot_widget.plot_frame.x_axis
                 # ??? experiment.curve.y = self.plot_widget.plot_frame.y_axis
                 # ??? experiment.curve.update()
                 # ??? self.plot.addItem(experiment.curve)
-                for wdg in self.widget_list:
-                    wdg.load(experiment.curve)
+                for wdg, curve in zip(self.widget_list, experiment.curve_list):
+                    wdg.load(curve)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -405,24 +403,21 @@ class ManagedWindowBase(QtGui.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    for index in range(len(self.widget_list)):
-                        experiment.curve[index].update_data()
+                    for curve in experiment.curve_list:
+                        curve.update_data()
                     experiment.browser_item.progressbar.setValue(100.)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
     def change_color(self, experiment):
-        for index, wdg in enumerate(self.widget_list):
-            if isinstance(wdg, PlotWidget):
-                curve = experiment.curve[index]
-                break
         color = QtGui.QColorDialog.getColor(
-            initial=curve.opts['pen'].color(), parent=self)
+            parent=self)
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
-            curve.setPen(pg.mkPen(color=color, width=2))
+            for wdg, curve in zip(self.widget_list, experiment.curve_list):
+                wdg.set_color(curve, color=color)
 
     def open_file_externally(self, filename):
         """ Method to open the datafile using an external editor or viewer. Uses the default
@@ -451,21 +446,21 @@ class ManagedWindowBase(QtGui.QMainWindow):
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
         return wdg.new_curve(results, color=color, **kwargs)
 
-    def new_experiment(self, results, curve=[]):
-        if curve == []:
+    def new_experiment(self, results, curve=None):
+        if curve == None:
             curve_list = []
             for wdg in self.widget_list:
                 curve_list.append(self.new_curve(wdg, results))
         else:
             curve_list = curve[:]
 
-        curve_browser = None
-        for index, wdg in enumerate(self.widget_list):
+        curve_color = pg.intColor(0)
+        for wdg, curve in zip(self.widget_list, curve_list):
             if isinstance(wdg, PlotWidget):
-                curve_browser = curve_list[index]
+                curve_color = curve.opts['pen'].color()
                 break
 
-        browser_item = BrowserItem(results, curve_browser)
+        browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
 
     def set_parameters(self, parameters):
@@ -565,6 +560,13 @@ class ManagedWindowBase(QtGui.QMainWindow):
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
 
+    @property
+    def directory(self):
+        if not self.directory_input:
+            raise ValueError("No directory input in the ManagedWindow")
+        return self.directory_line.text()
+
+
 class ManagedWindow(ManagedWindowBase):
     """
     Abstract base class.
@@ -593,6 +595,7 @@ class ManagedWindow(ManagedWindowBase):
 
 
     """
+
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
                  sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False, wdg_list=()):
@@ -600,7 +603,6 @@ class ManagedWindow(ManagedWindowBase):
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
         self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
-        self.plot = self.plot_widget.plot
         self.plot_widget.setMinimumSize(100, 200)
         super().__init__(
             procedure_class=procedure_class,
