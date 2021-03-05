@@ -553,6 +553,31 @@ class Keithley2400(Instrument, KeithleyBuffer):
             self.source_voltage = voltage
             time.sleep(pause)
 
+    def ramp_to_voltage_with_stop_condition(self, target_voltage, steps, read_obj, read_var_max, pause=20e-3):
+        """ Ramps to a target voltage from the set voltage value over
+        a certain number of linear steps, each separated by a pause duration.
+
+        :param target_voltage: A voltage in Amps
+        :param steps: An integer number of steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
+
+        voltages = np.linspace(
+            self.source_voltage,
+            target_voltage,
+            steps
+        )
+        try:
+            for voltage in voltages:
+                self.source_voltage = voltage
+                if read_obj.current >= read_var_max:
+                    print("stoped ramping at:" + str(voltage))
+                    break
+                time.sleep(pause)
+        except KeyboardInterrupt:
+            print("keyboard interrupt")
+            raise
+
     def trigger(self):
         """ Executes a bus trigger, which can be used when
         :meth:`~.trigger_on_bus` is configured.
@@ -748,3 +773,4 @@ class Keithley2400(Instrument, KeithleyBuffer):
             self.ramp_to_voltage(0.0)
         self.stop_buffer()
         self.disable_source()
+
