@@ -259,6 +259,27 @@ harmonics and spurious.""",
         values=[0, 99.99]
     )
 
+    ramp_transition_fall = Instrument.control(
+        "RAMP:TRANsition:TRAiling?", "RAMP:TRANsition:TRAiling %g",
+        """ A float parameter that sets the fall time of the ramp in percent. Range = [0, 99.99]""",
+        validator=strict_range,
+        values=[0, 99.99]
+    )
+
+    ramp_transition_fall = Instrument.control(
+        "RAMP:TRANsition:TRAiling?", "RAMP:TRANsition:TRAiling %g",
+        """ A float parameter that sets the fall time of the ramp in percent. Range = [0, 99.99]""",
+        validator=strict_range,
+        values=[0, 99.99]
+    )
+
+    arb_trace_select = Instrument.control(
+        "TRACe:SELect?", "TRACe:SELect %g",
+        """ An integer parameter that sets the arbitrary waveform segment for a given channel. Range = [0, 10000]""",
+        validator=strict_range,
+        values=[1,10000]
+    )
+
     def __init__(self, instrument, number):
         self.instrument = instrument
         self.number = number
