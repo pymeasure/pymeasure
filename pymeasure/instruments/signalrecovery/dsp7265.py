@@ -169,9 +169,10 @@ class DSP7265(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(DSP7265, self).__init__(
+        super().__init__(
             resourceName,
             "Signal Recovery DSP 7265",
+            includeSCPI=False,
             **kwargs
         )
         self.curve_bits = {
@@ -183,7 +184,6 @@ class DSP7265(Instrument):
             'ADC2': 64,
             'ADC3': 128
         }
-
 
     def values(self, command):
         """ Rewrite the method because of extra character in return string."""
