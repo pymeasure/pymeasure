@@ -184,8 +184,6 @@ class DSP7265(Instrument):
             'ADC3': 128
         }
 
-        # Pre-condition
-        self.adapter.config(datatype = 'str', converter = 's')
 
     def values(self, command):
         """ Rewrite the method because of extra character in return string."""
