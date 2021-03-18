@@ -344,7 +344,23 @@ Using the estimator widget
 In order to provide estimates of the measurement procedure, an EstimatorWidget is provided that allows the user to define and calculate estimates.
 The widget is automatically activated when the :code:`get_estimates` method is added in the :code:`Procedure`.
 
-For the maximum flexibility in both the types of estimates (e.g. duration, filesize, ending-time) and the measurement procedures, this method is expected to return a list of tuples.
+The quickest and most simple implementation of the :code:`get_estimates` function simple returns a the estimated duration of the measurement in seconds (as an :code:`int` or a :code:`float`).
+As an example, in the example provided in the ManagedWindow section, the :code:`Procedure` is changed to:
+.. code-block:: python
+
+   class RandomProcedure(Procedure):
+
+       # ...
+
+       def get_estimates(self, sequence_length=None, sequence=None):
+
+           return self.iterations * self.delay
+
+This will add the estimator widget at the dock on the left.
+The duration and finishing-time of a single measurement is always displayed in this case.
+Depending on whether the SequencerWidget is also used, the length, duration and finishing-time of the full sequence is also shown.
+
+For maximum flexibility (e.g. for showing multiple and other types of estimates, such as the duration, filesize, finishing-time, etc.) it is also possible that the :code:`get_esimates` returns a list of tuples.
 Each of these tuple consists of two strings: the first is the name (label) of the estimate, the second is the estimate itself.
 
 As an example, in the example provided in the ManagedWindow section, the :code:`Procedure` is changed to:
@@ -368,8 +384,8 @@ As an example, in the example provided in the ManagedWindow section, the :code:`
 
            return estimates
 
-This will add the estimator widget at the dock on the left.
 
+This will add the estimator widget at the dock on the left.
 .. image:: pymeasure-estimator.png
     :alt: Example of the estimator widget
 
