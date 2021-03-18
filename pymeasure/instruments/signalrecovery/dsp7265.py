@@ -54,6 +54,32 @@ class DSP7265(Instrument):
         ]
     REFERENCES = ['internal', 'external rear', 'external front']
 
+    CURVE_BITS = {
+            'x': 0,
+            'y': 1,
+            'mag': 2,
+            'phase': 3,
+            'sens': 4,
+            'ADC1': 5,
+            'ADC2': 6,
+            'ADC3': 7,
+            'DAC1': 8,
+            'DAC2': 9,
+            'noise': 10,
+            'ratio': 11,
+            'log ratio': 12,
+            'EVENT': 13,
+            'frequency': 14,
+            'frequency2': 15,
+
+            # Dual modes
+            'x2': 16,
+            'y2': 17,
+            'mag2': 18,
+            'phase2': 19,
+            'sense2': 20
+        }
+
     voltage = Instrument.control(
         "OA.", "OA. %g",
         """ A floating point property that represents the voltage
@@ -175,15 +201,6 @@ class DSP7265(Instrument):
             includeSCPI=False,
             **kwargs
         )
-        self.curve_bits = {
-            'x': 1,
-            'y': 2,
-            'mag': 4,
-            'phase': 8,
-            'ADC1': 32,
-            'ADC2': 64,
-            'ADC3': 128
-        }
 
     def values(self, command):
         """ Rewrite the method because of extra character in return string."""
@@ -251,7 +268,7 @@ class DSP7265(Instrument):
     def set_buffer(self, points, quantities=['x'], interval=10.0e-3):
         num = 0
         for q in quantities:
-            num += self.curve_bits[q]
+            num += 2**self.CURVE_BITS[q]
         self.points = points
         self.write("CBD %d" % int(num))
         self.write("LEN %d" % int(points))
