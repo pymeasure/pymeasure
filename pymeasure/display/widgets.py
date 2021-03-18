@@ -32,6 +32,7 @@ import numpy
 from collections import ChainMap
 from itertools import product
 from inspect import signature
+from datetime import datetime, timedelta
 
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
@@ -1125,9 +1126,11 @@ class EstimatorWidget(QtGui.QWidget):
 
         if raise_error:
             raise TypeError(
-                "if implemented, return a list of tuples, where each tuple "
-                "represents an estimate containing two string: the first is "
-                "a label for the estimate, the second is the estimate itself."
+                "If implemented, the get_estimates function is expected to"
+                "return an int or float representing the estimated duration,"
+                "or a list of tuples of strings, where each tuple  represents"
+                "an estimate containing two string: the first is a label for"
+                "the estimate, the second is the estimate itself."
             )
 
         # Store the number of estimates
@@ -1168,20 +1171,17 @@ class EstimatorWidget(QtGui.QWidget):
         parameters and returns the estimates for these parameters.
         """
         # Make a procedure
-        proc = self._parent.make_procedure()
+        procedure = self._parent.make_procedure()
 
         kwargs = dict()
 
         sequence = None
         sequence_length = None
-        if hasattr(self._parent, "sequencer") and any((
-            self.provide_sequence,
-            self.provide_sequence_length
-        )):
+        if hasattr(self._parent, "sequencer"):
             try:
                 sequence = self._parent.sequencer.get_sequence_from_tree()
             except SequenceEvaluationException:
-                pass
+                sequence_length = 0
             else:
                 sequence_length = len(sequence)
 
@@ -1191,7 +1191,10 @@ class EstimatorWidget(QtGui.QWidget):
         if self.provide_sequence_length:
             kwargs["sequence_length"] = sequence_length
 
-        estimates = proc.get_estimates(**kwargs)
+        estimates = procedure.get_estimates(**kwargs)
+
+        if isinstance(estimates, (int, float)):
+            estimates = self._estimates_from_duration(estimates, sequence_length)
 
         return estimates
 
@@ -1219,6 +1222,24 @@ class EstimatorWidget(QtGui.QWidget):
             self.line_edits[idx][0].setText(estimate[0])
             self.line_edits[idx][1].setText(estimate[1])
 
+    def _estimates_from_duration(self, duration, sequence_length):
+        estimates = list()
+
+        estimates.append(("Duration", "%d s" % int(duration)))
+
+        if hasattr(self._parent, "sequencer"):
+            estimates.append(("Sequence length", str(sequence_length)))
+            estimates.append(("Sequence duration", "%d s" % int(sequence_length * duration)))
+
+        estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
+            seconds=duration))[:-7]))
+
+        if hasattr(self._parent, "sequencer"):
+            estimates.append(('Sequence finished at', str(datetime.now() + timedelta(
+                seconds=duration * sequence_length))[:-7]))
+
+        return estimates
+
     def _set_continuous_updating(self):
         state = self.update_box.checkState()
 
@@ -1233,5 +1254,3 @@ class EstimatorWidget(QtGui.QWidget):
         elif state == 2:
             self.update_thread.delay = 0.1
             self.update_thread.start()
-
-        print()
