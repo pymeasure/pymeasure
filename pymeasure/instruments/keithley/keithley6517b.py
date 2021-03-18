@@ -327,6 +327,18 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         """
         return self.write("*TRG")
 
+    def trigger_immediately(self):
+        """ Configures measurements to be taken with the internal
+        trigger at the maximum sampling rate.
+        """
+        self.write(":TRIG:SOUR IMM;")
+
+    def trigger_on_bus(self):
+        """ Configures the trigger to detect events based on the bus
+        trigger, which can be activated by :meth:`~.trigger`.
+        """
+        self.write(":TRIG:SOUR BUS;")
+
     def shutdown(self):
         """ Ensures that the current or voltage is turned to zero
         and disables the output. """
