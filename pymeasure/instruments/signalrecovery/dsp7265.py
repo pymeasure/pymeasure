@@ -265,6 +265,15 @@ class DSP7265(Instrument):
     def gain(self, value):
         self.write("ACGAIN %d" % int(value/10.0))
 
+    curve_buffer_bits = Instrument.control(
+        "CBD", "CBD %d",
+        """ An integer property that controls which data outputs are stored
+        in the curve buffer. Valid values are values between 1 and 65,535 (or
+        2,097,151 in dual reference mode). """,
+        values=[1, 2097151],
+        validator=truncated_range,
+    )
+
     def set_buffer(self, points, quantities=['x'], interval=10.0e-3):
         num = 0
         for q in quantities:
