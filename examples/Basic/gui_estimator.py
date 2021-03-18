@@ -60,8 +60,10 @@ class TestProcedure(Procedure):
         is implemented (and does not return a NotImplementedError) the widget is
         automatically activated.
 
-        The function is expected to return a list of tuples. Each tuple containing two
-        strings, a label and the estimate itself:
+        The function is expected to an int or float, or a list of tuples. If an int or
+        float is returned, it should represent the duration in seconds.If a list of
+        tuples is returned, each tuple containing two strings, a label and the estimate
+        itself:
         estimates = [
             ("label 1", "estimate 1"),
             ("label 2", "estimate 2"),
@@ -76,9 +78,15 @@ class TestProcedure(Procedure):
         """
         duration = self.iterations * self.delay
 
+        """
+        A simple implementation of the get_estimates function immediately returns the duration
+        in seconds.
+        """
+        # return duration
+
         estimates = list()
 
-        estimates.append(("Duration", "%d s" % int(self.iterations * self.delay)))
+        estimates.append(("Duration", "%d s" % int(duration)))
         estimates.append(("Number of lines", "%d" % int(self.iterations)))
 
         estimates.append(("Sequence length", str(sequence_length)))
