@@ -64,11 +64,11 @@ Generate a tone at 868MHz
     sg.power
     # -50.0
     # Set power
-    a.power = -60.0
+    sg.power = -60.0
     # Set frequency
     sg.frequency=868000000.0
     # enable RF output
-    a.rf_enable = 1
+    sg.rf_enable = 1
 
     
     """
