@@ -46,7 +46,7 @@ setup(
     extras_require={
         'matplotlib': ['matplotlib >= 2.0.2'],
         'tcp': [
-            'zmq >= 16.0.2',
+            'pyzmq >= 16.0.2',
             'cloudpickle >= 0.3.1'
         ],
         'python-vxi11': ['python-vxi11 >= 0.9']
