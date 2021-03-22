@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 import pytest
+from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -150,6 +151,47 @@ def test_control_get_process():
     assert fake.x == 5
 
 
+def test_control_preprocess_reply_property():
+    # test setting preprocess_reply at property-level
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "JUNK%d",
+            "",
+            preprocess_reply=lambda v: v.replace('JUNK', ''),
+            cast=int
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == 'JUNK5'
+    # notice that read returns the full reply since preprocess_reply is only
+    # called inside Adapter.values()
+    fake.x = 5
+    assert fake.x == 5
+    fake.x = 5
+    assert type(fake.x) == int
+
+
+def test_control_preprocess_reply_adapter():
+    # test setting preprocess_reply at Adapter-level
+    class Fake(FakeInstrument):
+        def __init__(self):
+            super().__init__(preprocess_reply=lambda v: v.replace('JUNK', ''))
+
+        x = Instrument.control(
+            "", "JUNK%d", "",
+            cast=int
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == 'JUNK5'
+    # notice that read returns the full reply since preprocess_reply is only
+    # called inside Adapter.values()
+    fake.x = 5
+    assert fake.x == 5
+
+
 def test_measurement_dict_str_map():
     class Fake(FakeInstrument):
         x = Instrument.measurement(
@@ -179,3 +221,32 @@ def test_setting_process():
     assert fake.read() == 'OUT 0'
     fake.x = 2
     assert fake.read() == 'OUT 1'
+
+
+def test_control_multivalue():
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "%d,%d", "",
+        )
+
+    fake = Fake()
+    fake.x = (5, 6)
+    assert fake.read() == '5,6'
+
+
+@pytest.mark.parametrize(
+    'set_command, given, expected',
+    [("%d", 5, 5),
+     ("%d, %d", (5, 6), [5, 6]),  # input has to be a tuple, not a list
+     ])
+def test_fakeinstrument_control(set_command, given, expected):
+    """FakeInstrument's custom simple control needs to process values correctly.
+    """
+    class Fake(FakeInstrument):
+        x = FakeInstrument.control(
+            "", set_command, "",
+        )
+
+    fake = Fake()
+    fake.x = given
+    assert fake.x == expected

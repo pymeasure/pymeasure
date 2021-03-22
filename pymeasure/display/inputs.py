@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,8 +55,8 @@ class Input(object):
         """
         self._parameter = parameter
 
-        if parameter.default is not None:
-            self.setValue(parameter.default)
+        if parameter.is_set():
+            self.setValue(parameter.value)
 
         if hasattr(parameter, 'units') and parameter.units:
             self.setSuffix(" %s" % parameter.units)
@@ -190,16 +190,18 @@ class ListInput(QtGui.QComboBox, Input):
     def set_parameter(self, parameter):
         # Override from :class:`Input`
         try:
-            self._stringChoices = tuple(str(choice) for choice in parameter.choices)
+            if hasattr(parameter, 'units') and parameter.units:
+                suffix = " %s"%parameter.units
+            else:
+                suffix = ""
+
+            self._stringChoices = tuple((str(choice) + suffix) for choice in parameter.choices)
         except TypeError: # choices is None
             self._stringChoices = tuple()
-        super().set_parameter(parameter)
         self.clear()
         self.addItems(self._stringChoices)
 
-        # can't be set in super().set_parameter: addItems not yet called there
-        if parameter.default is not None:
-            self.setValue(parameter.default)
+        super().set_parameter(parameter)
 
 
     def setValue(self, value):
@@ -211,7 +213,7 @@ class ListInput(QtGui.QComboBox, Input):
                              "Must be one of %s" % str(self._parameter.choices)) from e
 
     def setSuffix(self, value):
-        self._stringChoices = tuple(choice + str(value) for choice in self._stringChoices)
+        pass
 
     def value(self):
         return self._parameter.choices[self.currentIndex()]
@@ -237,14 +239,18 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
-        self.setMinimum(parameter.minimum)
-        self.setMaximum(parameter.maximum)
+        self._parameter = parameter  # required before super().set_parameter
+        # for self.validate which is called when setting self.decimals()
         self.validator = QtGui.QDoubleValidator(
             parameter.minimum,
             parameter.maximum,
-            10, self)
+            parameter.decimals,
+            self)
+        self.setDecimals(parameter.decimals)
+        self.setMinimum(parameter.minimum)
+        self.setMaximum(parameter.maximum)
         self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
-        super().set_parameter(parameter) # default gets set here, after min/max
+        super().set_parameter(parameter)  # default gets set here, after min/max
 
     def validate(self, text, pos):
         if self._parameter.units:

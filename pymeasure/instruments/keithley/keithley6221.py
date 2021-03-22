@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -347,7 +347,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
 
     def trigger_on_bus(self):
         """ Configures the trigger to detect events based on the bus
-        trigger, which can be activated by :code:`GET` or :code:`*TRG`.
+        trigger, which can be activated by :meth:`~.trigger`.
         """
         self.write(":ARM:SOUR BUS;:TRIG:SOUR BUS;")
 

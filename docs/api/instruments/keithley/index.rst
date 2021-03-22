@@ -10,8 +10,10 @@ This section contains specific documentation on the Keithley instruments that ar
    :maxdepth: 2
 
    keithley2000
+   keithley2260B
    keithley2400
    keithley2450
    keithley2700
    keithley6221
+   keithley6517b
    keithley2750

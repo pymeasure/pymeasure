@@ -1,0 +1,5 @@
+# Ignore generated files
+/Notebook Experiments/procedures.py
+/Notebook Experiments/analysis.py
+/Notebook Experiments/my_config.ini
+/**/*.csv
