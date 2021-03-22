@@ -50,7 +50,7 @@ class TemptronicATS545(TemptronicBase):
     Instantate a temptronic thermostream, define a temperature force
     operation and force 100 degC.
         
-    >>> from pymeasure.instruments import TemptronicATS545
+    >>> from pymeasure.instruments.temptronic import TemptronicATS545
     >>> with TemptronicATS545("ASRL6::INSTR") as ts:
     >>>     ts.configure(temp_window=5, dut_type='T', soak_window=30)
     >>>     ts.set_temperature(100)
