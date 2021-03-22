@@ -832,8 +832,10 @@ class TemptronicBase(Instrument):
                 print('no settling achieved')
                 break
 
-    def stop(self):
-        # shut down thermo stream
+    def shutdown(self):
+        """Brings the instrument to a safe and stable state"""
+        self.isShutdown = True
+        log.info("Shutting down %s" % self.name)
         self.enable_air_flow = 0
         self.remote_mode = False
         self.head = 'up'
@@ -876,4 +878,4 @@ class TemptronicBase(Instrument):
         return self
 
     def __exit__(self):
-        self.stop()
+        self.shutdown()
