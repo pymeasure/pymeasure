@@ -38,6 +38,7 @@ September, 2019
 """
 
 from pymeasure.instruments.temptronic.temptronic_base import TemptronicBase
+from pymeasure.instruments.instrument import Instrument
 from pymeasure.instruments.validators import *
 
 
