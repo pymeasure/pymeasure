@@ -124,19 +124,7 @@ class ErrorCode(Enum):
 
 
 class TemptronicBase(Instrument):    
-    """Represent the TemptronicATSXXX instruments.
-
-    Examples
-    -------
-    Instantate a temptronic thermostream, define a temperature force
-    operation and force 100 degC.
-        
-    >>> from pymeasure.instruments.temptronic import TemptronicATS525
-    >>> ts =  TemptronicATS525("ASRL6::INSTR")   
-    >>> ts.configure(temp_window=5, dut_type='T', soak_window=30)
-    >>> ts.set_temperature(100)
-    
-    
+    """Represent the bas class for TemptronicATSXXX instruments.
     """ 
 
     remote_mode = Instrument.setting(

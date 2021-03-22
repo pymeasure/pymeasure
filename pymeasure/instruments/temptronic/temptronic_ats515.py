@@ -44,19 +44,6 @@ from pymeasure.instruments.validators import *
 
 class TemptronicATS515(TemptronicBase): 
     """Represent the TemptronicATS515 instruments.
-
-    Examples
-    -------
-    Instantate a temptronic thermostream, define a temperature force
-    operation and force 100 degC.
-        
-    >>> from pymeasure.instruments.temptronic import TemptronicATS515
-    >>> with TemptronicATS515("ASRL6::INSTR") as ts:
-    >>>     ts.configure(temp_window=5, dut_type='T', soak_window=30)
-    >>>     ts.set_temperature(100)
-    >>>     ts.start()
-    >>>     ts.wait_for_settling()
-    >>>     # <do your stuff>
     """
 
     temperature_limit_air_low = Instrument.control(
