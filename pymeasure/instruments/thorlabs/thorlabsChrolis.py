@@ -66,7 +66,7 @@ class ThorlabsChrolis(ThorlabsDLLInstrument):
 
     :param adapter: instance of adapter
     :type adapter: :class:`~pymeasure.instruments.thorlabs.ThorlabsDLLAdapter`
-    :param resourceName: 
+    :param resourceName:
         resource name as given by
         :meth:`~pymeasure.instruments.thorlabs.ThorlabsDLLAdapter.get_resource_name`
     :type resourceName: str
