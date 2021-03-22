@@ -1,0 +1,7 @@
+########################
+HP 6060B Electronic Load
+########################
+
+.. autoclass:: pymeasure.instruments.hp.HP6060B
+    :members:
+    :show-inheritance:
