@@ -274,19 +274,55 @@ class DSP7265(Instrument):
         validator=truncated_range,
     )
 
+    curve_buffer_length = Instrument.control(
+        "LEN", "LEN %d",
+        """ An integer property that controls the length of the curve buffer.
+        Valid values are values between 1 and 32,768, but the actual maximum
+        amount of points is determined by the amount of curves that are stored,
+        as set via the curve_buffer_bits property (32,768 / n) """,
+        values=[1, 32768],
+        validator=truncated_range,
+    )
+
+    curve_buffer_interval = Instrument.control(
+        "LEN", "LEN %d",
+        """  An integer property that controls Sets the time interval between
+        successive points being acquired in the curve buffer. The time interval
+        is specified in ms with a resolution of 5 ms; input values are rounded
+        up to a multiple of 5. Valid values are values between 0 and 1,000,000,000
+        (corresponding to 12 days).
+        The interval may be set to 0, which sets the rate of data storage to the
+        curve buffer to 1.25 ms/point (800 Hz). However this only allows storage
+        of the X and Y channel outputs. There is no need to issue a CBD 3 command
+        to set this up since it happens automatically when acquisition starts.
+        """,
+        values=[1, 1000000000],
+        validator=truncated_range,
+    )
+
+    def init_curve_buffer(self):
+        """Initializes the curve storage memory and status variables. All record
+        of previously taken curves is removed.
+        """
+        self.write("NC")
+
     def set_buffer(self, points, quantities=['x'], interval=10.0e-3):
         num = 0
         for q in quantities:
             num += 2**self.CURVE_BITS[q]
-        self.points = points
-        self.write("CBD %d" % int(num))
-        self.write("LEN %d" % int(points))
+
+        self.curve_buffer_bits = num
+        self.curve_buffer_length = points
+
         # interval in increments of 5ms
-        interval = int(float(interval)/5.0e-3)
-        self.write("STR %d" % interval)
-        self.write("NC")
+        self.curve_buffer_interval = int(float(interval)/5.0e-3)
+        self.init_curve_buffer()
 
     def start_buffer(self):
+        """Initiates data acquisition. Acquisition starts at the current position
+        in the curve buffer and continues at the rate set by the STR command until
+        the buffer is full.
+        """
         self.write("TD")
 
     def get_buffer(self, quantity='x', timeout=1.00, average=False):
