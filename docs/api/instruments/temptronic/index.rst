@@ -9,4 +9,8 @@ This section contains specific documentation on the temptronic instruments that 
 .. toctree::
    :maxdepth: 2
 
-   temptronic
+   temptronic_base
+   temptronic_ats515
+   temptronic_ats525
+   temptronic_ats545
+   temptronic_ats615
