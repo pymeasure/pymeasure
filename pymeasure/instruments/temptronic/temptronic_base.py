@@ -714,16 +714,7 @@ class TemptronicBase(Instrument):
         Returns
         -------
         none
-          
 
-        Examples
-        -------
-        
-        configure a temperature force operation with T type thermocouple
-        and 30 second soak time intervall,
-        all other parameters are set to their pre-defined default
-        
-        >>> ts.conf_set_temp(temp_window=5, dut_type='T', soak_window=30)
         """
         self.maximum_test_time = 3600*5   # max 5 houre test time
         #sent dut type
@@ -750,14 +741,6 @@ class TemptronicBase(Instrument):
         Returns
         -------
         none
-
-        Examples
-        -------
-        
-        configure a default force temperature operation and sweep to 100 degC
-        
-        >>> ts.conf_set_temp()
-        >>> ts.set_temp(100)
                      
         """
         if self.mode == 'manual':
@@ -791,20 +774,9 @@ class TemptronicBase(Instrument):
         Returns
         -------
         none
-
-        Examples
-        -------
         
-        configure a default force temperature operation and sweep to 100 degC.
-        Stop script execution until temperature has settled or if it runs longer
-        than 150 s and use logging
-        
-        >>> ts.conf_set_temp()
-        >>> ts.set_temp_wait_settling(100,150)
-        temp_set= 100.0 deg, temp = 27.2 deg, time elapsed =   10 s, status = not at temperature             
         """
-        # delay (thermostream firmware issue)
-        # force set_temp
+
         time.sleep(1)
         t = 0
         while( not self.at_temperature()): #assert at temperature
