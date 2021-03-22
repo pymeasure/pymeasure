@@ -30,4 +30,6 @@ Jonathan Larochelle
 Dominic Caron
 Mathieu Plante
 Michele Sardo
+Steven Siegl
+Benjamin Klebel-Knobloch
 Markus Röleke

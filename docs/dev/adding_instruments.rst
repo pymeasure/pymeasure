@@ -47,7 +47,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     #
     # This file is part of the PyMeasure package.
     #
-    # Copyright (c) 2013-2020 PyMeasure Developers
+    # Copyright (c) 2013-2021 PyMeasure Developers
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
     # of this software and associated documentation files (the "Software"), to deal
@@ -154,7 +154,29 @@ We can use this property to set the voltage to 100 mV, which will execute the co
     >>> extreme.voltage              # Reads ":VOLT?"
     0.1
 
-Using both of these functions, you can create a number of properties for basic measurements and controls. The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
+Using :func:`Instrument.control <pymeasure.instruments.Instrument.control>` and :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` functions, you can create a number of properties for basic measurements and controls. 
+
+The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at once, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+
+.. testcode::
+
+    Extreme5000.combination = Instrument.control(
+        ":VOLTFREQ?", ":VOLTFREQ %g,%g",
+        """ A floating point property that simultaneously controls the voltage
+        in Volts and the frequency in Hertz. This property can be set by a tuple.
+        """
+    )
+
+In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards. 
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.combination = (0.2, 931)        # Executes ":VOLTFREQ 0.2,931"
+    >>> extreme.combination                     # Reads ":VOLTFREQ?"
+    [0.2, 931.0]
+
+The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
 .. _advanced-properties:
 

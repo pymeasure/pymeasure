@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,10 +59,6 @@ class AgilentB1500(Instrument):
         )
         self._smu_names = {}
         self._smu_references = {}
-        # setting of data output format
-        # determines how to read measurement data
-        self._data_format = self._data_formatting(
-            "FMT" + self.query_learn(31)['FMT'][0])
 
     @property
     def smu_references(self):
@@ -299,7 +295,7 @@ class AgilentB1500(Instrument):
             }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
-        def __init__(self, output_format_str, smu_names={}):
+        def __init__(self, smu_names, output_format_str):
             """ Stores parameters of the chosen output format
             for later usage in reading and processing instrument data.
 
@@ -427,8 +423,8 @@ class AgilentB1500(Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """ Data formatting for FMT1 format
         """
-        def __init__(self, smu_names={}):
-            super().__init__("FMT1", smu_names)
+        def __init__(self, smu_names={}, output_format_string="FMT1"):
+            super().__init__(smu_names, output_format_string)
 
         def format_single(self, element):
             """ Format single measurement value
@@ -451,16 +447,16 @@ class AgilentB1500(Instrument):
             return (status, channel, data_name, value)
 
     class _data_formatting_FMT11(_data_formatting_FMT1):
-        """ Data formatting for FMT11 format
+        """ Data formatting for FMT11 format (based on FMT1)
         """
         def __init__(self, smu_names={}):
-            super().__init__("FMT11", smu_names)
+            super().__init__(smu_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
         """ Data formatting for FMT21 format
         """
         def __init__(self, smu_names={}):
-            super().__init__("FMT21", smu_names)
+            super().__init__(smu_names, "FMT21")
 
         def format_single(self, element):
             """ Format single measurement value
@@ -493,18 +489,20 @@ class AgilentB1500(Instrument):
         :rtype: class
         """
         classes = {
-            "FMT21": self._data_formatting_FMT21,
             "FMT1": self._data_formatting_FMT1,
-            "FMT11": self._data_formatting_FMT11
+            "FMT11": self._data_formatting_FMT11,
+            "FMT21": self._data_formatting_FMT21
             }
         try:
             format_class = classes[output_format_str]
-        except Exception:
-            raise NotImplementedError(
-                ("Data Format {0} is not implemented "
-                 "so far.").format(output_format_str)
-            )
-        return format_class(smu_names)
+        except KeyError:
+            log.error((
+                "Data Format {0} is not implemented "
+                "so far. Please set appropriate Data Format."
+                ).format(output_format_str))
+            return
+        else:
+            return format_class(smu_names=smu_names)
 
     def data_format(self, output_format, mode=0):
         """ Specifies data output format. Check Documentation for parameters.
@@ -512,14 +510,18 @@ class AgilentB1500(Instrument):
         interpreting the measurement values read from the instrument.
         (``FMT``)
 
+        Currently implemented are format 1, 11, and 21.
+
         :param output_format: Output format string, e.g. ``FMT21``
         :type output_format: str
         :param mode: Data output mode, defaults to 0 (only measurement
                      data is returned)
         :type mode: int, optional
         """
+        # restrict to implemented formats
         output_format = strict_discrete_set(
-            output_format, [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25])
+            output_format, [1, 11, 21])
+        # possible: [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25]
         mode = strict_range(mode, range(0, 11))
         self.write("FMT %d, %d" % (output_format, mode))
         self.check_errors()
@@ -1005,7 +1007,7 @@ class SMU():
     @filter.setter
     def filter(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write("FL %d, %d" % (self.channel, setting))
+        self.write("FL %d, %d" % (setting, self.channel))
         self.check_errors()
 
     @property
@@ -1365,39 +1367,42 @@ class Ranging():
 
     :param supported_ranges: Ranges which are supported (list of range indizes)
     :type supported_ranges: list
-    :param all_ranges: All ranges ``{Name: Indizes}``
-    :type all_ranges: dict
-    :param inverse_ranges: manually give inverse ranges
-                           ``{Index: (Name, Synonym)}``, to select same range
-                           by multiple names; defaults to 'AUTO'
-    :type inverse_ranges: dict, optional
+    :param ranges: All range names ``{Name: Indizes}``
+    :type ranges: dict
+    :param fixed_ranges: add fixed ranges (negative indizes); defaults to False
+    :type inverse_ranges: bool, optional
 
     .. automethod:: __call__
     """
 
     _Range = namedtuple('Range', 'name index')
 
-    def __init__(self, supported_ranges, all_ranges, inverse_ranges='AUTO'):
-        # create inverse dict to compare with supported_ranges
-        if inverse_ranges == 'AUTO':
-            # index is unique
-            inverse = {}
-            for k, v in all_ranges.items():
-                if isinstance(v, tuple):
-                    for v2 in v:
-                        inverse[v2] = k
-                else:
-                    inverse[v] = k
-        else:
-            # multiple possible names for the same index, given as
-            # inverse_ranges; first entry is main name
-            # {11:('1 nA limited auto ranging', '1 nA')}
-            inverse = inverse_ranges
+    def __init__(self, supported_ranges, ranges, fixed_ranges=False):
+        if fixed_ranges:
+            # add negative indizes for measurement ranges (fixed ranging)
+            supported_ranges += [-i for i in supported_ranges]
+            # remove duplicates (0)
+            supported_ranges = list(dict.fromkeys(supported_ranges))
+
+        # create dictionary {Index: Range Name}
+        # distinguish between limited and fixed ranging
+        # omitting 'limited auto ranging'/'range fixed'
+        # defaults to 'limited auto ranging'
+        inverse_ranges = {0: 'Auto Ranging'}
+        for key, value in ranges.items():
+            if isinstance(value, tuple):
+                for v in value:
+                    inverse_ranges[v] = (key + ' limited auto ranging', key)
+                    inverse_ranges[-v] = (key + ' range fixed')
+            else:
+                inverse_ranges[value] = (key + ' limited auto ranging', key)
+                inverse_ranges[-value] = (key + ' range fixed')
+
         ranges = {}
         indizes = {}
         # only take ranges supported by SMU
         for i in supported_ranges:
-            name = inverse[i]
+            name = inverse_ranges[i]
             # check if multiple names exist for index i
             if isinstance(name, tuple):
                 ranges[i] = name[0]  # first entry is main name (unique) and
@@ -1452,6 +1457,14 @@ class SMUVoltageRanging():
     """ Provides Range Name/Index transformation for voltage
     measurement/sourcing.
     Validity of ranges is checked against the type of the SMU.
+
+    Omitting the 'limited auto ranging'/'range fixed' specification in
+    the range string for voltage measurement defaults to
+    'limited auto ranging'.
+
+    Full specification: '2 V range fixed' or '2 V limited auto ranging'
+
+    '2 V' defaults to '2 V limited auto ranging'
     """
     def __init__(self, smu_type):
         supported_ranges = {
@@ -1467,48 +1480,26 @@ class SMUVoltageRanging():
                 'UHVU': [0, 103]
                 }
         supported_ranges = supported_ranges[smu_type]
-        output_ranges = {
-            'Auto Ranging': 0,
-            '0.2 V limited auto ranging': 2,
-            '0.5 V limited auto ranging': 5,
-            '2 V limited auto ranging': (11, 20),
-            # '2 V limited auto ranging': 20,  # or 11
-            '5 V limited auto ranging': 50,
-            '20 V limited auto ranging': (12, 200),
-            # '20 V limited auto ranging': 200,  # or 12
-            '40 V limited auto ranging': (13, 400),
-            # '40 V limited auto ranging': 400,  # or 13
-            '100 V limited auto ranging': (14, 1000),
-            # '100 V limited auto ranging': 1000,  # or 14
-            '200 V limited auto ranging': (15, 2000),
-            # '200 V limited auto ranging': 2000,  # or 15
-            '500 V limited auto ranging': 5000,
-            '1500 V limited auto ranging': 15000,
-            '3000 V limited auto ranging': 30000,
-            '10 kV limited auto ranging': 103
-            }
-        meas_ranges = {
-            'Auto Ranging': 0,
+
+        ranges = {
             '0.2 V': 2,
             '0.5 V': 5,
             '2 V': (11, 20),
-            # '2 V': 20,  # or 11
             '5 V': 50,
             '20 V': (12, 200),
-            # '20 V': 200,  # or 12
             '40 V': (13, 400),
-            # '40 V': 400,  # or 13
             '100 V': (14, 1000),
-            # '100 V': 1000,  # or 14
             '200 V': (15, 2000),
-            # '200 V': 2000,  # or 15
             '500 V': 5000,
             '1500 V': 15000,
             '3000 V': 30000,
             '10 kV': 103
             }
-        self.output = Ranging(supported_ranges, output_ranges)
-        self.meas = Ranging(supported_ranges, meas_ranges)
+
+        # set range attributes
+        self.output = Ranging(supported_ranges, ranges)
+        self.meas = Ranging(supported_ranges, ranges,
+                            fixed_ranges=True)
 
 
 class SMUCurrentRanging():
@@ -1539,44 +1530,16 @@ class SMUCurrentRanging():
             'HVMCU': [],
             'UHVU': []
             }
-        supported_output_ranges = supported_output_ranges[smu_type]
-        output_ranges = {
-            'Auto Ranging': 0,
-            '1 pA limited auto ranging': 8,  # for ASU
-            '10 pA limited auto ranging': 9,
-            '100 pA limited auto ranging': 10,
-            '1 nA limited auto ranging': 11,
-            '10 nA limited auto ranging': 12,
-            '100 nA limited auto ranging': 13,
-            '1 uA limited auto ranging': 14,
-            '10 uA limited auto ranging': 15,
-            '100 uA limited auto ranging': 16,
-            '1 mA limited auto ranging': 17,
-            '10 mA limited auto ranging': 18,
-            '100 mA limited auto ranging': 19,
-            '1 A limited auto ranging': 20,
-            '2 A limited auto ranging': 21,
-            '20 A limited auto ranging': 22,
-            '40 A limited auto ranging': 23,
-            '500 A limited auto ranging': 26,
-            '2000 A limited auto ranging': 28
-            }
         supported_meas_ranges = {
-            # in combination with ASU also 8
-            'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            # in combination with ASU also 8,9,10
-            'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-            'MCSMU': [0, 15, 16, 17, 18, 19, 20],
-            'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
-            'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
-            'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
-            'UHCU': [0, 26, 28],
+            **supported_output_ranges,
+            # overwrite output ranges:
             'HVMCU': [0, 19, 21],
             'UHVU': [0, 15, 16, 17, 18, 19]
             }
+        supported_output_ranges = supported_output_ranges[smu_type]
         supported_meas_ranges = supported_meas_ranges[smu_type]
-        meas_ranges = {
+
+        ranges = {
             '1 pA': 8,  # for ASU
             '10 pA': 9,
             '100 pA': 10,
@@ -1596,22 +1559,11 @@ class SMUCurrentRanging():
             '500 A': 26,
             '2000 A': 28
             }
-        # distinguish between limited and fixed ranging
-        meas_ranges2 = {'Auto Ranging': 0}
-        for key, value in meas_ranges.items():
-            meas_ranges2[key + ' range fixed'] = -value
-            meas_ranges2[key + ' limited auto ranging'] = value
-        inverse_ranges = {0: 'Auto Ranging'}
-        for key, value in meas_ranges.items():
-            # omitting the 'limited auto ranging'/'range fixed'
-            # defaults to 'limited auto ranging'
-            inverse_ranges[value] = (key + ' limited auto ranging', key)
-            inverse_ranges[-value] = (key + ' range fixed')
-        meas_ranges['Auto Ranging'] = 0
-        self.output = Ranging(supported_output_ranges, output_ranges)
-        self.meas = Ranging(
-            supported_meas_ranges, meas_ranges2,
-            inverse_ranges=inverse_ranges)
+
+        # set range attributes
+        self.output = Ranging(supported_output_ranges, ranges)
+        self.meas = Ranging(supported_meas_ranges, ranges,
+                            fixed_ranges=True)
 
 
 class CustomIntEnum(IntEnum):

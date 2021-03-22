@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -339,9 +339,10 @@ class FakeInstrument(Instrument):
 
         # Regex search to find first format specifier in the command
         fmt_spec_pattern = r'(%[\w.#-+ *]*[diouxXeEfFgGcrsa%])'
-        match = re.search(fmt_spec_pattern, set_command)
+        match = re.findall(fmt_spec_pattern, set_command)
         if match:
-            format_specifier = match.group(0)
+            # format_specifier = match.group(0)
+            format_specifier = ','.join(match)
         else:
             format_specifier = ''
         # To preserve as much functionality as possible, call the real
