@@ -662,7 +662,7 @@ class TemptronicBase(Instrument):
         map_values=True
         )
 
-    def __init__(self, adapter, delay=0.02, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "Temptronic ATS-525 Thermostream", **kwargs)
 
     def reset(self):
