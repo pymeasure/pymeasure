@@ -286,7 +286,7 @@ class DSP7265(Instrument):
 
     curve_buffer_interval = Instrument.control(
         "LEN", "LEN %d",
-        """  An integer property that controls Sets the time interval between
+        """ An integer property that controls Sets the time interval between
         successive points being acquired in the curve buffer. The time interval
         is specified in ms with a resolution of 5 ms; input values are rounded
         up to a multiple of 5. Valid values are values between 0 and 1,000,000,000
@@ -301,25 +301,41 @@ class DSP7265(Instrument):
     )
 
     def init_curve_buffer(self):
-        """Initializes the curve storage memory and status variables. All record
+        """ Initializes the curve storage memory and status variables. All record
         of previously taken curves is removed.
         """
         self.write("NC")
 
-    def set_buffer(self, points, quantities=['x'], interval=10.0e-3):
-        num = 0
-        for q in quantities:
-            num += 2**self.CURVE_BITS[q]
+    def set_buffer(self, points, quantities=None, interval=10.0e-3):
+        """ Method that prepares the curve buffer for a measurement.
 
-        self.curve_buffer_bits = num
+        :param int points:
+            Number of points to be recorded in the curve buffer
+
+        :param list quantities:
+            List containing the quantities (strings) that are to be
+            recorded in the curve buffer
+
+        :param float interval:
+            The interval between two subsequent points stored in the
+            curve buffer in ms
+        """
+        if quantities is None:
+            quantities = ["X", "Y"]
+
+        bits = 0
+        for q in quantities:
+            bits += 2**self.CURVE_BITS[q]
+
+        self.curve_buffer_bits = bits
         self.curve_buffer_length = points
 
-        # interval in increments of 5ms
-        self.curve_buffer_interval = int(float(interval)/5.0e-3)
+        # TODO: check if this results in the correct interval length
+        self.curve_buffer_interval = int(interval / 1e-3)
         self.init_curve_buffer()
 
     def start_buffer(self):
-        """Initiates data acquisition. Acquisition starts at the current position
+        """ Initiates data acquisition. Acquisition starts at the current position
         in the curve buffer and continues at the rate set by the STR command until
         the buffer is full.
         """
