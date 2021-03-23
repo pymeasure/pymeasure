@@ -296,6 +296,21 @@ class DSP7265(Instrument):
         cast=int,
     )
 
+    curve_buffer_status = Instrument.measurement(
+        "M",
+        """ A property that represents the status of the curve buffer acquisition
+        with four values:
+        the first value represents the status with 5 possibilities (0: no activity, 
+        1: acquisition via TD command running, 2: acquisition bya TDC command running,
+        5: acquisition via TD command halted, 6: acquisition bia TDC command halted);
+        the second value is the number of sweeps that is acquired;
+        the third value is the decimal representation of the status byte (the same
+        response as the ST command;
+        the fourth value is the number of points acquired in the curve buffer. 
+        """,
+        cast=int,
+    )
+
     def init_curve_buffer(self):
         """ Initializes the curve storage memory and status variables. All record
         of previously taken curves is removed.
@@ -341,7 +356,7 @@ class DSP7265(Instrument):
         count = 0
         maxCount = int(timeout/0.05)
         failed = False
-        while int(self.values("M")) != 0:
+        while self.curve_buffer_status[0] != 0:
             # Sleeping
             sleep(0.05)
             if count > maxCount:
