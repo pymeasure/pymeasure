@@ -265,6 +265,7 @@ class DSP7265(Instrument):
         2,097,151 in dual reference mode). """,
         values=[1, 2097151],
         validator=truncated_range,
+        cast=int,
     )
 
     curve_buffer_length = Instrument.control(
@@ -275,6 +276,7 @@ class DSP7265(Instrument):
         as set via the curve_buffer_bits property (32,768 / n) """,
         values=[1, 32768],
         validator=truncated_range,
+        cast=int,
     )
 
     curve_buffer_interval = Instrument.control(
@@ -291,6 +293,7 @@ class DSP7265(Instrument):
         """,
         values=[1, 1000000000],
         validator=truncated_range,
+        cast=int,
     )
 
     def init_curve_buffer(self):
