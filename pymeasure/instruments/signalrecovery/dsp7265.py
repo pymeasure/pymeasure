@@ -199,18 +199,11 @@ class DSP7265(Instrument):
             resourceName,
             "Signal Recovery DSP 7265",
             includeSCPI=False,
+            # Remove extra unicode character
+            # TODO: (find a way to) test if the line underneath indeed correctly replaces the reimplemented values method
+            preprocess_reply=lambda r: r.replace('\x00', ''),
             **kwargs
         )
-
-    def values(self, command):
-        """ Rewrite the method because of extra character in return string."""
-        result = self.ask(command).strip()
-        result = result.replace('\x00','') # Remove extra unicode character
-        try:
-            return [float(x) for x in result.split(",")]
-        except:
-            return result
-
 
     def set_voltage_mode(self):
         self.write("IMODE 0")
