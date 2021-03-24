@@ -235,6 +235,7 @@ class Agilent33220A(Instrument):
         set. """,
         validator=strict_discrete_set,
         values=range(1, 50001),
+        cast=lambda v: int(float(v))
     )
 
     def trigger(self):
