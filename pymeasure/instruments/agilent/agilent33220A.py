@@ -320,7 +320,7 @@ class Agilent33220A(Instrument):
             err = self.values("SYST:ERR?")
             if int(err[0]) != 0:
                 errmsg = "Agilent 33220A: %s: %s" % (err[0], err[1])
-                log.error(errmsg + '\n')
+                log.error(errmsg)
                 errors.append(errmsg)
             else:
                 break
