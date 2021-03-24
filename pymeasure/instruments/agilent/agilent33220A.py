@@ -55,8 +55,8 @@ class Agilent33220A(Instrument):
         wfg.amplitude = 1               # Set amplitude of 1 V
         wfg.offset = 0                  # Set the amplitude to 0 V
 
-        wfg.burst = True                # Enable burst mode
-        wfg.burst_ncycles = 10e3        # A burst will consist of 10 cycles
+        wfg.burst_state = True          # Enable burst mode
+        wfg.burst_ncycles = 10          # A burst will consist of 10 cycles
         wfg.burst_mode = "TRIGGERED"    # A burst will be applied on a trigger
         wfg.trigger_source = "BUS"      # A burst will be triggered on TRG*
 
@@ -65,7 +65,7 @@ class Agilent33220A(Instrument):
         wfg.wait_for_trigger()          # Wait until the triggering is finished
         wfg.beep()                      # "beep"
 
-        wfg.check_errors()              # Get the error queue
+        print(wfg.check_errors())       # Get the error queue
 
     """
 
