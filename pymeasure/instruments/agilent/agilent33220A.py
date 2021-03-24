@@ -80,9 +80,11 @@ class Agilent33220A(Instrument):
         "FUNC?", "FUNC %s",
         """ A string property that controls the output waveform. Can be set to:
         SIN<USOID>, SQU<ARE>, RAMP, PULS<E>, NOIS<E>, DC, USER. """,
-        validator=string_validator,
-        values=["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
-                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
+                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"],],
     )
 
     frequency = Instrument.control(
@@ -106,8 +108,10 @@ class Agilent33220A(Instrument):
         "VOLT:UNIT?", "VOLT:UNIT %s",
         """ A string property that controls the units of the amplitude. Valid
         values are Vpp (default), Vrms, and dBm. Can be set. """,
-        validator=string_validator,
-        values=["VPP", "VRMS", "DBM"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["VPP", "VRMS", "DBM"],],
     )
 
     offset = Instrument.control(
@@ -170,8 +174,10 @@ class Agilent33220A(Instrument):
         """ A string property that controls if either the pulse width or the
         duty cycle is retained when changing the period or frequency of the
         waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
-        validator=string_validator,
-        values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["WIDT", "WIDTH", "DCYC", "DCYCLE"],],
     )
 
     pulse_width = Instrument.control(
@@ -224,8 +230,10 @@ class Agilent33220A(Instrument):
         "BURS:MODE?", "BURS:MODE %s",
         """ A string property that controls the burst mode. Valid values
         are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
-        validator=string_validator,
-        values=["TRIG", "TRIGGERED", "GAT", "GATED"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["TRIG", "TRIGGERED", "GAT", "GATED"],],
     )
 
     burst_ncycles = Instrument.control(
@@ -278,8 +286,10 @@ class Agilent33220A(Instrument):
         """ A string property that controls the trigger source. Valid values
         are: IMM<EDIATE> (internal), EXT<ERNAL> (rear input), BUS (via trigger
         command). This setting can be set. """,
-        validator=string_validator,
-        values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],],
     )
 
     trigger_state = Instrument.control(
@@ -296,8 +306,10 @@ class Agilent33220A(Instrument):
         """ A string property that controls the remote/local state of the
         function generator. Valid values are: LOC<AL>, REM<OTE>, RWL<OCK>.
         This setting can only be set. """,
-        validator=string_validator,
-        values=["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],],
     )
 
     def check_errors(self):
