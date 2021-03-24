@@ -332,7 +332,7 @@ class DSP7265(Instrument):
             curve buffer in ms
         """
         if quantities is None:
-            quantities = ["X", "Y"]
+            quantities = ["x", "y"]
 
         bits = 0
         for q in quantities:
