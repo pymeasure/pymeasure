@@ -280,7 +280,7 @@ class DSP7265(Instrument):
     )
 
     curve_buffer_interval = Instrument.control(
-        "LEN", "LEN %d",
+        "STR", "STR %d",
         """ An integer property that controls Sets the time interval between
         successive points being acquired in the curve buffer. The time interval
         is specified in ms with a resolution of 5 ms; input values are rounded
