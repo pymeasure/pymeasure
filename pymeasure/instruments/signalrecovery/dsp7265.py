@@ -79,6 +79,7 @@ class DSP7265(Instrument):
             'phase2': 19,
             'sense2': 20
         }
+    CURVE_BITS_INV = {v: k for k, v in CURVE_BITS.items()}
 
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -352,7 +353,7 @@ class DSP7265(Instrument):
         """
         self.write("TD")
 
-    def wait_for_buffer(self, delay=0.1, timeout=None):
+    def wait_for_buffer(self, timeout=None, delay=0.1):
         """ Method that waits until the curve buffer is filled
         """
         start = time()
@@ -361,29 +362,58 @@ class DSP7265(Instrument):
             if timeout is not None and time() < start + timeout:
                 break
 
-    def get_buffer(self, quantity='x', timeout=1.00, average=False):
-        count = 0
-        maxCount = int(timeout/0.05)
-        failed = False
-        while self.curve_buffer_status[0] != 0:
-            # Sleeping
-            sleep(0.05)
-            if count > maxCount:
-                # Count reached max value, wait longer before asking!
-                failed = True
-                break
-        if not failed:
-            data = []
-            # Getting data
-            for i in range(self.length):
-                val = self.values("DC. %d" % self.curve_bits[quantity])
-                data.append(val)
-            if average:
-                return np.mean(data)
+    def get_buffer(self, quantity=None, timeout=None, wait_for_buffer=True):
+        """
+        TODO: docstring
+        TODO: fix three times same exception
+        """
+        # Check if buffer is finished
+        if self.curve_buffer_status[0] != 0:
+            if wait_for_buffer:
+                self.wait_for_buffer(timeout)
             else:
-                return data
-        else:
-            return [0.0]
+                raise ValueError("Buffer acquisition is not yet finished.")
+
+        # Check which quantities are recorded in the buffer
+        bits = format(self.curve_buffer_bits, '021b')[::-1]
+        quantity_enums = [e for e, b in enumerate(bits) if b == "1"]
+        quantity_names = [self.CURVE_BITS_INV[q] for q in quantity_enums]
+
+        # Check if the provided quantity (if any) is indeed recorded
+        if quantity is not None:
+            if self.CURVE_BITS[quantity] in quantity_enums:
+                quantity_enums = [self.CURVE_BITS[quantity]]
+                quantity_names = [quantity]
+            else:
+                raise ValueError("The selected quantity '%s' is not recorded;"
+                                 "quantity should be one of: %s" % (
+                                    quantity, ", ".join(quantity_names)))
+
+        # Retrieve the data
+        data = {}
+        for name, enum in zip(quantity_names, quantity_enums):
+            self.write("DC %d" % enum)
+            q_data = []
+
+            while True:
+                stb = format(self.adapter.connection.read_stb(), '08b')[::-1]
+
+                if bool(int(stb[2])):
+                    raise ValueError("Status byte reports command parameter error.")
+
+                if bool(int(stb[0])):
+                    break
+
+                if bool(int(stb[7])):
+                    q_data.append(int(self.read().strip()))
+
+            data[name] = q_data
+
+        if quantity is not None:
+            data = data[quantity]
+
+        return data
+
 
     def shutdown(self):
         log.info("Shutting down %s." % self.name)
