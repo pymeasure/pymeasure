@@ -29,7 +29,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, modular_range, modular_range_bidirectional, strict_discrete_set
 
-from time import sleep
+from time import sleep, time
 import numpy as np
 
 
@@ -351,6 +351,15 @@ class DSP7265(Instrument):
         the buffer is full.
         """
         self.write("TD")
+
+    def wait_for_buffer(self, delay=0.1, timeout=None):
+        """ Method that waits until the curve buffer is filled
+        """
+        start = time()
+        while self.curve_buffer_status[0] == 1:
+            sleep(delay)
+            if timeout is not None and time() < start + timeout:
+                break
 
     def get_buffer(self, quantity='x', timeout=1.00, average=False):
         count = 0
