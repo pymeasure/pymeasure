@@ -123,7 +123,7 @@ class DSP7265(Instrument):
     y = Instrument.measurement("Y.",
         """ Reads the Y value in Volts """
     )
-    xy = Instrument.measurement("X.Y.",
+    xy = Instrument.measurement("XY.",
         """ Reads both the X and Y values in Volts """
     )
     mag = Instrument.measurement("MAG.",
