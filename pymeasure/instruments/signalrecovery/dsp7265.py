@@ -110,7 +110,7 @@ class DSP7265(Instrument):
         validator=truncated_discrete_set,
         values=list(range(65535))
     )
-    phase = Instrument.control(
+    reference_phase = Instrument.control(
         "REFP.", "REFP. %g",
         """ A floating point property that represents the reference
         harmonic phase in degrees. This property can be set. """,
@@ -128,6 +128,9 @@ class DSP7265(Instrument):
     )
     mag = Instrument.measurement("MAG.",
         """ Reads the magnitude in Volts """
+    )
+    phase = Instrument.measurement("PHA.",
+        """ Reads the phase in degrees """
     )
     adc1 = Instrument.measurement("ADC. 1",
         """ Reads the input value of ADC1 in Volts """
