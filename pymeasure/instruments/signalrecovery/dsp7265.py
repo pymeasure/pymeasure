@@ -412,6 +412,86 @@ class DSP7265(Instrument):
 
         return data
 
+    def buffer_to_float(self, buffer_data, sensitivity=None, sensitivity2=None, raise_error=True):
+        """
+        Method that converts the fixed-point buffer data to floating point data.
+        The provided data is converted as much as possible, but there are some
+        requirements to the data if all provided columns are to be converted.
+        TODO: docstring
+
+        """
+        data = {}
+
+        # Sensitivity
+        if "sensitivity" in buffer_data:
+            data["sensitivity"] = np.array(
+                [self.SENSITIVITIES[v] for v in buffer_data["sensitivity"]]
+            )
+
+        # X, Y, magnitude, and noise data
+        if any(["x" in buffer_data,
+                "y" in buffer_data,
+                "magnitude" in buffer_data,
+                "noise" in buffer_data, ]):
+            # Requires a sensitivity
+            if sensitivity is not None:
+                pass
+            elif "sensitivity" in data:
+                sensitivity = data["sensitivity"]
+            elif raise_error:
+                raise ValueError("X, Y, magnitude and noise cannot be converted as no "
+                                 "sensitivity is provided, neither as argument or as "
+                                 "part of the buffer_data. ")
+
+            if sensitivity is not None:
+                for key in ["x", "y", "magnitude", "noise"]:
+                    data[key] = buffer_data[key] * sensitivity / 10000
+
+        # phase data for both single and dual modes
+        for key in ["phase", "phase2"]:
+            if key in buffer_data:
+                data[key] = buffer_data[key] / 100
+
+        # frequency data from frequency part 1 and 2
+        if "frequency part 1" in buffer_data or "frequency part 2" in buffer_data:
+            if "frequency part 1" in buffer_data and "frequency part 2" in buffer_data:
+                data["frequency"] = np.array([
+                    int(format(v2, "016b") + format(v1, "016b"), 2) / 1000 for
+                    v1, v2 in zip(buffer_data["frequency part 1"], buffer_data["frequency part 2"])
+                ])
+            elif raise_error:
+                raise ValueError("Cannot calculate the frequency when not both"
+                                 "frequency part 1 and 2 are provided.")
+
+        # adc1, adc2, dac1, dac2
+        for key in ["adc1", "adc2", "dac1", "dac2"]:
+            data[key] = buffer_data[key] / 1000
+
+        # TODO: implement adc3
+        # TODO: implement ratio
+        # TODO: implement log ratio
+        # TODO: implement event
+
+        # X, Y, magnitude, and noise data for both dual modes
+        if any(["x2" in buffer_data,
+                "y2" in buffer_data,
+                "magnitude2" in buffer_data,
+                "noise2" in buffer_data,]):
+            # Requires a sensitivity
+            if sensitivity2 is not None:
+                pass
+            elif "sensitivity2" in data:
+                sensitivity2 = data["sensitivity2"]
+            elif raise_error:
+                raise ValueError("X2, Y2, magnitude2 and noise2 cannot be converted as no "
+                                 "sensitivity2 is provided, neither as argument or as "
+                                 "part of the buffer_data. ")
+
+            if sensitivity2 is not None:
+                for key in ["x2", "y2", "magnitude2", "noise2"]:
+                    data[key] = buffer_data[key] * sensitivity2 / 10000
+
+        return data
 
     def shutdown(self):
         log.info("Shutting down %s." % self.name)
