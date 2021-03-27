@@ -386,7 +386,7 @@ class DSP7265(Instrument):
                 if bool(int(stb[7])):
                     q_data.append(int(self.read().strip()))
 
-            data[self.CURVE_BITS[enum]] = q_data
+            data[self.CURVE_BITS[enum]] = np.array(q_data)
 
         if quantity is not None:
             data = data[quantity]
