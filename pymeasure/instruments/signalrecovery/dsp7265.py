@@ -54,11 +54,11 @@ class DSP7265(Instrument):
         ]
     REFERENCES = ['internal', 'external rear', 'external front']
 
-    CURVE_BITS = ['x', 'y', 'mag', 'phase', 'sens', 'ADC1', 'ADC2',
-                  'ADC3', 'DAC1', 'DAC2', 'noise', 'ratio', 'log ratio',
-                  'EVENT', 'frequency', 'frequency2',
+    CURVE_BITS = ['x', 'y', 'magnitude', 'phase', 'sensitivity', 'ADC1',
+                  'ADC2', 'ADC3', 'DAC1', 'DAC2', 'noise', 'ratio', 'log ratio',
+                  'EVENT', 'frequency_bytes1', 'frequency_bytes2',
                   # Dual modes
-                  'x2', 'y2', 'mag2', 'phase2', 'sense2']
+                  'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2']
 
     voltage = Instrument.control(
         "OA.", "OA. %g",
