@@ -54,32 +54,11 @@ class DSP7265(Instrument):
         ]
     REFERENCES = ['internal', 'external rear', 'external front']
 
-    CURVE_BITS = {
-            'x': 0,
-            'y': 1,
-            'mag': 2,
-            'phase': 3,
-            'sens': 4,
-            'ADC1': 5,
-            'ADC2': 6,
-            'ADC3': 7,
-            'DAC1': 8,
-            'DAC2': 9,
-            'noise': 10,
-            'ratio': 11,
-            'log ratio': 12,
-            'EVENT': 13,
-            'frequency': 14,
-            'frequency2': 15,
-
-            # Dual modes
-            'x2': 16,
-            'y2': 17,
-            'mag2': 18,
-            'phase2': 19,
-            'sense2': 20
-        }
-    CURVE_BITS_INV = {v: k for k, v in CURVE_BITS.items()}
+    CURVE_BITS = ['x', 'y', 'mag', 'phase', 'sens', 'ADC1', 'ADC2',
+                  'ADC3', 'DAC1', 'DAC2', 'noise', 'ratio', 'log ratio',
+                  'EVENT', 'frequency', 'frequency2',
+                  # Dual modes
+                  'x2', 'y2', 'mag2', 'phase2', 'sense2']
 
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -337,7 +316,7 @@ class DSP7265(Instrument):
 
         bits = 0
         for q in quantities:
-            bits += 2**self.CURVE_BITS[q]
+            bits += 2**self.CURVE_BITS.index(q)
 
         self.curve_buffer_bits = bits
         self.curve_buffer_length = points
@@ -377,21 +356,21 @@ class DSP7265(Instrument):
         # Check which quantities are recorded in the buffer
         bits = format(self.curve_buffer_bits, '021b')[::-1]
         quantity_enums = [e for e, b in enumerate(bits) if b == "1"]
-        quantity_names = [self.CURVE_BITS_INV[q] for q in quantity_enums]
 
         # Check if the provided quantity (if any) is indeed recorded
         if quantity is not None:
-            if self.CURVE_BITS[quantity] in quantity_enums:
-                quantity_enums = [self.CURVE_BITS[quantity]]
-                quantity_names = [quantity]
+            if self.CURVE_BITS.index(quantity) in quantity_enums:
+                quantity_enums = [self.CURVE_BITS.index(quantity)]
             else:
                 raise ValueError("The selected quantity '%s' is not recorded;"
                                  "quantity should be one of: %s" % (
-                                    quantity, ", ".join(quantity_names)))
+                                    quantity, ", ".join(
+                                        [self.CURVE_BITS[q] for q in quantity_enums]
+                                    )))
 
         # Retrieve the data
         data = {}
-        for name, enum in zip(quantity_names, quantity_enums):
+        for enum in quantity_enums:
             self.write("DC %d" % enum)
             q_data = []
 
@@ -407,7 +386,7 @@ class DSP7265(Instrument):
                 if bool(int(stb[7])):
                     q_data.append(int(self.read().strip()))
 
-            data[name] = q_data
+            data[self.CURVE_BITS[enum]] = q_data
 
         if quantity is not None:
             data = data[quantity]
