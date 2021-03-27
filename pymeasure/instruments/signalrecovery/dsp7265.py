@@ -54,9 +54,9 @@ class DSP7265(Instrument):
         ]
     REFERENCES = ['internal', 'external rear', 'external front']
 
-    CURVE_BITS = ['x', 'y', 'magnitude', 'phase', 'sensitivity', 'ADC1',
-                  'ADC2', 'ADC3', 'DAC1', 'DAC2', 'noise', 'ratio', 'log ratio',
-                  'EVENT', 'frequency_bytes1', 'frequency_bytes2',
+    CURVE_BITS = ['x', 'y', 'magnitude', 'phase', 'sensitivity', 'adc1',
+                  'adc2', 'adc3', 'dac1', 'dac2', 'noise', 'ratio', 'log ratio',
+                  'event', 'frequency part 1', 'frequency part 2',
                   # Dual modes
                   'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2']
 
@@ -308,14 +308,30 @@ class DSP7265(Instrument):
 
         :param list quantities:
             List containing the quantities (strings) that are to be
-            recorded in the curve buffer
+            recorded in the curve buffer, can be any of:
+            'x', 'y', 'magnitude', 'phase', 'sensitivity', 'adc1',
+            'adc2', 'adc3', 'dac1', 'dac2', 'noise', 'ratio', 'log ratio',
+            'event', 'frequency' (or 'frequency part 1' and 'frequency part 2');
+            for both dual modes, additional options are:
+            'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2'.
+            Default is 'x' and 'y'.
 
         :param float interval:
             The interval between two subsequent points stored in the
-            curve buffer in ms
+            curve buffer in s. Default is 10 ms.
         """
         if quantities is None:
             quantities = ["x", "y"]
+
+        if "frequency" in quantities:
+            quantities.remove("frequency")
+            quantities.extend([
+                "frequency part 1",
+                "frequency part 2"
+            ])
+
+        # remove all possible duplicates
+        quantities = list(set([q.lower() for q in quantities]))
 
         bits = 0
         for q in quantities:
@@ -325,7 +341,7 @@ class DSP7265(Instrument):
         self.curve_buffer_length = points
 
         # TODO: check if this results in the correct interval length
-        self.curve_buffer_interval = int(interval / 1e-3)
+        self.curve_buffer_interval = int(interval * 1000)
         self.init_curve_buffer()
 
     def start_buffer(self):
