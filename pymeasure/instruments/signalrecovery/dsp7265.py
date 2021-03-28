@@ -27,7 +27,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, modular_range, modular_range_bidirectional, strict_discrete_set
+from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, \
+    modular_range_bidirectional, strict_discrete_set
 
 from time import sleep, time
 import numpy as np
