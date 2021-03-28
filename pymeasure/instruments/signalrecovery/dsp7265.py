@@ -531,7 +531,9 @@ class DSP7265(Instrument):
             data[key] = buffer_data[key] / 1000
 
         # TODO: implement adc3
-        # TODO: implement event
+
+        # event does not require a conversion
+        data['event'] = buffer_data['event']
 
         # X, Y, magnitude, and noise data for both dual modes
         if any(["x2" in buffer_data,
