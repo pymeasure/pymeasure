@@ -208,13 +208,13 @@ class DSP7265(Instrument):
     @property
     def adc3(self):
         # 50,000 for 1V signal over 1 s
-        integral = self.values("ADC 3")
-        return float(integral)/(50000.0*self.adc3_time)
+        integral = self.values("ADC 3")[0]
+        return integral/(50000.0*self.adc3_time)
 
     @property
     def adc3_time(self):
         # Returns time in seconds
-        return self.values("ADC3TIME")/1000.0
+        return self.values("ADC3TIME")[0]/1000.0
 
     @adc3_time.setter
     def adc3_time(self, value):
@@ -530,7 +530,9 @@ class DSP7265(Instrument):
         for key in ["adc1", "adc2", "dac1", "dac2", "ratio", "log ratio"]:
             data[key] = buffer_data[key] / 1000
 
-        # TODO: implement adc3
+        # adc3 (integrating converter); requires a call to adc3_time
+        if "adc3" in buffer_data:
+            data["adc3"] = buffer_data["adc3"] / (50000 * self.adc3_time)
 
         # event does not require a conversion
         data['event'] = buffer_data['event']
