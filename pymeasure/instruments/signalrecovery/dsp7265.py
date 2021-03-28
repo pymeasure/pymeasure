@@ -54,6 +54,7 @@ class DSP7265(Instrument):
             20.0e3, 50.0e3
         ]
     REFERENCES = ['internal', 'external rear', 'external front']
+    IMODES = ['voltage mode', 'current mode', 'low noise current mode']
 
     CURVE_BITS = ['x', 'y', 'magnitude', 'phase', 'sensitivity', 'adc1',
                   'adc2', 'adc3', 'dac1', 'dac2', 'noise', 'ratio', 'log ratio',
@@ -163,6 +164,14 @@ class DSP7265(Instrument):
         1 V. This property can be set. """,
         validator=truncated_discrete_set,
         values=SENSITIVITIES,
+        map_values=True
+    )
+    imode = Instrument.control(
+        "IMODE", "IMODE %d",
+        """ Property that controls the voltage/current mode. can be
+        'voltage mode', 'current mode', or 'low noise current mode' """,
+        validator=strict_discrete_set,
+        values=IMODES,
         map_values=True
     )
     slope = Instrument.control(
