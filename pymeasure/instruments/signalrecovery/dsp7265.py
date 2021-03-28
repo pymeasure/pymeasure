@@ -360,17 +360,43 @@ class DSP7265(Instrument):
             if timeout is not None and time() < start + timeout:
                 break
 
-    def get_buffer(self, quantity=None, timeout=None, wait_for_buffer=True):
-        """
-        TODO: docstring
-        TODO: fix three times same exception
+    def get_buffer(self, quantity=None, convert_to_float=True, wait_for_buffer=True):
+        """ Method that retrieves the buffer after it has been filled. The data
+        retrieved from the lock-in is in a fixed-point format, which requires
+        translation before it can be interpreted as meaningful data. When
+        `convert_to_float` is True the conversion is performed (if possible)
+        before returning the data.
+
+        :param str quantity:
+            If provided, names the quantity that is to be retrieved from the
+            curve buffer; can be any of:
+            'x', 'y', 'magnitude', 'phase', 'sensitivity', 'adc1', 'adc2',
+            'adc3', 'dac1', 'dac2', 'noise', 'ratio', 'log ratio', 'event',
+            'frequency part 1' and 'frequency part 2';
+            for both dual modes, additional options are:
+            'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2'.
+            If no quantity is provided, all available data is retrieved.
+
+        :param bool convert_to_float:
+            Bool that determines whether to convert the fixed-point buffer-data to
+            meaningful floating point values via the `buffer_to_float` method. If True,
+            this method tries to convert all the available data to meaningful values;
+            if this is not possible, an exception will be raised. If False, this
+            conversion is not performed and the raw buffer-data is returned.
+
+        :param bool wait_for_buffer:
+            Bool that determines whether to wait for the data acquisition to finished
+            if this method is called before the acquisition is finished. If True, the
+            method waits until the buffer is filled before continuing; if False, the
+            method raises an exception if the acquisition is not finished when the
+            method is called.
         """
         # Check if buffer is finished
         if self.curve_buffer_status[0] != 0:
             if wait_for_buffer:
-                self.wait_for_buffer(timeout)
+                self.wait_for_buffer()
             else:
-                raise ValueError("Buffer acquisition is not yet finished.")
+                raise RuntimeError("Buffer acquisition is not yet finished.")
 
         # Check which quantities are recorded in the buffer
         bits = format(self.curve_buffer_bits, '021b')[::-1]
@@ -381,8 +407,8 @@ class DSP7265(Instrument):
             if self.CURVE_BITS.index(quantity) in quantity_enums:
                 quantity_enums = [self.CURVE_BITS.index(quantity)]
             else:
-                raise ValueError("The selected quantity '%s' is not recorded;"
-                                 "quantity should be one of: %s" % (
+                raise KeyError("The selected quantity '%s' is not recorded;"
+                               "quantity should be one of: %s" % (
                                     quantity, ", ".join(
                                         [self.CURVE_BITS[q] for q in quantity_enums]
                                     )))
@@ -406,6 +432,9 @@ class DSP7265(Instrument):
                     q_data.append(int(self.read().strip()))
 
             data[self.CURVE_BITS[enum]] = np.array(q_data)
+
+        if convert_to_float:
+            data = self.buffer_to_float(data)
 
         if quantity is not None:
             data = data[quantity]
