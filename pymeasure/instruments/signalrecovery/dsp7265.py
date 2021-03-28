@@ -537,11 +537,10 @@ class DSP7265(Instrument):
         # event does not require a conversion
         data['event'] = buffer_data['event']
 
-        # X, Y, magnitude, and noise data for both dual modes
+        # X, Y, and magnitude data for both dual modes
         if any(["x2" in buffer_data,
                 "y2" in buffer_data,
-                "magnitude2" in buffer_data,
-                "noise2" in buffer_data, ]):
+                "magnitude2" in buffer_data, ]):
             # Requires a sensitivity
             if sensitivity2 is not None:
                 pass
@@ -553,7 +552,7 @@ class DSP7265(Instrument):
                                  "part of the buffer_data. ")
 
             if sensitivity2 is not None:
-                for key in ["x2", "y2", "magnitude2", "noise2"]:
+                for key in ["x2", "y2", "magnitude2"]:
                     data[key] = buffer_data[key] * sensitivity2 / 10000
 
         return data
