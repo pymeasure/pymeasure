@@ -39,12 +39,13 @@ class DSP7265(Instrument):
     # TODO: add regultors on most of these
 
     SENSITIVITIES = [
-            0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
+            np.nan, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
             200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
             20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
             2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
             200.0e-3, 500.0e-3, 1.0
         ]
+    SEN_MULTIPLIER = [1, 1e-6, 1e-8]
 
     TIME_CONSTANTS = [
             10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
@@ -157,15 +158,35 @@ class DSP7265(Instrument):
         values=REFERENCES,
         map_values=True
     )
-    sensitivity = Instrument.control(
-        "SEN", "SEN %d",
+
+    @property
+    def sensitivity(self):
         """ A floating point property that controls the sensitivity
-        range in Volts, which can take discrete values from 2 nV to
-        1 V. This property can be set. """,
-        validator=truncated_discrete_set,
-        values=SENSITIVITIES,
-        map_values=True
-    )
+        range in Volts (for voltage mode) or Amps (for current modes).
+        When in Volts it takes discrete values from 2 nV to 1 V. When in
+        Amps it takes discrete values from 2 fA to 1 µA (for normal current
+        mode) or up to 10 nA (for low noise current mode).
+        This property can be set; setting requires a call to `imode`. """
+        return self.values("SEN.")[0]
+
+    @sensitivity.setter
+    def sensitivity(self, value):
+        # get the voltage/current mode:
+        imode = self.IMODES.index(self.imode)
+
+        # Scale the sensitivities to the correct range for voltage/current mode
+        sensitivities = [s * self.SEN_MULTIPLIER[imode] for s in self.SENSITIVITIES]
+        if imode == 2:
+            sensitivities[0:7] = [np.nan] * 7
+
+        # Check and map the value
+        value = truncated_discrete_set(value, sensitivities)
+        print(value)
+        value = sensitivities.index(value)
+
+        # Set sensitivity
+        self.write("SEN %d" % value)
+
     imode = Instrument.control(
         "IMODE", "IMODE %d",
         """ Property that controls the voltage/current mode. can be
@@ -499,7 +520,10 @@ class DSP7265(Instrument):
         # Sensitivity (for both single and dual modes)
         for key in ["sensitivity", "sensitivity2"]:
             if key in buffer_data:
-                data[key] = np.array([self.SENSITIVITIES[v] for v in buffer_data[key]])
+                data[key] = np.array([
+                    self.SENSITIVITIES[v % 32] * self.SEN_MULTIPLIER[v // 32]
+                    for v in buffer_data[key]
+                ])
 
         # X, Y, magnitude, and noise data
         if any(["x" in buffer_data,
