@@ -542,7 +542,8 @@ class DSP7265(Instrument):
 
             if sensitivity is not None:
                 for key in ["x", "y", "magnitude", "noise"]:
-                    data[key] = buffer_data[key] * sensitivity / 10000
+                    if key in buffer_data:
+                        data[key] = buffer_data[key] * sensitivity / 10000
 
         # phase data (for both single and dual modes)
         for key in ["phase", "phase2"]:
@@ -562,14 +563,16 @@ class DSP7265(Instrument):
 
         # conversion for, adc1, adc2, dac1, dac2, ratio, and log ratio
         for key in ["adc1", "adc2", "dac1", "dac2", "ratio", "log ratio"]:
-            data[key] = buffer_data[key] / 1000
+            if key in buffer_data:
+                data[key] = buffer_data[key] / 1000
 
         # adc3 (integrating converter); requires a call to adc3_time
         if "adc3" in buffer_data:
             data["adc3"] = buffer_data["adc3"] / (50000 * self.adc3_time)
 
         # event does not require a conversion
-        data['event'] = buffer_data['event']
+        if "event" in buffer_data:
+            data['event'] = buffer_data['event']
 
         # X, Y, and magnitude data for both dual modes
         if any(["x2" in buffer_data,
@@ -587,7 +590,8 @@ class DSP7265(Instrument):
 
             if sensitivity2 is not None:
                 for key in ["x2", "y2", "magnitude2"]:
-                    data[key] = buffer_data[key] * sensitivity2 / 10000
+                    if key in buffer_data:
+                        data[key] = buffer_data[key] * sensitivity2 / 10000
 
         return data
 
