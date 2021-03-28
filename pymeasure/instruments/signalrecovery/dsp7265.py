@@ -445,17 +445,45 @@ class DSP7265(Instrument):
         """
         Method that converts the fixed-point buffer data to floating point data.
         The provided data is converted as much as possible, but there are some
-        requirements to the data if all provided columns are to be converted.
-        TODO: docstring
+        requirements to the data if all provided columns are to be converted; if
+        a key in the provided data cannot be converted it will be omitted in the
+        returned data or an exception will be raised, depending on the value of
+        raise_error.
+
+        The requirements for converting the data are as follows:
+        - Converting X, Y, magnitude and noise requires sensitivity data, which
+            can either be part of the provided data or can be provided via the
+            sensitivity argument
+        - The same holds for X2, Y2, magnitude2 and noise2 with sensitivity2.
+        - Converting the frequency requires both 'frequency part 1' and
+            'frequency part 2'.
+
+        :param dict buffer_data:
+            The data to be converted. Must be in the format as returned by the
+            `get_buffer` method: a dict of numpy arrays.
+
+        :param sensitivity:
+            If provided, the sensitivity used to convert X, Y, magnitude and noise.
+            Can be provided as a float or as an array that matches the length elements
+            in the buffer_data. If both a sensitivity is provided and present in the
+            buffer_data, the provided value is used for the conversion, but the
+            sensitivity in the buffer_data is stored in the returned dict.
+
+        :param sensitivity2:
+            Same as the first sensitivity argument, but for X2, Y2, magnitude2 and noise2.
+
+        :param bool raise_error:
+            Boolean that determines whether an exception is raised in case not all keys
+            provided in buffer_data can be converted. If False, the columns that cannot
+            be converted as omitted in the returned dict.
 
         """
         data = {}
 
-        # Sensitivity
-        if "sensitivity" in buffer_data:
-            data["sensitivity"] = np.array(
-                [self.SENSITIVITIES[v] for v in buffer_data["sensitivity"]]
-            )
+        # Sensitivity (for both single and dual modes)
+        for key in ["sensitivity", "sensitivity2"]:
+            if key in buffer_data:
+                data[key] = np.array([self.SENSITIVITIES[v] for v in buffer_data[key]])
 
         # X, Y, magnitude, and noise data
         if any(["x" in buffer_data,
@@ -476,7 +504,7 @@ class DSP7265(Instrument):
                 for key in ["x", "y", "magnitude", "noise"]:
                     data[key] = buffer_data[key] * sensitivity / 10000
 
-        # phase data for both single and dual modes
+        # phase data (for both single and dual modes)
         for key in ["phase", "phase2"]:
             if key in buffer_data:
                 data[key] = buffer_data[key] / 100
@@ -505,7 +533,7 @@ class DSP7265(Instrument):
         if any(["x2" in buffer_data,
                 "y2" in buffer_data,
                 "magnitude2" in buffer_data,
-                "noise2" in buffer_data,]):
+                "noise2" in buffer_data, ]):
             # Requires a sensitivity
             if sensitivity2 is not None:
                 pass
