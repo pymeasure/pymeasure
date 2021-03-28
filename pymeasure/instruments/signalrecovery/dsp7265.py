@@ -141,6 +141,12 @@ class DSP7265(Instrument):
     id = Instrument.measurement("ID",
         """ Reads the instrument identification """
     )
+    ratio = Instrument.measurement("RT.",
+        """ Reads the ratio output, defined as X/ADC1 """
+    )
+    log_ratio = Instrument.measurement("LR.",
+        """ Reads the log ratio output, defined as log(X/ADC1) """
+    )
     reference = Instrument.control(
         "IE", "IE %d",
         """Controls the oscillator reference. Can be "internal",
@@ -520,13 +526,11 @@ class DSP7265(Instrument):
                 raise ValueError("Cannot calculate the frequency when not both"
                                  "frequency part 1 and 2 are provided.")
 
-        # adc1, adc2, dac1, dac2
-        for key in ["adc1", "adc2", "dac1", "dac2"]:
+        # conversion for, adc1, adc2, dac1, dac2, ratio, and log ratio
+        for key in ["adc1", "adc2", "dac1", "dac2", "ratio", "log ratio"]:
             data[key] = buffer_data[key] / 1000
 
         # TODO: implement adc3
-        # TODO: implement ratio
-        # TODO: implement log ratio
         # TODO: implement event
 
         # X, Y, magnitude, and noise data for both dual modes
