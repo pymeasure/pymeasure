@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -230,6 +230,7 @@ class Manager(QtCore.QObject):
     def _clean_up(self):
         self._worker.join()
         del self._worker
+        self._monitor.wait()
         del self._monitor
         self._worker = None
         self._running_experiment = None

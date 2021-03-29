@@ -32,7 +32,8 @@ Serial adapter
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:
+    :private-members: _format_binary_values
 
 ================
 Prologix adapter
@@ -42,7 +43,8 @@ Prologix adapter
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:
+    :private-members: _format_binary_values
 
 ============
 VISA adapter

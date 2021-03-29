@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ import pandas as pd
 import numpy as np
 from pymeasure.experiment.results import Results, CSVFormatter
 from pymeasure.experiment.procedure import Procedure, Parameter
+from pymeasure.experiment import BooleanParameter
 
 # Load the procedure, without it being in a module
 #data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
@@ -113,3 +114,27 @@ class TestResults:
         result.reload() # assert no error
         pd.read_csv(filename, comment="#") # assert no error
         assert (result.parameters['par'].value == np.linspace(1,100,17)).all()
+
+
+def test_parameter_reading():
+    data_path = os.path.join(os.path.dirname(__file__), "data/results_for_testing_parameters.csv")
+    test_string = "/test directory with space/test_filename.csv"
+    iterations = 101
+    delay = 0.0005
+    seed = '54321'
+
+    class DummyProcedure(RandomProcedure):
+        check_false = BooleanParameter('checkbox False')
+        check_true = BooleanParameter('checkbox True')
+        check_dir = Parameter('Directory string')
+
+    results = Results.load(data_path, procedure_class=DummyProcedure)
+
+    # Check if all parameters are correctly read from file
+    assert results.parameters["iterations"].value == iterations
+    assert results.parameters["delay"].value == delay
+    assert results.parameters["seed"].value == seed
+
+    assert results.parameters["check_true"].value == True
+    assert results.parameters["check_false"].value == False
+    assert results.parameters["check_dir"].value == test_string

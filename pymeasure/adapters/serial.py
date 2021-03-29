@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import logging
 
 import serial
 import numpy as np
-
+from pyvisa.util import to_ieee_block, to_hp_block, to_binary_block
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)
@@ -45,15 +45,10 @@ class SerialAdapter(Adapter):
 
     def __init__(self, port, preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
-        if isinstance(port, serial.Serial):
+        if isinstance(port, serial.SerialBase):
             self.connection = port
         else:
             self.connection = serial.Serial(port, **kwargs)
-
-    def __del__(self):
-        """ Ensures the connection is closed upon deletion
-        """
-        self.connection.close()
 
     def write(self, command):
         """ Writes a command to the instrument
@@ -82,6 +77,40 @@ class SerialAdapter(Adapter):
         binary = self.connection.read().decode()
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
+
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt = "ieee"):
+        """Format values in binary format, used internally in :meth:`.write_binary_values`.
+
+        :param values: data to be written to the device.
+        :param datatype: the format string for a single element. See struct module.
+        :param is_big_endian: boolean indicating endianess.
+        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
+        :return: binary string.
+        :rtype: bytes
+        """
+
+        if header_fmt == "ieee":
+            block = to_ieee_block(values, datatype, is_big_endian)
+        elif header_fmt == "hp":
+            block = to_hp_block(values, datatype, is_big_endian)
+        elif header_fmt == "empty":
+            block = to_binary_block(values, b"", datatype, is_big_endian)
+        else:
+            raise ValueError("Unsupported header_fmt: %s" % header_fmt)
+
+        return block
+
+    def write_binary_values(self, command, values, **kwargs):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
+        :returns: number of bytes written
+        """
+
+        block = self._format_binary_values(values, **kwargs)
+        return self.connection.write(command.encode() + block) 
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port

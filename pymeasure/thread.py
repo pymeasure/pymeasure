@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,27 @@
 import logging
 
 from threading import Thread, Event
+from time import time
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class InterruptableEvent(Event):
+    """
+    This subclass solves the problem indicated in bug
+    https://bugs.python.org/issue35935 that prevents the
+    wait of an Event to be interrupted by a KeyboardInterrupt.
+    """
+
+    def wait(self, timeout=None):
+        if timeout is None:
+            while not super().wait(0.1):
+                pass
+        else:
+            timeout_start = time()
+            while not super().wait(0.1) and time() <= timeout_start + timeout:
+                pass
 
 
 class StoppableThread(Thread):
@@ -37,7 +55,7 @@ class StoppableThread(Thread):
 
     def __init__(self):
         super().__init__()
-        self._should_stop = Event()
+        self._should_stop = InterruptableEvent()
         self._should_stop.clear()
 
     def join(self, timeout=0):

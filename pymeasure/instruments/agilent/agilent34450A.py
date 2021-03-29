@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -552,7 +552,7 @@ class Agilent34450A(Instrument):
             one_long_string = conf_values
 
         # Split string in elements
-        list_of_elements = re.split('["\s,]', one_long_string)
+        list_of_elements = re.split(r'["\s,]', one_long_string)
 
         # Eliminate empty string elements
         list_without_empty_elements = list(filter(lambda v: v != '', list_of_elements))
