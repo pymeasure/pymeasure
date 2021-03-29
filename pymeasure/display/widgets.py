@@ -534,9 +534,8 @@ class InputsWidget(QtGui.QWidget):
     def get_placeholders(self):
         placeholders = {}
         parameters = self._procedure.parameter_objects()
-        print(parameters)
+
         for name in parameters:
-            print(name)
             placeholder = parameters[name].placeholder
             if placeholder is not None:
                 placeholders[placeholder] = name

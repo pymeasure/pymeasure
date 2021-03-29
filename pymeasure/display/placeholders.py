@@ -9,9 +9,9 @@ builtin_placeholders = {'time' : lambda: datetime.now().strftime('%Hh%Mm%Ss'),
 
 class PlaceholderReplacer():
     """ Allows to replace sequence of characters in a string with information
-    or experiment values.
+    or parameter values.
 
-    :param inputs: Reference ti the input widget
+    :param inputs: Reference to the input widget
     """
 
     def __init__(self, inputs):
@@ -56,7 +56,7 @@ class PlaceholderReplacer():
                 if callable(placeholder):
                     placeholder = str(placeholder())
 
-                print(f'\tPlaceholder : {placeholder}')
+                print(f'\tValue : {placeholder}')
 
             modified_string = modified_string.replace(match, placeholder)
 
