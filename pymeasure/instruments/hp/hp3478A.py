@@ -113,34 +113,37 @@ class HP3478A(Instrument):
             DESCRIPTION.
 
         """
-        status_read=self.adapter.connection.query_binary_values("B","b",data_points=5)
+        # status_read=self.adapter.connection.query_binary_values("B","b",data_points=5)
+        self.write("B")
+        status_read=self.adapter.connection.read_bytes(5)
         status=[]
         for i in range(0,len(status_read)):
             # print(bin(status_read[i]))
             status.append(status_read[i])
         return status
 
-    # def status_readable(self):
-    #     """
-    #     Delivers a human-readble status based on the status() command
+    def status_readable(self):
+        """
+        Delivers a human-readble status based on the status() command
 
-    #     Returns
-    #     -------
-    #     None.
+        Returns
+        -------
+        None.
 
-    #     """
-    #     status_read=self.status()
-    #     d_select=status_read[0]&3
-    #     r_select=(status_read[0]>>2)&7
-    #     m_select=(status_read[0]>>5)&7
-    #     print(RANGES[m_select][r_select])
-    #     print(DIGITS[d_select])
-    #     print(MODES[m_select])
-    #     #TODO: add decodung on status byte, e.g. AZ on/off, Front/rear selection
-    #     print('General status: ',status_read[1])
-    #     print('srq mask: ',status_read[2])
-    #     print('Error status: ',status_read[3])
-    #     print('DAC value: ',status_read[4])
+        """
+        status_read=self.status()
+        d_act=6-(status_read[0]&3)
+        
+        m_act=list(self.MODES.keys())[((status_read[0]>>5)&7)-1]
+        r_act=list(self.RANGES[m_act].keys())[(((status_read[0]>>2)&7)-1)]
+        #TODO improve the status display 
+        print('The actual range is '+str(r_act)+' '+m_act+' with '+str(d_act)+' 1/2 digits')
+            
+        #TODO: add decodung on status byte, e.g. AZ on/off, Front/rear selection
+        print('General status: ',status_read[1])
+        print('srq mask: ',status_read[2])
+        print('Error status: ',status_read[3])
+        print('DAC value: ',status_read[4])
 
     @property
     def auto_zero(self):
