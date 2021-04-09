@@ -63,8 +63,10 @@ class HP3478A(Instrument):
 
     RANGES={"DCV": {3E-2: "R-2",3E-1: "R-1",3: "R0",30: "R1",300:"R2","auto": "RA"},
             "ACV": {3E-1: "R-1",3: "R0",30: "R1" ,300: "R2","auto": "RA"},
-            "R2W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5", 3E6: "R6", 3E7: "R7","auto": "RA"},
-            "R4W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5", 3E6: "R6", 3E7: "R7","auto": "RA"},
+            "R2W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5", 3E6: "R6",
+                    3E7: "R7","auto": "RA"},
+            "R4W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5", 3E6: "R6",
+                    3E7: "R7","auto": "RA"},
             "DCI": {3E-1: "R-1",3: "R0","auto": "RA"},
             "ACI": {3E-1: "R-1",3: "R0","auto": "RA"},
             "Rext": {3E6: "R7","auto": "RA"}
@@ -117,7 +119,7 @@ class HP3478A(Instrument):
         self.write("B")
         status_read=self.adapter.connection.read_bytes(5)
         status=[]
-        for i in range(0,len(status_read)):
+        for i in range(0,4):
             # print(bin(status_read[i]))
             status.append(status_read[i])
         return status
@@ -133,15 +135,41 @@ class HP3478A(Instrument):
         """
         status_read=self.status()
         d_act=6-(status_read[0]&3)
-        
         m_act=list(self.MODES.keys())[((status_read[0]>>5)&7)-1]
+        if m_act=='DCV':
+            m_str='V'
+        if m_act=='ACV':
+            m_str='V'
+        if m_act=='DCI':
+            m_str='A'
+        if m_act=='ACI':
+            m_str='A'
+        if m_act=='R2W':
+            m_str='Ohm'
+        if m_act=='R4W':
+            m_str='Ohm'
+        if m_act=='Rext':
+            m_str='Ohm'
+
         r_act=list(self.RANGES[m_act].keys())[(((status_read[0]>>2)&7)-1)]
-        #TODO improve the status display 
-        print('The actual range is '+str(r_act)+' '+m_act+' with '+str(d_act)+' 1/2 digits')
-            
-        #TODO: add decodung on status byte, e.g. AZ on/off, Front/rear selection
-        print('General status: ',status_read[1])
-        print('srq mask: ',status_read[2])
+        if r_act <= 1:
+            r_str=str(r_act*1000)+' m'
+        if r_act >=1E6:
+            r_str=str(r_act/1E6)+' M'
+        if r_act >=1000:
+            r_str=str(r_act/1000)+' k'
+        print('----- HP3478 ----- Status -----')
+        print('The current range is '+r_str+m_str+' with '+str(d_act)+' 1/2 digits')
+
+        print('General status: ')
+        print('     Internal trigger: '+str(status_read[1]&1))
+        print('     Autorange: '+str(status_read[1]>>1&1))
+        print('     Auto Zero: '+str(status_read[1]>>2&1))
+        print('     50 Hz opereration: '+str(status_read[1]>>3&1))
+        print('     Front/Rear: '+str(status_read[1]>>4&1))
+        print('     CalibrationRAM en: '+str(status_read[1]>>6&1))
+        print('     External trigger: '+str(status_read[1]>>7&1))
+        print('Srq mask: ',status_read[2])
         print('Error status: ',status_read[3])
         print('DAC value: ',status_read[4])
 
@@ -200,12 +228,33 @@ class HP3478A(Instrument):
         status_read=self.status()
         front_back=status_read[1]>>4&1
         return front_back
+    
+    @property
+    def trigger(self):
+        status_read=self.status()
+        int_trig=status_read[1]&1
+        ext_trig=status_read[1]>>7&1
+        if int_trig==1 and ext_trig==0:
+            trigger_stat='internal'
+        if int_trig==0 and ext_trig==1:
+            trigger_stat='external'
+        if int_trig==0 and ext_trig==0:
+            trigger_stat='hold'
+        return trigger_stat
+    
+    @trigger.setter
+    def trigger(self, trigger_mode):
+        if trigger_mode in self.TRIGGERS.keys():
+            self.write(self.TRIGGERS[trigger_mode])
+        else:
+            print("fix me")
+      
 
 
     def measure(self,mode='DCV',measurement_range='auto',auto_zero="on",digits=5, trigger='auto'):
         """
         returens a measurement result, depeding on the parameters
-        see also the other measure_ functions for the HP3478A.
+        s
 
 
 
@@ -250,7 +299,6 @@ class HP3478A(Instrument):
         measured_value=float(self.ask(measurement_string))
         return measured_value
 
-
     def display_reset(self):
 
 
@@ -274,4 +322,3 @@ class HP3478A(Instrument):
     def shutdown(self):
         self.adapter.connection.clear()
         self.adapter.connection.close()
-
