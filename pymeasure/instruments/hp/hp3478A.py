@@ -27,7 +27,7 @@
 import logging
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+
 
 
 log = logging.getLogger(__name__)
@@ -228,9 +228,18 @@ class HP3478A(Instrument):
         status_read=self.status()
         front_back=status_read[1]>>4&1
         return front_back
-    
+
     @property
     def trigger(self):
+        """
+        Checks the triger settings on the HP3478
+
+        Returns
+        -------
+        trigger_stat : str
+            A string value describing the current status of the trigger
+
+        """
         status_read=self.status()
         int_trig=status_read[1]&1
         ext_trig=status_read[1]>>7&1
@@ -241,14 +250,28 @@ class HP3478A(Instrument):
         if int_trig==0 and ext_trig==0:
             trigger_stat='hold'
         return trigger_stat
-    
+
     @trigger.setter
     def trigger(self, trigger_mode):
+        """
+        Offers the possibility to set the trigger mode
+
+        Parameters
+        ----------
+        trigger_mode : str
+            allowed values are:
+                 auto, internal, external, single, hold or fast
+
+        Returns
+        -------
+        None.
+
+        """
         if trigger_mode in self.TRIGGERS.keys():
             self.write(self.TRIGGERS[trigger_mode])
         else:
             print("fix me")
-      
+
 
 
     def measure(self,mode='DCV',measurement_range='auto',auto_zero="on",digits=5, trigger='auto'):
@@ -314,11 +337,35 @@ class HP3478A(Instrument):
         self.write('D1')
 
     def reset(self):
+        """
+        Initatiates a reset of the HP3478A
+
+        Returns
+        -------
+        None.
+
+        """
         self.adapter.connection.clear()
 
     def close(self):
+        """
+        close the current connection to the HP3478A
+
+        Returns
+        -------
+        None.
+
+        """
         self.adapter.connection.close()
 
     def shutdown(self):
+        """
+        provides a way to gravcefully close the conention to the HP3478A
+
+        Returns
+        -------
+        None.
+
+        """
         self.adapter.connection.clear()
         self.adapter.connection.close()
