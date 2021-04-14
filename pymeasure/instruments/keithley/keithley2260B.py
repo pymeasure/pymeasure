@@ -112,3 +112,8 @@ class Keithley2260B(Instrument):
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2260B error retrieval.")
+
+    def shutdown(self):
+        """ Disable output, call parent function"""
+        self.enabled = False
+        super().shutdown()
