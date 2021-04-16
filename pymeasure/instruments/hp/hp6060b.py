@@ -59,7 +59,7 @@ class HP6060B(Instrument):
 
     current = Instrument.control(
         ":CURR:LEVEL?", ":CURR:LEVEL:IMM %g",
-        """ Current mode regulation target, in Amps. """,
+        """ Current mode regulation target, [0...6] Amps. """,
         validator=validators.strict_range,
         values=[0, 60],
         check_set_errors=True,
@@ -67,7 +67,7 @@ class HP6060B(Instrument):
 
     voltage = Instrument.control(
         ":VOLT:LEVEL?", ":VOLT:LEVEL:IMM %g",
-        """ Voltage mode regulation target, in Volts. """,
+        """ Voltage mode regulation target, [0...60] Volts. """,
         validator=validators.strict_range,
         values=[0, 60],
         check_set_errors=True,
@@ -75,7 +75,7 @@ class HP6060B(Instrument):
 
     resistance = Instrument.control(
         ":RES:LEVEL?", ":RES:LEVEL:IMM %g",
-        """ Resistance mode regulation target, in Ohms. """,
+        """ Resistance mode regulation target, [.033 ... 10000] Ohms. """,
         validator=validators.strict_range,
         values=[1, 10000],
         check_set_errors=True,
