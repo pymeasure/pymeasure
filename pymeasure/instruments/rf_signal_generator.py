@@ -40,10 +40,9 @@ class RFSignalGenerator(Instrument):
     this class should have the same base interface plus optionally device specific extensions.
     The class is not normally intended to be used directly but should be subclassed to implement support for specific instruments.
     For RF signal generators not yet supported, this class can also be used to provide initial basic functions.
-    Of course, in this case, correctness cannot be guaranteed.
+    Of course, in this case, correctness cannot be guaranteed. Some examples are shown below.
 
-    Initialization of the Instrument
-    ====================================
+Instrument intialization example:
 
 .. code-block:: python
 
@@ -55,8 +54,7 @@ class RFSignalGenerator(Instrument):
     # 'Rohde&Schwarz,SMIQ06B,100205/0006,5.80 HX'
 
 
-Generate a tone at 868MHz
-====================================================
+Generate a tone at 868MHz:
 
 .. code-block:: python
    
@@ -170,7 +168,6 @@ An example for data pattern generation
 
     sg.custom_modulation_enable = 1
     sg.rf_enable = 1
-    sg.shutdown()
 
 
 Another example for user data loading
@@ -191,7 +188,6 @@ Another example for user data loading
     sg.rf_enable = 1
     sg.data_trigger_setup()
     sg.data_trigger()
-    sg.shutdown()
 
     """
     
@@ -207,7 +203,7 @@ Another example for user data loading
         'PatternPN9' : None,
         'DATA' : None,
     }
-    """ Define modulation data source, DATA refer to user bit sequences loaded by :meth: data_load and :meth: data_load_repeated """
+    """ Define modulation data source, ``DATA`` refers to user bit sequences loaded by :meth:`data_load` and :meth:`data_load_repeated` """
 
 
     custom_modulation_data  = None
@@ -269,14 +265,21 @@ Another example for user data loading
     def set_fsk_constellation(self, constellation, fdev):
         """ For multi level FSK modulation, allow to define the constellation mapping.
 
-        :param constellation: a dictonary which maps to fdev dividers, eg for an hypothetical 4-FSK:
-        {
-        0: 1, # Symbol 00 -> fdev
-        1: 3, # Symbol 01 -> fdev/3
-        2: -1,# Symbol 10 -> -fdev
-        3: -3,# Symbol 11 -> -fdev/3
-        }
+        :param constellation: a dictonary which maps to fdev dividers, for an hypothetical 4-FSK example see below.
+
         :param fdev: Outer frequency deviation
+
+    ``constellation`` parameter example
+
+    .. code-block:: python
+
+        {
+            0:   1, # Symbol 00 -> fdev
+            1:   3, # Symbol 01 -> fdev/3
+            2:  -1, # Symbol 10 -> -fdev
+            3:  -3, # Symbol 11 -> -fdev/3
+        }
+        
         """
         # Subclasses should implement this
         raise Exception ("Not supported/implemented")
