@@ -128,14 +128,16 @@ class AgilentE4438C(RFSignalGeneratorDM):
         self.data_ramping_workaround = True
 
     def data_load(self, bitsequences, spacings):
-        """ Load data into signal generator for transmission, the parameters are:
+        """ Load data into signal generator for transmission.
+
+        The parameters are:
         :param bitsequences: list of items. Each item is a string of '1' or '0' in transmission order
         :param spacing: list of integer, gap to be inserted between each bitsequence  expressed in number of bit
         """
         data = []
         for bitseq, spacing in zip(bitsequences, spacings):
-            for bit in bitseq:
-                data.append(0x14+int(bit,2))
+            # Add data bits
+            data += [(0x14+int(bit,2)) for bit in bitseq]
             # Add bits with RF off
             data += [0x10]*spacing
         self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"PacketsToTransmit\",", data, datatype='B')
@@ -147,7 +149,6 @@ class AgilentE4438C(RFSignalGeneratorDM):
     def data_trigger_setup(self, mode='SINGLE'):
         """ Configure the trigger system for bitsequence transmission
         """
-        # Subclasses should implement this
         self.write("RADio:CUSTom:TRIG:SOURCE BUS")
         self.write("RADio:CUSTom:TRIG:TYPE %s"%mode)
 
