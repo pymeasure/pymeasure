@@ -488,12 +488,13 @@ class DSP7265(Instrument):
         raise_error.
 
         The requirements for converting the data are as follows:
+        
         - Converting X, Y, magnitude and noise requires sensitivity data, which
-            can either be part of the provided data or can be provided via the
-            sensitivity argument
+          can either be part of the provided data or can be provided via the
+          sensitivity argument
         - The same holds for X2, Y2, magnitude2 and noise2 with sensitivity2.
         - Converting the frequency requires both 'frequency part 1' and
-            'frequency part 2'.
+          'frequency part 2'.
 
         :param dict buffer_data:
             The data to be converted. Must be in the format as returned by the
