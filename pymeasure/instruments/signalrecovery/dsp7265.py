@@ -166,7 +166,7 @@ class DSP7265(Instrument):
         When in Volts it takes discrete values from 2 nV to 1 V. When in
         Amps it takes discrete values from 2 fA to 1 µA (for normal current
         mode) or up to 10 nA (for low noise current mode).
-        This property can be set; setting requires a call to `imode`. """
+        This property can be set. """
         return self.values("SEN.")[0]
 
     @sensitivity.setter
