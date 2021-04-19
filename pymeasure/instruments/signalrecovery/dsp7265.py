@@ -63,6 +63,17 @@ class DSP7265(Instrument):
                   # Dual modes
                   'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2']
 
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "Signal Recovery DSP 7265",
+            includeSCPI=False,
+            # Remove extra unicode character
+            # TODO: (find a way to) test if the line underneath indeed correctly replaces the reimplemented values method
+            preprocess_reply=lambda r: r.replace('\x00', ''),
+            **kwargs
+        )
+
     voltage = Instrument.control(
         "OA.", "OA. %g",
         """ A floating point property that represents the voltage
@@ -213,17 +224,6 @@ class DSP7265(Instrument):
         values=TIME_CONSTANTS,
         map_values=True
     )
-
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-            "Signal Recovery DSP 7265",
-            includeSCPI=False,
-            # Remove extra unicode character
-            # TODO: (find a way to) test if the line underneath indeed correctly replaces the reimplemented values method
-            preprocess_reply=lambda r: r.replace('\x00', ''),
-            **kwargs
-        )
 
     def set_voltage_mode(self):
         self.write("IMODE 0")
