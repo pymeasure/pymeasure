@@ -36,7 +36,6 @@ import numpy as np
 
 class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
-    # TODO: add regultors on most of these
 
     SENSITIVITIES = [
             np.nan, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
@@ -69,7 +68,6 @@ class DSP7265(Instrument):
             "Signal Recovery DSP 7265",
             includeSCPI=False,
             # Remove extra unicode character
-            # TODO: (find a way to) test if the line underneath indeed correctly replaces the reimplemented values method
             preprocess_reply=lambda r: r.replace('\x00', ''),
             **kwargs
         )
@@ -377,7 +375,6 @@ class DSP7265(Instrument):
         self.curve_buffer_bits = bits
         self.curve_buffer_length = points
 
-        # TODO: check if this results in the correct interval length
         self.curve_buffer_interval = int(interval * 1000)
         self.init_curve_buffer()
 
