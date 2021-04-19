@@ -513,7 +513,7 @@ class DSP7265(Instrument):
         :param bool raise_error:
             Boolean that determines whether an exception is raised in case not all keys
             provided in buffer_data can be converted. If False, the columns that cannot
-            be converted as omitted in the returned dict.
+            be converted are omitted in the returned dict.
 
         """
         data = {}
