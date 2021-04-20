@@ -272,9 +272,8 @@ class LakeShore421(Instrument):
 
     relative_setpoint = Instrument.measurement(
         "RELS?", "RELS %g",
-        """ Property that controls the setpoint for the relative field mode
-        in θcurrent units. This takes into account the field multiplier. Returns
-        np.nan if field is out of range. """,
+        """ Property that controls the setpoint for the relative field mode in
+        the current units. This takes into account the field multiplier. """,
         get_process=partialmethod(
             _raw_to_field, multiplier_name="relative_setpoint_multiplier"
         ),
@@ -291,13 +290,83 @@ class LakeShore421(Instrument):
     )
 
     # ALARM MODE
-    """
-    TODO: implement ALARM MODE
-    ALARM(?) Alarm On/Off
-    ALMB(?) Audible Alarm
-    ALMH(?) High Alarm Setpoint
-    ALMHM? High Alarm Setpoint Multiplier
-    ALMIO(?) Alarm Inside/Outside
-    ALML(?) Low Alarm Setpoint
-    ALMLM? Low Alarm Setpoint Multiplier
-    """
+    alarm_mode_enabled = Instrument.control(
+        "ALARM?", "ALARM %d",
+        """ A boolean property that enables or disables the alarm mode. """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
+
+    alarm_audible = Instrument.control(
+        "ALMB?", "ALMB %d",
+        """ A boolean property that enables or disables the audible alarm
+        beeper. """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
+
+    alarm_in_out = Instrument.control(
+        "ALMB?", "ALMB %d",
+        """ A string property that controls whether an active alarm is caused
+        when the field reading is inside ("Inside") or outside ("Outside") of
+        the high and low setpoint values. """,
+        validator=strict_discrete_set,
+        values={"Inside": 1, "Outside": 0},
+        map_values=True
+    )
+
+    alarm_active = Instrument.measurement(
+        "ALMS?",
+        """ A boolean property that returns whether the alarm is triggered. """,
+        values={True: 1, False: 0},
+        map_values=True
+    )
+
+    alarm_sort_enabled = Instrument.control(
+        "ALMSORT?", "ALMSORT %d",
+        """ A boolean property that enables or disables the alarm Sort Pass/Fail
+        function. """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
+
+    alarm_low = Instrument.measurement(
+        "ALML?", "ALML %g",
+        """ Property that controls the lower setpoint for the alarm mode in the
+        current units. This takes into account the field multiplier. """,
+        get_process=partialmethod(
+            _raw_to_field, multiplier_name="alarm_low_multiplier"
+        ),
+        set_process=partialmethod(
+            _field_to_raw, multiplier_name="alarm_low_multiplier"
+        ),
+    )
+
+    alarm_low_multiplier = Instrument.measurement(
+        "ALMLM?",
+        """ Returns the multiplier for the lower alarm setpoint field. """,
+        values=MULTIPLIERS,
+        map_values=True
+    )
+
+    alarm_high = Instrument.measurement(
+        "ALMH?", "ALMH %g",
+        """ Property that controls the upper setpoint for the alarm mode in the
+        current units. This takes into account the field multiplier. """,
+        get_process=partialmethod(
+            _raw_to_field, multiplier_name="alarm_high_multiplier"
+        ),
+        set_process=partialmethod(
+            _field_to_raw, multiplier_name="alarm_high_multiplier"
+        ),
+    )
+
+    alarm_high_multiplier = Instrument.measurement(
+        "ALMHM?",
+        """ Returns the multiplier for the upper alarm setpoint field. """,
+        values=MULTIPLIERS,
+        map_values=True
+    )
