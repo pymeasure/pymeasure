@@ -250,3 +250,16 @@ def test_fakeinstrument_control(set_command, given, expected):
     fake = Fake()
     fake.x = given
     assert fake.x == expected
+
+
+def test_with_statement():
+    """ Test the with-statement-behaviour of the instruments. """
+    with FakeInstrument() as fake:
+        # Check if fake is an instance of FakeInstrument
+        assert isinstance(fake, FakeInstrument)
+
+        # Check whether the shutdown function is already called
+        assert fake.isShutdown == False
+
+    # Check whether the shutdown function is called upon
+    assert fake.isShutdown == True
