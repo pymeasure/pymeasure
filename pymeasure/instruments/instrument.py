@@ -74,6 +74,12 @@ class Instrument(object):
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.shutdown()
+
     @property
     def id(self):
         """ Requests and returns the identification of the instrument. """
