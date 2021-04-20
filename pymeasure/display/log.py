@@ -32,12 +32,16 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LogHandler(QtCore.QObject, Handler):
-    record = QtCore.QSignal(object)
+class LogHandler(Handler):
+    class Emitter(QtCore.QObject):
+        record = QtCore.QSignal(object)
 
-    def __init__(self, parent=None):
-        QtCore.QObject.__init__(self, parent)
-        Handler.__init__(self)
+    def __init__(self):
+        super().__init__()
+        self.emitter = self.Emitter()
+
+    def connect(self, *args, **kwargs):
+        return self.emitter.record.connect(*args, **kwargs)
 
     def emit(self, record):
-        self.record.emit(self.format(record))
+        self.emitter.record.emit(self.format(record))
