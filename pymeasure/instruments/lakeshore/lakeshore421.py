@@ -362,3 +362,9 @@ class LakeShore421(Instrument):
         values=MULTIPLIERS,
         map_values=True
     )
+
+    def shutdown(self):
+        """ Closes the serial connection to the system. """
+        self.adapter.connection.close()
+        super().shutdown()
+
