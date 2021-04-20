@@ -99,14 +99,6 @@ class LakeShore421(Instrument):
         map_values=True
     )
 
-    @property
-    def field(self):
-        """ Returns the field in the current units. This property takes into
-        account the field multiplier. Returns np.nan if field is out of range.
-        TODO: Implement software auto-range.
-        """
-        return self._raw_to_field(self.field_raw, "field_multiplier")
-
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
         """ A string property that controls the units used by the gaussmeter.
