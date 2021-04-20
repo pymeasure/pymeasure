@@ -28,6 +28,7 @@ from pymeasure.instruments.validators import strict_discrete_set, \
 
 from pyvisa import constants as visa_const
 import numpy as np
+from functools import partialmethod
 
 
 class LakeShore421(Instrument):
@@ -67,10 +68,27 @@ class LakeShore421(Instrument):
         self.adapter.connection.set_visa_attribute(
             visa_const.VI_ATTR_ASRL_PARITY, visa_const.VI_ASRL_PAR_ODD)
 
-    field_raw = Instrument.measurement(
+    def _raw_to_field(self, field_raw, multiplier_name):
+        if not field_raw == "OL":
+            multiplier = getattr(self, multiplier_name)
+            field = multiplier * field_raw
+        else:
+            field = np.nan
+
+        return field
+
+    def _field_to_raw(self, field, multiplier_name):
+        multiplier = getattr(self, multiplier_name)
+        return field / multiplier
+
+    field = Instrument.measurement(
         "FIELD?",
-        """ Returns the field in the current units and the current multiplier.
-        """
+        """ Returns the field in the current units. This property takes into
+        account the field multiplier. Returns np.nan if field is out of range.
+        """,
+        get_process=partialmethod(
+            _raw_to_field, multiplier_name="field_multiplier"
+        )
     )
 
     field_multiplier = Instrument.measurement(
@@ -195,10 +213,15 @@ class LakeShore421(Instrument):
         map_values=True
     )
 
-    max_hold_field_raw = Instrument.measurement(
+    max_hold_field = Instrument.measurement(
         "MAXR?",
-        """ Returns the largest field since the last reset in the current units
-        and the current multiplier. """
+        """ Returns the largest field since the last reset in the current units.
+        This property takes into account the field multiplier. Returns np.nan if
+        field is out of range.
+        """,
+        get_process=partialmethod(
+            _raw_to_field, multiplier_name="max_hold_multiplier"
+        )
     )
 
     max_hold_multiplier = Instrument.measurement(
@@ -208,13 +231,6 @@ class LakeShore421(Instrument):
         values=MULTIPLIERS,
         map_values=True
     )
-
-    @property
-    def max_hold_field(self):
-        """ Returns the max hold field in the current units. This property takes
-        into account the multiplier. Returns np.nan if field is out of range.
-        """
-        return self._raw_to_field(self.max_hold_field_raw, "max_hold_multiplier")
 
     def max_hold_reset(self):
         """ Clears the stored Max Hold value. """
@@ -235,6 +251,16 @@ class LakeShore421(Instrument):
         """ Returns the relative field in the current units and the current
         multiplier. """
     )
+    relative_field = Instrument.measurement(
+        "RELR?",
+        """ Returns the relative field in the current units. This property
+        takes into account the field multiplier. Returns np.nan if field is
+        out of range.
+        """,
+        get_process=partialmethod(
+            _raw_to_field, multiplier_name="relative_multiplier"
+        )
+    )
 
     relative_multiplier = Instrument.measurement(
         "RELRM?",
@@ -244,17 +270,17 @@ class LakeShore421(Instrument):
         map_values=True
     )
 
-    @property
-    def relative_field(self):
-        """ Returns the relative field in the current units. This property
-        takes into account the field multiplier. Returns np.nan if field is
-        out of range. """
-        return self._raw_to_field(self.relative_field_raw, "relative_multiplier")
-
-    relative_setpoint_raw = Instrument.measurement(
+    relative_setpoint = Instrument.measurement(
         "RELS?", "RELS %g",
-        """ Returns the relative setpoint in the current units and the current
-        multiplier. """,
+        """ Property that controls the setpoint for the relative field mode
+        in θcurrent units. This takes into account the field multiplier. Returns
+        np.nan if field is out of range. """,
+        get_process=partialmethod(
+            _raw_to_field, multiplier_name="relative_setpoint_multiplier"
+        ),
+        set_process=partialmethod(
+            _field_to_raw, multiplier_name="relative_setpoint_multiplier"
+        ),
     )
 
     relative_setpoint_multiplier = Instrument.measurement(
@@ -263,18 +289,6 @@ class LakeShore421(Instrument):
         values=MULTIPLIERS,
         map_values=True
     )
-
-    @property
-    def relative_setpoint(self):
-        """ Returns or sets the setpoint for the relative field mode in the
-        current units. This takes into account the field multiplier. Returns
-        np.nan if field is out of range. """
-        return self._raw_to_field(self.relative_setpoint_raw,
-                                  "relative_setpoint_multiplier")
-
-    @relative_setpoint.setter
-    def relative_setpoint(self, setpoint):
-        self.relative_setpoint_raw = setpoint / self.relative_setpoint_multiplier
 
     # ALARM MODE
     """
@@ -286,15 +300,4 @@ class LakeShore421(Instrument):
     ALMIO(?) Alarm Inside/Outside
     ALML(?) Low Alarm Setpoint
     ALMLM? Low Alarm Setpoint Multiplier
-    ALMS? Alarm Status
-    ALMSORT(?) Sort Pass/Fail
     """
-
-    def _raw_to_field(self, field_raw, multiplier_name):
-        if not field_raw == "OL":
-            multiplier = getattr(self, multiplier_name)
-            field = multiplier * field_raw
-        else:
-            field = np.nan
-
-        return field
