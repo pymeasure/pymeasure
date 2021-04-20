@@ -35,10 +35,12 @@ class LakeShore421(Instrument):
     Represents the Lake Shore 421 Gaussmeter and provides
     a high-level interface for interacting with the instrument.
     .. code-block:: python
+
         gaussmeter = LakeShore421("COM1")
         gaussmeter.unit = "T"               # Set units to Tesla
         gaussmeter.auto_range = True        # Turn on auto-range
         gaussmeter.fast_mode = True         # Turn on fast-mode
+
     """
 
     MULTIPLIERS = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
