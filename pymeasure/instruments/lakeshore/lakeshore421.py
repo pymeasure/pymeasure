@@ -83,20 +83,11 @@ class LakeShore421(Instrument):
 
     @property
     def field(self):
-        """ Returns the field in the current units. This function takes into
+        """ Returns the field in the current units. This property takes into
         account the field multiplier. Returns np.nan if field is out of range.
         TODO: Implement software auto-range.
         """
-
-        field_raw = self.field_raw
-
-        if not field_raw == "OL":
-            multiplier = self.field_multiplier
-            field = multiplier * field_raw
-        else:
-            field = np.nan
-
-        return field
+        return self._raw_to_field(self.field_raw, "field_multiplier")
 
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
@@ -220,33 +211,16 @@ class LakeShore421(Instrument):
 
     @property
     def max_hold_field(self):
-        """ Returns the max hold field in the current units. This function takes
+        """ Returns the max hold field in the current units. This property takes
         into account the multiplier. Returns np.nan if field is out of range.
         """
-
-        field_raw = self.max_hold_field_raw
-
-        if not field_raw == "OL":
-            multiplier = self.max_hold_multiplier
-            field = multiplier * field_raw
-        else:
-            field = np.nan
-
-        return field
+        return self._raw_to_field(self.max_hold_field_raw, "max_hold_multiplier")
 
     def max_hold_reset(self):
         """ Clears the stored Max Hold value. """
         self.write("MAXC")
 
     # RELATIVE MODE
-    """
-    TODO: implement RELATIVE MODE
-    RELR? Relative Mode Reading
-    RELRM? Relative Mode Reading Multiplier
-    RELS(?) Relative Mode Setpoint
-    RELSM? Relative Mode Setpoint Multiplier
-    """
-
     relative_mode_enabled = Instrument.control(
         "REL?", "REL %d",
         """ A boolean property that enables or disables the relative mode to
@@ -255,6 +229,52 @@ class LakeShore421(Instrument):
         values={True: 1, False: 0},
         map_values=True
     )
+
+    relative_field_raw = Instrument.measurement(
+        "RELR?",
+        """ Returns the relative field in the current units and the current
+        multiplier. """
+    )
+
+    relative_multiplier = Instrument.measurement(
+        "RELRM?",
+        """ Returns the relative field multiplier for the returned magnetic
+        field. """,
+        values=MULTIPLIERS,
+        map_values=True
+    )
+
+    @property
+    def relative_field(self):
+        """ Returns the relative field in the current units. This property
+        takes into account the field multiplier. Returns np.nan if field is
+        out of range. """
+        return self._raw_to_field(self.relative_field_raw, "relative_multiplier")
+
+    relative_setpoint_raw = Instrument.measurement(
+        "RELS?", "RELS %g",
+        """ Returns the relative setpoint in the current units and the current
+        multiplier. """,
+    )
+
+    relative_setpoint_multiplier = Instrument.measurement(
+        "RELRM?",
+        """ Returns the multiplier for the setpoint field. """,
+        values=MULTIPLIERS,
+        map_values=True
+    )
+
+    @property
+    def relative_setpoint(self):
+        """ Returns or sets the setpoint for the relative field mode in the
+        current units. This takes into account the field multiplier. Returns
+        np.nan if field is out of range. """
+        return self._raw_to_field(self.relative_setpoint_raw,
+                                  "relative_setpoint_multiplier")
+
+    @relative_setpoint.setter
+    def relative_setpoint(self, setpoint):
+        self.relative_setpoint_raw = setpoint / self.relative_setpoint_multiplier
 
     # ALARM MODE
     """
@@ -269,3 +289,12 @@ class LakeShore421(Instrument):
     ALMS? Alarm Status
     ALMSORT(?) Sort Pass/Fail
     """
+
+    def _raw_to_field(self, field_raw, multiplier_name):
+        if not field_raw == "OL":
+            multiplier = getattr(self, multiplier_name)
+            field = multiplier * field_raw
+        else:
+            field = np.nan
+
+        return field
