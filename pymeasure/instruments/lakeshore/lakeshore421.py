@@ -45,7 +45,7 @@ class LakeShore421(Instrument):
     """
 
     MULTIPLIERS = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
-    RANGES = {35: 1, 350: 2, 3500: 3, 35000: 4}
+    RANGES = {30: 1, 300: 2, 3000: 3, 30000: 4}
     PROBETYPES = {"High Sensitivity": 0,
                   "High Stability": 1,
                   "Ultra-High Sensitivity": 2}
@@ -113,7 +113,7 @@ class LakeShore421(Instrument):
     field_range = Instrument.control(
         "RANGE?", "RANGE %d",
         """ A floating point property that controls the field range of the
-        meter. Valid values are 35, 350, 3500, and 35000 (in Gauss). """,
+        meter. Valid values are 30, 300, 3000, and 3000 (in Gauss). """,
         validator=truncated_discrete_set,
         values=RANGES,
         map_values=True
