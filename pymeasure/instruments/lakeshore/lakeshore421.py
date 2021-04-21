@@ -383,4 +383,3 @@ class LakeShore421(Instrument):
         """ Closes the serial connection to the system. """
         self.adapter.connection.close()
         super().shutdown()
-
