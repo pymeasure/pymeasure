@@ -59,4 +59,4 @@ def qt_min_version(major, minor=0):
     version = QtCore.qVersion().split(".")
     version_major = int(version[0])
     version_minor = int(version[1])
-    return (version_major > major) or ((version_major == major) and  (version_minor >= minor))
+    return (version_major > major) or ((version_major == major) and (version_minor >= minor))
