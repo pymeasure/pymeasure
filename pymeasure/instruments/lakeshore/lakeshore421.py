@@ -28,6 +28,7 @@ from pymeasure.instruments.validators import strict_discrete_set, \
 
 from pyvisa import constants as visa_const
 import numpy as np
+from time import sleep
 
 
 class LakeShore421(Instrument):
@@ -148,12 +149,20 @@ class LakeShore421(Instrument):
         map_values=True
     )
 
-    def zero_probe(self):
+    def zero_probe(self, wait=True):
         """ Reset the probe value to 0. It is normally used with a zero gauss
         chamber, but may also be used with an open probe to cancel the Earth
         magnetic field. To cancel larger magnetic fields, the relative mode
-        should be used. """
+        should be used.
+
+        :param bool wait:
+            Wait for 20 seconds after issuing the command to allow the
+            resetting to finish.
+
+        """
         self.write("ZCAL")
+        if wait:
+            sleep(20)
 
     probe_type = Instrument.measurement(
         "TYPE?",
