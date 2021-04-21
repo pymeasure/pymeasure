@@ -28,7 +28,6 @@ from pymeasure.instruments.validators import strict_discrete_set, \
 
 from pyvisa import constants as visa_const
 import numpy as np
-from functools import partialmethod, partial
 
 
 class LakeShore421(Instrument):
