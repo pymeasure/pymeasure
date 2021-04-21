@@ -260,7 +260,7 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def relative_field(self)
+    def relative_field(self):
         """ Returns the relative field in the current units. This property
         takes into account the field multiplier. Returns np.nan if field is
         out of range.
