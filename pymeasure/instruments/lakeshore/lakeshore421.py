@@ -267,7 +267,7 @@ class LakeShore421(Instrument):
         """
         return self._raw_to_field(self.relative_field_raw, "relative_multiplier")
 
-    relative_setpoint_raw = Instrument.measurement(
+    relative_setpoint_raw = Instrument.control(
         "RELS?", "RELS %g",
         """ Property that controls the setpoint for the relative field mode in
         the current units and multiplier. """
