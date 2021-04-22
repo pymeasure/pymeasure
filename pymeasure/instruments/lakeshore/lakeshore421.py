@@ -56,6 +56,7 @@ class LakeShore421(Instrument):
             "Lake Shore 421 Gaussmeter",
             read_termination='\r',
             write_termination='\n',
+            command_delay=0.05,
             **kwargs
         )
 
