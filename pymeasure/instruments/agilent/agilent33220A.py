@@ -209,6 +209,13 @@ class Agilent33220A(Instrument):
         map_values=True,
         values={True: 1, False: 0},
     )
+    
+    output_impedance = Instrument.control(
+        "OUTP:LOAD?", "OUTP:LOAD %s",
+        """A mixed property that sets the impedance correction for the AWG, only takes strings. Turn you impedance into
+         a string before sending"""
+
+    )
 
     burst_state = Instrument.control(
         "BURS:STAT?", "BURS:STAT %d",
