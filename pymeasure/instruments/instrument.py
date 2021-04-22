@@ -29,6 +29,7 @@ import numpy as np
 
 from pymeasure.adapters import FakeAdapter
 from pymeasure.adapters.visa import VISAAdapter
+from time import time, sleep
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -46,7 +47,7 @@ class Instrument(object):
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, command_delay=None, **kwargs):
         try:
             if isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -57,6 +58,8 @@ class Instrument(object):
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
+        self.command_delay = command_delay
+        self.last_command_time = time()
 
         class Object(object):
             pass
@@ -95,6 +98,7 @@ class Instrument(object):
 
         :param command: command string to be sent to the instrument
         """
+        self.delay_command()
         return self.adapter.ask(command)
 
     def write(self, command):
@@ -102,6 +106,7 @@ class Instrument(object):
 
         :param command: command string to be sent to the instrument
         """
+        self.delay_command()
         self.adapter.write(command)
 
     def read(self):
@@ -114,9 +119,11 @@ class Instrument(object):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
+        self.delay_command()
         return self.adapter.values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
+        self.delay_command()
         return self.adapter.binary_values(command, header_bytes, dtype)
 
     @staticmethod
@@ -315,6 +322,15 @@ class Instrument(object):
         """Return any accumulated errors. Must be reimplemented by subclasses.
         """
         pass
+
+    def delay_command(self):
+        if self.command_delay is None:
+            return
+
+        while time() - self.last_command_time < self.command_delay:
+            sleep(self.command_delay / 10)
+
+        self.last_command_time = time()
 
 
 class FakeInstrument(Instrument):

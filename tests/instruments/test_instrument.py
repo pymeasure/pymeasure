@@ -23,6 +23,7 @@
 #
 
 import pytest
+from time import time
 from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -263,3 +264,32 @@ def test_with_statement():
 
     # Check whether the shutdown function is called upon
     assert fake.isShutdown == True
+
+
+def test_command_delay():
+    """ Test whether all communication command correctly observe
+    the command-delay"""
+    delay = 0.2
+    fake = FakeInstrument(command_delay=delay)
+
+    # Patch the Adapter of the FakeInstrument to the binary_values method
+    fake.adapter.binary_values = lambda c, h, d: c
+
+    fake.write("command")
+    t0 = time()
+
+    fake.write("command")
+    t1 = time()
+    assert t1 - t0 >= delay
+
+    fake.ask("command")
+    t2 = time()
+    assert t2 - t1 >= delay
+
+    fake.values("command")
+    t3 = time()
+    assert t3 - t2 >= delay
+
+    fake.binary_values("command")
+    t4 = time()
+    assert t4 - t3 >= delay
