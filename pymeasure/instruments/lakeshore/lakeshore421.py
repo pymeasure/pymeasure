@@ -45,7 +45,7 @@ class LakeShore421(Instrument):
     """
 
     MULTIPLIERS = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
-    RANGES = {30: 1, 300: 2, 3000: 3, 30000: 4}
+    RANGES = {30: 0, 300: 1, 3000: 2, 30000: 3}
     PROBETYPES = {"High Sensitivity": 0,
                   "High Stability": 1,
                   "Ultra-High Sensitivity": 2}
