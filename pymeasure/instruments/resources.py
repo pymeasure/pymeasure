@@ -47,7 +47,7 @@ def list_resources():
             # try to avoid errors from *idn?
             try:
                 # noinspection PyUnresolvedReferences
-                idn = res.ask('*idn?')[:-1]
+                idn = res.query('*idn?')[:-1]
             except pyvisa.Error:
                 idn = "Not known"
             finally:
