@@ -93,7 +93,7 @@ class Agilent33220A(Instrument):
         waveform in Hz, from 1e-6 (1 uHz) to 20e+6 (20 MHz), depending on the
         specified function. Can be set. """,
         validator=strict_range,
-        values=[1e-6, 5e+6],
+        values=[1e-6, 20e+6],
     )
 
     amplitude = Instrument.control(
@@ -215,6 +215,13 @@ class Agilent33220A(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+    )
+    
+    output_impedance = Instrument.control(
+        "OUTP:LOAD?", "OUTP:LOAD %s",
+        """A mixed property that sets the impedance correction for the AWG, only takes strings. Turn you impedance into
+         a string before sending"""
+
     )
 
     burst_state = Instrument.control(

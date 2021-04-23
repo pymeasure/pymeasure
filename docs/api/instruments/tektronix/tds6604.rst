@@ -1,0 +1,7 @@
+####################
+TDS6604 Oscilloscope
+####################
+
+.. autoclass:: pymeasure.instruments.tektronix.TDS6604
+    :members:
+    :show-inheritance:
