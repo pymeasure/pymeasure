@@ -322,7 +322,6 @@ class TDS620B(Instrument):
         values=['FIFty', 'MEG']
     )
 
-
     CH2_offset = Instrument.control(
         "CH2:OFFSet?", "CH2:OFFSet %g",
         """

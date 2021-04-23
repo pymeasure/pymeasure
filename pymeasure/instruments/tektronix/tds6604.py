@@ -40,19 +40,13 @@ class TDS6604(Instrument):
     and provides a high-level for interacting with the instrument
 
     .. code-block:: python
-
-<<<<<<< HEAD
         osc= TDS6604("GPIB0::...")
-=======
-        osc= TDS620B("GPIB0::...")
->>>>>>> 8d72b79 (Bn765 and Tds6604)
         osc.pretrigger = 1 # set pretrigger to 1% of recorded waveform
         osc.acquire_mode = 'SAMPLE' # the default
         osc.acquire_stop_after = 'SEQUENCE' # Stop recording after 1 waveform after trigger
         osc.data_source = 'CH1' # set data source to channel 1
         #emit trigger somehow
         data = osc.get_binary_curve() # get curve data from channel 1 with default binary encoding
-
     """
 
     pretrigger = Instrument.control(
