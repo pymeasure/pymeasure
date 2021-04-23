@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .ws8351A import WS8351A
+from .ws8351a import WS8351A

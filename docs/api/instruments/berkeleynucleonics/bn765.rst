@@ -1,0 +1,7 @@
+############################################
+Berkeley Nucleonics 765 Fast Pulse Generator
+############################################
+
+.. autoclass:: pymeasure.instruments.berkeleynucleonics.bn765
+    :members:
+    :show-inheritance:
