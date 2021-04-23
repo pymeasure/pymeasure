@@ -224,169 +224,9 @@ class WS8351A(Instrument):
         Can be set. """,
     )
 
-    burst_state = Instrument.control(
-        "BURS:STAT?", "BURS:STAT %d",
-        """ A boolean property that controls whether the burst mode is on
-        (True) or off (False). Can be set. """,
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: 1, False: 0},
-    )
-
-    burst_mode = Instrument.control(
-        "BURS:MODE?", "BURS:MODE %s",
-        """ A string property that controls the burst mode. Valid values
-        are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
-        validator=strict_discrete_set,
-        values=["TRIG", "TRIGGERED", "GAT", "GATED"],
-    )
-
-    burst_period = Instrument.control(
-        "BURS:INT:PER?", "BURS:INT:PER %e",
-        """ A floating point property that controls the period of subsequent bursts.
-        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.
-        Valid values are 1 µs to 8000 s. Can be set. """,
-        validator=strict_range,
-        values=[1e-6, 8000],
-    )
-
-    burst_ncycles = Instrument.control(
-        "BURS:NCYC?", "BURS:NCYC %d",
-        """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. Valid values are 1 to 100000. This can be
-        set. """,
-        validator=strict_range,
-        values=range(1, 100000),
-    )
-
-    arb_file = Instrument.control(
-        "FUNC:ARB?", "FUNC:ARB %s",
-        """ A string property that selects the arbitrary signal from the volatile
-        memory of the device. String has to match an existing arb signal in volatile
-        memore (set by data_arb()). Can be set. """
-    )
-
-    arb_advance = Instrument.control(
-        "FUNC:ARB:ADV?", "FUNC:ARB:ADV %s",
-        """ A string property that selects how the device advances from data point
-        to data point. Can be set to 'TRIG<GER>' or 'SRAT<E>' (default). """,
-        validator=strict_discrete_set,
-        values=["TRIG", "TRIGGER", "SRAT", "SRATE"],
-    )
-
-    arb_filter = Instrument.control(
-        "FUNC:ARB:FILT?", "FUNC:ARB:FILT %s",
-        """ A string property that selects the filter setting for arbitrary signals. 
-        Can be set to 'NORM<AL>', 'STEP' and 'OFF'. """,
-        validator=strict_discrete_set,
-        values=["NORM", "NORMAL", "STEP", "OFF"],
-    )
-
-    # TODO: This implementation is currently not working. Do not know why.
-    # arb_period = Instrument.control(
-    #     "FUNC:ARB:PER?", "FUNC:ARB:PER %e",
-    #     """ A floating point property that controls the period of the arbitrary signal.
-    #     Limited by number of signal points. Check for instrument errors when setting
-    #     this property. Can be set. """,
-    #     validator=strict_range,
-    #     values=[33e-9, 1e6],
-    # )
-    #
-    # arb_frequency = Instrument.control(
-    #     "FUNC:ARB:FREQ?", "FUNC:ARB:FREQ %f",
-    #     """ A floating point property that controls the frequency of the arbitrary signal.
-    #     Limited by number of signal points. Check for instrument
-    #     errors when setting this property. Can be set. """,
-    #     validator=strict_range,
-    #     values=[1e-6, 30e+6],
-    # )
-    #
-    # arb_npoints = Instrument.measurement(
-    #     "FUNC:ARB:POIN?",
-    #     """ Returns the number of points in the currently selected arbitrary trace. """
-    # )
-    #
-    # arb_voltage = Instrument.control(
-    #     "FUNC:ARB:PTP?", "FUNC:ARB:PTP %f",
-    #     """ An floating point property that sets the peak-to-peak voltage for the
-    #     currently selected arbitrary signal. Valid values are 1 mV to 10 V. This can be
-    #     set. """,
-    #     validator=strict_range,
-    #     values=[0.001, 10],
-    # )
-
-    arb_srate = Instrument.control(
-        "FUNC:ARB:SRAT?", "FUNC:ARB:SRAT %f",
-        """ An floating point property that sets the sample rate of the currently selected 
-        arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
-        depending on your device). This can be set. """,
-        validator=strict_range,
-        values=[1e-6, 250e6],
-    )
-
-    def data_volatile_clear(self):
-        """
-        Clear all arbitrary signals from the volatile memory. This should be done if the same name
-        is used continuously to load different arbitrary signals into the memory, since an error
-        will occur if a trace is loaded which already exists in the memory.
-        """
-        self.write("DATA:VOL:CLE")
-
-    def data_arb(self, arb_name, data_points, data_format='DAC'):
-        """
-        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be given
-        as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma separated floating
-        point values (ranging from -1.0 to +1.0) or as a binary data stream. Check the manual for more
-        information. The storage depends on the device type and ranges from 8 Sa to 16 MSa (maximum).
-        TODO: *Binary is not yet implemented*
-
-        :param arb_name: The name of the trace in the volatile memory. This is used to access the
-                         trace.
-        :param data_points: Individual points of the trace. The format depends on the format
-                            parameter.
-
-                            format = 'DAC' (default): Accepts list of integer values ranging from
-                            -32767 to +32767. Minimum of 8 a maximum of 65536 points.
-
-                            format = 'float': Accepts list of floating point values ranging from
-                            -1.0 to +1.0. Minimum of 8 a maximum of 65536 points.
-
-                            format = 'binary': Accepts a binary stream of 8 bit data.
-        :param data_format: Defines the format of data_points. Can be 'DAC' (default), 'float' or
-                            'binary'. See documentation on parameter data_points above.
-        """
-        if data_format == 'DAC':
-            separator = ', '
-            data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
-            data_string = separator.join(data_points_str)  # Join strings with separator
-            print("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
-            self.write("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
-            return
-        elif data_format == 'float':
-            separator = ', '
-            data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
-            data_string = separator.join(data_points_str)  # Join strings with separator
-            print("DATA:ARB {}, {}".format(arb_name, data_string))
-            self.write("DATA:ARB {}, {}".format(arb_name, data_string))
-            return
-        elif data_format == 'binary':
-            raise NotImplementedError('The binary format has not yet been implemented. Use "DAC" or "float" instead.')
-        else:
-            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
-
-    display = Instrument.setting(
-        "DISP:TEXT '%s'",
-        """ A string property which is displayed on the front panel of
-        the device. Can be set. """,
-    )
-
-    def clear_display(self):
-        """ Removes a text message from the display. """
-        self.write("DISP:TEXT:CLE")
-
     def trigger(self):
         """ Send a trigger signal to the function generator. """
-        self.write("*TRG;*WAI")
+        self.write("*TRG")
 
     def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
         """ Wait until the triggering has finished or timeout is reached.
@@ -412,7 +252,7 @@ class WS8351A(Instrument):
 
             if timeout != 0 and time() - t0 > timeout:
                 raise TimeoutError(
-                    "Timeout expired while waiting for the Agilent 33220A" +
+                    "Timeout expired while waiting for the Tabor WS8351" +
                     " to finish the triggering."
                 )
 
