@@ -40,7 +40,8 @@ import time
 class USB_2SP2T_DCH():
     """ Represents the USB-2SP2T-DCH solid state switch and provides a high level
     interface to the SCIPI commands. Requires that the mcl_SolidStateSwitch_NET45 be in the path
-    or same directory as the running code.
+    or same directory as the running code and pythonnet is installed to import clr. DLL may be obtained from:
+    https://www.minicircuits.com/softwaredownload/solidstate.html
 
     """
 
