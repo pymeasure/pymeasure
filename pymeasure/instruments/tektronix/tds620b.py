@@ -25,6 +25,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     strict_range, joined_validators, truncated_range
+from pymeasure.instruments.tektronix.tekutils import Channel
 import numpy as np
 
 def capitalize_string(string: str, *args, **kwargs):
@@ -33,6 +34,7 @@ def capitalize_string(string: str, *args, **kwargs):
 
 # Combine the capitalize function and validator
 string_validator = joined_validators(capitalize_string, strict_discrete_set)
+
 
 
 class TDS620B(Instrument):
@@ -50,6 +52,17 @@ class TDS620B(Instrument):
         data = osc.get_binary_curve() # get curve data from channel 1 with default binary encoding
 
     """
+
+    def __init__(self, adapter, **kwargs):
+        super(TDS620B, self).__init__(
+            adapter, "Tektronix TDS620B oscilloscope", **kwargs
+        )
+        # Account for setup time for timebase_mode, waveform_points_mode
+        self.adapter.connection.timeout = 6000
+        self.ch1 = Channel(self, 1)
+        self.ch2 = Channel(self, 2)
+        self.ch3 = Channel(self, 3)
+        self.ch4 = Channel(self, 4)
 
     pretrigger = Instrument.control(
         "HORizontal:TRIGger:POSition?", "HORizontal:TRIGger:POSition %d",
@@ -359,7 +372,7 @@ class TDS620B(Instrument):
         """
         Convenience function to get the curve data from the sources available in self.data_source using binary encoding.
         Transfer is signed, 0 is in center. 5 divs above and below recorded (though only +-4 shown on scope)
-        If trigger is unchanged then pulse is starts being measured at 50% of time scale, so halfway
+        If trigger is unchanged then pulse is starts being measured at 50% of time scale, so halfway.
         """
         self.data_encoding = encoding
         self.data_source = source

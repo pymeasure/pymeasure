@@ -25,6 +25,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     strict_range, joined_validators, truncated_range
+from pymeasure.instruments.tektronix.tekutils import Channel
 import numpy as np
 
 def capitalize_string(string: str, *args, **kwargs):
@@ -48,6 +49,18 @@ class TDS6604(Instrument):
         #emit trigger somehow
         data = osc.get_binary_curve() # get curve data from channel 1 with default binary encoding
     """
+
+    def __init__(self, adapter, **kwargs):
+        super(TDS6604, self).__init__(
+            adapter, "Tektronix TDS6604 oscilloscope", **kwargs
+        )
+        # Account for setup time for timebase_mode, waveform_points_mode
+        self.adapter.connection.timeout = 6000
+        self.ch1 = Channel(self, 1)
+        self.ch2 = Channel(self, 2)
+        self.ch3 = Channel(self, 3)
+        self.ch4 = Channel(self, 4)
+
 
     pretrigger = Instrument.control(
         "HORizontal:TRIGger:POSition?", "HORizontal:TRIGger:POSition %d",
@@ -211,7 +224,8 @@ class TDS6604(Instrument):
 
     horizontal_recordlength = Instrument.control(
         "HORizontal:RECOrdlength?", "HORizontal:RECOrdlength %d",
-        """An integer property that sets the length of the waveform record. Values are 500,1000,2500,5000,15000 points.
+        """An integer property that sets the length of the waveform record. Values are 
+        500, 2000, 5000, 10000, 25000, 50000, 100000, 124000, 200000 points.
          Longer records will extend past the end of the scope screen and take longer to transfer. 
          There are 50 points/div""",
         validator=strict_discrete_set,

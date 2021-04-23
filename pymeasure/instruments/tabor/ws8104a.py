@@ -313,7 +313,7 @@ class WS8104A(Instrument):
 
     def __init__(self, adapter, **kwargs):
         super(WS8104A, self).__init__(
-            adapter, "Rigol MSO5354 Oscilloscope", **kwargs
+            adapter, "Tabor Electronics WS8104 AWG", **kwargs
         )
         # Account for setup time for timebase_mode, waveform_points_mode
         self.adapter.connection.timeout = 6000
