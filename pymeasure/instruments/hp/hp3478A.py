@@ -277,28 +277,44 @@ class HP3478A(Instrument):
     def measure(self,mode='DCV',measurement_range='auto',auto_zero="on",digits=5, trigger='auto'):
         """
         returens a measurement result, depeding on the parameters
-        s
-
 
 
         Parameters
         ----------
-        mode : TYPE, optional
-            DESCRIPTION. The default is 'DCV'.
-        measurement_range : TYPE, optional
-            DESCRIPTION. The default is 'auto'.
-        auto_zero : TYPE, optional
-            DESCRIPTION. The default is 1.
-        digits : TYPE, optional
-            DESCRIPTION. The default is 5.
-        trigger : TYPE, optional
-            DESCRIPTION. The default is 'auto'.
+        mode : str, optional
+            The measurement mode to be used.
+            Valid modes are: 
+                "DCV",
+                "ACV", 
+                "R2W" (2 wire Ohms mode), 
+                "R4W" (4 wire Ohms mode), 
+                "DCI", 
+                "ACI",
+                "Rext" (extended Ohms mode, see manual for more detail)
+            Default is "DCV".
+        measurement_range : str, optional
+            Manaul selection for the measurement range or "auto" for auto-ranging.
+            
+            Default is "auto".
+        auto_zero : int, optional
+            a vlaue of 0 diables autozero, 
+            while a value of 1 enables autozero.
+            
+            Default is 1.
+        digits : int, optional
+            Number of digits selection, allowed values are 3,4,5
+            
+            Default is 5.
+        trigger : str, optional
+            Trigger mode selection, choices are: auto=internal, external, single, hold, fast (see manual for this)
+            
+            Default is 'auto'.
 
         Returns
         -------
-        measured_value : TYPE
-            DESCRIPTION.
-
+        measured_value : float
+            the value mesured based on the mode and other settings.
+            
         """
         measurement_string=''
         if mode in self.MODES:
