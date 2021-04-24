@@ -98,8 +98,8 @@ class HP3478A(Instrument):
 
         Returns
         -------
-        estatus : TYPE
-            DESCRIPTION.
+        estatus : int
+            error status register value (confirm with manual for detail)
 
         """
         estatus=self.ask('E')
@@ -111,16 +111,14 @@ class HP3478A(Instrument):
 
         Returns
         -------
-        status : TYPE
-            DESCRIPTION.
+        status : list
+            list of 5 status bytes (confirm with manual for detail).
 
         """
-        # status_read=self.adapter.connection.query_binary_values("B","b",data_points=5)
         self.write("B")
         status_read=self.adapter.connection.read_bytes(5)
         status=[]
-        for i in range(0,4):
-            # print(bin(status_read[i]))
+        for i in range(0,5):
             status.append(status_read[i])
         return status
 
@@ -130,7 +128,8 @@ class HP3478A(Instrument):
 
         Returns
         -------
-        None.
+        hrs : str
+            human readable status
 
         """
         status_read=self.status()
@@ -158,20 +157,23 @@ class HP3478A(Instrument):
             r_str=str(r_act/1E6)+' M'
         if r_act >=1000:
             r_str=str(r_act/1000)+' k'
-        print('----- HP3478 ----- Status -----')
-        print('The current range is '+r_str+m_str+' with '+str(d_act)+' 1/2 digits')
+        else:
+            r_str=str(r_act)+ ' '
+        hrs = '----- HP3478 ----- Status -----\n'
+        hrs = hrs + 'The current range is '+r_str+m_str+' with '+str(d_act)+' 1/2 digits\r\n'
 
-        print('General status: ')
-        print('     Internal trigger: '+str(status_read[1]&1))
-        print('     Autorange: '+str(status_read[1]>>1&1))
-        print('     Auto Zero: '+str(status_read[1]>>2&1))
-        print('     50 Hz opereration: '+str(status_read[1]>>3&1))
-        print('     Front/Rear: '+str(status_read[1]>>4&1))
-        print('     CalibrationRAM en: '+str(status_read[1]>>6&1))
-        print('     External trigger: '+str(status_read[1]>>7&1))
-        print('Srq mask: ',status_read[2])
-        print('Error status: ',status_read[3])
-        print('DAC value: ',status_read[4])
+        hrs = hrs + 'General status: \r\n'
+        hrs = hrs + '     Internal trigger: '+str(status_read[1]&1)+'\r\n'
+        hrs = hrs + '     Autorange: '+str(status_read[1]>>1&1)+'\r\n'
+        hrs = hrs + '     Auto Zero: '+str(status_read[1]>>2&1)+'\r\n'
+        hrs = hrs + '     50 Hz opereration: '+str(status_read[1]>>3&1)+'\r\n'
+        hrs = hrs + '     Front/Rear: '+str(status_read[1]>>4&1)+'\r\n'
+        hrs = hrs + '     CalibrationRAM en: '+str(status_read[1]>>6&1)+'\r\n'
+        hrs = hrs + '     External trigger: '+str(status_read[1]>>7&1)+'\r\n'
+        hrs = hrs + 'Srq mask: '+str(status_read[2])+'\r\n'
+        hrs = hrs + 'Error status: '+str(status_read[3])+'\r\n'
+        hrs = hrs + 'DAC value: '+str(status_read[4])+'\r\n'
+        return hrs
 
     @property
     def auto_zero(self):
@@ -276,7 +278,7 @@ class HP3478A(Instrument):
 
     def measure(self,mode='DCV',measurement_range='auto',auto_zero="on",digits=5, trigger='auto'):
         """
-        returens a measurement result, depeding on the parameters
+        returns a measurement result, depeding on the parameters
 
 
         Parameters
