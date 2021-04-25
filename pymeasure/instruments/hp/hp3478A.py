@@ -43,14 +43,6 @@ class HP3478A(Instrument):
     As this unit predates SCPI some tricks are required to get this working
     """
 
-    DIGITS={3: "N3",
-            4: "N4",
-            5: "N5"
-            }
-
-    AZ={"off": "Z0",
-        "on": "Z1"
-        }
 
     MODES={"DCV": "F1",
            "ACV": "F2",
@@ -91,29 +83,24 @@ class HP3478A(Instrument):
             **kwargs
         )
 
-
+    @property
     def error_status(self):
         """
         get the Error-status register value
 
-        Returns
-        -------
-        estatus : int
-            error status register value (confirm with manual for detail)
-
+        :return estatus: error status register value (confirm with manual for detail)
+        :rtype estatus: int
         """
         estatus=self.ask('E')
         return estatus
 
+    @property
     def status(self):
         """
         Reads the HP3478A status register (5-bytes)
 
-        Returns
-        -------
-        status : list
-            list of 5 status bytes (confirm with manual for detail).
-
+        :return status: list of 5 status bytes (confirm with manual for detail).
+        :rtype status: list
         """
         self.write("B")
         status_read=self.adapter.connection.read_bytes(5)
@@ -121,18 +108,15 @@ class HP3478A(Instrument):
         for i in range(0,5):
             status.append(status_read[i])
         return status
-
+    @property
     def status_readable(self):
         """
         Delivers a human-readble status based on the status() command
 
-        Returns
-        -------
-        hrs : str
-            human readable status
-
+        :return hrs: human readable status
+        :rtype hrs: str
         """
-        status_read=self.status()
+        status_read=self.status
         d_act=6-(status_read[0]&3)
         m_act=list(self.MODES.keys())[((status_read[0]>>5)&7)-1]
         if m_act=='DCV':
@@ -151,14 +135,15 @@ class HP3478A(Instrument):
             m_str='Ohm'
 
         r_act=list(self.RANGES[m_act].keys())[(((status_read[0]>>2)&7)-1)]
-        if r_act <= 1:
-            r_str=str(r_act*1000)+' m'
         if r_act >=1E6:
             r_str=str(r_act/1E6)+' M'
-        if r_act >=1000:
+        elif r_act >=1000:
             r_str=str(r_act/1000)+' k'
+        elif r_act <= 1:
+            r_str=str(r_act*1000)+' m'
         else:
             r_str=str(r_act)+ ' '
+
         hrs = '----- HP3478 ----- Status -----\n'
         hrs = hrs + 'The current range is '+r_str+m_str+' with '+str(d_act)+' 1/2 digits\r\n'
 
@@ -180,12 +165,8 @@ class HP3478A(Instrument):
         """
         Checks the autozero settings on the HP3478
 
-        Returns
-        -------
-        autozero : int
-            0 == Autozero off
-            1 == Autozero on
-
+        :return autozero: 0 --> Autozero off,1 --> Autozero on
+        :rtype autozero: int
         """
         status_read=self.status()
         autozero=status_read[1]>>2&1
@@ -194,38 +175,23 @@ class HP3478A(Instrument):
     @auto_zero.setter
     def auto_zero(self,on_off):
         """
-        Offers the possibility to enable or disable the Autozero feature
+        enable or disable the Autozero feature
 
-        Parameters
-        ----------
-        on_off : int
-            expects either 0 or 1
-            0 --> disabled autozero
-            1 --> enables autozero.
-
-        Returns
-        -------
-        None.
-
+        :param on_off: 0 --> disables autozero,1 --> enables autozero.
+        :type on_off: int
         """
-        if on_off==0:
-            self.write('Z0')
+        if on_off == 1 or on_off == 0:
+            self.write('Z{}'.format(on_off))
         else:
-            if on_off==1:
-                self.write('Z1')
+            raise Exception(ValueError("Value should be 0 or 1"))
 
+    @property
     def active_connectors(self):
         """
-        checks the status of the front/back switch, selecting either the front
-        or back mearsurement terminals
+        Status of the front/back conenction terminal switch
 
-        Returns
-        -------
-        front_back : int
-            0 == back terminals
-            1 == front terminals
-
-
+        :return front_back: 0 --> back terminals, 1 --> front terminals
+        :rtype front_back: int
         """
         status_read=self.status()
         front_back=status_read[1]>>4&1
@@ -234,13 +200,10 @@ class HP3478A(Instrument):
     @property
     def trigger(self):
         """
-        Checks the triger settings on the HP3478
+        Checks the trigger settings on the HP3478
 
-        Returns
-        -------
-        trigger_stat : str
-            A string value describing the current status of the trigger
-
+        :return trigger_stat: string value describing the current status of the trigger
+        :rtype trigger_stat: str
         """
         status_read=self.status()
         int_trig=status_read[1]&1
@@ -256,134 +219,85 @@ class HP3478A(Instrument):
     @trigger.setter
     def trigger(self, trigger_mode):
         """
-        Offers the possibility to set the trigger mode
+        sets the trigger mode
 
-        Parameters
-        ----------
-        trigger_mode : str
-            allowed values are:
-                 auto, internal, external, single, hold or fast
-
-        Returns
-        -------
-        None.
-
+        :param trigger_mode: allowed values are: 'auto', 'internal', 'external', 'single', 'hold' or 'fast'
+        :type trigger_mode: str
         """
         if trigger_mode in self.TRIGGERS.keys():
             self.write(self.TRIGGERS[trigger_mode])
         else:
-            print("fix me")
+            raise Exception(ValueError("Value not allowed"))
 
-
-
-    def measure(self,mode='DCV',measurement_range='auto',auto_zero="on",digits=5, trigger='auto'):
+    def measure(self,mode='DCV',measurement_range='auto',auto_zero=1,digits=5, trigger='auto'):
         """
         returns a measurement result, depeding on the parameters
 
 
-        Parameters
-        ----------
-        mode : str, optional
-            The measurement mode to be used.
-            Valid modes are: 
-                "DCV",
-                "ACV", 
-                "R2W" (2 wire Ohms mode), 
-                "R4W" (4 wire Ohms mode), 
-                "DCI", 
-                "ACI",
-                "Rext" (extended Ohms mode, see manual for more detail)
-            Default is "DCV".
-        measurement_range : str, optional
-            Manaul selection for the measurement range or "auto" for auto-ranging.
-            
-            Default is "auto".
-        auto_zero : int, optional
-            a vlaue of 0 diables autozero, 
-            while a value of 1 enables autozero.
-            
-            Default is 1.
-        digits : int, optional
-            Number of digits selection, allowed values are 3,4,5
-            
-            Default is 5.
-        trigger : str, optional
-            Trigger mode selection, choices are: auto=internal, external, single, hold, fast (see manual for this)
-            
-            Default is 'auto'.
-
-        Returns
-        -------
-        measured_value : float
-            the value mesured based on the mode and other settings.
-            
+        :param mode: optional, measurement mode to be used, valid modes are: 'DCV','ACV','R2W' (2 wire Ohms mode),
+            'R4W' (4 wire Ohms mode),'DCI','ACI', 'Rext' (extended Ohms mode, see manual for more detail), defaults to ['DCV']
+        :type mode: str
+        :param measurement_range: optional, manual selection for the measurement range or 'auto' for auto-ranging, defaults to [auto]
+        :type measurement_range: int/str
+        :param auto_zero: 0 --> Autozero off,1 --> Autozero on, defaults to [1]
+        :type auto_zero: int
+        :param digits: Number of digits selection, allowed values are 3,4,5, defaults to [5]
+        :type digits: int
+        :param trigger: Trigger mode selection, choices are: 'auto'='internal', 'external', 'single', 'hold', 'fast' (see manual for detail on this), defaults to ['auto']
+        :type trigger: str
+        :return measured_value: the value mesured based on the settings.
+        :rtype measured_value: float
         """
         measurement_string=''
         if mode in self.MODES:
             measurement_string=self.MODES[mode]
         else:
-            raise Exception('Mode string not supported')
+            raise Exception(ValueError('Mode string not supported'))
 
         if measurement_range in self.RANGES[mode]:
             measurement_string=measurement_string+self.RANGES[mode][measurement_range]
+        else:
+            raise Exception(ValueError('Value not supported'))
 
-        if auto_zero in self.AZ:
-            measurement_string=measurement_string+self.AZ[auto_zero]
+        if auto_zero == 0 or auto_zero == 1:
+            measurement_string=measurement_string+str('Z{}'.format(auto_zero))
+        else:
+            raise Exception(ValueError('Value not supported'))
 
-        if digits in self.DIGITS:
-            measurement_string=measurement_string+self.DIGITS[digits]
+        if digits == 3 or digits == 4 or digits == 5:
+            measurement_string=measurement_string+str('N{}'.format(digits))
+        else:
+            raise Exception(ValueError('Value not supported'))
 
         if trigger in self.TRIGGERS:
             measurement_string=measurement_string+self.TRIGGERS[trigger]
-
-        # print(measurement_string)
+        else:
+            raise Exception(ValueError('Value not supported'))
         measured_value=float(self.ask(measurement_string))
         return measured_value
 
     def display_reset(self):
-
-
         """
         Resets the display of the HP3478A to the normal measurement dusplay.
         Especially helpful after using D2 or D3 command
-
-        Returns
-        -------
-        None.
-
         """
         self.write('D1')
 
     def reset(self):
         """
         Initatiates a reset of the HP3478A
-
-        Returns
-        -------
-        None.
-
         """
         self.adapter.connection.clear()
 
     def close(self):
         """
         close the current connection to the HP3478A
-
-        Returns
-        -------
-        None.
-
         """
         self.adapter.connection.close()
 
     def shutdown(self):
         """
-        provides a way to gravcefully close the conention to the HP3478A
-
-        Returns
-        -------
-        None.
-
+        provides a way to gracefully close the conention to the HP3478A
         """
         self.adapter.connection.clear()
         self.adapter.connection.close()

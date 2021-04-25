@@ -1,5 +1,5 @@
 ######################################
-HP 33120A Arbitrary Waveform Generator
+HP 3478A Multimeter
 ######################################
 
 .. autoclass:: pymeasure.instruments.hp.HP3478A
