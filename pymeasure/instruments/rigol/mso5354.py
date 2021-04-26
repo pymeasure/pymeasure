@@ -154,16 +154,17 @@ class RigolMSO5354(Instrument):
     .. code-block:: python
 
         scope = RigolMSO5354(resource)
-        scope.autoscale()
-        ch1_data_array, ch1_preamble = scope.download_data(source="channel1", points=2000)
-        # ...
-        scope.shutdown()
-    Known issues:
+        scope.ch1.display = True
+        scope.trigger_edge_source = 'CHAN1'
+        scope.ch1.scale = 1
+        scope.single()
+        ... send trigger waveform
+        scope.waveform_source = 'CHAN1'
+        scope.waveform_mode = 'raw'
+        out = scope.waveform_data
+        time_increment = scope.waveform_xincrement
+        timebase = time_increment*range(len(out))
 
-    - The digitize command will be completed before the operation is. May lead to
-      VI_ERROR_TMO (timeout) occuring when sending commands immediately after digitize.
-      Current fix: if deemed necessary, add delay between digitize and follow-up command
-      to scope.
     """
 
     BOOLS = {True: 1, False: 0}
