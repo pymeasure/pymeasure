@@ -34,10 +34,11 @@ class Parameter(object):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    def __init__(self, name, default=None, ui_class=None):
+    def __init__(self, name, default=None, placeholder=None, ui_class=None):
         self.name = name
         self._value = default
         self.default = default
+        self.placeholder = placeholder
         self.ui_class = ui_class
 
     @property

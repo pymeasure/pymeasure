@@ -515,6 +515,32 @@ class InputsWidget(QtGui.QWidget):
         self._procedure.set_parameters(parameter_values)
         return self._procedure
 
+    def get_parameter(self, name):
+        try:
+            element = getattr(self, name)
+            return element
+        except AttributeError:
+            print(f'The parameter {name} doesn\'t exist')
+            return None
+    
+    def get_value(self, name):
+        try:
+            element = getattr(self, name)
+            return element.parameter.value
+        except AttributeError:
+            print(f'The parameter {name} doesn\'t exist')
+            return None
+
+    def get_placeholders(self):
+        placeholders = {}
+        parameters = self._procedure.parameter_objects()
+
+        for name in parameters:
+            placeholder = parameters[name].placeholder
+            if placeholder is not None:
+                placeholders[placeholder] = name
+        
+        return placeholders
 
 class LogWidget(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -1036,3 +1062,12 @@ class DirectoryLineEdit(QtGui.QLineEdit):
         path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
         if path != '':
             self.setText(path)
+
+class FilenameLineEdit(QtGui.QLineEdit):
+    """
+    Widget that allows to choose a filename for the result file.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        
