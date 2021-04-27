@@ -121,7 +121,7 @@ class Instrument(object):
                 **kwargs):
         """Returns a property for the class based on the supplied
         commands. This property may be set and read from the
-        instrument.
+         instrument.
 
         :param get_command: A string command that asks for the value
         :param set_command: A string command that writes the value
