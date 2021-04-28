@@ -92,6 +92,42 @@ class CSVFormatter(logging.Formatter):
         return self.delimiter.join(self.columns)
 
 
+class CSVFormatter_Pandas(logging.Formatter):
+    """ Formatter of data results """
+
+    def __init__(self, columns, delimiter=',', line_break='\n'):
+        """Creates a csv formatter for a given list of columns (=header).
+
+        :param columns: list of column names.
+        :type columns: list
+        :param delimiter: delimiter between columns.
+        :type delimiter: str
+        """
+        super().__init__()
+        self.columns = columns
+        self.delimiter = delimiter
+        self.line_break = line_break
+
+    def format(self, record):
+        """Formats a record as csv.
+
+        :param record: record to format.
+        :type record: pandas.DataFrame
+        :return: a string
+        """
+        return record.to_csv(
+            sep=self.delimiter,
+            header=False,
+            index=False,
+            # explicit line_terminator required, otherwise Windows
+            # uses \r\n which results in double blank lines
+            line_terminator=self.line_break
+        )
+
+    def format_header(self):
+        return self.delimiter.join(self.columns)
+
+
 class Results(object):
     """ The Results class provides a convenient interface to reading and
     writing data in connection with a :class:`.Procedure` object.
@@ -104,6 +140,8 @@ class Results(object):
     :param procedure: Procedure object
     :param data_filename: The data filename where the data is or should be
                           stored
+    :param output_format: Formatter which converts the emitted result data
+                          so it can be written to file, defaults to CSV
     """
 
     COMMENT = '#'
@@ -111,7 +149,7 @@ class Results(object):
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
 
-    def __init__(self, procedure, data_filename):
+    def __init__(self, procedure, data_filename, output_format='CSV'):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
@@ -119,7 +157,14 @@ class Results(object):
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
 
-        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
+        if output_format == 'CSV_PANDAS':
+            self.formatter = CSVFormatter_Pandas(
+                columns=self.procedure.DATA_COLUMNS,
+                delimiter=self.DELIMITER,
+                line_break=self.LINE_BREAK
+            )
+        else:  # default to CSV
+            self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
         if isinstance(data_filename, (list, tuple)):
             data_filenames, data_filename = data_filename, data_filename[0]
