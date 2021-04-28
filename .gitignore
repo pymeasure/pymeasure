@@ -109,3 +109,5 @@ settings.json
 
 # Vim
 *.swp
+.DS_Store
+pymeasure/.DS_Store
