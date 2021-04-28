@@ -447,7 +447,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         return wdg.new_curve(results, color=color, **kwargs)
 
     def new_experiment(self, results, curve=None):
-        if curve == None:
+        if curve is None:
             curve_list = []
             for wdg in self.widget_list:
                 curve_list.append(self.new_curve(wdg, results))
