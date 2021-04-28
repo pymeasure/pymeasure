@@ -127,11 +127,14 @@ def test_float_bounds():
 
 
 def test_list_value():
-    # TODO: check against setting the string version of the numeric choices
     p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'])
     p.value = 1
     assert p.value == 1
     p.value = 2.2
+    assert p.value == 2.2
+    p.value = '1' # reading from file
+    assert p.value == 1
+    p.value = '2.2' # reading from file
     assert p.value == 2.2
     p.value = 'three'
     assert p.value == 'three'
@@ -142,13 +145,20 @@ def test_list_value():
 
 
 def test_list_value_with_units():
-    # TODO: check against setting the string version (with units) of the numeric choices
     p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'], units='tests')
+    p.value = '1 tests'
+    assert p.value == 1
+    p.value = '2.2 tests'
+    assert p.value == 2.2
     p.value = 'three tests'
     assert p.value == 'three'
     p.value = 'and four tests'
     assert p.value == 'and four'
 
+def test_list_order():
+    p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'])
+    # check if order is preserved, choices are internally stored as dict
+    assert p.choices == (1, 2.2, 'three', 'and four')
 
 def test_vector():
     p = VectorParameter('test', length=3, units='tests')
