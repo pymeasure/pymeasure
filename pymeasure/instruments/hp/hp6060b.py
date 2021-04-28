@@ -28,6 +28,20 @@ class HP6060B(Instrument):
     """ Represents the HP HP6060B instrument.
     """
 
+    def check_errors(self):
+        """ Return all errors from the instrument. """
+
+        errors = []
+        while True:
+            err = self.values("SYST:ERR?")
+            if int(err[0]) != 0:
+                errmsg = "HP6060B: %s: %s" % (err[0], err[1])
+                errors.append(errmsg)
+            else:
+                break
+
+        return errors
+
     voltage_measured = Instrument.measurement(
         ":MEAS:VOLT?",
         "Measured DC voltage, in Volts"
@@ -57,12 +71,18 @@ class HP6060B(Instrument):
         values=["ON", "OFF"],
     )
 
-    current = Instrument.control(
-        ":CURR:LEVEL?", ":CURR:LEVEL:IMM %g",
-        """ Current mode regulation target, [0...6] Amps. """,
+    current_range = Instrument.control(
+        ":CURR:RANGE?", ":CURR:RANGE %g",
+        """ Current mode regulation range, [0...60] Amps. """,
         validator=validators.strict_range,
         values=[0, 60],
-        check_set_errors=True,
+    )
+
+    current = Instrument.control(
+        ":CURR:LEVEL?", ":CURR:LEVEL:IMM %g",
+        """ Current mode regulation target, [0...60] Amps. """,
+        validator=validators.strict_range,
+        values=[0, 60],
     )
 
     voltage = Instrument.control(
@@ -70,19 +90,24 @@ class HP6060B(Instrument):
         """ Voltage mode regulation target, [0...60] Volts. """,
         validator=validators.strict_range,
         values=[0, 60],
-        check_set_errors=True,
+    )
+
+    resistance_range = Instrument.control(
+        ":RES:RANGE?", ":RES:RANGE %g",
+        """ Resistance mode regulation target, [.033 ... 10000] Ohms. """,
+        validator=validators.strict_range,
+        values=[.033, 10000],
     )
 
     resistance = Instrument.control(
         ":RES:LEVEL?", ":RES:LEVEL:IMM %g",
         """ Resistance mode regulation target, [.033 ... 10000] Ohms. """,
         validator=validators.strict_range,
-        values=[1, 10000],
-        check_set_errors=True,
+        values=[.033, 10000],
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(HP6060B, self).__init__(
+        super().__init__(
             resourceName,
             "HP 6060B",
             **kwargs
