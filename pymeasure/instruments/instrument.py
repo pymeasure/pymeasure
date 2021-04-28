@@ -63,14 +63,6 @@ class Instrument(object):
 
         self.get = Object()
 
-        # TODO: Determine case basis for the addition of these methods
-        if includeSCPI:
-            # Basic SCPI commands
-            self.status = self.measurement("*STB?",
-                                           """ Returns the status of the instrument """)
-            self.complete = self.measurement("*OPC?",
-                                             """ TODO: Add this doc """)
-
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
 
@@ -80,7 +72,38 @@ class Instrument(object):
         if self.SCPI:
             return self.adapter.ask("*IDN?").strip()
         else:
-            return "Warning: Property not implemented."
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
+
+    @property
+    def status(self):
+        """ Returns the status of the instrument"""
+        if self.SCPI:
+            return int(self.adapter.ask("*STB?"))
+        else:
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
+
+    @property
+    def complete(self):
+        """ Return 1 when all pending selected device operations have been completed."""
+        if self.SCPI:
+            return int(self.adapter.ask("*OPC?"))
+        else:
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
+
+    def clear(self):
+        """ Clears the instrument status byte
+        """
+        if self.SCPI:
+            self.write("*CLS")
+        else:
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
+
+    def reset(self):
+        """ Resets the instrument. """
+        if self.SCPI:
+            self.write("*RST")
+        else:
+            raise NotImplementedError("Only implemented for SCPI instruments. Must be re-implemented by the subclass")
 
     # Wrapper functions for the Adapter object
     def ask(self, command):
@@ -112,6 +135,11 @@ class Instrument(object):
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
+
+    def read_stb(self):
+        """ Reads a status byte of the service request by calling read_stb() from Pyvisa. This corresponds
+         to viReadSTB function of the VISA library."""
+        return self.adapter.connection.read_stb()
 
     @staticmethod
     def control(get_command, set_command, docs,
@@ -289,21 +317,14 @@ class Instrument(object):
 
         return property(fget, fset)
 
-    # TODO: Determine case basis for the addition of this method
-    def clear(self):
-        """ Clears the instrument status byte
-        """
-        self.write("*CLS")
-
-    # TODO: Determine case basis for the addition of this method
-    def reset(self):
-        """ Resets the instrument. """
-        self.write("*RST")
-
     def shutdown(self):
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
         log.info("Shutting down %s" % self.name)
+
+    def close(self):
+        """Close the instrument session"""
+        self.adapter.connection.close()
 
     def check_errors(self):
         """Return any accumulated errors. Must be reimplemented by subclasses.
