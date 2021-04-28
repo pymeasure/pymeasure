@@ -26,6 +26,7 @@ import time
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 import logging
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -40,16 +41,177 @@ _reO = re.compile(r'^A(\d{2}.\d{5})D(\d)T(\d)B(\d)W(\d{3}.)C(0.\d{6})\r\n$')
 _reSF = re.compile(r'^T(\d)U(\d{2}.\d{4})L(\d{2}.\d{4})Y(\d{2}.\d)\r\n$')
 _reSI = re.compile(r'^T(\d)U(\d{3}.\d{3})L(\d{3}.\d{3})Y(\d{2}.\d)\r\n$')
 
+
 def extract_value_output_parameters_amps(reply) -> dict:
     match = _reG.match(reply)
     if not match:
-        return None
-    i = float(match.group(1))
-    u = float(match.group(2))
-    r = match.group(3)
+        i = u = r = None
+        log.warning(
+            """
+            Could not match regex to reply of output_parameters_amps.
+            Reply received: 
+            %s
+            """ %reply
+        )
+    else:
+        i = float(match.group(1))
+        u = float(match.group(2))
+        r = match.group(3)
     return dict(current=i, voltage=u, ramp=r)
 
 
+def extract_value_output_parameters_tesla(reply) -> dict:
+    match = _reN.match(reply)
+    if not match:
+        f = u = r = None
+        log.warning(
+            """
+            Could not match regex to reply of output_parameters_tesla.
+            Reply received: 
+            %s
+            """ %reply
+        )
+    else:
+        f = float(match.group(1))
+        u = float(match.group(2))
+        r = match.group(3)
+
+    return dict(field=f, voltage=u, ramp=r)
+
+
+def extract_value_magnet_status(reply) -> dict:
+    matchF = _reJF.match(reply)
+    matchI = _reJI.match(reply)
+
+    if matchF:
+        return dict(heater=int(matchF.group(2)),
+                    value=float(matchF.group(1)),
+                    units=1)
+    elif matchI:
+        return dict(heater=int(matchI.group(2)),
+                    value=float(matchI.group(1)),
+                    units=0)
+    else:
+        return dict(heater=None,
+                    value=None,
+                    units=None)
+        log.warning(
+            """
+            Could not match regex to reply of magnet_status.
+            Reply received: 
+            %s
+            """ % reply
+        )
+
+
+def extract_value_current_status(reply) -> dict:
+    matchF = _reKF.match(reply)
+    matchI = _reKI.match(reply)
+
+    if matchF:
+        return dict(
+            ramp_target=int(matchF.group(1)),
+            ramp_status=int(matchF.group(2)),
+            pause=int(matchF.group(3)),
+            external_trip=int(matchF.group(4)),
+            heater_mode=int(matchF.group(5)),
+            error_code=int(matchF.group(6)),
+            quench_value=float(matchF.group(7)),
+            units=1
+        )
+    elif matchI:
+        return dict(
+            ramp_target=int(matchI.group(1)),
+            ramp_status=int(matchI.group(2)),
+            pause=int(matchI.group(3)),
+            external_trip=int(matchI.group(4)),
+            heater_mode=int(matchI.group(5)),
+            error_code=int(matchI.group(6)),
+            quench_value=float(matchI.group(7)),
+            units=0
+        )
+    else:
+        return dict(
+            ramp_target=None,
+            ramp_status=None,
+            pause=None,
+            external_trip=None,
+            heater_mode=None,
+            error_code=None,
+            quench_value=None,
+            units=None
+        )
+        log.warning(
+            """
+            Could not match regex to reply of current_status.
+            Reply received: 
+            %s
+            """ % reply
+        )
+
+
+
+def extract_value_operating_parameters(reply) -> dict:
+    match = _reO.match(reply)
+
+    if match:
+        return dict(
+            ramp_rate=float(match.group(1)),
+            switch_direction=int(match.group(2)),
+            units=int(match.group(3)),
+            front_panel_lock=int(match.group(4)),
+            heater_current_mA=float(match.group(5)),
+            telsa_per_amps=float(match.group(6))
+        )
+    else:
+        return dict(
+            ramp_rate=None,
+            switch_direction=None,
+            units=None,
+            front_panel_lock=None,
+            heater_current_mA=None,
+            telsa_per_amps=None
+        )
+        log.warning(
+            """
+            Could not match regex to reply of operating_parameters.
+            Reply received: 
+            %s
+            """ % reply
+        )
+
+
+def extract_value_set_point_status(reply) -> dict:
+    matchF = _reSF.match(reply)
+    matchI = _reSI.match(reply)
+
+    if matchF:
+        return dict(
+            units=int(matchF.group(1)),
+            upper_set_point=float(matchF.group(2)),
+            lower_set_point=float(matchF.group(3)),
+            terminal_voltage=float(matchF.group(4))
+        )
+    elif matchI:
+        return dict(
+            units=int(matchI.group(1)),
+            upper_set_point=float(matchI.group(2)),
+            lower_set_point=float(matchI.group(3)),
+            terminal_voltage=float(matchI.group(4))
+        )
+    else:
+        return dict(
+            units=None,
+            upper_set_point=None,
+            lower_set_point=None,
+            terminal_voltage=None
+        )
+        log.warning(
+            """
+            Could not match regex to reply of set_point_status.
+            Reply received: 
+            %s
+            """ % reply
 
 
 class SMC(Instrument, includeSCPI=False):
@@ -148,8 +310,6 @@ class SMC(Instrument, includeSCPI=False):
         values=[0.01, 0.5],
     )
 
-
-
     def __init__(self, resourceName,
                  ramp_rate_max=5,
                  voltage_limit_max=1,
@@ -161,136 +321,6 @@ class SMC(Instrument, includeSCPI=False):
         )
         self._RAMP_RATE_MAX = ramp_rate_max  # A/s
         self._VOLTAGE_LIMIT_MAX = voltage_limit_max  # V
-
-
-    @property
-    def output_parameters_amps(self):
-        self.unit_amps()
-        self.write('G')
-        message = self.read()
-        match = self._reG.match(message)
-
-        if not match:
-            return None
-
-        I = float(match.group(1))
-        U = float(match.group(2))
-        R = match.group(3)
-
-        return dict(current=I, voltage=U, ramp=R)
-
-    @property
-    def output_parameters_tesla(self):
-        self.unit = "T"
-        self.write('N')
-        message = self.read()
-        match = self._reN.match(message)
-
-        if not match:
-            print('DEBUG', self._reN, match, message)
-            return None
-
-        F = float(match.group(1))
-        U = float(match.group(2))
-        R = match.group(3)
-
-        return dict(field=F, voltage=U, ramp=R)
-
-    @property
-    def magnet_status(self):
-        self.write('J')
-        message = self.read()
-
-        matchF = self._reJF.match(message)
-        matchI = self._reJI.match(message)
-
-        if matchF:
-            return dict(heater=int(matchF.group(2)),
-                        value=float(matchF.group(1)),
-                        units=1)
-        elif matchI:
-            return dict(heater=int(matchI.group(2)),
-                        value=float(matchI.group(1)),
-                        units=0)
-        else:
-            return None
-
-    @property
-    def current_status(self):
-        self.write('K')
-        message = self.read()
-
-        matchF = self._reKF.match(message)
-        matchI = self._reKI.match(message)
-
-        if matchF:
-            return dict(
-                ramp_target=int(matchF.group(1)),
-                ramp_status=int(matchF.group(2)),
-                pause=int(matchF.group(3)),
-                external_trip=int(matchF.group(4)),
-                heater_mode=int(matchF.group(5)),
-                error_code=int(matchF.group(6)),
-                quench_value=float(matchF.group(7)),
-                units=1
-            )
-        elif matchI:
-            return dict(
-                ramp_target=int(matchI.group(1)),
-                ramp_status=int(matchI.group(2)),
-                pause=int(matchI.group(3)),
-                external_trip=int(matchI.group(4)),
-                heater_mode=int(matchI.group(5)),
-                error_code=int(matchI.group(6)),
-                quench_value=float(matchI.group(7)),
-                units=0
-            )
-        else:
-            return None
-
-    @property
-    def operating_parameters(self):
-        self.write('O')
-        message = self.read()
-
-        match = self._reO.match(message)
-
-        if match:
-            return dict(
-                ramp_rate=float(match.group(1)),
-                switch_direction=int(match.group(2)),
-                units=int(match.group(3)),
-                front_panel_lock=int(match.group(4)),
-                heater_current_mA=float(match.group(5)),
-                telsa_per_amps=float(match.group(6))
-            )
-        else:
-            return None
-
-    @property
-    def set_point_status(self):
-        self.write('S')
-        message = self.read()
-
-        matchF = self._reSF.match(message)
-        matchI = self._reSI.match(message)
-
-        if matchF:
-            return dict(
-                units=int(matchF.group(1)),
-                upper_set_point=float(matchF.group(2)),
-                lower_set_point=float(matchF.group(3)),
-                terminal_voltage=float(matchF.group(4))
-            )
-        elif matchI:
-            return dict(
-                units=int(matchI.group(1)),
-                upper_set_point=float(matchI.group(2)),
-                lower_set_point=float(matchI.group(3)),
-                terminal_voltage=float(matchI.group(4))
-            )
-        else:
-            return None
 
     @property
     def tesla(self) -> float:
@@ -333,6 +363,9 @@ class SMC(Instrument, includeSCPI=False):
             self.ramp_upper()
 
     def shutdown(self):
+        """Brings the instrument to a safe and stable state"""
+        self.isShutdown = True
+        log.info("Shutting down %s" % self.name)
         self.persistent_mode_heater = True
         self.ramp_target = "Z"
         self.pause = False
