@@ -10,3 +10,4 @@ This section contains specific documentation on the Yokogawa instruments that ar
    :maxdepth: 2
 
    yokogawa7651
+   yokogawags200
