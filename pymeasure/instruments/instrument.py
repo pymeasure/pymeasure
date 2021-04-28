@@ -70,6 +70,9 @@ class Instrument(object):
                                            """ Returns the status of the instrument """)
             self.complete = self.measurement("*OPC?",
                                              """ TODO: Add this doc """)
+        if self.name is None:
+            id_dict = self.id_dict
+            self.name = " ".join(id_dict[k] for k in ("vendor", "model", "serial"))
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
@@ -81,15 +84,21 @@ class Instrument(object):
             return self.adapter.ask("*IDN?").strip()
         else:
             return "Warning: Property not implemented."
+    
+    @property
+    def id_dict(self):
+        return dict(zip(("vendor", "model", "serial", "firmware"), self.id.split(",")))
 
     # Wrapper functions for the Adapter object
-    def ask(self, command):
+    def query(self, command):
         """ Writes the command to the instrument through the adapter
         and returns the read response.
 
         :param command: command string to be sent to the instrument
         """
         return self.adapter.ask(command)
+    
+    ask = query # ask is deprecated
 
     def write(self, command):
         """ Writes the command to the instrument through the adapter.
