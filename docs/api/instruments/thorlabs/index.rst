@@ -10,4 +10,7 @@ This section contains specific documentation on the Thorlabs instruments that ar
    :maxdepth: 2
 
    thorlabspm100usb
+   thorlabsdll
+   thorlabspm
+   thorlabsChrolis
    thorlabspro8000
