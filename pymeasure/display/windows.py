@@ -43,6 +43,7 @@ from .widgets import (
     SequencerWidget,
     ImageWidget,
     DirectoryLineEdit,
+    EstimatorWidget,
 )
 from ..experiment.results import Results
 
@@ -172,6 +173,19 @@ class ManagedWindow(QtGui.QMainWindow):
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.x_axis, self.y_axis = x_axis, y_axis
+
+        # Check if the get_estimates function is reimplemented
+        proc = self.procedure_class()
+        try:
+            proc.get_estimates()
+        except NotImplementedError:
+            self.use_estimator = False
+        except TypeError:
+            # Raised if arguments are asked by the get_estimates method.
+            self.use_estimator = True
+        else:
+            self.use_estimator = True
+
         self._setup_ui()
         self._layout()
         self.setup_plot(self.plot)
@@ -232,6 +246,11 @@ class ManagedWindow(QtGui.QMainWindow):
                 parent=self
             )
 
+        if self.use_estimator:
+            self.estimator = EstimatorWidget(
+                parent=self
+            )
+
     def _layout(self):
         self.main = QtGui.QWidget(self)
 
@@ -281,6 +300,12 @@ class ManagedWindow(QtGui.QMainWindow):
             sequencer_dock.setWidget(self.sequencer)
             sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
+
+        if self.use_estimator:
+            estimator_dock = QtGui.QDockWidget('Estimator')
+            estimator_dock.setWidget(self.estimator)
+            estimator_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, estimator_dock)
 
         tabs = QtGui.QTabWidget(self.main)
         tabs.addTab(self.plot_widget, "Results Graph")
