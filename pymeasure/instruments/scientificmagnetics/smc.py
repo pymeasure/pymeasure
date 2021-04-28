@@ -218,6 +218,10 @@ class SMC(Instrument, includeSCPI=False):
     """ Represents the Scientific Magnetics (Twickenham Scientific Instruments)
     Superconducting Magnet Controller and provides a high-level interface for
     interacting with the instrument.
+
+    WARNING: Use at your own risk!
+    Faulty operation of a superconducting magnet can lead to severe damage or injury!
+    Read the manual: https://www.twicksci.co.uk/manuals/pdf/smc552+.pdf
     """
 
     _RAMP_RATE_MAX = 5
