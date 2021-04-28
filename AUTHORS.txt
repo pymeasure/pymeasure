@@ -23,6 +23,7 @@ Moritz Jung
 Richard Schlitz
 Manuel Zahn
 Mikhaël Myara
+Domenic Prete
 Paul Goulain
 John McMaster
 Dominik Kriegner
