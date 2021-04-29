@@ -25,6 +25,7 @@
 import pytest
 
 import os
+from datetime import datetime
 
 from pymeasure.experiment.results import replace_placeholders
 from pymeasure.experiment.procedure import Procedure
@@ -52,4 +53,10 @@ def test_replace_placeholders():
     with pytest.raises(KeyError):
         replace_placeholders("{Unknown Parameter}", fake)
 
-
+    date_format = "%Y-%m"
+    time_format = "%H:%M"
+    now = datetime.now()
+    date = now.strftime(date_format)
+    time = now.strftime(time_format)
+    assert replace_placeholders("{date}--{time}", fake,
+                                date_format=date_format, time_format=time_format) == date + '--' + time

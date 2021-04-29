@@ -45,6 +45,9 @@ def replace_placeholders(string, procedure):
     parameters = procedure.parameter_objects()
     placeholders = {param.name: param.value for param in parameters.values()}
 
+    placeholders["date"] = now.strftime(date_format)
+    placeholders["time"] = now.strftime(time_format)
+
     # Check keys against available parameters
     invalid_keys = [i[1] for i in Formatter().parse(string)
                     if i[1] is not None and i[1] not in placeholders]
