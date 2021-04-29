@@ -41,7 +41,31 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def replace_placeholders(string, procedure):
+def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
+    """ Replaces the placeholders in the provided strings with the values of the
+    associated parameters, as provided by the procedure. This uses the standard
+    python string.format syntax. Apart from the parameter in the procedure (which
+    should be called by their full names) "date" and "time" are also added as optional
+    placeholders.
+
+    :param string:
+        The string in which the placeholders are to be replaced. Python string.format
+        syntax is used, e.g. "{Parameter Name}" to insert a FloatParameter called
+        "Parameter Name", or "{Parameter Name:.2f}" to also specifically format the
+        parameter.
+
+    :param procedure:
+        The procedure from which to get the parameter values.
+
+    :param date_format:
+        A string to represent how the additional placeholder "date" will be formatted.
+
+    :param time_format:
+        A string to represent how the additional placeholder "time" will be formatted.
+
+    """
+    now = datetime.now()
+
     parameters = procedure.parameter_objects()
     placeholders = {param.name: param.value for param in parameters.values()}
 
