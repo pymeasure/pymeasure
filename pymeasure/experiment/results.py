@@ -30,6 +30,7 @@ import sys
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
 from datetime import datetime
+from string import Formatter
 
 import pandas as pd
 
@@ -40,12 +41,35 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def replace_placeholders(string, procedure):
+    parameters = procedure.parameter_objects()
+    placeholders = {param.name: param.value for param in parameters.values()}
+
+    # Check keys against available parameters
+    invalid_keys = [i[1] for i in Formatter().parse(string)
+                    if i[1] is not None and i[1] not in placeholders]
+    if invalid_keys:
+        raise KeyError("The following placeholder-keys are not valid: '%s'; "
+                       "valid keys are: '%s'." % (
+                           "', '".join(invalid_keys),
+                           "', '".join(placeholders.keys())
+                       ))
+
+    return string.format(**placeholders)
+
+
 def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
-                    dated_folder=False, index=True, datetimeformat="%Y-%m-%d"):
+                    dated_folder=False, index=True, datetimeformat="%Y-%m-%d",
+                    procedure=None):
     """ Returns a unique filename based on the directory and prefix
     """
     now = datetime.now()
     directory = os.path.abspath(directory)
+
+    if procedure is not None:
+        prefix = replace_placeholders(prefix, procedure)
+        suffix = replace_placeholders(suffix, procedure)
+
     if dated_folder:
         directory = os.path.join(directory, now.strftime('%Y-%m-%d'))
     if not os.path.exists(directory):
