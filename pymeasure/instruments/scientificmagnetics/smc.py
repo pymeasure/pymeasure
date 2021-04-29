@@ -51,7 +51,7 @@ def extract_value_output_parameters_amps(reply) -> dict:
             Could not match regex to reply of output_parameters_amps.
             Reply received: 
             %s
-            """ %reply
+            """ % reply
         )
     else:
         i = float(match.group(1))
@@ -69,7 +69,7 @@ def extract_value_output_parameters_tesla(reply) -> dict:
             Could not match regex to reply of output_parameters_tesla.
             Reply received: 
             %s
-            """ %reply
+            """ % reply
         )
     else:
         f = float(match.group(1))
@@ -80,21 +80,18 @@ def extract_value_output_parameters_tesla(reply) -> dict:
 
 
 def extract_value_magnet_status(reply) -> dict:
-    matchF = _reJF.match(reply)
-    matchI = _reJI.match(reply)
+    match_f = _reJF.match(reply)
+    match_i = _reJI.match(reply)
 
-    if matchF:
-        return dict(heater=int(matchF.group(2)),
-                    value=float(matchF.group(1)),
+    if match_f:
+        return dict(heater=int(match_f.group(2)),
+                    value=float(match_f.group(1)),
                     units=1)
-    elif matchI:
-        return dict(heater=int(matchI.group(2)),
-                    value=float(matchI.group(1)),
+    elif match_i:
+        return dict(heater=int(match_i.group(2)),
+                    value=float(match_i.group(1)),
                     units=0)
     else:
-        return dict(heater=None,
-                    value=None,
-                    units=None)
         log.warning(
             """
             Could not match regex to reply of magnet_status.
@@ -102,35 +99,45 @@ def extract_value_magnet_status(reply) -> dict:
             %s
             """ % reply
         )
+        return dict(heater=None,
+                    value=None,
+                    units=None)
 
 
 def extract_value_current_status(reply) -> dict:
-    matchF = _reKF.match(reply)
-    matchI = _reKI.match(reply)
+    match_f = _reKF.match(reply)
+    match_i = _reKI.match(reply)
 
-    if matchF:
+    if match_f:
         return dict(
-            ramp_target=int(matchF.group(1)),
-            ramp_status=int(matchF.group(2)),
-            pause=int(matchF.group(3)),
-            external_trip=int(matchF.group(4)),
-            heater_mode=int(matchF.group(5)),
-            error_code=int(matchF.group(6)),
-            quench_value=float(matchF.group(7)),
+            ramp_target=int(match_f.group(1)),
+            ramp_status=int(match_f.group(2)),
+            pause=int(match_f.group(3)),
+            external_trip=int(match_f.group(4)),
+            heater_mode=int(match_f.group(5)),
+            error_code=int(match_f.group(6)),
+            quench_value=float(match_f.group(7)),
             units=1
         )
-    elif matchI:
+    elif match_i:
         return dict(
-            ramp_target=int(matchI.group(1)),
-            ramp_status=int(matchI.group(2)),
-            pause=int(matchI.group(3)),
-            external_trip=int(matchI.group(4)),
-            heater_mode=int(matchI.group(5)),
-            error_code=int(matchI.group(6)),
-            quench_value=float(matchI.group(7)),
+            ramp_target=int(match_i.group(1)),
+            ramp_status=int(match_i.group(2)),
+            pause=int(match_i.group(3)),
+            external_trip=int(match_i.group(4)),
+            heater_mode=int(match_i.group(5)),
+            error_code=int(match_i.group(6)),
+            quench_value=float(match_i.group(7)),
             units=0
         )
     else:
+        log.warning(
+            """
+            Could not match regex to reply of current_status.
+            Reply received: 
+            %s
+            """ % reply
+        )
         return dict(
             ramp_target=None,
             ramp_status=None,
@@ -141,14 +148,6 @@ def extract_value_current_status(reply) -> dict:
             quench_value=None,
             units=None
         )
-        log.warning(
-            """
-            Could not match regex to reply of current_status.
-            Reply received: 
-            %s
-            """ % reply
-        )
-
 
 
 def extract_value_operating_parameters(reply) -> dict:
@@ -164,6 +163,13 @@ def extract_value_operating_parameters(reply) -> dict:
             telsa_per_amps=float(match.group(6))
         )
     else:
+        log.warning(
+            """
+            Could not match regex to reply of operating_parameters.
+            Reply received: 
+            %s
+            """ % reply
+        )
         return dict(
             ramp_rate=None,
             switch_direction=None,
@@ -172,46 +178,41 @@ def extract_value_operating_parameters(reply) -> dict:
             heater_current_mA=None,
             telsa_per_amps=None
         )
-        log.warning(
-            """
-            Could not match regex to reply of operating_parameters.
-            Reply received: 
-            %s
-            """ % reply
-        )
+
 
 
 def extract_value_set_point_status(reply) -> dict:
-    matchF = _reSF.match(reply)
-    matchI = _reSI.match(reply)
+    match_f = _reSF.match(reply)
+    match_i = _reSI.match(reply)
 
-    if matchF:
+    if match_f:
         return dict(
-            units=int(matchF.group(1)),
-            upper_set_point=float(matchF.group(2)),
-            lower_set_point=float(matchF.group(3)),
-            terminal_voltage=float(matchF.group(4))
+            units=int(match_f.group(1)),
+            upper_set_point=float(match_f.group(2)),
+            lower_set_point=float(match_f.group(3)),
+            terminal_voltage=float(match_f.group(4))
         )
-    elif matchI:
+    elif match_i:
         return dict(
-            units=int(matchI.group(1)),
-            upper_set_point=float(matchI.group(2)),
-            lower_set_point=float(matchI.group(3)),
-            terminal_voltage=float(matchI.group(4))
+            units=int(match_i.group(1)),
+            upper_set_point=float(match_i.group(2)),
+            lower_set_point=float(match_i.group(3)),
+            terminal_voltage=float(match_i.group(4))
         )
     else:
-        return dict(
-            units=None,
-            upper_set_point=None,
-            lower_set_point=None,
-            terminal_voltage=None
-        )
         log.warning(
             """
             Could not match regex to reply of set_point_status.
             Reply received: 
             %s
             """ % reply
+        )
+        return dict(
+            units=None,
+            upper_set_point=None,
+            lower_set_point=None,
+            terminal_voltage=None
+        )
 
 
 class SMC(Instrument, includeSCPI=False):
@@ -245,13 +246,14 @@ class SMC(Instrument, includeSCPI=False):
         map_values=True
     )
 
-    direction = Instrument.setting(
+    reverse_switch_on = Instrument.setting(
         "D%d",
         """Sets the direction of the reversing switch, if installed.
-         Can take the values "F"orward or "R"everse.
-         WARNING: Change only if Magnet has been ramped to Zero!""",
+        Forward if switch is off; Reverse if switch is on.
+        Takes boolean value. True = Switch is on, Field is reverse.
+        WARNING: Change only if Magnet has been ramped to Zero!""",
         validator=strict_discrete_set,
-        values={"F": 0, "R": 1},
+        values={False: 0, True: 1},
         map_values=True
     )
 
@@ -313,6 +315,43 @@ class SMC(Instrument, includeSCPI=False):
         validator=strict_range,
         values=[0.01, 0.5],
     )
+
+    output_parameters_amps = Instrument.measurement(
+        "G",
+        """Returns dict of output parameters.""",
+        preprocess_reply=extract_value_output_parameters_amps
+    )
+
+    output_parameters_tesla = Instrument.measurement(
+        "N",
+        """Returns dict of output parameters.""",
+        preprocess_reply=extract_value_output_parameters_tesla
+    )
+
+    magnet_status = Instrument.measurement(
+        "J",
+        "Returns dict of magnet status.",
+        preprocess_reply=extract_value_magnet_status
+    )
+
+    current_status = Instrument.measurement(
+        "K",
+        "Returns dict of current status.",
+        preprocess_reply=extract_value_current_status
+    )
+
+    operating_parameters = Instrument.measurement(
+        "O",
+        "Returns dict of operation parameters",
+        preprocess_reply=extract_value_operating_parameters
+    )
+
+    set_point_status = Instrument.measurement(
+        "S",
+        "Returns dict of set point status.",
+        preprocess_reply=extract_value_set_point_status
+    )
+
 
     def __init__(self, resourceName,
                  ramp_rate_max=5,
