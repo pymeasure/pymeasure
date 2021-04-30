@@ -27,6 +27,7 @@
 import logging
 
 from pymeasure.instruments import Instrument
+from enum import IntFlag
 
 
 
@@ -72,7 +73,10 @@ class HP3478A(Instrument):
         "hold": "T4",
         "fast": "T5"
         }
+    
 
+    measurement_string=''
+    
     def __init__(self, resourceName, **kwargs):
         super(HP3478A, self).__init__(
             resourceName,
@@ -82,7 +86,7 @@ class HP3478A(Instrument):
             read_termination="\r\n",
             **kwargs
         )
-
+    
     @property
     def error_status(self):
         """
@@ -108,6 +112,7 @@ class HP3478A(Instrument):
         for i in range(0,5):
             status.append(status_read[i])
         return status
+
     @property
     def status_readable(self):
         """
@@ -248,32 +253,38 @@ class HP3478A(Instrument):
         :return measured_value: the value mesured based on the settings.
         :rtype measured_value: float
         """
-        measurement_string=''
+        cached_ms=self.measurement_string
         if mode in self.MODES:
-            measurement_string=self.MODES[mode]
+            self.measurement_string=self.MODES[mode]
         else:
             raise Exception(ValueError('Mode string not supported'))
 
         if measurement_range in self.RANGES[mode]:
-            measurement_string=measurement_string+self.RANGES[mode][measurement_range]
+            self.measurement_string=self.measurement_string+self.RANGES[mode][measurement_range]
         else:
             raise Exception(ValueError('Value not supported'))
 
         if auto_zero == 0 or auto_zero == 1:
-            measurement_string=measurement_string+str('Z{}'.format(auto_zero))
+            self.measurement_string=self.measurement_string+str('Z{}'.format(auto_zero))
         else:
             raise Exception(ValueError('Value not supported'))
 
         if digits == 3 or digits == 4 or digits == 5:
-            measurement_string=measurement_string+str('N{}'.format(digits))
+            self.measurement_string=self.measurement_string+str('N{}'.format(digits))
         else:
             raise Exception(ValueError('Value not supported'))
 
         if trigger in self.TRIGGERS:
-            measurement_string=measurement_string+self.TRIGGERS[trigger]
+            self.measurement_string=self.measurement_string+self.TRIGGERS[trigger]
         else:
             raise Exception(ValueError('Value not supported'))
-        measured_value=float(self.ask(measurement_string))
+      
+        if cached_ms==self.measurement_string:
+            measured_value=float(self.read())
+            print("cached")
+        else:
+            measured_value=float(self.ask(self.measurement_string))
+            print("uncached")
         return measured_value
 
     def display_reset(self):
