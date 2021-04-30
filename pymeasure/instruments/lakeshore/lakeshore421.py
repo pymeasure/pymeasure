@@ -23,10 +23,10 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.adapters import VISAAdapter, SerialAdapter
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set
 
-from pyvisa import constants as visa_const
 import numpy as np
 from time import sleep
 
@@ -54,20 +54,30 @@ class LakeShore421(Instrument):
         super(LakeShore421, self).__init__(
             resource_name,
             "Lake Shore 421 Gaussmeter",
-            read_termination='\r',
-            write_termination='\n',
             command_delay=0.05,
             **kwargs
         )
 
-        self.adapter.connection.set_visa_attribute(
-            visa_const.VI_ATTR_ASRL_BAUD, 9600)
-        self.adapter.connection.set_visa_attribute(
-            visa_const.VI_ATTR_ASRL_DATA_BITS, 7)
-        self.adapter.connection.set_visa_attribute(
-            visa_const.VI_ATTR_ASRL_STOP_BITS, visa_const.VI_ASRL_STOP_ONE)
-        self.adapter.connection.set_visa_attribute(
-            visa_const.VI_ATTR_ASRL_PARITY, visa_const.VI_ASRL_PAR_ODD)
+        if isinstance(self.adapter, VISAAdapter):
+            self.adapter.connection.baud_rate = 9600
+            self.adapter.connection.data_bits = 7
+            self.adapter.connection.stop_bits = 10
+            self.adapter.connection.parity = 1
+
+            self.adapter.connection.read_termination = '\r'
+            self.adapter.connection.write_termination = '\n'
+
+        elif isinstance(self.adapter, SerialAdapter):
+            self.adapter.connection.baudrate = 9600
+            self.adapter.connection.bytesize = 7
+            self.adapter.connection.stopbits = 1
+            self.adapter.connection.parity = "O"
+            self.adapter.connection.timeout = 1
+
+            # Ensure a \n is writen after every command
+            write = self.adapter.write
+            self.adapter.write = lambda command: write(command + '\n')
+
 
     def _raw_to_field(self, field_raw, multiplier_name):
         if not field_raw == "OL":
