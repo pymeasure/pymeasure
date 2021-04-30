@@ -281,10 +281,8 @@ class HP3478A(Instrument):
       
         if cached_ms==self.measurement_string:
             measured_value=float(self.read())
-            print("cached")
         else:
             measured_value=float(self.ask(self.measurement_string))
-            print("uncached")
         return measured_value
 
     def display_reset(self):
