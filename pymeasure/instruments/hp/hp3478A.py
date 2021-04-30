@@ -237,7 +237,7 @@ class HP3478A(Instrument):
     def measure(self,mode='DCV',measurement_range='auto',auto_zero=1,digits=5, trigger='auto'):
         """
         returns a measurement result, depeding on the parameters
-
+        
 
         :param mode: optional, measurement mode to be used, valid modes are: 'DCV','ACV','R2W' (2 wire Ohms mode),
             'R4W' (4 wire Ohms mode),'DCI','ACI', 'Rext' (extended Ohms mode, see manual for more detail), defaults to ['DCV']
@@ -284,6 +284,29 @@ class HP3478A(Instrument):
         else:
             measured_value=float(self.ask(self.measurement_string))
         return measured_value
+
+    def display_text(self, text_to_display, pers=0):
+        """
+        Will show the text on the display.
+        Up to 12 uppercase characters and numbers are allowed. punctuation marks (,.;) are allowed in the string
+        if pers is set to 1, the display will only show the text (no other announcators are shown) and go blank after 10min.
+        use the display_reset() function to restore normal display operation
+        :param text_to_display: string to be displayed, will be transferred to uppercase and checked for length
+        :type text_to_display: str
+        :param pers: 0: normal status display, 1: no status display
+        :type pers: int
+        """
+        if text_to_display.isprintable():
+            if len(text_to_display)<=12:
+                if pers==0:
+                    self.write('D2'+text_to_display.upper())
+                else:
+                    self.write('D3'+text_to_display.upper())
+            else:
+                raise Exception(ValueError('String too long'))
+        else:
+            raise Exception(ValueError('String contains not printable elements'))
+
 
     def display_reset(self):
         """
