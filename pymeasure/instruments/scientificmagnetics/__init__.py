@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .smc import SMC
+from .scimag import SciMag

@@ -215,11 +215,12 @@ def extract_value_set_point_status(reply) -> dict:
         )
 
 
-class SMC(Instrument, includeSCPI=False):
+class SciMag(Instrument):
     """ Represents the Scientific Magnetics (Twickenham Scientific Instruments)
-    Superconducting Magnet Controller and provides a high-level interface for
-    interacting with the instrument.
+    Superconducting Magnet Controller SciMag S-11-52-13.
 
+    Provides a high-level interface for
+    interacting with the instrument.
     WARNING: Use at your own risk!
     Faulty operation of a superconducting magnet can lead to severe damage or injury!
     Read the manual: https://www.twicksci.co.uk/manuals/pdf/smc552+.pdf
@@ -231,7 +232,8 @@ class SMC(Instrument, includeSCPI=False):
     pause = Instrument.setting(
         "P%d",
         """A boolean property that controls the pause-status,
-         which takes the values True (pause) and False (continue)""",
+         which takes the values True (pause) and False (continue)
+         """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -240,7 +242,8 @@ class SMC(Instrument, includeSCPI=False):
     unit = Instrument.setting(
         "T%d",
         """Sets the units displayed and can take the values
-         "A"mpere or "T"esla""",
+         "A"mpere or "T"esla
+         """,
         validator=strict_discrete_set,
         values={"A": 0, "T": 1},
         map_values=True
@@ -251,7 +254,8 @@ class SMC(Instrument, includeSCPI=False):
         """Sets the direction of the reversing switch, if installed.
         Forward if switch is off; Reverse if switch is on.
         Takes boolean value. True = Switch is on, Field is reverse.
-        WARNING: Change only if Magnet has been ramped to Zero!""",
+        WARNING: Change only if Magnet has been ramped to Zero!
+        """,
         validator=strict_discrete_set,
         values={False: 0, True: 1},
         map_values=True
@@ -259,7 +263,8 @@ class SMC(Instrument, includeSCPI=False):
 
     ramp_target = Instrument.setting(
         "R%d",
-        """Sets Ramp Target. Can take the values "Z"ero, "L"ower, "U"pper.""",
+        """Sets Ramp Target. Can take the values "Z"ero, "L"ower, "U"pper.
+        """,
         validator=strict_discrete_set,
         values={"Z": 0, "L": 1, "U": 2},
         map_values=True
@@ -271,7 +276,8 @@ class SMC(Instrument, includeSCPI=False):
         Can take the values "O"ff, "C"onditional on, "U"nconditional on, "R"eset persistent current mode to zero.
         WARNING: Unconditional on will turn on the heater without any interlocks! Use at own risk.
         Standard mode to switch heater on is Conditional.
-        Simplified Commands are "True" (Conditional on) and "False" (Off).""",
+        Simplified Commands are "True" (Conditional on) and "False" (Off).
+        """,
         validator=strict_discrete_set,
         values={"O": 0, "C": 1, "U": 2, "R": 9, False: 0, True: 1},
         map_values=True
@@ -279,7 +285,7 @@ class SMC(Instrument, includeSCPI=False):
 
     ramp_rate = Instrument.setting(
         "A%08.5f",
-        "Sets the Ramp rate in A/s.",
+        """Sets the Ramp rate in A/s.""",
         validator=strict_range,
         values=[0, _RAMP_RATE_MAX],
     )
@@ -311,9 +317,30 @@ class SMC(Instrument, includeSCPI=False):
         "C%08.6f",
         """Calibrate the output to Tesla per Amp value of the superconducting magnet.
          The Value is assumed to lie between 0.01 and 0.5 T/A
-         and will be set to zero if a number outside this range is entered.""",
+         and will be set to zero if a number outside this range is entered.
+         """,
         validator=strict_range,
         values=[0.01, 0.5],
+    )
+
+    lower_setpoint = Instrument.setting(
+        "L%08.4f",
+        """Sets the lower setpoint. 
+        Unit depends on the unit set in the magnet controller.
+        Unit can be "T" or "A" and must be set before.
+        """,
+        validator=strict_range,
+        values=[0, 200]
+    )
+
+    upper_setpoint = Instrument.setting(
+        "U%08.4f",
+        """Sets the upper setpoint. 
+        Unit depends on the unit set in the magnet controller.
+        Unit can be "T" or "A" and must be set before.
+        """,
+        validator=strict_range,
+        values=[0, 200]
     )
 
     output_parameters_amps = Instrument.measurement(
@@ -356,17 +383,27 @@ class SMC(Instrument, includeSCPI=False):
     def __init__(self, resourceName,
                  ramp_rate_max=5,
                  voltage_limit_max=1,
+                 field_max=10,
                  **kwargs):
         super().__init__(
             resourceName,
             "Scientific Magnetics SMC",
+            includeSCPI = False
             **kwargs
         )
         self._RAMP_RATE_MAX = ramp_rate_max  # A/s
         self._VOLTAGE_LIMIT_MAX = voltage_limit_max  # V
+        self._T_MAX  # T
 
     @property
     def tesla(self) -> float:
+        """
+        High-Level property for setting and getting the field in the solenoid.
+
+        If installed, the setter-funktion toggles the
+        reversal-switch automatically at zero-field.
+        """
+        self.unit = "T"
         value = self.output_parameters_tesla["field"]
         if self.operating_parameters["switch_direction"] == 0:
             sign = +1
@@ -377,9 +414,10 @@ class SMC(Instrument, includeSCPI=False):
 
     @tesla.setter
     def tesla(self, value: float):
+        self.unit = "T"
         if value == 0:
-            self.ramp_zero()
-        else:
+            self.ramp_target = "Z"
+        elif abs(value) < self.MAX_FIELD_TESLA:
             # 1. Get actual direction
             if self.operating_parameters["switch_direction"] == 0:
                 sign = +1
@@ -392,21 +430,23 @@ class SMC(Instrument, includeSCPI=False):
             if value * sign > 0:
                 self.upper_setpoint_tesla(abs(value))
             elif value * sign < 0:
-                self.ramp_zero()
-
+                self.ramp_target = "Z"
                 # At zero-field: switch direction.
                 while not (self.current_status["ramp_status"] == 1):
                     time.sleep(1)
                 if value > 0:
-                    self.switch_forward()
+                    self.reverse_switch_on = False
                 elif value < 0:
-                    self.switch_reversed()
-
+                    self.reverse_switch_on = True
                 self.upper_setpoint_tesla(abs(value))
-            self.ramp_upper()
+            self.ramp_target = "U"
+        else:
+            log.warning("Intended field was: %08.4f T.\nAllowed maximum field is: %08.4f T" %(value, self._T_MAX))
+            raise UserWarning("Intended field value exceeded range of the solenoid. Value was NOT set.")
 
     def shutdown(self):
-        """Brings the instrument to a safe and stable state"""
+        """Brings the instrument to a safe and stable state.
+        """
         self.isShutdown = True
         log.info("Shutting down %s" % self.name)
         self.persistent_mode_heater = True
