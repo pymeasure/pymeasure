@@ -44,6 +44,9 @@ class Instrument(object):
     :param adapter: An :class:`Adapter<pymeasure.adapters.Adapter>` object
     :param name: A string name
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    :param write_delay: A float that enables to ensure a minimum time (in seconds) between
+        consecutive writes (also includes the writes in a query); if sufficient time has
+        already passed after the previous write, the write will not be delayed any further.
     """
 
     # noinspection PyPep8Naming
