@@ -30,6 +30,17 @@ Here the :code:`ask` method writes the SCPI command, reads the result, and retur
 
 This example illustrates that the top-level methods like :code:`id` are really composed of many lower-level methods. Both can be called depending on the operation that is desired. PyMeasure hides the complexity of these lower-level operations, so you can focus on the bigger picture.
 
+Instruments are also equipped to be used in a :code:`with` statement. ::
+
+    with Keithley2400("GPIB::4") as sourcemeter:
+        sourcemeter.id
+
+When the :code:`with`-block is exited, the :code:`shutdown` method of the instrument will be called, turning the system into a safe state. ::
+
+    with Keithley2400("GPIB::4") as sourcemeter:
+        sourcemeter.isShutdown == False
+    sourcemeter.isShutdown == True
+
 .. _adapters:
 
 Using adapters
