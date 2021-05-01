@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter, SerialAdapter
+from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set
 
@@ -66,17 +66,6 @@ class LakeShore421(Instrument):
 
             self.adapter.connection.read_termination = '\r'
             self.adapter.connection.write_termination = '\n'
-
-        elif isinstance(self.adapter, SerialAdapter):
-            self.adapter.connection.baudrate = 9600
-            self.adapter.connection.bytesize = 7
-            self.adapter.connection.stopbits = 1
-            self.adapter.connection.parity = "O"
-            self.adapter.connection.timeout = 1
-
-            # Ensure a \n is written after every command
-            write = self.adapter.write
-            self.adapter.write = lambda command: write(command + '\n')
 
     def _raw_to_field(self, field_raw, multiplier_name):
         if not field_raw == "OL":
