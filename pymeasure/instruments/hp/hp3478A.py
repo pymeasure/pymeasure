@@ -25,11 +25,7 @@
 
 
 import logging
-
 from pymeasure.instruments import Instrument
-from enum import IntFlag
-
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,8 +39,6 @@ class HP3478A(Instrument):
 
     As this unit predates SCPI some tricks are required to get this working
     """
-
-
     MODES={"DCV": "F1",
            "ACV": "F2",
            "R2W": "F3",
@@ -82,25 +76,23 @@ class HP3478A(Instrument):
         super(HP3478A, self).__init__(
             resourceName,
             "Hewlett-Packard HP3478A",
-            includeSCPI=False,
-            send_end=True,
-            read_termination="\r\n",
+            includeSCPI = False,
+            send_end = True,
+            read_termination = "\r\n",
             **kwargs
         )
-    
+
     check_errors = Instrument.measurement(
         "E",
         """Checks the error status register""",
         get_process=(lambda x: int(x)),
         )
 
-    
     status = Instrument.measurement(
         "B",
         """Checks the status registers""",
         get_process=(lambda x: bytes(x.encode(encoding="ASCII"))),
         )
-    
 
     @property
     def status_readable(self):
@@ -111,22 +103,22 @@ class HP3478A(Instrument):
         :rtype hrs: str
         """
         status_read=self.status
-        d_act=6-(status_read[0]&3)
-        m_act=list(self.MODES.keys())[((status_read[0]>>5)&7)-1]
-        if m_act=='DCV':
-            m_str='V'
-        if m_act=='ACV':
-            m_str='V'
-        if m_act=='DCI':
-            m_str='A'
-        if m_act=='ACI':
-            m_str='A'
-        if m_act=='R2W':
-            m_str='Ohm'
-        if m_act=='R4W':
-            m_str='Ohm'
-        if m_act=='Rext':
-            m_str='Ohm'
+        d_act = 6 - (status_read[0]&3)
+        m_act = list(self.MODES.keys())[((status_read[0]>>5)&7)-1]
+        if m_act == 'DCV':
+            m_str = 'V'
+        if m_act == 'ACV':
+            m_str = 'V'
+        if m_act == 'DCI':
+            m_str = 'A'
+        if m_act == 'ACI':
+            m_str = 'A'
+        if m_act == 'R2W':
+            m_str = 'Ohm'
+        if m_act == 'R4W':
+            m_str = 'Ohm'
+        if m_act == 'Rext':
+            m_str = 'Ohm'
 
         r_act=list(self.RANGES[m_act].keys())[(((status_read[0]>>2)&7)-1)]
         if r_act >=1E6:
@@ -139,19 +131,19 @@ class HP3478A(Instrument):
             r_str=str(r_act)+ ' '
 
         hrs = '----- HP3478 ----- Status -----\n'
-        hrs = hrs + 'The current range is '+r_str+m_str+' with '+str(d_act)+' 1/2 digits\r\n'
+        hrs = hrs + 'The current range is ' + r_str + m_str + ' with ' + str(d_act) + ' 1/2 digits\r\n'
 
         hrs = hrs + 'General status: \r\n'
-        hrs = hrs + '     Internal trigger: '+str(status_read[1]&1)+'\r\n'
-        hrs = hrs + '     Autorange: '+str(status_read[1]>>1&1)+'\r\n'
-        hrs = hrs + '     Auto Zero: '+str(status_read[1]>>2&1)+'\r\n'
-        hrs = hrs + '     50 Hz opereration: '+str(status_read[1]>>3&1)+'\r\n'
-        hrs = hrs + '     Front/Rear: '+str(status_read[1]>>4&1)+'\r\n'
-        hrs = hrs + '     CalibrationRAM en: '+str(status_read[1]>>6&1)+'\r\n'
-        hrs = hrs + '     External trigger: '+str(status_read[1]>>7&1)+'\r\n'
-        hrs = hrs + 'Srq mask: '+str(status_read[2])+'\r\n'
-        hrs = hrs + 'Error status: '+str(status_read[3])+'\r\n'
-        hrs = hrs + 'DAC value: '+str(status_read[4])+'\r\n'
+        hrs = hrs + '     Internal trigger: ' + str(status_read[1]&1) + '\r\n'
+        hrs = hrs + '     Autorange: ' + str(status_read[1]>>1&1) + '\r\n'
+        hrs = hrs + '     Auto Zero: ' + str(status_read[1]>>2&1) + '\r\n'
+        hrs = hrs + '     50 Hz opereration: ' + str(status_read[1]>>3&1) + '\r\n'
+        hrs = hrs + '     Front/Rear: ' + str(status_read[1]>>4&1) + '\r\n'
+        hrs = hrs + '     CalibrationRAM en: ' + str(status_read[1]>>6&1) + '\r\n'
+        hrs = hrs + '     External trigger: ' + str(status_read[1]>>7&1) + '\r\n'
+        hrs = hrs + 'Srq mask: ' + str(status_read[2]) + '\r\n'
+        hrs = hrs + 'Error status: ' + str(status_read[3]) + '\r\n'
+        hrs = hrs + 'DAC value: ' + str(status_read[4]) + '\r\n'
         return hrs
 
     @property
@@ -162,8 +154,8 @@ class HP3478A(Instrument):
         :return autozero: 0 --> Autozero off,1 --> Autozero on
         :rtype autozero: int
         """
-        status_read=self.status
-        autozero=status_read[1]>>2&1
+        status_read = self.status
+        autozero = status_read[1]>>2&1
         return autozero
 
     @auto_zero.setter
@@ -174,10 +166,10 @@ class HP3478A(Instrument):
         :param on_off: 0 --> disables autozero,1 --> enables autozero.
         :type on_off: int
         """
-        if on_off == 1 or on_off == 0:
+        if on_off in (0,1):
             self.write('Z{}'.format(on_off))
         else:
-            raise Exception(ValueError("Value should be 0 or 1"))
+            raise Exception(ValueError('Value should be 0 or 1'))
 
     @property
     def active_connectors(self):
@@ -187,8 +179,8 @@ class HP3478A(Instrument):
         :return front_back: 0 --> back terminals, 1 --> front terminals
         :rtype front_back: int
         """
-        status_read=self.status
-        front_back=status_read[1]>>4&1
+        status_read = self.status
+        front_back = status_read[1]>>4&1
         return front_back
 
     @property
@@ -199,15 +191,15 @@ class HP3478A(Instrument):
         :return trigger_stat: string value describing the current status of the trigger
         :rtype trigger_stat: str
         """
-        status_read=self.status
-        int_trig=status_read[1]&1
-        ext_trig=status_read[1]>>7&1
-        if int_trig==1 and ext_trig==0:
-            trigger_stat='internal'
-        if int_trig==0 and ext_trig==1:
-            trigger_stat='external'
-        if int_trig==0 and ext_trig==0:
-            trigger_stat='hold'
+        status_read = self.status
+        int_trig = status_read[1]&1
+        ext_trig = status_read[1]>>7&1
+        if int_trig == 1 and ext_trig == 0:
+            trigger_stat = 'internal'
+        if int_trig == 0 and ext_trig == 1:
+            trigger_stat = 'external'
+        if int_trig == 0 and ext_trig == 0:
+            trigger_stat = 'hold'
         return trigger_stat
 
     @trigger.setter
@@ -221,9 +213,9 @@ class HP3478A(Instrument):
         if trigger_mode in self.TRIGGERS.keys():
             self.write(self.TRIGGERS[trigger_mode])
         else:
-            raise Exception(ValueError("Value not allowed"))
+            raise Exception(ValueError('Value not allowed'))
 
-    def measure(self,mode='DCV',measurement_range='auto',auto_zero=1,digits=5, trigger='auto'):
+    def measure(self, mode='DCV', measurement_range='auto', auto_zero=1, digits=5, trigger='auto'):
         """
         returns a measurement result, depeding on the parameters
 
@@ -242,36 +234,36 @@ class HP3478A(Instrument):
         :return measured_value: the value mesured based on the settings.
         :rtype measured_value: float
         """
-        cached_ms=self.measurement_string
+        cached_ms = self.measurement_string
         if mode in self.MODES:
-            self.measurement_string=self.MODES[mode]
+            self.measurement_string = self.MODES[mode]
         else:
             raise Exception(ValueError('Mode string not supported'))
 
         if measurement_range in self.RANGES[mode]:
-            self.measurement_string=self.measurement_string+self.RANGES[mode][measurement_range]
+            self.measurement_string = self.measurement_string + self.RANGES[mode][measurement_range]
         else:
             raise Exception(ValueError('Value not supported'))
 
-        if auto_zero == 0 or auto_zero == 1:
-            self.measurement_string=self.measurement_string+str('Z{}'.format(auto_zero))
+        if auto_zero in (0,1):
+            self.measurement_string = self.measurement_string + str('Z{}'.format(auto_zero))
         else:
             raise Exception(ValueError('Value not supported'))
 
-        if digits == 3 or digits == 4 or digits == 5:
-            self.measurement_string=self.measurement_string+str('N{}'.format(digits))
+        if digits in (3,4,5):
+            self.measurement_string = self.measurement_string + str('N{}'.format(digits))
         else:
             raise Exception(ValueError('Value not supported'))
 
         if trigger in self.TRIGGERS:
-            self.measurement_string=self.measurement_string+self.TRIGGERS[trigger]
+            self.measurement_string = self.measurement_string + self.TRIGGERS[trigger]
         else:
             raise Exception(ValueError('Value not supported'))
 
-        if cached_ms==self.measurement_string:
-            measured_value=float(self.read())
+        if cached_ms == self.measurement_string:
+            measured_value = float(self.read())
         else:
-            measured_value=float(self.ask(self.measurement_string))
+            measured_value = float(self.ask(self.measurement_string))
         return measured_value
 
     def display_text(self, text_to_display, pers=0):
@@ -286,11 +278,11 @@ class HP3478A(Instrument):
         :type pers: int
         """
         if text_to_display.isprintable():
-            if len(text_to_display)<=12:
-                if pers==0:
-                    self.write('D2'+text_to_display.upper())
+            if len(text_to_display) <= 12:
+                if pers == 0:
+                    self.write('D2' + text_to_display.upper())
                 else:
-                    self.write('D3'+text_to_display.upper())
+                    self.write('D3' + text_to_display.upper())
             else:
                 raise Exception(ValueError('String too long'))
         else:
