@@ -51,18 +51,19 @@ class HP3478A(Instrument):
            "R4W": "F4",
            "DCI": "F5",
            "ACI": "F6",
-           "Rext": "F7"
+           "Rext": "F7",
            }
 
-    RANGES={"DCV": {3E-2: "R-2",3E-1: "R-1",3: "R0",30: "R1",300:"R2","auto": "RA"},
-            "ACV": {3E-1: "R-1",3: "R0",30: "R1" ,300: "R2","auto": "RA"},
-            "R2W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5", 3E6: "R6",
-                    3E7: "R7","auto": "RA"},
-            "R4W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5", 3E6: "R6",
-                    3E7: "R7","auto": "RA"},
+    RANGES={"DCV": {3E-2: "R-2", 3E-1: "R-1",3: "R0",30: "R1",300:"R2",
+                    "auto": "RA"},
+            "ACV": {3E-1: "R-1", 3: "R0",30: "R1" ,300: "R2","auto": "RA"},
+            "R2W": {30: "R1", 300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5",
+                    3E6: "R6", 3E7: "R7","auto": "RA"},
+            "R4W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5",
+                    3E6: "R6", 3E7: "R7","auto": "RA"},
             "DCI": {3E-1: "R-1",3: "R0","auto": "RA"},
             "ACI": {3E-1: "R-1",3: "R0","auto": "RA"},
-            "Rext": {3E6: "R7","auto": "RA"}
+            "Rext": {3E6: "R7","auto": "RA"},
             }
 
     TRIGGERS={
@@ -71,12 +72,12 @@ class HP3478A(Instrument):
         "external": "T2",
         "single": "T3",
         "hold": "T4",
-        "fast": "T5"
+        "fast": "T5",
         }
-    
+
 
     measurement_string=''
-    
+
     def __init__(self, resourceName, **kwargs):
         super(HP3478A, self).__init__(
             resourceName,
@@ -87,31 +88,19 @@ class HP3478A(Instrument):
             **kwargs
         )
     
-    @property
-    def error_status(self):
-        """
-        get the Error-status register value
+    check_errors = Instrument.measurement(
+        "E",
+        """Checks the error status register""",
+        get_process=(lambda x: int(x)),
+        )
 
-        :return estatus: error status register value (confirm with manual for detail)
-        :rtype estatus: int
-        """
-        estatus=self.ask('E')
-        return estatus
-
-    @property
-    def status(self):
-        """
-        Reads the HP3478A status register (5-bytes)
-
-        :return status: list of 5 status bytes (confirm with manual for detail).
-        :rtype status: list
-        """
-        self.write("B")
-        status_read=self.adapter.connection.read_bytes(5)
-        status=[]
-        for i in range(0,5):
-            status.append(status_read[i])
-        return status
+    
+    status = Instrument.measurement(
+        "B",
+        """Checks the status registers""",
+        get_process=(lambda x: bytes(x.encode(encoding="ASCII"))),
+        )
+    
 
     @property
     def status_readable(self):
@@ -173,7 +162,7 @@ class HP3478A(Instrument):
         :return autozero: 0 --> Autozero off,1 --> Autozero on
         :rtype autozero: int
         """
-        status_read=self.status()
+        status_read=self.status
         autozero=status_read[1]>>2&1
         return autozero
 
@@ -198,7 +187,7 @@ class HP3478A(Instrument):
         :return front_back: 0 --> back terminals, 1 --> front terminals
         :rtype front_back: int
         """
-        status_read=self.status()
+        status_read=self.status
         front_back=status_read[1]>>4&1
         return front_back
 
@@ -210,7 +199,7 @@ class HP3478A(Instrument):
         :return trigger_stat: string value describing the current status of the trigger
         :rtype trigger_stat: str
         """
-        status_read=self.status()
+        status_read=self.status
         int_trig=status_read[1]&1
         ext_trig=status_read[1]>>7&1
         if int_trig==1 and ext_trig==0:
@@ -237,7 +226,7 @@ class HP3478A(Instrument):
     def measure(self,mode='DCV',measurement_range='auto',auto_zero=1,digits=5, trigger='auto'):
         """
         returns a measurement result, depeding on the parameters
-        
+
 
         :param mode: optional, measurement mode to be used, valid modes are: 'DCV','ACV','R2W' (2 wire Ohms mode),
             'R4W' (4 wire Ohms mode),'DCI','ACI', 'Rext' (extended Ohms mode, see manual for more detail), defaults to ['DCV']
@@ -278,7 +267,7 @@ class HP3478A(Instrument):
             self.measurement_string=self.measurement_string+self.TRIGGERS[trigger]
         else:
             raise Exception(ValueError('Value not supported'))
-      
+
         if cached_ms==self.measurement_string:
             measured_value=float(self.read())
         else:
