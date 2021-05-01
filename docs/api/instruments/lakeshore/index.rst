@@ -11,4 +11,5 @@ This section contains specific documentation on the Lake Shore Cryogenics instru
 
    adapters
    lakeshore331
+   lakeshore421
    lakeshore425
