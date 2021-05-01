@@ -54,7 +54,7 @@ class LakeShore421(Instrument):
         super(LakeShore421, self).__init__(
             resource_name,
             "Lake Shore 421 Gaussmeter",
-            command_delay=0.05,
+            write_delay=0.05,
             **kwargs
         )
 

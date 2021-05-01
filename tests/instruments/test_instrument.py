@@ -266,11 +266,11 @@ def test_with_statement():
     assert fake.isShutdown == True
 
 
-def test_command_delay():
-    """ Test whether all communication command correctly observe
-    the command-delay"""
+def test_write_delay():
+    """ Test whether all instrument writes correctly observe
+    the write-delay"""
     delay = 0.2
-    fake = FakeInstrument(command_delay=delay)
+    fake = FakeInstrument(write_delay=delay)
 
     # Patch the Adapter of the FakeInstrument to the binary_values method
     fake.adapter.binary_values = lambda c, h, d: c

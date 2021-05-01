@@ -47,7 +47,7 @@ class Instrument(object):
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, command_delay=None, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, write_delay=None, **kwargs):
         try:
             if isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -58,8 +58,8 @@ class Instrument(object):
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
-        self.command_delay = command_delay
-        self.last_command_time = time()
+        self.write_delay = write_delay
+        self.last_write_time = time()
 
         class Object(object):
             pass
@@ -98,7 +98,7 @@ class Instrument(object):
 
         :param command: command string to be sent to the instrument
         """
-        self.delay_command()
+        self.delay_write()
         return self.adapter.ask(command)
 
     def write(self, command):
@@ -106,7 +106,7 @@ class Instrument(object):
 
         :param command: command string to be sent to the instrument
         """
-        self.delay_command()
+        self.delay_write()
         self.adapter.write(command)
 
     def read(self):
@@ -119,11 +119,11 @@ class Instrument(object):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        self.delay_command()
+        self.delay_write()
         return self.adapter.values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        self.delay_command()
+        self.delay_write()
         return self.adapter.binary_values(command, header_bytes, dtype)
 
     @staticmethod
@@ -323,14 +323,14 @@ class Instrument(object):
         """
         pass
 
-    def delay_command(self):
-        if self.command_delay is None:
+    def delay_write(self):
+        if self.write_delay is None:
             return
 
-        while time() - self.last_command_time < self.command_delay:
-            sleep(self.command_delay / 10)
+        while time() - self.last_write_time < self.write_delay:
+            sleep(self.write_delay / 10)
 
-        self.last_command_time = time()
+        self.last_write_time = time()
 
 
 class FakeInstrument(Instrument):
