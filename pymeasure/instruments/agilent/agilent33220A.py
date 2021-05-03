@@ -99,9 +99,9 @@ class Agilent33220A(Instrument):
     amplitude = Instrument.control(
         "VOLT?", "VOLT %f",
         """ A floating point property that controls the voltage amplitude of the
-        output waveform in V, from 10e-3 V to 10 V. Can be set. """,
+        output waveform in V, from 10e-3 V to 10 V (20 in High Z mode) . Can be set. """,
         validator=strict_range,
-        values=[10e-3, 10],
+        values=[10e-3, 20],
     )
 
     amplitude_unit = Instrument.control(
@@ -121,7 +121,7 @@ class Agilent33220A(Instrument):
         voltage amplitude (maximum offset = (10 - voltage) / 2). Can be set.
         """,
         validator=strict_range,
-        values=[-4.995, +4.995],
+        values=[-9.999, +9.999],
     )
 
     voltage_high = Instrument.control(
@@ -130,7 +130,7 @@ class Agilent33220A(Instrument):
         output waveform in V, from -4.990 V to 5 V (must be higher than low
         voltage). Can be set. """,
         validator=strict_range,
-        values=[-4.99, 5],
+        values=[-9.98, 10],
     )
 
     voltage_low = Instrument.control(
@@ -139,7 +139,7 @@ class Agilent33220A(Instrument):
         output waveform in V, from -5 V to 4.990 V (must be lower than high
         voltage). Can be set. """,
         validator=strict_range,
-        values=[-5, 4.99],
+        values=[-10, 9.98],
     )
 
     square_dutycycle = Instrument.control(
