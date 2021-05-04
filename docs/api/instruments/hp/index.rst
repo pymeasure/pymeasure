@@ -11,3 +11,4 @@ This section contains specific documentation on the Hewlett Packard instruments 
 
    hp33120A
    hp34401A
+   hpD4000A
