@@ -180,7 +180,6 @@ def extract_value_operating_parameters(reply) -> dict:
         )
 
 
-
 def extract_value_set_point_status(reply) -> dict:
     match_f = _reSF.match(reply)
     match_i = _reSI.match(reply)
@@ -379,7 +378,6 @@ class SciMag(Instrument):
         preprocess_reply=extract_value_set_point_status
     )
 
-
     def __init__(self, resourceName,
                  ramp_rate_max=5,
                  voltage_limit_max=1,
@@ -388,12 +386,12 @@ class SciMag(Instrument):
         super().__init__(
             resourceName,
             "Scientific Magnetics SMC",
-            includeSCPI = False
+            includeSCPI=False,
             **kwargs
         )
         self._RAMP_RATE_MAX = ramp_rate_max  # A/s
         self._VOLTAGE_LIMIT_MAX = voltage_limit_max  # V
-        self._T_MAX  # T
+        self._T_MAX = field_max  # T
 
     @property
     def tesla(self) -> float:
@@ -417,7 +415,7 @@ class SciMag(Instrument):
         self.unit = "T"
         if value == 0:
             self.ramp_target = "Z"
-        elif abs(value) < self.MAX_FIELD_TESLA:
+        elif abs(value) < self._T_MAX:
             # 1. Get actual direction
             if self.operating_parameters["switch_direction"] == 0:
                 sign = +1
@@ -428,7 +426,7 @@ class SciMag(Instrument):
 
             # 2. Check, if value and sign are both positive or both negative
             if value * sign > 0:
-                self.upper_setpoint_tesla(abs(value))
+                self.upper_setpoint(abs(value))
             elif value * sign < 0:
                 self.ramp_target = "Z"
                 # At zero-field: switch direction.
@@ -438,10 +436,10 @@ class SciMag(Instrument):
                     self.reverse_switch_on = False
                 elif value < 0:
                     self.reverse_switch_on = True
-                self.upper_setpoint_tesla(abs(value))
+                self.upper_setpoint(abs(value))
             self.ramp_target = "U"
         else:
-            log.warning("Intended field was: %08.4f T.\nAllowed maximum field is: %08.4f T" %(value, self._T_MAX))
+            log.warning("Intended field was: %08.4f T.\nAllowed maximum field is: %08.4f T" % (value, self._T_MAX))
             raise UserWarning("Intended field value exceeded range of the solenoid. Value was NOT set.")
 
     def shutdown(self):
@@ -452,4 +450,3 @@ class SciMag(Instrument):
         self.persistent_mode_heater = True
         self.ramp_target = "Z"
         self.pause = False
-
