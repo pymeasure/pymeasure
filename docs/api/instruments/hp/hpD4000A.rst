@@ -1,0 +1,7 @@
+##########################
+HP D4000A Signal Generator
+##########################
+
+.. autoclass:: pymeasure.instruments.hp.HPD4000A
+    :members:
+    :show-inheritance:

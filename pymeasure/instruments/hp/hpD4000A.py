@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,20 @@
 # THE SOFTWARE.
 #
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hpD4000A import HPD4000A
+from pymeasure.instruments.rf_signal_generator import RFSignalGenerator
+class HPD4000A(RFSignalGenerator):
+    """ Class representing Agilent E4433A RF signal generator """
+
+    # Define instrument limits according to datasheet
+    power_values = (-136.0, 13.0)
+    frequency_values = (250e3, 4e9)
+
+    name = "HP D4000A Signal Generator"
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            self.name,
+            **kwargs
+        )
+
+
