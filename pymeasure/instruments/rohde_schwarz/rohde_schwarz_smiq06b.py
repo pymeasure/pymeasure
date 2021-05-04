@@ -142,7 +142,6 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         bitsequences: list of items. Each item is a string of '1' or '0' in transmission order
         spacings: integer list, gap to be inserted between each bitsequence  expressed in number of bit
         """
-        # Check if bitsequences are compatible with bit per symbol
         
         # Switch line terminator to EOI to send data in packed format
         self.write(":SYST:COMM:GPIB:LTER EOI")
@@ -151,15 +150,16 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         self.write("SOURce:DM:DLISt:SELect 'data2tx'")
 
         # Write data list and store positions when switch between sequence and spacing occurs
-        # for bitseq, spacing in zip(bitsequences, spacings):
         sympos = 0
         ctrls = []
         val = ''
         symbol_length = self._get_symbol_length()
         for bitseq, spacing in zip(bitsequences, spacings):
+            # Position to switch on RF
             ctrls.append(sympos)
             val += bitseq + "0"*spacing
             sympos += (len(bitseq)//symbol_length)
+            # Position to switch off RF
             ctrls.append(sympos)
             sympos += (spacing//symbol_length)
         length = len(val)
@@ -169,10 +169,11 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
             val = val + "0"*(8-(length % 8))
             length = len(val)
             
+        # Group bit data in byte format
         values = []
         for i in range(0, length, 8):
             values.append(int(val[i:i+8], 2))
-        
+
         self.adapter.write_binary_values("SOURce:DM:DLISt:DATA ", values, datatype='B')
         self.complete
 
@@ -200,7 +201,7 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         self.complete
 
     def enable_modulation(self):
-        # Do nothing since  each modulation type should be enable with relevant command
+        # Do nothing since  each modulation type should be enabled with relevant command
         pass
 
     def disable_modulation(self):
