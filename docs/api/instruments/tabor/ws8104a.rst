@@ -1,0 +1,7 @@
+####################################################
+Tabor Electronics WS8104a 4 Channel 100 MHz AWG
+####################################################
+
+.. autoclass:: pymeasure.instruments.tabor.ws8104a
+    :members:
+    :show-inheritance:

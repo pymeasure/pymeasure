@@ -49,6 +49,7 @@ from . import parker
 from . import razorbill
 from . import signalrecovery
 from . import srs
+from . import tabor
 from . import tektronix
 from . import thorlabs
 from . import yokogawa

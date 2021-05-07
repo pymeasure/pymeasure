@@ -1,0 +1,7 @@
+####################################################
+Rigol MSO5354 4 Channel 350 MHz Oscilloscope
+####################################################
+
+.. autoclass:: pymeasure.instruments.rigol.mso5354
+    :members:
+    :show-inheritance:
