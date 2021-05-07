@@ -23,3 +23,4 @@
 #
 
 from .ws8351a import WS8351A
+from .ws8104a import WS8104A

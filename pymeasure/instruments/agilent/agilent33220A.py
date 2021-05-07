@@ -285,7 +285,7 @@ class Agilent33220A(Instrument):
                     " to finish the triggering."
                 )
 
-            if should_stop:
+            if should_stop():
                 return
 
     trigger_source = Instrument.control(
