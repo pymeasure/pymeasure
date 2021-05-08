@@ -430,11 +430,6 @@ class Keithley2000(Instrument, KeithleyBuffer):
         values=[0, 999999.999]
     )
 
-    def __init__(self, adapter, **kwargs):
-        super(Keithley2000, self).__init__(
-            adapter, "Keithley 2000 Multimeter", **kwargs
-        )
-
     # TODO: Clean up error checking
     def check_errors(self):
         """ Read all errors from the instrument."""
