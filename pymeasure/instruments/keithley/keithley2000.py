@@ -434,14 +434,6 @@ class Keithley2000(Instrument, KeithleyBuffer):
         super(Keithley2000, self).__init__(
             adapter, "Keithley 2000 Multimeter", **kwargs
         )
-        # Set up data transfer format
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.config(
-                is_binary=False,
-                datatype='float32',
-                converter='f',
-                separator=','
-            )
 
     # TODO: Clean up error checking
     def check_errors(self):
