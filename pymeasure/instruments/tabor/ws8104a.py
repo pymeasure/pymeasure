@@ -359,6 +359,12 @@ class WS8104A(Instrument):
         values=['EXT', 'BUS', 'MIXED'],
     )
 
+    sample_clock = Instrument.control(
+        ":FREQ:RAST?", ":FREQ:RAST %g",
+        """ """,
+        validator=strict_range,
+        values=[1.5, 200e6],
+    )
 
     #TODO implement the rest of the trigger commands
 

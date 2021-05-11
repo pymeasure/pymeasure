@@ -200,7 +200,7 @@ class RigolMSO5354(Instrument):
     )
 
     timebase_offset = Instrument.control(
-        ":TIMebase:OFFSet?", ":TIMebase:HREFerence:MODE CENTer;:TIMebase:OFFSet %f",
+        ":TIMebase:OFFSet?", ":TIMebase:HREFerence:MODE CENTer;:TIMebase:OFFSet %g",
         """ A float parameter that sets the time interval in seconds between the trigger 
         event and the reference position (at center of screen by default)."""
     )
