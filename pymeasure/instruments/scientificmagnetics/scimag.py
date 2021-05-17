@@ -31,15 +31,16 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Define RegExpressions to match the responses of the instrument
-_reG = re.compile(r'^I([\s+-]\d{3}.\d{3})V([\s+-]\d{2}.\d)R(\d[AV])\r\n$')
-_reJF = re.compile(r'^F([\s+-]\d{2}.\d{4})H(\d)\r\n$')
-_reJI = re.compile(r'^I([\s+-]\d{3}.\d{3})H(\d)\r\n$')
-_reKF = re.compile(r'^R(\d)M(\d)P(\d)X(\d)H(\d)Z0.00E(\d{2})Q([\s+-]\d{2}.\d{4})\r\n$')
-_reKI = re.compile(r'^R(\d)M(\d)P(\d)X(\d)H(\d)Z0.00E(\d{2})Q([\s+-]\d{3}.\d{3})\r\n$')
-_reN = re.compile(r'^F([\s+-]\d{2}.\d{4})V([\s+-]\d{2}.\d)R(\d[AV])\r\n$')
-_reO = re.compile(r'^A(\d{2}.\d{5})D(\d)T(\d)B(\d)W(\d{3}.)C(0.\d{6})\r\n$')
-_reSF = re.compile(r'^T(\d)U(\d{2}.\d{4})L(\d{2}.\d{4})Y(\d{2}.\d)\r\n$')
-_reSI = re.compile(r'^T(\d)U(\d{3}.\d{3})L(\d{3}.\d{3})Y(\d{2}.\d)\r\n$')
+_reG = re.compile(r'^I([\s+-]\d{3}.\d{3})V([\s+-]\d{2}.\d)R(\d[AV])$')
+_reJF = re.compile(r'^F([\s+-]\d{2}.\d{4})H(\d)$')
+_reJI = re.compile(r'^I([\s+-]\d{3}.\d{3})H(\d)$')
+_reKF = re.compile(r'^R(\d)M(\d)P(\d)X(\d)H(\d)Z0.00E(\d{2})Q([\s+-]\d{2}.\d{4})$')
+_reKI = re.compile(r'^R(\d)M(\d)P(\d)X(\d)H(\d)Z0.00E(\d{2})Q([\s+-]\d{3}.\d{3})$')
+_reN = re.compile(r'^F([\s+-]\d{2}.\d{4})V([\s+-]\d{2}.\d)R(\d[AV])$')
+_reO = re.compile(r'^A(\d{2}.\d{5})D(\d)T(\d)B(\d)W(\d{3}.)C(0.\d{6})$')
+_reSF = re.compile(r'^T(\d)U(\d{2}.\d{4})L(\d{2}.\d{4})Y(\d{2}.\d)$')
+_reSI = re.compile(r'^T(\d)U(\d{3}.\d{3})L(\d{3}.\d{3})Y(\d{2}.\d)$')
+
 
 
 def extract_value_output_parameters_amps(reply) -> dict:
@@ -403,12 +404,7 @@ class SciMag(Instrument):
         """
         self.unit = "T"
         value = self.output_parameters_tesla["field"]
-        if self.operating_parameters["switch_direction"] == 0:
-            sign = +1
-            return float(sign * value)
-        elif self.operating_parameters["switch_direction"] == 1:
-            sign = -1
-            return float(sign * value)
+        return value
 
     @tesla.setter
     def tesla(self, value: float):
@@ -426,7 +422,7 @@ class SciMag(Instrument):
 
             # 2. Check, if value and sign are both positive or both negative
             if value * sign > 0:
-                self.upper_setpoint(abs(value))
+                self.upper_setpoint = abs(value)
             elif value * sign < 0:
                 self.ramp_target = "Z"
                 # At zero-field: switch direction.
@@ -436,7 +432,7 @@ class SciMag(Instrument):
                     self.reverse_switch_on = False
                 elif value < 0:
                     self.reverse_switch_on = True
-                self.upper_setpoint(abs(value))
+                self.upper_setpoint = abs(value)
             self.ramp_target = "U"
         else:
             log.warning("Intended field was: %08.4f T.\nAllowed maximum field is: %08.4f T" % (value, self._T_MAX))
