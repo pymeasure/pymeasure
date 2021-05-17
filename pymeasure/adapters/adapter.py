@@ -89,18 +89,21 @@ class Adapter(object):
             results = preprocess_reply(results)
         elif callable(self.preprocess_reply):
             results = self.preprocess_reply(results)
-        results = results.split(separator)
-        for i, result in enumerate(results):
-            try:
-                if cast == bool:
-                    # Need to cast to float first since results are usually
-                    # strings and bool of a non-empty string is always True
-                    results[i] = bool(float(result))
-                else:
-                    results[i] = cast(result)
-            except Exception:
-                pass  # Keep as string
-        return results
+        if isinstance(results, dict):
+            return results
+        else:
+            results = results.split(separator)
+            for i, result in enumerate(results):
+                try:
+                    if cast == bool:
+                        # Need to cast to float first since results are usually
+                        # strings and bool of a non-empty string is always True
+                        results[i] = bool(float(result))
+                    else:
+                        results[i] = cast(result)
+                except Exception:
+                    pass  # Keep as string
+            return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data 
