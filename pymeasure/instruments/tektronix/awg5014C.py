@@ -65,6 +65,14 @@ class Channel(object):
             """ Loads the waveform of a given name """
         )
 
+        sampling_frequency = Instrument.control(
+            "frequency:fixed?", "frequency:fixed %e",
+            """ A floating point property that sets the sampling frequency.
+            A given waveform will have frequency=sampling_frequency/number_of_points""",
+            validator=strict_range,
+            values=[10e6,10e9]
+        )
+
         def __init__(self, instrument, number):
             self.instrument = instrument
             self.number = number
@@ -90,10 +98,10 @@ class Channel(object):
         def disable(self):
             self.instrument.write("output%d:state off" % self.number)
 
-        def waveform(self, shape='SIN', frequency=1e6, units='VPP',
+        def waveform(self, name, frequency=1e6, units='VPP',
                      amplitude=1, offset=0):
-            """General setting method for a complete wavefunction"""
-            self.instrument.write("source%d:function:shape %s" % (
+            """General setting method for loading and setting a full WF"""
+            self.instrument.write("source%d:waveform %s" % (
                                   self.number, shape))
             self.instrument.write("source%d:frequency:fixed %e" % (
                                   self.number, frequency))
@@ -116,6 +124,46 @@ class AFG3152C(Instrument):
         afg.reset()                    # Reset to default
     """
 
+    trigger_wait_value = Instrument.control(
+        "TRIGger:SEQUENCE:WVALue?", "TRIGger:SEQUENCE:WVALue %s",
+        """ A string parameter to set the voltage while waiting for trigger:
+        either the LAST value or FIRS value (not a typo)""",
+        validator=strict_discrete_set,
+        values={'LAST':'LAST', 'FIRS':'FIRS'},
+        map_values=True
+    )
+
+    trigger_source = Instrument.control(
+        "TRIGger:SEQUENCE:SOURce?", "TRIGger:SEQUENCE:SOURce %s",
+        """ A string parameter to set the whether the trigger is INTernal or EXTernal""",
+        validator=strict_discrete_set,
+        values={'INT': 'INT', 'EXT': 'EXT'},
+        map_values=True
+    )
+
+    trigger_slope = Instrument.control(
+        "TRIGger:SEQUENCE:SLOPe?", "TRIGger:SEQUENCE:SLOPe %s",
+        """ A string parameter to set the whether the trigger edge is POSitive or NEGative""",
+        validator=strict_discrete_set,
+        values={'POS': 'POS', 'NEG': 'NEG'},
+        map_values=True
+    )
+
+    trigger_level = Instrument.control(
+        "TRIGger:SEQUENCE:LEVel?", "TRIGger:SEQUENCE:LEVel %g",
+        """ A float parameter that sets the trigger input level threshold. Unclear what the range is,
+        0.2 V - 1.4 V is a valid range""",
+    )
+
+    trigger_impedance = Instrument.control(
+        "TRIGger:SEQUENCE:IMPedance?", "TRIGger:SEQUENCE:IMPedance %d",
+        """ An integer parameter to set the trigger input impedance to either 50 or 1000 Ohms""",
+        validator=strict_discrete_set,
+        values=[50,1000],
+        map_values=True
+    )
+
+
     def __init__(self, adapter, **kwargs):
         super(AFG3152C, self).__init__(
             adapter,
@@ -124,6 +172,8 @@ class AFG3152C(Instrument):
         )
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
+        self.ch3 = Channel(self, 3)
+        self.ch4 = Channel(self, 4)
 
     def beep(self):
         self.write("system:beep")
@@ -179,3 +229,19 @@ class AFG3152C(Instrument):
         Defines an empty waveform of name, of integer length size of datatype ('INT' or 'REAL'
         """
         self.write("wlist:waveform:new \"%s\",%i,%s" % (name,size,datatype))
+
+
+    def delete_waveform(self, name):
+        """
+        Defines an empty waveform of name, of integer length size of datatype ('INT' or 'REAL'
+        """
+        self.write("wlist:waveform:delete \"%s\"" % name)
+
+    def load_waveform(self,name, start_index, data, converter='f'):
+        """
+        Transfers a data to a waveform predifined in define_new_waveform. Max limit of data is 650,000,000 bytes,
+        converter 'f' is for floating point, 'h' is for int16
+        """
+
+        cmd_string = 'wlist:waveform:data \"%s\", %d, %d,' % (name, start_index, len(data))
+        self.adapter.connection.write_binary_values(cmd_string,data,datatype=converter)
