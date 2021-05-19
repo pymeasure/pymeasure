@@ -163,6 +163,25 @@ class AWG5014C(Instrument):
         map_values=True
     )
 
+    sampling_frequency = Instrument.control(
+        "source1:frequency:fixed?", "source1:frequency:fixed %e",
+        """ A floating point property that controls the frequency.
+        This property can be set.""",
+        validator=strict_range,
+        values=[10e6, 1.2e9]
+    )
+
+    run_mode = Instrument.control(
+        "AWGControl:RMODe?", "AWGControl:RMODe %s",
+        """ A string parameter controlling the AWG run mode. Can be:
+        CONT: output continously outputs WF
+        TRIG: Each trigger input fires off one cycle
+        GAT: output is continuously output subject to stimulus being applied
+        SEQ: output according to a loaded sequence file, if one isn't loaded, this is equal to triggered""",
+        validator=strict_discrete_set,
+        values=['CONT', 'TRIG', 'GAT', 'SEQ'],
+    )
+
 
     def __init__(self, adapter, **kwargs):
         super(AWG5014C, self).__init__(
@@ -216,13 +235,6 @@ class AWG5014C(Instrument):
     def opc(self):
         return int(self.query("*OPC?"))
 
-    sampling_frequency = Instrument.control(
-        "source1:frequency:fixed?", "source1:frequency:fixed %e",
-        """ A floating point property that controls the frequency.
-        This property can be set.""",
-        validator=strict_range,
-        values=[10e6, 1.2e9]
-    )
 
     def define_new_waveform(self, name, size, datatype='INT'):
         """
