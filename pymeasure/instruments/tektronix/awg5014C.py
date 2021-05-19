@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 from time import time
 from pyvisa.errors import VisaIOError
 
@@ -112,7 +112,7 @@ class Channel(object):
             self.instrument.write("source%d:voltage:offset %eV" %(
                                   self.number, offset))
 
-class AFG3152C(Instrument):
+class AWG5014C(Instrument):
     """Represents the Tektronix AWG 5000 series (written for 5014c, YMMV)
     arbitrary function generator and provides a high-level for
     interacting with the instrument. This is an AWG first an foremost so,
@@ -120,7 +120,7 @@ class AFG3152C(Instrument):
     by a certain number of points so it is not as straight forward as specifying "SINE".
     You must know the name of the built in waveform to call it.
 
-        afg=AFG3152C("GPIB::1")        # AFG on GPIB 1
+        afg=AFG5014C("GPIB::1")        # AFG on GPIB 1
         afg.reset()                    # Reset to default
     """
 
@@ -165,7 +165,7 @@ class AFG3152C(Instrument):
 
 
     def __init__(self, adapter, **kwargs):
-        super(AFG3152C, self).__init__(
+        super(AWG5014C, self).__init__(
             adapter,
             "Tektronix AFG3152C arbitrary function generator",
             **kwargs
