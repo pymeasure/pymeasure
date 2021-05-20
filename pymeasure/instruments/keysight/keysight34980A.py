@@ -28,7 +28,7 @@ from pyvisa import VisaIOError
 
 class Keysight34980A(Instrument):
     """ Represents the Keysight34980A Multifunction Switch/Measure Unit
-    and provides a high-level interface for taking scans with Keysight 34923A 34980A 
+    and provides a high-level interface for taking scans with Keysight 34923A 
     Multifunction Switch/Measure Unit.
     """
 
