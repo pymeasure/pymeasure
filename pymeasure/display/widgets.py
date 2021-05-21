@@ -461,6 +461,7 @@ class InputsWidget(QtGui.QWidget):
         self._inputs = inputs
         self._setup_ui()
         self._layout()
+        self._setup_visibility_groups()
 
     def _setup_ui(self):
         parameter_objects = self._procedure.parameter_objects()
@@ -490,15 +491,42 @@ class InputsWidget(QtGui.QWidget):
         vbox = QtGui.QVBoxLayout(self)
         vbox.setSpacing(6)
 
+        self.labels = {}
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
                 label = QtGui.QLabel(self)
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
+                self.labels[name] = label
+
             vbox.addWidget(getattr(self, name))
 
         self.setLayout(vbox)
+
+    def _setup_visibility_groups(self):
+        groups = {}
+        parameters = self._procedure.parameter_objects()
+        for name in self._inputs:
+            parameter = parameters[name]
+            group = parameter.grouped_by
+            if group is None or group not in self._inputs:
+                continue
+            elif not isinstance(getattr(self, group), BooleanInput):
+                raise TypeError("The grouped_by property of %s refers to a"
+                                "non-BooleanInput (%s)" % (name, group))
+
+            if group not in groups:
+                groups[group] = []
+
+            groups[group].append(getattr(self, name))
+            if name in self.labels:
+                groups[group].append(self.labels[name])
+
+        for name, group in groups.items():
+            toggle = lambda state: [el.setHidden(not state) for el in group]
+            getattr(self, name).stateChanged.connect(toggle)
+            toggle(getattr(self, name).checkState())
 
     def set_parameters(self, parameter_objects):
         for name in self._inputs:
