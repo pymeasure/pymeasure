@@ -66,6 +66,7 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         cast=bool
     )
 
+    @staticmethod
     def extract_value(self, result):
         """ extracts the physical value from a result object returned
             by the instrument """
