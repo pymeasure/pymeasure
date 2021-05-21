@@ -510,7 +510,7 @@ class InputsWidget(QtGui.QWidget):
         for name in self._inputs:
             parameter = parameters[name]
             group = parameter.grouped_by
-            if group is None or group not in self._inputs:
+            if group is None or group not in self._inputs or group == name:
                 continue
             elif not isinstance(getattr(self, group), BooleanInput):
                 raise TypeError("The grouped_by property of %s refers to a"
