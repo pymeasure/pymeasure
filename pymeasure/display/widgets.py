@@ -509,24 +509,49 @@ class InputsWidget(QtGui.QWidget):
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameters[name]
-            group = parameter.grouped_by
+            group = parameter.group_by
+            condition = parameter.group_condition
             if group is None or group not in self._inputs or group == name:
                 continue
-            elif not isinstance(getattr(self, group), BooleanInput):
-                raise TypeError("The grouped_by property of %s refers to a"
-                                "non-BooleanInput (%s)" % (name, group))
+
+            if isinstance(getattr(self, group), BooleanInput):
+                if condition:
+                    condition = 2
+                elif not condition:
+                    condition = 0
 
             if group not in groups:
                 groups[group] = []
 
-            groups[group].append(getattr(self, name))
+            groups[group].append((getattr(self, name), condition))
             if name in self.labels:
-                groups[group].append(self.labels[name])
+                groups[group].append((self.labels[name], condition))
 
         for name, group in groups.items():
-            toggle = lambda state: [el.setHidden(not state) for el in group]
-            getattr(self, name).stateChanged.connect(toggle)
-            toggle(getattr(self, name).checkState())
+            def toggle(state):
+                for (el, con) in group:
+                    if callable(con):
+                        visible = con(state)
+                    else:
+                        visible = (state == con)
+                    el.setHidden(not visible)
+
+            group_el = getattr(self, name)
+            if isinstance(group_el, BooleanInput):
+                group_el.stateChanged.connect(toggle)
+                toggle(group_el.checkState())
+            elif isinstance(group_el, StringInput):
+                group_el.textChanged.connect(toggle)
+                toggle(group_el.text())
+            elif isinstance(group_el, IntegerInput):
+                group_el.valueChanged.connect(toggle)
+                toggle(group_el.value())
+            elif isinstance(group_el, ScientificInput):
+                group_el.valueChanged.connect(toggle)
+                toggle(group_el.value())
+            elif isinstance(group_el, ListInput):
+                group_el.currentTextChanged.connect(toggle)
+                toggle(group_el.currentText())
 
     def set_parameters(self, parameter_objects):
         for name in self._inputs:

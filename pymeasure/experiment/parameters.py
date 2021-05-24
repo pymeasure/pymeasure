@@ -32,16 +32,19 @@ class Parameter(object):
     :param name: The parameter name
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
-    :param grouped_by: The name (string) of a BooleanParameter that controls
-        the visibility of the associated
+    :param group_by: The name (string) of a Parameter that controls
+        the visibility of the associated input
+    :param group_condition: The condition for the group_by Parameter
+        that controls the visibility of this parameter
     """
 
-    def __init__(self, name, default=None, ui_class=None, grouped_by=None):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
         self.name = name
         self._value = default
         self.default = default
         self.ui_class = ui_class
-        self.grouped_by = grouped_by
+        self.group_by = group_by
+        self.group_condition = group_condition
 
     @property
     def value(self):
