@@ -36,6 +36,7 @@ from . import anapico
 from . import anritsu
 from . import attocube
 from . import danfysik
+from . import datron
 from . import deltaelektronika
 from . import fwbell
 from . import hp

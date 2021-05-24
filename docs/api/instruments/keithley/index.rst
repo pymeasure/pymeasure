@@ -9,6 +9,7 @@ This section contains specific documentation on the Keithley instruments that ar
 .. toctree::
    :maxdepth: 2
 
+   Keithley179A
    keithley2000
    keithley2260B
    keithley2400

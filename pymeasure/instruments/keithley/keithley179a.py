@@ -22,12 +22,39 @@
 # THE SOFTWARE.
 #
 
-from .keithley2000 import Keithley2000
-from .keithley2260B import Keithley2260B
-from .keithley2400 import Keithley2400
-from .keithley2450 import Keithley2450
-from .keithley2700 import Keithley2700
-from .keithley6221 import Keithley6221
-from .keithley2750 import Keithley2750
-from .keithley6517b import Keithley6517B
-from .keithley179a import Keithley179A
+
+from pymeasure.instruments import Instrument
+
+class Keithley179A(Instrument):
+    """ 
+    Represent the Keithley 179A DMM
+    Read value Keithley 179A
+    no units, the Keithley 179A can not cange any mode or range,
+    only manuel set on DMM
+        
+    Read value Keithley 179A no units
+    Unit has no own SCPI commandos. 
+    """  
+    
+    
+    #fake IDN, Datron1071, no internal 'IDN' command
+    #program check @ Datron FW from 1981
+    id = "Keithley179A" 
+    
+    
+    readval = Instrument.measurement("RDX",
+    """ 
+    Read value Keithley 179A no units
+    """  
+    )
+
+   
+
+    def __init__(self, resourceName,includeSCPI=False, **kwargs):
+        super().__init__(
+            resourceName,
+            "Keithley 179A",
+            **kwargs
+        )
+
+
