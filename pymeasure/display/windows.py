@@ -155,12 +155,14 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False,
+                 directory_input=False, hide_groups=True):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
         self.procedure_class = procedure_class
         self.inputs = inputs
+        self.hide_groups = hide_groups
         self.displays = displays
         self.use_sequencer = sequencer
         self.sequencer_inputs = sequencer_inputs
@@ -215,7 +217,8 @@ class ManagedWindow(QtGui.QMainWindow):
         self.inputs = InputsWidget(
             self.procedure_class,
             self.inputs,
-            parent=self
+            parent=self,
+            hide_groups=self.hide_groups,
         )
 
         self.manager = Manager(self.plot, self.browser, log_level=self.log_level, parent=self)

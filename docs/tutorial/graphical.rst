@@ -369,5 +369,7 @@ To allow for even more flexibility, it is also possible to pass a (lambda)functi
 
 Now the input of :code:`param` is only shown if the value of :code:`iterations` is between 50 and 99.
 
+Using the :code:`hide_groups` keyword-argument of the :code:`ManagedWindow` you can choose between hiding the groups (:code:`hide_groups = True`) and disabling / graying-out the groups (:code:`hide_groups = False`).
+
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html

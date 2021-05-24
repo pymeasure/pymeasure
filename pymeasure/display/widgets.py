@@ -454,13 +454,14 @@ class InputsWidget(QtGui.QWidget):
     # tuple of Input classes that do not need an external label
     NO_LABEL_INPUTS = (BooleanInput,)
 
-    def __init__(self, procedure_class, inputs=(), parent=None):
+    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True):
         super().__init__(parent)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
         self._inputs = inputs
         self._setup_ui()
         self._layout()
+        self._hide_groups = hide_groups
         self._setup_visibility_groups()
 
     def _setup_ui(self):
@@ -534,7 +535,11 @@ class InputsWidget(QtGui.QWidget):
                         visible = con(state)
                     else:
                         visible = (state == con)
-                    el.setHidden(not visible)
+
+                    if self._hide_groups:
+                        el.setHidden(not visible)
+                    else:
+                        el.setDisabled(not visible)
 
             group_el = getattr(self, name)
             if isinstance(group_el, BooleanInput):
