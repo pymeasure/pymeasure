@@ -165,13 +165,15 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  sequencer_inputs=None,
                  sequence_file=None,
                  inputs_in_scrollarea=False,
-                 directory_input=False):
+                 directory_input=False,
+                 hide_groups=True):
 
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
         self.procedure_class = procedure_class
         self.inputs = inputs
+        self.hide_groups = hide_groups
         self.displays = displays
         self.use_sequencer = sequencer
         self.sequencer_inputs = sequencer_inputs
@@ -219,7 +221,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.inputs = InputsWidget(
             self.procedure_class,
             self.inputs,
-            parent=self
+            parent=self,
+            hide_groups=self.hide_groups,
         )
 
         self.manager = Manager(self.widget_list,
@@ -598,7 +601,8 @@ class ManagedWindow(ManagedWindowBase):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False, wdg_list=()):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
+                 hide_groups=True, wdg_list=()):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
@@ -614,7 +618,9 @@ class ManagedWindow(ManagedWindowBase):
             sequencer_inputs=sequencer_inputs,
             sequence_file=sequence_file,
             inputs_in_scrollarea=inputs_in_scrollarea,
-            directory_input=directory_input)
+            directory_input=directory_input,
+            hide_groups=hide_groups
+        )
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(log_level)
         log.info("ManagedWindow connected to logging")
@@ -651,7 +657,7 @@ class ManagedImageWindow(ManagedWindow):
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False, hide_groups=True):
         self.z_axis = z_axis
         self.image_widget = ImageWidget("Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
         wdg_list = (self.image_widget, )
@@ -668,4 +674,5 @@ class ManagedImageWindow(ManagedWindow):
                          sequence_file=sequence_file,
                          inputs_in_scrollarea=inputs_in_scrollarea,
                          directory_input=directory_input,
+                         hide_groups=hide_groups,
                          wdg_list=wdg_list)

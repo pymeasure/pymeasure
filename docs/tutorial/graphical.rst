@@ -338,5 +338,38 @@ This adds the input line above the Queue and Abort buttons.
 
 A completer is implemented allowing to quickly select an existing folder, and a button on the right side of the input widget opens a browse dialog.
 
+Flexible hiding of inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There can be situations when it may be relevant to turn on or off a number of inputs (e.g. when a part of the measurement script is skipped upon turning of a single :code:`BooleanParameter`).
+For these cases, it is possible to assign a :code:`Parameter` to a controlling :code:`Parameter`, which will hide or show the :code:`Input` of the :code:`Parameter` depending on the value of the :code:`Parameter`.
+This is done with the :code:`group_by` key-word argument.
+
+.. code-block:: python
+
+    toggle = BooleanParameter("toggle", default=True)
+    param = FloatParameter('some parameter', group_by='toggle')
+
+When both the :code:`toggle` and :code:`param` are visible in the :code:`InputsWidget` (via :code:`inputs=['iterations', 'delay', 'seed']` as demonstrated above) one can control whether the input-field of :code:`param` is visible by checking and unchecking the checkbox of :code:`toggle`.
+By default, the group will be visible if the value of the :code:`group_by` :code:`Parameter` is :code:`True` (which is only relevant for a :code:`BooleanParameter`, but is is possible to specify other value as conditions using the :code:`group_condition` keyword argument.
+
+.. code-block:: python
+
+    iterations = IntegerParameter('Loop Iterations', default=100)
+    param = FloatParameter('some parameter', group_by='iterations', group_condition=99)
+
+Here the input of :code:`param` is only visible if :code:`iterations` has a value of 99.
+This works with any type of :code:`Parameter` as :code:`group_by` parameter.
+
+To allow for even more flexibility, it is also possible to pass a (lambda)function as a condition:
+.. code-block:: python
+
+    iterations = IntegerParameter('Loop Iterations', default=100)
+    param = FloatParameter('some parameter', group_by='iterations', group_condition=lambda v: 50 > v > 99)
+
+Now the input of :code:`param` is only shown if the value of :code:`iterations` is between 50 and 99.
+
+Using the :code:`hide_groups` keyword-argument of the :code:`ManagedWindow` you can choose between hiding the groups (:code:`hide_groups = True`) and disabling / graying-out the groups (:code:`hide_groups = False`).
+
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
