@@ -26,43 +26,43 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pymeasure.adapters import SerialAdapter
 
-class FlukeSerialAdapter(SerialAdapter):
-    def write(self, command):
-        super().write(command + "\r\n")
-
 class Fluke7341(Instrument):
     """ Represents the compact constant temperature bath from Fluke
     """
 
     set_point = Instrument.control("s", "s=%g",
-                                   """ Set the bath temperature. This property can be read
+                                   """ A `float` property to set the bath temperature set-point. 
+                                   Valid values are  in the range –40 to 150 °C.
+                                   The unit is as defined in property :attr:`~.unit`. This property can be read
                                    """,
                                    validator=strict_range,
                                    values = (-40, 150),
-                                   get_process=lambda x: float(x.split()[1])
                                    )
+    
     unit = Instrument.control("u", "u=%s",
-                              """ Set the temperature unit. This property can be read
-                              """,
+                              """ A string property that controls the temperature
+                              unit. Possible values are `c` for Celsius and `f` for Fahrenheit`.""",
                               validator=strict_discrete_set,
                               values = ('c','f'),
-                              get_process=lambda x: x.split()[1]
                               )
     
     temperature = Instrument.measurement("t",
-                                         """ Read the current bath temperature """,
-                                         get_process=lambda x: float(x.split()[1])
+                                         """ Read the current bath temperature.
+                                         The unit is as defined in property :attr:`unit`.""",
                                          )
 
     id = Instrument.measurement("*ver",
                                 """ Read the instrument model """,
-                                get_process=lambda x: "Fluke,{},NA,{}".format(x[0][4:], x[1])
+                                preprocess_reply=lambda x: "Fluke,{},NA,{}".format(x[0][4:], x[1])
                                 )
 
     def __init__(self, port):
         super(Fluke7341, self).__init__(
-            FlukeSerialAdapter(port, baudrate=2400, timeout=2),
+            SerialAdapter(port, baudrate=2400, timeout=2, preprocess_reply=lambda x: x.split()[1]),
             "Fluke 7341",
             includeSCPI=False
         )
 
+    def write(self, command):
+        """ Append carriage return and line feed before writing to instrument """
+        super().write(command + "\r\n")
