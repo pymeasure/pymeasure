@@ -24,7 +24,7 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.adapters import SerialAdapter
+from pymeasure.adapters import VISAAdapter
 
 class Fluke7341(Instrument):
     """ Represents the compact constant temperature bath from Fluke
@@ -56,13 +56,16 @@ class Fluke7341(Instrument):
                                 preprocess_reply=lambda x: "Fluke,{},NA,{}".format(x[0][4:], x[1])
                                 )
 
-    def __init__(self, port):
-        super(Fluke7341, self).__init__(
-            SerialAdapter(port, baudrate=2400, timeout=2, preprocess_reply=lambda x: x.split()[1]),
+    def __init__(self, resource_name, **kwargs):
+        super().__init__(
+            resource_name,
             "Fluke 7341",
-            includeSCPI=False
+            timeout=2000,
+            write_termination='\r\n',
+            preprocess_reply=lambda x: x.split()[1],
+            includeSCPI=False,
+            **kwargs
         )
 
-    def write(self, command):
-        """ Append carriage return and line feed before writing to instrument """
-        super().write(command + "\r\n")
+        if isinstance(self.adapter, VISAAdapter):
+            self.adapter.connection.baud_rate = 2400
