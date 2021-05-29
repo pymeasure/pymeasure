@@ -24,7 +24,7 @@
 
 from pymeasure.instruments.rf_signal_generator import RFSignalGenerator
 class HPD4000A(RFSignalGenerator):
-    """ Class representing Agilent E4433A RF signal generator """
+    """ Class representing "HP D4000A/Agilent E4433A RF signal generator """
 
     # Define instrument limits according to datasheet
     power_values = (-136.0, 13.0)
@@ -38,4 +38,12 @@ class HPD4000A(RFSignalGenerator):
             **kwargs
         )
 
+    @property
+    def id(self):
+        """ Requests and returns the identification of the instrument. """
+        return_value self.adapter.ask("*IDN?").strip()
+        # Swap second and third entry since they are not following SCPI order.
+        # The second entry should be model
+        return_value[1], return_value[2] = return_value[2], return_value[1]
+        return return_value
 
