@@ -41,7 +41,7 @@ class HPD4000A(RFSignalGenerator):
     @property
     def id(self):
         """ Requests and returns the identification of the instrument. """
-        return_value self.adapter.ask("*IDN?").strip()
+        return_value = self.adapter.ask("*IDN?").strip()
         # Swap second and third entry since they are not following SCPI order.
         # The second entry should be model
         return_value[1], return_value[2] = return_value[2], return_value[1]
