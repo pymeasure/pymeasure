@@ -53,7 +53,8 @@ class Fluke7341(Instrument):
 
     id = Instrument.measurement("*ver",
                                 """ Read the instrument model """,
-                                preprocess_reply=lambda x: "Fluke,{},NA,{}".format(x[0][4:], x[1])
+                                preprocess_reply=lambda x: x,
+                                get_process=lambda x: "Fluke,{},NA,{}".format(x[0][4:], x[1])
                                 )
 
     def __init__(self, resource_name, **kwargs):
