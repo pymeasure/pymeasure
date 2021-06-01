@@ -533,7 +533,7 @@ class LogWidget(QtGui.QWidget):
             fmt='%(asctime)s : %(message)s (%(levelname)s)',
             datefmt='%m/%d/%Y %I:%M:%S %p'
         ))
-        self.handler.record.connect(self.view.appendPlainText)
+        self.handler.connect(self.view.appendPlainText)
 
     def _layout(self):
         vbox = QtGui.QVBoxLayout(self)
