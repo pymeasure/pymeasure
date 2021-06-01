@@ -96,12 +96,12 @@ class SR570(Instrument):
         map_values=True)
     
     bias_level = Instrument.setting(
-        "BSLV %f", 
+        "BSLV %g", 
         """ A floating point value in V that sets the bias voltage level of the 
         amplifier, in the [-5V,+5V] limits. Only at a mV precision level.""", 
         validators=truncated_range,
         values=BIAS_LIMITS,
-        set_process = lambda v: 1e3*v)
+        set_process = lambda v: int(1000*v))
     
     offset_current = Instrument.setting(
         "BSLV %f", 
