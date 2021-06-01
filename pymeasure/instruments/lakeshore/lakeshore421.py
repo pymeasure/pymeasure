@@ -45,10 +45,13 @@ class LakeShore421(Instrument):
     """
 
     MULTIPLIERS = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
-    RANGES = {0.003: 0, 0.03: 1, 0.3: 2, 3: 3}  # in Tesla
-    PROBETYPES = {"High Sensitivity": 0,
+    PROBE_TYPES = {"High Sensitivity": 0,
                   "High Stability": 1,
                   "Ultra-High Sensitivity": 2}
+    RANGES = [30e3, 3e3, 300, 30]  # in Gauss
+    RANGE_MULTIPLIER_PROBE = [1, 10, 0.01]
+    RANGE_MULTIPLIER_UNIT = {'G': 1, 'T': 1e-4}
+    UNITS = ['G', 'T']
 
     def __init__(self, resource_name, **kwargs):
         super(LakeShore421, self).__init__(
@@ -106,17 +109,38 @@ class LakeShore421(Instrument):
         """ A string property that controls the units used by the gaussmeter.
         Valid values are G, T, Oe, A/m. """,
         validator=strict_discrete_set,
-        values=['G', 'T', 'Oe', 'A/m'],
+        values=UNITS,
     )
 
-    field_range = Instrument.control(
+    field_range_raw = Instrument.control(
         "RANGE?", "RANGE %d",
-        """ A floating point property that controls the field range of the
-        meter. Valid values are 0.003, 0.03, 0.3, and 3 (in Tesla). """,
+        """ A integer property that controls the field range of the
+        meter. Valid values are 0 (highest) to 3 (lowest). """,
         validator=truncated_discrete_set,
-        values=RANGES,
-        map_values=True,
+        values=range(4),
+        cast=int,
     )
+
+    @property
+    def field_range(self):
+        """ A floating point property that controls the field range of the
+        meter in the current unit (G or T). Valid values are 30e3, 3e3, 300,
+        30 (when in Gauss), or 0.003, 0.03, 0.3, and 3 (when in Tesla).
+        """
+        probe_multiplier = self.RANGE_MULTIPLIER_PROBE[self.PROBE_TYPES[self.probe_type]]
+        unit_multiplier = self.RANGE_MULTIPLIER_UNIT[self.unit]
+        range = self.RANGES[self.field_range_raw]
+        return np.round(range * probe_multiplier * unit_multiplier, 3)
+
+    @field_range.setter
+    def field_range(self, range):
+        probe_multiplier = self.RANGE_MULTIPLIER_PROBE[self.PROBE_TYPES[self.probe_type]]
+        unit_multiplier = self.RANGE_MULTIPLIER_UNIT[self.unit]
+        ranges = np.array(self.RANGES) * probe_multiplier * unit_multiplier
+        range = truncated_discrete_set(range, values=ranges)
+        range = np.round(range / (probe_multiplier * unit_multiplier), 3)
+
+        self.field_range_raw = self.RANGES.index(range)
 
     auto_range = Instrument.control(
         "AUTO?", "AUTO %d",
@@ -168,7 +192,7 @@ class LakeShore421(Instrument):
         """ Returns type of field-probe used with the gaussmeter. Possible
         values are High Sensitivity, High Stability, or Ultra-High Sensitivity.
         """,
-        values=PROBETYPES,
+        values=PROBE_TYPES,
         map_values=True,
     )
 
