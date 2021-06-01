@@ -107,7 +107,7 @@ class LakeShore421(Instrument):
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
         """ A string property that controls the units used by the gaussmeter.
-        Valid values are G, T, Oe, A/m. """,
+        Valid values are G (Gauss), T (Tesla). """,
         validator=strict_discrete_set,
         values=UNITS,
     )
