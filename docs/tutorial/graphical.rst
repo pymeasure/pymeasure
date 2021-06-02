@@ -365,7 +365,7 @@ To allow for even more flexibility, it is also possible to pass a (lambda)functi
 .. code-block:: python
 
     iterations = IntegerParameter('Loop Iterations', default=100)
-    param = FloatParameter('some parameter', group_by='iterations', group_condition=lambda v: 50 > v > 99)
+    param = FloatParameter('some parameter', group_by='iterations', group_condition=lambda v: 50 < v < 99)
 
 Now the input of :code:`param` is only shown if the value of :code:`iterations` is between 50 and 99.
 
