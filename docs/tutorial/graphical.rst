@@ -351,7 +351,7 @@ This is done with the :code:`group_by` key-word argument.
     param = FloatParameter('some parameter', group_by='toggle')
 
 When both the :code:`toggle` and :code:`param` are visible in the :code:`InputsWidget` (via :code:`inputs=['iterations', 'delay', 'seed']` as demonstrated above) one can control whether the input-field of :code:`param` is visible by checking and unchecking the checkbox of :code:`toggle`.
-By default, the group will be visible if the value of the :code:`group_by` :code:`Parameter` is :code:`True` (which is only relevant for a :code:`BooleanParameter`, but is is possible to specify other value as conditions using the :code:`group_condition` keyword argument.
+By default, the group will be visible if the value of the :code:`group_by` :code:`Parameter` is :code:`True` (which is only relevant for a :code:`BooleanParameter`), but it is possible to specify other value as conditions using the :code:`group_condition` keyword argument.
 
 .. code-block:: python
 
