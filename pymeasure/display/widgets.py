@@ -545,10 +545,7 @@ class InputsWidget(QtGui.QWidget):
             elif isinstance(group_el, StringInput):
                 group_el.textChanged.connect(toggle)
                 toggle(group_el.text())
-            elif isinstance(group_el, IntegerInput):
-                group_el.valueChanged.connect(toggle)
-                toggle(group_el.value())
-            elif isinstance(group_el, ScientificInput):
+            elif isinstance(group_el, (IntegerInput, ScientificInput)):
                 group_el.valueChanged.connect(toggle)
                 toggle(group_el.value())
             elif isinstance(group_el, ListInput):
