@@ -551,6 +551,9 @@ class InputsWidget(QtGui.QWidget):
             elif isinstance(group_el, ListInput):
                 group_el.currentTextChanged.connect(toggle)
                 toggle(group_el.currentText())
+            else:
+                raise NotImplementedError(
+                    "Grouping based on % (%) is not implemented." % (name, group_el))
 
     def set_parameters(self, parameter_objects):
         for name in self._inputs:
