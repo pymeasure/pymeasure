@@ -516,10 +516,7 @@ class InputsWidget(QtGui.QWidget):
                 continue
 
             if isinstance(getattr(self, group), BooleanInput):
-                if condition:
-                    condition = 2
-                elif not condition:
-                    condition = 0
+                coondition = 2 if condition else 0
 
             if group not in groups:
                 groups[group] = []
