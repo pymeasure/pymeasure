@@ -206,9 +206,9 @@ class SR570(Instrument):
     
     def blank_front(self):
         """"Blanks the frontend output of the device"""
-        self.write("BLNK 1")
+        self.front_blanked = True
         
     def unblank_front(self):
         """Un-blanks the frontend output of the device"""
-        self.write("BLNK 0")
+        self.front_blanked = False
         
