@@ -27,10 +27,13 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 import struct
 
-class RS_SMIQ06B(RFSignalGeneratorDM):
+class RS_SMIQ0xB(RFSignalGeneratorDM):
     # Define instrument limits according to datasheet
     power_values = (-144.0, 16.0)
-    frequency_values = (300e3, 6.4e9)
+
+    # ALC syntax adaptation
+    alc_values = ("ON", "OFF", "AUTO")
+    alc_map_values = False
 
     ####################################################################
     # 3.5.14.5 SOURce:DM (Digital Modulation) Subsystem ([:SOURce]:DM)
@@ -121,10 +124,10 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         get_process=lambda v: int(v[0]),
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, resourceName, desc, **kwargs):
         super().__init__(
             resourceName,
-            "Rohde & Schwarz SMIQ06B Signal Generator",
+            desc,
             **kwargs
         )
 
@@ -238,3 +241,21 @@ class RS_SMIQ06B(RFSignalGeneratorDM):
         self.write("SOURce:DM:MLISt:SELect 'datamod'")
         self.write(":SOUR:DM:MLIS:DATA {}".format(cmd_params))
         self.write(":DM:FORMat USER")
+
+class RS_SMIQ03B(RS_SMIQ0xB):
+    frequency_values = (300e3, 3.3e9)
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "Rohde & Schwarz SMIQ03B Signal Generator",
+            **kwargs
+        )
+
+class RS_SMIQ06B(RS_SMIQ0xB):
+    frequency_values = (300e3, 6.4e9)
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "Rohde & Schwarz SMIQ06B Signal Generator",
+            **kwargs
+        )
