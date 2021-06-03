@@ -25,9 +25,6 @@
 """
 Implementation of an interface class for ThermoStream® Systems devices.
 
-Authors:
-    - Markus Roeleke (markus.roeleke@bosch.com)
-
 Reference Document for implementation:
 
 ATS-515/615, ATS 525/625 & ATS 535/635 ThermoStream® Systems
@@ -42,7 +39,7 @@ Command      | imp | Description
 *TST?        | no  | Self test (dummy, always returns 0, meaning “passed”).
 -------------+-----+-----------------------------------------------------------------
 *OPC         | no  | Not implemented
-*OPC?        |     | 
+*OPC?        |     |
 -------------+-----+-----------------------------------------------------------------
 *WAI         | no  | Not implemented
 -------------+-----+-----------------------------------------------------------------
@@ -60,26 +57,14 @@ Command      | imp | Description
 -------------+-----+-----------------------------------------------------------------
 """
 
-from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import *
+from pymeasure.instruments.instrument import Instrument, log
+from pymeasure.instruments.validators import (
+        strict_discrete_set,
+        truncated_range,
+        strict_range
+        )
 from enum import Enum
 import time
-
-import functools
-
-GLOBAL_DELAY_FOR_CMD_EXEC = 0.05
-
-def wait_for_cmd_exec(func):
-    @functools.wraps(func)
-    def wait_after_cmd(*args, **kwargs):
-        val = func(*args, **kwargs)
-        time.sleep(GLOBAL_DELAY_FOR_CMD_EXEC)
-        return val
-    return wait_after_cmd
-
-Instrument.setting = wait_for_cmd_exec(Instrument.setting)
-Instrument.control = wait_for_cmd_exec(Instrument.control)
-Instrument.measurement = wait_for_cmd_exec(Instrument.measurement)
 
 
 class StandardEventStatusCode(Enum):
@@ -123,14 +108,14 @@ class ErrorCode(Enum):
     OVERHEAT                       = 1      # bit 0  – overheat
 
 
-class TemptronicBase(Instrument):    
+class TemptronicBase(Instrument):
     """Represent the bas class for TemptronicATSXXX instruments.
-    """ 
+    """
 
     remote_mode = Instrument.setting(
         "%s",
         """remote mode
-        
+
         remote_mode = True -> Go into remote mode – the System touch screen controls are
         disabled, but a “Return to local” button appears.
         NOTE: When in remote mode, the touch screen controls are
@@ -144,7 +129,7 @@ class TemptronicBase(Instrument):
     maximum_test_time = Instrument.control(
         "TTIM?", "TTIM %g",
         """Set or get maximum allowed test time
-        
+
         Set the maximum allowable test time.
         maximum_test_time = nnnn -- where nnnn is 0-9999 seconds
         NOTE: Setting a test time prevents the System from staying at one
@@ -225,13 +210,13 @@ class TemptronicBase(Instrument):
     temperature_limit_air_low = Instrument.control(
         "LLIM?", "LLIM %g",
         """lower air temperature limit.
-        
+
         Set or get the lower air temperature limit.
         LLIM nnn -- where nnn is -99 to +25 °C
         NOTE: LLIM limits the minimum air temperature in both air and
         DUT control modes. Additionally, an “out of range” error generates
         if a setpoint is less than this value.
-        
+
         """,
         validator=truncated_range,
         values=[-99, 25]
@@ -240,7 +225,7 @@ class TemptronicBase(Instrument):
     temperature_limit_air_high = Instrument.control(
         "ULIM?", "ULIM %g",
         """upper air temperature limit.
-        
+
         Set or get the upper air temperature limit.
         ULIM nnn -- where nnn is 25 to 225 °C.
         NOTE: ULIM limits the maximum air temperature in both air and
@@ -254,9 +239,9 @@ class TemptronicBase(Instrument):
     temperature_limit_air_dut = Instrument.control(
         "ADMD?", "ADMD %g",
         """Air to DUT limit.
-        
+
         Set the air-to-DUT maximum difference.
-        ADMD nnn -- where nnn is 10 - 300 °C in 1 degree increments.        
+        ADMD nnn -- where nnn is 10 - 300 °C in 1 degree increments.
         """,
         validator=truncated_range,
         values=[10,300]
@@ -265,7 +250,7 @@ class TemptronicBase(Instrument):
     temperature_setpoint = Instrument.control(
         "SETP?", "SETP %g",
         """Set or get selected setpoint’s temperature
-        
+
         Set the currently selected setpoint’s temperature.
         SETP nnn.n -- where nnn.n is –99.9 to 225.0 °C.
         NOTE: values entered must be with in the ULIM (the upper limit)
@@ -278,7 +263,7 @@ class TemptronicBase(Instrument):
     temperature_setpoint_window = Instrument.control(
         "WNDW?", "WNDW %g",
         """Setpoint’s temperature window
-        
+
         Set the currently selected setpoint’s temperature window.
         WNDW n.n -- where n.n is 0.1 - 9.9 °C
         NOTE: The window is the maximum positive or negative deviation
@@ -302,7 +287,7 @@ class TemptronicBase(Instrument):
     temperature = Instrument.measurement(
         "TEMP?",
         """ current main temperature.
-        
+
         Read the main temperature, in 0.1 °C increments.
         NOTE: This query returns air temperature when in air-control
         mode, or DUT temperature when in DUT-control mode.
@@ -314,7 +299,7 @@ class TemptronicBase(Instrument):
     temperature_condition_status_code = Instrument.measurement(
         "TECR?",
         """ temperature condition status register.
-        
+
         bit 7 –- not used
         bit 6 -- not used
         bit 5 -- cycling stopped ("stop on fail" signal was received)
@@ -333,7 +318,7 @@ class TemptronicBase(Instrument):
         """Select a setpoint to be the current setpoint.
         SETN nn -- where n is 0 – 17 when on the Cycle screen.
         or
-        SETN n – where n is 0 to 2 when on the Operator screen 
+        SETN n – where n is 0 to 2 when on the Operator screen
         (0=hot, 1=ambient, 2=cold).
         NOTE: Use *RST to reset (force) the System to the Cycle screen.
               Use RSTO to reset (force) the System to the Operator screen.
@@ -435,7 +420,7 @@ class TemptronicBase(Instrument):
         validator=truncated_range,
         values=[0, 1023]
         )
- 
+
     copy_active_setup_file = Instrument.setting(
         "CFIL %g",
         """Local lockout – the System touch screen controls are disabled, and
@@ -586,7 +571,7 @@ class TemptronicBase(Instrument):
         "TESE?", "TESE %g",
         """ Set the temperature event status enable (mask) register.
         TESE nnn -- where nnn is 0 – 255
-        
+
         bit 7 - not used
         bit 6 - not used
         bit 5 - stopped cycling ("stop on fail" signal was received)
@@ -594,7 +579,7 @@ class TemptronicBase(Instrument):
         bit 3 - end of one cycle
         bit 2 - end of test (test time has elapsed)
         bit 1 - not at temperature
-        bit 0 - at temperature (soak time has elapsed) 
+        bit 0 - at temperature (soak time has elapsed)
 
         NOTE: See TESR? for the meaning of each bit in the mask.
         Read the temperature event status enable (mask) register.
@@ -606,7 +591,7 @@ class TemptronicBase(Instrument):
     temperature_event_status = Instrument.measurement(
         "TESR?",
         """ temperature event status register.
-        
+
         bit 7 - not used
         bit 6 - not used
         bit 5 - stopped cycling ("stop on fail" signal was received)
@@ -614,7 +599,7 @@ class TemptronicBase(Instrument):
         bit 3 - end of one cycle
         bit 2 - end of test (test time has elapsed)
         bit 1 - not at temperature
-        bit 0 - at temperature (soak time has elapsed) 
+        bit 0 - at temperature (soak time has elapsed)
         """,
         validator=strict_range,
         values=[0, 255]
@@ -632,7 +617,7 @@ class TemptronicBase(Instrument):
     dut_temperature = Instrument.measurement(
         "TMPD?",
         """Read DUT temperature, in 0.1 °C increments.
-        
+
         NOTE: This query always returns the DUT temperature, whether in
         air or DUT control modes.
         """
@@ -641,26 +626,26 @@ class TemptronicBase(Instrument):
     mode = Instrument.measurement(
         "WHAT?",
         """Returns an integer indicating what the system is doing at the time the query is processed.
-        
+
         5 = on Operator screen (manual mode)
         6 = on Cycle screen (program mode)
         """,
-        values={'manual' : 5, 
+        values={'manual' : 5,
                 'program'  : 6},
         map_values=True
         )
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Temptronic ATS-525 Thermostream", **kwargs)
+        super().__init__(adapter, "Temptronic ATS-525 Thermostream", query_delay=0.05, **kwargs)
 
     def reset(self):
         """Reset (force) the System to the Operator screen.
-        
+
         NOTE: Any device-specific errors are reset. Setpoint number 1
         (Ambient) becomes the active setpoint.
         """
         self.write("RSTO")
-    
+
     def enter_cycle(self):
         """Enter Cycle.
         RMPC 1 = enter cycle
@@ -686,28 +671,28 @@ class TemptronicBase(Instrument):
 
         Parameters
         ----------
-            
+
         dut_type : string
             string indicating which dut type to use
             ''  : no dut,
             'T' : T-DUT,
             'K' : K-DUT
-        
+
         soak_time : float
             soak time before settling is indicated
-        
+
         soak_window : float
             soak window size
-        
+
         dut_constant : float
             time constant of dut, higher values indicate higher thermal mass
-        
+
         temp_limit_air_low: float
             minimum flow temperature limit
-        
+
         temp_limit_air_high: float
             maximum flow temperature limit
-        
+
         temp_limit_air_dut: float
             maximum allowed difference between DUT and Flow temperature
 
@@ -720,16 +705,16 @@ class TemptronicBase(Instrument):
         #sent dut type
         self.dut_type=dut_type
         #temperature window
-        self.temperature_setpoint_window = temp_window        
+        self.temperature_setpoint_window = temp_window
         #temperature limit low
-        self.temperature_limit_air_low = temp_limit_air_low   
+        self.temperature_limit_air_low = temp_limit_air_low
         #temperature limit high
-        self.temperature_limit_air_high = temp_limit_air_high    
+        self.temperature_limit_air_high = temp_limit_air_high
         self.dut_mode = 'ON'
         self.dut_constant = dut_constant
         self.temperature_limit_air_dut = temp_limit_air_dut
         self.temperature_soak_time = soak_time
-        
+
     def set_temperature(self, set_temp):
         """sweep to a specified.
 
@@ -737,11 +722,11 @@ class TemptronicBase(Instrument):
         ----------
         set_temp : float
             target temperature for DUT
-            
+
         Returns
         -------
         none
-                     
+
         """
         if self.mode == 'manual':
             if set_temp <= 20:
@@ -753,28 +738,28 @@ class TemptronicBase(Instrument):
             else:
                 raise ValueError(f"Temperature {set_temp} is impossible to set!")
 
-        self.temp_set_point=set_temp 
+        self.temp_set_point=set_temp
 
-    def wait_for_settling(self, time_limit=300, log=False):
+    def wait_for_settling(self, time_limit=300, use_logging=False):
         """sweep to a specified.
 
         Parameters
         ----------
         set_temp : float
             target temperature for DUT
-        
+
         time_limit : float
             set the maximum blocking time within thermostream has to settle.
             Script execution is blocked until either thermostream has settled
             or time_limte has been exceeded.
-        
-        log : boolean
+
+        use_logging : boolean
             show polling progress in command line
-            
+
         Returns
         -------
         none
-        
+
         """
 
         time.sleep(1)
@@ -782,19 +767,19 @@ class TemptronicBase(Instrument):
         while( not self.at_temperature()): #assert at temperature
             time.sleep(1)
             t += 1
-            if log == True:
-                print(f"temp_set= {self.temperature_setpoint:4.1f} deg,",
-                      f"temp = {self.temperature:4.1f} deg,",
-                      f"time elapsed = {t:4.0f} s,",
-                      f"status = {self.temperature_event_status}")
-                
+            if use_logging == True:
+                log.info(f"temp_set= {self.temperature_setpoint:4.1f} deg,",
+                         f"temp = {self.temperature:4.1f} deg,",
+                         f"time elapsed = {t:4.0f} s,",
+                         f"status = {self.temperature_event_status}")
+
             if t > time_limit:
-                print('no settling achieved')
+                log.info('no settling achieved')
                 break
 
     def shutdown(self):
         """Brings the instrument to a safe and stable state"""
-        self.isShutdown = True
+        super().isShutdown = True
         log.info("Shutting down %s" % self.name)
         self.enable_air_flow = 0
         self.remote_mode = False
@@ -805,7 +790,7 @@ class TemptronicBase(Instrument):
         self.enable_air_flow = 1 # enable thermostream
 
     def cycling_stopped(self):
-        """check if cycling has stopped.      
+        """check if cycling has stopped.
         """
         return self.temperature_condition_status_code & TemperatureStatusCode.CYCLING_STOPPED
 
@@ -833,7 +818,7 @@ class TemptronicBase(Instrument):
         """ check if at temperature.
         """
         return self.temperature_condition_status_code & TemperatureStatusCode.AT_TEMPERATURE
-    
+
     def __enter__(self):
         return self
 

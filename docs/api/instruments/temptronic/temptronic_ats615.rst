@@ -1,7 +1,7 @@
-###########################
-Temptronic TemptronicATS615
-###########################
+##############################
+Temptronic ATS615 Thermostream
+##############################
 
-.. autoclass:: pymeasure.instruments.temptronic.TemptronicATS615
+.. autoclass:: pymeasure.instruments.temptronic.ATS615
     :members:
     :show-inheritance:

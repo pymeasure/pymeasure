@@ -25,9 +25,6 @@
 """
 Implementation of an interface class for ThermoStream® Systems devices.
 
-Authors:
-    - Markus Roeleke (markus.roeleke@bosch.com)
-
 Reference Document for implementation:
 
 ATS-515/615, ATS 525/625 & ATS 535/635 ThermoStream® Systems
@@ -37,25 +34,25 @@ September, 2019
 
 """
 
-from pymeasure.instruments.temptronic.temptronic_base import TemptronicBase
+from pymeasure.instruments.temptronic.temptronic_base import Base
 from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import *
+from pymeasure.instruments.validators import truncated_range
 
 
-class TemptronicATS545(TemptronicBase): 
+class ATS545(Base):
     """Represent the TemptronicATS545 instruments.
     """
 
     temperature_limit_air_low = Instrument.control(
         "LLIM?", "LLIM %g",
         """lower air temperature limit.
-        
+
         Set or get the lower air temperature limit.
         LLIM nnn -- where nnn is -80 to +25 °C
         NOTE: LLIM limits the minimum air temperature in both air and
         DUT control modes. Additionally, an “out of range” error generates
         if a setpoint is less than this value.
-        
+
         """,
         validator=truncated_range,
         values=[-80, 25]

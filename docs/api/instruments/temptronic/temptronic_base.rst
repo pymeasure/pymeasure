@@ -1,7 +1,7 @@
-#########################
-Temptronic TemptronicBase
-#########################
+#####################
+Temptronic Base Class
+#####################
 
-.. autoclass:: pymeasure.instruments.temptronic.TemptronicBase
+.. autoclass:: pymeasure.instruments.temptronic.Base
     :members:
     :show-inheritance:
