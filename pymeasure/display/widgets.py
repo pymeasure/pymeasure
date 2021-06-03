@@ -516,7 +516,7 @@ class InputsWidget(QtGui.QWidget):
                 continue
 
             if isinstance(getattr(self, group), BooleanInput):
-                coondition = 2 if condition else 0
+                condition = 2 if condition else 0
 
             if group not in groups:
                 groups[group] = []
@@ -553,7 +553,7 @@ class InputsWidget(QtGui.QWidget):
                 toggle(group_el.currentText())
             else:
                 raise NotImplementedError(
-                    "Grouping based on % (%) is not implemented." % (name, group_el))
+                    "Grouping based on %s (%s) is not implemented." % (name, group_el))
 
     def set_parameters(self, parameter_objects):
         for name in self._inputs:
