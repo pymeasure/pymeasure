@@ -182,19 +182,19 @@ class SR570(Instrument):
     
     def enable_bias(self):
         """Turns the bias voltage on"""
-        self.write("BSON 1")
+        self.bias_enabled = True
     
     def disable_bias(self):
         """Turns the bias voltage off"""
-        self.write("BSON 0")
+        self.bias_enabled = False
     
     def enable_offset_current(self):
         """"Enables the offset current """
-        self.write("IOON 1")
+        self.offset_current_enabled = True
         
     def disable_offset_current(self):
         """"Disables the offset current """
-        self.write("IOON 0")
+        self.offset_current_enabled = False
     
     def clear_overload(self):
         """"Reset the filter capacitors to clear an overload condition"""
