@@ -464,10 +464,7 @@ class InputsWidget(QtGui.QWidget):
                 continue
 
             if isinstance(getattr(self, group), BooleanInput):
-                if condition:
-                    condition = 2
-                elif not condition:
-                    condition = 0
+                condition = 2 if condition else 0
 
             if group not in groups:
                 groups[group] = []
@@ -496,15 +493,15 @@ class InputsWidget(QtGui.QWidget):
             elif isinstance(group_el, StringInput):
                 group_el.textChanged.connect(toggle)
                 toggle(group_el.text())
-            elif isinstance(group_el, IntegerInput):
-                group_el.valueChanged.connect(toggle)
-                toggle(group_el.value())
-            elif isinstance(group_el, ScientificInput):
+            elif isinstance(group_el, (IntegerInput, ScientificInput)):
                 group_el.valueChanged.connect(toggle)
                 toggle(group_el.value())
             elif isinstance(group_el, ListInput):
                 group_el.currentTextChanged.connect(toggle)
                 toggle(group_el.currentText())
+            else:
+                raise NotImplementedError(
+                    "Grouping based on %s (%s) is not implemented." % (name, group_el))
 
     def set_parameters(self, parameter_objects):
         for name in self._inputs:
