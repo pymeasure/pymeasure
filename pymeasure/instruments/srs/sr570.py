@@ -200,10 +200,7 @@ class SR570(Instrument):
         """"Reset the filter capacitors to clear an overload condition"""
         self.write("ROLD")
     
-    def reset_instrument(self):
-        """Resets the amplifier to default settings"""
-        self.write('*RST')
-    
+
     def blank_front(self):
         """"Blanks the frontend output of the device"""
         self.front_blanked = True
