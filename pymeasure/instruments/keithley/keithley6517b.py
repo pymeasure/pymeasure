@@ -66,7 +66,8 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         cast=bool
     )
 
-    def extract_value(self, result):
+    @staticmethod
+    def extract_value(result):
         """ extracts the physical value from a result object returned
             by the instrument """
         m = re.fullmatch(r'([+\-0-9E.]+)[A-Z]{4}', result[0])
