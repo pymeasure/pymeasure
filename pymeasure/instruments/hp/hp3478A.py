@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # This file is part of the PyMeasure package.
 #
@@ -173,11 +172,10 @@ def get_status(status_bytes, field=None):
     ret_val = Status(Status_bytes(*status_bytes))
     if field is None:
         return ret_val.b
+    elif field == "SRQ":
+        return getattr(ret_val.B, "byte3")
     else:
-        if field == "SRQ":
-            return getattr(ret_val.B, "byte3")
-        else:
-            return getattr(ret_val.b, field)
+        return getattr(ret_val.b, field)
 
 def get_mode(status_bytes):
     """Method to decode current mode
@@ -236,6 +234,7 @@ class HP3478A(Instrument):
     with the instrument.
 
     As this unit predates SCPI some tricks are required to get this working
+    
     """
 
     def __init__(self, resourceName, **kwargs):
