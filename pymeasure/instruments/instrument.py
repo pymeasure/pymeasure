@@ -63,15 +63,6 @@ class Instrument(object):
 
         self.get = Object()
 
-        # TODO: Determine case basis for the addition of these methods
-        if includeSCPI:
-            # Basic SCPI commands
-            #self.status = self.measurement("*STB?",
-            #                               """ Returns the status of the instrument """)
-            #self.complete = self.measurement("*OPC?",
-            #                                 """ TODO: Add this doc """)
-            pass
-
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
 
