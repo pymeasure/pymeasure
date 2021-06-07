@@ -428,6 +428,7 @@ class HP3478A(Instrument):
          8(dec) - SRQ when internal error,
         16(dec) - front panel SQR
         32(dec) - SRQ by invalid calibration
+
         """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"),"SRQ")),
         validator = strict_range,
