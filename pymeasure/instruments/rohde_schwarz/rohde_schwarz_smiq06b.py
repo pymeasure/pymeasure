@@ -88,7 +88,7 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         """ A integer property that allow to set the transmission symbol rate
         This property can be set. """,
         validator=strict_range,
-        values=[1000, 7e6]        
+        values=[100, 7e6]
     )
 
     custom_modulation_ask_depth = Instrument.setting(
