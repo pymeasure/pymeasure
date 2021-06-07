@@ -32,37 +32,6 @@ from pymeasure.instruments.validators import joined_validators,strict_discrete_s
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-# Definitions for different specifics of this instrument
-MODES={"DCV": "F1",
-       "ACV": "F2",
-       "R2W": "F3",
-       "R4W": "F4",
-       "DCI": "F5",
-       "ACI": "F6",
-       "Rext": "F7",
-       }
-
-RANGES={"DCV": {3E-2: "R-2", 3E-1: "R-1",3: "R0",30: "R1",300:"R2",
-                "auto": "RA"},
-        "ACV": {3E-1: "R-1", 3: "R0",30: "R1" ,300: "R2","auto": "RA"},
-        "R2W": {30: "R1", 300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5",
-                3E6: "R6", 3E7: "R7","auto": "RA"},
-        "R4W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5",
-                3E6: "R6", 3E7: "R7","auto": "RA"},
-        "DCI": {3E-1: "R-1",3: "R0","auto": "RA"},
-        "ACI": {3E-1: "R-1",3: "R0","auto": "RA"},
-        "Rext": {3E6: "R7","auto": "RA"},
-        }
-
-TRIGGERS={
-        "auto": "T1",
-        "internal": "T1",
-        "external": "T2",
-        "single": "T3",
-        "hold": "T4",
-        "fast": "T5",
-        }
-
 
 c_uint8 = ctypes.c_uint8
 
@@ -127,9 +96,9 @@ class Status_bits(ctypes.LittleEndianStructure):
         Returns a pretty formatted (human readable) string showing the status of the instrument
 
         """
-        inv_modes = dict(zip(MODES.values(),MODES.keys()))
+        inv_modes = dict(zip(HP3478A.MODES.values(),HP3478A.MODES.keys()))
         cur_mode = inv_modes["F" + str(self.function)]
-        cur_range = list(RANGES[cur_mode].keys())[self.range - 1]
+        cur_range = list(HP3478A.RANGES[cur_mode].keys())[self.range - 1]
         if cur_range >= 1E6:
             r_str = str(cur_range / 1E6) + ' M'
         elif cur_range >= 1000:
@@ -187,7 +156,7 @@ def get_mode(status_bytes):
     """
     cur_stat = Status(Status_bytes(*status_bytes))
     function = cur_stat.b.function
-    inv_modes = dict(zip(MODES.values(),MODES.keys()))
+    inv_modes = dict(zip(HP3478A.MODES.values(),HP3478A.MODES.keys()))
     cur_mode = inv_modes["F"+str(function)]
     return cur_mode
 
@@ -201,10 +170,10 @@ def get_range(status_bytes):
     """
     cur_stat = Status(Status_bytes(*status_bytes))
     function = cur_stat.b.function
-    inv_modes = dict(zip(MODES.values(),MODES.keys()))
+    inv_modes = dict(zip(HP3478A.MODES.values(),HP3478A.MODES.keys()))
     cur_mode = inv_modes["F"+str(function)]
     rnge = cur_stat.b.range
-    cur_range = list(RANGES[cur_mode].keys())[rnge-1]
+    cur_range = list(HP3478A.RANGES[cur_mode].keys())[rnge-1]
     return cur_range
 
 
@@ -217,7 +186,7 @@ def get_trigger(status_bytes):
     """
     cur_stat= Status(Status_bytes(*status_bytes))
     i_trig = cur_stat.b.int_trig
-    e_trig = cur_stat.b.int_trig
+    e_trig = cur_stat.b.ext_trig
     if i_trig == 0:
         if e_trig == 0:
             trigger_mode = "hold"
@@ -227,6 +196,24 @@ def get_trigger(status_bytes):
         trigger_mode = "internal"
     return trigger_mode
 
+def set_range(r_string):
+    """Method to convert a string object in the form of "XXX,ZZZ"
+    with XXX being a valid mode and ZZZ a valid number or auto 
+    according to the RANGES construct
+    :return ranges_str: string indicating the range to the instrument
+    :rtype ranges_str: str
+    
+    """
+    mo = r_string.split(sep=",")[0]
+    ra = str.strip(r_string.split(sep=",")[1])
+    if ra == "auto":
+        rr = ra
+    else:
+        rr = int(ra)
+    
+    ranges_str = HP3478A.RANGES[mo][rr]
+    return ranges_str
+
 
 class HP3478A(Instrument):
     """ Represents the Hewlett Packard 3748A 5 1/2 digit multimeter
@@ -234,7 +221,7 @@ class HP3478A(Instrument):
     with the instrument.
 
     As this unit predates SCPI some tricks are required to get this working
-    
+
     """
 
     def __init__(self, resourceName, **kwargs):
@@ -247,17 +234,51 @@ class HP3478A(Instrument):
             **kwargs
         )
 
+    # Definitions for different specifics of this instrument
+    MODES={"DCV": "F1",
+           "ACV": "F2",
+           "R2W": "F3",
+           "R4W": "F4",
+           "DCI": "F5",
+           "ACI": "F6",
+           "Rext": "F7",
+           }
+
+    RANGES={"DCV": {3E-2: "R-2", 3E-1: "R-1",3: "R0",30: "R1",300:"R2",
+                    "auto": "RA"},
+            "ACV": {3E-1: "R-1", 3: "R0",30: "R1" ,300: "R2","auto": "RA"},
+            "R2W": {30: "R1", 300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5",
+                    3E6: "R6", 3E7: "R7","auto": "RA"},
+            "R4W": {30: "R1",300: "R2", 3E3: "R3",3E4: "R4",3E5: "R5",
+                    3E6: "R6", 3E7: "R7","auto": "RA"},
+            "DCI": {3E-1: "R-1",3: "R0","auto": "RA"},
+            "ACI": {3E-1: "R-1",3: "R0","auto": "RA"},
+            "Rext": {3E6: "R7","auto": "RA"},
+            }
+
+    TRIGGERS={
+            "auto": "T1",
+            "internal": "T1",
+            "external": "T2",
+            "single": "T3",
+            "hold": "T4",
+            "fast": "T5",
+            }
 
     active_connectors = Instrument.measurement(
         "B",
         """Return selected connectors (1->front/0->back)), based on front-panel selector switch""",
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "front_rear")),
+        values={"back":0, "front":1},
+        map_values = True,
         )
 
     auto_range = Instrument.measurement(
         "B",
-        """ Return auto-ranging status """,
+        """ Return auto-ranging status, range can be set the range property""",
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "auto_range")),
+        values={False:0, True:1},
+        map_values = True,
         )
 
     auto_zero = Instrument.control(
@@ -266,16 +287,28 @@ class HP3478A(Instrument):
         """ Return autozero settings on the HP3478, this property can be set (0: disabled, 1: enabled) """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "auto_zero")),
         validator = strict_discrete_set,
-        values = (0,1),
+        values={False:0, True:1},
+        map_values = True,
         )
 
     cal_enable = Instrument.measurement(
         "B",
         """Return calibration enable switch setting (1->CAL / 0->disbaled), based on front-panel selector switch""",
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "cal_enable")),
+        values={False:0, True:1},
+        map_values = True,
         )
 
-    check_errors = Instrument.measurement(
+    def check_errors(self):
+        """
+        Method to read the error status register
+
+        :return error_status: one byte with the error status register content
+        :rtype error_status: int
+        """
+        return self.error_status
+
+    error_status = Instrument.measurement(
         "E",
         """Checks the error status register""",
         get_process = (lambda x: int(x)),
@@ -301,8 +334,6 @@ class HP3478A(Instrument):
         """Displays up to 12 upper-case ASCII characters on the display and disables all symbols on the display.""",
         set_process = (lambda x: str.upper(x[0:12])),
         )
-
-    id = Exception(ValueError('Not implemented in this pre-SCPI instrument'))
 
     #TODO: find a good way to cache the latest measurment and use it to incease speed (if actually needed)
     measure_ACI = Instrument.measurement(
@@ -350,9 +381,11 @@ class HP3478A(Instrument):
     mode = Instrument.control(
         "B",
         "%s",
-        """Return current selected measurment mode, this propery can be set""",
+        """Return current selected measurment mode, this propery can be set.
+        Allowed values are ACI,ACV,DCI,DCV,R2W,R4W,Rext
+        """,
         get_process = (lambda x: get_mode(x.encode(encoding="ASCII"))),
-        set_process = (lambda x: MODES[x]),
+        set_process = (lambda x: HP3478A.MODES[x]),
         validator = strict_discrete_set,
         values = MODES,
         )
@@ -361,17 +394,20 @@ class HP3478A(Instrument):
     range = Instrument.control(
         "B",
         "%s",
-        """Returns the current measurment range, this property can be set""",
+        """Returns the current measurment range, this property can be set.
+        Valid settings are a string like "DCV, 30000" or "R2W,auto"
+        for all valid ranges look at HP3478A.RANGES structure
+        """,
         get_process = (lambda x: get_range(x.encode(encoding="ASCII"))),
-        set_process = (lambda x,y: RANGES[x][y]),
-        # validator = joined_validators(strict_discrete_set,strict_discrete_set),
-        # values = RANGES,
+        set_process = (lambda x: set_range(x)),
         )
 
     resolution = Instrument.control(
         "B",
         "N%d",
-        """Return current selected resolution, this property can be set""",
+        """Return current selected resolution, this property can be set.
+        Allowewd values are 3,4 or 5
+        """,
         get_process = (lambda x: 6-get_status(x.encode(encoding="ASCII"),"digits")),
         validator = strict_discrete_set,
         values = [3,4,5],
@@ -386,7 +422,13 @@ class HP3478A(Instrument):
     SRQ_mask = Instrument.control(
         "B",
         "M%o",
-        """Return current SRQ mask, this property can be set""",
+        """Return current SRQ mask, this property can be set,
+         1(dec) - SRQ when Data ready,
+         4(dec) - SRQ when Syntax error,
+         8(dec) - SRQ when internal error,
+        16(dec) - front panel SQR
+        32(dec) - SRQ by invalid calibration
+        """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"),"SRQ")),
         validator = strict_range,
         values = [0,63],
@@ -395,14 +437,16 @@ class HP3478A(Instrument):
     trigger = Instrument.control(
         "B",
         "%s",
-        """Return current selected trigger mode, this property can be set""",
+        """Return current selected trigger mode, this property can be set
+        Possibe values are: auto/internal, external, hold, fast
+        """,
         get_process = (lambda x: get_trigger(x.encode(encoding="ASCII"))),
-        set_process = (lambda x: TRIGGERS[x]),
+        set_process = (lambda x: HP3478A.TRIGGERS[x]),
         validator = strict_discrete_set,
         values = TRIGGERS,
         )
 
-    #Functions using low-level access via instrument.adapter.conneciton methods
+    #Functions using low-level access via instrument.adapter.connection methods
 
     def GPIB_trigger(self):
         """
