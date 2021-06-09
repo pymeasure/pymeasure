@@ -99,7 +99,7 @@ class Instrument(object):
         if self.SCPI:
             return self.ask("*IDN?").strip()
         else:
-            return "Warning: Property not implemented."
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     # Wrapper functions for the Adapter object
     def ask(self, command):
