@@ -140,11 +140,11 @@ class AgilentE4438C(RFSignalGeneratorDM):
             data += [(0x14+int(bit,2)) for bit in bitseq]
             # Add bits with RF off
             data += [0x10]*spacing
-        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"PacketsToTransmit\",", data, datatype='B')
+        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"PacketsToTransmit\",", data, timeout=20000, datatype='B')
         self.complete
         self.write("RADIO:CUSTOM:DATA:PRAM \"PacketsToTransmit\"")
         self.data_ramping_workaround = True
-        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"RampingWorkaround\",", [0x94], datatype='B')
+        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"RampingWorkaround\",", [0x94], timeout=20000, datatype='B')
 
     def data_trigger_setup(self, mode='SINGLE'):
         """ Configure the trigger system for bitsequence transmission

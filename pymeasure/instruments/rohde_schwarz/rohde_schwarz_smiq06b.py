@@ -177,7 +177,7 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         for i in range(0, length, 8):
             values.append(int(val[i:i+8], 2))
 
-        self.adapter.write_binary_values("SOURce:DM:DLISt:DATA ", values, datatype='B')
+        self.adapter.write_binary_values("SOURce:DM:DLISt:DATA ", values, timeout=20000, datatype='B')
         self.complete
 
         # Write control list
@@ -192,7 +192,7 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         for i,v in enumerate(ctrls):
             # Switch on the power at the beginning of each sequence and switch it off at end of the sequences
             values.append( (((i+1)%2) << 31) + (v & index_mask))
-        self.adapter.write_binary_values("SOURce:DM:CLISt:DATA ", values, datatype="I", is_big_endian=True)
+        self.adapter.write_binary_values("SOURce:DM:CLISt:DATA ", values, timeout=20000, datatype="I", is_big_endian=True)
         self.complete
 
         # Switch back to normal mode
