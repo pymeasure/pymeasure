@@ -134,7 +134,7 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
     def _get_symbol_length(self):
         modulation = self.custom_modulation
         symbol_length = 1
-        if modulation in ["FSK4", "QPSK", "PSK4", "P4QPsk", "AFSK4"]:
+        if modulation in ("FSK4", "QPSK", "PSK4", "P4QPsk", "AFSK4"):
             symbol_length = 2
         elif modulation == "USER":
             symbol_length = int(float(self.ask("DM:MLIST:DATA?").split(",")[1]))
@@ -171,11 +171,16 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         if (length % 8):
             val = val + "0"*(8-(length % 8))
             length = len(val)
-            
+
+        # Define a xor mask to invert bit for ask/ook
+        # For some weird reason, 1 correspond to OFF and 0 to ON
+        xor_mask = 0xff if (self.custom_modulation == "ASK") else 0
+
         # Group bit data in byte format
         values = []
         for i in range(0, length, 8):
-            values.append(int(val[i:i+8], 2))
+            value = int(val[i:i+8], 2) ^ xor_mask
+            values.append(value)
 
         self.adapter.write_binary_values("SOURce:DM:DLISt:DATA ", values, timeout=20000, datatype='B')
         self.complete
