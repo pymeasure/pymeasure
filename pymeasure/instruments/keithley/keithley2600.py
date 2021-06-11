@@ -46,7 +46,7 @@ class Keithley2600(Instrument):
 class Channel(object):
 
     source_output=Instrument.control(
-        'source_output', 'source_output=%d',
+        'source.output', 'source.output=%d',
         """Property controlling the channel output state (ON of OFF)
         """, 
         validator=strict_discrete_set,
@@ -55,11 +55,11 @@ class Channel(object):
     )
     
     source_mode=Instrument.control(
-        'source_func', 'source_func=%d',
+        'source.func', 'source.func=%d',
         """Property controlling the channel soource function (Voltage or Current)
         """, 
         validator=strict_discrete_set,
-        values={'Voltage': 1, 'Current': 0},
+        values={'voltage': 1, 'current': 0},
         map_values=True
     )
 
@@ -87,7 +87,7 @@ class Channel(object):
     )
 
     compliance_current=Instrument.control(
-        'source.limiti', 'source.limit=%f',
+        'source.limiti', 'source.limiti=%f',
         """ Property controlling the source compliance current """,
         validator=truncated_range,
         values=[-1.5,1.5]
