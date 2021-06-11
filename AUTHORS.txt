@@ -24,6 +24,7 @@ Richard Schlitz
 Manuel Zahn
 Mikhaël Myara
 Mathieu Jeannin
+Domenic Prete
 Paul Goulain
 John McMaster
 Dominik Kriegner
