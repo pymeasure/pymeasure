@@ -91,18 +91,20 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         values=[100, 7e6]
     )
 
-    custom_modulation_ask_depth = Instrument.setting(
-        ":DM:ASK:DEPTh %e", 
-        """ An integer property that allow to set the depth for the amplitude shift keying (ASK) modulation.
+    custom_modulation_ask_depth = Instrument.control(
+        ":DM:ASK:DEPTh?", 
+        ":DM:ASK:DEPTh %e",
+        """ An integer property that allow to set/read the depth for the amplitude shift keying (ASK) modulation.
         Depth is set as a percentage of the full power on level.
         """,
         validator=strict_range,
         values=[0, 100]
     )
 
-    custom_modulation_fsk_deviation = Instrument.setting(
-        ":DM:FSK:DEViation %e", 
-        """ An integer property that allow to set the FSK frequency deviation value.
+    custom_modulation_fsk_deviation = Instrument.control(
+        ":DM:FSK:DEViation?", 
+        ":DM:FSK:DEViation %e",
+        """ An integer property that allow to set/read the FSK frequency deviation value.
         Unit is Hz.
         """,
         validator=strict_range,
