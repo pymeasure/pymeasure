@@ -260,9 +260,8 @@ class Channel(object):
     def error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
-        err = self.values('errorqueue.next()')
-        if len(err) < 2:
-            err = self.read()  # Try reading again
+        err = self.instrument.ask('print(errorqueue.next())')
+        err = (float(err.split('\t')[0]), err.split('\t')[1])
         code = err[0]
         message = err[1].replace('"', '')
         return (code, message)
