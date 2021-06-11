@@ -156,7 +156,8 @@ class Channel(object):
         'sense', 'sense=%d',
         """Property controlling the resistance measurement mode: 4 wires or 2 wires""",
         validator=strict_discrete_set,
-        values={'4': 1, '2': 0}
+        values={'4': 1, '2': 0},
+        map_values=True
     )
 
     ###########
