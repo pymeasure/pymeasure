@@ -31,8 +31,10 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
+
     def __init__(self, adapter, **kwargs):
         super(Keithley2600, self).__init__(
             adapter,
@@ -44,119 +46,119 @@ class Keithley2600(Instrument):
 
 
 class Channel(object):
-
-    source_output=Instrument.control(
+    source_output = Instrument.control(
         'source.output', 'source.output=%d',
         """Property controlling the channel output state (ON of OFF)
-        """, 
+        """,
         validator=strict_discrete_set,
         values={'OFF': 0, 'ON': 1},
         map_values=True
     )
-    
-    source_mode=Instrument.control(
+
+    source_mode = Instrument.control(
         'source.func', 'source.func=%d',
         """Property controlling the channel soource function (Voltage or Current)
-        """, 
+        """,
         validator=strict_discrete_set,
         values={'voltage': 1, 'current': 0},
         map_values=True
     )
 
-    measure_nplc=Instrument.control(
+    measure_nplc = Instrument.control(
         'measure.nplc', 'measure.nplc=%f',
         """ Property controlling the nplc value """,
         validator=truncated_range,
-        values=[0.001,25],
+        values=[0.001, 25],
         map_values=True
     )
 
     ###############
     # Current (A) #
     ###############
-    current=Instrument.measurement(
+    current = Instrument.measurement(
         'measure.i()',
         """ Reads the current in Amps """
     )
 
-    source_current=Instrument.control(
+    source_current = Instrument.control(
         'source.leveli', 'source.leveli=%f',
         """ Property controlling the applied source current """,
         validator=truncated_range,
-        values=[-1.5,1.5]
+        values=[-1.5, 1.5]
     )
 
-    compliance_current=Instrument.control(
+    compliance_current = Instrument.control(
         'source.limiti', 'source.limiti=%f',
         """ Property controlling the source compliance current """,
         validator=truncated_range,
-        values=[-1.5,1.5]
+        values=[-1.5, 1.5]
     )
 
-    source_current_range=Instrument.control(
+    source_current_range = Instrument.control(
         'source.rangei', 'source.rangei=%f',
         """Property controlling the source current range """,
         validator=truncated_range,
-        values=[-1.5,1.5]
+        values=[-1.5, 1.5]
     )
 
-    current_range=Instrument.control(
+    current_range = Instrument.control(
         'measure.rangei', 'measure.rangei=%f',
         """Property controlling the measurement current range """,
         validator=truncated_range,
-        values=[-1.5,1.5]
+        values=[-1.5, 1.5]
     )
-    
+
     ###############
     # Voltage (V) #
     ###############
-    voltage=Instrument.measurement(
+    voltage = Instrument.measurement(
         'measure.v()',
         """ Reads the voltage in Volts """
     )
-    
-    source_voltage=Instrument.control(
+
+    source_voltage = Instrument.control(
         'source.levelv', 'source.levelv=%f',
         """ Property controlling the applied source voltage """,
         validator=truncated_range,
-        values=[-200,200]
+        values=[-200, 200]
     )
 
-    compliance_voltage=Instrument.control(
+    compliance_voltage = Instrument.control(
         'source.limitv', 'source.limiv=%f',
         """ Property controlling the source compliance voltage """,
         validator=truncated_range,
-        values=[-200,200]
+        values=[-200, 200]
     )
 
-    source_voltage_range=Instrument.control(
+    source_voltage_range = Instrument.control(
         'source.rangev', 'source.rangev=%f',
         """Property controlling the source current range """,
         validator=truncated_range,
-        values=[-200,200]
+        values=[-200, 200]
     )
 
-    voltage_range=Instrument.control(
+    voltage_range = Instrument.control(
         'measure.rangev', 'measure.rangev=%f',
         """Property controlling the measurement voltage range """,
         validator=truncated_range,
-        values=[-200,200]
+        values=[-200, 200]
     )
 
     ####################
     # Resistance (Ohm) #
     ####################
-    resistance=Instrument.measurement(
+    resistance = Instrument.measurement(
         'measure.r()',
         """ Reads the resistance in Ohms """
     )
 
-    wires_mode=Instrument.control(
+    wires_mode = Instrument.control(
         'sense', 'sense=%d',
         """Property controlling the resistance measurement mode: 4 wires or 2 wires""",
         validator=strict_discrete_set,
         values={'4': 1, '2': 0}
     )
+
     ###########
     # Methods #
     ###########
@@ -166,10 +168,10 @@ class Channel(object):
         self.channel = channel
 
     def ask(self, cmd):
-        return float(self.instrument.ask('print(smu%s.%s)' %(self.channel,cmd)))
+        return float(self.instrument.ask('print(smu%s.%s)' % (self.channel, cmd)))
 
     def write(self, cmd):
-        self.instrument.write('smu%s.%s' %(self.channel,cmd))
+        self.instrument.write('smu%s.%s' % (self.channel, cmd))
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
@@ -296,4 +298,4 @@ class Channel(object):
             self.ramp_to_current(0.0)
         else:
             self.ramp_to_voltage(0.0)
-        self.source_output='off'
+        self.source_output = 'off'
