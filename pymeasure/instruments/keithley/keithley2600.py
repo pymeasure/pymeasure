@@ -174,6 +174,15 @@ class Channel(object):
     def write(self, cmd):
         self.instrument.write('smu%s.%s' % (self.channel, cmd))
 
+    def values(self, cmd, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values('print(smu%s.%s)' % (self.channel, cmd))
+
+    def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
+        return self.instrument.binary_values('print(smu%s.%s)' % (self.channel, cmd,), header_bytes, dtype)
+
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
         :param nplc: Number of power line cycles (NPLC) from 0.001 to 25
