@@ -24,8 +24,6 @@
 
 import numpy as np
 from copy import copy
-import logging
-from pymeasure.log import console_log
 
 
 class Adapter(object):
@@ -37,17 +35,11 @@ class Adapter(object):
 
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
-    :param debug: optional boolean if logging of commands should be enabled. Default is False
-    :param log_wrapper: optional callable used to wrap the logging instance. Default is pymeasure.log.console_log
     :param kwargs: all other keyword arguments are ignored.
     """
-
-    def __init__(self, preprocess_reply=None, debug=False, log_wrapper=console_log, **kwargs):
+    def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
         self.connection = None
-        self.debug = debug
-        self.log = logging.getLogger(__name__)
-        log_wrapper(self.log)
 
     def __del__(self):
         """Close connection upon garbage collection of the device"""
@@ -141,9 +133,6 @@ class FakeAdapter(Adapter):
 
     _buffer = ""
 
-    def __init__(self, **kwargs):
-        super(FakeAdapter, self).__init__(**kwargs)
-
     def read(self):
         """ Returns the last commands given after the
         last read call.
@@ -158,7 +147,6 @@ class FakeAdapter(Adapter):
         be read back.
         """
         self._buffer += command
-        if self.debug: self.log.info(command)
 
     def __repr__(self):
         return "<FakeAdapter>"
