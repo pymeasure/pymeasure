@@ -102,7 +102,7 @@ class Experiment(object):
     :param _data_timeout: Time limit for how long live plotting should wait for datapoints.
     """
 
-    def __init__(self, title, procedure, analyse=(lambda x: x)):
+    def __init__(self, title, procedure, dir, analyse=(lambda x: x)):
         self.title = title
         self.procedure = procedure
         self.measlist = []
@@ -112,6 +112,7 @@ class Experiment(object):
         self._data = []
         self.analyse = analyse
         self._data_timeout = 10
+        self.dir = dir
 
         config = get_config()
         set_mpl_rcparams(config)
@@ -121,7 +122,7 @@ class Experiment(object):
             self.scribe = console_log(log)
         self.scribe.start()
 
-        self.filename = create_filename(self.title)
+        self.filename = create_filename(self.dir)
         log.info("Using data file: %s" % self.filename)
 
         self.results = Results(self.procedure, self.filename)
