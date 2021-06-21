@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,24 +48,25 @@ class VISAAdapter(Adapter):
     :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
     """
 
-    def __init__(self, resourceName, visa_library='', preprocess_reply=None, **kwargs):
+    def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
-        if isinstance(resourceName, int):
-            resourceName = "GPIB0::%d::INSTR" % resourceName
-        self.resource_name = resourceName
+        if isinstance(resource_name, int):
+            resource_name = "GPIB0::%d::INSTR" % resource_name
+        self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
-        safeKeywords = ['resource_name', 'timeout',
-                        'chunk_size', 'lock', 'query_delay', 'send_end',
-                        'values_format', 'read_termination', 'write_termination']
+        safeKeywords = [
+            'resource_name', 'timeout', 'chunk_size', 'lock', 'query_delay', 'send_end',
+            'read_termination', 'write_termination'
+        ]
         kwargsCopy = copy.deepcopy(kwargs)
         for key in kwargsCopy:
             if key not in safeKeywords:
                 kwargs.pop(key)
         self.connection = self.manager.open_resource(
-            resourceName,
+            resource_name,
             **kwargs
         )
 
@@ -76,9 +77,6 @@ class VISAAdapter(Adapter):
             return parse_version(pyvisa.__version__) >= parse_version('1.8')
         else:
             return False
-
-    def __repr__(self):
-        return "<VISAAdapter(resource='%s')>" % self.connection.resourceName
 
     def write(self, command):
         """ Writes a command to the instrument
@@ -113,15 +111,16 @@ class VISAAdapter(Adapter):
         """
         return self.connection.query(command)
 
-    def ask_values(self, command):
+    def ask_values(self, command, **kwargs):
         """ Writes a command to the instrument and returns a list of formatted
-        values from the result. The format of the return is configurated by
-        self.config().
+        values from the result. This leverages the `query_ascii_values` method
+        in PyVISA.
 
         :param command: SCPI command to be sent to the instrument
+        :param kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
-        return self.connection.query_values(command)
+        return self.connection.query_ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
@@ -136,24 +135,16 @@ class VISAAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def config(self, is_binary=False, datatype='str',
-               container=np.array, converter='s',
-               separator=',', is_big_endian=False):
-        """ Configurate the format of data transfer to and from the instrument.
+    def write_binary_values(self, command, values, **kwargs):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
 
-        :param is_binary: If True, data is in binary format, otherwise ASCII.
-        :param datatype: Data type.
-        :param container: Return format. Any callable/type that takes an iterable.
-        :param converter: String converter, used in dealing with ASCII data.
-        :param separator: Delimiter of a series of data in ASCII.
-        :param is_big_endian: Endianness.
+        :param command: SCPI command to be sent to the instrument
+        :param values: iterable representing the binary values
+        :param kwargs: Key-word arguments to pass onto `write_binary_values`
+        :returns: number of bytes written
         """
-        self.connection.values_format.is_binary = is_binary
-        self.connection.values_format.datatype = datatype
-        self.connection.values_format.container = container
-        self.connection.values_format.converter = converter
-        self.connection.values_format.separator = separator
-        self.connection.values_format.is_big_endian = is_big_endian
+
+        return self.connection.write_binary_values(command, values, **kwargs)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
@@ -162,3 +153,6 @@ class VISAAdapter(Adapter):
         :param delay: Time delay between checking SRQ in seconds
         """
         self.connection.wait_for_srq(timeout * 1000)
+
+    def __repr__(self):
+        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name

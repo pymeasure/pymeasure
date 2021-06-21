@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -221,3 +221,32 @@ def test_setting_process():
     assert fake.read() == 'OUT 0'
     fake.x = 2
     assert fake.read() == 'OUT 1'
+
+
+def test_control_multivalue():
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "%d,%d", "",
+        )
+
+    fake = Fake()
+    fake.x = (5, 6)
+    assert fake.read() == '5,6'
+
+
+@pytest.mark.parametrize(
+    'set_command, given, expected',
+    [("%d", 5, 5),
+     ("%d, %d", (5, 6), [5, 6]),  # input has to be a tuple, not a list
+     ])
+def test_fakeinstrument_control(set_command, given, expected):
+    """FakeInstrument's custom simple control needs to process values correctly.
+    """
+    class Fake(FakeInstrument):
+        x = FakeInstrument.control(
+            "", set_command, "",
+        )
+
+    fake = Fake()
+    fake.x = given
+    assert fake.x == expected

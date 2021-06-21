@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,9 @@ class SR830(Instrument):
     INPUT_COUPLINGS = ['AC', 'DC']
     INPUT_NOTCH_CONFIGS = ['None', 'Line', '2 x Line', 'Both']
     REFERENCE_SOURCES = ['External', 'Internal']
+    SNAP_ENUMERATION = {"x": 1, "y": 2, "r": 3, "theta": 4,
+                        "aux in 1": 5, "aux in 2": 6, "aux in 3": 7, "aux in 4": 8,
+                        "frequency": 9, "ch1": 10, "ch2": 11}
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -85,6 +88,12 @@ class SR830(Instrument):
     y = Instrument.measurement("OUTP?2",
         """ Reads the Y value in Volts. """
     )
+
+    @property
+    def xy(self):
+        """ Reads the X and Y values in Volts. """
+        return self.snap()
+
     magnitude = Instrument.measurement("OUTP?3",
         """ Reads the magnitude in Volts. """
     )
@@ -447,3 +456,30 @@ class SR830(Instrument):
 
     def trigger(self):
         self.write("TRIG")
+
+    def snap(self, val1="X", val2="Y", *vals):
+        """ Method that records and retrieves 2 to 6 parameters at a single
+        instant. The parameters can be one of: X, Y, R, Theta, Aux In 1,
+        Aux In 2, Aux In 3, Aux In 4, Frequency, CH1, CH2.
+        Default is "X" and "Y".
+
+        :param val1: first parameter to retrieve
+        :param val2: second parameter to retrieve
+        :param vals: other parameters to retrieve (optional)
+        """
+        if len(vals) > 4:
+            raise ValueError("No more that 6 values (in total) can be captured"
+                             "simultaneously.")
+
+        # check if additional parameters are given as a list
+        if len(vals) == 1 and isinstance(vals[0], (list, tuple)):
+            vals = vals[0]
+
+        # make a list of all vals
+        vals = [val1, val2] + list(vals)
+
+        vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in vals]
+
+        command = "SNAP? " + ",".join(vals_idx)
+        return self.values(command)
+

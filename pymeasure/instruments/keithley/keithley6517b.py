@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,8 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         cast=bool
     )
 
-    def extract_value(self, result):
+    @staticmethod
+    def extract_value(result):
         """ extracts the physical value from a result object returned
             by the instrument """
         m = re.fullmatch(r'([+\-0-9E.]+)[A-Z]{4}', result[0])
@@ -326,6 +327,18 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         :meth:`~.trigger_on_bus` is configured.
         """
         return self.write("*TRG")
+
+    def trigger_immediately(self):
+        """ Configures measurements to be taken with the internal
+        trigger at the maximum sampling rate.
+        """
+        self.write(":TRIG:SOUR IMM;")
+
+    def trigger_on_bus(self):
+        """ Configures the trigger to detect events based on the bus
+        trigger, which can be activated by :meth:`~.trigger`.
+        """
+        self.write(":TRIG:SOUR BUS;")
 
     def shutdown(self):
         """ Ensures that the current or voltage is turned to zero

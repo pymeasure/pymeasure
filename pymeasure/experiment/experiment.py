@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +39,7 @@ from pymeasure.experiment import Results, Worker
 from .parameters import Measurable
 import time, signal
 import numpy as np
+import pandas as pd
 import tempfile
 import gc
 
@@ -181,6 +182,7 @@ class Experiment(object):
         """Clear the figures and plot lists."""
         for fig in self.figs:
             fig.clf()
+        for pl in self.plots:
             pl.close()
         self.figs = []
         self.plots = []
@@ -202,7 +204,7 @@ class Experiment(object):
                         self.update_line(ax, line, x, yname)
                 if plot['type'] == 'pcolor':
                     x, y, z = plot['x'], plot['y'], plot['z']
-                    update_pcolor(ax, x, y, z)
+                    self.update_pcolor(ax, x, y, z)
 
             display.clear_output(wait=True)
             display.display(*self.figs)
@@ -221,6 +223,7 @@ class Experiment(object):
         diff = shape[0] * shape[1] - len(z)
         Z = np.concatenate((z.values, np.zeros(diff))).reshape(shape)
         df = pd.DataFrame(Z, index=y.unique(), columns=x.unique())
+        # TODO: Remove seaborn dependencies
         ax = sns.heatmap(df)
         pl.title(title)
         pl.xlabel(xname)
@@ -241,6 +244,7 @@ class Experiment(object):
         Z = np.concatenate((z.values, np.zeros(diff))).reshape(shape)
         df = pd.DataFrame(Z, index=y.unique(), columns=x.unique())
         cbar_ax = ax.get_figure().axes[1]
+        # TODO: Remove seaborn dependencies
         sns.heatmap(df, ax=ax, cbar_ax=cbar_ax)
         ax.set_xlabel(xname)
         ax.set_ylabel(yname)
