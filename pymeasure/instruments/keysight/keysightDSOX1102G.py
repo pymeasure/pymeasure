@@ -426,16 +426,6 @@ class KeysightDSOX1102G(Instrument):
         else:
             raise ValueError("Invalid channel number. Must be 1 or 2.")
 
-    def check_errors(self):
-        """ Read all errors from the instrument."""
-        while True:
-            err = self.values(":SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Keysight DSOX1102G: %s: %s" % (err[0], err[1])
-                log.error(errmsg + "\n")
-            else:
-                break
-
     def clear_status(self):
         """ Clear device status. """
         self.write("*CLS")

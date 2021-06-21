@@ -449,18 +449,3 @@ class Agilent33500(Instrument):
         map_values=True,
         values={True: 1, False: 0},
     )
-
-    def check_errors(self):
-        """ Read all errors from the instrument. """
-
-        errors = []
-        while True:
-            err = self.values("SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Agilent 33521A: %s: %s" % (err[0], err[1])
-                log.error(errmsg + '\n')
-                errors.append(errmsg)
-            else:
-                break
-
-        return errors

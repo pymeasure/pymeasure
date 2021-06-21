@@ -308,7 +308,6 @@ class Instrument(object):
 
         return property(fget, fset)
 
-    # TODO: Determine case basis for the addition of this method
     def clear(self):
         """ Clears the instrument status byte
         """
@@ -317,7 +316,6 @@ class Instrument(object):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    # TODO: Determine case basis for the addition of this method
     def reset(self):
         """ Resets the instrument. """
         if self.SCPI:
