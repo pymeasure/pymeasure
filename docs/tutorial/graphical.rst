@@ -341,11 +341,12 @@ A completer is implemented allowing to quickly select an existing folder, and a 
 Using the estimator widget
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to provide estimates of the measurement procedure, an EstimatorWidget is provided that allows the user to define and calculate estimates.
+In order to provide estimates of the measurement procedure, an :class:`~pymeasure.display.widgets.EstimatorWidget` is provided that allows the user to define and calculate estimates.
 The widget is automatically activated when the :code:`get_estimates` method is added in the :code:`Procedure`.
 
-The quickest and most simple implementation of the :code:`get_estimates` function simple returns a the estimated duration of the measurement in seconds (as an :code:`int` or a :code:`float`).
+The quickest and most simple implementation of the :code:`get_estimates` function simply returns the estimated duration of the measurement in seconds (as an :code:`int` or a :code:`float`).
 As an example, in the example provided in the ManagedWindow section, the :code:`Procedure` is changed to:
+
 .. code-block:: python
 
    class RandomProcedure(Procedure):
@@ -386,6 +387,7 @@ As an example, in the example provided in the ManagedWindow section, the :code:`
 
 
 This will add the estimator widget at the dock on the left.
+
 .. image:: pymeasure-estimator.png
     :alt: Example of the estimator widget
 
