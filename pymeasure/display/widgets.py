@@ -1097,7 +1097,7 @@ class EstimatorWidget(QtGui.QWidget):
 
         self.update_estimates()
 
-        self.update_box.setCheckState(1)
+        self.update_box.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
 
     def check_get_estimates_signature(self):
         """ Method that checks the signature of the get_estimates function.
@@ -1246,11 +1246,11 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_thread.stop()
         self.update_thread.join()
 
-        if state == 0:
+        if state == QtCore.Qt.CheckState.Unchecked:
             pass
-        elif state == 1:
+        elif state == QtCore.Qt.CheckState.PartiallyChecked:
             self.update_thread.delay = 2
             self.update_thread.start()
-        elif state == 2:
+        elif state == QtCore.Qt.CheckState.Checked:
             self.update_thread.delay = 0.1
             self.update_thread.start()
