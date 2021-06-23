@@ -116,7 +116,7 @@ class MainWindow(ManagedWindow):
         )
         self.setWindowTitle('GUI Example')
 
-    def queue(self, procedure=None):
+    def queue(self, *, procedure=None):
         filename = tempfile.mktemp()
 
         if procedure is None:
