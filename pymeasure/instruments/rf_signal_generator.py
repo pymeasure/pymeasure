@@ -125,21 +125,8 @@ Generate a tone at 868MHz:
         and the output signal.
         """
         self.rf_enable = 0
+        super().shutdown()
  
-    def check_errors(self):
-        """Return any accumulated errors.
-        """
-        retVal = []
-        while True:
-            error = self.ask("SYSTEM:ERROR?")
-            f = error.split(",")
-            errorCode = int(f[0])
-            if errorCode == 0:
-                break
-            else:
-                retVal.append(error)
-        return retVal
-        
 class RFSignalGeneratorDM(RFSignalGenerator):
     """ Represent a generic signal generator with digital modulation capability.
 
