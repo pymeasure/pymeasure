@@ -243,17 +243,3 @@ Single sweep acquisition and peak value calculation
         """ Perform a single sweep and wait for completion. 'sweep_mode_continuous' must be OFF """
         self.write("INIT:IMM")
         self.complete
-        
-    def check_errors(self):
-        """Return any accumulated errors.
-        """
-        retVal = []
-        while True:
-            error = self.ask("SYSTEM:ERROR?")
-            f = error.split(",")
-            errorCode = int(f[0])
-            if errorCode == 0:
-                break
-            else:
-                retVal.append(error)
-        return retVal
