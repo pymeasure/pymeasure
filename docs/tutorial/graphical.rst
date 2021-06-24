@@ -345,7 +345,7 @@ In order to provide estimates of the measurement procedure, an :class:`~pymeasur
 The widget is automatically activated when the :code:`get_estimates` method is added in the :code:`Procedure`.
 
 The quickest and most simple implementation of the :code:`get_estimates` function simply returns the estimated duration of the measurement in seconds (as an :code:`int` or a :code:`float`).
-As an example, in the example provided in the ManagedWindow section, the :code:`Procedure` is changed to:
+As an example, in the example provided in the `Using the ManagedWindow`_ section, the :code:`Procedure` is changed to:
 
 .. code-block:: python
 
@@ -364,7 +364,7 @@ Depending on whether the SequencerWidget is also used, the length, duration and 
 For maximum flexibility (e.g. for showing multiple and other types of estimates, such as the duration, filesize, finishing-time, etc.) it is also possible that the :code:`get_esimates` returns a list of tuples.
 Each of these tuple consists of two strings: the first is the name (label) of the estimate, the second is the estimate itself.
 
-As an example, in the example provided in the ManagedWindow section, the :code:`Procedure` is changed to:
+As an example, in the example provided in the `Using the ManagedWindow`_ section, the :code:`Procedure` is changed to:
 
 .. code-block:: python
 
