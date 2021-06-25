@@ -526,18 +526,7 @@ class InputsWidget(QtGui.QWidget):
                 groups[group].append((self.labels[name], condition))
 
         for name, group in groups.items():
-            def toggle(state):
-                for (el, con) in group:
-                    if callable(con):
-                        visible = con(state)
-                    else:
-                        visible = (state == con)
-
-                    if self._hide_groups:
-                        el.setHidden(not visible)
-                    else:
-                        el.setDisabled(not visible)
-
+            toggle = partial(self.toggle_group, group=group)
             group_el = getattr(self, name)
             if isinstance(group_el, BooleanInput):
                 group_el.stateChanged.connect(toggle)
@@ -554,6 +543,18 @@ class InputsWidget(QtGui.QWidget):
             else:
                 raise NotImplementedError(
                     "Grouping based on %s (%s) is not implemented." % (name, group_el))
+
+    def toggle_group(self, state, group):
+        for (el, con) in group:
+            if callable(con):
+                visible = con(state)
+            else:
+                visible = (state == con)
+
+            if self._hide_groups:
+                el.setHidden(not visible)
+            else:
+                el.setDisabled(not visible)
 
     def set_parameters(self, parameter_objects):
         for name in self._inputs:
