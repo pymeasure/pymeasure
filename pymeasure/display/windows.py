@@ -96,7 +96,7 @@ class PlotterWindow(QtGui.QMainWindow):
         hbox.addWidget(self.file)
         vbox.addLayout(hbox)
 
-        self.plot_widget = PlotWidget(columns, refresh_time=self.refresh_time, check_status=False)
+        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time, check_status=False)
         self.plot = self.plot_widget.plot
 
         vbox.addWidget(self.plot_widget)
@@ -407,7 +407,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
                     for curve in experiment.curve_list:
-                        curve.update_data()
+                        if curve:
+                            curve.update_data()
                     experiment.browser_item.progressbar.setValue(100.)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
