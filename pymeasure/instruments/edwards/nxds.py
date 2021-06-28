@@ -25,7 +25,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
-class nxds(Instrument):
+class Nxds(Instrument):
     """ Represents the Edwards nXDS (10i) Vacuum Pump
     and provides a low-level interaction with the instrument.
     This could potentially work with Edwards pump that has a RS232 interface. 
@@ -38,10 +38,10 @@ class nxds(Instrument):
                               values = (0,1),)
 	
     def __init__(self, resourceName, **kwargs):
-        super(nxds, self).__init__(
+        super(Nxds, self).__init__(
             resourceName,
             "Edwards NXDS Vacuum Pump",
-	        includeSCPI=False,
+            includeSCPI=False,
             **kwargs
         )
 	
