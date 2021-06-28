@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .NXDS import NXDS
+from .nxds import nxds
