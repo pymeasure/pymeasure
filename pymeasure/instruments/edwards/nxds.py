@@ -44,3 +44,4 @@ class nxds(Instrument):
 	        includeSCPI=False,
             **kwargs
         )
+	
