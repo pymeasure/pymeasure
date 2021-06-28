@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +22,26 @@
 # THE SOFTWARE.
 #
 
-# from pymeasure.instruments import Instrument
-
-from time import sleep
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
 
-class NXDS(Instrument):
+class nxds(Instrument):
     """ Represents the Edwards nXDS (10i) Vacuum Pump
     and provides a low-level interaction with the instrument.
+    This could potentially work with Edwards pump that has a RS232 interface. 
 
     This instrument is constructed to only start and stop pump.
     """
 
+    enable = Instrument.setting("!C802 %d",
+                              """ Starts/stops pump with default settings.""",
+                              validator=strict_discrete_set,
+                              values = (0,1),)
+	
     def __init__(self, resourceName, **kwargs):
         super(NXDS, self).__init__(
             resourceName,
             "Edwards NXDS Vacuum Pump",
+	    includeSCPI=False,
             **kwargs
         )
-	
-    def start(self):
-        """ Starts pump with default settings.
-        """
-        self.write("!C802 1\r")
-		
-    def stop(self):
-        """ Starts pump with default settings.
-        """
-        self.write("!C802 0\r")
