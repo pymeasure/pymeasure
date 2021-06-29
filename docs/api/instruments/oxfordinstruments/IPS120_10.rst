@@ -1,0 +1,7 @@
+#############################################################################
+Oxford Instrument Intelligent Power Supply 120-10 for superconducting magnets
+#############################################################################
+
+.. autoclass:: pymeasure.instruments.oxfordinstruments.IPS120_10
+    :members:
+    :show-inheritance:

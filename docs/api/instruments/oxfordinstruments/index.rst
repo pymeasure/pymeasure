@@ -10,3 +10,4 @@ This section contains specific documentation on the Oxford Instruments instrumen
    :maxdepth: 2
 
    ITC503
+   IPS120_10
