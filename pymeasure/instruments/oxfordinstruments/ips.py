@@ -273,10 +273,6 @@ class IPS(Instrument):
             if error_ct > max_errors:
                 raise Exception("Too many exceptions occured during getting IPS status.")
 
-
-    def clear_buffer(self):
-        self.adapter.connection.clear()
-
     def set_field(self, field, sweep_rate=None, persistent_mode_control=True):
         # Check if field needs changing
         if self.field == field:
@@ -331,4 +327,4 @@ class IPS(Instrument):
 
         # Clear the buffer in order to prevent communication problems
         if clear_buffer:
-            self.clear_buffer()
+            self.adapter.connection.clear()
