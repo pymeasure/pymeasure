@@ -61,6 +61,23 @@ class IPS120_10(Instrument):
         (16.0, 0.1),
     ]
 
+    def __init__(self, resourceName, clear_buffer=True, switch_heater_delay=None, **kwargs):
+        super().__init__(
+            resourceName,
+            "Oxford IPS",
+            includeSCPI=False,
+            send_end=True,
+            read_termination="\r",
+            **kwargs
+        )
+
+        if switch_heater_delay is not None:
+            self._SWITCH_HEATER_DELAY = switch_heater_delay
+
+        # Clear the buffer in order to prevent communication problems
+        if clear_buffer:
+            self.adapter.connection.clear()
+
     version = Instrument.measurement(
         "V",
         """ A string property that returns the version of the IPS. """
@@ -311,20 +328,3 @@ class IPS120_10(Instrument):
 
         for (field, rate) in self._TRAINING_SCHEME:
             self.set_field(field, rate, persistent_mode_control=False)
-
-    def __init__(self, resourceName, clear_buffer=True, switch_heater_delay=None, **kwargs):
-        super().__init__(
-            resourceName,
-            "Oxford IPS",
-            includeSCPI=False,
-            send_end=True,
-            read_termination="\r",
-            **kwargs
-        )
-
-        if switch_heater_delay is not None:
-            self._SWITCH_HEATER_DELAY = switch_heater_delay
-
-        # Clear the buffer in order to prevent communication problems
-        if clear_buffer:
-            self.adapter.connection.clear()
