@@ -259,7 +259,7 @@ In order to implement the sequencer into the previous example, only the :class:`
             )
             self.setWindowTitle('GUI Example')
 
-        def queue(self, *, procedure=None):                          # Modified line
+        def queue(self, procedure=None):                             # Modified line
             filename = tempfile.mktemp()
 
             if procedure is None:                                    # Added line
@@ -370,6 +370,69 @@ To allow for even more flexibility, it is also possible to pass a (lambda)functi
 Now the input of :code:`param` is only shown if the value of :code:`iterations` is between 50 and 99.
 
 Using the :code:`hide_groups` keyword-argument of the :code:`ManagedWindow` you can choose between hiding the groups (:code:`hide_groups = True`) and disabling / graying-out the groups (:code:`hide_groups = False`).
+
+Using the estimator widget
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to provide estimates of the measurement procedure, an :class:`~pymeasure.display.widgets.EstimatorWidget` is provided that allows the user to define and calculate estimates.
+The widget is automatically activated when the :code:`get_estimates` method is added in the :code:`Procedure`.
+
+The quickest and most simple implementation of the :code:`get_estimates` function simply returns the estimated duration of the measurement in seconds (as an :code:`int` or a :code:`float`).
+As an example, in the example provided in the `Using the ManagedWindow`_ section, the :code:`Procedure` is changed to:
+
+.. code-block:: python
+
+   class RandomProcedure(Procedure):
+
+       # ...
+
+       def get_estimates(self, sequence_length=None, sequence=None):
+
+           return self.iterations * self.delay
+
+This will add the estimator widget at the dock on the left.
+The duration and finishing-time of a single measurement is always displayed in this case.
+Depending on whether the SequencerWidget is also used, the length, duration and finishing-time of the full sequence is also shown.
+
+For maximum flexibility (e.g. for showing multiple and other types of estimates, such as the duration, filesize, finishing-time, etc.) it is also possible that the :code:`get_esimates` returns a list of tuples.
+Each of these tuple consists of two strings: the first is the name (label) of the estimate, the second is the estimate itself.
+
+As an example, in the example provided in the `Using the ManagedWindow`_ section, the :code:`Procedure` is changed to:
+
+.. code-block:: python
+
+   class RandomProcedure(Procedure):
+
+       # ...
+
+       def get_estimates(self, sequence_length=None, sequence=None):
+
+           duration = self.iterations * self.delay
+
+           estimates = [
+               ("Duration", "%d s" % int(duration)),
+               ("Number of lines", "%d" % int(self.iterations)),
+               ("Sequence length", str(sequence_length)),
+               ('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))),
+           ]
+
+           return estimates
+
+
+This will add the estimator widget at the dock on the left.
+
+.. image:: pymeasure-estimator.png
+    :alt: Example of the estimator widget
+
+Note that after the initialisation of the widget both the label of the estimate as of course the estimate itself can be modified, but the amount of estimates is fixed.
+
+The keyword arguments are not required in the implementation of the function, but are passed if asked for (i.e. :code:`def get_estimates(self)` does also works).
+Keyword arguments that are accepted are :code:`sequence`, which contains the full sequence of the sequencer (if present), and :code:`sequence_length`, which gives the length of the sequence as integer (if present).
+If the sequencer is not present or the sequence cannot be parsed, both :code:`sequence` and :code:`sequence_length` will contain :code:`None`.
+
+The estimates are automatically updated every 2 seconds.
+Changing this update interval is possible using the "Update continuously"-checkbox, which can be toggled between three states: off (i.e. no updating), auto-update every two seconds (default) or auto-update every 100 milliseconds.
+Manually updating the estimates (useful whenver continuous updating is turned of) is also possible using the "update"-button.
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
