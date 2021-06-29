@@ -362,6 +362,7 @@ Here the input of :code:`param` is only visible if :code:`iterations` has a valu
 This works with any type of :code:`Parameter` as :code:`group_by` parameter.
 
 To allow for even more flexibility, it is also possible to pass a (lambda)function as a condition:
+
 .. code-block:: python
 
     iterations = IntegerParameter('Loop Iterations', default=100)
