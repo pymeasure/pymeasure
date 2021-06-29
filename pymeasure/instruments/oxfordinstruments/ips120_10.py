@@ -37,12 +37,12 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class IPS(Instrument):
+class IPS120_10(Instrument):
     """Represents the Oxford Superconducting Magnet Power Supply.
 
     .. code-block:: python
 
-        ips = IPS("GPIB::25")        # Default channel for the IPS
+        ips = IPS120_10("GPIB::25")  # Default channel for the IPS
 
         ips.enable_control()         # Enables the power supply and remote control
 

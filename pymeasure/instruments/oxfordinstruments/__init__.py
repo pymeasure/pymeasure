@@ -23,4 +23,4 @@
 #
 
 from .itc503 import ITC503
-from .ips import IPS
+from .ips120_10 import IPS120_10
