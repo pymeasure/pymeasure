@@ -201,7 +201,7 @@ class ManagedWindow(QtGui.QMainWindow):
             self.directory_line = DirectoryLineEdit(parent=self)
 
         self.queue_button = QtGui.QPushButton('Queue', self)
-        self.queue_button.clicked.connect(self.queue)
+        self.queue_button.clicked.connect(self._queue)
 
         self.abort_button = QtGui.QPushButton('Abort', self)
         self.abort_button.setEnabled(False)
@@ -477,7 +477,15 @@ class ManagedWindow(QtGui.QMainWindow):
                             " without a InputsWidget")
         self.inputs.set_parameters(parameters)
 
-    def queue(self):
+    def _queue(self, checked):
+        """ This method is a wrapper for the `self.queue` method to be connected
+        to the `queue` button. It catches the positional argument that is passed
+        when it is called by the button and calls the `self.queue` method without
+        any arguments.
+        """
+        self.queue()
+
+    def queue(self, procedure=None):
         """
 
         Abstract method, which must be overridden by the child class.
@@ -488,6 +496,9 @@ class ManagedWindow(QtGui.QMainWindow):
         contains the
         :class:`~pymeasure.experiment.results.Results` and
         :class:`~pymeasure.experiment.procedure.Procedure` to be run.
+
+        The optional `procedure` argument is not required for a basic implementation,
+        but is required when the `~pymeasure.display.widgets.SequencerWidget`is used.
 
         For example:
 

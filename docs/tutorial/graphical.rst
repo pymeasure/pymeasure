@@ -259,7 +259,7 @@ In order to implement the sequencer into the previous example, only the :class:`
             )
             self.setWindowTitle('GUI Example')
 
-        def queue(self, *, procedure=None):                          # Modified line
+        def queue(self, procedure=None):                             # Modified line
             filename = tempfile.mktemp()
 
             if procedure is None:                                    # Added line
