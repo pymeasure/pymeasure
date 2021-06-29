@@ -186,7 +186,7 @@ class IPS(Instrument):
         elif sw_heater in [1]:
             field = self.demand_field
         else:
-            log.error("IPS: Switch status returned %d" % switch_status)
+            log.error("IPS: Switch status returned %d" % sw_heater)
             field = self.demand_field
 
         return field
