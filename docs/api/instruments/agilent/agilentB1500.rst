@@ -92,6 +92,7 @@ Initialization of the Instrument
     b1500=AgilentB1500("GPIB0::17::INSTR", read_termination='\r\n', write_termination='\r\n', timeout=600000)
     # query SMU config from instrument and initialize all SMU instances
     b1500.initialize_all_smus()
+    # set data output format (required!)
     b1500.data_format(21, mode=1) #call after SMUs are initialized to get names for the channels
 
 
@@ -182,6 +183,12 @@ Sampling measurement with 4 SMUs
     b1500.smu2.sampling_source('VOLTAGE','Auto Ranging',0,1,0.001)
     b1500.smu3.ramp_source('VOLTAGE','Auto Ranging',-1,stepsize=0.1,pause=20e-3) #output starts immediately! (compared to sweeps)
     b1500.smu4.ramp_source('VOLTAGE','Auto Ranging',-1,stepsize=0.1,pause=20e-3)
+
+    #Start Measurement
+    b1500.check_errors()
+    b1500.clear_buffer()
+    b1500.clear_timer()
+    b1500.send_trigger()
 
     meas=[]
     for i in range(nop):

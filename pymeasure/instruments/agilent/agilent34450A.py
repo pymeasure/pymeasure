@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -375,16 +375,6 @@ class Agilent34450A(Instrument):
         self.adapter.connection.timeout = 10000
         self.check_errors()
 
-    def check_errors(self):
-        """ Read all errors from the instrument."""
-        while True:
-            err = self.values(":SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Agilent 34450A: %s: %s" % (err[0], err[1])
-                log.error(errmsg + '\n')
-            else:
-                break
-
     def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
         """ Configures the instrument to measure voltage.
 
@@ -552,7 +542,7 @@ class Agilent34450A(Instrument):
             one_long_string = conf_values
 
         # Split string in elements
-        list_of_elements = re.split('["\s,]', one_long_string)
+        list_of_elements = re.split(r'["\s,]', one_long_string)
 
         # Eliminate empty string elements
         list_without_empty_elements = list(filter(lambda v: v != '', list_of_elements))

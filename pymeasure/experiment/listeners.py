@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -68,8 +68,8 @@ class Listener(StoppableThread):
         self.context = zmq.Context()
         log.debug("%s has ZMQ Context: %r" % (self.__class__.__name__, self.context))
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect('tcp://localhost:%d' % port)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
+        self.subscriber.connect('tcp://localhost:%d' % port)
         log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
             self.__class__.__name__, topic, port))
 
@@ -78,11 +78,15 @@ class Listener(StoppableThread):
         self.timeout = timeout
 
     def receive(self, flags=0):
-        topic, record = self.subscriber.recv_serialized(deserialize=cloudpickle.loads, flags=flags)
+        topic, record = self.subscriber.recv_serialized(
+            deserialize=lambda msg: (msg[0].decode(), cloudpickle.loads(msg[1])),
+            flags=flags
+        )
         return topic, record
 
     def message_waiting(self):
-        return self.poller.poll(self.timeout)
+        """Check if we have a message, wait at most until timeout."""
+        return self.poller.poll(self.timeout * 1000)  # poll timeout is in ms
 
     def __repr__(self):
         return "<%s(port=%s,topic=%s,should_stop=%s)>" % (
@@ -107,3 +111,9 @@ class Recorder(QueueListener):
             handlers.append(fh)
 
         super().__init__(queue, *handlers)
+
+    def stop(self):
+        for handler in self.handlers:
+            handler.close()
+
+        super().stop()
