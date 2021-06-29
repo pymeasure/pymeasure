@@ -271,7 +271,7 @@ class IPS(Instrument):
                 break
 
             if error_ct > max_errors:
-                raise Exception("Too many exceptions occured during getting IPS status.")
+                raise Exception("Too many exceptions occurred during getting IPS status.")
 
     def set_field(self, field, sweep_rate=None, persistent_mode_control=True):
         # Check if field needs changing
