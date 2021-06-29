@@ -498,7 +498,8 @@ class ManagedWindow(QtGui.QMainWindow):
         :class:`~pymeasure.experiment.procedure.Procedure` to be run.
 
         The optional `procedure` argument is not required for a basic implementation,
-        but is required when the `~pymeasure.display.widgets.SequencerWidget`is used.
+        but is required when the :class:`~pymeasure.display.widgets.SequencerWidget`
+        is used.
 
         For example:
 
