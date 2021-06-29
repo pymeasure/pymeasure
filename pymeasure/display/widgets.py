@@ -665,6 +665,8 @@ class SequencerWidget(QtGui.QWidget):
         super().__init__(parent)
         self._parent = parent
 
+        self._check_queue_signature()
+
         # if no explicit inputs are given, use the displayed parameters
         if inputs is not None:
             self._inputs = inputs
@@ -678,6 +680,22 @@ class SequencerWidget(QtGui.QWidget):
         # Load the sequence file if supplied.
         if sequence_file is not None:
             self.load_sequence(fileName=sequence_file)
+
+    def _check_queue_signature(self):
+        """
+        Check if the call signature of the implementation of the`ManagedWindow.queue`
+        method accepts the `procedure` keyword argument, which is required for using
+        the sequencer.
+        """
+
+        call_signature = signature(self._parent.queue)
+
+        if 'procedure' not in call_signature.parameters:
+            raise AttributeError(
+                "The queue method of of the ManagedWindow does not accept the 'procedure'"
+                "keyword argument. Accepting this keyword argument is required when using"
+                "the 'SequencerWidget'."
+            )
 
     def _get_properties(self):
         """
