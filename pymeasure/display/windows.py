@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -256,7 +256,7 @@ class ManagedWindow(QtGui.QMainWindow):
             inputs_scroll.setWidgetResizable(True)
             inputs_scroll.setFrameStyle(QtGui.QScrollArea.NoFrame)
 
-            self.inputs.setSizePolicy(1, 0)
+            self.inputs.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
             inputs_scroll.setWidget(self.inputs)
             inputs_vbox.addWidget(inputs_scroll, 1)
 
@@ -301,6 +301,9 @@ class ManagedWindow(QtGui.QMainWindow):
         self.resize(1000, 800)
 
     def quit(self, evt=None):
+        if self.manager.is_running():
+            self.abort()
+
         self.close()
 
     def browser_item_changed(self, item, column):
@@ -679,6 +682,9 @@ class ManagedImageWindow(QtGui.QMainWindow):
         self.resize(1000, 800)
 
     def quit(self, evt=None):
+        if self.manager.is_running():
+            self.abort()
+
         self.close()
 
     def browser_item_changed(self, item, column):

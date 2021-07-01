@@ -1,0 +1,7 @@
+#######################
+SR570 Lock-in Amplifier
+#######################
+
+.. autoclass:: pymeasure.instruments.srs.SR570
+    :members:
+    :show-inheritance:
