@@ -31,7 +31,6 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-
 class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
 
@@ -46,10 +45,12 @@ class Keithley2600(Instrument):
 
 
 class Channel(object):
+
     source_output = Instrument.control(
         'source.output', 'source.output=%d',
         """Property controlling the channel output state (ON of OFF)
         """,
+
         validator=strict_discrete_set,
         values={'OFF': 0, 'ON': 1},
         map_values=True
@@ -69,13 +70,16 @@ class Channel(object):
         """ Property controlling the nplc value """,
         validator=truncated_range,
         values=[0.001, 25],
+
         map_values=True
     )
 
     ###############
     # Current (A) #
     ###############
+
     current = Instrument.measurement(
+
         'measure.i()',
         """ Reads the current in Amps """
     )
@@ -142,15 +146,19 @@ class Channel(object):
         """Property controlling the measurement voltage range """,
         validator=truncated_range,
         values=[-200, 200]
+
     )
 
     ####################
     # Resistance (Ohm) #
     ####################
+
     resistance = Instrument.measurement(
+
         'measure.r()',
         """ Reads the resistance in Ohms """
     )
+
 
     wires_mode = Instrument.control(
         'sense', 'sense=%d',
@@ -159,6 +167,7 @@ class Channel(object):
         values={'4': 1, '2': 0},
         map_values=True
     )
+
 
     ###########
     # Methods #
@@ -169,6 +178,7 @@ class Channel(object):
         self.channel = channel
 
     def ask(self, cmd):
+
         return float(self.instrument.ask('print(smu%s.%s)' % (self.channel, cmd)))
 
     def write(self, cmd):
@@ -182,6 +192,7 @@ class Channel(object):
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
         return self.instrument.binary_values('print(smu%s.%s)' % (self.channel, cmd,), header_bytes, dtype)
+
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
@@ -247,7 +258,9 @@ class Channel(object):
                                    :attr:`~.Keithley2600.compliance_current`
         :param voltage_range: A :attr:`~.Keithley2600.voltage_range` value or None
         """
+
         log.info("%s is sourcing voltage." % self.channel)
+
         self.source_mode = 'voltage'
         if voltage_range is None:
             self.auto_range_source()
@@ -260,8 +273,10 @@ class Channel(object):
     def error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
+
         err = self.instrument.ask('print(errorqueue.next())')
         err = (float(err.split('\t')[0]), err.split('\t')[1])
+
         code = err[0]
         message = err[1].replace('"', '')
         return (code, message)
@@ -307,4 +322,6 @@ class Channel(object):
             self.ramp_to_current(0.0)
         else:
             self.ramp_to_voltage(0.0)
+
         self.source_output = 'off'
+
