@@ -25,6 +25,7 @@ Manuel Zahn
 Mikhaël Myara
 Domenic Prete
 Mathieu Jeannin
+Domenic Prete
 Paul Goulain
 John McMaster
 Dominik Kriegner
@@ -34,4 +35,6 @@ Mathieu Plante
 Michele Sardo
 Steven Siegl
 Benjamin Klebel-Knobloch
+Demetra Adrahtas
+Dan McDonald
 Hud Wahab
