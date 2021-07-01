@@ -45,11 +45,11 @@ class VISAAdapter(Adapter):
                          if not given, the default for the platform will be used.
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
-    :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
+    :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument or pymeasure Adapter
     """
 
     def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply)
+        super().__init__(preprocess_reply=preprocess_reply, **kwargs)
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
@@ -83,6 +83,7 @@ class VISAAdapter(Adapter):
 
         :param command: SCPI command string to be sent to the instrument
         """
+        if self.debug: self.log.info(command)
         self.connection.write(command)
 
     def read(self):
@@ -109,6 +110,7 @@ class VISAAdapter(Adapter):
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
+        if self.debug: self.log.info(command)
         return self.connection.query(command)
 
     def ask_values(self, command, **kwargs):
@@ -120,6 +122,7 @@ class VISAAdapter(Adapter):
         :param kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
+        if self.debug: self.log.info(command)
         return self.connection.query_ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
@@ -130,6 +133,7 @@ class VISAAdapter(Adapter):
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
+        if self.debug: self.log.info(command)
         self.connection.write(command)
         binary = self.connection.read_raw()
         header, data = binary[:header_bytes], binary[header_bytes:]
@@ -143,7 +147,7 @@ class VISAAdapter(Adapter):
         :param kwargs: Key-word arguments to pass onto `write_binary_values`
         :returns: number of bytes written
         """
-
+        if self.debug: self.log.info(command)
         return self.connection.write_binary_values(command, values, **kwargs)
 
     def wait_for_srq(self, timeout=25, delay=0.1):

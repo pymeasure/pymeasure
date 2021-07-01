@@ -34,11 +34,15 @@ log.addHandler(logging.NullHandler())
 
 
 class BrowserItem(QtGui.QTreeWidgetItem):
-    def __init__(self, results, curve, parent=None):
+
+    # curve_color is of type PyQt5.QtGui.QColor object
+    # aka curve.opts['pen'].color()
+
+    def __init__(self, results, curve_color, parent=None):
         super().__init__(parent)
 
         pixelmap = QtGui.QPixmap(24, 24)
-        pixelmap.fill(curve.opts['pen'].color())
+        pixelmap.fill(curve_color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         self.setCheckState(0, QtCore.Qt.Checked)

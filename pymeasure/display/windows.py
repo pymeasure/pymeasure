@@ -155,7 +155,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False, setup=True):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
@@ -172,9 +172,10 @@ class ManagedWindow(QtGui.QMainWindow):
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.x_axis, self.y_axis = x_axis, y_axis
-        self._setup_ui()
-        self._layout()
-        self.setup_plot(self.plot)
+        if setup:
+            self._setup_ui()
+            self._layout()
+            self.setup_plot(self.plot)
 
     def _setup_ui(self):
         self.log_widget = LogWidget()
@@ -438,7 +439,7 @@ class ManagedWindow(QtGui.QMainWindow):
     def new_experiment(self, results, curve=None):
         if curve is None:
             curve = self.new_curve(results)
-        browser_item = BrowserItem(results, curve)
+        browser_item = BrowserItem(results, curve.opts['pen'].color())
         return Experiment(results, curve, browser_item)
 
     def set_parameters(self, parameters):
@@ -831,7 +832,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
             image = self.new_image(results)
         if curve is None:
             curve = self.new_curve(results)
-        browser_item = BrowserItem(results, curve)
+        browser_item = BrowserItem(results, curve.opts['pen'].color())
         return ImageExperiment(results, curve, image, browser_item)
 
     def set_parameters(self, parameters):
