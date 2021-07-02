@@ -25,7 +25,7 @@
 import ctypes
 import logging
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import joined_validators,strict_discrete_set,strict_range
+from pymeasure.instruments.validators import strict_discrete_set,strict_range
 
 
 
@@ -176,7 +176,6 @@ def get_range(status_bytes):
     cur_range = list(HP3478A.RANGES[cur_mode].keys())[rnge-1]
     return cur_range
 
-
 def get_trigger(status_bytes):
     """Method to decode trigger mode
     :param status_bytes:   list of bytes to be decoded
@@ -195,25 +194,6 @@ def get_trigger(status_bytes):
     else:
         trigger_mode = "internal"
     return trigger_mode
-
-def set_range(r_string):
-    """Method to convert a string object in the form of "XXX,ZZZ"
-    with XXX being a valid mode and ZZZ a valid number or auto 
-    according to the RANGES construct
-    :return ranges_str: string indicating the range to the instrument
-    :rtype ranges_str: str
-    
-    """
-    mo = r_string.split(sep=",")[0]
-    ra = str.strip(r_string.split(sep=",")[1])
-    if ra == "auto":
-        rr = ra
-    else:
-        rr = int(ra)
-    
-    ranges_str = HP3478A.RANGES[mo][rr]
-    return ranges_str
-
 
 class HP3478A(Instrument):
     """ Represents the Hewlett Packard 3748A 5 1/2 digit multimeter
@@ -253,7 +233,7 @@ class HP3478A(Instrument):
                     3E6: "R6", 3E7: "R7","auto": "RA"},
             "DCI": {3E-1: "R-1",3: "R0","auto": "RA"},
             "ACI": {3E-1: "R-1",3: "R0","auto": "RA"},
-            "Rext": {3E6: "R7","auto": "RA"},
+            "Rext": {3E7: "R7","auto": "RA"},
             }
 
     TRIGGERS={
@@ -265,9 +245,19 @@ class HP3478A(Instrument):
             "fast": "T5",
             }
 
+    ERRORS={
+            1: "Calibration error",
+            2: "RAM error",
+            4: "ROM error",
+            8: "AD slope error",
+            16: "AD converter error",
+            32: "AD link error",
+           }
+
     active_connectors = Instrument.measurement(
         "B",
-        """Return selected connectors (1->front/0->back)), based on front-panel selector switch""",
+        """Return selected connectors ("front"/"back"), based on front-panel selector switch
+        """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "front_rear")),
         values={"back":0, "front":1},
         map_values = True,
@@ -275,7 +265,9 @@ class HP3478A(Instrument):
 
     auto_range = Instrument.measurement(
         "B",
-        """ Return auto-ranging status, range can be set the range property""",
+        """ Return auto-ranging status, returns False if manual range and True if auto-range active.
+        For manual range control the range property can be set
+        """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "auto_range")),
         values={False:0, True:1},
         map_values = True,
@@ -284,7 +276,9 @@ class HP3478A(Instrument):
     auto_zero = Instrument.control(
         "B",
         "Z%d",
-        """ Return autozero settings on the HP3478, this property can be set (0: disabled, 1: enabled) """,
+        """ Returns autozero settings on the HP3478, this property can be set 
+        (False: disabled, True: enabled) 
+        """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "auto_zero")),
         validator = strict_discrete_set,
         values={False:0, True:1},
@@ -293,7 +287,9 @@ class HP3478A(Instrument):
 
     cal_enable = Instrument.measurement(
         "B",
-        """Return calibration enable switch setting (1->CAL / 0->disbaled), based on front-panel selector switch""",
+        """Return calibration enable switch setting (False: cal disabled, True: cablibration possible),
+        based on front-panel selector switch
+        """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"), "cal_enable")),
         values={False:0, True:1},
         map_values = True,
@@ -306,17 +302,22 @@ class HP3478A(Instrument):
         :return error_status: one byte with the error status register content
         :rtype error_status: int
         """
+
+        if self.error_status != 0:
+            log.critical("HP3478A error detected: $s", self.ERRORS[self.error_status] )
         return self.error_status
 
     error_status = Instrument.measurement(
         "E",
-        """Checks the error status register""",
+        """Checks the error status register
+        """,
         get_process = (lambda x: int(x)),
         )
 
     disp_reset = Instrument.setting(
         "D%d",
-        """Resets the display of the instrument if 1 is written to it.""",
+        """Resets the display of the instrument if 1 is written to it.
+        """,
         set_process = (lambda x: int(x)),
         validator = strict_discrete_set,
         values = [1],
@@ -325,56 +326,65 @@ class HP3478A(Instrument):
     #TODO: find a proper validator for the next two methods (without using regex, if possible)
     disp_text = Instrument.setting(
         "D2%s",
-        """Displays up to 12 upper-case ASCII characters on the display.""",
+        """Displays up to 12 upper-case ASCII characters on the display.
+        """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
 
     disp_text_no_symbol = Instrument.setting(
         "D3%s",
-        """Displays up to 12 upper-case ASCII characters on the display and disables all symbols on the display.""",
+        """Displays up to 12 upper-case ASCII characters on the display and disables all symbols on the display.
+        """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
 
     #TODO: find a good way to cache the latest measurment and use it to incease speed (if actually needed)
     measure_ACI = Instrument.measurement(
         MODES["ACI"],
-        """Return the measured value for AC current""",
+        """Return the measured value for AC current
+        """,
         get_process = (lambda x: float(x)),
         )
 
     measure_ACV = Instrument.measurement(
         MODES["ACV"],
-        """Return the measured value for AC Voltage""",
+        """Return the measured value for AC Voltage
+        """,
         get_process = (lambda x: float(x)),
         )
 
     measure_DCI = Instrument.measurement(
         MODES["DCI"],
-        """Return the measured value for DC current""",
+        """Return the measured value for DC current
+        """,
         get_process = (lambda x: float(x)),
         )
 
     measure_DCV = Instrument.measurement(
         MODES["DCV"],
-        """Return the measured value for DC Voltage""",
+        """Return the measured value for DC Voltage
+        """,
         get_process = (lambda x: float(x)),
         )
 
     measure_R2W = Instrument.measurement(
         MODES["R2W"],
-        """Return the measured value for 2-wire resistance""",
+        """Return the measured value for 2-wire resistance
+        """,
         get_process = (lambda x: float(x)),
         )
 
     measure_R4W = Instrument.measurement(
         MODES["R4W"],
-        """Return the measured value for 4-wire resistance""",
+        """Return the measured value for 4-wire resistance
+        """,
         get_process = (lambda x: float(x)),
         )
 
     measure_Rext = Instrument.measurement(
         MODES["Rext"],
-        """Return the measured value for extended resistance mode (>30M, 2-wire) resistance""",
+        """Return the measured value for extended resistance mode (>30M, 2-wire) resistance
+        """,
         get_process = (lambda x: float(x)),
         )
 
@@ -390,23 +400,28 @@ class HP3478A(Instrument):
         values = MODES,
         )
 
-    #TODO: fix validators
-    range = Instrument.control(
+    range = Instrument.measurement(
         "B",
-        "%s",
         """Returns the current measurment range, this property can be set.
-        Valid settings are a string like "DCV, 30000" or "R2W,auto"
+        Valid settings are 3*powers of ten (e.g 0.3,3,30)"
         for all valid ranges look at HP3478A.RANGES structure
         """,
         get_process = (lambda x: get_range(x.encode(encoding="ASCII"))),
-        set_process = (lambda x: set_range(x)),
         )
+
+    @range.setter
+    def range(self,value):
+        cur_mode = self.mode
+        set_range = strict_discrete_set(value, self.RANGES[cur_mode])
+        set_range = self.RANGES[cur_mode][value]
+        print(set_range)
+        self.write(set_range)
 
     resolution = Instrument.control(
         "B",
         "N%d",
         """Return current selected resolution, this property can be set.
-        Allowewd values are 3,4 or 5
+        Allowed values are 3,4 or 5
         """,
         get_process = (lambda x: 6-get_status(x.encode(encoding="ASCII"),"digits")),
         validator = strict_discrete_set,
@@ -415,7 +430,8 @@ class HP3478A(Instrument):
 
     status = Instrument.measurement(
         "B",
-        """Checks the status registers""",
+        """Checks the status registers
+        """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"))),
         )
 
@@ -423,12 +439,15 @@ class HP3478A(Instrument):
         "B",
         "M%o",
         """Return current SRQ mask, this property can be set,
-         1(dec) - SRQ when Data ready,
-         4(dec) - SRQ when Syntax error,
-         8(dec) - SRQ when internal error,
-        16(dec) - front panel SQR
-        32(dec) - SRQ by invalid calibration
-
+        
+        bit assigment for SQR:
+        
+            1(dec) - SRQ when Data ready,
+            4(dec) - SRQ when Syntax error,
+            8(dec) - SRQ when internal error,
+            16(dec) - front panel SQR,
+            32(dec) - SRQ by invalid calibration,
+        
         """,
         get_process = (lambda x: get_status(x.encode(encoding="ASCII"),"SRQ")),
         validator = strict_range,
@@ -439,7 +458,7 @@ class HP3478A(Instrument):
         "B",
         "%s",
         """Return current selected trigger mode, this property can be set
-        Possibe values are: auto/internal, external, hold, fast
+        Possibe values are: "auto"/"internal", "external", "hold", "fast"
         """,
         get_process = (lambda x: get_trigger(x.encode(encoding="ASCII"))),
         set_process = (lambda x: HP3478A.TRIGGERS[x]),
@@ -465,7 +484,7 @@ class HP3478A(Instrument):
 
     def shutdown(self):
         """
-        provides a way to gracefully close the conention to the HP3478A
+        provides a way to gracefully close the connection to the HP3478A
 
         """
         self.adapter.connection.clear()
