@@ -256,7 +256,7 @@ class ManagedWindow(QtGui.QMainWindow):
             inputs_scroll.setWidgetResizable(True)
             inputs_scroll.setFrameStyle(QtGui.QScrollArea.NoFrame)
 
-            self.inputs.setSizePolicy(1, 0)
+            self.inputs.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
             inputs_scroll.setWidget(self.inputs)
             inputs_vbox.addWidget(inputs_scroll, 1)
 
