@@ -45,7 +45,7 @@ from .widgets import (
     DirectoryLineEdit,
     EstimatorWidget,
 )
-from ..experiment.results import Results
+from ..experiment import Results, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -175,16 +175,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.x_axis, self.y_axis = x_axis, y_axis
 
         # Check if the get_estimates function is reimplemented
-        proc = self.procedure_class()
-        try:
-            proc.get_estimates()
-        except NotImplementedError:
-            self.use_estimator = False
-        except TypeError:
-            # Raised if arguments are asked by the get_estimates method.
-            self.use_estimator = True
-        else:
-            self.use_estimator = True
+        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
 
         self._setup_ui()
         self._layout()
