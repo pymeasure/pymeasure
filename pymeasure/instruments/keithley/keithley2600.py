@@ -261,9 +261,17 @@ class Channel(object):
         """ Returns a tuple of an error code and message from a
         single error. """
         err = self.instrument.ask('print(errorqueue.next())')
-        err = (float(err.split('\t')[0]), err.split('\t')[1])
-        code = err[0]
-        message = err[1].replace('"', '')
+        err = err.split('\t')
+        # Keithley Instruments Inc. sometimes on startup
+        # if tab delimitated message is greater than one, grab first two as code, message
+        # otherwise, assign code & message to returned error
+        if len(err) > 1:
+            err = (float(err[0]), err[1])
+            code = err[0]
+            message = err[1].replace('"', '')
+        else:
+            code = message = err[0]
+        log.info("ERROR %s,%s - len %s" % (str(code), str(message), str(len(err))))
         return (code, message)
 
     def check_errors(self):
@@ -307,4 +315,4 @@ class Channel(object):
             self.ramp_to_current(0.0)
         else:
             self.ramp_to_voltage(0.0)
-        self.source_output = 'off'
+        self.source_output = 'OFF'
