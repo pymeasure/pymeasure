@@ -29,7 +29,7 @@ from pyvisa.errors import VisaIOError
 class Channel(object):
 
         vpp_amplitude = Instrument.control(
-            "voltage:amplitude?","voltage:amplitude %eVPP",
+            "voltage:amplitude?","voltage:amplitude %g",
             """ A floating point property that controls the output amplitude
             in Vpp. This property can be set.""",
             validator=strict_range,
@@ -37,7 +37,7 @@ class Channel(object):
         )
 
         offset = Instrument.control(
-            "voltage:offset?","voltage:offset %e",
+            "voltage:offset?","voltage:offset %g",
             """ A floating point property that controls the amplitude
             offset. It is always in Volt. This property can be set.""",
             validator=strict_range,
@@ -45,7 +45,7 @@ class Channel(object):
         )
 
         vpp_high = Instrument.control(
-            "voltage:high?", "voltage:high %eVPP",
+            "voltage:high?", "voltage:high %g",
             """ A floating point property that controls the output high level
             in Vpp. This property can be set.""",
             validator=strict_range,
@@ -53,7 +53,7 @@ class Channel(object):
         )
 
         vpp_low = Instrument.control(
-            "voltage:low?", "voltage:low %eVPP",
+            "voltage:low?", "voltage:low %g",
             """ A floating point property that controls the output low level
             in Vpp. This property can be set.""",
             validator=strict_range,
@@ -61,7 +61,7 @@ class Channel(object):
         )
 
         load_waveform = Instrument.control(
-            "waveform?", "waveform %s",
+            "waveform?", "waveform \"%s\"",
             """ Loads the waveform of a given name """
         )
 
@@ -102,7 +102,7 @@ class Channel(object):
                      amplitude=1, offset=0):
             """General setting method for loading and setting a full WF"""
             self.instrument.write("source%d:waveform %s" % (
-                                  self.number, shape))
+                                  self.number, name))
             self.instrument.write("source%d:frequency:fixed %e" % (
                                   self.number, frequency))
             self.instrument.write("source%d:voltage:unit %s" % (
@@ -236,6 +236,12 @@ class AWG5014C(Instrument):
         return int(self.query("*OPC?"))
 
 
+    def start_awg(self):
+        self.write('AWGC:RUN')
+
+    def stop_awg(self):
+        self.write('AWGC:STOP')
+
     def define_new_waveform(self, name, size, datatype='INT'):
         """
         Defines an empty waveform of name, of integer length size of datatype ('INT' or 'REAL'
@@ -256,4 +262,4 @@ class AWG5014C(Instrument):
         """
 
         cmd_string = 'wlist:waveform:data \"%s\", %d, %d,' % (name, start_index, len(data))
-        self.adapter.connection.write_binary_values(cmd_string,data,datatype=converter)
+        self.adapter.connection.write_binary_values(cmd_string,data,datatype=converter,is_big_endian=True)
