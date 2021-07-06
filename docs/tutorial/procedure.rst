@@ -264,8 +264,8 @@ Now that you have a background on how to use the different features of the Proce
 
         data_points = IntegerParameter('Data points', default=50)
         averages = IntegerParameter('Averages', default=50)
-        max_current = FloatParameter('Maximum Current', unit='A', default=0.01)
-        min_current = FloatParameter('Minimum Current', unit='A', default=-0.01)
+        max_current = FloatParameter('Maximum Current', units='A', default=0.01)
+        min_current = FloatParameter('Minimum Current', units='A', default=-0.01)
 
         DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Voltage Std (V)']
 

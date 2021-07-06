@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -109,12 +109,3 @@ class KeysightN5767A(Instrument):
                 separator=','
             )
 
-    def check_errors(self):
-        """ Read all errors from the instrument."""
-        while True:
-            err = self.values(":SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Keysight N5767A: %s: %s" % (err[0],err[1])
-                log.error(errmsg + '\n')
-            else:
-                break
