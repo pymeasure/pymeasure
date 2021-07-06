@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,28 +45,42 @@ class SR830(Instrument):
     ]
     TIME_CONSTANTS = [
         10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
-        30e-3, 100e-3, 300e-3, 1, 3, 10, 100, 300, 1e3,
+        30e-3, 100e-3, 300e-3, 1, 3, 10, 30, 100, 300, 1e3,
         3e3, 10e3, 30e3
     ]
     FILTER_SLOPES = [6, 12, 18, 24]
     EXPANSION_VALUES = [1, 10, 100]
     RESERVE_VALUES = ['High Reserve', 'Normal', 'Low Noise']
     CHANNELS = ['X', 'Y', 'R']
+    INPUT_CONFIGS = ['A', 'A - B', 'I (1 MOhm)', 'I (100 MOhm)']
+    INPUT_GROUNDINGS = ['Float', 'Ground']
+    INPUT_COUPLINGS = ['AC', 'DC']
+    INPUT_NOTCH_CONFIGS = ['None', 'Line', '2 x Line', 'Both']
+    REFERENCE_SOURCES = ['External', 'Internal']
+    SNAP_ENUMERATION = {"x": 1, "y": 2, "r": 3, "theta": 4,
+                        "aux in 1": 5, "aux in 2": 6, "aux in 3": 7, "aux in 4": 8,
+                        "frequency": 9, "ch1": 10, "ch2": 11}
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
         """ A floating point property that represents the reference sine-wave
-        voltage in Volts. This property can be set. """
+        voltage in Volts. This property can be set. """,
+        validator=truncated_range,
+        values=[0.004, 5.0]
     )
     frequency = Instrument.control(
         "FREQ?", "FREQ%0.5e",
         """ A floating point property that represents the lock-in frequency
-        in Hz. This property can be set. """
+        in Hz. This property can be set. """,
+        validator=truncated_range,
+        values=[0.001, 102000]
     )
     phase = Instrument.control(
         "PHAS?", "PHAS%0.2f",
         """ A floating point property that represents the lock-in phase
-        in degrees. This property can be set. """
+        in degrees. This property can be set. """,
+        validator=truncated_range,
+        values=[-360, 729.99]
     )
     x = Instrument.measurement("OUTP?1",
         """ Reads the X value in Volts. """
@@ -74,6 +88,12 @@ class SR830(Instrument):
     y = Instrument.measurement("OUTP?2",
         """ Reads the Y value in Volts. """
     )
+
+    @property
+    def xy(self):
+        """ Reads the X and Y values in Volts. """
+        return self.snap()
+
     magnitude = Instrument.measurement("OUTP?3",
         """ Reads the magnitude in Volts. """
     )
@@ -131,7 +151,47 @@ class SR830(Instrument):
         """ An integer property that controls the harmonic that is measured.
         Allowed values are 1 to 19999. Can be set. """,
         validator=strict_discrete_set,
-        values=range(1, 20000),
+        values=range(1, 19999),
+    )
+    input_config = Instrument.control(
+        "ISRC?", "ISRC %d",
+        """ An string property that controls the input configuration. Allowed
+        values are: {}""".format(INPUT_CONFIGS),
+        validator=strict_discrete_set,
+        values=INPUT_CONFIGS,
+        map_values=True
+    )
+    input_grounding = Instrument.control(
+        "IGND?", "IGND %d",
+        """ An string property that controls the input shield grounding. Allowed
+        values are: {}""".format(INPUT_GROUNDINGS),
+        validator=strict_discrete_set,
+        values=INPUT_GROUNDINGS,
+        map_values=True
+    )
+    input_coupling = Instrument.control(
+        "ICPL?", "ICPL %d",
+        """ An string property that controls the input coupling. Allowed
+        values are: {}""".format(INPUT_COUPLINGS),
+        validator=strict_discrete_set,
+        values=INPUT_COUPLINGS,
+        map_values=True
+    )
+    input_notch_config = Instrument.control(
+        "ILIN?", "ILIN %d",
+        """ An string property that controls the input line notch filter 
+        status. Allowed values are: {}""".format(INPUT_NOTCH_CONFIGS),
+        validator=strict_discrete_set,
+        values=INPUT_NOTCH_CONFIGS,
+        map_values=True
+    )
+    reference_source = Instrument.control(
+        "FMOD?", "FMOD %d",
+        """ An string property that controls the reference source. Allowed
+        values are: {}""".format(REFERENCE_SOURCES),
+        validator=strict_discrete_set,
+        values=REFERENCE_SOURCES,
+        map_values=True
     )
 
     aux_out_1 = Instrument.control(
@@ -262,7 +322,7 @@ class SR830(Instrument):
     def sample_frequency(self):
         """ Gets the sample frequency in Hz """
         index = int(self.ask("SRAT?"))
-        if index is 14:
+        if index == 14:
             return None  # Trigger
         else:
             return SR830.SAMPLE_FREQUENCIES[index]
@@ -296,18 +356,22 @@ class SR830(Instrument):
     def is_out_of_range(self):
         """ Returns True if the magnitude is out of range
         """
-        return int(self.ask("LIAS?2")) is 1
+        return int(self.ask("LIAS?2")) == 1
 
     def quick_range(self):
         """ While the magnitude is out of range, increase
         the sensitivity by one setting
         """
+        self.write('LIAE 2,1')
         while self.is_out_of_range():
             self.write("SENS%d" % (int(self.ask("SENS?"))+1))
             time.sleep(5.0*self.time_constant)
             self.write("*CLS")
         # Set the range as low as possible
-        self.sensitivity(1.15*abs(self.R))
+        newsensitivity = 1.15*abs(self.magnitude)
+        if self.input_config in('I (1 MOhm)','I (100 MOhm)'):
+            newsensitivity = newsensitivity*1e6
+        self.sensitivity = newsensitivity
 
     @property
     def buffer_count(self):
@@ -392,3 +456,30 @@ class SR830(Instrument):
 
     def trigger(self):
         self.write("TRIG")
+
+    def snap(self, val1="X", val2="Y", *vals):
+        """ Method that records and retrieves 2 to 6 parameters at a single
+        instant. The parameters can be one of: X, Y, R, Theta, Aux In 1,
+        Aux In 2, Aux In 3, Aux In 4, Frequency, CH1, CH2.
+        Default is "X" and "Y".
+
+        :param val1: first parameter to retrieve
+        :param val2: second parameter to retrieve
+        :param vals: other parameters to retrieve (optional)
+        """
+        if len(vals) > 4:
+            raise ValueError("No more that 6 values (in total) can be captured"
+                             "simultaneously.")
+
+        # check if additional parameters are given as a list
+        if len(vals) == 1 and isinstance(vals[0], (list, tuple)):
+            vals = vals[0]
+
+        # make a list of all vals
+        vals = [val1, val2] + list(vals)
+
+        vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in vals]
+
+        command = "SNAP? " + ",".join(vals_idx)
+        return self.values(command)
+

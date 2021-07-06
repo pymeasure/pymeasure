@@ -11,6 +11,11 @@ Using the Plotter
 
 While it lacks the nice features of the ManagedWindow, the Plotter object is the simplest way of getting live-plotting. The Plotter takes a Results object and plots the data at a regular interval, grabbing the latest data each time from the file.
 
+.. warning::
+   The example in this section is known to raise issues when executed on recent versions of macOS (10.12 Sierra and later): a `QApplication was not created in the main thread` / `nextEventMatchingMask should only be called from the Main Thread` warning is raised.
+   macOS users are hence adviced to skip this example and continue with the `Using the ManagedWindow`_ section.
+
+
 Let's extend our SimpleProcedure with a RandomProcedure, which generates random numbers during our loop. This example does not include instruments to provide a simpler example. ::
 
     import logging
@@ -173,7 +178,7 @@ This results in the following graphical display.
 .. image:: pymeasure-managedwindow.png
     :alt: ManagedWindow Example
 
-In the code, the MainWindow class is a sub-class of the ManagedWindow class. We override the constructor to provide information about the procedure class and its options. The :code:`inputs` are a list of Parameters class-variable names, which the display will generate graphical fields for. The :code:`displays` is a similar list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
+In the code, the MainWindow class is a sub-class of the ManagedWindow class. We override the constructor to provide information about the procedure class and its options. The :code:`inputs` are a list of Parameters class-variable names, which the display will generate graphical fields for. When the list of inputs is long, a boolean key-word argument :code:`inputs_in_scrollarea` is provided that adds a scrollbar to the input area. The :code:`displays` is a list similar to the :code:`inputs` list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
 
 The :code:`queue` method establishes how the Procedure object is constructed. We use the :code:`self.make_procedure` method to create a Procedure based on the graphical input fields. Here we are free to modify the procedure before putting it on the queue. In this context, the Manager uses an Experiment object to keep track of the Procedure, Results, and its associated graphical representations in the browser and live-graph. This is then given to the Manager to queue the experiment.
 
@@ -229,6 +234,114 @@ It is also possible to access the :attr:`~pymeasure.display.windows.ManagedWindo
         sys.exit(app.exec_())
 
 See pyqtgraph's API documentation on PlotItem_ for further details.
+
+Using the sequencer
+~~~~~~~~~~~~~~~~~~~
+
+As an extension to the way of graphically inputting parameters and executing multiple measurements using the :class:`~pymeasure.display.windows.ManagedWindow`, :class:`~pymeasure.display.widgets.SequencerWidget` is provided which allows users to queue a series of measurements with varying one, or more, of the parameters. This sequencer thereby provides a convenient way to scan through the parameter space of the measurement procedure.
+
+To activate the sequencer, two additional keyword arguments are added to :class:`~pymeasure.display.windows.ManagedWindow`, namely :code:`sequencer` and :code:`sequencer_inputs`. :code:`sequencer` accepts a boolean stating whether or not the sequencer has to be included into the window and :code:`sequencer_inputs` accepts either :code:`None` or a list of the parameter names are to be scanned over. If no list of parameters is given, the parameters displayed in the manager queue are used.
+
+In order to be able to use the sequencer, the :class:`~pymeasure.display.windows.ManagedWindow` class is required to have a :code:`queue` method which takes a keyword (or better keyword-only for safety reasons) argument :code:`procedure`, where a procedure instance can be passed. The sequencer will use this method to queue the parameter scan. 
+
+In order to implement the sequencer into the previous example, only the :class:`MainWindow` has to be modified slightly (where modified lines are marked):
+
+.. code-block:: python
+   :emphasize-lines: 10,11,12,16,19,20
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super(MainWindow, self).__init__(
+                procedure_class=TestProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number',
+                sequencer=True,                                      # Added line
+                sequencer_inputs=['iterations', 'delay', 'seed'],    # Added line
+                sequence_file="gui_sequencer_example_sequence.txt",  # Added line, optional
+            )
+            self.setWindowTitle('GUI Example')
+
+        def queue(self, *, procedure=None):                          # Modified line
+            filename = tempfile.mktemp()
+
+            if procedure is None:                                    # Added line
+                procedure = self.make_procedure()                    # Indented
+
+            results = Results(procedure, filename)
+            experiment = self.new_experiment(results)
+
+            self.manager.queue(experiment)
+
+This adds the sequencer underneath the the input panel.
+
+.. image:: pymeasure-sequencer.png
+    :alt: Example of the sequencer widget
+
+The widget contains a tree-view where you can build the sequence.
+It has three columns: :code:`level` (indicated how deep an item is nested), :code:`parameter` (a drop-down menu to select which parameter is being sequenced by that item), and :code:`sequence` (the text-box where you can define the sequence).
+While the two former columns are rather straightforward, filling in the later requires some explanation.
+
+In order to maintain flexibility, the sequence is defined in a text-box, allowing the user to enter any list-generating single-line piece of code.
+To assist in this, a number of functions is supported, either from the main python library (namely :code:`range`, :code:`sorted`, and :code:`list`) or the numpy library.
+The supported numpy functions (prepending :code:`numpy.` or any abbreviation is not required) are: :code:`arange`, :code:`linspace`, :code:`arccos`, :code:`arcsin`, :code:`arctan`, :code:`arctan2`, :code:`ceil`, :code:`cos`, :code:`cosh`, :code:`degrees`, :code:`e`, :code:`exp`, :code:`fabs`, :code:`floor`, :code:`fmod`, :code:`frexp`, :code:`hypot`, :code:`ldexp`, :code:`log`, :code:`log10`, :code:`modf`, :code:`pi`, :code:`power`, :code:`radians`, :code:`sin`, :code:`sinh`, :code:`sqrt`, :code:`tan`, and :code:`tanh`.
+
+As an example, :code:`arange(0, 10, 1)` generates a list increasing with steps of 1, while using :code:`exp(arange(0, 10, 1))` generates an exponentially increasing list.
+This way complex sequences can be entered easily.
+
+The sequences can be extended and shortened using the buttons :code:`Add root item`, :code:`Add item`, and :code:`Remove item`.
+The later two either add a item as a child of the currently selected item or remove the selected item, respectively.
+To queue the entered sequence the button :code:`Queue` sequence can be used.
+If an error occurs in evaluating the sequence text-boxes, this is mentioned in the logger, and nothing is queued.
+
+Finally, it is possible to write a simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button, such that the user does not need to write the sequence again each time.
+In the sequence file each line adds one item to the sequence tree, starting with a number of dashes (:code:`-`) to indicate the level of the item (starting with 1 dash for top level), followed by the name of the parameter and the sequence string, both as a python string between parentheses.
+An example of such a sequence file is given below, resulting in the sequence shown in the figure above.
+
+.. literalinclude:: gui_sequencer_example_sequence.txt
+
+This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super(MainWindow, self).__init__` call, as was done in the example.
+
+Using the directory input
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.ManagedWindow` init. The value of the directory can be retrieved using the property :code:`directory`.
+
+Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
+
+.. code-block:: python
+   :emphasize-lines: 10,15,16
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super(MainWindow, self).__init__(
+                procedure_class=TestProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number',
+                directory_input=True,                                # Added line
+            )
+            self.setWindowTitle('GUI Example')
+
+        def queue(self):
+            directory = self.directory
+            filename = unique_filename(directory)                    # Modified line
+
+            results = Results(procedure, filename)
+            experiment = self.new_experiment(results)
+
+            self.manager.queue(experiment)
+
+This adds the input line above the Queue and Abort buttons.
+
+.. image:: pymeasure-directoryinput.png
+    :alt: Example of the directory input widget
+
+A completer is implemented allowing to quickly select an existing folder, and a button on the right side of the input widget opens a browse dialog.
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html

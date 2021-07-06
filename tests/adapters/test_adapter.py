@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,3 +37,13 @@ def test_adapter_values():
     assert a.values("X,Y,Z") == ['X', 'Y', 'Z']
     assert a.values("X,Y,Z", cast=str) == ['X', 'Y', 'Z']
     assert a.values("X.Y.Z", separator='.') == ['X', 'Y', 'Z']
+
+
+def test_adapter_preprocess_reply():
+    a = FakeAdapter(preprocess_reply=lambda v: v[1:])
+    assert a.values("R42.1") == [42.1]
+    assert a.values("A4,3,2") == [4, 3, 2]
+    assert a.values("TV 1", preprocess_reply=lambda v: v.split()[0]) == ['TV']
+    assert a.values("15", preprocess_reply=lambda v: v) == [15]
+    a = FakeAdapter()
+    assert a.values("V 3.4", preprocess_reply=lambda v: v.split()[1]) == [3.4]

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='PyMeasure',
-    version='0.6.1',
+    version='0.9.0',
     author='PyMeasure Developers',
     packages=find_packages(),
     scripts=[],
-    url='https://github.com/ralph-group/pymeasure',
-    download_url='https://github.com/ralph-group/pymeasure/tarball/v0.6.1',
+    url='https://github.com/pymeasure/pymeasure',
+    download_url='https://github.com/pymeasure/pymeasure/tarball/v0.9.0',
     license='MIT License',
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
@@ -46,7 +46,7 @@ setup(
     extras_require={
         'matplotlib': ['matplotlib >= 2.0.2'],
         'tcp': [
-            'zmq >= 16.0.2',
+            'pyzmq >= 16.0.2',
             'cloudpickle >= 0.3.1'
         ],
         'python-vxi11': ['python-vxi11 >= 0.9']
@@ -56,7 +56,8 @@ setup(
     ],
     tests_require=[
         'pytest >= 2.9.1',
-        'pytest-qt >= 2.4.0'
+        'pytest-qt >= 2.4.0',
+        'pyvisa-sim >= 0.4.0',
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -67,6 +68,10 @@ setup(
         "Operating System :: POSIX",
         "Operating System :: Unix",
         "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering",
     ],
     keywords="measure instrument experiment control automate graph plot"

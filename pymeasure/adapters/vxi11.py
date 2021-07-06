@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,18 @@
 # THE SOFTWARE.
 #
 
+import logging
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+try:
+    import vxi11
+except ImportError:
+    log.warning('Failed to import vxi11 package, which is required for the VXI11Adapter')
+
 from .adapter import Adapter
-import vxi11
+
 
 class VXI11Adapter(Adapter):
     """ VXI11 Adapter class. Provides a adapter object that
@@ -31,11 +41,12 @@ class VXI11Adapter(Adapter):
         of the vxi11 library.
 
     :param host: string containing the visa connection information.
-
+    :param preprocess_reply: optional callable used to preprocess strings
+        received from the instrument. The callable returns the processed string.
     """
 
-    def __init__(self, host, **kwargs):
-
+    def __init__(self, host, preprocess_reply=None, **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply)
         # Filter valid arguments that can be passed to vxi instrument
         valid_args = ["name", "client_id", "term_char"]
         self.conn_kwargs = {}
@@ -44,9 +55,6 @@ class VXI11Adapter(Adapter):
                 self.conn_kwargs[key] = kwargs[key]
 
         self.connection = vxi11.Instrument(host, **self.conn_kwargs)
-
-    def __repr__(self):
-        return '<VXI11Adapter(host={})>'.format(self.connection.host)
 
     def write(self, command):
         """ Wrapper function for the write command using the
@@ -103,3 +111,6 @@ class VXI11Adapter(Adapter):
         :returns binary string containing the response from the device.
         """
         return self.connection.ask_raw(command)
+
+    def __repr__(self):
+        return '<VXI11Adapter(host={})>'.format(self.connection.host)
