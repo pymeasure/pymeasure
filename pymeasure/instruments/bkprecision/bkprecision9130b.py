@@ -29,22 +29,36 @@ CHANNEL_NUMS = [1, 2, 3]
 
 
 class BKPrecision9130B(Instrument):
-    """ Represents the BK Precision 9130B DC Power Supply interface for interacting with the instrument. """
+    """ Represents the BK Precision 9130B DC Power Supply interface for interacting with
+    the instrument. """
 
-    current = Instrument.control('MEASure:SCALar:CURRent:DC?', 'SOURce:CURRent:LEVel:IMMediate:AMPLitude %g',
-                                 """Floating point property used to control current of the selected channel.""",
-                                 validator=truncated_range,
-                                 values=[0, 3])
+    current = Instrument.control(
+        'MEASure:SCALar:CURRent:DC?',
+        'SOURce:CURRent:LEVel:IMMediate:AMPLitude %g',
+        """Floating point property used to control current of the selected channel.""",
+        validator=truncated_range,
+        values=[0, 3]
+    )
 
-    source_enabled = Instrument.control('SOURce:CHANnel:OUTPut:STATe?', 'SOURce:CHANnel:OUTPut:STATe %d',
-                                        """A boolean property that controls whether the source is enabled, takes """
-                                        """values True or False. """,
-                                        validator=strict_discrete_set, values={True: 1, False: 0}, map_values=True)
+    source_enabled = Instrument.control(
+        'SOURce:CHANnel:OUTPut:STATe?',
+        'SOURce:CHANnel:OUTPut:STATe %d',
+        """A boolean property that controls whether the source is enabled, takes values 
+        True or False. """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
 
-    channel = Instrument.control('INSTrument:SELect?', 'INSTrument:SELect CH%d',
-                                 """An integer property used to control which channel is selected. Can only take""" 
-                                 """values {}.""".format(CHANNEL_NUMS),
-                                 validator=strict_discrete_set, values=CHANNEL_NUMS, get_process=lambda x: int(x[2]))
+    channel = Instrument.control(
+        'INSTrument:SELect?',
+        'INSTrument:SELect CH%d',
+        f"""An integer property used to control which channel is selected. Can only take 
+        values {CHANNEL_NUMS}.""",
+        validator=strict_discrete_set,
+        values=CHANNEL_NUMS,
+        get_process=lambda x: int(x[2])
+    )
 
     def __init__(self, adapter, **kwargs):
         super(BKPrecision9130B, self).__init__(
@@ -63,4 +77,3 @@ class BKPrecision9130B(Instrument):
         else:
             new_level = truncated_range(level, [0, 30])
         self.write("SOURce:VOLTage:LEVel:IMMediate:AMPLitude %g" % new_level)
-
