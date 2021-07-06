@@ -315,4 +315,4 @@ class Channel(object):
             self.ramp_to_current(0.0)
         else:
             self.ramp_to_voltage(0.0)
-        self.source_output = 'off'
+        self.source_output = 'OFF'
