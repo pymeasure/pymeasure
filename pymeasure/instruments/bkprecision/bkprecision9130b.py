@@ -72,8 +72,6 @@ class BKPrecision9130B(Instrument):
 
     @voltage.setter
     def voltage(self, level):
-        if self.channel == 3:
-            new_level = truncated_range(level, [0, 5])
-        else:
-            new_level = truncated_range(level, [0, 30])
+        voltage_range = [0, 5] if self.channel == 3 else [0, 30]
+        new_level = truncated_range(level, voltage_range)
         self.write("SOURce:VOLTage:LEVel:IMMediate:AMPLitude %g" % new_level)
