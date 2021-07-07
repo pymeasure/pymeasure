@@ -32,10 +32,16 @@ class Parameter(object):
     :param name: The parameter name
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
-    :param group_by: The name (string) of a Parameter that controls
-        the visibility of the associated input
+    :param group_by: Defines the Parameter(s) that controls the visibility
+        of the associated input; can be a string containting the Parameter
+        name, a list of strings with multiple Parameter names, or a dict
+        containing {"Parameter name": condition} pairs.
     :param group_condition: The condition for the group_by Parameter
-        that controls the visibility of this parameter
+        that controls the visibility of this parameter, provided as a value
+        or a (lambda)function. If the group_by argument is provided as a
+        list of strings, this argument can be either a single condition or
+        a list of conditions. If the group_by argument is provided as a dict
+        this argument is ignored.
     """
 
     def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
@@ -45,10 +51,19 @@ class Parameter(object):
         self.ui_class = ui_class
 
         self.group_by = {}
-        if isinstance(group_by, str):
-            self.group_by = {group_by: group_condition}
-        elif isinstance(group_by, dict):
+        if isinstance(group_by, dict):
             self.group_by = group_by
+        elif isinstance(group_by, str):
+            self.group_by = {group_by: group_condition}
+        elif isinstance(group_by, (list, tuple)) and all(isinstance(e, str) for e in group_by):
+            if isinstance(group_condition, (list, tuple)):
+                self.group_by = {g: c for g, c in zip(group_by, group_condition)}
+            else:
+                self.group_by = {g: group_condition for g in group_by}
+        elif group_by is not None:
+            raise TypeError("The provided group_by argument () of is not valid, should be either"
+                            "a string, a list of strings, or a dict of string: condition pairs.")
+
 
 
     @property
