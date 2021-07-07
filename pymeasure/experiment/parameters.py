@@ -43,8 +43,13 @@ class Parameter(object):
         self._value = default
         self.default = default
         self.ui_class = ui_class
-        self.group_by = group_by
-        self.group_condition = group_condition
+
+        self.group_by = {}
+        if isinstance(group_by, str):
+            self.group_by = {group_by: group_condition}
+        elif isinstance(group_by, dict):
+            self.group_by = group_by
+
 
     @property
     def value(self):

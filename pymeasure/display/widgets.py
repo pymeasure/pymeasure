@@ -511,19 +511,20 @@ class InputsWidget(QtGui.QWidget):
         for name in self._inputs:
             parameter = parameters[name]
             group = parameter.group_by
-            condition = parameter.group_condition
-            if group is None or group not in self._inputs or group == name:
-                continue
 
-            if isinstance(getattr(self, group), BooleanInput):
-                condition = 2 if condition else 0
+            for group, condition in parameter.group_by.items():
+                if group is None or group not in self._inputs or group == name:
+                    continue
 
-            if group not in groups:
-                groups[group] = []
+                if isinstance(getattr(self, group), BooleanInput):
+                    condition = 2 if condition else 0
 
-            groups[group].append((getattr(self, name), condition))
-            if name in self.labels:
-                groups[group].append((self.labels[name], condition))
+                if group not in groups:
+                    groups[group] = []
+
+                groups[group].append((getattr(self, name), condition))
+                if name in self.labels:
+                    groups[group].append((self.labels[name], condition))
 
         for name, group in groups.items():
             toggle = partial(self.toggle_group, group=group)
