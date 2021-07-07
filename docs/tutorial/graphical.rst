@@ -400,7 +400,7 @@ This will add the estimator widget at the dock on the left.
 The duration and finishing-time of a single measurement is always displayed in this case.
 Depending on whether the SequencerWidget is also used, the length, duration and finishing-time of the full sequence is also shown.
 
-For maximum flexibility (e.g. for showing multiple and other types of estimates, such as the duration, filesize, finishing-time, etc.) it is also possible that the :code:`get_esimates` returns a list of tuples.
+For maximum flexibility (e.g. for showing multiple and other types of estimates, such as the duration, filesize, finishing-time, etc.) it is also possible that the :code:`get_estimates` returns a list of tuples.
 Each of these tuple consists of two strings: the first is the name (label) of the estimate, the second is the estimate itself.
 
 As an example, in the example provided in the `Using the ManagedWindow`_ section, the :code:`Procedure` is changed to:

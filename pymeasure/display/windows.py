@@ -45,7 +45,7 @@ from .widgets import (
     DirectoryLineEdit,
     EstimatorWidget,
 )
-from ..experiment.results import Results
+from ..experiment import Results, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -188,16 +188,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.widget_list = widget_list
 
         # Check if the get_estimates function is reimplemented
-        proc = self.procedure_class()
-        try:
-            proc.get_estimates()
-        except NotImplementedError:
-            self.use_estimator = False
-        except TypeError:
-            # Raised if arguments are asked by the get_estimates method.
-            self.use_estimator = True
-        else:
-            self.use_estimator = True
+        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
 
         self._setup_ui()
         self._layout()
@@ -524,7 +515,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
         :class:`~pymeasure.experiment.procedure.Procedure` to be run.
 
         The optional `procedure` argument is not required for a basic implementation,
-        but is required when the `~pymeasure.display.widgets.SequencerWidget` is used.
+        but is required when the :class:`~pymeasure.display.widgets.SequencerWidget`
+        is used.
 
         For example:
 
