@@ -30,6 +30,7 @@ Instruments by manufacturer:
    attocube/index
    danfysik/index
    deltaelektronica/index
+   edwards/index
    fluke/index
    fwbell/index
    hp/index
