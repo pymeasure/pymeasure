@@ -517,7 +517,7 @@ class InputsWidget(QtGui.QWidget):
                     continue
 
                 if isinstance(getattr(self, group), BooleanInput):
-                    condition = 2 if condition else 0
+                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked
 
                 if group not in groups:
                     groups[group] = []
