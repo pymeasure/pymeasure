@@ -510,10 +510,9 @@ class InputsWidget(QtGui.QWidget):
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameters[name]
-            group = parameter.group_by
 
             for group, condition in parameter.group_by.items():
-                if group is None or group not in self._inputs or group == name:
+                if group not in self._inputs or group == name:
                     continue
 
                 if isinstance(getattr(self, group), BooleanInput):
