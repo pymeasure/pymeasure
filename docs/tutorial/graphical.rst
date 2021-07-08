@@ -242,7 +242,7 @@ As an extension to the way of graphically inputting parameters and executing mul
 
 To activate the sequencer, two additional keyword arguments are added to :class:`~pymeasure.display.windows.ManagedWindow`, namely :code:`sequencer` and :code:`sequencer_inputs`. :code:`sequencer` accepts a boolean stating whether or not the sequencer has to be included into the window and :code:`sequencer_inputs` accepts either :code:`None` or a list of the parameter names are to be scanned over. If no list of parameters is given, the parameters displayed in the manager queue are used.
 
-In order to be able to use the sequencer, the :class:`~pymeasure.display.windows.ManagedWindow` class is required to have a :code:`queue` method which takes a keyword (or better keyword-only for safety reasons) argument :code:`procedure`, where a procedure instance can be passed. The sequencer will use this method to queue the parameter scan. 
+In order to be able to use the sequencer, the :class:`~pymeasure.display.windows.ManagedWindow` class is required to have a :code:`queue` method which takes a keyword (or better keyword-only for safety reasons) argument :code:`procedure`, where a procedure instance can be passed. The sequencer will use this method to queue the parameter scan.
 
 In order to implement the sequencer into the previous example, only the :class:`MainWindow` has to be modified slightly (where modified lines are marked):
 
@@ -345,3 +345,31 @@ A completer is implemented allowing to quickly select an existing folder, and a 
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+
+Displaying multiple plots
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to display two plots with different y-axes in the managed window such that quantities' dependence on eachother can be easily seen. Only the initialization of the MainWindow has to be changed as follows:
+
+.. code-block:: python
+   :emphasize-lines: 10,15,16
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super(MainWindow, self).__init__(
+                procedure_class=TestProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number',
+                nr_plots=2,                                # Added line
+            )
+            self.setWindowTitle('GUI Example')
+
+Now a second plot with a configurable y-axis will appear in the screen:
+
+.. image:: pymeasure-multipleplots.png
+    :alt: Example of showing multiple plots in the managed window
+
+Even more plots can be added by simply increasing :code:`nr_plots`.
