@@ -97,7 +97,7 @@ class PlotterWindow(QtGui.QMainWindow):
         vbox.addLayout(hbox)
 
         self.plot_widget = PlotWidget(columns, refresh_time=self.refresh_time, check_status=False)
-        self.plot = self.plot_widget.plot
+        self.plot = self.plot_widget.plot[0]
 
         vbox.addWidget(self.plot_widget)
 
@@ -155,7 +155,7 @@ class ManagedWindow(QtGui.QMainWindow):
 
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False, nr_plots=1):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
@@ -167,6 +167,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
         self.directory_input = directory_input
+        self.nr_plots = nr_plots
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -174,7 +175,7 @@ class ManagedWindow(QtGui.QMainWindow):
         self.x_axis, self.y_axis = x_axis, y_axis
         self._setup_ui()
         self._layout()
-        self.setup_plot(self.plot)
+        self.setup_plot(self.plots)
 
     def _setup_ui(self):
         self.log_widget = LogWidget()
@@ -193,8 +194,8 @@ class ManagedWindow(QtGui.QMainWindow):
         self.abort_button.setEnabled(False)
         self.abort_button.clicked.connect(self.abort)
 
-        self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
-        self.plot = self.plot_widget.plot
+        self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis, plots=self.nr_plots)
+        self.plots = self.plot_widget.plot
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
@@ -218,7 +219,7 @@ class ManagedWindow(QtGui.QMainWindow):
             parent=self
         )
 
-        self.manager = Manager(self.plot, self.browser, log_level=self.log_level, parent=self)
+        self.manager = Manager(self.plots, self.browser, log_level=self.log_level, parent=self)
         self.manager.abort_returned.connect(self.abort_returned)
         self.manager.queued.connect(self.queued)
         self.manager.running.connect(self.running)
@@ -311,12 +312,14 @@ class ManagedWindow(QtGui.QMainWindow):
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
             if state == 0:
-                self.plot.removeItem(experiment.curve)
+                for i in range(len(self.plots)):
+                    self.plots[i].removeItem(experiment.curve[i])
             else:
-                experiment.curve.x = self.plot_widget.plot_frame.x_axis
-                experiment.curve.y = self.plot_widget.plot_frame.y_axis
-                experiment.curve.update()
-                self.plot.addItem(experiment.curve)
+                for i in range(len(self.plots)):
+                    experiment.curve[i].x = self.plot_widget.plot_frame[i].x_axis
+                    experiment.curve[i].y = self.plot_widget.plot_frame[i].y_axis
+                    experiment.curve[i].update()
+                    self.plots[i].addItem(experiment.curve[i])
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -394,19 +397,21 @@ class ManagedWindow(QtGui.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    experiment.curve.update()
+                    for i in range(len(self.plots)):
+                        experiment.curve[i].update()
                     experiment.browser_item.progressbar.setValue(100.)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
     def change_color(self, experiment):
         color = QtGui.QColorDialog.getColor(
-            initial=experiment.curve.opts['pen'].color(), parent=self)
+            initial=experiment.curve[0].opts['pen'].color(), parent=self)
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
-            experiment.curve.setPen(pg.mkPen(color=color, width=2))
+            for i in range(len(self.plots)):
+                experiment.curve[i].setPen(pg.mkPen(color=color, width=2))
 
     def open_file_externally(self, filename):
         """ Method to open the datafile using an external editor or viewer. Uses the default
@@ -438,7 +443,7 @@ class ManagedWindow(QtGui.QMainWindow):
     def new_experiment(self, results, curve=None):
         if curve is None:
             curve = self.new_curve(results)
-        browser_item = BrowserItem(results, curve)
+        browser_item = BrowserItem(results, curve[0])
         return Experiment(results, curve, browser_item)
 
     def set_parameters(self, parameters):
@@ -607,7 +612,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         self.image_widget = ImageWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis, self.z_axis)
         self.plot_widget = PlotWidget(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
         self.im_plot = self.image_widget.plot
-        self.plot = self.plot_widget.plot
+        self.plot = self.plot_widget.plot[0]
 
         self.browser_widget = BrowserWidget(
             self.procedure_class,
@@ -820,7 +825,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
     def new_curve(self, results, color=None, **kwargs):
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
-        return self.plot_widget.new_curve(results, color=color, **kwargs)
+        return self.plot_widget.new_curve(results, color=color, **kwargs)[0]
 
     def new_image(self, results, **kwargs):
         return self.image_widget.new_image(results, **kwargs)
@@ -887,7 +892,7 @@ class ManagedImageWindow(QtGui.QMainWindow):
         .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
         """
         pass
-        
+
     def setup_im_plot(self, im_plot):
         """
         This method does nothing by default, but can be overridden by the child

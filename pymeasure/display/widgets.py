@@ -55,10 +55,11 @@ class PlotFrame(QtGui.QFrame):
     x_axis_changed = QtCore.QSignal(str)
     y_axis_changed = QtCore.QSignal(str)
 
-    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
+    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None, show_label=True):
         super().__init__(parent)
         self.refresh_time = refresh_time
         self.check_status = check_status
+        self.show_label = show_label
         self._setup_ui()
         self.change_x_axis(x_axis)
         self.change_y_axis(y_axis)
@@ -130,7 +131,8 @@ class PlotFrame(QtGui.QFrame):
                 item.x = axis
                 item.update()
         label, units = self.parse_axis(axis)
-        self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
+        if self.show_label:
+            self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
 
@@ -151,46 +153,65 @@ class PlotWidget(QtGui.QWidget):
     """
 
     def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True,
-                 parent=None):
+                 parent=None, plots=1):
         super().__init__(parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
+        self.plots = plots
         self._setup_ui()
         self._layout()
         if x_axis is not None:
             self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
-            self.plot_frame.change_x_axis(x_axis)
+            for i in range(self.plots):
+                self.plot_frame[i].change_x_axis(x_axis)
         if y_axis is not None:
-            self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
-            self.plot_frame.change_y_axis(y_axis)
+            for i in range(self.plots):
+                self.columns_y[i].setCurrentIndex(self.columns_y[i].findText(y_axis))
+                self.plot_frame[i].change_y_axis(y_axis)
+        # if plots > 1:
+            # self.extra_columns_y
 
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
         self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_x_label.setText('X Axis:')
-        self.columns_y_label = QtGui.QLabel(self)
-        self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_y_label.setText('Y Axis:')
+        self.columns_y_label = []
+        for i in range(self.plots):
+            self.columns_y_label.append(QtGui.QLabel(self))
+            self.columns_y_label[i].setMaximumSize(QtCore.QSize(45, 16777215))
+            if i:
+                self.columns_y_label[i].setText('Y Axis '+str(i + 1)+':')
+            else:
+                self.columns_y_label[i].setText('Y Axis :')
 
         self.columns_x = QtGui.QComboBox(self)
-        self.columns_y = QtGui.QComboBox(self)
+        self.columns_y = []
+        for i in range(self.plots):
+            self.columns_y.append(QtGui.QComboBox(self))
         for column in self.columns:
             self.columns_x.addItem(column)
-            self.columns_y.addItem(column)
+            for i in range(self.plots):
+                self.columns_y[i].addItem(column)
         self.columns_x.activated.connect(self.update_x_column)
-        self.columns_y.activated.connect(self.update_y_column)
+        for i in range(self.plots):
+            self.columns_y[i].activated.connect(partial(self.update_y_column, col_nr = i))
 
-        self.plot_frame = PlotFrame(
-            self.columns[0],
-            self.columns[1],
-            self.refresh_time,
-            self.check_status
-        )
-        self.updated = self.plot_frame.updated
-        self.plot = self.plot_frame.plot
+        self.plot_frame = []
+        for i in range(self.plots):
+            self.plot_frame.append(PlotFrame(
+                self.columns[0],
+                self.columns[1],
+                self.refresh_time,
+                self.check_status,
+                show_label = (i == (self.plots - 1))
+            ))
+
+        self.updated = [self.plot_frame[i].updated for i in range(self.plots)]
+        self.plot = [self.plot_frame[i].plot for i in range(self.plots)]
         self.columns_x.setCurrentIndex(0)
-        self.columns_y.setCurrentIndex(1)
+        for i in range(self.plots):
+            self.columns_y[i].setCurrentIndex(1)
 
     def _layout(self):
         vbox = QtGui.QVBoxLayout(self)
@@ -201,11 +222,14 @@ class PlotWidget(QtGui.QWidget):
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_x_label)
         hbox.addWidget(self.columns_x)
-        hbox.addWidget(self.columns_y_label)
-        hbox.addWidget(self.columns_y)
+        for i in range(self.plots):
+            hbox.addWidget(self.columns_y_label[i])
+            hbox.addWidget(self.columns_y[i])
 
         vbox.addLayout(hbox)
-        vbox.addWidget(self.plot_frame)
+        vbox.setSpacing(10)
+        for i in range(self.plots):
+            vbox.addWidget(self.plot_frame[i])
         self.setLayout(vbox)
 
     def sizeHint(self):
@@ -216,22 +240,26 @@ class PlotWidget(QtGui.QWidget):
             kwargs['pen'] = pg.mkPen(color=color, width=2)
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
-        curve = ResultsCurve(results,
-                             x=self.plot_frame.x_axis,
-                             y=self.plot_frame.y_axis,
-                             **kwargs
-                             )
-        curve.setSymbol(None)
-        curve.setSymbolBrush(None)
-        return curve
+        curves = []
+        for i in range(self.plots):
+            curve = ResultsCurve(results,
+                                 x=self.plot_frame[i].x_axis,
+                                 y=self.plot_frame[i].y_axis,
+                                 **kwargs
+                                 )
+            curve.setSymbol(None)
+            curve.setSymbolBrush(None)
+            curves.append(curve)
+        return curves
 
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
-        self.plot_frame.change_x_axis(axis)
+        for i in range(self.plots):
+            self.plot_frame[i].change_x_axis(axis)
 
-    def update_y_column(self, index):
-        axis = self.columns_y.itemText(index)
-        self.plot_frame.change_y_axis(axis)
+    def update_y_column(self, index, col_nr):
+        axis = self.columns_y[col_nr].itemText(index)
+        self.plot_frame[col_nr].change_y_axis(axis)
 
 
 class ImageFrame(QtGui.QFrame):
@@ -320,7 +348,7 @@ class ImageFrame(QtGui.QFrame):
             match = re.search(units_pattern, axis)
         except TypeError:
             match = None
-            
+
         if match:
             if 'units' in match.groupdict():
                 label = re.sub(units_pattern, '', axis)
@@ -875,8 +903,8 @@ class SequencerWidget(QtGui.QWidget):
             sequence = match.group(3)
 
             self._add_tree_item(
-                level=level, 
-                parameter=parameter, 
+                level=level,
+                parameter=parameter,
                 sequence=sequence,
             )
 

@@ -130,7 +130,7 @@ class Manager(QtCore.QObject):
     abort_returned = QtCore.QSignal(object)
     log = QtCore.QSignal(object)
 
-    def __init__(self, plot, browser, port=5888, log_level=logging.INFO, parent=None):
+    def __init__(self, plots, browser, port=5888, log_level=logging.INFO, parent=None):
         super().__init__(parent)
 
         self.experiments = ExperimentQueue()
@@ -139,7 +139,9 @@ class Manager(QtCore.QObject):
         self._monitor = None
         self.log_level = log_level
 
-        self.plot = plot
+        if not type(plots) == list:
+            plots = [plots]
+        self.plots = plots
         self.browser = browser
 
         self.port = port
@@ -170,7 +172,8 @@ class Manager(QtCore.QObject):
     def load(self, experiment):
         """ Load a previously executed Experiment
         """
-        self.plot.addItem(experiment.curve)
+        for i in range(len(self.plots)):
+            self.plots[i].addItem(experiment.curve[i])
         self.browser.add(experiment)
         self.experiments.append(experiment)
 
@@ -188,7 +191,8 @@ class Manager(QtCore.QObject):
         self.experiments.remove(experiment)
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
-        self.plot.removeItem(experiment.curve)
+        for i in range(len(self.plots)):
+            self.plots[i].removeItem(experiment.curve[i])
 
     def clear(self):
         """ Remove all Experiments
@@ -253,7 +257,8 @@ class Manager(QtCore.QObject):
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)
-        experiment.curve.update()
+        for i in range(len(self.plots)):
+            experiment.curve[i].update()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()
@@ -282,8 +287,8 @@ class Manager(QtCore.QObject):
 
 
 class ImageExperiment(Experiment):
-    """ 
-    Adds saving of the experiments image to :class:`.Experiment`. Needed to 
+    """
+    Adds saving of the experiments image to :class:`.Experiment`. Needed to
     make image features work
     """
     def __init__(self, results, curve, image, browser_item, parent=None):
@@ -293,8 +298,8 @@ class ImageExperiment(Experiment):
 
 
 class ImageExperimentQueue(ExperimentQueue):
-    """ 
-    Overwrites needed features from :class:`.ExperimentQueue` to make image 
+    """
+    Overwrites needed features from :class:`.ExperimentQueue` to make image
     features work
     """
 
@@ -340,9 +345,10 @@ class ImageManager(Manager):
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
         self.im_plot.removeItem(experiment.image)
-        self.plot.removeItem(experiment.curve)
-        
-    def load(self, experiment): 
+        for i in range(len(self.plots)):
+            self.plots[i].removeItem(experiment.curve[i])
+
+    def load(self, experiment):
         super().load(experiment)
         self.im_plot.addItem(experiment.image)
 
