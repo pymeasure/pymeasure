@@ -204,15 +204,14 @@ class BN675_AWG(Instrument):
 
 
     def __init__(self, adapter, **kwargs):
-        super(AWG5014C, self).__init__(
+        super(BN675_AWG, self).__init__(
             adapter,
-            "Tektronix AFG3152C arbitrary function generator",
+            "BN675 arbitrary waveform generator",
             **kwargs
         )
-        self.ch1 = Channel(self, 1)
-        self.ch2 = Channel(self, 2)
-        self.ch3 = Channel(self, 3)
-        self.ch4 = Channel(self, 4)
+        num_chan = int(self.num_channels)
+        for i in range(num_chan):
+            setattr(self,f'ch{i+1}', Channel(self, i+1))
 
     def beep(self):
         self.write("system:beep")
