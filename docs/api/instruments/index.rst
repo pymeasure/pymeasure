@@ -41,6 +41,7 @@ Instruments by manufacturer:
    oxfordinstruments/index
    parker/index
    razorbill/index
+   rs/index
    signalrecovery/index
    srs/index
    tektronix/index
