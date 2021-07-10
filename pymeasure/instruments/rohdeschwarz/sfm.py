@@ -77,8 +77,8 @@ class SFM(Instrument):
         "SOUR:FRE:CW %g",
         """A float property controlling the frequency in Hz for fixed mode op,
         Minimum 5 MHz, Maximum 1 GHz""",
-        validator = strict_range(5E6, 1E9),
-
+        validator = strict_range,
+        values=[5E6, 1E9]
         )
 
 
@@ -99,7 +99,8 @@ class SFM(Instrument):
         "SOUR:FRE:LEV:AMP %g DBM",
         """A float property controlling the output level in dBm,
         Minimum -60dBm, Maximum 15dBm (To be verified)""",
-        validator = strict_range(-60, 15),
+        validator = strict_range,
+        values=[-60, 15],
 
         )
 

@@ -48,6 +48,7 @@ from . import ni
 from . import oxfordinstruments
 from . import parker
 from . import razorbill
+from . import rohdeschwarz
 from . import signalrecovery
 from . import srs
 from . import tektronix
