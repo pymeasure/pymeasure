@@ -72,38 +72,45 @@ class SFM(Instrument):
 
     #TODO put more from the SOURCE subsystem in
 
-    cw_frequency = Instrument.control(
-        "SOUR:FREQ?",
-        "SOUR:FRE:CW %g",
+    frequency = Instrument.control(
+        "SOUR:FREQ:FIXED?",
+        "SOUR:FREQ:FIXED %g",
         """A float property controlling the frequency in Hz for fixed mode op,
         Minimum 5 MHz, Maximum 1 GHz""",
         validator = strict_range,
-        values=[5E6, 1E9]
+        values = [5E6, 1E9]
         )
 
 
     modulation = Instrument.control(
-        "SOUR:MOD?",
-        "SOUR:MOD %s",
+        "SOUR:MOD:STAT?",
+        "SOUR:MOD:STATE %s",
         """ A bool property that controls the modulation status,
         False => modulation disabled,
         True => modulation enabled
         """,
         validator = strict_discrete_set,
-        values={False:"OFF", True:"ON"},
+        values={False:0, True:1},
         map_values = True,
         )
 
     level = Instrument.control(
-        "SOUR:POW:LEV:AMP?",
-        "SOUR:FRE:LEV:AMP %g DBM",
+        "SOUR:POW:LEV?",
+        "SOUR:POW:LEV %g DBM",
         """A float property controlling the output level in dBm,
-        Minimum -60dBm, Maximum 15dBm (To be verified)""",
+        Minimum -99dBm, Maximum 10dBm (To be verified)""",
         validator = strict_range,
-        values=[-60, 15],
-
+        values = [-99, 10],
         )
 
+    level_mode = Instrument.control(
+        "SOUR:POW:LEV:MODE?",
+        "SOUR:POW:POW:MODE %s",
+        """A string property controlling the output attenuator and lineary mode,
+        Possible selections are NORM, LOWN, CONT and LOWD""",
+        validator = strict_discrete_set,
+        values = ["NORM","LOWN","CONT","LOWD"]
+        )
     #TODO add STATUS entries
 
     #TODO add SYSTEM entries
