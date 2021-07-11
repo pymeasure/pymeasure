@@ -34,12 +34,12 @@ September, 2019
 
 """
 
-from pymeasure.instruments.temptronic.temptronic_base import Base
+from pymeasure.instruments.temptronic.temptronic_base import ATSBase
 from pymeasure.instruments.instrument import Instrument
 from pymeasure.instruments.validators import truncated_range
 
 
-class ATS545(Base):
+class ATS545(ATSBase):
     """Represent the TemptronicATS545 instruments.
     """
 
