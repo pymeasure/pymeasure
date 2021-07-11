@@ -108,8 +108,8 @@ class ErrorCode(Enum):
     OVERHEAT                       = 1      # bit 0  – overheat
 
 
-class TemptronicBase(Instrument):
-    """Represent the base class for TemptronicATSXXX instruments.
+class ATSBase(Instrument):
+    """The base class for Temptronic ATSXXX instruments.
     """
 
     remote_mode = Instrument.setting(
