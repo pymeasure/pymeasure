@@ -55,8 +55,8 @@ class Agilent33220A(Instrument):
         wfg.amplitude = 1               # Set amplitude of 1 V
         wfg.offset = 0                  # Set the amplitude to 0 V
 
-        wfg.burst = True                # Enable burst mode
-        wfg.burst_ncycles = 10e3        # A burst will consist of 10 cycles
+        wfg.burst_state = True          # Enable burst mode
+        wfg.burst_ncycles = 10          # A burst will consist of 10 cycles
         wfg.burst_mode = "TRIGGERED"    # A burst will be applied on a trigger
         wfg.trigger_source = "BUS"      # A burst will be triggered on TRG*
 
@@ -65,7 +65,7 @@ class Agilent33220A(Instrument):
         wfg.wait_for_trigger()          # Wait until the triggering is finished
         wfg.beep()                      # "beep"
 
-        wfg.check_errors()              # Get the error queue
+        print(wfg.check_errors())       # Get the error queue
 
     """
 
@@ -80,9 +80,11 @@ class Agilent33220A(Instrument):
         "FUNC?", "FUNC %s",
         """ A string property that controls the output waveform. Can be set to:
         SIN<USOID>, SQU<ARE>, RAMP, PULS<E>, NOIS<E>, DC, USER. """,
-        validator=string_validator,
-        values=["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
-                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
+                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"],],
     )
 
     frequency = Instrument.control(
@@ -106,8 +108,10 @@ class Agilent33220A(Instrument):
         "VOLT:UNIT?", "VOLT:UNIT %s",
         """ A string property that controls the units of the amplitude. Valid
         values are Vpp (default), Vrms, and dBm. Can be set. """,
-        validator=string_validator,
-        values=["VPP", "VRMS", "DBM"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["VPP", "VRMS", "DBM"],],
     )
 
     offset = Instrument.control(
@@ -170,8 +174,10 @@ class Agilent33220A(Instrument):
         """ A string property that controls if either the pulse width or the
         duty cycle is retained when changing the period or frequency of the
         waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
-        validator=string_validator,
-        values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["WIDT", "WIDTH", "DCYC", "DCYCLE"],],
     )
 
     pulse_width = Instrument.control(
@@ -192,11 +198,12 @@ class Agilent33220A(Instrument):
     )
 
     pulse_transition = Instrument.control(
-        "FUNC:PULS:TRAN?", "FUNC:PULS:TRAN %f",
+        "FUNC:PULS:TRAN?", "FUNC:PULS:TRAN %g",
         """ A floating point property that controls the the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between 0.1 and 0.9 of the threshold. Valid values are between
-        5 ns to 100 ns. Can be set. """,
+        5 ns to 100 ns. The transition time has to be smaller than 
+        0.625 * the pulse width. Can be set. """,
         validator=strict_range,
         values=[5e-9, 100e-9],
     )
@@ -223,8 +230,10 @@ class Agilent33220A(Instrument):
         "BURS:MODE?", "BURS:MODE %s",
         """ A string property that controls the burst mode. Valid values
         are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
-        validator=string_validator,
-        values=["TRIG", "TRIGGERED", "GAT", "GATED"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["TRIG", "TRIGGERED", "GAT", "GATED"],],
     )
 
     burst_ncycles = Instrument.control(
@@ -234,6 +243,7 @@ class Agilent33220A(Instrument):
         set. """,
         validator=strict_discrete_set,
         values=range(1, 50001),
+        cast=lambda v: int(float(v))
     )
 
     def trigger(self):
@@ -268,7 +278,7 @@ class Agilent33220A(Instrument):
                     " to finish the triggering."
                 )
 
-            if should_stop:
+            if should_stop():
                 return
 
     trigger_source = Instrument.control(
@@ -276,8 +286,10 @@ class Agilent33220A(Instrument):
         """ A string property that controls the trigger source. Valid values
         are: IMM<EDIATE> (internal), EXT<ERNAL> (rear input), BUS (via trigger
         command). This setting can be set. """,
-        validator=string_validator,
-        values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],],
     )
 
     trigger_state = Instrument.control(
@@ -294,24 +306,11 @@ class Agilent33220A(Instrument):
         """ A string property that controls the remote/local state of the
         function generator. Valid values are: LOC<AL>, REM<OTE>, RWL<OCK>.
         This setting can only be set. """,
-        validator=string_validator,
-        values=["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],
+        validator=joined_validators(
+            strict_discrete_set, string_validator
+        ),
+        values=[["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],],
     )
-
-    def check_errors(self):
-        """ Read all errors from the instrument. """
-
-        errors = []
-        while True:
-            err = self.values("SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Agilent 33220A: %s: %s" % (err[0], err[1])
-                log.error(errmsg + '\n')
-                errors.append(errmsg)
-            else:
-                break
-
-        return errors
 
     beeper_state = Instrument.control(
         "SYST:BEEP:STAT?", "SYST:BEEP:STAT %d",

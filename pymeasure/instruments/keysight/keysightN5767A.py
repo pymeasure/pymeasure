@@ -109,12 +109,3 @@ class KeysightN5767A(Instrument):
                 separator=','
             )
 
-    def check_errors(self):
-        """ Read all errors from the instrument."""
-        while True:
-            err = self.values(":SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Keysight N5767A: %s: %s" % (err[0],err[1])
-                log.error(errmsg + '\n')
-            else:
-                break

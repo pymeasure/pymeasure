@@ -22,39 +22,26 @@
 # THE SOFTWARE.
 #
 
-import pyvisa
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
 
-
-def list_resources():
+class Nxds(Instrument):
+    """ Represents the Edwards nXDS (10i) Vacuum Pump
+    and provides a low-level interaction with the instrument.
+    This could potentially work with Edwards pump that has a RS232 interface. 
+    This instrument is constructed to only start and stop pump.
     """
-    Prints the available resources, and returns a list of VISA resource names
-    
-    .. code-block:: python
 
-        resources = list_resources()
-        #prints (e.g.)
-            #0 : GPIB0::22::INSTR : Agilent Technologies,34410A,******
-            #1 : GPIB0::26::INSTR : Keithley Instruments Inc., Model 2612, *****
-        dmm = Agilent34410(resources[0])
-    
-    """
-    rm = pyvisa.ResourceManager()
-    instrs = rm.list_resources()
-    for n, instr in enumerate(instrs):
-        # trying to catch errors in comunication
-        try:
-            res = rm.open_resource(instr)
-            # try to avoid errors from *idn?
-            try:
-                # noinspection PyUnresolvedReferences
-                idn = res.query('*idn?')[:-1]
-            except pyvisa.Error:
-                idn = "Not known"
-            finally:
-                res.close()
-                print(n, ":", instr, ":", idn)
-        except pyvisa.VisaIOError as e:
-            print(n, ":", instr, ":", "Visa IO Error: check connections")
-            print(e)
-    rm.close()
-    return instrs
+    enable = Instrument.setting("!C802 %d",
+                              """ Starts/stops pump with default settings.""",
+                              validator=strict_discrete_set,
+                              values = (0,1),)
+	
+    def __init__(self, resourceName, **kwargs):
+        super(Nxds, self).__init__(
+            resourceName,
+            "Edwards NXDS Vacuum Pump",
+            includeSCPI=False,
+            **kwargs
+        )
+	

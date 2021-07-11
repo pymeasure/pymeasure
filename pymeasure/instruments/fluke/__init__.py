@@ -22,39 +22,4 @@
 # THE SOFTWARE.
 #
 
-import pyvisa
-
-
-def list_resources():
-    """
-    Prints the available resources, and returns a list of VISA resource names
-    
-    .. code-block:: python
-
-        resources = list_resources()
-        #prints (e.g.)
-            #0 : GPIB0::22::INSTR : Agilent Technologies,34410A,******
-            #1 : GPIB0::26::INSTR : Keithley Instruments Inc., Model 2612, *****
-        dmm = Agilent34410(resources[0])
-    
-    """
-    rm = pyvisa.ResourceManager()
-    instrs = rm.list_resources()
-    for n, instr in enumerate(instrs):
-        # trying to catch errors in comunication
-        try:
-            res = rm.open_resource(instr)
-            # try to avoid errors from *idn?
-            try:
-                # noinspection PyUnresolvedReferences
-                idn = res.query('*idn?')[:-1]
-            except pyvisa.Error:
-                idn = "Not known"
-            finally:
-                res.close()
-                print(n, ":", instr, ":", idn)
-        except pyvisa.VisaIOError as e:
-            print(n, ":", instr, ":", "Visa IO Error: check connections")
-            print(e)
-    rm.close()
-    return instrs
+from .fluke7341 import Fluke7341

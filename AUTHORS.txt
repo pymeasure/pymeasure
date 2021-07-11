@@ -23,6 +23,7 @@ Moritz Jung
 Richard Schlitz
 Manuel Zahn
 Mikhaël Myara
+Mathieu Jeannin
 Paul Goulain
 John McMaster
 Dominik Kriegner
@@ -33,3 +34,5 @@ Michele Sardo
 Steven Siegl
 Benjamin Klebel-Knobloch
 Markus Röleke
+Hud Wahab
+Nicola Corna
