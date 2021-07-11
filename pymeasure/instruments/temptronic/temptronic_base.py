@@ -109,7 +109,7 @@ class ErrorCode(Enum):
 
 
 class TemptronicBase(Instrument):
-    """Represent the bas class for TemptronicATSXXX instruments.
+    """Represent the base class for TemptronicATSXXX instruments.
     """
 
     remote_mode = Instrument.setting(
