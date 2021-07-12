@@ -24,12 +24,12 @@
 
 
 import logging
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class SFM(Instrument):
@@ -52,23 +52,45 @@ class SFM(Instrument):
 
     #TODO add CALIBRATION related entries
 
-    output = Instrument.control(
-        "OUTP?",
-        "OUTP %s",
-        """ A bool property that controls the output stage,
-        False => output disabled,
-        True => output enabled
+    #TODO add READ related entries
+
+    #ROUTE
+    R75_out = Instrument.control(
+        "ROUT:CHAN:OUTP:IMP?",
+        "ROUT:CHAN:OUTP:IMP %s",
+        """ A bool property that controls the use of the 75R output (if installed),
+        False => 50R output active (N),
+        True => 75R output active (BNC)
         """,
         validator = strict_discrete_set,
-        values={False:"OFF", True:"ON"},
+        values={False:"LOW", True:"HIGH"},
         map_values = True,
         )
 
-    #TODO add READ related entries
+    ext_ref_basic = Instrument.control(
+        "ROUT:REF:CLOCK:BAS?",
+        "ROUT:REF:CLOCK:BAS %s",
+        """ A bool property for the external reference for the basic unit,
+        False => Internal 10 MHz is used,
+        True => External 10 MHz is used
+        """,
+        validator = strict_discrete_set,
+        values={False:"INT", True:"EXT"},
+        map_values = True,
+        )
 
-    #TODO check if ROUTE is also supported on SFM
+    ext_ref_extenstion = Instrument.control(
+        "ROUT:REF:CLOCK:EXT?",
+        "ROUT:REF:CLOCK:EXT %s",
+        """ A bool property for the external reference for the extension frame,
+        False => Internal 10 MHz is used,
+        True => External 10 MHz is used
+        """,
+        validator = strict_discrete_set,
+        values={False:"INT", True:"EXT"},
+        map_values = True,
+        )
 
-    #TODO check if SENSE is also supported on SFM
 
     #TODO put more from the SOURCE subsystem in
 
@@ -79,6 +101,18 @@ class SFM(Instrument):
         Minimum 5 MHz, Maximum 1 GHz""",
         validator = strict_range,
         values = [5E6, 1E9]
+        )
+
+    high_f_res = Instrument.control(
+        "SOUR:FREQ:RES?",
+        "SOUR:FREQ:RES %s",
+        """ A property that controls the modulation status,
+        False => low resolution (1000Hz),
+        True => High resoultion (1Hz)
+        """,
+        validator = strict_discrete_set,
+        values={False:"LOW", True:"HIGH"},
+        map_values = True,
         )
 
 
@@ -94,27 +128,162 @@ class SFM(Instrument):
         map_values = True,
         )
 
+    lower_sideband = Instrument.control(
+        "SOUR:SID?",
+        "SOUR:SID %s",
+        """ A bool property that controls the use of the lower sideband,
+        False => upper sideband,
+        True => lower sideband
+        """,
+        validator = strict_discrete_set,
+        values={False:"UPP", True:"LOW"},
+        map_values = True,
+        )
+
     level = Instrument.control(
         "SOUR:POW:LEV?",
         "SOUR:POW:LEV %g DBM",
         """A float property controlling the output level in dBm,
-        Minimum -99dBm, Maximum 10dBm (To be verified)""",
+        Minimum -99dBm, Maximum 10dBm (depending on output mode)""",
         validator = strict_range,
         values = [-99, 10],
         )
 
     level_mode = Instrument.control(
         "SOUR:POW:LEV:MODE?",
-        "SOUR:POW:POW:MODE %s",
-        """A string property controlling the output attenuator and lineary mode,
+        "SOUR:POW:LEV:MODE %s",
+        """A string property controlling the output attenuator and linearity mode,
         Possible selections are NORM, LOWN, CONT and LOWD""",
         validator = strict_discrete_set,
         values = ["NORM","LOWN","CONT","LOWD"]
         )
+
+    rf_out = Instrument.control(
+        "SOUR:POW:STAT?",
+        "SOUR:POW:STATE %s",
+        """ A bool property that controls the status of the RF-output,
+        False => RF-output disabled,
+        True => RF-output enabled
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+
     #TODO add STATUS entries
 
-    #TODO add SYSTEM entries
+    #SYSTEM entries
+    beeper = Instrument.control(
+        "SYST:BEEP:STATE?",
+        "SYST:BEEP:STATE %s",
+        """ A bool property that controls the beeper status,
+        False => beeper disabled,
+        True => beeper enabled
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
 
+    display_update = Instrument.control(
+        "SYST:DISP:UPDATE:STATE?",
+        "SYST:DISP:UPDATE:STATE %s",
+        """ A bool property that controls the status of the displayed values ,
+        False => No infomation on display during remote operation
+        True => infomation shown on display
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    gpib_address = Instrument.control(
+        "SYST:COMM:GPIB:ADDR?",
+        "SYST:COMM:GPIB:ADDR %d",
+        """ A int property that controls the status of the displayed values ,
+        False => No infomation on display during remote operation
+        True => infomation shown on display
+        """,
+        validator = strict_range,
+        values=[0, 30],
+        )
+
+    remote_interfaces = Instrument.control(
+        "SYST:COM:REM?",
+        "SYST:COM:REM %s",
+        """A string property controlling the selection of interfaces for remote control,
+        Possible selections are OFF, GPIB, SER and BOTH""",
+        validator = strict_discrete_set,
+        values = ["OFF","GPIB","SER","BOTH"]
+        )
+
+    ser_baud = Instrument.control(
+        "SYST:COMM:SER:BAUD?",
+        "SYST:COMM:SER:BAUD %g",
+        """ A int property that controls the serial communication speed ,
+        Possible values are: 110,300,600,1200,4800,9600,19200
+        """,
+        validator = strict_discrete_set,
+        values=[110,300,600,1200,4800,9600,19200],
+        )
+
+    set_bits = Instrument.control(
+        "SYST:COMM:SER:BITS?",
+        "SYST:COMM:SER:BITS %g",
+        """ A int property that controls the number of bits used in serial communication,
+        Possible values are: 7 or 8
+        """,
+        validator = strict_discrete_set,
+        values=[7,8],
+        )
+
+    ser_pace = Instrument.control(
+        "SYST:COMM:SER:PACE?",
+        "SYST:COMM:SER:PACE %s",
+        """ A string property that controls the serial handshake type used in serial communication,
+        Possible values are: NONE, XON, ACK (HW w/ RTS&CTS)
+        """,
+        validator = strict_discrete_set,
+        values=["NONE","XON","ACK"],
+        )
+
+    ser_parity = Instrument.control(
+        "SYST:COMM:SER:PAR?",
+        "SYST:COMM:SER:PAR %s",
+        """ A string property that controls the parity type used for serial communication ,
+        Possible values are: 
+        NONE, EVEN, ODD, ONE (parity bit fixed to 1), ZERO (parity bit fixed to 0)
+        """,
+        validator = strict_discrete_set,
+        values=["NONE","EVEN","ODD","ONE","ZERO"],
+        )
+
+    ser_stopbits = Instrument.control(
+        "SYST:COMM:SER:SBIT?",
+        "SYST:COMM:SER:SBIT %g",
+        """ A int property that controls the number of stop-bits used in serial communication,
+        Possible values are: 1 or 2
+        """,
+        validator = strict_discrete_set,
+        values=[1,2],
+        )
+    #TODO add date & time related entries
+    #TODO add syst:info related entried
+
+    scale_volt = Instrument.control(
+        "UNIT:VOLT?",
+        "UNIT:VOLT %s",
+        """ A string property that controls the unit to be used for voltage entries on the unit,
+        Possible values are:
+        AV,FV, PV, NV, UV, MV, V, KV, MAV, GV, TV, PEV, EV,
+        DBAV, DBFV, DBPV, DBNV, DBUV, DBMV, DBV, DBKV, DBMAv, DBGV, DBTV, DBPEv, DBEV
+        """,
+        validator = strict_discrete_set,
+        values= ["AV","FV", "PV", "NV", "UV", "MV", "V", "KV", "MAV", "GV",
+                 "TV", "PEV", "EV", "DBAV", "DBFV", "DBPV", "DBNV", "DBUV",
+                 "DBMV", "DBV", "DBKV", "DBMAv", "DBGV", "DBTV", "DBPEv", "DBEV"],
+        )
 
     def check_errors(self):
         """ Read all errors from the instrument."""
