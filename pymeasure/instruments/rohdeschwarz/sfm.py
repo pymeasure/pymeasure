@@ -51,10 +51,19 @@ class SFM(Instrument):
             # read_termination = "\r\n",
 
     #TODO add CALIBRATION related entries
-
-    #TODO add READ related entries
-
-    #ROUTE
+    #INST (Manual 3.6.4)
+    system_number = Instrument.control(
+        "INST:SEL ?",
+        "INST:SEL: SYS%d",
+        """A int property for the selected systems (if more then 1 available),
+        Minimum 1, Maximum 6""",
+        validator = strict_range,
+        values = [1, 6],
+        check_set_errors=True,
+        )
+    
+    #ROUTE (Manual 3.6.5)
+    #TODO enhance for more then 1 system
     R75_out = Instrument.control(
         "ROUT:CHAN:OUTP:IMP?",
         "ROUT:CHAN:OUTP:IMP %s",
@@ -90,19 +99,59 @@ class SFM(Instrument):
         values={False:"INT", True:"EXT"},
         map_values = True,
         )
-
-
-    #TODO put more from the SOURCE subsystem in
-
-    frequency = Instrument.control(
-        "SOUR:FREQ:FIXED?",
-        "SOUR:FREQ:FIXED %g",
-        """A float property controlling the frequency in Hz for fixed mode op,
+    #TODO enhance for more then 1 system
+    ext_vid_connector = Instrument.control(
+        "ROUT:TEL:VID:EXT?",
+        "ROUT:TEL:VID:EXT %s",
+        """A string property controlling which connector is used as the input of the video source,
+        Possible selections are HIGH, LOW, REAR1, REAR2, AUTO (based on the setting in stndard)""",
+        validator = strict_discrete_set,
+        values = ["HIGH","LOW","REAR1","REAR2","AUTO"],
+        )
+    
+    #SOURCE (Manual 3.6.6)
+    #SOURCE:FREQ (3.6.6.1)
+    #TODO enhance for more then 1 system
+    channel_table = Instrument.control(
+        "SOUR:FREQ:CHAN:TABL ?",
+        "SOUR:FREQ:CHAN:TABL %s",
+        """A string property controlling which channel table is used,
+        Possible selections are DEFault, USR1..USR5""",
+        validator = strict_discrete_set,
+        values = ["DEF","USR1","USR2","USR3","USR4","USR5"],
+        )
+    
+    #TODO add more channel properties
+    
+    cw_frequency = Instrument.control(
+        "SOUR:FREQ:CW?",
+        "SOUR:FREQ:CW %g",
+        """A float property controlling the CW-frequency in Hz,
         Minimum 5 MHz, Maximum 1 GHz""",
         validator = strict_range,
         values = [5E6, 1E9]
         )
 
+    #TODO enhance for more then 1 system
+    frequency = Instrument.control(
+        "SOUR:FREQ:FIXED?",
+        "SOUR:FREQ:FIXED %g",
+        """A float property controlling the frequency in Hz,
+        Minimum 5 MHz, Maximum 1 GHz""",
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
+
+    freq_mode = Instrument.control(
+        "SOUR:FREQ:MODE ?",
+        "SOUR:FREQ:MODE %s",
+        """A string property controlling which the unit is used in,
+        Possible selections are CW, FIXED, CHSW (channel sweep), RFSW (frequency sweep)
+        Note: selecting the sweep mode, will start the sweep imemdiately""",
+        validator = strict_discrete_set,
+        values = ["CW","FIXED","CHSW","RFSW"],
+        )
+    
     high_f_res = Instrument.control(
         "SOUR:FREQ:RES?",
         "SOUR:FREQ:RES %s",
@@ -114,32 +163,53 @@ class SFM(Instrument):
         values={False:"LOW", True:"HIGH"},
         map_values = True,
         )
-
-
-    modulation = Instrument.control(
-        "SOUR:MOD:STAT?",
-        "SOUR:MOD:STATE %s",
-        """ A bool property that controls the modulation status,
-        False => modulation disabled,
-        True => modulation enabled
-        """,
-        validator = strict_discrete_set,
-        values={False:0, True:1},
-        map_values = True,
+    
+    center_f = Instrument.control(
+        "SOUR:FREQ:CENTER?",
+        "SOUR:FREQ:CENTER %g",
+        """A float property controlling the center frequency (for sweep) in Hz,
+        Minimum 5 MHz, Maximum 1 GHz""",
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
+    
+    start_f = Instrument.control(
+        "SOUR:FREQ:STAR?",
+        "SOUR:FREQ:STAR %g",
+        """A float property controlling the start frequency (for sweep) in Hz,
+        Minimum 5 MHz, Maximum 1 GHz""",
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
+    
+    stop_f = Instrument.control(
+        "SOUR:FREQ:STOP?",
+        "SOUR:FREQ:STOP %g",
+        """A float property controlling the stop frequency (for sweep)in Hz,
+        Minimum 5 MHz, Maximum 1 GHz""",
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
+    
+    step_f = Instrument.control(
+        "SOUR:FREQ:STEP?",
+        "SOUR:FREQ:STEP %g",
+        """A float property controlling the stepwidth (for sweep) in Hz,
+        Minimum 5 MHz, Maximum 1 GHz""",
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
+    
+    span = Instrument.control(
+        "SOUR:FREQ:SPAN?",
+        "SOUR:FREQ:SPAN %g",
+        """A float property controlling the frequency in Hz,
+        Minimum 5 MHz, Maximum 1 GHz""",
+        validator = strict_range,
+        values = [5E6, 1E9]
         )
 
-    lower_sideband = Instrument.control(
-        "SOUR:SID?",
-        "SOUR:SID %s",
-        """ A bool property that controls the use of the lower sideband,
-        False => upper sideband,
-        True => lower sideband
-        """,
-        validator = strict_discrete_set,
-        values={False:"UPP", True:"LOW"},
-        map_values = True,
-        )
-
+    #SOUR:POW (3.6.6.2)
     level = Instrument.control(
         "SOUR:POW:LEV?",
         "SOUR:POW:LEV %g DBM",
@@ -170,6 +240,36 @@ class SFM(Instrument):
         map_values = True,
         )
 
+    #TODO add SOUR:TEL:IMOD (3.6.6.3 Intermodulation subsystem)
+    
+    #SOUR:TEL:MOD:COD (3.6.6.4)
+    
+
+    modulation = Instrument.control(
+        "SOUR:MOD:STAT?",
+        "SOUR:MOD:STATE %s",
+        """ A bool property that controls the modulation status,
+        False => modulation disabled,
+        True => modulation enabled
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    lower_sideband = Instrument.control(
+        "SOUR:SID?",
+        "SOUR:SID %s",
+        """ A bool property that controls the use of the lower sideband,
+        False => upper sideband,
+        True => lower sideband
+        """,
+        validator = strict_discrete_set,
+        values={False:"UPP", True:"LOW"},
+        map_values = True,
+        )
+
+    
 
     #TODO add STATUS entries
 
