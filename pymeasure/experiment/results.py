@@ -42,7 +42,9 @@ log.addHandler(logging.NullHandler())
 
 
 def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
-    """ Replaces the placeholders in the provided strings with the values of the
+    """Replace placeholders in string with values from procedure parameters.
+    
+    Replaces the placeholders in the provided string with the values of the
     associated parameters, as provided by the procedure. This uses the standard
     python string.format syntax. Apart from the parameter in the procedure (which
     should be called by their full names) "date" and "time" are also added as optional
