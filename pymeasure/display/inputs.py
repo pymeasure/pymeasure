@@ -26,7 +26,7 @@ import logging
 
 import re
 
-from .Qt import QtCore, QtGui, qt_min_version
+from .Qt import QtCore, QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -80,18 +80,14 @@ class Input(object):
         return self._parameter
 
 
-class StringInput(QtGui.QLineEdit, Input):
+class StringInput(Input, QtGui.QLineEdit):
     """
     String input box connected to a :class:`Parameter`. Parameter subclasses
     that are string-based may also use this input, but non-string parameters
     should use more specialised input classes.
     """
     def __init__(self, parameter, parent=None, **kwargs):
-        if qt_min_version(5):
-            super().__init__(parameter=parameter, parent=parent, **kwargs)
-        else:
-            QtGui.QLineEdit.__init__(self, parent=parent, **kwargs)
-            Input.__init__(self, parameter)
+        super().__init__(parameter=parameter, parent=parent, **kwargs)
 
     def setValue(self, value):
         # QtGui.QLineEdit has a setText() method instead of setValue()
@@ -105,7 +101,7 @@ class StringInput(QtGui.QLineEdit, Input):
         return super().text()
 
 
-class FloatInput(QtGui.QDoubleSpinBox, Input):
+class FloatInput(Input, QtGui.QDoubleSpinBox):
     """
     Spin input box for floating-point values, connected to a
     :class:`FloatParameter`.
@@ -115,11 +111,7 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
             For inputs in scientific notation.
     """
     def __init__(self, parameter, parent=None, **kwargs):
-        if qt_min_version(5):
-            super().__init__(parameter=parameter, parent=parent, **kwargs)
-        else:
-            QtGui.QDoubleSpinBox.__init__(self, parent=parent, **kwargs)
-            Input.__init__(self, parameter)
+        super().__init__(parameter=parameter, parent=parent, **kwargs)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
@@ -129,16 +121,12 @@ class FloatInput(QtGui.QDoubleSpinBox, Input):
         super().set_parameter(parameter) # default gets set here, after min/max
 
 
-class IntegerInput(QtGui.QSpinBox, Input):
+class IntegerInput(Input, QtGui.QSpinBox):
     """
     Spin input box for integer values, connected to a :class:`IntegerParameter`.
     """
     def __init__(self, parameter, parent=None, **kwargs):
-        if qt_min_version(5):
-            super().__init__(parameter=parameter, parent=parent, **kwargs)
-        else:
-            QtGui.QSpinBox.__init__(self, parent=parent, **kwargs)
-            Input.__init__(self, parameter)
+        super().__init__(parameter=parameter, parent=parent, **kwargs)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
@@ -148,16 +136,12 @@ class IntegerInput(QtGui.QSpinBox, Input):
         super().set_parameter(parameter) # default gets set here, after min/max
 
 
-class BooleanInput(QtGui.QCheckBox, Input):
+class BooleanInput(Input, QtGui.QCheckBox):
     """
     Checkbox for boolean values, connected to a :class:`BooleanParameter`.
     """
     def __init__(self, parameter, parent=None, **kwargs):
-        if qt_min_version(5):
-            super().__init__(parameter=parameter, parent=parent, **kwargs)
-        else:
-            QtGui.QCheckBox.__init__(self, parent=parent, **kwargs)
-            Input.__init__(self, parameter)
+        super().__init__(parameter=parameter, parent=parent, **kwargs)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -174,16 +158,12 @@ class BooleanInput(QtGui.QCheckBox, Input):
         return super().isChecked()
 
 
-class ListInput(QtGui.QComboBox, Input):
+class ListInput(Input, QtGui.QComboBox):
     """
     Dropdown for list values, connected to a :class:`ListParameter`.
     """
     def __init__(self, parameter, parent=None, **kwargs):
-        if qt_min_version(5):
-            super().__init__(parameter=parameter, parent=parent, **kwargs)
-        else:
-            QtGui.QComboBox.__init__(self, parent=parent, **kwargs)
-            Input.__init__(self, parameter)
+        super().__init__(parameter=parameter, parent=parent, **kwargs)
         self._stringChoices = None
         self.setEditable(False)
 
@@ -219,7 +199,7 @@ class ListInput(QtGui.QComboBox, Input):
         return self._parameter.choices[self.currentIndex()]
 
 
-class ScientificInput(QtGui.QDoubleSpinBox, Input):
+class ScientificInput(Input, QtGui.QDoubleSpinBox):
     """
     Spinner input box for floating-point values, connected to a
     :class:`FloatParameter`. This box will display and accept values in
@@ -230,11 +210,7 @@ class ScientificInput(QtGui.QDoubleSpinBox, Input):
             For a non-scientific floating-point input box.
     """
     def __init__(self, parameter, parent=None, **kwargs):
-        if qt_min_version(5):
-            super().__init__(parameter=parameter, parent=parent, **kwargs)
-        else:
-            QtGui.QDoubleSpinBox.__init__(self, parent, **kwargs)
-            Input.__init__(self, parameter)
+        super().__init__(parameter=parameter, parent=parent, **kwargs)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
