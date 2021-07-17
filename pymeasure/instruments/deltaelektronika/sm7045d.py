@@ -69,7 +69,7 @@ class SM7045D(Instrument):
     )
 
     max_current = Instrument.control(
-        "SO:CU:MA?", "SO:VO:MA %g",
+        "SO:CU:MA?", "SO:CU:MA %g",
         """ A floating point property that represents the maximum output
         current of the power supply in Amps. This property can be set. """,
         validator=strict_range,
