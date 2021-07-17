@@ -178,6 +178,7 @@ def get_range(status_bytes):
 
 def get_trigger(status_bytes):
     """Method to decode trigger mode
+    
     :param status_bytes:   list of bytes to be decoded
     :return trigger_mode: string with the current trigger mode
     :rtype trigger_mode: str
@@ -263,7 +264,7 @@ class HP3478A(Instrument):
         map_values = True,
         )
 
-    auto_range = Instrument.measurement(
+    auto_range_enabled = Instrument.measurement(
         "B",
         """ Return auto-ranging status, returns False if manual range and True if auto-range active.
         For manual range control the range property can be set
@@ -273,7 +274,7 @@ class HP3478A(Instrument):
         map_values = True,
         )
 
-    auto_zero = Instrument.control(
+    auto_zero_enabled = Instrument.control(
         "B",
         "Z%d",
         """ Returns autozero settings on the HP3478, this property can be set 
@@ -285,7 +286,7 @@ class HP3478A(Instrument):
         map_values = True,
         )
 
-    cal_enable = Instrument.measurement(
+    calibration_enabled = Instrument.measurement(
         "B",
         """Return calibration enable switch setting (False: cal disabled, True: cablibration possible),
         based on front-panel selector switch
@@ -304,7 +305,7 @@ class HP3478A(Instrument):
         """
 
         if self.error_status != 0:
-            log.critical("HP3478A error detected: $s", self.ERRORS[self.error_status] )
+            log.error("HP3478A error detected: $s", self.ERRORS[self.error_status] )
         return self.error_status
 
     error_status = Instrument.measurement(
@@ -314,78 +315,65 @@ class HP3478A(Instrument):
         get_process = (lambda x: int(x)),
         )
 
-    disp_reset = Instrument.setting(
-        "D%d",
-        """Resets the display of the instrument if 1 is written to it.
-        """,
-        set_process = (lambda x: int(x)),
-        validator = strict_discrete_set,
-        values = [1],
-        )
+    def display_reset(self): 
+        """ Reset the display of the instrument.
+        """
+        self.write("D1")
 
-    #TODO: find a proper validator for the next two methods (without using regex, if possible)
-    disp_text = Instrument.setting(
+    display_text = Instrument.setting(
         "D2%s",
         """Displays up to 12 upper-case ASCII characters on the display.
         """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
 
-    disp_text_no_symbol = Instrument.setting(
+    display_text_no_symbol = Instrument.setting(
         "D3%s",
         """Displays up to 12 upper-case ASCII characters on the display and disables all symbols on the display.
         """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
 
-    #TODO: find a good way to cache the latest measurment and use it to incease speed (if actually needed)
     measure_ACI = Instrument.measurement(
         MODES["ACI"],
         """Return the measured value for AC current
         """,
-        get_process = (lambda x: float(x)),
         )
 
     measure_ACV = Instrument.measurement(
         MODES["ACV"],
         """Return the measured value for AC Voltage
         """,
-        get_process = (lambda x: float(x)),
         )
 
     measure_DCI = Instrument.measurement(
         MODES["DCI"],
         """Return the measured value for DC current
         """,
-        get_process = (lambda x: float(x)),
         )
 
     measure_DCV = Instrument.measurement(
         MODES["DCV"],
         """Return the measured value for DC Voltage
         """,
-        get_process = (lambda x: float(x)),
         )
 
     measure_R2W = Instrument.measurement(
         MODES["R2W"],
         """Return the measured value for 2-wire resistance
         """,
-        get_process = (lambda x: float(x)),
         )
 
     measure_R4W = Instrument.measurement(
         MODES["R4W"],
         """Return the measured value for 4-wire resistance
         """,
-        get_process = (lambda x: float(x)),
         )
 
     measure_Rext = Instrument.measurement(
         MODES["Rext"],
         """Return the measured value for extended resistance mode (>30M, 2-wire) resistance
         """,
-        get_process = (lambda x: float(x)),
         )
 
     mode = Instrument.control(
@@ -414,7 +402,6 @@ class HP3478A(Instrument):
         cur_mode = self.mode
         set_range = strict_discrete_set(value, self.RANGES[cur_mode])
         set_range = self.RANGES[cur_mode][value]
-        print(set_range)
         self.write(set_range)
 
     resolution = Instrument.control(
@@ -477,8 +464,8 @@ class HP3478A(Instrument):
 
     def reset(self):
         """
-        Initatiates a reset of the HP3478A
-
+        Initatiates a reset (like a power-on reset) of the HP3478A
+        
         """
         self.adapter.connection.clear()
 
@@ -489,3 +476,4 @@ class HP3478A(Instrument):
         """
         self.adapter.connection.clear()
         self.adapter.connection.close()
+        super().shutdown()
