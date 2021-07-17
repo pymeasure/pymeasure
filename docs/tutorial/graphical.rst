@@ -399,7 +399,7 @@ If the sequencer is not present or the sequence cannot be parsed, both :code:`se
 
 The estimates are automatically updated every 2 seconds.
 Changing this update interval is possible using the "Update continuously"-checkbox, which can be toggled between three states: off (i.e. no updating), auto-update every two seconds (default) or auto-update every 100 milliseconds.
-Manually updating the estimates (useful whenver continuous updating is turned of) is also possible using the "update"-button.
+Manually updating the estimates (useful whenever continuous updating is turned off) is also possible using the "update"-button.
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html

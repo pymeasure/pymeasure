@@ -1103,7 +1103,6 @@ class EstimatorWidget(QtGui.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._parent = parent
-        log.info("doing nothing")
 
         self.check_get_estimates_signature()
 
@@ -1119,7 +1118,7 @@ class EstimatorWidget(QtGui.QWidget):
 
     def check_get_estimates_signature(self):
         """ Method that checks the signature of the get_estimates function.
-        It checks which input arguments are allowed, if the output of the is
+        It checks which input arguments are allowed and, if the output is
         correct for the EstimatorWidget, stores the number of estimates.
         """
 
@@ -1170,7 +1169,7 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_box.setTristate(True)
         self.update_box.stateChanged.connect(self._set_continuous_updating)
 
-        # Add a button for continuous updating
+        # Add a button for instant updating
         self.update_button = QtGui.QPushButton("Update", self)
         self.update_button.clicked.connect(self.update_estimates)
 
