@@ -22,11 +22,26 @@
 # THE SOFTWARE.
 #
 
-from .parameters import (Parameter, IntegerParameter, FloatParameter,
-                        VectorParameter, ListParameter, BooleanParameter, Measurable)
-from .procedure import Procedure, UnknownProcedure
-from .results import Results, unique_filename, replace_placeholders
-from .workers import Worker
-from .listeners import Listener, Recorder
-from .config import get_config
-from .experiment import Experiment, get_array, get_array_steps, get_array_zero
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
+
+class Nxds(Instrument):
+    """ Represents the Edwards nXDS (10i) Vacuum Pump
+    and provides a low-level interaction with the instrument.
+    This could potentially work with Edwards pump that has a RS232 interface. 
+    This instrument is constructed to only start and stop pump.
+    """
+
+    enable = Instrument.setting("!C802 %d",
+                              """ Starts/stops pump with default settings.""",
+                              validator=strict_discrete_set,
+                              values = (0,1),)
+	
+    def __init__(self, resourceName, **kwargs):
+        super(Nxds, self).__init__(
+            resourceName,
+            "Edwards NXDS Vacuum Pump",
+            includeSCPI=False,
+            **kwargs
+        )
+	

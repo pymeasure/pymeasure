@@ -151,6 +151,15 @@ class Agilent33500(Instrument):
         values=[-5, 4.99],
     )
 
+    phase = Instrument.control(
+        "PHAS?", "PHAS %f",
+        """ A floating point property that controls the phase of the output
+        waveform in degrees, from -360 degrees to 360 degrees. Not available
+        for arbitrary waveforms or noise. Can be set. """,
+        validator=strict_range,
+        values=[-360, 360],
+    )
+
     square_dutycycle = Instrument.control(
         "FUNC:SQU:DCYC?", "FUNC:SQU:DCYC %f",
         """ A floating point property that controls the duty cycle of a square
@@ -449,18 +458,3 @@ class Agilent33500(Instrument):
         map_values=True,
         values={True: 1, False: 0},
     )
-
-    def check_errors(self):
-        """ Read all errors from the instrument. """
-
-        errors = []
-        while True:
-            err = self.values("SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Agilent 33521A: %s: %s" % (err[0], err[1])
-                log.error(errmsg + '\n')
-                errors.append(errmsg)
-            else:
-                break
-
-        return errors
