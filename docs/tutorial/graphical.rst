@@ -207,28 +207,19 @@ For :class:`~pymeasure.display.plotter.Plotter`, you can make a sub-class that o
             # use logarithmic x-axis (e.g. for frequency sweeps)
             plot.setLogMode(x=True)
 
-For :class:`~pymeasure.display.windows.ManagedWindow`, Similarly to the Plotter, the :meth:`~pymeasure.display.windows.ManagedWindow.setup_plot` method can be overridden by your sub-class in order to do the set-up ::
+For :class:`~pymeasure.display.windows.ManagedWindow`, the mechanism to customize plots is much more flexible by using specialization via inheritance. Indeed :class:`~pymeasure.display.windows.ManagedWindowBase` is the base class for :class:`~pymeasure.display.windows.ManagedWindow` and :class:`~pymeasure.display.windows.ManagedImageWindow` which are subclasses ready to use for GUI.
 
-    class MainWindow(ManagedWindow):
+Defining your own ManagedWindow's widgets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        # ...
+The parameter :code:`widget_list` in :class:`~pymeasure.display.windows.ManagedWindowBase` constructor allow to introduce user's defined widget in the GUI results display area.
+The user's widget should inherit from :class:`~pymeasure.display.widgets.TabWidget` and could reimplement any of the methods that needs customization.
+In order to get familiar with the mechanism, users can check the following widgets already provided:
 
-        def setup_plot(self, plot):
-            # use logarithmic x-axis (e.g. for frequency sweeps)
-            plot.setLogMode(x=True)
+- :class:`~pymeasure.display.widgets.LogWidget`
+- :class:`~pymeasure.display.widgets.PlotWidget`
+- :class:`~pymeasure.display.widgets.ImageWidget`
 
-        # ...
-
-It is also possible to access the :attr:`~pymeasure.display.windows.ManagedWindow.plot` attribute while outside of your sub-class, for example we could modify the previous section's example ::
-
-    if __name__ == "__main__":
-        app = QtGui.QApplication(sys.argv)
-        window = MainWindow()
-        window.plot.setLogMode(x=True) # use logarithmic x-axis (e.g. for frequency sweeps)
-        window.show()
-        sys.exit(app.exec_())
-
-See pyqtgraph's API documentation on PlotItem_ for further details.
 
 Using the sequencer
 ~~~~~~~~~~~~~~~~~~~
