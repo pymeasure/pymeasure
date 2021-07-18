@@ -34,6 +34,8 @@ log.addHandler(logging.NullHandler())
 
 
 class BrowserItem(QtGui.QTreeWidgetItem):
+    """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
+
     def __init__(self, results, color, parent=None):
         super().__init__(parent)
 
