@@ -22,39 +22,26 @@
 # THE SOFTWARE.
 #
 
-import pyvisa
+import pytest
+import serial
+
+from pymeasure.adapters import SerialAdapter
+
+def make_adapter(**kwargs):
+    return SerialAdapter(serial.serial_for_url("loop://", **kwargs))
 
 
-def list_resources():
-    """
-    Prints the available resources, and returns a list of VISA resource names
-    
-    .. code-block:: python
+@pytest.mark.parametrize("msg", ["OUTP\n", "POWER 22 dBm\n"])
+def test_adapter_write(msg):
+    adapter = make_adapter(timeout=0.2)
+    adapter.write(msg)
+    assert(adapter.read() == msg)
 
-        resources = list_resources()
-        #prints (e.g.)
-            #0 : GPIB0::22::INSTR : Agilent Technologies,34410A,******
-            #1 : GPIB0::26::INSTR : Keithley Instruments Inc., Model 2612, *****
-        dmm = Agilent34410(resources[0])
-    
-    """
-    rm = pyvisa.ResourceManager()
-    instrs = rm.list_resources()
-    for n, instr in enumerate(instrs):
-        # trying to catch errors in comunication
-        try:
-            res = rm.open_resource(instr)
-            # try to avoid errors from *idn?
-            try:
-                # noinspection PyUnresolvedReferences
-                idn = res.query('*idn?')[:-1]
-            except pyvisa.Error:
-                idn = "Not known"
-            finally:
-                res.close()
-                print(n, ":", instr, ":", idn)
-        except pyvisa.VisaIOError as e:
-            print(n, ":", instr, ":", "Visa IO Error: check connections")
-            print(e)
-    rm.close()
-    return instrs
+@pytest.mark.parametrize("test_input,expected", [([1,2,3], b'OUTP#13\x01\x02\x03'),
+                                                 (range(100), b'OUTP#3100'+bytes(range(100)))])
+def test_adapter_write_binary_values(test_input, expected):
+    adapter = make_adapter(timeout=0.2)
+    adapter.write_binary_values("OUTP", test_input, datatype='B')
+    # Add 10 bytes more, just to check that no extra bytes are present
+    assert(adapter.connection.read(len(expected)+10) == expected)
+
