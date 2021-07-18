@@ -208,8 +208,9 @@ class Procedure(object):
     def get_estimates(self):
         """ Function that returns estimates that are to be displayed by
         the EstimatorWidget. Must be reimplemented by subclasses. Should
-        return a list with a tuple for each estimate. The tuple should
-        consists of two strings: the first will be used as the label of the
+        return an int or float representing the duration in seconds, or
+        a list with a tuple for each estimate. The tuple should consists
+        of two strings: the first will be used as the label of the
         estimate, the second as the displayed estimate.
         """
         raise NotImplementedError('Must be reimplemented by subclasses')

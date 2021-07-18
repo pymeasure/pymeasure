@@ -60,7 +60,7 @@ class TestProcedure(Procedure):
         is implemented (and does not return a NotImplementedError) the widget is
         automatically activated.
 
-        The function is expected to an int or float, or a list of tuples. If an int or
+        The function is expected to return an int or float, or a list of tuples. If an int or
         float is returned, it should represent the duration in seconds.If a list of
         tuples is returned, each tuple containing two strings, a label and the estimate
         itself:
@@ -69,7 +69,7 @@ class TestProcedure(Procedure):
             ("label 2", "estimate 2"),
         ]
         The length of the number of estimates is not limited but has to remain unchanged after
-        initialisation. Not that also the label can be altered after initialisation.
+        initialisation. Note that also the label can be altered after initialisation.
 
         The keyword arguments `sequence_length` and `sequence` are optional and return
         (if asked for) the length of the current sequence (of the `SequencerWidget`) or
