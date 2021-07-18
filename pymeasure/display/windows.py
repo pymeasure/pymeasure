@@ -164,8 +164,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
 
     :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
     :param widget_list: list of widget to be displayed in the GUI
-    :param inputs: list of :class:`~pymeasure.experiment.parameter.Parameter` instance variable names, which the display will generate graphical fields for
-    :param displays: list of :class:`~pymeasure.experiment.parameter.Parameter` instance variable names displayed in the browser window
+    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names, which the display will generate graphical fields for
+    :param displays: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names displayed in the browser window
     :param log_channel: :code:`logging.Logger` instance to use for logging output
     :param log_level: logging level
     :param parent: Parent widget or :code:`None`
