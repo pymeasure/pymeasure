@@ -127,30 +127,54 @@ class PlotterWindow(QtGui.QMainWindow):
 
 class ManagedWindowBase(QtGui.QMainWindow):
     """
-    Abstract base class.
+    Base class for GUI experiment management .
 
-    The ManagedWindow provides an interface for inputting experiment
+    The ManagedWindowBase provides an interface for inputting experiment
     parameters, running several experiments
     (:class:`~pymeasure.experiment.procedure.Procedure`), plotting
     result curves, and listing the experiments conducted during a session.
 
-    The ManagedWindow uses a Manager to control Workers in a Queue,
-    and provides a simple interface. The :meth:`~.queue` method must be
+    The ManagedWindowBase uses a Manager to control Workers in a Queue,
+    and provides a simple interface.
+    The :meth:`~pymeasure.display.windows.ManagedWindowBase.queue` method must be
     overridden by the child class.
+
+    The ManagedWindowBase allow user to define a set of widget that display information about the
+    experiment. The information displayed may include: plots, tabular view, logging information, etc.
+
+    This class is not intended to be used directy, but it should be subclassed to provide some
+    appropriate widget list. Example of classes usable as element of widget list are:
+
+    - :class:`~pymeasure.display.widgets.LogWidget`
+    - :class:`~pymeasure.display.widgets.PlotWidget`
+    - :class:`~pymeasure.display.widgets.ImageWidget`
+
+    Of course, users can define its own widget making sure that inherits from :class:`~pymeasure.display.widgets.TabWidget`.
+
+    Examples of ready to use classes inherited from ManagedWindowBase are:
+
+    - :class:`~pymeasure.display.windows.ManagedWindow`
+    - :class:`~pymeasure.display.windows.ManagedImageWindow`
 
     .. seealso::
 
         Tutorial :ref:`tutorial-managedwindow`
             A tutorial and example on the basic configuration and usage of ManagedWindow.
 
-    .. attribute:: plot
+    Parameters for :code:`__init__` constructor.
 
-        The `pyqtgraph.PlotItem`_ object for this window. Can be
-        accessed to further customise the plot view programmatically, e.g.,
-        display log-log or semi-log axes by default, change axis range, etc.
-
-    .. _pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
+    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param widget_list: list of widget to be displayed in the GUI
+    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names, which the display will generate graphical fields for
+    :param displays: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names displayed in the browser window
+    :param log_channel: :code:`logging.Logger` instance to use for logging output
+    :param log_level: logging level
+    :param parent: Parent widget or :code:`None`
+    :param sequencer: a boolean stating whether or not the sequencer has to be included into the window
+    :param sequencer_inputs: either :code:`None` or a list of the parameter names to be scanned over. If no list of parameters is given, the parameters displayed in the manager queue are used
+    :param sequence_file: simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button
+    :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
+    :param directory_input: specify, if present, where the experiment's result will be saved.
 
     """
 
@@ -209,8 +233,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.browser_widget = BrowserWidget(
             self.procedure_class,
             self.displays,
-            # ??? Measured quantities, I am not sure what this is for [self.x_axis, self.y_axis],
-            [],
+            [], # This value will be patched by subclasses, if needed
             parent=self
         )
         self.browser_widget.show_button.clicked.connect(self.show_experiments)
@@ -302,15 +325,15 @@ class ManagedWindowBase(QtGui.QMainWindow):
             sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
 
-        self.tabs = QtGui.QTabWidget(self.main)
-        for wdg in self.widget_list:
-            self.tabs.addTab(wdg, wdg.name)
-
         if self.use_estimator:
             estimator_dock = QtGui.QDockWidget('Estimator')
             estimator_dock.setWidget(self.estimator)
             estimator_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, estimator_dock)
+
+        self.tabs = QtGui.QTabWidget(self.main)
+        for wdg in self.widget_list:
+            self.tabs.addTab(wdg, wdg.name)
 
         splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
         splitter.addWidget(self.tabs)
@@ -339,10 +362,6 @@ class ManagedWindowBase(QtGui.QMainWindow):
                 for wdg, curve in zip(self.widget_list, experiment.curve_list):
                     wdg.remove(curve)
             else:
-                # ??? experiment.curve.x = self.plot_widget.plot_frame.x_axis
-                # ??? experiment.curve.y = self.plot_widget.plot_frame.y_axis
-                # ??? experiment.curve.update()
-                # ??? self.plot.addItem(experiment.curve)
                 for wdg, curve in zip(self.widget_list, experiment.curve_list):
                     wdg.load(curve)
 
@@ -535,20 +554,6 @@ class ManagedWindowBase(QtGui.QMainWindow):
         raise NotImplementedError(
             "Abstract method ManagedWindow.queue not implemented")
 
-    # def setup_plot(self, plot):
-    #     """
-    #     This method does nothing by default, but can be overridden by the child
-    #     class in order to set up custom options for the plot
-
-    #     This method is called during the constructor, after all other set up has
-    #     been completed, and is provided as a convenience method to parallel Plotter.
-
-    #     :param plot: This window's PlotItem instance.
-
-    #     .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-    #     """
-    #     pass
-
     def abort(self):
         self.abort_button.setEnabled(False)
         self.abort_button.setText("Resume")
@@ -601,30 +606,12 @@ class ManagedWindowBase(QtGui.QMainWindow):
 
 class ManagedWindow(ManagedWindowBase):
     """
-    Abstract base class.
-
-    The ManagedWindow provides an interface for inputting experiment
-    parameters, running several experiments
-    (:class:`~pymeasure.experiment.procedure.Procedure`), plotting
-    result curves, and listing the experiments conducted during a session.
-
-    The ManagedWindow uses a Manager to control Workers in a Queue,
-    and provides a simple interface. The :meth:`~.queue` method must be
-    overridden by the child class.
+    Display experiment output with an :class:`~pymeasure.display.widget.PlotWidget` class.
 
     .. seealso::
 
         Tutorial :ref:`tutorial-managedwindow`
             A tutorial and example on the basic configuration and usage of ManagedWindow.
-
-    .. attribute:: plot
-
-        The `pyqtgraph.PlotItem`_ object for this window. Can be
-        accessed to further customise the plot view programmatically, e.g.,
-        display log-log or semi-log axes by default, change axis range, etc.
-
-    .. _pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
 
     """
 
@@ -650,39 +637,19 @@ class ManagedWindow(ManagedWindowBase):
             directory_input=directory_input,
             hide_groups=hide_groups
         )
+
+        # Setup measured_quantities once we know x_axis and y_axis
+        self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
+
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(log_level)
         log.info("ManagedWindow connected to logging")
 
 class ManagedImageWindow(ManagedWindow):
     """
-    Abstract base class.
-
-    The ManagedImageWindow provides an interface for inputting experiment
-    parameters, running several experiments
-    (:class:`~pymeasure.experiment.procedure.Procedure`), plotting
-    result curves, and listing the experiments conducted during a session.
-
-    The ManagedImageWindow uses a Manager to control Workers in a Queue,
-    and provides a simple interface. The :meth:`~.queue` method must be
-    overridden by the child class.
-
-    .. seealso::
-
-        Tutorial :ref:`tutorial-managedwindow`
-            A tutorial and example on the basic configuration and usage of MangedImageWindow.
-
-    .. attribute:: plot
-
-        The `pyqtgraph.PlotItem`_ object for this window. Can be
-        accessed to further customise the plot view programmatically, e.g.,
-        display log-log or semi-log axes by default, change axis range, etc.
-
-    .. _pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
+    Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
 
     """
-
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,

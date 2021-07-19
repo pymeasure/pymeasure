@@ -149,6 +149,8 @@ class PlotFrame(QtGui.QFrame):
         self.y_axis_changed.emit(axis)
 
 class ImageFrame(PlotFrame):
+    """ Extends PlotFrame to plot also axis Z using colors
+    """
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.QSignal(str)
 
@@ -170,7 +172,12 @@ class ImageFrame(PlotFrame):
         self.z_axis_changed.emit(axis)
 
 class TabWidget(object):
-    """ Utility class to define default implementation for some basic methods """
+    """ Utility class to define default implementation for some basic methods.
+
+        When defining a widget to be used in subclasses of ManagedWindowBase, users should inherit
+        from this class and provide the specialized implementation of these method's
+    """
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
@@ -188,7 +195,7 @@ class TabWidget(object):
         pass
 
     def set_color(self, curve, color):
-        """ Remove curve from widget """
+        """ Set color for widget """
         pass
 
 class PlotWidget(TabWidget, QtGui.QWidget):
@@ -290,7 +297,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         curve.setPen(pg.mkPen(color=color, width=2))
 
 class ImageWidget(TabWidget, QtGui.QWidget):
-    """ Extends the PlotFrame to allow different columns
+    """ Extends the ImageFrame to allow different columns
     of the data to be dynamically choosen
     """
 
@@ -532,6 +539,11 @@ class InputsWidget(QtGui.QWidget):
         return self._procedure
 
 class LogWidget(TabWidget, QtGui.QWidget):
+    """ Widget to display logging information in GUI
+
+    It is recommended to include this widget in all subclasses of ManagedWindowBase
+    """
+
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
         self._setup_ui()
