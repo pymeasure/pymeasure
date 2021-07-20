@@ -191,19 +191,20 @@ class HP3478A(Instrument):
             16: "AD converter error",
             32: "AD link error",
            }
-    
+
 
 
     #decoder functions
-    @classmethod
-    def decode_status(self,status_bytes, field=None):
+    @staticmethod
+    def decode_status(status_bytes, field=None):
         """Method to handle the decoding of the status bytes into something meaningfull
 
         :param status_bytes:    list of bytes to be decoded
         :return ret_val:
 
         """
-        ret_val = Status(Status_bytes(*status_bytes))
+
+        ret_val = Status(Status_bytes(*status_bytes.encode(encoding="ASCII")))
         if field is None:
             return ret_val.b
         elif field == "SRQ":
@@ -220,9 +221,9 @@ class HP3478A(Instrument):
         :rtype cur_mode: str
 
         """
-        cur_stat = Status(Status_bytes(*status_bytes))
+        cur_stat = Status(Status_bytes(*status_bytes.encode(encoding="ASCII")))
         function = cur_stat.b.function
-        inv_modes = {v: k for k, v in HP3478A.MODES.items()}
+        inv_modes = {v: k for k, v in cls.MODES.items()}
         cur_mode = inv_modes["F"+str(function)]
         return cur_mode
 
@@ -235,16 +236,16 @@ class HP3478A(Instrument):
         :rtype cur_range: float
 
         """
-        cur_stat = Status(Status_bytes(*status_bytes))
+        cur_stat = Status(Status_bytes(*status_bytes.encode(encoding="ASCII")))
         function = cur_stat.b.function
-        inv_modes = {v: k for k, v in HP3478A.MODES.items()}
+        inv_modes = {v: k for k, v in cls.MODES.items()}
         cur_mode = inv_modes["F"+str(function)]
         rnge = cur_stat.b.range
-        cur_range = list(HP3478A.RANGES[cur_mode].keys())[rnge-1]
+        cur_range = list(cls.RANGES[cur_mode].keys())[rnge-1]
         return cur_range
 
-    @classmethod
-    def decode_trigger(cls,status_bytes):
+    @staticmethod
+    def decode_trigger(status_bytes):
         """Method to decode trigger mode
 
         :param status_bytes:   list of bytes to be decoded
@@ -252,7 +253,7 @@ class HP3478A(Instrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat= Status(Status_bytes(*status_bytes))
+        cur_stat= Status(Status_bytes(*status_bytes.encode(encoding="ASCII")))
         i_trig = cur_stat.b.int_trig
         e_trig = cur_stat.b.ext_trig
         if i_trig == 0:
@@ -269,7 +270,7 @@ class HP3478A(Instrument):
         "B",
         """Return selected connectors ("front"/"back"), based on front-panel selector switch
         """,
-        get_process = (lambda x: HP3478A.decode_status(x.encode(encoding="ASCII"), "front_rear")),
+        get_process = (lambda x: HP3478A.decode_status(x, "front_rear")),
         values={"back":0, "front":1},
         map_values = True,
         )
@@ -279,7 +280,7 @@ class HP3478A(Instrument):
         """ Return auto-ranging status, returns False if manual range and True if auto-range active.
         For manual range control the range property can be set
         """,
-        get_process = (lambda x: HP3478A.decode_status(x.encode(encoding="ASCII"), "auto_range")),
+        get_process = (lambda x: HP3478A.decode_status(x, "auto_range")),
         values={False:0, True:1},
         map_values = True,
         )
@@ -287,10 +288,10 @@ class HP3478A(Instrument):
     auto_zero_enabled = Instrument.control(
         "B",
         "Z%d",
-        """ Returns autozero settings on the HP3478, this property can be set 
-        (False: disabled, True: enabled) 
+        """ Returns autozero settings on the HP3478, this property can be set
+        (False: disabled, True: enabled)
         """,
-        get_process = (lambda x: HP3478A.decode_status(x.encode(encoding="ASCII"), "auto_zero")),
+        get_process = (lambda x: HP3478A.decode_status(x, "auto_zero")),
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
@@ -301,7 +302,7 @@ class HP3478A(Instrument):
         """Return calibration enable switch setting (False: cal disabled, True: cablibration possible),
         based on front-panel selector switch
         """,
-        get_process = (lambda x: HP3478A.decode_status(x.encode(encoding="ASCII"), "cal_enable")),
+        get_process = (lambda x: HP3478A.decode_status(x, "cal_enable")),
         values={False:0, True:1},
         map_values = True,
         )
@@ -315,7 +316,7 @@ class HP3478A(Instrument):
         """
 
         if self.error_status != 0:
-            log.error("HP3478A error detected: $s", self.ERRORS[self.error_status] )
+            log.error("HP3478A error detected: $s", self.ERRORS[self.error_status])
         return self.error_status
 
     error_status = Instrument.measurement(
@@ -392,7 +393,7 @@ class HP3478A(Instrument):
         """Return current selected measurment mode, this propery can be set.
         Allowed values are ACI,ACV,DCI,DCV,R2W,R4W,Rext
         """,
-        get_process = (lambda x: HP3478A.decode_mode(x.encode(encoding="ASCII"))),
+        get_process = (lambda x: HP3478A.decode_mode(x)),
         set_process = (lambda x: HP3478A.MODES[x]),
         validator = strict_discrete_set,
         values = MODES,
@@ -404,7 +405,7 @@ class HP3478A(Instrument):
         Valid settings are 3*powers of ten (e.g 0.3,3,30)"
         for all valid ranges look at HP3478A.RANGES structure
         """,
-        get_process = (lambda x: HP3478A.decode_range(x.encode(encoding="ASCII"))),
+        get_process = lambda x: HP3478A.decode_range(x),
         )
 
     @range.setter
@@ -420,7 +421,7 @@ class HP3478A(Instrument):
         """Return current selected resolution, this property can be set.
         Allowed values are 3,4 or 5
         """,
-        get_process = (lambda x: 6-HP3478A.decode_status(x.encode(encoding="ASCII"),"digits")),
+        get_process = (lambda x: 6-HP3478A.decode_status(x,"digits")),
         validator = strict_discrete_set,
         values = [3,4,5],
         )
@@ -429,24 +430,24 @@ class HP3478A(Instrument):
         "B",
         """Checks the status registers
         """,
-        get_process = (lambda x: HP3478A.decode_status(x.encode(encoding="ASCII"))),
+        get_process = (lambda x: HP3478A.decode_status(x)),
         )
 
     SRQ_mask = Instrument.control(
         "B",
         "M%o",
         """Return current SRQ mask, this property can be set,
-        
+
         bit assigment for SQR:
-        
+
             1(dec) - SRQ when Data ready,
             4(dec) - SRQ when Syntax error,
             8(dec) - SRQ when internal error,
             16(dec) - front panel SQR,
             32(dec) - SRQ by invalid calibration,
-        
+
         """,
-        get_process = (lambda x: HP3478A.decode_status(x.encode(encoding="ASCII"),"SRQ")),
+        get_process = (lambda x: HP3478A.decode_status(x,"SRQ")),
         validator = strict_range,
         values = [0,63],
         )
@@ -457,7 +458,7 @@ class HP3478A(Instrument):
         """Return current selected trigger mode, this property can be set
         Possibe values are: "auto"/"internal", "external", "hold", "fast"
         """,
-        get_process = (lambda x: HP3478A.decode_trigger(x.encode(encoding="ASCII"))),
+        get_process = (lambda x: HP3478A.decode_trigger(x)),
         set_process = (lambda x: HP3478A.TRIGGERS[x]),
         validator = strict_discrete_set,
         values = TRIGGERS,
