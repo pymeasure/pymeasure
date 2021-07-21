@@ -127,7 +127,7 @@ class BN675_AWG(Instrument):
 
     """
 
-    burst_n_cyces = Instrument.control(
+    burst_n_cycles = Instrument.control(
         "AWGC:BURST?", "AWGC:BURST %d",
         """ Integer parameter setting the number of cycles to burst in burst mode""",
     )
