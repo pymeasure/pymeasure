@@ -43,8 +43,9 @@ from .widgets import (
     SequencerWidget,
     ImageWidget,
     DirectoryLineEdit,
+    EstimatorWidget,
 )
-from ..experiment.results import Results
+from ..experiment import Results, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -172,6 +173,9 @@ class ManagedWindow(QtGui.QMainWindow):
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.x_axis, self.y_axis = x_axis, y_axis
+
+        # Check if the get_estimates function is reimplemented
+        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
         if setup:
             self._setup_ui()
             self._layout()
@@ -188,7 +192,7 @@ class ManagedWindow(QtGui.QMainWindow):
             self.directory_line = DirectoryLineEdit(parent=self)
 
         self.queue_button = QtGui.QPushButton('Queue', self)
-        self.queue_button.clicked.connect(self.queue)
+        self.queue_button.clicked.connect(self._queue)
 
         self.abort_button = QtGui.QPushButton('Abort', self)
         self.abort_button.setEnabled(False)
@@ -230,6 +234,11 @@ class ManagedWindow(QtGui.QMainWindow):
             self.sequencer = SequencerWidget(
                 self.sequencer_inputs,
                 self.sequence_file,
+                parent=self
+            )
+
+        if self.use_estimator:
+            self.estimator = EstimatorWidget(
                 parent=self
             )
 
@@ -282,6 +291,12 @@ class ManagedWindow(QtGui.QMainWindow):
             sequencer_dock.setWidget(self.sequencer)
             sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
+
+        if self.use_estimator:
+            estimator_dock = QtGui.QDockWidget('Estimator')
+            estimator_dock.setWidget(self.estimator)
+            estimator_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, estimator_dock)
 
         tabs = QtGui.QTabWidget(self.main)
         tabs.addTab(self.plot_widget, "Results Graph")
@@ -453,7 +468,15 @@ class ManagedWindow(QtGui.QMainWindow):
                             " without a InputsWidget")
         self.inputs.set_parameters(parameters)
 
-    def queue(self):
+    def _queue(self, checked):
+        """ This method is a wrapper for the `self.queue` method to be connected
+        to the `queue` button. It catches the positional argument that is passed
+        when it is called by the button and calls the `self.queue` method without
+        any arguments.
+        """
+        self.queue()
+
+    def queue(self, procedure=None):
         """
 
         Abstract method, which must be overridden by the child class.
@@ -464,6 +487,10 @@ class ManagedWindow(QtGui.QMainWindow):
         contains the
         :class:`~pymeasure.experiment.results.Results` and
         :class:`~pymeasure.experiment.procedure.Procedure` to be run.
+
+        The optional `procedure` argument is not required for a basic implementation,
+        but is required when the :class:`~pymeasure.display.widgets.SequencerWidget`
+        is used.
 
         For example:
 
