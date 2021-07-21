@@ -174,7 +174,7 @@ class BN765(Instrument):
     )
 
     source1_loadimpedance = Instrument.control(
-        'SOURce1:LOAD:IMP?', 'SOURce1:LOAD:IMP %g'
+        'SOURce1:LOAD:IMP?', 'SOURce1:LOAD:IMP %g',
         """A mixed parameter that sets the load impedance. Any float between
         [50, 1e8] are allowed. """
     )
