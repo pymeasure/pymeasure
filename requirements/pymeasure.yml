@@ -16,8 +16,8 @@ dependencies:
   - pytest-runner=5.2
   - pytest=6.1.1
   - flake8=3.8.4
-  - sphinx=3.2.1
-  - sphinx_rtd_theme=0.4.3
+  - sphinx=4.0.2
+  - sphinx_rtd_theme=0.5.2
   - pip  # don't pin, to gain newest conda compatibility fixes
   - pip:
     - pyvisa-sim==0.4.0

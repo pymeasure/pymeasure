@@ -33,3 +33,4 @@ The following developers have contributed to the PyMeasure package:
 | Steven Siegl
 | Benjamin Klebel-Knobloch
 | Hud Wahab
+| Nicola Corna
