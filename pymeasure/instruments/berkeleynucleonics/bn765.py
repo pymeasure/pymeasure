@@ -35,6 +35,101 @@ from pyvisa.errors import VisaIOError
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+class Channel():
+    """ Implementation of a BN765 fast pulse generator channel.
+     """
+
+    BOOLS = {True: 1, False: 0}
+
+
+    coupling = Instrument.control(
+        "COUPling?", "COUPling %s",
+        """ A string parameter that determines the coupling ("dc" only).
+        The 90000A (Again there are four zeroes there) series oscilloscopes only
+        have DC coupling at 50 Ohms impedance.""",
+        validator=strict_discrete_set,
+        values={"dc": "DC50"},
+        map_values=True
+    )
+
+    display = Instrument.control(
+        "DISPlay?", "DISPlay %d",
+        """ A boolean parameter that toggles the display.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    invert = Instrument.control(
+        "INVert?", "INVert %d",
+        """ A boolean parameter that toggles the inversion of the input signal.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    label = Instrument.control(
+        "LABel?", 'LABel "%s"',
+        """ A string to label the channel. Labels with more than 10 characters are truncated to 10 
+        characters. May contain commonly used ASCII characters. Lower case characters are converted 
+        to upper case.""",
+        get_process=lambda v: str(v[1:-1])
+    )
+
+    offset = Instrument.control(
+        "OFFSet?", "OFFSet %f",
+        """ A float parameter to set value that is represented at center of screen in 
+        Volts. The range of legal values varies depending on range and scale. If the specified value 
+        is outside of the legal range, the offset value is automatically set to the nearest legal value. """
+    )
+
+    probe_attenuation = Instrument.control(
+        "PROBe?", "PROBe %f,RAT",
+        """ A float parameter that specifies the probe attenuation as a ratio. The probe attenuation
+        may be from 0.1 to 10000.""",
+        validator=strict_range,
+        values=[0.1, 10000]
+    )
+
+    range = Instrument.control(
+        "RANGe?", "RANGe %f",
+        """ A float parameter that specifies the full-scale vertical axis in Volts. 
+        When using 1:1 probe attenuation, legal values for the 91204A range from 8 mV to 800 mV."""
+    )
+
+    scale = Instrument.control(
+        "SCALe?", "SCALe %f",
+        """ A float parameter that specifies the vertical scale, or units per division, in Volts. 
+        Limits are [1e-3,1] for the 91204A range"""
+    )
+
+    def __init__(self, instrument, number):
+        self.instrument = instrument
+        self.number = number
+
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values(":source%d:%s" % (
+            self.number, command), **kwargs)
+
+    def ask(self, command):
+        self.instrument.ask("source%d:%s" % (self.number, command))
+
+    def write(self, command):
+        self.instrument.write("source%d:%s" % (self.number, command))
+
+    @property
+    def output_enabled(self):
+        mapper = {1: True, 0: False}
+        out = int(self.instrument.ask("output%d?" % self.number))
+        return mapper[out]
+
+    @output_enabled.setter
+    def output_enabled(self, state):
+        mapper = {True: 'ON', False: 'OFF'}
+        self.instrument.write("output%d %s" % (self.number, mapper[state]))
 
 
 class BN765(Instrument):
@@ -45,21 +140,7 @@ class BN765(Instrument):
 
         generator = BN765("GPIB::1")
 
-        generator.shape = 'SIN'                 # Sets the output signal shape to sine
-        generator.frequency = 1e3               # Sets the output frequency to 1 kHz
-        generator.amplitude = 5                 # Sets the output amplitude to 5 Vpp
-        generator.output = 'on'                 # Enables the output
 
-        generator.shape = 'ARB'                 # Set shape to arbitrary
-        generator.arb_srate = 1e6               # Set sample rate to 1MSa/s
-
-        generator.data_volatile_clear()         # Clear volatile internal memory
-        generator.data_arb(                     # Send data points of arbitrary waveform
-            'test',
-            range(-10000, 10000, +20),          # In this case a simple ramp
-            data_format='DAC'                   # Data format is set to 'DAC'
-        )
-        generator.arb_file = 'test'             # Select the transmitted waveform 'test'
 
     """
 
@@ -90,6 +171,12 @@ class BN765(Instrument):
          Options are SIN (single), DOU (double), TRI (triple), QUAD (quadruple).""",
         validator=strict_discrete_set,
         values=['SIN', 'DOU', 'TRI', 'QUAD'],
+    )
+
+    source1_loadimpedance = Instrument.control(
+        'SOURce1:LOAD:IMP?', 'SOURce1:LOAD:IMP %g',
+        """A mixed parameter that sets the load impedance. Any float between
+        [50, 1e8] are allowed. """
     )
 
     source1_period = Instrument.control(
