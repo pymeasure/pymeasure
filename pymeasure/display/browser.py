@@ -34,11 +34,13 @@ log.addHandler(logging.NullHandler())
 
 
 class BrowserItem(QtGui.QTreeWidgetItem):
-    def __init__(self, results, curve, parent=None):
+    """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
+
+    def __init__(self, results, color, parent=None):
         super().__init__(parent)
 
         pixelmap = QtGui.QPixmap(24, 24)
-        pixelmap.fill(curve.opts['pen'].color())
+        pixelmap.fill(color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         self.setCheckState(0, QtCore.Qt.Checked)
