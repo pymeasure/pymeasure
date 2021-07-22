@@ -73,15 +73,6 @@ class Channel():
         values=['WALL', 'BESSEL4', 'BANDPASS']
     )
 
-    coupling = Instrument.control(
-        "COUPling?", "COUPling %s",
-        """ A string parameter that determines the coupling ("dc" only).
-        The 90000A (Again there are four zeroes there) series oscilloscopes only
-        have DC coupling at 50 Ohms impedance.""",
-        validator=strict_discrete_set,
-        values={"dc": "DC50"},
-        map_values=True
-    )
 
     display = Instrument.control(
         "DISPlay?", "DISPlay %d",
@@ -179,56 +170,6 @@ class Channel():
         if vertical_range is not None: self.range = vertical_range
         if scale is not None: self.scale = scale
 
-    @property
-    def current_configuration(self):
-        """ Read channel configuration as a dict containing the following keys:
-            - "CHAN": channel number (int)
-            - "OFFS": vertical offset (float)
-            - "RANG": vertical range (float)
-            - "COUP": "dc" or "ac" coupling (str)
-            - "IMP": input impedance (str)
-            - "DISP": currently displayed (bool)
-            - "BWL": bandwidth limiting enabled (bool)
-            - "INV": inverted (bool)
-            - "UNIT": unit (str)
-            - "PROB": probe attenuation (float)
-            - "PROB:SKEW": skew factor (float)
-            - "STYP": probe signal type (str)
-        """
-
-        # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and to query the
-        # configuration details, we actually need to ask ":channelX?", without a second ":"
-        ch_setup_raw = self.instrument.ask(":channel%d?" % self.number).strip("\n")
-
-        # ch_setup_raw hat the following format:
-        # :CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;
-        # INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING
-
-        # Cut out the ":CHANx:" at beginning and split string
-        ch_setup_splitted = ch_setup_raw[7:].split(";")
-
-        # Create dict of setup parameters
-        ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
-
-        # Add "CHAN" key
-        ch_setup_dict["CHAN"] = ch_setup_raw[5]
-
-        # Convert values to specific type
-        to_str = ["COUP", "IMP", "UNIT", "STYP"]
-        to_bool = ["DISP", "BWL", "INV"]
-        to_float = ["OFFS", "PROB", "PROB:SKEW", "RANG"]
-        to_int = ["CHAN"]
-        for key in ch_setup_dict:
-            if key in to_str:
-                ch_setup_dict[key] = str(ch_setup_dict[key])
-            elif key in to_bool:
-                ch_setup_dict[key] = (ch_setup_dict[key] == "1")
-            elif key in to_float:
-                ch_setup_dict[key] = float(ch_setup_dict[key])
-            elif key in to_int:
-                ch_setup_dict[key] = int(ch_setup_dict[key])
-        return ch_setup_dict
-
 
 class KeysightDSA90000A(Instrument):
     """ Represents the Keysight DSA90000A Oscilloscope interface for interacting
@@ -287,29 +228,21 @@ class KeysightDSA90000A(Instrument):
     # Timebase Setup #
     ##################
 
-    @property
-    def timebase(self):
-        """ Read timebase setup as a dict containing the following keys:
-            - "REF": position on screen of timebase reference (str)
-            - "MAIN:RANG": full-scale timebase range (float)
-            - "POS": interval between trigger and reference point (float)
-            - "MODE": mode (str)"""
-        return self._timebase()
 
     timebase_offset = Instrument.control(
-        ":TIMebase:POSition?", ":TIMebase:REFerence CENTer;:TIMebase:POSition %f",
+        ":TIMebase:POSition?", ":TIMebase:REFerence CENTer;:TIMebase:POSition %.4E",
         """ A float parameter that sets the time interval in seconds between the trigger 
         event and the reference position (at center of screen by default)."""
     )
 
     timebase_range = Instrument.control(
-        ":TIMebase:RANGe?", ":TIMebase:RANGe %f",
+        ":TIMebase:RANGe?", ":TIMebase:RANGe %.4E",
         """ A float parameter that sets the full-scale horizontal time in seconds for the 
         main window."""
     )
 
     timebase_scale = Instrument.control(
-        ":TIMebase:SCALe?", ":TIMebase:SCALe %f",
+        ":TIMebase:SCALe?", ":TIMebase:SCALe %.4E",
         """ A float parameter that sets the horizontal scale (units per division) in seconds 
         for the main window."""
     )
