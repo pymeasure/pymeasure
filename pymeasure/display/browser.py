@@ -34,15 +34,13 @@ log.addHandler(logging.NullHandler())
 
 
 class BrowserItem(QtGui.QTreeWidgetItem):
+    """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
 
-    # curve_color is of type PyQt5.QtGui.QColor object
-    # aka curve.opts['pen'].color()
-
-    def __init__(self, results, curve_color, parent=None):
+    def __init__(self, results, color, parent=None):
         super().__init__(parent)
 
         pixelmap = QtGui.QPixmap(24, 24)
-        pixelmap.fill(curve_color)
+        pixelmap.fill(color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         self.setCheckState(0, QtCore.Qt.Checked)
@@ -77,6 +75,7 @@ class BrowserItem(QtGui.QTreeWidgetItem):
 
     def setProgress(self, progress):
         self.progressbar.setValue(progress)
+
 
 class Browser(QtGui.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
