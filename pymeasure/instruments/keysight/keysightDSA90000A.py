@@ -336,8 +336,9 @@ class KeysightDSA90000A(Instrument):
         """
         Convenience function to set the scope trigger to edge, source to channel source at the specified level
         """
-        self.trigger_mode = 'edge'
+        self.trigger_mode = 'EDGE'
         self.trigger_level(source, level)
+        self.trigger_edge_slope = slope
         self.trigger_edge_source(source)
 
     ###############
@@ -477,7 +478,7 @@ class KeysightDSA90000A(Instrument):
 
     @property
     def waveform_data_word(self):
-        """ Get the ascii block of sampled data points transmitted using the IEEE 488.2 arbitrary
+        """ Get the block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format."""
         # Other waveform formats raise UnicodeDecodeError
         self.waveform_format = "word"
