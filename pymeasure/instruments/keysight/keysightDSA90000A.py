@@ -294,9 +294,18 @@ class KeysightDSA90000A(Instrument):
         values=['sing', 'auto', 'trig']
     )
 
-    def trigger_level(self,channel: int, level: float):
+    trigger_edge_slope = Instrument.control(
+        ":TRIGger:EDGE:SLOPe?", ":TRIGger:EDGE:SLOPe %s",
+        """ A string control that sets the slope of the edge trigger to:
+        'pos', 'neg', or 'eith' (either)""",
+        validator=strict_discrete_set,
+        values=['pos', 'neg', 'eith']
+    )
+
+    def trigger_level(self,channel, level):
         """
         Function to set the trigger level on the specified channel  (channel 0 is aux).
+        NOTE: This does not change the trigger source.
         :param channel: Integer corresponding to a given channel (0 is aux)
         :param level: level of trigger in V
         :return:
@@ -309,6 +318,27 @@ class KeysightDSA90000A(Instrument):
             raise ValueError(f'{channel} not a valid trigger source')
         self.write(':TRIGger:LEVel %s, %f' % (source, level))
 
+    def trigger_edge_source(self,channel):
+        """
+        Function to set the edge trigger source
+        :param channel: Integer corresponding to a given channel (0 is aux)
+        :return:
+        """
+        if channel == 0:
+            source = 'AUX'
+        elif channel in [1,2,3,4]:
+            source = 'CHAN%d' % channel
+        else:
+            raise ValueError(f'{channel} not a valid trigger source')
+        self.write(':TRIGger:EDGE:SOURce %s' % (source))
+
+    def set_edge_trigger(self, source, level, slope):
+        """
+        Convenience function to set the scope trigger to edge, source to channel source at the specified level
+        """
+        self.trigger_mode = 'edge'
+        self.trigger_level(source, level)
+        self.trigger_edge_source(source)
 
     ###############
     # Acquisition #
