@@ -407,13 +407,10 @@ class KeysightDSA90000A(Instrument):
         :param source: "channel1", "channel2", "function", "math", "fft", "abus", or "ext"."""
         self._digitize = source
 
-    waveform_points_mode = Instrument.control(
-        ":waveform:points:mode?", ":waveform:points:mode %s",
-        """ A string parameter that sets the data record to be transferred with the waveform_data
-         method. Can be "normal", "maximum", or "raw".""",
-        validator=strict_discrete_set,
-        values={"normal": "NORM", "maximum": "MAX", "raw": "RAW"},
-        map_values=True
+    waveform_points_mode = Instrument.measurement(
+        ":waveform:type?",
+        """ A string measurement that returns the type of waveform data. The type cannot be set here.
+        It is set by other parameters on the scope""",
     )
 
     waveform_source = Instrument.control(
@@ -620,6 +617,7 @@ class KeysightDSA90000A(Instrument):
         Reads waveform preamble and converts it to a more convenient dict of values.
         """
         vals = self.values(":waveform:preamble?")
+        vals = vals[:9]
         # Get values to dict
         vals_dict = dict(zip(["format", "type", "points", "count", "xincrement", "xorigin",
                               "xreference", "yincrement", "yorigin", "yreference"], vals))
