@@ -33,7 +33,7 @@ class Channel(object):
             """ A floating point property that controls the output amplitude
             in Vpp. This property can be set.""",
             validator=strict_range,
-            values=[50e-3, 2]
+            values=[50e-3, 4.5]
         )
 
         offset = Instrument.control(
