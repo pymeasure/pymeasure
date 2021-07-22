@@ -621,8 +621,8 @@ class KeysightDSA90000A(Instrument):
         vals_dict = dict(zip(["format", "type", "points", "count", "xincrement", "xorigin",
                               "xreference", "yincrement", "yorigin", "yreference"], vals))
         # Map element values
-        format_map = {0: "BYTE", 1: "WORD", 4: "ASCII"}
-        type_map = {0: "NORMAL", 1: "PEAK DETECT", 2: "AVERAGE", 3: "HRES"}
+        format_map = {0: "ASCII", 1: "BYTE", 2: "WORD", 3: "LONG", 4: "LONGLONG", 5: 'FLOAT'}
+        type_map = {1: "RAW", 2: "AVER", 3: "VHIS", 4: "HHIS", 6: 'INT', 9: 'DIGITAL', 10: 'PDET'}
         vals_dict["format"] = format_map[int(vals_dict["format"])]
         vals_dict["type"] = type_map[int(vals_dict["type"])]
 
