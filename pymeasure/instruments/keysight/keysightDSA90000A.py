@@ -247,6 +247,69 @@ class KeysightDSA90000A(Instrument):
         for the main window."""
     )
 
+    ###########
+    # Trigger #
+    ###########
+
+    trigger_holdoff = Instrument.control(
+        ":TRIGger:HOLDoff?", ":TRIGger:HOLDoff %.4E",
+        """ A float control that sets the time before the oscilloscope should wait
+        after receiving a trigger to enable the trigger again. Range is [1e-9,10] s.""",
+        validator=strict_range,
+        values=[1e-9,10]
+    )
+
+    trigger_holdoff_mode = Instrument.control(
+        ":TRIGger:HOLDoff:MODE?", ":TRIGger:HOLDoff:MODE %s",
+        """ A string control that sets the holdoff mode to FIXED (rearm delay specified by trigger_holdoff)
+         or RANDOM (not implemented yet in this driver).""",
+        validator=strict_discrete_set,
+        values=['fixed', 'random']
+    )
+
+    trigger_hysteresis = Instrument.control(
+        ":TRIGger:HYSTeresis?", ":TRIGger:HYSTeresis %s",
+        """ A string control that sets the noise rejection type on the trigger. For the 90000 (four zeros) series,
+        your options are norm (normal) and hsen (lowers hysteresis of trigger circuitry, use for wfs > 4 GHz)""",
+        validator=strict_discrete_set,
+        values=['norm', 'hsen']
+    )
+
+    trigger_mode = Instrument.control(
+        ":TRIGger:MODE?", ":TRIGger:MODE %s",
+        """ A string control that sets the trigger mode. Consult the manual for advanced options. 
+        EDGE is the most common option""",
+        validator=strict_discrete_set,
+        values=['EDGE', 'COMM', 'DELAY', 'GLIT', 'PATT', 'PWID', 'RUNT', 'SBUS1', 'SBUS2', 'SBUS3', 'SBUS4',
+                'SEQ', 'SHOL', 'STAT', 'TIM', 'TRAN', 'TV', 'WIND', 'ADV']
+    )
+
+    trigger_sweep = Instrument.control(
+        ":TRIGger:SWEep?", ":TRIGger:SWEep %s",
+        """ A string control that sets the oscilloscope sweep mode. 'sing' is a legacy option. 
+        If the scope is set to single() and this is 'auto' the scope will force a trigger every 200 us.
+        Use 'trig' if your waveform may occur >200 us after single() is called (in general, probably just use 'trig')
+        Factory default is 'auto'""",
+        validator=strict_discrete_set,
+        values=['sing', 'auto', 'trig']
+    )
+
+    def trigger_level(self,channel: int, level: float):
+        """
+        Function to set the trigger level on the specified channel  (channel 0 is aux).
+        :param channel: Integer corresponding to a given channel (0 is aux)
+        :param level: level of trigger in V
+        :return:
+        """
+        if channel == 0:
+            source = 'AUX'
+        elif channel in [1,2,3,4]:
+            source = 'CHAN%d' % channel
+        else:
+            raise ValueError(f'{channel} not a valid trigger source')
+        self.write(':TRIGger:LEVel %s, %f' % (source, level))
+
+
     ###############
     # Acquisition #
     ###############
