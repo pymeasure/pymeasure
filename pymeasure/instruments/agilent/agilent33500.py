@@ -151,6 +151,15 @@ class Agilent33500(Instrument):
         values=[-5, 4.99],
     )
 
+    phase = Instrument.control(
+        "PHAS?", "PHAS %f",
+        """ A floating point property that controls the phase of the output
+        waveform in degrees, from -360 degrees to 360 degrees. Not available
+        for arbitrary waveforms or noise. Can be set. """,
+        validator=strict_range,
+        values=[-360, 360],
+    )
+
     square_dutycycle = Instrument.control(
         "FUNC:SQU:DCYC?", "FUNC:SQU:DCYC %f",
         """ A floating point property that controls the duty cycle of a square
