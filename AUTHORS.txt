@@ -23,6 +23,7 @@ Moritz Jung
 Richard Schlitz
 Manuel Zahn
 Mikhaël Myara
+Domenic Prete
 Mathieu Jeannin
 Domenic Prete
 Paul Goulain
@@ -34,3 +35,7 @@ Mathieu Plante
 Michele Sardo
 Steven Siegl
 Benjamin Klebel-Knobloch
+Demetra Adrahtas
+Dan McDonald
+Hud Wahab
+Nicola Corna
