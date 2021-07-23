@@ -22,11 +22,14 @@
 # THE SOFTWARE.
 #
 
-import warnings
+import logging
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set, truncated_discrete_set, truncated_range
 )
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 MIN_RAMP_TIME = 0.1  # seconds
 
@@ -120,7 +123,7 @@ class YokogawaGS200(Instrument):
                 "Otherwise, the Yokogawa will reject the ramp."
             )
         if ramp_time < MIN_RAMP_TIME:
-            warnings.warn(
+            log.warning(
                 f"Ramp time of {ramp_time}s is below the minimum ramp time of {MIN_RAMP_TIME}s, "
                 f"so the Yokogawa will instead be instantaneously set to the desired level."
             )
