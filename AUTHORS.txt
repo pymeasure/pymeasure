@@ -25,7 +25,6 @@ Manuel Zahn
 Mikhaël Myara
 Domenic Prete
 Mathieu Jeannin
-Domenic Prete
 Paul Goulain
 John McMaster
 Dominik Kriegner
