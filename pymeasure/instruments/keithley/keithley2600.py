@@ -54,7 +54,7 @@ class Keithley2600(Instrument):
         # if tab delimitated message is greater than one, grab first two as code, message
         # otherwise, assign code & message to returned error
         if len(err) > 1:
-            err = (float(err[0]), err[1])
+            err = (int(err[0]), err[1])
             code = err[0]
             message = err[1].replace('"', '')
         else:
