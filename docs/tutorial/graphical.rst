@@ -425,9 +425,9 @@ To allow for even more flexibility, it is also possible to pass a (lambda)functi
 .. code-block:: python
 
     iterations = IntegerParameter('Loop Iterations', default=100)
-    param = FloatParameter('some parameter', group_by='iterations', group_condition=lambda v: 50 < v < 99)
+    param = FloatParameter('some parameter', group_by='iterations', group_condition=lambda v: 50 < v < 100)
 
-Now the input of :code:`param` is only shown if the value of :code:`iterations` is between 50 and 99.
+Now the input of :code:`param` is only shown if the value of :code:`iterations` is between 51 and 99.
 
 Using the :code:`hide_groups` keyword-argument of the :code:`ManagedWindow` you can choose between hiding the groups (:code:`hide_groups = True`) and disabling / graying-out the groups (:code:`hide_groups = False`).
 
@@ -438,10 +438,10 @@ Multiple parameters for grouping can either be passed as a dict of string: condi
 
     iterations = IntegerParameter('Loop Iterations', default=100)
     toggle = BooleanParameter('A checkbox')
-    param_A = FloatParameter('some parameter', group_by=['iterations', 'toggle'], group_condition=[lambda v: 50 < v < 99, True])
-    param_B = FloatParameter('some parameter', group_by={'iterations': lambda v: 50 < v < 99, 'toggle':, True]})
+    param_A = FloatParameter('some parameter', group_by=['iterations', 'toggle'], group_condition=[lambda v: 50 < v < 100, True])
+    param_B = FloatParameter('some parameter', group_by={'iterations': lambda v: 50 < v < 100, 'toggle': True})
 
-Note that in this example, :code:`param_A` and :code:`param_B` are identically grouped: they're only visible if :code:`iterations` is between 50 and 99 and if the `toggle` checkbox is checked (i.e. True).
+Note that in this example, :code:`param_A` and :code:`param_B` are identically grouped: they're only visible if :code:`iterations` is between 51 and 99 and if the `toggle` checkbox is checked (i.e. True).
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
