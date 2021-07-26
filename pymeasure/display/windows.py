@@ -175,6 +175,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
     :param sequence_file: simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
     :param directory_input: specify, if present, where the experiment's result will be saved.
+    :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default) or disabled/grayed-out (False) when the group conditions are not met.
 
     """
 

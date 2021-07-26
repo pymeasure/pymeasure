@@ -432,7 +432,7 @@ Now the input of :code:`param` is only shown if the value of :code:`iterations` 
 Using the :code:`hide_groups` keyword-argument of the :code:`ManagedWindow` you can choose between hiding the groups (:code:`hide_groups = True`) and disabling / graying-out the groups (:code:`hide_groups = False`).
 
 Finally, it is also possible to provide multiple parameters to the :code:`group_by` argument, in which case the input will only be visible if all of the conditions are true.
-Multiple parameters for grouping can either be passed as a dict of string: condition pairs, or as a list of strings, in which case the `group_conditions` can be either a single condition or a list of conditions:
+Multiple parameters for grouping can either be passed as a dict of string: condition pairs, or as a list of strings, in which case the :code:`group_condition` can be either a single condition or a list of conditions:
 
 .. code-block:: python
 
