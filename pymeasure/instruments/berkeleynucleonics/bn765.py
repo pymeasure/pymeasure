@@ -35,77 +35,142 @@ from pyvisa.errors import VisaIOError
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+class Pulse():
+    """ Implementation of a BN765 fast pulse on a given generator channel.
+     """
+
+    BOOLS = {True: 1, False: 0}
+
+    width = Instrument.control(
+        'width?', 'width %.4E',
+        """Float parameter that contols the width of the pulse represented by this instance, on this
+         instance of channel. Width must be less than pulse period"""
+    )
+
+    delay = Instrument.control(
+        'delay?', 'delay %.4E',
+        """Float paramer which controls the delay for the specified pulse relative
+        to the selected output channel"""
+    )
+
+    dcycle = Instrument.control(
+        'dcyle?', 'dcyle %.4E',
+        """Float paramer which controls the duty cycle of the pulse for the given channel.
+        Alternative way to set width."""
+    )
+
+    phase = Instrument.control(
+        'phase?', 'phase %.4E',
+        """Float paramer which controls the phase of the pulse for the given channel.
+        Alternative way to set the delay."""
+    )
+
+
+
+
+    def __init__(self, instrument, pulse_number):
+        self.instrument = instrument
+        self.pulse_number = pulse_number
+
+
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values("pulse%d:%s" % (
+             self.pulse_number, command), **kwargs)
+
+    def ask(self, command):
+        self.instrument.ask("pulse%d:%s" % (
+            self.pulse_number, command))
+
+    def write(self, command):
+        self.instrument.write("pulse%d:%s" % (
+            self.pulse_number, command))
+
 class Channel():
     """ Implementation of a BN765 fast pulse generator channel.
      """
 
     BOOLS = {True: 1, False: 0}
 
-
-    coupling = Instrument.control(
-        "COUPling?", "COUPling %s",
-        """ A string parameter that determines the coupling ("dc" only).
-        The 90000A (Again there are four zeroes there) series oscilloscopes only
-        have DC coupling at 50 Ohms impedance.""",
-        validator=strict_discrete_set,
-        values={"dc": "DC50"},
-        map_values=True
+    load_impedance = Instrument.control(
+        'LOAD:IMP?', 'LOAD:IMP %.4E',
+        """A mixed parameter that sets the load impedance. Any float between
+        [50, 1e8] are allowed as well as 'MIN' and 'MAX'.""",
     )
 
-    display = Instrument.control(
-        "DISPlay?", "DISPlay %d",
-        """ A boolean parameter that toggles the display.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
+    period = Instrument.control(
+        "PERiod?", "PERiod %.4E",
+        """ A floating point property that controls the period of the output1
+        waveform function in seconds, ranging from 3e-5 s to 8 s. Can be set
+        and overwrites the frequency for *all* waveforms. If the period is
+        shorter than the pulse width + the edge time, the edge time and pulse
+        width will be adjusted accordingly. """,
+        validator=strict_range,
+        values=[1.25e-9, 8],
+    )
+
+    frequency = Instrument.control(
+        "FREQuency?", "FREQuency %g",
+        """ A floating point property that controls the frequency of the output1
+        waveform function in Hz, ranging from 0.125 Hz to 1.25e8 Hz. Can be set
+        and overwrites the frequency for *all* waveforms. If the period is
+        shorter than the pulse width + the edge time, the edge time and pulse
+        width will be adjusted accordingly. """,
+        validator=strict_range,
+        values=[.125, 1.25e8],
+    )
+
+    burst_ncycles = Instrument.control(
+        "BURS:NCYC?", "BURS:NCYC %d",
+        """ An integer property that sets the number of cycles to be output
+        when a burst is triggered. Valid values are 1 to 4294967295. This can be
+        set. """,
+        validator=strict_range,
+        values=[1, 4294967295],
+    )
+
+    init_delay = Instrument.control(
+        "INITDELay?", "INITDELay %g",
+        """ This parameter is the group delay from the Trigger IN signal that all
+         the pulses associated to the output N have in common.""",
+        validator=strict_range,
+        values=[0, 1e6],
     )
 
     invert = Instrument.control(
-        "INVert?", "INVert %d",
-        """ A boolean parameter that toggles the inversion of the input signal.""",
+        "INV?", "INV %s",
+        """ A boolean property that sets inversion on ('ON') or off ('OFF') 
+        the output 1 of the function generator. Can be set. """,
         validator=strict_discrete_set,
         values=BOOLS,
         map_values=True
     )
 
-    label = Instrument.control(
-        "LABel?", 'LABel "%s"',
-        """ A string to label the channel. Labels with more than 10 characters are truncated to 10 
-        characters. May contain commonly used ASCII characters. Lower case characters are converted 
-        to upper case.""",
-        get_process=lambda v: str(v[1:-1])
+    amplitude = Instrument.control(
+        "VOLT:LEV:IMM:AMPL?", "VOLT:LEV:IMM:AMPL %g",
+        """ This control reads and sets the amplitude of the source 1 output. 
+        Range is 0.01-5 V""",
+        validator=strict_range,
+        values=[0, 5],
     )
 
     offset = Instrument.control(
-        "OFFSet?", "OFFSet %f",
-        """ A float parameter to set value that is represented at center of screen in 
-        Volts. The range of legal values varies depending on range and scale. If the specified value 
-        is outside of the legal range, the offset value is automatically set to the nearest legal value. """
-    )
-
-    probe_attenuation = Instrument.control(
-        "PROBe?", "PROBe %f,RAT",
-        """ A float parameter that specifies the probe attenuation as a ratio. The probe attenuation
-        may be from 0.1 to 10000.""",
+        "VOLT:LEV:IMM:OFFS?", "VOLT:LEV:IMM:OFFS %g",
+        """ This control reads and sets the DC offset of the source 1 output. 
+        Range is -2.5 - +2.5 V""",
         validator=strict_range,
-        values=[0.1, 10000]
-    )
-
-    range = Instrument.control(
-        "RANGe?", "RANGe %f",
-        """ A float parameter that specifies the full-scale vertical axis in Volts. 
-        When using 1:1 probe attenuation, legal values for the 91204A range from 8 mV to 800 mV."""
-    )
-
-    scale = Instrument.control(
-        "SCALe?", "SCALe %f",
-        """ A float parameter that specifies the vertical scale, or units per division, in Volts. 
-        Limits are [1e-3,1] for the 91204A range"""
+        values=[-2.5, 2.55],
     )
 
     def __init__(self, instrument, number):
         self.instrument = instrument
         self.number = number
+        self.pulse1 = Pulse(self, 1)
+        self.pulse2 = Pulse(self, 2)
+        self.pulse3 = Pulse(self, 3)
+        self.pulse4 = Pulse(self, 4)
 
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
@@ -131,6 +196,16 @@ class Channel():
         mapper = {True: 'ON', False: 'OFF'}
         self.instrument.write("output%d %s" % (self.number, mapper[state]))
 
+    @property
+    def pulse_mode(self):
+        mapper = {"EXTernalWIDth": 0, 'SINgle': 1, 'DOUble': 2, 'TRIple': 3, 'QUADruple': 4}
+        out = self.instrument.ask("output%d:pulse:mode?" % self.number)
+        return mapper[out]
+
+    @pulse_mode.setter
+    def pulse_mode(self, state):
+        mapper = {0: "EXTernalWIDth", 1: 'SINgle', 2: 'DOUble', 3: 'TRIple', 4: 'QUADruple'}
+        self.instrument.write("output%d:pulse:mode %s" % (self.number, mapper[state]))
 
 class BN765(Instrument):
     """Represents the Berkeley Nucleonics 765 800 MHz waveform generator.
@@ -155,6 +230,10 @@ class BN765(Instrument):
             **kwargs
         )
 
+        self.ch1 = Channel(self, 1)
+        self.ch2 = Channel(self, 2)
+
+
 
 
     output1 = Instrument.control(
@@ -173,81 +252,6 @@ class BN765(Instrument):
         values=['SIN', 'DOU', 'TRI', 'QUAD'],
     )
 
-    source1_loadimpedance = Instrument.control(
-        'SOURce1:LOAD:IMP?', 'SOURce1:LOAD:IMP %g',
-        """A mixed parameter that sets the load impedance. Any float between
-        [50, 1e8] are allowed. """
-    )
-
-    source1_period = Instrument.control(
-        "SOURce1:PERiod?", "SOURce1:PERiod %g",
-        """ A floating point property that controls the period of the output1
-        waveform function in seconds, ranging from 3e-5 s to 8 s. Can be set
-        and overwrites the frequency for *all* waveforms. If the period is
-        shorter than the pulse width + the edge time, the edge time and pulse
-        width will be adjusted accordingly. """,
-        validator=strict_range,
-        values=[1.25e-9, 8],
-    )
-
-    source1_frequency = Instrument.control(
-        "SOURce1:FREQuency?", "SOURce1:FREQuency %g",
-        """ A floating point property that controls the frequency of the output1
-        waveform function in Hz, ranging from 0.125 Hz to 1.25e8 Hz. Can be set
-        and overwrites the frequency for *all* waveforms. If the period is
-        shorter than the pulse width + the edge time, the edge time and pulse
-        width will be adjusted accordingly. """,
-        validator=strict_range,
-        values=[.125, 1.25e8],
-    )
-
-    source1_burst_ncycles = Instrument.control(
-        "SOURce1:BURS:NCYC?", "SOURce1:BURS:NCYC %d",
-        """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. Valid values are 1 to 4294967295. This can be
-        set. """,
-        validator=strict_range,
-        values=[1, 4294967295],
-    )
-
-    source1_initdelay = Instrument.control(
-        "SOURce1:INITDELay?", "SOURce1:INITDELay %g",
-        """ This parameter is the group delay from the Trigger IN signal that all
-         the pulses associated to the output N have in common.""",
-        validator=strict_range,
-        values=[0, 1e6],
-    )
-
-    source1_invert = Instrument.control(
-        "SOURce1:INV?", "SOURce1:INV %s",
-        """ A boolean property that sets inversion on ('ON') or off ('OFF') 
-        the output 1 of the function generator. Can be set. """,
-        validator=strict_discrete_set,
-        values=['ON', 'OFF'],
-    )
-
-    source1_amplitude = Instrument.control(
-        "SOURce1:VOLT:LEV:IMM:AMPL?", "SOURce1:VOLT:LEV:IMM:AMPL %g",
-        """ This control reads and sets the amplitude of the source 1 output. 
-        Range is 0.01-5 V""",
-        validator=strict_range,
-        values=[0, 5],
-    )
-
-    source1_offset = Instrument.control(
-        "SOURce1:VOLT:LEV:IMM:OFFS?", "SOURce1:VOLT:LEV:IMM:OFFS %g",
-        """ This control reads and sets the DC offset of the source 1 output. 
-        Range is -2.5 - +2.5 V""",
-        validator=strict_range,
-        values=[-2.5, 2.55],
-    )
-
-    source1_pulse1 = Instrument.control(
-        "SOURce1:PULSe1:WIDTh?", "SOURce1:PULSe1:WIDTh %g",
-        """ This sets and reads the width of pulse1. Pulse width must be less than the period""",
-        validator=strict_range,
-        values=[3e-10, 8],
-    )
 
     trigger_mode = Instrument.control(
         "TRIGger:SEQ:MODE?", "TRIGger:SEQ:MODE %s",
