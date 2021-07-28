@@ -205,6 +205,16 @@ class Procedure(object):
     def should_stop(self):
         raise NotImplementedError('should be monkey patched by a worker')
 
+    def get_estimates(self):
+        """ Function that returns estimates that are to be displayed by
+        the EstimatorWidget. Must be reimplemented by subclasses. Should
+        return an int or float representing the duration in seconds, or
+        a list with a tuple for each estimate. The tuple should consists
+        of two strings: the first will be used as the label of the
+        estimate, the second as the displayed estimate.
+        """
+        raise NotImplementedError('Must be reimplemented by subclasses')
+
     def __str__(self):
         result = repr(self) + "\n"
         for parameter in self._parameters.items():
