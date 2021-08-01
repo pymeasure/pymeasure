@@ -175,10 +175,11 @@ class ManagedWindowBase(QtGui.QMainWindow):
     :param sequence_file: simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
     :param directory_input: specify, if present, where the experiment's result will be saved.
+    :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default) or disabled/grayed-out (False) when the group conditions are not met.
 
     """
 
-    def __init__(self, 
+    def __init__(self,
                  procedure_class,
                  widget_list=(),
                  inputs=(),
@@ -191,7 +192,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  sequence_file=None,
                  inputs_in_scrollarea=False,
                  directory_input=False,
-                 hide_groups=True):
+                 hide_groups=True,
+                 ):
 
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
@@ -618,7 +620,7 @@ class ManagedWindow(ManagedWindowBase):
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
                  sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
-                 hide_groups=True, wdg_list=()):
+                 wdg_list=(), hide_groups=True):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
@@ -635,7 +637,7 @@ class ManagedWindow(ManagedWindowBase):
             sequence_file=sequence_file,
             inputs_in_scrollarea=inputs_in_scrollarea,
             directory_input=directory_input,
-            hide_groups=hide_groups
+            hide_groups=hide_groups,
         )
 
         # Setup measured_quantities once we know x_axis and y_axis
@@ -653,22 +655,25 @@ class ManagedImageWindow(ManagedWindow):
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False, hide_groups=True):
+                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
+                 hide_groups=True):
         self.z_axis = z_axis
         self.image_widget = ImageWidget("Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
         wdg_list = (self.image_widget, )
-        super().__init__(procedure_class = procedure_class,
-                         inputs=inputs,
-                         displays=displays,
-                         x_axis=x_axis,
-                         y_axis=y_axis,
-                         log_channel=log_channel,
-                         log_level=log_level,
-                         parent=parent,
-                         sequencer=sequencer,
-                         sequencer_inputs=sequencer_inputs,
-                         sequence_file=sequence_file,
-                         inputs_in_scrollarea=inputs_in_scrollarea,
-                         directory_input=directory_input,
-                         hide_groups=hide_groups,
-                         wdg_list=wdg_list)
+        super().__init__(
+            procedure_class = procedure_class,
+            inputs=inputs,
+            displays=displays,
+            x_axis=x_axis,
+            y_axis=y_axis,
+            log_channel=log_channel,
+            log_level=log_level,
+            parent=parent,
+            sequencer=sequencer,
+            sequencer_inputs=sequencer_inputs,
+            sequence_file=sequence_file,
+            inputs_in_scrollarea=inputs_in_scrollarea,
+            directory_input=directory_input,
+            wdg_list=wdg_list,
+            hide_groups=hide_groups,
+        )
