@@ -312,21 +312,6 @@ class Agilent33220A(Instrument):
         values=[["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],],
     )
 
-    def check_errors(self):
-        """ Read all errors from the instrument. """
-
-        errors = []
-        while True:
-            err = self.values("SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Agilent 33220A: %s: %s" % (err[0], err[1])
-                log.error(errmsg)
-                errors.append(errmsg)
-            else:
-                break
-
-        return errors
-
     beeper_state = Instrument.control(
         "SYST:BEEP:STAT?", "SYST:BEEP:STAT %d",
         """ A boolean property that controls the state of the beeper. Can

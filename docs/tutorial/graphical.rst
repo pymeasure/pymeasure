@@ -11,6 +11,11 @@ Using the Plotter
 
 While it lacks the nice features of the ManagedWindow, the Plotter object is the simplest way of getting live-plotting. The Plotter takes a Results object and plots the data at a regular interval, grabbing the latest data each time from the file.
 
+.. warning::
+   The example in this section is known to raise issues when executed on recent versions of macOS (10.12 Sierra and later): a `QApplication was not created in the main thread` / `nextEventMatchingMask should only be called from the Main Thread` warning is raised.
+   macOS users are hence adviced to skip this example and continue with the `Using the ManagedWindow`_ section.
+
+
 Let's extend our SimpleProcedure with a RandomProcedure, which generates random numbers during our loop. This example does not include instruments to provide a simpler example. ::
 
     import logging
@@ -207,28 +212,19 @@ For :class:`~pymeasure.display.plotter.Plotter`, you can make a sub-class that o
             # use logarithmic x-axis (e.g. for frequency sweeps)
             plot.setLogMode(x=True)
 
-For :class:`~pymeasure.display.windows.ManagedWindow`, Similarly to the Plotter, the :meth:`~pymeasure.display.windows.ManagedWindow.setup_plot` method can be overridden by your sub-class in order to do the set-up ::
+For :class:`~pymeasure.display.windows.ManagedWindow`, the mechanism to customize plots is much more flexible by using specialization via inheritance. Indeed :class:`~pymeasure.display.windows.ManagedWindowBase` is the base class for :class:`~pymeasure.display.windows.ManagedWindow` and :class:`~pymeasure.display.windows.ManagedImageWindow` which are subclasses ready to use for GUI.
 
-    class MainWindow(ManagedWindow):
+Defining your own ManagedWindow's widgets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        # ...
+The parameter :code:`widget_list` in :class:`~pymeasure.display.windows.ManagedWindowBase` constructor allow to introduce user's defined widget in the GUI results display area.
+The user's widget should inherit from :class:`~pymeasure.display.widgets.TabWidget` and could reimplement any of the methods that needs customization.
+In order to get familiar with the mechanism, users can check the following widgets already provided:
 
-        def setup_plot(self, plot):
-            # use logarithmic x-axis (e.g. for frequency sweeps)
-            plot.setLogMode(x=True)
+- :class:`~pymeasure.display.widgets.LogWidget`
+- :class:`~pymeasure.display.widgets.PlotWidget`
+- :class:`~pymeasure.display.widgets.ImageWidget`
 
-        # ...
-
-It is also possible to access the :attr:`~pymeasure.display.windows.ManagedWindow.plot` attribute while outside of your sub-class, for example we could modify the previous section's example ::
-
-    if __name__ == "__main__":
-        app = QtGui.QApplication(sys.argv)
-        window = MainWindow()
-        window.plot.setLogMode(x=True) # use logarithmic x-axis (e.g. for frequency sweeps)
-        window.show()
-        sys.exit(app.exec_())
-
-See pyqtgraph's API documentation on PlotItem_ for further details.
 
 Using the sequencer
 ~~~~~~~~~~~~~~~~~~~
@@ -259,7 +255,7 @@ In order to implement the sequencer into the previous example, only the :class:`
             )
             self.setWindowTitle('GUI Example')
 
-        def queue(self, *, procedure=None):                          # Modified line
+        def queue(self, procedure=None):                             # Modified line
             filename = tempfile.mktemp()
 
             if procedure is None:                                    # Added line
@@ -337,6 +333,115 @@ This adds the input line above the Queue and Abort buttons.
     :alt: Example of the directory input widget
 
 A completer is implemented allowing to quickly select an existing folder, and a button on the right side of the input widget opens a browse dialog.
+
+Using the estimator widget
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to provide estimates of the measurement procedure, an :class:`~pymeasure.display.widgets.EstimatorWidget` is provided that allows the user to define and calculate estimates.
+The widget is automatically activated when the :code:`get_estimates` method is added in the :code:`Procedure`.
+
+The quickest and most simple implementation of the :code:`get_estimates` function simply returns the estimated duration of the measurement in seconds (as an :code:`int` or a :code:`float`).
+As an example, in the example provided in the `Using the ManagedWindow`_ section, the :code:`Procedure` is changed to:
+
+.. code-block:: python
+
+   class RandomProcedure(Procedure):
+
+       # ...
+
+       def get_estimates(self, sequence_length=None, sequence=None):
+
+           return self.iterations * self.delay
+
+This will add the estimator widget at the dock on the left.
+The duration and finishing-time of a single measurement is always displayed in this case.
+Depending on whether the SequencerWidget is also used, the length, duration and finishing-time of the full sequence is also shown.
+
+For maximum flexibility (e.g. for showing multiple and other types of estimates, such as the duration, filesize, finishing-time, etc.) it is also possible that the :code:`get_estimates` returns a list of tuples.
+Each of these tuple consists of two strings: the first is the name (label) of the estimate, the second is the estimate itself.
+
+As an example, in the example provided in the `Using the ManagedWindow`_ section, the :code:`Procedure` is changed to:
+
+.. code-block:: python
+
+   class RandomProcedure(Procedure):
+
+       # ...
+
+       def get_estimates(self, sequence_length=None, sequence=None):
+
+           duration = self.iterations * self.delay
+
+           estimates = [
+               ("Duration", "%d s" % int(duration)),
+               ("Number of lines", "%d" % int(self.iterations)),
+               ("Sequence length", str(sequence_length)),
+               ('Measurement finished at', str(datetime.now() + timedelta(seconds=duration))),
+           ]
+
+           return estimates
+
+
+This will add the estimator widget at the dock on the left.
+
+.. image:: pymeasure-estimator.png
+    :alt: Example of the estimator widget
+
+Note that after the initialisation of the widget both the label of the estimate as of course the estimate itself can be modified, but the amount of estimates is fixed.
+
+The keyword arguments are not required in the implementation of the function, but are passed if asked for (i.e. :code:`def get_estimates(self)` does also works).
+Keyword arguments that are accepted are :code:`sequence`, which contains the full sequence of the sequencer (if present), and :code:`sequence_length`, which gives the length of the sequence as integer (if present).
+If the sequencer is not present or the sequence cannot be parsed, both :code:`sequence` and :code:`sequence_length` will contain :code:`None`.
+
+The estimates are automatically updated every 2 seconds.
+Changing this update interval is possible using the "Update continuously"-checkbox, which can be toggled between three states: off (i.e. no updating), auto-update every two seconds (default) or auto-update every 100 milliseconds.
+Manually updating the estimates (useful whenever continuous updating is turned off) is also possible using the "update"-button.
+
+Flexible hiding of inputs
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There can be situations when it may be relevant to turn on or off a number of inputs (e.g. when a part of the measurement script is skipped upon turning of a single :code:`BooleanParameter`).
+For these cases, it is possible to assign a :code:`Parameter` to a controlling :code:`Parameter`, which will hide or show the :code:`Input` of the :code:`Parameter` depending on the value of the :code:`Parameter`.
+This is done with the :code:`group_by` key-word argument.
+
+.. code-block:: python
+
+    toggle = BooleanParameter("toggle", default=True)
+    param = FloatParameter('some parameter', group_by='toggle')
+
+When both the :code:`toggle` and :code:`param` are visible in the :code:`InputsWidget` (via :code:`inputs=['iterations', 'delay', 'seed']` as demonstrated above) one can control whether the input-field of :code:`param` is visible by checking and unchecking the checkbox of :code:`toggle`.
+By default, the group will be visible if the value of the :code:`group_by` :code:`Parameter` is :code:`True` (which is only relevant for a :code:`BooleanParameter`), but it is possible to specify other value as conditions using the :code:`group_condition` keyword argument.
+
+.. code-block:: python
+
+    iterations = IntegerParameter('Loop Iterations', default=100)
+    param = FloatParameter('some parameter', group_by='iterations', group_condition=99)
+
+Here the input of :code:`param` is only visible if :code:`iterations` has a value of 99.
+This works with any type of :code:`Parameter` as :code:`group_by` parameter.
+
+To allow for even more flexibility, it is also possible to pass a (lambda)function as a condition:
+
+.. code-block:: python
+
+    iterations = IntegerParameter('Loop Iterations', default=100)
+    param = FloatParameter('some parameter', group_by='iterations', group_condition=lambda v: 50 < v < 100)
+
+Now the input of :code:`param` is only shown if the value of :code:`iterations` is between 51 and 99.
+
+Using the :code:`hide_groups` keyword-argument of the :code:`ManagedWindow` you can choose between hiding the groups (:code:`hide_groups = True`) and disabling / graying-out the groups (:code:`hide_groups = False`).
+
+Finally, it is also possible to provide multiple parameters to the :code:`group_by` argument, in which case the input will only be visible if all of the conditions are true.
+Multiple parameters for grouping can either be passed as a dict of string: condition pairs, or as a list of strings, in which case the :code:`group_condition` can be either a single condition or a list of conditions:
+
+.. code-block:: python
+
+    iterations = IntegerParameter('Loop Iterations', default=100)
+    toggle = BooleanParameter('A checkbox')
+    param_A = FloatParameter('some parameter', group_by=['iterations', 'toggle'], group_condition=[lambda v: 50 < v < 100, True])
+    param_B = FloatParameter('some parameter', group_by={'iterations': lambda v: 50 < v < 100, 'toggle': True})
+
+Note that in this example, :code:`param_A` and :code:`param_B` are identically grouped: they're only visible if :code:`iterations` is between 51 and 99 and if the `toggle` checkbox is checked (i.e. True).
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
