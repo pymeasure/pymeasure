@@ -260,8 +260,8 @@ class Manager(QtCore.QObject):
         self._clean_up()
         experiment.browser_item.setProgress(100.)
         for curves in experiment.curve_list:
-            for curve in curves:
-                if curve:
+            if curves:
+                for curve in curves:
                     curve.update_data()
 
         self.finished.emit(experiment)
