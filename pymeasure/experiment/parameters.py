@@ -293,7 +293,7 @@ class VectorParameter(Parameter):
 
 class ListParameter(Parameter):
     """ :class:`.Parameter` sub-class that stores the value as a list.
-    String representation of value must be unique.
+    String representation of choices must be unique.
 
     :param name: The parameter name
     :param choices: An explicit list of choices, which is disregarded if None
@@ -305,7 +305,12 @@ class ListParameter(Parameter):
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
         if choices is not None:
-            self._choices = {str(i): i for i in choices}
+            keys = [str(c) for c in choices]
+            # check that string representation is unique
+            if not len(keys) == len(set(keys)):
+                raise ValueError(
+                    "String representation of choices is not unique!")
+            self._choices = {k: c for k, c in zip(keys, choices)}
         else:
             self._choices = None
         self.units = units
