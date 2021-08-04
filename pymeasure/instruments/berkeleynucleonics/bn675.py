@@ -253,6 +253,19 @@ class BN675_AWG(Instrument):
             raise ValueError(f'{format} not allowed. Specify AMPL or HIGH')
         self.write('DISP:UNIT:VOLT ' + format)
 
+    def set_marker_mode(self, index, mode):
+        """
+        Sets the behavior of the index'th marker according to mode:
+        'FIXEDLow': marker fixed to low level
+        'FIXEDHigh': marker fixed to high level
+        'AUTOmatic': behavior varies according to run mode
+        'REPLYdigital': behaves like digital 0, only works if digital channels > 0
+        :param index: integer. there is one marker every two instrument channels
+        :param mode: see docstring for options
+        :return:
+        """
+        self.write(f'MARKer:MODE{int(index)} {mode}')
+
     def trigger(self):
         """ Send a trigger signal to the function generator. """
         self.write("*TRG")
