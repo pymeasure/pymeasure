@@ -445,9 +445,10 @@ class ManagedWindowBase(QtGui.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    for curve in experiment.curve_list:
-                        if curve:
-                            curve.update_data()
+                    for curves in experiment.curve_list:
+                        if curves:
+                            for curve in curves:
+                                    curve.update_data()
                     experiment.browser_item.progressbar.setValue(100.)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
