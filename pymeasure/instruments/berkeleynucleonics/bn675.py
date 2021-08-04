@@ -105,11 +105,14 @@ class Channel(object):
 
 
 
-    def __init__(self, instrument, number):
+    def __init__(self, instrument, number, **kwargs):
         self.instrument = instrument
         self.number = number
         self._elem = None
         self._elemprefix = None
+
+        for key, item in kwargs.items():
+            setattr(self, key, item)
 
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
@@ -218,7 +221,7 @@ class BN675_AWG(Instrument):
     )
 
     run_state = Instrument.measurement(
-        "AWGC:RSTAT", """Queries the run state: 0 is stopped
+        "AWGC:RSTAT?", """Queries the run state: 0 is stopped
         1 is waiting for trigger, 2 is running"""
     )
 
@@ -283,7 +286,10 @@ class BN675_AWG(Instrument):
         self.default_dir = 'C:\\Users\\AWG3000\\Pictures\\Saved Pictures\\'
         num_chan = int(self.num_channels)
         for i in range(num_chan):
-            setattr(self,f'ch{i+1}', Channel(self, i+1))
+            setattr(self, f'ch{i+1}', Channel(self, i+1,
+                                             trigger=self.trigger,
+                                             wait_for_trigger=self.wait_for_trigger))
+
 
         for i in range(num_chan//2):
             setattr(self, f'marker{i+1}', Marker(self, i+1))
@@ -329,7 +335,7 @@ class BN675_AWG(Instrument):
 
             if timeout != 0 and time() - t0 > timeout:
                 raise TimeoutError(
-                    "Timeout expired while waiting for the WAS8104A" +
+                    "Timeout expired while waiting for the BN675_AWG" +
                     " to finish the triggering."
                 )
 
