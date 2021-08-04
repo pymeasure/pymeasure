@@ -27,6 +27,56 @@ from time import time
 import numpy as np
 from pyvisa.errors import VisaIOError
 
+class Marker(object):
+
+    level = Instrument.control(
+        "LEVelb?", "LEVelb %g",
+        """ A proper controlling the level of the marker output. Into 
+        50 Ohms the minimum is 1 V and the max is 2.5 V.""",
+    )
+
+    mode = Instrument.control(
+        "MODEb?", "MODEb %s",
+        """ Sets the behavior of the marker according to mode:
+        'FIXEDLow': marker fixed to low level
+        'FIXEDHigh': marker fixed to high level
+        'AUTOmatic': behavior varies according to run mode
+        'REPLYdigital': behaves like digital 0, only works if digital channels > 0 """,
+        validator=strict_discrete_set,
+        values=['FIXEDLow', 'FIXEDHigh', 'AUTOmatic', 'REPLYdigital'],
+    )
+
+    skew = Instrument.control(
+        "SKEWb?","SKEWb %g",
+        """ A property to set the skew between the marker and analogue channels,
+        resolution is 78 ps. Max skew depends on sampling rate""",
+    )
+
+    def __init__(self, instrument, number):
+        self.instrument = instrument
+        self.number = number
+
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        preprocess = f'MARKer:{command}'
+        preprocess = preprocess.replace('b', str(self.number))
+        return self.instrument.values(preprocess, **kwargs)
+
+    def ask(self, command):
+        preprocess = f'MARKer:{command}'
+        preprocess = preprocess.replace('b', str(self.number))
+        return self.instrument.query(preprocess)
+
+    def write(self, command):
+        preprocess = f'MARKer:{command}'
+        preprocess = preprocess.replace('b', str(self.number))
+        return self.instrument.write(preprocess)
+
+    def read(self):
+        self.instrument.read()
+
 class Channel(object):
 
     inverted = Instrument.control(
@@ -216,11 +266,6 @@ class BN675_AWG(Instrument):
         """ Integer atrribute to control the length of the sequence table for all channels""",
     )
 
-    def sequence_elem_loop_count(self,elem, count):
-        """
-        set
-        """
-
 
 
     @property
@@ -240,6 +285,9 @@ class BN675_AWG(Instrument):
         for i in range(num_chan):
             setattr(self,f'ch{i+1}', Channel(self, i+1))
 
+        for i in range(num_chan//2):
+            setattr(self, f'marker{i+1}', Marker(self, i+1))
+
     def beep(self):
         self.write("system:beep")
 
@@ -253,18 +301,6 @@ class BN675_AWG(Instrument):
             raise ValueError(f'{format} not allowed. Specify AMPL or HIGH')
         self.write('DISP:UNIT:VOLT ' + format)
 
-    def set_marker_mode(self, index, mode):
-        """
-        Sets the behavior of the index'th marker according to mode:
-        'FIXEDLow': marker fixed to low level
-        'FIXEDHigh': marker fixed to high level
-        'AUTOmatic': behavior varies according to run mode
-        'REPLYdigital': behaves like digital 0, only works if digital channels > 0
-        :param index: integer. there is one marker every two instrument channels
-        :param mode: see docstring for options
-        :return:
-        """
-        self.write(f'MARKer:MODE{int(index)} {mode}')
 
     def trigger(self):
         """ Send a trigger signal to the function generator. """
