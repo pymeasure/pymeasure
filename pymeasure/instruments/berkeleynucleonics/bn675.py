@@ -24,15 +24,16 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 from time import time
+import numpy as np
 from pyvisa.errors import VisaIOError
 
 class Channel(object):
 
-    polarity = Instrument.control(
+    inverted = Instrument.control(
         "POLarity?", "POLarity %s",
-        """ A string property controlling the output polarity. 'NORM' or 'INV'.""",
-        validator=strict_range,
-        values=['NORM', 'INV'],
+        """ A boolean property controlling the output polarity. True means the output is inverted.""",
+        validator=strict_discrete_set,
+        values={True: 'INVerted', False: 'NORMal'},
     )
 
     output = Instrument.control(
@@ -44,7 +45,7 @@ class Channel(object):
         values={True: 1, False: 0},
     )
 
-    offset = Instrument.control(
+    bloffset = Instrument.control(
         "BLOF?","BLOF %g",
         """ A floating point property that controls the amplitude
         offset. It is always in Volt. This property can be set.""",
@@ -64,7 +65,7 @@ class Channel(object):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values("source%d:%s" % (
+        return self.instrument.values("output%d:%s" % (
                                       self.number, command), **kwargs)
     def ask(self, command):
         self.instrument.query("output%d:%s" % (self.number, command))
@@ -92,27 +93,45 @@ class Channel(object):
 
     @property
     def waveform(self):
-        return self.instrument.query(self._elemprefix+f"WAV{self.number}?")
+        return self.instrument.ask(self._elemprefix+f"WAV{self.number}?")
 
     @waveform.setter
     def waveform(self, wfname):
-        self.instrument.query(self._elemprefix + f"WAV{self.number} \"{wfname}\"")
+        self.instrument.write(self._elemprefix + f"WAV{self.number} \"{wfname}\"")
 
     @property
     def amplitude(self):
-        return self.instrument.query(self._elemprefix + f"AMP{self.number}?")
+        return self.instrument.ask(self._elemprefix + f"AMP{self.number}?")
 
     @amplitude.setter
     def amplitude(self, amp):
-        self.instrument.query(self._elemprefix + f"AMP{self.number} {amp}")
+        self.instrument.write(self._elemprefix + f"AMP{self.number} {amp}")
 
     @property
     def offset(self):
-        return self.instrument.query(self._elemprefix + f"OFF{self.number}?")
+        return self.instrument.ask(self._elemprefix + f"OFF{self.number}?")
 
     @offset.setter
     def offset(self, offset):
-        self.instrument.query(self._elemprefix + f"OFF{self.number} {offset}")
+        self.instrument.write(self._elemprefix + f"OFF{self.number} {offset}")
+
+    @property
+    def elem_length(self):
+        return self.instrument.ask(self._elemprefix + f"LENGth?")
+
+    @elem_length.setter
+    def elem_length(self, length):
+        return self.instrument.write(self._elemprefix + f"LENGth {int(length)}")
+
+    @property
+    def elem_repetition(self):
+        return self.instrument.ask(self._elemprefix + f"LOOP:COUNt?")
+
+    @elem_repetition.setter
+    def elem_repetition(self, length):
+        if not isinstance(length, str):
+            length = int(length)
+        return self.instrument.write(self._elemprefix + f"LOOP:COUNt {length}")
 
 
 class BN675_AWG(Instrument):
@@ -195,11 +214,18 @@ class BN675_AWG(Instrument):
     sequence_len = Instrument.control(
         "SEQ:LENG?", "SEQ:LENG %d",
         """ Integer atrribute to control the length of the sequence table for all channels""",
-        validator=strict_discrete_set,
-        values={50: '50 Ohm', 1000: '1 KOhm'},
-        map_values=True
     )
 
+    def sequence_elem_loop_count(self,elem, count):
+        """
+        set
+        """
+
+
+
+    @property
+    def waveform_list(self):
+        return self.ask('WLIST:LIST?')
 
 
 
@@ -209,12 +235,23 @@ class BN675_AWG(Instrument):
             "BN675 arbitrary waveform generator",
             **kwargs
         )
+        self.default_dir = 'C:\\Users\\AWG3000\\Pictures\\Saved Pictures\\'
         num_chan = int(self.num_channels)
         for i in range(num_chan):
             setattr(self,f'ch{i+1}', Channel(self, i+1))
 
     def beep(self):
         self.write("system:beep")
+
+    def set_voltage_format(self, format):
+        """
+        Sets the way voltages are specified:
+        'AMPL': specify voltages as amplitude + offset
+        'HIGH': specify voltages as vlow and vhigh #TODO implement these on Channel
+        """
+        if format not in ['AMPL', 'HIGH']:
+            raise ValueError(f'{format} not allowed. Specify AMPL or HIGH')
+        self.write('DISP:UNIT:VOLT ' + format)
 
     def trigger(self):
         """ Send a trigger signal to the function generator. """
@@ -251,7 +288,7 @@ class BN675_AWG(Instrument):
                 return
 
     def opc(self):
-        return int(self.query("*OPC?"))
+        return int(self.ask("*OPC?"))
 
 
     def start_awg(self):
@@ -260,8 +297,41 @@ class BN675_AWG(Instrument):
     def stop_awg(self):
         self.write('AWGC:STOP')
 
+    def transfer_array(self, array, filename):
+        """
+        Takes an array and saves it to the Saved Pictures directory of the
+        BN675
+        """
+        to_transfer = np.array(array)
+        to_transferstr = ''
+        for i, val in enumerate(to_transfer):
+            if i == 0:
+                to_transferstr = to_transferstr + str(val)
+            else:
+                to_transferstr = to_transferstr + '\n' + str(val)
+        l = len(to_transferstr)
+        to_transferstr = '#' + str(len(str(l))) + str(l) + to_transferstr
+        default_path = self.default_dir + filename
+        self.write(f'MMEM:DOWN:FNAM "{default_path}"')
+        self.write('MMEM:DOWN:DATA ' + to_transferstr)
+
+    def transfer_and_load(self, array, wfname):
+        """
+        Creates a file in the 'C:\\Users\\AWG3000\\Pictures\\Saved Pictures\\' directory
+         with the filename wfname + '.txt' out of the input array (must be a single column).
+         That file is then loaded to the waveform list with name wfname. If wfname.txt or wfname
+         already exist in then they are overwritten.
+        """
+        wlist = self.waveform_list
+        if wfname in wlist:
+            self.delete_waveform(wfname)
+        self.transfer_array(array, wfname+".txt")
+        self.load_waveform_from_file(wfname, self.default_dir+wfname+".txt")
+
+
     def load_waveform_from_file(self, name, pathtofile):
         #todo implement analog, digital specification
+
         """
         Loads a waveform at pathtofile to the waveform list with name. The default behavior assumes analog data
         """
