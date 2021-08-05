@@ -285,17 +285,24 @@ class BN675_AWG(Instrument):
         )
         self.default_dir = 'C:\\Users\\AWG3000\\Pictures\\Saved Pictures\\'
         num_chan = int(self.num_channels)
+        self.mapper = {}
         for i in range(num_chan):
             setattr(self, f'ch{i+1}', Channel(self, i+1,
                                              trigger=self.trigger,
-                                             wait_for_trigger=self.wait_for_trigger))
-
+                                             wait_for_trigger=self.wait_for_trigger,
+                                              start_awg = self.start_awg,
+                                              stop_awg = self.stop_awg))
+            self.mapper[i + 1] = getattr(self,f'ch{i+1}')
 
         for i in range(num_chan//2):
             setattr(self, f'marker{i+1}', Marker(self, i+1))
 
     def beep(self):
         self.write("system:beep")
+
+    def all_off(self):
+        for key, item in self.mapper.items():
+            item.output = False
 
     def set_voltage_format(self, format):
         """
