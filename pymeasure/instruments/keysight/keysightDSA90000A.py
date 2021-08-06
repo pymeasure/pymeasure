@@ -442,7 +442,7 @@ class KeysightDSA90000A(Instrument):
     )
 
     waveform_streaming = Instrument.control(
-        ":waveform:streaming?", ":SYSTem:streaming? %d",
+        ":waveform:streaming?", ":SYSTem:streaming %d",
         """ A boolean parameter controlling whether or not the oscope streams data when queried for data""",
         validator=strict_discrete_set,
         values=BOOLS,

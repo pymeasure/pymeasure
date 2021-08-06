@@ -84,6 +84,7 @@ class Channel(object):
         """ A boolean property controlling the output polarity. True means the output is inverted.""",
         validator=strict_discrete_set,
         values={True: 'INVerted', False: 'NORMal'},
+        map_values=True
     )
 
     output = Instrument.control(
