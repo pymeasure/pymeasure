@@ -354,7 +354,7 @@ class BN675_AWG(Instrument):
         return int(self.ask("*OPC?"))
 
 
-    def start_awg(self, timeout=5000):
+    def start_awg(self, timeout=15000):
         """Starts the AWG to run. This may take some time, so we temporarily
          shift the timeout to be more conservative"""
         old_timeout = self.adapter.connection.timeout
