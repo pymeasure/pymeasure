@@ -38,7 +38,7 @@ log.addHandler(logging.NullHandler())
 
 
 class IPS120_10(Instrument):
-    """Represents the Oxford Superconducting Magnet Power Supply.
+    """Represents the Oxford Superconducting Magnet Power Supply IPS 120-10.
 
     .. code-block:: python
 
@@ -47,6 +47,14 @@ class IPS120_10(Instrument):
         ips.enable_control()         # Enables the power supply and remote control
 
 
+    :param clear_buffer: A boolean property that controls whether the instrument
+        buffer is clear upon initialisation.
+    :param switch_heater_delay: The time in seconds (default is 20s) to wait after
+        the switch-heater is turned on or off before the heater is expected to be
+        in the correct mode.
+    :param field_range: A numeric value or a tuple of two values to indicate the
+        lowest and highest allowed magnetic fields. If a numeric value is provided
+        the range is expected to be from `-field_range` to `+field_range`.
 
     """
 
@@ -250,7 +258,7 @@ class IPS120_10(Instrument):
         elif switch_status == 1:
             self.activity = "hold"
             self.switch_heater_status = 0
-            log.info("IPS 120-10: Wait for 20s for switch heater")
+            log.info("IPS 120-10: Wait for for switch heater delay")
             sleep(self._SWITCH_HEATER_DELAY)
             self.activity = "to zero"
             self.wait_for_idle()
@@ -277,7 +285,7 @@ class IPS120_10(Instrument):
             self.wait_for_idle()
             self.activity = "hold"
             self.switch_heater_status = 1
-            log.info("IPS 120-10: Wait for 20s for switch heater")
+            log.info("IPS 120-10: Wait for for switch heater delay")
             sleep(self._SWITCH_HEATER_DELAY)
         else:
             raise Exception("IPS 120-10: Switch status returned %d" % switch_status)
