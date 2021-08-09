@@ -272,7 +272,7 @@ class IPS120_10(Instrument):
         self.control_mode = "LU"
 
     def enable_persistent_mode(self):
-        """ Methods that enables the persistent magnetic field mode. """
+        """ Method that enables the persistent magnetic field mode. """
         # Check if system idle
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot enable persistent mode")
@@ -291,7 +291,7 @@ class IPS120_10(Instrument):
             raise SwitchHeaterStatusError("IPS 120-10: Switch status returned %d" % switch_status)
 
     def disable_persistent_mode(self):
-        """ Methods that disables the persistent magnetic field mode. """
+        """  that disables the persistent magnetic field mode. """
         # Check if system idle
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot disable persistent mode")
