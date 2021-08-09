@@ -46,6 +46,13 @@ class IPS120_10(Instrument):
 
         ips.enable_control()         # Enables the power supply and remote control
 
+        ips.train_magnet([           # Train the magnet after it has been cooled-down
+            (11.8, 1.0),
+            (13.9, 0.4),
+            (14.9, 0.2),
+            (16.0, 0.1),
+        ])
+
 
     :param clear_buffer: A boolean property that controls whether the instrument
         buffer is clear upon initialisation.
@@ -62,13 +69,6 @@ class IPS120_10(Instrument):
     _MAX_VOLTAGE = 10  # Volts
     _SWITCH_HEATER_DELAY = 20  # Seconds
     _FIELD_RANGE = [-16, 16]  # Tesla
-
-    _TRAINING_SCHEME = [  # (field, field-rate)-pairs
-        (11.8, 1.0),
-        (13.9, 0.4),
-        (14.9, 0.2),
-        (16.0, 0.1),
-    ]
 
     def __init__(self, resourceName,
                  clear_buffer=True,
@@ -341,11 +341,15 @@ class IPS120_10(Instrument):
         if persistent_mode_control and field != 0:
             self.enable_persistent_mode()
 
-    def train_magnet(self, training_scheme=None):
-        """ Method that trains the magnet after cooling down """
+    def train_magnet(self, training_scheme):
+        """ Method that trains the magnet after cooling down. Afterwards, the field
+        is set back to 0 tesla (at last-used ramp-rate)
 
-        if training_scheme is not None:
-            self._TRAINING_SCHEME = training_scheme
+        :param training_scheme: The training scheme as a list of tuples; each
+            tuple should consist of a (field, ramp-rate) pair.
+        """
 
-        for (field, rate) in self._TRAINING_SCHEME:
+        for (field, rate) in training_scheme:
             self.set_field(field, rate, persistent_mode_control=False)
+
+        self.set_field(0)
