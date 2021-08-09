@@ -298,7 +298,7 @@ class IPS120_10(Instrument):
         else:
             raise SwitchHeaterStatusError("IPS 120-10: Switch status returned %d" % switch_status)
 
-    def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None):
+    def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None, should_stop=lambda: False):
         error_ct = 0
         start_time = time()
         status = None
@@ -312,6 +312,8 @@ class IPS120_10(Instrument):
                 error_ct += 1
 
             if status == "at rest":
+                break
+            if should_stop():
                 break
 
             if max_errors is not None and error_ct > max_errors:
