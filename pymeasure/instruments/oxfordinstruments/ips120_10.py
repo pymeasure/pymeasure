@@ -282,23 +282,26 @@ class IPS120_10(Instrument):
         else:
             raise Exception("IPS 120-10: Switch status returned %d" % switch_status)
 
-    def wait_for_idle(self, max_errors=10, delay=1):
+    def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None):
         error_ct = 0
+        start_time = time()
         status = None
         while True:
             sleep(delay)
 
             try:
                 status = self.sweep_status
-            except Exception as e:
-                log.error("IPS: Issue with getting status (#%d): %s" % (error_ct, e))
-                error_ct = 0
+            except ValueError as e:
+                log.error("IPS 120-10: Issue with getting status (#%d): %s" % (error_ct, e))
+                error_ct += 1
 
             if status == "at rest":
                 break
 
-            if error_ct > max_errors:
-                raise Exception("Too many exceptions occurred during getting IPS status.")
+            if max_errors is not None and error_ct > max_errors:
+                raise Exception("IPS 120-10: Too many exceptions occurred during getting IPS status.")
+            if max_wait_time is not None and time() - start_time > max_wait_time:
+                raise TimeoutError("IPS 120-10: Magnet not idle within max wait time.")
 
     def set_field(self, field, sweep_rate=None, persistent_mode_control=True):
         # Check if field needs changing
@@ -313,7 +316,7 @@ class IPS120_10(Instrument):
             if persistent_mode_control:
                 self.disable_persistent_mode()
             else:
-                raise Exception("IPS in persistent mode and control of persistent mode not allowed")
+                raise Exception("IPS 120-10: magnet in persistent mode and control of persistent mode not allowed")
 
         if sweep_rate is not None:
             self.sweep_rate = sweep_rate
