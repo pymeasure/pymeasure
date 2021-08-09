@@ -269,6 +269,7 @@ class IPS120_10(Instrument):
 
         self.switch_heater_status = 0
         self.activity = "clamp"
+        self.control_mode = "LU"
 
     def enable_persistent_mode(self):
         """ Methods that enables the persistent magnetic field mode. """
