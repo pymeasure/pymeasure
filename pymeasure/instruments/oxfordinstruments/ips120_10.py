@@ -61,6 +61,20 @@ class IPS120_10(Instrument):
             (16.0, 0.1),
         ])
 
+        ips.set_field(12)           # Bring the magnet to 12 T. The switch heater will
+                                    # be turned off when the field is reached and the
+                                    # current is ramped back to 0 (i.e. persistent mode).
+
+        print(self.field)           # Print the current field (whether in persistent or
+                                    # non-persistent mode)
+
+        ips.set_field(0)            # Bring the magnet to 0 T. The persistent mode will be
+                                    # turned off first (i.e. current back to set-point and
+                                    # switch-heater on); afterwards the switch-heater will
+                                    # again be turned off.
+
+        ips.disable_control()       # Disables the control of the supply, turns off the
+                                    # switch-heater and clamps the output.
 
     :param clear_buffer: A boolean property that controls whether the instrument
         buffer is clear upon initialisation.
@@ -113,7 +127,7 @@ class IPS120_10(Instrument):
 
     control_mode = Instrument.control(
         "X", "$C%d",
-        """ A string property that sets the IPS in LOCAL or REMOTE and LOCKEd,
+        """ A string property that sets the IPS in LOCAL or REMOTE and LOCKED,
         or UNLOCKED, the LOC/REM button. Allowed values are:
         LL: LOCAL & LOCKED
         RL: REMOTE & LOCKED
@@ -248,8 +262,10 @@ class IPS120_10(Instrument):
             self.switch_heater_status = 1
 
     def disable_control(self):
+        """ Method that disable active control of the IPS (if at 0T).
+        Turns off the switch heater, clamps the output and sets control to local. """
         if not self.field == 0:
-            raise MagnetError("IPS 120-10: field not at 0T; cannot disable the supply")
+            raise MagnetError("IPS 120-10: field not at 0T; cannot disable the supply. ")
 
         self.switch_heater_status = 0
         self.activity = "clamp"
@@ -299,6 +315,16 @@ class IPS120_10(Instrument):
             raise SwitchHeaterStatusError("IPS 120-10: Switch status returned %d" % switch_status)
 
     def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None, should_stop=lambda: False):
+        """ Method that waits until the system is at rest (i.e. current of field not ramping).
+
+        :param delay: Time in seconds between each query into the state of the instrument.
+        :param max_errors: Maximum number of errors that is allowed in the communication with the
+            instrument before the wait is terminated (by raising a MagnetError). `None` is interpreted
+            as no maximum error count.
+        :param max_wait_time: Maximum time to wait before is at rest. If the system is not at rest
+            within this time a TimeoutError is raised. `None` is interpreted as no maximum time.
+        :param should_stop: A function that returns True when this function should return early.
+        """
         error_ct = 0
         start_time = time()
         status = None
@@ -322,6 +348,23 @@ class IPS120_10(Instrument):
                 raise TimeoutError("IPS 120-10: Magnet not idle within max wait time.")
 
     def set_field(self, field, sweep_rate=None, persistent_mode_control=True):
+        """ Method that changes the applied magnetic field.
+        If allowed (via `persistent_mode_control`) the persistent mode will be turned off
+        if needed and turned on when the magnetic field is reached.
+        When the new field set-point is 0, the set-point of the instrument will not be changed
+        but rather the `to zero` functionality will be used. Also, the persistent mode will not
+        turned on upon reaching the 0T field in this case.
+
+        :param field: The new set-point for the magnetic field.
+        :param sweep_rate: A numeric value that controls the rate with which to change
+            the magnetic field.
+        :param persistent_mode_control: A boolean that controls whether the persistent
+            mode may be turned off (if needed before sweeping) and on (when the field is reached);
+            if set to False and the system is in persistent mode, a MagnetError will be raised and
+            the magnetic field will not be changed.
+
+        """
+
         # Check if field needs changing
         if self.field == field:
             return
@@ -353,7 +396,7 @@ class IPS120_10(Instrument):
 
     def train_magnet(self, training_scheme):
         """ Method that trains the magnet after cooling down. Afterwards, the field
-        is set back to 0 tesla (at last-used ramp-rate)
+        is set back to 0 tesla (at last-used ramp-rate).
 
         :param training_scheme: The training scheme as a list of tuples; each
             tuple should consist of a (field, ramp-rate) pair.
