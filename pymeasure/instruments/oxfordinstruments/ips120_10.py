@@ -213,7 +213,7 @@ class IPS120_10(Instrument):
         elif sw_heater in [1]:
             field = self.demand_field
         else:
-            log.error("IPS: Switch status returned %d" % sw_heater)
+            log.error("IPS 120-10: Switch status returned %d" % sw_heater)
             field = self.demand_field
 
         return field
@@ -233,7 +233,7 @@ class IPS120_10(Instrument):
 
     def disable_control(self):
         if not self.field == 0:
-            raise Exception("IPS not at 0T, not disabling the supply")
+            raise Exception("IPS 120-10: field not at 0T; cannot disable the supply")
 
         self.switch_heater_status = 0
         self.activity = "clamp"
@@ -242,7 +242,7 @@ class IPS120_10(Instrument):
         """ Methods that enables the persistent magnetic field mode. """
         # Check if system idle
         if not self.sweep_status == "at rest":
-            raise Exception("Magnet not at rest")
+            raise Exception("IPS 120-10: magnet not at rest; cannot enable persistent mode")
 
         switch_status = self.switch_heater_status
         if switch_status in [0, 2]:
@@ -250,22 +250,22 @@ class IPS120_10(Instrument):
         elif switch_status == 1:
             self.activity = "hold"
             self.switch_heater_status = 0
-            log.info("IPS: Wait for 20s for switch heater")
+            log.info("IPS 120-10: Wait for 20s for switch heater")
             sleep(self._SWITCH_HEATER_DELAY)
             self.activity = "to zero"
             self.wait_for_idle()
         else:
-            raise Exception("Switch status returned %d" % switch_status)
+            raise Exception("IPS 120-10: Switch status returned %d" % switch_status)
 
     def disable_persistent_mode(self):
         """ Methods that disables the persistent magnetic field mode. """
         # Check if system idle
         if not self.sweep_status == "at rest":
-            raise Exception("Magnet not at rest")
+            raise Exception("IPS 120-10: magnet not at rest; cannot disable persistent mode")
 
         # Check if the setpoint equals the persistent field
         if not self.field == self.field_setpoint:
-            log.warning("IPS: field setpoint and persistent field not identical; "
+            log.warning("IPS 120-10: field setpoint and persistent field not identical; "
                         "setting the setpoint to the persistent field.")
             self.field_setpoint = self.field
 
@@ -277,10 +277,10 @@ class IPS120_10(Instrument):
             self.wait_for_idle()
             self.activity = "hold"
             self.switch_heater_status = 1
-            log.info("IPS: Wait for 20s for switch heater")
+            log.info("IPS 120-10: Wait for 20s for switch heater")
             sleep(self._SWITCH_HEATER_DELAY)
         else:
-            raise Exception("Switch status returned %d" % switch_status)
+            raise Exception("IPS 120-10: Switch status returned %d" % switch_status)
 
     def wait_for_idle(self, max_errors=10, delay=1):
         error_ct = 0
