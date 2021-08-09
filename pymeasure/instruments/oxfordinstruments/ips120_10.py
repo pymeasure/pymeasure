@@ -181,8 +181,6 @@ class IPS120_10(Instrument):
         """ A floating point property that controls the sweep-rate of
         the IPS in Tesla/minute. """,
         get_process=lambda v: float(v[1:]),
-        # validator=truncated_range,
-        # values=_T_RANGE
     )
 
     activity = Instrument.control(
