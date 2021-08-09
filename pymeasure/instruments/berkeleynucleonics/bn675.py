@@ -84,6 +84,7 @@ class Channel(object):
         """ A boolean property controlling the output polarity. True means the output is inverted.""",
         validator=strict_discrete_set,
         values={True: 'INVerted', False: 'NORMal'},
+        map_values=True
     )
 
     output = Instrument.control(
@@ -353,7 +354,7 @@ class BN675_AWG(Instrument):
         return int(self.ask("*OPC?"))
 
 
-    def start_awg(self, timeout=5000):
+    def start_awg(self, timeout=15000):
         """Starts the AWG to run. This may take some time, so we temporarily
          shift the timeout to be more conservative"""
         old_timeout = self.adapter.connection.timeout
