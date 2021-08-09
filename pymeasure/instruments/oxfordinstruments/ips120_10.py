@@ -37,6 +37,14 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class MagnetError(ValueError):
+    pass
+
+
+class SwitchHeaterStatusError(ValueError):
+    pass
+
+
 class IPS120_10(Instrument):
     """Represents the Oxford Superconducting Magnet Power Supply IPS 120-10.
 
@@ -241,7 +249,7 @@ class IPS120_10(Instrument):
 
     def disable_control(self):
         if not self.field == 0:
-            raise Exception("IPS 120-10: field not at 0T; cannot disable the supply")
+            raise MagnetError("IPS 120-10: field not at 0T; cannot disable the supply")
 
         self.switch_heater_status = 0
         self.activity = "clamp"
@@ -250,7 +258,7 @@ class IPS120_10(Instrument):
         """ Methods that enables the persistent magnetic field mode. """
         # Check if system idle
         if not self.sweep_status == "at rest":
-            raise Exception("IPS 120-10: magnet not at rest; cannot enable persistent mode")
+            raise MagnetError("IPS 120-10: magnet not at rest; cannot enable persistent mode")
 
         switch_status = self.switch_heater_status
         if switch_status in [0, 2]:
@@ -263,13 +271,13 @@ class IPS120_10(Instrument):
             self.activity = "to zero"
             self.wait_for_idle()
         else:
-            raise Exception("IPS 120-10: Switch status returned %d" % switch_status)
+            raise SwitchHeaterStatusError("IPS 120-10: Switch status returned %d" % switch_status)
 
     def disable_persistent_mode(self):
         """ Methods that disables the persistent magnetic field mode. """
         # Check if system idle
         if not self.sweep_status == "at rest":
-            raise Exception("IPS 120-10: magnet not at rest; cannot disable persistent mode")
+            raise MagnetError("IPS 120-10: magnet not at rest; cannot disable persistent mode")
 
         # Check if the setpoint equals the persistent field
         if not self.field == self.field_setpoint:
@@ -288,7 +296,7 @@ class IPS120_10(Instrument):
             log.info("IPS 120-10: Wait for for switch heater delay")
             sleep(self._SWITCH_HEATER_DELAY)
         else:
-            raise Exception("IPS 120-10: Switch status returned %d" % switch_status)
+            raise SwitchHeaterStatusError("IPS 120-10: Switch status returned %d" % switch_status)
 
     def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None):
         error_ct = 0
@@ -307,7 +315,7 @@ class IPS120_10(Instrument):
                 break
 
             if max_errors is not None and error_ct > max_errors:
-                raise Exception("IPS 120-10: Too many exceptions occurred during getting IPS status.")
+                raise MagnetError("IPS 120-10: Too many exceptions occurred during getting IPS status.")
             if max_wait_time is not None and time() - start_time > max_wait_time:
                 raise TimeoutError("IPS 120-10: Magnet not idle within max wait time.")
 
@@ -324,7 +332,7 @@ class IPS120_10(Instrument):
             if persistent_mode_control:
                 self.disable_persistent_mode()
             else:
-                raise Exception("IPS 120-10: magnet in persistent mode and control of persistent mode not allowed")
+                raise MagnetError("IPS 120-10: magnet in persistent mode and control of persistent mode not allowed")
 
         if sweep_rate is not None:
             self.sweep_rate = sweep_rate
