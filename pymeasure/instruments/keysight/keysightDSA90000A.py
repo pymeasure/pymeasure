@@ -30,7 +30,7 @@ log.addHandler(logging.NullHandler())
 import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-
+from time import sleep
 
 class Channel():
     """ Implementation of a Keysight DSA 90000A Oscilloscope channel. Note, that is
@@ -353,7 +353,7 @@ class KeysightDSA90000A(Instrument):
         map_values=True
     )
 
-    enable_averaging = Instrument.control(
+    average_n = Instrument.control(
         ":ACQuire:COUNt?", ":ACQuire:COUNt %d",
         """ A integer parameter controlling the number of averages provided averaging is turned on.""",
         validator=strict_range,
@@ -387,6 +387,17 @@ class KeysightDSA90000A(Instrument):
         """ Causes the instrument to acquire a single trigger of data.
         This is the same as pressing the Single key on the front panel. """
         self.write(":single")
+
+    @property
+    def pder(self):
+        return self.read(':PDER?')
+
+    def wait_for_op(self, tdelta=.1, n_it=1000 ):
+        breaker = 0
+        while self.pder == 0 and breaker < n_it:
+            sleep(tdelta)
+            breaker = breaker + 1
+
 
     _digitize = Instrument.setting(
         ":DIGitize %s",
