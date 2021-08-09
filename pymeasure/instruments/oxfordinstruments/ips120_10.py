@@ -359,10 +359,10 @@ class IPS120_10(Instrument):
         :param field: The new set-point for the magnetic field.
         :param sweep_rate: A numeric value that controls the rate with which to change
             the magnetic field.
-        :param persistent_mode_control: A boolean that controls whether the persistent
-            mode may be turned off (if needed before sweeping) and on (when the field is reached);
-            if set to False and the system is in persistent mode, a MagnetError will be raised and
-            the magnetic field will not be changed.
+        :param persistent_mode_control: A boolean that controls whether the persistent mode
+            may be turned off (if needed before sweeping) and on (when the field is reached);
+            if set to False but the system is in persistent mode, a MagnetError will be raised
+            and the magnetic field will not be changed.
 
         """
 
@@ -378,7 +378,10 @@ class IPS120_10(Instrument):
             if persistent_mode_control:
                 self.disable_persistent_mode()
             else:
-                raise MagnetError("IPS 120-10: magnet in persistent mode and control of persistent mode not allowed")
+                raise MagnetError(
+                    "IPS 120-10: magnet is in persistent mode but cannot turn off persistent mode because "
+                    "persistent_mode_control == False. "
+                )
 
         if sweep_rate is not None:
             self.sweep_rate = sweep_rate
