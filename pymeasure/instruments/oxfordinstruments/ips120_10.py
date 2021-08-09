@@ -53,6 +53,7 @@ class IPS120_10(Instrument):
     _MAX_CURRENT = 120  # Ampere
     _MAX_VOLTAGE = 10  # Volts
     _SWITCH_HEATER_DELAY = 20  # Seconds
+    _FIELD_RANGE = [-16, 16]  # Tesla
 
     _TRAINING_SCHEME = [  # (field, field-rate)-pairs
         (11.8, 1.0),
@@ -61,7 +62,12 @@ class IPS120_10(Instrument):
         (16.0, 0.1),
     ]
 
-    def __init__(self, resourceName, clear_buffer=True, switch_heater_delay=None, **kwargs):
+    def __init__(self, resourceName,
+                 clear_buffer=True,
+                 switch_heater_delay=None,
+                 field_range=None,
+                 **kwargs):
+
         super().__init__(
             resourceName,
             "Oxford IPS",
@@ -73,6 +79,12 @@ class IPS120_10(Instrument):
 
         if switch_heater_delay is not None:
             self._SWITCH_HEATER_DELAY = switch_heater_delay
+
+        if field_range is not None:
+            if isinstance(field_range, (float, int)):
+                self._FIELD_RANGE[:] = [-field_range, +field_range]
+            elif isinstance(field_range, (list, tuple)):
+                self._FIELD_RANGE[:] = field_range
 
         # Clear the buffer in order to prevent communication problems
         if clear_buffer:
@@ -160,8 +172,8 @@ class IPS120_10(Instrument):
         """ A floating point property that controls the magnetic field set-point of
         the IPS in Tesla. """,
         get_process=lambda v: float(v[1:]),
-        # validator=truncated_range,
-        # values=_T_RANGE
+        validator=truncated_range,
+        values=_FIELD_RANGE,
     )
 
     sweep_rate = Instrument.control(
