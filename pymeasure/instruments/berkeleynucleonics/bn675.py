@@ -333,25 +333,28 @@ class BN675_AWG(Instrument):
                             waiting to be stopped before its end.
 
         """
+        self.write("*OPC?")
 
         t0 = time()
         while True:
             try:
-                ready = self.run_state
+                ready = bool(self.read())
             except VisaIOError:
-                ready = -1
+                ready = False
 
-            if ready != 0:
+            if ready:
                 return
 
             if timeout != 0 and time() - t0 > timeout:
                 raise TimeoutError(
-                    "Timeout expired while waiting for the BN675_AWG" +
+                    "Timeout expired while waiting for the Agilent 33220A" +
                     " to finish the triggering."
                 )
 
-            if should_stop:
+            if should_stop():
                 return
+
+
 
     def opc(self):
         return int(self.ask("*OPC?"))
