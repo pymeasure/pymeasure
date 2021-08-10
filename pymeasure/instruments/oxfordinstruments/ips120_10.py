@@ -41,7 +41,8 @@ class MagnetError(ValueError):
     pass
 
 
-class SwitchHeaterStatusError(ValueError):
+class SwitchHeaterError(ValueError):
+    """ Exception that is raised for issues regarding the state of the superconducting switch. """
     pass
 
 
@@ -91,6 +92,19 @@ class IPS120_10(Instrument):
     _MAX_VOLTAGE = 10  # Volts
     _SWITCH_HEATER_DELAY = 20  # Seconds
     _FIELD_RANGE = [-16, 16]  # Tesla
+
+    _SWITCH_HEATER_SET_VALUES = {
+        False: 0,  # Heater off
+        True: 1,  # Heater on, with safety checks
+        "Force": 2,  # Heater on, without safety checks
+    }
+    _SWITCH_HEATER_GET_VALUES = {
+        0: False,  # Heater off, Switch closed, Magnet at zero
+        1: True,  # Heater on, Switch open
+        2: False,  # Heater off, Switch closed, Magnet at field
+        5: "Heater fault, low heater current",  # Heater on but current is low
+        8: "No switch fitted",  # No switch fitted
+    }
 
     def __init__(self, resourceName,
                  clear_buffer=True,
@@ -183,10 +197,57 @@ class IPS120_10(Instrument):
 
     switch_heater_status = Instrument.control(
         "X", "$H%d",
-        """ A integer property that returns the switch heater status of
-        the IPS in Tesla. """,
+        """ An integer property that returns the switch heater status of
+        the IPS. Use the :py:attr:`~switch_heater_enabled` property for controlling
+        and reading the switch heater. When using this property, the user
+        is referred to the IPS120-10 manual for the meaning of the integer
+        values. """,
         get_process=lambda v: int(v[8]),
     )
+    
+    @property
+    def switch_heater_enabled(self):
+        """ A boolean property that controls whether the switch heater
+        is enabled or not. When the switch heater is enabled (:code:`True`), the
+        switch is closed and the switch is open and the current in the
+        magnet can be controlled; when the switch heater is disabled
+        (:code:`False`) the switch is closed and the current in the magnet cannot
+        be controlled.
+
+        When turning on the switch heater with :code:`True`, the switch heater is
+        only activated if the current of the power supply matches the last
+        recorded current in the magnet.
+
+        .. warning::
+            These checks can be omitted by using :code:`"Force"` in stead of
+            :code:`True`. Caution: Not performing these checks can cause serious
+            damage to both the power supply and the magnet.
+
+        After turning on the switch heater it is necessary to wait several
+        seconds for the switch the respond.
+
+        Raises a :class:`.SwitchHeaterError` if the system reports a 'heater fault'
+        or if no switch is fitted on the system upon getting the status.
+        """
+        status_value = self.switch_heater_status
+        status = self._SWITCH_HEATER_GET_VALUES[status_value]
+
+        if isinstance(status, str):
+            raise SwitchHeaterError(
+                "IPS 120-10: switch heater status reported issue with "
+                "switch heater: %s" % status)
+
+        return status
+    
+    @switch_heater_enabled.setter
+    def switch_heater_enabled(self, value):
+
+        status_value = self._SWITCH_HEATER_SET_VALUES[value]
+
+        if status_value == 2:
+            log.info("IPS 120-10: Turning on the switch heater without any safety checks.")
+
+        self.switch_heater_status = status_value
 
     current_setpoint = Instrument.control(
         "R0", "$I%f",
@@ -236,15 +297,16 @@ class IPS120_10(Instrument):
         """ Property that returns the current magnetic field value in Tesla.
         """
 
-        sw_heater = self.switch_heater_status
-
-        if sw_heater in [0, 2]:
-            field = self.persistent_field
-        elif sw_heater in [1]:
+        try:
+            heater_on = self.switch_heater_enabled
+        except SwitchHeaterError as e:
+            log.error("IPS 120-10: Switch heater status reported issue: %s" % e)
             field = self.demand_field
         else:
-            log.error("IPS 120-10: Switch status returned %d" % sw_heater)
-            field = self.demand_field
+            if heater_on:
+                field = self.demand_field
+            else:
+                field = self.persistent_field
 
         return field
 
@@ -259,7 +321,7 @@ class IPS120_10(Instrument):
 
         # Turn on switch-heater if field at zero
         if self.field == 0:
-            self.switch_heater_status = 1
+            self.switch_heater_enabled = True
 
     def disable_control(self):
         """ Method that disable active control of the IPS (if at 0T).
@@ -267,7 +329,7 @@ class IPS120_10(Instrument):
         if not self.field == 0:
             raise MagnetError("IPS 120-10: field not at 0T; cannot disable the supply. ")
 
-        self.switch_heater_status = 0
+        self.switch_heater_enabled = False
         self.activity = "clamp"
         self.control_mode = "LU"
 
@@ -277,18 +339,15 @@ class IPS120_10(Instrument):
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot enable persistent mode")
 
-        switch_status = self.switch_heater_status
-        if switch_status in [0, 2]:
+        if not self.switch_heater_enabled:
             return  # Magnet already in persistent mode
-        elif switch_status == 1:
+        else:
             self.activity = "hold"
-            self.switch_heater_status = 0
+            self.switch_heater_enabled = False
             log.info("IPS 120-10: Wait for for switch heater delay")
             sleep(self._SWITCH_HEATER_DELAY)
             self.activity = "to zero"
             self.wait_for_idle()
-        else:
-            raise SwitchHeaterStatusError("IPS 120-10: Switch status returned %d" % switch_status)
 
     def disable_persistent_mode(self):
         """  that disables the persistent magnetic field mode. """
@@ -302,18 +361,15 @@ class IPS120_10(Instrument):
                         "setting the setpoint to the persistent field.")
             self.field_setpoint = self.field
 
-        switch_status = self.switch_heater_status
-        if switch_status == 1:
+        if self.switch_heater_enabled:
             return  # Magnet already in demand mode or at 0 field
-        elif switch_status in [0, 2]:
+        else:
             self.activity = "to setpoint"
             self.wait_for_idle()
             self.activity = "hold"
-            self.switch_heater_status = 1
+            self.switch_heater_enabled = True
             log.info("IPS 120-10: Wait for for switch heater delay")
             sleep(self._SWITCH_HEATER_DELAY)
-        else:
-            raise SwitchHeaterStatusError("IPS 120-10: Switch status returned %d" % switch_status)
 
     def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None, should_stop=lambda: False):
         """ Method that waits until the system is at rest (i.e. current of field not ramping).
@@ -370,10 +426,9 @@ class IPS120_10(Instrument):
         if self.field == field:
             return
 
-        switch_status = self.switch_heater_status
-        if switch_status == 1:
+        if self.switch_heater_enabled:
             pass  # Magnet in demand mode
-        elif switch_status in [0, 2]:
+        else:
             # Magnet in persistent mode
             if persistent_mode_control:
                 self.disable_persistent_mode()
