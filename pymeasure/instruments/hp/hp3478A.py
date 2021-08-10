@@ -343,6 +343,7 @@ class HP3478A(Instrument):
     def calibration_enabled(self):
         """Return calibration enable switch setting (False: cal disabled, True: cablibration possible),
         based on front-panel selector switch
+        
         """
         selection = self.decode_status(self.get_status(self),"cal_enable")
         if selection == 1:
@@ -367,18 +368,21 @@ class HP3478A(Instrument):
     error_status = Instrument.measurement(
         "E",
         """Checks the error status register
+        
         """,
         cast = int,
         )
 
     def display_reset(self):
         """ Reset the display of the instrument.
+        
         """
         self.write("D1")
 
     display_text = Instrument.setting(
         "D2%s",
         """Displays up to 12 upper-case ASCII characters on the display.
+        
         """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
@@ -386,56 +390,82 @@ class HP3478A(Instrument):
     display_text_no_symbol = Instrument.setting(
         "D3%s",
         """Displays up to 12 upper-case ASCII characters on the display and disables all symbols on the display.
+        
         """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
 
     measure_ACI = Instrument.measurement(
         MODES["ACI"],
-        """Return the measured value for AC current
+        """
+        Return the measured value for AC current
+        
         """,
         )
 
     measure_ACV = Instrument.measurement(
         MODES["ACV"],
-        """Return the measured value for AC Voltage
+        """
+        Return the measured value for AC Voltage
+        
         """,
         )
 
     measure_DCI = Instrument.measurement(
         MODES["DCI"],
-        """Return the measured value for DC current
+        """
+        Return the measured value for DC current
+        
         """,
         )
 
     measure_DCV = Instrument.measurement(
         MODES["DCV"],
-        """Return the measured value for DC Voltage
+        """
+        Return the measured value for DC Voltage
+        
         """,
         )
 
     measure_R2W = Instrument.measurement(
         MODES["R2W"],
-        """Return the measured value for 2-wire resistance
+        """
+        Return the measured value for 2-wire resistance
+        
         """,
         )
 
     measure_R4W = Instrument.measurement(
         MODES["R4W"],
-        """Return the measured value for 4-wire resistance
+        """
+        Return the measured value for 4-wire resistance
+        
         """,
         )
 
     measure_Rext = Instrument.measurement(
         MODES["Rext"],
-        """Return the measured value for extended resistance mode (>30M, 2-wire) resistance
+        """
+        Return the measured value for extended resistance mode (>30M, 2-wire) resistance
         """,
         )
 
     @property
     def mode(self):
         """Return current selected measurement mode, this propery can be set.
-        Allowed values are ACI,ACV,DCI,DCV,R2W,R4W,Rext
+        Allowed values are 
+        
+        ====  =============================================================
+        Mode  Function
+        ====  =============================================================
+        ACI   AC Current
+        ACV   AC Voltage
+        DCI   DC Current
+        DCV   DC Voltage
+        R2W   2-wire resistance
+        R4W   4-wire resistance
+        Rext  extended resistance method (requires additonal 10 M resistor)
+        ====  =============================================================
         """
         current_mode = self.decode_mode(self.get_status(self))
         return current_mode
@@ -449,7 +479,20 @@ class HP3478A(Instrument):
     def range(self):
         """Returns the current measurement range, this property can be set.
         Valid settings are 3*powers of ten (e.g 0.3,3,30)"
-        for all valid ranges look at HP3478A.RANGES structure
+        Allowed values are :
+
+        ====  =========================================
+        Mode  Range
+        ====  =========================================
+        ACI   0.3, 3, auto
+        ACV   0.3, 3, 30, 300, auto
+        DCI   0.3, 3, auto
+        DCV   0.03, 0.3, 3, 30, 300, auto
+        R2W   30, 300, 3000, 3E4, 3E5, 3E6, 3E7, auto
+        R4W   30, 300, 3000, 3E4, 3E5, 3E6, 3E7, auto
+        Rext  3E7, auto
+        ====  =========================================
+
         """
         current_range = self.decode_range(self.get_status(self))
         return current_range
@@ -464,6 +507,7 @@ class HP3478A(Instrument):
     @property
     def resolution(self):
         """Return current selected resolution, this property can be set.
+
         Allowed values are 3,4 or 5
         """
         number_of_digit = 6-self.decode_status(self.get_status(self),"digits")
@@ -485,11 +529,15 @@ class HP3478A(Instrument):
 
         bit assigment for SRQ:
 
-            1(dec) - SRQ when Data ready,
-            4(dec) - SRQ when Syntax error,
-            8(dec) - SRQ when internal error,
-            16(dec) - front panel SQR button,
-            32(dec) - SRQ by invalid calibration,
+        ========  ==========================
+        Bit(dec)  Description
+        ========  ==========================
+         1        SRQ when Data ready
+         4        SRQ when Syntax error
+         8        SRQ when internal error
+        16        front panel SQR button
+        32        SRQ by invalid calibration
+        ========  ==========================
 
         """
         mask = self.decode_status(self.get_status(self),"SRQ")
@@ -503,7 +551,19 @@ class HP3478A(Instrument):
     @property
     def trigger(self):
         """Return current selected trigger mode, this property can be set
-        Possibe values are: "auto"/"internal", "external", "hold", "fast"
+
+        Possibe values are:
+
+        ========  =========================================
+        Value     Meaning
+        ========  =========================================
+        auto      automatic trigger (internal)
+        internal  automatic trigger (internal)
+        external  external trigger (connector on back, GET)
+        hold      holds the measurement
+        fast      fast trigger for AC measurements
+        ========  =========================================
+
         """
         trigger = self.decode_trigger(self.get_status(self))
         return trigger
