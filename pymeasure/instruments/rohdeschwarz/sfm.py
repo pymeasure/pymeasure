@@ -50,7 +50,18 @@ class SFM(Instrument):
             # send_end = True,
             # read_termination = "\r\n",
 
-    #TODO add CALIBRATION related entries
+    def calibration(self,number=1,subsystem=None):
+        """
+        Function to either calibrate the whole modulator, when subsystem paramtrer is omitted,
+        or calibrate a subsystem of the modulator.
+        Valid subssyem selectiosn include: "NICam, VISion, SOUNd1|2, CODer"
+
+        """
+        if subsystem is None:
+            self.write("CAL:MOD%d" % (number))
+        else:
+            self.write("CAL:MOD%d:%s" % (number,strict_discrete_set(subsystem,["NIC","VIS","SOUN1","SOUN2","COD"])))
+
     #INST (Manual 3.6.4)
     system_number = Instrument.control(
         "INST:SEL ?",
@@ -61,9 +72,8 @@ class SFM(Instrument):
         values = [1, 6],
         check_set_errors=True,
         )
-    
+
     #ROUTE (Manual 3.6.5)
-    #TODO enhance for more then 1 system
     R75_out = Instrument.control(
         "ROUT:CHAN:OUTP:IMP?",
         "ROUT:CHAN:OUTP:IMP %s",
@@ -99,7 +109,7 @@ class SFM(Instrument):
         values={False:"INT", True:"EXT"},
         map_values = True,
         )
-    #TODO enhance for more then 1 system
+
     ext_vid_connector = Instrument.control(
         "ROUT:TEL:VID:EXT?",
         "ROUT:TEL:VID:EXT %s",
@@ -108,10 +118,8 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values = ["HIGH","LOW","REAR1","REAR2","AUTO"],
         )
-    
-    #SOURCE (Manual 3.6.6)
+
     #SOURCE:FREQ (3.6.6.1)
-    #TODO enhance for more then 1 system
     channel_table = Instrument.control(
         "SOUR:FREQ:CHAN:TABL ?",
         "SOUR:FREQ:CHAN:TABL %s",
@@ -120,9 +128,9 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values = ["DEF","USR1","USR2","USR3","USR4","USR5"],
         )
-    
+
     #TODO add more channel properties
-    
+
     cw_frequency = Instrument.control(
         "SOUR:FREQ:CW?",
         "SOUR:FREQ:CW %g",
@@ -151,7 +159,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values = ["CW","FIXED","CHSW","RFSW"],
         )
-    
+
     high_f_res = Instrument.control(
         "SOUR:FREQ:RES?",
         "SOUR:FREQ:RES %s",
@@ -163,7 +171,7 @@ class SFM(Instrument):
         values={False:"LOW", True:"HIGH"},
         map_values = True,
         )
-    
+
     center_f = Instrument.control(
         "SOUR:FREQ:CENTER?",
         "SOUR:FREQ:CENTER %g",
@@ -172,7 +180,7 @@ class SFM(Instrument):
         validator = strict_range,
         values = [5E6, 1E9]
         )
-    
+
     start_f = Instrument.control(
         "SOUR:FREQ:STAR?",
         "SOUR:FREQ:STAR %g",
@@ -181,7 +189,7 @@ class SFM(Instrument):
         validator = strict_range,
         values = [5E6, 1E9]
         )
-    
+
     stop_f = Instrument.control(
         "SOUR:FREQ:STOP?",
         "SOUR:FREQ:STOP %g",
@@ -190,23 +198,23 @@ class SFM(Instrument):
         validator = strict_range,
         values = [5E6, 1E9]
         )
-    
+
     step_f = Instrument.control(
         "SOUR:FREQ:STEP?",
         "SOUR:FREQ:STEP %g",
         """A float property controlling the stepwidth (for sweep) in Hz,
         Minimum 5 MHz, Maximum 1 GHz""",
         validator = strict_range,
-        values = [5E6, 1E9]
+        values = [1E3, 1E9]
         )
-    
+
     span = Instrument.control(
         "SOUR:FREQ:SPAN?",
         "SOUR:FREQ:SPAN %g",
         """A float property controlling the frequency in Hz,
         Minimum 5 MHz, Maximum 1 GHz""",
         validator = strict_range,
-        values = [5E6, 1E9]
+        values = [1E3, 1E9]
         )
 
     #SOUR:POW (3.6.6.2)
@@ -241,9 +249,90 @@ class SFM(Instrument):
         )
 
     #TODO add SOUR:TEL:IMOD (3.6.6.3 Intermodulation subsystem)
-    
+
     #SOUR:TEL:MOD:COD (3.6.6.4)
-    
+    def coder_adjust(self):
+        """
+        Starts the automatic setting of the differential deviation
+        """
+        self.write("SOUR:TEL:MOD:COD:ADJ")
+
+    coder_id_frequency = Instrument.control(
+        "SOUR:TEL:MOD:COD:IDENT:FREQ?",
+        "SOUR:TEL:MOD:COD:IDENT:FREQ %d",
+        """ A int property that controls the frequency of the identification of the coder
+        valid range 0 .. 200 Hz
+        """,
+        validator = strict_range,
+        values=[0, 200],
+        )
+
+    coder_modulation_degree = Instrument.control(
+        "SOUR:TEL:MOD:COD:MOD:DEGR?",
+        "SOUR:TEL:MOD:COD:MOD:DEGR %d",
+        """ A int property that controls the fmodulation degree of the identification of the coder
+        valid range 0 .. 0.9
+        """,
+        validator = strict_range,
+        values=[0, 0.9],
+        )
+
+    coder_pilot_frequency = Instrument.control(
+        "SOUR:TEL:MOD:COD:PIL:FREQ?",
+        "SOUR:TEL:MOD:COD:PIL:FREQ %d",
+        """ A int property that controls the pilot frequency of the coder
+        valid range 40 .. 60 kHz
+        """,
+        validator = strict_range,
+        values=[5E4, 6E4],
+        )
+
+    coder_pilot_deviation = Instrument.control(
+        "SOUR:TEL:MOD:COD:PIL:FREQ:DEV?",
+        "SOUR:TEL:MOD:COD:PIL:FREQ:DEV %d",
+        """ A int property that controls deviation of the pilot frequency of the coder
+        valid range 1 .. 4 kHz
+        """,
+        validator = strict_range,
+        values=[1E3, 4E3],
+        )
+
+    #SOUR:TEL:MOD:EXT (3.6.6.5)
+    external_modulation_power = Instrument.control(
+        "SOUR:TEL:MOD:EXT:POW?",
+        "SOUR:TEL:MOD:EXT:POW %d",
+        """ A int property that controls the setting for the external modulator output power
+        valid range -7..0 dBm
+        """,
+        validator = strict_range,
+        values=[-7, 0],
+        )
+
+    external_modulation_frequency = Instrument.control(
+        "SOUR:TEL:MOD:EXT:FREQ?",
+        "SOUR:TEL:MOD:EXT:FREQ %d",
+        """ A int property that controls the setting for the external modulator output power
+        valid range 32 .. 46 MHz
+        """,
+        validator = strict_range,
+        values=[32e6, 46e6],
+        )
+
+    #TODO NICAM system (3.6.6.6)
+    #TODO SOUND (3.6.6.7)
+
+    #Modulation (3.6.6.8)
+    modulation_source = Instrument.control(
+        "SOUR:MOD:SOUR?",
+        "SOUR:MOD:SOUR %s",
+        """ A bool property for the modulation source selection,
+        False => Internal modulator is used,
+        True => External external is used
+        """,
+        validator = strict_discrete_set,
+        values={False:"INT", True:"EXT"},
+        map_values = True,
+        )
 
     modulation = Instrument.control(
         "SOUR:MOD:STAT?",
@@ -257,9 +346,12 @@ class SFM(Instrument):
         map_values = True,
         )
 
+    #TODO VISION subsystem (3.6.6.9)
+
+    #Television subsystem (3.6.6.10)
     lower_sideband = Instrument.control(
-        "SOUR:SID?",
-        "SOUR:SID %s",
+        "SOUR:TEL:SID?",
+        "SOUR:TEL:SID %s",
         """ A bool property that controls the use of the lower sideband,
         False => upper sideband,
         True => lower sideband
@@ -269,11 +361,123 @@ class SFM(Instrument):
         map_values = True,
         )
 
-    
+    sound_mode = Instrument.control(
+        "SOUR:TEL:SOUN?",
+        "SOUR:TEL:SOUN %s",
+        """ A string property that controls the type of audio signal
+        Possible values are:
+        MONO,PIL (Pilot+mono),BTSC, STEReo, DUAL, NIC (nicam + mono)
+        """,
+        validator = strict_discrete_set,
+        values=["MONO","PIL","BTSC","STER","DUAL","NIC"],
+        )
 
-    #TODO add STATUS entries
+    TV_standard = Instrument.control(
+        "SOUR:TEL:STAN?",
+        "SOUR:TEL:STAN %s",
+        """ A string property that controls the type of video standard,
+        Possible values are:
+        BG, DK, I, K1, L, M, N
+        """,
+        validator = strict_discrete_set,
+        values=["BG","DK","I","K1","L","M","N"],
+        )
 
-    #SYSTEM entries
+    TV_country = Instrument.control(
+        "SOUR:TEL:STAN:COUN?",
+        "SOUR:TEL:STAN:COUN %s",
+        """ A string property that controls the country specifics of the video/sound system to be used,
+        Possible values are:
+        BG_General, DK_General, I_General, L_General, GERMany, BELGium, NETHerlands
+        FINland, AUSTralia, BG_Tg, DENMark, NORWay, SWEDen, GUS, POLAND1, POLAND2,
+        HUNGary, CHECho, CHINA1, CHINA2 , GREatbritain, SAFRica, FRANce, USA,
+        KORea , JAPan, CANada, SAMerica
+        """,
+        validator = strict_discrete_set,
+        values=["BG_G", "DK_G", "I_G", "L_G", "GERM","BELG", "NETH",
+        "FIN", "AUST", "BG_T", "DENM", "NORW", "SWED", "GUS", "POLAND1", "POLAND2",
+        "HUNG", "CHEC", "CHINA1", "CHINA2" , "GRE", "SAFR", "FRAN", "USA",
+        "KOR" , "JAP", "CAN", "SAM"],
+            )
+
+    #output voltage (3.6.6.12)
+    output_voltage = Instrument.control(
+        "SOUR:VOLT:LEV?",
+        "SOUR:VOLT:LEV %g",
+        """A float property controlling the output level in Volt,
+        Minimum 2.50891e-6, Maximum 0.707068 (depending on output mode)
+        """,
+        validator = strict_range,
+        values = [2.508910e-6,0.7070168],
+        )
+
+    #STATUS entries (3.6.7)
+    event_reg = Instrument.measurement(
+        "STAT:OPER:EVEN?",
+        """
+        Content of the event register of the Status Operation Register
+        """,
+        cast=int,
+        )
+
+    status_reg = Instrument.measurement(
+        "STAT:OPER:COND?",
+        """
+        Content of the condition register of the Status Operation Register
+        """,
+        cast=int,
+        )
+
+    operation_enable_reg = Instrument.control(
+        "STAT:OPER:ENAB?",
+        "STAT:OPER:ENAB %d",
+        """
+        Content of the enable register of the Status Operation Register
+        valid range 0...32767
+        """,
+        cast=int,
+        validator = strict_range,
+        values=[0, 32767]
+        )
+
+    def status_preset(self):
+        """ partly resets the SCPI status reporting structures
+
+        """
+        self.write("STAT:PRES")
+
+
+
+    questionable_event_reg = Instrument.measurement(
+        "STAT:QUES:EVEN?",
+        """
+        Content of the event register of the Status Questionable Operation Register
+        """,
+        cast=int,
+        )
+
+    questionanble_status_reg = Instrument.measurement(
+        "STAT:QUES:COND?",
+        """
+        Content of the condition register of the Status Questionable Operation Register
+        """,
+        cast=int,
+        )
+
+    questionable_operation_enable_reg = Instrument.control(
+        "STAT:QUES:ENAB?",
+        "STAT:QUES:ENAB %d",
+        """
+        Content of the enable register of the Status Questionable Operation Register
+        valid range 0...32767
+        """,
+        cast=int,
+        validator = strict_range,
+        values=[0, 32767]
+        )
+
+
+    #SYSTEM entries (3.6.8)
     beeper = Instrument.control(
         "SYST:BEEP:STATE?",
         "SYST:BEEP:STATE %s",
@@ -301,9 +505,8 @@ class SFM(Instrument):
     gpib_address = Instrument.control(
         "SYST:COMM:GPIB:ADDR?",
         "SYST:COMM:GPIB:ADDR %d",
-        """ A int property that controls the status of the displayed values ,
-        False => No infomation on display during remote operation
-        True => infomation shown on display
+        """ A int property that controls the GPIB address of the unit,
+        valid range = 0..30
         """,
         validator = strict_range,
         values=[0, 30],
@@ -352,7 +555,7 @@ class SFM(Instrument):
         "SYST:COMM:SER:PAR?",
         "SYST:COMM:SER:PAR %s",
         """ A string property that controls the parity type used for serial communication ,
-        Possible values are: 
+        Possible values are:
         NONE, EVEN, ODD, ONE (parity bit fixed to 1), ZERO (parity bit fixed to 0)
         """,
         validator = strict_discrete_set,
@@ -368,8 +571,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values=[1,2],
         )
-    #TODO add date & time related entries
-    #TODO add syst:info related entried
+
 
     scale_volt = Instrument.control(
         "UNIT:VOLT?",

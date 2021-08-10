@@ -41,8 +41,12 @@ The following developers have contributed to the PyMeasure package:
 | Michele Sardo
 | Steven Siegl
 | Benjamin Klebel-Knobloch
+<<<<<<< HEAD
 | Demetra Adrahtas
 | Dan McDonald
 | Hud Wahab
 | Nicola Corna
 | Robert Eckelmann
+=======
+
+>>>>>>> 5967bcb (functional enhancements,)
