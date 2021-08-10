@@ -467,7 +467,7 @@ class HP3478A(Instrument):
         Allowed values are 3,4 or 5
         """
         number_of_digit = 6-self.decode_status(self.get_status(self),"digits")
-        return number_of_digit[0]
+        return number_of_digit
 
     @resolution.setter
     def resolution(self,value):
