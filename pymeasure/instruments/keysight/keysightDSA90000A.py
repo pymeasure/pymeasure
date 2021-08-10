@@ -390,7 +390,7 @@ class KeysightDSA90000A(Instrument):
 
     @property
     def pder(self):
-        return self.read(':PDER?')
+        return self.ask(':PDER?')
 
     def wait_for_op(self, tdelta=.1, n_it=1000 ):
         breaker = 0

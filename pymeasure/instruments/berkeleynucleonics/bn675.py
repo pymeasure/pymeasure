@@ -136,6 +136,9 @@ class Channel(object):
     def disable(self):
         self.instrument.write("output%d:state off" % self.number)
 
+    def in_focus(self):
+        self.instrument.write('DISPlay:FOCus CH%d' % self.number)
+
     @property
     def active_sequence_elem(self):
         return self._elem
