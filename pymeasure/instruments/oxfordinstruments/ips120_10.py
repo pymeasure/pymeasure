@@ -38,6 +38,7 @@ log.addHandler(logging.NullHandler())
 
 
 class MagnetError(ValueError):
+    """ Exception that is raised for issues regarding the state of the magnet or power supply. """
     pass
 
 
@@ -84,7 +85,7 @@ class IPS120_10(Instrument):
         in the correct mode.
     :param field_range: A numeric value or a tuple of two values to indicate the
         lowest and highest allowed magnetic fields. If a numeric value is provided
-        the range is expected to be from `-field_range` to `+field_range`.
+        the range is expected to be from :code:`-field_range` to :code:`+field_range`.
 
     """
 
@@ -143,10 +144,10 @@ class IPS120_10(Instrument):
         "X", "$C%d",
         """ A string property that sets the IPS in LOCAL or REMOTE and LOCKED,
         or UNLOCKED, the LOC/REM button. Allowed values are:
-        LL: LOCAL & LOCKED
-        RL: REMOTE & LOCKED
-        LU: LOCAL & UNLOCKED
-        RU: REMOTE & UNLOCKED. """,
+        :code:`"LL"`: local & locked,
+        :code:`"RL"`: remote & locked,
+        :code:`"LU"`: local & unlocked,
+        :code:`"RU"`: remote & unlocked. """,
         get_process=lambda v: int(v[6]),
         validator=strict_discrete_set,
         values={"LL": 0, "RL": 1, "LU": 2, "RU": 3},
@@ -183,8 +184,7 @@ class IPS120_10(Instrument):
 
     field_polarity = Instrument.measurement(
         "X",
-        """ A integer property that returns the magnet polarity of
-        the IPS in Tesla. """,
+        """ A integer property that returns the magnet polarity of the IPS. """,
         get_process=lambda v: int(v[13]),
     )
 
@@ -285,8 +285,7 @@ class IPS120_10(Instrument):
 
     sweep_status = Instrument.measurement(
         "X",
-        """ A string property that returns the current sweeping mode of
-        the IPS. """,
+        """ A string property that returns the current sweeping mode of the IPS. """,
         get_process=lambda v: int(v[11]),
         values={"at rest": 0, "sweeping": 1, "sweep limiting": 2, "sweeping & sweep limiting": 3},
         map_values=True,
@@ -325,7 +324,8 @@ class IPS120_10(Instrument):
 
     def disable_control(self):
         """ Method that disable active control of the IPS (if at 0T).
-        Turns off the switch heater, clamps the output and sets control to local. """
+        Turns off the switch heater, clamps the output and sets control to local.
+        Raises a :class:`.MagnetError` if field not at 0T. """
         if not self.field == 0:
             raise MagnetError("IPS 120-10: field not at 0T; cannot disable the supply. ")
 
@@ -334,7 +334,8 @@ class IPS120_10(Instrument):
         self.control_mode = "LU"
 
     def enable_persistent_mode(self):
-        """ Method that enables the persistent magnetic field mode. """
+        """ Method that enables the persistent magnetic field mode.
+         Raises a :class:`.MagnetError` if the magnet is not at rest. """
         # Check if system idle
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot enable persistent mode")
@@ -350,7 +351,8 @@ class IPS120_10(Instrument):
             self.wait_for_idle()
 
     def disable_persistent_mode(self):
-        """  that disables the persistent magnetic field mode. """
+        """ Method that disables the persistent magnetic field mode.
+         Raises a :class:`.MagnetError` if the magnet is not at rest. """
         # Check if system idle
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot disable persistent mode")
@@ -376,11 +378,12 @@ class IPS120_10(Instrument):
 
         :param delay: Time in seconds between each query into the state of the instrument.
         :param max_errors: Maximum number of errors that is allowed in the communication with the
-            instrument before the wait is terminated (by raising a MagnetError). `None` is interpreted
-            as no maximum error count.
+            instrument before the wait is terminated (by raising a :class:`.MagnetError`).
+            :code:`None` is interpreted as no maximum error count.
         :param max_wait_time: Maximum time to wait before is at rest. If the system is not at rest
-            within this time a TimeoutError is raised. `None` is interpreted as no maximum time.
-        :param should_stop: A function that returns True when this function should return early.
+            within this time a :class:`TimeoutError` is raised. :code:`None` is interpreted as no
+            maximum time.
+        :param should_stop: A function that returns :code:`True` when this function should return early.
         """
         error_ct = 0
         start_time = time()
@@ -417,8 +420,8 @@ class IPS120_10(Instrument):
             the magnetic field.
         :param persistent_mode_control: A boolean that controls whether the persistent mode
             may be turned off (if needed before sweeping) and on (when the field is reached);
-            if set to False but the system is in persistent mode, a MagnetError will be raised
-            and the magnetic field will not be changed.
+            if set to :code:`False` but the system is in persistent mode, a :class:`.MagnetError`
+            will be raised and the magnetic field will not be changed.
 
         """
 
@@ -434,8 +437,8 @@ class IPS120_10(Instrument):
                 self.disable_persistent_mode()
             else:
                 raise MagnetError(
-                    "IPS 120-10: magnet is in persistent mode but cannot turn off persistent mode because "
-                    "persistent_mode_control == False. "
+                    "IPS 120-10: magnet is in persistent mode but cannot turn off "
+                    "persistent mode because persistent_mode_control == False. "
                 )
 
         if sweep_rate is not None:
