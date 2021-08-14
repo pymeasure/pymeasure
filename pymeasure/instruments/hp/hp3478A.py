@@ -315,7 +315,7 @@ class HP3478A(Instrument):
         ======  ============================================
         Value   Status
         ======  ============================================
-        True    auto-range functiona activated
+        True    auto-range function activated
         False   manual range selection / auto-range disabled
         ======  ============================================
         
