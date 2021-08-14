@@ -67,7 +67,7 @@ class SFM(Instrument):
 
         * Minimum 1
         * Maximum 6
-        
+
         """,
         validator = strict_range,
         values = [1, 6],
@@ -141,7 +141,7 @@ class SFM(Instrument):
         LOW     Front connector - 75R
         REAR1   Rear connector 1
         REAR2   Rear connector 2
-        AUTO    Autmatic assignment
+        AUTO    Automatic assignment
         ======  =======================
         """,
         validator = strict_discrete_set,
@@ -171,7 +171,69 @@ class SFM(Instrument):
         values = ["DEF","USR1","USR2","USR3","USR4","USR5"],
         )
 
-    #TODO add more channel properties
+    normal_channel = Instrument.control(
+        "SOUR:FREQ:CHAN:NORM ?",
+        "SOUR:FREQ:CHAN:NORM %d",
+        """A int property controlling the current selected regular/normal channel number,
+        valid selections are based on the country settings.
+        """,
+        )
+
+    special_channel = Instrument.control(
+        "SOUR:FREQ:CHAN:NORM ?",
+        "SOUR:FREQ:CHAN:NORM %d",
+        """A int property controlling the current selected special channel number,
+        valid selections are based on the country settings.
+        """,
+        )
+
+    def channel_up_relative(self):
+        """
+        Increases the outpout frequency to the next higher channel/special channel based on the current country settings
+        """
+        Instrument.setting("SOUR:CHAN:REL UP")
+
+    def channel_down_relative(self):
+        """
+        Decreases the outpout frequency to the next low channel/special channel based on the current country settings
+        """
+        Instrument.setting("SOUR:CHAN:REL DOWN")
+
+    channel_sweep_start = Instrument.control(
+        "SOUR:FREQ:CHAN:STAR?",
+        "SOUR:FREQ:CHAN:STAR %g",
+        """A float property controlling the start frequency for channel sweep in Hz,
+
+        * Minimum 5 MHz
+        * Maximum 1 GHz
+        """,
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
+
+    channel_sweep_stop =  Instrument.control(
+        "SOUR:FREQ:CHAN:STOP?",
+        "SOUR:FREQ:CHAN:STOP %g",
+        """A float property controlling the start frequency for channel sweep in Hz,
+
+        * Minimum 5 MHz
+        * Maximum 1 GHz
+        """,
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
+
+    channel_sweep_step = Instrument.control(
+        "SOUR:FREQ:CHAN:STEP?",
+        "SOUR:FREQ:CHAN:STEP %g",
+        """A float property controlling the start frequency for  channel sweep in Hz,
+
+        * Minimum 5 MHz
+        * Maximum 1 GHz
+        """,
+        validator = strict_range,
+        values = [5E6, 1E9]
+        )
 
     cw_frequency = Instrument.control(
         "SOUR:FREQ:CW?",
@@ -185,7 +247,6 @@ class SFM(Instrument):
         values = [5E6, 1E9]
         )
 
-    #TODO enhance for more then 1 system
     frequency = Instrument.control(
         "SOUR:FREQ:FIXED?",
         "SOUR:FREQ:FIXED %g",
@@ -198,8 +259,8 @@ class SFM(Instrument):
         values = [5E6, 1E9]
         )
 
-    freq_mode = Instrument.control(
-        "SOUR:FREQ:MODE ?",
+    frequency_mode = Instrument.control(
+        "SOUR:FREQ:MODE?",
         "SOUR:FREQ:MODE %s",
         """A string property controlling which the unit is used in,
 
@@ -239,10 +300,10 @@ class SFM(Instrument):
         map_values = True,
         )
 
-    center_f = Instrument.control(
+    rf_sweep_center = Instrument.control(
         "SOUR:FREQ:CENTER?",
         "SOUR:FREQ:CENTER %g",
-        """A float property controlling the center frequency (for sweep) in Hz,
+        """A float property controlling the center frequency for sweep in Hz,
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -251,10 +312,10 @@ class SFM(Instrument):
         values = [5E6, 1E9]
         )
 
-    start_f = Instrument.control(
+    rf_sweep_start = Instrument.control(
         "SOUR:FREQ:STAR?",
         "SOUR:FREQ:STAR %g",
-        """A float property controlling the start frequency (for sweep) in Hz,
+        """A float property controlling the start frequency for sweep in Hz,
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -263,10 +324,10 @@ class SFM(Instrument):
         values = [5E6, 1E9]
         )
 
-    stop_f = Instrument.control(
+    rf_sweep_stop = Instrument.control(
         "SOUR:FREQ:STOP?",
         "SOUR:FREQ:STOP %g",
-        """A float property controlling the stop frequency (for sweep)in Hz,
+        """A float property controlling the stop frequency for sweep in Hz,
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -275,12 +336,12 @@ class SFM(Instrument):
         values = [5E6, 1E9]
         )
 
-    step_f = Instrument.control(
+    rf_sweep_step = Instrument.control(
         "SOUR:FREQ:STEP?",
         "SOUR:FREQ:STEP %g",
-        """A float property controlling the stepwidth (for sweep) in Hz,
+        """A float property controlling the stepwidth for sweep in Hz,
 
-        * Minimum 5 MHz
+        * Minimum 1 kHz
         * Maximum 1 GHz
         """,
         validator = strict_range,
@@ -290,9 +351,9 @@ class SFM(Instrument):
     span = Instrument.control(
         "SOUR:FREQ:SPAN?",
         "SOUR:FREQ:SPAN %g",
-        """A float property controlling the frequency in Hz,
+        """A float property controlling the sweep span in Hz,
 
-        * Minimum 5 MHz
+        * Minimum 1 kHz
         * Maximum 1 GHz
         """,
         validator = strict_range,
@@ -327,9 +388,9 @@ class SFM(Instrument):
         CONT    continous mode        +10 dBm
         LOWD    low distortion mode   +0 dBm
         ======  ====================  =================
-        
+
         Contiuous mode allows up to 14 dB of level setting without use of the mechanical attenuator.
-        
+
         """,
         validator = strict_discrete_set,
         values = ["NORM","LOWN","CONT","LOWD"]
@@ -700,12 +761,12 @@ class SFM(Instrument):
         """A string property controlling the selection of interfaces for remote control,
 
         Possible selections are:
-        
+
         ======  =======================
         Value   Meaning
         ======  =======================
         OFF     no remote control
-        GPIB    GPIB only enabled 
+        GPIB    GPIB only enabled
         SER     RS232 only anbled
         BOTH    GPIB & RS232 enabled
         ======  =======================""",
@@ -761,7 +822,7 @@ class SFM(Instrument):
         """ A string property that controls the parity type used for serial communication ,
 
         Possible values are:
-        
+
         ======  =======================
         Value   Meaning
         ======  =======================
@@ -771,7 +832,7 @@ class SFM(Instrument):
         ONE     parity bit fixed to 1
         ZERO    parity bit fixed to 0
         ======  =======================
-        
+
         """,
         validator = strict_discrete_set,
         values=["NONE","EVEN","ODD","ONE","ZERO"],
