@@ -310,8 +310,16 @@ class HP3478A(Instrument):
 
     @property
     def auto_range_enabled(self):
-        """ Return auto-ranging status, returns False if manual range and True if auto-range active.
-        For manual range control the range property can be set
+        """ Property describing the auto-ranging status
+                
+        ======  ============================================
+        Value   Status
+        ======  ============================================
+        True    auto-range functiona activated
+        False   manual range selection / auto-range disabled
+        ======  ============================================
+        
+        The range can be set with the :py:attr:`range` property
         """
         selection = self.decode_status(self.get_status(self),"auto_range")
         if selection == 1:
@@ -321,8 +329,15 @@ class HP3478A(Instrument):
 
     @property
     def auto_zero_enabled(self):
-        """ Return auto-zero status, returns False if disabled and True if auto-zero active.
-        For manual control this property can be set
+        """ Return auto-zero status, this property can be set
+        
+        ======  ==================
+        Value   Status
+        ======  ==================
+        True    auto-zero active
+        False   auto-zero disabled
+        ======  ==================
+        
         """
         selection = self.decode_status(self.get_status(self),"auto_zero")
         if selection == 1:
@@ -341,8 +356,15 @@ class HP3478A(Instrument):
 
     @property
     def calibration_enabled(self):
-        """Return calibration enable switch setting (False: cal disabled, True: cablibration possible),
+        """Return calibration enable switch setting ,
         based on front-panel selector switch
+        
+        ======  ===================
+        Value   Status
+        ======  ===================
+        True    calbration possible
+        False   calibration locked
+        ======  ===================
         
         """
         selection = self.decode_status(self.get_status(self),"cal_enable")
@@ -398,7 +420,7 @@ class HP3478A(Instrument):
     measure_ACI = Instrument.measurement(
         MODES["ACI"],
         """
-        Return the measured value for AC current
+        Returns the measured value for AC current as a float
         
         """,
         )
@@ -406,7 +428,7 @@ class HP3478A(Instrument):
     measure_ACV = Instrument.measurement(
         MODES["ACV"],
         """
-        Return the measured value for AC Voltage
+        Returns the measured value for AC Voltage as a float
         
         """,
         )
@@ -414,7 +436,7 @@ class HP3478A(Instrument):
     measure_DCI = Instrument.measurement(
         MODES["DCI"],
         """
-        Return the measured value for DC current
+        Returns the measured value for DC current as a float
         
         """,
         )
@@ -422,7 +444,7 @@ class HP3478A(Instrument):
     measure_DCV = Instrument.measurement(
         MODES["DCV"],
         """
-        Return the measured value for DC Voltage
+        Returns the measured value for DC Voltage as a float
         
         """,
         )
@@ -430,7 +452,7 @@ class HP3478A(Instrument):
     measure_R2W = Instrument.measurement(
         MODES["R2W"],
         """
-        Return the measured value for 2-wire resistance
+        Returns the measured value for 2-wire resistance as a float
         
         """,
         )
@@ -438,7 +460,7 @@ class HP3478A(Instrument):
     measure_R4W = Instrument.measurement(
         MODES["R4W"],
         """
-        Return the measured value for 4-wire resistance
+        Returns the measured value for 4-wire resistance as a float
         
         """,
         )
@@ -446,7 +468,7 @@ class HP3478A(Instrument):
     measure_Rext = Instrument.measurement(
         MODES["Rext"],
         """
-        Return the measured value for extended resistance mode (>30M, 2-wire) resistance
+        Returns the measured value for extended resistance mode (>30M, 2-wire) resistance as a float
         """,
         )
 
@@ -455,17 +477,17 @@ class HP3478A(Instrument):
         """Return current selected measurement mode, this propery can be set.
         Allowed values are 
         
-        ====  =============================================================
+        ====  ==============================================================
         Mode  Function
-        ====  =============================================================
-        ACI   AC Current
-        ACV   AC Voltage
-        DCI   DC Current
-        DCV   DC Voltage
+        ====  ==============================================================
+        ACI   AC current
+        ACV   AC voltage
+        DCI   DC current
+        DCV   DC voltage
         R2W   2-wire resistance
         R4W   4-wire resistance
-        Rext  extended resistance method (requires additonal 10 M resistor)
-        ====  =============================================================
+        Rext  extended resistance method (requires additional 10 M resistor)
+        ====  ==============================================================
         """
         current_mode = self.decode_mode(self.get_status(self))
         return current_mode
@@ -478,12 +500,12 @@ class HP3478A(Instrument):
     @property
     def range(self):
         """Returns the current measurement range, this property can be set.
-        Valid settings are 3*powers of ten (e.g 0.3,3,30)"
-        Allowed values are :
+        
+        Valid values are :
 
-        ====  =========================================
+        ====  =======================================
         Mode  Range
-        ====  =========================================
+        ====  =======================================
         ACI   0.3, 3, auto
         ACV   0.3, 3, 30, 300, auto
         DCI   0.3, 3, auto
@@ -491,7 +513,7 @@ class HP3478A(Instrument):
         R2W   30, 300, 3000, 3E4, 3E5, 3E6, 3E7, auto
         R4W   30, 300, 3000, 3E4, 3E5, 3E6, 3E7, auto
         Rext  3E7, auto
-        ====  =========================================
+        ====  =======================================
 
         """
         current_range = self.decode_range(self.get_status(self))
@@ -506,9 +528,9 @@ class HP3478A(Instrument):
 
     @property
     def resolution(self):
-        """Return current selected resolution, this property can be set.
+        """Returns current selected resolution, this property can be set.
 
-        Allowed values are 3,4 or 5
+        Possible values are 3,4 or 5
         """
         number_of_digit = 6-self.decode_status(self.get_status(self),"digits")
         return number_of_digit
@@ -520,6 +542,10 @@ class HP3478A(Instrument):
 
     @property
     def status(self):
+        """
+        Returns a object representing the current status of the unit.
+        
+        """
         current_status = self.decode_status(self.get_status(self))
         return current_status
 
@@ -554,15 +580,15 @@ class HP3478A(Instrument):
 
         Possibe values are:
 
-        ========  =========================================
+        ========  ===========================================
         Value     Meaning
-        ========  =========================================
+        ========  ===========================================
         auto      automatic trigger (internal)
         internal  automatic trigger (internal)
-        external  external trigger (connector on back, GET)
+        external  external trigger (connector on back or GET)
         hold      holds the measurement
         fast      fast trigger for AC measurements
-        ========  =========================================
+        ========  ===========================================
 
         """
         trigger = self.decode_trigger(self.get_status(self))
@@ -577,7 +603,7 @@ class HP3478A(Instrument):
 
     def GPIB_trigger(self):
         """
-        Initate trigger via low-level GPIB-command (aka GET- group execute trigger)
+        Initate trigger via low-level GPIB-command (aka GET - group execute trigger)
 
         """
         self.adapter.connection.assert_trigger()
