@@ -24,8 +24,10 @@
 
 
 import logging
+import datetime
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -57,7 +59,8 @@ class SFM(Instrument):
         if subsystem is None:
             self.write("CAL:MOD%d" % (number))
         else:
-            self.write("CAL:MOD%d:%s" % (number,strict_discrete_set(subsystem,["NIC","VIS","SOUN1","SOUN2","COD"])))
+            self.write("CAL:MOD%d:%s" % (number,strict_discrete_set(subsystem,
+                                        ["NIC","VIS","SOUN1","SOUN2","COD"])))
 
     #INST (Manual 3.6.4)
     system_number = Instrument.control(
@@ -189,15 +192,17 @@ class SFM(Instrument):
 
     def channel_up_relative(self):
         """
-        Increases the outpout frequency to the next higher channel/special channel based on the current country settings
+        Increases the outpout frequency to the next higher channel/special channel
+        based on the current country settings
         """
-        Instrument.setting("SOUR:CHAN:REL UP")
+        Instrument.write(self,"SOUR:CHAN:REL UP")
 
     def channel_down_relative(self):
         """
-        Decreases the outpout frequency to the next low channel/special channel based on the current country settings
+        Decreases the outpout frequency to the next low channel/special channel
+        based on the current country settings
         """
-        Instrument.setting("SOUR:CHAN:REL DOWN")
+        Instrument.write(self,"SOUR:CHAN:REL DOWN")
 
     channel_sweep_start = Instrument.control(
         "SOUR:FREQ:CHAN:STAR?",
@@ -774,7 +779,7 @@ class SFM(Instrument):
         values = ["OFF","GPIB","SER","BOTH"]
         )
 
-    ser_baud = Instrument.control(
+    serial_baud = Instrument.control(
         "SYST:COMM:SER:BAUD?",
         "SYST:COMM:SER:BAUD %g",
         """ A int property that controls the serial communication speed ,
@@ -785,7 +790,7 @@ class SFM(Instrument):
         values=[110,300,600,1200,4800,9600,19200],
         )
 
-    set_bits = Instrument.control(
+    serial_bits = Instrument.control(
         "SYST:COMM:SER:BITS?",
         "SYST:COMM:SER:BITS %g",
         """ A int property that controls the number of bits used in serial communication,
@@ -796,7 +801,7 @@ class SFM(Instrument):
         values=[7,8],
         )
 
-    ser_pace = Instrument.control(
+    serial_pace = Instrument.control(
         "SYST:COMM:SER:PACE?",
         "SYST:COMM:SER:PACE %s",
         """ A string property that controls the serial handshake type used in serial communication,
@@ -816,7 +821,7 @@ class SFM(Instrument):
         values=["NONE","XON","ACK"],
         )
 
-    ser_parity = Instrument.control(
+    serial_parity = Instrument.control(
         "SYST:COMM:SER:PAR?",
         "SYST:COMM:SER:PAR %s",
         """ A string property that controls the parity type used for serial communication ,
@@ -838,7 +843,7 @@ class SFM(Instrument):
         values=["NONE","EVEN","ODD","ONE","ZERO"],
         )
 
-    ser_stopbits = Instrument.control(
+    serial_stopbits = Instrument.control(
         "SYST:COMM:SER:SBIT?",
         "SYST:COMM:SER:SBIT %g",
         """ A int property that controls the number of stop-bits used in serial communication,
@@ -849,7 +854,25 @@ class SFM(Instrument):
         values=[1,2],
         )
 
+    date = Instrument.measurement(
+        "SYST:DATE?",
+        """
+        A tuple property for the date of the RTC in the generator,
+        can be set with either a tuple (year,month,day) or using the systemtime from python by passing use_systemtime=True
+        """,
+        )
 
+
+    time = Instrument.measurement(
+        "SYST:TIME?",
+        """
+        A tuple property for the time of the RTC in the generator,
+        can be set with either a tuple (HH,MM,SS) or using the systemtime from python by passing use_systemtime=True
+        """,
+        )
+
+
+    #Unit subsystem (3.6.9)
     scale_volt = Instrument.control(
         "UNIT:VOLT?",
         "UNIT:VOLT %s",
@@ -870,7 +893,6 @@ class SFM(Instrument):
         while True:
             err = self.values(":SYST:ERR?")
             if int(err[0]) != 0:
-                errmsg = "R&S SFM: %s: %s" % (err[0],err[1])
-                log.error(errmsg + '\n')
+                log.error("R&S SFM: %s: %s \n" % (err[0],err[1]) )
             else:
                 break
