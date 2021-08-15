@@ -82,12 +82,12 @@ class SFM(Instrument):
         "ROUT:CHAN:OUTP:IMP %s",
         """ A bool property that controls the use of the 75R output (if installed)
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   50R output active (N)
         True    75R output active (BNC)
-        ======  =======================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values={False:"LOW", True:"HIGH"},
@@ -99,12 +99,12 @@ class SFM(Instrument):
         "ROUT:REF:CLOCK:BAS %s",
         """ A bool property for the external reference for the basic unit
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   Internal 10 MHz is used
         True    External 10 MHz is used
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -117,12 +117,12 @@ class SFM(Instrument):
         "ROUT:REF:CLOCK:EXT %s",
         """ A bool property for the external reference for the extension frame
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   Internal 10 MHz is used
         True    External 10 MHz is used
-        ======  =======================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values={False:"INT", True:"EXT"},
@@ -136,15 +136,15 @@ class SFM(Instrument):
 
         Possible selections are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         HIGH    Front connector - Hi-Z
         LOW     Front connector - 75R
         REAR1   Rear connector 1
         REAR2   Rear connector 2
         AUTO    Automatic assignment
-        ======  =======================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values = ["HIGH","LOW","REAR1","REAR2","AUTO"],
@@ -158,16 +158,16 @@ class SFM(Instrument):
 
         Possible selections are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         DEF     Default channel table
         USR1    User table No. 1
         USR2    User table No. 2
         USR3    User table No. 3
         USR4    User table No. 4
         USR5    User table No. 5
-        ======  =======================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values = ["DEF","USR1","USR2","USR3","USR4","USR5"],
@@ -270,14 +270,14 @@ class SFM(Instrument):
 
         Possible selections are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         CW      Continous wave mode
         FIXED   fixed frequency mode
         CHSW    Channel sweep
         RFSW    Frequency sweep
-        ======  =======================
+        ======  =======
 
         _Note_: selecting the sweep mode, will start the sweep imemdiately!
         """,
@@ -292,12 +292,12 @@ class SFM(Instrument):
 
         Possible selections are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   Low resolution (1000Hz)
         True    High resoultion (1Hz)
-        ======  =======================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values={False:"LOW", True:"HIGH"},
@@ -405,12 +405,12 @@ class SFM(Instrument):
         "SOUR:POW:STATE %s",
         """ A bool property that controls the status of the RF-output,
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   RF-output disabled
         True    RF-output enabled
-        ======  =======================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values={False:0, True:1},
@@ -494,11 +494,241 @@ class SFM(Instrument):
         )
 
     #NICAM system (3.6.6.6)
-    
-    
-    
-    #Sound (3.6.6.7)
+    nicam_mode = Instrument.control(
+        "SOUR:TEL:MOD:NIC:AUD:MODE?",
+        "SOUR:TEL:MOD:NIC:AUD:MODE %s",
+        """ A string property that controls the signal type to be sent via NICAM
 
+        Possible values are:
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        MON     Mono sound + NICAM data
+        STER    Stereo sound
+        DUAL    Dual channel sound
+        DATA    NICAM data only
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values=["MON","STER","DUAL","DATA"],
+        )
+
+    nicam_audio_frequency = Instrument.control(
+        "SOUR:TEL:MOD:NIC:AUD:FREQ?",
+        "SOUR:TEL:MOD:NIC:AUD:FREQ %d",
+        """ A int property that controls the frequency of the internal sound generator
+
+        valid range: 0 Hz .. 15 kHz
+        """,
+        validator = strict_range,
+        values=[0, 1.5E4],
+        )
+
+    nicam_preemphasis_enabled = Instrument.control(
+        "SOUR:TEL:MOD:NIC:AUD:PRE?",
+        "SOUR:TEL:MOD:NIC:AUD:PRE %d",
+        """ A bool property that controls the status of the J17 preemphasis,
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   preemphasis disabled
+        True    preemphasis enabled
+        ======  =======
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    nicam_audio_volume = Instrument.control(
+        "SOUR:TEL:MOD:NIC:AUD:VOL?",
+        "SOUR:TEL:MOD:NIC:AUD:VOL %g",
+        """ A float property that controls the audio volume in the NICAM  modulator
+
+        valid range: 0..60 dB
+        """,
+        validator = strict_range,
+        values=[0, 60],
+        )
+
+    nicam_data = Instrument.control(
+        "SOUR:TEL:MOD:NIC:AUD:DATA?",
+        "SOUR:TEL:MOD:NIC:AUD:DATA %d",
+        """ A int property that controls the data in the NICAM  modulator
+
+        valid range: 0 .. 2047
+        """,
+        validator = strict_range,
+        values=[0, 2047],
+        cast=int
+        )
+
+
+    nicam_additional_bits = Instrument.control(
+        "SOUR:TEL:MOD:NIC:AUD:ADD?",
+        "SOUR:TEL:MOD:NIC:AUD:ADD %d",
+        """ A int property that controls the additional data in the NICAM  modulator
+
+        valid range: 0 .. 2047
+        """,
+        validator = strict_range,
+        values=[0, 2047],
+        )
+
+    nicam_control_bits = Instrument.control(
+        "SOUR:TEL:MOD:NIC:AUD:CONT?",
+        "SOUR:TEL:MOD:NIC:AUD:CONT %d",
+        """ A int property that controls the additional data in the NICAM  modulator
+
+        valid range: 0 .. 3
+        """,
+        validator = strict_range,
+        values=[0, 3],
+        )
+
+    nicam_bit_error_rate = Instrument.control(
+        "SOUR:TEL:MOD:NIC:BIT?",
+        "SOUR:TEL:MOD:NIC:BIT %g",
+        """ A float property that controls the additional data in the NICAM  modulator
+
+        valid range: 1.2E-7 .. 2E-3
+        """,
+        validator = strict_range,
+        values=[1.2E-7, 2E-3],
+        )
+
+    nicam_bit_error_enabled = Instrument.control(
+        "SOUR:TEL:MOD:NIC:BIT:STAT?",
+        "SOUR:TEL:MOD:NIC:BIT:STAT %d",
+        """ A bool property that controls the status of an artifical bit error rate to be applied,
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   artificial BER disabled
+        True    artificial BER enabled
+        ======  =======
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+
+    nicam_carrier_frequency = Instrument.control(
+        "SOUR:TEL:MOD:NIC:CARR:FREQ?",
+        "SOUR:TEL:MOD:NIC:CARR:FREQ %g",
+        """ A float property that controls the frequency of the NICAM carrier
+
+        valid range: 33.05 MHz +/- 0.2 Mhz
+        """,
+        validator = strict_range,
+        values=[32.85E6, 33.25E6],
+        )
+
+    nicam_intercarrier_frequency = Instrument.control(
+        "SOUR:TEL:MOD:NIC:INT:FREQ?",
+        "SOUR:TEL:MOD:NIC:INT:FREQ %g",
+        """ A float property that controls the inter-carrier frequency of the NICAM carrier
+
+        valid range: 5 .. 9 MHz
+        """,
+        validator = strict_range,
+        values=[5E6, 9E6],
+        )
+
+    nicam_carrier_level = Instrument.control(
+        "SOUR:TEL:MOD:NIC:CARR:LEV?",
+        "SOUR:TEL:MOD:NIC:CARR:LEV %g",
+        """ A float property that controls the value of the NICAM carrier
+
+        valid range: -40 .. -13 dB
+        """,
+        validator = strict_range,
+        values=[-40, 13],
+        )
+
+    nicam_carrier_enabled = Instrument.control(
+        "SOUR:TEL:MOD:NIC:CARR:STAT?",
+        "SOUR:TEL:MOD:NIC:CARR:STAT %s",
+        """ A bool property that controls if the NICAM carrier is switched on or off
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   NICAM carrier disabled
+        True    NICAM carrier enabled
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    nicam_IQ_inverted = Instrument.control(
+        "SOUR:TEL:MOD:NIC:MODE?",
+        "SOUR:TEL:MOD:NIC:MODE %s",
+        """ A bool property that controls if the NICAM IQ signals are inverted or not
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   normal (IQ)
+        True    inverted (QI)
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={False:"IQ", True:"QI"},
+        map_values = True,
+        )
+
+    nicam_source = Instrument.control(
+        "SOUR:TEL:MOD:NIC:SOUR?",
+        "SOUR:TEL:MOD:NIC:SOUR %s",
+        """ A string property that controls the signal source for NICAM
+
+        Possible values are:
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        INT     Internal audio generator(s)
+        EXT     External audio source
+        CW      Continous wave signal
+        RAND    Random data stream
+        TEST    Test signal
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values=["INT","EXT","CW","RAND","TEST"],
+        )
+
+    nicam_test_signal = Instrument.control(
+        "SOUR:TEL:MOD:NIC:TEST?",
+        "SOUR:TEL:MOD:NIC:TEST %s",
+        """ A int property that controls the selection of the test sinal applied
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        1       Test signal 1 (91 kHz square wave, I&Q 90deg apart)
+        2       Test signal 2 (45.5 kHz square wave, I&Q 90deg apart)
+        3       Test signal 3 (182 kHz sine wave, I&Q in phase)
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={1:"TST1", 2:"TST2", 3:"TST3"},
+        map_values = True,
+        )
+
+    #Sound (3.6.6.7)
     sound_modulation_degree = Instrument.control(
         "SOUR:TEL:MOD:SOUN:AUD:DEGR?",
         "SOUR:TEL:MOD:SOUN:AUD:DEGR %g",
@@ -538,12 +768,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:SOUN:AUD:FREQ:SOUR %s",
         """ A bool property for the audio source selection,
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
-        False   Internal modulator
-        True    External modulator
-        ======  =======================
+        ======  =======
+        False   Internal audio generator(s)
+        True    External signal source
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -556,19 +786,19 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:SOUN:AUD:FREQ:STAT %s",
         """ A bool property that controls the audio modulation status
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   modulation disabled
         True    modulation enabled
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
         )
- 
+
     audio_carrier_frequency = Instrument.control(
         "SOUR:TEL:MOD:SOUN:CARR:FREQ?",
         "SOUR:TEL:MOD:SOUN:CARR:FREQ %g",
@@ -596,12 +826,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:SOUN:CARR:STAT %s",
         """ A bool property that controls if the audio carrier is switched on or off
 
-        ======  ======================
+        ======  =======
         Value   Meaning
-        ======  ======================
+        ======  =======
         False   audio carrier disabled
         True    audio carrier enabled
-        ======  ======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -614,12 +844,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:SOUN:PRE:MODE %s",
         """ A bool property that controls if the mode of the preemphasis for the audio signal
 
-        ======  ======================
+        ======  =======
         Value   Meaning
-        ======  ======================
+        ======  =======
         50      50 us preemphasis
         75      75 us preemphasis
-        ======  ======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -632,12 +862,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:SOUN:PRE:STAT %s",
         """ A bool property that controls if the preemphasis for the audui is switched on or off
 
-        ======  ======================
+        ======  =======
         Value   Meaning
-        ======  ======================
+        ======  =======
         False   audio carrier disabled
         True    audio carrier enabled
-        ======  ======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -651,12 +881,12 @@ class SFM(Instrument):
         "SOUR:MOD:SOUR %s",
         """ A bool property for the modulation source selection,
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   Internal modulator
         True    External modulator
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -669,12 +899,12 @@ class SFM(Instrument):
         "SOUR:MOD:STAT %s",
         """ A bool property that controls the modulation status
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   modulation disabled
         True    modulation enabled
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -688,12 +918,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:VIS:CARR:STAT %s",
         """ A bool property that controls the vision carrier status
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   Vision carrier disabled
         True    Vision carrier enabled
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -717,12 +947,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:VIS:AVER:STAT %s",
         """ A bool property that controls the average mode for the vision system
 
-        ======  =========================
+        ======  =======
         Value   Meaning
-        ======  =========================
+        ======  =======
         False   Average function disabled
         True    Average function enabled
-        ======  =========================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -757,12 +987,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:VIS:CLAM:STAT %s",
         """ A bool property that controls the clamping behavior of the vision modulator,
 
-        ======  =================
+        ======  =======
         Value   Meaning
-        ======  =================
+        ======  =======
         False   Clamping disabled
         True    Clamping enabled
-        ======  =================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -788,12 +1018,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:VIS:PREC %s",
         """ A bool property that controls the precorrection behavior of the vision modulator
 
-        ======  ======================
+        ======  =======
         Value   Meaning
-        ======  ======================
+        ======  =======
         False   Precorrection disabled
         True    Precorrection enabled
-        ======  ======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -817,12 +1047,12 @@ class SFM(Instrument):
         "SOUR:TEL:MOD:VIS:VID %s",
         """ A bool property that controls if the video signal is switched on or off
 
-        ======  ======================
+        ======  =======
         Value   Meaning
-        ======  ======================
+        ======  =======
         False   video signal disabled
         True    video signal enabled
-        ======  ======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -836,12 +1066,12 @@ class SFM(Instrument):
         """ A bool property that controls the use of the VSBF (vestigal sideband filter)
         in the vision modulator
 
-        ======  ======================
+        ======  =======
         Value   Meaning
-        ======  ======================
+        ======  =======
         False   VSBF disabled
         True    VSBF enabled
-        ======  ======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -855,12 +1085,12 @@ class SFM(Instrument):
         "SOUR:TEL:SID %s",
         """ A bool property that controls the use of the lower sideband
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   upper side band (USB)
         True    lower side band (LSB)
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -875,16 +1105,16 @@ class SFM(Instrument):
 
         Possible values are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         MONO    MOnoaural sound
         PIL     pilot-carrier + mono
         BTSC    BTSC + mono
         STER    Stereo sound
         DUAL    Dual channel sound
         NIC     NICAM + Mono
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -911,9 +1141,9 @@ class SFM(Instrument):
 
         Possible values are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         BG_G    BG General
         DK_G    DK General
         I_G     I General
@@ -942,7 +1172,7 @@ class SFM(Instrument):
         JAP     Japan
         CAN     Canada
         SAM     South America
-        ======  =======================
+        ======  =======
 
         Please confim with the manual about the details for these settings.
         """,
@@ -1035,12 +1265,12 @@ class SFM(Instrument):
         "SYST:BEEP:STATE %s",
         """ A bool property that controls the beeper status,
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         False   beeper disabled
         True    beeper enabled
-        ======  =======================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values={False:0, True:1},
@@ -1052,12 +1282,12 @@ class SFM(Instrument):
         "SYST:DISP:UPDATE:STATE %s",
         """ A bool property that controls the status of the displayed values
 
-        ======  =================================================
+        ======  =======
         Value   Meaning
-        ======  =================================================
+        ======  =======
         False   no infomation shown on the display during remote
         True    status info shown on display
-        ======  =================================================
+        ======  =======
         """,
         validator = strict_discrete_set,
         values={False:0, True:1},
@@ -1082,14 +1312,15 @@ class SFM(Instrument):
 
         Possible selections are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         OFF     no remote control
         GPIB    GPIB only enabled
         SER     RS232 only anbled
         BOTH    GPIB & RS232 enabled
-        ======  =======================""",
+        ======  =======
+        """,
         validator = strict_discrete_set,
         values = ["OFF","GPIB","SER","BOTH"]
         )
@@ -1123,13 +1354,13 @@ class SFM(Instrument):
 
         Possible values are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         NONE    no flow-control/handshake
         XON     XON/XOFF flow-control
         ACK     hardware handshake with RTS&CTS
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
@@ -1143,15 +1374,15 @@ class SFM(Instrument):
 
         Possible values are:
 
-        ======  =======================
+        ======  =======
         Value   Meaning
-        ======  =======================
+        ======  =======
         NONE    no parity
         EVEN    even parity
         ODD     odd parity
         ONE     parity bit fixed to 1
         ZERO    parity bit fixed to 0
-        ======  =======================
+        ======  =======
 
         """,
         validator = strict_discrete_set,
