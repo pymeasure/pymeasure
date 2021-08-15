@@ -24,7 +24,6 @@
 
 
 import logging
-import datetime
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -66,7 +65,7 @@ class SFM(Instrument):
     system_number = Instrument.control(
         "INST:SEL ?",
         "INST:SEL: SYS%d",
-        """A int property for the selected systems (if more then 1 available),
+        """A int property for the selected systems (if more then 1 available)
 
         * Minimum 1
         * Maximum 6
@@ -133,7 +132,7 @@ class SFM(Instrument):
     ext_vid_connector = Instrument.control(
         "ROUT:TEL:VID:EXT?",
         "ROUT:TEL:VID:EXT %s",
-        """A string property controlling which connector is used as the input of the video source,
+        """A string property controlling which connector is used as the input of the video source
 
         Possible selections are:
 
@@ -155,7 +154,7 @@ class SFM(Instrument):
     channel_table = Instrument.control(
         "SOUR:FREQ:CHAN:TABL ?",
         "SOUR:FREQ:CHAN:TABL %s",
-        """A string property controlling which channel table is used,
+        """A string property controlling which channel table is used
 
         Possible selections are:
 
@@ -177,7 +176,7 @@ class SFM(Instrument):
     normal_channel = Instrument.control(
         "SOUR:FREQ:CHAN:NORM ?",
         "SOUR:FREQ:CHAN:NORM %d",
-        """A int property controlling the current selected regular/normal channel number,
+        """A int property controlling the current selected regular/normal channel number
         valid selections are based on the country settings.
         """,
         )
@@ -185,7 +184,7 @@ class SFM(Instrument):
     special_channel = Instrument.control(
         "SOUR:FREQ:CHAN:NORM ?",
         "SOUR:FREQ:CHAN:NORM %d",
-        """A int property controlling the current selected special channel number,
+        """A int property controlling the current selected special channel number
         valid selections are based on the country settings.
         """,
         )
@@ -207,7 +206,7 @@ class SFM(Instrument):
     channel_sweep_start = Instrument.control(
         "SOUR:FREQ:CHAN:STAR?",
         "SOUR:FREQ:CHAN:STAR %g",
-        """A float property controlling the start frequency for channel sweep in Hz,
+        """A float property controlling the start frequency for channel sweep in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -219,7 +218,7 @@ class SFM(Instrument):
     channel_sweep_stop =  Instrument.control(
         "SOUR:FREQ:CHAN:STOP?",
         "SOUR:FREQ:CHAN:STOP %g",
-        """A float property controlling the start frequency for channel sweep in Hz,
+        """A float property controlling the start frequency for channel sweep in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -231,7 +230,7 @@ class SFM(Instrument):
     channel_sweep_step = Instrument.control(
         "SOUR:FREQ:CHAN:STEP?",
         "SOUR:FREQ:CHAN:STEP %g",
-        """A float property controlling the start frequency for  channel sweep in Hz,
+        """A float property controlling the start frequency for  channel sweep in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -243,7 +242,7 @@ class SFM(Instrument):
     cw_frequency = Instrument.control(
         "SOUR:FREQ:CW?",
         "SOUR:FREQ:CW %g",
-        """A float property controlling the CW-frequency in Hz,
+        """A float property controlling the CW-frequency in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -255,7 +254,7 @@ class SFM(Instrument):
     frequency = Instrument.control(
         "SOUR:FREQ:FIXED?",
         "SOUR:FREQ:FIXED %g",
-        """A float property controlling the frequency in Hz,
+        """A float property controlling the frequency in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -267,7 +266,7 @@ class SFM(Instrument):
     frequency_mode = Instrument.control(
         "SOUR:FREQ:MODE?",
         "SOUR:FREQ:MODE %s",
-        """A string property controlling which the unit is used in,
+        """A string property controlling which the unit is used in
 
         Possible selections are:
 
@@ -308,7 +307,7 @@ class SFM(Instrument):
     rf_sweep_center = Instrument.control(
         "SOUR:FREQ:CENTER?",
         "SOUR:FREQ:CENTER %g",
-        """A float property controlling the center frequency for sweep in Hz,
+        """A float property controlling the center frequency for sweep in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -320,7 +319,7 @@ class SFM(Instrument):
     rf_sweep_start = Instrument.control(
         "SOUR:FREQ:STAR?",
         "SOUR:FREQ:STAR %g",
-        """A float property controlling the start frequency for sweep in Hz,
+        """A float property controlling the start frequency for sweep in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -332,7 +331,7 @@ class SFM(Instrument):
     rf_sweep_stop = Instrument.control(
         "SOUR:FREQ:STOP?",
         "SOUR:FREQ:STOP %g",
-        """A float property controlling the stop frequency for sweep in Hz,
+        """A float property controlling the stop frequency for sweep in Hz
 
         * Minimum 5 MHz
         * Maximum 1 GHz
@@ -440,8 +439,8 @@ class SFM(Instrument):
 
     coder_modulation_degree = Instrument.control(
         "SOUR:TEL:MOD:COD:MOD:DEGR?",
-        "SOUR:TEL:MOD:COD:MOD:DEGR %d",
-        """ A int property that controls the fmodulation degree of the identification of the coder
+        "SOUR:TEL:MOD:COD:MOD:DEGR %g",
+        """ A float property that controls the modulation degree of the identification of the coder
 
         valid range: 0 .. 0.9
         """,
@@ -496,6 +495,9 @@ class SFM(Instrument):
 
     #TODO NICAM system (3.6.6.6)
     #TODO SOUND (3.6.6.7)
+    
+    
+    
 
     #Modulation (3.6.6.8)
     modulation_source = Instrument.control(
@@ -518,8 +520,8 @@ class SFM(Instrument):
 
     modulation = Instrument.control(
         "SOUR:MOD:STAT?",
-        "SOUR:MOD:STATE %s",
-        """ A bool property that controls the modulation status,
+        "SOUR:MOD:STAT %s",
+        """ A bool property that controls the modulation status
 
         ======  =======================
         Value   Meaning
@@ -534,13 +536,178 @@ class SFM(Instrument):
         map_values = True,
         )
 
-    #TODO VISION subsystem (3.6.6.9)
+    #VISION subsystem (3.6.6.9)
+    vision_carrier = Instrument.control(
+        "SOUR:TEL:MOD:VIS:CARR:STAT?",
+        "SOUR:TEL:MOD:VIS:CARR:STAT %s",
+        """ A bool property that controls the vision carrier status
+
+        ======  =======================
+        Value   Meaning
+        ======  =======================
+        False   Vision carrier disabled
+        True    Vision carrier enabled
+        ======  =======================
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    vision_carrier_frequency = Instrument.control(
+        "SOUR:TEL:MOD:VIS:CARR:FREQ?",
+        "SOUR:TEL:MOD:VIS:CARR:FREQ %g",
+        """ A float property that controls the frequency of the vision carrier
+
+        valid range: 32 .. 46 MHz
+        """,
+        validator = strict_range,
+        values=[32E6, 46E6],
+        )
+
+    vision_average = Instrument.control(
+        "SOUR:TEL:MOD:VIS:AVER:STAT?",
+        "SOUR:TEL:MOD:VIS:AVER:STAT %s",
+        """ A bool property that controls the average mode for the vision system
+
+        ======  =========================
+        Value   Meaning
+        ======  =========================
+        False   Average function disabled
+        True    Average function enabled
+        ======  =========================
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    vision_balance = Instrument.control(
+        "SOUR:TEL:MOD:VIS:BAL?",
+        "SOUR:TEL:MOD:VIS:BAL %g",
+        """ A float property that controls the balance of the vision modulator
+
+        valid range: -0.5 .. 0.5
+        """,
+        validator = strict_range,
+        values=[-0.5, 0.5],
+        )
+
+    vision_clamping_average = Instrument.control(
+        "SOUR:TEL:MOD:VIS:CLAM:AVER?",
+        "SOUR:TEL:MOD:VIS:CLAM:AVER %g",
+        """ A float property that controls the operation point of the vision modulator
+
+        valid range: -0.5 .. 0.5
+        """,
+        validator = strict_range,
+        values=[-0.5, 0.5],
+        )
+
+    vision_clamping_enabled = Instrument.control(
+        "SOUR:TEL:MOD:VIS:CLAM:STAT?",
+        "SOUR:TEL:MOD:VIS:CLAM:STAT %s",
+        """ A bool property that controls the clamping behavior of the vision modulator,
+
+        ======  =================
+        Value   Meaning
+        ======  =================
+        False   Clamping disabled
+        True    Clamping enabled
+        ======  =================
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    vision_clamping_mode = Instrument.control(
+        "SOUR:TEL:MOD:VIS:CLAM:TYPE?",
+        "SOUR:TEL:MOD:VIS:CLAM:TYPE %s",
+        """ A string property that controls the clamping mode of the vision modulator
+
+        Possible selections are HARD or SOFT
+
+        """,
+        validator = strict_discrete_set,
+        values=["HARD","SOFT"],
+        )
+
+
+    vision_precorrection_enabled = Instrument.control(
+        "SOUR:TEL:MOD:VIS:PREC?",
+        "SOUR:TEL:MOD:VIS:PREC %s",
+        """ A bool property that controls the precorrection behavior of the vision modulator
+
+        ======  ======================
+        Value   Meaning
+        ======  ======================
+        False   Precorrection disabled
+        True    Precorrection enabled
+        ======  ======================
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    vision_residual_carrier_level = Instrument.control(
+        "SOUR:TEL:MOD:VIS:RES?",
+        "SOUR:TEL:MOD:VIS:RES %g",
+        """ A float property that controls the value of the residual carrier
+
+        valid range: 0 .. 0.3 (30%)
+        """,
+        validator = strict_range,
+        values=[-0, 0.3],
+        )
+
+    vision_videosignal_enabled = Instrument.control(
+        "SOUR:TEL:MOD:VIS:VID?",
+        "SOUR:TEL:MOD:VIS:VID %s",
+        """ A bool property that controls if the video signal is switched on or off
+
+        ======  ======================
+        Value   Meaning
+        ======  ======================
+        False   video signal disabled
+        True    video signal enabled
+        ======  ======================
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    vision_sideband_filter_enabled = Instrument.control(
+        "SOUR:TEL:MOD:VIS:VSBF?",
+        "SOUR:TEL:MOD:VIS:VSBF %s",
+        """ A bool property that controls the use of the VSBF (vestigal sideband filter)
+        in the vision modulator
+
+        ======  ======================
+        Value   Meaning
+        ======  ======================
+        False   VSBF disabled
+        True    VSBF enabled
+        ======  ======================
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
 
     #Television subsystem (3.6.6.10)
     lower_sideband = Instrument.control(
         "SOUR:TEL:SID?",
         "SOUR:TEL:SID %s",
-        """ A bool property that controls the use of the lower sideband,
+        """ A bool property that controls the use of the lower sideband
 
         ======  =======================
         Value   Meaning
@@ -581,7 +748,7 @@ class SFM(Instrument):
     TV_standard = Instrument.control(
         "SOUR:TEL:STAN?",
         "SOUR:TEL:STAN %s",
-        """ A string property that controls the type of video standard,
+        """ A string property that controls the type of video standard
 
         Possible values are:
         BG, DK, I, K1, L, M, N
@@ -593,7 +760,9 @@ class SFM(Instrument):
     TV_country = Instrument.control(
         "SOUR:TEL:STAN:COUN?",
         "SOUR:TEL:STAN:COUN %s",
-        """ A string property that controls the country specifics of the video/sound system to be used,
+        """ A string property that controls the country specifics of the
+        video/sound system to be used
+
         Possible values are:
 
         ======  =======================
@@ -735,14 +904,14 @@ class SFM(Instrument):
     display_update = Instrument.control(
         "SYST:DISP:UPDATE:STATE?",
         "SYST:DISP:UPDATE:STATE %s",
-        """ A bool property that controls the status of the displayed values ,
+        """ A bool property that controls the status of the displayed values
 
-        ======  =======================
+        ======  =================================================
         Value   Meaning
-        ======  =======================
+        ======  =================================================
         False   no infomation shown on the display during remote
         True    status info shown on display
-        ======  =======================
+        ======  =================================================
         """,
         validator = strict_discrete_set,
         values={False:0, True:1},
@@ -752,7 +921,7 @@ class SFM(Instrument):
     gpib_address = Instrument.control(
         "SYST:COMM:GPIB:ADDR?",
         "SYST:COMM:GPIB:ADDR %d",
-        """ A int property that controls the GPIB address of the unit,
+        """ A int property that controls the GPIB address of the unit
 
         valid range:  0..30
         """,
@@ -763,7 +932,7 @@ class SFM(Instrument):
     remote_interfaces = Instrument.control(
         "SYST:COM:REM?",
         "SYST:COM:REM %s",
-        """A string property controlling the selection of interfaces for remote control,
+        """A string property controlling the selection of interfaces for remote control
 
         Possible selections are:
 
@@ -793,7 +962,7 @@ class SFM(Instrument):
     serial_bits = Instrument.control(
         "SYST:COMM:SER:BITS?",
         "SYST:COMM:SER:BITS %g",
-        """ A int property that controls the number of bits used in serial communication,
+        """ A int property that controls the number of bits used in serial communication
 
         Possible values are: 7 or 8
         """,
@@ -801,10 +970,10 @@ class SFM(Instrument):
         values=[7,8],
         )
 
-    serial_pace = Instrument.control(
+    serial_flowcontrol = Instrument.control(
         "SYST:COMM:SER:PACE?",
         "SYST:COMM:SER:PACE %s",
-        """ A string property that controls the serial handshake type used in serial communication,
+        """ A string property that controls the serial handshake type used in serial communication
 
         Possible values are:
 
@@ -824,7 +993,7 @@ class SFM(Instrument):
     serial_parity = Instrument.control(
         "SYST:COMM:SER:PAR?",
         "SYST:COMM:SER:PAR %s",
-        """ A string property that controls the parity type used for serial communication ,
+        """ A string property that controls the parity type used for serial communication
 
         Possible values are:
 
@@ -857,8 +1026,8 @@ class SFM(Instrument):
     date = Instrument.measurement(
         "SYST:DATE?",
         """
-        A tuple property for the date of the RTC in the generator,
-        can be set with either a tuple (year,month,day) or using the systemtime from python by passing use_systemtime=True
+        A tuple property for the date of the RTC in the unit
+
         """,
         )
 
@@ -866,8 +1035,8 @@ class SFM(Instrument):
     time = Instrument.measurement(
         "SYST:TIME?",
         """
-        A tuple property for the time of the RTC in the generator,
-        can be set with either a tuple (HH,MM,SS) or using the systemtime from python by passing use_systemtime=True
+        A tuple property for the time of the RTC in the unit
+
         """,
         )
 
@@ -876,7 +1045,7 @@ class SFM(Instrument):
     scale_volt = Instrument.control(
         "UNIT:VOLT?",
         "UNIT:VOLT %s",
-        """ A string property that controls the unit to be used for voltage entries on the unit,
+        """ A string property that controls the unit to be used for voltage entries on the unit
 
         Possible values are:
         AV,FV, PV, NV, UV, MV, V, KV, MAV, GV, TV, PEV, EV,
