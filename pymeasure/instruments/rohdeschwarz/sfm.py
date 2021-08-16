@@ -1,4 +1,4 @@
-#
+ #
 # This file is part of the PyMeasure package.
 #
 # Copyright (c) 2013-2021 PyMeasure Developers
@@ -30,6 +30,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
 
 
 
@@ -352,7 +353,7 @@ class SFM(Instrument):
         values = [1E3, 1E9]
         )
 
-    span = Instrument.control(
+    rf_sweep_span = Instrument.control(
         "SOUR:FREQ:SPAN?",
         "SOUR:FREQ:SPAN %g",
         """A float property controlling the sweep span in Hz,
@@ -1217,7 +1218,8 @@ class SFM(Instrument):
         "STAT:OPER:ENAB %d",
         """
         Content of the enable register of the Status Operation Register
-        valid range: 0...32767
+
+        Valid range: 0...32767
         """,
         cast=int,
         validator = strict_range,
@@ -1251,7 +1253,8 @@ class SFM(Instrument):
         "STAT:QUES:ENAB %d",
         """
         Content of the enable register of the Status Questionable Operation Register
-        valid range 0...32767
+
+        Valid range 0...32767
         """,
         cast=int,
         validator = strict_range,
@@ -1403,7 +1406,7 @@ class SFM(Instrument):
     date = Instrument.measurement(
         "SYST:DATE?",
         """
-        A tuple property for the date of the RTC in the unit
+        A list property for the date of the RTC in the unit
 
         """,
         )
@@ -1412,7 +1415,7 @@ class SFM(Instrument):
     time = Instrument.measurement(
         "SYST:TIME?",
         """
-        A tuple property for the time of the RTC in the unit
+        A list property for the time of the RTC in the unit
 
         """,
         )
@@ -1436,9 +1439,10 @@ class SFM(Instrument):
 
     def check_errors(self):
         """ Read all errors from the instrument."""
+        log.warning("into error routine\n")
         while True:
-            err = self.values(":SYST:ERR?")
-            if int(err[0]) != 0:
-                log.error("R&S SFM: %s: %s \n" % (err[0],err[1]) )
+            err = self.values("SYST:ERR?")
+            if int(err[0]) !=  0:
+                log.error(("R&S SFM: %s: %s" % (err[0],err[1])) + "\n")
             else:
                 break
