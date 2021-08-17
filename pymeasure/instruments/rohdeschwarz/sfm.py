@@ -1128,8 +1128,22 @@ class SFM(Instrument):
         """ A string property that controls the type of video standard
 
         Possible values are:
-        BG, DK, I, K1, L, M, N
-        """,
+
+        ======  ======  ======
+        Value   Lines   System
+        ======  ======  ======
+        BG      625     PAL
+        DK      625     SECAM
+        I       625     PAL
+        K1      625     SECAM
+        L       625     SECAM
+        M       525     NTSC
+        N       625     NTSC
+        ======  ======  ======
+
+        Please confirm with the manual about the details for these settings.
+        """
+        ,
         validator = strict_discrete_set,
         values=["BG","DK","I","K1","L","M","N"],
         )
@@ -1175,7 +1189,7 @@ class SFM(Instrument):
         SAM     South America
         ======  =======
 
-        Please confim with the manual about the details for these settings.
+        Please confirm with the manual about the details for these settings.
         """,
         validator = strict_discrete_set,
         values=["BG_G", "DK_G", "I_G", "L_G", "GERM","BELG", "NETH",
@@ -1261,7 +1275,6 @@ class SFM(Instrument):
         values=[0, 32767]
         )
 
-
     #SYSTEM entries (3.6.8)
     beeper = Instrument.control(
         "SYST:BEEP:STATE?",
@@ -1320,7 +1333,7 @@ class SFM(Instrument):
         ======  =======
         OFF     no remote control
         GPIB    GPIB only enabled
-        SER     RS232 only anbled
+        SER     RS232 only enabled
         BOTH    GPIB & RS232 enabled
         ======  =======
         """,
@@ -1411,7 +1424,6 @@ class SFM(Instrument):
         """,
         )
 
-
     time = Instrument.measurement(
         "SYST:TIME?",
         """
@@ -1419,7 +1431,6 @@ class SFM(Instrument):
 
         """,
         )
-
 
     #Unit subsystem (3.6.9)
     scale_volt = Instrument.control(
@@ -1436,13 +1447,3 @@ class SFM(Instrument):
                  "TV", "PEV", "EV", "DBAV", "DBFV", "DBPV", "DBNV", "DBUV",
                  "DBMV", "DBV", "DBKV", "DBMAv", "DBGV", "DBTV", "DBPEv", "DBEV"],
         )
-
-    def check_errors(self):
-        """ Read all errors from the instrument."""
-        log.warning("into error routine\n")
-        while True:
-            err = self.values("SYST:ERR?")
-            if int(err[0]) !=  0:
-                log.error(("R&S SFM: %s: %s" % (err[0],err[1])) + "\n")
-            else:
-                break
