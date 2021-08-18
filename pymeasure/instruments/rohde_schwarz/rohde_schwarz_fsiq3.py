@@ -39,7 +39,7 @@ class RS_FSIQ3(SpectrumAnalyzer):
 
     frequency_points_values = (500, 500) # TODO: The command to get the sweep points is not available
 
-    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS", "AVER"),
+    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS", "AVER")
 
     trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
     trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"

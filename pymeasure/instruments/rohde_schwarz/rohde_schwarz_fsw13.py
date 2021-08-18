@@ -39,7 +39,7 @@ class RS_FSW13(SpectrumAnalyzer):
 
     frequency_points_values = (101, 100001)
 
-    detector_values = ("APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS"),
+    detector_values = ("APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS")
 
     trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
     trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"
