@@ -198,6 +198,38 @@ Single sweep acquisition and peak value calculation
         dynamic=True        
     )
 
+    average_type = Instrument.control(
+        "AVERage:TYPE?;",  "AVERage:TYPE %s;",
+        """ A string property that enable you to set and read the averaging type.
+        Allowed values are:
+        - "POWER": Sets Power (RMS) averaging
+        - "VOLTAGE": Sets Voltage averaging (linear)
+        - "VIDEO": Sets Log-Power (video) averaging
+        This property can be set.
+        """,
+        validator=strict_discrete_set,
+        values={"POWER" : "RMS",
+                "VOLTAGE" : "SCAL",
+                "VIDEO" : "LOG"
+            },
+        map_values = True,
+        dynamic=True
+    )
+
+    sweep_type = Instrument.control(
+        ":SWEep:TYPE?;",  ":SWEep:TYPE %s;",
+        """ A string property that enable you to set and read the sweep type.
+        Allowed values are:
+        - "": Sets Power (RMS) averaging
+        - "VOLTAGE": Sets Voltage averaging (linear)
+        - "VIDEO": Sets Log-Power (video) averaging
+        This property can be set.
+        """,
+        validator=strict_discrete_set,
+        values=("SWEEP", "FFT"),
+        dynamic=True
+    )
+
     def __init__(self, resourceName, description, **kwargs):
         super(SpectrumAnalyzer, self).__init__(
             resourceName,

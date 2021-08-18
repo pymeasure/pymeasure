@@ -47,6 +47,11 @@ class RS_FSW13(SpectrumAnalyzer):
     input_attenuation_get_command = ":INPut:ATTenuation?;"
     input_attenuation_set_command = ":INPut:ATTenuation %d;"
 
+    average_type_values = {
+        "POWER" : "POW",
+        "VOLTAGE" : "LIN",
+        "VIDEO" : "VID"
+    }
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
