@@ -39,7 +39,7 @@ class RS_FSC6(SpectrumAnalyzer):
 
     frequency_points_values = (631, 631)
 
-    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS"),
+    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS")
 
     input_attenuation_get_command = ":INPut:ATTenuation?;"
     input_attenuation_set_command = ":INPut:ATTenuation %d;"
