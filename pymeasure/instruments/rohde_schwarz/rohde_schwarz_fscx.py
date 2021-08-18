@@ -44,13 +44,15 @@ class RS_FSC6(SpectrumAnalyzer):
     input_attenuation_get_command = ":INPut:ATTenuation?;"
     input_attenuation_set_command = ":INPut:ATTenuation %d;"
 
+    average_type = None # Not supported
+    sweep_type = None # Not supported
+
     def __init__(self, resourceName, description, **kwargs):
         super(RS_FSCx, self).__init__(
             resourceName,
             description,
             **kwargs
         )
-
 
 class RS_FSC3(RS_FSC6):
     """ Variant of Rohde&Schwarz FSC6 Spectrum Analyzer covering up to 3 GHz """

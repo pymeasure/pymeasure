@@ -47,6 +47,13 @@ class RS_FSIQ3(SpectrumAnalyzer):
     input_attenuation_get_command = ":INPut:ATTenuation?;"
     input_attenuation_set_command = ":INPut:ATTenuation %d;"
 
+    average_type_values={
+        "MAX" : "MAX",
+        "VOLTAGE" : "SCAL",
+        "MIN" : "MIN"
+    }
+
+    sweep_type = None # Not supported
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
