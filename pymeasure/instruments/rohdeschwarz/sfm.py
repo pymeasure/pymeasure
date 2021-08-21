@@ -35,6 +35,7 @@ class Sound_Channel(object):
     """
     Class object for the two sound channels
 
+    :meta public:
     """
     modulation_degree = Instrument.control(
         "AUD:DEGR?",
