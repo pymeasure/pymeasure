@@ -31,7 +31,175 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+class Sound_Channel(object):
+    """
+    Class object for the two sound channels
 
+    """
+    modulation_degree = Instrument.control(
+        "AUD:DEGR?",
+        "AUD:DEGR %g",
+        """ A float property that controls the modulation depth for the audi signal
+        (Note: only for the use of AM in Standard L)
+
+        valid range: 0 .. 1 (100%)
+        """,
+        validator = strict_range,
+        values=[0, 1],
+        )
+
+    deviation = Instrument.control(
+        "AUD:DEV?",
+        "AUD:DEV %d",
+        """ A int property that controls deviation of the selected audio signal
+
+        valid range: 0 .. 110 kHz
+        """,
+        validator = strict_range,
+        values=[0, 1.1E5],
+        )
+
+    frequency = Instrument.control(
+        "AUD:FREQ?",
+        "AUD:FREQ %d",
+        """ A int property that controls the frequency of the internal sound generator
+
+        valid range: 300 Hz .. 15 kHz
+        """,
+        validator = strict_range,
+        values=[300, 1.5E4],
+        )
+
+    source = Instrument.control(
+        "FREQ:SOUR?",
+        "FREQ:SOUR %s",
+        """ A bool property for the audio source selection,
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   Internal audio generator(s)
+        True    External signal source
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={False:"INT", True:"EXT"},
+        map_values = True,
+        )
+
+    modulation = Instrument.control(
+        "AUD:FREQ:STAT?",
+        "AUD:FREQ:STAT %s",
+        """ A bool property that controls the audio modulation status
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   modulation disabled
+        True    modulation enabled
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    carrier_frequency = Instrument.control(
+        "CARR:FREQ?",
+        "CARR:FREQ %g",
+        """ A float property that controls the frequency of the sound carrier
+
+        valid range: 32 .. 46 MHz
+        """,
+        validator = strict_range,
+        values=[38.75E6, 52.75E6],
+        )
+
+    carrier_level = Instrument.control(
+        "CARR:LEV?",
+        "CARR:LEV %g",
+        """ A float property that controls the value of the audio carrier
+
+        valid range: -34 .. -6 dB
+        """,
+        validator = strict_range,
+        values=[-34, 6],
+        )
+
+    carrier_enabled = Instrument.control(
+        "CARR:STAT?",
+        "CARR:STAT %s",
+        """ A bool property that controls if the audio carrier is switched on or off
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   audio carrier disabled
+        True    audio carrier enabled
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    preemphasis_time = Instrument.control(
+        "PRE:MODE?",
+        "PRE:MODE %s",
+        """ A bool property that controls if the mode of the preemphasis for the audio signal
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        50      50 us preemphasis
+        75      75 us preemphasis
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={50:"US50",75:"US75"},
+        map_values = True,
+        )
+
+    preemphasis_enabled = Instrument.control(
+        "PRE:STAT?",
+        "PRE:STAT %s",
+        """ A bool property that controls if the preemphasis for the audui is switched on or off
+
+        ======  =======
+        Value   Meaning
+        ======  =======
+        False   audio carrier disabled
+        True    audio carrier enabled
+        ======  =======
+
+        """,
+        validator = strict_discrete_set,
+        values={False:0, True:1},
+        map_values = True,
+        )
+
+    def __init__(self, instrument, number):
+        self.instrument = instrument
+        self.number = number
+
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values("SOUR:TEL:MOD:SOUN%d:%s" % (
+                                      self.number, command), **kwargs)
+    def ask(self, command):
+        self.instrument.ask("SOUR:TEL:MOD:SOUN:%d:%s" % (self.number, command))
+
+    def write(self, command):
+        self.instrument.write("SOUR:TEL:MOD:SOUN:%d:%s" % (self.number, command))
+
+    def read(self):
+        self.instrument.read()
 
 
 class SFM(Instrument):
@@ -47,6 +215,8 @@ class SFM(Instrument):
             includeSCPI = True,
             **kwargs
         )
+        self.sound1=Sound_Channel(self,1)
+        self.sound2=Sound_Channel(self,2)
 
     def calibration(self,number=1,subsystem=None):
         """
@@ -739,151 +909,7 @@ class SFM(Instrument):
 
     #Sound (3.6.6.7)
     #TODO (for all in ext mode MOD-->MOD[1..6] && SOUN--> SOUN[1..2]]
-    sound_modulation_degree = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:AUD:DEGR?",
-        "SOUR:TEL:MOD:SOUN:AUD:DEGR %g",
-        """ A float property that controls the modulation depth for the audi signal
-        (Note: only for the use of AM in Standard L)
 
-        valid range: 0 .. 1 (100%)
-        """,
-        validator = strict_range,
-        values=[0, 1],
-        )
-
-    audio_deviation = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:AUD:DEV?",
-        "SOUR:TEL:MOD:SOUN:AUD:DEV %d",
-        """ A int property that controls deviation of the selected audio signal
-
-        valid range: 0 .. 110 kHz
-        """,
-        validator = strict_range,
-        values=[0, 1.1E5],
-        )
-
-    audio_frequency = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:AUD:FREQ?",
-        "SOUR:TEL:MOD:SOUN:AUD:FREQ %d",
-        """ A int property that controls the frequency of the internal sound generator
-
-        valid range: 300 Hz .. 15 kHz
-        """,
-        validator = strict_range,
-        values=[300, 1.5E4],
-        )
-
-    audio_source = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:AUD:FREQ:SOUR?",
-        "SOUR:TEL:MOD:SOUN:AUD:FREQ:SOUR %s",
-        """ A bool property for the audio source selection,
-
-        ======  =======
-        Value   Meaning
-        ======  =======
-        False   Internal audio generator(s)
-        True    External signal source
-        ======  =======
-
-        """,
-        validator = strict_discrete_set,
-        values={False:"INT", True:"EXT"},
-        map_values = True,
-        )
-
-    audio_modulation = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:AUD:FREQ:STAT?",
-        "SOUR:TEL:MOD:SOUN:AUD:FREQ:STAT %s",
-        """ A bool property that controls the audio modulation status
-
-        ======  =======
-        Value   Meaning
-        ======  =======
-        False   modulation disabled
-        True    modulation enabled
-        ======  =======
-
-        """,
-        validator = strict_discrete_set,
-        values={False:0, True:1},
-        map_values = True,
-        )
-
-    audio_carrier_frequency = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:CARR:FREQ?",
-        "SOUR:TEL:MOD:SOUN:CARR:FREQ %g",
-        """ A float property that controls the frequency of the sound carrier
-
-        valid range: 32 .. 46 MHz
-        """,
-        validator = strict_range,
-        values=[38.75E6, 52.75E6],
-        )
-
-    audio_carrier_level = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:CARR:LEV?",
-        "SOUR:TEL:MOD:SOUN:CARR:LEV %g",
-        """ A float property that controls the value of the audio carrier
-
-        valid range: -34 .. -6 dB
-        """,
-        validator = strict_range,
-        values=[-34, 6],
-        )
-
-    audio_carrier_enabled = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:CARR:STAT?",
-        "SOUR:TEL:MOD:SOUN:CARR:STAT %s",
-        """ A bool property that controls if the audio carrier is switched on or off
-
-        ======  =======
-        Value   Meaning
-        ======  =======
-        False   audio carrier disabled
-        True    audio carrier enabled
-        ======  =======
-
-        """,
-        validator = strict_discrete_set,
-        values={False:0, True:1},
-        map_values = True,
-        )
-
-    audio_preemphasis_time = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:PRE:MODE?",
-        "SOUR:TEL:MOD:SOUN:PRE:MODE %s",
-        """ A bool property that controls if the mode of the preemphasis for the audio signal
-
-        ======  =======
-        Value   Meaning
-        ======  =======
-        50      50 us preemphasis
-        75      75 us preemphasis
-        ======  =======
-
-        """,
-        validator = strict_discrete_set,
-        values={50:"US50",75:"US75"},
-        map_values = True,
-        )
-
-    audio_preemphasis_enabled = Instrument.control(
-        "SOUR:TEL:MOD:SOUN:PRE:STAT?",
-        "SOUR:TEL:MOD:SOUN:PRE:STAT %s",
-        """ A bool property that controls if the preemphasis for the audui is switched on or off
-
-        ======  =======
-        Value   Meaning
-        ======  =======
-        False   audio carrier disabled
-        True    audio carrier enabled
-        ======  =======
-
-        """,
-        validator = strict_discrete_set,
-        values={False:0, True:1},
-        map_values = True,
-        )
 
     #Modulation (3.6.6.8)
     #TODO  MOD-->MOD[1..6]
