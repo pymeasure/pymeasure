@@ -35,7 +35,6 @@ class Sound_Channel(object):
     """
     Class object for the two sound channels
 
-    :meta public:
     """
     modulation_degree = Instrument.control(
         "AUD:DEGR?",
@@ -773,7 +772,7 @@ class SFM(Instrument):
     nicam_bit_error_rate = Instrument.control(
         "SOUR:TEL:MOD:NIC:BIT?",
         "SOUR:TEL:MOD:NIC:BIT %g",
-        """ A float property that controls the additional data in the NICAM  modulator
+        """ A float property that controls the artifical bit error rate.
 
         valid range: 1.2E-7 .. 2E-3
         """,
@@ -907,10 +906,6 @@ class SFM(Instrument):
         values={1:"TST1", 2:"TST2", 3:"TST3"},
         map_values = True,
         )
-
-    #Sound (3.6.6.7)
-    #TODO (for all in ext mode MOD-->MOD[1..6] && SOUN--> SOUN[1..2]]
-
 
     #Modulation (3.6.6.8)
     #TODO  MOD-->MOD[1..6]
