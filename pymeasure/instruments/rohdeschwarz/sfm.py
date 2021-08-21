@@ -1,4 +1,4 @@
- #
+#
 # This file is part of the PyMeasure package.
 #
 # Copyright (c) 2013-2021 PyMeasure Developers
@@ -64,20 +64,22 @@ class SFM(Instrument):
 
     #INST (Manual 3.6.4)
     system_number = Instrument.control(
-        "INST:SEL ?",
-        "INST:SEL: SYS%d",
+        "INST:SEL?",
+        "INST:SEL:%s",
         """A int property for the selected systems (if more then 1 available)
 
         * Minimum 1
         * Maximum 6
 
         """,
-        validator = strict_range,
-        values = [1, 6],
+        validator = strict_discrete_set,
+        values = {1:"SYS1",2:"SYS2",3:"SYS3",4:"SYS4",5:"SYS5",6:"SYS6"},
+        map_values=True,
         check_set_errors=True,
         )
 
     #ROUTE (Manual 3.6.5)
+    #TODO: CHAN-->CHAN[1..6]
     R75_out = Instrument.control(
         "ROUT:CHAN:OUTP:IMP?",
         "ROUT:CHAN:OUTP:IMP %s",
@@ -129,7 +131,7 @@ class SFM(Instrument):
         values={False:"INT", True:"EXT"},
         map_values = True,
         )
-
+    #TODO: VID-->VID[1..6]
     ext_vid_connector = Instrument.control(
         "ROUT:TEL:VID:EXT?",
         "ROUT:TEL:VID:EXT %s",
@@ -173,7 +175,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values = ["DEF","USR1","USR2","USR3","USR4","USR5"],
         )
-
+    #TODO NORM--> NORM[1..6]
     normal_channel = Instrument.control(
         "SOUR:FREQ:CHAN:NORM ?",
         "SOUR:FREQ:CHAN:NORM %d",
@@ -182,21 +184,23 @@ class SFM(Instrument):
         """,
         )
 
+    #TODO SPEC--> SPEC[1..6]
     special_channel = Instrument.control(
-        "SOUR:FREQ:CHAN:NORM ?",
-        "SOUR:FREQ:CHAN:NORM %d",
+        "SOUR:FREQ:CHAN:SPEC ?",
+        "SOUR:FREQ:CHAN:SPEC %d",
         """A int property controlling the current selected special channel number
         valid selections are based on the country settings.
         """,
         )
 
+    #TODO REL --> REL[1..6]
     def channel_up_relative(self):
         """
         Increases the outpout frequency to the next higher channel/special channel
         based on the current country settings
         """
         Instrument.write(self,"SOUR:CHAN:REL UP")
-
+    #TODO REL --> REL[1..6]
     def channel_down_relative(self):
         """
         Decreases the outpout frequency to the next low channel/special channel
@@ -239,7 +243,7 @@ class SFM(Instrument):
         validator = strict_range,
         values = [5E6, 1E9]
         )
-
+    #TODO CW --> CW[1..6]
     cw_frequency = Instrument.control(
         "SOUR:FREQ:CW?",
         "SOUR:FREQ:CW %g",
@@ -251,7 +255,7 @@ class SFM(Instrument):
         validator = strict_range,
         values = [5E6, 1E9]
         )
-
+    #TODO FIXED --> FIXED[1..6]
     frequency = Instrument.control(
         "SOUR:FREQ:FIXED?",
         "SOUR:FREQ:FIXED %g",
@@ -366,6 +370,7 @@ class SFM(Instrument):
         )
 
     #Level (3.6.6.2)
+    #TODO POW-->POW[1..6]
     level = Instrument.control(
         "SOUR:POW:LEV?",
         "SOUR:POW:LEV %g DBM",
@@ -378,6 +383,7 @@ class SFM(Instrument):
         values = [-99, 10],
         )
 
+    #TODO POW-->POW[1..6]
     level_mode = Instrument.control(
         "SOUR:POW:LEV:MODE?",
         "SOUR:POW:LEV:MODE %s",
@@ -401,6 +407,7 @@ class SFM(Instrument):
         values = ["NORM","LOWN","CONT","LOWD"]
         )
 
+    #TODO POW-->POW[1..6]
     rf_out = Instrument.control(
         "SOUR:POW:STAT?",
         "SOUR:POW:STATE %s",
@@ -421,6 +428,7 @@ class SFM(Instrument):
     #for later add SOUR:TEL:IMOD (3.6.6.3 Intermodulation subsystem)
 
     #Coder (3.6.6.4)
+    #TODO (for all in coder MOD-->MOD[1..6])
     def coder_adjust(self):
         """
         Starts the automatic setting of the differential deviation
@@ -472,6 +480,7 @@ class SFM(Instrument):
         )
 
     #External modulation (3.6.6.5)
+    #TODO (for all in ext mode MOD-->MOD[1..6])
     external_modulation_power = Instrument.control(
         "SOUR:TEL:MOD:EXT:POW?",
         "SOUR:TEL:MOD:EXT:POW %d",
@@ -495,6 +504,7 @@ class SFM(Instrument):
         )
 
     #NICAM system (3.6.6.6)
+    #TODO (for all in NICAM MOD-->MOD[1..6])
     nicam_mode = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:MODE?",
         "SOUR:TEL:MOD:NIC:AUD:MODE %s",
@@ -567,7 +577,6 @@ class SFM(Instrument):
         cast=int
         )
 
-
     nicam_additional_bits = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:ADD?",
         "SOUR:TEL:MOD:NIC:AUD:ADD %d",
@@ -617,7 +626,6 @@ class SFM(Instrument):
         values={False:0, True:1},
         map_values = True,
         )
-
 
     nicam_carrier_frequency = Instrument.control(
         "SOUR:TEL:MOD:NIC:CARR:FREQ?",
@@ -730,6 +738,7 @@ class SFM(Instrument):
         )
 
     #Sound (3.6.6.7)
+    #TODO (for all in ext mode MOD-->MOD[1..6] && SOUN--> SOUN[1..2]]
     sound_modulation_degree = Instrument.control(
         "SOUR:TEL:MOD:SOUN:AUD:DEGR?",
         "SOUR:TEL:MOD:SOUN:AUD:DEGR %g",
@@ -877,6 +886,7 @@ class SFM(Instrument):
         )
 
     #Modulation (3.6.6.8)
+    #TODO  MOD-->MOD[1..6]
     modulation_source = Instrument.control(
         "SOUR:MOD:SOUR?",
         "SOUR:MOD:SOUR %s",
@@ -914,6 +924,7 @@ class SFM(Instrument):
         )
 
     #VISION subsystem (3.6.6.9)
+    #TODO  MOD-->MOD[1..6]
     vision_carrier = Instrument.control(
         "SOUR:TEL:MOD:VIS:CARR:STAT?",
         "SOUR:TEL:MOD:VIS:CARR:STAT %s",
@@ -1081,6 +1092,7 @@ class SFM(Instrument):
         )
 
     #Television subsystem (3.6.6.10)
+    #TODO  SID-->SID[1..6]
     lower_sideband = Instrument.control(
         "SOUR:TEL:SID?",
         "SOUR:TEL:SID %s",
@@ -1099,6 +1111,7 @@ class SFM(Instrument):
         map_values = True,
         )
 
+    #TODO  SOUN-->SOUN[1..6]
     sound_mode = Instrument.control(
         "SOUR:TEL:SOUN?",
         "SOUR:TEL:SOUN %s",
@@ -1121,7 +1134,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values=["MONO","PIL","BTSC","STER","DUAL","NIC"],
         )
-
+    #TODO STAN--> STAN[1..6]
     TV_standard = Instrument.control(
         "SOUR:TEL:STAN?",
         "SOUR:TEL:STAN %s",
@@ -1147,7 +1160,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values=["BG","DK","I","K1","L","M","N"],
         )
-
+    #TODO STAN--> STAN[1..6]
     TV_country = Instrument.control(
         "SOUR:TEL:STAN:COUN?",
         "SOUR:TEL:STAN:COUN %s",
@@ -1199,6 +1212,7 @@ class SFM(Instrument):
             )
 
     #output voltage (3.6.6.12)
+    #TODO  LEV-->LEV[1..6]
     output_voltage = Instrument.control(
         "SOUR:VOLT:LEV?",
         "SOUR:VOLT:LEV %g",
@@ -1431,6 +1445,22 @@ class SFM(Instrument):
 
         """,
         )
+
+    basic_info = Instrument.measurement(
+        "SYST:INF:BAS?",
+        """
+        A String property containing infomation about the hardware modules installed in the unit
+
+        """,
+        )
+
+    #TODO: SUBS --> SUB[1..6]
+    subsystem_info = Instrument.measurement(
+        "SYST:INF:SUBS?",
+        """
+        A String property containing infomation about the system configuration
+        """,
+)
 
     #Unit subsystem (3.6.9)
     scale_volt = Instrument.control(
