@@ -98,8 +98,7 @@ class Status_bits(ctypes.LittleEndianStructure):
         Returns a pretty formatted (human readable) string showing the status of the instrument
 
         """
-        inv_modes = {v: k for k, v in HP3478A.MODES.items()}
-        cur_mode = inv_modes["F" + str(self.function)]
+        cur_mode = HP3478A.INV_MODES["F" + str(self.function)]
         cur_range = list(HP3478A.RANGES[cur_mode].keys())[self.range - 1]
         if cur_range >= 1E6:
             r_str = str(cur_range / 1E6) + ' M'
@@ -111,18 +110,24 @@ class Status_bits(ctypes.LittleEndianStructure):
             r_str=str(cur_range) + ' '
         return (
             "function: {}, range: {}, digits: {}\
-                \nStatus:\n  internal | external trigger: {} | {}\n  Auto ranging: {}\n  AutoZero: {}\
-                \n  50Hz mode: {}\n  Front/Rear selection: {}\n  Calibration enable: {}\
+                \nStatus:\n  internal | external trigger: {} | {}\
+                \n  Auto ranging: {}\n  AutoZero: {}\
+                \n  50Hz mode: {}\n  Front/Rear selection: {} \
+                \n  Calibration enable: {}\
                 \nSerial poll mask (SRQ):\n  SRQ for Data ready: {}\
-                \n  SRQ for Syntax error: {}\n  SRQ for Internal error: {}\n  SRQ Front Panel button: {}\
+                \n  SRQ for Syntax error: {}\n  SRQ for Internal error: {}\
+                \n  SRQ Front Panel button: {}\
                 \n  SRQ for Cal err: {}\n  SQR for Power on: {}\
-                \nError information: \n Calibration: {}  RAM: {}  ROM: {}  AD Slope: {} AD: {} AD-Link: {} \
+                \nError information: \n  Calibration: {} \n  RAM: {}\n  ROM: {}\
+                \n  AD Slope: {}\n  AD: {}\n  AD-Link: {} \
                 \nDAC value: {}".format(
-                cur_mode, r_str, 6-self.digits, self.int_trig, self.ext_trig, self.auto_range,
-                self.auto_zero, self.fifty_hz, self.front_rear , self.cal_enable,
-                self.SRQ_data_rdy, self.SRQ_syntax_error, self.SRQ_internal_error, self.SRQ_front_panel, self.SRQ_cal_error, self.SRQ_PON,
-                self.ERR_cal, self.ERR_RAM, self.ERR_ROM, self.ERR_slope, self.ERR_AD, self.ERR_AD_Link,
-                self.DAC_value)
+                cur_mode, r_str, 6-self.digits, self.int_trig, self.ext_trig,
+                self.auto_range, self.auto_zero, self.fifty_hz,
+                self.front_rear , self.cal_enable, self.SRQ_data_rdy,
+                self.SRQ_syntax_error, self.SRQ_internal_error,
+                self.SRQ_front_panel, self.SRQ_cal_error, self.SRQ_PON,
+                self.ERR_cal, self.ERR_RAM, self.ERR_ROM, self.ERR_slope,
+                self.ERR_AD, self.ERR_AD_Link, self.DAC_value)
             )
 
 class Status(ctypes.Union):
@@ -160,6 +165,8 @@ class HP3478A(Instrument):
            "ACI": "F6",
            "Rext": "F7",
            }
+
+    INV_MODES = {v: k for k, v in MODES.items()}
 
     RANGES={"DCV": {3E-2: "R-2", 3E-1: "R-1",3: "R0",30: "R1",300:"R2",
                     "auto": "RA"},
@@ -203,7 +210,6 @@ class HP3478A(Instrument):
         Syntax_error = 4
         Data_ready = 1
 
-    @staticmethod
     def get_status(self):
         """Method to read the status bytes from the instrument
         :return current_status: a byte array representing the instrument status
@@ -232,48 +238,42 @@ class HP3478A(Instrument):
             return getattr(ret_val.b,field)
 
     @classmethod
-    def decode_mode(cls,status_bytes):
+    def decode_mode(cls,function):
         """Method to decode current mode
 
-        :param status_bytes: list of bytes to be decoded
+        :param function: int indicating the measurement function selected
         :return cur_mode: string with the current measurement mode
         :rtype cur_mode: str
 
         """
-        cur_stat = Status(Status_bytes(*status_bytes))
-        function = cur_stat.b.function
-        inv_modes = {v: k for k, v in cls.MODES.items()}
-        cur_mode = inv_modes["F"+str(function)]
+        cur_mode = cls.INV_MODES["F"+str(function)]
         return cur_mode
 
     @classmethod
-    def decode_range(cls,status_bytes):
+    def decode_range(cls,range_undecoded,function):
         """Method to decode current range
 
-        :param status_bytes: list of bytes to be decoded
+        :param range_undecoded: int to be decoded
+        :param function: int indicating the measurement function selected
         :return cur_range: float value repesenting the active measurment range
         :rtype cur_range: float
 
         """
-        cur_stat = Status(Status_bytes(*status_bytes))
-        function = cur_stat.b.function
-        inv_modes = {v: k for k, v in cls.MODES.items()}
-        cur_mode = inv_modes["F"+str(function)]
-        rnge = cur_stat.b.range
+        cur_mode = cls.INV_MODES["F"+str(function)]
         if cur_mode == "DCV":
             correction_factor= 3
         elif cur_mode in ["ACV", "ACI", "DCI"]:
             correction_factor = 2
         else:
             correction_factor=0
-        cur_range = 3*math.pow(10,rnge-correction_factor)
+        cur_range = 3*math.pow(10,range_undecoded - correction_factor)
         return cur_range
 
     @staticmethod
     def decode_trigger(status_bytes):
         """Method to decode trigger mode
 
-        :param status_bytes:   list of bytes to be decoded
+        :param status_bytes: list of bytes to be decoded
         :return trigger_mode: string with the current trigger mode
         :rtype trigger_mode: str
 
@@ -295,7 +295,7 @@ class HP3478A(Instrument):
     def active_connectors(self):
         """Return selected connectors ("front"/"back"), based on front-panel selector switch
         """
-        selection = self.decode_status(self.get_status(self),"front_rear")
+        selection = self.status.front_rear
         if selection == 1:
             return "front"
         else:
@@ -314,7 +314,7 @@ class HP3478A(Instrument):
 
         The range can be set with the :py:attr:`range` property
         """
-        selection = self.decode_status(self.get_status(self),"auto_range")
+        selection = self.status.auto_range
         return bool(selection)
 
     @property
@@ -329,7 +329,7 @@ class HP3478A(Instrument):
         ======  ==================
 
         """
-        selection = self.decode_status(self.get_status(self),"auto_zero")
+        selection = self.status.auto_zero
         return bool(selection)
 
     @auto_zero_enabled.setter
@@ -351,7 +351,7 @@ class HP3478A(Instrument):
         ======  ===================
 
         """
-        selection = self.decode_status(self.get_status(self),"cal_enable")
+        selection = self.status.cal_enable
         return bool(selection)
 
     def check_errors(self):
@@ -392,7 +392,8 @@ class HP3478A(Instrument):
 
     display_text_no_symbol = Instrument.setting(
         "D3%s",
-        """Displays up to 12 upper-case ASCII characters on the display and disables all symbols on the display.
+        """Displays up to 12 upper-case ASCII characters on the display and
+        disables all symbols on the display.
 
         """,
         set_process = (lambda x: str.upper(x[0:12])),
@@ -449,7 +450,8 @@ class HP3478A(Instrument):
     measure_Rext = Instrument.measurement(
         MODES["Rext"],
         """
-        Returns the measured value for extended resistance mode (>30M, 2-wire) resistance as a float in Ohm.
+        Returns the measured value for extended resistance mode (>30M, 2-wire)
+        resistance as a float in Ohm.
         """,
         )
 
@@ -470,7 +472,7 @@ class HP3478A(Instrument):
         Rext  extended resistance method (requires additional 10 M resistor)
         ====  ==============================================================
         """
-        current_mode = self.decode_mode(self.get_status(self))
+        current_mode = self.decode_mode(self.status.function)
         return current_mode
 
     @mode.setter
@@ -497,7 +499,7 @@ class HP3478A(Instrument):
         ====  =======================================
 
         """
-        current_range = self.decode_range(self.get_status(self))
+        current_range = self.decode_range(self.status.range, self.status.function)
         return current_range
 
     @range.setter
@@ -513,7 +515,7 @@ class HP3478A(Instrument):
 
         Possible values are 3,4 or 5 (for 3 1/2, 4 1/2 or 5 1/2 digits of resolution)
         """
-        number_of_digit = 6-self.decode_status(self.get_status(self),"digits")
+        number_of_digit = 6-self.status.digits
         return number_of_digit
 
     @resolution.setter
@@ -527,7 +529,7 @@ class HP3478A(Instrument):
         Returns an object representing the current status of the unit.
 
         """
-        current_status = self.decode_status(self.get_status(self))
+        current_status = self.decode_status(self.get_status())
         return current_status
 
     @property
@@ -547,7 +549,7 @@ class HP3478A(Instrument):
         =========  ==========================
 
         """
-        mask = self.decode_status(self.get_status(self),"SRQ")
+        mask = self.decode_status(self.get_status(),"SRQ")
         return mask
 
     @SRQ_mask.setter
@@ -572,7 +574,7 @@ class HP3478A(Instrument):
         ========  ===========================================
 
         """
-        trigger = self.decode_trigger(self.get_status(self))
+        trigger = self.decode_trigger(self.get_status())
         return trigger
 
     @trigger.setter
