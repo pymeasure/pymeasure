@@ -100,7 +100,6 @@ class Status_bits(ctypes.LittleEndianStructure):
         """
         inv_modes = {v: k for k, v in HP3478A.MODES.items()}
         cur_mode = inv_modes["F" + str(self.function)]
-        #TODO: Fix the range
         cur_range = list(HP3478A.RANGES[cur_mode].keys())[self.range - 1]
         if cur_range >= 1E6:
             r_str = str(cur_range / 1E6) + ' M'
@@ -140,9 +139,6 @@ class HP3478A(Instrument):
     """ Represents the Hewlett Packard 3748A 5 1/2 digit multimeter
     and provides a high-level interface for interacting
     with the instrument.
-
-    As this unit predates SCPI some tricks are required to get this working
-
     """
 
     def __init__(self, resourceName, **kwargs):
@@ -203,7 +199,7 @@ class HP3478A(Instrument):
         Power_on = 128
         Calibration = 32
         Front_panel_button = 16
-        internal_error = 8
+        Internal_error = 8
         Syntax_error = 4
         Data_ready = 1
 
@@ -223,7 +219,8 @@ class HP3478A(Instrument):
         """Method to handle the decoding of the status bytes into something meaningfull
 
         :param status_bytes: list of bytes to be decoded
-        :return ret_val:
+        :param field: name of field to be returned
+        :return ret_val: int status value
 
         """
         ret_val = Status(Status_bytes(*status_bytes))
@@ -238,7 +235,7 @@ class HP3478A(Instrument):
     def decode_mode(cls,status_bytes):
         """Method to decode current mode
 
-        :param status_bytes:   list of bytes to be decoded
+        :param status_bytes: list of bytes to be decoded
         :return cur_mode: string with the current measurement mode
         :rtype cur_mode: str
 
@@ -265,11 +262,7 @@ class HP3478A(Instrument):
         rnge = cur_stat.b.range
         if cur_mode == "DCV":
             correction_factor= 3
-        elif cur_mode == "ACV":
-            correction_factor = 2
-        elif cur_mode == "ACI":
-            correction_factor = 2
-        elif cur_mode == "DCI":
+        elif cur_mode in ["ACV", "ACI", "DCI"]:
             correction_factor = 2
         else:
             correction_factor=0
@@ -311,67 +304,55 @@ class HP3478A(Instrument):
     @property
     def auto_range_enabled(self):
         """ Property describing the auto-ranging status
-                
+
         ======  ============================================
         Value   Status
         ======  ============================================
         True    auto-range function activated
         False   manual range selection / auto-range disabled
         ======  ============================================
-        
+
         The range can be set with the :py:attr:`range` property
         """
         selection = self.decode_status(self.get_status(self),"auto_range")
-        if selection == 1:
-            return True
-        else:
-            return False
+        return bool(selection)
 
     @property
     def auto_zero_enabled(self):
         """ Return auto-zero status, this property can be set
-        
+
         ======  ==================
         Value   Status
         ======  ==================
         True    auto-zero active
         False   auto-zero disabled
         ======  ==================
-        
+
         """
         selection = self.decode_status(self.get_status(self),"auto_zero")
-        if selection == 1:
-            return True
-        else:
-            return False
+        return bool(selection)
 
     @auto_zero_enabled.setter
     def auto_zero_enabled(self,value):
-        if value is True:
-            az_set = 1
-        if value is False:
-            az_set = 0
+        az_set = int(value)
         AZ_str = "Z" + str(int(strict_discrete_set(az_set, [0,1])))
         self.write(AZ_str)
 
     @property
     def calibration_enabled(self):
-        """Return calibration enable switch setting ,
+        """Return calibration enable switch setting,
         based on front-panel selector switch
-        
+
         ======  ===================
         Value   Status
         ======  ===================
         True    calbration possible
         False   calibration locked
         ======  ===================
-        
+
         """
         selection = self.decode_status(self.get_status(self),"cal_enable")
-        if selection == 1:
-            return True
-        else:
-            return False
+        return bool(selection)
 
     def check_errors(self):
         """
@@ -390,21 +371,21 @@ class HP3478A(Instrument):
     error_status = Instrument.measurement(
         "E",
         """Checks the error status register
-        
+
         """,
         cast = int,
         )
 
     def display_reset(self):
         """ Reset the display of the instrument.
-        
+
         """
         self.write("D1")
 
     display_text = Instrument.setting(
         "D2%s",
         """Displays up to 12 upper-case ASCII characters on the display.
-        
+
         """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
@@ -412,7 +393,7 @@ class HP3478A(Instrument):
     display_text_no_symbol = Instrument.setting(
         "D3%s",
         """Displays up to 12 upper-case ASCII characters on the display and disables all symbols on the display.
-        
+
         """,
         set_process = (lambda x: str.upper(x[0:12])),
         )
@@ -420,63 +401,63 @@ class HP3478A(Instrument):
     measure_ACI = Instrument.measurement(
         MODES["ACI"],
         """
-        Returns the measured value for AC current as a float
-        
+        Returns the measured value for AC current as a float in A.
+
         """,
         )
 
     measure_ACV = Instrument.measurement(
         MODES["ACV"],
         """
-        Returns the measured value for AC Voltage as a float
-        
+        Returns the measured value for AC Voltage as a float in V.
+
         """,
         )
 
     measure_DCI = Instrument.measurement(
         MODES["DCI"],
         """
-        Returns the measured value for DC current as a float
-        
+        Returns the measured value for DC current as a float in A.
+
         """,
         )
 
     measure_DCV = Instrument.measurement(
         MODES["DCV"],
         """
-        Returns the measured value for DC Voltage as a float
-        
+        Returns the measured value for DC Voltage as a float in V.
+
         """,
         )
 
     measure_R2W = Instrument.measurement(
         MODES["R2W"],
         """
-        Returns the measured value for 2-wire resistance as a float
-        
+        Returns the measured value for 2-wire resistance as a float in Ohm.
+
         """,
         )
 
     measure_R4W = Instrument.measurement(
         MODES["R4W"],
         """
-        Returns the measured value for 4-wire resistance as a float
-        
+        Returns the measured value for 4-wire resistance as a float in Ohm.
+
         """,
         )
 
     measure_Rext = Instrument.measurement(
         MODES["Rext"],
         """
-        Returns the measured value for extended resistance mode (>30M, 2-wire) resistance as a float
+        Returns the measured value for extended resistance mode (>30M, 2-wire) resistance as a float in Ohm.
         """,
         )
 
     @property
     def mode(self):
         """Return current selected measurement mode, this propery can be set.
-        Allowed values are 
-        
+        Allowed values are
+
         ====  ==============================================================
         Mode  Function
         ====  ==============================================================
@@ -500,7 +481,7 @@ class HP3478A(Instrument):
     @property
     def range(self):
         """Returns the current measurement range, this property can be set.
-        
+
         Valid values are :
 
         ====  =======================================
@@ -522,7 +503,7 @@ class HP3478A(Instrument):
     @range.setter
     def range(self,value):
         cur_mode = self.mode
-        strict_discrete_set(value, self.RANGES[cur_mode])
+        value = strict_discrete_set(value, self.RANGES[cur_mode])
         set_range = self.RANGES[cur_mode][value]
         self.write(set_range)
 
@@ -530,7 +511,7 @@ class HP3478A(Instrument):
     def resolution(self):
         """Returns current selected resolution, this property can be set.
 
-        Possible values are 3,4 or 5
+        Possible values are 3,4 or 5 (for 3 1/2, 4 1/2 or 5 1/2 digits of resolution)
         """
         number_of_digit = 6-self.decode_status(self.get_status(self),"digits")
         return number_of_digit
@@ -543,8 +524,8 @@ class HP3478A(Instrument):
     @property
     def status(self):
         """
-        Returns a object representing the current status of the unit.
-        
+        Returns an object representing the current status of the unit.
+
         """
         current_status = self.decode_status(self.get_status(self))
         return current_status
@@ -555,15 +536,15 @@ class HP3478A(Instrument):
 
         bit assigment for SRQ:
 
-        ========  ==========================
-        Bit(dec)  Description
-        ========  ==========================
-         1        SRQ when Data ready
-         4        SRQ when Syntax error
-         8        SRQ when internal error
-        16        front panel SQR button
-        32        SRQ by invalid calibration
-        ========  ==========================
+        =========  ==========================
+        Bit (dec)  Description
+        =========  ==========================
+         1         SRQ when Data ready
+         4         SRQ when Syntax error
+         8         SRQ when internal error
+        16         front panel SQR button
+        32         SRQ by invalid calibration
+        =========  ==========================
 
         """
         mask = self.decode_status(self.get_status(self),"SRQ")
