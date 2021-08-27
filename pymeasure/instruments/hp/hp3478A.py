@@ -220,8 +220,8 @@ class HP3478A(Instrument):
         return current_status
 
     #decoder functions
-    @staticmethod
-    def decode_status(status_bytes, field=None):
+    @classmethod
+    def decode_status(cls,status_bytes, field=None):
         """Method to handle the decoding of the status bytes into something meaningfull
 
         :param status_bytes: list of bytes to be decoded
@@ -233,7 +233,7 @@ class HP3478A(Instrument):
         if field is None:
             return ret_val.b
         elif field == "SRQ":
-            return HP3478A.SRQ(getattr(ret_val.B, "byte3"))
+            return cls.SRQ(getattr(ret_val.B, "byte3"))
         else:
             return getattr(ret_val.b,field)
 
@@ -554,7 +554,7 @@ class HP3478A(Instrument):
 
     @SRQ_mask.setter
     def SRQ_mask(self,value):
-        mask_str = "M" + str(oct(strict_range(value, [0,63])))
+        mask_str = "M" + format(strict_range(value, [0,63]),"2o")
         self.write(mask_str)
 
     @property
