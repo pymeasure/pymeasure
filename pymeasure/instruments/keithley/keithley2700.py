@@ -248,8 +248,8 @@ class Keithley2700(Instrument, KeithleyBuffer):
             columns = new_columns
 
         # Determine channel number from rows and columns number.
-        rows = np.array(rows)
-        columns = np.array(columns)
+        rows = np.array(rows, ndmin=1)
+        columns = np.array(columns, ndmin=1)
 
         channels = (rows - 1) * 8 + columns
 
