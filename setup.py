@@ -41,7 +41,8 @@ setup(
         "pandas >= 0.14",
         "pyvisa >= 1.8",
         "pyserial >= 2.7",
-        "pyqtgraph >= 0.9.10"
+        "pyqtgraph >= 0.9.10",
+        "PyQt5"
     ],
     extras_require={
         'matplotlib': ['matplotlib >= 2.0.2'],
@@ -58,6 +59,7 @@ setup(
         'pytest >= 2.9.1',
         'pytest-qt >= 2.4.0',
         'pyvisa-sim >= 0.4.0',
+        'tox>=3.24'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
