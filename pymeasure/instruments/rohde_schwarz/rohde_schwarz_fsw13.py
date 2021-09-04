@@ -39,7 +39,7 @@ class RS_FSW13(SpectrumAnalyzer):
 
     frequency_points_values = (101, 100001)
 
-    detector_values = ("APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS"),
+    detector_values = ("APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS")
 
     trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
     trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"
@@ -47,6 +47,11 @@ class RS_FSW13(SpectrumAnalyzer):
     input_attenuation_get_command = ":INPut:ATTenuation?;"
     input_attenuation_set_command = ":INPut:ATTenuation %d;"
 
+    average_type_values = {
+        "POWER" : "POW",
+        "VOLTAGE" : "LIN",
+        "VIDEO" : "VID"
+    }
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(

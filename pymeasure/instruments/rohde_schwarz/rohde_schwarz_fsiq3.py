@@ -39,7 +39,7 @@ class RS_FSIQ3(SpectrumAnalyzer):
 
     frequency_points_values = (500, 500) # TODO: The command to get the sweep points is not available
 
-    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS", "AVER"),
+    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS", "AVER")
 
     trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
     trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"
@@ -47,6 +47,13 @@ class RS_FSIQ3(SpectrumAnalyzer):
     input_attenuation_get_command = ":INPut:ATTenuation?;"
     input_attenuation_set_command = ":INPut:ATTenuation %d;"
 
+    average_type_values={
+        "MAX" : "MAX",
+        "VOLTAGE" : "SCAL",
+        "MIN" : "MIN"
+    }
+
+    sweep_type = None # Not supported
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
