@@ -97,6 +97,15 @@ class Keithley6221(Instrument, KeithleyBuffer):
         values=[1e-3, 999999.999],
     )
 
+    output_low_grounded = Instrument.control(
+        ":OUTP:LTE?", "OUTP:LTE %d",
+        """ A boolean property that controls whether the low output of the triax
+        connection is connected to earth ground (True) or is floating (False). """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
+
     ##########
     # SOURCE #
     ##########
