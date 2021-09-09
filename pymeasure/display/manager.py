@@ -140,6 +140,7 @@ class Manager(QtCore.QObject):
         self.log_level = log_level
 
         self.widget_list = widget_list
+
         self.browser = browser
 
         self.port = port
@@ -190,8 +191,10 @@ class Manager(QtCore.QObject):
         self.experiments.remove(experiment)
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
+
         for wdg, curve in zip(self.widget_list, experiment.curve_list):
             wdg.remove(curve)
+
 
     def clear(self):
         """ Remove all Experiments
@@ -256,9 +259,11 @@ class Manager(QtCore.QObject):
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100.)
-        for curve in experiment.curve_list:
-            if curve:
-                curve.update_data()
+        for curves in experiment.curve_list:
+            if curves:
+                for curve in curves:
+                    curve.update_data()
+
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()

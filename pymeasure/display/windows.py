@@ -98,7 +98,7 @@ class PlotterWindow(QtGui.QMainWindow):
         vbox.addLayout(hbox)
 
         self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time, check_status=False)
-        self.plot = self.plot_widget.plot
+        self.plot = self.plot_widget.plot[0]
 
         vbox.addWidget(self.plot_widget)
 
@@ -193,7 +193,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  inputs_in_scrollarea=False,
                  directory_input=False,
                  hide_groups=True,
-                 setup=True
+                 setup=True,
+                 num_plots=1
                  ):
 
         super().__init__(parent)
@@ -208,6 +209,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
         self.directory_input = directory_input
+        self.num_plots = num_plots
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -446,16 +448,16 @@ class ManagedWindowBase(QtGui.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    for curve in experiment.curve_list:
-                        if curve:
-                            curve.update_data()
+                    for curves in experiment.curve_list:
+                        if curves:
+                            for curve in curves:
+                                    curve.update_data()
                     experiment.browser_item.progressbar.setValue(100.)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
     def change_color(self, experiment):
-        color = QtGui.QColorDialog.getColor(
-            parent=self)
+        color = QtGui.QColorDialog.getColor(parent=self)
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
@@ -501,11 +503,12 @@ class ManagedWindowBase(QtGui.QMainWindow):
         curve_color = pg.intColor(0)
         for wdg, curve in zip(self.widget_list, curve_list):
             if isinstance(wdg, PlotWidget):
-                curve_color = curve.opts['pen'].color()
+                curve_color = curve[0].opts['pen'].color()
                 break
 
         browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
+
 
     def set_parameters(self, parameters):
         """ This method should be overwritten by the child class. The
@@ -623,11 +626,11 @@ class ManagedWindow(ManagedWindowBase):
     def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
                  sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
-                 wdg_list=(), hide_groups=True):
+                 wdg_list=(), hide_groups=True, num_plots=1):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
-        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis, num_plots=num_plots)
         self.plot_widget.setMinimumSize(100, 200)
         super().__init__(
             procedure_class=procedure_class,
