@@ -44,8 +44,37 @@ class Keithley2600(Instrument):
         self.ChA = Channel(self, 'a')
         self.ChB = Channel(self, 'b')
 
+    @property
+    def error(self):
+        """ Returns a tuple of an error code and message from a
+        single error. """
+        err = self.ask('print(errorqueue.next())')
+        err = err.split('\t')
+        # Keithley Instruments Inc. sometimes on startup
+        # if tab delimitated message is greater than one, grab first two as code, message
+        # otherwise, assign code & message to returned error
+        if len(err) > 1:
+            err = (int(err[0]), err[1])
+            code = err[0]
+            message = err[1].replace('"', '')
+        else:
+            code = message = err[0]
+        log.info("ERROR %s,%s - len %s" % (str(code), str(message), str(len(err))))
+        return (code, message)
+
+    def check_errors(self):
+        """ Logs any system errors reported by the instrument.
+        """
+        code, message = self.error
+        while code != 0:
+            t = time.time()
+            log.info("Keithley 2600 reported error: %d, %s" % (code, message))
+            code, message = self.error
+            if (time.time() - t) > 10:
+                log.warning("Timed out for Keithley 2600 error retrieval.")
 
 class Channel(object):
+
     source_output = Instrument.control(
         'source.output', 'source.output=%d',
         """Property controlling the channel output state (ON of OFF)
@@ -190,10 +219,10 @@ class Channel(object):
         :param auto_range: Enables auto_range if True, else uses the set voltage
         """
         log.info("%s is measuring voltage." % self.channel)
-        self.instrument.write('smu%s.measure.v()' % self.channel)
-        self.instrument.write('smu%s.measure.nplc=%f' % (self.channel, nplc))
+        self.write('measure.v()')
+        self.write('measure.nplc=%f' % nplc)
         if auto_range:
-            self.instrument.write('smu%s.measure.autorangev=1' % self.channel)
+            self.write('measure.autorangev=1')
         else:
             self.voltage_range = voltage
         self.check_errors()
@@ -205,10 +234,10 @@ class Channel(object):
         :param auto_range: Enables auto_range if True, else uses the set current
         """
         log.info("%s is measuring current." % self.channel)
-        self.instrument.write('smu%s.measure.i()' % self.channel)
-        self.instrument.write('smu%s.measure.nplc=%f' % (self.channel, nplc))
+        self.write('measure.i()')
+        self.write('measure.nplc=%f' % nplc)
         if auto_range:
-            self.instrument.write('smu%s.measure.autorangei=1' % self.channel)
+            self.write('measure.autorangei=1')
         else:
             self.current_range = current
         self.check_errors()
@@ -217,18 +246,18 @@ class Channel(object):
         """ Configures the source to use an automatic range.
         """
         if self.source_mode == 'current':
-            self.instrument.write('smu%s.source.autorangei=1' % self.channel)
+            self.write('source.autorangei=1')
         else:
-            self.instrument.write('smu%s.source.autorangev=1' % self.channel)
+            self.write('source.autorangev=1')
 
     def apply_current(self, current_range=None, compliance_voltage=0.1):
         """ Configures the instrument to apply a source current, and
-                uses an auto range unless a current range is specified.
-                The compliance voltage is also set.
-                :param compliance_voltage: A float in the correct range for a
-                                           :attr:`~.Keithley2600.compliance_voltage`
-                :param current_range: A :attr:`~.Keithley2600.current_range` value or None
-                """
+        uses an auto range unless a current range is specified.
+        The compliance voltage is also set.
+        :param compliance_voltage: A float in the correct range for a
+                                   :attr:`~.Keithley2600.compliance_voltage`
+        :param current_range: A :attr:`~.Keithley2600.current_range` value or None
+        """
         log.info("%s is sourcing current." % self.channel)
         self.source_mode = 'current'
         if current_range is None:
