@@ -193,6 +193,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  inputs_in_scrollarea=False,
                  directory_input=False,
                  hide_groups=True,
+                 setup=True
                  ):
 
         super().__init__(parent)
@@ -216,8 +217,10 @@ class ManagedWindowBase(QtGui.QMainWindow):
         # Check if the get_estimates function is reimplemented
         self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
 
-        self._setup_ui()
-        self._layout()
+        if setup:
+            self._setup_ui()
+            self._layout()
+            self.setup_plot(self.plot)
 
     def _setup_ui(self):
         if self.directory_input:
@@ -650,7 +653,6 @@ class ManagedWindow(ManagedWindowBase):
 class ManagedImageWindow(ManagedWindow):
     """
     Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
-
     """
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),

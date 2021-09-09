@@ -75,28 +75,6 @@ class Keithley2600(Instrument):
 
 class Channel(object):
 
-    def __init__(self, instrument, channel):
-        self.instrument = instrument
-        self.channel = channel
-
-    def ask(self, cmd):
-        return float(self.instrument.ask('print(smu%s.%s)' % (self.channel, cmd)))
-
-    def write(self, cmd):
-        self.instrument.write('smu%s.%s' % (self.channel, cmd))
-
-    def values(self, cmd, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
-        passing on any key-word arguments.
-        """
-        return self.instrument.values('print(smu%s.%s)' % (self.channel, cmd))
-
-    def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
-        return self.instrument.binary_values('print(smu%s.%s)' % (self.channel, cmd,), header_bytes, dtype)
-
-    def check_errors(self):
-        return self.instrument.check_errors()
-
     source_output = Instrument.control(
         'source.output', 'source.output=%d',
         """Property controlling the channel output state (ON of OFF)
@@ -211,9 +189,28 @@ class Channel(object):
         map_values=True
     )
 
-    #######################
-    # Measurement Methods #
-    #######################
+    ###########
+    # Methods #
+    ###########
+
+    def __init__(self, instrument, channel):
+        self.instrument = instrument
+        self.channel = channel
+
+    def ask(self, cmd):
+        return float(self.instrument.ask('print(smu%s.%s)' % (self.channel, cmd)))
+
+    def write(self, cmd):
+        self.instrument.write('smu%s.%s' % (self.channel, cmd))
+
+    def values(self, cmd, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values('print(smu%s.%s)' % (self.channel, cmd))
+
+    def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
+        return self.instrument.binary_values('print(smu%s.%s)' % (self.channel, cmd,), header_bytes, dtype)
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
@@ -288,7 +285,34 @@ class Channel(object):
         self.compliance_current = compliance_current
         self.check_errors()
 
+    @property
+    def error(self):
+        """ Returns a tuple of an error code and message from a
+        single error. """
+        err = self.instrument.ask('print(errorqueue.next())')
+        err = err.split('\t')
+        # Keithley Instruments Inc. sometimes on startup
+        # if tab delimitated message is greater than one, grab first two as code, message
+        # otherwise, assign code & message to returned error
+        if len(err) > 1:
+            err = (float(err[0]), err[1])
+            code = err[0]
+            message = err[1].replace('"', '')
+        else:
+            code = message = err[0]
+        log.info("ERROR %s,%s - len %s" % (str(code), str(message), str(len(err))))
+        return (code, message)
 
+    def check_errors(self):
+        """ Logs any system errors reported by the instrument.
+        """
+        code, message = self.error
+        while code != 0:
+            t = time.time()
+            log.info("Keithley 2600 reported error: %d, %s" % (code, message))
+            code, message = self.error
+            if (time.time() - t) > 10:
+                log.warning("Timed out for Keithley 2600 error retrieval.")
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=0.1):
         """ Ramps to a target voltage from the set voltage value over
