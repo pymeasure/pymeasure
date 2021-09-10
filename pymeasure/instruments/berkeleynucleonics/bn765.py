@@ -186,13 +186,13 @@ class Channel():
         self.instrument.write("source%d:%s" % (self.number, command))
 
     @property
-    def output_enabled(self):
+    def output(self):
         mapper = {1: True, 0: False}
         out = int(self.instrument.ask("output%d?" % self.number))
         return mapper[out]
 
-    @output_enabled.setter
-    def output_enabled(self, state):
+    @output.setter
+    def output(self, state):
         mapper = {True: 'ON', False: 'OFF'}
         self.instrument.write("output%d %s" % (self.number, mapper[state]))
 
@@ -232,26 +232,6 @@ class BN765(Instrument):
 
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
-
-
-
-
-    output1 = Instrument.control(
-        "OUTPut1:STATe?", "OUTPut1:STATe %s",
-        """ A boolean property that turns on (True, 'on') or off (False, 'off') 
-        the output 1 of the function generator. Can be set. """,
-        validator=strict_discrete_set,
-        values={'ON',  'OFF'},
-    )
-
-    output1_pulse_mode = Instrument.control(
-        "OUTPut1:PULSe:MODE?", "OUTPut1:PULSe:MODE %s",
-        """ A string control that sets how many pulses will be available for output 1.
-         Options are SIN (single), DOU (double), TRI (triple), QUAD (quadruple).""",
-        validator=strict_discrete_set,
-        values=['SIN', 'DOU', 'TRI', 'QUAD'],
-    )
-
 
     trigger_mode = Instrument.control(
         "TRIGger:SEQ:MODE?", "TRIGger:SEQ:MODE %s",

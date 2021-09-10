@@ -375,6 +375,16 @@ class KeysightDSA90000A(Instrument):
         12e9, 10e9, 8e9, 6e9, 4e9, 3e9, 2.5e9, 2e9, 1e9"""
     )
 
+    state = Instrument.measurement(
+        ":ASTate?",
+        """Returns the acquisition state of the oscilloscope. 
+         ARM : the trigger is armed and the oscilloscope has acquired all of the pre-trigger data
+         TRIG : The trigger condition has occurred and the oscilloscope is acquiring post trigger data
+         ATRIG : The trigger condition has not been met, but the oscillscope has auto triggered and is acquiring
+         post trigger data
+         ADONE : The acquisition is done and the data has been processed and is ready to be unloaded"""
+    )
+
     def run(self):
         """ Starts repetitive acquisitions. This is the same as pressing the Run key on the front panel."""
         self.write(":run")
