@@ -41,7 +41,7 @@ class SR510(Instrument):
                                values=[-999, 999],
                                )
 
-    pre_time_constant = Instrument.control("T1", "T1,%d",
+    time_constant = Instrument.control("T1", "T1,%d",
                                            """A float property that represents the SR510 PRE filter time constant""",
                                            validator=truncated_discrete_set,
                                            values=PRE_TIME_CONSTANTS,
@@ -55,7 +55,7 @@ class SR510(Instrument):
                                      map_values=True,
                                      )
 
-    reference_frequency = Instrument.measurement("F",
+    frequency = Instrument.measurement("F",
                                                  """A float property representing the SR510 input reference frequency""",
                                                  )
 
