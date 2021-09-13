@@ -89,6 +89,16 @@ class SR830(Instrument):
         """ Reads the Y value in Volts. """
     )
 
+    lia_status = Instrument.measurement("LIAS?",
+        """ Reads the value of the lockin amplifier (LIA) status byte""",
+        get_process=lambda s: bin(int(s))[2:],
+    )
+    
+    err_status = Instrument.measurement("ERRS?",
+        """Reads the value of the lockin error (ERR) status byte""",
+        get_process=lambda s: bin(int(s))[2:],
+    )
+
     @property
     def xy(self):
         """ Reads the X and Y values in Volts. """
