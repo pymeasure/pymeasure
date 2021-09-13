@@ -27,8 +27,8 @@ from pymeasure.instruments.validators import truncated_range, truncated_discrete
 
 
 class SR510(Instrument):
-    PRE_TIME_CONSTANTS = {1e-3: 1, 3e-3: 2, 10e-3: 3, 30e-3: 4, 100e-3: 5,
-                          300e-3: 6, 1: 7, 3: 8, 10: 9, 30: 10, 100: 11, }
+    TIME_CONSTANTS = {1e-3: 1, 3e-3: 2, 10e-3: 3, 30e-3: 4, 100e-3: 5,
+                      300e-3: 6, 1: 7, 3: 8, 10: 9, 30: 10, 100: 11, }
 
     SENSITIVITIES = {10e-9: 1, 20e-9: 2, 50e-9: 3, 100e-9: 4, 200e-9: 5, 500e-9: 6,
                      1e-6: 7, 2e-6: 8, 5e-6: 9, 10e-6: 10, 20e-6: 11, 50e-6: 12, 100e-6: 13,
@@ -36,28 +36,33 @@ class SR510(Instrument):
                      50e-3: 21, 100e-3: 22, 200e-3: 23, 500e-3: 24, }
 
     phase = Instrument.control("P", "P %g",
-                               """A float property that represents the SR510 reference to input phase offset.""",
+                               """A float property that represents the SR510 reference to input phase offset in degrees.
+                                  Queries return values between -180 and 180 degrees. This property can be set with a
+                                  range of values between -999 to 999 degrees. Set values are mapped internal in the 
+                                  lockin to -180 and 180 degrees.""",
                                validator=truncated_range,
                                values=[-999, 999],
                                )
 
     time_constant = Instrument.control("T1", "T1,%d",
-                                           """A float property that represents the SR510 PRE filter time constant""",
-                                           validator=truncated_discrete_set,
-                                           values=PRE_TIME_CONSTANTS,
-                                           map_values=True,
-                                           )
+                                       """A float property that represents the SR510 PRE filter time constant.
+                                          This property can be set.""",
+                                       validator=truncated_discrete_set,
+                                       values=TIME_CONSTANTS,
+                                       map_values=True,
+                                       )
 
     sensitivity = Instrument.control("G", "G%d",
-                                     """A float property that represents the SR510 sensitivity value.""",
+                                     """A float property that represents the SR510 sensitivity value.
+                                        This property can be set.""",
                                      validator=truncated_discrete_set,
                                      values=SENSITIVITIES,
                                      map_values=True,
                                      )
 
     frequency = Instrument.measurement("F",
-                                                 """A float property representing the SR510 input reference frequency""",
-                                                 )
+                                       """A float property representing the SR510 input reference frequency""",
+                                       )
 
     status = Instrument.measurement("Y",
                                     """A string property representing the bits set within the SR510 status byte""",
