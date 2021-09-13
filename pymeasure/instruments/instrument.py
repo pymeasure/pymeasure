@@ -57,6 +57,7 @@ class Instrument(object):
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
+        self.quick_props_list = []
 
         class Object(object):
             pass
@@ -68,7 +69,7 @@ class Instrument(object):
 
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete 
+        """ This property allows synchronization between a controller and a device. The Operation Complete
         query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
@@ -100,6 +101,35 @@ class Instrument(object):
             return self.ask("*IDN?").strip()
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    @property
+    def quick_properties_list(self):
+        return self.quick_props_list
+
+    @quick_properties_list.setter
+    def quick_properties_list(self, prop_list):
+        if type(prop_list) is str:
+            self.quick_props_list = [prop_list]
+        elif type(prop_list) is list:
+            self.quick_props_list = prop_list
+        else:
+            raise TypeError("Expected input of type str or list")
+
+    @property
+    def quick_properties(self):
+        prop_dict = {}
+        for prop_name in self.quick_props_list:
+            prop_dict[prop_name] = getattr(self, prop_name)
+
+        return prop_dict
+
+    @quick_properties.setter
+    def quick_properties(self, setter_dict):
+        for key in setter_dict:
+            if key in self.quick_props_list:
+                setattr(self, key, setter_dict[key])
+            else:
+                raise RuntimeError("Property {} has not been placed in the quick properties list!".format(key))
 
     # Wrapper functions for the Adapter object
     def ask(self, command):
@@ -346,6 +376,7 @@ class Instrument(object):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
 
 class FakeInstrument(Instrument):
     """ Provides a fake implementation of the Instrument class
