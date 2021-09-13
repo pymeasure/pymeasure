@@ -2,7 +2,7 @@
 R&S SFM TV test transmitter
 ######################################
 
-.. autoclass:: pymeasure.instruments.rohdeschwarz.SFM
+.. autoclass:: pymeasure.instruments.rohdeschwarz.sfm.SFM
     :members:
     :show-inheritance:
 
