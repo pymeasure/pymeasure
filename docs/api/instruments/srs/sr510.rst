@@ -1,0 +1,7 @@
+#######################
+SR510 Lock-in Amplifier
+#######################
+
+.. autoclass:: pymeasure.instruments.srs.SR510
+    :members:
+    :show-inheritance:
