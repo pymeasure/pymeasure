@@ -155,7 +155,10 @@ class PrologixAdapter(SerialAdapter):
         :returns: String ASCII response of the instrument
         """
         self.write("++read eoi")
-        return self.connection.readline().decode()
+        line = self.connection.readline().decode()
+        if line == '':
+            raise Exception("Timeout while reading from instrument")
+        return line
 
     def gpib(self, address, rw_delay=None):
         """ Returns and PrologixAdapter object that references the GPIB
@@ -175,7 +178,11 @@ class PrologixAdapter(SerialAdapter):
         :param timeout: Timeout duration in seconds
         :param delay: Time delay between checking SRQ in seconds
         """
-        while int(self.ask("++srq")) != 1:  # TODO: Include timeout!
+
+        start = time.time()
+        while int(self.ask("++srq")) != 1:
+            if (time.time() - start) >= timeout:
+                break
             time.sleep(delay)
 
     def __repr__(self):
