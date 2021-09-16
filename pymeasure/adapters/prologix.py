@@ -148,12 +148,14 @@ class PrologixAdapter(SerialAdapter):
         self.connection.write('\n'.encode())
 
     def read(self):
-        """ Reads the response of the instrument until timeout
+        """ Reads the response of the instrument
+
+        Read response from instruement until EOI detected or timeout.
 
         :returns: String ASCII response of the instrument
         """
         self.write("++read eoi")
-        return b"\n".join(self.connection.readlines()).decode()
+        return self.connection.readline().decode()
 
     def gpib(self, address, rw_delay=None):
         """ Returns and PrologixAdapter object that references the GPIB
