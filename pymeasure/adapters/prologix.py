@@ -130,7 +130,7 @@ class PrologixAdapter(SerialAdapter):
 
         return new_block
 
-    def write_binary_values(self, command, values, **kwargs):
+    def write_binary_values(self, command, values, timeout=None, **kwargs):
         """ Write binary data to the instrument, e.g. waveform for signal generators.
 
         values are encoded in a binary format according to
