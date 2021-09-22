@@ -379,9 +379,9 @@ class IPS120_10(Instrument):
         :param max_errors: Maximum number of errors that is allowed in the communication with the
             instrument before the wait is terminated (by raising a :class:`.MagnetError`).
             :code:`None` is interpreted as no maximum error count.
-        :param max_wait_time: Maximum time to wait before is at rest. If the system is not at rest
-            within this time a :class:`TimeoutError` is raised. :code:`None` is interpreted as no
-            maximum time.
+        :param max_wait_time: Maximum time in seconds to wait before is at rest. If the system is not
+            at rest within this time a :class:`TimeoutError` is raised. :code:`None` is interpreted
+            as no maximum time.
         :param should_stop: A function that returns :code:`True` when this function should return early.
         """
         error_ct = 0
@@ -414,9 +414,9 @@ class IPS120_10(Instrument):
         but rather the `to zero` functionality will be used. Also, the persistent mode will not
         turned on upon reaching the 0T field in this case.
 
-        :param field: The new set-point for the magnetic field.
+        :param field: The new set-point for the magnetic field in Tesla.
         :param sweep_rate: A numeric value that controls the rate with which to change
-            the magnetic field.
+            the magnetic field in Tesla/minute.
         :param persistent_mode_control: A boolean that controls whether the persistent mode
             may be turned off (if needed before sweeping) and on (when the field is reached);
             if set to :code:`False` but the system is in persistent mode, a :class:`.MagnetError`
@@ -460,7 +460,7 @@ class IPS120_10(Instrument):
         is set back to 0 tesla (at last-used ramp-rate).
 
         :param training_scheme: The training scheme as a list of tuples; each
-            tuple should consist of a (field, ramp-rate) pair.
+            tuple should consist of a (field [T], ramp-rate [T/min]) pair.
         """
 
         for (field, rate) in training_scheme:
