@@ -28,6 +28,7 @@ from time import sleep, time
 import numpy
 
 from pymeasure.instruments import Instrument
+from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
 
@@ -121,6 +122,12 @@ class IPS120_10(Instrument):
             read_termination="\r",
             **kwargs
         )
+
+        if isinstance(self.adapter, VISAAdapter):
+            self.adapter.connection.baud_rate = 9600
+            self.adapter.connection.data_bits = 8
+            self.adapter.connection.parity = 0
+            self.adapter.connection.stop_bits = 20
 
         if switch_heater_delay is not None:
             self._SWITCH_HEATER_DELAY = switch_heater_delay
