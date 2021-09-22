@@ -81,9 +81,10 @@ class IPS120_10(Instrument):
 
     :param clear_buffer: A boolean property that controls whether the instrument
         buffer is clear upon initialisation.
-    :param switch_heater_delay: The time in seconds (default is 20s) to wait after
-        the switch-heater is turned on or off before the heater is expected to be
-        in the correct mode.
+    :param switch_heater_heating_delay: The time in seconds (default is 20s) to wait after
+        the switch-heater is turned on before the heater is expected to be heated.
+    :param switch_heater_cooling_delay: The time in seconds (default is 20s) to wait after
+        the switch-heater is turned off before the heater is expected to be cooled down.
     :param field_range: A numeric value or a tuple of two values to indicate the
         lowest and highest allowed magnetic fields. If a numeric value is provided
         the range is expected to be from :code:`-field_range` to :code:`+field_range`.
@@ -92,7 +93,8 @@ class IPS120_10(Instrument):
 
     _MAX_CURRENT = 120  # Ampere
     _MAX_VOLTAGE = 10  # Volts
-    _SWITCH_HEATER_DELAY = 20  # Seconds
+    _SWITCH_HEATER_HEATING_DELAY = 20  # Seconds
+    _SWITCH_HEATER_COOLING_DELAY = 20  # Seconds
     _FIELD_RANGE = [-16, 16]  # Tesla
 
     _SWITCH_HEATER_SET_VALUES = {
@@ -110,7 +112,8 @@ class IPS120_10(Instrument):
 
     def __init__(self, resourceName,
                  clear_buffer=True,
-                 switch_heater_delay=None,
+                 switch_heater_heating_delay=None,
+                 switch_heater_cooling_delay=None,
                  field_range=None,
                  **kwargs):
 
@@ -129,8 +132,10 @@ class IPS120_10(Instrument):
             self.adapter.connection.parity = 0
             self.adapter.connection.stop_bits = 20
 
-        if switch_heater_delay is not None:
-            self._SWITCH_HEATER_DELAY = switch_heater_delay
+        if switch_heater_heating_delay is not None:
+            self._SWITCH_HEATER_HEATING_DELAY = switch_heater_heating_delay
+        if switch_heater_cooling_delay is not None:
+            self._SWITCH_HEATER_COOLING_DELAY = switch_heater_cooling_delay
 
         if field_range is not None:
             if isinstance(field_range, (float, int)):
@@ -340,7 +345,7 @@ class IPS120_10(Instrument):
             self.activity = "hold"
             self.switch_heater_enabled = False
             log.info("IPS 120-10: Wait for for switch heater delay")
-            sleep(self._SWITCH_HEATER_DELAY)
+            sleep(self._SWITCH_HEATER_COOLING_DELAY)
             self.activity = "to zero"
             self.wait_for_idle()
 
@@ -365,7 +370,7 @@ class IPS120_10(Instrument):
             self.activity = "hold"
             self.switch_heater_enabled = True
             log.info("IPS 120-10: Wait for for switch heater delay")
-            sleep(self._SWITCH_HEATER_DELAY)
+            sleep(self._SWITCH_HEATER_HEATING_DELAY)
 
     def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None, should_stop=lambda: False):
         """ Method that waits until the system is at rest (i.e. current of field not ramping).
