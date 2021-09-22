@@ -309,8 +309,9 @@ class IPS120_10(Instrument):
         return field
 
     def enable_control(self):
-        """ Method that enables active control of the IPS.
-        Sets control to remote and turns off the clamp. """
+        """ Enable active control of the IPS by setting control to remote and
+        turning off the clamp.
+        """
         self.control_mode = "RU"
 
         # Turn off clamping if still clamping
@@ -322,9 +323,9 @@ class IPS120_10(Instrument):
             self.switch_heater_enabled = True
 
     def disable_control(self):
-        """ Method that disable active control of the IPS (if at 0T).
-        Turns off the switch heater, clamps the output and sets control to local.
-        Raises a :class:`.MagnetError` if field not at 0T. """
+        """ Disable active control of the IPS (if at 0T) by turning off the switch heater,
+        clamping the output and setting control to local.
+        Raise a :class:`.MagnetError` if field not at 0T. """
         if not self.field == 0:
             raise MagnetError("IPS 120-10: field not at 0T; cannot disable the supply. ")
 
@@ -333,8 +334,8 @@ class IPS120_10(Instrument):
         self.control_mode = "LU"
 
     def enable_persistent_mode(self):
-        """ Method that enables the persistent magnetic field mode.
-         Raises a :class:`.MagnetError` if the magnet is not at rest. """
+        """ Enable the persistent magnetic field mode.
+         Raise a :class:`.MagnetError` if the magnet is not at rest. """
         # Check if system idle
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot enable persistent mode")
@@ -350,8 +351,8 @@ class IPS120_10(Instrument):
             self.wait_for_idle()
 
     def disable_persistent_mode(self):
-        """ Method that disables the persistent magnetic field mode.
-         Raises a :class:`.MagnetError` if the magnet is not at rest. """
+        """ Disable the persistent magnetic field mode.
+         Raise a :class:`.MagnetError` if the magnet is not at rest. """
         # Check if system idle
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot disable persistent mode")
@@ -373,7 +374,7 @@ class IPS120_10(Instrument):
             sleep(self._SWITCH_HEATER_HEATING_DELAY)
 
     def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None, should_stop=lambda: False):
-        """ Method that waits until the system is at rest (i.e. current of field not ramping).
+        """ Wait until the system is at rest (i.e. current of field not ramping).
 
         :param delay: Time in seconds between each query into the state of the instrument.
         :param max_errors: Maximum number of errors that is allowed in the communication with the
@@ -407,7 +408,7 @@ class IPS120_10(Instrument):
                 raise TimeoutError("IPS 120-10: Magnet not idle within max wait time.")
 
     def set_field(self, field, sweep_rate=None, persistent_mode_control=True):
-        """ Method that changes the applied magnetic field.
+        """ Change the applied magnetic field to a new specified magnitude.
         If allowed (via `persistent_mode_control`) the persistent mode will be turned off
         if needed and turned on when the magnetic field is reached.
         When the new field set-point is 0, the set-point of the instrument will not be changed
@@ -456,8 +457,8 @@ class IPS120_10(Instrument):
             self.enable_persistent_mode()
 
     def train_magnet(self, training_scheme):
-        """ Method that trains the magnet after cooling down. Afterwards, the field
-        is set back to 0 tesla (at last-used ramp-rate).
+        """ Train the magnet after cooling down. Afterwards, set the field
+        back to 0 tesla (at last-used ramp-rate).
 
         :param training_scheme: The training scheme as a list of tuples; each
             tuple should consist of a (field [T], ramp-rate [T/min]) pair.
