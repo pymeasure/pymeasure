@@ -222,7 +222,6 @@ class ManagedWindowBase(QtGui.QMainWindow):
         if setup:
             self._setup_ui()
             self._layout()
-            self.setup_plot(self.plot)
 
     def _setup_ui(self):
         if self.directory_input:
