@@ -95,7 +95,7 @@ class IPS120_10(Instrument):
     _MAX_VOLTAGE = 10  # Volts
     _SWITCH_HEATER_HEATING_DELAY = 20  # Seconds
     _SWITCH_HEATER_COOLING_DELAY = 20  # Seconds
-    _FIELD_RANGE = [-16, 16]  # Tesla
+    _FIELD_RANGE = [-7, 7]  # Tesla
 
     _SWITCH_HEATER_SET_VALUES = {
         False: 0,  # Heater off
