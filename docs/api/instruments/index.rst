@@ -44,6 +44,7 @@ Instruments by manufacturer:
    parker/index
    razorbill/index
    rohde_schwarz/index
+   rohdeschwarz/index
    signalrecovery/index
    srs/index
    tektronix/index
