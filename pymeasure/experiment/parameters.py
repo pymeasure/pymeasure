@@ -49,6 +49,7 @@ class Parameter(object):
         self._value = default
         self.default = default
         self.ui_class = ui_class
+        self.help_fields=[('units are', 'units'), 'default']
 
         self.group_by = {}
         if isinstance(group_by, dict):
@@ -76,6 +77,13 @@ class Parameter(object):
     @value.setter
     def value(self, value):
         self._value = value
+
+    @property
+    def cli_args(self):
+        kwargs = {
+            "default" : self.default,
+        }
+        return (kwargs, self.help_fields, self)
 
     def is_set(self):
         """ Returns True if the Parameter value is set
@@ -109,6 +117,8 @@ class IntegerParameter(Parameter):
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
+        self.help_fields.append('minimum')
+        self.help_fields.append('maximum')
 
     @property
     def value(self):
@@ -208,6 +218,7 @@ class FloatParameter(Parameter):
         self.minimum = minimum
         self.maximum = maximum
         self.decimals = decimals
+        self.help_fields.append('decimals')
 
     @property
     def value(self):
@@ -266,6 +277,7 @@ class VectorParameter(Parameter):
         super().__init__(name, **kwargs)
         self._length = length
         self.units = units
+        self.help_fields.append('_length')
 
     @property
     def value(self):
@@ -340,6 +352,7 @@ class ListParameter(Parameter):
         else:
             self._choices = None
         self.units = units
+        self.help_fields.append('choices')
 
     @property
     def value(self):
