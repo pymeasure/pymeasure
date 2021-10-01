@@ -12,6 +12,6 @@ This section contains specific documentation on the Rohde & Schwarz instruments 
    rohdeschwarz_sma100a
    rohdeschwarz_smiq06b
    rohdeschwarz_sml01
-   rohde_schwarz_fscx
-   rohde_schwarz_fsw13
+   rohdeschwarz_fscx
+   rohdeschwarz_fsw13
    sfm

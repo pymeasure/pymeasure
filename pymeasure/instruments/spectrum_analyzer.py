@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -124,6 +124,7 @@ Single sweep acquisition and peak value calculation
         """,
         dynamic=True
     )
+
     stop_frequency = Instrument.control(
         ":SENS:FREQ:STOP?;", ":SENS:FREQ:STOP %e Hz;",
         """ A floating point property that represents the stop frequency
@@ -131,6 +132,7 @@ Single sweep acquisition and peak value calculation
         """,
         dynamic=True
     )
+
     frequency_points = Instrument.control(
         ":SENSe:SWEEp:POINts?;", ":SENSe:SWEEp:POINts %d;",
         """ An integer property that represents the number of frequency
@@ -141,6 +143,7 @@ Single sweep acquisition and peak value calculation
         cast=int,
         dynamic=True
     )
+
     frequency_step = Instrument.control(
         ":SENS:FREQ:CENT:STEP:INCR?;", ":SENS:FREQ:CENT:STEP:INCR %g Hz;",
         """ A floating point property that represents the frequency step
@@ -148,6 +151,7 @@ Single sweep acquisition and peak value calculation
         """,
         dynamic=True
     )
+
     center_frequency = Instrument.control(
         ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e Hz;",
         """ A floating point property that represents the center frequency
@@ -155,6 +159,7 @@ Single sweep acquisition and peak value calculation
         """,
         dynamic=True
     )
+
     sweep_time = Instrument.control(
         ":SENS:SWE:TIME?;", ":SENS:SWE:TIME %.2e;",
         """ A floating point property that represents the sweep time
@@ -205,7 +210,6 @@ Single sweep acquisition and peak value calculation
         - "POWER": Sets Power (RMS) averaging
         - "VOLTAGE": Sets Voltage averaging (linear)
         - "VIDEO": Sets Log-Power (video) averaging
-        This property can be set.
         """,
         validator=strict_discrete_set,
         values={"POWER" : "RMS",
@@ -220,10 +224,8 @@ Single sweep acquisition and peak value calculation
         ":SWEep:TYPE?;",  ":SWEep:TYPE %s;",
         """ A string property that enable you to set and read the sweep type.
         Allowed values are:
-        - "": Sets Power (RMS) averaging
-        - "VOLTAGE": Sets Voltage averaging (linear)
-        - "VIDEO": Sets Log-Power (video) averaging
-        This property can be set.
+        - "SWEEP": Sweep list mode
+        - "FFT": FFT mode
         """,
         validator=strict_discrete_set,
         values=("SWEEP", "FFT"),
