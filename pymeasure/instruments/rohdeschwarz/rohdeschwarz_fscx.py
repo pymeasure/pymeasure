@@ -22,18 +22,45 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.rf_signal_generator import RFSignalGenerator
+from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
-class RS_SMA100A(RFSignalGenerator):
-    """ Class representing R&S SMA100A RF signal generator """
+class RS_FSC6(SpectrumAnalyzer):
+    """ This class represent an Rohde&Schwarz FSC6 Spectrum Analyzer """
 
-    # Define instrument limits according to datasheet
-    power_values = (-147.0, 18.0)
-    frequency_values = (9e3, 6e9)
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
+    # Customize parameters with values taken from datasheet/user manual 
+    reference_level_values = (-80, 30)
+
+    frequency_span_values = (10, 6e9)
+
+    resolution_bw_values = (10, 3e6)
+
+    input_attenuation_values = (0, 40)
+
+    frequency_points_values = (631, 631)
+
+    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS")
+
+    input_attenuation_get_command = ":INPut:ATTenuation?;"
+    input_attenuation_set_command = ":INPut:ATTenuation %d;"
+
+    average_type = None # Not supported
+    sweep_type = None # Not supported
+
+    def __init__(self, resourceName, description, **kwargs):
+        super(RS_FSCx, self).__init__(
             resourceName,
-            "Rohde & Schwarz SMA100A Signal Generator",
+            description,
             **kwargs
         )
 
+class RS_FSC3(RS_FSC6):
+    """ Variant of Rohde&Schwarz FSC6 Spectrum Analyzer covering up to 3 GHz """
+
+    frequency_span_values = (10, 3e9)
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "R&S FSC3 Spectrum Analyzer",
+            **kwargs
+        )
