@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,40 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.agilent import agilentE4438C
-class AgilentN5172B(agilentE4438C.AgilentE4438C):
-    """ Class representing Agilent N5172B RF signal generator """
+from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
-    # Define instrument limits according to datasheet
-    power_values = (-144.0, 19.0)
-    frequency_values = (9e3, 6e9)
+class RS_FSW13(SpectrumAnalyzer):
+    """ Rohde&Schwarz FSW13 spectrum analyzer """
 
-    name = "Agilent N5172B Signal Generator"
+    # Customize parameters with values taken from datasheet/user manual 
+    reference_level_values = (-40, 27)
+
+    frequency_span_values = (0, 13.6e9)
+
+    resolution_bw_values = (10, 10e6)
+
+    input_attenuation_values = (0, 70) # This limit is not clear in the datasheet
+
+    frequency_points_values = (101, 100001)
+
+    detector_values = ("APE", "NEG", "POS", "QPE", "SAMP", "RMS", "AVER", "CAV", "CRMS")
+
+    trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
+    trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"
+
+    input_attenuation_get_command = ":INPut:ATTenuation?;"
+    input_attenuation_set_command = ":INPut:ATTenuation %d;"
+
+    average_type_values = {
+        "POWER" : "POW",
+        "VOLTAGE" : "LIN",
+        "VIDEO" : "VID"
+    }
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
+            "R&S FSW Spectrum Analyzer FSW-13",
             **kwargs
         )
-
-

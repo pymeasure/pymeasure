@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,42 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.rf_signal_generator import RFSignalGenerator
-class HPD4000A(RFSignalGenerator):
-    """ Class representing "HP D4000A/Agilent E4433A RF signal generator """
+from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
-    # Define instrument limits according to datasheet
-    power_values = (-136.0, 13.0)
-    frequency_values = (250e3, 4e9)
+class RS_FSIQ3(SpectrumAnalyzer):
+    """ Rohde&Schwarz FSIQ3 spectrum analyzer """
 
-    name = "HP D4000A Signal Generator"
+    # Customize parameters with values taken from datasheet/user manual 
+    reference_level_values = (-200, 200)
+
+    frequency_span_values = (0, 3e9)
+
+    resolution_bw_values = (10, 10e6)
+
+    input_attenuation_values = (0, 70) # This limit is not clear in the datasheet
+
+    frequency_points_values = (500, 500) # TODO: The command to get the sweep points is not available
+
+    detector_values = ("APE", "NEG", "POS", "SAMP", "RMS", "AVER")
+
+    trace_mode_get_command = "DISPLAY:TRACe:MODE?;"
+    trace_mode_set_command = "DISPLAY:TRACe:MODE %s;"
+
+    input_attenuation_get_command = ":INPut:ATTenuation?;"
+    input_attenuation_set_command = ":INPut:ATTenuation %d;"
+
+    average_type_values={
+        "MAX" : "MAX",
+        "VOLTAGE" : "SCAL",
+        "MIN" : "MIN"
+    }
+
+    sweep_type = None # Not supported
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
-            self.name,
+            "R&S FSW Spectrum Analyzer FSIQ 3",
             **kwargs
         )
-
-    @property
-    def id(self):
-        """ Requests and returns the identification of the instrument. """
-        return_value = self.ask("*IDN?").strip().split(",")
-        # Swap second and third entry since they are not following SCPI order.
-        # The second entry should be model
-        return_value[1], return_value[2] = return_value[2], return_value[1]
-        return ",".join(return_value)
-
