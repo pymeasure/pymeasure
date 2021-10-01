@@ -1,4 +1,4 @@
-.. module:: pymeasure.instruments.rohde_schwarz
+.. module:: pymeasure.instruments.rohdeschwarz
 
 #############
 Rohde&Schwarz
@@ -9,5 +9,5 @@ This section contains specific documentation on the Rohde&Schwarz instruments th
 .. toctree::
    :maxdepth: 2
 
-   rohde_schwarz_fscx
-   rohde_schwarz_fsw13
+   rohdeschwarz_fscx
+   rohdeschwarz_fsw13
