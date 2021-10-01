@@ -1,7 +1,7 @@
 ##########################################################
-Rohde&Schwarz SMA100A RF Signal Generator
+Rohde&Schwarz SML01 RF Signal Generator
 ##########################################################
 
-.. autoclass:: pymeasure.instruments.rohde_schwarz.RS_SMA100A
+.. autoclass:: pymeasure.instruments.rohdeschwarz.RS_SML01
     :members:
     :show-inheritance:

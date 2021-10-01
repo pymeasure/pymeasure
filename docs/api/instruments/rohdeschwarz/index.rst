@@ -1,4 +1,4 @@
-.. module:: pymeasure.instruments.rohde_schwarz
+.. module:: pymeasure.instruments.rohdeschwarz
 
 #############
 Rohde&Schwarz
@@ -9,7 +9,7 @@ This section contains specific documentation on the Rohde&Schwarz instruments th
 .. toctree::
    :maxdepth: 2
 
-   rohde_schwarz_sma100a
-   rohde_schwarz_smiq06b
-   rohde_schwarz_sml01
+   rohdeschwarz_sma100a
+   rohdeschwarz_smiq06b
+   rohdeschwarz_sml01
 
