@@ -43,7 +43,6 @@ Instruments by manufacturer:
    oxfordinstruments/index
    parker/index
    razorbill/index
-   rohde_schwarz/index
    rohdeschwarz/index
    signalrecovery/index
    srs/index

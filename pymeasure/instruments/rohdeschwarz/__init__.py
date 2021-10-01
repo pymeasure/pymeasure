@@ -21,5 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
+from .rohdeschwarz_sma100a import RS_SMA100A
+from .rohdeschwarz_smiq06b import RS_SMIQ06B
+from .rohdeschwarz_sml01 import RS_SML01
+from .rohde_schwarz_fscx import RS_FSC3, RS_FSC6
+from .rohde_schwarz_fsw13 import RS_FSW13
+from .rohde_schwarz_fsiq3 import RS_FSIQ3
 from .sfm import SFM
