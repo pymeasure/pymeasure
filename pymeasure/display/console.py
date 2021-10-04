@@ -49,10 +49,21 @@ class ManagedConsole(object):
     :param directory_input: specify, if present, where the experiment's result will be saved.
     """
     special_options = {
-        "log-level":       {"default" :logging.INFO, "desc": "Set log level", "help_fields": ["default"]},
-        "sequence-file":   {"default" :None, "desc": "Sequencer file", "help_fields": ["default"]},
-        "directory-input": {"default" :False, "desc": "Log directory", "help_fields": ["default"]},
-        "use-log-file":    {"default" :None, "help_fields": ["default"], "desc": "File to retrieve params from"},
+        "log-level":       {"default" :logging.INFO,
+                            "desc": "Set log level (logging module values)",
+                            "help_fields": ["default"]},
+        "sequence-file":   {"default" :None,
+                            "desc": "Sequencer file",
+                            "help_fields": ["default"]},
+        "log-directory":   {"default" :".",
+                            "desc": "Log directory",
+                            "help_fields": ["default"]},
+        "log-file":        {"default" : None,
+                            "desc": "Log filename (string or callable which return a string)",
+                            "help_fields": ["default"]},
+        "use-log-file":    {"default" :None,
+                            "desc": "File to retrieve params from",
+                            "help_fields": ["default"]},
     }
          
     def __init__(self,
@@ -80,13 +91,27 @@ class ManagedConsole(object):
         self._setup_parser()
 
     def _cli_help_fields(self, name, inst, help_fields):
+        def hasattr_dict(inst, key):
+            return key in inst
+        def getattr_dict(inst, key):
+            return inst[key]
+
+        if isinstance(inst, dict):
+            hasattribute = hasattr_dict
+            getattribute = getattr_dict
+        else:
+            hasattribute = hasattr
+            getattribute = getattr
+
         message = name
         for field in help_fields:
             if isinstance(field, str):
                 field = ["{} is".format(field), field]
-            if hasattr(inst, field[1]) and getattr(inst, field[1]) != None:
-                message += ", {} {}".format(field[0], getattr(inst, field[1]))
 
+            if hasattribute(inst, field[1]) and getattribute(inst, field[1]) != None:
+                prefix = field[0]
+                value = getattribute(inst,field[1])
+                message += ", {} {}".format(prefix, value)
         return message
 
     def _setup_parser(self):
@@ -99,7 +124,7 @@ class ManagedConsole(object):
             self.parser.add_argument("--"+name, **kwargs)
 
         for option, kwargs in self.special_options.items():
-            help_fields = kwargs['help_fields']
+            help_fields = [('units are', 'units')] + kwargs['help_fields']
             desc = kwargs['desc']
             kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
             del kwargs['help_fields']
@@ -118,18 +143,32 @@ class ManagedConsole(object):
 
     def open_experiment(self, filename):
         """
-        TODO: To get params from previously run experiment
+        TODO: Add description
         """
         results = Results.load(filename)
         return results
+
+    def get_filename(self, directory):
+        """ Return filename for logging.
+
+        User can oveerride this method to define their own filename
+        """
+        if self.filename != None:
+            return os.path.join(directory, self.filename)
+        else:
+            return unique_filename(directory)
 
     def exec_(self):
         # Parse command line arguments
         args = vars(self.parser.parse_args())
         procedure = self.procedure_class()
-        # Set parameters
-        parameter_values = {}
+
+        self.directory = args['log_directory']
+        self.filename = args['log_file']
         
+        # Set procedure parameters
+        parameter_values = {}
+
         if args['use_log_file'] != None:
             # Special case set parameters from log file
             logfile = args['use_log_file']
@@ -147,7 +186,7 @@ class ManagedConsole(object):
         scribe = console_log(log, level=logging.DEBUG)
         scribe.start()
         
-        results = Results(procedure, unique_filename("."))
+        results = Results(procedure, self.get_filename(self.directory))
         log.info("Set up Results")
 
         worker = Worker(results, scribe.queue, log_level=logging.DEBUG)
@@ -160,8 +199,3 @@ class ManagedConsole(object):
         log.info("Worker has joined")
         scribe.stop()
 
-    @property
-    def directory(self):
-        if not self.directory_input:
-            raise ValueError("No directory input in the ManagedWindow")
-        return self.directory_line.text()
