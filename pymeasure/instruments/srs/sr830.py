@@ -22,13 +22,40 @@
 # THE SOFTWARE.
 #
 
+import re
+import time
+import numpy as np
+from enum import IntFlag
 from pymeasure.instruments import Instrument, discreteTruncate
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
-import numpy as np
-import time
-import re
+
+
+class LIAStatus(IntFlag):
+    """ IntFlag type that is returned by the lia_status property.
+    """
+    NO_ERROR = 0
+    INPUT_OVERLOAD = 1 
+    FILTER_OVERLOAD = 2 
+    OUTPUT_OVERLOAD = 4 
+    REF_UNLOCK = 8 
+    FREQ_RANGE_CHANGE = 16 
+    TC_CHANGE = 32 
+    TRIGGER = 64 
+    UNUSED = 128 
+
+
+class ERRStatus(IntFlag):
+    """ IntFlag type that is returned by the err_status property.
+    """
+    NO_ERROR = 0
+    BACKUP_ERR = 2 
+    RAM_ERR = 4 
+    ROM_ERR = 16 
+    GPIB_ERR = 32 
+    DSP_ERR = 64 
+    MATH_ERR = 128 
 
 
 class SR830(Instrument):
@@ -101,11 +128,11 @@ class SR830(Instrument):
             bit 6: Data storage triggered
             bit 7: unused
             """,
-        get_process=lambda s: bin(int(s))[2:],
+        get_process=lambda s: LIAStatus(int(s)),
     )
     
     err_status = Instrument.measurement("ERRS?",
-        """Reads the value of the lockin error (ERR) status byte. Returns a binary string with
+        """Reads the value of the lockin error (ERR) status byte. Returns an IntFlag type with
            positions within the string corresponding to different error flags:
            bit 0: unused
            bit 1: backup error
@@ -116,7 +143,7 @@ class SR830(Instrument):
            bit 6: DSP error
            bit 7: Math error
            """,
-        get_process=lambda s: bin(int(s))[2:],
+        get_process=lambda s: ERRStatus(int(s)),
     )
 
     @property
