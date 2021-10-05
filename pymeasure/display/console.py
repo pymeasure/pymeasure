@@ -89,6 +89,8 @@ class ManagedConsole(object):
         self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
         self.parser = argparse.ArgumentParser()
         self._setup_parser()
+        if self.use_estimator:
+            log.warning("Estimator not yet implemented")
 
     def _cli_help_fields(self, name, inst, help_fields):
         def hasattr_dict(inst, key):
@@ -140,7 +142,6 @@ class ManagedConsole(object):
 
         self.close()
 
-
     def open_experiment(self, filename):
         """
         TODO: Add description
@@ -165,7 +166,14 @@ class ManagedConsole(object):
 
         self.directory = args['log_directory']
         self.filename = args['log_file']
+        log_level = int(args['log_level'])
         
+        log.setLevel(log_level)
+        self.log.setLevel(log_level)
+
+        if args['sequence_file'] != None:
+            raise NotImplementedError("Sequencer not yet implemented")
+
         # Set procedure parameters
         parameter_values = {}
 
@@ -177,25 +185,28 @@ class ManagedConsole(object):
                 parameter_values[name] = results.parameters[name].value
         else:
             for name in args:
-                opt_name = "--" + name.replace("_", "-")
+                opt_name = name.replace("_", "-")
                 if not (opt_name in self.special_options):
                     parameter_values[name] = args[name]
 
         procedure.set_parameters(parameter_values)
 
-        scribe = console_log(log, level=logging.DEBUG)
+        scribe = console_log(log, level=log_level)
         scribe.start()
         
         results = Results(procedure, self.get_filename(self.directory))
         log.info("Set up Results")
 
-        worker = Worker(results, scribe.queue, log_level=logging.DEBUG)
+        worker = Worker(results, scribe.queue, log_level=log_level)
         log.info("Created worker for procedure {}".format(self.procedure_class.__name__))
-        log.info("Starting worker...")
-        worker.start()
+        if False:
+            log.info("Starting worker...")
+            worker.start()
 
-        log.info("Joining with the worker in at most 20 min")
-        worker.join(60*20)
-        log.info("Worker has joined")
+            log.info("Joining with the worker in at most 20 min")
+            worker.join(60*20)
+            log.info("Worker has joined")
+        else:
+            worker.run()
         scribe.stop()
 
