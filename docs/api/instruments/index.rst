@@ -46,6 +46,7 @@ Instruments by manufacturer:
    rohdeschwarz/index
    signalrecovery/index
    srs/index
+   stmicroelectronics/index
    tektronix/index
    thorlabs/index
    yokogawa/index

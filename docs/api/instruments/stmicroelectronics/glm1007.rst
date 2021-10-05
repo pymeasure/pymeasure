@@ -1,0 +1,7 @@
+####################################
+STMicroelectronics GLM1007 RF switch
+####################################
+
+.. autoclass:: pymeasure.instruments.stmicroelectronics.GLM1007
+    :members:
+    :show-inheritance:
