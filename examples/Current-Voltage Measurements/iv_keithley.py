@@ -13,21 +13,19 @@ python iv_keithley.py
 """
 
 import logging
-log = logging.getLogger('')
-log.addHandler(logging.NullHandler())
-
 import sys
 from time import sleep
 import numpy as np
 
 from pymeasure.instruments.keithley import Keithley2000, Keithley2400
-from pymeasure.instruments import Instrument
-from pymeasure.log import console_log
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
 from pymeasure.experiment import (
     Procedure, FloatParameter, unique_filename, Results
 )
+
+log = logging.getLogger('')
+log.addHandler(logging.NullHandler())
 
 
 class IVProcedure(Procedure):
@@ -45,20 +43,20 @@ class IVProcedure(Procedure):
         self.meter = Keithley2000("GPIB::25")
         self.meter.measure_voltage()
         self.meter.voltage_range = self.voltage_range
-        self.meter.voltage_nplc = 1 # Integration constant to Medium
+        self.meter.voltage_nplc = 1  # Integration constant to Medium
         
         self.source = Keithley2400("GPIB::1")
         self.source.apply_current()
-        self.source.source_current_range = self.max_current*1e-3 # A
-        self.source.complinance_voltage = self.voltage_range
+        self.source.source_current_range = self.max_current*1e-3  # A
+        self.source.compliance_voltage = self.voltage_range
         self.source.enable_source()
         sleep(2)
 
     def execute(self):
         currents_up = np.arange(self.min_current, self.max_current, self.current_step)
         currents_down = np.arange(self.max_current, self.min_current, -self.current_step)
-        currents = np.concatenate((currents_up, currents_down)) # Include the reverse
-        currents *= 1e-3 # to mA from A
+        currents = np.concatenate((currents_up, currents_down))  # Include the reverse
+        currents *= 1e-3  # to mA from A
         steps = len(currents)
         
         log.info("Starting to sweep through current")
@@ -110,7 +108,7 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('IV Measurement')
 
     def queue(self):
-        directory = "./" # Change this to the desired directory
+        directory = "./"  # Change this to the desired directory
         filename = unique_filename(directory, prefix='IV')
 
         procedure = self.make_procedure()

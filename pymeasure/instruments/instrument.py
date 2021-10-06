@@ -127,14 +127,6 @@ class Instrument(object):
 
         self.get = Object()
 
-        # TODO: Determine case basis for the addition of these methods
-        if includeSCPI:
-            # Basic SCPI commands
-            self.status = self.measurement("*STB?",
-                                           """ Returns the status of the instrument """)
-            self.complete = self.measurement("*OPC?",
-                                             """ TODO: Add this doc """)
-
         self.isShutdown = False
         self._special_names = self._compute_special_names()
 
@@ -179,12 +171,39 @@ class Instrument(object):
         return super().__getattribute__(name)
 
     @property
+    def complete(self):
+        """ This property allows synchronization between a controller and a device. The Operation Complete 
+        query places an ASCII character 1 into the device's Output Queue when all pending
+        selected device operations have been finished.
+        """
+        if self.SCPI:
+            return self.ask("*OPC?").strip()
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    @property
+    def status(self):
+        """ Requests and returns the status byte and Master Summary Status bit. """
+        if self.SCPI:
+            return self.ask("*STB?").strip()
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    @property
+    def options(self):
+        """ Requests and returns the device options installed. """
+        if self.SCPI:
+            return self.ask("*OPT?").strip()
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    @property
     def id(self):
         """ Requests and returns the identification of the instrument. """
         if self.SCPI:
-            return self.adapter.ask("*IDN?").strip()
+            return self.ask("*IDN?").strip()
         else:
-            return "Warning: Property not implemented."
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     # Wrapper functions for the Adapter object
     def ask(self, command):
@@ -439,16 +458,20 @@ class Instrument(object):
                                   **kwargs)
 
 
-    # TODO: Determine case basis for the addition of this method
     def clear(self):
         """ Clears the instrument status byte
         """
-        self.write("*CLS")
+        if self.SCPI:
+            self.write("*CLS")
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    # TODO: Determine case basis for the addition of this method
     def reset(self):
         """ Resets the instrument. """
-        self.write("*RST")
+        if self.SCPI:
+            self.write("*RST")
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     def shutdown(self):
         """Brings the instrument to a safe and stable state"""
@@ -456,10 +479,23 @@ class Instrument(object):
         log.info("Shutting down %s" % self.name)
 
     def check_errors(self):
-        """Return any accumulated errors. Must be reimplemented by subclasses.
-        """
-        pass
+        """ Read all errors from the instrument.
 
+        :return: list of error entries
+        """
+        if self.SCPI:
+            errors = []
+            while True:
+                err = self.values("SYST:ERR?")
+                if int(err[0]) != 0:
+                    log.error("{}: {}, {}".format(self.name, err[0], err[1]))
+                    errors.append(err)
+                else:
+                    break
+
+            return errors
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
 class FakeInstrument(Instrument):
     """ Provides a fake implementation of the Instrument class
@@ -489,9 +525,10 @@ class FakeInstrument(Instrument):
 
         # Regex search to find first format specifier in the command
         fmt_spec_pattern = r'(%[\w.#-+ *]*[diouxXeEfFgGcrsa%])'
-        match = re.search(fmt_spec_pattern, set_command)
+        match = re.findall(fmt_spec_pattern, set_command)
         if match:
-            format_specifier = match.group(0)
+            # format_specifier = match.group(0)
+            format_specifier = ','.join(match)
         else:
             format_specifier = ''
         # To preserve as much functionality as possible, call the real

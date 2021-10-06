@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,13 @@ from functools import partial
 import numpy
 from collections import ChainMap
 from itertools import product
+from inspect import signature
+from datetime import datetime, timedelta
 
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
+from .thread import StoppableQThread
 from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
@@ -52,6 +55,7 @@ class PlotFrame(QtGui.QFrame):
 
     LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
     updated = QtCore.QSignal()
+    ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
     y_axis_changed = QtCore.QSignal(str)
 
@@ -101,12 +105,12 @@ class PlotFrame(QtGui.QFrame):
 
     def update_curves(self):
         for item in self.plot.items:
-            if isinstance(item, ResultsCurve):
+            if isinstance(item, self.ResultsClass):
                 if self.check_status:
                     if item.results.procedure.status == Procedure.RUNNING:
-                        item.update()
+                        item.update_data()
                 else:
-                    item.update()
+                    item.update_data()
 
     def parse_axis(self, axis):
         """ Returns the units of an axis by searching the string
@@ -126,9 +130,9 @@ class PlotFrame(QtGui.QFrame):
 
     def change_x_axis(self, axis):
         for item in self.plot.items:
-            if isinstance(item, ResultsCurve):
+            if isinstance(item, self.ResultsClass):
                 item.x = axis
-                item.update()
+                item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
@@ -136,23 +140,72 @@ class PlotFrame(QtGui.QFrame):
 
     def change_y_axis(self, axis):
         for item in self.plot.items:
-            if isinstance(item, ResultsCurve):
+            if isinstance(item, self.ResultsClass):
                 item.y = axis
-                item.update()
+                item.update_data()
         label, units = self.parse_axis(axis)
         self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
 
+class ImageFrame(PlotFrame):
+    """ Extends PlotFrame to plot also axis Z using colors
+    """
+    ResultsClass = ResultsImage
+    z_axis_changed = QtCore.QSignal(str)
 
-class PlotWidget(QtGui.QWidget):
+    def __init__(self, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True, parent=None):
+        super().__init__(x_axis, y_axis, refresh_time, check_status, parent)
+        self.change_z_axis(z_axis)
+
+    def change_z_axis(self, axis):
+        for item in self.plot.items:
+            if isinstance(item, self.ResultsClass):
+                item.z = axis
+                item.update_data()
+        label, units = self.parse_axis(axis)
+        if units is not None:
+            self.plot.setTitle(label + ' (%s)'%units)
+        else:
+            self.plot.setTitle(label)
+        self.z_axis = axis
+        self.z_axis_changed.emit(axis)
+
+class TabWidget(object):
+    """ Utility class to define default implementation for some basic methods.
+
+        When defining a widget to be used in subclasses of ManagedWindowBase, users should inherit
+        from this class and provide the specialized implementation of these method's
+    """
+
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = name
+
+    def new_curve(self, *args, **kwargs):
+        """ Create a new curve """
+        return None
+
+    def load(self, curve):
+        """ Add curve to widget """
+        pass
+
+    def remove(self, curve):
+        """ Remove curve from widget """
+        pass
+
+    def set_color(self, curve, color):
+        """ Set color for widget """
+        pass
+
+class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, columns, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True,
-                 parent=None):
-        super().__init__(parent)
+    def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
+                 check_status=True, parent=None):
+        super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -233,123 +286,27 @@ class PlotWidget(QtGui.QWidget):
         axis = self.columns_y.itemText(index)
         self.plot_frame.change_y_axis(axis)
 
+    def load(self, curve):
+        curve.x = self.columns_x.currentText()
+        curve.y = self.columns_y.currentText()
+        curve.update_data()
+        self.plot.addItem(curve)
 
-class ImageFrame(QtGui.QFrame):
-    """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
-    the plot based on the refresh_time, and allows the axes
-    to be changed on the fly, which updates the plotted data
-    """
+    def remove(self, curve):
+        self.plot.removeItem(curve)
 
-    LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
-    updated = QtCore.QSignal()
-    x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(str)
-    z_axis_changed = QtCore.QSignal(str)
+    def set_color(self, curve, color):
+        """ Remove curve from widget """
+        curve.setPen(pg.mkPen(color=color, width=2))
 
-    def __init__(self, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True, parent=None):
-        super().__init__(parent)
-        self.refresh_time = refresh_time
-        self.check_status = check_status
-        self._setup_ui()
-        # set axis labels
-        for item in self.plot.items:
-            if isinstance(item, ResultsImage):
-                item.x = x_axis
-                item.y = y_axis
-                item.update_img()
-        xlabel, xunits = self.parse_axis(x_axis)
-        self.plot.setLabel('bottom', xlabel, units=xunits, **self.LABEL_STYLE)
-        self.x_axis = x_axis
-        self.x_axis_changed.emit(x_axis)
-        ylabel, yunits = self.parse_axis(y_axis)
-        self.plot.setLabel('left', ylabel, units=yunits, **self.LABEL_STYLE)
-        self.y_axis = y_axis
-        self.y_axis_changed.emit(y_axis)
-        self.change_z_axis(z_axis)
-
-    def _setup_ui(self):
-        self.setAutoFillBackground(False)
-        self.setStyleSheet("background: #fff")
-        self.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.setFrameShadow(QtGui.QFrame.Sunken)
-        self.setMidLineWidth(1)
-
-        vbox = QtGui.QVBoxLayout(self)
-
-        self.plot_widget = pg.PlotWidget(self, background='#ffffff')
-        self.coordinates = QtGui.QLabel(self)
-        self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
-        self.coordinates.setStyleSheet("background: #fff")
-        self.coordinates.setText("")
-        self.coordinates.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-
-        vbox.addWidget(self.plot_widget)
-        vbox.addWidget(self.coordinates)
-        self.setLayout(vbox)
-
-        self.plot = self.plot_widget.getPlotItem()
-
-        self.crosshairs = Crosshairs(self.plot,
-                                     pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
-        self.crosshairs.coordinates.connect(self.update_coordinates)
-
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.update_curves)
-        self.timer.timeout.connect(self.crosshairs.update)
-        self.timer.timeout.connect(self.updated)
-        self.timer.start(int(self.refresh_time * 1e3))
-
-    def update_coordinates(self, x, y):
-        self.coordinates.setText("(%g, %g)" % (x, y))
-
-    def update_curves(self):
-        for item in self.plot.items:
-            if isinstance(item, ResultsImage):
-                if self.check_status:
-                    if item.results.procedure.status == Procedure.RUNNING:
-                        item.update_img()
-                else:
-                    item.update()
-
-    def parse_axis(self, axis):
-        """ Returns the units of an axis by searching the string
-        """
-        units_pattern = r"\((?P<units>\w+)\)"
-        try:
-            match = re.search(units_pattern, axis)
-        except TypeError:
-            match = None
-            
-        if match:
-            if 'units' in match.groupdict():
-                label = re.sub(units_pattern, '', axis)
-                return label, match.groupdict()['units']
-        else:
-            return axis, None
-
-    def change_z_axis(self, axis):
-        for item in self.plot.items:
-            if isinstance(item, ResultsImage):
-                item.z = axis
-                item.update_img()
-        label, units = self.parse_axis(axis)
-        if units is not None:
-            self.plot.setTitle(label + ' (%s)'%units)
-        else:
-            self.plot.setTitle(label)
-        self.z_axis = axis
-        self.z_axis_changed.emit(axis)
-
-
-class ImageWidget(QtGui.QWidget):
-    """ Extends the PlotFrame to allow different columns
+class ImageWidget(TabWidget, QtGui.QWidget):
+    """ Extends the ImageFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
+    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
                  parent=None):
-        super().__init__(parent)
+        super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -400,7 +357,7 @@ class ImageWidget(QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    def new_image(self, results):
+    def new_curve(self, results, color=pg.intColor(0), **kwargs):
         """ Creates a new image """
         image = ResultsImage(results,
                              x=self.image_frame.x_axis,
@@ -413,6 +370,13 @@ class ImageWidget(QtGui.QWidget):
         axis = self.columns_z.itemText(index)
         self.image_frame.change_z_axis(axis)
 
+    def load(self, curve):
+        curve.z = self.columns_z.currentText()
+        curve.update_data()
+        self.plot.addItem(curve)
+
+    def remove(self, curve):
+        self.plot.removeItem(curve)
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):
@@ -449,18 +413,19 @@ class BrowserWidget(QtGui.QWidget):
         vbox.addWidget(self.browser)
         self.setLayout(vbox)
 
-
 class InputsWidget(QtGui.QWidget):
     # tuple of Input classes that do not need an external label
     NO_LABEL_INPUTS = (BooleanInput,)
 
-    def __init__(self, procedure_class, inputs=(), parent=None):
+    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True):
         super().__init__(parent)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
         self._inputs = inputs
         self._setup_ui()
         self._layout()
+        self._hide_groups = hide_groups
+        self._setup_visibility_groups()
 
     def _setup_ui(self):
         parameter_objects = self._procedure.parameter_objects()
@@ -490,15 +455,78 @@ class InputsWidget(QtGui.QWidget):
         vbox = QtGui.QVBoxLayout(self)
         vbox.setSpacing(6)
 
+        self.labels = {}
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
                 label = QtGui.QLabel(self)
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
+                self.labels[name] = label
+
             vbox.addWidget(getattr(self, name))
 
         self.setLayout(vbox)
+
+    def _setup_visibility_groups(self):
+        groups = {}
+        parameters = self._procedure.parameter_objects()
+        for name in self._inputs:
+            parameter = parameters[name]
+
+            group_state = {g: True for g in parameter.group_by}
+
+            for group_name, condition in parameter.group_by.items():
+                if group_name not in self._inputs or group_name == name:
+                    continue
+
+                if isinstance(getattr(self, group_name), BooleanInput):
+                    # Adjust the boolean condition to a condition suitable for a checkbox
+                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked
+
+                if group_name not in groups:
+                    groups[group_name] = []
+
+                groups[group_name].append((name, condition, group_state))
+
+        for group_name, group in groups.items():
+            toggle = partial(self.toggle_group, group_name=group_name, group=group)
+            group_el = getattr(self, group_name)
+            if isinstance(group_el, BooleanInput):
+                group_el.stateChanged.connect(toggle)
+                toggle(group_el.checkState())
+            elif isinstance(group_el, StringInput):
+                group_el.textChanged.connect(toggle)
+                toggle(group_el.text())
+            elif isinstance(group_el, (IntegerInput, ScientificInput)):
+                group_el.valueChanged.connect(toggle)
+                toggle(group_el.value())
+            elif isinstance(group_el, ListInput):
+                group_el.currentTextChanged.connect(toggle)
+                toggle(group_el.currentText())
+            else:
+                raise NotImplementedError(
+                    "Grouping based on %s (%s) is not implemented." % (group_name, group_el))
+
+    def toggle_group(self, state, group_name, group):
+        for (name, condition, group_state) in group:
+            if callable(condition):
+                group_state[group_name] = condition(state)
+            else:
+                group_state[group_name] = (state == condition)
+
+            visible = all(group_state.values())
+
+            if self._hide_groups:
+                getattr(self, name).setHidden(not visible)
+            else:
+                getattr(self, name).setDisabled(not visible)
+
+            if name in self.labels:
+                if self._hide_groups:
+                    self.labels[name].setHidden(not visible)
+                else:
+                    self.labels[name].setDisabled(not visible)
 
     def set_parameters(self, parameter_objects):
         for name in self._inputs:
@@ -515,10 +543,14 @@ class InputsWidget(QtGui.QWidget):
         self._procedure.set_parameters(parameter_values)
         return self._procedure
 
+class LogWidget(TabWidget, QtGui.QWidget):
+    """ Widget to display logging information in GUI
 
-class LogWidget(QtGui.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    It is recommended to include this widget in all subclasses of ManagedWindowBase
+    """
+
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent)
         self._setup_ui()
         self._layout()
 
@@ -530,7 +562,7 @@ class LogWidget(QtGui.QWidget):
             fmt='%(asctime)s : %(message)s (%(levelname)s)',
             datefmt='%m/%d/%Y %I:%M:%S %p'
         ))
-        self.handler.record.connect(self.view.appendPlainText)
+        self.handler.connect(self.view.appendPlainText)
 
     def _layout(self):
         vbox = QtGui.QVBoxLayout(self)
@@ -538,7 +570,6 @@ class LogWidget(QtGui.QWidget):
 
         vbox.addWidget(self.view)
         self.setLayout(vbox)
-
 
 class ResultsDialog(QtGui.QFileDialog):
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
@@ -555,7 +586,7 @@ class ResultsDialog(QtGui.QFileDialog):
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
 
-        self.plot_widget = PlotWidget(self.columns, self.x_axis, self.y_axis, parent=self)
+        self.plot_widget = PlotWidget("Results", self.columns, self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
         self.preview_param = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
@@ -593,7 +624,7 @@ class ResultsDialog(QtGui.QFileDialog):
                                  pen=pg.mkPen(color=(255, 0, 0), width=1.75),
                                  antialias=True
                                  )
-            curve.update()
+            curve.update_data()
 
             self.plot.addItem(curve)
 
@@ -662,6 +693,8 @@ class SequencerWidget(QtGui.QWidget):
         super().__init__(parent)
         self._parent = parent
 
+        self._check_queue_signature()
+
         # if no explicit inputs are given, use the displayed parameters
         if inputs is not None:
             self._inputs = inputs
@@ -675,6 +708,22 @@ class SequencerWidget(QtGui.QWidget):
         # Load the sequence file if supplied.
         if sequence_file is not None:
             self.load_sequence(fileName=sequence_file)
+
+    def _check_queue_signature(self):
+        """
+        Check if the call signature of the implementation of the`ManagedWindow.queue`
+        method accepts the `procedure` keyword argument, which is required for using
+        the sequencer.
+        """
+
+        call_signature = signature(self._parent.queue)
+
+        if 'procedure' not in call_signature.parameters:
+            raise AttributeError(
+                "The queue method of of the ManagedWindow does not accept the 'procedure'"
+                "keyword argument. Accepting this keyword argument is required when using"
+                "the 'SequencerWidget'."
+            )
 
     def _get_properties(self):
         """
@@ -821,7 +870,7 @@ class SequencerWidget(QtGui.QWidget):
         self.queue_button.setEnabled(False)
 
         try:
-            sequence = self._generate_sequence_from_tree()
+            sequence = self.get_sequence_from_tree()
         except SequenceEvaluationException:
             log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
         else:
@@ -880,7 +929,7 @@ class SequencerWidget(QtGui.QWidget):
                 sequence=sequence,
             )
 
-    def _generate_sequence_from_tree(self):
+    def get_sequence_from_tree(self):
         """
         Generate a list of parameters from the sequence tree.
         """
@@ -1034,5 +1083,219 @@ class DirectoryLineEdit(QtGui.QLineEdit):
 
     def browse_triggered(self):
         path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
-        if path is not '':
+        if path != '':
             self.setText(path)
+
+
+class EstimatorThread(StoppableQThread):
+    new_estimates = QtCore.QSignal(list)
+
+    def __init__(self, get_estimates_callable):
+        StoppableQThread.__init__(self)
+
+        self._get_estimates = get_estimates_callable
+
+        self.delay = 2
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        self._should_stop.clear()
+
+        while not self._should_stop.wait(self.delay):
+            estimates = self._get_estimates()
+            self.new_estimates.emit(estimates)
+
+
+class EstimatorWidget(QtGui.QWidget):
+    """
+    Widget that allows to display up-front estimates of the measurement
+    procedure.
+
+    This widget relies on a `get_estimates` method of the `Procedure` class.
+    `get_estimates` is expected to return a list of tuples, where each tuple
+    contains two strings: a label and the estimate.
+
+    If the `SequencerWidget` is also used, it is possible to ask for the
+    current sequencer or its length by asking for two keyword arguments in the
+    Implementation of the `get_estimates` function: `sequence` and
+    `sequence_length`, respectively.
+
+    """
+    provide_sequence = False
+    provide_sequence_length = False
+    number_of_estimates = 0
+    sequencer = None
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._parent = parent
+
+        self.check_get_estimates_signature()
+
+        self.update_thread = EstimatorThread(self.get_estimates)
+        self.update_thread.new_estimates.connect(self.display_estimates)
+
+        self._setup_ui()
+        self._layout()
+
+        self.update_estimates()
+
+        self.update_box.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
+
+    def check_get_estimates_signature(self):
+        """ Method that checks the signature of the get_estimates function.
+        It checks which input arguments are allowed and, if the output is
+        correct for the EstimatorWidget, stores the number of estimates.
+        """
+
+        # Check function arguments
+        proc = self._parent.make_procedure()
+        call_signature = signature(proc.get_estimates)
+
+        if "sequence" in call_signature.parameters:
+            self.provide_sequence = True
+
+        if "sequence_length" in call_signature.parameters:
+            self.provide_sequence_length = True
+
+        estimates = self.get_estimates()
+
+        # Check if the output of the function is acceptable
+        raise_error = True
+        if isinstance(estimates, (list, tuple)):
+            if all([isinstance(est, (tuple, list)) for est in estimates]):
+                if all([len(est) == 2 for est in estimates]):
+                    raise_error = False
+
+        if raise_error:
+            raise TypeError(
+                "If implemented, the get_estimates function is expected to"
+                "return an int or float representing the estimated duration,"
+                "or a list of tuples of strings, where each tuple  represents"
+                "an estimate containing two string: the first is a label for"
+                "the estimate, the second is the estimate itself."
+            )
+
+        # Store the number of estimates
+        self.number_of_estimates = len(estimates)
+
+    def _setup_ui(self):
+        self.line_edits = list()
+        for idx in range(self.number_of_estimates):
+            qlb = QtGui.QLabel(self)
+
+            qle = QtGui.QLineEdit(self)
+            qle.setEnabled(False)
+            qle.setAlignment(QtCore.Qt.AlignRight)
+
+            self.line_edits.append((qlb, qle))
+
+        # Add a checkbox for continuous updating
+        self.update_box = QtGui.QCheckBox(self)
+        self.update_box.setTristate(True)
+        self.update_box.stateChanged.connect(self._set_continuous_updating)
+
+        # Add a button for instant updating
+        self.update_button = QtGui.QPushButton("Update", self)
+        self.update_button.clicked.connect(self.update_estimates)
+
+    def _layout(self):
+        f_layout = QtGui.QFormLayout(self)
+        for row in self.line_edits:
+            f_layout.addRow(*row)
+
+        update_hbox = QtGui.QHBoxLayout()
+        update_hbox.addWidget(self.update_box)
+        update_hbox.addWidget(self.update_button)
+        f_layout.addRow("Update continuously", update_hbox)
+
+    def get_estimates(self):
+        """ Method that makes a procedure with the currently entered
+        parameters and returns the estimates for these parameters.
+        """
+        # Make a procedure
+        procedure = self._parent.make_procedure()
+
+        kwargs = dict()
+
+        sequence = None
+        sequence_length = None
+        if hasattr(self._parent, "sequencer"):
+            try:
+                sequence = self._parent.sequencer.get_sequence_from_tree()
+            except SequenceEvaluationException:
+                sequence_length = 0
+            else:
+                sequence_length = len(sequence)
+
+        if self.provide_sequence:
+            kwargs["sequence"] = sequence
+
+        if self.provide_sequence_length:
+            kwargs["sequence_length"] = sequence_length
+
+        estimates = procedure.get_estimates(**kwargs)
+
+        if isinstance(estimates, (int, float)):
+            estimates = self._estimates_from_duration(estimates, sequence_length)
+
+        return estimates
+
+    def update_estimates(self):
+        """ Method that gets and displays the estimates.
+        Implemented for connecting to the 'update'-button.
+        """
+        estimates = self.get_estimates()
+        self.display_estimates(estimates)
+
+    def display_estimates(self, estimates):
+        """ Method that updates the shown estimates for the given set of
+        estimates.
+
+        :param estimates: The set of estimates to be shown in the form of a
+            list of tuples of (2) strings
+        """
+        if len(estimates) != self.number_of_estimates:
+            raise ValueError(
+                "Number of estimates changed after initialisation "
+                "(from %d to %d)." % (self.number_of_estimates, len(estimates))
+            )
+
+        for idx, estimate in enumerate(estimates):
+            self.line_edits[idx][0].setText(estimate[0])
+            self.line_edits[idx][1].setText(estimate[1])
+
+    def _estimates_from_duration(self, duration, sequence_length):
+        estimates = list()
+
+        estimates.append(("Duration", "%d s" % int(duration)))
+
+        if hasattr(self._parent, "sequencer"):
+            estimates.append(("Sequence length", str(sequence_length)))
+            estimates.append(("Sequence duration", "%d s" % int(sequence_length * duration)))
+
+        estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
+            seconds=duration))[:-7]))
+
+        if hasattr(self._parent, "sequencer"):
+            estimates.append(('Sequence finished at', str(datetime.now() + timedelta(
+                seconds=duration * sequence_length))[:-7]))
+
+        return estimates
+
+    def _set_continuous_updating(self):
+        state = self.update_box.checkState()
+
+        self.update_thread.stop()
+        self.update_thread.join()
+
+        if state == QtCore.Qt.CheckState.Unchecked:
+            pass
+        elif state == QtCore.Qt.CheckState.PartiallyChecked:
+            self.update_thread.delay = 2
+            self.update_thread.start()
+        elif state == QtCore.Qt.CheckState.Checked:
+            self.update_thread.delay = 0.1
+            self.update_thread.start()

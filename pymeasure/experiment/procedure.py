@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -204,6 +204,16 @@ class Procedure(object):
 
     def should_stop(self):
         raise NotImplementedError('should be monkey patched by a worker')
+
+    def get_estimates(self):
+        """ Function that returns estimates that are to be displayed by
+        the EstimatorWidget. Must be reimplemented by subclasses. Should
+        return an int or float representing the duration in seconds, or
+        a list with a tuple for each estimate. The tuple should consists
+        of two strings: the first will be used as the label of the
+        estimate, the second as the displayed estimate.
+        """
+        raise NotImplementedError('Must be reimplemented by subclasses')
 
     def __str__(self):
         result = repr(self) + "\n"

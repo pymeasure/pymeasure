@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,40 @@
 # THE SOFTWARE.
 #
 
+import re
+import time
+import numpy as np
+from enum import IntFlag
 from pymeasure.instruments import Instrument, discreteTruncate
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
-import numpy as np
-import time
-import re
+
+
+class LIAStatus(IntFlag):
+    """ IntFlag type that is returned by the lia_status property.
+    """
+    NO_ERROR = 0
+    INPUT_OVERLOAD = 1 
+    FILTER_OVERLOAD = 2 
+    OUTPUT_OVERLOAD = 4 
+    REF_UNLOCK = 8 
+    FREQ_RANGE_CHANGE = 16 
+    TC_CHANGE = 32 
+    TRIGGER = 64 
+    UNUSED = 128 
+
+
+class ERRStatus(IntFlag):
+    """ IntFlag type that is returned by the err_status property.
+    """
+    NO_ERROR = 0
+    BACKUP_ERR = 2 
+    RAM_ERR = 4 
+    ROM_ERR = 16 
+    GPIB_ERR = 32 
+    DSP_ERR = 64 
+    MATH_ERR = 128 
 
 
 class SR830(Instrument):
@@ -57,6 +84,9 @@ class SR830(Instrument):
     INPUT_COUPLINGS = ['AC', 'DC']
     INPUT_NOTCH_CONFIGS = ['None', 'Line', '2 x Line', 'Both']
     REFERENCE_SOURCES = ['External', 'Internal']
+    SNAP_ENUMERATION = {"x": 1, "y": 2, "r": 3, "theta": 4,
+                        "aux in 1": 5, "aux in 2": 6, "aux in 3": 7, "aux in 4": 8,
+                        "frequency": 9, "ch1": 10, "ch2": 11}
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -85,6 +115,42 @@ class SR830(Instrument):
     y = Instrument.measurement("OUTP?2",
         """ Reads the Y value in Volts. """
     )
+
+    lia_status = Instrument.measurement("LIAS?",
+        """ Reads the value of the lockin amplifier (LIA) status byte. Returns a binary string with
+            positions within the string corresponding to different status flags:
+            bit 0: Input/Amplifier overload
+            bit 1: Time constant filter overload
+            bit 2: Output overload
+            bit 3: Reference unlock
+            bit 4: Detection frequency range switched
+            bit 5: Time constant changed indirectly
+            bit 6: Data storage triggered
+            bit 7: unused
+            """,
+        get_process=lambda s: LIAStatus(int(s)),
+    )
+    
+    err_status = Instrument.measurement("ERRS?",
+        """Reads the value of the lockin error (ERR) status byte. Returns an IntFlag type with
+           positions within the string corresponding to different error flags:
+           bit 0: unused
+           bit 1: backup error
+           bit 2: RAM error
+           bit 3: unused
+           bit 4: ROM error
+           bit 5: GPIB error
+           bit 6: DSP error
+           bit 7: Math error
+           """,
+        get_process=lambda s: ERRStatus(int(s)),
+    )
+
+    @property
+    def xy(self):
+        """ Reads the X and Y values in Volts. """
+        return self.snap()
+
     magnitude = Instrument.measurement("OUTP?3",
         """ Reads the magnitude in Volts. """
     )
@@ -447,3 +513,30 @@ class SR830(Instrument):
 
     def trigger(self):
         self.write("TRIG")
+
+    def snap(self, val1="X", val2="Y", *vals):
+        """ Method that records and retrieves 2 to 6 parameters at a single
+        instant. The parameters can be one of: X, Y, R, Theta, Aux In 1,
+        Aux In 2, Aux In 3, Aux In 4, Frequency, CH1, CH2.
+        Default is "X" and "Y".
+
+        :param val1: first parameter to retrieve
+        :param val2: second parameter to retrieve
+        :param vals: other parameters to retrieve (optional)
+        """
+        if len(vals) > 4:
+            raise ValueError("No more that 6 values (in total) can be captured"
+                             "simultaneously.")
+
+        # check if additional parameters are given as a list
+        if len(vals) == 1 and isinstance(vals[0], (list, tuple)):
+            vals = vals[0]
+
+        # make a list of all vals
+        vals = [val1, val2] + list(vals)
+
+        vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in vals]
+
+        command = "SNAP? " + ",".join(vals_idx)
+        return self.values(command)
+
