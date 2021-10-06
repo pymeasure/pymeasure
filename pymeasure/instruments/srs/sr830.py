@@ -22,13 +22,40 @@
 # THE SOFTWARE.
 #
 
+import re
+import time
+import numpy as np
+from enum import IntFlag
 from pymeasure.instruments import Instrument, discreteTruncate
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
-import numpy as np
-import time
-import re
+
+
+class LIAStatus(IntFlag):
+    """ IntFlag type that is returned by the lia_status property.
+    """
+    NO_ERROR = 0
+    INPUT_OVERLOAD = 1 
+    FILTER_OVERLOAD = 2 
+    OUTPUT_OVERLOAD = 4 
+    REF_UNLOCK = 8 
+    FREQ_RANGE_CHANGE = 16 
+    TC_CHANGE = 32 
+    TRIGGER = 64 
+    UNUSED = 128 
+
+
+class ERRStatus(IntFlag):
+    """ IntFlag type that is returned by the err_status property.
+    """
+    NO_ERROR = 0
+    BACKUP_ERR = 2 
+    RAM_ERR = 4 
+    ROM_ERR = 16 
+    GPIB_ERR = 32 
+    DSP_ERR = 64 
+    MATH_ERR = 128 
 
 
 class SR830(Instrument):
@@ -87,6 +114,36 @@ class SR830(Instrument):
     )
     y = Instrument.measurement("OUTP?2",
         """ Reads the Y value in Volts. """
+    )
+
+    lia_status = Instrument.measurement("LIAS?",
+        """ Reads the value of the lockin amplifier (LIA) status byte. Returns a binary string with
+            positions within the string corresponding to different status flags:
+            bit 0: Input/Amplifier overload
+            bit 1: Time constant filter overload
+            bit 2: Output overload
+            bit 3: Reference unlock
+            bit 4: Detection frequency range switched
+            bit 5: Time constant changed indirectly
+            bit 6: Data storage triggered
+            bit 7: unused
+            """,
+        get_process=lambda s: LIAStatus(int(s)),
+    )
+    
+    err_status = Instrument.measurement("ERRS?",
+        """Reads the value of the lockin error (ERR) status byte. Returns an IntFlag type with
+           positions within the string corresponding to different error flags:
+           bit 0: unused
+           bit 1: backup error
+           bit 2: RAM error
+           bit 3: unused
+           bit 4: ROM error
+           bit 5: GPIB error
+           bit 6: DSP error
+           bit 7: Math error
+           """,
+        get_process=lambda s: ERRStatus(int(s)),
     )
 
     @property
