@@ -1,0 +1,201 @@
+##############################################
+HP4142A Modular DC Source
+##############################################
+.. currentmodule:: pymeasure.instruments.hp.hp4142b
+
+.. contents::
+
+**********************************************
+General Information
+**********************************************
+This instrument driver does not support all configuration options 
+of the HP4142B mainframe yet.
+So far, it is possible to interface multiple SMU modules and source/measure 
+currents and voltages, perform sampling and staircase sweep measurements.
+The implementation of further measurement functionalities 
+is highly encouraged.
+The device has quite the same syntax as the Agilent B1500.
+See the corresponding "Programming Guide"
+for details on the control methods and their parameters
+
+Command Translation
+===================
+Alphabetical list of implemented HP4142B commands and their corresponding
+method/attribute names in this instrument driver.
+
+.. |br| raw:: html
+
+    <br>
+
+
+===========     =============================================
+Command         Property/Method
+===========     =============================================
+``AAD``         :meth:`SMU.adc_type`
+``AB``          :meth:`~HP4142B.abort`
+``AIT``         :meth:`~HP4142B.adc_setup`
+``AV``          :meth:`~HP4142B.adc_averaging`
+``AZ``          :attr:`~HP4142B.adc_auto_zero`
+``BC``          :meth:`~HP4142B.clear_buffer`
+``CL``          :meth:`SMU.disable`
+``CM``          :attr:`~HP4142B.auto_calibration`
+``CMM``         :meth:`SMU.meas_op_mode`
+``CN``          :meth:`SMU.enable`
+``DI``          :meth:`SMU.force` mode: ``'CURRENT'``
+``DV``          :meth:`SMU.force` mode: ``'VOLTAGE'``
+``DZ``          :meth:`~HP4142B.force_gnd`, :meth:`SMU.force_gnd`
+``ERR?``       :meth:`~HP4142B.check_errors`
+``FL``          :attr:`SMU.filter`
+``*IDN?``       :meth:`~HP4142B.id`
+``*LRN?``       :meth:`~HP4142B.query_learn`, |br|
+                multiple methods to read/format settings directly
+``MI``          :meth:`SMU.sampling_source` mode: ``'CURRENT'``
+``ML``          :attr:`~HP4142B.sampling_mode`
+``MM``          :meth:`~HP4142B.meas_mode`
+``MSC``         :meth:`~HP4142B.sampling_auto_abort`
+``MT``          :meth:`~HP4142B.sampling_timing`
+``MV``          :meth:`SMU.sampling_source` mode: ``'VOLTAGE'``
+``*OPC?``       :meth:`~HP4142B.check_idle`
+``PA``          :meth:`~HP4142B.pause`
+``PAD``         :attr:`~HP4142B.parallel_meas`
+``RI``          :attr:`~SMU.meas_range_current`
+``RM``          :meth:`SMU.meas_range_current_auto`
+``*RST``        :meth:`~HP4142B.reset`
+``RV``          :attr:`~SMU.meas_range_voltage`
+``SSR``         :attr:`~SMU.series_resistor`
+``TSC``         :attr:`~HP4142B.time_stamp`
+``UNT?``        :meth:`~HP4142B.query_modules`
+``WAT``         :meth:`~HP4142B.wait_time`
+``WI``          :meth:`SMU.staircase_sweep_source` mode: ``'CURRENT'``
+``WM``          :meth:`~HP4142B.sweep_auto_abort`
+``WSI``         :meth:`SMU.synchronous_sweep_source` mode: ``'CURRENT'``
+``WSV``         :meth:`SMU.synchronous_sweep_source` mode: ``'VOLTAGE'``
+``WT``          :meth:`~HP4142B.sweep_timing`
+``WV``          :meth:`SMU.staircase_sweep_source` mode: ``'VOLTAGE'``
+``XE``          :meth:`~HP4142B.send_trigger`
+===========     =============================================
+
+**********************************************
+Examples
+**********************************************
+
+Initialization of the Instrument
+====================================
+
+.. code-block:: python
+
+    from pymeasure.instruments.hp import HP4142B
+
+    hp4142=HP4142B("GPIB0::17::INSTR")
+    # query SMU config from instrument and initialize all SMU instances
+    hp4142.initialize_all_smus()
+
+
+IV measurement with 3 SMUs
+=================================================
+
+.. code-block:: python
+
+    # choose measurement mode
+    hp4142.meas_mode('STAIRCASE_SWEEP', *hp4142.smu_references) #order in smu_references determines order of measurement
+    
+    # settings for individual SMUs
+    for smu in hp4142.smu_references:
+        smu.enable() #enable SMU
+
+    #Sweep Settings
+    hp4142.sweep_timing(0,5,step_delay=0.1) #hold,delay
+    hp4142.sweep_auto_abort(False,post='STOP') #disable auto abort, set post measurement output condition to stop value of sweep
+    # Sweep Source
+    nop = 11
+    hp4142.smu1.staircase_sweep_source('VOLTAGE','LINEAR_DOUBLE','Auto Ranging',0,1,nop,0.001) #type, mode, range, start, stop, steps, compliance
+    # Constant Source on other SMUs
+    hp4142.smu2.force('VOLTAGE',0, 0.01)
+    hp4142.smu3.force('VOLTAGE',0, 0.01)
+    #Start Measurement
+    hp4142.check_errors()
+    hp4142.clear_buffer()
+    hp4142.send_trigger()
+
+    # read measurement data all at once
+    while t != '1\r\n':
+            t = self.hp.check_idle()
+    data = self.hp.read_data(nop)
+
+    # set voltages back to zero
+    hp4142.reset()
+
+
+**********************************************
+Main Classes
+**********************************************
+
+Classes to communicate with the instrument:
+
+* :class:`HP414B`: Main instrument class
+* :class:`SMU`: Instantiated by main instrument class for every SMU
+
+All `query` commands return a human readable dict of settings. These are intended for debugging/logging/file headers, not for passing to the accompanying setting commands.
+
+.. autoclass:: HP414B
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+.. autoclass:: SMU
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+
+.. .. automodule:: pymeasure.instruments.hp.hp4142b
+..     :members: HP414B, SMU
+..     :show-inheritance:
+
+**********************************************
+Supporting Classes
+**********************************************
+
+Classes that provide additional functionalities:
+
+* :class:`QueryLearn`: Process read out of instrument settings
+
+* :class:`SMUCurrentRanging`, :class:`SMUVoltageRanging`: Allowed 
+  ranges for different SMU types and transformation of 
+  range names to indices (base: :class:`Ranging`)
+
+.. autoclass:: QueryLearn
+    :members:
+    :show-inheritance:
+.. autoclass:: Ranging
+    :members:
+    :show-inheritance:
+.. autoclass:: SMUCurrentRanging
+    :members:
+    :show-inheritance:
+.. autoclass:: SMUVoltageRanging
+    :members:
+    :show-inheritance:
+
+.. .. automodule:: pymeasure.instruments.agilent.agilentB1500
+..     :members: QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
+..     :show-inheritance:
+
+Enumerations
+=========================
+Enumerations are used for easy selection of the available 
+parameters (where it is applicable). 
+Methods accept member name or number as input, 
+but name is recommended for readability reasons. 
+The member number is passed to the instrument. 
+Converting an enumeration member into a string gives a title case, 
+whitespace separated string (:meth:`~.CustomIntEnum.__str__`)
+which cannot be used to select an enumeration member again. 
+It's purpose is only logging or documentation.
+
+.. call automodule with full module path only once to avoid duplicate index warnings
+.. autodoc other classes via currentmodule:: and autoclass::
+
+.. automodule:: pymeasure.instruments.hp.hp4142b
+    :members: 
+    :exclude-members: HP414B, SMU, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
+    :show-inheritance:
+    :member-order: bysource
