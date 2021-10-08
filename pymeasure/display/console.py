@@ -27,6 +27,7 @@ import logging
 import os
 import subprocess, platform
 import argparse
+import progressbar
 
 from ..log import console_log
 
@@ -34,6 +35,8 @@ from ..experiment import Results, Procedure, Worker, unique_filename
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+import threading
 
 class ManagedConsole(object):
     """
@@ -159,6 +162,17 @@ class ManagedConsole(object):
         else:
             return unique_filename(directory)
 
+    def emit(self, topic, record):
+        """ Emits data of some topic over TCP """
+        if topic == 'results':
+            self.worker.recorder.handle(record)
+        elif topic == 'status':
+            pass
+            # To be reviewed
+            #self.worker.monitor_queue.put((topic, record))
+        elif topic == 'progress':
+            self.bar.update(record)
+
     def exec_(self):
         # Parse command line arguments
         args = vars(self.parser.parse_args())
@@ -190,23 +204,18 @@ class ManagedConsole(object):
                     parameter_values[name] = args[name]
 
         procedure.set_parameters(parameter_values)
+        progressbar.streams.wrap_stderr()
+        self.bar = progressbar.ProgressBar(max_value=100)
 
-        scribe = console_log(log, level=log_level)
+        scribe = console_log(self.log, level=self.log_level)
         scribe.start()
         
         results = Results(procedure, self.get_filename(self.directory))
         log.info("Set up Results")
 
-        worker = Worker(results, scribe.queue, log_level=log_level)
+        self.worker = Worker(results, scribe.queue, log_level=log_level)
+        self.worker.emit = self.emit
         log.info("Created worker for procedure {}".format(self.procedure_class.__name__))
-        if False:
-            log.info("Starting worker...")
-            worker.start()
-
-            log.info("Joining with the worker in at most 20 min")
-            worker.join(60*20)
-            log.info("Worker has joined")
-        else:
-            worker.run()
+        self.worker.run()
         scribe.stop()
 
