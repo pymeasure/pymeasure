@@ -320,6 +320,9 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def load(self, curve):
         for i in range(self.num_plots):
+            curve[i].x = self.columns_x.currentText()
+            curve[i].y = self.columns_y[i].currentText()
+            curve[i].update_data()
             self.plot_frame[i].plot.addItem(curve[i])
 
     def remove(self, curve):
@@ -402,6 +405,8 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         self.image_frame.change_z_axis(axis)
 
     def load(self, curve):
+        curve.z = self.columns_z.currentText()
+        curve.update_data()
         self.plot.addItem(curve)
 
     def remove(self, curve):
