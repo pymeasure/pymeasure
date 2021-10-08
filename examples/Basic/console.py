@@ -55,7 +55,6 @@ class TestProcedure(Procedure):
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
                 break
-        print("Parameter testList:{}".format(self.testList))
 
     def shutdown(self):
         log.info("Finished")
