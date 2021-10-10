@@ -64,6 +64,7 @@ class Console(ManagedConsole):
 
     def __init__(self, argv):
         super().__init__(
+            argv,
             procedure_class=TestProcedure,
             inputs=['iterations', 'delay', 'seed', 'testbool', 'testList'],
         )
@@ -92,10 +93,10 @@ class MainWindow(ManagedWindow):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        agent = Console(sys.argv)
+        app = Console(sys.argv)
     else:
-        agent = QtGui.QApplication(sys.argv)
+        app = QtGui.QApplication(sys.argv)
         window = MainWindow()
         window.show()
         
-    sys.exit(agent.exec_())
+    sys.exit(app.exec_())

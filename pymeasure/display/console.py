@@ -28,17 +28,17 @@ import os
 import subprocess, platform
 import argparse
 import progressbar
+from .Qt import QtCore
 
 from ..log import console_log
+from .listeners import Monitor
 
 from ..experiment import Results, Procedure, Worker, unique_filename
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-import threading
-
-class ManagedConsole(object):
+class ManagedConsole(QtCore.QCoreApplication):
     """
     Base class for console experiment management .
 
@@ -68,8 +68,8 @@ class ManagedConsole(object):
                             "desc": "File to retrieve params from",
                             "help_fields": ["default"]},
     }
-         
     def __init__(self,
+                 args,
                  procedure_class,
                  inputs=(),
                  log_channel='',
@@ -78,7 +78,8 @@ class ManagedConsole(object):
                  directory_input=False,
                  ):
 
-        super().__init__()
+        super().__init__(args)
+        self.args = args
         self.procedure_class = procedure_class
         self.inputs = inputs
         self.sequence_file = sequence_file
@@ -136,15 +137,6 @@ class ManagedConsole(object):
             del kwargs['desc']
             self.parser.add_argument("--" + option, **kwargs)
             
-    def quit(self, evt=None):
-        """
-        TODO: Is it needed ?
-        """
-        if self.manager.is_running():
-            self.abort()
-
-        self.close()
-
     def open_experiment(self, filename):
         """
         TODO: Add description
@@ -162,28 +154,52 @@ class ManagedConsole(object):
         else:
             return unique_filename(directory)
 
-    def emit(self, topic, record):
-        """ Emits data of some topic over TCP """
-        if topic == 'results':
-            self.worker.recorder.handle(record)
-        elif topic == 'status':
-            pass
-            # To be reviewed
-            #self.worker.monitor_queue.put((topic, record))
-        elif topic == 'progress':
-            self.bar.update(record)
+    def _update_progress(self, progress):
+        self.bar.update(progress)
+
+    def _update_status(self, status):
+        self.bar.update(status=Procedure.STATUS_STRINGS[status])
+
+    def _update_log(self, record):
+        log.emit(record)
+
+    def _running(self):
+        pass
+
+    def _clean_up(self):
+        self._monitor.wait()
+        log.debug("Monitor has cleaned up after the Worker")
+
+    def _failed(self):
+        log.debug("Manager's running experiment has failed")
+        self._clean_up()
+
+    def _abort_returned(self):
+        log.debug("Running experiment has returned after an abort")
+        self._clean_up()
+
+    def _finish(self):
+        log.debug("Running experiment has finished")
+        self._clean_up()
+        self.bar.update(100.)
+        self.bar.finish()
+        self.quit()
 
     def exec_(self):
         # Parse command line arguments
-        args = vars(self.parser.parse_args())
+        args = vars(self.parser.parse_args(self.args[1:]))
         procedure = self.procedure_class()
 
         self.directory = args['log_directory']
         self.filename = args['log_file']
-        log_level = int(args['log_level'])
-        
-        log.setLevel(log_level)
-        self.log.setLevel(log_level)
+        try:
+            log_level = int(args['log_level'])
+        except ValueError:
+            # Ignore and assume it is a valid level string
+            log_level = args['log_level']
+        self.log_level = log_level
+        log.setLevel(self.log_level)
+        self.log.setLevel(self.log_level)
 
         if args['sequence_file'] != None:
             raise NotImplementedError("Sequencer not yet implemented")
@@ -205,17 +221,27 @@ class ManagedConsole(object):
 
         procedure.set_parameters(parameter_values)
         progressbar.streams.wrap_stderr()
-        self.bar = progressbar.ProgressBar(max_value=100)
-
+        self.bar = progressbar.ProgressBar(max_value=100,
+                                           prefix='{variables.status}: ',
+                                           variables={'status': "Unknown"})
         scribe = console_log(self.log, level=self.log_level)
         scribe.start()
         
         results = Results(procedure, self.get_filename(self.directory))
-        log.info("Set up Results")
+        log.debug("Set up Results")
 
-        self.worker = Worker(results, scribe.queue, log_level=log_level)
-        self.worker.emit = self.emit
+        self._worker = Worker(results, log_queue=scribe.queue, log_level=self.log_level)
+        self._monitor = Monitor(self._worker.monitor_queue)
+        self._monitor.worker_running.connect(self._running)
+        self._monitor.worker_failed.connect(self._failed)
+        self._monitor.worker_abort_returned.connect(self._abort_returned)
+        self._monitor.worker_finished.connect(self._finish)
+        self._monitor.progress.connect(self._update_progress)
+        self._monitor.status.connect(self._update_status)
+        self._monitor.log.connect(self._update_log)
+
+        self._monitor.start()
         log.info("Created worker for procedure {}".format(self.procedure_class.__name__))
-        self.worker.run()
-        scribe.stop()
+        self._worker.start()
+        super().exec_()
 
