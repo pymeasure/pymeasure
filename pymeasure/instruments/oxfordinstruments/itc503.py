@@ -54,7 +54,7 @@ class ITC503(Instrument):
         print(itc.temperature_1)        # Print the temperature at sensor 1
 
     """
-    _T_RANGE = [0, 301]
+    _T_RANGE = [0, 1677.7]
 
     control_mode = Instrument.control(
         "X", "$C%d",
@@ -86,12 +86,20 @@ class ITC503(Instrument):
 
     heater = Instrument.control(
         "R5", "$O%f",
-        """ A floating point property that sets the required heater output when
-        in manual mode. The parameter is expressed as a percentage of the
-        maximum voltage. Valid values are in range 0 [off] to 99.9 [%]. """,
+        """ A floating point property that represents the heater output power
+        as a percentage of the maximum voltage. Can be set if the heater is in
+        manual mode. Valid values are in range 0 [off] to 99.9 [%]. """,
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 99.9]
+    )
+
+    heater_voltage = Instrument.measurement(
+        "R6",
+        """ A floating point property that represents the heater output power
+        in volts. For controlling the heater, use the :class:`ITC503.heater`
+        property. """,
+        get_process=lambda v: float(v[1:]),
     )
 
     gasflow = Instrument.control(
@@ -102,6 +110,36 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 99.9]
+    )
+
+    proportional_band = Instrument.control(
+        "R8", "$P%f",
+        """ A floating point property that controls the proportional band
+        for the PID controller in Kelvin. Can be set if the PID controller
+        is in manual mode. Valid values are 0 [K] to 1677.7 [K]. """,
+        get_process=lambda v: float(v[1:]),
+        validator=truncated_range,
+        values=[0, 1677.7]
+    )
+
+    integral_action_time = Instrument.control(
+        "R9", "$I%f",
+        """ A floating point property that controls the integral action time
+        for the PID controller in minutes. Can be set if the PID controller
+        is in manual mode. Valid values are 0 [min.] to 140 [min.]. """,
+        get_process=lambda v: float(v[1:]),
+        validator=truncated_range,
+        values=[0, 140]
+    )
+
+    derivative_action_time = Instrument.control(
+        "R10", "$D%f",
+        """ A floating point property that controls the derivative action time
+        for the PID controller in minutes. Can be set if the PID controller
+        is in manual mode. Valid values are 0 [min.] to 273 [min.]. """,
+        get_process=lambda v: float(v[1:]),
+        validator=truncated_range,
+        values=[0, 273]
     )
 
     auto_pid = Instrument.control(
