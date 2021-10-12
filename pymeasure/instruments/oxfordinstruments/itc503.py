@@ -37,6 +37,24 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def pointer_validator(value, values):
+    """ Provides a validator function that ensures the passed value is
+    a tuple or a list with a length of 2 and passes every item through
+    the strict_range validator.
+
+    :param value: A value to test
+    :param values: A range of values (passed to strict_range)
+    :raises: TypeError if the value is not a tuple or a list
+    :raises: IndexError if the value is not of length 2
+    """
+
+    if not isinstance(value, (list, tuple)):
+        raise TypeError('{:g} is not a list or tuple'.format(value))
+    if not len(value) == 2:
+        raise IndexError('{:g} is not of length 2'.format(value))
+    return tuple(strict_range(v, values) for v in value)
+
+
 class ITC503(Instrument):
     """Represents the Oxford Intelligent Temperature Controller 503.
 
@@ -214,6 +232,16 @@ class ITC503(Instrument):
         examining values in the table. The significance and valid values for
         the pointer depends on what property is to be read or set. """,
         validator=strict_range,
+        values=[0, 128]
+    )
+
+    pointer = Instrument.setting(
+        "$x%d\r$y%d",
+        """ A tuple property to set pointers into tables for loading and
+        examining values in the table, of format (x, y). The significance
+        and valid values for the pointer depends on what property is to be
+        read or set. The value for x and y can be in the range 0 to 128. """,
+        validator=pointer_validator,
         values=[0, 128]
     )
 
