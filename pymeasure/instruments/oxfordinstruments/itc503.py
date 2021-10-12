@@ -199,24 +199,20 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
-    xpointer = Instrument.setting(
+    x_pointer = Instrument.setting(
         "$x%d",
         """ An integer property to set pointers into tables for loading and
-        examining values in the table. For programming the sweep table values
-        from 1 to 16 are allowed, corresponding to the maximum number of steps.
-        """,
+        examining values in the table. The significance and valid values for
+        the pointer depends on what property is to be read or set. """,
         validator=strict_range,
         values=[0, 128]
     )
 
-    ypointer = Instrument.setting(
+    y_pointer = Instrument.setting(
         "$y%d",
         """ An integer property to set pointers into tables for loading and
-        examining values in the table. For programming the sweep table the
-        allowed values are:
-        1: Setpoint temperature,
-        2: Sweep-time to set-point,
-        3: Hold-time at set-point. """,
+        examining values in the table. The significance and valid values for
+        the pointer depends on what property is to be read or set. """,
         validator=strict_range,
         values=[0, 128]
     )
@@ -224,8 +220,10 @@ class ITC503(Instrument):
     sweep_table = Instrument.control(
         "r", "$s%f",
         """ A property that sets values in the sweep table. Relies on the
-        xpointer and ypointer to point at the location in the table that
-        is to be set. """,
+        x_pointer and y_pointer to point at the location in the table that
+        is to be set or read. The x-pointer selects the step of the sweep
+        (1 to 16); the y-pointer selects the set-point temperature (1), the
+        sweep-time to set-point (2), or the hold-time at set-point (3). """,
         get_process=lambda v: float(v[1:]),
     )
 
@@ -383,13 +381,13 @@ class ITC503(Instrument):
         # Setting the arrays to the controller
         for line, (setpoint, sweep, hold) in \
                 enumerate(zip(temperatures, sweep_time, hold_time), 1):
-            self.xpointer = line
+            self.x_pointer = line
 
-            self.ypointer = 1
+            self.y_pointer = 1
             self.sweep_table = setpoint
 
-            self.ypointer = 2
+            self.y_pointer = 2
             self.sweep_table = sweep
 
-            self.ypointer = 3
+            self.y_pointer = 3
             self.sweep_table = hold
