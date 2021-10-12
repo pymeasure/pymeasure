@@ -23,7 +23,7 @@ from pymeasure.log import console_log
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
-from pymeasure.display.windows import ManagedWindow
+from pymeasure.display.multiwindows import MultiManagedWindow
 
 
 class TestProcedure(Procedure):
@@ -32,7 +32,7 @@ class TestProcedure(Procedure):
     delay = FloatParameter('Delay Time', units='s', default=0.2)
     seed = Parameter('Random Seed', default='12345')
 
-    DATA_COLUMNS = ['Iteration', 'Random Number']
+    DATA_COLUMNS = ['Iteration', 'Random Number', 'Tulip', 'Daffodil']
 
     def startup(self):
         log.info("Setting up random number generator")
@@ -43,7 +43,9 @@ class TestProcedure(Procedure):
         for i in range(self.iterations):
             data = {
                 'Iteration': i,
-                'Random Number': random.random()
+                'Random Number': random.random(),
+                'Tulip': random.random(),
+                'Daffodil': random.random()
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
@@ -57,16 +59,16 @@ class TestProcedure(Procedure):
         log.info("Finished")
 
 
-class MainWindow(ManagedWindow):
+class MainWindow(MultiManagedWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__(
             procedure_class=TestProcedure,
+            data_plots=[['Iteration', 'Random Number'], ['Tulip', 'Daffodil']],
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
-            y_axis='Random Number',
-            num_plots=3
+            y_axis='Random Number'
         )
         self.setWindowTitle('GUI Example')
 

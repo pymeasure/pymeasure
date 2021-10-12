@@ -193,6 +193,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  inputs_in_scrollarea=False,
                  directory_input=False,
                  hide_groups=True,
+                 setup=True,
                  num_plots=1
                  ):
 
@@ -218,8 +219,9 @@ class ManagedWindowBase(QtGui.QMainWindow):
         # Check if the get_estimates function is reimplemented
         self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
 
-        self._setup_ui()
-        self._layout()
+        if setup:
+            self._setup_ui()
+            self._layout()
 
     def _setup_ui(self):
         if self.directory_input:

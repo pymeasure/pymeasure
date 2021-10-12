@@ -45,3 +45,5 @@ The following developers have contributed to the PyMeasure package:
 | Dan McDonald
 | Hud Wahab
 | Nicola Corna
+| Robert Eckelmann
+| Sam Condon

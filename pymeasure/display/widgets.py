@@ -320,6 +320,9 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def load(self, curve):
         for i in range(self.num_plots):
+            curve[i].x = self.columns_x.currentText()
+            curve[i].y = self.columns_y[i].currentText()
+            curve[i].update_data()
             self.plot_frame[i].plot.addItem(curve[i])
 
     def remove(self, curve):
@@ -402,6 +405,8 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         self.image_frame.change_z_axis(axis)
 
     def load(self, curve):
+        curve.z = self.columns_z.currentText()
+        curve.update_data()
         self.plot.addItem(curve)
 
     def remove(self, curve):
@@ -605,8 +610,9 @@ class LogWidget(TabWidget, QtGui.QWidget):
 
 
 class ResultsDialog(QtGui.QFileDialog):
-    def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
+    def __init__(self, columns, x_axis=None, y_axis=None, parent=None, num_plots=1):
         super().__init__(parent)
+        self.num_plots = num_plots
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
         self.setOption(QtGui.QFileDialog.DontUseNativeDialog, True)
@@ -619,7 +625,7 @@ class ResultsDialog(QtGui.QFileDialog):
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
 
-        self.plot_widget = PlotWidget("Results", self.columns, self.x_axis, self.y_axis, parent=self)
+        self.plot_widget = PlotWidget("Results", self.columns, self.x_axis, self.y_axis, parent=self, num_plots=self.num_plots)
         self.plot = self.plot_widget.plot
         self.preview_param = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
@@ -650,16 +656,15 @@ class ResultsDialog(QtGui.QFileDialog):
                 return
             except Exception as e:
                 raise e
-
-            curve = ResultsCurve(results,
-                                 x=self.plot_widget.plot_frame.x_axis,
-                                 y=self.plot_widget.plot_frame.y_axis,
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1.75),
-                                 antialias=True
-                                 )
-            curve.update_data()
-
-            self.plot.addItem(curve)
+            for i in range(self.num_plots):
+                curve = ResultsCurve(results,
+                                     x=self.plot_widget.plot_frame[i].x_axis,
+                                     y=self.plot_widget.plot_frame[i].y_axis,
+                                     pen=pg.mkPen(color=(255, 0, 0), width=1.75),
+                                     antialias=True
+                                     )
+                curve.update_data()
+                self.plot_widget.plot_frame[i].plot.addItem(curve)
 
             self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():
