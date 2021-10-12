@@ -409,13 +409,11 @@ class ITC503(Instrument):
         # Setting the arrays to the controller
         for line, (setpoint, sweep, hold) in \
                 enumerate(zip(temperatures, sweep_time, hold_time), 1):
-            self.x_pointer = line
-
-            self.y_pointer = 1
+            self.pointer = (line, 1)
             self.sweep_table = setpoint
 
-            self.y_pointer = 2
+            self.pointer = (line, 2)
             self.sweep_table = sweep
 
-            self.y_pointer = 3
+            self.pointer = (line, 3)
             self.sweep_table = hold
