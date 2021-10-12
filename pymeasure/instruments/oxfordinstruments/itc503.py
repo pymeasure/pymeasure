@@ -192,7 +192,7 @@ class ITC503(Instrument):
     )
 
     def __init__(self, resourceName, clear_buffer=True,
-                 max_temperature=301, min_temperature=0, **kwargs):
+                 max_temperature=None, min_temperature=None, **kwargs):
         super(ITC503, self).__init__(
             resourceName,
             "Oxford ITC503",
@@ -206,8 +206,10 @@ class ITC503(Instrument):
         if clear_buffer:
             self.adapter.connection.clear()
 
-        self._T_RANGE[0] = min_temperature
-        self._T_RANGE[1] = max_temperature
+        if min_temperature is not None:
+            self._T_RANGE[0] = min_temperature
+        if max_temperature is not None:
+            self._T_RANGE[1] = max_temperature
 
     def wait_for_temperature(self, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
