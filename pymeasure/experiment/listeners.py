@@ -24,6 +24,7 @@
 
 import logging
 from logging import StreamHandler, FileHandler
+from logging.handlers import RotatingFileHandler
 
 from ..log import QueueListener
 from ..thread import StoppableThread
@@ -105,7 +106,7 @@ class Recorder(QueueListener):
         """
         handlers = []
         for filename in results.data_filenames:
-            fh = FileHandler(filename=filename, **kwargs)
+            fh = RotatingFileHandler(filename=filename, **kwargs)
             fh.setFormatter(results.formatter)
             fh.setLevel(logging.NOTSET)
             handlers.append(fh)

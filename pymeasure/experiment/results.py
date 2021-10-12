@@ -151,12 +151,16 @@ class Results(object):
 
     :cvar COMMENT: The character used to identify a comment (default: #)
     :cvar DELIMITER: The character used to delimit the data (default: ,)
-    :cvar LINE_BREAK: The character used for line breaks (default \\n)
+    :cvar LINE_BREAK: The character used for line breaks (default: \\n)
     :cvar CHUNK_SIZE: The length of the data chuck that is read
 
     :param procedure: Procedure object
     :param data_filename: The data filename where the data is or should be
                           stored
+    :param recorder_args: Dictionary of `maxBytes` and `backupCount`
+                          to limit results file size, or an empty 
+                          dictionary to write all files to a single file
+                          (default: {}) 
     """
 
     COMMENT = '#'
@@ -164,7 +168,7 @@ class Results(object):
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
 
-    def __init__(self, procedure, data_filename):
+    def __init__(self, procedure, data_filename, recorder_args={}):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
@@ -192,6 +196,14 @@ class Results(object):
                     f.write(self.header())
                     f.write(self.labels())
             self._data = None
+
+        if (
+            recorder_args != {} and
+            ('maxBytes' not in recorder_args or 'backupCount' not in recorder_args)
+        ):
+            raise ValueError('Must include both `maxBytes` and `backupCount` in `recorder_args`.')
+        
+        self.recorder_args = recorder_args
 
     def __getstate__(self):
         # Get all information needed to reconstruct procedure

@@ -159,7 +159,7 @@ class Worker(StoppableThread):
 
         self.procedure = self.results.procedure
 
-        self.recorder = Recorder(self.results, self.recorder_queue)
+        self.recorder = Recorder(self.results, self.recorder_queue, **self.results.recorder_args)
         self.recorder.start()
 
         #locals()[self.procedures_file] = __import__(self.procedures_file)
