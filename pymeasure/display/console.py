@@ -29,7 +29,7 @@ import subprocess, platform
 import argparse
 import progressbar
 from .Qt import QtCore
-
+import signal
 from ..log import console_log
 from .listeners import Monitor
 
@@ -95,6 +95,8 @@ class ManagedConsole(QtCore.QCoreApplication):
         self._setup_parser()
         if self.use_estimator:
             log.warning("Estimator not yet implemented")
+        # Handle Ctrl+C nicely
+        signal.signal(signal.SIGINT, lambda sig,_: self.abort())
 
     def _cli_help_fields(self, name, inst, help_fields):
         def hasattr_dict(inst, key):
@@ -177,6 +179,10 @@ class ManagedConsole(QtCore.QCoreApplication):
     def _abort_returned(self):
         log.debug("Running experiment has returned after an abort")
         self._clean_up()
+        self.bar.update()
+        # Leave the progressbar status untouched
+        self.bar.finish(dirty=True)
+        self.quit()
 
     def _finish(self):
         log.debug("Running experiment has finished")
@@ -184,6 +190,13 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.bar.update(100.)
         self.bar.finish()
         self.quit()
+
+    def abort(self):
+        """ Aborts the currently running Experiment, but raises an exception if
+        there is no running experiment
+        """
+        self._worker.update_status(Procedure.ABORTED)
+        self._worker.stop()
 
     def exec_(self):
         # Parse command line arguments
