@@ -35,17 +35,11 @@ class AnaheimMotorControllerSerialAdapter(SerialAdapter):
     Initiates the adapter to open serial communication over the supplied
     port.
 
-
     :param port: A string representing the serial port. 
-    :param idn: integer representing the identification number assigned to an individual motor
-                controller. Values between 0-99 are valid.
-    :param rs485: boolean to indicate if the rs485 communication protocol should be used. 
     """
     
 
-    def __init__(self, port, idn):
-        
-        self.idn = idn
+    def __init__(self, port):
 
         super(AnaheimMotorControllerSerialAdapter, self).__init__(
             port,
@@ -54,14 +48,6 @@ class AnaheimMotorControllerSerialAdapter(SerialAdapter):
             timeout=0.2,
             write_timeout=0.5
         )
-       
-    def write(self, command):
-        """ Overwrites the :func:'SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>'
-        method to automatically prepend the motor controller id and append a carriage return to the command string.
-
-        :param command: Command string to be sent to the instrument.
-        """
-        super(AnaheimMotorControllerSerialAdapter, self).write("@{}".format(self.idn) + command + "\r")
 
 
 

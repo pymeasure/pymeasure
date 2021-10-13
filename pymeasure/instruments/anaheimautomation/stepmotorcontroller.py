@@ -73,7 +73,10 @@ class MotorController(Instrument):
         "Reads the current value of the error codes register."
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, idn, write_termination="\r", **kwargs):
+        self.idn = idn
+        self.write_termination = write_termination
+        
         super().__init__(
             adapter,
             "Anaheim Automation Stepper Motor Controller",
@@ -84,27 +87,48 @@ class MotorController(Instrument):
         """Method that stops all motion on the motor controller."""
         self.write(".")
 
-    def go(self, block=False):
+    def go(self):
         """Method that sends the G command to the controller to tell the controller to turn the 
            motor the number of steps previously set with the steps property."""
 
         self.write("G")
 
     def step(self, steps, direction):
-        """Similar to the go() method, but also sets the number of steps and the direction in the same method."""
+        """Similar to the go() method, but also sets the number of steps and the direction in the same method.
+        
+        :param steps: Number of steps to clock
+        :param direction: Value to set on the direction property before sending the go command to the controller.
+        """
         self.steps = steps 
         self.direction = direction
         self.write("G")
 
-    def home(self):
-        """Sends the home command to the motor controller.
-        """
-        self.write("H")
-
-    def slew(self):
+    def slew(self, direction):
         """Sends the slew command to the motor controller. This tells the controller to clock the stepper motor until a stop command is sent or a limit switch is reached.
+        
+        :param direction: value to set on the direction property before sending the slew command to the controller.
         """
+        self.direction = direction
         self.write("S") 
 
+    def write(self, command):
+        """Override the instrument base write method to add the motor controller's id to the command string.
+        
+        :param command: command string to be sent to the motor controller.
+        """
+        self.adapter.write("@{}".format(self.idn) + command + self.write_termination)
 
-
+    def values(self, command, **kwargs):
+        """ Override the instrument base values method to add the motor controller's id to the command string.
+        
+        :param command: command string to be sent to the motor controller.
+        """
+        return self.adapter.values("@{}".format(self.idn) + command + self.write_termination, **kwargs)
+        
+    def ask(self, command):
+            """ Override the instrument base ask method to add the motor controller's id to the command string.
+            
+            :param command: command string to be sent to the instrument
+            """
+            return self.adapter.ask("@{}".format(self.idn) + command + self.write_termination)
+    
