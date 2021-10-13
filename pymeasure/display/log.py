@@ -32,12 +32,23 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LogHandler(QtCore.QObject, Handler):
-    record = QtCore.QSignal(object)
+class LogHandler(Handler):
+    # Class Emitter is added to keep compatibility with PySide2
+    # 1. Signal needs to be class attribute of a QObject subclass
+    # 2. logging Handler emit method clashes with QObject emit method
+    # 3. As a consequence, the LogHandler cannot inherit both from
+    # Handler and QObject
+    # 4. A new utility class Emitter subclass of QObject is
+    # introduced to handle record Signal and workaround the problem
+    class Emitter(QtCore.QObject):
+        record = QtCore.QSignal(object)
 
-    def __init__(self, parent=None):
-        QtCore.QObject.__init__(self, parent)
-        Handler.__init__(self)
+    def __init__(self):
+        super().__init__()
+        self.emitter = self.Emitter()
+
+    def connect(self, *args, **kwargs):
+        return self.emitter.record.connect(*args, **kwargs)
 
     def emit(self, record):
-        self.record.emit(self.format(record))
+        self.emitter.record.emit(self.format(record))
