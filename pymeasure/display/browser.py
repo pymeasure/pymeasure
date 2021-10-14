@@ -43,7 +43,7 @@ class BrowserItem(QtGui.QTreeWidgetItem):
         pixelmap.fill(color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-        self.setCheckState(0, QtCore.Qt.Unchecked)
+        self.setCheckState(0, QtCore.Qt.Checked)
         self.setText(1, basename(results.data_filename))
 
         self.setStatus(results.procedure.status)
