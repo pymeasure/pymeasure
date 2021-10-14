@@ -79,8 +79,7 @@ class Procedure(object):
         # TODO: Refactor measurable-s implementation to be consistent with parameters
 
         self.MEASURE = {}
-        for item in dir(self):
-            parameter = getattr(self, item)
+        for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Measurable):
                 if parameter.measure:
                     self.MEASURE.update({parameter.name: item})

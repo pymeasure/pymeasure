@@ -75,3 +75,16 @@ def test_procedure_properties():
 
     p = TestProcedure()
     assert p.x == 5
+
+# Make sure that a procedure can be initialized even though some properties are raising
+# errors at initialization time
+def test_procedure_init_with_invalid_property():
+    class TestProcedure(Procedure):
+        @property
+        def prop(self):
+            return self.x
+    p = TestProcedure()
+    with pytest.raises(AttributeError):
+        v = p.prop  # AttributeError
+    p.x = 5
+    assert p.prop == 5
