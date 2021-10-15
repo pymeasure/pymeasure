@@ -24,7 +24,7 @@
 
 import logging
 
-import os
+import os, copy
 import subprocess, platform
 import argparse
 import progressbar
@@ -38,20 +38,12 @@ from ..experiment import Results, Procedure, Worker, unique_filename
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-class ManagedConsole(QtCore.QCoreApplication):
-    """
-    Base class for console experiment management .
-
-    Parameters for :code:`__init__` constructor.
-
-    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names, which the display will generate graphical fields for
-    :param log_channel: :code:`logging.Logger` instance to use for logging output
-    :param log_level: logging level
-    :param sequence_file: simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button
-    :param directory_input: specify, if present, where the experiment's result will be saved.
-    """
+class ConsoleArgumentParser(argparse.ArgumentParser):
     special_options = {
+        "no-progressbar":  {"default" : False,
+                            "desc": "Disable progressbar",
+                            "help_fields": ["default"],
+                            "action": 'store_true'},
         "log-level":       {"default" :logging.INFO,
                             "desc": "Set log level (logging module values)",
                             "help_fields": ["default"]},
@@ -68,35 +60,33 @@ class ManagedConsole(QtCore.QCoreApplication):
                             "desc": "File to retrieve params from",
                             "help_fields": ["default"]},
     }
-    def __init__(self,
-                 args,
-                 procedure_class,
-                 inputs=(),
-                 log_channel='',
-                 log_level=logging.INFO,
-                 sequence_file=None,
-                 directory_input=False,
-                 ):
-
-        super().__init__(args)
-        self.args = args
+    def __init__(self, procedure_class, **kwargs):
+        super().__init__(**kwargs)
         self.procedure_class = procedure_class
-        self.inputs = inputs
-        self.sequence_file = sequence_file
-        self.directory_input = directory_input
-        self.log = logging.getLogger(log_channel)
-        self.log_level = log_level
-        log.setLevel(log_level)
-        self.log.setLevel(log_level)
 
-        # Check if the get_estimates function is reimplemented
-        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
-        self.parser = argparse.ArgumentParser()
-        self._setup_parser()
-        if self.use_estimator:
-            log.warning("Estimator not yet implemented")
-        # Handle Ctrl+C nicely
-        signal.signal(signal.SIGINT, lambda sig,_: self.abort())
+    def setup_parser(self, inputs):
+        """ Setup command line arguments parsing fro parameters information """
+
+        self.procedure = self.procedure_class()
+        parameter_objects = self.procedure.parameter_objects()
+        for name in inputs:
+            kwargs={}
+            parameter = parameter_objects[name]
+            default, help_fields,_type = parameter.cli_args
+            kwargs['help'] = self._cli_help_fields(parameter.name, parameter, help_fields)
+            kwargs['default'] = default
+            if _type != None:
+                kwargs['type'] = _type
+            a=self.add_argument("--"+name, **kwargs)
+
+        special_options = copy.deepcopy(self.special_options)
+        for option, kwargs in special_options.items():
+            help_fields = [('units are', 'units')] + kwargs['help_fields']
+            desc = kwargs['desc']
+            kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
+            del kwargs['help_fields']
+            del kwargs['desc']
+            self.add_argument("--" + option, **kwargs)
 
     def _cli_help_fields(self, name, inst, help_fields):
         def hasattr_dict(inst, key):
@@ -122,23 +112,49 @@ class ManagedConsole(QtCore.QCoreApplication):
                 message += ", {} {}".format(prefix, value)
         return message
 
-    def _setup_parser(self):
-        self.procedure = self.procedure_class()
-        parameter_objects = self.procedure.parameter_objects()
-        for name in self.inputs:
-            parameter = parameter_objects[name]
-            kwargs, help_fields, inst = parameter.cli_args
-            kwargs['help'] = self._cli_help_fields(inst.name, inst, help_fields)
-            self.parser.add_argument("--"+name, **kwargs)
+class ManagedConsole(QtCore.QCoreApplication):
+    """
+    Base class for console experiment management .
 
-        for option, kwargs in self.special_options.items():
-            help_fields = [('units are', 'units')] + kwargs['help_fields']
-            desc = kwargs['desc']
-            kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
-            del kwargs['help_fields']
-            del kwargs['desc']
-            self.parser.add_argument("--" + option, **kwargs)
-            
+    Parameters for :code:`__init__` constructor.
+
+    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names, which the display will generate graphical fields for
+    :param log_channel: :code:`logging.Logger` instance to use for logging output
+    :param log_level: logging level
+    :param sequence_file: simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button
+    :param directory_input: specify, if present, where the experiment's result will be saved.
+    """
+    def __init__(self,
+                 args,
+                 procedure_class,
+                 inputs=(),
+                 log_channel='',
+                 log_level=logging.INFO,
+                 sequence_file=None,
+                 directory_input=False,
+                 ):
+
+        super().__init__(args)
+        self.args = args
+        self.procedure_class = procedure_class
+        self.inputs = inputs
+        self.sequence_file = sequence_file
+        self.directory_input = directory_input
+        self.log = logging.getLogger(log_channel)
+        self.log_level = log_level
+        log.setLevel(log_level)
+        self.log.setLevel(log_level)
+
+        # Check if the get_estimates function is reimplemented
+        self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
+        self.parser = ConsoleArgumentParser(procedure_class)
+        self.parser.setup_parser(self.inputs)
+        if self.use_estimator:
+            log.warning("Estimator not yet implemented")
+        # Handle Ctrl+C nicely
+        signal.signal(signal.SIGINT, lambda sig,_: self.abort())
+
     def open_experiment(self, filename):
         """
         TODO: Add description
@@ -157,10 +173,12 @@ class ManagedConsole(QtCore.QCoreApplication):
             return unique_filename(directory)
 
     def _update_progress(self, progress):
-        self.bar.update(progress)
+        if self.bar:
+            self.bar.update(progress)
 
     def _update_status(self, status):
-        self.bar.update(status=Procedure.STATUS_STRINGS[status])
+        if self.bar:
+            self.bar.update(status=Procedure.STATUS_STRINGS[status])
 
     def _update_log(self, record):
         log.emit(record)
@@ -179,16 +197,18 @@ class ManagedConsole(QtCore.QCoreApplication):
     def _abort_returned(self):
         log.debug("Running experiment has returned after an abort")
         self._clean_up()
-        self.bar.update()
-        # Leave the progressbar status untouched
-        self.bar.finish(dirty=True)
+        if self.bar:
+            self.bar.update()
+            # Leave the progressbar status untouched
+            self.bar.finish(dirty=True)
         self.quit()
 
     def _finish(self):
         log.debug("Running experiment has finished")
         self._clean_up()
-        self.bar.update(100.)
-        self.bar.finish()
+        if self.bar:
+            self.bar.update(100.)
+            self.bar.finish()
         self.quit()
 
     def abort(self):
@@ -217,6 +237,8 @@ class ManagedConsole(QtCore.QCoreApplication):
         if args['sequence_file'] != None:
             raise NotImplementedError("Sequencer not yet implemented")
 
+        bar_enabled = not args['no_progressbar']
+
         # Set procedure parameters
         parameter_values = {}
 
@@ -229,14 +251,17 @@ class ManagedConsole(QtCore.QCoreApplication):
         else:
             for name in args:
                 opt_name = name.replace("_", "-")
-                if not (opt_name in self.special_options):
+                if not (opt_name in self.parser.special_options):
                     parameter_values[name] = args[name]
 
         procedure.set_parameters(parameter_values)
-        progressbar.streams.wrap_stderr()
-        self.bar = progressbar.ProgressBar(max_value=100,
-                                           prefix='{variables.status}: ',
-                                           variables={'status': "Unknown"})
+        if (bar_enabled):
+            progressbar.streams.wrap_stderr()
+            self.bar = progressbar.ProgressBar(max_value=100,
+                                               prefix='{variables.status}: ',
+                                               variables={'status': "Unknown"})
+        else:
+            self.bar = None
         scribe = console_log(self.log, level=self.log_level)
         scribe.start()
         
