@@ -97,7 +97,7 @@ class Channel():
     load_impedance = Instrument.control(
         'LOAD:IMP?', 'LOAD:IMP %.4E',
         """A mixed parameter that sets the load impedance. Any float between
-        [50, 1e8] are allowed as well as 'MIN' and 'MAX'.""",
+        [50, 1e4] are allowed as well as 'MIN' and 'MAX'.""",
     )
 
     period = Instrument.control(
@@ -213,9 +213,7 @@ class BN765(Instrument):
 
     .. code-block:: python
 
-        generator = BN765("GPIB::1")
-
-
+        generator = BN765('TCPIP0::169.254.26.15::inst0::INSTR')
 
     """
 
@@ -229,7 +227,6 @@ class BN765(Instrument):
             "BN 765 Function/Arbitrary Waveform generator",
             **kwargs
         )
-
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
 
