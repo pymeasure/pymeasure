@@ -130,5 +130,4 @@ class Browser(QtGui.QTreeWidget):
 
         self.addTopLevelItem(item)
         self.setItemWidget(item, 2, item.progressbar)
-        
         return item
