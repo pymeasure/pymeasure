@@ -375,16 +375,6 @@ class Agilent34450A(Instrument):
         self.adapter.connection.timeout = 10000
         self.check_errors()
 
-    def check_errors(self):
-        """ Read all errors from the instrument."""
-        while True:
-            err = self.values(":SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Agilent 34450A: %s: %s" % (err[0], err[1])
-                log.error(errmsg + '\n')
-            else:
-                break
-
     def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
         """ Configures the instrument to measure voltage.
 

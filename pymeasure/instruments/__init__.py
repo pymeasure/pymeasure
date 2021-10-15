@@ -37,6 +37,7 @@ from . import anritsu
 from . import attocube
 from . import danfysik
 from . import deltaelektronika
+from . import fluke
 from . import fwbell
 from . import hp
 from . import keithley
@@ -47,6 +48,7 @@ from . import ni
 from . import oxfordinstruments
 from . import parker
 from . import razorbill
+from . import rohdeschwarz
 from . import signalrecovery
 from . import srs
 from . import tektronix

@@ -23,7 +23,7 @@
 #
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
-from time import time
+from time import time, sleep
 import numpy as np
 from pyvisa.errors import VisaIOError
 
@@ -388,7 +388,9 @@ class BN675_AWG(Instrument):
         to_transferstr = '#' + str(len(str(l))) + str(l) + to_transferstr
         default_path = self.default_dir + filename
         self.write(f'MMEM:DOWN:FNAM "{default_path}"')
+        sleep(.5)
         self.write('MMEM:DOWN:DATA ' + to_transferstr)
+        sleep(.1)
 
     def transfer_and_load(self, array, wfname):
         """
