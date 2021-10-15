@@ -266,7 +266,9 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=2)
+            # The pyqtgraph pen width was changed to 1 (originally: 2) to circumvent plotting slowdown.
+            # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
+            kwargs['pen'] = pg.mkPen(color=color, width=1)
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         curve = ResultsCurve(results,
@@ -297,7 +299,9 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def set_color(self, curve, color):
         """ Remove curve from widget """
-        curve.setPen(pg.mkPen(color=color, width=2))
+        # The pyqtgraph pen width was changed to 1 (originally: 2) to circumvent plotting slowdown.
+        # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
+        curve.setPen(pg.mkPen(color=color, width=1))
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
@@ -621,7 +625,9 @@ class ResultsDialog(QtGui.QFileDialog):
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1.75),
+                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to circumvent plotting slowdown.
+                                 # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
+                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
                                  antialias=True
                                  )
             curve.update_data()
