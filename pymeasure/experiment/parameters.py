@@ -44,11 +44,13 @@ class Parameter(object):
         this argument is ignored.
     """
 
+    _type = None
     def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
         self.name = name
         self._value = default
         self.default = default
         self.ui_class = ui_class
+        self._help_fields=[('units are', 'units'), 'default']
 
         self.group_by = {}
         if isinstance(group_by, dict):
@@ -64,8 +66,6 @@ class Parameter(object):
             raise TypeError("The provided group_by argument is not valid, should be either "
                             "a string, a list of strings, or a dict with {string: condition} pairs.")
 
-
-
     @property
     def value(self):
         if self.is_set():
@@ -76,6 +76,18 @@ class Parameter(object):
     @value.setter
     def value(self, value):
         self._value = value
+
+    @property
+    def cli_args(self):
+        """ helper for command line interface parsing of parameters
+
+        This property returns a list of data to help formatting a command line
+        interface interpreter, the list is composed of the following elements:
+        - index 0: default value
+        - index 1: List of value to format an help string, that is either, the name of the fields to be documented or a tuple with (helps_string, field)
+        - index 2: type
+        """
+        return (self.default, self._help_fields, self._type)
 
     def is_set(self):
         """ Returns True if the Parameter value is set
@@ -103,12 +115,14 @@ class IntegerParameter(Parameter):
     :param default: The default integer value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
-
+    _type = int
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
+        self._help_fields.append('minimum')
+        self._help_fields.append('maximum')
 
     @property
     def value(self):
@@ -149,7 +163,6 @@ class IntegerParameter(Parameter):
         return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
-
 class BooleanParameter(Parameter):
     """ :class:`.Parameter` sub-class that uses the boolean type to
     store the value.
@@ -160,6 +173,8 @@ class BooleanParameter(Parameter):
     :param default: The default boolean value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
+
+    _type = lambda inst, x: bool(eval(x))
 
     @property
     def value(self):
@@ -201,6 +216,7 @@ class FloatParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
+    _type = float
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
                  decimals=15, **kwargs):
         super().__init__(name, **kwargs)
@@ -208,6 +224,7 @@ class FloatParameter(Parameter):
         self.minimum = minimum
         self.maximum = maximum
         self.decimals = decimals
+        self._help_fields.append('decimals')
 
     @property
     def value(self):
@@ -262,10 +279,12 @@ class VectorParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
+    _type = eval
     def __init__(self, name, length=3, units=None, **kwargs):
         super().__init__(name, **kwargs)
         self._length = length
         self.units = units
+        self._help_fields.append('_length')
 
     @property
     def value(self):
@@ -340,6 +359,7 @@ class ListParameter(Parameter):
         else:
             self._choices = None
         self.units = units
+        self._help_fields.append('choices')
 
     @property
     def value(self):
