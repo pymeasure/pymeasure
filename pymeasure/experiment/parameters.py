@@ -359,7 +359,7 @@ class ListParameter(Parameter):
         else:
             self._choices = None
         self.units = units
-        self._help_fields.append('choices')
+        self._help_fields.append(('choices are', 'choices'))
 
     @property
     def value(self):
