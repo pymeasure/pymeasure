@@ -35,7 +35,7 @@ WL_RANGE = [1480,1620]
 
 class N7776C(Instrument):
     """
-    This represents the Keysight N7776C Tunable Laser Source interface
+    This represents the Keysight N7776C Tunable Laser Source interface.
     .. code-block:: python
         laser = N7776C( address )
         laser.sweep_wl_start = 1550
@@ -125,6 +125,13 @@ class N7776C(Instrument):
                                     """ Sweep mode of the swept laser source """,
                                     validator=strict_discrete_set,
                                     values=['STEP','MAN','CONT'])
+    sweep_twoway = Instrument.control('sour0:wav:swe:rep?','sour0:wav:swe:rep %s',
+                                    """Sets the repeat mode. Applies in stepped,continuous and manual sweep mode.""",
+                                    map_values=True,
+                                    validator=strict_discrete_set,
+                                    values=[True,False],
+                                    set_process=lambda v: ['ONEW','TWOW'][int(v)],
+                                    get_process=lambda v: bool(['ONEW','TWOW'].index(v)))
     _sweep_check = Instrument.measurement('sour0:wav:swe:chec?',
                                     """Returns whether the currently set sweep parameters (sweep mode, sweep start, stop, width, etc.) are consistent. If there is a
                                     sweep configuration problem, the laser source is not able to pass a wavelength sweep.""")
