@@ -49,7 +49,7 @@ class KeysightN7776C(Instrument):
     
     """
     def __init__(self, address, **kwargs):
-        super(N7776C, self).__init__(
+        super(KeysightN7776C, self).__init__(
             address, "N7776C Tunable Laser Source",**kwargs)
 
     def reset(self):
