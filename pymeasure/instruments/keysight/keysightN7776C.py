@@ -38,6 +38,14 @@ class N7776C(Instrument):
     This represents the Keysight N7776C Tunable Laser Source interface
     .. code-block:: python
         laser = N7776C( address )
+        laser.sweep_wl_start = 1550
+        laser.sweep_wl_stop = 1560
+        laser.sweep_speed = 1
+        laser.sweep_mode = 'CONT'
+        laser.output = 1
+        while laser.sweep == 1:
+            continue
+        laser.output = 0
     
     """
     def __init__(self, address, **kwargs):
@@ -45,9 +53,15 @@ class N7776C(Instrument):
             address, "N7776C Tunable Laser Source",**kwargs)
 
     def reset(self):
+        """
+        Reset the laser controller to its default state.
+        """
         self.write('*RST')
 
     def set_power(self,value,unit='mW'):
+        """
+        Function wrapper to set the power in an arbitrary unit
+        """
         if not unit in ['dBm','mW']:
             raise ValueError('Unknown Power Unit.')
 
@@ -55,6 +69,9 @@ class N7776C(Instrument):
         self.output_power = value
 
     def get_power(self,unit_output=False):
+        """
+        Function wrapper to get the power including the unit directly if neccessary.
+        """
         power_reading = self._output_power
         power_unit = self._output_power_unit
         if unit_output:
@@ -71,12 +88,9 @@ class N7776C(Instrument):
                                     set_process=lambda v: int(v),
                                     get_process=lambda v: bool(v))
 
-
-
-
-    _output_power = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
+    _output_power = Instrument.control('SOUR0:POW?','SOUR0:POW %g',
                                     """ Floating point value indicating the laser output power in the unit set by the user (see _output_power_unit).""")
-    _output_power_unit = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
+    _output_power_unit = Instrument.control('SOUR0:POW;UNIT?','SOUR0:POW:UNIT %g',
                                     """ String parameter controlling the power unit used internally by the laser.""",
                                     map_values=True,
                                     values={'dBm':0,'mW':1})
@@ -114,15 +128,26 @@ class N7776C(Instrument):
     _sweep_check = Instrument.measurement('sour0:wav:swe:chec?',
                                     """Returns whether the currently set sweep parameters (sweep mode, sweep start, stop, width, etc.) are consistent. If there is a
                                     sweep configuration problem, the laser source is not able to pass a wavelength sweep.""")
+
     sweep_points = Instrument.measurement('sour0:read:points? llog',
                                     """Returns the number of datapoints that the :READout:DATA? command will return.""")
-    sweep = Instrument.control('sour0:wav:swe?','sour0:wav:swe %g',""" State of the wavelength sweep. Stops, starts, pauses or continues a wavelength sweep.""")
+    
+    sweep = Instrument.control('sour0:wav:swe?','sour0:wav:swe %g',
+                                    """ State of the wavelength sweep. Stops, starts, pauses 
+                                    or continues a wavelength sweep.""")
 
-    wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?','SOUR0:WAV:SWE:LLOG %g',""" State (on/off) of the lambda logging feature of the laser source.""")
+    wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?','SOUR0:WAV:SWE:LLOG %g',
+                                    """ State (on/off) of the lambda logging feature of the laser source.""")
 
 
     def get_wl_data(self):
+        """
+        Function returning the wavelength data logged in the internal memory of the laser
+        """
         return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',datatype=u'd'))    
 
     def close(self):
+        """
+        Fully closes the connection to the instrument through the adapter connection.
+        """
         self.adapter.connection.close()
