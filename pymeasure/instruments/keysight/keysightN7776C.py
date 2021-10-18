@@ -147,6 +147,18 @@ class N7776C(Instrument):
                                     """ State (on/off) of the lambda logging feature of the laser source.""")
 
 
+    def next_step(self):
+        """
+        Performs the next sweep step in stepped sweep if its paused or in manual mode.
+        """
+        self.write('sour0:wav:swe:step:next')
+
+    def previous_step(self):
+        """
+        Performs one sweep step backwards in stepped sweep if its paused or in manual mode.
+        """
+        self.write('sour0:wav:swe:step:prev')
+
     def get_wl_data(self):
         """
         Function returning the wavelength data logged in the internal memory of the laser
