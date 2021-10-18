@@ -33,7 +33,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 WL_RANGE = [1480,1620]
 
-class N7776C(Instrument):
+class KeysightN7776C(Instrument):
     """
     This represents the Keysight N7776C Tunable Laser Source interface.
     .. code-block:: python
