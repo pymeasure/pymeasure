@@ -24,6 +24,7 @@
 
 import logging
 import sys
+import inspect
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
 
@@ -78,8 +79,7 @@ class Procedure(object):
         # TODO: Refactor measurable-s implementation to be consistent with parameters
 
         self.MEASURE = {}
-        for item in dir(self):
-            parameter = getattr(self, item)
+        for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Measurable):
                 if parameter.measure:
                     self.MEASURE.update({parameter.name: item})
@@ -103,8 +103,7 @@ class Procedure(object):
         """
         if not self._parameters:
             self._parameters = {}
-        for item in dir(self):
-            parameter = getattr(self, item)
+        for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Parameter):
                 self._parameters[item] = deepcopy(parameter)
                 if parameter.is_set():
