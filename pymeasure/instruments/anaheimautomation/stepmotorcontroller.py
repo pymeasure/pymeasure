@@ -197,11 +197,13 @@ class MotorController(Instrument):
         self.direction = direction
         self.write("S") 
 
-    async def async_step(self, steps, direction):
-        """ Asynchronous implementation of the step() method. This method can be awaited and will not
-            return until the controller has actually clocked the number of steps specified, whereas the step() method returns as soon as the step command is sent to the controller.
+    async def async_step(self, steps, direction, **kwargs):
+        """ Asynchronous implementation of the step() method. This method can be awaited and will not return until the controller completes its step operation.
         """
-        pass 
+        # call the normal step method #
+        self.step(steps, direction)
+        # wait until the step operation completes. # 
+        await self.wait_for_completion(**kwargs)
 
     def write(self, command):
         """Override the instrument base write method to add the motor controller's id to the command string.
@@ -223,4 +225,27 @@ class MotorController(Instrument):
         :param command: command string to be sent to the instrument
         """
         return self.adapter.ask("@{}".format(self.idn) + command)
-    
+   
+    async def wait_for_completion(self, interval=0.5, threshold=3):
+        """ Query the motor controller's step (or encoder) position and only return when inactivity is detected. Inactivity is 
+            defined as when the previous queried position and current queried position match for "threshold" number of times.
+        
+        :param interval: (float) duration in seconds between controller position queries
+        :param threshold: (int) number of times that the previous and current position must match before returning. 
+        """
+        pos_matches = 0
+        prev_pos = None 
+        while pos_matches < threshold:
+            if self._encoder_enabled:
+                pos = self.encoder_position
+            else:
+                pos = self.position
+             
+            if pos == prev_pos:
+                pos_matches += 1
+
+            print(pos, prev_pos) 
+            prev_pos = pos 
+            await asyncio.sleep(interval)
+
+
