@@ -23,6 +23,7 @@
 #
 
 import asyncio
+from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
@@ -73,15 +74,20 @@ class MotorController(Instrument):
         "Reads the current value of the error codes register."
     )
 
-    def __init__(self, adapter, idn, write_termination="\r", **kwargs):
+    def __init__(self, resourceName, idn, **kwargs):
         self.idn = idn
-        self.write_termination = write_termination
         
         super().__init__(
-            adapter,
+            resourceName,
             "Anaheim Automation Stepper Motor Controller",
+            includeSCPI=False,
+            write_termination="\r",
+            read_termination="\r",
             **kwargs
         )
+        
+        if isinstance(self.adapter, VISAAdapter):
+            self.adapter.connection.baud_rate = 38400
 
     def stop(self):
         """Method that stops all motion on the motor controller."""
@@ -116,19 +122,19 @@ class MotorController(Instrument):
         
         :param command: command string to be sent to the motor controller.
         """
-        self.adapter.write("@{}".format(self.idn) + command + self.write_termination)
+        self.adapter.write("@{}".format(self.idn) + command)
 
     def values(self, command, **kwargs):
         """ Override the instrument base values method to add the motor controller's id to the command string.
         
         :param command: command string to be sent to the motor controller.
         """
-        return self.adapter.values("@{}".format(self.idn) + command + self.write_termination, **kwargs)
+        return self.adapter.values("@{}".format(self.idn) + command, **kwargs)
         
     def ask(self, command):
-            """ Override the instrument base ask method to add the motor controller's id to the command string.
-            
-            :param command: command string to be sent to the instrument
-            """
-            return self.adapter.ask("@{}".format(self.idn) + command + self.write_termination)
+        """ Override the instrument base ask method to add the motor controller's id to the command string.
+
+        :param command: command string to be sent to the instrument
+        """
+        return self.adapter.ask("@{}".format(self.idn) + command)
     
