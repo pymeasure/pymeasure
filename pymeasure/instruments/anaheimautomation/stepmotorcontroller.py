@@ -23,6 +23,7 @@
 #
 
 import asyncio
+from pyvisa.errors import VisaIOError
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
@@ -59,35 +60,114 @@ class MotorController(Instrument):
         "VN", "N%i",
         """An integer property that represents the number of steps the motor controller will run upon the next 'G' (go) command that is sent to the controller. This property can be set.""",
         validator=truncated_range,
-        values=[0, 8388607]
+        values=[0, 8388607],
     )
 
     position = Instrument.control(
        "VZ", "Z%i",
-       """An integer property that represents the step position reference as seen by the motor controller. This property can be set.""",
+       """An integer property that represents the step position as seen by the motor controller. This property can be set.""",
        validator=truncated_range,
-       values=[-8388607, 8388607]
+       values=[-8388607, 8388607],
     ) 
+
+    encoder_position = Instrument.measurement(
+        "VEP", 
+        """An integer property that represents the step position as counted by an externally connected encoder. This property cannot be set, but can be 
+        reset to 0 using the reset_encoder_position() method.""",
+    )
+
+    encoder_autocorrect = Instrument.control(
+        "VEA", "EA%i",
+        """A boolean property to enable or disable the encoder auto correct function. This property can be set.""",
+        map_values=True, 
+        values={True: 1, False: 0},
+        validator=strict_discrete_set,
+        get_process=lambda ea: int(ea),
+    )
+
+    encoder_delay = Instrument.control(
+        "VED", "ED%i",
+        """An integer property that represents the wait time in ms. after move is finished before
+           the encoder is read for a potential encoder auto-correct action to take place. This property can be set.""",
+        validator=truncated_range,
+        values=[0, 65535], 
+    )
+
+    encoder_motor_ratio = Instrument.control(
+        "VEM", "EM%i",
+        """An integer property that represents the ratio of the number of encoder pulses per motor step. This property can be set.""",
+        validator=truncated_range,
+        values=[1, 255],
+    )
+
+    encoder_retries = Instrument.control(
+        "VER", "ER%i",
+        """An integer property that represents the number of times the motor controller will try
+           the encoder auto correct function before setting an error flag. This property can be set.""",
+        validator=truncated_range,
+        values=[0, 255],
+    )
+
+    encoder_window = Instrument.control(
+        "VEW", "EW%i",
+        """An integer property that represents the allowable error in encoder pulses from the desired
+           position before the encoder auto-correct function runs. This property can be set.""",
+        validator=truncated_range,
+        values=[0, 255],
+    )
 
     error_reg = Instrument.measurement(
         "!",
         "Reads the current value of the error codes register."
     )
 
-    def __init__(self, resourceName, idn, **kwargs):
+    def __init__(self, resourceName, idn, encoder=False, **kwargs):
+        """
+        Initialize communication with the motor controller with id=idn. In addition to the keyword arguments that can be
+        set for the Instrument base class, this class has the following kwargs:
+
+        :param idn: (int) Assigned id of the motor controller.
+        :param encoder: (bool) Flag to indicate if an encoder has been connected to the controller. 
+        """
         self.idn = idn
-        
+        self._encoder_enabled = encoder 
+
         super().__init__(
             resourceName,
             "Anaheim Automation Stepper Motor Controller",
             includeSCPI=False,
             write_termination="\r",
             read_termination="\r",
+            timeout=2000, 
             **kwargs
         )
         
         if isinstance(self.adapter, VISAAdapter):
             self.adapter.connection.baud_rate = 38400
+
+    @property
+    def encoder_enabled(self):
+        """
+        Return the value of the _encoder_enabled flag.
+        """
+        return self._encoder_enabled
+
+    @encoder_enabled.setter
+    def encoder_enabled(self, en):
+        """ Set the value of the _encoder_enabled flag. When set, asynchronous coroutine methods like step_async() will query
+            the "encoder_position" property instead of the "position" property.
+
+        :param en: (bool) boolean value to set the _encoder_enabled flag with
+        """
+        if type(en) is bool: 
+            self._encoder_enabled = en 
+        else:
+            TypeError("encoder_enabled can only be set with a boolean!")
+
+    def reset_encoder_position(self):
+        """ Reset the position as counted by an externally connected encoder to 0.
+        """
+        self.write("ET")
 
     def stop(self):
         """Method that stops all motion on the motor controller."""
@@ -116,6 +196,12 @@ class MotorController(Instrument):
         """
         self.direction = direction
         self.write("S") 
+
+    async def async_step(self, steps, direction):
+        """ Asynchronous implementation of the step() method. This method can be awaited and will not
+            return until the controller has actually clocked the number of steps specified, whereas the step() method returns as soon as the step command is sent to the controller.
+        """
+        pass 
 
     def write(self, command):
         """Override the instrument base write method to add the motor controller's id to the command string.
