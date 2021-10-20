@@ -11,8 +11,7 @@ dependencies:
   - pyvisa=1.10.1
   - pyzmq=22.0.3
   - qt=5.12.9
-  - progressbar2=3.53.3
-# Development dependencies below
+ # Development dependencies below
   - pytest-qt=3.3.0
   - pytest-runner=5.2
   - pytest=6.1.1
@@ -22,3 +21,5 @@ dependencies:
   - pip  # don't pin, to gain newest conda compatibility fixes
   - pip:
     - pyvisa-sim==0.4.0
+    - progressbar2==3.53.3
+
