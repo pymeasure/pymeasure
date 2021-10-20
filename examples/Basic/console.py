@@ -32,8 +32,6 @@ class TestProcedure(Procedure):
     iterations = IntegerParameter('Loop Iterations', default=100)
     delay = FloatParameter('Delay Time', units='s', default=0.2)
     seed = Parameter('Random Seed', default='12345')
-    testbool = BooleanParameter('Boolean value', default=True)
-    testList = ListParameter('List value', choices=[1,2,3,"h"], default=1)
 
     DATA_COLUMNS = ['Iteration', 'Random Number']
 
@@ -66,7 +64,7 @@ class Console(ManagedConsole):
         super().__init__(
             argv,
             procedure_class=TestProcedure,
-            inputs=['iterations', 'delay', 'seed', 'testbool', 'testList'],
+            inputs=['iterations', 'delay', 'seed'],
         )
 
 class MainWindow(ManagedWindow):
