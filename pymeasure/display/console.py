@@ -110,6 +110,8 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
                 prefix = field[0]
                 value = getattribute(inst,field[1])
                 message += ", {} {}".format(prefix, value)
+
+        message = message.replace("%", "%%")
         return message
 
 class ManagedConsole(QtCore.QCoreApplication):
