@@ -32,6 +32,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 WL_RANGE = [1480,1620]
+LOCK_PW = 1234
 
 class KeysightN7776C(Instrument):
     """
@@ -65,8 +66,11 @@ class KeysightN7776C(Instrument):
         if not unit in ['dBm','mW']:
             raise ValueError('Unknown Power Unit.')
 
-        self._output_power_unit = unit.lower()
-        self.output_power = value
+        self._output_power_unit = unit
+        if unit == 'mW':
+            self._output_power = value*1e-3 #Conversion to mW
+        else:
+            self._output_power = value
 
     def get_power(self,unit_output=False):
         """
@@ -74,13 +78,32 @@ class KeysightN7776C(Instrument):
         """
         power_reading = self._output_power
         power_unit = self._output_power_unit
-        if unit_output:
-            return (power_reading,power_unit)
+        if power_unit == 'mW':
+            if unit_output:
+                return (power_reading*1e3,power_unit)
+            else:
+                return power_reading*1e3
         else:
-            return power_reading
+            if unit_output:
+                return (power_reading,power_unit)
+            else:
+                return power_reading
+    def lock(self):
+        self._locked = True
+        
+    def unlock(self):
+        self._locked = False
+        
+    def locked(self):
+        return self._locked
 
-
-
+    _locked = Instrument.control(':LOCK?',':LOCK %g,'+str(LOCK_PW),
+                                   """ Boolean property controlling the lock state (True/False) of the laser source""",
+                                   validator=strict_discrete_set,
+                                   values=[True,False],
+                                   set_process=lambda v: int(v),
+                                   get_process=lambda v: bool(v))
+    
     output = Instrument.control('SOUR0:POW:STAT?','SOUR0:POW:STAT %g',
                                     """ Boolean Property that controls the state (on/off) of the laser source """,
                                     validator=strict_discrete_set,
@@ -88,9 +111,10 @@ class KeysightN7776C(Instrument):
                                     set_process=lambda v: int(v),
                                     get_process=lambda v: bool(v))
 
-    _output_power = Instrument.control('SOUR0:POW?','SOUR0:POW %g',
+    _output_power = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
                                     """ Floating point value indicating the laser output power in the unit set by the user (see _output_power_unit).""")
-    _output_power_unit = Instrument.control('SOUR0:POW;UNIT?','SOUR0:POW:UNIT %g',
+    
+    _output_power_unit = Instrument.control('SOUR0:POW:UNIT?','SOUR0:POW:UNIT %g',
                                     """ String parameter controlling the power unit used internally by the laser.""",
                                     map_values=True,
                                     values={'dBm':0,'mW':1})
@@ -104,14 +128,22 @@ class KeysightN7776C(Instrument):
                                     validator=strict_discrete_set,
                                     values=['IGN','NEXT','SWS'])
 
+    wavelength = Instrument.control('sour0:wav?','sour0:wav %fnm',
+                                    """ Absolute wavelength of the output light (in nanometers)""",
+                                    validator=strict_range,
+                                    values=WL_RANGE,
+                                    get_process=lambda v: v*1e9)
+
     sweep_wl_start = Instrument.control('sour0:wav:swe:star?','sour0:wav:swe:star %fnm',
                                     """ Start Wavelength (in nanometers) for a sweep.""",
                                     validator=strict_range,
-                                    values=WL_RANGE)
+                                    values=WL_RANGE,
+                                    get_process=lambda v: v*1e9)
     sweep_wl_stop = Instrument.control('sour0:wav:swe:stop?','sour0:wav:swe:stop %fnm',
                                     """ End Wavelength (in nanometers) for a sweep.""",
                                     validator=strict_range,
-                                    values=WL_RANGE)
+                                    values=WL_RANGE,
+                                    get_process=lambda v: v*1e9)
 
     sweep_step = Instrument.control('sour0:wav:swe:step?','sour0:wav:swe:step %fnm',
                                     """ Step width of th[e sweep (in nanometers).""",
@@ -120,14 +152,14 @@ class KeysightN7776C(Instrument):
     sweep_speed = Instrument.control('sour0:wav:swe:speed?','sour0:wav:swe:speed %fnm/s',
                                     """ Speed of the sweep (in nanometers per second).""",
                                     validator=strict_discrete_set,
-                                    values=[0.5,1,2,5,10,20,40,50,80,100,150,160,200])
+                                    values=[0.5,1,50,80,200],
+                                    get_process=lambda v: v*1e9)
     sweep_mode = Instrument.control('sour0:wav:swe:mode?','sour0:wav:swe:mode %s',
                                     """ Sweep mode of the swept laser source """,
                                     validator=strict_discrete_set,
                                     values=['STEP','MAN','CONT'])
     sweep_twoway = Instrument.control('sour0:wav:swe:rep?','sour0:wav:swe:rep %s',
                                     """Sets the repeat mode. Applies in stepped,continuous and manual sweep mode.""",
-                                    map_values=True,
                                     validator=strict_discrete_set,
                                     values=[True,False],
                                     set_process=lambda v: ['ONEW','TWOW'][int(v)],
@@ -144,7 +176,59 @@ class KeysightN7776C(Instrument):
                                     or continues a wavelength sweep.""")
 
     wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?','SOUR0:WAV:SWE:LLOG %g',
-                                    """ State (on/off) of the lambda logging feature of the laser source.""")
+                                    """ State (on/off) of the lambda logging feature of the laser source.""",
+                                    validator=strict_discrete_set,
+                                    values=[True,False],
+                                    set_process=lambda v: int(v),
+                                    get_process=lambda v: bool(v))
+
+    def check_sweep_params(self):
+        response = self._sweep_check
+        if response[0] == 0.0:
+            return True
+        elif response[0] == 368:
+            log.log(30,'Warning: End Wavelength <= Start Wavelength.')
+            return False
+        elif response[0] == 369:
+            log.log(30,'Warning: Sweep time too small.')
+            return False
+        elif response[0] == 370:
+            log.log(30,'Warning: Sweep time too big.')
+            return False
+        elif response[0] == 371:
+            log.log(30,'Warning: Trigger Frequency too large.')
+            return False
+        elif response[0] == 372:
+            log.log(30,'Warning: Stepsize too small.')
+            return False
+        elif response[0] == 373 or response[0] == 378:
+            log.log(30,'Warning: Number of triggers exceeds allowed limit.')
+            return False
+        elif response[0] == 374:
+            log.log(30,'Warning: The only allowed modulation source with lambda logging function is coherence control.')
+            return False
+        elif response[0] == 375:
+            log.log(30,'Warning: Lambda logging only works Step Finished output trigger configuration')
+            return False
+        elif response[0] == 376:
+            log.log(30,'Warning: Lambda logging can only be done in continuous sweep mode')
+            return False
+        elif response[0] == 377:
+            log.log(30,'Warning: The step size must be a multiple of the smallest possible step size')
+            return False
+        elif response[0] == 379:
+            log.log(30,'Warning: Continuous Sweep and Modulation on.')
+            return False
+        elif response[0] == 380:
+            log.log(30,'Warning: Start Wavelength is too small.')
+            return False
+        elif response[0] == 381:
+            log.log(30,'Warning: End Wavelength is too large.')
+            return False
+        else:
+            log.log(30,'Warning: Unknown Error!')
+            return False
+            
 
 
     def next_step(self):
