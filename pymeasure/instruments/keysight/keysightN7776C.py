@@ -120,7 +120,7 @@ class KeysightN7776C(Instrument):
     sweep_speed = Instrument.control('sour0:wav:swe:speed?','sour0:wav:swe:speed %fnm/s',
                                     """ Speed of the sweep (in nanometers per second).""",
                                     validator=strict_discrete_set,
-                                    values=[0.5,1,50,80,200]) #TODO: Get Real values
+                                    values=[0.5,1,2,5,10,20,40,50,80,100,150,160,200])
     sweep_mode = Instrument.control('sour0:wav:swe:mode?','sour0:wav:swe:mode %s',
                                     """ Sweep mode of the swept laser source """,
                                     validator=strict_discrete_set,
