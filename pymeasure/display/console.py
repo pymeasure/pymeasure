@@ -185,31 +185,21 @@ class ManagedConsole(QtCore.QCoreApplication):
     def _update_log(self, record):
         log.emit(record)
 
-    def _running(self):
-        pass
-
-    def _clean_up(self):
-        self._monitor.wait()
-        log.debug("Monitor has cleaned up after the Worker")
-
     def _failed(self):
-        log.debug("Manager's running experiment has failed")
-        self._clean_up()
+        self._terminate("Manager's running experiment has failed")
 
     def _abort_returned(self):
-        log.debug("Running experiment has returned after an abort")
-        self._clean_up()
-        if self.bar:
-            self.bar.update()
-            # Leave the progressbar status untouched
-            self.bar.finish(dirty=True)
-        self.quit()
+        self._terminate("Running experiment has returned after an abort")
 
     def _finish(self):
-        log.debug("Running experiment has finished")
-        self._clean_up()
+        self._terminate("Running experiment has finished", 100.0)
+
+    def _terminate(self, debug_message, update_bar=None):
+        log.debug(debug_message)
+        self._monitor.wait()
+        log.debug("Monitor has cleaned up after the Worker")
         if self.bar:
-            self.bar.update(100.)
+            self.bar.update(update_bar)
             self.bar.finish()
         self.quit()
 
@@ -272,7 +262,6 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         self._worker = Worker(results, log_queue=scribe.queue, log_level=self.log_level)
         self._monitor = Monitor(self._worker.monitor_queue)
-        self._monitor.worker_running.connect(self._running)
         self._monitor.worker_failed.connect(self._failed)
         self._monitor.worker_abort_returned.connect(self._abort_returned)
         self._monitor.worker_finished.connect(self._finish)
