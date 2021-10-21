@@ -247,11 +247,42 @@ class ITC503(Instrument):
 
     sweep_table = Instrument.control(
         "r", "$s%f",
-        """ A property that sets values in the sweep table. Relies on the
+        """ A property that controls values in the sweep table. Relies on the
         x_pointer and y_pointer to point at the location in the table that
         is to be set or read. The x-pointer selects the step of the sweep
         (1 to 16); the y-pointer selects the set-point temperature (1), the
         sweep-time to set-point (2), or the hold-time at set-point (3). """,
+        get_process=lambda v: float(v[1:]),
+    )
+
+    auto_pid_table = Instrument.control(
+        "q", "$p%f",
+        """ A property that controls values in the auto-pid table. Relies on the
+        x_pointer and y_pointer to point at the location in the table that
+        is to be set or read. The x-pointer selects the table entry (1 to 16);
+        the y-pointer selects the upper temperature limit (1), the proportional
+        band (2), the integral action time (3), or the derivative action time (4).
+        """,
+        get_process=lambda v: float(v[1:]),
+    )
+
+    target_voltage_table = Instrument.control(
+        "t", "$v%f",
+        """ A property that controls values in the target heater voltage table.
+        Relies on the x_pointer to select the entry in the table that is to be
+        set or read (1 to 64).
+        """,
+        get_process=lambda v: float(v[1:]),
+    )
+
+    gasflow_configuration_parameter = Instrument.control(
+        "d", "$c%f",
+        """ A property that controls the gas flow configuration parameters.
+        Relies on the x_pointer to select which parameter is set or read:
+        the valve gearing (1), target table & features configuration (2),
+        gas flow scaling (3) temperature error sensitivity (4), heater voltage
+        error sensitivity (5), or minimum gas valve in auto (6).
+        """,
         get_process=lambda v: float(v[1:]),
     )
 
