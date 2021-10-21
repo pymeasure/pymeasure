@@ -76,12 +76,18 @@ class ITC503(Instrument):
 
     control_mode = Instrument.control(
         "X", "$C%d",
-        """ A string property that sets the ITC in LOCAL or REMOTE and LOCKES,
-        or UNLOCKES, the LOC/REM button. Allowed values are:
-        LL: LOCAL & LOCKED
-        RL: REMOTE & LOCKED
-        LU: LOCAL & UNLOCKED
-        RU: REMOTE & UNLOCKED. """,
+        """ A string property that sets the ITC in `local` or `remote` and `locked`
+        or `unlocked`, locking the LOC/REM button. Allowed values are:
+        
+        =====   =================
+        value   state
+        =====   =================
+        LL      local & locked
+        RL      remote & locked
+        LU      local & unlocked
+        RU      remote & unlocked
+        =====   =================
+        """,
         get_process=lambda v: int(v[5:6]),
         validator=strict_discrete_set,
         values={"LL": 0, "RL": 1, "LU": 2, "RU": 3},
@@ -91,11 +97,17 @@ class ITC503(Instrument):
     heater_gas_mode = Instrument.control(
         "X", "$A%d",
         """ A string property that sets the heater and gas flow control to
-        AUTO or MANUAL. Allowed values are:
-        MANUAL: HEATER MANUAL, GAS MANUAL
-        AM: HEATER AUTO, GAS MANUAL
-        MA: HEATER MANUAL, GAS AUTO
-        AUTO: HEATER AUTO, GAS AUTO. """,
+        `auto` or `manual`. Allowed values are:
+
+        ======   =======================
+        value    state
+        ======   =======================
+        MANUAL   heater & gas manual
+        AM       heater auto, gas manual
+        MA       heater manual, gas auto
+        AUTO     heater & gas auto 
+        ======   =======================
+        """,
         get_process=lambda v: int(v[3:4]),
         validator=strict_discrete_set,
         values={"MANUAL": 0, "AM": 1, "MA": 2, "AUTO": 3},
@@ -173,10 +185,16 @@ class ITC503(Instrument):
     sweep_status = Instrument.control(
         "X", "$S%d",
         """ An integer property that sets the sweep status. Values are:
-        0: Sweep not running
-        1: Start sweep / sweeping to first set-point
-        2P - 1: Sweeping to set-point P
-        2P: Holding at set-point P. """,
+
+        =========   =========================================
+        value       meaning
+        =========   =========================================
+        0           Sweep not running
+        1           Start sweep / sweeping to first set-point
+        2P - 1      Sweeping to set-point P
+        2P          Holding at set-point P
+        =========   =========================================
+        """,
         get_process=lambda v: int(v[7:9]),
         validator=strict_range,
         values=[0, 32]
@@ -247,21 +265,43 @@ class ITC503(Instrument):
 
     sweep_table = Instrument.control(
         "r", "$s%f",
-        """ A property that controls values in the sweep table. Relies on the
-        x_pointer and y_pointer to point at the location in the table that
-        is to be set or read. The x-pointer selects the step of the sweep
-        (1 to 16); the y-pointer selects the set-point temperature (1), the
-        sweep-time to set-point (2), or the hold-time at set-point (3). """,
+        """ A property that controls values in the sweep table. Relies on
+        :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
+        :class:`ITC503.pointer`) to point at the location in the table that is
+        to be set or read.
+        
+        The x-pointer selects the step of the sweep (1 to 16); the y-pointer
+        selects the parameter:
+    
+        =========   =======================
+        y-pointer   parameter
+        =========   =======================
+        1           set-point temperature
+        2           sweep-time to set-point
+        3           hold-time at set-point
+        =========   =======================
+        """,
         get_process=lambda v: float(v[1:]),
     )
 
     auto_pid_table = Instrument.control(
         "q", "$p%f",
-        """ A property that controls values in the auto-pid table. Relies on the
-        x_pointer and y_pointer to point at the location in the table that
-        is to be set or read. The x-pointer selects the table entry (1 to 16);
-        the y-pointer selects the upper temperature limit (1), the proportional
-        band (2), the integral action time (3), or the derivative action time (4).
+        """ A property that controls values in the auto-pid table. Relies on
+        :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
+        :class:`ITC503.pointer`) to point at the location in the table that
+        is to be set or read.
+        
+        The x-pointer selects the table entry (1 to 16); the y-pointer
+        selects the parameter:
+    
+        =========   =======================
+        y-pointer   parameter
+        =========   =======================
+        1           upper temperature limit
+        2           proportional band
+        3           integral action time
+        4           derivative action time
+        =========   =======================
         """,
         get_process=lambda v: float(v[1:]),
     )
@@ -269,8 +309,8 @@ class ITC503(Instrument):
     target_voltage_table = Instrument.control(
         "t", "$v%f",
         """ A property that controls values in the target heater voltage table.
-        Relies on the x_pointer to select the entry in the table that is to be
-        set or read (1 to 64).
+        Relies on the :class:`ITC503.x_pointer` to select the entry in the table
+        that is to be set or read (1 to 64).
         """,
         get_process=lambda v: float(v[1:]),
     )
@@ -278,10 +318,19 @@ class ITC503(Instrument):
     gasflow_configuration_parameter = Instrument.control(
         "d", "$c%f",
         """ A property that controls the gas flow configuration parameters.
-        Relies on the x_pointer to select which parameter is set or read:
-        the valve gearing (1), target table & features configuration (2),
-        gas flow scaling (3) temperature error sensitivity (4), heater voltage
-        error sensitivity (5), or minimum gas valve in auto (6).
+        Relies on the :class:`ITC503.x_pointer` to select which parameter
+        is set or read:
+
+        =========   =====================================
+        x-pointer   parameter
+        =========   =====================================
+        1           valve gearing
+        2           target table & features configuration
+        3           gas flow scaling
+        4           temperature error sensitivity
+        5           heater voltage error sensitivity
+        6           minimum gas valve in auto
+        =========   =====================================
         """,
         get_process=lambda v: float(v[1:]),
     )
