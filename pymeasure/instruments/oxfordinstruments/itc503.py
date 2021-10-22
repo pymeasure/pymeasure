@@ -257,6 +257,36 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
+    front_panel_display = Instrument.setting(
+        "$F%d",
+        """ A string property that controls what value is displayed on
+        the front panel of the ITC. Valid values are:
+        'temperature setpoint', 'temperature 1', 'temperature 2',
+        'temperature 3', 'temperature error', 'heater', 'heater voltage',
+        'gasflow', 'proportional band', 'integral action time',
+        'derivative action time', 'channel 1 freq/4', 'channel 2 freq/4',
+        'channel 3 freq/4'.
+        """,
+        validator=strict_discrete_set,
+        map=True,
+        values={
+            "temperature setpoint": 0,
+            "temperature 1": 1,
+            "temperature 2": 2,
+            "temperature 3": 3,
+            "temperature error": 4,
+            "heater": 5,
+            "heater voltage": 6,
+            "gasflow": 7,
+            "proportional band": 8,
+            "integral action time": 9,
+            "derivative action time": 10,
+            "channel 1 freq/4": 11,
+            "channel 2 freq/4": 12,
+            "channel 3 freq/4": 13,
+        },
+    )
+
     x_pointer = Instrument.setting(
         "$x%d",
         """ An integer property to set pointers into tables for loading and
