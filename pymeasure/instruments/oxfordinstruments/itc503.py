@@ -572,3 +572,7 @@ class ITC503(Instrument):
 
             self.pointer = (line, 3)
             self.sweep_table = hold
+
+    def wipe_sweep_table(self):
+        """ Wipe the currently programmed sweep table. """
+        self.write("$w")
