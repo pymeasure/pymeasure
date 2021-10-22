@@ -26,6 +26,7 @@
 import logging
 from time import sleep, time
 import numpy
+from enum import IntFlag
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
@@ -73,6 +74,27 @@ class ITC503(Instrument):
 
     """
     _T_RANGE = [0, 1677.7]
+
+    class FLOW_CONTROL_STATUS(IntFlag):
+        """ IntFlag class for decoding the flow control status. Contains the following
+        flags:
+
+        === ======================  ==============================================
+        bit flag                    meaning
+        === ======================  ==============================================
+        4   HEATER_ERROR_SIGN       Sign of heater-error; True means negative
+        3   TEMPERATURE_ERROR_SIGN  Sign of temperature-error; True means negative
+        2   SLOW_VALVE_ACTION       Slow valve action occurring
+        1   COOLDOWN_TERMINATION    Cooldown-termination occurring
+        0   FAST_COOLDOWN           Fast-cooldown occurring
+        === ======================  ==============================================
+
+        """
+        HEATER_ERROR_SIGN = 16
+        TEMPERATURE_ERROR_SIGN = 8
+        SLOW_VALVE_ACTION = 4
+        COOLDOWN_TERMINATION = 2
+        FAST_COOLDOWN = 1
 
     control_mode = Instrument.control(
         "X", "$C%d",
@@ -332,6 +354,29 @@ class ITC503(Instrument):
         6           minimum gas valve in auto
         =========   =====================================
         """,
+        get_process=lambda v: float(v[1:]),
+    )
+
+    gasflow_control_status = Instrument.measurement(
+        "m",
+        """ A property that reads the gas-flow control status. Returns
+        the status in the form of a :class:`ITC503.FLOW_CONTROL_STATUS`
+        IntFlag. """,
+        get_process=lambda v: ITC503.FLOW_CONTROL_STATUS(int(v[1:])),
+    )
+
+    target_voltage = Instrument.measurement(
+        "n",
+        """ A float property that reads the current heater target voltage
+        with which the actual heater voltage is being compared. Only valid
+        if gas-flow in auto mode. """,
+        get_process=lambda v: float(v[1:]),
+    )
+
+    valve_scaling = Instrument.measurement(
+        "o",
+        """ A float property that reads the valve scaling parameter. Only
+        valid if gas-flow in auto mode. """,
         get_process=lambda v: float(v[1:]),
     )
 
