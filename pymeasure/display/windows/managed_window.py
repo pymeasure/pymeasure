@@ -41,6 +41,7 @@ from ..widgets import (
     ResultsDialog,
     SequencerWidget,
     DirectoryLineEdit,
+    FilenameLineEdit,
     EstimatorWidget,
 )
 from ...experiment import Results, Procedure
@@ -107,8 +108,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
     :param directory_input: specify, if present, where the experiment's result will be saved.
+    :param filename_input: specify, if present, the base of the filename where the results will be saved.
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
+
     """
 
     def __init__(self,
@@ -124,6 +127,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                  sequence_file=None,
                  inputs_in_scrollarea=False,
                  directory_input=False,
+                 filename_input=True,
                  hide_groups=True,
                  ):
 
@@ -139,6 +143,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
         self.directory_input = directory_input
+        self.filename_input = filename_input
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -155,6 +160,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self._layout()
 
     def _setup_ui(self):
+        if self.filename_input:
+            self.filename_label = QtGui.QLabel(self)
+            self.filename_label.setText('Filename')
+            self.filename_line = FilenameLineEdit(parent=self)
         if self.directory_input:
             self.directory_label = QtWidgets.QLabel(self)
             self.directory_label.setText('Directory')
@@ -225,11 +234,16 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
+        vbox = QtGui.QVBoxLayout()
+
+        if self.filename_input:
+            vbox.addWidget(self.filename_label)
+            vbox.addWidget(self.filename_line)
         if self.directory_input:
-            vbox = QtWidgets.QVBoxLayout()
             vbox.addWidget(self.directory_label)
             vbox.addWidget(self.directory_line)
-            vbox.addLayout(hbox)
+
+        vbox.addLayout(hbox)
 
         if self.inputs_in_scrollarea:
             inputs_scroll = QtWidgets.QScrollArea()
@@ -244,10 +258,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         else:
             inputs_vbox.addWidget(self.inputs)
 
-        if self.directory_input:
-            inputs_vbox.addLayout(vbox)
-        else:
-            inputs_vbox.addLayout(hbox)
+        inputs_vbox.addLayout(vbox)
 
         inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
@@ -578,6 +589,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             raise ValueError("No directory input in the ManagedWindow")
 
         self.directory_line.setText(str(value))
+
+    @property
+    def filename(self):
+        if not self.filename_input:
+            raise ValueError("No directory input in the ManagedWindow")
+        return self.filename_line.text()
 
 
 class ManagedWindow(ManagedWindowBase):
