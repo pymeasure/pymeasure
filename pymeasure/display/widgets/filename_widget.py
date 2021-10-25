@@ -22,17 +22,19 @@
 # THE SOFTWARE.
 #
 
-from .browser_widget import BrowserWidget
-from .directory_widget import DirectoryLineEdit
-from .filename_widget import FilenameLineEdit
-from .estimator_widget import EstimatorWidget, EstimatorThread
-from .image_frame import ImageFrame
-from .image_widget import ImageWidget
-from .inputs_widget import InputsWidget
-from .log_widget import LogWidget
-from .plot_frame import PlotFrame
-from .plot_widget import PlotWidget
-from .results_dialog import ResultsDialog
-from .sequencer_widget import SequencerWidget
-from .tab_widget import TabWidget
-from .table_widget import TableWidget
+import logging
+
+from ..Qt import QtCore, QtGui, QtWidgets
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class FilenameLineEdit(QtWidgets.QLineEdit):
+    """
+    Widget that allows to choose a filename.
+    A completer is implemented for quick completion of placeholders
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)

@@ -161,7 +161,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     def _setup_ui(self):
         if self.filename_input:
-            self.filename_label = QtGui.QLabel(self)
+            self.filename_label = QtWidgets.QLabel(self)
             self.filename_label.setText('Filename')
             self.filename_line = FilenameLineEdit(parent=self)
         if self.directory_input:
@@ -234,7 +234,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
 
         if self.filename_input:
             vbox.addWidget(self.filename_label)
