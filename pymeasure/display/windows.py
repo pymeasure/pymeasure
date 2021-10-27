@@ -619,14 +619,15 @@ class ManagedWindow(ManagedWindowBase):
 
     """
 
-    def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
+    def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None, linewidth=1,
                  log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
                  sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
                  wdg_list=(), hide_groups=True):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
-        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis,
+                                      linewidth=linewidth)
         self.plot_widget.setMinimumSize(100, 200)
         super().__init__(
             procedure_class=procedure_class,
