@@ -71,7 +71,7 @@ class PlotterWindow(QtGui.QMainWindow):
     .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
 
     """
-    def __init__(self, plotter, refresh_time=0.1, parent=None):
+    def __init__(self, plotter, refresh_time=0.1, linewidth=1, parent=None):
         super().__init__(parent)
         self.plotter = plotter
         self.refresh_time = refresh_time
@@ -97,7 +97,8 @@ class PlotterWindow(QtGui.QMainWindow):
         hbox.addWidget(self.file)
         vbox.addLayout(hbox)
 
-        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time, check_status=False)
+        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time,
+                                      check_status=False, linewidth=linewidth)
         self.plot = self.plot_widget.plot
 
         vbox.addWidget(self.plot_widget)
@@ -107,10 +108,8 @@ class PlotterWindow(QtGui.QMainWindow):
         self.main.show()
         self.resize(800, 600)
 
-        # The pyqtgraph pen width was changed to 1 (originally: 2) to circumvent plotting slowdown.
-        # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
         self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
-                                  pen=pg.mkPen(color=pg.intColor(0), width=1), antialias=False)
+                                  pen=pg.mkPen(color=pg.intColor(0), width=linewidth), antialias=False)
         self.plot.addItem(self.curve)
 
         self.plot_widget.updated.connect(self.check_stop)
