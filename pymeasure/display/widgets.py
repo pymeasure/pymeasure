@@ -298,10 +298,9 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.plot.removeItem(curve)
 
     def set_color(self, curve, color):
-        """ Remove curve from widget """
-        # The pyqtgraph pen width was changed to 1 (originally: 2) to circumvent plotting slowdown.
-        # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
-        curve.setPen(pg.mkPen(color=color, width=1))
+        """ Change the color of the pen of the curve """
+        curve.pen.setColor(color)
+        curve.updateItems(styleUpdate=True)
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
