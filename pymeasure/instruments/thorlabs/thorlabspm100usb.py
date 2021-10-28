@@ -23,51 +23,69 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument, RangeException
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class ThorlabsPM100USB(Instrument):
     """Represents Thorlabs PM100USB powermeter"""
 
     # TODO: refactor to check if the sensor wavelength is adjustable
-    wavelength = Instrument.control("SENSE:CORR:WAV?", "SENSE:CORR:WAV %g",
-                                    "Wavelength in nm; not set outside of range")
-    
+    wavelength = Instrument.control(
+        "SENSE:CORR:WAV?",
+        "SENSE:CORR:WAV %g",
+        "Wavelength in nm; not set outside of range",
+    )
+
     # TODO: refactor to check if the sensor is a power sensor
     power = Instrument.measurement("MEAS:POW?", "Power, in Watts")
-    
-    wavelength_min = Instrument.measurement("SENS:CORR:WAV? MIN", "Get minimum wavelength, in nm")
-    
-    wavelength_max = Instrument.measurement("SENS:CORR:WAV? MAX", "Get maximum wavelength, in nm")
 
+    wavelength_min = Instrument.measurement(
+        "SENS:CORR:WAV? MIN", "Get minimum wavelength, in nm"
+    )
+
+    wavelength_max = Instrument.measurement(
+        "SENS:CORR:WAV? MAX", "Get maximum wavelength, in nm"
+    )
 
     def __init__(self, adapter, **kwargs):
         super(ThorlabsPM100USB, self).__init__(
-            adapter, "ThorlabsPM100USB powermeter", **kwargs)
+            adapter, "ThorlabsPM100USB powermeter", **kwargs
+        )
         self.timout = 3000
         self.sensor()
 
     def measure_power(self, wavelength):
-        """Set wavelength in nm and get power in W
-        If wavelength is out of range it will be set to range limit"""
+        """
+        Set wavelength in nm and get power in W.
+
+        If wavelength is out of range it will be set to range limit.
+        """
         if wavelength < self.wavelength_min:
-            raise RangeException("Wavelength %.2f nm out of range: using minimum wavelength: %.2f nm" % (
-                wavelength, self.wavelength_min))
-            # explicit setting wavelenghth, althought it would be automatically set
+            raise RangeException(
+                ("Wavelength %.2f nm out of range: "
+                    "using minimum wavelength: %.2f nm")
+                % (wavelength, self.wavelength_min)
+            )
+            # explicit setting wavelenghth, althought it would be automatically
+            # set
             wavelength = self.wavelength_min
         if wavelength > self.wavelength_max:
-            raise RangeException("Wavelength %.2f nm out of range: using maximum wavelength: %.2f nm" % (
-                wavelength, self.wavelength_max))
+            raise RangeException(
+                ("Wavelength %.2f nm out of range: "
+                    "using maximum wavelength: %.2f nm")
+                % (wavelength, self.wavelength_max)
+            )
             wavelength = self.wavelength_max
         self.wavelength = wavelength
         return self.power
 
     def sensor(self):
-        "Get sensor info"
-        response = self.ask("SYST:SENSOR:IDN?").split(',')
+        "Get sensor info."
+        response = self.ask("SYST:SENSOR:IDN?").split(",")
         self.sensor_name = response[0]
         self.sensor_sn = response[1]
         self.sensor_cal_msg = response[2]
@@ -77,11 +95,19 @@ class ThorlabsPM100USB(Instrument):
         # interpretation of the flags
         # rough trick using bin repr, maybe something more elegant exixts
         # (bitshift, bitarray?)
-        self._flags = tuple(
-            map(lambda x: x == '1', bin(int(self._flags_str))[2:]))
+        self._flags = tuple(map(lambda x: x == "1", bin(int(self._flags_str))[2:]))
         # setting the flags; _dn are empty
-        self.is_power, self.is_energy, _d4, _d8, \
-        self.resp_settable, self.wavelength_settable, self.tau_settable, _d128, self.temperature_sens = self._flags
+        (
+            self.is_power,
+            self.is_energy,
+            _d4,
+            _d8,
+            self.resp_settable,
+            self.wavelength_settable,
+            self.tau_settable,
+            _d128,
+            self.temperature_sens,
+        ) = self._flags
 
     @property
     def energy(self):
