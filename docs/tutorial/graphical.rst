@@ -199,8 +199,8 @@ Now that you have learned about the ManagedWindow, you have all of the basics to
 
 .. note::
    For performance reasons, the default linewidth of all the graphs has been set to 1.
-   If performance is not an issue, the linewidth can be changed to 2 (or any other value) for beter visibility by using the `linewidth` keyword-argument in the `Plotter` or the `ManagedWindow`.
-   Whenever a linewidth of 2 is prefered and a beter performance is required, it is possible to enable using OpenGL in the import section of the file: ::
+   If performance is not an issue, the linewidth can be changed to 2 (or any other value) for better visibility by using the `linewidth` keyword-argument in the `Plotter` or the `ManagedWindow`.
+   Whenever a linewidth of 2 is prefered and a better performance is required, it is possible to enable using OpenGL in the import section of the file: ::
 
       import pyqtgraph as pg
       pg.setConfigOption("useOpenGL", True)
