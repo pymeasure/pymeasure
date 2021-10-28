@@ -340,7 +340,6 @@ class Results(object):
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
-            print(name, parameter)
             if parameter.name in parameters:
                 value = parameters[parameter.name]
                 setattr(procedure, name, value)
@@ -349,6 +348,17 @@ class Results(object):
                     parameter.name, procedure_class))
 
         procedure.refresh_parameters()  # Enforce update of meta data
+
+        # Fill the procedure with the conditions found
+        for name, condition in procedure.condition_objects().items():
+            if condition.name in parameters:
+                value = parameters[condition.name]
+                setattr(procedure, name, value)
+
+                # Set the value in the condition
+                condition._value = value
+                condition.evaluated = True
+
         return procedure
 
     @staticmethod
