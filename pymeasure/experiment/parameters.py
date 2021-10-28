@@ -506,3 +506,69 @@ class Measurable(object):
     @value.setter
     def value(self, value):
         self._value = value
+
+
+class Condition(object):
+    """ Encapsulates the information for a condition of the experiment with
+    information about the name, the fget function and the units, if supplied.
+    If no fget function is specified, the value property will return the
+    latest set value of the parameter (or default if never set).
+
+    :var value: The value of the parameter. This returns (if possible) the
+        value obtained from the `fget` method or a stored value (in case
+        `fget` is not available or if the condition has been evaluated
+
+    :param name: The parameter name
+    :param fget: The parameter fget function (e.g. an instrument parameter);
+        can also be a string, in which case it is assumed to be a method name
+        of the `Procedure` class in which the Condition is defined
+    :param units: The parameter units
+    :param default: The default value, in case no value is assigned or if no
+        fget method is provided
+
+    """
+    def __init__(self, name, fget=None, units=None, default=None):
+        self.name = name
+        self.units = units
+
+        self._value = default
+        self.fget = fget
+
+        self.evaluated = False
+
+    @property
+    def value(self):
+        if self.fget is not None:
+            self._value = self.fget()
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        if self.fget is not None:
+            raise ValueError("A condition with a defined fget method cannot be manually assigned a value")
+        print(self.evaluated)
+        if self.evaluated:
+            raise ValueError("The value of a condition cannot be changed after it has been evaluated")
+        self._value = value
+
+    def is_set(self):
+        """ Returns True if the Parameter value is set
+        """
+        return self._value is not None
+
+    def evaluate(self, new_value=None):
+        self.evaluated = False
+        if new_value is not None:
+            self.value = new_value
+
+        value = self.value
+        self.evaluated = True
+        return value
+
+    def __str__(self):
+        result = str(self.value)
+
+        if self.units is not None:
+            result += " %s" % self.units
+
+        return result
