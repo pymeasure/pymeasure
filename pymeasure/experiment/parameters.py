@@ -546,7 +546,6 @@ class Condition(object):
     def value(self, value):
         if self.fget is not None:
             raise ValueError("A condition with a defined fget method cannot be manually assigned a value")
-        print(self.evaluated)
         if self.evaluated:
             raise ValueError("The value of a condition cannot be changed after it has been evaluated")
         self._value = value
