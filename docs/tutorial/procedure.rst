@@ -249,6 +249,52 @@ Let's extend our SimpleProcedure with logging. ::
 First, we have imported the Python logging module and grabbed the logger using the :python:`__name__` argument. This gives us logging information specific to the current file. Conversely, we could use the :python:`''` argument to get all logs, including those of pymeasure. We use the :python:`console_log` function to conveniently output the log to the console. Further details on how to use the logger are addressed in the Python logging documentation.
 
 
+Using conditions
+~~~~~~~~~~~~~~~~
+
+Conditions (:class:`pymeasure.experiment.parameters.Condition`) allow storing information (e.g. the actual starting time, instrument parameters) about the measurement in the header of the datafile.
+These conditions are evaluated and stored in the datafile only after the :python:`startup` method has ran; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
+Using a Condition is nearly as straightforward as using a Parameter; extending the example of above to include several conditions, looks as follows: ::
+
+    from time import sleep, time
+    from pymeasure.experiment import Procedure
+    from pymeasure.experiment import IntegerParameter, Condition
+
+    class SimpleProcedure(Procedure):
+
+        # a Parameter that defines the number of loop iterations
+        iterations = IntegerParameter('Loop Iterations')
+
+        # the Condition objects store information after the startup has ran
+        starttime = Condition('Start time', fget=time)
+        customcondition = Condition('Custom', default=1)
+
+        # a list defining the order and appearance of columns in our data file
+        DATA_COLUMNS = ['Iteration']
+
+        def startup(self):
+            self.customcondition = 20
+
+        def execute(self):
+            """ Loops over each iteration and emits the current iteration,
+            before waiting for 0.01 sec, and then checking if the procedure
+            should stop
+            """
+            for i in range(self.iterations):
+                self.emit('results', {'Iteration': i})
+                sleep(0.01)
+                if self.should_stop():
+                    break
+
+
+As with a Parameter, PyMeasure swaps out the Condition with their values behind the scene, which makes accessing the values of conditions very convenient.
+
+The value of a Condition can be set either using an :python:`fget` method or manually in the startup method.
+The :python:`fget` method, if provided, is ran after startup method.
+It can also be provided as a string; in that case it is assumed that the string contains the name of a method of the Procedure class which returns the value that is to be stored.
+If neither an :python:`fget` method is provided or a value manually set, the Condition will return to its default value, if set.
+
+
 Modifying our script
 ~~~~~~~~~~~~~~~~~~~~
 
