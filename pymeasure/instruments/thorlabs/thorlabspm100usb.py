@@ -109,6 +109,7 @@ class ThorlabsPM100USB(Instrument):
 
     @property
     def energy(self):
+        """Get energy in J."""
         if self.is_energy:
             return self.values("MEAS:ENER?")
         else:
