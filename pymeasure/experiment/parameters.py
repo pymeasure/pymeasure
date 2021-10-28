@@ -538,7 +538,7 @@ class Condition(object):
 
     @property
     def value(self):
-        if self.fget is not None:
+        if self.fget is not None and not self.evaluated:
             self._value = self.fget()
         return self._value
 
