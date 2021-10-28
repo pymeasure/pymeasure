@@ -72,19 +72,17 @@ class ThorlabsPM100USB(Instrument):
             )
             # explicit setting wavelenghth, althought it would be automatically
             # set
-            wavelength = self.wavelength_min
         if wavelength > self.wavelength_max:
             raise RangeException(
                 ("Wavelength %.2f nm out of range: "
                     "using maximum wavelength: %.2f nm")
                 % (wavelength, self.wavelength_max)
             )
-            wavelength = self.wavelength_max
         self.wavelength = wavelength
         return self.power
 
     def sensor(self):
-        "Get sensor info."
+        """Get sensor info."""
         response = self.ask("SYST:SENSOR:IDN?").split(",")
         self.sensor_name = response[0]
         self.sensor_sn = response[1]
@@ -115,8 +113,3 @@ class ThorlabsPM100USB(Instrument):
             return self.values("MEAS:ENER?")
         else:
             raise Exception("%s is not an energy sensor" % self.sensor_name)
-            return 0
-
-    @energy.setter
-    def energy(self, val):
-        raise Exception("Energy not settable!")
