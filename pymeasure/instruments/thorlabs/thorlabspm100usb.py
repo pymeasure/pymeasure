@@ -89,23 +89,30 @@ class ThorlabsPM100USB(Instrument):
         self.sensor_cal_msg = response[2]
         self.sensor_type = response[3]
         self.sensor_subtype = response[4]
-        self._flags_str = response[-1][:-1]
-        # interpretation of the flags
-        # rough trick using bin repr, maybe something more elegant exixts
-        # (bitshift, bitarray?)
-        self._flags = tuple(map(lambda x: x == "1", bin(int(self._flags_str))[2:]))
-        # setting the flags; _dn are empty
+        _flags_str = response[5].rstrip('\n')
+
+        # interpretation of the flags, see p. 49 of the manual:
+        # https://www.thorlabs.de/_sd.cfm?fileName=17654-D02.pdf&partNumber=PM100D
+
+        # Convert to binary representation and pad zeros to 9 bit for sensors
+        # where not all flags are present.
+        _flags_str = format(int(_flags_str), "09b")
+        # Reverse the order so it matches the flag order from the manual, i.e.
+        # from decimal values from 1 to 256.
+        _flags_str = _flags_str[::-1]
+
+        # setting the flags; _dn are unused; decimal values as comments
         (
-            self.is_power,
-            self.is_energy,
-            _d4,
-            _d8,
-            self.resp_settable,
-            self.wavelength_settable,
-            self.tau_settable,
-            _d128,
-            self.temperature_sens,
-        ) = self._flags
+            self.is_power,              # 1
+            self.is_energy,             # 2
+            _d4,                        # 4
+            _d8,                        # 8
+            self.resp_settable,         # 16
+            self.wavelength_settable,   # 32
+            self.tau_settable,          # 64
+            _d128,                      # 128
+            self.temperature_sens,      # 256
+        ) = self.flags
 
     @property
     def energy(self):
