@@ -28,7 +28,7 @@ import inspect
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
 
-from .parameters import Parameter, Measurable
+from .parameters import Parameter, Measurable, Condition
 
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
@@ -58,16 +58,18 @@ class Procedure(object):
     MEASURE = {}
     FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
     STATUS_STRINGS = {
-        FINISHED: 'Finished', FAILED: 'Failed', 
+        FINISHED: 'Finished', FAILED: 'Failed',
         ABORTED: 'Aborted', QUEUED: 'Queued',
         RUNNING: 'Running'
     }
 
     _parameters = {}
+    _conditions = {}
 
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
         self._update_parameters()
+        self._update_conditions()
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
@@ -179,6 +181,37 @@ class Procedure(object):
                 if except_missing:
                     raise NameError("Parameter '%s' does not belong to '%s'" % (
                         name, repr(self)))
+
+    def _update_conditions(self):
+        """ Collects all the Condition objects for the procedure and stores
+        them in a meta dictionary so that the actual values can be set and used
+        in their stead
+        """
+        if not self._conditions:
+            self._conditions = {}
+
+        for item, condition in inspect.getmembers(self.__class__):
+            if isinstance(condition, Condition):
+                # If required, replace string for fget method for non-string
+                if isinstance(condition.fget, str):
+                    condition.fget = getattr(self, condition.fget)
+
+                self._conditions[item] = deepcopy(condition)
+
+                if condition.is_set():
+                    setattr(self, item, condition.value)
+                else:
+                    setattr(self, item, None)
+
+    def evaluate_conditions(self):
+        """ Evaluates all Condition objects, fixing their values to the current value
+        """
+        for item, condition in self._conditions.items():
+            # Evaluate the condition, fixing its value
+            value = condition.evaluate(new_value=getattr(self, item))
+
+            # Make the value of the condition easily accessible
+            setattr(self, item, value)
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement
