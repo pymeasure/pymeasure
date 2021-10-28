@@ -652,7 +652,7 @@ class ResultsDialog(QtGui.QFileDialog):
             self.preview_param.sortItems(0, QtCore.Qt.AscendingOrder)
 
             self.preview_condition.clear()
-            for key, condition in results.procedure._conditions.items():
+            for key, condition in results.procedure.condition_objects().items():
                 new_item = QtGui.QTreeWidgetItem([condition.name, str(condition)])
                 self.preview_condition.addTopLevelItem(new_item)
             self.preview_condition.sortItems(0, QtCore.Qt.AscendingOrder)

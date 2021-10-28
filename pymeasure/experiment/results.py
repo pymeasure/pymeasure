@@ -265,11 +265,11 @@ class Results(object):
 
     def conditions(self):
         """ Returns a text header for the conditions to write into the datafile """
-        if not self.procedure._conditions:
+        if not self.procedure.condition_objects():
             return
 
         c = ["Conditions:"]
-        for _, condition in self.procedure._conditions.items():
+        for _, condition in self.procedure.condition_objects().items():
             c.append("\t%s: %s" % (condition.name, str(condition).encode("unicode_escape").decode("utf-8")))
 
         self._condition_count = len(c)
@@ -340,6 +340,7 @@ class Results(object):
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
+            print(name, parameter)
             if parameter.name in parameters:
                 value = parameters[parameter.name]
                 setattr(procedure, name, value)

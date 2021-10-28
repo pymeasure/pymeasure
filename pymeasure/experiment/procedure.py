@@ -213,6 +213,11 @@ class Procedure(object):
             # Make the value of the condition easily accessible
             setattr(self, item, value)
 
+    def condition_objects(self):
+        """ Returns a dictionary of all the Condition objects
+        """
+        return self._conditions
+
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement
         """
