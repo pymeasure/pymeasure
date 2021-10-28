@@ -262,6 +262,32 @@ class Results(object):
             data[key] = items[i]
         return data
 
+    def conditions(self):
+        """ Returns a text header for the conditions to write into the datafile """
+        if not self.procedure._conditions:
+            return
+
+        c = ["Conditions:"]
+        for _, condition in self.procedure._conditions.items():
+            c.append("\t%s: %s" % (condition.name, str(condition).encode("unicode_escape").decode("utf-8")))
+
+        c = [Results.COMMENT + l for l in c]  # Comment each line
+        return Results.LINE_BREAK.join(c) + Results.LINE_BREAK
+
+    def store_conditions(self):
+        """ Inserts the conditions header (if any) into the datafile """
+        c_header = self.conditions()
+        if c_header is None:
+            return
+
+        for filename in self.data_filenames:
+            with open(filename, 'r+') as f:
+                contents = f.readlines()
+                contents.insert(self._header_count - 1, self.conditions())
+
+                f.seek(0)
+                f.writelines(contents)
+
     @staticmethod
     def parse_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
