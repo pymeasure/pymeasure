@@ -171,6 +171,7 @@ class Results(object):
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
+        self._condition_count = -1
 
         self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
@@ -271,6 +272,7 @@ class Results(object):
         for _, condition in self.procedure._conditions.items():
             c.append("\t%s: %s" % (condition.name, str(condition).encode("unicode_escape").decode("utf-8")))
 
+        self._condition_count = len(c)
         c = [Results.COMMENT + l for l in c]  # Comment each line
         return Results.LINE_BREAK.join(c) + Results.LINE_BREAK
 
@@ -287,6 +289,8 @@ class Results(object):
 
                 f.seek(0)
                 f.writelines(contents)
+
+        self._header_count += self._condition_count
 
     @staticmethod
     def parse_header(header, procedure_class=None):
