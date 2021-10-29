@@ -66,16 +66,20 @@ class ThorlabsPM100USB(Instrument):
         """
         if wavelength < self.wavelength_min:
             raise RangeException(
-                ("Wavelength %.2f nm out of range: "
-                    "using minimum wavelength: %.2f nm")
+                (
+                    "Wavelength %.2f nm out of range: "
+                    "using minimum wavelength: %.2f nm"
+                )
                 % (wavelength, self.wavelength_min)
             )
             # explicit setting wavelenghth, althought it would be automatically
             # set
         if wavelength > self.wavelength_max:
             raise RangeException(
-                ("Wavelength %.2f nm out of range: "
-                    "using maximum wavelength: %.2f nm")
+                (
+                    "Wavelength %.2f nm out of range: "
+                    "using maximum wavelength: %.2f nm"
+                )
                 % (wavelength, self.wavelength_max)
             )
         self.wavelength = wavelength
@@ -89,7 +93,7 @@ class ThorlabsPM100USB(Instrument):
         self.sensor_cal_msg = response[2]
         self.sensor_type = response[3]
         self.sensor_subtype = response[4]
-        _flags_str = response[5].rstrip('\n')
+        _flags_str = response[5].rstrip("\n")
 
         # interpretation of the flags, see p. 49 of the manual:
         # https://www.thorlabs.de/_sd.cfm?fileName=17654-D02.pdf&partNumber=PM100D
@@ -101,17 +105,20 @@ class ThorlabsPM100USB(Instrument):
         # from decimal values from 1 to 256.
         _flags_str = _flags_str[::-1]
 
+        # Convert to boolean.
+        self.flags = [x == "1" for x in _flags_str]
+
         # setting the flags; _dn are unused; decimal values as comments
         (
-            self.is_power,              # 1
-            self.is_energy,             # 2
-            _d4,                        # 4
-            _d8,                        # 8
-            self.resp_settable,         # 16
-            self.wavelength_settable,   # 32
-            self.tau_settable,          # 64
-            _d128,                      # 128
-            self.temperature_sens,      # 256
+            self.is_power,  # 1
+            self.is_energy,  # 2
+            _d4,  # 4
+            _d8,  # 8
+            self.resp_settable,  # 16
+            self.wavelength_settable,  # 32
+            self.tau_settable,  # 64
+            _d128,  # 128
+            self.temperature_sens,  # 256
         ) = self.flags
 
     @property
