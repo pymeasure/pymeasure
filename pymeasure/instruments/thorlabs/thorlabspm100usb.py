@@ -56,7 +56,7 @@ class ThorlabsPM100USB(Instrument):
             adapter, "ThorlabsPM100USB powermeter", **kwargs
         )
         self.timout = 3000
-        self.sensor()
+        self._set_flags()
 
     def measure_power(self, wavelength):
         """
@@ -85,8 +85,8 @@ class ThorlabsPM100USB(Instrument):
         self.wavelength = wavelength
         return self.power
 
-    def sensor(self):
-        """Get sensor info."""
+    def _set_flags(self):
+        """Get sensor info and write flags."""
         response = self.ask("SYST:SENSOR:IDN?").split(",")
         self.sensor_name = response[0]
         self.sensor_sn = response[1]
