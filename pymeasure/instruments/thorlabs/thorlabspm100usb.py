@@ -24,32 +24,15 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class ThorlabsPM100USB(Instrument):
-    """Represents Thorlabs PM100USB powermeter"""
-
-    # TODO: refactor to check if the sensor wavelength is adjustable
-    wavelength = Instrument.control(
-        "SENSE:CORR:WAV?",
-        "SENSE:CORR:WAV %g",
-        "Wavelength in nm; not set outside of range",
-    )
-
-    # TODO: refactor to check if the sensor is a power sensor
-    power = Instrument.measurement("MEAS:POW?", "Power, in Watts")
-
-    wavelength_min = Instrument.measurement(
-        "SENS:CORR:WAV? MIN", "Get minimum wavelength, in nm"
-    )
-
-    wavelength_max = Instrument.measurement(
-        "SENS:CORR:WAV? MAX", "Get maximum wavelength, in nm"
-    )
+    """Represents Thorlabs PM100USB powermeter."""
 
     def __init__(self, adapter, **kwargs):
         super(ThorlabsPM100USB, self).__init__(
@@ -58,32 +41,52 @@ class ThorlabsPM100USB(Instrument):
         self.timout = 3000
         self._set_flags()
 
-    def measure_power(self, wavelength):
-        """
-        Set wavelength in nm and get power in W.
+    #        if self.is_energy:
+    #            self.energy = Instrument.measurement("MEAS:ENER?", "Energy in J.")
 
-        If wavelength is out of range it will be set to range limit.
-        """
-        if wavelength < self.wavelength_min:
-            raise RangeException(
-                (
-                    "Wavelength %.2f nm out of range: "
-                    "using minimum wavelength: %.2f nm"
-                )
-                % (wavelength, self.wavelength_min)
+    #        if self.is_power:
+    #            self.power = Instrument.measurement("MEAS:POW?", "Power in W.")
+
+    wavelength_min = Instrument.measurement(
+        "SENS:CORR:WAV? MIN", "Minimum wavelength, in nm"
+    )
+
+    wavelength_max = Instrument.measurement(
+        "SENS:CORR:WAV? MAX", "Maximum wavelength, in nm"
+    )
+
+    @property
+    def wavelength(self):
+        """Wavelength in nm."""
+        value = self.values("SENSE:CORR:WAV?")[0]
+        return value
+
+    @wavelength.setter
+    def wavelength(self, value):
+        """Wavelength in nm."""
+        if self.wavelength_settable:
+            value = truncated_range(value, [self.wavelength_min, self.wavelength_max])
+            self.write("SENSE:CORR:WAV {}".format(value))
+        else:
+            raise AttributeError(
+                f"{self.sensor_name} does not allow setting the wavelength."
             )
-            # explicit setting wavelenghth, althought it would be automatically
-            # set
-        if wavelength > self.wavelength_max:
-            raise RangeException(
-                (
-                    "Wavelength %.2f nm out of range: "
-                    "using maximum wavelength: %.2f nm"
-                )
-                % (wavelength, self.wavelength_max)
-            )
-        self.wavelength = wavelength
-        return self.power
+
+    @property
+    def power(self):
+        """Power in W."""
+        if self.is_power:
+            return self.values("MEAS:POW?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not a power sensor.")
+
+    @property
+    def energy(self):
+        """Energy in J."""
+        if self.is_energy:
+            return self.values("MEAS:ENER?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not an energy sensor.")
 
     def _set_flags(self):
         """Get sensor info and write flags."""
@@ -120,11 +123,3 @@ class ThorlabsPM100USB(Instrument):
             _d128,  # 128
             self.temperature_sens,  # 256
         ) = self.flags
-
-    @property
-    def energy(self):
-        """Get energy in J."""
-        if self.is_energy:
-            return self.values("MEAS:ENER?")
-        else:
-            raise Exception("%s is not an energy sensor" % self.sensor_name)
