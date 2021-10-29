@@ -27,6 +27,10 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pymeasure.adapters import VISAAdapter
 from math import sqrt, sin, cos, radians, degrees, atan
 
+class ZeroPositionNotSet(Exception):
+    """Raised when a zero position is required."""
+    pass
+
 class Axis(object):
     """ Implementation of a DAMS x000 stepper motor axis."""
 
@@ -103,7 +107,7 @@ class Axis(object):
         """ Return current absolute angle position """
 
         if (not self.zero_set):
-            raise Exception ("Zero position not set")
+            raise ZeroPositionNotSet("Zero position not set")
 
         return self.current_angle
 
@@ -112,13 +116,13 @@ class Axis(object):
         """ Move to absolute angle position """
 
         if (not self.zero_set):
-            raise Exception ("Zero position not set")
+            raise ZeroPositionNotSet("Zero position not set")
 
-        movement_degrees = (degrees - self.current_angle) % 360
+        movement_degrees = (degrees - self.current_angle)
         steps = self.degrees2steps(movement_degrees)
 
         self.step_rel = steps
-        self.current_angle += self.x.steps2degrees(steps)
+        self.current_angle += self.steps2degrees(steps)
 
     def angle_rel(self, degrees):
         steps = self.degrees2steps(degrees)
@@ -184,7 +188,7 @@ class YAxis(Axis):
     offset_angle = degrees(atan(h/R))
 
     angle_min = -45.1 # Actually it is -45, extra 0.1 is to deal with roundings errors
-    angle_min = 45.1 # Actually it is 45, extra 0.1 is to deal with roundings errors
+    angle_max = 45.1 # Actually it is 45, extra 0.1 is to deal with roundings errors
 
     def get_intersections(self, r_motor):
         """ return point of intersection between two circles """
@@ -222,15 +226,18 @@ class YAxis(Axis):
         current_angle = self.current_angle if self.zero_set else 0
 
          # Check limits if any
-        if angle_min is not None:
+        if self.angle_min is not None:
             assert((current_angle+degrees) >= self.angle_min)
 
-        if angle_max is not None:
+        if self.angle_max is not None:
+            print ("*", self.current_angle, current_angle, degrees, self.angle_max)
             assert((current_angle+degrees) <= self.angle_max)
 
         current_angle = radians(current_angle)
         # Calculate current x and y coordinates from current_angle
         R = self.R
+        h = self.h
+
         xs = -R*cos(current_angle)+h*sin(current_angle)
         ys = R*sin(current_angle)+h*cos(current_angle)
         ds = sqrt((xs-self.x0)**2+(ys-self.y0)**2)
@@ -292,20 +299,20 @@ class DAMSx000(Instrument):
         return self.x.zero_set and self.y.zero_set
 
     @property
-    def azimut_angle(self):
+    def azimuth_angle(self):
         return self.x.angle
 
     @property
     def elevation_angle(self):
         return self.y.angle
 
-    def azimut(self, degree):
+    def azimuth(self, degree):
         """ Bring the positioner to absolute azimuth angle """
 
         self.x.angle = degree
         return self.x.angle
 
-    def azimut_rel(self, degree):
+    def azimuth_rel(self, degree):
         """ Move the positioner of degrees relative to current position.
         
         This method may be useful to center the azimuth to zero
