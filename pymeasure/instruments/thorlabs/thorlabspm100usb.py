@@ -41,12 +41,6 @@ class ThorlabsPM100USB(Instrument):
         self.timout = 3000
         self._set_flags()
 
-    #        if self.is_energy:
-    #            self.energy = Instrument.measurement("MEAS:ENER?", "Energy in J.")
-
-    #        if self.is_power:
-    #            self.power = Instrument.measurement("MEAS:POW?", "Power in W.")
-
     wavelength_min = Instrument.measurement(
         "SENS:CORR:WAV? MIN", "Minimum wavelength, in nm"
     )
