@@ -59,8 +59,14 @@ class ThorlabsPM100USB(Instrument):
     def wavelength(self, value):
         """Wavelength in nm."""
         if self.wavelength_settable:
+            # Store min and max wavelength to only request them once.
+            if not hasattr(self, "_wavelength_min"):
+                self._wavelength_min = self.wavelength_min
+            if not hasattr(self, "_wavelength_max"):
+                self._wavelength_max = self.wavelength_max
+
             value = truncated_range(
-                value, [self.wavelength_min, self.wavelength_max]
+                value, [self._wavelength_min, self._wavelength_max]
             )
             self.write("SENSE:CORR:WAV {}".format(value))
         else:
