@@ -42,6 +42,7 @@ from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
 from ..experiment.results import Results
+from .treeview import SequencerWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -678,12 +679,12 @@ SAFE_FUNCTIONS = {
 }
 
 
-class SequenceEvaluationException(Exception):
+class SequenceEvaluationExceptionOld(Exception):
     """Raised when the evaluation of a sequence string goes wrong."""
     pass
 
 
-class SequencerWidget(QtGui.QWidget):
+class SequencerWidgetOld(QtGui.QWidget):
     """
     Widget that allows to generate a sequence of measurements with varying
     parameters. Moreover, one can write a simple text file to easily load a
