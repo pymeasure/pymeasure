@@ -94,13 +94,13 @@ class ThorlabsPM100USB(Instrument):
 
     def _set_flags(self):
         """Get sensor info and write flags."""
-        response = self.ask("SYST:SENSOR:IDN?").split(",")
+        response = self.values("SYST:SENSOR:IDN?")
         self.sensor_name = response[0]
         self.sensor_sn = response[1]
         self.sensor_cal_msg = response[2]
         self.sensor_type = response[3]
         self.sensor_subtype = response[4]
-        _flags_str = response[5].rstrip("\n")
+        _flags_str = response[5]
 
         # interpretation of the flags, see p. 49 of the manual:
         # https://www.thorlabs.de/_sd.cfm?fileName=17654-D02.pdf&partNumber=PM100D
