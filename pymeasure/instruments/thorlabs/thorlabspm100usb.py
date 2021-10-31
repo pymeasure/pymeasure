@@ -59,7 +59,9 @@ class ThorlabsPM100USB(Instrument):
     def wavelength(self, value):
         """Wavelength in nm."""
         if self.wavelength_settable:
-            value = truncated_range(value, [self.wavelength_min, self.wavelength_max])
+            value = truncated_range(
+                value, [self.wavelength_min, self.wavelength_max]
+            )
             self.write("SENSE:CORR:WAV {}".format(value))
         else:
             raise AttributeError(
@@ -80,7 +82,9 @@ class ThorlabsPM100USB(Instrument):
         if self.is_energy_sensor:
             return self.values("MEAS:ENER?")[0]
         else:
-            raise AttributeError(f"{self.sensor_name} is not an energy sensor.")
+            raise AttributeError(
+                f"{self.sensor_name} is not an energy sensor."
+            )
 
     def _set_flags(self):
         """Get sensor info and write flags."""
