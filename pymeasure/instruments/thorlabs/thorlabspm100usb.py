@@ -69,7 +69,7 @@ class ThorlabsPM100USB(Instrument):
     @property
     def power(self):
         """Power in W."""
-        if self.is_power:
+        if self.is_power_sensor:
             return self.values("MEAS:POW?")[0]
         else:
             raise AttributeError(f"{self.sensor_name} is not a power sensor.")
@@ -77,7 +77,7 @@ class ThorlabsPM100USB(Instrument):
     @property
     def energy(self):
         """Energy in J."""
-        if self.is_energy:
+        if self.is_energy_sensor:
             return self.values("MEAS:ENER?")[0]
         else:
             raise AttributeError(f"{self.sensor_name} is not an energy sensor.")
@@ -107,13 +107,13 @@ class ThorlabsPM100USB(Instrument):
 
         # setting the flags; _dn are unused; decimal values as comments
         (
-            self.is_power,  # 1
-            self.is_energy,  # 2
+            self.is_power_sensor,  # 1
+            self.is_energy_sensor,  # 2
             _d4,  # 4
             _d8,  # 8
-            self.resp_settable,  # 16
+            self.response_settable,  # 16
             self.wavelength_settable,  # 32
             self.tau_settable,  # 64
             _d128,  # 128
-            self.temperature_sens,  # 256
+            self.has_temperature_sens,  # 256
         ) = self.flags
