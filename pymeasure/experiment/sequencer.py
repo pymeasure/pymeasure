@@ -216,11 +216,6 @@ class SequenceFileHandler():
             idx += 1
 
         self._sequences.insert(idx, seq_item)
-        # Update parent dictionary
-        for node in range(len(self._sequences) - 1, idx, -1):
-            self.parent[node] = self.parent[node-1]
-            
-        self.parent[idx] = parent_idx
         return seq_item, self.get_children_order(seq_item)
     
     def remove_node(self, seq_item):
@@ -229,24 +224,9 @@ class SequenceFileHandler():
         for child_seq_item in self.children(seq_item):
             self.remove_node(child_seq_item)
         
-        idx, level = self._get_idx(seq_item)
-        parent_idx = self.parent[idx]
-
         self._sequences.remove(seq_item)
-        # Update parent dictionary
-        for node in range(idx, len(self._sequences)):
-            new_node = self.parent[node+1]
-            new_node = new_node if new_node < idx else new_node - 1
-            self.parent[node] = new_node
 
-        del self.parent[len(self._sequences)]
-
-        if parent_idx == -1:
-            parent_seq_item = None
-        else:
-            parent_seq_item = self[parent_idx]
-
-        return parent_seq_item, self.get_children_order(parent_seq_item)
+        return seq_item.parent, self.get_children_order(seq_item.parent)
         
     def children(self, seq_item):
         """ return a list of children of node identified by seq_item """
@@ -262,7 +242,7 @@ class SequenceFileHandler():
         return child_list
         
     def get_children(self, seq_item, index):
-        """ Return the children of order index of the node in row """
+        """ Return the children of order index of the node seq_item """
 
         child_list = self.children(seq_item)
 
@@ -282,22 +262,16 @@ class SequenceFileHandler():
 
         if seq_item is None:
             return -1
-        idx, _ = self._get_idx(seq_item)
-        # Get parent
-        parent_idx = self.parent[idx] if idx >= 0 else -1
-        parent_seq_item = None if parent_idx < 0 else self.sequences[parent_idx]
 
         # Get parent's children list
-        children_list = self.children(parent_seq_item)
+        children_list = self.children(seq_item.parent)
 
         return children_list.index(seq_item)
 
     def get_parent(self, seq_item):
         """ Return parent of node identified by seq_item """
 
-        parent_seq_item = seq_item.parent
-
-        return parent_seq_item, self.get_children_order(parent_seq_item)
+        return seq_item.parent, self.get_children_order(seq_item.parent)
 
     def set_data(self, seq_item, row, column, value):
         """ Set data for node identified by seq_item """
@@ -324,9 +298,7 @@ class SequenceFileHandler():
 
         self._sequences = []
         self.parent = {}
-        current_parent = -1
-        current_level = -1
-        current_row = -1
+        current_parent = None
 
         pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
         self.file_obj.seek(0)
@@ -344,37 +316,26 @@ class SequenceFileHandler():
 
             parameter = match.group(2)
             sequence = match.group(3)
-            if level == (current_level + 1):
-                self.parent[current_row + 1] = current_parent
-                current_parent = current_row + 1
-                current_level = current_level + 1
-            elif (level <= current_level):
+            parent_level = -1 if current_parent == None else current_parent.level
+            if level == (parent_level + 1):
+                pass
+            elif (level <= parent_level):
                 # Find parent
-                current_parent -= 1
-                while current_parent >= 0:
-                    current_level = self._sequences[current_parent].level
-                    if level == (current_level + 1):
+                current_parent = current_parent.parent
+                while current_parent != None:
+                    if level == (current_parent.level + 1):
                         break
-                    current_parent -= 1
-                if current_parent == -1:
-                    current_level = -1
-                self.parent[current_row+1] = current_parent
-                current_parent = current_row + 1
-                current_level = current_level + 1
+                    current_parent = current_parent.parent
             else:
                 raise Exception("Invalid file format: level missing ?")
-            parent = None
-            parent_index = self.parent[current_row + 1]
-            if parent_index >= 0:
-                parent = self._sequences[parent_index]
 
             data = SequenceItem(level,
                                 parameter,
                                 sequence,
-                                parent)
+                                current_parent)
+            current_parent = data
             
             self._sequences.append(data)
-            current_row += 1
 
     def save(self, filename=None):
         """ Save modified sequence to file """
