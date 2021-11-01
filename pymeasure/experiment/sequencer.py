@@ -72,16 +72,20 @@ class SequenceFileHandler():
     - Level: that is the distance from the root node
     - Parameter: A string that is the parameter name
     - Expression: A python expression which describe the list of values to be assumed by the Parameter.
-    The syntax of the file is as follow:
 
-    - "Parameter1" "(1,2,3)"
-    -- "Parameter2" "(4,5,6)"
-    --- "Parameter3" "(6,7,8)"
-    - "Parameter4" "range(1,3)"
+    The syntax of the file is as follow: ::
+
+    - "Parameter1", "(1,2,3)"
+    -- "Parameter2", "(4,5,6)"
+    --- "Parameter3", "(6,7,8)"
+    - "Parameter4", "range(1,3)"
 
     In this case, the tree is composed of a root node with two children (Parameter1 and Parameter4)
     Parameter2 is the only child of Parameter1 and Parameter3 is the only child of Parameter2.
     Parameter4 has no child.
+
+    Data is stored internally as a list where each
+    item matches a row of the sequence file
     [Add grphical representation ???]
  """
 
@@ -183,7 +187,7 @@ class SequenceFileHandler():
         return self._sequences
 
     def _get_idx(self, seq_item):
-        """ Return the index of the list whose value correspond to sequence """
+        """ Return the index and level of the list whose value correspond to sequence """
         try:
             idx = self._sequences.index(seq_item)
         except:
@@ -197,7 +201,7 @@ class SequenceFileHandler():
         return idx, level
 
     def add_node(self, name, parent_seq_item=None):
-        """ Add a node under this parent identified by parent_sequence """
+        """ Add a node under the parent identified by parent_seq_item """
         parent_idx, level = self._get_idx(parent_seq_item)
         
         seq_item = SequenceItem(level+1,
@@ -290,10 +294,8 @@ class SequenceFileHandler():
 
     def get_parent(self, seq_item):
         """ Return parent of node identified by seq_item """
-        idx, _ = self._get_idx(seq_item)
 
-        parent_idx = self.parent[idx] if idx >= 0 else -1
-        parent_seq_item = None if parent_idx < 0 else self.sequences[parent_idx]
+        parent_seq_item = seq_item.parent
 
         return parent_seq_item, self.get_children_order(parent_seq_item)
 
