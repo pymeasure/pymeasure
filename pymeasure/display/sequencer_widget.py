@@ -50,7 +50,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
     """ TODO: Documentation
     """
 
-    def __init__(self, header, data, header_types=None, key_column=0, parent=None):
+    def __init__(self, header, data, parent=None):
         """ TreeModel constructor
         :param header: The header to use
         :type header: Iterable
@@ -59,14 +59,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         super().__init__(parent)
 
         self.header = header
-        self.header_types = header_types
-
-        if not self.header_types:
-            self.header_types = {}
-            for column in self.header:
-                self.header_types[column] = 'string'
-
-        self.key_column = self.header[key_column]
         self.root = data
 
     def add_node(self, parameter, parent=None):
@@ -230,7 +222,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
 
     def save(self, filename=None):
         self.root.save(filename)
-
 
 class ComboBoxDelegate(QtGui.QStyledItemDelegate):
     def __init__(self, owner, choices):
