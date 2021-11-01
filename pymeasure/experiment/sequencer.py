@@ -126,7 +126,7 @@ class SequenceFileHandler():
         self.parse()
 
     @staticmethod
-    def eval_string(string, name=None, depth=None):
+    def eval_string(string, name=None, depth=None, log_enabled=True):
         """
         Evaluate the given string. The string is evaluated using a list of
         pre-defined functions that are deemed safe to use, to prevent the
@@ -138,6 +138,7 @@ class SequenceFileHandler():
             error messages.
         :param depth: Depth of the to-be-interpreted string, only used
             for error messages.
+        :param log_enabled: Enable log messages.
         """
 
         evaluated_string = None
@@ -147,24 +148,28 @@ class SequenceFileHandler():
                     string, {"__builtins__": None}, SequenceFileHandler.SAFE_FUNCTIONS
                 )
             except TypeError:
-                log.error("TypeError, likely a typo in one of the " +
-                          "functions for parameter '{}', depth {}".format(
-                              name, depth
-                          ))
+                if log_enabled:
+                    log.error("TypeError, likely a typo in one of the " +
+                              "functions for parameter '{}', depth {}".format(
+                                  name, depth
+                              ))
                 raise SequenceEvaluationException("TypeError, likely a typo")
             except SyntaxError:
-                log.error("SyntaxError, likely unbalanced brackets " +
-                          "for parameter '{}', depth {}".format(name, depth))
+                if log_enabled:
+                    log.error("SyntaxError, likely unbalanced brackets " +
+                              "for parameter '{}', depth {}".format(name, depth))
                 raise SequenceEvaluationException("SyntaxError, likely unbalanced brackets")
             except ValueError:
-                log.error("ValueError, likely wrong function argument " +
-                          "for parameter '{}', depth {}".format(name, depth))
+                if log_enabled:
+                    log.error("ValueError, likely wrong function argument " +
+                              "for parameter '{}', depth {}".format(name, depth))
                 raise SequenceEvaluationException("ValueError, likely wrong function argument")
             except Exception as e:
                 raise SequenceEvaluationException(e)
         else:
-            log.error("No sequence entered for " +
-                      "for parameter '{}', depth {}".format(name, depth))
+            if log_enabled:
+                log.error("No sequence entered for " +
+                          "for parameter '{}', depth {}".format(name, depth))
             raise SequenceEvaluationException("No sequence entered")
 
         evaluated_string = numpy.array(evaluated_string)
@@ -212,7 +217,7 @@ class SequenceFileHandler():
             self.parent[node] = self.parent[node-1]
             
         self.parent[idx] = parent_idx
-        return seq_item
+        return seq_item, self.get_children_order(seq_item)
     
     def remove_node(self, seq_item):
         """ Remove node identified by seq_item """
@@ -224,12 +229,20 @@ class SequenceFileHandler():
         parent_idx = self.parent[idx]
 
         self._sequences.remove(seq_item)
-
         # Update parent dictionary
         for node in range(idx, len(self._sequences)):
-            self.parent[node] = self.parent[node+1]
+            new_node = self.parent[node+1]
+            new_node = new_node if new_node < idx else new_node - 1
+            self.parent[node] = new_node
 
         del self.parent[len(self._sequences)]
+
+        if parent_idx == -1:
+            parent_seq_item = None
+        else:
+            parent_seq_item = self[parent_idx]
+
+        return parent_seq_item, self.get_children_order(parent_seq_item)
         
     def children(self, seq_item):
         """ return a list of children of node identified by seq_item """
@@ -255,13 +268,34 @@ class SequenceFileHandler():
             child = child_list[index]
         return child
 
+    def get_children_order(self, seq_item):
+        """ Return the children of order of the node identified by seq_item
+
+        The children order is the index related to the parent's children list.
+
+        Provide example here: TODO
+        """
+
+        if seq_item is None:
+            return -1
+        idx, _ = self._get_idx(seq_item)
+        # Get parent
+        parent_idx = self.parent[idx] if idx >= 0 else -1
+        parent_seq_item = None if parent_idx < 0 else self.sequences[parent_idx]
+
+        # Get parent's children list
+        children_list = self.children(parent_seq_item)
+
+        return children_list.index(seq_item)
+
     def get_parent(self, seq_item):
         """ Return parent of node identified by seq_item """
         idx, _ = self._get_idx(seq_item)
 
         parent_idx = self.parent[idx] if idx >= 0 else -1
         parent_seq_item = None if parent_idx < 0 else self.sequences[parent_idx]
-        return parent_seq_item, self.children(parent_seq_item).index(seq_item)
+
+        return parent_seq_item, self.get_children_order(parent_seq_item)
 
     def set_data(self, seq_item, row, column, value):
         """ Set data for node identified by seq_item """
@@ -320,11 +354,13 @@ class SequenceFileHandler():
                     if level == (current_level + 1):
                         break
                     current_parent -= 1
-                    
+                if current_parent == -1:
+                    current_level = -1
                 self.parent[current_row+1] = current_parent
+                current_parent = current_row + 1
+                current_level = current_level + 1
             else:
                 raise Exception("Invalid file format: level missing ?")
-
             parent = None
             parent_index = self.parent[current_row + 1]
             if parent_index >= 0:
