@@ -125,5 +125,5 @@ class ThorlabsPM100USB(Instrument):
             self.wavelength_settable,  # 32
             self.tau_settable,  # 64
             _d128,  # 128
-            self.has_temperature_sens,  # 256
+            self.has_temperature_sensor,  # 256
         ) = self.flags
