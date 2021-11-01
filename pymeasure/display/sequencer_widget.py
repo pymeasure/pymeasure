@@ -41,7 +41,6 @@ debug_modules_enabled=(
 #    "add_node",
 #    "remove_node",
 #    "headerData",
-    "find_index",
 )
 def print_debug(module, *args):
     if module in debug_modules_enabled:
@@ -70,15 +69,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         self.key_column = self.header[key_column]
         self.root = data
 
-    def find_index_to_delete(self, pointer):
-        print_debug ("find_index", "******** find_index", pointer)
-        for index in self.persistentIndexList():
-            if index.column() != 0:
-                continue
-
-            if index.internalPointer() == pointer:
-                return index
-
     def add_node(self, parameter, parent=None):
         """ Add a row in the sequencer """
         print_debug("add_node", parameter, parent)
@@ -99,17 +89,18 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         print_debug("remove_node", index, index.internalPointer())
         children = self.rowCount(index)
         print_debug("remove_node", "children", children)
+        seq_item = index.internalPointer()
+        # Remove children from last to first
         while (children > 0):
             child = children -1
-            children_seq_item = self.root.get_children(index.internalPointer(), child)
+            children_seq_item = self.root.get_children(seq_item, child)
             self.remove_node(self.createIndex(child, 0, children_seq_item))
             children = self.rowCount(index)
 
         self.beginRemoveRows(index.parent(), index.row(), index.row())
-        parent_seq_item, parent_row = self.root.remove_node(index.internalPointer())
+        parent_seq_item, parent_row = self.root.remove_node(seq_item)
         self.endRemoveRows()
         return self.createIndex(parent_row, 0, parent_seq_item)
-
 
     def flags(self, index):
         """ QAbstractItemModel override method that is used to set the flags for the item at the given QModelIndex.
@@ -150,12 +141,9 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         """
         print_debug ("index", row, col, parent.row(), parent.column(), parent.internalPointer())
         if not parent or not parent.isValid():
-            parent_data = None # self.root[0]
+            parent_data = None
         else:
             parent_data = parent.internalPointer()
-
-        if row < 0 or row >= len(self.root.sequences):
-            return QtCore.QModelIndex()
 
         seq_item=self.root.get_children(parent_data, row)
         child = seq_item
@@ -193,8 +181,8 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         return index
 
     def rowCount(self, parent):
-        """ Return the number of rows a given index has under it. If an invalid QModelIndex is supplied, return the
-                number of children under the root.
+        """ Return the number of children of a given parent.
+        If an invalid QModelIndex is supplied, return the number of children under the root.
 
         :param parent: QModelIndex
         """
@@ -237,8 +225,8 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         return return_value
 
     def __iter__(self):
-        for child in self.root.children.itervalues():
-            yield child
+        for row, child in enumerate(self.root.children()):
+            yield self.createIndex(row, 0, None)
 
     def save(self, filename=None):
         self.root.save(filename)
