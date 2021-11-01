@@ -95,6 +95,8 @@ class ThorlabsPM100USB(Instrument):
     def _set_flags(self):
         """Get sensor info and write flags."""
         response = self.values("SYST:SENSOR:IDN?")
+        if response[0] == "no sensor":
+            raise IOError("No sensor connected.")
         self.sensor_name = response[0]
         self.sensor_sn = response[1]
         self.sensor_cal_msg = response[2]
