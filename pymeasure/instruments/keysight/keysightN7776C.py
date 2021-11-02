@@ -93,17 +93,15 @@ class KeysightN7776C(Instrument):
 
     _locked = Instrument.control(':LOCK?',':LOCK %g,'+str(LOCK_PW),
                                    """ Boolean property controlling the lock state (True/False) of the laser source""",
-                                   validator=strict_discrete_set,
-                                   values=[True,False],
-                                   set_process=lambda v: int(v),
-                                   get_process=lambda v: bool(v))
+                                   validator=strict_discrete_set, 
+                                   map_values=True, 
+                                   values={True: 1, False: 0})
     
     output = Instrument.control('SOUR0:POW:STAT?','SOUR0:POW:STAT %g',
                                     """ Boolean Property that controls the state (on/off) of the laser source """,
-                                    validator=strict_discrete_set,
-                                    values=[True,False],
-                                    set_process=lambda v: int(v),
-                                    get_process=lambda v: bool(v))
+                                   validator=strict_discrete_set, 
+                                   map_values=True, 
+                                   values={True: 1, False: 0})
 
     _output_power = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
                                     """ Floating point value indicating the laser output power in the unit set by the user (see _output_power_unit).""")
@@ -171,10 +169,9 @@ class KeysightN7776C(Instrument):
 
     wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?','SOUR0:WAV:SWE:LLOG %g',
                                     """ State (on/off) of the lambda logging feature of the laser source.""",
-                                    validator=strict_discrete_set,
-                                    values=[True,False],
-                                    set_process=lambda v: int(v),
-                                    get_process=lambda v: bool(v))
+                                   validator=strict_discrete_set, 
+                                   map_values=True, 
+                                   values={True: 1, False: 0})
 
     def check_sweep_params(self):
         response = self._sweep_check
