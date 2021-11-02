@@ -180,7 +180,7 @@ class KeysightN7776C(Instrument):
             log.warning('Trigger Frequency too large.')
             return False
         elif response[0] == 372:
-            log.warning'Stepsize too small.')
+            log.warning('Stepsize too small.')
             return False
         elif response[0] == 373 or response[0] == 378:
             log.warning('Number of triggers exceeds allowed limit.')
