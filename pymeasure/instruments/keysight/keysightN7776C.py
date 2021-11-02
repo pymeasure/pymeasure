@@ -81,17 +81,8 @@ class KeysightN7776C(Instrument):
                 return (power_reading,power_unit)
             else:
                 return power_reading
-    
-    def lock(self):
-        self._locked = True
-        
-    def unlock(self):
-        self._locked = False
-        
-    def locked(self):
-        return self._locked
 
-    _locked = Instrument.control(':LOCK?',':LOCK %g,'+str(LOCK_PW),
+    locked = Instrument.control(':LOCK?',':LOCK %g,'+str(LOCK_PW),
                                    """ Boolean property controlling the lock state (True/False) of the laser source""",
                                    validator=strict_discrete_set, 
                                    map_values=True, 
