@@ -216,7 +216,7 @@ class KeysightN7776C(Instrument):
 
     def next_step(self):
         """
-        Performs the next sweep step in stepped sweep if its paused or in manual mode.
+        Performs the next sweep step in stepped sweep if it is paused or in manual mode.
         """
         self.write('sour0:wav:swe:step:next')
 
