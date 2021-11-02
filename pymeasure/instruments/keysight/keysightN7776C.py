@@ -44,7 +44,7 @@ class KeysightN7776C(Instrument):
         laser.sweep_speed = 1
         laser.sweep_mode = 'CONT'
         laser.output_enabled = 1
-        while laser.sweep == 1:
+        while laser.sweep_state == 1:
             log.info('Sweep in progress.')
         laser.output_enabled = 0
     """
@@ -153,7 +153,7 @@ class KeysightN7776C(Instrument):
     sweep_points = Instrument.measurement('sour0:read:points? llog',
                                     """Returns the number of datapoints that the :READout:DATA? command will return.""")
     
-    sweep = Instrument.control('sour0:wav:swe?','sour0:wav:swe %g',
+    sweep_state = Instrument.control('sour0:wav:swe?','sour0:wav:swe %g',
                                     """ State of the wavelength sweep. Stops, starts, pauses 
                                     or continues a wavelength sweep.""")
 
