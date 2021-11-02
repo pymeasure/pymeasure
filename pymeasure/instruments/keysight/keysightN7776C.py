@@ -44,7 +44,7 @@ class KeysightN7776C(Instrument):
         laser.sweep_mode = 'CONT'
         laser.output = 1
         while laser.sweep == 1:
-            continue
+            log.info('Sweep in progress.')
         laser.output = 0
     """
     def __init__(self, address, **kwargs):
@@ -144,6 +144,8 @@ class KeysightN7776C(Instrument):
 
     wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?','SOUR0:WAV:SWE:LLOG %g',
                                     """ State (on/off) of the lambda logging feature of the laser source.""")
+
+    
 
 
     def next_step(self):
