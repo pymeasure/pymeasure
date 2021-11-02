@@ -43,10 +43,10 @@ class KeysightN7776C(Instrument):
         laser.sweep_wl_stop = 1560
         laser.sweep_speed = 1
         laser.sweep_mode = 'CONT'
-        laser.output = 1
+        laser.output_enabled = 1
         while laser.sweep == 1:
             log.info('Sweep in progress.')
-        laser.output = 0
+        laser.output_enabled = 0
     """
     def __init__(self, address, **kwargs):
         super(KeysightN7776C, self).__init__(
@@ -88,7 +88,7 @@ class KeysightN7776C(Instrument):
                                    map_values=True, 
                                    values={True: 1, False: 0})
     
-    output = Instrument.control('SOUR0:POW:STAT?','SOUR0:POW:STAT %g',
+    output_enabled = Instrument.control('SOUR0:POW:STAT?','SOUR0:POW:STAT %g',
                                     """ Boolean Property that controls the state (on/off) of the laser source """,
                                    validator=strict_discrete_set, 
                                    map_values=True, 
@@ -143,10 +143,9 @@ class KeysightN7776C(Instrument):
                                     values=['STEP','MAN','CONT'])
     sweep_twoway = Instrument.control('sour0:wav:swe:rep?','sour0:wav:swe:rep %s',
                                     """Sets the repeat mode. Applies in stepped,continuous and manual sweep mode.""",
-                                    validator=strict_discrete_set,
-                                    values=[True,False],
-                                    set_process=lambda v: ['ONEW','TWOW'][int(v)],
-                                    get_process=lambda v: bool(['ONEW','TWOW'].index(v)))
+                                    validator=strict_discrete_set, 
+                                    map_values=True, 
+                                    values={True: 'ONEW', False: 'TWOW'})
     _sweep_check = Instrument.measurement('sour0:wav:swe:chec?',
                                     """Returns whether the currently set sweep parameters (sweep mode, sweep start, stop, width, etc.) are consistent. If there is a
                                     sweep configuration problem, the laser source is not able to pass a wavelength sweep.""")
