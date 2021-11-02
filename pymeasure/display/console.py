@@ -160,7 +160,7 @@ class ManagedConsole(QtCore.QCoreApplication):
     def get_filename(self, directory):
         """ Return filename for logging.
 
-        User can oveerride this method to define their own filename
+        User can override this method to define their own filename
         """
         if self.filename != None:
             return os.path.join(directory, self.filename)
@@ -229,7 +229,7 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         if args['use_log_file'] != None:
             # Special case set parameters from log file
-            results = Results(args['use_log_file'])
+            results = Results.load(args['use_log_file'])
             for name in results.parameters:
                 parameter_values[name] = results.parameters[name].value
         else:
