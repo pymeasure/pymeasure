@@ -168,46 +168,46 @@ class KeysightN7776C(Instrument):
         if response[0] == 0.0:
             return True
         elif response[0] == 368:
-            log.log(30,'Warning: End Wavelength <= Start Wavelength.')
+            log.warning('End Wavelength <= Start Wavelength.')
             return False
         elif response[0] == 369:
-            log.log(30,'Warning: Sweep time too small.')
+            log.warning('Sweep time too small.')
             return False
         elif response[0] == 370:
-            log.log(30,'Warning: Sweep time too big.')
+            log.warning('Sweep time too big.')
             return False
         elif response[0] == 371:
-            log.log(30,'Warning: Trigger Frequency too large.')
+            log.warning('Trigger Frequency too large.')
             return False
         elif response[0] == 372:
-            log.log(30,'Warning: Stepsize too small.')
+            log.warning'Stepsize too small.')
             return False
         elif response[0] == 373 or response[0] == 378:
-            log.log(30,'Warning: Number of triggers exceeds allowed limit.')
+            log.warning('Number of triggers exceeds allowed limit.')
             return False
         elif response[0] == 374:
-            log.log(30,'Warning: The only allowed modulation source with lambda logging function is coherence control.')
+            log.warning('The only allowed modulation source with lambda logging function is coherence control.')
             return False
         elif response[0] == 375:
-            log.log(30,'Warning: Lambda logging only works Step Finished output trigger configuration')
+            log.warning('Lambda logging only works Step Finished output trigger configuration')
             return False
         elif response[0] == 376:
-            log.log(30,'Warning: Lambda logging can only be done in continuous sweep mode')
+            log.warning('Lambda logging can only be done in continuous sweep mode')
             return False
         elif response[0] == 377:
-            log.log(30,'Warning: The step size must be a multiple of the smallest possible step size')
+            log.warning('The step size must be a multiple of the smallest possible step size')
             return False
         elif response[0] == 379:
-            log.log(30,'Warning: Continuous Sweep and Modulation on.')
+            log.warning('Continuous Sweep and Modulation on.')
             return False
         elif response[0] == 380:
-            log.log(30,'Warning: Start Wavelength is too small.')
+            log.warning('Start Wavelength is too small.')
             return False
         elif response[0] == 381:
-            log.log(30,'Warning: End Wavelength is too large.')
+            log.warning('End Wavelength is too large.')
             return False
         else:
-            log.log(30,'Warning: Unknown Error!')
+            log.warning('Unknown Error!')
             return False
             
 
