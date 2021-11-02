@@ -37,7 +37,7 @@ class KeysightN7776C(Instrument):
     """
     This represents the Keysight N7776C Tunable Laser Source interface.
     .. code-block:: python
-        laser = N7776C( address )
+        laser = N7776C(address)
         laser.sweep_wl_start = 1550
         laser.sweep_wl_stop = 1560
         laser.sweep_speed = 1
@@ -46,7 +46,6 @@ class KeysightN7776C(Instrument):
         while laser.sweep == 1:
             continue
         laser.output = 0
-    
     """
     def __init__(self, address, **kwargs):
         super(KeysightN7776C, self).__init__(
