@@ -52,12 +52,6 @@ class KeysightN7776C(Instrument):
         super(KeysightN7776C, self).__init__(
             address, "N7776C Tunable Laser Source",**kwargs)
 
-    def reset(self):
-        """
-        Reset the laser controller to its default state.
-        """
-        self.write('*RST')
-
     def set_power(self,value,unit='mW'):
         """
         Function wrapper to set the power in an arbitrary unit
@@ -87,6 +81,7 @@ class KeysightN7776C(Instrument):
                 return (power_reading,power_unit)
             else:
                 return power_reading
+    
     def lock(self):
         self._locked = True
         
