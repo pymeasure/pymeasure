@@ -270,6 +270,7 @@ def test_fakeinstrument_control(set_command, given, expected, dynamic):
     class Fake(FakeInstrument):
         x = FakeInstrument.control(
             "", set_command, "",
+            dynamic=dynamic,
         )
 
     fake = Fake()
