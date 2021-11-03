@@ -244,11 +244,12 @@ def test_setting_process(dynamic):
     fake.x = 2
     assert fake.read() == 'OUT 1'
 
-
-def test_control_multivalue():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_multivalue(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d,%d", "",
+            dynamic=dynamic,
         )
 
     fake = Fake()
@@ -257,11 +258,13 @@ def test_control_multivalue():
 
 
 @pytest.mark.parametrize(
-    'set_command, given, expected',
-    [("%d", 5, 5),
-     ("%d, %d", (5, 6), [5, 6]),  # input has to be a tuple, not a list
+    'set_command, given, expected, dynamic',
+    [("%d", 5, 5, False),
+     ("%d", 5, 5, True),
+     ("%d, %d", (5, 6), [5, 6], False),  # input has to be a tuple, not a list
+     ("%d, %d", (5, 6), [5, 6], True),  # input has to be a tuple, not a list
      ])
-def test_fakeinstrument_control(set_command, given, expected):
+def test_fakeinstrument_control(set_command, given, expected, dynamic):
     """FakeInstrument's custom simple control needs to process values correctly.
     """
     class Fake(FakeInstrument):

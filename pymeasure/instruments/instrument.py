@@ -33,9 +33,18 @@ from pymeasure.adapters.visa import VISAAdapter
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-reserved_prefix = "___"
+reserved_prefix = "___" # Prefix used to store reserved variables
+
 class DynamicProperty(property):
-    """ This property redefines get and set in a "dynamic" fashion
+    """ Class that allows to manage python property behaviour in a "dynamic" fashion
+
+    The class allows to pass, in addition to regular property parameters, a list of
+    runtime configurable parameters.
+    The effect is that the behaviour of fget/fset not only depends on the obj parameter, but
+    also on a set of keyword parameters with a default value.
+    These extra parameters are read from instance, if available, or left with the default value.
+    Dynamic behaviour is achieved by changing class or instance variables with special names.
+
     :param fget_list: List of parameter's names that are dynamically configurable
     :param fset_list: List of parameter's names that are dynamically configurable
     :param fget: class property fget parameter with added parameters as in fget_list
@@ -125,10 +134,12 @@ class Instrument(object):
         log.info("Initializing %s." % self.name)
 
     def _compute_special_names(self):
-        """ Internal method, not intended to be accessed at user level.
+        """ Return list of class/instance special names
+
         Compute the list of special names based on the list of 
         class variable names defined as DynamicProperty. Check also for class variables
-        with special name and copy them at instance level """
+        with special name and copy them at instance level 
+        Internal method, not intended to be accessed at user level."""
         special_names = []
         # Check if class variable of DynamicProperty type are present
         for obj in [self] + self.__class__.mro():
