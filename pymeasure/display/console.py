@@ -65,7 +65,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
         self.procedure_class = procedure_class
 
     def setup_parser(self, inputs):
-        """ Setup command line arguments parsing fro parameters information """
+        """ Setup command line arguments parsing from parameters information """
 
         self.procedure = self.procedure_class()
         parameter_objects = self.procedure.parameter_objects()
@@ -77,7 +77,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             kwargs['default'] = default
             if _type != None:
                 kwargs['type'] = _type
-            a=self.add_argument("--"+name, **kwargs)
+            self.add_argument("--"+name, **kwargs)
 
         special_options = copy.deepcopy(self.special_options)
         for option, kwargs in special_options.items():
@@ -157,17 +157,10 @@ class ManagedConsole(QtCore.QCoreApplication):
         # Handle Ctrl+C nicely
         signal.signal(signal.SIGINT, lambda sig,_: self.abort())
 
-    def open_experiment(self, filename):
-        """
-        TODO: Add description
-        """
-        results = Results.load(filename)
-        return results
-
     def get_filename(self, directory):
         """ Return filename for logging.
 
-        User can oveerride this method to define their own filename
+        User can override this method to define their own filename
         """
         if self.filename != None:
             return os.path.join(directory, self.filename)
@@ -236,8 +229,7 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         if args['use_log_file'] != None:
             # Special case set parameters from log file
-            logfile = args['use_log_file']
-            results = self.open_experiment(logfile)
+            results = Results.load(args['use_log_file'])
             for name in results.parameters:
                 parameter_values[name] = results.parameters[name].value
         else:
@@ -261,6 +253,8 @@ class ManagedConsole(QtCore.QCoreApplication):
         log.debug("Set up Results")
 
         self._worker = Worker(results, log_queue=scribe.queue, log_level=self.log_level)
+        log.info("Created worker for procedure {}".format(self.procedure_class.__name__))
+
         self._monitor = Monitor(self._worker.monitor_queue)
         self._monitor.worker_failed.connect(self._failed)
         self._monitor.worker_abort_returned.connect(self._abort_returned)
@@ -270,7 +264,5 @@ class ManagedConsole(QtCore.QCoreApplication):
         self._monitor.log.connect(self._update_log)
 
         self._monitor.start()
-        log.info("Created worker for procedure {}".format(self.procedure_class.__name__))
         self._worker.start()
         super().exec_()
-
