@@ -258,7 +258,8 @@ class Manager(QtCore.QObject):
         experiment.browser_item.setProgress(100.)
         for curve in experiment.curve_list:
             if curve:
-                curve.update_data()
+                for i_curve in curve.values(): ##### BRIAN MODIFICATIONS ######
+                    i_curve.update_data()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()

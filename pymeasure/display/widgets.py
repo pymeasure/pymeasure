@@ -39,7 +39,7 @@ from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from .thread import StoppableQThread
 from .log import LogHandler
-from .Qt import QtCore, QtGui
+from .Qt import QtCore, QtGui, CheckableComboBox
 from ..experiment import parameters, Procedure
 from ..experiment.results import Results
 
@@ -57,7 +57,7 @@ class PlotFrame(QtGui.QFrame):
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(str)
+    y_axis_changed = QtCore.QSignal(list)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)
@@ -202,14 +202,15 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
-
+    
+    index = QtCore.QModelIndex()
+    
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, linewidth=1, parent=None):
+                 check_status=True, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
-        self.linewidth = linewidth
         self._setup_ui()
         self._layout()
         if x_axis is not None:
@@ -227,8 +228,9 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_y_label.setText('Y Axis:')
 
+        # self.columns_y = QtGui.QComboBox(self)
         self.columns_x = QtGui.QComboBox(self)
-        self.columns_y = QtGui.QComboBox(self)
+        self.columns_y = CheckableComboBox()
         for column in self.columns:
             self.columns_x.addItem(column)
             self.columns_y.addItem(column)
@@ -267,39 +269,55 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
+            kwargs['pen'] = pg.mkPen(color=color, width=2)
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
-        curve = ResultsCurve(results,
+        
+        curve = {}
+        for column in self.columns:
+                curve[column] = ResultsCurve(results,
                              x=self.plot_frame.x_axis,
-                             y=self.plot_frame.y_axis,
+                             y=column,
                              **kwargs
                              )
-        curve.setSymbol(None)
-        curve.setSymbolBrush(None)
+                curve[column].setSymbol(None)
+                curve[column].setSymbolBrush(None)
+                
         return curve
 
     def update_x_column(self, index):
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
 
-    def update_y_column(self, index):
+    def update_y_column(self,index):
         axis = self.columns_y.itemText(index)
-        self.plot_frame.change_y_axis(axis)
-
+        checked = self.columns_y.item_checked(index)
+        for item in self.plot.items:
+            if item.y == axis:
+                if checked:
+                    item.show()
+                else:
+                    item.hide()
+        #self.plot_frame.change_y_axis(axis)
+        
     def load(self, curve):
-        curve.x = self.columns_x.currentText()
-        curve.y = self.columns_y.currentText()
-        curve.update_data()
-        self.plot.addItem(curve)
+        for i,i_curve in enumerate(curve.values()):
+            i_curve.x = self.columns_x.currentText()
+            i_curve.y = self.columns[i]
+            i_curve.update_data()
+            self.plot.addItem(i_curve)
+            if self.columns_y.item_checked(i):
+                i_curve.show()
+            else:
+                i_curve.hide()
 
     def remove(self, curve):
-        self.plot.removeItem(curve)
+        for i_curve in curve.values():
+            self.plot.removeItem(i_curve)
 
     def set_color(self, curve, color):
-        """ Change the color of the pen of the curve """
-        curve.pen.setColor(color)
-        curve.updateItems(styleUpdate=True)
+        """ Remove curve from widget """
+        curve.setPen(pg.mkPen(color=color, width=2))
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
@@ -619,17 +637,14 @@ class ResultsDialog(QtGui.QFileDialog):
                 return
             except Exception as e:
                 raise e
-
+            
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
-                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to circumvent plotting slowdown.
-                                 # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
+                                 pen=pg.mkPen(color=(255, 0, 0), width=1.75),
                                  antialias=True
                                  )
             curve.update_data()
-
             self.plot.addItem(curve)
 
             self.preview_param.clear()
