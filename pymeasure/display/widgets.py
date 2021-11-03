@@ -587,10 +587,10 @@ class ResultsDialog(QtGui.QFileDialog):
         preview_tab = QtGui.QTabWidget()
         vbox = QtGui.QVBoxLayout()
         param_vbox = QtGui.QVBoxLayout()
-        condition_vbox = QtGui.QVBoxLayout()
+        metadata_vbox = QtGui.QVBoxLayout()
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
-        condition_vbox_widget = QtGui.QWidget()
+        metadata_vbox_widget = QtGui.QWidget()
 
         self.plot_widget = PlotWidget("Results", self.columns, self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
@@ -600,21 +600,21 @@ class ResultsDialog(QtGui.QFileDialog):
         self.preview_param.setColumnWidth(0, 150)
         self.preview_param.setAlternatingRowColors(True)
 
-        self.preview_condition = QtGui.QTreeWidget()
+        self.preview_metadata = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
-        self.preview_condition.setHeaderItem(param_header)
-        self.preview_condition.setColumnWidth(0, 150)
-        self.preview_condition.setAlternatingRowColors(True)
+        self.preview_metadata.setHeaderItem(param_header)
+        self.preview_metadata.setColumnWidth(0, 150)
+        self.preview_metadata.setAlternatingRowColors(True)
 
         vbox.addWidget(self.plot_widget)
         param_vbox.addWidget(self.preview_param)
-        condition_vbox.addWidget(self.preview_condition)
+        metadata_vbox.addWidget(self.preview_metadata)
         vbox_widget.setLayout(vbox)
         param_vbox_widget.setLayout(param_vbox)
-        condition_vbox_widget.setLayout(condition_vbox)
+        metadata_vbox_widget.setLayout(metadata_vbox)
         preview_tab.addTab(vbox_widget, "Plot Preview")
         preview_tab.addTab(param_vbox_widget, "Run Parameters")
-        preview_tab.addTab(condition_vbox_widget, "Run Conditions")
+        preview_tab.addTab(metadata_vbox_widget, "Metadata")
         self.layout().addWidget(preview_tab, 0, 5, 4, 1)
         self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
@@ -651,11 +651,11 @@ class ResultsDialog(QtGui.QFileDialog):
                 self.preview_param.addTopLevelItem(new_item)
             self.preview_param.sortItems(0, QtCore.Qt.AscendingOrder)
 
-            self.preview_condition.clear()
-            for key, condition in results.procedure.condition_objects().items():
-                new_item = QtGui.QTreeWidgetItem([condition.name, str(condition)])
-                self.preview_condition.addTopLevelItem(new_item)
-            self.preview_condition.sortItems(0, QtCore.Qt.AscendingOrder)
+            self.preview_metadata.clear()
+            for key, metadata in results.procedure.metadata_objects().items():
+                new_item = QtGui.QTreeWidgetItem([metadata.name, str(metadata)])
+                self.preview_metadata.addTopLevelItem(new_item)
+            self.preview_metadata.sortItems(0, QtCore.Qt.AscendingOrder)
 
 
 """ This defines a list of functions that can be used to generate a sequence. """

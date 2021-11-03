@@ -28,7 +28,7 @@ import inspect
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
 
-from .parameters import Parameter, Measurable, Condition
+from .parameters import Parameter, Measurable, Metadata
 
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
@@ -64,12 +64,12 @@ class Procedure(object):
     }
 
     _parameters = {}
-    _conditions = {}
+    _metadata = {}
 
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
         self._update_parameters()
-        self._update_conditions()
+        self._update_metadata()
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
@@ -182,41 +182,41 @@ class Procedure(object):
                     raise NameError("Parameter '%s' does not belong to '%s'" % (
                         name, repr(self)))
 
-    def _update_conditions(self):
-        """ Collects all the Condition objects for the procedure and stores
+    def _update_metadata(self):
+        """ Collects all the Metadata objects for the procedure and stores
         them in a meta dictionary so that the actual values can be set and used
         in their stead
         """
-        if not self._conditions:
-            self._conditions = {}
+        if not self._metadata:
+            self._metadata = {}
 
-        for item, condition in inspect.getmembers(self.__class__):
-            if isinstance(condition, Condition):
+        for item, metadata in inspect.getmembers(self.__class__):
+            if isinstance(metadata, Metadata):
                 # If required, replace string for fget method for non-string
-                if isinstance(condition.fget, str):
-                    condition.fget = getattr(self, condition.fget)
+                if isinstance(metadata.fget, str):
+                    metadata.fget = getattr(self, metadata.fget)
 
-                self._conditions[item] = deepcopy(condition)
+                self._metadata[item] = deepcopy(metadata)
 
-                if condition.is_set():
-                    setattr(self, item, condition.value)
+                if metadata.is_set():
+                    setattr(self, item, metadata.value)
                 else:
                     setattr(self, item, None)
 
-    def evaluate_conditions(self):
-        """ Evaluates all Condition objects, fixing their values to the current value
+    def evaluate_metadata(self):
+        """ Evaluates all Metadata objects, fixing their values to the current value
         """
-        for item, condition in self._conditions.items():
-            # Evaluate the condition, fixing its value
-            value = condition.evaluate(new_value=getattr(self, item))
+        for item, metadata in self._metadata.items():
+            # Evaluate the metadata, fixing its value
+            value = metadata.evaluate(new_value=getattr(self, item))
 
-            # Make the value of the condition easily accessible
+            # Make the value of the metadata easily accessible
             setattr(self, item, value)
 
-    def condition_objects(self):
-        """ Returns a dictionary of all the Condition objects
+    def metadata_objects(self):
+        """ Returns a dictionary of all the Metadata objects
         """
-        return self._conditions
+        return self._metadata
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement

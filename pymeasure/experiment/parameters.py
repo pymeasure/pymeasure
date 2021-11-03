@@ -508,20 +508,20 @@ class Measurable(object):
         self._value = value
 
 
-class Condition(object):
-    """ Encapsulates the information for a condition of the experiment with
+class Metadata(object):
+    """ Encapsulates the information for metadata of the experiment with
     information about the name, the fget function and the units, if supplied.
     If no fget function is specified, the value property will return the
     latest set value of the parameter (or default if never set).
 
     :var value: The value of the parameter. This returns (if possible) the
         value obtained from the `fget` method or a stored value (in case
-        `fget` is not available or if the condition has been evaluated
+        `fget` is not available or if the Metadata has been evaluated)
 
     :param name: The parameter name
     :param fget: The parameter fget function (e.g. an instrument parameter);
         can also be a string, in which case it is assumed to be a method name
-        of the `Procedure` class in which the Condition is defined
+        of the `Procedure` class in which the Metadata is defined
     :param units: The parameter units
     :param default: The default value, in case no value is assigned or if no
         fget method is provided
@@ -545,9 +545,9 @@ class Condition(object):
     @value.setter
     def value(self, value):
         if self.fget is not None:
-            raise ValueError("A condition with a defined fget method cannot be manually assigned a value")
+            raise ValueError("Metadata with a defined fget method cannot be manually assigned a value")
         if self.evaluated:
-            raise ValueError("The value of a condition cannot be changed after it has been evaluated")
+            raise ValueError("The value of Metadata cannot be changed after it has been evaluated")
         self._value = value
 
     def is_set(self):

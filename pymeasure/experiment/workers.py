@@ -174,8 +174,8 @@ class Worker(StoppableThread):
 
         try:
             self.procedure.startup()
-            self.procedure.evaluate_conditions()
-            self.results.store_conditions()
+            self.procedure.evaluate_metadata()
+            self.results.store_metadata()
             self.procedure.execute()
         except (KeyboardInterrupt, SystemExit):
             self.handle_abort()

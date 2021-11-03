@@ -249,31 +249,31 @@ Let's extend our SimpleProcedure with logging. ::
 First, we have imported the Python logging module and grabbed the logger using the :python:`__name__` argument. This gives us logging information specific to the current file. Conversely, we could use the :python:`''` argument to get all logs, including those of pymeasure. We use the :python:`console_log` function to conveniently output the log to the console. Further details on how to use the logger are addressed in the Python logging documentation.
 
 
-Using conditions
+Storing metadata
 ~~~~~~~~~~~~~~~~
 
-Conditions (:class:`pymeasure.experiment.parameters.Condition`) allow storing information (e.g. the actual starting time, instrument parameters) about the measurement in the header of the datafile.
-These conditions are evaluated and stored in the datafile only after the :python:`startup` method has ran; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
-Using a Condition is nearly as straightforward as using a Parameter; extending the example of above to include several conditions, looks as follows: ::
+Metadata (:class:`pymeasure.experiment.parameters.Metadata`) allows storing information (e.g. the actual starting time, instrument parameters) about the measurement in the header of the datafile.
+These Metadata objects are evaluated and stored in the datafile only after the :python:`startup` method has ran; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
+Using a Metadata is nearly as straightforward as using a Parameter; extending the example of above to include metadata, looks as follows: ::
 
     from time import sleep, time
     from pymeasure.experiment import Procedure
-    from pymeasure.experiment import IntegerParameter, Condition
+    from pymeasure.experiment import IntegerParameter, Metadata
 
     class SimpleProcedure(Procedure):
 
         # a Parameter that defines the number of loop iterations
         iterations = IntegerParameter('Loop Iterations')
 
-        # the Condition objects store information after the startup has ran
-        starttime = Condition('Start time', fget=time)
-        customcondition = Condition('Custom', default=1)
+        # the Metadata objects store information after the startup has ran
+        starttime = Metadata('Start time', fget=time)
+        custom_metadata = Metadata('Custom', default=1)
 
         # a list defining the order and appearance of columns in our data file
         DATA_COLUMNS = ['Iteration']
 
         def startup(self):
-            self.customcondition = 20
+            self.custom_metadata = 20
 
         def execute(self):
             """ Loops over each iteration and emits the current iteration,
@@ -287,12 +287,12 @@ Using a Condition is nearly as straightforward as using a Parameter; extending t
                     break
 
 
-As with a Parameter, PyMeasure swaps out the Condition with their values behind the scene, which makes accessing the values of conditions very convenient.
+As with a Parameter, PyMeasure swaps out the Metadata with their values behind the scene, which makes accessing the values of Metadata very convenient.
 
-The value of a Condition can be set either using an :python:`fget` method or manually in the startup method.
+The value of a Metadata can be set either using an :python:`fget` method or manually in the startup method.
 The :python:`fget` method, if provided, is ran after startup method.
 It can also be provided as a string; in that case it is assumed that the string contains the name of a method of the Procedure class which returns the value that is to be stored.
-If neither an :python:`fget` method is provided or a value manually set, the Condition will return to its default value, if set.
+If neither an :python:`fget` method is provided or a value manually set, the Metadata will return to its default value, if set.
 
 
 Modifying our script

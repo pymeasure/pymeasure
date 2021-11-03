@@ -24,7 +24,7 @@
 
 from .parameters import (Parameter, IntegerParameter, FloatParameter,
                          VectorParameter, ListParameter, BooleanParameter,
-                         Measurable, Condition)
+                         Measurable, Metadata)
 from .procedure import Procedure, UnknownProcedure
 from .results import Results, unique_filename, replace_placeholders
 from .workers import Worker

@@ -171,7 +171,7 @@ class Results(object):
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
-        self._condition_count = -1
+        self._metadata_count = -1
 
         self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
@@ -263,34 +263,34 @@ class Results(object):
             data[key] = items[i]
         return data
 
-    def conditions(self):
-        """ Returns a text header for the conditions to write into the datafile """
-        if not self.procedure.condition_objects():
+    def metadata(self):
+        """ Returns a text header for the metadata to write into the datafile """
+        if not self.procedure.metadata_objects():
             return
 
-        c = ["Conditions:"]
-        for _, condition in self.procedure.condition_objects().items():
-            c.append("\t%s: %s" % (condition.name, str(condition).encode("unicode_escape").decode("utf-8")))
+        m = ["Metadata:"]
+        for _, metadata in self.procedure.metadata_objects().items():
+            m.append("\t%s: %s" % (metadata.name, str(metadata).encode("unicode_escape").decode("utf-8")))
 
-        self._condition_count = len(c)
-        c = [Results.COMMENT + l for l in c]  # Comment each line
-        return Results.LINE_BREAK.join(c) + Results.LINE_BREAK
+        self._metadata_count = len(m)
+        m = [Results.COMMENT + l for l in m]  # Comment each line
+        return Results.LINE_BREAK.join(m) + Results.LINE_BREAK
 
-    def store_conditions(self):
-        """ Inserts the conditions header (if any) into the datafile """
-        c_header = self.conditions()
+    def store_metadata(self):
+        """ Inserts the metadata header (if any) into the datafile """
+        c_header = self.metadata()
         if c_header is None:
             return
 
         for filename in self.data_filenames:
             with open(filename, 'r+') as f:
                 contents = f.readlines()
-                contents.insert(self._header_count - 1, self.conditions())
+                contents.insert(self._header_count - 1, c_header)
 
                 f.seek(0)
                 f.writelines(contents)
 
-        self._header_count += self._condition_count
+        self._header_count += self._metadata_count
 
     @staticmethod
     def parse_header(header, procedure_class=None):
@@ -349,15 +349,15 @@ class Results(object):
 
         procedure.refresh_parameters()  # Enforce update of meta data
 
-        # Fill the procedure with the conditions found
-        for name, condition in procedure.condition_objects().items():
-            if condition.name in parameters:
-                value = parameters[condition.name]
+        # Fill the procedure with the metadata found
+        for name, metadata in procedure.metadata_objects().items():
+            if metadata.name in parameters:
+                value = parameters[metadata.name]
                 setattr(procedure, name, value)
 
-                # Set the value in the condition
-                condition._value = value
-                condition.evaluated = True
+                # Set the value in the metadata
+                metadata._value = value
+                metadata.evaluated = True
 
         return procedure
 
