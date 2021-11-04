@@ -97,9 +97,11 @@ class CNT91(Instrument):
     continuous = Instrument.control(
         "INIT:CONT?",
         "INIT:CONT %s",
-        "Turn continuous measurement 'ON' or 'OFF'",
+        "Controls whether to perform continuous measurements.",
         strict_discrete_set,
-        values=["ON", "OFF"],
+        values=[True, False],
+        set_process=lambda x: "ON" if x else "OFF",
+        get_process=lambda x: bool(x),
     )
 
     measurement_time = Instrument.control(
@@ -118,13 +120,14 @@ class CNT91(Instrument):
         values=["ASCII", "REAL"],
     )
 
-    interpolator_calibration = Instrument.control(
+    interpolator_autocalibrated = Instrument.control(
         ":CAL:INT:AUTO?",
         "CAL:INT:AUTO %s",
         "Controls if interpolators should be calibrated automatically.",
         strict_discrete_set,
-        values=["ON", "OFF"],
-        get_process=lambda v: "ON" if v else "OFF",
+        values=[True, False],
+        set_process=lambda x: "ON" if x else "OFF",
+        get_process=lambda x: bool(x),
     )
 
     def configure_frequency_array_measurement(self, n_samples, channel):
@@ -151,13 +154,13 @@ class CNT91(Instrument):
         :param trigger_source: Optionally specify a trigger source to start the
                                measurement.
         """
-        if self.interpolator_calibration:
+        if self.interpolator_autocalibrated:
             max_sample_rate = 125e3
         else:
             max_sample_rate = 250e3
         log.info(
             "Calibration of interpolation is {}".format(
-                self.interpolator_calibration
+                self.interpolator_autocalibrated
             )
         )
         sample_rate = strict_range(sample_rate, [0, max_sample_rate])
@@ -167,7 +170,7 @@ class CNT91(Instrument):
         self.clear()
         self.format = "ASCII"
         self.configure_frequency_array_measurement(n_samples, channel)
-        self.continuous = "OFF"
+        self.continuous = False
         self.measurement_time = measurement_time
 
         if trigger_source:
