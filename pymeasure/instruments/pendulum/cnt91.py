@@ -72,7 +72,7 @@ class CNT91(Instrument):
         """
         Read out the entire buffer.
 
-        :return : Frequency values from the buffer.
+        :return: Frequency values from the buffer.
         """
         while not self.operation_complete:
             # Wait until the buffer is filled.
@@ -145,8 +145,8 @@ class CNT91(Instrument):
         """
         Configure the counter for an array of measurements.
 
-        :param n_samples : The number of samples
-        :param channel : Measurment channel (A, B, C, E, INTREF)
+        :param n_samples: The number of samples
+        :param channel: Measurment channel (A, B, C, E, INTREF)
         """
         n_samples = truncated_range(n_samples, [1, self.MAX_BUFFER_SIZE])
         channel = strict_discrete_set(channel, self.CHANNELS)
@@ -160,8 +160,8 @@ class CNT91(Instrument):
         Record a time series to the buffer and read it out after completion.
 
         :param channel: Channel that should be used.
-        :param n_samples : The number of samples
-        :param sample_rate : Sample rate in Hz.
+        :param n_samples: The number of samples
+        :param sample_rate: Sample rate in Hz.
         :param trigger_source: Optionally specify a trigger source to start the
                                measurement.
         """
