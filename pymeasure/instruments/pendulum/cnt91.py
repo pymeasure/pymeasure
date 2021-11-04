@@ -45,16 +45,7 @@ class CNT91(Instrument):
     def __init__(self, resourceName, **kwargs):
         super().__init__(resourceName, "Pendulum CNT-91", **kwargs)
         self.adapter.connection.timeout = 120000
-
-    def ask(self, command):
-        """
-        Writes the command to the instrument through the adapter
-        and returns the read response.
-
-        :param command: command string to be sent to the instrument
-        """
-        # Infinite loop occures if not redefined.
-        return super().ask(command).rstrip("\n")
+        self.adapter.connection.read_termination = "\n"
 
     @property
     def operation_complete(self):
