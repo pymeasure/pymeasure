@@ -48,11 +48,6 @@ class CNT91(Instrument):
         self.adapter.connection.read_termination = "\n"
 
     @property
-    def operation_complete(self):
-        """Is True if operation is complete."""
-        return self.ask("*OPC?") == "1"
-
-    @property
     def batch_size(self):
         """Maximum number of buffer entries that can be transmitted at once."""
         if not hasattr(self, "_batch_size"):
@@ -65,7 +60,7 @@ class CNT91(Instrument):
 
         :return: Frequency values from the buffer.
         """
-        while not self.operation_complete:
+        while not self.complete:
             # Wait until the buffer is filled.
             sleep(0.01)
         data = []
