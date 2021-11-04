@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class SequenceEvaluationException(Exception):
+class SequenceEvaluationError(Exception):
     """Raised when the evaluation of a sequence string goes wrong."""
     pass
 
@@ -157,24 +157,24 @@ class SequenceFileHandler():
                               "functions for parameter '{}', depth {}".format(
                                   name, depth
                               ))
-                raise SequenceEvaluationException("TypeError, likely a typo")
+                raise SequenceEvaluationError("TypeError, likely a typo")
             except SyntaxError:
                 if log_enabled:
                     log.error("SyntaxError, likely unbalanced brackets " +
                               "for parameter '{}', depth {}".format(name, depth))
-                raise SequenceEvaluationException("SyntaxError, likely unbalanced brackets")
+                raise SequenceEvaluationError("SyntaxError, likely unbalanced brackets")
             except ValueError:
                 if log_enabled:
                     log.error("ValueError, likely wrong function argument " +
                               "for parameter '{}', depth {}".format(name, depth))
-                raise SequenceEvaluationException("ValueError, likely wrong function argument")
+                raise SequenceEvaluationError("ValueError, likely wrong function argument")
             except Exception as e:
-                raise SequenceEvaluationException(e)
+                raise SequenceEvaluationError(e)
         else:
             if log_enabled:
                 log.error("No sequence entered for " +
                           "for parameter '{}', depth {}".format(name, depth))
-            raise SequenceEvaluationException("No sequence entered")
+            raise SequenceEvaluationError("No sequence entered")
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
@@ -327,7 +327,7 @@ class SequenceFileHandler():
                         break
                     current_parent = current_parent.parent
             else:
-                raise Exception("Invalid file format: level missing ?")
+                raise SequenceEvaluationError("Invalid file format: level missing ?")
 
             data = SequenceItem(level,
                                 parameter,
