@@ -132,7 +132,7 @@ class KeysightN7776C(Instrument):
                                     get_process=lambda v: v*1e9)
 
     sweep_step = Instrument.control('sour0:wav:swe:step?','sour0:wav:swe:step %fnm',
-                                    """ Step width of th[e sweep (in nanometers).""",
+                                    """ Step width of the sweep (in nanometers).""",
                                     validator=strict_range,
                                     values=[0.0001,WL_RANGE[1]-WL_RANGE[0]])
     sweep_speed = Instrument.control('sour0:wav:swe:speed?','sour0:wav:swe:speed %fnm/s',
