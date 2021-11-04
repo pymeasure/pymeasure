@@ -91,10 +91,10 @@ class CNT91(Instrument):
     external_start_arming_source = Instrument.control(
         "ARM:SOUR?",
         "ARM:SOUR %s",
-        (
-            "Select arming input or switch off the start arming function."
-            "Options are 'A', 'B' and 'E' (rear). 'IMM' turns trigger off."
-        ),
+        """
+        Select arming input or switch off the start arming function.
+        Options are 'A', 'B' and 'E' (rear). 'IMM' turns trigger off.
+        """,
         validator=strict_discrete_set,
         values={"A": "EXT1", "B": "EXT2", "E": "EXT4", "IMM": "IMM"},
         map_values=True,
