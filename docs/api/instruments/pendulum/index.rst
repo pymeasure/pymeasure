@@ -1,4 +1,4 @@
-.. module:: pymeasure.instruments.rohdeschwarz
+.. module:: pymeasure.instruments.pendulum
 
 ########
 Pendulum
