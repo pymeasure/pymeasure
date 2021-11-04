@@ -166,13 +166,7 @@ class CNT91(Instrument):
             max_sample_rate = 125e3
         else:
             max_sample_rate = 250e3
-        log.info(
-            "Calibration of interpolation is {}".format(
-                self.interpolator_autocalibrated
-            )
-        )
         sample_rate = strict_range(sample_rate, [0, max_sample_rate])
-        log.info("sample rate is {}".format(sample_rate))
         measurement_time = 1 / sample_rate
 
         self.clear()
