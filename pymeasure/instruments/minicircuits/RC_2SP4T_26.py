@@ -89,9 +89,9 @@ class RC_2SP4T_26():
             ret = self.connection.Connect()
         if ret == 0:
             raise ValueError('Failed to connect')
-        model = 'RC-2SP4T-26'
+        model = ['RC-2SP4T-26','RC-2SP4T-A18']
         actual = self.connection.Read_ModelName("")[1]
-        if actual != model:
+        if actual not in model:
             raise ValueError(f'Got different model {actual}')
 
         for chan in self.channels:
