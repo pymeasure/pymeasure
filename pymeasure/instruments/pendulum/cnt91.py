@@ -111,7 +111,7 @@ class CNT91(Instrument):
     continuous = Instrument.control(
         "INIT:CONT?",
         "INIT:CONT %s",
-        "Turn continious measurement 'ON' or 'OFF'",
+        "Turn continuous measurement 'ON' or 'OFF'",
         strict_discrete_set,
         values=["ON", "OFF"],
     )
