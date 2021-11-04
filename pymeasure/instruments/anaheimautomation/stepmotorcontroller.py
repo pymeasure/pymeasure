@@ -29,8 +29,8 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 
-class MotorController(Instrument):
-    """Driver to interface with Anaheim Automation stepper motor controllers. This driver has been tested with the DPY50601 and DPE25601 motor controllers. 
+class DPSeriesMotorController(Instrument):
+    """Driver to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested with the DPY50601 and DPE25601 motor controllers. 
     """
 
     basespeed = Instrument.control(
@@ -244,7 +244,6 @@ class MotorController(Instrument):
             if pos == prev_pos:
                 pos_matches += 1
 
-            print(pos, prev_pos) 
             prev_pos = pos 
             await asyncio.sleep(interval)
 
