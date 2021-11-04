@@ -1,0 +1,7 @@
+####################
+HP 34401A Multimeter
+####################
+
+.. autoclass:: pymeasure.instruments.hp.HP34401A
+    :members:
+    :show-inheritance:
