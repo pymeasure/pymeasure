@@ -119,7 +119,7 @@ class CNT91(Instrument):
     measurement_time = Instrument.control(
         ":ACQ:APER?",
         ":ACQ:APER %f",
-        "Gate time for one measurement.",
+        "Gate time for one measurement in s.",
         validator=strict_range,
         values=[2e-9, 1000],  # Programmer's guide 8-92
     )
