@@ -54,10 +54,14 @@ class CNT91(Instrument):
             self._batch_size = int(self.ask("FORM:SMAX?"))
         return self._batch_size
 
-    def read_buffer(self):
+    def read_buffer(self, expected_length=0):
         """
         Read out the entire buffer.
 
+        :param expected_length: The expected length of the buffer. If more
+                                data is read, values at the end are be removed.
+                                Defaults to 0, which means that the entire
+                                buffer is returned independent of its length.
         :return: Frequency values from the buffer.
         """
         while not self.complete:
@@ -71,6 +75,10 @@ class CNT91(Instrument):
             data += new
             # Last values have been read from buffer.
             if len(new) < self.batch_size:
+                # Remove the last values if the buffer is too long.
+                if expected_length and len(data) > expected_length:
+                    data = data[:expected_length]
+                    log.info("Buffer was too long, truncated.")
                 break
         return data
 
