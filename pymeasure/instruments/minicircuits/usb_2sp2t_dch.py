@@ -30,9 +30,11 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument, RangeException
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 import clr
-clr.AddReference('mcl_SolidStateSwitch_NET45')
-from mcl_SolidStateSwitch_NET45 import USB_Digital_Switch
-
+try:
+    clr.AddReference('mcl_SolidStateSwitch_NET45')
+    from mcl_SolidStateSwitch_NET45 import USB_Digital_Switch
+except:
+    pass
 import numpy as np
 import time
 
