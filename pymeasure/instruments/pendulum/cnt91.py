@@ -111,9 +111,8 @@ class CNT91(Instrument):
         "INIT:CONT %s",
         "Controls whether to perform continuous measurements.",
         strict_discrete_set,
-        values=[True, False],
-        set_process=lambda x: "ON" if x else "OFF",
-        get_process=lambda x: bool(x),
+        values={True: 1.0, False: 0.0},
+        map_values=True,
     )
 
     measurement_time = Instrument.control(
@@ -137,9 +136,8 @@ class CNT91(Instrument):
         "CAL:INT:AUTO %s",
         "Controls if interpolators should be calibrated automatically.",
         strict_discrete_set,
-        values=[True, False],
-        set_process=lambda x: "ON" if x else "OFF",
-        get_process=lambda x: bool(x),
+        values={True: 1.0, False: 0.0},
+        map_values=True,
     )
 
     def configure_frequency_array_measurement(self, n_samples, channel):
