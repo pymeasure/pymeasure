@@ -155,15 +155,15 @@ class Axis(object):
 class XAxis(Axis):
     """ Implementation of a DAMS x000 stepper motor X axis (azimuth)."""
 
-    steps_per_meter = 2880
+    steps_per_full_revolution = 2880 # 360 degree revolution
     def degrees2steps(self, degrees):
         """ Translate degrees to steps """
         # TODO: Check that 2880 is OK both for full step and half step
-        return (self.steps_per_meter * degrees) / 360
+        return (self.steps_per_full_revolution * degrees) / 360
 
     def steps2degrees(self, steps):
         """ Translate steps to degrees """
-        return (360 * steps) / self.steps_per_meter
+        return (360 * steps) / self.steps_per_full_revolution
 
     def __init__(self, instrument):
         super().__init__(instrument, 'X')
