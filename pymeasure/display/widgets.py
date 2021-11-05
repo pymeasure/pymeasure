@@ -39,13 +39,95 @@ from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from .thread import StoppableQThread
 from .log import LogHandler
-from .Qt import QtCore, QtGui, CheckableComboBox
+from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
 from ..experiment.results import Results
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+# creating checkable combo box class
+class CheckableComboBox(QtGui.QComboBox):
+    def __init__(self):
+        super(CheckableComboBox, self).__init__()
+        self.view().pressed.connect(self.handle_item_pressed)
+        self.setModel(QtGui.QStandardItemModel(self))
+  
+    # when any item get pressed
+    def handle_item_pressed(self, index):
+  
+        # getting which item is pressed
+        item = self.model().itemFromIndex(index)
+  
+        # make it check if unchecked and vice-versa
+        if item.checkState() == QtCore.Qt.Checked:
+            item.setCheckState(QtCore.Qt.Unchecked)
+        else:
+            item.setCheckState(QtCore.Qt.Checked)
+  
+        # calling method
+        self.check_items()
+  
+    # method called by check_items
+    def item_checked(self, index):
+  
+        # getting item at index
+        item = self.model().item(index, 0)
+  
+        # return true if checked else false
+        return item.checkState() == QtCore.Qt.Checked
+  
+    # calling method
+    def check_items(self):
+        # blank list
+        checkedItems = []
+  
+        # traversing the items
+        for i in range(self.count()):
+  
+            # if item is checked add it to the list
+            if self.item_checked(i):
+                checkedItems.append(i)
+ 
+        #call this method
+        # self.update_labels(checkedItems)
+  
+    # method to update the label
+    def update_labels(self, item_list):
+  
+        n = ''
+        count = 0
+  
+        # traversing the list
+        for i in item_list:
+  
+            # if count value is 0 don't add comma
+            if count == 0:
+                n += ' % s' % i
+            # else value is greater then 0
+            # add comma
+            else:
+                n += ', % s' % i
+  
+            # increment count
+            count += 1
+  
+  
+        # loop
+        for i in range(self.count()):
+  
+            # getting label
+            text_label = self.model().item(i, 0).text()
+  
+            # default state
+            if text_label.find('-') >= 0:
+                text_label = text_label.split('-')[0]
+  
+            # shows the selected items
+            item_new_text_label = text_label + ' - selected index: ' + n
+  
+           # setting text to combo box
+            self.setItemText(i, item_new_text_label)
 
 class PlotFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -57,7 +139,7 @@ class PlotFrame(QtGui.QFrame):
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(list)
+    y_axis_changed = QtCore.QSignal(str)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)
@@ -206,11 +288,12 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     index = QtCore.QModelIndex()
     
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, parent=None):
+                 check_status=True,linewidth=1, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
+        self.linewidth = linewidth
         self._setup_ui()
         self._layout()
         if x_axis is not None:
@@ -269,7 +352,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=2)
+            kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         
