@@ -11,6 +11,7 @@ Address".
 It can then be connected like this:
 
 .. code:: python
+
     from pymeasure.instruments.rohdeschwarz import FSL
     fsl = FSL("TCPIP::192.168.1.123::INSTR")
 
@@ -19,9 +20,9 @@ Getting and setting parameters
 
 Most parameters are implemented as properties, which means they can be read and
 written (getting and setting) in a consistent and dimple way. If numerical
-values are provided, base units are used (seconds, hertz, decibel, ...). 
-Alternatively, the values can also be provided with a unit, e.g. :code:"1.5 GHz" or
-:code:"1.5GHz". Return values are always numerical.
+values are provided, base units are used (s, Hz, dB, ...). 
+Alternatively, the values can also be provided with a unit, e.g. ``"1.5 GHz"``
+or ``"1.5GHz"``. Return values are always numerical.
 
 .. code:: python
 

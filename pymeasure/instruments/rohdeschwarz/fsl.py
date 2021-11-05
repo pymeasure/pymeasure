@@ -35,6 +35,7 @@ log.addHandler(logging.NullHandler())
 class FSL(Instrument):
     """
     Represents a Rohde&Schwarz FSL spectrum analyzer.
+
     All physical values that can be set can either be as a string of a value
     and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
     dBm, etc.).
@@ -138,6 +139,7 @@ class FSL(Instrument):
     def read_trace(self, n_trace=1):
         """
         Read trace data.
+
         :param n_trace: The trace number (1-6). Default is 1.
         :return: Nnumpy arrays of the trace data (frequency and amplitude).
         """
@@ -153,14 +155,15 @@ class FSL(Instrument):
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
     )
 
-    # Markers --------------------------------------------------------------------
+    # Markers -----------------------------------------------------------------
 
     def create_marker(self, num=1, is_delta_marker=False):
         """
         Create a marker.
+
         :param num: The marker number (1-4)
         :param is_delta_marker: True if the marker is a delta marker, default
-                            is False.
+            is False.
         :return: The marker object.
         """
         return self.Marker(self, num, is_delta_marker)
@@ -169,10 +172,11 @@ class FSL(Instrument):
         def __init__(self, instrument, num, is_delta_marker):
             """
             Marker and Delte Marker class.
+
             :param instrument: The FSL instrument.
             :param num: The marker number (1-4)
             :param is_delta_marker: True if the marker is a delta marker,
-                                defaults to False.
+                defaults to False.
             """
             self.instr = instrument
             self.is_delta_marker = is_delta_marker
@@ -199,6 +203,7 @@ class FSL(Instrument):
         def to_trace(self, n_trace=1):
             """
             Set marker to trace.
+
             :param n_trace: The trace number (1-6). Default is 1.
             """
             self.instr.write(f"CALC:{self.name}:TRAC {n_trace}")
@@ -219,8 +224,9 @@ class FSL(Instrument):
         def to_next_peak(self, direction="right"):
             """
             Set marker to next peak.
+
             :param direction: Direction of the next peak ('left' or 'right' of
-                            the current position).
+                the current position).
             """
             self.instr.write(f"CALC:{self.name}:MAX:{direction}")
 
@@ -245,8 +251,9 @@ class FSL(Instrument):
         def zoom(self, value):
             """
             Zoom in to a frequency span or by a factor.
+
             :param value: The value to zoom in by. If a number is passed it is
-                        interpreted as a factor. If a string (number with
-                        unit) is passed it is interpreted as a frequency span.
+                interpreted as a factor. If a string (number with unit) is
+                passed it is interpreted as a frequency span.
             """
             self.instr.write(f"CALC:{self.name}:FUNC:ZOOM {value}; *WAI")
