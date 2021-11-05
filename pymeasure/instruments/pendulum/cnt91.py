@@ -63,9 +63,9 @@ class CNT91(Instrument):
         Read out the entire buffer.
 
         :param expected_length: The expected length of the buffer. If more
-                                data is read, values at the end are be removed.
-                                Defaults to 0, which means that the entire
-                                buffer is returned independent of its length.
+            data is read, values at the end are be removed. Defaults to 0,
+            which means that the entire buffer is returned independent of its
+            length.
         :return: Frequency values from the buffer.
         """
         while not self.complete:
@@ -160,11 +160,11 @@ class CNT91(Instrument):
         """
         Record a time series to the buffer and read it out after completion.
 
-        :param channel: Channel that should be used.
+        :param channel: Channel that should be used
         :param n_samples: The number of samples
-        :param sample_rate: Sample rate in Hz.
+        :param sample_rate: Sample rate in Hz
         :param trigger_source: Optionally specify a trigger source to start the
-                               measurement.
+            measurement
         """
         if self.interpolator_autocalibrated:
             max_sample_rate = 125e3
