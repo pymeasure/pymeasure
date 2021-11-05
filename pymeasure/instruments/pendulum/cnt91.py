@@ -43,9 +43,13 @@ class CNT91(Instrument):
     MAX_BUFFER_SIZE = 32000  # User Manual 8-38
 
     def __init__(self, resourceName, **kwargs):
-        super().__init__(resourceName, "Pendulum CNT-91", **kwargs)
-        self.adapter.connection.timeout = 120000
-        self.adapter.connection.read_termination = "\n"
+        super().__init__(
+            resourceName,
+            "Pendulum CNT-91",
+            timeout=120000,
+            read_termination="\n",
+            **kwargs,
+        )
 
     @property
     def batch_size(self):
