@@ -157,9 +157,20 @@ class Results(object):
     :param procedure: Procedure object
     :param data_filename: The data filename where the data is or should be
                           stored
-    :param recorder_args: Dictionary of `maxBytes` and `backupCount`
-                          to limit results file size, or an empty 
-                          dictionary to write all files to a single file
+    :param rollover: When to rollover the results files.
+                     If None, no rollover occurs.
+                     If 'size', rollover occurs once the current file size
+                     exceeds a given size.
+                     See logging.handlers.RotatingFilehandler.
+                     If 'time', rollover occurs at a speificed time or time interval.
+                     See logging.handlers.TimedRotatingFileHandler.
+                     (default: None)
+    :param recorder_args: Dictionary of arguments to pass to the recorder.
+                          Arguments should match the type of recorder specified in `rollover`.
+                          If `rollover` is 
+                            + None uses logging.FileHandler.
+                            + 'size' uses logging.handlers.RotatingFileHandler.
+                            + 'time' uses logging.handlers.TimedRotatingFileHandler.
                           (default: {}) 
     """
 
@@ -168,7 +179,7 @@ class Results(object):
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
 
-    def __init__(self, procedure, data_filename, recorder_args={}):
+    def __init__(self, procedure, data_filename, rollover=None, recorder_args={}):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
@@ -197,12 +208,7 @@ class Results(object):
                     f.write(self.labels())
             self._data = None
 
-        if (
-            recorder_args != {} and
-            ('maxBytes' not in recorder_args or 'backupCount' not in recorder_args)
-        ):
-            raise ValueError('Must include both `maxBytes` and `backupCount` in `recorder_args`.')
-        
+        self.rollover = rollover
         self.recorder_args = recorder_args
 
     def __getstate__(self):
@@ -388,20 +394,52 @@ class Results(object):
                 pass  # All data is up to date
         return self._data
 
-    def reload(self):
+    def reload(self, backupCount=None):
         """ Preforms a full reloading of the file data, neglecting
         any changes in the comments
+
+        :param backupCount: If a rotating file handler is used,
+                            how many backupfiles to load.
+                            If None, only load active file.
+                            If -1, load all. (Only loads consecutively numbered files.)
+                            (default: None)
         """
-        chunks = pd.read_csv(
-            self.data_filename,
-            comment=Results.COMMENT,
-            chunksize=Results.CHUNK_SIZE,
-            iterator=True
-        )
-        try:
-            self._data = pd.concat(chunks, ignore_index=True)
-        except Exception:
-            self._data = chunks.read()
+        # get data files
+        data_files = [ self.data_filename ]
+        if backupCount > 0:
+            for i in range(backupCount):
+                filename = f'{self.data_filename}.{i+1}'
+                if os.path.isfile(filename):
+                    data_files.append(filename)
+
+        elif backupCount < 0:
+            i = 1
+            filename = f'{self.data_filename}.{i}'
+            while os.path.isfile(filename):
+                data_files.append(filename)
+                i += 1
+                file_name = f'{self.data_filename}.{i}'
+
+        data_files = data_files.reverse()  # oldest data has highest count
+
+        # load data
+        df = []
+        for file in data_files:
+            chunks = pd.read_csv(
+                self.data_filename,
+                comment=Results.COMMENT,
+                chunksize=Results.CHUNK_SIZE,
+                iterator=True
+            )
+            try:
+                data = pd.concat(chunks, ignore_index=True)
+            except Exception:
+                data = chunks.read()
+
+            df.append(data)
+
+        df = pd.concat(df, ignore_index=True)
+        self._data = df
 
     def __repr__(self):
         return "<{}(filename='{}',procedure={},shape={})>".format(

@@ -24,7 +24,7 @@
 
 import logging
 from logging import StreamHandler, FileHandler
-from logging.handlers import RotatingFileHandler
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 from ..log import QueueListener
 from ..thread import StoppableThread
@@ -100,18 +100,54 @@ class Recorder(QueueListener):
     ensures that no data is lost between the Recorder and Worker.
     """
 
-    def __init__(self, results, queue, **kwargs):
+    def __init__(self, results, queue, rollover=None, recorder_args={}):
         """ Constructs a Recorder to record the Procedure data into
         the file path, by waiting for data on the subscription port
+
+        :param rollover: Type of rollover handler to use.
+            If None use logging.FileHandler.
+            If 'size' use logging.handlers.RotatingFileHandler.
+            if 'time' use logging.handlers.TimedRotatingFileHandler.
+            (default: None)
+        :param recorder_args: Arguments passed to the recorder.
+            (default: {})
         """
+        if rollover is None:
+            file_handler = FileHandler
+        
+        elif rollover == 'size':
+            file_handler = RotatingFileHandler
+
+        elif rollover == 'time':
+            file_handler = TimedRotatingFileHandler
+
+        else:
+            raise ValueError( 'Invalid `rollover`.' )
+
         handlers = []
         for filename in results.data_filenames:
-            fh = RotatingFileHandler(filename=filename, **kwargs)
+            fh = file_handler(filename=filename, **recorder_args)
             fh.setFormatter(results.formatter)
             fh.setLevel(logging.NOTSET)
             handlers.append(fh)
 
         super().__init__(queue, *handlers)
+        self.header = results.header()
+
+    def handle(self, record):
+        """Check if rollover will occur. If so emit results header.
+        """
+        for handler in self.handlers:
+            if not hasattr( handler, 'shouldRollover' ):
+                continue
+
+            if handler.shouldRollover(record):
+                # new record will cause a rollover
+                # rollover and write header
+                handler.doRollover()
+                handler.emit(self.header)
+
+        super().handle(record)
 
     def stop(self):
         for handler in self.handlers:
