@@ -395,11 +395,11 @@ class Results(object):
         return self._data
 
     def reload(self, backupCount=None):
-        """ Preforms a full reloading of the file data, neglecting
+        """ Performs a full reloading of the file data, neglecting
         any changes in the comments
 
         :param backupCount: If a rotating file handler is used,
-                            how many backupfiles to load.
+                            how many backup files to load.
                             If None, only load active file.
                             If -1, load all. (Only loads consecutively numbered files.)
                             (default: None)
@@ -424,17 +424,18 @@ class Results(object):
                 i += 1
                 file_name = f'{self.data_filename}.{i}'
 
-        data_files.reverse()  # oldest data has highest count
+        data_files.reverse()  # oldest data has highest count name, but should be first in data
 
         # load data
         df = []
         for file in data_files:
             chunks = pd.read_csv(
-                self.data_filename,
+                file,
                 comment=Results.COMMENT,
                 chunksize=Results.CHUNK_SIZE,
                 iterator=True
             )
+
             try:
                 data = pd.concat(chunks, ignore_index=True)
             except Exception:
