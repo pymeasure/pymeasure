@@ -406,7 +406,11 @@ class Results(object):
         """
         # get data files
         data_files = [ self.data_filename ]
-        if backupCount > 0:
+        if backupCount is None:
+            # needed to avoid comparison between None and integer
+            pass
+
+        elif backupCount > 0:
             for i in range(backupCount):
                 filename = f'{self.data_filename}.{i+1}'
                 if os.path.isfile(filename):
@@ -420,7 +424,7 @@ class Results(object):
                 i += 1
                 file_name = f'{self.data_filename}.{i}'
 
-        data_files = data_files.reverse()  # oldest data has highest count
+        data_files.reverse()  # oldest data has highest count
 
         # load data
         df = []
