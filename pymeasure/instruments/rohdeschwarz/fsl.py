@@ -150,7 +150,7 @@ class FSL(Instrument):
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
         "DISP:TRAC:MODE %s",
-        "Trace mode ('WRIT', 'MAXH', 'MINH', 'AVER' or 'VIEW'",
+        "Trace mode ('WRIT', 'MAXH', 'MINH', 'AVER' or 'VIEW')",
         validator=strict_discrete_set,
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
     )
@@ -171,7 +171,7 @@ class FSL(Instrument):
     class Marker:
         def __init__(self, instrument, num, is_delta_marker):
             """
-            Marker and Delte Marker class.
+            Marker and Delta Marker class.
 
             :param instrument: The FSL instrument.
             :param num: The marker number (1-4)

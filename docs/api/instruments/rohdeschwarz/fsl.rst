@@ -19,7 +19,7 @@ Getting and setting parameters
 ------------------------------
 
 Most parameters are implemented as properties, which means they can be read and
-written (getting and setting) in a consistent and dimple way. If numerical
+written (getting and setting) in a consistent and simple way. If numerical
 values are provided, base units are used (s, Hz, dB, ...). 
 Alternatively, the values can also be provided with a unit, e.g. ``"1.5 GHz"``
 or ``"1.5GHz"``. Return values are always numerical.
@@ -32,8 +32,6 @@ or ``"1.5GHz"``. Return values are always numerical.
     9000000000.0
 
 .. code:: python
-
-
     # Changing it to 10 MHz by providing the numerical value 
     fsl.freq_center = 10e6
 
