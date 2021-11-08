@@ -296,7 +296,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
-    
+
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
                  check_status=True, linewidth=1, parent=None):
         super().__init__(name, parent)
@@ -760,6 +760,8 @@ class ResultsDialog(QtGui.QFileDialog):
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
+                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to circumvent plotting slowdown.
+                                 # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
                                  pen=pg.mkPen(color=(255, 0, 0), width=1),
                                  antialias=True
                                  )
