@@ -79,24 +79,24 @@ class FSL(Instrument):
     )
 
     @property
-    def rbw(self):
+    def res_bandwidth(self):
         """Resolution bandwidth in Hz. Can be set to 'AUTO'."""
         return self.values("BAND:RES?")[0]
 
-    @rbw.setter
-    def rbw(self, value):
+    @res_bandwidth.setter
+    def res_bandwidth(self, value):
         if type(value) is str and value.upper() == "AUTO":
             self.write("BAND:RES:AUTO ON")
         else:
             self.write(f"BAND:RES {value}")
 
     @property
-    def vbw(self):
+    def video_bandwidth(self):
         """Video bandwidth in Hz. Can be set to 'AUTO'."""
         return self.values("BAND:VID?")[0]
 
-    @vbw.setter
-    def vbw(self, value):
+    @video_bandwidth.setter
+    def video_bandwidth(self, value):
         if type(value) is str and value.upper() == "AUTO":
             self.write("BAND:VID:AUTO ON")
         else:

@@ -119,8 +119,8 @@ Here is an example of a simple script for recording the peak of a signal.
     # Set standard settings, set to full span
     fsl.continuous_sweep = False
     fsl.freq_span = '18 GHz'
-    fsl.rbw = "AUTO"
-    fsl.vbw = "AUTO"
+    fsl.res_bandwidth = "AUTO"
+    fsl.video_bandwidth = "AUTO"
     fsl.sweep_time = "AUTO"
 
     # Perform a sweep on full span, set the marker to the peak and some to that marker
