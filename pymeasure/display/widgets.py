@@ -285,8 +285,6 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     of the data to be dynamically choosen
     """
     
-    index = QtCore.QModelIndex()
-    
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
                  check_status=True,linewidth=1, parent=None):
         super().__init__(name, parent)
@@ -311,7 +309,6 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_y_label.setText('Y Axis:')
 
-        # self.columns_y = QtGui.QComboBox(self)
         self.columns_x = QtGui.QComboBox(self)
         self.columns_y = CheckableComboBox()
         for column in self.columns:
@@ -399,8 +396,9 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             self.plot.removeItem(i_curve)
 
     def set_color(self, curve, color):
-        """ Remove curve from widget """
-        curve.setPen(pg.mkPen(color=color, width=2))
+        """ Change the color of the pen of the curve """
+        curve.pen.setColor(color)
+        curve.updateItems(styleUpdate=True)
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
@@ -724,10 +722,11 @@ class ResultsDialog(QtGui.QFileDialog):
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1.75),
+                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
                                  antialias=True
                                  )
             curve.update_data()
+            
             self.plot.addItem(curve)
 
             self.preview_param.clear()
