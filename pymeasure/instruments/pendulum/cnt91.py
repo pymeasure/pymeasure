@@ -63,7 +63,7 @@ class CNT91(Instrument):
         Read out the entire buffer.
 
         :param expected_length: The expected length of the buffer. If more
-            data is read, values at the end are be removed. Defaults to 0,
+            data is read, values at the end are removed. Defaults to 0,
             which means that the entire buffer is returned independent of its
             length.
         :return: Frequency values from the buffer.
