@@ -81,7 +81,7 @@ class FSL(Instrument):
     @property
     def res_bandwidth(self):
         """Resolution bandwidth in Hz. Can be set to 'AUTO'."""
-        return self.values("BAND:RES?")[0]
+        return float(self.ask("BAND:RES?"))
 
     @res_bandwidth.setter
     def res_bandwidth(self, value):
@@ -93,7 +93,7 @@ class FSL(Instrument):
     @property
     def video_bandwidth(self):
         """Video bandwidth in Hz. Can be set to 'AUTO'."""
-        return self.values("BAND:VID?")[0]
+        return float(self.ask("BAND:VID?"))
 
     @video_bandwidth.setter
     def video_bandwidth(self, value):
