@@ -617,6 +617,12 @@ class ManagedWindow(ManagedWindowBase):
         Tutorial :ref:`tutorial-managedwindow`
             A tutorial and example on the basic configuration and usage of ManagedWindow.
 
+    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param x_axis: the initial data-column for the x-axis of the plot
+    :param y_axis: the initial data-column for the y-axis of the plot
+    :param linewidth: linewidth for the displayed curves, default is 1
+    :param \**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindowBase`
+
     """
 
     def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
@@ -626,6 +632,7 @@ class ManagedWindow(ManagedWindowBase):
         self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis,
                                       linewidth=linewidth)
         self.plot_widget.setMinimumSize(100, 200)
+
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
         kwargs["widget_list"] = kwargs["widget_list"] + (self.plot_widget, self.log_widget)
@@ -633,7 +640,10 @@ class ManagedWindow(ManagedWindowBase):
         super().__init__(procedure_class, **kwargs)
 
         # Setup measured_quantities once we know x_axis and y_axis
-        self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
+        y_axis = self.y_axis
+        if not isinstance(y_axis, (list, tuple)):
+            y_axis = [y_axis]
+        self.browser_widget.browser.measured_quantities = [self.x_axis] + list(y_axis)
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)
@@ -642,11 +652,13 @@ class ManagedWindow(ManagedWindowBase):
 class ManagedImageWindow(ManagedWindow):
     """
     Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
+
     :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
     :param x_axis: the data-column for the x-axis of the plot, cannot be changed afterwards for the image-plot
     :param y_axis: the data-column for the y-axis of the plot, cannot be changed afterwards for the image-plot
     :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
     :param \**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindow`
+
     """
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):

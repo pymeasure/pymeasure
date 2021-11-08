@@ -52,6 +52,12 @@ class CheckableComboBox(QtGui.QComboBox):
         super(CheckableComboBox, self).__init__()
         self.view().pressed.connect(self.handle_item_pressed)
         self.setModel(QtGui.QStandardItemModel(self))
+
+    def addItem(self, text, userData=None):
+        ret = super().addItem(text, userData)
+        item = self.model().item(self.count() - 1, 0)
+        #item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+        item.setCheckState(QtCore.Qt.Unchecked)
   
     # when any item get pressed
     def handle_item_pressed(self, index):
@@ -64,9 +70,14 @@ class CheckableComboBox(QtGui.QComboBox):
             item.setCheckState(QtCore.Qt.Unchecked)
         else:
             item.setCheckState(QtCore.Qt.Checked)
-  
-        # calling method
-        self.check_items()
+
+    def set_check_state(self, entry, value):
+        index = self.findText(entry)
+        item = self.model().item(index, 0)
+        if value:
+            item.setCheckState(QtCore.Qt.Checked)
+        else:
+            item.setCheckState(QtCore.Qt.Unchecked)
   
     # method called by check_items
     def item_checked(self, index):
@@ -78,7 +89,7 @@ class CheckableComboBox(QtGui.QComboBox):
         return item.checkState() == QtCore.Qt.Checked
   
     # calling method
-    def check_items(self):
+    def checked_items(self):
         # blank list
         checkedItems = []
   
@@ -87,10 +98,11 @@ class CheckableComboBox(QtGui.QComboBox):
   
             # if item is checked add it to the list
             if self.item_checked(i):
-                checkedItems.append(i)
+                checkedItems.append(self.itemText(i))
  
         #call this method
         # self.update_labels(checkedItems)
+        return checkedItems
   
     # method to update the label
     def update_labels(self, item_list):
@@ -286,7 +298,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     """
     
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True,linewidth=1, parent=None):
+                 check_status=True, linewidth=1, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
@@ -298,8 +310,14 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
             self.plot_frame.change_x_axis(x_axis)
         if y_axis is not None:
-            self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
-            self.plot_frame.change_y_axis(y_axis)
+            if isinstance(y_axis, str):
+                y_list = (y_axis,)
+            else:
+                y_list = y_axis
+            self.columns_y.setCurrentIndex(self.columns_y.findText(y_list[0]))
+            for y in y_list:
+                self.columns_y.set_check_state(y, True)
+            self.plot_frame.change_y_axis(y_list[0])
 
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
@@ -348,20 +366,31 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         return QtCore.QSize(300, 600)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
+        styles = (QtCore.Qt.SolidLine,
+                  QtCore.Qt.DashLine,
+                  QtCore.Qt.DotLine,
+                  QtCore.Qt.DashDotLine,
+                  QtCore.Qt.DashDotDotLine)
+        need_pen = False
         if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
+            need_pen = True
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         
         curve = {}
-        for column in self.columns:
-                curve[column] = ResultsCurve(results,
-                             x=self.plot_frame.x_axis,
-                             y=column,
-                             **kwargs
-                             )
-                curve[column].setSymbol(None)
-                curve[column].setSymbolBrush(None)
+        for index, column in enumerate(self.columns):
+            if need_pen:
+                kwargs['pen'] = pg.mkPen(color=color, 
+                                         width=self.linewidth,
+                                         style = styles[index % len(styles)],
+                                         )
+            curve[column] = ResultsCurve(results,
+                                         x=self.plot_frame.x_axis,
+                                         y=column,
+                                         **kwargs
+                                     )
+            curve[column].setSymbol(None)
+            curve[column].setSymbolBrush(None)
                 
         return curve
 
@@ -369,7 +398,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
 
-    def update_y_column(self,index):
+    def update_y_column(self, index):
         axis = self.columns_y.itemText(index)
         checked = self.columns_y.item_checked(index)
         for item in self.plot.items:
@@ -378,27 +407,36 @@ class PlotWidget(TabWidget, QtGui.QWidget):
                     item.show()
                 else:
                     item.hide()
+        for item in self.plot.items:
+            if isinstance(item, ResultsCurve):
+                item.update_data()
+            #break
         #self.plot_frame.change_y_axis(axis)
         
     def load(self, curve):
+        # Add new set of curves
         for i,i_curve in enumerate(curve.values()):
             i_curve.x = self.columns_x.currentText()
             i_curve.y = self.columns[i]
             i_curve.update_data()
             self.plot.addItem(i_curve)
-            if self.columns_y.item_checked(i):
-                i_curve.show()
+        # Make sure only enabled ones are visible
+        checked_items = self.columns_y.checked_items()
+        for item in self.plot.listDataItems():
+            if item.y in checked_items:
+                item.show()
             else:
-                i_curve.hide()
+                item.hide()
 
     def remove(self, curve):
+        """ Remove curve from widget """
         for i_curve in curve.values():
             self.plot.removeItem(i_curve)
 
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
-        curve.pen.setColor(color)
-        curve.updateItems(styleUpdate=True)
+        for i_curve in curve.values():
+            i_curve.setPen(pg.mkPen(color=color, width=self.linewidth))
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
@@ -718,7 +756,7 @@ class ResultsDialog(QtGui.QFileDialog):
                 return
             except Exception as e:
                 raise e
-            
+
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
@@ -726,7 +764,7 @@ class ResultsDialog(QtGui.QFileDialog):
                                  antialias=True
                                  )
             curve.update_data()
-            
+
             self.plot.addItem(curve)
 
             self.preview_param.clear()
