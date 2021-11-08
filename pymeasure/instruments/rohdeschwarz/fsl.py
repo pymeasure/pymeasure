@@ -178,7 +178,7 @@ class FSL(Instrument):
             :param is_delta_marker: True if the marker is a delta marker,
                 defaults to False.
             """
-            self.instr = instrument
+            self.instrument = instrument
             self.is_delta_marker = is_delta_marker
             # Building the marker name for the commands.
             if self.is_delta_marker:
@@ -192,13 +192,37 @@ class FSL(Instrument):
 
             self.activate()
 
+        def write(self, command):
+            self.instrument.write(f"CALC:{self.name}:{command}")
+
+        def values(self, command, **kwargs):
+            """
+            Reads a set of values from the instrument through the adapter,
+            passing on any keyword arguments.
+            """
+            return self.values(f"CALC:{self.name}:{command}", **kwargs)
+
         def activate(self):
             """Activate a marker."""
-            self.instr.write(f"CALC:{self.name}:STAT ON")
+            self.write("STAT ON")
 
         def disable(self):
             """Disable a marker."""
-            self.instr.write(f"CALC:{self.name}:STAT OFF")
+            self.write("STAT OFF")
+
+        x = Instrument.control(
+            "X?", "X %s", "Position of marker on the frequency axis in Hz."
+        )
+
+        y = Instrument.control(
+            "Y?", "Y %s", "Amplitude of the marker position in dBm."
+        )
+
+        peak_excursion = Instrument.control(
+            "PEXC?",
+            "PEXC %s",
+            "Peak excursion in dB.",
+        )
 
         def to_trace(self, n_trace=1):
             """
@@ -206,20 +230,11 @@ class FSL(Instrument):
 
             :param n_trace: The trace number (1-6). Default is 1.
             """
-            self.instr.write(f"CALC:{self.name}:TRAC {n_trace}")
-
-        @property
-        def peak_excursion(self):
-            """Peak excursion in dB."""
-            return self.instr.values(f"CALC:{self.name}:PEXC?")
-
-        @peak_excursion.setter
-        def peak_excursion(self, value):
-            self.instr.write(f"CALC:{self.name}:PEXC {value}")
+            self.write(f"TRAC {n_trace}")
 
         def to_peak(self):
             """Set marker to highest peak within the span."""
-            self.instr.write(f"CALC:{self.name}:MAX")
+            self.write("MAX")
 
         def to_next_peak(self, direction="right"):
             """
@@ -228,25 +243,7 @@ class FSL(Instrument):
             :param direction: Direction of the next peak ('left' or 'right' of
                 the current position).
             """
-            self.instr.write(f"CALC:{self.name}:MAX:{direction}")
-
-        @property
-        def x(self):
-            """Position of marker on the frequency axis in Hz."""
-            return self.instr.values(f"CALC:{self.name}:X?")
-
-        @x.setter
-        def x(self, value):
-            self.instr.write(f"CALC:{self.name}:X {value}")
-
-        @property
-        def y(self):
-            """Amplitude of the marker position."""
-            return self.instr.values(f"CALC:{self.name}:Y?")
-
-        @y.setter
-        def y(self, value):
-            self.instr.write(f"CALC:{self.name}:Y {value}")
+            self.write(f"MAX:{direction}")
 
         def zoom(self, value):
             """
@@ -256,4 +253,4 @@ class FSL(Instrument):
                 interpreted as a factor. If a string (number with unit) is
                 passed it is interpreted as a frequency span.
             """
-            self.instr.write(f"CALC:{self.name}:FUNC:ZOOM {value}; *WAI")
+            self.write(f"FUNC:ZOOM {value}; *WAI")
