@@ -35,6 +35,10 @@ from pymeasure.instruments.validators import (
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+# Programmer's guide 8-92, defined outside of the class, since it is used by
+# `Instrument.control` without access to `self`.
+MAX_MEASUREMENT_TIME = 1000
+
 
 class CNT91(Instrument):
     """Represents a Pendulum CNT-91 frequency counter."""
@@ -120,7 +124,7 @@ class CNT91(Instrument):
         ":ACQ:APER %f",
         "Gate time for one measurement in s.",
         validator=strict_range,
-        values=[2e-9, 1000],  # Programmer's guide 8-92
+        values=[2e-9, MAX_MEASUREMENT_TIME],  # Programmer's guide 8-92
     )
 
     format = Instrument.control(
@@ -168,7 +172,10 @@ class CNT91(Instrument):
             max_sample_rate = 125e3
         else:
             max_sample_rate = 250e3
-        sample_rate = strict_range(sample_rate, [0, max_sample_rate])
+        # Minimum sample rate is 1 sample in the maximum measurement time.
+        sample_rate = strict_range(
+            sample_rate, [1 / MAX_MEASUREMENT_TIME, max_sample_rate]
+        )
         measurement_time = 1 / sample_rate
 
         self.clear()
