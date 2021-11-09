@@ -39,13 +39,107 @@ from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
 from .thread import StoppableQThread
 from .log import LogHandler
-from .Qt import QtCore, QtGui, CheckableComboBox
+from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
 from ..experiment.results import Results
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+# creating checkable combo box class
+class CheckableComboBox(QtGui.QComboBox):
+    def __init__(self):
+        super(CheckableComboBox, self).__init__()
+        self.view().pressed.connect(self.handle_item_pressed)
+        self.setModel(QtGui.QStandardItemModel(self))
+
+    def addItem(self, text, userData=None):
+        ret = super().addItem(text, userData)
+        item = self.model().item(self.count() - 1, 0)
+        #item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+        item.setCheckState(QtCore.Qt.Unchecked)
+  
+    # when any item get pressed
+    def handle_item_pressed(self, index):
+  
+        # getting which item is pressed
+        item = self.model().itemFromIndex(index)
+  
+        # make it check if unchecked and vice-versa
+        if item.checkState() == QtCore.Qt.Checked:
+            item.setCheckState(QtCore.Qt.Unchecked)
+        else:
+            item.setCheckState(QtCore.Qt.Checked)
+
+    def set_check_state(self, entry, value):
+        index = self.findText(entry)
+        item = self.model().item(index, 0)
+        if value:
+            item.setCheckState(QtCore.Qt.Checked)
+        else:
+            item.setCheckState(QtCore.Qt.Unchecked)
+  
+    # method called by check_items
+    def item_checked(self, index):
+  
+        # getting item at index
+        item = self.model().item(index, 0)
+  
+        # return true if checked else false
+        return item.checkState() == QtCore.Qt.Checked
+  
+    # calling method
+    def checked_items(self):
+        # blank list
+        checkedItems = []
+  
+        # traversing the items
+        for i in range(self.count()):
+  
+            # if item is checked add it to the list
+            if self.item_checked(i):
+                checkedItems.append(self.itemText(i))
+ 
+        #call this method
+        # self.update_labels(checkedItems)
+        return checkedItems
+  
+    # method to update the label
+    def update_labels(self, item_list):
+  
+        n = ''
+        count = 0
+  
+        # traversing the list
+        for i in item_list:
+  
+            # if count value is 0 don't add comma
+            if count == 0:
+                n += ' % s' % i
+            # else value is greater then 0
+            # add comma
+            else:
+                n += ', % s' % i
+  
+            # increment count
+            count += 1
+  
+  
+        # loop
+        for i in range(self.count()):
+  
+            # getting label
+            text_label = self.model().item(i, 0).text()
+  
+            # default state
+            if text_label.find('-') >= 0:
+                text_label = text_label.split('-')[0]
+  
+            # shows the selected items
+            item_new_text_label = text_label + ' - selected index: ' + n
+  
+           # setting text to combo box
+            self.setItemText(i, item_new_text_label)
 
 class PlotFrame(QtGui.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
@@ -57,7 +151,7 @@ class PlotFrame(QtGui.QFrame):
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(list)
+    y_axis_changed = QtCore.QSignal(str)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)
@@ -202,23 +296,28 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
-    
-    index = QtCore.QModelIndex()
-    
+
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, parent=None):
+                 check_status=True, linewidth=1, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
+        self.linewidth = linewidth
         self._setup_ui()
         self._layout()
         if x_axis is not None:
             self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
             self.plot_frame.change_x_axis(x_axis)
         if y_axis is not None:
-            self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
-            self.plot_frame.change_y_axis(y_axis)
+            if isinstance(y_axis, str):
+                y_list = (y_axis,)
+            else:
+                y_list = y_axis
+            self.columns_y.setCurrentIndex(self.columns_y.findText(y_list[0]))
+            for y in y_list:
+                self.columns_y.set_check_state(y, True)
+            self.plot_frame.change_y_axis(y_list[0])
 
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
@@ -228,7 +327,6 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_y_label.setText('Y Axis:')
 
-        # self.columns_y = QtGui.QComboBox(self)
         self.columns_x = QtGui.QComboBox(self)
         self.columns_y = CheckableComboBox()
         for column in self.columns:
@@ -268,20 +366,31 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         return QtCore.QSize(300, 600)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
+        styles = (QtCore.Qt.SolidLine,
+                  QtCore.Qt.DashLine,
+                  QtCore.Qt.DotLine,
+                  QtCore.Qt.DashDotLine,
+                  QtCore.Qt.DashDotDotLine)
+        need_pen = False
         if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=2)
+            need_pen = True
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         
         curve = {}
-        for column in self.columns:
-                curve[column] = ResultsCurve(results,
-                             x=self.plot_frame.x_axis,
-                             y=column,
-                             **kwargs
-                             )
-                curve[column].setSymbol(None)
-                curve[column].setSymbolBrush(None)
+        for index, column in enumerate(self.columns):
+            if need_pen:
+                kwargs['pen'] = pg.mkPen(color=color, 
+                                         width=self.linewidth,
+                                         style = styles[index % len(styles)],
+                                         )
+            curve[column] = ResultsCurve(results,
+                                         x=self.plot_frame.x_axis,
+                                         y=column,
+                                         **kwargs
+                                     )
+            curve[column].setSymbol(None)
+            curve[column].setSymbolBrush(None)
                 
         return curve
 
@@ -289,7 +398,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         axis = self.columns_x.itemText(index)
         self.plot_frame.change_x_axis(axis)
 
-    def update_y_column(self,index):
+    def update_y_column(self, index):
         axis = self.columns_y.itemText(index)
         checked = self.columns_y.item_checked(index)
         for item in self.plot.items:
@@ -298,26 +407,36 @@ class PlotWidget(TabWidget, QtGui.QWidget):
                     item.show()
                 else:
                     item.hide()
+        for item in self.plot.items:
+            if isinstance(item, ResultsCurve):
+                item.update_data()
+            #break
         #self.plot_frame.change_y_axis(axis)
         
     def load(self, curve):
+        # Add new set of curves
         for i,i_curve in enumerate(curve.values()):
             i_curve.x = self.columns_x.currentText()
             i_curve.y = self.columns[i]
             i_curve.update_data()
             self.plot.addItem(i_curve)
-            if self.columns_y.item_checked(i):
-                i_curve.show()
+        # Make sure only enabled ones are visible
+        checked_items = self.columns_y.checked_items()
+        for item in self.plot.listDataItems():
+            if item.y in checked_items:
+                item.show()
             else:
-                i_curve.hide()
+                item.hide()
 
     def remove(self, curve):
+        """ Remove curve from widget """
         for i_curve in curve.values():
             self.plot.removeItem(i_curve)
 
     def set_color(self, curve, color):
-        """ Remove curve from widget """
-        curve.setPen(pg.mkPen(color=color, width=2))
+        """ Change the color of the pen of the curve """
+        for i_curve in curve.values():
+            i_curve.setPen(pg.mkPen(color=color, width=self.linewidth))
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
@@ -637,14 +756,17 @@ class ResultsDialog(QtGui.QFileDialog):
                 return
             except Exception as e:
                 raise e
-            
+
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1.75),
+                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to circumvent plotting slowdown.
+                                 # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
+                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
                                  antialias=True
                                  )
             curve.update_data()
+
             self.plot.addItem(curve)
 
             self.preview_param.clear()

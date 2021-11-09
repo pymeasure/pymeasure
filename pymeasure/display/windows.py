@@ -109,7 +109,7 @@ class PlotterWindow(QtGui.QMainWindow):
         self.resize(800, 600)
 
         self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
-                                  pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
+                                  pen=pg.mkPen(color=pg.intColor(0), width=linewidth), antialias=False)
         self.plot.addItem(self.curve)
 
         self.plot_widget.updated.connect(self.check_stop)
@@ -617,65 +617,56 @@ class ManagedWindow(ManagedWindowBase):
         Tutorial :ref:`tutorial-managedwindow`
             A tutorial and example on the basic configuration and usage of ManagedWindow.
 
+    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param x_axis: the initial data-column for the x-axis of the plot
+    :param y_axis: the initial data-column for the y-axis of the plot
+    :param linewidth: linewidth for the displayed curves, default is 1
+    :param \**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindowBase`
+
     """
 
-    def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
-                 log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
-                 wdg_list=(), hide_groups=True):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
-        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis,
+                                      linewidth=linewidth)
         self.plot_widget.setMinimumSize(100, 200)
-        super().__init__(
-            procedure_class=procedure_class,
-            widget_list=wdg_list+(self.plot_widget, self.log_widget),
-            inputs=inputs,
-            displays=displays,
-            parent=parent,
-            sequencer=sequencer,
-            sequencer_inputs=sequencer_inputs,
-            sequence_file=sequence_file,
-            inputs_in_scrollarea=inputs_in_scrollarea,
-            directory_input=directory_input,
-            hide_groups=hide_groups,
-        )
+
+        if "widget_list" not in kwargs:
+            kwargs["widget_list"] = ()
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.plot_widget, self.log_widget)
+
+        super().__init__(procedure_class, **kwargs)
 
         # Setup measured_quantities once we know x_axis and y_axis
-        self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
+        y_axis = self.y_axis
+        if not isinstance(y_axis, (list, tuple)):
+            y_axis = [y_axis]
+        self.browser_widget.browser.measured_quantities = [self.x_axis] + list(y_axis)
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
-        log.setLevel(log_level)
+        log.setLevel(self.log_level)
         log.info("ManagedWindow connected to logging")
 
 class ManagedImageWindow(ManagedWindow):
     """
     Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
 
+    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param x_axis: the data-column for the x-axis of the plot, cannot be changed afterwards for the image-plot
+    :param y_axis: the data-column for the y-axis of the plot, cannot be changed afterwards for the image-plot
+    :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
+    :param \**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindow`
+
     """
 
-    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),
-                 log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
-                 hide_groups=True):
+    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
         self.z_axis = z_axis
         self.image_widget = ImageWidget("Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
-        wdg_list = (self.image_widget, )
-        super().__init__(
-            procedure_class = procedure_class,
-            inputs=inputs,
-            displays=displays,
-            x_axis=x_axis,
-            y_axis=y_axis,
-            log_channel=log_channel,
-            log_level=log_level,
-            parent=parent,
-            sequencer=sequencer,
-            sequencer_inputs=sequencer_inputs,
-            sequence_file=sequence_file,
-            inputs_in_scrollarea=inputs_in_scrollarea,
-            directory_input=directory_input,
-            wdg_list=wdg_list,
-            hide_groups=hide_groups,
-        )
+
+        if "widget_list" not in kwargs:
+            kwargs["widget_list"] = ()
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget, )
+
+        super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
