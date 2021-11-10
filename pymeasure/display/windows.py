@@ -457,7 +457,11 @@ class ManagedWindowBase(QtGui.QMainWindow):
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
+            # setIcon trigger browser itemChanged signal on colunm 0,
+            # which in turn call the browser_item_changed, so a block signals is needed.
+            self.browser.blockSignals(True)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
+            self.browser.blockSignals(False)
             for wdg, curve in zip(self.widget_list, experiment.curve_list):
                 wdg.set_color(curve, color=color)
 

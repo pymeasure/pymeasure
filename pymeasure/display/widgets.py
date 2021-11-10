@@ -56,12 +56,10 @@ class CheckableComboBox(QtGui.QComboBox):
     def addItem(self, text, userData=None):
         ret = super().addItem(text, userData)
         item = self.model().item(self.count() - 1, 0)
-        #item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
         item.setCheckState(QtCore.Qt.Unchecked)
   
     # when any item get pressed
     def handle_item_pressed(self, index):
-  
         # getting which item is pressed
         item = self.model().itemFromIndex(index)
   
@@ -159,7 +157,9 @@ class PlotFrame(QtGui.QFrame):
         self.check_status = check_status
         self._setup_ui()
         self.change_x_axis(x_axis)
-        self.change_y_axis(y_axis)
+        if isinstance(y_axis, str):
+            y_axis = [y_axis,]
+        self.change_y_axis(y_axis[0])
 
     def _setup_ui(self):
         self.setAutoFillBackground(False)
@@ -402,31 +402,24 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         axis = self.columns_y.itemText(index)
         checked = self.columns_y.item_checked(index)
         for item in self.plot.items:
-            if item.y == axis:
-                if checked:
-                    item.show()
-                else:
-                    item.hide()
-        for item in self.plot.items:
             if isinstance(item, ResultsCurve):
-                item.update_data()
-            #break
-        #self.plot_frame.change_y_axis(axis)
+                if item.y == axis:
+                    if checked:
+                        item.show()
+                        item.update_data()
+                    else:
+                        item.hide()
         
     def load(self, curve):
         # Add new set of curves
+        checked = self.columns_y.checked_items()
         for i,i_curve in enumerate(curve.values()):
             i_curve.x = self.columns_x.currentText()
             i_curve.y = self.columns[i]
             i_curve.update_data()
             self.plot.addItem(i_curve)
-        # Make sure only enabled ones are visible
-        checked_items = self.columns_y.checked_items()
-        for item in self.plot.listDataItems():
-            if item.y in checked_items:
-                item.show()
-            else:
-                item.hide()
+            if not i_curve.y in checked:
+                i_curve.hide()
 
     def remove(self, curve):
         """ Remove curve from widget """
@@ -436,7 +429,8 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
         for i_curve in curve.values():
-            i_curve.setPen(pg.mkPen(color=color, width=self.linewidth))
+            i_curve.pen.setColor(color)
+            i_curve.updateItems(styleUpdate=True)
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
