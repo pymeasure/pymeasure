@@ -192,15 +192,23 @@ class FSL(Instrument):
 
             self.activate()
 
+        def read(self):
+            return self.instrument.read()
+
         def write(self, command):
             self.instrument.write(f"CALC:{self.name}:{command}")
+
+        def ask(self, command):
+            return self.instrument.ask(f"CALC:{self.name}:{command}")
 
         def values(self, command, **kwargs):
             """
             Reads a set of values from the instrument through the adapter,
             passing on any keyword arguments.
             """
-            return self.values(f"CALC:{self.name}:{command}", **kwargs)
+            return self.instrument.values(
+                f"CALC:{self.name}:{command}", **kwargs
+            )
 
         def activate(self):
             """Activate a marker."""
