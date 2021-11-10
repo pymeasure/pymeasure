@@ -23,7 +23,7 @@
 #
 import logging
 from pymeasure.display.Qt import QtCore, QtGui
-from pymeasure.experiment.sequencer import SequenceFileHandler, SequenceEvaluationException
+from pymeasure.experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
 from functools import partial
 from inspect import signature
 from logging import Handler
@@ -255,7 +255,7 @@ class ExpressionValidator(QtGui.QValidator):
         return_value = QtGui.QValidator.Acceptable
         try:
             SequenceFileHandler.eval_string(input_string, log_enabled=False)
-        except SequenceEvaluationException as e:
+        except SequenceEvaluationError as e:
             return_value = QtGui.QValidator.Intermediate
         return return_value
 
@@ -451,7 +451,7 @@ class SequencerWidget(QtGui.QWidget):
 
         try:
             sequence = self.data.parameters_sequence(self.names_inv)
-        except SequenceEvaluationException:
+        except SequenceEvaluationError:
             log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
         else:
             log.info(
