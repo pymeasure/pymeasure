@@ -141,11 +141,11 @@ class FSL(Instrument):
         Read trace data.
 
         :param n_trace: The trace number (1-6). Default is 1.
-        :return: Nnumpy arrays of the trace data (frequency and amplitude).
+        :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
-        y = np.array(self.values("TRAC{n_trace}? TRACE{n_trace}"))
+        y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
         x = np.linspace(self.freq_start, self.freq_stop, len(y))
-        return x, y
+        return np.array([x, y])
 
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
