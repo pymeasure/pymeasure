@@ -32,6 +32,7 @@ or ``"1.5GHz"``. Return values are always numerical.
     9000000000.0
 
 .. code:: python
+
     # Changing it to 10 MHz by providing the numerical value 
     fsl.freq_center = 10e6
 
