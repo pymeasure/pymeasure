@@ -78,29 +78,28 @@ class FSL(Instrument):
         "Attenuation in dB.",
     )
 
-    @property
-    def res_bandwidth(self):
-        """Resolution bandwidth in Hz. Can be set to 'AUTO'."""
-        return float(self.ask("BAND:RES?"))
-
-    @res_bandwidth.setter
-    def res_bandwidth(self, value):
-        if type(value) is str and value.upper() == "AUTO":
-            self.write("BAND:RES:AUTO ON")
+    @staticmethod
+    def _number_or_auto(value):
+        # helper for the bandwidth setting
+        if isinstance(value, str) and value.upper() == "AUTO":
+            return ":AUTO ON"
         else:
-            self.write(f"BAND:RES {value}")
+            # There is no space in the set commands, so we have to add it
+            return " " + str(value)
 
-    @property
-    def video_bandwidth(self):
-        """Video bandwidth in Hz. Can be set to 'AUTO'."""
-        return float(self.ask("BAND:VID?"))
+    res_bandwidth = Instrument.control(
+        "BAND:RES?",
+        "BAND:RES%s",
+        "Resolution bandwidth in Hz. Can be set to 'AUTO'",
+        set_process=_number_or_auto,
+    )
 
-    @video_bandwidth.setter
-    def video_bandwidth(self, value):
-        if type(value) is str and value.upper() == "AUTO":
-            self.write("BAND:VID:AUTO ON")
-        else:
-            self.write(f"BAND:VID {value}")
+    video_bandwidth = Instrument.control(
+        "BAND:VID?",
+        "BAND:VID%s",
+        "Video bandwidth in Hz. Can be set to 'AUTO'",
+        set_process=_number_or_auto,
+    )
 
     # Sweeping ----------------------------------------------------------------
 
