@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 from math import sqrt, log10
-from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 
