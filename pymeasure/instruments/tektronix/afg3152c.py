@@ -135,13 +135,13 @@ class Channel(object):
             return self.instrument.values("source%d:%s" % (
                                           self.number, command), **kwargs)
         def ask(self, command):
-            self.instrument.ask("source%d:%s" % (self.number, command))
+            return self.instrument.ask("source%d:%s" % (self.number, command))
 
         def write(self, command):
             self.instrument.write("source%d:%s" % (self.number, command))
 
         def read(self):
-            self.instrument.read()
+            return self.instrument.read()
 
         def enable(self):
             self.instrument.write("output%d:state on" % self.number)
