@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,4 +25,5 @@
 from .rohde_schwarz_fscx import RS_FSC3, RS_FSC6
 from .rohde_schwarz_fsw13 import RS_FSW13
 from .rohde_schwarz_fsiq3 import RS_FSIQ3
+from .sfm import SFM
 

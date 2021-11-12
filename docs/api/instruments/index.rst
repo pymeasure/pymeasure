@@ -27,8 +27,11 @@ Instruments by manufacturer:
    anapico/index
    anritsu/index
    attocube/index
+   bkprecision/index
    danfysik/index
    deltaelektronica/index
+   edwards/index
+   fluke/index
    fwbell/index
    hp/index
    keithley/index
