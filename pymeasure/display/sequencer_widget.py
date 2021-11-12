@@ -441,6 +441,9 @@ class SequencerWidget(QtGui.QWidget):
         if node_index.isValid():
             self.tree.selectRow(node_index)
 
+    def get_sequence(self):
+        return self.data.parameters_sequence(self.names_inv)
+
     def queue_sequence(self):
         """
         Obtain a list of parameters from the sequence tree, enter these into
@@ -450,7 +453,7 @@ class SequencerWidget(QtGui.QWidget):
         self.queue_button.setEnabled(False)
 
         try:
-            sequence = self.data.parameters_sequence(self.names_inv)
+            sequence = self.get_sequence()
         except SequenceEvaluationError:
             log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
         else:

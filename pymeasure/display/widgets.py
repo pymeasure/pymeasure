@@ -42,6 +42,7 @@ from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
 from ..experiment.results import Results
+from ..experiment.sequencer import SequenceEvaluationError
 from .sequencer_widget import SequencerWidget
 
 log = logging.getLogger(__name__)
@@ -844,8 +845,8 @@ class EstimatorWidget(QtGui.QWidget):
         sequence_length = None
         if hasattr(self._parent, "sequencer"):
             try:
-                sequence = self._parent.sequencer.get_sequence_from_tree()
-            except SequenceEvaluationException:
+                sequence = self._parent.sequencer.get_sequence()
+            except SequenceEvaluationError:
                 sequence_length = 0
             else:
                 sequence_length = len(sequence)
