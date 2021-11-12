@@ -244,11 +244,12 @@ def test_setting_process(dynamic):
     fake.x = 2
     assert fake.read() == 'OUT 1'
 
-
-def test_control_multivalue():
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_multivalue(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d,%d", "",
+            dynamic=dynamic,
         )
 
     fake = Fake()
@@ -257,18 +258,85 @@ def test_control_multivalue():
 
 
 @pytest.mark.parametrize(
-    'set_command, given, expected',
-    [("%d", 5, 5),
-     ("%d, %d", (5, 6), [5, 6]),  # input has to be a tuple, not a list
+    'set_command, given, expected, dynamic',
+    [("%d", 5, 5, False),
+     ("%d", 5, 5, True),
+     ("%d, %d", (5, 6), [5, 6], False),  # input has to be a tuple, not a list
+     ("%d, %d", (5, 6), [5, 6], True),  # input has to be a tuple, not a list
      ])
-def test_fakeinstrument_control(set_command, given, expected):
+def test_fakeinstrument_control(set_command, given, expected, dynamic):
     """FakeInstrument's custom simple control needs to process values correctly.
     """
     class Fake(FakeInstrument):
         x = FakeInstrument.control(
             "", set_command, "",
+            dynamic=dynamic,
         )
 
     fake = Fake()
     fake.x = given
     assert fake.x == expected
+
+def test_instrument_dynamic_parameter():
+    class GenericInstrument(FakeInstrument):
+        fake_ctrl = Instrument.control(
+            ":PARAM?;", ":PARAM %e Hz;",
+            """ A property that represents ...
+            """,
+            validator=strict_range,
+            values=(1, 10),
+            dynamic = True
+        )
+        fake_setting = Instrument.setting(
+            ":PARAM1 %e Hz;",
+            """ A property that represents ...
+            """,
+            validator=strict_range,
+            values=(1, 10),
+            dynamic = True
+        )
+        fake_measurement = Instrument.measurement(
+            "",
+            """ A property that represents ...
+            """,
+            values={'X': 1, 'Y': 2, 'Z': 3},
+            map_values = True,
+            dynamic = True
+        )
+    class SpecificInstrument1(GenericInstrument):
+        fake_ctrl_values = (1, 10) # Set values parameter for SpecificInstrument1
+        fake_setting_values = (1, 10) # Set values parameter for SpecificInstrument1
+        fake_measurement_values={'X': 1, 'Y': 2, 'Z': 3} # Set values parameter for SpecificInstrument1
+
+    class SpecificInstrument2(GenericInstrument):
+        fake_ctrl_values = (10, 20) # Set values parameter for SpecificInstrument2
+        fake_setting_values = (10, 20) # Set values parameter for SpecificInstrument2
+        fake_measurement_values={'X': 4, 'Y': 5, 'Z': 6} # Set values parameter for SpecificInstrument2
+    
+    s1 = SpecificInstrument1()
+    s2 = SpecificInstrument2()
+    
+    s2.fake_ctrl = 15
+    with pytest.raises(ValueError) as e_info:
+        s1.fake_ctrl = 15
+
+    s2.fake_setting = 15
+    with pytest.raises(ValueError) as e_info:
+        s1.fake_setting = 15
+
+    s1.read()
+    s2.read()
+    s1.write('1')
+    s2.write('4')
+    assert s1.fake_measurement == 'X'
+    assert s2.fake_measurement == 'X'
+
+    s1.fake_ctrl_validator=truncated_range # Try truncated range
+    with pytest.raises(AttributeError) as e_info:
+        # Reading a special variable is not allowed
+        s1.fake_ctrl_validator
+        
+    s1.fake_ctrl = 15
+    s1.fake_ctrl_validator=strict_range # Back to strict_range
+    with pytest.raises(ValueError) as e_info:
+        s1.fake_ctrl = 15
