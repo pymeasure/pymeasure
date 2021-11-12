@@ -204,11 +204,12 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     """
 
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, parent=None):
+                 check_status=True, linewidth=1, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
+        self.linewidth = linewidth
         self._setup_ui()
         self._layout()
         if x_axis is not None:
@@ -266,7 +267,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=2)
+            kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         curve = ResultsCurve(results,
@@ -287,14 +288,18 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.plot_frame.change_y_axis(axis)
 
     def load(self, curve):
+        curve.x = self.columns_x.currentText()
+        curve.y = self.columns_y.currentText()
+        curve.update_data()
         self.plot.addItem(curve)
 
     def remove(self, curve):
         self.plot.removeItem(curve)
 
     def set_color(self, curve, color):
-        """ Remove curve from widget """
-        curve.setPen(pg.mkPen(color=color, width=2))
+        """ Change the color of the pen of the curve """
+        curve.pen.setColor(color)
+        curve.updateItems(styleUpdate=True)
 
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
@@ -368,6 +373,8 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         self.image_frame.change_z_axis(axis)
 
     def load(self, curve):
+        curve.z = self.columns_z.currentText()
+        curve.update_data()
         self.plot.addItem(curve)
 
     def remove(self, curve):
@@ -616,7 +623,9 @@ class ResultsDialog(QtGui.QFileDialog):
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1.75),
+                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to circumvent plotting slowdown.
+                                 # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
+                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
                                  antialias=True
                                  )
             curve.update_data()
