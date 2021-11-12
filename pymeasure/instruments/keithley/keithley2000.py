@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -434,25 +434,6 @@ class Keithley2000(Instrument, KeithleyBuffer):
         super(Keithley2000, self).__init__(
             adapter, "Keithley 2000 Multimeter", **kwargs
         )
-        # Set up data transfer format
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.config(
-                is_binary=False,
-                datatype='float32',
-                converter='f',
-                separator=','
-            )
-
-    # TODO: Clean up error checking
-    def check_errors(self):
-        """ Read all errors from the instrument."""
-        while True:
-            err = self.values(":SYST:ERR?")
-            if int(err[0]) != 0:
-                errmsg = "Keithley 2000: %s: %s" % (err[0],err[1])
-                log.error(errmsg + '\n')
-            else:
-                break
 
     def measure_voltage(self, max_voltage=1, ac=False):
         """ Configures the instrument to measure voltage,

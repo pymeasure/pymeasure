@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,3 +25,4 @@
 from .rohde_schwarz_sma100a import RS_SMA100A
 from .rohde_schwarz_smiq06b import RS_SMIQ06B
 from .rohde_schwarz_sml01 import RS_SML01
+from .sfm import SFM
