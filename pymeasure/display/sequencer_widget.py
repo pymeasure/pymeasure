@@ -489,38 +489,3 @@ class SequencerWidget(QtGui.QWidget):
                                              data=self.data)
         self.tree.setModel(self.tree_model)
         self.tree.expandAll()
-
-class AppDemo(QtGui.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle('Sequencer Manager')
-        self.resize(500, 700)
-
-        self.treeView = TreeView()
-        self.treeView.setHeaderHidden(False)
-        data=SequenceFileHandler(open(sys.argv[1]))
-        treeModel = SequencerTreeModel(header=["Level", "Parameter", "Sequence"], data=data)
-
-        self.treeView.setModel(treeModel)
-        self.treeView.expandAll()
-        self.treeView.doubleClicked.connect(self.getValue)
-
-        self.setCentralWidget(self.treeView)
-
-    def getValue(self, val):
-        row = val.row()
-        column = val.column()
-        print (val)
-        print(val.data())
-        print(val.row())
-        print(val.column())
-        if row == 0 and column == 0:
-            self.treeView.save()
-
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)        
-
-    demo = AppDemo()
-    demo.show()
-    
-    sys.exit(app.exec_())
