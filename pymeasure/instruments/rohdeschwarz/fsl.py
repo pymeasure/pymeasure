@@ -121,9 +121,8 @@ class FSL(Instrument):
         "INIT:CONT %s",
         "Continuous (True) or single sweep (False)",
         validator=strict_discrete_set,
-        values=[True, False],
-        set_process=lambda x: "ON" if x else "OFF",
-        get_process=lambda x: bool(x),
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     def single_sweep(self):
