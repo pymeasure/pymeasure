@@ -12,8 +12,9 @@ Using the Plotter
 While it lacks the nice features of the ManagedWindow, the Plotter object is the simplest way of getting live-plotting. The Plotter takes a Results object and plots the data at a regular interval, grabbing the latest data each time from the file.
 
 .. warning::
-   The example in this section is known to raise issues when executed on recent versions of macOS (10.12 Sierra and later): a `QApplication was not created in the main thread` / `nextEventMatchingMask should only be called from the Main Thread` warning is raised.
-   macOS users are hence adviced to skip this example and continue with the `Using the ManagedWindow`_ section.
+   The example in this section is known to raise issues when executed: a `QApplication was not created in the main thread` / `nextEventMatchingMask should only be called from the Main Thread` warning is raised.
+   While the example works without issues on some operating systems and python configurations, users are advised not to rely on the plotter while this issue is unresolved.
+   Users can hence skip this example and continue with the `Using the ManagedWindow`_ section.
 
 
 Let's extend our SimpleProcedure with a RandomProcedure, which generates random numbers during our loop. This example does not include instruments to provide a simpler example. ::
