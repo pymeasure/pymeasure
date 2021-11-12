@@ -17,17 +17,6 @@
     - `python setup.py sdist`
 9. Create a tagged release on GitHub
 
-## conda-forge feedstock
-
-1. Pull the latest `master` branch
-2. `git checkout -b v<version>_release`
-3. Download the tarball and determine the sha256 checksum
-    - `wget -qO- https://github.com/pymeasure/pymeasure/archive/<version>.tar.gz | sha256sum`
-4. Update recipe/meta.yml with the checksum and version number
-5. Push the changes up as a PR
-6. Verify that the builds complete
-7. Merge the PR
-
 ## PyPI release
 
 1. Ensure twine is the latest version (`pip install -U twine`)
@@ -38,3 +27,15 @@
 4. Verify the test repository: https://test.pypi.org/project/PyMeasure
 5. Upload to the real repository (`twine upload dist/PyMeasure-<version>*`)
 6. Verify that the package is updated: https://pypi.org/project/PyMeasure
+
+## conda-forge feedstock
+
+1. Release to PyPI first (the feedstock pulls from there)
+2. Pull the latest `master` branch
+3. `git checkout -b v<version>_release`
+4. Download the tarball and determine the sha256 checksum
+    - `wget -qO- https://github.com/pymeasure/pymeasure/archive/<version>.tar.gz | sha256sum`
+5. Update recipe/meta.yml with the checksum and version number
+6. Push the changes up as a PR
+7. Verify that the builds complete
+8. Merge the PR
