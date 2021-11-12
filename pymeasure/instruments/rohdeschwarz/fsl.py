@@ -32,6 +32,15 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def _number_or_auto(value):
+    # helper for the bandwidth setting
+    if isinstance(value, str) and value.upper() == "AUTO":
+        return ":AUTO ON"
+    else:
+        # There is no space in the set commands, so we have to add it
+        return " " + str(value)
+
+
 class FSL(Instrument):
     """
     Represents a Rohde&Schwarz FSL spectrum analyzer.
@@ -78,15 +87,7 @@ class FSL(Instrument):
         "Attenuation in dB.",
     )
 
-    @staticmethod
-    def _number_or_auto(value):
-        # helper for the bandwidth setting
-        if isinstance(value, str) and value.upper() == "AUTO":
-            return ":AUTO ON"
-        else:
-            # There is no space in the set commands, so we have to add it
-            return " " + str(value)
-
+    # There is no space between RES and %s on purpose, see _number_or_auto.
     res_bandwidth = Instrument.control(
         "BAND:RES?",
         "BAND:RES%s",
