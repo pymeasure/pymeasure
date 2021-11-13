@@ -119,7 +119,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
     line_frequency = Instrument.control(
         ":SYST:LFR?", ":SYST:LFR %d",
-        """ An integer property that controls the line frequncy in Hertz. 
+        """ An integer property that controls the line frequency in Hertz. 
         Valid values are 50 and 60. """,
         validator=strict_discrete_set,
         values=[50, 60],
