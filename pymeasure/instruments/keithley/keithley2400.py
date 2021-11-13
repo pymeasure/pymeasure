@@ -110,7 +110,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
     )
 
     auto_zero = Instrument.control(
-        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %d",
+        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %s",
         """ A property that controls the auto zero option. Valid values are
         True (enabled) and False (disabled) and 'ONCE' (force immediate). """,
         values={True: 1, False: 0, "ONCE": "ONCE"},
