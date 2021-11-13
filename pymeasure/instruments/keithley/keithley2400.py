@@ -117,6 +117,23 @@ class Keithley2400(Instrument, KeithleyBuffer):
         map_values=True,
     )
 
+    line_frequency = Instrument.control(
+        ":SYST:LFR?", ":SYST:LFR %d",
+        """ An integer property that controls the line frequency in Hertz. 
+        Valid values are 50 and 60. """,
+        validator=strict_discrete_set,
+        values=[50, 60],
+        cast=int,
+    )
+        
+    line_frequency_auto = Instrument.control(
+        ":SYST:LFR:AUTO?", ":SYST:LFR:AUTO %d",
+        """ A boolean property that enables or disables auto line frequency. 
+        Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+    
     measure_concurent_functions = Instrument.control(
         ":SENS:FUNC:CONC?", ":SENS:FUNC:CONC %d",
         """ A boolean property that enables or disables the ability to measure
