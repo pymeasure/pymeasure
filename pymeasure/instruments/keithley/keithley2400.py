@@ -122,7 +122,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         """ An integer property that controls the line frequncy in Hertz. 
         Valid values are 50 and 60. """,
         validator=strict_discrete_set,
-	values={50: 50, 60: 60},
+        values={50: 50, 60: 60},
         map_values=True,
     )
         
