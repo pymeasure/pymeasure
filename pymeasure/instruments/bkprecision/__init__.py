@@ -22,5 +22,6 @@
 # THE SOFTWARE.
 #
 
+from .bkprecision8500 import BKPrecision8500
 from .bkprecision9130b import BKPrecision9130B
 

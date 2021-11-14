@@ -9,4 +9,5 @@ This section contains specific documentation on the BK Precision instruments tha
 .. toctree::
    :maxdepth: 2
 
+   bkprecision8500
    bkprecision9130b
