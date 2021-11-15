@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .stepmotorcontroller import MotorController
+from .dpseriesmotorcontroller import DPSeriesMotorController

@@ -9,4 +9,4 @@ This section contains specific documentation on the Anaheim Automation instrumen
 .. toctree::
    :maxdepth: 2
 
-   stepmotorcontroller
+   dpseriesstepmotorcontroller
