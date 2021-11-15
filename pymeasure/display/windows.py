@@ -444,7 +444,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    for curve in experiment.curve_list:
+                    for curve in experiment.curve_list[0].values():
                         if curve:
                             curve.update_data()
                     experiment.browser_item.progressbar.setValue(100.)
