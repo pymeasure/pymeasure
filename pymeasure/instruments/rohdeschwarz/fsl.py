@@ -87,9 +87,9 @@ class FSL(Instrument):
         "Attenuation in dB.",
     )
 
-    # There is no space between RES and %s on purpose, see _number_or_auto.
     res_bandwidth = Instrument.control(
         "BAND:RES?",
+        # There is no space between RES and %s on purpose, see _number_or_auto.
         "BAND:RES%s",
         "Resolution bandwidth in Hz. Can be set to 'AUTO'",
         set_process=_number_or_auto,
@@ -104,17 +104,13 @@ class FSL(Instrument):
 
     # Sweeping ----------------------------------------------------------------
 
-    @property
-    def sweep_time(self):
-        """Sweep time in s. Can be set to 'AUTO'."""
-        return self.values("SWE:TIME?")[0]
-
-    @sweep_time.setter
-    def sweep_time(self, value):
-        if type(value) is str and value.upper() == "AUTO":
-            self.write("SWE:TIME:AUTO ON")
-        else:
-            self.write(f"SWE:TIME {value}")
+    sweep_time = Instrument.control(
+        "SWE:TIME?",
+        # No space between TIME and %s on purpose, see _number_or_auto.
+        "SWE:TIME%s",
+        "Sweep time in s. Can be set to 'AUTO'.",
+        set_process=_number_or_auto,
+    )
 
     continuous_sweep = Instrument.control(
         "INIT:CONT?",
