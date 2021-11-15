@@ -23,74 +23,109 @@
 #
 
 import logging
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_range
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-from pymeasure.instruments import Instrument, RangeException
-
 
 class ThorlabsPM100USB(Instrument):
-    """Represents Thorlabs PM100USB powermeter"""
-
-    # TODO: refactor to check if the sensor wavelength is adjustable
-    wavelength = Instrument.control("SENSE:CORR:WAV?", "SENSE:CORR:WAV %g",
-                                    "Wavelength in nm; not set outside of range")
-    
-    # TODO: refactor to check if the sensor is a power sensor
-    power = Instrument.measurement("MEAS:POW?", "Power, in Watts")
-    
-    wavelength_min = Instrument.measurement("SENS:CORR:WAV? MIN", "Get minimum wavelength, in nm")
-    
-    wavelength_max = Instrument.measurement("SENS:CORR:WAV? MAX", "Get maximum wavelength, in nm")
-
+    """Represents Thorlabs PM100USB powermeter."""
 
     def __init__(self, adapter, **kwargs):
         super(ThorlabsPM100USB, self).__init__(
-            adapter, "ThorlabsPM100USB powermeter", **kwargs)
+            adapter, "ThorlabsPM100USB powermeter", **kwargs
+        )
         self.timout = 3000
-        self.sensor()
+        self._set_flags()
 
-    def measure_power(self, wavelength):
-        """Set wavelength in nm and get power in W
-        If wavelength is out of range it will be set to range limit"""
-        if wavelength < self.wavelength_min:
-            raise RangeException("Wavelength %.2f nm out of range: using minimum wavelength: %.2f nm" % (
-                wavelength, self.wavelength_min))
-            # explicit setting wavelenghth, althought it would be automatically set
-            wavelength = self.wavelength_min
-        if wavelength > self.wavelength_max:
-            raise RangeException("Wavelength %.2f nm out of range: using maximum wavelength: %.2f nm" % (
-                wavelength, self.wavelength_max))
-            wavelength = self.wavelength_max
-        self.wavelength = wavelength
-        return self.power
+    wavelength_min = Instrument.measurement(
+        "SENS:CORR:WAV? MIN", "Minimum wavelength, in nm"
+    )
 
-    def sensor(self):
-        "Get sensor info"
-        response = self.ask("SYST:SENSOR:IDN?").split(',')
+    wavelength_max = Instrument.measurement(
+        "SENS:CORR:WAV? MAX", "Maximum wavelength, in nm"
+    )
+
+    @property
+    def wavelength(self):
+        """Wavelength in nm."""
+        value = self.values("SENSE:CORR:WAV?")[0]
+        return value
+
+    @wavelength.setter
+    def wavelength(self, value):
+        """Wavelength in nm."""
+        if self.wavelength_settable:
+            # Store min and max wavelength to only request them once.
+            if not hasattr(self, "_wavelength_min"):
+                self._wavelength_min = self.wavelength_min
+            if not hasattr(self, "_wavelength_max"):
+                self._wavelength_max = self.wavelength_max
+
+            value = truncated_range(
+                value, [self._wavelength_min, self._wavelength_max]
+            )
+            self.write("SENSE:CORR:WAV {}".format(value))
+        else:
+            raise AttributeError(
+                f"{self.sensor_name} does not allow setting the wavelength."
+            )
+
+    @property
+    def power(self):
+        """Power in W."""
+        if self.is_power_sensor:
+            return self.values("MEAS:POW?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not a power sensor.")
+
+    @property
+    def energy(self):
+        """Energy in J."""
+        if self.is_energy_sensor:
+            return self.values("MEAS:ENER?")[0]
+        else:
+            raise AttributeError(
+                f"{self.sensor_name} is not an energy sensor."
+            )
+
+    def _set_flags(self):
+        """Get sensor info and write flags."""
+        response = self.values("SYST:SENSOR:IDN?")
+        if response[0] == "no sensor":
+            raise IOError("No sensor connected.")
         self.sensor_name = response[0]
         self.sensor_sn = response[1]
         self.sensor_cal_msg = response[2]
         self.sensor_type = response[3]
         self.sensor_subtype = response[4]
-        self._flags_str = response[-1][:-1]
-        # interpretation of the flags
-        # rough trick using bin repr, maybe something more elegant exixts
-        # (bitshift, bitarray?)
-        self._flags = tuple(
-            map(lambda x: x == '1', bin(int(self._flags_str))[2:]))
-        # setting the flags; _dn are empty
-        self.is_power, self.is_energy, _d4, _d8, \
-        self.resp_settable, self.wavelength_settable, self.tau_settable, _d128, self.temperature_sens = self._flags
+        _flags_str = response[5]
 
-    @property
-    def energy(self):
-        if self.is_energy:
-            return self.values("MEAS:ENER?")
-        else:
-            raise Exception("%s is not an energy sensor" % self.sensor_name)
-            return 0
+        # interpretation of the flags, see p. 49 of the manual:
+        # https://www.thorlabs.de/_sd.cfm?fileName=17654-D02.pdf&partNumber=PM100D
 
-    @energy.setter
-    def energy(self, val):
-        raise Exception("Energy not settable!")
+        # Convert to binary representation and pad zeros to 9 bit for sensors
+        # where not all flags are present.
+        _flags_str = format(int(_flags_str), "09b")
+        # Reverse the order so it matches the flag order from the manual, i.e.
+        # from decimal values from 1 to 256.
+        _flags_str = _flags_str[::-1]
+
+        # Convert to boolean.
+        self.flags = [x == "1" for x in _flags_str]
+
+        # setting the flags; _dn are unused; decimal values as comments
+        (
+            self.is_power_sensor,  # 1
+            self.is_energy_sensor,  # 2
+            _d4,  # 4
+            _d8,  # 8
+            self.response_settable,  # 16
+            self.wavelength_settable,  # 32
+            self.tau_settable,  # 64
+            _d128,  # 128
+            self.has_temperature_sensor,  # 256
+        ) = self.flags
