@@ -10,3 +10,4 @@ This section contains specific documentation on the Rohde & Schwarz instruments 
    :maxdepth: 2
 
    sfm
+   fsl
