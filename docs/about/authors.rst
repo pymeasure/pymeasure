@@ -48,3 +48,4 @@ The following developers have contributed to the PyMeasure package:
 | Robert Eckelmann
 | Sam Condon
 | Andreas Maeder
+| Bastian Leykauf
