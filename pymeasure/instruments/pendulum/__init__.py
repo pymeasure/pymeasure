@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .sfm import SFM
-from .fsl import FSL
+from .cnt91 import CNT91
