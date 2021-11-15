@@ -110,13 +110,30 @@ class Keithley2400(Instrument, KeithleyBuffer):
     )
 
     auto_zero = Instrument.control(
-        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %d",
+        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %s",
         """ A property that controls the auto zero option. Valid values are
         True (enabled) and False (disabled) and 'ONCE' (force immediate). """,
         values={True: 1, False: 0, "ONCE": "ONCE"},
         map_values=True,
     )
 
+    line_frequency = Instrument.control(
+        ":SYST:LFR?", ":SYST:LFR %d",
+        """ An integer property that controls the line frequency in Hertz. 
+        Valid values are 50 and 60. """,
+        validator=strict_discrete_set,
+        values=[50, 60],
+        cast=int,
+    )
+        
+    line_frequency_auto = Instrument.control(
+        ":SYST:LFR:AUTO?", ":SYST:LFR:AUTO %d",
+        """ A boolean property that enables or disables auto line frequency. 
+        Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+    
     measure_concurent_functions = Instrument.control(
         ":SENS:FUNC:CONC?", ":SENS:FUNC:CONC %d",
         """ A boolean property that enables or disables the ability to measure
@@ -191,7 +208,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=[-210, 210]
     )
     voltage_nplc = Instrument.control(
-        ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
+        ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line cycles
         (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
