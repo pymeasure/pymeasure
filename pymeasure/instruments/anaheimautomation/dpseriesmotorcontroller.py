@@ -121,16 +121,16 @@ class DPSeriesMotorController(Instrument):
         "Reads the current value of the error codes register."
     )
 
-    def __init__(self, resourceName, idn, encoder=False, **kwargs):
+    def __init__(self, resourceName, idn, encoder_enabled=False, **kwargs):
         """
         Initialize communication with the motor controller with id=idn. In addition to the keyword arguments that can be
         set for the Instrument base class, this class has the following kwargs:
 
         :param idn: (int) Assigned id of the motor controller.
-        :param encoder: (bool) Flag to indicate if an encoder has been connected to the controller. 
+        :param encoder_enabled: (bool) Flag to indicate if an encoder has been connected to the controller. 
         """
         self.idn = idn
-        self._encoder_enabled = encoder 
+        self._encoder_enabled = encoder_enabled 
 
         super().__init__(
             resourceName,
@@ -159,11 +159,8 @@ class DPSeriesMotorController(Instrument):
 
         :param en: (bool) boolean value to set the _encoder_enabled flag with
         """
-        if type(en) is bool: 
-            self._encoder_enabled = en 
-        else:
-            TypeError("encoder_enabled can only be set with a boolean!")
-
+        self._encoder_enabled = bool(en)
+        
     def reset_encoder_position(self):
         """ Reset the position as counted by an externally connected encoder to 0.
         """
@@ -176,14 +173,13 @@ class DPSeriesMotorController(Instrument):
     def go(self):
         """Method that sends the G command to the controller to tell the controller to turn the 
            motor the number of steps previously set with the steps property."""
-
         self.write("G")
 
     def step(self, steps, direction):
         """Similar to the go() method, but also sets the number of steps and the direction in the same method.
         
         :param steps: Number of steps to clock
-        :param direction: Value to set on the direction property before sending the go command to the controller.
+        :param direction: Value to set on the direction property before sending the go command to the controller. Valid values of direction are those than can be set on the direction property ("CW" for clockwise or "CCW" for counter-clockwise).
         """
         self.steps = steps 
         self.direction = direction
