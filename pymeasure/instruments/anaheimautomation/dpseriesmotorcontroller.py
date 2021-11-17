@@ -22,12 +22,50 @@
 # THE SOFTWARE.
 #
 
+from enum import IntFlag
 from pyvisa.errors import VisaIOError
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
 
 
+class DPSeriesErrors(IntFlag):
+    """ IntFlag type to decode error register queries. Error codes are as follows:
+    
+        0: no error
+        1: Receive Overflow Error: serial communications had a receiving error.
+        2: Encoder Error 1: encoder needed to correct the motor position.
+        4: Encoder Error 2: encoder could not finish motor position correction.
+        8: Command Error: a bad command was sent to the controller.
+        16: Motor Error: motor speed profiles are set incorrectly.
+        32: Range Overflow Error: go to position has an overflow error.
+        64: Range Error: invalid number of commands and characters sent to the controller.
+        128: Transmit Error: Too many parameters sent back to the pc.
+        256: Mode Error: Controller is in a wrong mode.
+        512: Zero Parameters Error: Command sent to the controller that expected to see
+                                    parameters follow, but none were given.
+        1024: Busy Error: The controller is busy indexing (moving a motor).
+        2048: Memory Range Error: Specified address is out of range.
+        4096: Memory Command Error: Command pulled from memory is invalid.
+        8192: Thumbwheel Read Error: Error reading the thumbwheel, or thumbwheel is not present.
+    """
+    NO_ERR = 0
+    RCV_OVERFLOW_ERR = 1
+    ENC_ERR_1 = 2
+    ENC_ERR_2 = 4
+    CMD_ERR = 8
+    MOT_ERR = 16
+    RANGE_OVERFLOW_ERR = 32
+    RANGE_ERR = 64
+    TX_ERR = 128
+    MODE_ERR = 256
+    ZERO_PARAMS_ERR = 512
+    BUSY_ERR = 1024
+    MEM_RANGE_ERR = 2048
+    MEM_CMD_ERR = 4096
+    THBWHEEL_ERR = 8192
+
+    
 class DPSeriesMotorController(Instrument):
     """Driver to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested with the DPY50601 and DPE25601 motor controllers. 
     """
@@ -116,7 +154,8 @@ class DPSeriesMotorController(Instrument):
     
     error_reg = Instrument.measurement(
         "!",
-        """Reads the current value of the error codes register."""
+        """Reads the current value of the error codes register.""",
+        get_process=lamba err: DPSeriesErrors(int(err)),
     )
 
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
