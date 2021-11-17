@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-import asyncio
 from pyvisa.errors import VisaIOError
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
@@ -123,9 +122,14 @@ class DPSeriesMotorController(Instrument):
         values=[0, 255],
     )
 
+    busy = Instrument.measurement(
+            "VF",
+            """Query to see if the controller is currently moving a motor."""
+    )
+    
     error_reg = Instrument.measurement(
         "!",
-        "Reads the current value of the error codes register."
+        """Reads the current value of the error codes register."""
     )
 
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
@@ -167,7 +171,7 @@ class DPSeriesMotorController(Instrument):
         :param en: (bool) boolean value to set the _encoder_enabled flag with
         """
         self._encoder_enabled = bool(en)
-        
+    
     def reset_encoder_position(self):
         """ Reset the position as counted by an externally connected encoder to 0.
         """
@@ -193,20 +197,12 @@ class DPSeriesMotorController(Instrument):
         self.write("G")
 
     def slew(self, direction):
-        """Sends the slew command to the motor controller. This tells the controller to clock the stepper motor until a stop command is sent or a limit switch is reached.
+        """Sends the slew command to the motor controller. This tells the controller to move the stepper motor until a stop command is sent or a limit switch is reached.
         
         :param direction: value to set on the direction property before sending the slew command to the controller.
         """
         self.direction = direction
         self.write("S") 
-
-    async def async_step(self, steps, direction, **kwargs):
-        """ Asynchronous implementation of the step() method. This method can be awaited and will not return until the controller completes its step operation.
-        """
-        # call the normal step method #
-        self.step(steps, direction)
-        # wait until the step operation completes. # 
-        await self.wait_for_completion(**kwargs)
 
     def write(self, command):
         """Override the instrument base write method to add the motor controller's id to the command string.
@@ -215,9 +211,9 @@ class DPSeriesMotorController(Instrument):
         """
         # check if an address related command was sent. #
         if "%" in command or "~" in command:
-            self.adapter.write("@%s" % command)
+            super().write("@%s" % command)
         else:
-            self.adapter.write("@%i%s" % (self.address, command))
+            super().write("@%i%s" % (self.address, command))
 
     def values(self, command, **kwargs):
         """ Override the instrument base values method to add the motor controller's id to the command string.
@@ -226,9 +222,9 @@ class DPSeriesMotorController(Instrument):
         """
         # check if an address related command was sent. #
         if "%" in command or "~" in command:
-            vals = self.adapter.values("@%s" % command, **kwargs)
+            vals = super().values("@%s" % command, **kwargs)
         else:
-            vals = self.adapter.values("@%i%s" % (self.address, command))
+            vals = super().values("@%i%s" % (self.address, command))
 
         return vals
     
@@ -239,31 +235,11 @@ class DPSeriesMotorController(Instrument):
         """
         # check if an address related command was sent. #
         if "%" in command or "~" in command:
-            val = self.adapter.ask("@%s" % command, **kwargs)
+            val = super().ask("@%s" % command, **kwargs)
         else:
-            val = self.adapter.ask("@%i%s" % (self.address, command))
+            val = super().ask("@%i%s" % (self.address, command))
 
         return val
-    
-    async def wait_for_completion(self, interval=0.5, threshold=3):
-        """ Query the motor controller's step (or encoder) position and only return when inactivity is detected. Inactivity is 
-            defined as when the previous queried position and current queried position match for "threshold" number of times.
-        
-        :param interval: (float) duration in seconds between controller position queries
-        :param threshold: (int) number of times that the previous and current position must match before returning. 
-        """
-        pos_matches = 0
-        prev_pos = None 
-        while pos_matches < threshold:
-            if self._encoder_enabled:
-                pos = self.encoder_position
-            else:
-                pos = self.position
-             
-            if pos == prev_pos:
-                pos_matches += 1
 
-            prev_pos = pos 
-            await asyncio.sleep(interval)
 
 
