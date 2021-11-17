@@ -26,13 +26,20 @@ import asyncio
 from pyvisa.errors import VisaIOError
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
 
 
 class DPSeriesMotorController(Instrument):
     """Driver to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested with the DPY50601 and DPE25601 motor controllers. 
     """
 
+    address = Instrument.control(
+        "%", "~%i",
+        """Integer property representing the address that the motor controller uses for serial communications.""",
+        validator=strict_range,
+        values=[0, 99],
+    )
+    
     basespeed = Instrument.control(
         "VB", "B%i", 
         """Integer property that represents the motor controller's starting/homing speed. This property can be set.""",
@@ -121,15 +128,15 @@ class DPSeriesMotorController(Instrument):
         "Reads the current value of the error codes register."
     )
 
-    def __init__(self, resourceName, idn, encoder_enabled=False, **kwargs):
+    def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
         """
         Initialize communication with the motor controller with id=idn. In addition to the keyword arguments that can be
         set for the Instrument base class, this class has the following kwargs:
 
-        :param idn: (int) Assigned id of the motor controller.
+        :param address: (int) Address that the motor controller uses for serial communiations.
         :param encoder_enabled: (bool) Flag to indicate if an encoder has been connected to the controller. 
         """
-        self.idn = idn
+        self._address = address
         self._encoder_enabled = encoder_enabled 
 
         super().__init__(
@@ -144,7 +151,7 @@ class DPSeriesMotorController(Instrument):
         
         if isinstance(self.adapter, VISAAdapter):
             self.adapter.connection.baud_rate = 38400
-
+    
     @property
     def encoder_enabled(self):
         """
@@ -206,22 +213,38 @@ class DPSeriesMotorController(Instrument):
         
         :param command: command string to be sent to the motor controller.
         """
-        self.adapter.write("@{}".format(self.idn) + command)
+        # check if an address related command was sent. #
+        if "%" in command or "~" in command:
+            self.adapter.write("@%s" % command)
+        else:
+            self.adapter.write("@%i%s" % (self.address, command))
 
     def values(self, command, **kwargs):
         """ Override the instrument base values method to add the motor controller's id to the command string.
         
         :param command: command string to be sent to the motor controller.
         """
-        return self.adapter.values("@{}".format(self.idn) + command, **kwargs)
-        
+        # check if an address related command was sent. #
+        if "%" in command or "~" in command:
+            vals = self.adapter.values("@%s" % command, **kwargs)
+        else:
+            vals = self.adapter.values("@%i%s" % (self.address, command))
+
+        return vals
+    
     def ask(self, command):
         """ Override the instrument base ask method to add the motor controller's id to the command string.
 
         :param command: command string to be sent to the instrument
         """
-        return self.adapter.ask("@{}".format(self.idn) + command)
-   
+        # check if an address related command was sent. #
+        if "%" in command or "~" in command:
+            val = self.adapter.ask("@%s" % command, **kwargs)
+        else:
+            val = self.adapter.ask("@%i%s" % (self.address, command))
+
+        return val
+    
     async def wait_for_completion(self, interval=0.5, threshold=3):
         """ Query the motor controller's step (or encoder) position and only return when inactivity is detected. Inactivity is 
             defined as when the previous queried position and current queried position match for "threshold" number of times.
