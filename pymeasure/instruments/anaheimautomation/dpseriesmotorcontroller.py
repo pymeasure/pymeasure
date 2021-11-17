@@ -155,7 +155,7 @@ class DPSeriesMotorController(Instrument):
     error_reg = Instrument.measurement(
         "!",
         """Reads the current value of the error codes register.""",
-        get_process=lamba err: DPSeriesErrors(int(err)),
+        get_process=lambda err: DPSeriesErrors(int(err)),
     )
 
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
