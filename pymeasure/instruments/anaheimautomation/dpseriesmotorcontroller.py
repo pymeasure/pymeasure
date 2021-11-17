@@ -69,19 +69,6 @@ class DPSeriesMotorController(Instrument):
         values=[0, 8388607],
     )
 
-    position = Instrument.control(
-       "VZ", "Z%i",
-       """An integer property that represents the step position as seen by the motor controller. This property can be set.""",
-       validator=truncated_range,
-       values=[-8388607, 8388607],
-    ) 
-
-    encoder_position = Instrument.measurement(
-        "VEP", 
-        """An integer property that represents the step position as counted by an externally connected encoder. This property cannot be set, but can be 
-        reset to 0 using the reset_encoder_position() method.""",
-    )
-
     encoder_autocorrect = Instrument.control(
         "VEA", "EA%i",
         """A boolean property to enable or disable the encoder auto correct function. This property can be set.""",
@@ -172,10 +159,47 @@ class DPSeriesMotorController(Instrument):
         """
         self._encoder_enabled = bool(en)
     
-    def reset_encoder_position(self):
-        """ Reset the position as counted by an externally connected encoder to 0.
+    @property
+    def step_position(self):
         """
+        Return the value of the motor position measured in steps counted by the motor controller or, if encoder_enabled is set, return the
+        steps counted by an externally connected encoder.
+        """
+        if self._encoder_enabled:
+            pos = self.ask("VEP")
+        else:
+            pos = self.ask("VZ")    
+        return pos
+    
+    @property
+    def absolute_position(self):
+        """
+        Return the absolute position of the motor in units determined by the steps_to_position() method.
+        """
+        step_pos = self.step_position
+        return self.steps_to_position(step_pos)
+    
+    def position_to_steps(self, pos):
+        """ Convert an absolute position to a number of steps to move. This must be implemented in subclasses.
+        
+        :param pos: Absolute position in the units determined by the subclassed position_to_steps() method.
+        """
+        raise NotImplementedError("position_to_steps() must be implemented in subclasses!")   
+    
+    def steps_to_position(self, steps):
+        """ Convert a position measured in steps to an absolute position.
+        
+        :param steps: Position in steps to be converted to an absolute position.
+        """
+        raise NotImplementedError("steps_to_position() must be implemented in subclasses!")
+    
+    def reset_position(self):
+        """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
+        """
+        # reset encoder recorded position #
         self.write("ET")
+        # reset motor recorded position #
+        self.write("Z0")
 
     def stop(self):
         """Method that stops all motion on the motor controller."""
@@ -203,7 +227,7 @@ class DPSeriesMotorController(Instrument):
         """
         self.direction = direction
         self.write("S") 
-
+        
     def write(self, command):
         """Override the instrument base write method to add the motor controller's id to the command string.
         
