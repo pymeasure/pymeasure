@@ -30,6 +30,9 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
 
 
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
 class DPSeriesErrors(IntFlag):
     """ IntFlag type to decode error register queries. Error codes are as follows:
     
@@ -166,7 +169,7 @@ class DPSeriesMotorController(Instrument):
         """
         current_errors = self.error_reg
         if current_errors != 0:
-            log.error("DP-Series motor controller error detected: %s", % current_errors)
+            logging.error("DP-Series motor controller error detected: %s" % current_errors)
         return current_errors
     
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
@@ -299,7 +302,23 @@ class DPSeriesMotorController(Instrument):
         """
         self.direction = direction
         self.write("S") 
+    
+    def home(self, home_mode):
+        """ Send command to the motor controller to 'home' the motor.
         
+        :param home_mode: 0 or 1 specifying which homing mode to run.
+                          0:
+                              DP series controller moves motor until a soft limit is reached, then ramp down to base speed. Motion will continue until a home limit is reached.
+                          
+                          1: 
+                              DP series controller moves until a limit is reached, then ramps down to base speed, changes direction and runs until the limit is released.
+        """
+        hm = int(home_mode)
+        if hm == 0 or hm == 1:
+            self.write("H%i" % hm)
+        else:
+            raise ValueError("Invalid home mode %i specified!" % hm)
+    
     def write(self, command):
         """Override the instrument base write method to add the motor controller's id to the command string.
         
