@@ -293,7 +293,7 @@ class DPSeriesMotorController(Instrument):
         """
         self.steps = steps 
         self.direction = direction
-        self.write("G")
+        self.go()
         
     def slew(self, direction):
         """Sends the slew command to the motor controller. This tells the controller to move the stepper motor until a stop command is sent or a limit switch is reached.
