@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import logging
 from enum import IntFlag
 from pyvisa.errors import VisaIOError
 from pymeasure.adapters import VISAAdapter
@@ -106,7 +107,7 @@ class DPSeriesMotorController(Instrument):
         validator=truncated_range,
         values=[0, 8388607],
     )
-
+    
     encoder_autocorrect = Instrument.control(
         "VEA", "EA%i",
         """A boolean property to enable or disable the encoder auto correct function. This property can be set.""",
@@ -158,6 +159,16 @@ class DPSeriesMotorController(Instrument):
         get_process=lambda err: DPSeriesErrors(int(err)),
     )
 
+    def check_errors(self):
+        """ Method to read the error codes register and log when an error is detected.
+        
+        :return error_code: one byte with the error codes register contents
+        """
+        current_errors = self.error_reg
+        if current_errors != 0:
+            log.error("DP-Series motor controller error detected: %s", % current_errors)
+        return current_errors
+    
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
         """
         Initialize communication with the motor controller with id=idn. In addition to the keyword arguments that can be
@@ -210,22 +221,44 @@ class DPSeriesMotorController(Instrument):
             pos = self.ask("VZ")    
         return pos
     
+    @step_position.setter
+    def step_position(self, pos):
+        """ Sends command to the motor controller to move to the desired step position. Note that in DP series controller instrument manuals, this property corresponds to the 'absolute position' command. In this driver, the `absolute_position` property implements a conversion between steps to absolute units whereas the DP series manuals refer to `absolute position` as measured in steps.
+        """
+        step_pos = int(pos)
+        if -8388607 < step_pos < 8388607:
+            self.write("P%i" % step_pos)
+            self.go()
+        else:
+            raise ValueError("Provided step position out of valid range!")
+    
     @property
     def absolute_position(self):
         """
         Return the absolute position of the motor in units determined by the steps_to_position() method.
         """
         step_pos = self.step_position
-        return self.steps_to_position(step_pos)
+        return self.steps_to_absolute(step_pos)
     
-    def position_to_steps(self, pos):
+    @absolute_position.setter
+    def absolute_position(self, abs_pos):
+        """ 
+        Move the motor to the absolute position provided. Note that the absolute_to_steps()
+        method must be implemented in a subclass for this to work.
+        
+        :param abs_pos: absolute position in units determined by the absolute_to_steps() method.
+        """
+        steps_pos = self.absolute_to_steps(abs_pos)
+        self.step_position = steps_pos
+    
+    def absolute_to_steps(self, pos):
         """ Convert an absolute position to a number of steps to move. This must be implemented in subclasses.
         
         :param pos: Absolute position in the units determined by the subclassed position_to_steps() method.
         """
-        raise NotImplementedError("position_to_steps() must be implemented in subclasses!")   
+        raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")   
     
-    def steps_to_position(self, steps):
+    def steps_to_absolute(self, steps):
         """ Convert a position measured in steps to an absolute position.
         
         :param steps: Position in steps to be converted to an absolute position.
@@ -258,7 +291,7 @@ class DPSeriesMotorController(Instrument):
         self.steps = steps 
         self.direction = direction
         self.write("G")
-
+        
     def slew(self, direction):
         """Sends the slew command to the motor controller. This tells the controller to move the stepper motor until a stop command is sent or a limit switch is reached.
         
