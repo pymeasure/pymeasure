@@ -23,8 +23,8 @@
 #
 
 import logging
+from time import sleep
 from enum import IntFlag
-from pyvisa.errors import VisaIOError
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
@@ -32,6 +32,7 @@ from pymeasure.instruments.validators import strict_range, truncated_range, stri
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
 
 class DPSeriesErrors(IntFlag):
     """ IntFlag type to decode error register queries. Error codes are as follows:
@@ -71,7 +72,8 @@ class DPSeriesErrors(IntFlag):
 
     
 class DPSeriesMotorController(Instrument):
-    """Driver to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested with the DPY50601 and DPE25601 motor controllers. 
+    """Driver to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested with
+       the DPY50601 and DPE25601 motor controllers.
     """
 
     address = Instrument.control(
@@ -90,14 +92,17 @@ class DPSeriesMotorController(Instrument):
     
     maxspeed = Instrument.control(
         "VM", "M%i", 
-        """Integer property that represents the motor controller's maximum (running) speed. This property can be set.""",
+        """Integer property that represents the motor controller's maximum (running) speed. 
+           This property can be set.""",
         validator=truncated_range,
         values=[1, 50000],
     )
 
     direction = Instrument.control(
         "V+", "%s",
-        """A string property that represents the direction in which the stepper motor will rotate upon subsequent step commands. This property can be set. 'CW' corresponds to clockwise rotation and 'CCW' corresponds to counter-clockwise rotation.""",
+        """A string property that represents the direction in which the stepper motor will rotate upon subsequent 
+           step commands. This property can be set. 'CW' corresponds to clockwise rotation and 'CCW' corresponds to 
+           counter-clockwise rotation.""",
         map_values=True, 
         validator=strict_discrete_set,
         values={"CW" : "+", "CCW" : "-"},
@@ -106,7 +111,8 @@ class DPSeriesMotorController(Instrument):
 
     steps = Instrument.control(
         "VN", "N%i",
-        """An integer property that represents the number of steps the motor controller will run upon the next 'G' (go) command that is sent to the controller. This property can be set.""",
+        """An integer property that represents the number of steps the motor controller will run upon the next 'G' (go) 
+           command that is sent to the controller. This property can be set.""",
         validator=truncated_range,
         values=[0, 8388607],
     )
@@ -130,7 +136,8 @@ class DPSeriesMotorController(Instrument):
 
     encoder_motor_ratio = Instrument.control(
         "VEM", "EM%i",
-        """An integer property that represents the ratio of the number of encoder pulses per motor step. This property can be set.""",
+        """An integer property that represents the ratio of the number of encoder pulses per motor step. 
+           This property can be set.""",
         validator=truncated_range,
         values=[1, 255],
     )
@@ -205,8 +212,8 @@ class DPSeriesMotorController(Instrument):
 
     @encoder_enabled.setter
     def encoder_enabled(self, en):
-        """ Set the value of the _encoder_enabled flag. When set, asynchronous coroutine methods like step_async() will query
-            the "encoder_position" property instead of the "position" property.
+        """ Set the value of the _encoder_enabled flag. When set, asynchronous coroutine methods like step_async() will
+            query the "encoder_position" property instead of the "position" property.
 
         :param en: (bool) boolean value to set the _encoder_enabled flag with
         """
@@ -215,8 +222,8 @@ class DPSeriesMotorController(Instrument):
     @property
     def step_position(self):
         """
-        Return the value of the motor position measured in steps counted by the motor controller or, if encoder_enabled is set, return the
-        steps counted by an externally connected encoder.
+        Return the value of the motor position measured in steps counted by the motor controller or, if encoder_enabled
+        is set, return the steps counted by an externally connected encoder.
         """
         if self._encoder_enabled:
             pos = self.ask("VEP")
@@ -226,7 +233,10 @@ class DPSeriesMotorController(Instrument):
     
     @step_position.setter
     def step_position(self, pos):
-        """ Sends command to the motor controller to move to the desired step position. Note that in DP series controller instrument manuals, this property corresponds to the 'absolute position' command. In this driver, the `absolute_position` property implements a conversion between steps to absolute units whereas the DP series manuals refer to `absolute position` as measured in steps.
+        """ Sends command to the motor controller to move to the desired step position. Note that in DP series
+            controller instrument manuals, this property corresponds to the 'absolute position' command. In this driver,
+            the `absolute_position` property implements a conversion between steps to absolute units whereas the DP
+            series manuals refer to `absolute position` as measured in steps.
         """
         step_pos = int(pos)
         if -8388607 < step_pos < 8388607:
@@ -289,14 +299,17 @@ class DPSeriesMotorController(Instrument):
         """Similar to the go() method, but also sets the number of steps and the direction in the same method.
         
         :param steps: Number of steps to clock
-        :param direction: Value to set on the direction property before sending the go command to the controller. Valid values of direction are those than can be set on the direction property ("CW" for clockwise or "CCW" for counter-clockwise).
+        :param direction: Value to set on the direction property before sending the go command to the controller.
+                          Valid values of direction are those than can be set on the direction property ("CW" for
+                          clockwise or "CCW" for counter-clockwise).
         """
         self.steps = steps 
         self.direction = direction
         self.go()
         
     def slew(self, direction):
-        """Sends the slew command to the motor controller. This tells the controller to move the stepper motor until a stop command is sent or a limit switch is reached.
+        """Sends the slew command to the motor controller. This tells the controller to move the stepper motor until a
+           stop command is sent or a limit switch is reached.
         
         :param direction: value to set on the direction property before sending the slew command to the controller.
         """
@@ -308,10 +321,12 @@ class DPSeriesMotorController(Instrument):
         
         :param home_mode: 0 or 1 specifying which homing mode to run.
                           0:
-                              DP series controller moves motor until a soft limit is reached, then ramp down to base speed. Motion will continue until a home limit is reached.
+                              DP series controller moves motor until a soft limit is reached, then ramp down to base
+                              speed. Motion will continue until a home limit is reached.
                           
                           1: 
-                              DP series controller moves until a limit is reached, then ramps down to base speed, changes direction and runs until the limit is released.
+                              DP series controller moves until a limit is reached, then ramps down to base speed,
+                              changes direction and runs until the limit is released.
         """
         hm = int(home_mode)
         if hm == 0 or hm == 1:
@@ -356,5 +371,11 @@ class DPSeriesMotorController(Instrument):
 
         return val
 
+    def wait_for_completion(self, interval=0.5):
+        """ Block until the controller is not "busy"
 
-
+        :param interval: (float) seconds between queries to the "busy" flag.
+        :return: None
+        """
+        while self.busy:
+            sleep(interval)
