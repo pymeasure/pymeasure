@@ -350,7 +350,7 @@ class DPSeriesMotorController(Instrument):
         """
         # check if an address related command was sent. #
         if "%" in command or "~" in command:
-            val = super().ask("@%s" % command, **kwargs)
+            val = super().ask("@%s" % command)
         else:
             val = super().ask("@%i%s" % (self.address, command))
 
