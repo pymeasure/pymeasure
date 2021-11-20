@@ -229,7 +229,7 @@ class DPSeriesMotorController(Instrument):
             pos = self.ask("VEP")
         else:
             pos = self.ask("VZ")    
-        return pos
+        return int(pos)
     
     @step_position.setter
     def step_position(self, pos):
@@ -372,7 +372,7 @@ class DPSeriesMotorController(Instrument):
         return val
 
     def wait_for_completion(self, interval=0.5):
-        """ Block until the controller is not "busy"
+        """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)
 
         :param interval: (float) seconds between queries to the "busy" flag.
         :return: None
