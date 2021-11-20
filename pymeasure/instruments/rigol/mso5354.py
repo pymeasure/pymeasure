@@ -330,6 +330,10 @@ class RigolMSO5354(Instrument):
         This is the same as pressing the Single key on the front panel. """
         self.write(":single")
 
+    ############
+    # Waveform #
+    ############
+
     waveform_source = Instrument.control(
         ":waveform:source?", ":waveform:source %s",
         """ A string parameter that selects the analog channel, function, or reference waveform 
@@ -415,7 +419,85 @@ class RigolMSO5354(Instrument):
 
         return data
 
+    ########
+    # Mask #
+    ########
 
+    mask_enable = Instrument.control(
+        "MASK:ENABle?", "MASK:ENABle %d",
+        """ A boolean parameter that controls whether or not the mask is enabled.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    mask_source = Instrument.control(
+        "MASK:SOURce?", "MASK:SOURce %s",
+        """ An integer parameter that sets the channel source for the mask.""",
+        validator=strict_discrete_set,
+        values={1: 'CHAN1', 2: 'CHAN2', 3: 'CHAN3', 4: 'CHAN4'},
+        map_values=True
+    )
+
+    mask_operate = Instrument.control(
+        "MASK:OPERate?", "MASK:OPERate %s",
+        """ A boolean control that turns the mask test condition on/off.""",
+        validator=strict_discrete_set,
+        values={True: 'RUN', False: 'STOP'},
+        map_values=True
+    )
+
+    mask_mdisplay = Instrument.control(
+        "MASK:MDISplay?", "MASK:MDISplay %d",
+        """ A boolean parameter that controls whether or not the mask statistics window is displayed.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    mask_x = Instrument.control(
+        "MASK:X?", "MASK:X %g",
+        """ A float parameter controlling the horizontal location of the pass/fail test mask.
+        Can be anywhere from 0.01 div to 2 divs. Default is 0.24 div""",
+        validator=strict_range,
+        values=[0.01, 2],
+    )
+
+    mask_y= Instrument.control(
+        "MASK:Y?", "MASK:Y %g",
+        """ A float parameter controlling the vertical location of the pass/fail test mask.
+        Can be anywhere from 0.04 div to 2 divs. Default is 0.48 div.""",
+        validator=strict_range,
+        values=[0.04, 2]
+    )
+
+    def create_mask(self, source, x=0.24, y=0.48):
+        """
+        Create the mask with the desire parameters
+        """
+        if self.trigger_status != 'STOP':
+            self.stop()
+        self.mask_operate = False
+        self.mask_enable = True
+        self.mask_source = source
+        self.mask_x = x
+        self.mask_y = y
+        self.write(':MASK:CREate')
+        self.mask_operate = True
+        self.mask_mdisplay = True
+
+    def disable_mask(self):
+        self.mask_operate = False
+        self.mask_enable = False
+
+
+
+    def reset_mask_stats(self):
+        """
+        Resets the number of frames that passed and failed the pass/fail test, as well as the total
+        number of frames.
+        """
+        self.write(':MASK:RESet')
 
     ################
     # System Setup #
