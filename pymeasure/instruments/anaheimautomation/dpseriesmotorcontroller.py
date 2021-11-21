@@ -319,14 +319,10 @@ class DPSeriesMotorController(Instrument):
     def home(self, home_mode):
         """ Send command to the motor controller to 'home' the motor.
         
-        :param home_mode: 0 or 1 specifying which homing mode to run.
-                          0:
-                              DP series controller moves motor until a soft limit is reached, then ramp down to base
-                              speed. Motion will continue until a home limit is reached.
-                          
-                          1: 
-                              DP series controller moves until a limit is reached, then ramps down to base speed,
-                              changes direction and runs until the limit is released.
+        :param home_mode: 0 or 1 specifying which homing mode to run. 0 will perform a homing operation where the controller
+                          moves the motor until a soft limit is reached, then will ramp down to base speed and continue motion
+                          until a home limit is reached. In mode 1, the controller will move the motor until a limit is 
+                          reached, then will ramp down to base speed, change direction, and run until the limit is released.
         """
         hm = int(home_mode)
         if hm == 0 or hm == 1:
