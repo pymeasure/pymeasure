@@ -45,7 +45,7 @@ class Channel():
             strict_discrete_set, string_validator
         ),
         values=[["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
-                 "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"], ],
+                 "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER", "EMEM"], ],
     )
 
     output_impedance = Instrument.control( # this one is output rather than source for some reason???
@@ -157,7 +157,7 @@ class Channel():
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values(":SOURce%d:%s" % (
+        return self.instrument.values("SOURce%d:%s" % (
             self.number, command), **kwargs)
 
     def ask(self, command):
@@ -185,6 +185,13 @@ class Channel():
 
 class BN_A2255(Instrument):
     """Represents the Berkeley Nucleonics A2255 Arbitrary Waveform Generator."""
+
+    burst_state = Instrument.control(
+        "BURS:STAT?", "BURS:STAT %s",
+        """Sets the state of burst mode to either ON or OFF.""",
+        validator=strict_discrete_set,
+        values=['ON', 'OFF']
+    )
 
     burst_n_cycles = Instrument.control(
         "BURS:NCYC?", "BURS:NCYC %d",
@@ -349,22 +356,12 @@ class BN_A2255(Instrument):
     def stop_awg(self):
         self.write('STAT OFF')
 
-    def transfer_array(self, array, filename):
+    def transfer_array(self, array):
         """
         Takes an array and saves it to the Edit Memory (EMEM) of the A2255.
         """
-        to_transfer = np.array(array)
-        to_transferstr = ''
-        for i, val in enumerate(to_transfer):
-            if i == 0:
-                to_transferstr = to_transferstr + str(val)
-            else:
-                to_transferstr = to_transferstr + '\n' + str(val)
-        l = len(to_transferstr)
-        to_transferstr = '#' + str(len(str(l))) + str(l) + to_transferstr
-        default_path = self.default_dir + filename
-        #self.write(f'DATA:DATA EMEM,"{default_path}"')
-        self.write('DATA:DATA EMEM,' + to_transferstr)
+        array = np.array(array)
+        self.adapter.write_binary_values("DATA:DATA EMEM,",array,datatype='d',is_big_endian=True)
 
     def transfer_and_load(self, array, wfname):
         """
