@@ -409,7 +409,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
                         item.update_data()
                     else:
                         item.hide()
-        
+                        item.update_data()
     def load(self, curve):
         # Add new set of curves
         checked = self.columns_y.checked_items()
@@ -420,7 +420,8 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             self.plot.addItem(i_curve)
             if not i_curve.y in checked:
                 i_curve.hide()
-
+                i_curve.update_data()
+                
     def remove(self, curve):
         """ Remove curve from widget """
         for i_curve in curve.values():
@@ -764,8 +765,10 @@ class ResultsDialog(QtGui.QFileDialog):
             for i_curve in curve.values():
                 checked = self.plot_widget.columns_y.checked_items()
                 self.plot.addItem(i_curve)
+                i_curve.update_data()
                 if not i_curve.y in checked:
                     i_curve.hide()
+                    i_curve.update_data()
 
             self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():
