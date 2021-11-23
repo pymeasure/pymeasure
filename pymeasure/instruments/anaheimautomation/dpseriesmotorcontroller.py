@@ -159,8 +159,8 @@ class DPSeriesMotorController(Instrument):
     )
 
     busy = Instrument.measurement(
-            "VF",
-            """Query to see if the controller is currently moving a motor."""
+        "VF",
+        """Query to see if the controller is currently moving a motor."""
     )
     
     error_reg = Instrument.measurement(
