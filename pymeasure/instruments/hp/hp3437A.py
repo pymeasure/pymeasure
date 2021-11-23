@@ -64,10 +64,11 @@ class Status_bits(ctypes.BigEndianStructure):
     _pack_ = 1
     _fields_ = [
         # Byte 1: Function, Range and Number of Digits
-        ("range", c_uint8, 2),  # bit 0..1
-        ("trigger", c_uint8, 2),  # bit 2..3
-        ("SRQ", c_uint8, 3),  # bit 4..6
         ("Format", c_uint8, 1),  # Bit 7
+        ("SRQ", c_uint8, 3),  # bit 4..6
+        ("trigger", c_uint8, 2),  # bit 2..3
+        ("range", c_uint8, 2),  # bit 0..1
+        
         # Byte 2 & 3:
         ("Number", c_uint16, 16),
         # Byte 2:
@@ -152,9 +153,9 @@ class HP3437A(Instrument):
         :return current_status: a byte array representing the instrument status
         :rtype current_status: bytes
         """
-        # self.write("B")
-        # current_status = self.adapter.read_bytes(7)
-        current_status = self.adapter.read()
+        self.write("B")
+        current_status = self.adapter.read_bytes(7)
+        # current_status = self.adapter.read()
 
         return current_status
 
@@ -204,23 +205,23 @@ class HP3437A(Instrument):
         ret_val = Status(Status_bytes(*status_bytes))
         if field is None:
             return ret_val.b
-        elif field == "SRQ":
+
+        if field == "SRQ":
             return cls.SRQ(getattr(ret_val.b, field))
-        elif field == "Number":
+
+        if field == "Number":
             bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
             print(bcd_nr)
-            nr = cls.convert_from_bcd(bcd_nr)
+            return cls.convert_from_bcd(bcd_nr)
 
-            return nr
-        elif field == "Delay":
+        if field == "Delay":
             bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
             print(bcd_delay)
             delay_value = (
                 cls.convert_from_bcd(bcd_delay) / 1.0e7
             )  # delay resolution is 100ns
             return delay_value
-        else:
-            return getattr(ret_val.b, field)
+        return getattr(ret_val.b, field)
 
     @staticmethod
     def decode_range(status_bytes):
@@ -233,7 +234,8 @@ class HP3437A(Instrument):
         """
         cur_stat = Status(Status_bytes(*status_bytes))
         range_undecoded = cur_stat.b.range
-        cur_range = math.pow(10, (range_undecoded-2))
+        print(range_undecoded)
+        cur_range = math.pow(10, (range_undecoded - 1))  # TODO verify on actual system
         return cur_range
 
     @staticmethod
@@ -276,29 +278,33 @@ class HP3437A(Instrument):
     #         log.error("HP3437A error detected: %s", self.ERRORS(current_errors))
     #     return self.ERRORS(current_errors)
 
-    # measure = Instrument.measurement(
-    #     MODES["Rext"],
-    #     """
-    #     Returns the measured value(s) for the conditions set.
-    #     """,
-    # )
-
-    # TODO Add doc string
-
     @property
-    def ascii_comm(self):
-        return self.decode_status(self.get_status(), "Format")
+    def talk_ascii(self):
+        """Return True if the instrument is set to ASCII communciation,
+        this property can be set.
 
-    @ascii_comm.setter
-    def ascii_comm(self, value):
+        _Note:_
+
+        ASCII communciation is slower then the (packed) BCD based communication,
+        this may cause problems with measurment with short delay values.
+
+        """
+        return self.decode_status(self.get_status(), "Format")-1
+
+    @talk_ascii.setter
+    def talk_ascii(self, value):
         if value is True:
-            self.write("F0")
-        else:
             self.write("F1")
+        else:
+            self.write("F2")
 
     @property
     def delay(self):
-        # TODO Add doc string
+        """Return the current value for the delay between two measurements programmed in the unit.
+        This value can be set,
+        valid range: 100ns - 0.999999s
+
+        """
         delay = self.decode_status(self.get_status(), "Delay")
         return delay
 
@@ -309,9 +315,13 @@ class HP3437A(Instrument):
         )
         self.write(delay_str)
 
-    # TODO Add doc string
     @property
     def number_readings(self):
+        """Return current value for the number of consecutive measurements programmed.
+        This value can be set,
+        valid range: 0 - 9999
+
+        """
         number = self.decode_status(self.get_status(), "Number")
         return number
 
@@ -320,9 +330,16 @@ class HP3437A(Instrument):
         number_str = "N" + str(strict_range(value, [0, 9999])) + "S"
         self.write(number_str)
 
-    # TODO Add doc string
     @property
     def range(self):
+        """Return the current measurement voltage range.
+        This value can be set,
+        valid values: 0.1,1,10 (V)
+
+        _Note:_
+
+        THis instrument does not have autorange functionality
+        """
         range_decoded = self.decode_range(self.get_status())
         return range_decoded
 
