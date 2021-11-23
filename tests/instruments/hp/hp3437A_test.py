@@ -5,13 +5,16 @@ Created on Tue Nov 23 13:19:45 2021
 
 @author: robby
 """
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments.hp import HP3437A
-from pymeasure.adapters import FakeAdapter
+# from pymeasure.adapters import FakeAdapter
 
-fa = FakeAdapter()
+# fa = FakeAdapter()
 
-svm = HP3437A(fa)
+svm = HP3437A('GPIB0::24')
 # # N
 # svm.number_readings = 0
 # print(f"Number of readings set-string {fa.read()}")
@@ -68,19 +71,23 @@ svm = HP3437A(fa)
 # print(f"SRQ set-string {fa.read()}")
 # # svm.SRQ_mask = 8
 # # print(f"SRQ set-string {fa.read()}")
+# 
+# fa._buffer = b'\xFF\xFF\xFF\xFF\xFF\xFF\xFF'
+# print(svm.status)
+# fa._buffer = b'\xFF\x00\x01\x00\x12\x34\x56'
+# print(svm.delay)
+# fa._buffer = b'\xFF\x12\x34\x01\x23\x45\x67'
+# print(svm.delay)
+# fa._buffer = b'\xFF\x12\x34\x01\x29\x39\x49'
+# print(svm.number_readings)
 
-fa._buffer = b'\xFF\xFF\xFF\xFF\xFF\xFF\xFF'
-print(svm.status)
-fa._buffer = b'\xFF\x00\x01\x00\x12\x34\x56'
-print(svm.delay)
-fa._buffer = b'\xFF\x12\x34\x01\x23\x45\x67'
-print(svm.delay)
-fa._buffer = b'\xFF\x12\x34\x01\x29\x39\x49'
-print(svm.number_readings)
-
-svm.range= 0.1
-print(f"Range set-string {fa.read()}")
-svm.range= 1
-print(f"Range set-string {fa.read()}")
-svm.range= 10
-print(f"Range set-string {fa.read()}")
+# svm.range= 0.1
+# print(f"Range set-string {fa.read()}")
+# svm.range= 1
+# print(f"Range set-string {fa.read()}")
+# svm.range= 10
+# print(f"Range set-string {fa.read()}")
+# fa._buffer = b'\xAA\x12\x34\x01\x29\x39\x49'
+# print(f"Range readback {svm.range}")
+# fa._buffer = b'\xAA\x12\x34\x01\x29\x39\x49'
+# print(f"Trigger readback {svm.trigger}")
