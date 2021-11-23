@@ -72,8 +72,8 @@ class DPSeriesErrors(IntFlag):
 
     
 class DPSeriesMotorController(Instrument):
-    """Driver to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested with
-       the DPY50601 and DPE25601 motor controllers.
+    """Base class to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested
+       with the DPY50601 and DPE25601 motor controllers.
     """
 
     address = Instrument.control(
@@ -81,6 +81,7 @@ class DPSeriesMotorController(Instrument):
         """Integer property representing the address that the motor controller uses for serial communications.""",
         validator=strict_range,
         values=[0, 99],
+        get_process=lambda addr: int(addr),
     )
     
     basespeed = Instrument.control(
@@ -88,6 +89,7 @@ class DPSeriesMotorController(Instrument):
         """Integer property that represents the motor controller's starting/homing speed. This property can be set.""",
         validator=truncated_range,
         values=[1, 5000],
+        get_process=lambda bs: int(bs)
     )
     
     maxspeed = Instrument.control(
@@ -96,6 +98,7 @@ class DPSeriesMotorController(Instrument):
            This property can be set.""",
         validator=truncated_range,
         values=[1, 50000],
+        get_process=lambda  ms: int(ms)
     )
 
     direction = Instrument.control(
@@ -109,14 +112,6 @@ class DPSeriesMotorController(Instrument):
         get_process=lambda d: "+" if d == 1.0 else "-",
     )    
 
-    steps = Instrument.control(
-        "VN", "N%i",
-        """An integer property that represents the number of steps the motor controller will run upon the next 'G' (go) 
-           command that is sent to the controller. This property can be set.""",
-        validator=truncated_range,
-        values=[0, 8388607],
-    )
-    
     encoder_autocorrect = Instrument.control(
         "VEA", "EA%i",
         """A boolean property to enable or disable the encoder auto correct function. This property can be set.""",
@@ -128,10 +123,11 @@ class DPSeriesMotorController(Instrument):
 
     encoder_delay = Instrument.control(
         "VED", "ED%i",
-        """An integer property that represents the wait time in ms. after move is finished before
+        """An integer property that represents the wait time in ms. after a move is finished before
            the encoder is read for a potential encoder auto-correct action to take place. This property can be set.""",
         validator=truncated_range,
         values=[0, 65535], 
+        get_process=lambda encd_dly: int(encd_dly),
     )
 
     encoder_motor_ratio = Instrument.control(
@@ -140,6 +136,7 @@ class DPSeriesMotorController(Instrument):
            This property can be set.""",
         validator=truncated_range,
         values=[1, 255],
+        get_process=lambda emr: int(emr),
     )
 
     encoder_retries = Instrument.control(
@@ -148,6 +145,7 @@ class DPSeriesMotorController(Instrument):
            the encoder auto correct function before setting an error flag. This property can be set.""",
         validator=truncated_range,
         values=[0, 255],
+        get_process=lambda encd_ret: int(encd_ret),
     )
 
     encoder_window = Instrument.control(
@@ -156,6 +154,7 @@ class DPSeriesMotorController(Instrument):
            position before the encoder auto-correct function runs. This property can be set.""",
         validator=truncated_range,
         values=[0, 255],
+        get_process=lambda encd_win: int(encd_win),
     )
 
     busy = Instrument.measurement(
@@ -181,11 +180,13 @@ class DPSeriesMotorController(Instrument):
     
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
         """
-        Initialize communication with the motor controller with id=idn. In addition to the keyword arguments that can be
-        set for the Instrument base class, this class has the following kwargs:
+        Initialize communication with the motor controller with the address given by the 'address' parameter.
+        In addition to the keyword arguments that can be set for the Instrument base class, this class has the following
+        kwargs:
 
-        :param address: (int) Address that the motor controller uses for serial communiations.
-        :param encoder_enabled: (bool) Flag to indicate if an encoder has been connected to the controller. 
+        :param address: (int) Address that the motor controller uses for serial communiation.
+        :param encoder_enabled: (bool) Flag to indicate if the driver should use an encoder input to set its position
+                                 property.
         """
         self._address = address
         self._encoder_enabled = encoder_enabled 
@@ -205,25 +206,22 @@ class DPSeriesMotorController(Instrument):
     
     @property
     def encoder_enabled(self):
-        """
-        Return the value of the _encoder_enabled flag.
+        """ A boolean property to represent whether an external encoder is connected and should be used to set the
+            step_position property.
         """
         return self._encoder_enabled
 
     @encoder_enabled.setter
     def encoder_enabled(self, en):
-        """ Set the value of the _encoder_enabled flag. When set, asynchronous coroutine methods like step_async() will
-            query the "encoder_position" property instead of the "position" property.
-
-        :param en: (bool) boolean value to set the _encoder_enabled flag with
-        """
         self._encoder_enabled = bool(en)
     
     @property
     def step_position(self):
-        """
-        Return the value of the motor position measured in steps counted by the motor controller or, if encoder_enabled
-        is set, return the steps counted by an externally connected encoder.
+        """ Integer property representing the value of the motor position measured in steps counted by the motor
+            controller or, if encoder_enabled is set, the steps counted by an externally connected encoder. Note that in
+            the DP series motor controller instrument manuals, this property would be referred to as the 'absolute
+            position' while this driver implements a conversion between steps and absolute units for the `absolute
+            position` property. This property can be set.
         """
         if self._encoder_enabled:
             pos = self.ask("VEP")
@@ -233,41 +231,34 @@ class DPSeriesMotorController(Instrument):
     
     @step_position.setter
     def step_position(self, pos):
-        """ Sends command to the motor controller to move to the desired step position. Note that in DP series
-            controller instrument manuals, this property corresponds to the 'absolute position' command. In this driver,
-            the `absolute_position` property implements a conversion between steps to absolute units whereas the DP
-            series manuals refer to `absolute position` as measured in steps.
-        """
         step_pos = int(pos)
         if -8388607 < step_pos < 8388607:
             self.write("P%i" % step_pos)
-            self.go()
+            self.write("G")
         else:
             raise ValueError("Provided step position out of valid range!")
     
     @property
     def absolute_position(self):
-        """
-        Return the absolute position of the motor in units determined by the steps_to_position() method.
+        """ Float property representing the value of the motor position measured in absolute units. Note that in DP
+            series motor controller instrument manuals, `absolute position` refers to the 'step_position' property
+            rather than this property. Also note that use of this property relies on steps_to_absolute() and
+            absolute_to_steps() being implemented in a subclass. In this way, the user can define the conversion from
+            a motor step position into any desired absolute unit. Absolute units could be the position in meters of a
+            linear stage or the angular position of a gimbal mount, etc. This property can be set.
         """
         step_pos = self.step_position
         return self.steps_to_absolute(step_pos)
     
     @absolute_position.setter
     def absolute_position(self, abs_pos):
-        """ 
-        Move the motor to the absolute position provided. Note that the absolute_to_steps()
-        method must be implemented in a subclass for this to work.
-        
-        :param abs_pos: absolute position in units determined by the absolute_to_steps() method.
-        """
         steps_pos = self.absolute_to_steps(abs_pos)
         self.step_position = steps_pos
     
     def absolute_to_steps(self, pos):
         """ Convert an absolute position to a number of steps to move. This must be implemented in subclasses.
         
-        :param pos: Absolute position in the units determined by the subclassed position_to_steps() method.
+        :param pos: Absolute position in the units determined by the subclassed absolute_to_steps() method.
         """
         raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")   
     
@@ -276,7 +267,7 @@ class DPSeriesMotorController(Instrument):
         
         :param steps: Position in steps to be converted to an absolute position.
         """
-        raise NotImplementedError("steps_to_position() must be implemented in subclasses!")
+        raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
     
     def reset_position(self):
         """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
@@ -290,28 +281,11 @@ class DPSeriesMotorController(Instrument):
         """Method that stops all motion on the motor controller."""
         self.write(".")
 
-    def go(self):
-        """Method that sends the G command to the controller to tell the controller to turn the 
-           motor the number of steps previously set with the steps property."""
-        self.write("G")
+    def move(self, direction):
+        """ Move the stepper motor continuously in the given direction until a stop command is sent or a limit switch
+            is reached. This method corresponds to the 'slew' command in the DP series instrument manuals.
 
-    def step(self, steps, direction):
-        """Similar to the go() method, but also sets the number of steps and the direction in the same method.
-        
-        :param steps: Number of steps to clock
-        :param direction: Value to set on the direction property before sending the go command to the controller.
-                          Valid values of direction are those than can be set on the direction property ("CW" for
-                          clockwise or "CCW" for counter-clockwise).
-        """
-        self.steps = steps 
-        self.direction = direction
-        self.go()
-        
-    def slew(self, direction):
-        """Sends the slew command to the motor controller. This tells the controller to move the stepper motor until a
-           stop command is sent or a limit switch is reached.
-        
-        :param direction: value to set on the direction property before sending the slew command to the controller.
+        :param direction: value to set on the direction property before moving the motor.
         """
         self.direction = direction
         self.write("S") 
@@ -319,10 +293,13 @@ class DPSeriesMotorController(Instrument):
     def home(self, home_mode):
         """ Send command to the motor controller to 'home' the motor.
         
-        :param home_mode: 0 or 1 specifying which homing mode to run. 0 will perform a homing operation where the controller
-                          moves the motor until a soft limit is reached, then will ramp down to base speed and continue motion
-                          until a home limit is reached. In mode 1, the controller will move the motor until a limit is 
-                          reached, then will ramp down to base speed, change direction, and run until the limit is released.
+        :param home_mode: 0 or 1 specifying which homing mode to run.
+
+                          0 will perform a homing operation where the controller moves the motor until a soft limit is
+                          reached, then will ramp down to base speed and continue motion until a home limit is reached.
+
+                          In mode 1, the controller will move the motor until a limit is reached, then will ramp down to
+                          base speed, change direction, and run until the limit is released.
         """
         hm = int(home_mode)
         if hm == 0 or hm == 1:
@@ -331,18 +308,21 @@ class DPSeriesMotorController(Instrument):
             raise ValueError("Invalid home mode %i specified!" % hm)
     
     def write(self, command):
-        """Override the instrument base write method to add the motor controller's id to the command string.
+        """Override the instrument base write method to add the motor controller's address to the command string.
         
         :param command: command string to be sent to the motor controller.
         """
-        # check if an address related command was sent. #
-        if "%" in command or "~" in command:
-            super().write("@%s" % command)
+        # check if @ was already prepended when using say, the SerialAdapter #
+        if "@" in command:
+            cmd_str = command
+        elif "%" in command or "~" in command:
+            cmd_str = "@%s" % command
         else:
-            super().write("@%i%s" % (self.address, command))
+            cmd_str = "@%i%s" % (self.address, command)
+        super().write(cmd_str)
 
     def values(self, command, **kwargs):
-        """ Override the instrument base values method to add the motor controller's id to the command string.
+        """ Override the instrument base values method to add the motor controller's address to the command string.
         
         :param command: command string to be sent to the motor controller.
         """
@@ -355,7 +335,7 @@ class DPSeriesMotorController(Instrument):
         return vals
     
     def ask(self, command):
-        """ Override the instrument base ask method to add the motor controller's id to the command string.
+        """ Override the instrument base ask method to add the motor controller's address to the command string.
 
         :param command: command string to be sent to the instrument
         """
