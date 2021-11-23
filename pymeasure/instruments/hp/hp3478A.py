@@ -144,7 +144,7 @@ class Status(ctypes.Union):
 
 
 class HP3478A(Instrument):
-    """ Represents the Hewlett Packard 3748A 5 1/2 digit multimeter
+    """ Represents the Hewlett Packard 3478A 5 1/2 digit multimeter
     and provides a high-level interface for interacting
     with the instrument.
     """
