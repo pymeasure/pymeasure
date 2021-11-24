@@ -62,12 +62,6 @@ class Nd287(Instrument):
             **kwargs
         )
         
-        """
-        self.position = Instrument.measurement(
-            "\x1BA0200", "Read the encoder's current position.",
-            get_process=lambda p: float(p.split("\x02")[-1]),
-        )"""
-        
     @property
     def units(self):
         """ String property representing the unit of measure set on the device. Valid values are 'mm' and 'inch'
