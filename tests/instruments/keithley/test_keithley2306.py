@@ -197,7 +197,9 @@ class TestKeithley2306:
     def test_nplc(self, instr, channel, case):
         assert instr.ch(channel).nplc == 1
         instr.ch(channel).nplc = case
+        time.sleep(0.5)
         assert instr.ch(channel).nplc == case
+        instr.ch(channel).nplc == 1
 
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", AVERAGE_COUNTS)
@@ -224,6 +226,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("pulse_current_measure_enabled", BOOLEANS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_AVERAGE_COUNTS)
     def test_pulse_current_average_count(self, instr, channel, pulse_current_measure_enabled, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_average_count == 1
         instr.ch(channel).pulse_current_measure_enabled = pulse_current_measure_enabled
         if not pulse_current_measure_enabled or case <= 100:
@@ -233,6 +236,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_pulse_current_measure_enabled(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_measure_enabled
         instr.ch(channel).pulse_current_measure_enabled = case
         assert instr.ch(channel).pulse_current_measure_enabled == case
@@ -240,18 +244,15 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_MODES)
     def test_pulse_current_mode(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_mode == 'high'
         instr.ch(channel).pulse_current_mode = case
         assert instr.ch(channel).pulse_current_mode == case
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_pulse_current_time_auto(self, instr, channel):
-        instr.ch(channel).pulse_current_time_auto()
-        assert not instr.check_errors()
-
-    @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_TIMES)
     def test_pulse_current_time_high(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_time_high == 33.33333e-06
         instr.ch(channel).pulse_current_time_high = case
         assert instr.ch(channel).pulse_current_time_high == case
@@ -259,6 +260,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_TIMES)
     def test_pulse_current_time_low(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_time_low == 33.33333e-06
         instr.ch(channel).pulse_current_time_low = case
         assert instr.ch(channel).pulse_current_time_low == case
@@ -266,6 +268,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_TIMES)
     def test_pulse_current_time_average(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_time_average == 33.33333e-06
         instr.ch(channel).pulse_current_time_average = case
         assert instr.ch(channel).pulse_current_time_average == case
@@ -273,54 +276,63 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_TIMES)
     def test_pulse_current_time_digitize(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_time_digitize == 33.33333e-06
         instr.ch(channel).pulse_current_time_digitize = case
         assert instr.ch(channel).pulse_current_time_digitize == case
 
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_pulse_current_step_enabled(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert not instr.ch1.pulse_current_step_enabled
         instr.ch1.pulse_current_step_enabled = case
         assert instr.ch1.pulse_current_step_enabled == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_COUNTS)
     def test_pulse_current_step_up_count(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_up_count == 1
         instr.ch1.pulse_current_step_up_count = case
         assert instr.ch1.pulse_current_step_up_count == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_COUNTS)
     def test_pulse_current_step_down_count(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_down_count == 1
         instr.ch1.pulse_current_step_down_count = case
         assert instr.ch1.pulse_current_step_down_count == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_TIMES)
     def test_pulse_current_step_time(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_time == 200e-6
         instr.ch1.pulse_current_step_time = case
         assert instr.ch1.pulse_current_step_time == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_TIMEOUTS)
     def test_pulse_current_step_time(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_timeout == 2e-3
         instr.ch1.pulse_current_step_timeout = case
         assert instr.ch1.pulse_current_step_timeout == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_TIMEOUT_INITIALS)
     def test_pulse_current_step_time(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_timeout_initial == 2
         instr.ch1.pulse_current_step_timeout_initial = case
         assert instr.ch1.pulse_current_step_timeout_initial == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_DELAYS)
     def test_pulse_current_step_time(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_delay == 0
         instr.ch1.pulse_current_step_delay = case
         assert instr.ch1.pulse_current_step_delay == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_RANGES)
     def test_pulse_current_step_time(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_range == 5
         instr.ch1.pulse_current_step_range = case
         assert instr.ch1.pulse_current_step_range == case
@@ -329,6 +341,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("step", PULSE_CURRENT_STEP_INDICES)
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_TRIGGER_LEVELS)
     def test_pulse_current_step_time(self, instr, range, step, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step(step).trigger_level == 0.0
         if case <= range:
             instr.ch1.pulse_current_step(step).trigger_level = case
@@ -338,6 +351,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("pulse_current_measure_enabled", BOOLEANS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_TRIGGER_DELAYS)
     def test_pulse_current_trigger_delay(self, instr, channel, pulse_current_measure_enabled, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_trigger_delay == 0
         instr.ch(channel).pulse_current_measure_enabled = pulse_current_measure_enabled
         if not pulse_current_measure_enabled or case <= 0.1:
@@ -346,6 +360,7 @@ class TestKeithley2306:
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_TRIGGER_LEVEL_RANGES)
     def test_pulse_current_trigger_level_range(self, instr, case):
+        instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_trigger_level_range == 5
         instr.ch1.pulse_current_trigger_level_range = case
         assert instr.ch1.pulse_current_trigger_level_range == case
@@ -353,6 +368,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_TRIGGER_LEVELS)
     def test_pulse_current_trigger_level(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_trigger_level == 0
         instr.ch(channel).pulse_current_trigger_level = case
         assert instr.ch(channel).pulse_current_trigger_level == case
@@ -367,6 +383,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_pulse_current_search_enabled(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_search_enabled
         instr.ch(channel).pulse_current_search_enabled = case
         assert instr.ch(channel).pulse_current_search_enabled == case
@@ -374,6 +391,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_pulse_current_detect_enabled(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert not instr.ch(channel).pulse_current_detect_enabled
         instr.ch(channel).pulse_current_detect_enabled = case
         assert instr.ch(channel).pulse_current_detect_enabled == case
@@ -381,6 +399,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", PULSE_CURRENT_TIMEOUTS)
     def test_pulse_current_timeouts(self, instr, channel, case):
+        instr.ch(channel).pulse_current_fast_enabled = True
         assert instr.ch(channel).pulse_current_timeout == 1
         instr.ch(channel).pulse_current_timeout = case
         assert instr.ch(channel).pulse_current_timeout == case
@@ -388,6 +407,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", LONG_INTEGRATION_TRIGGER_EDGES)
     def test_long_integration_trigger_edge(self, instr, channel, case):
+        instr.ch(channel).long_integration_fast_enabled = True
         assert instr.ch(channel).long_integration_trigger_edge == 'rising'
         instr.ch(channel).long_integration_trigger_edge = case
         assert instr.ch(channel).long_integration_trigger_edge == case
@@ -395,18 +415,15 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", LONG_INTEGRATION_TIMES)
     def test_long_integration_time(self, instr, channel, case):
+        instr.ch(channel).long_integration_fast_enabled = True
         assert instr.ch(channel).long_integration_time == 1.0
         instr.ch(channel).long_integration_time = case
         assert instr.ch(channel).long_integration_time == case
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_long_integration_time_auto(self, instr, channel):
-        instr.ch(channel).long_integration_time_auto()
-        assert not instr.check_errors()
-
-    @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", LONG_INTEGRATION_TRIGGER_LEVELS)
     def test_long_integration_trigger_level(self, instr, channel, case):
+        instr.ch(channel).long_integration_fast_enabled = True
         instr.ch(channel).long_integration_timeout = 1
         assert instr.ch(channel).long_integration_trigger_level == 0
         instr.ch(channel).long_integration_trigger_level = case
@@ -415,6 +432,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", LONG_INTEGRATION_TIMEOUTS)
     def test_long_integration_timeout(self, instr, channel, case):
+        instr.ch(channel).long_integration_fast_enabled = True
         assert instr.ch(channel).long_integration_timeout == 16
         instr.ch(channel).long_integration_timeout = case
         assert instr.ch(channel).long_integration_timeout == case
@@ -429,6 +447,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_long_integration_search_enabled(self, instr, channel, case):
+        instr.ch(channel).long_integration_fast_enabled = True
         assert instr.ch(channel).long_integration_search_enabled
         instr.ch(channel).long_integration_search_enabled = case
         assert instr.ch(channel).long_integration_search_enabled == case
@@ -436,12 +455,14 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_long_integration_detect_enabled(self, instr, channel, case):
+        instr.ch(channel).long_integration_fast_enabled = True
         assert not instr.ch(channel).long_integration_detect_enabled
         instr.ch(channel).long_integration_detect_enabled = case
         assert instr.ch(channel).long_integration_detect_enabled == case
 
     @pytest.mark.parametrize("case", LONG_INTEGRATION_TRIGGER_LEVEL_RANGES)
     def test_long_integration_trigger_level_range(self, instr, case):
+        instr.ch1.long_integration_fast_enabled = True
         instr.ch1.long_integration_timeout = 1
         assert instr.ch1.long_integration_trigger_level_range == 5
         instr.ch1.long_integration_trigger_level_range = case
