@@ -336,10 +336,94 @@ class Channel():
         """A boolean property that returns the source current limit state. """
     )
 
-    read = Instrument.measurement(
+    last_reading = Instrument.measurement(
+        ":FETCH<ch>?",
+        """A floating point property that returns the last reading. """,
+        get_process=lambda v: float(v)
+    )
+
+    last_readings = Instrument.measurement(
+        ":FETCH<ch>:ARR?",
+        """A floating point array property that returns the last readings. """,
+        get_process=lambda v: v if type(v) == list else [v]
+    )
+
+    reading = Instrument.measurement(
         ":READ<ch>?",
-        """A floating point property that returns the current reading state
-        in accordance with sense_mode. """
+        """A floating point property that triggers and returns a reading
+        in accordance with sense_mode. """,
+        get_process=lambda v: float(v),
+    )
+
+    readings = Instrument.measurement(
+        ":READ<ch>:ARR?",
+        """A floating point array property that triggers and returns readings
+        in accordance with sense_mode. """,
+        get_process=lambda v: v if type(v) == list else [v]
+    )
+
+    measured_voltage = Instrument.measurement(
+        ":MEAS<ch>:VOLT?",
+        """A floating point property that triggers and returns a voltage 
+        reading. """
+    )
+
+    measured_voltages = Instrument.measurement(
+        ":MEAS<ch>:ARR:VOLT?",
+        """A floating point array property that triggers and returns 
+        voltage readings. """,
+        get_process=lambda v: v if type(v) == list else [v]
+    )
+
+    measured_current = Instrument.measurement(
+        ":MEAS<ch>:CURR?",
+        """A floating point property that triggers and returns a current 
+        reading. """
+    )
+
+    measured_currents = Instrument.measurement(
+        ":MEAS<ch>:ARR:CURR?",
+        """A floating point array property that triggers and returns 
+        current readings. """,
+        get_process=lambda v: v if type(v) == list else [v]
+    )
+
+    dvm_voltage = Instrument.measurement(
+        ":MEAS<ch>:DVM?",
+        """A floating point property that triggers and returns a DVM voltage 
+        reading. """
+    )
+
+    dvm_voltages = Instrument.measurement(
+        ":MEAS<ch>:ARR:DVM?",
+        """A floating point array property that triggers and returns 
+        DVM voltage readings. """,
+        get_process=lambda v: v if type(v) == list else [v]
+    )
+
+    pulse_current = Instrument.measurement(
+        ":MEAS<ch>:PCUR?",
+        """A floating point property that returns a pulse current reading. """
+    )
+
+    pulse_currents = Instrument.measurement(
+        ":MEAS<ch>:ARR:PCUR?",
+        """A floating point array property that triggers and returns 
+        pulse current readings. """,
+        get_process=lambda v: v if type(v) == list else [v]
+    )
+
+    long_integration_current = Instrument.measurement(
+        ":MEAS<ch>:LINT?",
+        """A floating point property that returns a long integration current 
+        reading. """
+    )
+
+    long_integration_currents = Instrument.measurement(
+        ":MEAS<ch>:ARR:LINT?",
+        """A floating point array property that triggers and returns 
+        long integration current readings. """,
+        get_process=lambda v: v if type(v) == list else [v]
     )
 
     def __init__(self, instrument, number):
