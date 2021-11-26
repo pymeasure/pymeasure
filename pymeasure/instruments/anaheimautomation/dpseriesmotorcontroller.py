@@ -81,7 +81,7 @@ class DPSeriesMotorController(Instrument):
         """Integer property representing the address that the motor controller uses for serial communications.""",
         validator=strict_range,
         values=[0, 99],
-        get_process=lambda addr: int(addr),
+        cast=int,
     )
     
     basespeed = Instrument.control(
@@ -89,7 +89,7 @@ class DPSeriesMotorController(Instrument):
         """Integer property that represents the motor controller's starting/homing speed. This property can be set.""",
         validator=truncated_range,
         values=[1, 5000],
-        get_process=lambda bs: int(bs)
+        cast=int,
     )
     
     maxspeed = Instrument.control(
@@ -98,7 +98,7 @@ class DPSeriesMotorController(Instrument):
            This property can be set.""",
         validator=truncated_range,
         values=[1, 50000],
-        get_process=lambda  ms: int(ms)
+        cast=int,
     )
 
     direction = Instrument.control(
@@ -118,7 +118,7 @@ class DPSeriesMotorController(Instrument):
         map_values=True, 
         values={True: 1, False: 0},
         validator=strict_discrete_set,
-        get_process=lambda ea: int(ea),
+        cast=int,
     )
 
     encoder_delay = Instrument.control(
@@ -127,7 +127,7 @@ class DPSeriesMotorController(Instrument):
            the encoder is read for a potential encoder auto-correct action to take place. This property can be set.""",
         validator=truncated_range,
         values=[0, 65535], 
-        get_process=lambda encd_dly: int(encd_dly),
+        cast=int,
     )
 
     encoder_motor_ratio = Instrument.control(
@@ -136,7 +136,7 @@ class DPSeriesMotorController(Instrument):
            This property can be set.""",
         validator=truncated_range,
         values=[1, 255],
-        get_process=lambda emr: int(emr),
+        cast=int,
     )
 
     encoder_retries = Instrument.control(
@@ -145,7 +145,7 @@ class DPSeriesMotorController(Instrument):
            the encoder auto correct function before setting an error flag. This property can be set.""",
         validator=truncated_range,
         values=[0, 255],
-        get_process=lambda encd_ret: int(encd_ret),
+        cast=int,
     )
 
     encoder_window = Instrument.control(
@@ -154,7 +154,7 @@ class DPSeriesMotorController(Instrument):
            position before the encoder auto-correct function runs. This property can be set.""",
         validator=truncated_range,
         values=[0, 255],
-        get_process=lambda encd_win: int(encd_win),
+        cast=int,
     )
 
     busy = Instrument.measurement(
@@ -231,12 +231,9 @@ class DPSeriesMotorController(Instrument):
     
     @step_position.setter
     def step_position(self, pos):
-        step_pos = int(pos)
-        if -8388607 < step_pos < 8388607:
-            self.write("P%i" % step_pos)
-            self.write("G")
-        else:
-            raise ValueError("Provided step position out of valid range!")
+        strict_range(pos, (-8388607, 8388607)) 
+        self.write("P%i" % step_pos)
+        self.write("G")
     
     @property
     def absolute_position(self):
