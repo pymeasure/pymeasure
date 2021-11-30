@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import pyvisa.constants as pvconst
 from pymeasure.instruments import Instrument
 
 
@@ -33,9 +34,14 @@ class Nd287(Instrument):
         "\x1BA0200", "Read the encoder's current position.",
         get_process=lambda p: Nd287.position_proc(float(p.split("\x02")[-1])),
     )
-    
+
+    status = Instrument.measurement(
+        "\x1BA0800", "Read the encoder's status bar"
+    )
+
     id = Instrument.measurement(
-        "\x1BA0000", "Read the instrument's indentification"
+        "\x1BA0000", "Read the instrument's identification",
+        separator="\r\n",
     )
     
     # additional configuration properties that must be set on the device, but should be configurable in this driver #
@@ -43,7 +49,8 @@ class Nd287(Instrument):
     
     @classmethod
     def position_proc(cls, pos):
-        """ Apply the appropriate scaling factor to the position read-out from the encoder based on the value of the units property.
+        """ Apply the appropriate scaling factor to the position read-out from the encoder based on the value of the
+            units property.
         """
         if cls._units == "mm":
             pos *= 1e-4
@@ -51,14 +58,15 @@ class Nd287(Instrument):
             pos *= 1e-5
         return pos
     
-    def __init__(self, resourceName, serial_configuration=None, **kwargs):
-        """ Initialize
+    def __init__(self, resourceName, **kwargs):
+        """ Initialize the nd287 with a carriage return write termination and no serial termination on reads.
         """
         super().__init__(
             resourceName,
             "Heidenhain ND287",
             includeSCPI=False,
             write_termination="\r",
+            end_input=pvconst.SerialTermination.none,
             **kwargs
         )
         
