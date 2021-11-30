@@ -22,12 +22,14 @@
 # THE SOFTWARE.
 #
 
-import pyvisa.constants as pvconst
+import logging
+from pyvisa.errors import VisaIOError
 from pymeasure.instruments import Instrument
 
 
 class Nd287(Instrument):
-    """ Represents the Heidenhain ND287 position display unit used to readout and display absolute position measured by Heidenhain encoders.
+    """ Represents the Heidenhain ND287 position display unit used to readout and display absolute position measured by
+        Heidenhain encoders.
     """
     
     position = Instrument.measurement(
@@ -39,12 +41,8 @@ class Nd287(Instrument):
         "\x1BA0800", "Read the encoder's status bar"
     )
 
-    id = Instrument.measurement(
-        "\x1BA0000", "Read the instrument's identification",
-        separator="\r\n",
-    )
-    
-    # additional configuration properties that must be set on the device, but should be configurable in this driver #
+    # additional configuration properties that cannot be controlled through software, but should be configurable
+    # to match the values on the local device. #
     _units = "mm"
     
     @classmethod
@@ -59,17 +57,38 @@ class Nd287(Instrument):
         return pos
     
     def __init__(self, resourceName, **kwargs):
-        """ Initialize the nd287 with a carriage return write termination and no serial termination on reads.
+        """ Initialize the nd287 with a carriage return write termination.
         """
+
         super().__init__(
             resourceName,
             "Heidenhain ND287",
             includeSCPI=False,
             write_termination="\r",
-            end_input=pvconst.SerialTermination.none,
             **kwargs
         )
-        
+
+    @property
+    def id(self):
+        """ String identification property for the device.
+        """
+        self.adapter.connection.write("\x1BA0000")
+        id_str = self.adapter.connection.read_bytes(36).decode("utf-8")
+        return id_str
+
+    @property
+    def error(self):
+        """ String property representing the on screen error message. Note that ND287 only returns an error message
+            string when there is actually an error message present. Otherwise, nothing is returned and the query times
+            out. In this case, this property returns None.
+        """
+        self.adapter.connection.write("\x1BA0301")
+        try:
+            err_str = self.adapter.connection.read_bytes(36).decode("utf-8")
+        except VisaIOError:
+            err_str = None
+        return err_str
+
     @property
     def units(self):
         """ String property representing the unit of measure set on the device. Valid values are 'mm' and 'inch'
@@ -86,4 +105,14 @@ class Nd287(Instrument):
         if unit in val_units:
             self._units = unit
             Nd287._units = unit
+
+    def check_errors(self):
+        """ Method to read an error status message and log when an error is detected.
+
+        :return: String with the error message as its contents.
+        """
+        err_msg = self.error
+        if err_msg is not None:
+            logging.error("Heidenhain ND287 error message received: %s" % err_msg)
+        return err_msg
 
