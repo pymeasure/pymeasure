@@ -40,6 +40,7 @@ from . import danfysik
 from . import deltaelektronika
 from . import fluke
 from . import fwbell
+from . import heidenhain
 from . import hp
 from . import keithley
 from . import keysight
