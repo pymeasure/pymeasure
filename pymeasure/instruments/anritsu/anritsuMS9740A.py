@@ -43,7 +43,7 @@ class AnritsuMS9740A(AnritsuMS9710C):
      def __init__(self, adapter, **kwargs):
         """Constructor."""
         self.analysis_mode = None
-        super(AnritsuMS9740A, self).__init__(adapter, name = "Anritsu MS9740A Optical Spectrum Analyzer", **kwargs)
+        super(AnritsuMS9740A, self).__init__(adapter, name="Anritsu MS9740A Optical Spectrum Analyzer", **kwargs)
     
     ####################################
     # Spectrum Parameters - Wavelength #
@@ -63,7 +63,7 @@ class AnritsuMS9740A(AnritsuMS9710C):
 
     average_sweep = Instrument.control(
         "AVS?", "AVS %d",
-        "Number of averages to make on a sweep (1-1000)",
+        "Number of averages to make on a sweep (1-1000), with 1 being a single (non-averaged) sweep",
         validator=truncated_range, values=[1, 1000]
     )
 
