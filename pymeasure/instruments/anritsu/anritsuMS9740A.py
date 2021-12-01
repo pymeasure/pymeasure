@@ -85,11 +85,11 @@ class AnritsuMS9740A(AnritsuMS9710C):
         values=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
     )
 
-    def repeat_sweep(self, **kwargs):
+    def repeat_sweep(self, n=20, delay=0.5):
         """Perform a single sweep and wait for completion."""
         log.debug("Performing a repeat Spectrum Sweep")
         self.clear()
         self.write('SRT')
-        self.wait_for_sweep(**kwargs)
+        self.wait_for_sweep(n=n, delay=delay)
 
    
