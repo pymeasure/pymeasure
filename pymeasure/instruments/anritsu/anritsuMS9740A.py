@@ -37,54 +37,14 @@ import re
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-# Analysis Results with Units, ie -24.5DBM -> (-24.5, 'DBM')
-r_value_units = re.compile("([-\d]*\.\d*)(.*)")
-
-# Join validators to allow for special sets of characters
-truncated_range_or_off = joined_validators(strict_discrete_set, truncated_range)
-
-
-def _int_or_neg_one(v):
-    try:
-        return int(v)
-    except ValueError:
-        return -1
-
-
-def _parse_trace_peak(vals):
-    """Parse the returned value from a trace peak query."""
-    l, p = vals
-    res = [l]
-    m = r_value_units.match(p)
-    if m is not None:
-        data = list(m.groups())
-        data[0] = float(data[0])
-        res.extend(data)
-    else:
-        res.append(float(p))
-    return res
-
-
 class AnritsuMS9740A(AnritsuMS9710C):
     """Anritsu MS9740A Optical Spectrum Analyzer."""
     
-    #############
-    #  Mappings #
-    #############
+     def __init__(self, adapter, **kwargs):
+        """Constructor."""
+        self.analysis_mode = None
+        super(AnritsuMS9740A, self).__init__(adapter, name = "Anritsu MS9740A Optical Spectrum Analyzer", **kwargs)
     
-    ONOFF = ["ON", "OFF"]
-    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF'}
-
-    ###########
-    #  Modes  #
-    ###########
-
-    measure_mode = Instrument.measurement(
-        "MOD?", "Returns the current Measure Mode the OSA is in.",
-        values={None: 0, "SINGLE": 1.0, "REPEAT": 2.0, "POWER": 3.0},
-        map_values=True
-    )
-
     ####################################
     # Spectrum Parameters - Wavelength #
     ####################################
@@ -124,11 +84,6 @@ class AnritsuMS9740A(AnritsuMS9710C):
         validator=strict_discrete_set,
         values=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
     )
-
-    def __init__(self, adapter, **kwargs):
-        """Constructor."""
-        self.analysis_mode = None
-        super(AnritsuMS9740A, self).__init__(adapter, "Anritsu MS9740A Optical Spectrum Analyzer", **kwargs)
 
     def repeat_sweep(self, **kwargs):
         """Perform a single sweep and wait for completion."""
