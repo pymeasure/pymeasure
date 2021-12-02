@@ -22,37 +22,27 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .mock import Mock
-from .resources import list_resources
-from .validators import discreteTruncate
+from pymeasure.instruments import Instrument
+from .ah2500a import AH2500A
 
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anaheimautomation
-from . import anapico
-from . import andeenhagerling
-from . import anritsu
-from . import attocube
-from . import danfysik
-from . import deltaelektronika
-from . import fluke
-from . import fwbell
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import rohdeschwarz
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import thorlabs
-from . import yokogawa
+
+class AH2700A(AH2500A):
+    """ Andeen Hagerling 2700A Precision Capacitance Bridge implementation
+    """
+    id = Instrument.measurement(
+        "*IDN?", """ Reads the instrument identification """
+    )
+
+    config = Instrument.measurement(
+        "SHOW ALL",
+        """ Read out configuration """,
+    )
+
+    def __init__(self, adapter, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 5000
+        super(AH2700A, self).__init__(adapter, **kwargs)
+
+    def trigger(self):
+        self._triggered = True
+        self.write("*TRG")
