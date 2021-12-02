@@ -104,7 +104,7 @@ class TopticaAdapter(VISAAdapter):
 
         :param command: command string to be sent to the instrument
         :param check_ack: flag to decide if also an acknowledgement from the
-        device is expected. This is the case for set commands.
+          device is expected. This is the case for set commands.
         """
         self.lastcommand = command
         super().write(command)
