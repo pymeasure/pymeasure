@@ -40,7 +40,7 @@ log.addHandler(logging.NullHandler())
 class AnritsuMS9740A(AnritsuMS9710C):
     """Anritsu MS9740A Optical Spectrum Analyzer."""
     
-     def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, **kwargs):
         """Constructor."""
         self.analysis_mode = None
         super(AnritsuMS9740A, self).__init__(adapter, name="Anritsu MS9740A Optical Spectrum Analyzer", **kwargs)
