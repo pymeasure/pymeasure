@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -110,13 +110,30 @@ class Keithley2400(Instrument, KeithleyBuffer):
     )
 
     auto_zero = Instrument.control(
-        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %d",
+        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %s",
         """ A property that controls the auto zero option. Valid values are
         True (enabled) and False (disabled) and 'ONCE' (force immediate). """,
         values={True: 1, False: 0, "ONCE": "ONCE"},
         map_values=True,
     )
 
+    line_frequency = Instrument.control(
+        ":SYST:LFR?", ":SYST:LFR %d",
+        """ An integer property that controls the line frequency in Hertz. 
+        Valid values are 50 and 60. """,
+        validator=strict_discrete_set,
+        values=[50, 60],
+        cast=int,
+    )
+        
+    line_frequency_auto = Instrument.control(
+        ":SYST:LFR:AUTO?", ":SYST:LFR:AUTO %d",
+        """ A boolean property that enables or disables auto line frequency. 
+        Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+    
     measure_concurent_functions = Instrument.control(
         ":SENS:FUNC:CONC?", ":SENS:FUNC:CONC %d",
         """ A boolean property that enables or disables the ability to measure
@@ -191,7 +208,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=[-210, 210]
     )
     voltage_nplc = Instrument.control(
-        ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
+        ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line cycles
         (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
@@ -307,53 +324,37 @@ class Keithley2400(Instrument, KeithleyBuffer):
     # Filters #
     ###########
 
-    current_filter_type = Instrument.control(
-        ":SENS:CURR:AVER:TCON?", ":SENS:CURR:AVER:TCON %s",
-        """ A String property that controls the filter's type for the current.
+    filter_type = Instrument.control(
+        ":SENS:AVER:TCON?", ":SENS:AVER:TCON %s",
+        """ A String property that controls the filter's type.
         REP : Repeating filter
         MOV : Moving filter""",
         validator=strict_discrete_set,
         values=['REP', 'MOV'],
         map_values=False)
 
-    current_filter_count = Instrument.control(
-        ":SENS:CURR:AVER:COUNT?", ":SENS:CURR:AVER:COUNT %d",
+    filter_count = Instrument.control(
+        ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
         """ A integer property that controls the number of readings that are 
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
-        values=[1, 2500],
+        values=[1, 100],
         cast=int)
 
-    current_filter_state = Instrument.control(
-        ":SENS:CURR:AVER?", ":SENS:CURR:AVER %s",
+    filter_state = Instrument.control(
+        ":SENS:AVER?", ":SENS:AVER %s",
         """ A string property that controls if the filter is active.""",
         validator=strict_discrete_set,
         values=['ON', 'OFF'],
         map_values=False)
 
-    voltage_filter_type = Instrument.control(
-        ":SENS:VOLT:AVER:TCON?", ":SENS:VOLT:AVER:TCON %s",
-        """ A String property that controls the filter's type for the current.
-        REP : Repeating filter
-        MOV : Moving filter""",
-        validator=strict_discrete_set,
-        values=['REP', 'MOV'],
-        map_values=False)
-
-    voltage_filter_count = Instrument.control(
-        ":SENS:VOLT:AVER:COUNT?", ":SENS:VOLT:AVER:COUNT %d",
-        """ A integer property that controls the number of readings that are 
-        acquired and stored in the filter buffer for the averaging""",
-        validator=truncated_range,
-        values=[1, 2500],
-        cast=int)
 
     #####################
     # Output subsystem #
     #####################
 
-    current_output_off_state = Instrument.control(
-        ":OUTP:CURR:SMOD?", ":OUTP:CURR:SMOD %s",
+    output_off_state = Instrument.control(
+        ":OUTP:SMOD?", ":OUTP:SMOD %s",
         """ Select the output-off state of the SourceMeter.
         HIMP : output relay is open, disconnects external circuitry.
         NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
@@ -366,20 +367,11 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
         map_values=False)
 
-    voltage_output_off_state = Instrument.control(
-        ":OUTP:VOLT:SMOD?", ":OUTP:VOLT:SMOD %s",
-        """ Select the output-off state of the SourceMeter.
-        HIMP : output relay is open, disconnects external circuitry.
-        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
-        full scale of the present current range.
-        ZERO : V-Source is selected and set to 0V, compliance is set to the 
-        programmed Source I value or to 0.5% full scale of the present current
-        range, whichever is greater.
-        GUAR : I-Source is selected and set to 0A""",
-        validator=strict_discrete_set,
-        values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
-        map_values=False)
-
+    
+    ####################
+    # Methods        #
+    ####################
+    
     def __init__(self, adapter, **kwargs):
         super(Keithley2400, self).__init__(
             adapter, "Keithley 2400 SourceMeter", **kwargs
@@ -592,7 +584,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
     def trigger_on_bus(self):
         """ Configures the trigger to detect events based on the bus
-        trigger, which can be activated by :code:`GET` or :code:`*TRG`.
+        trigger, which can be activated by :meth:`~.trigger`.
         """
         self.write(":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;")
 

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ class ResultsCurve(pg.PlotDataItem):
             self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
             self.xerr, self.yerr = xerr, yerr
 
-    def update(self):
+    def update_data(self):
         """Updates the data by polling the results"""
         if self.force_reload:
             self.results.reload()
@@ -114,7 +114,7 @@ class ResultsImage(pg.ImageItem):
         self.translate(int(self.xstart/self.xstep)-0.5,
                        int(self.ystart/self.ystep)-0.5) # 0.5 so pixels centered
 
-    def update_img(self):
+    def update_data(self):
         if self.force_reload:
             self.results.reload()
 

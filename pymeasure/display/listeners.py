@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -71,7 +71,10 @@ class QListener(StoppableQThread):
         self.timeout = timeout
 
     def receive(self, flags=0):
-        topic, record = self.subscriber.recv_serialized(deserialize=cloudpickle.loads, flags=flags)
+        topic, record = self.subscriber.recv_serialized(
+            deserialize=lambda msg: (msg[0].decode(), cloudpickle.loads(msg[1])),
+            flags=flags
+        )
         return topic, record
 
     def message_waiting(self):

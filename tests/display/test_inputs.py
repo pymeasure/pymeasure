@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,16 +31,26 @@ from pymeasure.experiment.parameters import BooleanParameter, ListParameter, Flo
 
 @pytest.mark.parametrize("default_value", [True, False])
 class TestBooleanInput:
-    def test_init_from_param(self, qtbot, default_value):
+    @pytest.mark.parametrize("value_remains_default", [True, False])
+    def test_init_from_param(self, qtbot, default_value, value_remains_default):
         # set up BooleanInput
         bool_param = BooleanParameter('potato', default=default_value)
+
+        if (value_remains_default):
+            # Enable check that the value is initialized to default_value
+            check_value = default_value
+        else:
+            # Set to a non default value
+            bool_param.value = not default_value
+            # Enable check that the value is changed after initialization to a non default value
+            check_value = not default_value
+
         bool_input = BooleanInput(bool_param)
         qtbot.addWidget(bool_input)
 
         # test
         assert bool_input.text() == bool_param.name
-        assert bool_input.value() == default_value
-
+        assert bool_input.value() == check_value
 
     def test_setValue_should_update_value(self, qtbot, default_value):
 
@@ -61,6 +71,10 @@ class TestBooleanInput:
                 new_callable=mock.PropertyMock,
                 return_value=default_value) as p:
             bool_input = BooleanInput(bool_param)
+
+            # Clear any call to property 'value' during initialization
+            p.reset_mock()
+
             qtbot.addWidget(bool_input)
             bool_input.show()
 
@@ -79,16 +93,27 @@ class TestListInput:
         ([123, 456, 789], 123), # numbers
         (["abc", "def", "ghi"], "def") # default not first value
     ])
-    def test_init_from_param(self, qtbot, choices, default_value):
+    @pytest.mark.parametrize("value_remains_default", [True, False])
+    def test_init_from_param(self, qtbot, choices, default_value, value_remains_default):
         list_param = ListParameter('potato',
                 choices=choices,
                 default=default_value,
                 units='m')
+
+        if (value_remains_default):
+            # Enable check that the value is initialized to default_value
+            check_value = default_value
+        else:
+            # Set to a non default value
+            list_param.value = choices[2]
+            # Enable check that the value is changed after initialization to a non default_value
+            check_value = choices[2]
+
         list_input = ListInput(list_param)
         qtbot.addWidget(list_input)
 
         assert list_input.isEditable() == False
-        assert list_input.value() == default_value
+        assert list_input.value() == check_value
 
     def test_setValue_should_update_value(self, qtbot):
         # Test write-read loop: verify value -> index -> value conversion
@@ -140,18 +165,29 @@ class TestScientificInput:
         [0.004, 5.5, 3.3],  # minimum #225: 0 < minimum < 0.005
         [0, 0.01, 0.002]  # default #233: default <0.01 changes to 0
     ])
-    def test_init_from_param(self, qtbot, min_, max_, default_value):
+    @pytest.mark.parametrize("value_remains_default", [True, False])
+    def test_init_from_param(self, qtbot, min_, max_, default_value, value_remains_default):
         float_param = FloatParameter('potato',
                 minimum=min_,
                 maximum=max_,
                 default=default_value,
                 units='m')
+
+        if (value_remains_default):
+            # Enable check that the value is initialized to default_value
+            check_value = default_value
+        else:
+            # Set to a non default value
+            float_param.value = min_
+            # Enable check that the value is changed after initialization to a non default value
+            check_value = min_
+
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
         assert sci_input.minimum() == min_
         assert sci_input.maximum() == max_
-        assert sci_input.value() == default_value
+        assert sci_input.value() == check_value
         assert sci_input.suffix() == ' m'
 
     def test_setValue_within_range_should_set(self, qtbot):

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -123,6 +123,24 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-1.05, 1.05]
     )
+    
+    source_current_delay = Instrument.control(
+        ":SOUR:CURR:DEL?", ":SOUR:CURR:DEL %g",
+        """ A floating point property that sets a manual delay for the source
+        after the output is turned on before a measurement is taken. When this
+        property is set, the auto delay is turned off. Valid values are
+        between 0 [seconds] and 999.9999 [seconds].""",
+        validator=truncated_range,
+        values=[0, 999.9999],
+    )
+
+    source_current_delay_auto = Instrument.control(
+        ":SOUR:CURR:DEL:AUTO?", ":SOUR:CURR:DEL:AUTO %d",
+        """ A boolean property that enables or disables auto delay. Valid
+        values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
 
     ###############
     # Voltage (V) #
@@ -171,6 +189,24 @@ class Keithley2450(Instrument, KeithleyBuffer):
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[-210, 210]
+    )
+    
+    source_voltage_delay = Instrument.control(
+        ":SOUR:VOLT:DEL?", ":SOUR:VOLT:DEL %g",
+        """ A floating point property that sets a manual delay for the source
+        after the output is turned on before a measurement is taken. When this
+        property is set, the auto delay is turned off. Valid values are
+        between 0 [seconds] and 999.9999 [seconds].""",
+        validator=truncated_range,
+        values=[0, 999.9999],
+    )
+
+    source_voltage_delay_auto = Instrument.control(
+        ":SOUR:VOLT:DEL:AUTO?", ":SOUR:VOLT:DEL:AUTO %d",
+        """ A boolean property that enables or disables auto delay. Valid
+        values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     ####################
@@ -242,6 +278,84 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """ Returns the calculated standard deviations for voltage,
         current, and resistance from the buffer data as a list. """
     )
+
+    ###########
+    # Filters #
+    ###########
+
+    current_filter_type = Instrument.control(
+        ":SENS:CURR:AVER:TCON?", ":SENS:CURR:AVER:TCON %s",
+        """ A String property that controls the filter's type for the current.
+        REP : Repeating filter
+        MOV : Moving filter""",
+        validator=strict_discrete_set,
+        values=['REP', 'MOV'],
+        map_values=False)
+
+    current_filter_count = Instrument.control(
+        ":SENS:CURR:AVER:COUNT?", ":SENS:CURR:AVER:COUNT %d",
+        """ A integer property that controls the number of readings that are 
+        acquired and stored in the filter buffer for the averaging""",
+        validator=truncated_range,
+        values=[1, 100],
+        cast=int)
+
+    current_filter_state = Instrument.control(
+        ":SENS:CURR:AVER?", ":SENS:CURR:AVER %s",
+        """ A string property that controls if the filter is active.""",
+        validator=strict_discrete_set,
+        values=['ON', 'OFF'],
+        map_values=False)
+
+    voltage_filter_type = Instrument.control(
+        ":SENS:VOLT:AVER:TCON?", ":SENS:VOLT:AVER:TCON %s",
+        """ A String property that controls the filter's type for the current.
+        REP : Repeating filter
+        MOV : Moving filter""",
+        validator=strict_discrete_set,
+        values=['REP', 'MOV'],
+        map_values=False)
+
+    voltage_filter_count = Instrument.control(
+        ":SENS:VOLT:AVER:COUNT?", ":SENS:VOLT:AVER:COUNT %d",
+        """ A integer property that controls the number of readings that are 
+        acquired and stored in the filter buffer for the averaging""",
+        validator=truncated_range,
+        values=[1, 100],
+        cast=int)
+
+    #####################
+    # Output subsystem #
+    #####################
+
+    current_output_off_state = Instrument.control(
+        ":OUTP:CURR:SMOD?", ":OUTP:CURR:SMOD %s",
+        """ Select the output-off state of the SourceMeter.
+        HIMP : output relay is open, disconnects external circuitry.
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
+        full scale of the present current range.
+        ZERO : V-Source is selected and set to 0V, compliance is set to the 
+        programmed Source I value or to 0.5% full scale of the present current
+        range, whichever is greater.
+        GUAR : I-Source is selected and set to 0A""",
+        validator=strict_discrete_set,
+        values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
+        map_values=False)
+
+    voltage_output_off_state = Instrument.control(
+        ":OUTP:VOLT:SMOD?", ":OUTP:VOLT:SMOD %s",
+        """ Select the output-off state of the SourceMeter.
+        HIMP : output relay is open, disconnects external circuitry.
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
+        full scale of the present current range.
+        ZERO : V-Source is selected and set to 0V, compliance is set to the 
+        programmed Source I value or to 0.5% full scale of the present current
+        range, whichever is greater.
+        GUAR : I-Source is selected and set to 0A""",
+        validator=strict_discrete_set,
+        values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
+        map_values=False)
+
 
     ####################
     # Methods        #
