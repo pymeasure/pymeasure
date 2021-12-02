@@ -29,11 +29,11 @@ mcl = re.compile("[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS")
 
 def parse_reply(string):
     """
-    parse reply string from capacitance bridge
+    parse reply string from Andeen Hagerling capacitance bridges.
 
-    typical string would be
-    AH2500A: "C=123.123456 PF L=0.12345 NS"
-    AH2700A: "F= 1000.00 HZ C= 4.20188     PF L=-0.0260      NS V= 15.0     V"
+    :param string: reply string from the instrument. This commonly could be
+      2500A: "C=123.123456 PF L=0.12345 NS"
+      2700A: "F= 1000.00 HZ C= 4.20188     PF L=-0.0260      NS V= 15.0     V"
     """
     m = mcl.match(string)
     if m is not None:

@@ -57,11 +57,20 @@ class AH2500A(Instrument):
         self._triggered = False
 
     def trigger(self):
+        """
+        Triggers a new measurement without blocking and waiting for the return
+        value.
+        """
         self._triggered = True
         self.write("TRG")
 
     def triggered_caploss(self):
+        """
+        reads the measurement value after the device was triggered by the
+        trigger function.
+        """
         if self._triggered:
+            self._triggered = False
             return parse_reply(self.read())
         else:
             raise Exception("Device was not triggered previously!")

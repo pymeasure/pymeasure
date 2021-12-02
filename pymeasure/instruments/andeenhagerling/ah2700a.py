@@ -44,5 +44,9 @@ class AH2700A(AH2500A):
         super(AH2700A, self).__init__(adapter, **kwargs)
 
     def trigger(self):
+        """
+        Triggers a new measurement without blocking and waiting for the return
+        value.
+        """
         self._triggered = True
         self.write("*TRG")
