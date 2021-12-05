@@ -26,8 +26,10 @@ import ctypes
 import logging
 import math
 import struct
-
 from enum import IntFlag
+import numpy as np
+
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -40,7 +42,7 @@ c_uint16 = ctypes.c_uint16
 c_uint32 = ctypes.c_uint32
 
 # classes for the decoding of the 5-byte status word
-class Status_bytes(ctypes.Structure):
+class StatusBytes(ctypes.Structure):
     """
     Support-Class for the 7 status bytes of the HP3437A
     """
@@ -56,7 +58,7 @@ class Status_bytes(ctypes.Structure):
     ]
 
 
-class Status_bits(ctypes.BigEndianStructure):
+class StatusBits(ctypes.BigEndianStructure):
     """
     Support-Class with the bit assignments for the 5 status byte of the HP3437A
     """
@@ -76,7 +78,8 @@ class Status_bits(ctypes.BigEndianStructure):
         # Byte 3:
         # ("NRDGS_3SD", c_uint8, 4),
         # ("NRDGS_LSD", c_uint8, 4),
-        ("Delay", c_uint32, 32),
+        ("not_used", c_uint8(), 4),
+        ("Delay", c_uint32, 28),
         # Byte 4:
         # ("Not_Used", c_uint8, 4),
         # ("Delay_MSD", c_uint8, 4),
@@ -104,10 +107,72 @@ class Status_bits(ctypes.BigEndianStructure):
         )
 
 
+class PackedBytes(ctypes.Structure):
+    """
+    Support-Class for the 2 bytes of the HP3437A packed data transfer
+    """
+
+    _fields_ = [
+        ("byte1", c_uint8),
+        ("byte2", c_uint8),
+    ]
+
+
+class PackedBits(ctypes.BigEndianStructure):
+    """
+    Support-Class for the bits in the HP3437A packed data transfer
+    """
+
+    _pack_ = 1
+    _fields_ = [
+        ("range", c_uint8, 2),  # bit 0..1
+        ("sign_bit", c_uint8, 1),
+        ("MSD", c_uint8, 1),
+        ("NSD", c_uint8, 4),
+        ("OSD", c_uint8, 4),
+        ("LSD", c_uint8, 4),
+    ]
+
+    def __str__(self):
+        return "range: {}, sign_bit: {}, MSD: {}, 2SD: {}, 3SD: {}, LSD: {} \n".format(
+            self.range, self.sign_bit, self.MSD, self.NSD, self.OSD, self.LSD
+        )
+
+    def __float__(self):
+        if self.range == 1:
+            cur_range = 0.1
+        # 2 indicates 10V range
+        if self.range == 2:
+            cur_range = 10.0
+        # 3 indicated 1V range (cf table 3-2, page 3-5 of the manua, HPAK document 9018-05946)
+        if self.range == 3:
+            cur_range = 1.0
+
+        sb = 1
+        if self.sign_bit == 0:
+            sb = -1
+
+        return (
+            cur_range
+            * sb
+            * (
+                self.MSD + float(self.NSD) /10
+                + float(self.OSD) / 100
+                + float(self.LSD) / 1000
+            )
+        )
+
+
+class PackedData(ctypes.Union):
+    """Union type element for the decoding of the packed data bit-fields"""
+
+    _fields_ = [("B", PackedBytes), ("b", PackedBits)]
+
+
 class Status(ctypes.Union):
     """Union type element for the decoding of the status bit-fields"""
 
-    _fields_ = [("B", Status_bytes), ("b", Status_bits)]
+    _fields_ = [("B", StatusBytes), ("b", StatusBits)]
 
 
 class HP3437A(Instrument):
@@ -126,7 +191,7 @@ class HP3437A(Instrument):
             write_termination="\r\n",
             **kwargs,
         )
-        log.warning("Initialized HP3437A")
+        log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
     RANGE = {
@@ -202,7 +267,7 @@ class HP3437A(Instrument):
         :return ret_val: int status value
 
         """
-        ret_val = Status(Status_bytes(*status_bytes))
+        ret_val = Status(StatusBytes(*status_bytes))
         if field is None:
             return ret_val.b
 
@@ -211,16 +276,14 @@ class HP3437A(Instrument):
 
         if field == "Number":
             bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
-            print(bcd_nr)
             return cls.convert_from_bcd(bcd_nr)
 
         if field == "Delay":
             bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
-            print(bcd_delay)
             delay_value = (
                 cls.convert_from_bcd(bcd_delay) / 1.0e7
             )  # delay resolution is 100ns
-            return delay_value - 4
+            return delay_value
         return getattr(ret_val.b, field)
 
     @staticmethod
@@ -232,7 +295,7 @@ class HP3437A(Instrument):
         :rtype cur_range: float
 
         """
-        cur_stat = Status(Status_bytes(*status_bytes))
+        cur_stat = Status(StatusBytes(*status_bytes))
         range_undecoded = cur_stat.b.range
         if range_undecoded == 0:
             cur_range = math.nan
@@ -255,7 +318,7 @@ class HP3437A(Instrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = Status(Status_bytes(*status_bytes))
+        cur_stat = Status(StatusBytes(*status_bytes))
         trig = cur_stat.b.trigger
         if trig == 0:
             log.error("HP3437A invalid trigger detected!")
@@ -268,21 +331,53 @@ class HP3437A(Instrument):
             trigger_mode = "hold/manual"
         return trigger_mode
 
+    @staticmethod
+    def unpack_data(data_to_be_decoded):
+        """
+        Method to unpack the data from the returned bytes in packed mode
+
+        :param data_to_be_Decoded: list of bytes to be decoded
+        :return ret_data: float value
+
+        """
+        ret_data = PackedData(PackedBytes(*data_to_be_decoded))
+        return float(ret_data.b)
+
+    # commands overwriting the base implementaiton
+    def read(self):
+        """
+        Returns measured data
+
+        :return data: np.array with the data
+        """
+        # Adjusting the timeout to match the number of counts and the delay
+        self.adapter.connection.timeout = (
+            self.number_readings * self.delay * 1.25 * 1000
+        )
+        read_data = self.adapter.connection.read_raw()
+        # check if data is in packed format format
+        if read_data[0] == read_data[2]:
+            p_Data = list()
+            read_data_length = int(len(read_data) / 2)
+            for i in range(0, read_data_length):
+                _from = i * 2
+                _to = _from + 2
+                p_Data.append(self.unpack_data(read_data[_from:_to]))
+            return np.array(p_Data)
+        return np.array(read_data[:-2].decode("ASCII").split(","), dtype=float)
+
     # commands/properties for instrument control
+    def check_errors(self):
+        """
+        As this instrument does not have a error indication bit,
+        this function alwyas returns 0.
 
-    # def check_errors(self):
-    #     """
-    #     Method to read the error status register
-
-    #     :return error_status: one byte with the error status register content
-    #     :rtype error_status: int
-    #     """
-    #     # Read the error status reigster only one time for this method, as
-    #     # the manual states that reading the error status register also clears it.
-    #     current_errors = self.error_status
-    #     if current_errors != 0:
-    #         log.error("HP3437A error detected: %s", self.ERRORS(current_errors))
-    #     return self.ERRORS(current_errors)
+        :return error_status: one byte with the error status register content
+        :rtype error_status: int
+        """
+        # Read the error status reigster only one time for this method, as
+        # the manual states that reading the error status register also clears it.
+        return 0
 
     @property
     def talk_ascii(self):

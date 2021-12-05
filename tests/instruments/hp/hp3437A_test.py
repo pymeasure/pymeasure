@@ -7,87 +7,41 @@ Created on Tue Nov 23 13:19:45 2021
 """
 import logging
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+# log.addHandler(logging.NullHandler())
 
+from pymeasure.log import console_log
 from pymeasure.instruments.hp import HP3437A
 # from pymeasure.adapters import FakeAdapter
 
 # fa = FakeAdapter()
-
+console_log(log)
 svm = HP3437A('GPIB0::24')
-# # N
-# svm.number_readings = 0
-# print(f"Number of readings set-string {fa.read()}")
-# svm.number_readings = 101
-# print(f"Number of readings set-string {fa.read()}")
-# svm.number_readings = 1000
-# print(f"Number of readings set-string {fa.read()}")
-# # svm.number_readings = 12345
-# # print(f"Number of readings set-string {fa.read()}")
+#Set timeout for this device to about 60 min = 60000ms
+# svm.adapter.connection.timeout = 36000000
 
-# # D
-# svm.delay = 0
-# print(f"Delay set-string {fa.read()}")
-# svm.delay = 0.0000001
-# print(f"Delay set-string {fa.read()}")
-# svm.delay = 0.000123
-# print(f"Delay set-string {fa.read()}")
+svm.number_readings = 10
+
+
 # svm.delay = 0.1234567
-# print(f"Delay set-string {fa.read()}")
-# svm.delay = 0.999999
-# print(f"Delay set-string {fa.read()}")
-# # svm.delay = 12.345
-# # print(f"Delay set-string {fa.read()}")
+svm.delay = 0.1
 
+svm.trigger = "internal"
 
-# #T
-# svm.trigger = "internal"
-# print(f"Trigger set-string {fa.read()}")
-# svm.trigger = "external"
-# print(f"Trigger set-string {fa.read()}")
-# svm.trigger = "hold"
-# print(f"Trigger set-string {fa.read()}")
-# svm.trigger = "manual"
-# print(f"Trigger set-string {fa.read()}")
-# # svm.trigger = "operator"
-# # print(f"Trigger set-string {fa.read()}")
-
-
-# svm.SRQ_mask = 1
-# print(f"SRQ set-string {fa.read()}")
-# svm.SRQ_mask = 2
-# print(f"SRQ set-string {fa.read()}")
-# svm.SRQ_mask = 3
-# print(f"SRQ set-string {fa.read()}")
-# svm.SRQ_mask = 4
-# print(f"SRQ set-string {fa.read()}")
-# svm.SRQ_mask = 5
-# print(f"SRQ set-string {fa.read()}")
-# svm.SRQ_mask = 6
-# print(f"SRQ set-string {fa.read()}")
 # svm.SRQ_mask = 7
-# print(f"SRQ set-string {fa.read()}")
-# svm.SRQ_mask = 0
-# print(f"SRQ set-string {fa.read()}")
-# # svm.SRQ_mask = 8
-# # print(f"SRQ set-string {fa.read()}")
-# 
-# fa._buffer = b'\xFF\xFF\xFF\xFF\xFF\xFF\xFF'
-# print(svm.status)
-# fa._buffer = b'\xFF\x00\x01\x00\x12\x34\x56'
-# print(svm.delay)
-# fa._buffer = b'\xFF\x12\x34\x01\x23\x45\x67'
-# print(svm.delay)
-# fa._buffer = b'\xFF\x12\x34\x01\x29\x39\x49'
-# print(svm.number_readings)
 
-# svm.range= 0.1
-# print(f"Range set-string {fa.read()}")
-# svm.range= 1
-# print(f"Range set-string {fa.read()}")
-# svm.range= 10
-# print(f"Range set-string {fa.read()}")
-# fa._buffer = b'\xAA\x12\x34\x01\x29\x39\x49'
-# print(f"Range readback {svm.range}")
-# fa._buffer = b'\xAA\x12\x34\x01\x29\x39\x49'
-# print(f"Trigger readback {svm.trigger}")
+
+svm.range= 0.1
+
+svm.talk_ascii = False
+
+print(f"Range {svm.range}")
+
+print(svm.status)
+
+print(svm.delay)
+# handlers = log.handlers[:]
+# for handler in handlers:
+#     handler.close()
+#     log.removeHandler(handler)
+
+    
