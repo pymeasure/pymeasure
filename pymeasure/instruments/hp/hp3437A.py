@@ -68,7 +68,6 @@ class Status_bits(ctypes.BigEndianStructure):
         ("SRQ", c_uint8, 3),  # bit 4..6
         ("trigger", c_uint8, 2),  # bit 2..3
         ("range", c_uint8, 2),  # bit 0..1
-        
         # Byte 2 & 3:
         ("Number", c_uint16, 16),
         # Byte 2:
@@ -124,8 +123,10 @@ class HP3437A(Instrument):
             includeSCPI=False,
             send_end=True,
             read_termination="\r\n",
-            **kwargs
+            write_termination="\r\n",
+            **kwargs,
         )
+        log.warning("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
     RANGE = {
@@ -153,11 +154,10 @@ class HP3437A(Instrument):
         :return current_status: a byte array representing the instrument status
         :rtype current_status: bytes
         """
-        self.write("B")
-        current_status = self.adapter.read_bytes(7)
-        # current_status = self.adapter.read()
-
-        return current_status
+        # self.write("B")
+        self.adapter.connection.write_raw("B")
+        # current_status = self.adapter.read_bytes(7)
+        return self.adapter.connection.read_raw()
 
     # decoder functions
     # decimal to BCD & BCD to decimal conversion copied from
@@ -220,7 +220,7 @@ class HP3437A(Instrument):
             delay_value = (
                 cls.convert_from_bcd(bcd_delay) / 1.0e7
             )  # delay resolution is 100ns
-            return delay_value
+            return delay_value - 4
         return getattr(ret_val.b, field)
 
     @staticmethod
@@ -234,8 +234,16 @@ class HP3437A(Instrument):
         """
         cur_stat = Status(Status_bytes(*status_bytes))
         range_undecoded = cur_stat.b.range
-        print(range_undecoded)
-        cur_range = math.pow(10, (range_undecoded - 1))  # TODO verify on actual system
+        if range_undecoded == 0:
+            cur_range = math.nan
+        if range_undecoded == 1:
+            cur_range = 0.1
+        # 2 indicates 10V range
+        if range_undecoded == 2:
+            cur_range = 10.0
+        # 3 indicated 1V range (cf page 3-8 of the manua, HPAK document 9018-05946)
+        if range_undecoded == 3:
+            cur_range = 1.0
         return cur_range
 
     @staticmethod
@@ -262,8 +270,6 @@ class HP3437A(Instrument):
 
     # commands/properties for instrument control
 
-    # TODO: find a way to check for invalid program
-
     # def check_errors(self):
     #     """
     #     Method to read the error status register
@@ -289,10 +295,11 @@ class HP3437A(Instrument):
         this may cause problems with measurment with short delay values.
 
         """
-        return self.decode_status(self.get_status(), "Format")-1
+        return bool(self.decode_status(self.get_status(), "Format"))
 
     @talk_ascii.setter
     def talk_ascii(self, value):
+        # log.debug("ASCI STATUS bit %d",value)
         if value is True:
             self.write("F1")
         else:
@@ -305,13 +312,12 @@ class HP3437A(Instrument):
         valid range: 100ns - 0.999999s
 
         """
-        delay = self.decode_status(self.get_status(), "Delay")
-        return delay
+        return self.decode_status(self.get_status(), "Delay")
 
     @delay.setter
     def delay(self, value):
         delay_str = (
-            "D." + format(strict_range(value, [0, 0.999999]) * 10e6, "06.0f") + "S"
+            "D." + format(strict_range(value, [0, 0.9999999]) * 10e6, "07.0f") + "S"
         )
         self.write(delay_str)
 
@@ -322,8 +328,7 @@ class HP3437A(Instrument):
         valid range: 0 - 9999
 
         """
-        number = self.decode_status(self.get_status(), "Number")
-        return number
+        return self.decode_status(self.get_status(), "Number")
 
     @number_readings.setter
     def number_readings(self, value):
@@ -340,8 +345,7 @@ class HP3437A(Instrument):
 
         THis instrument does not have autorange functionality
         """
-        range_decoded = self.decode_range(self.get_status())
-        return range_decoded
+        return self.decode_range(self.get_status())
 
     @range.setter
     def range(self, value):
@@ -356,8 +360,7 @@ class HP3437A(Instrument):
         Returns an object representing the current status of the unit.
 
         """
-        current_status = self.decode_status(self.get_status())
-        return current_status
+        return self.decode_status(self.get_status())
 
     @property
     def SRQ_mask(self):
@@ -374,8 +377,7 @@ class HP3437A(Instrument):
         =========  ==========================
 
         """
-        mask = self.decode_status(self.get_status(), "SRQ")
-        return mask
+        return self.decode_status(self.get_status(), "SRQ")
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
@@ -397,8 +399,7 @@ class HP3437A(Instrument):
         ========  ===========================================
 
         """
-        trigger = self.decode_trigger(self.get_status())
-        return trigger
+        return self.decode_trigger(self.get_status())
 
     @trigger.setter
     def trigger(self, value):
