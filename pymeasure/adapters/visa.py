@@ -24,7 +24,6 @@
 
 import logging
 
-import copy
 import pyvisa
 import numpy as np
 from pkg_resources import parse_version
@@ -57,6 +56,20 @@ class VISAAdapter(Adapter):
             resource_name = "GPIB0::%d::INSTR" % resource_name
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
+
+        # Clean up kwargs considering the interface type matching resource_name
+        if_type = self.manager.resource_info(self.resource_name).interface_type
+        for key in list(kwargs):
+            # Remove all interface-specific kwargs:
+            if key in pyvisa.constants.InterfaceType.__members__:
+                if getattr(pyvisa.constants.InterfaceType, key) is if_type:
+                    # For the present interface, dump contents into kwargs first if they are not
+                    # present already. This way, it is possible to override default values with
+                    # kwargs passed to Instrument.__init__()
+                    for k, v in kwargs[key].items():
+                        kwargs.setdefault(k, v)
+                del kwargs[key]
+
         self.connection = self.manager.open_resource(
             resource_name,
             **kwargs
