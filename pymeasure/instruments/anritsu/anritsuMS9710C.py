@@ -66,6 +66,11 @@ def _parse_trace_peak(vals):
 
 class AnritsuMS9710C(Instrument):
     """Anritsu MS9710C Optical Spectrum Analyzer."""
+    
+    def __init__(self, adapter, name="Anritsu MS9710C Optical Spectrum Analyzer", **kwargs):
+        """Constructor."""
+        self.analysis_mode = None
+        super(AnritsuMS9710C, self).__init__(adapter, name=name, **kwargs)
 
     #############
     #  Mappings #
@@ -268,11 +273,6 @@ class AnritsuMS9710C(Instrument):
         "Sets the trace marker with a wavelength.  Returns the trace wavelength and power.",
         get_process=_parse_trace_peak
     )
-
-    def __init__(self, adapter, **kwargs):
-        """Constructor."""
-        self.analysis_mode = None
-        super(AnritsuMS9710C, self).__init__(adapter, "Anritsu MS9710C Optical Spectrum Analyzer", **kwargs)
 
     @property
     def wavelengths(self):
