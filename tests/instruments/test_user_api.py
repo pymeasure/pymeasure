@@ -48,20 +48,15 @@ class MultiprotocolInstrument(Instrument):
         # user-overridable if appropriate without having to change the code/implementation
         # of my instrument.
 
+        VISAAdapter.setdefaults(adapter, InterfaceType.asrl, kwargs,
+                                baud_rate = 2400)
+
+        VISAAdapter.setdefaults(adapter, InterfaceType.gpib, kwargs,
+                                enable_repeat_addressing = False)
+
         super().__init__(adapter,
                          name=name,
                          **kwargs)
-        if isinstance(adapter, (int, str)):
-            # These are only cases where adapter is created by Instrument class, in this case
-            # the adapter is a VISAAdapter class based on pyvisa
-            if_type = self.adapter.connection.resource_info.interface_type
-            # Different communication methods might have different valid and/or needed attributes
-            # This is just an example on how this is possible since pyvisa includes
-            # several type of interfaces
-            if if_type is InterfaceType.asrl and not 'baud_rate' in kwargs:
-                self.adapter.connection.baud_rate = 2400
-            elif if_type is InterfaceType.gpib and not 'enable_repeat_addressing' in kwargs:
-                self.adapter.connection.enable_repeat_addressing = False
 
 # The defined tests use the pyvisa-sim simulated connections to avoid the need for a connected
 # instrument. The argument handling and connection creation happens in pyvisa just like for a
@@ -98,7 +93,7 @@ def test_connections_use_gpib():
     assert instr.adapter.connection.enable_repeat_addressing == False  # attribute specific to pyvisa GPIBInstrument
 
 
-def test_use_separate_adapter_instance():
+def test_use_separate_SerialAdapter():
     """As a user, I want to be able to supply a self-generated Adapter instance
     (e.g. to enable serial connection sharing over RS-485/-422)
     """
@@ -108,7 +103,7 @@ def test_use_separate_adapter_instance():
     print (instr.adapter)
     assert instr.adapter.connection.baudrate == 4800
 
-def test_use_separate_adapter_instance1():
+def test_use_separate_VISAAdapter():
     """As a user, I want to be able to supply my own VISAAdpter with my settings
     """
     # User can use its own VISAAdapter
