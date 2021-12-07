@@ -38,15 +38,18 @@ class AH2700A(AH2500A):
         """ Read out configuration """,
     )
 
-    def __init__(self, adapter, **kwargs):
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = 5000
-        super(AH2700A, self).__init__(adapter, **kwargs)
+    def __init__(self, adapter, timeout=5000, **kwargs):
+        super(AH2700A, self).__init__(
+            adapter,
+            name="Andeen Hagerling 2700A Precision Capacitance Bridge",
+            timeout=timeout,
+            includeSCPI=True,
+            **kwargs)
 
     def trigger(self):
         """
         Triggers a new measurement without blocking and waiting for the return
         value.
         """
-        self._triggered = True
         self.write("*TRG")
+        self._triggered = True

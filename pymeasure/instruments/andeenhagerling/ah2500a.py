@@ -22,14 +22,39 @@
 # THE SOFTWARE.
 #
 
+import math
+import re
+import logging
+
 from pymeasure.instruments import Instrument
-from .util import parse_reply
+
+log = logging.getLogger(__name__)
 
 
 class AH2500A(Instrument):
     """ Andeen Hagerling 2500A Precision Capacitance Bridge implementation
     """
-    id = "Andeen Hagerling AH2500A"  # device does not support '*IDN?'
+    # regular expression to extract measurement values
+    mcl = re.compile(r"[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS")
+
+    @classmethod
+    def _parse_reply(cls, string):
+        """
+        parse reply string from Andeen Hagerling capacitance bridges.
+
+        :param string: reply string from the instrument. This commonly is:
+          2500A:
+            "C=123.123456 PF L=0.12345 NS"
+          2700A:
+            "F= 1000.00 HZ C= 4.20188     PF L=-0.0260      NS V= 15.0     V"
+        """
+        m = cls.mcl.match(string)
+        if m is not None:
+            cap, loss = map(float, m.groups())
+            return cap, loss
+        # if an invalid string is returned ('EXCESS NOISE')
+        log.warning("Excess noise, check your experiment setup")
+        return math.nan, math.nan
 
     config = Instrument.measurement(
         "SHOW",
@@ -40,18 +65,19 @@ class AH2500A(Instrument):
         "Q",
         """ Perform a single capacitance, loss measurement and return the
         values in units of pF and nS.""",
-        get_process=parse_reply
+        get_process=_parse_reply,
     )
 
-    def __init__(self, adapter, **kwargs):
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = 3000
-        if "write_termination" not in kwargs:
-            kwargs["write_termination"] = "\n"
-        if "read_termination" not in kwargs:
-            kwargs["read_termination"] = "\n"
+    def __init__(self, adapter, name=None, timeout=3000,
+                 write_termination="\n", read_termination="\n",
+                 **kwargs):
+        kwargs.setdefault("write_termination", write_termination)
+        kwargs.setdefault("read_termination", read_termination)
+        kwargs.setdefault("timeout", timeout)
+        kwargs.setdefault("includeSCPI", False)
         super(AH2500A, self).__init__(
-            adapter, "Andeen Hagerling 2x00A Precision Capacitance Bridge",
+            adapter,
+            name or "Andeen Hagerling 2500A Precision Capacitance Bridge",
             **kwargs
         )
         self._triggered = False
@@ -61,16 +87,17 @@ class AH2500A(Instrument):
         Triggers a new measurement without blocking and waiting for the return
         value.
         """
-        self._triggered = True
         self.write("TRG")
+        self._triggered = True
 
     def triggered_caploss(self):
         """
         reads the measurement value after the device was triggered by the
         trigger function.
         """
-        if self._triggered:
-            self._triggered = False
-            return parse_reply(self.read())
-        else:
-            raise Exception("Device was not triggered previously!")
+        if not self._triggered:
+            log.warning(
+                "Device not triggered, trigger manually for better timing")
+            self.trigger()
+        self._triggered = False
+        return parse_reply(self.read())
