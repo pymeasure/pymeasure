@@ -118,4 +118,4 @@ class AH2500A(Instrument):
                 "Device not triggered, trigger manually for better timing")
             self.trigger()
         self._triggered = False
-        return parse_reply(self.read())
+        return AH2500A._parse_reply(self.read())
