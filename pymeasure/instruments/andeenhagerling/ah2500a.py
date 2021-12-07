@@ -69,13 +69,16 @@ class AH2500A(Instrument):
     caplossvolt = Instrument.measurement(
         "Q",
         """ Perform a single capacitance, loss measurement and return the
-        values in units of pF and nS.""",
+        values in units of pF and nS. The used measurement voltage is returned
+        as third value.""",
         get_process=lambda v: AH2500A._parse_reply(v),
     )
 
     vhighest = Instrument.control(
         "SH V", "V %.4f",
-        """maximum RMS value of the used measurement voltage.""",
+        """maximum RMS value of the used measurement voltage. Values of up to
+        15 V are allowed. The device will select the best suiting range below
+        the given value.""",
         validator=strict_range,
         values=[0, 15],
         # typical replies: "VOLTAGE    HIGHEST= 15.0    V" or

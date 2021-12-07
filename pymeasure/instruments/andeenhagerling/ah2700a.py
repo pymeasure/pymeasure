@@ -41,7 +41,9 @@ class AH2700A(AH2500A):
 
     frequency = Instrument.control(
         "SH FR", "FR %.1f",
-        """test frequency used for the measurements.""",
+        """test frequency used for the measurements. Allowed are values between
+        50 and 20000 Hz. The device selects the closest possible frequency to
+        the given value.""",
         validator=strict_range,
         values=[50, 20000],
         # typical reply: "FREQUENCY      1200.0 Hz"
