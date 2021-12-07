@@ -514,14 +514,17 @@ class Metadata(object):
     If no fget function is specified, the value property will return the
     latest set value of the parameter (or default if never set).
 
-    :var value: The value of the parameter. This returns (if possible) the
-        value obtained from the `fget` method or a stored value (in case
-        `fget` is not available or if the Metadata has been evaluated)
+    :var value: The value of the parameter. This returns (if a value is set)
+        the value obtained from the `fget` (after evaluation) or a manually
+        set value. Returns `None` if no value has been set
 
     :param name: The parameter name
-    :param fget: The parameter fget function (e.g. an instrument parameter);
-        can also be a string, in which case it is assumed to be a method name
-        of the `Procedure` class in which the Metadata is defined
+    :param fget: The parameter fget function; can be provided as a callable,
+        or as be a string, in which case it is assumed to be the name of a
+        method or attribute of the `Procedure` class in which the Metadata is
+        defined. Passing a string also allows for nested attributes by separating
+        them with a period (e.g. to access an attribute or method of an
+        instrument) where only the last attribute can be a method.
     :param units: The parameter units
     :param default: The default value, in case no value is assigned or if no
         fget method is provided
@@ -538,31 +541,36 @@ class Metadata(object):
 
     @property
     def value(self):
-        if self.fget is not None and not self.evaluated:
-            self._value = self.fget()
         return self._value
-
-    @value.setter
-    def value(self, value):
-        if self.fget is not None:
-            raise ValueError("Metadata with a defined fget method cannot be manually assigned a value")
-        if self.evaluated:
-            raise ValueError("The value of Metadata cannot be changed after it has been evaluated")
-        self._value = value
 
     def is_set(self):
         """ Returns True if the Parameter value is set
         """
         return self._value is not None
 
-    def evaluate(self, new_value=None):
-        self.evaluated = False
-        if new_value is not None:
-            self.value = new_value
+    def evaluate(self, parent=None, new_value=None):
+        if new_value is not None and self.fget is not None:
+            raise ValueError("Metadata with a defined fget method cannot be manually assigned a value")
+        elif new_value is not None:
+            self._value = new_value
+        elif self.fget is not None:
+            self._value = self.eval_fget(parent)
 
-        value = self.value
         self.evaluated = True
-        return value
+        return self.value
+
+    def eval_fget(self, parent):
+        fget = self.fget
+        if isinstance(fget, str):
+            obj = parent
+            for obj_name in fget.split('.'):
+                obj = getattr(obj, obj_name)
+            fget = obj
+
+        if callable(fget):
+            return fget()
+        else:
+            return fget
 
     def __str__(self):
         result = str(self.value)

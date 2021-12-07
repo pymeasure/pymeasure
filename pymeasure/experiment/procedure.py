@@ -192,10 +192,6 @@ class Procedure(object):
 
         for item, metadata in inspect.getmembers(self.__class__):
             if isinstance(metadata, Metadata):
-                # If required, replace string for fget method for non-string
-                if isinstance(metadata.fget, str):
-                    metadata.fget = getattr(self, metadata.fget)
-
                 self._metadata[item] = deepcopy(metadata)
 
                 if metadata.is_set():
@@ -208,7 +204,7 @@ class Procedure(object):
         """
         for item, metadata in self._metadata.items():
             # Evaluate the metadata, fixing its value
-            value = metadata.evaluate(new_value=getattr(self, item))
+            value = metadata.evaluate(parent=self, new_value=getattr(self, item))
 
             # Make the value of the metadata easily accessible
             setattr(self, item, value)
