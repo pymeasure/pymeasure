@@ -544,7 +544,10 @@ class Metadata(object):
 
     @property
     def value(self):
-        return self._value
+        if self.is_set():
+            return self._value
+        else:
+            raise ValueError("Metadata value is not set")
 
     def is_set(self):
         """ Returns True if the Parameter value is set
