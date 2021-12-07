@@ -294,6 +294,7 @@ The :python:`fget` method, if provided, is ran after startup method.
 It can also be provided as a string; in that case it is assumed that the string contains the name of an attribute (either a callable or not) of the Procedure class which returns the value that is to be stored.
 This also allows to retrieve nested attributes (e.g. in order to store a property or method of an instrument) by separating the attributes with a period: e.g. `instrument_name.attribute_name` (or even `instrument_name.subclass_name.attribute_name`); note that here only the final element (i.e. `attribute_name` in the example) is allowed to refer to a callable.
 If neither an :python:`fget` method is provided or a value manually set, the Metadata will return to its default value, if set.
+The formatting of the value of the Metadata-object can be controlled using the `fmt` argument.
 
 
 Modifying our script

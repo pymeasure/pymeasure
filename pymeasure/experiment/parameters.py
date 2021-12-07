@@ -528,14 +528,17 @@ class Metadata(object):
     :param units: The parameter units
     :param default: The default value, in case no value is assigned or if no
         fget method is provided
+    :param fmt: A string used to format the value upon writing it to a file.
+        Default is "%s"
 
     """
-    def __init__(self, name, fget=None, units=None, default=None):
+    def __init__(self, name, fget=None, units=None, default=None, fmt="%s"):
         self.name = name
         self.units = units
 
         self._value = default
         self.fget = fget
+        self.fmt = fmt
 
         self.evaluated = False
 
@@ -573,7 +576,7 @@ class Metadata(object):
             return fget
 
     def __str__(self):
-        result = str(self.value)
+        result = self.fmt % self.value
 
         if self.units is not None:
             result += " %s" % self.units
