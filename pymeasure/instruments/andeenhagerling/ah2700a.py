@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
 from .ah2500a import AH2500A
 
 
@@ -38,13 +39,26 @@ class AH2700A(AH2500A):
         """ Read out configuration """,
     )
 
+    frequency = Instrument.control(
+        "SH FR", "FR %.1f",
+        """test frequency used for the measurements.""",
+        validator=strict_range,
+        values=[50, 20000],
+        # typical reply: "FREQUENCY      1200.0 Hz"
+        get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
+    )
+
     def __init__(self, adapter, timeout=5000, **kwargs):
         super(AH2700A, self).__init__(
             adapter,
             name="Andeen Hagerling 2700A Precision Capacitance Bridge",
             timeout=timeout,
-            includeSCPI=True,
-            **kwargs)
+            **kwargs
+        )
+
+    def reset(self):
+        """ Resets the instrument. """
+        self.write("*RST")
 
     def trigger(self):
         """

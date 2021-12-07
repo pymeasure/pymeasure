@@ -27,6 +27,7 @@ import re
 import logging
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +36,8 @@ class AH2500A(Instrument):
     """ Andeen Hagerling 2500A Precision Capacitance Bridge implementation
     """
     # regular expression to extract measurement values
-    mcl = re.compile(r"[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS")
+    _reclv = re.compile(r"[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS V=\s*(-?[0-9.]+)\s*V")
+    _renumeric = re.compile(r'[-+]?(\d*\.?\d+)')
 
     @classmethod
     def _parse_reply(cls, string):
@@ -44,28 +46,41 @@ class AH2500A(Instrument):
 
         :param string: reply string from the instrument. This commonly is:
           2500A:
-            "C=123.123456 PF L=0.12345 NS"
+            "C= 1.234567    PF L= 0.000014    NS V= 0.750   V"
           2700A:
             "F= 1000.00 HZ C= 4.20188     PF L=-0.0260      NS V= 15.0     V"
         """
-        m = cls.mcl.match(string)
+        m = cls._reclv.match(string)
         if m is not None:
-            cap, loss = map(float, m.groups())
-            return cap, loss
+            values = tuple(map(float, m.groups()))
+            return values
         # if an invalid string is returned ('EXCESS NOISE')
-        log.warning("Excess noise, check your experiment setup")
-        return math.nan, math.nan
+        if string.strip() == "EXCESS NOISE":
+            log.warning("Excess noise, check your experiment setup")
+            return (math.nan, math.nan, math.nan)
+        else:  # some unknown return string (e.g. misconfigured units)
+            raise Exception("Measurement value not understood")
 
     config = Instrument.measurement(
         "SHOW",
         """ Read out configuration """,
     )
 
-    caploss = Instrument.measurement(
+    caplossvolt = Instrument.measurement(
         "Q",
         """ Perform a single capacitance, loss measurement and return the
         values in units of pF and nS.""",
-        get_process=_parse_reply,
+        get_process=lambda v: AH2500A._parse_reply(v),
+    )
+
+    vhighest = Instrument.control(
+        "SH V", "V %.4f",
+        """maximum RMS value of the used measurement voltage.""",
+        validator=strict_range,
+        values=[0, 15],
+        # typical replies: "VOLTAGE    HIGHEST= 15.0    V" or
+        # "VOLTAGE HIGHEST 1.00    V"
+        get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
     )
 
     def __init__(self, adapter, name=None, timeout=3000,
@@ -90,7 +105,7 @@ class AH2500A(Instrument):
         self.write("TRG")
         self._triggered = True
 
-    def triggered_caploss(self):
+    def triggered_caplossvolt(self):
         """
         reads the measurement value after the device was triggered by the
         trigger function.
