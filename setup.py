@@ -41,7 +41,7 @@ setup(
         "pandas >= 0.14",
         "pyvisa >= 1.8",
         "pyserial >= 2.7",
-        "pyqtgraph >= 0.9.10"
+        "pyqtgraph >= 0.12.0"
     ],
     extras_require={
         'matplotlib': ['matplotlib >= 2.0.2'],
