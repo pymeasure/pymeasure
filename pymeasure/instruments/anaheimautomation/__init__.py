@@ -22,8 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .rohde_schwarz_sma100a import RS_SMA100A
-from .rohde_schwarz_smiq06b import RS_SMIQ06B
-from .rohde_schwarz_sml01 import RS_SML01
-from .sfm import SFM
-from .fsl import FSL
+from .dpseriesmotorcontroller import DPSeriesMotorController
