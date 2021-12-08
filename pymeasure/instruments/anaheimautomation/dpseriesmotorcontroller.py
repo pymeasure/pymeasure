@@ -232,7 +232,7 @@ class DPSeriesMotorController(Instrument):
     @step_position.setter
     def step_position(self, pos):
         strict_range(pos, (-8388607, 8388607)) 
-        self.write("P%i" % step_pos)
+        self.write("P%i" % pos)
         self.write("G")
     
     @property
