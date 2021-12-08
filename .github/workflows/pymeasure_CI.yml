@@ -89,7 +89,11 @@ jobs:
           conda list
       - name: Run pytest with xvfb
         if: runner.os == 'Linux'
-        run: xvfb-run -a python setup.py test
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          xvfb-run -a python setup.py test
       - name: Run pytest
         if: runner.os != 'Linux'
-        run: python setup.py test
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          python setup.py test
