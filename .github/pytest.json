@@ -13,7 +13,7 @@
                     "line": 2
                 },
                 {
-                    "regexp": "  (?<message>[\\S\\s]+?)%0A%0A",
+                    "regexp": "^  (?<message>.+)$",
                     "message": 1,
                     "loop": true
                 }
