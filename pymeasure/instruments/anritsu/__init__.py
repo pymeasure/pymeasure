@@ -24,4 +24,5 @@
 
 from .anritsuMG3692C import AnritsuMG3692C
 from .anritsuMS9710C import AnritsuMS9710C
+from .anritsuMS9740A import AnritsuMS9740A
 from .anritsuMS2830A import AnritsuMS2830A
