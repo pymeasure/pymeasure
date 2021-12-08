@@ -34,6 +34,8 @@ jobs:
         run: |
           conda info
           conda list
+      - name: Set up flake8 annotations
+        uses: rbialon/flake8-annotations@v1
       - name: Lint with flake8
         continue-on-error: true
         run: |
