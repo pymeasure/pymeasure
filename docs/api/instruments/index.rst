@@ -24,6 +24,7 @@ Instruments by manufacturer:
    agilent/index
    ametek/index
    ami/index
+   anaheimautomation/index 
    anapico/index
    anritsu/index
    attocube/index

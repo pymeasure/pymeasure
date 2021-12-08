@@ -32,6 +32,7 @@ from . import advantest
 from . import agilent
 from . import ametek
 from . import ami
+from . import anaheimautomation
 from . import anapico
 from . import anritsu
 from . import attocube

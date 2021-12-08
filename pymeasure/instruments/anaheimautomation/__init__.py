@@ -22,8 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .rohde_schwarz_fscx import RS_FSC3, RS_FSC6
-from .rohde_schwarz_fsw13 import RS_FSW13
-from .rohde_schwarz_fsiq3 import RS_FSIQ3
-from .sfm import SFM
-from .fsl import FSL
+from .dpseriesmotorcontroller import DPSeriesMotorController
