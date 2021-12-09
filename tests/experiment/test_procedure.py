@@ -46,6 +46,7 @@ def test_parameters():
 
 # TODO: Add tests for measureables
 
+
 def test_procedure_wrapper():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
@@ -61,12 +62,14 @@ def test_procedure_wrapper():
 # The test ensure that property is evaluated only when the Parameter has been processed during
 # class initialization.
 
+
 def test_procedure_properties():
     class TestProcedure(Procedure):
         @property
         def a(self):
             assert(isinstance(self.x, int))
             return self.x
+
         @property
         def z(self):
             assert(isinstance(self.x, int))
@@ -78,6 +81,8 @@ def test_procedure_properties():
 
 # Make sure that a procedure can be initialized even though some properties are raising
 # errors at initialization time
+
+
 def test_procedure_init_with_invalid_property():
     class TestProcedure(Procedure):
         @property

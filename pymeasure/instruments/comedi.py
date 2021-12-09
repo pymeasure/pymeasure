@@ -82,7 +82,7 @@ def writeAO(device, channel, voltage, range=None):
 
 class SynchronousAI(object):
 
-    def __init__(self, channels, period, samples): 
+    def __init__(self, channels, period, samples):
         self.channels = channels
         self.samples = samples
         self.period = period
@@ -94,7 +94,7 @@ class SynchronousAI(object):
     def _command(self):
         """ Returns the command used to initiate and end the sampling
         """
-        command = self.subdevice.get_cmd_generic_timed(len(self.channels), 
+        command = self.subdevice.get_cmd_generic_timed(len(self.channels),
                                                        self.scanPeriod)
         command.start_src = TRIG_SRC.int
         command.start_arg = 0
@@ -162,7 +162,7 @@ class SynchronousAI(object):
             count += 1
 
         # Cancel measurement if it is still running (abort event)
-        if self.subdevice.get_flags().running:             
+        if self.subdevice.get_flags().running:
             self.subdevice.cancel()
 
 

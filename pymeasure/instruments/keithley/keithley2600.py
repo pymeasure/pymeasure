@@ -73,6 +73,7 @@ class Keithley2600(Instrument):
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2600 error retrieval.")
 
+
 class Channel(object):
 
     def __init__(self, instrument, channel):
@@ -287,8 +288,6 @@ class Channel(object):
             self.source_voltage_range = voltage_range
         self.compliance_current = compliance_current
         self.check_errors()
-
-
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=0.1):
         """ Ramps to a target voltage from the set voltage value over

@@ -87,5 +87,3 @@ class Keithley2750(Instrument):
         :return: None
         """
         self.write(":ROUTe:OPEN:ALL")
-
-

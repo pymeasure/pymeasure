@@ -59,6 +59,7 @@ DAQmx_Val_GroupByChannel = 1
 
 class DAQmx(object):
     """Instrument object for interfacing with NI-DAQmx devices."""
+
     def __init__(self, name, *args, **kwargs):
         super(DAQmx, self).__init__()
         self.resourceName = name # NOTE: Device number, e.g. Dev1 or PXI1Slot2

@@ -555,7 +555,3 @@ class Agilent34450A(Instrument):
                 log.error(e)
 
         return list_without_empty_elements
-
-
-
-

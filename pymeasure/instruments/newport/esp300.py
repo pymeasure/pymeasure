@@ -77,6 +77,7 @@ class AxisError(Exception):
         return "Newport ESP300 axis %s reported the error: %s" % (
             self.axis, self.message)
 
+
 class GeneralError(Exception):
     """ Raised when the Newport ESP300 has a general error.
     """
@@ -124,6 +125,7 @@ class GeneralError(Exception):
     def __str__(self):
         return "Newport ESP300 reported the error: %s" % (
             self.message)
+
 
 class Axis(object):
     """ Represents an axis of the Newport ESP300 Motor Controller,

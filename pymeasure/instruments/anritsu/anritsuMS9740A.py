@@ -37,6 +37,7 @@ import re
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class AnritsuMS9740A(AnritsuMS9710C):
     """Anritsu MS9740A Optical Spectrum Analyzer."""
 
@@ -91,5 +92,3 @@ class AnritsuMS9740A(AnritsuMS9710C):
         self.clear()
         self.write('SRT')
         self.wait_for_sweep(n=n, delay=delay)
-
-

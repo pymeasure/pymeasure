@@ -32,7 +32,7 @@ from pymeasure.experiment.procedure import Procedure
 # TODO: Repair this unit test
 # class TestManagedWindow:
 #     # TODO: More thorough unit (or integration?) tests.
-# 
+#
 #     # TODO: Could we make this more testable? These patches are a bit ridiculous.
 #     @mock.patch('pymeasure.display.windows.Manager')
 #     @mock.patch('pymeasure.display.windows.InputsWidget')

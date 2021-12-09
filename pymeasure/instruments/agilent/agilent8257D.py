@@ -124,7 +124,7 @@ class Agilent8257D(Instrument):
         values=[0, 100]
     )
     AMPLITUDE_SOURCES = {
-        'internal':'INT', 'internal 2':'INT2', 
+        'internal':'INT', 'internal 2':'INT2',
         'external':'EXT', 'external 2':'EXT2'
     }
     amplitude_source = Instrument.control(
@@ -236,7 +236,7 @@ class Agilent8257D(Instrument):
         values=[0.5, 1e6]
     )
     INTERNAL_SHAPES = {
-        'sine':'SINE', 'triangle':'TRI', 'square':'SQU', 'ramp':'RAMP', 
+        'sine':'SINE', 'triangle':'TRI', 'square':'SQU', 'ramp':'RAMP',
         'noise':'NOIS', 'dual-sine':'DUAL', 'swept-sine':'SWEP'
     }
     internal_shape = Instrument.control(

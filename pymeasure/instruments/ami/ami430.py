@@ -63,6 +63,7 @@ class AMI430(Instrument):
         magnet.shutdown()                     # Ramps the current to zero and disables output
 
     """
+
     def __init__(self, resourceName, **kwargs):
         adapter = VISAAdapter(resourceName, read_termination='\n')
         super(AMI430, self).__init__(

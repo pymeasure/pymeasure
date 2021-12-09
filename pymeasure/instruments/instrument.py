@@ -347,6 +347,7 @@ class Instrument(object):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
+
 class FakeInstrument(Instrument):
     """ Provides a fake implementation of the Instrument class
     for testing purposes.

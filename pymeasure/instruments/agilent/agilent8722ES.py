@@ -172,7 +172,7 @@ class Agilent8722ES(Instrument):
         self.write("*CLS")
         self.scan_single()
         # All queries will block until the scan is done, so use NOOP? to check.
-        # These queries will time out after several seconds though, 
+        # These queries will time out after several seconds though,
         # so query repeatedly until the scan finishes.
         while True:
             try:

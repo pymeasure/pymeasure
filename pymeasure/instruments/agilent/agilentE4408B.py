@@ -89,7 +89,7 @@ class AgilentE4408B(Instrument):
         correspond to the current settings of the instrument.
         """
         return np.linspace(
-            self.start_frequency, 
+            self.start_frequency,
             self.stop_frequency,
             self.frequency_points,
             dtype=np.float64
@@ -116,4 +116,3 @@ class AgilentE4408B(Instrument):
             'Frequency (GHz)': self.frequencies*1e-9,
             'Peak (dB)': self.trace(number)
         })
-

@@ -71,6 +71,7 @@ class PlotterWindow(QtGui.QMainWindow):
     .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
 
     """
+
     def __init__(self, plotter, refresh_time=0.1, linewidth=1, parent=None):
         super().__init__(parent)
         self.plotter = plotter
@@ -644,6 +645,7 @@ class ManagedWindow(ManagedWindowBase):
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)
         log.info("ManagedWindow connected to logging")
+
 
 class ManagedImageWindow(ManagedWindow):
     """

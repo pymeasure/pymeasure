@@ -24,6 +24,7 @@
 
 from pymeasure.instruments import Instrument
 
+
 class HP34401A(Instrument):
     """ Represents the HP 34401A instrument.
     """
@@ -46,4 +47,3 @@ class HP34401A(Instrument):
             "HP 34401A",
             **kwargs
         )
-

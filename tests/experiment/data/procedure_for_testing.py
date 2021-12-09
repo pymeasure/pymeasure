@@ -23,7 +23,7 @@
 #
 
 from pymeasure.experiment import (
-    Procedure, IntegerParameter, 
+    Procedure, IntegerParameter,
     Parameter, FloatParameter
 )
 import random

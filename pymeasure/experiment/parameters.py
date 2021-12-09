@@ -64,8 +64,6 @@ class Parameter(object):
             raise TypeError("The provided group_by argument is not valid, should be either "
                             "a string, a list of strings, or a dict with {string: condition} pairs.")
 
-
-
     @property
     def value(self):
         if self.is_set():

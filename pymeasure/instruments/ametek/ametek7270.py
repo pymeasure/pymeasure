@@ -29,6 +29,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
 
+
 class Ametek7270(Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier"""
 

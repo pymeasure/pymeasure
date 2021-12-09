@@ -37,9 +37,11 @@ except ImportError:
 
 from .Qt import QtCore
 
+
 def _greyscale_colormap(x):
     """Simple greyscale colormap. Assumes x is already normalized."""
     return np.array([x,x,x,1])
+
 
 class ResultsCurve(pg.PlotDataItem):
     """ Creates a curve loaded dynamically from a file through the Results
@@ -86,6 +88,7 @@ class ResultsCurve(pg.PlotDataItem):
 class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
+
     def __init__(self, results, x, y, z, force_reload=False):
         self.results = results
         self.x = x

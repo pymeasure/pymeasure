@@ -110,7 +110,7 @@ class SerialAdapter(Adapter):
         """
 
         block = self._format_binary_values(values, **kwargs)
-        return self.connection.write(command.encode() + block) 
+        return self.connection.write(command.encode() + block)
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port

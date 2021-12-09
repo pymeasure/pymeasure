@@ -30,13 +30,14 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,strict_range
 
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 c_uint8 = ctypes.c_uint8
 
 #classes for the decoding of the 5-byte status word
+
+
 class Status_bytes(ctypes.Structure):
     """
     Support-Class for the 5 status byte of the HP3478A
@@ -48,6 +49,7 @@ class Status_bytes(ctypes.Structure):
         ("byte4",   c_uint8),
         ("byte5",   c_uint8)
     ]
+
 
 class Status_bits(ctypes.LittleEndianStructure):
     """
@@ -93,6 +95,7 @@ class Status_bits(ctypes.LittleEndianStructure):
         #Byte 5: DAC Value
         ("DAC_value",       c_uint8, 8),
     ]
+
     def __str__(self):
         """
         Returns a pretty formatted (human readable) string showing the status of the instrument
@@ -130,6 +133,7 @@ class Status_bits(ctypes.LittleEndianStructure):
                 self.ERR_AD, self.ERR_AD_Link, self.DAC_value)
         )
 
+
 class Status(ctypes.Union):
     """Union type element for the decoding of the status bit-fields
     """
@@ -137,7 +141,6 @@ class Status(ctypes.Union):
         ("B", Status_bytes),
         ("b", Status_bits)
     ]
-
 
 
 class HP3478A(Instrument):

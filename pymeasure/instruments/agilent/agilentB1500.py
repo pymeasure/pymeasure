@@ -423,6 +423,7 @@ class AgilentB1500(Instrument):
     class _data_formatting_FMT1(_data_formatting_generic):
         """ Data formatting for FMT1 format
         """
+
         def __init__(self, smu_names={}, output_format_string="FMT1"):
             super().__init__(smu_names, output_format_string)
 
@@ -449,12 +450,14 @@ class AgilentB1500(Instrument):
     class _data_formatting_FMT11(_data_formatting_FMT1):
         """ Data formatting for FMT11 format (based on FMT1)
         """
+
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
         """ Data formatting for FMT21 format
         """
+
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT21")
 
@@ -1466,6 +1469,7 @@ class SMUVoltageRanging():
 
     '2 V' defaults to '2 V limited auto ranging'
     """
+
     def __init__(self, smu_type):
         supported_ranges = {
             'HRSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
@@ -1515,6 +1519,7 @@ class SMUCurrentRanging():
 
     '1 nA' defaults to '1 nA limited auto ranging'
     """
+
     def __init__(self, smu_type):
         supported_output_ranges = {
             # in combination with ASU also 8

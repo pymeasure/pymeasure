@@ -25,9 +25,10 @@ import numpy as np
 from time import sleep
 import os
 
+
 class TestImageProcedure(Procedure):
 
-    # We will be using X and Y as coordinates for our images. We must have 
+    # We will be using X and Y as coordinates for our images. We must have
     # parameters called X_start, X_end and X_step and similarly for Y. X and
     # Y can be replaced with other names, but the suffixes must remain.
     X_start = FloatParameter("X Start Position", units="m", default=0.)
@@ -40,7 +41,7 @@ class TestImageProcedure(Procedure):
     delay = FloatParameter("Delay", units="s", default=0.01)
 
     # There must be two special data columns which correspond to the two things
-    # which will act as coordinates for our image. If X and Y are changed 
+    # which will act as coordinates for our image. If X and Y are changed
     # in the parameter names, their names must change in DATA_COLUMNS as well.
     DATA_COLUMNS = ["X", "Y", "pixel_data"]
 
@@ -95,6 +96,7 @@ class TestImageGUI(ManagedImageWindow):
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
         self.manager.queue(experiment)
+
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)

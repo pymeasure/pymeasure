@@ -108,4 +108,3 @@ class KeysightN5767A(Instrument):
                 converter='f',
                 separator=','
             )
-

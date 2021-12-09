@@ -29,6 +29,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class Sound_Channel(object):
     """
     Class object for the two sound channels
@@ -177,6 +178,7 @@ class Sound_Channel(object):
         """
         return self.instrument.values("SOUR:TEL:MOD:SOUN%d:%s" % (
                                       self.number, command), **kwargs)
+
     def ask(self, command):
         self.instrument.ask("SOUR:TEL:MOD:SOUN:%d:%s" % (self.number, command))
 
@@ -538,7 +540,6 @@ class SFM(Instrument):
         validator = strict_range,
         values = [1E3, 1E9]
     )
-
 
     level = Instrument.control(
         "SOUR:POW:LEV?",
@@ -979,7 +980,6 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values=["HARD","SOFT"],
     )
-
 
     vision_precorrection_enabled = Instrument.control(
         "SOUR:TEL:MOD:VIS:PREC?",

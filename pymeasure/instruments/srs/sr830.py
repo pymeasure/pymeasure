@@ -31,31 +31,30 @@ from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
 
-
 class LIAStatus(IntFlag):
     """ IntFlag type that is returned by the lia_status property.
     """
     NO_ERROR = 0
-    INPUT_OVERLOAD = 1 
-    FILTER_OVERLOAD = 2 
-    OUTPUT_OVERLOAD = 4 
-    REF_UNLOCK = 8 
-    FREQ_RANGE_CHANGE = 16 
-    TC_CHANGE = 32 
-    TRIGGER = 64 
-    UNUSED = 128 
+    INPUT_OVERLOAD = 1
+    FILTER_OVERLOAD = 2
+    OUTPUT_OVERLOAD = 4
+    REF_UNLOCK = 8
+    FREQ_RANGE_CHANGE = 16
+    TC_CHANGE = 32
+    TRIGGER = 64
+    UNUSED = 128
 
 
 class ERRStatus(IntFlag):
     """ IntFlag type that is returned by the err_status property.
     """
     NO_ERROR = 0
-    BACKUP_ERR = 2 
-    RAM_ERR = 4 
-    ROM_ERR = 16 
-    GPIB_ERR = 32 
-    DSP_ERR = 64 
-    MATH_ERR = 128 
+    BACKUP_ERR = 2
+    RAM_ERR = 4
+    ROM_ERR = 16
+    GPIB_ERR = 32
+    DSP_ERR = 64
+    MATH_ERR = 128
 
 
 class SR830(Instrument):
@@ -541,4 +540,3 @@ class SR830(Instrument):
 
         command = "SNAP? " + ",".join(vals_idx)
         return self.values(command)
-

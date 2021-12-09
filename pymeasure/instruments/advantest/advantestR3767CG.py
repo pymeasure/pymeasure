@@ -50,14 +50,14 @@ class AdvantestR3767CG(Instrument):
     )
 
     start_frequency = Instrument.control(
-        ":FREQ:STAR?", ":FREQ:STAR %d", 
+        ":FREQ:STAR?", ":FREQ:STAR %d",
         """ Starting frequency in Hz """,
         validator=strict_range,
         values=[1, 8000000000]
     )
 
     stop_frequency  = Instrument.control(
-        ":FREQ:STOP?",":FREQ:STOP %d", 
+        ":FREQ:STOP?",":FREQ:STOP %d",
         """ Stoping frequency in Hz """,
         validator=strict_range,
         values=[1, 8000000000]
@@ -75,4 +75,4 @@ class AdvantestR3767CG(Instrument):
         )
 
         # Tell unit to operate in IEEE488.2-1987 command mode.
-        self.write("OLDC OFF") 
+        self.write("OLDC OFF")

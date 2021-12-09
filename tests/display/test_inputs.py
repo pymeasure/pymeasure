@@ -29,6 +29,7 @@ from pymeasure.display.Qt import QtGui, QtCore
 from pymeasure.display.inputs import ScientificInput, BooleanInput, ListInput
 from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter
 
+
 @pytest.mark.parametrize("default_value", [True, False])
 class TestBooleanInput:
     @pytest.mark.parametrize("value_remains_default", [True, False])
@@ -61,7 +62,6 @@ class TestBooleanInput:
 
         bool_input.setValue(not default_value)
         assert bool_input.value() == (not default_value)
-
 
     def test_leftclick_should_update_parameter(self, qtbot, default_value):
         # set up BooleanInput
@@ -141,7 +141,6 @@ class TestListInput:
                 list_input.parameter # lazy update
             p.assert_has_calls((mock.call(123), mock.call('abc'), mock.call(0)))
 
-
     def test_unit_should_append_to_strings(self, qtbot):
         list_param = ListParameter('potato', choices=[123, 456], default=123, units='m')
         list_input = ListInput(list_param)
@@ -149,13 +148,13 @@ class TestListInput:
 
         assert list_input.currentText() == '123 m'
 
-
     def test_set_invalid_value_should_raise(self, qtbot):
         list_param = ListParameter('potato', choices=[123, 456], default=123, units='m')
         list_input = ListInput(list_param)
         qtbot.addWidget(list_input)
         with pytest.raises(ValueError):
             list_input.setValue(789)
+
 
 class TestScientificInput:
     @pytest.mark.parametrize("min_,max_,default_value", [

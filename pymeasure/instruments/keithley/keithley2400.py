@@ -348,7 +348,6 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=['ON', 'OFF'],
         map_values=False)
 
-
     #####################
     # Output subsystem #
     #####################
@@ -366,7 +365,6 @@ class Keithley2400(Instrument, KeithleyBuffer):
         validator=strict_discrete_set,
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
         map_values=False)
-
 
     ####################
     # Methods        #

@@ -24,6 +24,7 @@
 
 from pymeasure.instruments import Instrument
 
+
 class Agilent34410A(Instrument):
     """
     Represent the HP/Agilent/Keysight 34410A and related multimeters.

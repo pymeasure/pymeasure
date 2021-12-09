@@ -27,16 +27,19 @@
 from instrumental.drivers.daq import ni
 from pymeasure.instruments import Instrument
 
+
 def get_dict_attr(obj,attr):
     for obj in [obj]+obj.__class__.mro():
         if attr in obj.__dict__:
             return obj.__dict__[attr]
     raise AttributeError
 
+
 class NIDAQ(Instrument):
     '''
     Instrument driver for NIDAQ card.
     '''
+
     def __init__(self, name='Dev1', *args, **kwargs):
         self._daq  = ni.NIDAQ(name)
         super(NIDAQ, self).__init__(

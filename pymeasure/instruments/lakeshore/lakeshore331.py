@@ -87,7 +87,7 @@ class LakeShore331(Instrument):
         """ Turns the :attr:`~.heater_range` to :code:`off` to disable the heater. """
         self.heater_range = 'off'
 
-    def wait_for_temperature(self, accuracy=0.1, 
+    def wait_for_temperature(self, accuracy=0.1,
                              interval=0.1, sensor='A', setpoint=1, timeout=360,
                              should_stop=lambda: False):
         """ Blocks the program, waiting for the temperature to reach the setpoint
@@ -106,6 +106,7 @@ class LakeShore331(Instrument):
         setpoint_name = 'setpoint_%d' % setpoint
         # Only get the setpoint once, assuming it does not change
         setpoint_value = getattr(self, setpoint_name)
+
         def percent_difference(temperature):
             return abs(100*(temperature - setpoint_value)/setpoint_value)
         t = time()
@@ -118,4 +119,3 @@ class LakeShore331(Instrument):
                 ) % (timeout, setpoint))
             if should_stop():
                 return
-

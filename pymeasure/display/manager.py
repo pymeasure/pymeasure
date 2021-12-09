@@ -53,6 +53,7 @@ class Experiment(QtCore.QObject):
         self.curve_list = curve_list
         self.browser_item = browser_item
 
+
 class ExperimentQueue(QtCore.QObject):
     """ Represents a Queue of Experiments and allows queries to
     be easily preformed

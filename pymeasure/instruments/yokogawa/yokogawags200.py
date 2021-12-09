@@ -131,20 +131,18 @@ class YokogawaGS200(Instrument):
         else:
             # Use the Yokogawa's "program" mode to create the ramp
             ramp_program = (
-                f":program:edit:start;" 
+                f":program:edit:start;"
                 f":source:level {level};"
                 f":program:edit:end;"
             )
             # set "interval time" equal to "slope time" to make a continuous ramp
             ramp_program += (
-                f":program:interval {ramp_time};" 
+                f":program:interval {ramp_time};"
                 f":program:slope {ramp_time};"
             )
             # run it once
             ramp_program += (
-                ":program:repeat 0;" 
+                ":program:repeat 0;"
                 ":program:run"
             )
             self.write(ramp_program)
-
-

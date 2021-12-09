@@ -58,7 +58,7 @@ class Procedure(object):
     MEASURE = {}
     FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
     STATUS_STRINGS = {
-        FINISHED: 'Finished', FAILED: 'Failed', 
+        FINISHED: 'Finished', FAILED: 'Failed',
         ABORTED: 'Aborted', QUEUED: 'Queued',
         RUNNING: 'Running'
     }

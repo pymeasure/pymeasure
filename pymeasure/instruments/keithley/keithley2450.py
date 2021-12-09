@@ -35,6 +35,7 @@ from .buffer import KeithleyBuffer
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class Keithley2450(Instrument, KeithleyBuffer):
     """ Represents the Keithely 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
@@ -213,7 +214,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Resistance (Ohm) #
     ####################
 
-
     resistance = Instrument.measurement(":READ?",
                                         """ Reads the resistance in Ohms, if configured for this reading.
         """
@@ -356,7 +356,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
         map_values=False)
 
-
     ####################
     # Methods        #
     ####################
@@ -366,18 +365,15 @@ class Keithley2450(Instrument, KeithleyBuffer):
             adapter, "Keithley 2450 SourceMeter", **kwargs
         )
 
-
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT ON")
 
-
     def disable_source(self):
         """ Disables the source of current or voltage depending on the
         configuration of the instrument. """
         self.write("OUTPUT OFF")
-
 
     def measure_resistance(self, nplc=1, resistance=2.1e5, auto_range=True):
         """ Configures the measurement of resistance.
@@ -395,7 +391,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.resistance_range = resistance
         self.check_errors()
 
-
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
 
@@ -411,7 +406,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         else:
             self.voltage_range = voltage
         self.check_errors()
-
 
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
         """ Configures the measurement of current.
@@ -429,7 +423,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.current_range = current
         self.check_errors()
 
-
     def auto_range_source(self):
         """ Configures the source to use an automatic range.
         """
@@ -437,7 +430,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
             self.write(":SOUR:CURR:RANG:AUTO 1")
         else:
             self.write(":SOUR:VOLT:RANG:AUTO 1")
-
 
     def apply_current(self, current_range=None,
                       compliance_voltage=0.1):
@@ -458,7 +450,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.compliance_voltage = compliance_voltage
         self.check_errors()
 
-
     def apply_voltage(self, voltage_range=None,
                       compliance_current=0.1):
         """ Configures the instrument to apply a source voltage, and
@@ -478,7 +469,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         self.compliance_current = compliance_current
         self.check_errors()
 
-
     def beep(self, frequency, duration):
         """ Sounds a system beep.
 
@@ -486,7 +476,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
         self.write(":SYST:BEEP %g, %g" % (frequency, duration))
-
 
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.
@@ -500,7 +489,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         time.sleep(duration)
         self.beep(base_frequency*6.0/4.0, duration)
 
-
     @property
     def error(self):
         """ Returns a tuple of an error code and message from a
@@ -512,7 +500,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
         message = err[1].replace('"', '')
         return (code, message)
 
-
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
         """
@@ -523,7 +510,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
             code, message = self.error
             if (time.time()-t) > 10:
                 log.warning("Timed out for Keithley 2450 error retrieval.")
-
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """

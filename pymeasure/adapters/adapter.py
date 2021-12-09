@@ -37,6 +37,7 @@ class Adapter(object):
         received from the instrument. The callable returns the processed string.
     :param kwargs: all other keyword arguments are ignored.
     """
+
     def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
         self.connection = None

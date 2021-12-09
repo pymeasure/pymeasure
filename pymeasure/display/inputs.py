@@ -86,6 +86,7 @@ class StringInput(Input, QtGui.QLineEdit):
     that are string-based may also use this input, but non-string parameters
     should use more specialised input classes.
     """
+
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
 
@@ -110,6 +111,7 @@ class FloatInput(Input, QtGui.QDoubleSpinBox):
         Class :class:`~.ScientificInput`
             For inputs in scientific notation.
     """
+
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
@@ -125,6 +127,7 @@ class IntegerInput(Input, QtGui.QSpinBox):
     """
     Spin input box for integer values, connected to a :class:`IntegerParameter`.
     """
+
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
@@ -140,6 +143,7 @@ class BooleanInput(Input, QtGui.QCheckBox):
     """
     Checkbox for boolean values, connected to a :class:`BooleanParameter`.
     """
+
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
 
@@ -162,6 +166,7 @@ class ListInput(Input, QtGui.QComboBox):
     """
     Dropdown for list values, connected to a :class:`ListParameter`.
     """
+
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         self._stringChoices = None
@@ -182,7 +187,6 @@ class ListInput(Input, QtGui.QComboBox):
         self.addItems(self._stringChoices)
 
         super().set_parameter(parameter)
-
 
     def setValue(self, value):
         try:
@@ -209,6 +213,7 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
         Class :class:`~.FloatInput`
             For a non-scientific floating-point input box.
     """
+
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)

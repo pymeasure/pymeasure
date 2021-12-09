@@ -37,7 +37,7 @@ class HP33120A(Instrument):
     """
 
     SHAPES = {
-        'sinusoid':'SIN', 'square':'SQU', 'triangle':'TRI', 
+        'sinusoid':'SIN', 'square':'SQU', 'triangle':'TRI',
         'ramp':'RAMP', 'noise':'NOIS', 'dc':'DC', 'user':'USER'
     }
     shape = Instrument.control(
@@ -57,11 +57,11 @@ class HP33120A(Instrument):
         :attr:`~.min_frequency`. """
     )
     max_frequency = Instrument.measurement(
-        "SOUR:FREQ? MAX", 
+        "SOUR:FREQ? MAX",
         """ Reads the maximum :attr:`~.HP33120A.frequency` in Hz for the given shape """
     )
     min_frequency = Instrument.measurement(
-        "SOUR:FREQ? MIN", 
+        "SOUR:FREQ? MIN",
         """ Reads the minimum :attr:`~.HP33120A.frequency` in Hz for the given shape """
     )
     amplitude = Instrument.control(
@@ -73,11 +73,11 @@ class HP33120A(Instrument):
         and :attr:`~.min_amplitude`. """
     )
     max_amplitude = Instrument.measurement(
-        "SOUR:VOLT? MAX", 
+        "SOUR:VOLT? MAX",
         """ Reads the maximum :attr:`~.amplitude` in Volts for the given shape """
     )
     min_amplitude = Instrument.measurement(
-        "SOUR:VOLT? MIN", 
+        "SOUR:VOLT? MIN",
         """ Reads the minimum :attr:`~.amplitude` in Volts for the given shape """
     )
     offset = Instrument.control(
@@ -87,11 +87,11 @@ class HP33120A(Instrument):
         queried with :attr:`~.max_offset` and :attr:`~.min_offset`. """
     )
     max_offset = Instrument.measurement(
-        "SOUR:VOLT:OFFS? MAX", 
+        "SOUR:VOLT:OFFS? MAX",
         """ Reads the maximum :attr:`~.offset` in Volts for the given shape """
     )
     min_offset = Instrument.measurement(
-        "SOUR:VOLT:OFFS? MIN", 
+        "SOUR:VOLT:OFFS? MIN",
         """ Reads the minimum :attr:`~.offset` in Volts for the given shape """
     )
     AMPLITUDE_UNITS = {'Vpp':'VPP', 'Vrms':'VRMS', 'dBm':'DBM', 'default':'DEF'}

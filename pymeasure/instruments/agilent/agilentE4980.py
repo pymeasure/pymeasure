@@ -41,14 +41,13 @@ class AgilentE4980(Instrument):
                                     validator=strict_range,
                                     values=[0, 0.1])
 
-
     frequency = Instrument.control(":FREQ:CW?", ":FREQ:CW %g",
                                    "AC frequency (range depending on model), in Hertz",
                                    validator=strict_range,
                                    values=[20, 2e6])
 
     # FETCH? returns [A,B,state]: impedance returns only A,B
-    impedance = Instrument.measurement(":FETCH?", 
+    impedance = Instrument.measurement(":FETCH?",
                                        "Measured data A and B, according to :attr:`~.AgilentE4980.mode`",
                                        get_process=lambda x: x[:2])
 
@@ -85,9 +84,8 @@ Select quantities to be measured:
                               values=["CPD", "CPQ", "CPG", "CPRP",
                                       "CSD", "CSQ", "CSRS",
                                       "LPD", "LPQ", "LPG", "LPRP",
-                                      "LSD", "LSQ", "LSRS", 
+                                      "LSD", "LSQ", "LSRS",
                                       "RX", "ZTD", "ZTR", "GB", "YTD", "YTR",])
-
 
     trigger_source = Instrument.control("TRIG:SOUR?", "TRIG:SOUR %s",
                                         """

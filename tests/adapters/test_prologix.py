@@ -29,6 +29,7 @@ from pymeasure.adapters import PrologixAdapter
 
 prefix="\n".join(["++auto 0", "++eoi 1", "++eos 2"])+"\n"
 
+
 def make_adapter(**kwargs):
     return PrologixAdapter(serial.serial_for_url("loop://", **kwargs))
 
@@ -39,6 +40,7 @@ def test_adapter_write(test_input, expected):
     adapter = make_adapter(timeout=0.2)
     adapter.write(test_input)
     assert(adapter.connection.read(len(expected)+10) == expected.encode())
+
 
 @pytest.mark.parametrize("test_input,expected", [([1,2,3], prefix.encode() + b'OUTP#13\x01\x02\x03' + "\n".encode()),
                                                  ([43, 27, 10,13, 97, 98, 99], prefix.encode() + b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc'+ "\n".encode())])

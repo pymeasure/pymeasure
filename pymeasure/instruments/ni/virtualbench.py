@@ -314,6 +314,7 @@ class VirtualBench():
         device. Allows to read/write digital channels and/or set channels
         to export the start signal of FGEN module or trigger of MSO module.
         """
+
         def __init__(self, virtualbench, lines, reset, vb_name=''):
             """ Acquire DIO module
 
@@ -509,6 +510,7 @@ class VirtualBench():
         device. Allows to measure either DC/AC voltage or current,
         Resistance or Diodes.
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire DMM module
 
@@ -693,6 +695,7 @@ class VirtualBench():
         """ Represents Function Generator (FGEN) Module of Virtual
         Bench device.
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire FGEN module
 
@@ -1356,6 +1359,7 @@ class VirtualBench():
     class PowerSupply(VirtualBenchInstrument):
         """ Represents Power Supply (PS) Module of Virtual Bench device
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire PS module
 

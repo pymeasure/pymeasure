@@ -51,6 +51,7 @@ def test_procedure():
     assert procedure.delay == 0.001
     assert hasattr(procedure, 'execute')
 
+
 def test_worker_stop():
     procedure = RandomProcedure()
     file = tempfile.mktemp()
@@ -60,6 +61,7 @@ def test_worker_stop():
     worker.stop()
     assert worker.should_stop()
     worker.join()
+
 
 def test_worker_finish():
     procedure = RandomProcedure()
@@ -75,6 +77,7 @@ def test_worker_finish():
 
     new_results = Results.load(file, procedure_class=RandomProcedure)
     assert new_results.data.shape == (100, 2)
+
 
 def test_worker_closes_file_after_finishing():
     procedure = RandomProcedure()

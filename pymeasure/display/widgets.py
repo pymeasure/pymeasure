@@ -148,6 +148,7 @@ class PlotFrame(QtGui.QFrame):
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
 
+
 class ImageFrame(PlotFrame):
     """ Extends PlotFrame to plot also axis Z using colors
     """
@@ -170,6 +171,7 @@ class ImageFrame(PlotFrame):
             self.plot.setTitle(label)
         self.z_axis = axis
         self.z_axis_changed.emit(axis)
+
 
 class TabWidget(object):
     """ Utility class to define default implementation for some basic methods.
@@ -197,6 +199,7 @@ class TabWidget(object):
     def set_color(self, curve, color):
         """ Set color for widget """
         pass
+
 
 class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
@@ -301,6 +304,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         curve.pen.setColor(color)
         curve.updateItems(styleUpdate=True)
 
+
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
     of the data to be dynamically choosen
@@ -351,7 +355,6 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         hbox.addWidget(self.columns_z_label)
         hbox.addWidget(self.columns_z)
 
-
         vbox.addLayout(hbox)
         vbox.addWidget(self.image_frame)
         self.setLayout(vbox)
@@ -379,6 +382,7 @@ class ImageWidget(TabWidget, QtGui.QWidget):
 
     def remove(self, curve):
         self.plot.removeItem(curve)
+
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):
@@ -414,6 +418,7 @@ class BrowserWidget(QtGui.QWidget):
         vbox.addLayout(hbox)
         vbox.addWidget(self.browser)
         self.setLayout(vbox)
+
 
 class InputsWidget(QtGui.QWidget):
     # tuple of Input classes that do not need an external label
@@ -545,6 +550,7 @@ class InputsWidget(QtGui.QWidget):
         self._procedure.set_parameters(parameter_values)
         return self._procedure
 
+
 class LogWidget(TabWidget, QtGui.QWidget):
     """ Widget to display logging information in GUI
 
@@ -572,6 +578,7 @@ class LogWidget(TabWidget, QtGui.QWidget):
 
         vbox.addWidget(self.view)
         self.setLayout(vbox)
+
 
 class ResultsDialog(QtGui.QFileDialog):
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
@@ -928,8 +935,8 @@ class SequencerWidget(QtGui.QWidget):
             sequence = match.group(3)
 
             self._add_tree_item(
-                level=level, 
-                parameter=parameter, 
+                level=level,
+                parameter=parameter,
                 sequence=sequence,
             )
 
@@ -1059,6 +1066,7 @@ class SequencerWidget(QtGui.QWidget):
 
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
+
 
 class DirectoryLineEdit(QtGui.QLineEdit):
     """

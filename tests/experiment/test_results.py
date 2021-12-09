@@ -106,8 +106,8 @@ class TestResults:
 
     def test_regression_param_str_should_not_include_newlines(self, tmpdir):
         class DummyProcedure(Procedure):
-            par = Parameter('Generic Parameter with newline chars')           
-            DATA_COLUMNS = ['Foo', 'Bar', 'Baz'] 
+            par = Parameter('Generic Parameter with newline chars')
+            DATA_COLUMNS = ['Foo', 'Bar', 'Baz']
         procedure = DummyProcedure()
         procedure.par = np.linspace(1,100,17)
         filename = os.path.join(str(tmpdir), 'header_linebreak_test.csv')

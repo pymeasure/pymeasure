@@ -32,7 +32,7 @@ from pymeasure.experiment.results import Results
 # TODO: Repair this unit test
 # class TestPlotter:
 #     # TODO: More thorough unit (or integration?) tests.
-# 
+#
 #     @mock.patch('pymeasure.display.plotter.PlotterWindow')
 #     @mock.patch('pymeasure.display.plotter.QtGui')
 #     @mock.patch.object(Plotter, 'setup_plot')

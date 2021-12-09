@@ -85,7 +85,7 @@ class DPSeriesMotorController(Instrument):
     )
 
     basespeed = Instrument.control(
-        "VB", "B%i", 
+        "VB", "B%i",
         """Integer property that represents the motor controller's starting/homing speed. This property can be set.""",
         validator=truncated_range,
         values=[1, 5000],
@@ -93,7 +93,7 @@ class DPSeriesMotorController(Instrument):
     )
 
     maxspeed = Instrument.control(
-        "VM", "M%i", 
+        "VM", "M%i",
         """Integer property that represents the motor controller's maximum (running) speed. 
            This property can be set.""",
         validator=truncated_range,
@@ -106,16 +106,16 @@ class DPSeriesMotorController(Instrument):
         """A string property that represents the direction in which the stepper motor will rotate upon subsequent 
            step commands. This property can be set. 'CW' corresponds to clockwise rotation and 'CCW' corresponds to 
            counter-clockwise rotation.""",
-        map_values=True, 
+        map_values=True,
         validator=strict_discrete_set,
         values={"CW" : "+", "CCW" : "-"},
         get_process=lambda d: "+" if d == 1.0 else "-",
-    )    
+    )
 
     encoder_autocorrect = Instrument.control(
         "VEA", "EA%i",
         """A boolean property to enable or disable the encoder auto correct function. This property can be set.""",
-        map_values=True, 
+        map_values=True,
         values={True: 1, False: 0},
         validator=strict_discrete_set,
         cast=int,
@@ -126,7 +126,7 @@ class DPSeriesMotorController(Instrument):
         """An integer property that represents the wait time in ms. after a move is finished before
            the encoder is read for a potential encoder auto-correct action to take place. This property can be set.""",
         validator=truncated_range,
-        values=[0, 65535], 
+        values=[0, 65535],
         cast=int,
     )
 
@@ -189,7 +189,7 @@ class DPSeriesMotorController(Instrument):
                                  property.
         """
         self._address = address
-        self._encoder_enabled = encoder_enabled 
+        self._encoder_enabled = encoder_enabled
 
         super().__init__(
             resourceName,
@@ -197,7 +197,7 @@ class DPSeriesMotorController(Instrument):
             includeSCPI=False,
             write_termination="\r",
             read_termination="\r",
-            timeout=2000, 
+            timeout=2000,
             **kwargs
         )
 
@@ -226,12 +226,12 @@ class DPSeriesMotorController(Instrument):
         if self._encoder_enabled:
             pos = self.ask("VEP")
         else:
-            pos = self.ask("VZ")    
+            pos = self.ask("VZ")
         return int(pos)
 
     @step_position.setter
     def step_position(self, pos):
-        strict_range(pos, (-8388607, 8388607)) 
+        strict_range(pos, (-8388607, 8388607))
         self.write("P%i" % pos)
         self.write("G")
 
@@ -257,7 +257,7 @@ class DPSeriesMotorController(Instrument):
 
         :param pos: Absolute position in the units determined by the subclassed absolute_to_steps() method.
         """
-        raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")   
+        raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")
 
     def steps_to_absolute(self, steps):
         """ Convert a position measured in steps to an absolute position.
@@ -285,7 +285,7 @@ class DPSeriesMotorController(Instrument):
         :param direction: value to set on the direction property before moving the motor.
         """
         self.direction = direction
-        self.write("S") 
+        self.write("S")
 
     def home(self, home_mode):
         """ Send command to the motor controller to 'home' the motor.
