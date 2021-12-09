@@ -202,9 +202,6 @@ class Experiment(object):
                         y = [y]
                     for yname, line in zip(y, ax.lines):
                         self.update_line(ax, line, x, yname)
-                if plot['type'] == 'pcolor':
-                    x, y, z = plot['x'], plot['y'], plot['z']
-                    self.update_pcolor(ax, x, y, z)
 
             display.clear_output(wait=True)
             display.display(*self.figs)
@@ -213,42 +210,6 @@ class Experiment(object):
             display.clear_output(wait=True)
             display.display(*self.figs)
             self._user_interrupt = True
-
-    def pcolor(self, xname, yname, zname, *args, **kwargs):
-        """Plot the results from the experiment.data pandas dataframe in a pcolor graph.
-        Store the plots in a plots list attribute."""
-        title = self.title
-        x, y, z = self._data[xname], self._data[yname], self._data[zname]
-        shape = (len(y.unique()), len(x.unique()))
-        diff = shape[0] * shape[1] - len(z)
-        Z = np.concatenate((z.values, np.zeros(diff))).reshape(shape)
-        df = pd.DataFrame(Z, index=y.unique(), columns=x.unique())
-        # TODO: Remove seaborn dependencies
-        ax = sns.heatmap(df)
-        pl.title(title)
-        pl.xlabel(xname)
-        pl.ylabel(yname)
-        ax.invert_yaxis()
-        pl.plt.show()
-        self.plots.append(
-            {'type': 'pcolor', 'x': xname, 'y': yname, 'z': zname, 'args': args, 'kwargs': kwargs,
-             'ax': ax})
-        if ax.get_figure() not in self.figs:
-            self.figs.append(ax.get_figure())
-
-    def update_pcolor(self, ax, xname, yname, zname):
-        """Update a pcolor graph with new data."""
-        x, y, z = self._data[xname], self._data[yname], self._data[zname]
-        shape = (len(y.unique()), len(x.unique()))
-        diff = shape[0] * shape[1] - len(z)
-        Z = np.concatenate((z.values, np.zeros(diff))).reshape(shape)
-        df = pd.DataFrame(Z, index=y.unique(), columns=x.unique())
-        cbar_ax = ax.get_figure().axes[1]
-        # TODO: Remove seaborn dependencies
-        sns.heatmap(df, ax=ax, cbar_ax=cbar_ax)
-        ax.set_xlabel(xname)
-        ax.set_ylabel(yname)
-        ax.invert_yaxis()
 
     def update_line(self, ax, hl, xname, yname):
         """Update a line in a matplotlib graph with new data."""
