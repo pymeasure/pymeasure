@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,15 @@ class IBeamSmart(Instrument):
     :param baud_rate: communication speed, defaults to 115200
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
+    def __init__(self, port, baud_rate=115200, **kwargs):
+        if not isinstance(port, str):
+            raise TypeError("'port' must be a pyvisa resource name string")
+        super().__init__(
+            TopticaAdapter(port, baud_rate, **kwargs),
+            "toptica IBeam Smart laser diode",
+            includeSCPI = False,
+        )
+
     version = Instrument.measurement(
            "ver", """ Firmware version number """,
     )
@@ -90,13 +99,6 @@ class IBeamSmart(Instrument):
             validator=strict_range,
             values=[0, 200000],
     )
-
-    def __init__(self, port, baud_rate=115200, **kwargs):
-        super().__init__(
-            TopticaAdapter(port, baud_rate, **kwargs),
-            "toptica IBeam Smart laser diode",
-            includeSCPI = False,
-        )
 
     def enable_continous(self):
         """ enable countinous emmission mode """

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ import re
 import time
 
 from pymeasure.adapters import VISAAdapter
+from pyvisa.errors import VisaIOError
 
 
 class TopticaAdapter(VISAAdapter):
@@ -33,7 +34,7 @@ class TopticaAdapter(VISAAdapter):
     connection.
 
     :param port: pyvisa resource name of the instrument
-    :param baud_rate: communication speed, defaults to 115200
+    :param baud_rate: communication speed
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
     # compiled regular expression for finding numerical values in reply strings
@@ -52,7 +53,7 @@ class TopticaAdapter(VISAAdapter):
         super().write('prom off')
         time.sleep(0.04)
         # clear the initial messages from the controller
-        self.flush()
+        self.flush_read_buffer()
         self.ask('talk usual')
 
     def extract_value(self, reply):
@@ -69,34 +70,37 @@ class TopticaAdapter(VISAAdapter):
         else:
             return reply
 
-    def check_acknowledgement(self, reply):
-        """ checks if reply is '[OK]', otherwise a ValueError is raised and the
-        read buffer is flushed because one has to assume that some
-        communication is out of sync.
-
-        :param reply: reply string of the instrument which should be checked
-        """
-        if reply != '[OK]':
-            self.flush()
-            raise ValueError(
-                f"TopticaAdapter: Error after command '{self.lastcommand}' "
-                f"with message '{reply}'")
-
     def read(self):
-        """ Reads a reply of the instrument which consists of two lines. The
-        first one is the reply to the command while the last one should be
-        '[OK]' which acknowledges that the device is ready to receive more
-        commands.
+        """ Reads a reply of the instrument which consists of at least two
+        lines. The initial ones are the reply to the command while the last one
+        should be '[OK]' which acknowledges that the device is ready to receive
+        more commands.
 
-        Note: This command only understands replies with one data line. More
-        complicated replies have to be parsed by using the underlying adapter
-        methods!
+        Note: '[OK]' is always returned as last message even in case of an
+        invalid command, where a message indicating the error is returned
+        before the '[OK]'
 
         :returns: string containing the ASCII response of the instrument.
         """
-        reply = super().read()
-        self.check_acknowledgement(super().read())
-        return reply
+        reply = super().read()  # read back the LF+CR which is always sent back
+        if reply != "":
+            raise ValueError(
+                "TopticaAdapter.read(1): Error after command "
+                f"'{self.lastcommand}' with message '{reply}'")
+        msg = []
+        try:
+            while True:
+                line = super().read()
+                if line == '[OK]':
+                    break
+                msg.append(line)
+        except VisaIOError:
+            reply = '\n'.join(msg)
+            self.flush_read_buffer()
+            raise ValueError(
+                "TopticaAdapter.read(2): Error after command "
+                f"'{self.lastcommand}' with message '{reply}'")
+        return '\n'.join(msg)
 
     def write(self, command, check_ack=True):
         """ Writes a command to the instrument. Also reads back a LF+CR which
@@ -108,14 +112,17 @@ class TopticaAdapter(VISAAdapter):
         """
         self.lastcommand = command
         super().write(command)
-        # read back the LF+CR which is always sent back.
-        reply = super().read()
-        if reply != '':
-            raise ValueError(
-                f"TopticaAdapter.write: Error after command '{command}' with "
-                f"message '{reply}'")
+        # The following lines are used in order to avoid the need of a
+        # complicated Instrument where every property would need to use
+        # check_set/get_errors and many Adapter functions would need to be
+        # reimplemented in the Instrument. See discussion in PR #352
         if check_ack:
-                self.check_acknowledgement(super().read())
+            reply = self.read()
+            if reply != "":
+                # if any message is returned here this indicates some misuse
+                raise ValueError(
+                    f"TopticaAdapter.write: Error after command '{command}'"
+                    f"with message '{reply}'")
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
