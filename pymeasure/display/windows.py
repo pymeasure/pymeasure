@@ -620,7 +620,7 @@ class ManagedWindow(ManagedWindowBase):
     :param x_axis: the initial data-column for the x-axis of the plot
     :param y_axis: the initial data-column for the y-axis of the plot
     :param linewidth: linewidth for the displayed curves, default is 1
-    :param \**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindowBase`
+    :param \\**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindowBase`
 
     """
 
@@ -653,7 +653,7 @@ class ManagedImageWindow(ManagedWindow):
     :param x_axis: the data-column for the x-axis of the plot, cannot be changed afterwards for the image-plot
     :param y_axis: the data-column for the y-axis of the plot, cannot be changed afterwards for the image-plot
     :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
-    :param \**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindow`
+    :param \\**kwargs: optional keyword arguments that will be passed to :class:`~pymeasure.display.windows.ManagedWindow`
 
     """
 
