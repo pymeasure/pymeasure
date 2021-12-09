@@ -740,7 +740,7 @@ class VirtualBench():
                 waveform_function.upper()]
             amplitude = strict_range(amplitude, (0, 24))
             dc_offset = strict_range(dc_offset, (-12, 12))
-            if (amplitude/2 + abs(dc_offset)) > 12:
+            if (amplitude / 2 + abs(dc_offset)) > 12:
                 raise ValueError(
                     "Amplitude and DC Offset may not exceed +/-12V")
             duty_cycle = strict_range(duty_cycle, (0, 100))
@@ -1342,7 +1342,7 @@ class VirtualBench():
             times = (
                 list(range(-pretrigger_samples, 0))
                 + list(range(0, number_of_samples - pretrigger_samples)))
-            times = [list(map(lambda x: x*1/self.sample_rate, times))]
+            times = [list(map(lambda x: x * 1 / self.sample_rate, times))]
 
             np_array = np.array(analog_data_out)
             np_array = np.split(np_array, analog_data_stride)

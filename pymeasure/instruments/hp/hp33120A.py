@@ -37,8 +37,8 @@ class HP33120A(Instrument):
     """
 
     SHAPES = {
-        'sinusoid':'SIN', 'square':'SQU', 'triangle':'TRI',
-        'ramp':'RAMP', 'noise':'NOIS', 'dc':'DC', 'user':'USER'
+        'sinusoid': 'SIN', 'square': 'SQU', 'triangle': 'TRI',
+        'ramp': 'RAMP', 'noise': 'NOIS', 'dc': 'DC', 'user': 'USER'
     }
     shape = Instrument.control(
         "SOUR:FUNC:SHAP?", "SOUR:FUNC:SHAP %s",
@@ -94,7 +94,7 @@ class HP33120A(Instrument):
         "SOUR:VOLT:OFFS? MIN",
         """ Reads the minimum :attr:`~.offset` in Volts for the given shape """
     )
-    AMPLITUDE_UNITS = {'Vpp':'VPP', 'Vrms':'VRMS', 'dBm':'DBM', 'default':'DEF'}
+    AMPLITUDE_UNITS = {'Vpp': 'VPP', 'Vrms': 'VRMS', 'dBm': 'DBM', 'default': 'DEF'}
     amplitude_units = Instrument.control(
         "SOUR:VOLT:UNIT?", "SOUR:VOLT:UNIT %s",
         """ A string property that controls the units of the amplitude,

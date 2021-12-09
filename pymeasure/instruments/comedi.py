@@ -86,7 +86,7 @@ class SynchronousAI(object):
         self.channels = channels
         self.samples = samples
         self.period = period
-        self.scanPeriod = int(1e9*float(period)/float(samples)) # nano-seconds
+        self.scanPeriod = int(1e9 * float(period) / float(samples))  # nano-seconds
 
         self.subdevice = self.channels[0].subdevice
         self.subdevice.cmd = self._command()
@@ -113,10 +113,10 @@ class SynchronousAI(object):
         the command given any device specific conflicts       
         """
         for i in range(3):
-            rc = self.subdevice.command_test() # Verify command is correct
+            rc = self.subdevice.command_test()  # Verify command is correct
             if rc == None: break
 
-    def measure(self, hasAborted=lambda:False):
+    def measure(self, hasAborted=lambda: False):
         """ Initiates the scan after first checking the command
         and does not block, returns the starting timestamp
         """
@@ -135,7 +135,7 @@ class SynchronousAI(object):
 
         # Measurement loop
         count = 0
-        size = int(self.data.itemsize/2)*length
+        size = int(self.data.itemsize / 2) * length
         previous_bin_slice = b''
 
         while not hasAborted() and self.samples > count:
@@ -150,14 +150,14 @@ class SynchronousAI(object):
                 count=length
             )
 
-            if len(slice) != length: # Reading finished
+            if len(slice) != length:  # Reading finished
                 break
 
             # Convert to physical values
             for i, c in enumerate(converters):
-                self.data[count,i] = c.to_physical(slice[i])
+                self.data[count, i] = c.to_physical(slice[i])
 
-            self.emit_progress(100.*count/self.samples)
+            self.emit_progress(100. * count / self.samples)
             self.emit_data(self.data[count])
             count += 1
 

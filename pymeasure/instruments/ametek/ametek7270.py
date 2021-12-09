@@ -49,7 +49,7 @@ class Ametek7270(Instrument):
         20.0e3, 50.0e3, 100.0e3
     ]
 
-    sensitivity = Instrument.control( # NOTE: only for IMODE = 1.
+    sensitivity = Instrument.control(  # NOTE: only for IMODE = 1.
         "SEN.", "SEN %d",
         """ A floating point property that controls the sensitivity
         range in Volts, which can take discrete values from 2 nV to
@@ -67,7 +67,7 @@ class Ametek7270(Instrument):
         values=[6, 12, 18, 24],
         map_values=True
     )
-    time_constant = Instrument.control( # NOTE: only for NOISEMODE = 0
+    time_constant = Instrument.control(  # NOTE: only for NOISEMODE = 0
         "TC.", "TC %d",
         """ A floating point property that controls the time constant
         in seconds, which takes values from 10 microseconds to 100,000
@@ -108,56 +108,56 @@ class Ametek7270(Instrument):
         harmonic mode control, taking values from 1 to 127.
         This property can be set. """,
         validator=truncated_discrete_set,
-        values=list(range(1,128))
+        values=list(range(1, 128))
     )
     phase = Instrument.control(
         "REFP.", "REFP. %g",
         """ A floating point property that represents the reference
         harmonic phase in degrees. This property can be set. """,
         validator=modular_range,
-        values=[0,360]
+        values=[0, 360]
     )
     voltage = Instrument.control(
         "OA.", "OA. %g",
         """ A floating point property that represents the voltage
         in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[0,5]
+        values=[0, 5]
     )
     frequency = Instrument.control(
         "OF.", "OF. %g",
         """ A floating point property that represents the lock-in
         frequency in Hz. This property can be set. """,
         validator=truncated_range,
-        values=[0,2.5e5]
+        values=[0, 2.5e5]
     )
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
         """ A floating point property that represents the output
         value on DAC1 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10,10]
+        values=[-10, 10]
     )
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
         """ A floating point property that represents the output
         value on DAC2 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10,10]
+        values=[-10, 10]
     )
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
         """ A floating point property that represents the output
         value on DAC3 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10,10]
+        values=[-10, 10]
     )
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
         """ A floating point property that represents the output
         value on DAC4 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10,10]
+        values=[-10, 10]
     )
     adc1 = Instrument.measurement("ADC. 1",
                                   """ Reads the input value of ADC1 in Volts """

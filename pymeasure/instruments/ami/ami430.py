@@ -214,7 +214,7 @@ class AMI430(Instrument):
             sleep(interval)
             if should_stop():
                 return
-            if (time()-t) > timeout:
+            if (time() - t) > timeout:
                 raise Exception("Timed out waiting for AMI430 switch to warm up.")
 
     def shutdown(self, ramp_rate=0.0357):

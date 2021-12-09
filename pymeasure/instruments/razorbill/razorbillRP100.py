@@ -66,12 +66,12 @@ class razorbillRP100(Instrument):
     slew_rate_1 = Instrument.control("SOUR1:VOLT:SLEW?", "SOUR1:VOLT:SLEW %g",
                                      """Sets or queries the source slew rate in volts/sec of channel 1""",
                                      validator=strict_range,
-                                     values=[0.1*10e-3, 100*10e3])
+                                     values=[0.1 * 10e-3, 100 * 10e3])
 
     slew_rate_2 = Instrument.control("SOUR2:VOLT:SLEW?", "SOUR2:VOLT:SLEW %g",
                                      """Sets or queries the source slew rate in volts/sec of channel 2""",
                                      validator=strict_range,
-                                     values=[0.1*10e-3, 100*10e3])
+                                     values=[0.1 * 10e-3, 100 * 10e3])
 
     instant_voltage_1 = Instrument.measurement(
         "SOUR1:VOLT:NOW?",

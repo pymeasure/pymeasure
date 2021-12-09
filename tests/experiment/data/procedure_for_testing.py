@@ -48,7 +48,7 @@ class RandomProcedure(Procedure):
                 'Random Number': random.random()
             }
             self.emit('results', data)
-            self.emit('progress', 100.*i/self.iterations)
+            self.emit('progress', 100. * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 break

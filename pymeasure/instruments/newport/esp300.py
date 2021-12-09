@@ -166,10 +166,10 @@ class Axis(object):
         """,
         validator=strict_discrete_set,
         values={
-            'encoder count':0, 'motor step':1, 'millimeter':2,
-            'micrometer':3, 'inches':4, 'milli-inches':5,
-            'micro-inches':6, 'degree':7, 'gradient':8,
-            'radian':9, 'milliradian':10, 'microradian':11
+            'encoder count': 0, 'motor step': 1, 'millimeter': 2,
+            'micrometer': 3, 'inches': 4, 'milli-inches': 5,
+            'micro-inches': 6, 'degree': 7, 'gradient': 8,
+            'radian': 9, 'milliradian': 10, 'microradian': 11
         },
         map_values=True
     )
@@ -209,7 +209,7 @@ class Axis(object):
         hardware limit for some actuators (e.g. LTA-HS).
         type can take integer values from 0 to 6.
         """
-        home_type = strict_discrete_set(type, [0,1,2,3,4,5,6])
+        home_type = strict_discrete_set(type, [0, 1, 2, 3, 4, 5, 6])
         self.write("OR%d" % home_type)
 
     def define_position(self, position):
@@ -226,7 +226,7 @@ class Axis(object):
         """ Blocks the program until the motion is completed. A further
         delay can be specified in seconds.
         """
-        self.write("WS%d" % (delay*1e3))
+        self.write("WS%d" % (delay * 1e3))
         while not self.motion_done:
             sleep(interval)
 
@@ -290,7 +290,7 @@ class ESP300(Instrument):
         directory = dir(self)
         for name in directory:
             if name == 'axes':
-                continue # Skip this property
+                continue  # Skip this property
             try:
                 item = getattr(self, name)
                 if isinstance(item, Axis):

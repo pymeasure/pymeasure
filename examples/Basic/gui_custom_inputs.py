@@ -47,7 +47,7 @@ class TestProcedure(Procedure):
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
-            self.emit('progress', 100*i/self.iterations)
+            self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")

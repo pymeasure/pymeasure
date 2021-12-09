@@ -83,15 +83,15 @@ class TestBooleanInput:
             bool_input.setValue(not default_value)
 
             assert bool_input.value() == (not default_value)
-            bool_input.parameter # lazy update
+            bool_input.parameter  # lazy update
             p.assert_called_once_with(not default_value)
 
 
 class TestListInput:
     @pytest.mark.parametrize("choices,default_value", [
-        (["abc", "def", "ghi"], "abc"), # strings
-        ([123, 456, 789], 123), # numbers
-        (["abc", "def", "ghi"], "def") # default not first value
+        (["abc", "def", "ghi"], "abc"),  # strings
+        ([123, 456, 789], 123),  # numbers
+        (["abc", "def", "ghi"], "def")  # default not first value
     ])
     @pytest.mark.parametrize("value_remains_default", [True, False])
     def test_init_from_param(self, qtbot, choices, default_value, value_remains_default):
@@ -138,7 +138,7 @@ class TestListInput:
                         return_value=123) as p:
             for choice in choices:
                 list_input.setValue(choice)
-                list_input.parameter # lazy update
+                list_input.parameter  # lazy update
             p.assert_has_calls((mock.call(123), mock.call('abc'), mock.call(0)))
 
     def test_unit_should_append_to_strings(self, qtbot):
@@ -159,8 +159,8 @@ class TestListInput:
 class TestScientificInput:
     @pytest.mark.parametrize("min_,max_,default_value", [
         [0, 20, 12],
-        [0, 1000, 200], # regression #118: default above default max 99.99
-        [-1000, 1000, -10], # regression #118: default below default min 0
+        [0, 1000, 200],  # regression #118: default above default max 99.99
+        [-1000, 1000, -10],  # regression #118: default below default min 0
         [0.004, 5.5, 3.3],  # minimum #225: 0 < minimum < 0.005
         [0, 0.01, 0.002]  # default #233: default <0.01 changes to 0
     ])
@@ -237,5 +237,5 @@ class TestScientificInput:
                         return_value=10.0) as p:
             # test
             sci_input.setValue(5.0)
-            sci_input.parameter # lazy update
+            sci_input.parameter  # lazy update
             p.assert_called_once_with(5.0)

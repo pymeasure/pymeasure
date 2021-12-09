@@ -166,7 +166,7 @@ class ImageFrame(PlotFrame):
                 item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + ' (%s)'%units)
+            self.plot.setTitle(label + ' (%s)' % units)
         else:
             self.plot.setTitle(label)
         self.z_axis = axis

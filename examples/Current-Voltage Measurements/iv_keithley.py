@@ -47,7 +47,7 @@ class IVProcedure(Procedure):
 
         self.source = Keithley2400("GPIB::1")
         self.source.apply_current()
-        self.source.source_current_range = self.max_current*1e-3  # A
+        self.source.source_current_range = self.max_current * 1e-3  # A
         self.source.compliance_voltage = self.voltage_range
         self.source.enable_source()
         sleep(2)
@@ -65,21 +65,21 @@ class IVProcedure(Procedure):
 
             self.source.source_current = current
             # Or use self.source.ramp_to_current(current, delay=0.1)
-            sleep(self.delay*1e-3)
+            sleep(self.delay * 1e-3)
 
             voltage = self.meter.voltage
 
             if abs(current) <= 1e-10:
                 resistance = np.nan
             else:
-                resistance = voltage/current
+                resistance = voltage / current
             data = {
                 'Current (A)': current,
                 'Voltage (V)': voltage,
                 'Resistance (Ohm)': resistance
             }
             self.emit('results', data)
-            self.emit('progress', 100.*i/steps)
+            self.emit('progress', 100. * i / steps)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
                 break

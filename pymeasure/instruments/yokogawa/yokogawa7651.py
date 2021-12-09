@@ -87,7 +87,7 @@ class Yokogawa7651(Instrument):
         in Volts, which can take values: 10 mV, 100 mV, 1 V, 10 V, and 30 V.
         Voltages are truncted to an appropriate value if needed. """,
         validator=truncated_discrete_set,
-        values={10e-3:2, 100e-3:3, 1:4, 10:5, 30:6},
+        values={10e-3: 2, 100e-3: 3, 1: 4, 10: 5, 30: 6},
         map_values=True,
         get_process=lambda v: int(Yokogawa7651._find(v, 'R'))
     )
@@ -97,7 +97,7 @@ class Yokogawa7651(Instrument):
         in Amps, which can take values: 1 mA, 10 mA, and 100 mA.
         Currents are truncted to an appropriate value if needed. """,
         validator=truncated_discrete_set,
-        values={1e-3:4, 10e-3:5, 100e-3:6},
+        values={1e-3: 4, 10e-3: 5, 100e-3: 6},
         map_values=True,
         get_process=lambda v: int(Yokogawa7651._find(v, 'R'))
     )
@@ -108,7 +108,7 @@ class Yokogawa7651(Instrument):
         :meth:`~.Yokogawa7651.apply_current` and :meth:`~.Yokogawa7651.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
-        values={'current':5, 'voltage':1},
+        values={'current': 5, 'voltage': 1},
         map_values=True,
         get_process=lambda v: int(Yokogawa7651._find(v, 'F'))
     )
@@ -126,8 +126,8 @@ class Yokogawa7651(Instrument):
         in Amps, which can take values from 5 to 120 mA. """,
         validator=truncated_range,
         values=[5e-3, 120e-3],
-        get_process=lambda v: float(Yokogawa7651._find(v, 'LA'))*1e-3, # converts A to mA
-        set_process=lambda v: v*1e3, # converts mA to A
+        get_process=lambda v: float(Yokogawa7651._find(v, 'LA')) * 1e-3,  # converts A to mA
+        set_process=lambda v: v * 1e3,  # converts mA to A
     )
 
     def __init__(self, adapter, **kwargs):
@@ -135,7 +135,7 @@ class Yokogawa7651(Instrument):
             adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
         )
 
-        self.write("H0;E") # Set no header in output data
+        self.write("H0;E")  # Set no header in output data
 
     @property
     def id(self):
@@ -185,7 +185,7 @@ class Yokogawa7651(Instrument):
         """
         start_current = self.source_current
         stop_current = current
-        pause = duration/steps
+        pause = duration / steps
         if (start_current != stop_current):
             currents = np.linspace(start_current, stop_current, steps)
             for current in currents:
@@ -201,7 +201,7 @@ class Yokogawa7651(Instrument):
         """
         start_voltage = self.source_voltage
         stop_voltage = voltage
-        pause = duration/steps
+        pause = duration / steps
         if (start_voltage != stop_voltage):
             voltages = np.linspace(start_voltage, stop_voltage, steps)
             for voltage in voltages:

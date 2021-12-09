@@ -33,9 +33,9 @@ import re
 
 class ThorlabsPro8000(Instrument):
     """Represents Thorlabs Pro 8000 modular laser driver"""
-    SLOTS = range(1,9)
+    SLOTS = range(1, 9)
     LDC_POLARITIES = ['AG', 'CG']
-    STATUS = ['ON','OFF']
+    STATUS = ['ON', 'OFF']
 
     def __init__(self, resourceName, **kwargs):
         super(ThorlabsPro8000, self).__init__(

@@ -72,7 +72,7 @@ class LakeShore331(Instrument):
         can take the values: off, low, medium, and high. These values
         correlate to 0, 0.5, 5 and 50 W respectively. """,
         validator=strict_discrete_set,
-        values={'off':0, 'low':1, 'medium':2, 'high':3},
+        values={'off': 0, 'low': 1, 'medium': 2, 'high': 3},
         map_values=True
     )
 
@@ -108,11 +108,11 @@ class LakeShore331(Instrument):
         setpoint_value = getattr(self, setpoint_name)
 
         def percent_difference(temperature):
-            return abs(100*(temperature - setpoint_value)/setpoint_value)
+            return abs(100 * (temperature - setpoint_value) / setpoint_value)
         t = time()
         while percent_difference(getattr(self, temperature_name)) > accuracy:
             sleep(interval)
-            if (time()-t) > timeout:
+            if (time() - t) > timeout:
                 raise Exception((
                     "Timeout occurred after waiting %g seconds for "
                     "the LakeShore 331 temperature to reach %g K."

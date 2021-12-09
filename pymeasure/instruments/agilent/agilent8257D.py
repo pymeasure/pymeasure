@@ -124,8 +124,8 @@ class Agilent8257D(Instrument):
         values=[0, 100]
     )
     AMPLITUDE_SOURCES = {
-        'internal':'INT', 'internal 2':'INT2',
-        'external':'EXT', 'external 2':'EXT2'
+        'internal': 'INT', 'internal 2': 'INT2',
+        'external': 'EXT', 'external 2': 'EXT2'
     }
     amplitude_source = Instrument.control(
         ":SOUR:AM:SOUR?", ":SOUR:AM:SOUR %s",
@@ -147,7 +147,7 @@ class Agilent8257D(Instrument):
         cast=bool
     )
     PULSE_SOURCES = {
-        'internal':'INT', 'external':'EXT', 'scalar':'SCAL'
+        'internal': 'INT', 'external': 'EXT', 'scalar': 'SCAL'
     }
     pulse_source = Instrument.control(
         ":SOUR:PULM:SOUR?", ":SOUR:PULM:SOUR %s",
@@ -159,8 +159,8 @@ class Agilent8257D(Instrument):
         map_values=True
     )
     PULSE_INPUTS = {
-        'square':'SQU', 'free-run':'FRUN',
-        'triggered':'TRIG', 'doublet':'DOUB', 'gated':'GATE'
+        'square': 'SQU', 'free-run': 'FRUN',
+        'triggered': 'TRIG', 'doublet': 'DOUB', 'gated': 'GATE'
     }
     pulse_input = Instrument.control(
         ":SOUR:PULM:SOUR:INT?", ":SOUR:PULM:SOUR:INT %s",
@@ -189,11 +189,11 @@ class Agilent8257D(Instrument):
         """A floating point property that controls the peak voltage (amplitude) of the
         low frequency output in volts, which can take values from 0-3.5V""",
         validator=truncated_range,
-        values=[0,3.5]
+        values=[0, 3.5]
     )
 
     LOW_FREQUENCY_SOURCES = {
-        'internal':'INT', 'internal 2':'INT2', 'function':'FUNC', 'function 2':'FUNC2'
+        'internal': 'INT', 'internal 2': 'INT2', 'function': 'FUNC', 'function 2': 'FUNC2'
     }
 
     low_freq_out_source = Instrument.control(
@@ -236,8 +236,8 @@ class Agilent8257D(Instrument):
         values=[0.5, 1e6]
     )
     INTERNAL_SHAPES = {
-        'sine':'SINE', 'triangle':'TRI', 'square':'SQU', 'ramp':'RAMP',
-        'noise':'NOIS', 'dual-sine':'DUAL', 'swept-sine':'SWEP'
+        'sine': 'SINE', 'triangle': 'TRI', 'square': 'SQU', 'ramp': 'RAMP',
+        'noise': 'NOIS', 'dual-sine': 'DUAL', 'swept-sine': 'SWEP'
     }
     internal_shape = Instrument.control(
         ":SOUR:AM:INT:FUNC:SHAP?", ":SOUR:AM:INT:FUNC:SHAP %s",

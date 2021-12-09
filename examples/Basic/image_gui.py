@@ -15,7 +15,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.experiment import Results, unique_filename
 
 from pymeasure.experiment import Procedure
-from pymeasure.display.windows import ManagedImageWindow # new ManagedWindow class
+from pymeasure.display.windows import ManagedImageWindow  # new ManagedWindow class
 from pymeasure.experiment import FloatParameter
 from pymeasure.display.Qt import QtCore, QtGui, fromUi
 from pymeasure.log import console_log
@@ -49,16 +49,16 @@ class TestImageProcedure(Procedure):
         log.info("starting up...")
 
     def execute(self):
-        xs = np.arange(self.X_start,self.X_end,self.X_step)
-        ys = np.arange(self.Y_start,self.Y_end,self.Y_step)
+        xs = np.arange(self.X_start, self.X_end, self.X_step)
+        ys = np.arange(self.Y_start, self.Y_end, self.Y_step)
 
         nprog = xs.size * ys.size
         progit = 0
         for x in xs:
             for y in ys:
-                self.emit('progress', int(100*progit/nprog))
+                self.emit('progress', int(100 * progit / nprog))
                 progit += 1
-                self.emit("results",{
+                self.emit("results", {
                     'X': x,
                     'Y': y,
                     'pixel_data': np.random.rand(1)[0]
@@ -83,7 +83,7 @@ class TestImageGUI(ManagedImageWindow):
             x_axis='X',
             y_axis='Y',
             z_axis='pixel_data',
-            inputs=['X_start','X_end','X_step','Y_start','Y_end','Y_step',
+            inputs=['X_start', 'X_end', 'X_step', 'Y_start', 'Y_end', 'Y_step',
                     'delay'],
             displays=['X_start', 'X_end', 'Y_start', 'Y_end', 'delay']
         )
@@ -91,7 +91,7 @@ class TestImageGUI(ManagedImageWindow):
 
     def queue(self):
         direc = '.'
-        filename = unique_filename(direc,'test')
+        filename = unique_filename(direc, 'test')
         procedure = self.make_procedure()
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)

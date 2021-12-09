@@ -44,7 +44,7 @@ class TestProcedure(Procedure):
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
-            self.emit('progress', 100.*i/self.iterations)
+            self.emit('progress', 100. * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     worker.start()
 
     log.info("Joining with the worker in at most 20 min")
-    worker.join(60*20)
+    worker.join(60 * 20)
     log.info("Waiting for Plotter to close")
     plotter.wait_for_close()
     log.info("Plotter closed")

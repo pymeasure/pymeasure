@@ -855,7 +855,7 @@ class VARX(Instrument):
     @step.setter
     def step(self, value):
         validator = strict_range
-        values = 2*valid_iv(self.channel_mode)
+        values = 2 * valid_iv(self.channel_mode)
         set_value = validator(value, values)
         self.write(":PAGE:MEAS:{}:STEP {}".format(self.var, set_value))
         self.check_errors()
@@ -875,7 +875,7 @@ class VARX(Instrument):
     @compliance.setter
     def compliance(self, value):
         validator = strict_range
-        values = 2*valid_compliance(self.channel_mode)
+        values = 2 * valid_compliance(self.channel_mode)
         set_value = validator(value, values)
         self.write(":PAGE:MEAS:{}:COMP {}".format(self.var, set_value))
         self.check_errors()
@@ -981,7 +981,7 @@ class VARD(Instrument):
     @offset.setter
     def offset(self, offset_value):
         validator = strict_range
-        values = 2*valid_iv(self.channel_mode)
+        values = 2 * valid_iv(self.channel_mode)
         value = validator(offset_value, values)
         self.write(":PAGE:MEAS:VARD:OFFSET {}".format(value))
         self.check_errors()
@@ -1017,7 +1017,7 @@ class VARD(Instrument):
     @compliance.setter
     def compliance(self, value):
         validator = strict_range
-        values = 2*valid_compliance(self.channel_mode)
+        values = 2 * valid_compliance(self.channel_mode)
         set_value = validator(value, values)
         self.write(":PAGE:MEAS:VARD:COMP {}".format(set_value))
         self.check_errors()

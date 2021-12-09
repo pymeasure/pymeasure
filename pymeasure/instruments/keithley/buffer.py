@@ -81,13 +81,13 @@ class KeithleyBuffer(object):
         :param interval: A time in seconds for how often to check if the buffer is full
         """
         # TODO: Use SRQ initially instead of constant polling
-        #self.adapter.wait_for_srq()
+        # self.adapter.wait_for_srq()
         t = time()
         while not self.is_buffer_full():
             sleep(interval)
             if should_stop():
                 return
-            if (time()-t)>timeout:
+            if (time() - t) > timeout:
                 raise Exception("Timed out waiting for Keithley buffer to fill.")
 
     @property

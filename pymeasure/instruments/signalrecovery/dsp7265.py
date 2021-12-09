@@ -77,42 +77,42 @@ class DSP7265(Instrument):
         """ A floating point property that represents the voltage
         in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[0,5]
+        values=[0, 5]
     )
     frequency = Instrument.control(
         "OF.", "OF. %g",
         """ A floating point property that represents the lock-in
         frequency in Hz. This property can be set. """,
         validator=truncated_range,
-        values=[0,2.5e5]
+        values=[0, 2.5e5]
     )
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
         """ A floating point property that represents the output
         value on DAC1 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
         """ A floating point property that represents the output
         value on DAC2 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
         """ A floating point property that represents the output
         value on DAC3 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
         """ A floating point property that represents the output
         value on DAC4 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     harmonic = Instrument.control(
         "REFN", "REFN %d",
@@ -127,7 +127,7 @@ class DSP7265(Instrument):
         """ A floating point property that represents the reference
         harmonic phase in degrees. This property can be set. """,
         validator=modular_range_bidirectional,
-        values=[0,360]
+        values=[0, 360]
     )
     x = Instrument.measurement("X.",
                                """ Reads the X value in Volts """
@@ -238,18 +238,18 @@ class DSP7265(Instrument):
     def adc3(self):
         # 50,000 for 1V signal over 1 s
         integral = self.values("ADC 3")[0]
-        return integral/(50000.0*self.adc3_time)
+        return integral / (50000.0 * self.adc3_time)
 
     @property
     def adc3_time(self):
         # Returns time in seconds
-        return self.values("ADC3TIME")[0]/1000.0
+        return self.values("ADC3TIME")[0] / 1000.0
 
     @adc3_time.setter
     def adc3_time(self, value):
         # Takes time in seconds
-        self.write("ADC3TIME %g" % int(1000*value))
-        sleep(value*1.2)
+        self.write("ADC3TIME %g" % int(1000 * value))
+        sleep(value * 1.2)
 
     @property
     def auto_gain(self):
@@ -274,7 +274,7 @@ class DSP7265(Instrument):
 
     @gain.setter
     def gain(self, value):
-        self.write("ACGAIN %d" % int(value/10.0))
+        self.write("ACGAIN %d" % int(value / 10.0))
 
     curve_buffer_bits = Instrument.control(
         "CBD", "CBD %d",

@@ -120,7 +120,7 @@ class FloatInput(Input, QtGui.QDoubleSpinBox):
         # Override from :class:`Input`
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
-        super().set_parameter(parameter) # default gets set here, after min/max
+        super().set_parameter(parameter)  # default gets set here, after min/max
 
 
 class IntegerInput(Input, QtGui.QSpinBox):
@@ -136,7 +136,7 @@ class IntegerInput(Input, QtGui.QSpinBox):
         # Override from :class:`Input`
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
-        super().set_parameter(parameter) # default gets set here, after min/max
+        super().set_parameter(parameter)  # default gets set here, after min/max
 
 
 class BooleanInput(Input, QtGui.QCheckBox):
@@ -176,12 +176,12 @@ class ListInput(Input, QtGui.QComboBox):
         # Override from :class:`Input`
         try:
             if hasattr(parameter, 'units') and parameter.units:
-                suffix = " %s"%parameter.units
+                suffix = " %s" % parameter.units
             else:
                 suffix = ""
 
             self._stringChoices = tuple((str(choice) + suffix) for choice in parameter.choices)
-        except TypeError: # choices is None
+        except TypeError:  # choices is None
             self._stringChoices = tuple()
         self.clear()
         self.addItems(self._stringChoices)
@@ -192,7 +192,7 @@ class ListInput(Input, QtGui.QComboBox):
         try:
             index = self._parameter.choices.index(value)
             self.setCurrentIndex(index)
-        except (TypeError, ValueError) as e: # no choices or choice invalid
+        except (TypeError, ValueError) as e:  # no choices or choice invalid
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._parameter.choices)) from e
 

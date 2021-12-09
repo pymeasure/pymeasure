@@ -78,7 +78,7 @@ class SerialAdapter(Adapter):
         header, data = binary[:header_bytes], binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt = "ieee"):
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
         :param values: data to be written to the device.

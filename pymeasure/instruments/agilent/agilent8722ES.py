@@ -221,7 +221,7 @@ class Agilent8722ES(Instrument):
     def data_log_magnitude(self):
         """ Returns the absolute magnitude values in dB from the last scan
         """
-        return 20*np.log10(self.data_magnitude)
+        return 20 * np.log10(self.data_magnitude)
 
     @property
     def data_magnitude(self):
@@ -248,7 +248,7 @@ class Agilent8722ES(Instrument):
         number or numpy arrays
         """
         warnings.warn("Don't use log_magnitude(), use data_log_magnitude instead", FutureWarning)
-        return 20*np.log10(self.magnitude(real, imaginary))
+        return 20 * np.log10(self.magnitude(real, imaginary))
 
     def magnitude(self, real, imaginary):
         """ Returns the magnitude from a real and imaginary
@@ -262,4 +262,4 @@ class Agilent8722ES(Instrument):
         number or numpy arrays
         """
         warnings.warn("Don't use phase(), use data_phase instead", FutureWarning)
-        return np.arctan2(imaginary, real)*180/np.pi
+        return np.arctan2(imaginary, real) * 180 / np.pi

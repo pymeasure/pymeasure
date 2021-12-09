@@ -109,7 +109,7 @@ class SR570(Instrument):
         The values are up to 1 mV precision level.""",
         validators=truncated_range,
         values=BIAS_LIMITS,
-        set_process = lambda v: int(1000*v))
+        set_process=lambda v: int(1000 * v))
 
     offset_current = Instrument.setting(
         "BSLV %f",
@@ -119,7 +119,7 @@ class SR570(Instrument):
         Values are truncated to the closest allowed value if not exact. """,
         validators=truncated_discrete_set,
         values=OFFSET_CURRENTS,
-        map_values = True)
+        map_values=True)
 
     offset_current_sign = Instrument.setting(
         "IOSN %d",
@@ -134,7 +134,7 @@ class SR570(Instrument):
         """ A string that sets the gain mode.
         Allowed values are: {}""".format(GAIN_MODES),
         validators=truncated_discrete_set,
-        values = GAIN_MODES,
+        values=GAIN_MODES,
         map_values=True)
 
     invert_signal_sign = Instrument.setting(

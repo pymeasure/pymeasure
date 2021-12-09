@@ -122,7 +122,7 @@ class AgilentB1500(Instrument):
             module = module.split(',')
             if not module[0] == '0':
                 try:
-                    out[i+1] = module_names[module[0]]
+                    out[i + 1] = module_names[module[0]]
                     # i+1: channels start at 1 not at 0
                 except Exception:
                     raise NotImplementedError(
@@ -161,9 +161,9 @@ class AgilentB1500(Instrument):
         i = 1
         for channel, smu_type in modules.items():
             if 'SMU' in smu_type:
-                setattr(self, 'smu'+str(i),
+                setattr(self, 'smu' + str(i),
                         self.initialize_smu(
-                            channel, smu_type, 'SMU'+str(i)))
+                            channel, smu_type, 'SMU' + str(i)))
                 i += 1
 
     def pause(self, pause_seconds):
@@ -819,7 +819,7 @@ class AgilentB1500(Instrument):
             else:
                 raise ValueError(
                     'Sampling interval {} is too short.'.format(interval))
-        number = strict_discrete_range(number, (0, int(100001/n_channels)), 1)
+        number = strict_discrete_range(number, (0, int(100001 / n_channels)), 1)
         # ToDo: different restrictions apply for logarithmic sampling!
         hold_base = strict_discrete_range(hold_base, (0, 655.35), 0.01)
 
@@ -1713,7 +1713,7 @@ class QueryLearn():
         :return: Dictionary of command and set values
         :rtype: dict
         """
-        response = ask("*LRN? "+str(query_type))
+        response = ask("*LRN? " + str(query_type))
         # response.split(';')
         response = re.findall(
             r'(?P<command>[A-Z]+)(?P<parameter>[0-9,\+\-\.E]+)',

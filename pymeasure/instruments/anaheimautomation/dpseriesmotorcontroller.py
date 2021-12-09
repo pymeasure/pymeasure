@@ -108,7 +108,7 @@ class DPSeriesMotorController(Instrument):
            counter-clockwise rotation.""",
         map_values=True,
         validator=strict_discrete_set,
-        values={"CW" : "+", "CCW" : "-"},
+        values={"CW": "+", "CCW": "-"},
         get_process=lambda d: "+" if d == 1.0 else "-",
     )
 

@@ -56,8 +56,8 @@ class AdvantestR3767CG(Instrument):
         values=[1, 8000000000]
     )
 
-    stop_frequency  = Instrument.control(
-        ":FREQ:STOP?",":FREQ:STOP %d",
+    stop_frequency = Instrument.control(
+        ":FREQ:STOP?", ":FREQ:STOP %d",
         """ Stoping frequency in Hz """,
         validator=strict_range,
         values=[1, 8000000000]

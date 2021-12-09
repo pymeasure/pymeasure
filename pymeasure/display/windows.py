@@ -237,7 +237,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.browser_widget = BrowserWidget(
             self.procedure_class,
             self.displays,
-            [], # This value will be patched by subclasses, if needed
+            [],  # This value will be patched by subclasses, if needed
             parent=self
         )
         self.browser_widget.show_button.clicked.connect(self.show_experiments)
@@ -476,7 +476,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         elif (system == 'Darwin'):
             proc = subprocess.Popen(['open', filename])
         else:
-            raise Exception("{cls} method open_file_externally does not support {system} OS".format(cls=type(self).__name__,system=system))
+            raise Exception("{cls} method open_file_externally does not support {system} OS".format(cls=type(self).__name__, system=system))
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):

@@ -84,7 +84,7 @@ class Agilent33220A(Instrument):
             strict_discrete_set, string_validator
         ),
         values=[["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
-                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"],],
+                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"], ],
     )
 
     frequency = Instrument.control(
@@ -111,7 +111,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["VPP", "VRMS", "DBM"],],
+        values=[["VPP", "VRMS", "DBM"], ],
     )
 
     offset = Instrument.control(
@@ -177,7 +177,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["WIDT", "WIDTH", "DCYC", "DCYCLE"],],
+        values=[["WIDT", "WIDTH", "DCYC", "DCYCLE"], ],
     )
 
     pulse_width = Instrument.control(
@@ -233,7 +233,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["TRIG", "TRIGGERED", "GAT", "GATED"],],
+        values=[["TRIG", "TRIGGERED", "GAT", "GATED"], ],
     )
 
     burst_ncycles = Instrument.control(
@@ -289,7 +289,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],],
+        values=[["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"], ],
     )
 
     trigger_state = Instrument.control(
@@ -309,7 +309,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],],
+        values=[["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"], ],
     )
 
     beeper_state = Instrument.control(

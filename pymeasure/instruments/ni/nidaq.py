@@ -28,8 +28,8 @@ from instrumental.drivers.daq import ni
 from pymeasure.instruments import Instrument
 
 
-def get_dict_attr(obj,attr):
-    for obj in [obj]+obj.__class__.mro():
+def get_dict_attr(obj, attr):
+    for obj in [obj] + obj.__class__.mro():
         if attr in obj.__dict__:
             return obj.__dict__[attr]
     raise AttributeError
@@ -41,11 +41,11 @@ class NIDAQ(Instrument):
     '''
 
     def __init__(self, name='Dev1', *args, **kwargs):
-        self._daq  = ni.NIDAQ(name)
+        self._daq = ni.NIDAQ(name)
         super(NIDAQ, self).__init__(
             None,
             "NIDAQ",
-            includeSCPI = False,
+            includeSCPI=False,
             **kwargs)
         for chan in self._daq.get_AI_channels():
             self.add_property(chan)
@@ -55,17 +55,17 @@ class NIDAQ(Instrument):
     def add_property(self, chan, set=False):
         if set:
             fset = lambda self, value: self.set_chan(chan, value)
-            fget = lambda self: getattr(self, '_%s' %chan)
-            setattr(self, '_%s' %chan, None)
-            setattr(self.__class__,chan,property(fset=fset, fget=fget))
+            fget = lambda self: getattr(self, '_%s' % chan)
+            setattr(self, '_%s' % chan, None)
+            setattr(self.__class__, chan, property(fset=fset, fget=fget))
         else:
             fget = lambda self: self.get_chan(chan)
-            setattr(self.__class__,chan,property(fget=fget))
+            setattr(self.__class__, chan, property(fget=fget))
         setattr(self.get, chan, lambda: getattr(self, chan))
 
     def get_chan(self, chan):
-        return getattr(self._daq,chan).read().magnitude
+        return getattr(self._daq, chan).read().magnitude
 
     def set_chan(self, chan, value):
-        setattr(self, '_%s' %chan, value)
-        getattr(self._daq,chan).write('%sV' %value)
+        setattr(self, '_%s' % chan, value)
+        getattr(self._daq, chan).write('%sV' % value)

@@ -55,12 +55,12 @@ class FWBell5080(Instrument):
         ":MEAS:FLUX?",
         """ Reads a floating point value of the field in the appropriate units.
         """,
-        get_process=lambda v: v.split(' ')[0] # Remove units
+        get_process=lambda v: v.split(' ')[0]  # Remove units
     )
     UNITS = {
-        'gauss':'DC:GAUSS', 'gauss ac':'AC:GAUSS',
-        'tesla':'DC:TESLA', 'tesla ac':'AC:TESLA',
-        'amp-meter':'DC:AM', 'amp-meter ac':'AC:AM'
+        'gauss': 'DC:GAUSS', 'gauss ac': 'AC:GAUSS',
+        'tesla': 'DC:TESLA', 'tesla ac': 'AC:TESLA',
+        'amp-meter': 'DC:AM', 'amp-meter ac': 'AC:AM'
     }
     units = Instrument.control(
         ":UNIT:FLUX?", ":UNIT:FLUX%s",
@@ -71,7 +71,7 @@ class FWBell5080(Instrument):
         validator=strict_discrete_set,
         values=UNITS,
         map_values=True,
-        get_process=lambda v: v.replace(' ', ':') # Make output consistent with input
+        get_process=lambda v: v.replace(' ', ':')  # Make output consistent with input
     )
 
     def __init__(self, port):

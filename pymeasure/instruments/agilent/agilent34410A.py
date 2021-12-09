@@ -31,7 +31,7 @@ class Agilent34410A(Instrument):
 
     Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance, resistance_4w
     """
-    #only the most simple functions are implemented
+    # only the most simple functions are implemented
     voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
 
     voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")

@@ -374,7 +374,7 @@ class SR830(Instrument):
         """
         offset, expand = self.get_scaling(channel)
         sensitivity = self.sensitivity
-        return lambda x: (x/(10.*expand) + offset) * sensitivity
+        return lambda x: (x / (10. * expand) + offset) * sensitivity
 
     @property
     def sample_frequency(self):
@@ -422,13 +422,13 @@ class SR830(Instrument):
         """
         self.write('LIAE 2,1')
         while self.is_out_of_range():
-            self.write("SENS%d" % (int(self.ask("SENS?"))+1))
-            time.sleep(5.0*self.time_constant)
+            self.write("SENS%d" % (int(self.ask("SENS?")) + 1))
+            time.sleep(5.0 * self.time_constant)
             self.write("*CLS")
         # Set the range as low as possible
-        newsensitivity = 1.15*abs(self.magnitude)
-        if self.input_config in('I (1 MOhm)','I (100 MOhm)'):
-            newsensitivity = newsensitivity*1e6
+        newsensitivity = 1.15 * abs(self.magnitude)
+        if self.input_config in ('I (1 MOhm)', 'I (100 MOhm)'):
+            newsensitivity = newsensitivity * 1e6
         self.sensitivity = newsensitivity
 
     @property
@@ -455,8 +455,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pauseBuffer()
-        ch1[index:count+1] = self.buffer_data(1, index, count)
-        ch2[index:count+1] = self.buffer_data(2, index, count)
+        ch1[index:count + 1] = self.buffer_data(1, index, count)
+        ch2[index:count + 1] = self.buffer_data(2, index, count)
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):
@@ -507,7 +507,7 @@ class SR830(Instrument):
         if end is None:
             end = self.buffer_count
         return self.binary_values("TRCB?%d,%d,%d" % (
-            channel, start, end-start))
+            channel, start, end - start))
 
     def reset_buffer(self):
         self.write("REST")

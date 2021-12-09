@@ -113,6 +113,6 @@ class AgilentE4408B(Instrument):
         trace number (1, 2, or 3).
         """
         return pd.DataFrame({
-            'Frequency (GHz)': self.frequencies*1e-9,
+            'Frequency (GHz)': self.frequencies * 1e-9,
             'Peak (dB)': self.trace(number)
         })

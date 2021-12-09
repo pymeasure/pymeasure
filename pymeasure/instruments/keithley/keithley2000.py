@@ -47,12 +47,12 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     """
     MODES = {
-        'current':'CURR:DC', 'current ac':'CURR:AC',
-        'voltage':'VOLT:DC', 'voltage ac':'VOLT:AC',
-        'resistance':'RES', 'resistance 4W':'FRES',
-        'period':'PER', 'frequency':'FREQ',
-        'temperature':'TEMP', 'diode':'DIOD',
-        'continuity':'CONT'
+        'current': 'CURR:DC', 'current ac': 'CURR:AC',
+        'voltage': 'VOLT:DC', 'voltage ac': 'VOLT:AC',
+        'resistance': 'RES', 'resistance 4W': 'FRES',
+        'period': 'PER', 'frequency': 'FREQ',
+        'temperature': 'TEMP', 'diode': 'DIOD',
+        'continuity': 'CONT'
     }
 
     mode = Instrument.control(
@@ -74,7 +74,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         """ A string property that enables or disables the system status beeper,
         which can take the values: :code:'enabled' and :code:'disabled'. """,
         validator=strict_discrete_set,
-        values={'enabled':1, 'disabled':0},
+        values={'enabled': 1, 'disabled': 0},
         map_values=True
     )
 

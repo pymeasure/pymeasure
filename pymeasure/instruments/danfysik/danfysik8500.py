@@ -129,14 +129,14 @@ class Danfysik8500(Instrument):
         """ The actual current in Amps. This property can be set through
         :attr:`~.current_ppm`.
         """
-        return int(self.ask("AD 8"))*1e-2*self.polarity
+        return int(self.ask("AD 8")) * 1e-2 * self.polarity
 
     @current.setter
     def current(self, amps):
         if amps > 160 or amps < -160:
             raise RangeException("Danfysik 8500 is only capable of sourcing "
                                  "+/- 160 Amps")
-        self.current_ppm = int((1e6/160)*amps)
+        self.current_ppm = int((1e6 / 160) * amps)
 
     @property
     def current_ppm(self):
@@ -156,7 +156,7 @@ class Danfysik8500(Instrument):
         """ The setpoint for the current, which can deviate from the actual current
         (:attr:`~.Danfysik8500.current`) while the supply is in the process of setting the value.
         """
-        return self.current_ppm*(160/1e6)
+        return self.current_ppm * (160 / 1e6)
 
     @property
     def slew_rate(self):
@@ -260,7 +260,7 @@ class Danfysik8500(Instrument):
 
         :param current: A current in Amps
         """
-        self.write("R %.6f" % (current/160.))
+        self.write("R %.6f" % (current / 160.))
 
     def stop_ramp(self):
         """ Stops the current ramp.
@@ -279,7 +279,7 @@ class Danfysik8500(Instrument):
         self.clear_ramp_set()
         self.set_ramp_delay(delay_time)
         steps = np.linspace(initial_current, current, num=points)
-        cmds = ["R %.6f" % (step/160.) for step in steps]
+        cmds = ["R %.6f" % (step / 160.) for step in steps]
         self.write("\r".join(cmds))
 
     def ramp_to_current(self, current, points, delay_time=1):
@@ -299,15 +299,15 @@ class Danfysik8500(Instrument):
             self.write("SLOW %i" % stack)
         elif min(times) >= 0.1 and max(times) <= 6553.5:
             self.write("FAST %i" % stack)
-            times = [0.1*x for x in times]
+            times = [0.1 * x for x in times]
         else:
             raise RangeException("Timing for Danfysik 8500 ramp sequence is"
                                  " out of range")
         for i in range(len(times)):
             self.write("WSA %i,%i,%i,%i" % (
                 stack,
-                int(6250*abs(currents[i])),
-                int(6250*abs(currents[i+1])), times[i])
+                int(6250 * abs(currents[i])),
+                int(6250 * abs(currents[i + 1])), times[i])
             )
         self.write("MULT %i,%i" % (stack, multiplier))
 

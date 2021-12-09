@@ -224,11 +224,11 @@ class ANC300Controller(Instrument):
         super().__init__(
             AttocubeConsoleAdapter(host, 7230, passwd, **kwargs),
             "attocube ANC300 Piezo Controller",
-            includeSCPI = False,
+            includeSCPI=False,
             **kwargs
         )
         for i, axis in enumerate(axisnames):
-            setattr(self, axis, Axis(self, i+1))
+            setattr(self, axis, Axis(self, i + 1))
 
     def ground_all(self):
         """ Grounds all axis of the controller. """

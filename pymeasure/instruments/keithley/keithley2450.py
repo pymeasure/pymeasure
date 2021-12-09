@@ -66,7 +66,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         :meth:`~.Keithley2450.apply_current` and :meth:`~.Keithley2450.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
-        values={'current':'CURR', 'voltage':'VOLT'},
+        values={'current': 'CURR', 'voltage': 'VOLT'},
         map_values=True
     )
 
@@ -241,7 +241,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         2 or 4.
         """,
         validator=strict_discrete_set,
-        values={4:1, 2:0},
+        values={4: 1, 2: 0},
         map_values=True
     )
 
@@ -485,9 +485,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
         """
         self.beep(base_frequency, duration)
         time.sleep(duration)
-        self.beep(base_frequency*5.0/4.0, duration)
+        self.beep(base_frequency * 5.0 / 4.0, duration)
         time.sleep(duration)
-        self.beep(base_frequency*6.0/4.0, duration)
+        self.beep(base_frequency * 6.0 / 4.0, duration)
 
     @property
     def error(self):
@@ -495,7 +495,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         single error. """
         err = self.values(":system:error?")
         if len(err) < 2:
-            err = self.read() # Try reading again
+            err = self.read()  # Try reading again
         code = err[0]
         message = err[1].replace('"', '')
         return (code, message)
@@ -508,7 +508,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
             t = time.time()
             log.info("Keithley 2450 reported error: %d, %s", code, message)
             code, message = self.error
-            if (time.time()-t) > 10:
+            if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2450 error retrieval.")
 
     def reset(self):
