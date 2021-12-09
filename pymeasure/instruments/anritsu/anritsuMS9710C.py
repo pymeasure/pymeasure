@@ -66,7 +66,7 @@ def _parse_trace_peak(vals):
 
 class AnritsuMS9710C(Instrument):
     """Anritsu MS9710C Optical Spectrum Analyzer."""
-    
+
     def __init__(self, adapter, name="Anritsu MS9710C Optical Spectrum Analyzer", **kwargs):
         """Constructor."""
         self.analysis_mode = None

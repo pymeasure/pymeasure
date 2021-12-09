@@ -96,11 +96,13 @@ class Agilent8257D(Instrument):
         can be set.
         """
     )
-    is_enabled = Instrument.measurement(":OUTPUT?",
+    is_enabled = Instrument.measurement(
+        ":OUTPUT?",
         """ Reads a boolean value that is True if the output is on. """,
         cast=bool
     )
-    has_modulation = Instrument.measurement(":OUTPUT:MOD?",
+    has_modulation = Instrument.measurement(
+        ":OUTPUT:MOD?",
         """ Reads a boolean value that is True if the modulation is enabled. """,
         cast=bool
     )
@@ -109,7 +111,8 @@ class Agilent8257D(Instrument):
     # Amplitude modulation #
     ########################
 
-    has_amplitude_modulation = Instrument.measurement(":SOUR:AM:STAT?",
+    has_amplitude_modulation = Instrument.measurement(
+        ":SOUR:AM:STAT?",
         """ Reads a boolean value that is True if the amplitude modulation is enabled. """,
         cast=bool
     )
@@ -138,7 +141,8 @@ class Agilent8257D(Instrument):
     # Pulse modulation #
     ####################
 
-    has_pulse_modulation = Instrument.measurement(":SOUR:PULM:STAT?",
+    has_pulse_modulation = Instrument.measurement(
+        ":SOUR:PULM:STAT?",
         """ Reads a boolean value that is True if the pulse modulation is enabled. """,
         cast=bool
     )

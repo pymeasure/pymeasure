@@ -84,25 +84,26 @@ class TestResults:
     @mock.patch('os.path.exists', return_value=True)
     @mock.patch('pymeasure.experiment.results.pd.read_csv')
     def test_regression_attr_data_when_up_to_date_should_retain_dtype(self,
-            read_csv_mock, path_exists_mock):
+                                                                      read_csv_mock,
+                                                                      path_exists_mock):
         procedure_mock = mock.MagicMock(spec=Procedure)
         result = Results(procedure_mock, 'test.csv')
 
         read_csv_mock.return_value = [pd.DataFrame(data={
-                'A': [1,2,3,4,5,6,7],
-                'B': [2,3,4,5,6,7,8]
-            })]
+            'A': [1,2,3,4,5,6,7],
+            'B': [2,3,4,5,6,7,8]
+        })]
         first_data = result.data
 
         # if no updates, read_csv returns a zero-row dataframe
         read_csv_mock.return_value = [pd.DataFrame(data={
             'A': [], 'B': []
-            }, dtype=object)]
+        }, dtype=object)]
         second_data = result.data
 
         assert second_data.iloc[:,0].dtype is not object
         assert first_data.iloc[:,0].dtype is second_data.iloc[:,0].dtype
-        
+
     def test_regression_param_str_should_not_include_newlines(self, tmpdir):
         class DummyProcedure(Procedure):
             par = Parameter('Generic Parameter with newline chars')           

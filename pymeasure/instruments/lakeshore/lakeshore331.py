@@ -88,8 +88,8 @@ class LakeShore331(Instrument):
         self.heater_range = 'off'
 
     def wait_for_temperature(self, accuracy=0.1, 
-            interval=0.1, sensor='A', setpoint=1, timeout=360,
-            should_stop=lambda: False):
+                             interval=0.1, sensor='A', setpoint=1, timeout=360,
+                             should_stop=lambda: False):
         """ Blocks the program, waiting for the temperature to reach the setpoint
         within the accuracy (%), checking this each interval time in seconds.
 

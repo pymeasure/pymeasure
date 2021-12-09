@@ -55,7 +55,7 @@ class TestProcedure(Procedure):
 
 
 if __name__ == "__main__":
-    
+
     scribe = console_log(log, level=logging.DEBUG)
     scribe.start()
 

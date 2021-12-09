@@ -275,7 +275,7 @@ class AgilentB1500(Instrument):
                   'from the start voltage.'),
             'U': 'CMU is in the NULL loop unbalance condition.',
             'D': 'CMU is in the IV amplifier saturation condition.'
-            }
+        }
         smu_status = {
             1: 'A/D converter overflowed.',
             2: 'Oscillation of force or saturation current.',
@@ -285,14 +285,14 @@ class AgilentB1500(Instrument):
             32: 'Search measurement was automatically stopped.',
             64: 'Invalid data is returned. D is not used.',
             128: 'End of data'
-            }
+        }
         cmu_status = {
             1: 'A/D converter overflowed.',
             2: 'CMU is in the NULL loop unbalance condition.',
             4: 'CMU is in the IV amplifier saturation condition.',
             64: 'Invalid data is returned. D is not used.',
             128: 'End of data'
-            }
+        }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
         def __init__(self, smu_names, output_format_str):
@@ -492,14 +492,14 @@ class AgilentB1500(Instrument):
             "FMT1": self._data_formatting_FMT1,
             "FMT11": self._data_formatting_FMT11,
             "FMT21": self._data_formatting_FMT21
-            }
+        }
         try:
             format_class = classes[output_format_str]
         except KeyError:
             log.error((
                 "Data Format {0} is not implemented "
                 "so far. Please set appropriate Data Format."
-                ).format(output_format_str))
+            ).format(output_format_str))
             return
         else:
             return format_class(smu_names=smu_names)
@@ -1156,7 +1156,7 @@ class SMU():
         nop = int(nop)
         log.info("{0} ramping from {1}{2} to {3}{2} in {4} steps".format(
             self.name, start, unit, target_output, nop
-            ))
+        ))
         outputs = np.linspace(start, target_output, nop, endpoint=False)
 
         for output in outputs:
@@ -1168,8 +1168,8 @@ class SMU():
         # call force even if start==target_output
         # to set compliance
         self.force(
-                source_type, source_range, target_output,
-                comp, comp_polarity, comp_range)
+            source_type, source_range, target_output,
+            comp, comp_polarity, comp_range)
 
     ######################################
     # Measurement Range
@@ -1468,17 +1468,17 @@ class SMUVoltageRanging():
     """
     def __init__(self, smu_type):
         supported_ranges = {
-                'HRSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
-                'MPSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
-                'HPSMU': [0, 11, 20, 12, 200, 13, 400, 14, 1000, 15, 2000],
-                'MCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
-                'HCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
-                'DHCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
-                'HVSMU': [0, 15, 2000, 5000, 15000, 30000],
-                'UHCU': [0, 14, 1000],
-                'HVMCU': [0, 15000, 30000],
-                'UHVU': [0, 103]
-                }
+            'HRSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
+            'MPSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
+            'HPSMU': [0, 11, 20, 12, 200, 13, 400, 14, 1000, 15, 2000],
+            'MCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
+            'HCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
+            'DHCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
+            'HVSMU': [0, 15, 2000, 5000, 15000, 30000],
+            'UHCU': [0, 14, 1000],
+            'HVMCU': [0, 15000, 30000],
+            'UHVU': [0, 103]
+        }
         supported_ranges = supported_ranges[smu_type]
 
         ranges = {
@@ -1494,7 +1494,7 @@ class SMUVoltageRanging():
             '1500 V': 15000,
             '3000 V': 30000,
             '10 kV': 103
-            }
+        }
 
         # set range attributes
         self.output = Ranging(supported_ranges, ranges)
@@ -1529,13 +1529,13 @@ class SMUCurrentRanging():
             'UHCU': [0, 26, 28],
             'HVMCU': [],
             'UHVU': []
-            }
+        }
         supported_meas_ranges = {
             **supported_output_ranges,
             # overwrite output ranges:
             'HVMCU': [0, 19, 21],
             'UHVU': [0, 15, 16, 17, 18, 19]
-            }
+        }
         supported_output_ranges = supported_output_ranges[smu_type]
         supported_meas_ranges = supported_meas_ranges[smu_type]
 
@@ -1558,7 +1558,7 @@ class SMUCurrentRanging():
             '40 A': 23,
             '500 A': 26,
             '2000 A': 28
-            }
+        }
 
         # set range attributes
         self.output = Ranging(supported_output_ranges, ranges)
@@ -1724,7 +1724,7 @@ class QueryLearn():
             'PV', 'PI', 'PWV', 'PWI',  # Pulsed Source
             'MV', 'MI', 'MSP',  # Sampling
             'SSR', 'RM', 'AAD'  # Series Resistor, Auto Ranging, ADC
-            ]  # probably not complete yet...
+        ]  # probably not complete yet...
         response_dict = {}
         for element in response:
             parameters = element[1].split(',')
@@ -1821,7 +1821,7 @@ class QueryLearn():
             ('Voltage Compliance Ranging Type',
                 lambda parameter:
                 smu.voltage_ranging.meas(int(parameter)).name)
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Constant Current'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -1840,7 +1840,7 @@ class QueryLearn():
             ('Current Compliance Ranging Type',
                 lambda parameter:
                 smu.current_ranging.meas(int(parameter)).name)
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Constant Voltage'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -1863,7 +1863,7 @@ class QueryLearn():
             'ADC Averaging Number',
             ('ADC Averaging Mode',
                 lambda parameter: str(AutoManual(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -1871,7 +1871,7 @@ class QueryLearn():
         names = [
             ('Auto Calibration Mode',
                 lambda parameter: bool(int(parameter)))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -1885,7 +1885,7 @@ class QueryLearn():
         names = [
             ('Measurement Mode',
                 lambda parameter: str(MeasMode(int(parameter))))
-            ]
+        ]
         ret = cls.to_dict(parameters[0], names)
         smu_names = []
         for channel in parameters[1:]:
@@ -1901,7 +1901,7 @@ class QueryLearn():
             (smu.name + ' Current Measurement Range',
                 lambda parameter:
                 smu.current_ranging.meas(int(parameter)).name)
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -1911,7 +1911,7 @@ class QueryLearn():
             (smu.name + ' Voltage Measurement Range',
                 lambda parameter:
                 smu.voltage_ranging.meas(int(parameter)).name)
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     # Sweep: 33
@@ -1924,7 +1924,7 @@ class QueryLearn():
             ('Output after Measurement',
                 lambda parameter:
                 str(StaircaseSweepPostOutput(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -1933,7 +1933,7 @@ class QueryLearn():
             'Hold Time (s)', 'Delay Time (s)', 'Step Delay Time (s)',
             'Step Source Trigger Delay Time (s)',
             'Step Measurement Trigger Delay Time (s)'
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -1947,7 +1947,7 @@ class QueryLearn():
                 smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)", "Number of Steps",
             "Current Compliance (A)", "Power Compliance (W)"
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Voltage Sweep Source'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -1963,7 +1963,7 @@ class QueryLearn():
                 smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)", "Number of Steps",
             "Voltage Compliance (V)", "Power Compliance (W)"
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Current Sweep Source'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -1978,7 +1978,7 @@ class QueryLearn():
                 smu.voltage_ranging.output(int(parameter)).name),
             "Start Voltage (V)", "Stop Voltage (V)",
             "Current Compliance (A)", "Power Compliance (W)"
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Synchronous Voltage Sweep Source'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -1993,7 +1993,7 @@ class QueryLearn():
                 smu.current_ranging.output(int(parameter)).name),
             "Start Current (A)", "Stop Current (A)",
             "Voltage Compliance (V)", "Power Compliance (W)"
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Synchronous Current Sweep Source'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -2007,7 +2007,7 @@ class QueryLearn():
             (smu.name + ' Measurement Operation Mode',
                 lambda parameter:
                 str(MeasOpMode(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     # Sampling: 47
@@ -2020,7 +2020,7 @@ class QueryLearn():
             ('Output after Measurement',
                 lambda parameter:
                 str(SamplingPostOutput(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -2028,7 +2028,7 @@ class QueryLearn():
         names = [
             'Hold Bias Time (s)', 'Sampling Interval (s)',
             'Number of Samples', 'Hold Base Time (s)'
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -2036,7 +2036,7 @@ class QueryLearn():
         names = [
             ('Sampling Mode',
                 lambda parameter: str(SamplingMode(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -2048,7 +2048,7 @@ class QueryLearn():
                 smu.voltage_ranging.output(int(parameter)).name),
             "Base Voltage (V)", "Bias Voltage (V)",
             "Current Compliance (A)"
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Voltage Source Sampling'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -2063,7 +2063,7 @@ class QueryLearn():
                 smu.current_ranging.output(int(parameter)).name),
             "Base Current (A)", "Bias Current (A)",
             "Voltage Compliance (V)"
-            ]
+        ]
         ret = cls.to_dict(parameters, names)
         ret['Source Type'] = 'Current Source Sampling'
         ret.move_to_end('Source Type', last=False)  # make first entry
@@ -2076,7 +2076,7 @@ class QueryLearn():
         names = [
             (smu.name + ' Series Resistor',
                 lambda parameter: bool(int(parameter)))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     # Auto Ranging Mode: 54
@@ -2086,7 +2086,7 @@ class QueryLearn():
         names = [
             smu.name + ' Ranging Mode',
             smu.name + ' Ranging Mode Parameter'
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     # ADC: 55, 56
@@ -2097,7 +2097,7 @@ class QueryLearn():
             (smu.name + ' ADC',
                 lambda parameter:
                 str(ADCType(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -2109,7 +2109,7 @@ class QueryLearn():
                 lambda parameter:
                 str(ADCMode(int(parameter)))),
             adc_name + ' Parameter'
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -2117,7 +2117,7 @@ class QueryLearn():
         names = [
             ('ADC Auto Zero',
                 lambda parameter: str(bool(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)
 
     # Time Stamp: 60
@@ -2126,5 +2126,5 @@ class QueryLearn():
         names = [
             ('Time Stamp',
                 lambda parameter: str(bool(int(parameter))))
-            ]
+        ]
         return cls.to_dict(parameters, names)

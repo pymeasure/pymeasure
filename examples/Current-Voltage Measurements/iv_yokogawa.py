@@ -47,7 +47,7 @@ class IVProcedure(Procedure):
         self.meter.measure_voltage()
         self.meter.voltage_range = self.voltage_range
         self.meter.voltage_nplc = 1 # Integration constant to Medium
-        
+
         self.source = Yokogawa7651("GPIB::4")
         self.source.apply_current()
         self.source.source_current_range = self.max_current*1e-3 # A
@@ -61,7 +61,7 @@ class IVProcedure(Procedure):
         currents = np.concatenate((currents_up, currents_down)) # Include the reverse
         currents *= 1e-3 # to mA from A
         steps = len(currents)
-        
+
         log.info("Starting to sweep through current")
         for i, current in enumerate(currents):
             log.debug("Measuring current: %g mA" % current)
@@ -69,7 +69,7 @@ class IVProcedure(Procedure):
             self.source.source_current = current
             # Or use self.source.ramp_to_current(current, delay=0.1)
             sleep(self.delay*1e-3)
-            
+
             voltage = self.meter.voltage
             if abs(current) <= 1e-10:
                 resistance = np.nan

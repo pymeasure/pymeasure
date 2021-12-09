@@ -313,7 +313,7 @@ class Danfysik8500(Instrument):
 
     def clear_sequence(self, stack):
         """ Clears the sequence by the stack number.
-        
+
         :param stack: A stack number between 0-15 
         """
         self.write("CSS %i" % stack)

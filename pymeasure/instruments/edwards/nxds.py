@@ -33,10 +33,10 @@ class Nxds(Instrument):
     """
 
     enable = Instrument.setting("!C802 %d",
-                              """ Starts/stops pump with default settings.""",
-                              validator=strict_discrete_set,
-                              values = (0,1),)
-	
+                                """ Starts/stops pump with default settings.""",
+                                validator=strict_discrete_set,
+                                values = (0,1),)
+
     def __init__(self, resourceName, **kwargs):
         super(Nxds, self).__init__(
             resourceName,
@@ -44,4 +44,4 @@ class Nxds(Instrument):
             includeSCPI=False,
             **kwargs
         )
-	
+

@@ -28,22 +28,22 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 
 class AdvantestR3767CG(Instrument):
     """ Represents the Advantest R3767CG VNA. Implements controls to change the analysis
-    	range and to retreve the data for the trace. 
+        range and to retreve the data for the trace. 
     """
 
     id = Instrument.measurement(
-    	"*IDN?", """ Reads the instrument identification """
+        "*IDN?", """ Reads the instrument identification """
     )
 
     center_frequency = Instrument.control(
-    	":FREQ:CENT?", ":FREQ:CENT %d",
+        ":FREQ:CENT?", ":FREQ:CENT %d",
         """Center Frequency in Hz""",
         validator=strict_range,
         values=[300000, 8000000000]
     )
 
     span_frequency = Instrument.control(
-    	":FREQ:SPAN?", ":FREQ:SPAN %d",
+        ":FREQ:SPAN?", ":FREQ:SPAN %d",
         """Span Frequency in Hz""",
         validator=strict_range,
         values=[1, 8000000000]

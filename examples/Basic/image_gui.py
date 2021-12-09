@@ -36,7 +36,7 @@ class TestImageProcedure(Procedure):
     Y_start = FloatParameter("Y Start Position", units="m", default=-1.)
     Y_end = FloatParameter("Y End Position", units="m", default=1.)
     Y_step = FloatParameter("Y Scan Step Size", units="m", default=0.1)
-    
+
     delay = FloatParameter("Delay", units="s", default=0.01)
 
     # There must be two special data columns which correspond to the two things

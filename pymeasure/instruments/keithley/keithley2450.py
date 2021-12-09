@@ -70,18 +70,18 @@ class Keithley2450(Instrument, KeithleyBuffer):
     )
 
     source_enabled = Instrument.measurement("OUTPUT?",
-        """ Reads a boolean value that is True if the source is enabled. """,
-        cast=bool
-    )
+                                            """ Reads a boolean value that is True if the source is enabled. """,
+                                            cast=bool
+                                            )
 
     ###############
     # Current (A) #
     ###############
 
     current = Instrument.measurement(":READ?",
-        """ Reads the current in Amps, if configured for this reading.
+                                     """ Reads the current in Amps, if configured for this reading.
         """
-    )
+                                     )
 
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
@@ -123,7 +123,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-1.05, 1.05]
     )
-    
+
     source_current_delay = Instrument.control(
         ":SOUR:CURR:DEL?", ":SOUR:CURR:DEL %g",
         """ A floating point property that sets a manual delay for the source
@@ -147,9 +147,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
     ###############
 
     voltage = Instrument.measurement(":READ?",
-        """ Reads the voltage in Volts, if configured for this reading.
+                                     """ Reads the voltage in Volts, if configured for this reading.
         """
-    )
+                                     )
 
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
@@ -190,7 +190,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         validator=truncated_range,
         values=[-210, 210]
     )
-    
+
     source_voltage_delay = Instrument.control(
         ":SOUR:VOLT:DEL?", ":SOUR:VOLT:DEL %g",
         """ A floating point property that sets a manual delay for the source
@@ -215,9 +215,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
 
     resistance = Instrument.measurement(":READ?",
-        """ Reads the resistance in Ohms, if configured for this reading.
+                                        """ Reads the resistance in Ohms, if configured for this reading.
         """
-    )
+                                        )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
         """ A floating point property that controls the resistance range
@@ -440,7 +440,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
 
     def apply_current(self, current_range=None,
-             compliance_voltage=0.1):
+                      compliance_voltage=0.1):
         """ Configures the instrument to apply a source current, and
         uses an auto range unless a current range is specified.
         The compliance voltage is also set.
@@ -460,7 +460,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
 
     def apply_voltage(self, voltage_range=None,
-            compliance_current=0.1):
+                      compliance_current=0.1):
         """ Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.

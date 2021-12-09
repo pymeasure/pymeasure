@@ -35,12 +35,12 @@ class AgilentE4980(Instrument):
                                     "AC voltage level, in Volts",
                                     validator=strict_range,
                                     values=[0, 20])
-    
+
     ac_current = Instrument.control(":CURR:LEV?", ":CURR:LEV %g",
                                     "AC current level, in Amps",
                                     validator=strict_range,
                                     values=[0, 0.1])
-    
+
 
     frequency = Instrument.control(":FREQ:CW?", ":FREQ:CW %g",
                                    "AC frequency (range depending on model), in Hertz",
@@ -90,7 +90,7 @@ Select quantities to be measured:
 
 
     trigger_source = Instrument.control("TRIG:SOUR?", "TRIG:SOUR %s",
-                                            """
+                                        """
 Select trigger source; accept the values:
     * HOLD: manual
     * INT: internal
@@ -113,7 +113,7 @@ Select trigger source; accept the values:
 
         :param freq_list: list of frequencies
         :param return_freq: if True, returns the frequencies read from the instrument
-        
+
         Returns values as configured with :attr:`~.AgilentE4980.mode`
             """
         # manual, page 299

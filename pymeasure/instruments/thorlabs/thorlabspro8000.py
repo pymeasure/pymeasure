@@ -48,32 +48,32 @@ class ThorlabsPro8000(Instrument):
 
     # Code for general purpose commands (mother board related)
     slot = Instrument.control(":SLOT?", ":SLOT %d",
-                                "Slot selection. Allowed values are: {}""".format(SLOTS),
-                                validator=strict_discrete_set,
-                                values=SLOTS,
-                                map_values=False)
+                              "Slot selection. Allowed values are: {}""".format(SLOTS),
+                              validator=strict_discrete_set,
+                              values=SLOTS,
+                              map_values=False)
 
     # Code for LDC-xxxx daughter boards (laser driver)
     LDCCurrent = Instrument.control(":ILD:SET?", ":ILD:SET %g",
-                                """Laser current.""")
+                                    """Laser current.""")
     LDCCurrentLimit = Instrument.control(":LIMC:SET?", ":LIMC:SET %g",
-                                """Set Software current Limit (value must be lower than hardware current limit).""")
+                                         """Set Software current Limit (value must be lower than hardware current limit).""")
     LDCPolarity = Instrument.control(":LIMC:SET?", ":LIMC:SET %s",
-                                """Set laser diode polarity. Allowed values are: {}""".format(LDC_POLARITIES),
-                                validator=strict_discrete_set,
-                                values=LDC_POLARITIES,
-                                map_values=False)
+                                     """Set laser diode polarity. Allowed values are: {}""".format(LDC_POLARITIES),
+                                     validator=strict_discrete_set,
+                                     values=LDC_POLARITIES,
+                                     map_values=False)
     LDCStatus = Instrument.control(":LASER?", ":LASER %s",
-                                """Set laser diode status. Allowed values are: {}""".format(STATUS),
-                                validator=strict_discrete_set,
-                                values=STATUS,
-                                map_values=False)
+                                   """Set laser diode status. Allowed values are: {}""".format(STATUS),
+                                   validator=strict_discrete_set,
+                                   values=STATUS,
+                                   map_values=False)
 
     # Code for TED-xxxx daughter boards (TEC driver)
     TEDStatus = Instrument.control(":TEC?", ":TEC %s",
-                                """Set TEC status. Allowed values are: {}""".format(STATUS),
-                                validator=strict_discrete_set,
-                                values=STATUS,
-                                map_values=False)
+                                   """Set TEC status. Allowed values are: {}""".format(STATUS),
+                                   validator=strict_discrete_set,
+                                   values=STATUS,
+                                   map_values=False)
     TEDSetTemperature = Instrument.control(":TEMP:SET?", ":TEMP:SET %g",
-                                """Set TEC temperature""")
+                                           """Set TEC temperature""")

@@ -68,8 +68,8 @@ class TestBooleanInput:
         bool_param = BooleanParameter('potato', default=default_value)
 
         with mock.patch('test_inputs.BooleanParameter.value',
-                new_callable=mock.PropertyMock,
-                return_value=default_value) as p:
+                        new_callable=mock.PropertyMock,
+                        return_value=default_value) as p:
             bool_input = BooleanInput(bool_param)
 
             # Clear any call to property 'value' during initialization
@@ -96,9 +96,9 @@ class TestListInput:
     @pytest.mark.parametrize("value_remains_default", [True, False])
     def test_init_from_param(self, qtbot, choices, default_value, value_remains_default):
         list_param = ListParameter('potato',
-                choices=choices,
-                default=default_value,
-                units='m')
+                                   choices=choices,
+                                   default=default_value,
+                                   units='m')
 
         if (value_remains_default):
             # Enable check that the value is initialized to default_value
@@ -134,8 +134,8 @@ class TestListInput:
         qtbot.addWidget(list_input)
 
         with mock.patch('test_inputs.ListParameter.value',
-                new_callable=mock.PropertyMock,
-                return_value=123) as p:
+                        new_callable=mock.PropertyMock,
+                        return_value=123) as p:
             for choice in choices:
                 list_input.setValue(choice)
                 list_input.parameter # lazy update
@@ -168,10 +168,10 @@ class TestScientificInput:
     @pytest.mark.parametrize("value_remains_default", [True, False])
     def test_init_from_param(self, qtbot, min_, max_, default_value, value_remains_default):
         float_param = FloatParameter('potato',
-                minimum=min_,
-                maximum=max_,
-                default=default_value,
-                units='m')
+                                     minimum=min_,
+                                     maximum=max_,
+                                     default=default_value,
+                                     units='m')
 
         if (value_remains_default):
             # Enable check that the value is initialized to default_value
@@ -192,7 +192,7 @@ class TestScientificInput:
 
     def test_setValue_within_range_should_set(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-10, maximum=10, default=0)
+                                     minimum=-10, maximum=10, default=0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
@@ -202,7 +202,7 @@ class TestScientificInput:
 
     def test_setValue_within_range_should_set_regression_118(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-1000, maximum=1000, default=0)
+                                     minimum=-1000, maximum=1000, default=0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
@@ -216,7 +216,7 @@ class TestScientificInput:
 
     def test_setValue_out_of_range_should_constrain(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-1000, maximum=1000, default=0)
+                                     minimum=-1000, maximum=1000, default=0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
@@ -229,13 +229,13 @@ class TestScientificInput:
 
     def test_setValue_should_update_param(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-1000, maximum=1000, default=10.0)
+                                     minimum=-1000, maximum=1000, default=10.0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
         with mock.patch('test_inputs.FloatParameter.value',
-                new_callable=mock.PropertyMock,
-                return_value=10.0) as p:
+                        new_callable=mock.PropertyMock,
+                        return_value=10.0) as p:
             # test
             sci_input.setValue(5.0)
             sci_input.parameter # lazy update

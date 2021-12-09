@@ -116,4 +116,4 @@ class AgilentE4408B(Instrument):
             'Frequency (GHz)': self.frequencies*1e-9,
             'Peak (dB)': self.trace(number)
         })
-        
+

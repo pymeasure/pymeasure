@@ -45,7 +45,7 @@ class Sound_Channel(object):
         """,
         validator = strict_range,
         values=[0, 1],
-        )
+    )
 
     deviation = Instrument.control(
         "AUD:DEV?",
@@ -56,7 +56,7 @@ class Sound_Channel(object):
         """,
         validator = strict_range,
         values=[0, 1.1E5],
-        )
+    )
 
     frequency = Instrument.control(
         "AUD:FREQ?",
@@ -67,7 +67,7 @@ class Sound_Channel(object):
         """,
         validator = strict_range,
         values=[300, 1.5E4],
-        )
+    )
 
     use_external_source = Instrument.control(
         "FREQ:SOUR?",
@@ -85,7 +85,7 @@ class Sound_Channel(object):
         validator = strict_discrete_set,
         values={False:"INT", True:"EXT"},
         map_values = True,
-        )
+    )
 
     modulation_enabled = Instrument.control(
         "AUD:FREQ:STAT?",
@@ -103,7 +103,7 @@ class Sound_Channel(object):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     carrier_frequency = Instrument.control(
         "CARR:FREQ?",
@@ -115,7 +115,7 @@ class Sound_Channel(object):
         """,
         validator = strict_range,
         values=[38.75E6, 52.75E6],
-        )
+    )
 
     carrier_level = Instrument.control(
         "CARR:LEV?",
@@ -127,7 +127,7 @@ class Sound_Channel(object):
         """,
         validator = strict_range,
         values=[-34, 6],
-        )
+    )
 
     carrier_enabled = Instrument.control(
         "CARR:STAT?",
@@ -137,7 +137,7 @@ class Sound_Channel(object):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     preemphasis_time = Instrument.control(
         "PRE:MODE?",
@@ -155,7 +155,7 @@ class Sound_Channel(object):
         validator = strict_discrete_set,
         values={50:"US50",75:"US75"},
         map_values = True,
-        )
+    )
 
     preemphasis_enabled = Instrument.control(
         "PRE:STAT?",
@@ -165,7 +165,7 @@ class Sound_Channel(object):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     def __init__(self, instrument, number):
         self.instrument = instrument
@@ -221,8 +221,14 @@ class SFM(Instrument):
         if subsystem is None:
             self.write("CAL:MOD%d" % (number))
         else:
-            self.write("CAL:MOD%d:%s" % (number,strict_discrete_set(subsystem,
-                                        ["NIC","NICAM","VIS","VISION", "SOUN1","SOUND1","SOUN2","SOUND2","COD","CODER"])))
+            self.write(
+                "CAL:MOD%d:%s" % (
+                    number,
+                    strict_discrete_set(subsystem,
+                                        ["NIC", "NICAM", "VIS", "VISION", "SOUN1",
+                                         "SOUND1", "SOUN2", "SOUND2", "COD", "CODER"])
+                )
+            )
 
     #INST (Manual 3.6.4)
     system_number = Instrument.control(
@@ -238,7 +244,7 @@ class SFM(Instrument):
         values = {1:"SYS1",2:"SYS2",3:"SYS3",4:"SYS4",5:"SYS5",6:"SYS6"},
         map_values=True,
         check_set_errors=True,
-        )
+    )
 
     R75_out = Instrument.control(
         "ROUT:CHAN:OUTP:IMP?",
@@ -257,7 +263,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:"LOW", True:"HIGH"},
         map_values = True,
-        )
+    )
 
     ext_ref_base_unit = Instrument.control(
         "ROUT:REF:CLOCK:BAS?",
@@ -275,7 +281,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:"INT", True:"EXT"},
         map_values = True,
-        )
+    )
 
     ext_ref_extension = Instrument.control(
         "ROUT:REF:CLOCK:EXT?",
@@ -292,7 +298,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:"INT", True:"EXT"},
         map_values = True,
-        )
+    )
 
     ext_vid_connector = Instrument.control(
         "ROUT:TEL:VID:EXT?",
@@ -313,7 +319,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values = ["HIGH","LOW","REAR1","REAR2","AUTO"],
-        )
+    )
 
     channel_table = Instrument.control(
         "SOUR:FREQ:CHAN:TABL ?",
@@ -337,7 +343,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values = ["DEF","USR1","USR2","USR3","USR4","USR5"],
-        )
+    )
 
     normal_channel = Instrument.control(
         "SOUR:FREQ:CHAN:NORM ?",
@@ -345,7 +351,7 @@ class SFM(Instrument):
         """A int property controlling the current selected regular/normal channel number
         valid selections are based on the country settings.
         """,
-        )
+    )
 
     special_channel = Instrument.control(
         "SOUR:FREQ:CHAN:SPEC ?",
@@ -353,7 +359,7 @@ class SFM(Instrument):
         """A int property controlling the current selected special channel number
         valid selections are based on the country settings.
         """,
-        )
+    )
 
     def channel_up_relative(self):
         """
@@ -379,7 +385,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     channel_sweep_stop =  Instrument.control(
         "SOUR:FREQ:CHAN:STOP?",
@@ -391,7 +397,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     channel_sweep_step = Instrument.control(
         "SOUR:FREQ:CHAN:STEP?",
@@ -403,7 +409,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     cw_frequency = Instrument.control(
         "SOUR:FREQ:CW?",
@@ -415,7 +421,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     frequency = Instrument.control(
         "SOUR:FREQ:FIXED?",
@@ -427,7 +433,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     frequency_mode = Instrument.control(
         "SOUR:FREQ:MODE?",
@@ -451,7 +457,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values = ["CW","FIXED","CHSW","RFSW"],
-        )
+    )
 
     high_frequency_resolution = Instrument.control(
         "SOUR:FREQ:RES?",
@@ -471,7 +477,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:"LOW", True:"HIGH"},
         map_values = True,
-        )
+    )
 
     rf_sweep_center = Instrument.control(
         "SOUR:FREQ:CENTER?",
@@ -483,7 +489,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     rf_sweep_start = Instrument.control(
         "SOUR:FREQ:STAR?",
@@ -495,7 +501,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     rf_sweep_stop = Instrument.control(
         "SOUR:FREQ:STOP?",
@@ -507,7 +513,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [5E6, 1E9]
-        )
+    )
 
     rf_sweep_step = Instrument.control(
         "SOUR:FREQ:STEP?",
@@ -519,7 +525,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [1E3, 1E9]
-        )
+    )
 
     rf_sweep_span = Instrument.control(
         "SOUR:FREQ:SPAN?",
@@ -531,7 +537,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [1E3, 1E9]
-        )
+    )
 
 
     level = Instrument.control(
@@ -546,7 +552,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [-99, 10],
-        )
+    )
 
     level_mode = Instrument.control(
         "SOUR:POW:LEV:MODE?",
@@ -568,7 +574,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values = ["NORM","LOWN","CONT","LOWD"]
-        )
+    )
 
     rf_out_enabled = Instrument.control(
         "SOUR:POW:STAT?",
@@ -579,7 +585,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     def coder_adjust(self):
         """
@@ -599,7 +605,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 200],
-        )
+    )
 
     coder_modulation_degree = Instrument.control(
         "SOUR:TEL:MOD:COD:MOD:DEGR?",
@@ -610,7 +616,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 0.9],
-        )
+    )
 
     coder_pilot_frequency = Instrument.control(
         "SOUR:TEL:MOD:COD:PIL:FREQ?",
@@ -621,7 +627,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[5E4, 6E4],
-        )
+    )
 
     coder_pilot_deviation = Instrument.control(
         "SOUR:TEL:MOD:COD:PIL:FREQ:DEV?",
@@ -632,7 +638,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[1E3, 4E3],
-        )
+    )
 
     external_modulation_power = Instrument.control(
         "SOUR:TEL:MOD:EXT:POW?",
@@ -645,7 +651,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[-7, 0],
-        )
+    )
 
     external_modulation_frequency = Instrument.control(
         "SOUR:TEL:MOD:EXT:FREQ?",
@@ -656,7 +662,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[32e6, 46e6],
-        )
+    )
 
     nicam_mode = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:MODE?",
@@ -679,7 +685,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=["MON","STER","DUAL","DATA"],
-        )
+    )
 
     nicam_audio_frequency = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:FREQ?",
@@ -690,7 +696,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 1.5E4],
-        )
+    )
 
     nicam_preemphasis_enabled = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:PRE?",
@@ -701,7 +707,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     nicam_audio_volume = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:VOL?",
@@ -713,7 +719,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 60],
-        )
+    )
 
     nicam_data = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:DATA?",
@@ -725,7 +731,7 @@ class SFM(Instrument):
         validator = strict_range,
         values=[0, 2047],
         cast=int
-        )
+    )
 
     nicam_additional_bits = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:ADD?",
@@ -736,7 +742,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 2047],
-        )
+    )
 
     nicam_control_bits = Instrument.control(
         "SOUR:TEL:MOD:NIC:AUD:CONT?",
@@ -747,7 +753,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 3],
-        )
+    )
 
     nicam_bit_error_rate = Instrument.control(
         "SOUR:TEL:MOD:NIC:BIT?",
@@ -758,7 +764,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[1.2E-7, 2E-3],
-        )
+    )
 
     nicam_bit_error_enabled = Instrument.control(
         "SOUR:TEL:MOD:NIC:BIT:STAT?",
@@ -769,7 +775,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     nicam_carrier_frequency = Instrument.control(
         "SOUR:TEL:MOD:NIC:CARR:FREQ?",
@@ -781,7 +787,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[32.85E6, 33.25E6],
-        )
+    )
 
     nicam_intercarrier_frequency = Instrument.control(
         "SOUR:TEL:MOD:NIC:INT:FREQ?",
@@ -792,7 +798,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[5E6, 9E6],
-        )
+    )
 
     nicam_carrier_level = Instrument.control(
         "SOUR:TEL:MOD:NIC:CARR:LEV?",
@@ -803,7 +809,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[-40, 13],
-        )
+    )
 
     nicam_carrier_enabled = Instrument.control(
         "SOUR:TEL:MOD:NIC:CARR:STAT?",
@@ -813,7 +819,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     nicam_IQ_inverted = Instrument.control(
         "SOUR:TEL:MOD:NIC:MODE?",
@@ -831,7 +837,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:"IQ", True:"QI"},
         map_values = True,
-        )
+    )
 
     nicam_source = Instrument.control(
         "SOUR:TEL:MOD:NIC:SOUR?",
@@ -853,7 +859,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=["INT","EXT","CW","RAND","TEST"],
-        )
+    )
 
     nicam_test_signal = Instrument.control(
         "SOUR:TEL:MOD:NIC:TEST?",
@@ -872,7 +878,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={1:"TST1", 2:"TST2", 3:"TST3"},
         map_values = True,
-        )
+    )
 
     external_modulation_source = Instrument.control(
         "SOUR:MOD:SOUR?",
@@ -884,7 +890,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:"INT", True:"EXT"},
         map_values = True,
-        )
+    )
 
     modulation_enabled = Instrument.control(
         "SOUR:MOD:STAT?",
@@ -894,7 +900,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     vision_carrier_enabled = Instrument.control(
         "SOUR:TEL:MOD:VIS:CARR:STAT?",
@@ -907,7 +913,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     vision_carrier_frequency = Instrument.control(
         "SOUR:TEL:MOD:VIS:CARR:FREQ?",
@@ -918,7 +924,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[32E6, 46E6],
-        )
+    )
 
     vision_average_enabled = Instrument.control(
         "SOUR:TEL:MOD:VIS:AVER:STAT?",
@@ -928,7 +934,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     vision_balance = Instrument.control(
         "SOUR:TEL:MOD:VIS:BAL?",
@@ -939,7 +945,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[-0.5, 0.5],
-        )
+    )
 
     vision_clamping_average = Instrument.control(
         "SOUR:TEL:MOD:VIS:CLAM:AVER?",
@@ -950,7 +956,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[-0.5, 0.5],
-        )
+    )
 
     vision_clamping_enabled = Instrument.control(
         "SOUR:TEL:MOD:VIS:CLAM:STAT?",
@@ -961,7 +967,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     vision_clamping_mode = Instrument.control(
         "SOUR:TEL:MOD:VIS:CLAM:TYPE?",
@@ -972,7 +978,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=["HARD","SOFT"],
-        )
+    )
 
 
     vision_precorrection_enabled = Instrument.control(
@@ -983,7 +989,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     vision_residual_carrier_level = Instrument.control(
         "SOUR:TEL:MOD:VIS:RES?",
@@ -994,7 +1000,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 0.3],
-        )
+    )
 
     vision_videosignal_enabled = Instrument.control(
         "SOUR:TEL:MOD:VIS:VID?",
@@ -1005,7 +1011,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     vision_sideband_filter_enabled = Instrument.control(
         "SOUR:TEL:MOD:VIS:VSBF?",
@@ -1016,7 +1022,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     lower_sideband_enabled = Instrument.control(
         "SOUR:TEL:SID?",
@@ -1028,7 +1034,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:"UPP", True:"LOW"},
         map_values = True,
-        )
+    )
 
     sound_mode = Instrument.control(
         "SOUR:TEL:SOUN?",
@@ -1051,7 +1057,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=["MONO","PIL","BTSC","STER","DUAL","NIC"],
-        )
+    )
 
     TV_standard = Instrument.control(
         "SOUR:TEL:STAN?",
@@ -1077,7 +1083,7 @@ class SFM(Instrument):
         ,
         validator = strict_discrete_set,
         values=["BG","DK","I","K1","L","M","N"],
-        )
+    )
 
     TV_country = Instrument.control(
         "SOUR:TEL:STAN:COUN?",
@@ -1124,10 +1130,10 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=["BG_G", "DK_G", "I_G", "L_G", "GERM","BELG", "NETH",
-        "FIN", "AUST", "BG_T", "DENM", "NORW", "SWED", "GUS", "POL1", "POL2",
-        "HUNG", "CHEC", "CHINA1", "CHINA2" , "GRE", "SAFR", "FRAN", "USA",
-        "KOR" , "JAP", "CAN", "SAM"],
-            )
+                "FIN", "AUST", "BG_T", "DENM", "NORW", "SWED", "GUS", "POL1", "POL2",
+                "HUNG", "CHEC", "CHINA1", "CHINA2" , "GRE", "SAFR", "FRAN", "USA",
+                "KOR" , "JAP", "CAN", "SAM"],
+    )
 
     output_voltage = Instrument.control(
         "SOUR:VOLT:LEV?",
@@ -1139,7 +1145,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values = [2.508910e-6,0.7070168],
-        )
+    )
 
     event_reg = Instrument.measurement(
         "STAT:OPER:EVEN?",
@@ -1148,7 +1154,7 @@ class SFM(Instrument):
         refer also to chapter 3.6.7 of the manual
         """,
         cast=int,
-        )
+    )
 
     status_reg = Instrument.measurement(
         "STAT:OPER:COND?",
@@ -1156,7 +1162,7 @@ class SFM(Instrument):
         Content of the condition register of the Status Operation Register
         """,
         cast=int,
-        )
+    )
 
     operation_enable_reg = Instrument.control(
         "STAT:OPER:ENAB?",
@@ -1169,7 +1175,7 @@ class SFM(Instrument):
         cast=int,
         validator = strict_range,
         values=[0, 32767]
-        )
+    )
 
     def status_preset(self):
         """ partly resets the SCPI status reporting structures
@@ -1182,7 +1188,7 @@ class SFM(Instrument):
         Content of the event register of the Status Questionable Operation Register
         """,
         cast=int,
-        )
+    )
 
     questionanble_status_reg = Instrument.measurement(
         "STAT:QUES:COND?",
@@ -1190,7 +1196,7 @@ class SFM(Instrument):
         Content of the condition register of the Status Questionable Operation Register
         """,
         cast=int,
-        )
+    )
 
     questionable_operation_enable_reg = Instrument.control(
         "STAT:QUES:ENAB?",
@@ -1203,7 +1209,7 @@ class SFM(Instrument):
         cast=int,
         validator = strict_range,
         values=[0, 32767]
-        )
+    )
 
     beeper_enabled = Instrument.control(
         "SYST:BEEP:STATE?",
@@ -1215,7 +1221,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     status_info_shown = Instrument.control(
         "SYST:DISP:UPDATE:STATE?",
@@ -1226,7 +1232,7 @@ class SFM(Instrument):
         validator = strict_discrete_set,
         values={False:0, True:1},
         map_values = True,
-        )
+    )
 
     gpib_address = Instrument.control(
         "SYST:COMM:GPIB:ADDR?",
@@ -1237,7 +1243,7 @@ class SFM(Instrument):
         """,
         validator = strict_range,
         values=[0, 30],
-        )
+    )
 
     remote_interfaces = Instrument.control(
         "SYST:COM:REM?",
@@ -1258,7 +1264,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values = ["OFF","GPIB","SER","BOTH"]
-        )
+    )
 
     serial_baud = Instrument.control(
         "SYST:COMM:SER:BAUD?",
@@ -1269,7 +1275,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=[110,300,600,1200,4800,9600,19200],
-        )
+    )
 
     serial_bits = Instrument.control(
         "SYST:COMM:SER:BITS?",
@@ -1280,7 +1286,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=[7,8],
-        )
+    )
 
     serial_flowcontrol = Instrument.control(
         "SYST:COMM:SER:PACE?",
@@ -1300,7 +1306,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=["NONE","XON","ACK"],
-        )
+    )
 
     serial_parity = Instrument.control(
         "SYST:COMM:SER:PAR?",
@@ -1322,7 +1328,7 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=["NONE","EVEN","ODD","ONE","ZERO"],
-        )
+    )
 
     serial_stopbits = Instrument.control(
         "SYST:COMM:SER:SBIT?",
@@ -1333,35 +1339,35 @@ class SFM(Instrument):
         """,
         validator = strict_discrete_set,
         values=[1,2],
-        )
+    )
 
     date = Instrument.measurement(
         "SYST:DATE?",
         """
         A list property for the date of the RTC in the unit
         """,
-        )
+    )
 
     time = Instrument.measurement(
         "SYST:TIME?",
         """
         A list property for the time of the RTC in the unit
         """,
-        )
+    )
 
     basic_info = Instrument.measurement(
         "SYST:INF:BAS?",
         """
         A String property containing infomation about the hardware modules installed in the unit
         """,
-        )
+    )
 
     subsystem_info = Instrument.measurement(
         "SYST:INF:SUBS?",
         """
         A String property containing infomation about the system configuration
         """,
-)
+    )
 
     scale_volt = Instrument.control(
         "UNIT:VOLT?",
@@ -1378,4 +1384,4 @@ class SFM(Instrument):
         values= ["AV","FV", "PV", "NV", "UV", "MV", "V", "KV", "MAV", "GV",
                  "TV", "PEV", "EV", "DBAV", "DBFV", "DBPV", "DBNV", "DBUV",
                  "DBMV", "DBV", "DBKV", "DBMAv", "DBGV", "DBTV", "DBPEv", "DBEV"],
-        )
+    )

@@ -79,7 +79,7 @@ class LakeShore425(Instrument):
             LakeShoreUSBAdapter(port),
             "LakeShore 425 Gaussmeter",
         )
-        
+
     def auto_range(self):
         """ Sets the field range to automatically adjust """
         self.write("AUTO")

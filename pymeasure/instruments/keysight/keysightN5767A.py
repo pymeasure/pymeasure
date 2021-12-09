@@ -55,8 +55,8 @@ class KeysightN5767A(Instrument):
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
-        """ Reads a setting current in Amps. """
-     )
+                                     """ Reads a setting current in Amps. """
+                                     )
 
     ###############
     # Voltage (V) #
@@ -71,15 +71,15 @@ class KeysightN5767A(Instrument):
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
-        """ Reads a DC voltage measurement in Volts. """
-     )
+                                     """ Reads a DC voltage measurement in Volts. """
+                                     )
 
     ##############
     #_status (0/1) #
     ##############
     _status = Instrument.measurement(":OUTP?",
-        """ Read power supply current output status. """,
-    )
+                                     """ Read power supply current output status. """,
+                                     )
 
     def enable(self):
         """ Enables the flow of current.

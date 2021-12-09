@@ -375,8 +375,8 @@ class SR860(Instrument):
     dac4 = aux_out_4
 
     aux_in_1 = Instrument.measurement(
-            "OAUX? 0",
-            """ Reads the Aux input 1 value in Volts with 1/3 mV resolution. """
+        "OAUX? 0",
+        """ Reads the Aux input 1 value in Volts with 1/3 mV resolution. """
     )
     # For consistency with other lock-in instrument classes
     adc1 = aux_in_1
@@ -417,7 +417,7 @@ class SR860(Instrument):
         6 IN3         Aux In3      15 FInt        Int. Ref. Frequency
         7 IN4         Aux In4      16 FExt        Ext. Ref. Frequency
         8 XNOise      Xnoise
-        
+
         :param val1: parameter enumeration/index
         :param val2: parameter enumeration/index
         :param val3: parameter enumeration/index (optional)

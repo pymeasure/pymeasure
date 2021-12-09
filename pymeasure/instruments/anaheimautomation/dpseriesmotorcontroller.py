@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 class DPSeriesErrors(IntFlag):
     """ IntFlag type to decode error register queries. Error codes are as follows:
-    
+
         0: no error
         1: Receive Overflow Error: serial communications had a receiving error.
         2: Encoder Error 1: encoder needed to correct the motor position.
@@ -70,7 +70,7 @@ class DPSeriesErrors(IntFlag):
     MEM_CMD_ERR = 4096
     THBWHEEL_ERR = 8192
 
-    
+
 class DPSeriesMotorController(Instrument):
     """Base class to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested
        with the DPY50601 and DPE25601 motor controllers.
@@ -83,7 +83,7 @@ class DPSeriesMotorController(Instrument):
         values=[0, 99],
         cast=int,
     )
-    
+
     basespeed = Instrument.control(
         "VB", "B%i", 
         """Integer property that represents the motor controller's starting/homing speed. This property can be set.""",
@@ -91,7 +91,7 @@ class DPSeriesMotorController(Instrument):
         values=[1, 5000],
         cast=int,
     )
-    
+
     maxspeed = Instrument.control(
         "VM", "M%i", 
         """Integer property that represents the motor controller's maximum (running) speed. 
@@ -161,7 +161,7 @@ class DPSeriesMotorController(Instrument):
         "VF",
         """Query to see if the controller is currently moving a motor."""
     )
-    
+
     error_reg = Instrument.measurement(
         "!",
         """Reads the current value of the error codes register.""",
@@ -170,14 +170,14 @@ class DPSeriesMotorController(Instrument):
 
     def check_errors(self):
         """ Method to read the error codes register and log when an error is detected.
-        
+
         :return error_code: one byte with the error codes register contents
         """
         current_errors = self.error_reg
         if current_errors != 0:
             logging.error("DP-Series motor controller error detected: %s" % current_errors)
         return current_errors
-    
+
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
         """
         Initialize communication with the motor controller with the address given by the 'address' parameter.
@@ -200,10 +200,10 @@ class DPSeriesMotorController(Instrument):
             timeout=2000, 
             **kwargs
         )
-        
+
         if isinstance(self.adapter, VISAAdapter):
             self.adapter.connection.baud_rate = 38400
-    
+
     @property
     def encoder_enabled(self):
         """ A boolean property to represent whether an external encoder is connected and should be used to set the
@@ -214,7 +214,7 @@ class DPSeriesMotorController(Instrument):
     @encoder_enabled.setter
     def encoder_enabled(self, en):
         self._encoder_enabled = bool(en)
-    
+
     @property
     def step_position(self):
         """ Integer property representing the value of the motor position measured in steps counted by the motor
@@ -228,13 +228,13 @@ class DPSeriesMotorController(Instrument):
         else:
             pos = self.ask("VZ")    
         return int(pos)
-    
+
     @step_position.setter
     def step_position(self, pos):
         strict_range(pos, (-8388607, 8388607)) 
         self.write("P%i" % pos)
         self.write("G")
-    
+
     @property
     def absolute_position(self):
         """ Float property representing the value of the motor position measured in absolute units. Note that in DP
@@ -246,26 +246,26 @@ class DPSeriesMotorController(Instrument):
         """
         step_pos = self.step_position
         return self.steps_to_absolute(step_pos)
-    
+
     @absolute_position.setter
     def absolute_position(self, abs_pos):
         steps_pos = self.absolute_to_steps(abs_pos)
         self.step_position = steps_pos
-    
+
     def absolute_to_steps(self, pos):
         """ Convert an absolute position to a number of steps to move. This must be implemented in subclasses.
-        
+
         :param pos: Absolute position in the units determined by the subclassed absolute_to_steps() method.
         """
         raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")   
-    
+
     def steps_to_absolute(self, steps):
         """ Convert a position measured in steps to an absolute position.
-        
+
         :param steps: Position in steps to be converted to an absolute position.
         """
         raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
-    
+
     def reset_position(self):
         """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
         """
@@ -286,10 +286,10 @@ class DPSeriesMotorController(Instrument):
         """
         self.direction = direction
         self.write("S") 
-    
+
     def home(self, home_mode):
         """ Send command to the motor controller to 'home' the motor.
-        
+
         :param home_mode: 0 or 1 specifying which homing mode to run.
 
                           0 will perform a homing operation where the controller moves the motor until a soft limit is
@@ -303,10 +303,10 @@ class DPSeriesMotorController(Instrument):
             self.write("H%i" % hm)
         else:
             raise ValueError("Invalid home mode %i specified!" % hm)
-    
+
     def write(self, command):
         """Override the instrument base write method to add the motor controller's address to the command string.
-        
+
         :param command: command string to be sent to the motor controller.
         """
         # check if @ was already prepended when using say, the SerialAdapter #
@@ -320,7 +320,7 @@ class DPSeriesMotorController(Instrument):
 
     def values(self, command, **kwargs):
         """ Override the instrument base values method to add the motor controller's address to the command string.
-        
+
         :param command: command string to be sent to the motor controller.
         """
         # check if an address related command was sent. #
@@ -330,7 +330,7 @@ class DPSeriesMotorController(Instrument):
             vals = super().values("@%i%s" % (self.address, command))
 
         return vals
-    
+
     def ask(self, command):
         """ Override the instrument base ask method to add the motor controller's address to the command string.
 

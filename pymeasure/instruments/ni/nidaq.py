@@ -34,35 +34,35 @@ def get_dict_attr(obj,attr):
     raise AttributeError
 
 class NIDAQ(Instrument):
-	'''
-	Instrument driver for NIDAQ card.
-	'''
-	def __init__(self, name='Dev1', *args, **kwargs):
-		self._daq  = ni.NIDAQ(name)
-		super(NIDAQ, self).__init__(
-			None,
-			"NIDAQ",
-			includeSCPI = False,
-			**kwargs)
-		for chan in self._daq.get_AI_channels():
-			self.add_property(chan)
-		for chan in self._daq.get_AO_channels():
-			self.add_property(chan, set=True)
+    '''
+    Instrument driver for NIDAQ card.
+    '''
+    def __init__(self, name='Dev1', *args, **kwargs):
+        self._daq  = ni.NIDAQ(name)
+        super(NIDAQ, self).__init__(
+            None,
+            "NIDAQ",
+            includeSCPI = False,
+            **kwargs)
+        for chan in self._daq.get_AI_channels():
+            self.add_property(chan)
+        for chan in self._daq.get_AO_channels():
+            self.add_property(chan, set=True)
 
-	def add_property(self, chan, set=False):
-		if set:
-			fset = lambda self, value: self.set_chan(chan, value)
-			fget = lambda self: getattr(self, '_%s' %chan)
-			setattr(self, '_%s' %chan, None)
-			setattr(self.__class__,chan,property(fset=fset, fget=fget))
-		else:
-			fget = lambda self: self.get_chan(chan)
-			setattr(self.__class__,chan,property(fget=fget))
-		setattr(self.get, chan, lambda: getattr(self, chan))
+    def add_property(self, chan, set=False):
+        if set:
+            fset = lambda self, value: self.set_chan(chan, value)
+            fget = lambda self: getattr(self, '_%s' %chan)
+            setattr(self, '_%s' %chan, None)
+            setattr(self.__class__,chan,property(fset=fset, fget=fget))
+        else:
+            fget = lambda self: self.get_chan(chan)
+            setattr(self.__class__,chan,property(fget=fget))
+        setattr(self.get, chan, lambda: getattr(self, chan))
 
-	def get_chan(self, chan):
-		return getattr(self._daq,chan).read().magnitude
-	
-	def set_chan(self, chan, value):
-		setattr(self, '_%s' %chan, value)
-		getattr(self._daq,chan).write('%sV' %value)
+    def get_chan(self, chan):
+        return getattr(self._daq,chan).read().magnitude
+
+    def set_chan(self, chan, value):
+        setattr(self, '_%s' %chan, value)
+        getattr(self._daq,chan).write('%sV' %value)

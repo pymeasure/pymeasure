@@ -38,14 +38,14 @@ class Fluke7341(Instrument):
                                    validator=strict_range,
                                    values = (-40, 150),
                                    )
-    
+
     unit = Instrument.control("u", "u=%s",
                               """ A string property that controls the temperature
                               unit. Possible values are `c` for Celsius and `f` for Fahrenheit`.""",
                               validator=strict_discrete_set,
                               values = ('c','f'),
                               )
-    
+
     temperature = Instrument.measurement("t",
                                          """ Read the current bath temperature.
                                          The unit is as defined in property :attr:`unit`.""",

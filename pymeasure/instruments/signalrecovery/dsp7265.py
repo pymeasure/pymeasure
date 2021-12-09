@@ -38,21 +38,21 @@ class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
 
     SENSITIVITIES = [
-            np.nan, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
-            200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
-            20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
-            2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0
-        ]
+        np.nan, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
+        200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
+        20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
+        2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+        200.0e-3, 500.0e-3, 1.0
+    ]
     SEN_MULTIPLIER = [1, 1e-6, 1e-8]
 
     TIME_CONSTANTS = [
-            10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
-            640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
-            100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
-            20.0e3, 50.0e3
-        ]
+        10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
+        640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+        200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
+        100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
+        20.0e3, 50.0e3
+    ]
     REFERENCES = ['internal', 'external rear', 'external front']
     IMODES = ['voltage mode', 'current mode', 'low noise current mode']
 
@@ -130,35 +130,35 @@ class DSP7265(Instrument):
         values=[0,360]
     )
     x = Instrument.measurement("X.",
-        """ Reads the X value in Volts """
-    )
+                               """ Reads the X value in Volts """
+                               )
     y = Instrument.measurement("Y.",
-        """ Reads the Y value in Volts """
-    )
+                               """ Reads the Y value in Volts """
+                               )
     xy = Instrument.measurement("XY.",
-        """ Reads both the X and Y values in Volts """
-    )
+                                """ Reads both the X and Y values in Volts """
+                                )
     mag = Instrument.measurement("MAG.",
-        """ Reads the magnitude in Volts """
-    )
+                                 """ Reads the magnitude in Volts """
+                                 )
     phase = Instrument.measurement("PHA.",
-        """ Reads the phase in degrees """
-    )
+                                   """ Reads the phase in degrees """
+                                   )
     adc1 = Instrument.measurement("ADC. 1",
-        """ Reads the input value of ADC1 in Volts """
-    )
+                                  """ Reads the input value of ADC1 in Volts """
+                                  )
     adc2 = Instrument.measurement("ADC. 2",
-        """ Reads the input value of ADC2 in Volts """
-    )
+                                  """ Reads the input value of ADC2 in Volts """
+                                  )
     id = Instrument.measurement("ID",
-        """ Reads the instrument identification """
-    )
+                                """ Reads the instrument identification """
+                                )
     ratio = Instrument.measurement("RT.",
-        """ Reads the ratio output, defined as X/ADC1 """
-    )
+                                   """ Reads the ratio output, defined as X/ADC1 """
+                                   )
     log_ratio = Instrument.measurement("LR.",
-        """ Reads the log ratio output, defined as log(X/ADC1) """
-    )
+                                       """ Reads the log ratio output, defined as log(X/ADC1) """
+                                       )
     reference = Instrument.control(
         "IE", "IE %d",
         """Controls the oscillator reference. Can be "internal",
@@ -443,9 +443,9 @@ class DSP7265(Instrument):
             else:
                 raise KeyError("The selected quantity '%s' is not recorded;"
                                "quantity should be one of: %s" % (
-                                    quantity, ", ".join(
-                                        [self.CURVE_BITS[q] for q in quantity_enums]
-                                    )))
+                                   quantity, ", ".join(
+                                       [self.CURVE_BITS[q] for q in quantity_enums]
+                                   )))
 
         # Retrieve the data
         data = {}
@@ -485,7 +485,7 @@ class DSP7265(Instrument):
         raise_error.
 
         The requirements for converting the data are as follows:
-        
+
         - Converting X, Y, magnitude and noise requires sensitivity data, which
           can either be part of the provided data or can be provided via the
           sensitivity argument

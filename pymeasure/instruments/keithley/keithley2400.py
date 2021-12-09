@@ -125,7 +125,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=[50, 60],
         cast=int,
     )
-        
+
     line_frequency_auto = Instrument.control(
         ":SYST:LFR:AUTO?", ":SYST:LFR:AUTO %d",
         """ A boolean property that enables or disables auto line frequency. 
@@ -133,7 +133,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values={True: 1, False: 0},
         map_values=True,
     )
-    
+
     measure_concurent_functions = Instrument.control(
         ":SENS:FUNC:CONC?", ":SENS:FUNC:CONC %d",
         """ A boolean property that enables or disables the ability to measure
@@ -367,11 +367,11 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
         map_values=False)
 
-    
+
     ####################
     # Methods        #
     ####################
-    
+
     def __init__(self, adapter, **kwargs):
         super(Keithley2400, self).__init__(
             adapter, "Keithley 2400 SourceMeter", **kwargs

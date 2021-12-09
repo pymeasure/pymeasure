@@ -32,17 +32,17 @@ class Agilent34410A(Instrument):
     """
     #only the most simple functions are implemented
     voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
-    
+
     voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
-    
+
     current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
-    
+
     current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
-    
+
     resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
-    
+
     resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
-    
+
     def __init__(self, adapter, **kwargs):
         super(Agilent34410A, self).__init__(
             adapter, "HP/Agilent/Keysight 34410A Multimeter", **kwargs

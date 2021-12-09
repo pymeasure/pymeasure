@@ -45,7 +45,7 @@ class AMI430(Instrument):
 
         magnet = AMI430("TCPIP::web.address.com::7180::SOCKET")
 
-        
+
         magnet.coilconst = 1.182                 # kGauss/A
         magnet.voltage_limit = 2.2               # Sets the voltage limit in V
 
@@ -57,7 +57,7 @@ class AMI430(Instrument):
         magnet.ramp                             # Initiates the ramping
         magnet.pause                            # Pauses the ramping
         magnet.status                           # Returns the status of the magnet
-    
+
         magnet.ramp_to_current(5)             # Ramps the current to 5 A
 
         magnet.shutdown()                     # Ramps the current to zero and disables output
@@ -115,24 +115,24 @@ class AMI430(Instrument):
     )
 
     magnet_current = Instrument.measurement("CURR:MAG?",
-        """ Reads the current in Amps of the magnet.
+                                            """ Reads the current in Amps of the magnet.
         """
-    )
+                                            )
 
     supply_current = Instrument.measurement("CURR:SUPP?",
-        """ Reads the current in Amps of the power supply.
+                                            """ Reads the current in Amps of the power supply.
         """
-    )
+                                            )
 
     field = Instrument.measurement("FIELD:MAG?",
-        """ Reads the field in kGauss of the magnet.
+                                   """ Reads the field in kGauss of the magnet.
         """
-    )
+                                   )
 
     state = Instrument.measurement("STATE?",
-        """ Reads the field in kGauss of the magnet.
+                                   """ Reads the field in kGauss of the magnet.
         """
-    )
+                                   )
 
     def zero(self):
         """ Initiates the ramping of the magnetic field to zero

@@ -234,7 +234,7 @@ class Agilent8722ES(Instrument):
         """ Returns the phase in degrees from the last scan
         """
         return np.degrees(np.angle(self.data_complex))
-    
+
     @property
     def data(self):
         """ Returns the real and imaginary data from the last scan

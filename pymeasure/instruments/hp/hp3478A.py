@@ -128,7 +128,7 @@ class Status_bits(ctypes.LittleEndianStructure):
                 self.SRQ_front_panel, self.SRQ_cal_error, self.SRQ_PON,
                 self.ERR_cal, self.ERR_RAM, self.ERR_ROM, self.ERR_slope,
                 self.ERR_AD, self.ERR_AD_Link, self.DAC_value)
-            )
+        )
 
 class Status(ctypes.Union):
     """Union type element for the decoding of the status bit-fields
@@ -181,13 +181,13 @@ class HP3478A(Instrument):
             }
 
     TRIGGERS={
-            "auto": "T1",
-            "internal": "T1",
-            "external": "T2",
-            "single": "T3",
-            "hold": "T4",
-            "fast": "T5",
-            }
+        "auto": "T1",
+        "internal": "T1",
+        "external": "T2",
+        "single": "T3",
+        "hold": "T4",
+        "fast": "T5",
+    }
 
     class ERRORS(IntFlag):
         """Enum element for errror bit decoding
@@ -374,7 +374,7 @@ class HP3478A(Instrument):
 
         """,
         cast = int,
-        )
+    )
 
     def display_reset(self):
         """ Reset the display of the instrument.
@@ -388,7 +388,7 @@ class HP3478A(Instrument):
 
         """,
         set_process = (lambda x: str.upper(x[0:12])),
-        )
+    )
 
     display_text_no_symbol = Instrument.setting(
         "D3%s",
@@ -397,7 +397,7 @@ class HP3478A(Instrument):
 
         """,
         set_process = (lambda x: str.upper(x[0:12])),
-        )
+    )
 
     measure_ACI = Instrument.measurement(
         MODES["ACI"],
@@ -405,7 +405,7 @@ class HP3478A(Instrument):
         Returns the measured value for AC current as a float in A.
 
         """,
-        )
+    )
 
     measure_ACV = Instrument.measurement(
         MODES["ACV"],
@@ -413,7 +413,7 @@ class HP3478A(Instrument):
         Returns the measured value for AC Voltage as a float in V.
 
         """,
-        )
+    )
 
     measure_DCI = Instrument.measurement(
         MODES["DCI"],
@@ -421,7 +421,7 @@ class HP3478A(Instrument):
         Returns the measured value for DC current as a float in A.
 
         """,
-        )
+    )
 
     measure_DCV = Instrument.measurement(
         MODES["DCV"],
@@ -429,7 +429,7 @@ class HP3478A(Instrument):
         Returns the measured value for DC Voltage as a float in V.
 
         """,
-        )
+    )
 
     measure_R2W = Instrument.measurement(
         MODES["R2W"],
@@ -437,7 +437,7 @@ class HP3478A(Instrument):
         Returns the measured value for 2-wire resistance as a float in Ohm.
 
         """,
-        )
+    )
 
     measure_R4W = Instrument.measurement(
         MODES["R4W"],
@@ -445,7 +445,7 @@ class HP3478A(Instrument):
         Returns the measured value for 4-wire resistance as a float in Ohm.
 
         """,
-        )
+    )
 
     measure_Rext = Instrument.measurement(
         MODES["Rext"],
@@ -453,7 +453,7 @@ class HP3478A(Instrument):
         Returns the measured value for extended resistance mode (>30M, 2-wire)
         resistance as a float in Ohm.
         """,
-        )
+    )
 
     @property
     def mode(self):

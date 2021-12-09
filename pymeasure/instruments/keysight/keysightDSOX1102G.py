@@ -213,7 +213,7 @@ class KeysightDSOX1102G(Instrument):
     using the lower-level methods to interact directly with the scope.
 
     .. code-block:: python
-    
+
         scope = KeysightDSOX1102G(resource)
         scope.autoscale()
         ch1_data_array, ch1_preamble = scope.download_data(source="channel1", points=2000)
@@ -221,7 +221,7 @@ class KeysightDSOX1102G(Instrument):
         scope.shutdown()
 
     Known issues:
-    
+
     - The digitize command will be completed before the operation is. May lead to
       VI_ERROR_TMO (timeout) occuring when sending commands immediately after digitize.
       Current fix: if deemed necessary, add delay between digitize and follow-up command

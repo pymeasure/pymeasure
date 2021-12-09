@@ -539,7 +539,7 @@ class VirtualBench():
                 3: [0.005, 0.05, 0.5, 5],
                 4: [100, 1000, 10000, 100000, 1000000,
                     10000000, 100000000],
-                }
+            }
             range = truncated_discrete_set(range, ref_ranges[dmm_function])
             return range
 

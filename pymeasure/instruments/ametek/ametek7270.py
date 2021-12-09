@@ -33,20 +33,20 @@ class Ametek7270(Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier"""
 
     SENSITIVITIES = [
-            0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
-            200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
-            20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
-            2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0
-        ]
+        0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
+        200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
+        20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
+        2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+        200.0e-3, 500.0e-3, 1.0
+    ]
 
     TIME_CONSTANTS = [
-            10.0e-6, 20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6,
-            1.0e-3, 2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
-            100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
-            20.0e3, 50.0e3, 100.0e3
-        ]
+        10.0e-6, 20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6,
+        1.0e-3, 2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+        200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
+        100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
+        20.0e3, 50.0e3, 100.0e3
+    ]
 
     sensitivity = Instrument.control( # NOTE: only for IMODE = 1.
         "SEN.", "SEN %d",
@@ -78,29 +78,29 @@ class Ametek7270(Instrument):
     # TODO: Figure out if this actually can send for X1. X2. Y1. Y2. or not.
     #       There's nothing in the manual about it but UtilMOKE sends these.
     x = Instrument.measurement("X.",
-        """ Reads the X value in Volts """
-    )
+                               """ Reads the X value in Volts """
+                               )
     y = Instrument.measurement("Y.",
-        """ Reads the Y value in Volts """
-    )
+                               """ Reads the Y value in Volts """
+                               )
     x1 = Instrument.measurement("X1.",
-        """ Reads the first harmonic X value in Volts """
-    )
+                                """ Reads the first harmonic X value in Volts """
+                                )
     y1 = Instrument.measurement("Y1.",
-        """ Reads the first harmonic Y value in Volts """
-    )
+                                """ Reads the first harmonic Y value in Volts """
+                                )
     x2 = Instrument.measurement("X2.",
-        """ Reads the second harmonic X value in Volts """
-    )
+                                """ Reads the second harmonic X value in Volts """
+                                )
     y2 = Instrument.measurement("Y2.",
-        """ Reads the second harmonic Y value in Volts """
-    )
+                                """ Reads the second harmonic Y value in Volts """
+                                )
     xy = Instrument.measurement("XY.",
-        """ Reads both the X and Y values in Volts """
-    )
+                                """ Reads both the X and Y values in Volts """
+                                )
     mag = Instrument.measurement("MAG.",
-        """ Reads the magnitude in Volts """
-    )
+                                 """ Reads the magnitude in Volts """
+                                 )
     harmonic = Instrument.control(
         "REFN", "REFN %d",
         """ An integer property that represents the reference
@@ -159,20 +159,20 @@ class Ametek7270(Instrument):
         values=[-10,10]
     )
     adc1 = Instrument.measurement("ADC. 1",
-        """ Reads the input value of ADC1 in Volts """
-    )
+                                  """ Reads the input value of ADC1 in Volts """
+                                  )
     adc2 = Instrument.measurement("ADC. 2",
-        """ Reads the input value of ADC2 in Volts """
-    )
+                                  """ Reads the input value of ADC2 in Volts """
+                                  )
     adc3 = Instrument.measurement("ADC. 3",
-        """ Reads the input value of ADC3 in Volts """
-    )
+                                  """ Reads the input value of ADC3 in Volts """
+                                  )
     adc4 = Instrument.measurement("ADC. 4",
-        """ Reads the input value of ADC4 in Volts """
-    )
+                                  """ Reads the input value of ADC4 in Volts """
+                                  )
     id = Instrument.measurement("ID",
-        """ Reads the instrument identification """
-    )
+                                """ Reads the instrument identification """
+                                )
 
     def __init__(self, resourceName, **kwargs):
         super(Ametek7270, self).__init__(
