@@ -23,17 +23,24 @@
 #
 
 from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+
 def anritsu_get_trace_mode(mode):
     mode_map = {
         'WRIT;OFF': 'WRIT',
         'WRIT;MINH': 'MINH',
         'WRIT;MAXH': 'MAXH',
+        'WRIT;AVER': 'AVER',
+        'WRIT;LAV': 'LAV',
         'BLAN;OFF': 'BLANK',
         'BLAN;MINH': 'BLANK',
         'BLAN;MAXH': 'BLANK',
+        'BLAN;AVER': 'BLANK',
+        'BLAN;LAV': 'BLANK',
         'VIEW;OFF': 'VIEW',
         'VIEW;MINH': 'VIEW',
         'VIEW;MAXH': 'VIEW',
+        'VIEW;AVER': 'VIEW',
+        'VIEW;LAV': 'VIEW',
     }
     return mode_map[mode]
     
@@ -89,7 +96,6 @@ class AnritsuMS2830A(SpectrumAnalyzer):
                            "OFF": "OFF",
                            
             }
-    #average_type_get_process = lambda x: "RMS" if x == "AVER" else "SCAL" if x == "LAV" else "OFF"
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
