@@ -13,13 +13,13 @@ import random
 import tempfile
 from time import sleep
 
+from pymeasure.log import console_log
+from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+from pymeasure.experiment import Results, Worker
+
 import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
-
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, Worker, unique_filename
 
 
 class TestProcedure(Procedure):

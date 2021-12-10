@@ -13,19 +13,17 @@ import sys
 import random
 import tempfile
 from time import sleep
-import pyqtgraph as pg
 
 from datetime import datetime, timedelta
+
+from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+from pymeasure.experiment import Results
+from pymeasure.display.Qt import QtGui
+from pymeasure.display.windows import ManagedWindow
 
 import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
-
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
-from pymeasure.display.Qt import QtGui
-from pymeasure.display.windows import ManagedWindow, EstimatorWidget
 
 
 class TestProcedure(Procedure):

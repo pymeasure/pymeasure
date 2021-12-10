@@ -12,23 +12,21 @@ python iv_yokogawa.py
 
 """
 
-import logging
-log = logging.getLogger('')
-log.addHandler(logging.NullHandler())
-
 import sys
 from time import sleep
 import numpy as np
 
 from pymeasure.instruments.keithley import Keithley2000
 from pymeasure.instruments.yokogawa import Yokogawa7651
-from pymeasure.instruments import Instrument
-from pymeasure.log import console_log
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
 from pymeasure.experiment import (
     Procedure, FloatParameter, unique_filename, Results
 )
+
+import logging
+log = logging.getLogger('')
+log.addHandler(logging.NullHandler())
 
 
 class IVProcedure(Procedure):

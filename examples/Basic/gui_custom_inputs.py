@@ -15,15 +15,14 @@ import random
 import tempfile
 from time import sleep
 
-import logging
-log = logging.getLogger('')
-log.addHandler(logging.NullHandler())
-
-from pymeasure.log import console_log
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui, fromUi
 from pymeasure.display.windows import ManagedWindow
+
+import logging
+log = logging.getLogger('')
+log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):

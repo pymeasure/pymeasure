@@ -7,23 +7,20 @@ Run the program by changing to the directory containing this file and calling:
 
 python image_gui.py
 """
-
+from time import sleep
 import sys
-import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-from pymeasure.experiment import Results, unique_filename
 
+import numpy as np
+
+from pymeasure.experiment import Results, unique_filename
 from pymeasure.experiment import Procedure
 from pymeasure.display.windows import ManagedImageWindow  # new ManagedWindow class
 from pymeasure.experiment import FloatParameter
-from pymeasure.display.Qt import QtCore, QtGui, fromUi
-from pymeasure.log import console_log
+from pymeasure.display.Qt import QtGui
 
-
-import numpy as np
-from time import sleep
-import os
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class TestImageProcedure(Procedure):
