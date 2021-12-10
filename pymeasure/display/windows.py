@@ -25,7 +25,8 @@
 import logging
 
 import os
-import subprocess, platform
+import platform
+import subprocess
 
 
 import pyqtgraph as pg

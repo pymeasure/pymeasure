@@ -87,7 +87,7 @@ class DAQmx(object):
                                                 DAQmx_Val_Volts, None))
         self.CHK(nidaq.DAQmxCfgSampClkTiming(self.taskHandleAI, "", float64(sampleRate),
                                              DAQmx_Val_Rising, DAQmx_Val_FiniteSamps,
-                                             uInt64(self.numSamples)));
+                                             uInt64(self.numSamples)))
 
     def setup_analog_voltage_out(self, channel=0):
         resourceString = self.resourceName + "/ao" + str(channel)

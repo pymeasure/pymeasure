@@ -54,12 +54,12 @@ class NIDAQ(Instrument):
 
     def add_property(self, chan, set=False):
         if set:
-            fset = lambda self, value: self.set_chan(chan, value)
-            fget = lambda self: getattr(self, '_%s' % chan)
+            def fset(self, value): return self.set_chan(chan, value)
+            def fget(self): return getattr(self, '_%s' % chan)
             setattr(self, '_%s' % chan, None)
             setattr(self.__class__, chan, property(fset=fset, fget=fget))
         else:
-            fget = lambda self: self.get_chan(chan)
+            def fget(self): return self.get_chan(chan)
             setattr(self.__class__, chan, property(fget=fget))
         setattr(self.get, chan, lambda: getattr(self, chan))
 

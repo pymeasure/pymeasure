@@ -114,7 +114,8 @@ class SynchronousAI(object):
         """
         for i in range(3):
             rc = self.subdevice.command_test()  # Verify command is correct
-            if rc == None: break
+            if rc == None:
+                break
 
     def measure(self, hasAborted=lambda: False):
         """ Initiates the scan after first checking the command

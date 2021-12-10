@@ -145,15 +145,24 @@ class Channel():
             log.warning(
                 'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
 
-        if probe_attenuation is not None: self.probe_attenuation = probe_attenuation
-        if bwlimit is not None: self.bwlimit = bwlimit
-        if coupling is not None: self.coupling = coupling
-        if display is not None: self.display = display
-        if invert is not None: self.invert = invert
-        if label is not None: self.label = label
-        if offset is not None: self.offset = offset
-        if vertical_range is not None: self.range = vertical_range
-        if scale is not None: self.scale = scale
+        if probe_attenuation is not None:
+            self.probe_attenuation = probe_attenuation
+        if bwlimit is not None:
+            self.bwlimit = bwlimit
+        if coupling is not None:
+            self.coupling = coupling
+        if display is not None:
+            self.display = display
+        if invert is not None:
+            self.invert = invert
+        if label is not None:
+            self.label = label
+        if offset is not None:
+            self.offset = offset
+        if vertical_range is not None:
+            self.range = vertical_range
+        if scale is not None:
+            self.scale = scale
 
     @property
     def current_configuration(self):
@@ -449,10 +458,14 @@ class KeysightDSOX1102G(Instrument):
         :param horizontal_range: Full-scale range in seconds.
         :param scale: Units-per-division in seconds."""
 
-        if mode is not None: self.timebase_mode = mode
-        if offset is not None: self.timebase_offset = offset
-        if horizontal_range is not None: self.timebase_range = horizontal_range
-        if scale is not None: self.timebase_scale = scale
+        if mode is not None:
+            self.timebase_mode = mode
+        if offset is not None:
+            self.timebase_offset = offset
+        if horizontal_range is not None:
+            self.timebase_range = horizontal_range
+        if scale is not None:
+            self.timebase_scale = scale
 
     def download_image(self, format_="png", color_palette="color"):
         """ Get image of oscilloscope screen in bytearray of specified file format.
