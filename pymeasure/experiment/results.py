@@ -27,7 +27,6 @@ import logging
 import os
 import re
 import sys
-from copy import deepcopy
 from importlib.machinery import SourceFileLoader
 from datetime import datetime
 from string import Formatter
@@ -35,7 +34,6 @@ from string import Formatter
 import pandas as pd
 
 from .procedure import Procedure, UnknownProcedure
-from .parameters import Parameter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -240,7 +238,7 @@ class Results(object):
                 parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
-        h = [Results.COMMENT + l for l in h]  # Comment each line
+        h = [Results.COMMENT + line for line in h]  # Comment each line
         return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
 
     def labels(self):
