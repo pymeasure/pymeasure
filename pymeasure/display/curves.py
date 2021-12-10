@@ -25,17 +25,17 @@
 import logging
 import sys
 
+import numpy as np
+import pyqtgraph as pg
+from .Qt import QtCore
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-import pyqtgraph as pg
-import numpy as np
 try:
     from matplotlib.cm import viridis
 except ImportError:
     log.warning("Matplotlib not found. Images will be greyscale")
-
-from .Qt import QtCore
 
 
 def _greyscale_colormap(x):

@@ -311,8 +311,8 @@ class ImageWidget(TabWidget, QtGui.QWidget):
     of the data to be dynamically choosen
     """
 
-    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
-                 parent=None):
+    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2,
+                 check_status=True, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
@@ -490,7 +490,7 @@ class InputsWidget(QtGui.QWidget):
 
                 if isinstance(getattr(self, group_name), BooleanInput):
                     # Adjust the boolean condition to a condition suitable for a checkbox
-                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked
+                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked  # noqa
 
                 if group_name not in groups:
                     groups[group_name] = []
@@ -632,8 +632,8 @@ class ResultsDialog(QtGui.QFileDialog):
             curve = ResultsCurve(results,
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
-                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to circumvent plotting slowdown.
-                                 # Once the issue
+                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
+                                 # circumvent plotting slowdown. Once the issue
                                  # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
                                  # it can be reverted
                                  pen=pg.mkPen(color=(255, 0, 0), width=1),

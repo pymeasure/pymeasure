@@ -26,7 +26,7 @@ import logging
 
 import re
 
-from .Qt import QtCore, QtGui
+from .Qt import QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
