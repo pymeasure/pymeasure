@@ -227,19 +227,20 @@ class ANC300Controller(Instrument):
             includeSCPI = False,
             **kwargs
         )
+        self._axisnames = axisnames
         for i, axis in enumerate(axisnames):
             setattr(self, axis, Axis(self, i+1))
 
     def ground_all(self):
         """ Grounds all axis of the controller. """
-        for attr in dir(self):
+        for attr in self._axisnames:
             attribute = getattr(self, attr)
             if isinstance(attribute, Axis):
                 attribute.mode = 'gnd'
 
     def stop_all(self):
         """ Stop all movements of the axis. """
-        for attr in dir(self):
+        for attr in self._axisnames:
             attribute = getattr(self, attr)
             if isinstance(attribute, Axis):
                 attribute.stop()
