@@ -391,9 +391,11 @@ class Agilent33500(Instrument):
             self.write("DATA:ARB {}, {}".format(arb_name, data_string))
             return
         elif data_format == 'binary':
-            raise NotImplementedError('The binary format has not yet been implemented. Use "DAC" or "float" instead.')
+            raise NotImplementedError(
+                'The binary format has not yet been implemented. Use "DAC" or "float" instead.')
         else:
-            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
+            raise ValueError(
+                'Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
 
     display = Instrument.setting(
         "DISP:TEXT '%s'",

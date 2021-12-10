@@ -142,7 +142,8 @@ class Channel():
         :param scale: Units per division. """
 
         if vertical_range is not None and scale is not None:
-            log.warning('Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
+            log.warning(
+                'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
 
         if probe_attenuation is not None: self.probe_attenuation = probe_attenuation
         if bwlimit is not None: self.bwlimit = bwlimit

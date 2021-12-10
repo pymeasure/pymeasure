@@ -39,7 +39,8 @@ class HP34401A(Instrument):
 
     resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
 
-    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
+    resistance_4w = Instrument.measurement(
+        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
 
     def __init__(self, resourceName, **kwargs):
         super(HP34401A, self).__init__(

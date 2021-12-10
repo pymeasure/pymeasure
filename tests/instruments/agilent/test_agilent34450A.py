@@ -86,7 +86,8 @@ class TestAgilent34450A:
 
     def test_dmm_initialization_bad(self):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
-        # The pure python VISA library (pyvisa-py) raises a ValueError while the PyVISA library raises a VisaIOError.
+        # The pure python VISA library (pyvisa-py) raises a ValueError while the
+        # PyVISA library raises a VisaIOError.
         with pytest.raises((ValueError, VisaIOError)):
             dmm = Agilent34450A(bad_resource)
 

@@ -88,7 +88,8 @@ class TestKeysightDSOX1102G:
 
     def test_scope_connection(self, make_reseted_cleared_scope):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
-        # The pure python VISA library (pyvisa-py) raises a ValueError while the PyVISA library raises a VisaIOError.
+        # The pure python VISA library (pyvisa-py) raises a ValueError while the
+        # PyVISA library raises a VisaIOError.
         with pytest.raises((ValueError, VisaIOError)):
             scope = KeysightDSOX1102G(bad_resource)
 

@@ -93,7 +93,8 @@ class Channel(object):
         return self.instrument.values('print(smu%s.%s)' % (self.channel, cmd))
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
-        return self.instrument.binary_values('print(smu%s.%s)' % (self.channel, cmd,), header_bytes, dtype)
+        return self.instrument.binary_values('print(smu%s.%s)' %
+                                             (self.channel, cmd,), header_bytes, dtype)
 
     def check_errors(self):
         return self.instrument.check_errors()

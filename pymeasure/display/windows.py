@@ -469,14 +469,16 @@ class ManagedWindowBase(QtGui.QMainWindow):
         """
         system = platform.system()
         if (system == 'Windows'):
-            # The empty argument after the start is needed to be able to cope correctly with filenames with spaces
+            # The empty argument after the start is needed to be able to cope
+            # correctly with filenames with spaces
             proc = subprocess.Popen(['start', '', filename], shell=True)
         elif (system == 'Linux'):
             proc = subprocess.Popen(['xdg-open', filename])
         elif (system == 'Darwin'):
             proc = subprocess.Popen(['open', filename])
         else:
-            raise Exception("{cls} method open_file_externally does not support {system} OS".format(cls=type(self).__name__, system=system))
+            raise Exception("{cls} method open_file_externally does not support {system} OS".format(
+                cls=type(self).__name__, system=system))
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
@@ -661,7 +663,8 @@ class ManagedImageWindow(ManagedWindow):
 
     def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
         self.z_axis = z_axis
-        self.image_widget = ImageWidget("Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
+        self.image_widget = ImageWidget(
+            "Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()

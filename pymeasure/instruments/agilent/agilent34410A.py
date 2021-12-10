@@ -42,7 +42,8 @@ class Agilent34410A(Instrument):
 
     resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
 
-    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
+    resistance_4w = Instrument.measurement(
+        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
 
     def __init__(self, adapter, **kwargs):
         super(Agilent34410A, self).__init__(

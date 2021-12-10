@@ -155,7 +155,8 @@ class ImageFrame(PlotFrame):
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.QSignal(str)
 
-    def __init__(self, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True, parent=None):
+    def __init__(self, x_axis, y_axis, z_axis=None,
+                 refresh_time=0.2, check_status=True, parent=None):
         super().__init__(x_axis, y_axis, refresh_time, check_status, parent)
         self.change_z_axis(z_axis)
 
@@ -595,7 +596,8 @@ class ResultsDialog(QtGui.QFileDialog):
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
 
-        self.plot_widget = PlotWidget("Results", self.columns, self.x_axis, self.y_axis, parent=self)
+        self.plot_widget = PlotWidget("Results", self.columns,
+                                      self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
         self.preview_param = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
@@ -631,7 +633,9 @@ class ResultsDialog(QtGui.QFileDialog):
                                  x=self.plot_widget.plot_frame.x_axis,
                                  y=self.plot_widget.plot_frame.y_axis,
                                  # The pyqtgraph pen width was changed to 1 (originally: 1.75) to circumvent plotting slowdown.
-                                 # Once the issue (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved it can be reverted
+                                 # Once the issue
+                                 # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
+                                 # it can be reverted
                                  pen=pg.mkPen(color=(255, 0, 0), width=1),
                                  antialias=True
                                  )
@@ -1082,13 +1086,15 @@ class DirectoryLineEdit(QtGui.QLineEdit):
         completer.setCompletionMode(QtGui.QCompleter.PopupCompletion)
 
         model = QtGui.QDirModel(completer)
-        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives |
+                        QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
         completer.setModel(model)
 
         self.setCompleter(completer)
 
         browse_action = QtGui.QAction(self)
-        browse_action.setIcon(self.style().standardIcon(getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
+        browse_action.setIcon(self.style().standardIcon(
+            getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
         browse_action.triggered.connect(self.browse_triggered)
 
         self.addAction(browse_action, QtGui.QLineEdit.TrailingPosition)

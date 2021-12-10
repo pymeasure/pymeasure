@@ -78,7 +78,8 @@ class Keithley2750(Instrument):
         :param int channel: 3-digit number for the channel
         :return: None
         """
-        # Note: if `MULTiple` is omitted, then the specified channel will close, but all other channels will open.
+        # Note: if `MULTiple` is omitted, then the specified channel will close,
+        # but all other channels will open.
         self.write(":ROUTe:MULTiple:CLOSe (@{})".format(channel))
 
     def open_all(self):

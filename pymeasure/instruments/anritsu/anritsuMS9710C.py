@@ -107,13 +107,17 @@ class AnritsuMS9710C(Instrument):
     ####################################
     # Spectrum Parameters - Wavelength #
     ####################################
-    wavelength_center = Instrument.control('CNT?', 'CNT %g', "Center Wavelength of Spectrum Scan in nm.")
+    wavelength_center = Instrument.control(
+        'CNT?', 'CNT %g', "Center Wavelength of Spectrum Scan in nm.")
 
-    wavelength_span = Instrument.control('SPN?', 'SPN %g', "Wavelength Span of Spectrum Scan in nm.")
+    wavelength_span = Instrument.control(
+        'SPN?', 'SPN %g', "Wavelength Span of Spectrum Scan in nm.")
 
-    wavelength_start = Instrument.control('STA?', 'STA %g', "Wavelength Start of Spectrum Scan in nm.")
+    wavelength_start = Instrument.control(
+        'STA?', 'STA %g', "Wavelength Start of Spectrum Scan in nm.")
 
-    wavelength_stop = Instrument.control('STO?', 'STO %g', "Wavelength Stop of Spectrum Scan in nm.")
+    wavelength_stop = Instrument.control(
+        'STO?', 'STO %g', "Wavelength Stop of Spectrum Scan in nm.")
 
     wavelength_marker_value = Instrument.control(
         'MKV?', 'MKV %s',

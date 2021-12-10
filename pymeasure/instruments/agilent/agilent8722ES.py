@@ -64,7 +64,8 @@ class Agilent8722ES(Instrument):
         """ An integer representing the number of averages to take. Note that
         averaging must be enabled for this to take effect. This property can be set.
         """,
-        cast=lambda x: int(float(x))  # int() doesn't like converting scientific notation values directly from strings
+        cast=lambda x: int(
+            float(x))  # int() doesn't like converting scientific notation values directly from strings
     )
     averaging_enabled = Instrument.control(
         "AVERO?", "AVERO%d",
@@ -146,12 +147,14 @@ class Agilent8722ES(Instrument):
 
     def disable_averaging(self):
         """Disables averaging"""
-        warnings.warn("Don't use disable_averaging(), use averaging_enabled = False instead", FutureWarning)
+        warnings.warn(
+            "Don't use disable_averaging(), use averaging_enabled = False instead", FutureWarning)
         self.averaging_enabled = False
 
     def enable_averaging(self):
         """Enables averaging"""
-        warnings.warn("Don't use enable_averaging(), use averaging_enabled = True instead", FutureWarning)
+        warnings.warn(
+            "Don't use enable_averaging(), use averaging_enabled = True instead", FutureWarning)
         self.averaging_enabled = True
 
     def is_averaging(self):
@@ -168,7 +171,8 @@ class Agilent8722ES(Instrument):
         blocks until the operation is complete.
         """
         if averages is not None or blocking is not None or timeout is not None or delay is not None:
-            warnings.warn("averages, blocking, timeout, and delay arguments are no longer used by scan()", FutureWarning)
+            warnings.warn(
+                "averages, blocking, timeout, and delay arguments are no longer used by scan()", FutureWarning)
         self.write("*CLS")
         self.scan_single()
         # All queries will block until the scan is done, so use NOOP? to check.

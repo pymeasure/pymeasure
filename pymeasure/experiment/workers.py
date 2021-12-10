@@ -92,7 +92,8 @@ class Worker(StoppableThread):
                 self.publisher = self.context.socket(zmq.PUB)
                 self.publisher.bind('tcp://*:%d' % self.port)
                 log.info("Worker connected to tcp://*:%d" % self.port)
-                time.sleep(0.3)  # wait so that the socket will be ready before starting to emit messages
+                # wait so that the socket will be ready before starting to emit messages
+                time.sleep(0.3)
             except Exception:
                 log.exception("Couldn't establish ZMQ publisher!")
                 self.context = None

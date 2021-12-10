@@ -48,7 +48,8 @@ def test_replace_placeholders():
     assert replace_placeholders("{String Parameter}", fake) == "test"
     assert replace_placeholders("{Boolean Parameter}", fake) == "False"
     assert replace_placeholders("{Float Parameter:.2f}", fake) == "1.25"
-    assert replace_placeholders("{String Parameter}_{Float Parameter}_{Boolean Parameter}", fake) == "test_1.252_False"
+    assert replace_placeholders(
+        "{String Parameter}_{Float Parameter}_{Boolean Parameter}", fake) == "test_1.252_False"
 
     with pytest.raises(KeyError):
         replace_placeholders("{Unknown Parameter}", fake)
