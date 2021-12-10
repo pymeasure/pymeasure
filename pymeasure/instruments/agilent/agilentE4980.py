@@ -54,7 +54,7 @@ class AgilentE4980(Instrument):
     mode = Instrument.control("FUNCtion:IMPedance:TYPE?", "FUNCtion:IMPedance:TYPE %s",
                               """
 Select quantities to be measured:
-    
+
     * CPD: Parallel capacitance [F] and dissipation factor [number]
     * CPQ: Parallel capacitance [F] and quality factor [number]
     * CPG: Parallel capacitance [F] and parallel conductance [S]
@@ -68,11 +68,11 @@ Select quantities to be measured:
    * LPQ: Parallel inductance [H] and quality factor [number]
    * LPG: Parallel inductance [H] and parallel conductance [S]
    * LPRP: Parallel inductance [H] and parallel resistance [Ohm]
-   
+
     * LSD: Series inductance [H] and dissipation factor [number]
     * LSQ: Seriesinductance [H] and quality factor [number]
     * LSRS: Series inductance [H] and series resistance [Ohm]
-    
+
     * RX: Resitance [Ohm] and reactance [Ohm]
     * ZTD: Impedance, magnitude [Ohm] and phase [deg]
     * ZTR: Impedance, magnitude [Ohm] and phase [rad]

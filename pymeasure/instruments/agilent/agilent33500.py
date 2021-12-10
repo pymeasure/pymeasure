@@ -227,7 +227,7 @@ class Agilent33500(Instrument):
 
     output = Instrument.control(
         "OUTP?", "OUTP %d",
-        """ A boolean property that turns on (True, 'on') or off (False, 'off') 
+        """ A boolean property that turns on (True, 'on') or off (False, 'off')
         the output of the function generator. Can be set. """,
         validator=strict_discrete_set,
         map_values=True,
@@ -297,7 +297,7 @@ class Agilent33500(Instrument):
 
     arb_filter = Instrument.control(
         "FUNC:ARB:FILT?", "FUNC:ARB:FILT %s",
-        """ A string property that selects the filter setting for arbitrary signals. 
+        """ A string property that selects the filter setting for arbitrary signals.
         Can be set to 'NORM<AL>', 'STEP' and 'OFF'. """,
         validator=strict_discrete_set,
         values=["NORM", "NORMAL", "STEP", "OFF"],
@@ -338,7 +338,7 @@ class Agilent33500(Instrument):
 
     arb_srate = Instrument.control(
         "FUNC:ARB:SRAT?", "FUNC:ARB:SRAT %f",
-        """ An floating point property that sets the sample rate of the currently selected 
+        """ An floating point property that sets the sample rate of the currently selected
         arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
         depending on your device). This can be set. """,
         validator=strict_range,

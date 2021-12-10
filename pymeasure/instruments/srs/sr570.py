@@ -66,9 +66,9 @@ class SR570(Instrument):
 
     sensitivity = Instrument.setting(
         "SENS %d",
-        """ A floating point value that sets the sensitivity of the 
-        amplifier, which takes discrete values in a 1-2-5 sequence. 
-        Values are truncated to the closest allowed value if not exact. 
+        """ A floating point value that sets the sensitivity of the
+        amplifier, which takes discrete values in a 1-2-5 sequence.
+        Values are truncated to the closest allowed value if not exact.
         Allowed values range from 1 pA/V to 1 mA/V.""",
         validators=truncated_discrete_set,
         values=SENSITIVITIES,
@@ -84,9 +84,9 @@ class SR570(Instrument):
 
     low_freq = Instrument.setting(
         "LFRQ %d",
-        """ A floating point value that sets the lowpass frequency of the 
-        amplifier, which takes a discrete value in a 1-3 sequence. 
-        Values are truncated to the closest allowed value if not exact. 
+        """ A floating point value that sets the lowpass frequency of the
+        amplifier, which takes a discrete value in a 1-3 sequence.
+        Values are truncated to the closest allowed value if not exact.
         Allowed values range from 0.03 Hz to 1 MHz.""",
         validators=truncated_discrete_set,
         values=FREQUENCIES,
@@ -94,9 +94,9 @@ class SR570(Instrument):
 
     high_freq = Instrument.setting(
         "HFRQ %d",
-        """ A floating point value that sets the highpass frequency of the 
-        amplifier, which takes a discrete value in a 1-3 sequence. 
-        Values are truncated to the closest allowed value if not exact. 
+        """ A floating point value that sets the highpass frequency of the
+        amplifier, which takes a discrete value in a 1-3 sequence.
+        Values are truncated to the closest allowed value if not exact.
         Allowed values range from 0.03 Hz to 1 MHz.""",
         validators=truncated_discrete_set,
         values=FREQUENCIES,
@@ -104,8 +104,8 @@ class SR570(Instrument):
 
     bias_level = Instrument.setting(
         "BSLV %g",
-        """ A floating point value in V that sets the bias voltage level of the 
-        amplifier, in the [-5V,+5V] limits. 
+        """ A floating point value in V that sets the bias voltage level of the
+        amplifier, in the [-5V,+5V] limits.
         The values are up to 1 mV precision level.""",
         validators=truncated_range,
         values=BIAS_LIMITS,
@@ -113,9 +113,9 @@ class SR570(Instrument):
 
     offset_current = Instrument.setting(
         "BSLV %f",
-        """ A floating point value in A that sets the absolute value 
-        of the offset current of the amplifier, in the [1pA,5mA] limits. 
-        The offset current takes discrete values in a 1-2-5 sequence. 
+        """ A floating point value in A that sets the absolute value
+        of the offset current of the amplifier, in the [1pA,5mA] limits.
+        The offset current takes discrete values in a 1-2-5 sequence.
         Values are truncated to the closest allowed value if not exact. """,
         validators=truncated_discrete_set,
         values=OFFSET_CURRENTS,
@@ -123,7 +123,7 @@ class SR570(Instrument):
 
     offset_current_sign = Instrument.setting(
         "IOSN %d",
-        """ An string that sets the offset current sign. 
+        """ An string that sets the offset current sign.
         Allowed values are: 'positive' and 'negative'. """,
         validators=strict_discrete_set,
         values={'positive': 1, 'negative': 0},

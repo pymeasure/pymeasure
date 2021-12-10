@@ -38,7 +38,7 @@ class SR510(Instrument):
     phase = Instrument.control("P", "P %g",
                                """A float property that represents the SR510 reference to input phase offset in degrees.
                                   Queries return values between -180 and 180 degrees. This property can be set with a
-                                  range of values between -999 to 999 degrees. Set values are mapped internal in the 
+                                  range of values between -999 to 999 degrees. Set values are mapped internal in the
                                   lockin to -180 and 180 degrees.""",
                                validator=truncated_range,
                                values=[-999, 999],

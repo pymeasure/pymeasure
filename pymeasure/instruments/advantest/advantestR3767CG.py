@@ -28,7 +28,7 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 
 class AdvantestR3767CG(Instrument):
     """ Represents the Advantest R3767CG VNA. Implements controls to change the analysis
-        range and to retreve the data for the trace. 
+        range and to retreve the data for the trace.
     """
 
     id = Instrument.measurement(

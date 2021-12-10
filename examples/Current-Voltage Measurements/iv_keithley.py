@@ -1,6 +1,6 @@
 """
 This example demonstrates how to make a graphical interface to preform
-IV characteristic measurements. There are a two items that need to be 
+IV characteristic measurements. There are a two items that need to be
 changed for your system:
 
 1) Correct the GPIB addresses in IVProcedure.startup for your instruments

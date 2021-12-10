@@ -294,7 +294,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
     current_filter_count = Instrument.control(
         ":SENS:CURR:AVER:COUNT?", ":SENS:CURR:AVER:COUNT %d",
-        """ A integer property that controls the number of readings that are 
+        """ A integer property that controls the number of readings that are
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
         values=[1, 100],
@@ -318,7 +318,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
     voltage_filter_count = Instrument.control(
         ":SENS:VOLT:AVER:COUNT?", ":SENS:VOLT:AVER:COUNT %d",
-        """ A integer property that controls the number of readings that are 
+        """ A integer property that controls the number of readings that are
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
         values=[1, 100],
@@ -332,9 +332,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
         ":OUTP:CURR:SMOD?", ":OUTP:CURR:SMOD %s",
         """ Select the output-off state of the SourceMeter.
         HIMP : output relay is open, disconnects external circuitry.
-        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5%
         full scale of the present current range.
-        ZERO : V-Source is selected and set to 0V, compliance is set to the 
+        ZERO : V-Source is selected and set to 0V, compliance is set to the
         programmed Source I value or to 0.5% full scale of the present current
         range, whichever is greater.
         GUAR : I-Source is selected and set to 0A""",
@@ -346,9 +346,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
         ":OUTP:VOLT:SMOD?", ":OUTP:VOLT:SMOD %s",
         """ Select the output-off state of the SourceMeter.
         HIMP : output relay is open, disconnects external circuitry.
-        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5%
         full scale of the present current range.
-        ZERO : V-Source is selected and set to 0V, compliance is set to the 
+        ZERO : V-Source is selected and set to 0V, compliance is set to the
         programmed Source I value or to 0.5% full scale of the present current
         range, whichever is greater.
         GUAR : I-Source is selected and set to 0A""",

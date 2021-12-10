@@ -318,13 +318,13 @@ class DSP7265(Instrument):
         "M",
         """ A property that represents the status of the curve buffer acquisition
         with four values:
-        the first value represents the status with 5 possibilities (0: no activity, 
+        the first value represents the status with 5 possibilities (0: no activity,
         1: acquisition via TD command running, 2: acquisition bya TDC command running,
         5: acquisition via TD command halted, 6: acquisition bia TDC command halted);
         the second value is the number of sweeps that is acquired;
         the third value is the decimal representation of the status byte (the same
         response as the ST command;
-        the fourth value is the number of points acquired in the curve buffer. 
+        the fourth value is the number of points acquired in the curve buffer.
         """,
         cast=int,
     )

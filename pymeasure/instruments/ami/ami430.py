@@ -105,13 +105,13 @@ class AMI430(Instrument):
 
     ramp_rate_current = Instrument.control(
         "RAMP:RATE:CURR:1?", "CONF:RAMP:RATE:CURR 1,%g",
-        """ A floating point property that sets the current ramping 
+        """ A floating point property that sets the current ramping
         rate in A/s. """
     )
 
     ramp_rate_field = Instrument.control(
         "RAMP:RATE:FIELD:1?", "CONF:RAMP:RATE:FIELD 1,%g,1.00",
-        """ A floating point property that sets the field ramping 
+        """ A floating point property that sets the field ramping
         rate in kGauss/s. """
     )
 

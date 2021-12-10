@@ -94,7 +94,7 @@ class DPSeriesMotorController(Instrument):
 
     maxspeed = Instrument.control(
         "VM", "M%i",
-        """Integer property that represents the motor controller's maximum (running) speed. 
+        """Integer property that represents the motor controller's maximum (running) speed.
            This property can be set.""",
         validator=truncated_range,
         values=[1, 50000],
@@ -103,8 +103,8 @@ class DPSeriesMotorController(Instrument):
 
     direction = Instrument.control(
         "V+", "%s",
-        """A string property that represents the direction in which the stepper motor will rotate upon subsequent 
-           step commands. This property can be set. 'CW' corresponds to clockwise rotation and 'CCW' corresponds to 
+        """A string property that represents the direction in which the stepper motor will rotate upon subsequent
+           step commands. This property can be set. 'CW' corresponds to clockwise rotation and 'CCW' corresponds to
            counter-clockwise rotation.""",
         map_values=True,
         validator=strict_discrete_set,
@@ -132,7 +132,7 @@ class DPSeriesMotorController(Instrument):
 
     encoder_motor_ratio = Instrument.control(
         "VEM", "EM%i",
-        """An integer property that represents the ratio of the number of encoder pulses per motor step. 
+        """An integer property that represents the ratio of the number of encoder pulses per motor step.
            This property can be set.""",
         validator=truncated_range,
         values=[1, 255],

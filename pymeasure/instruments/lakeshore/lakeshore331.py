@@ -93,7 +93,7 @@ class LakeShore331(Instrument):
         """ Blocks the program, waiting for the temperature to reach the setpoint
         within the accuracy (%), checking this each interval time in seconds.
 
-        :param accuracy: An acceptable percentage deviation between the 
+        :param accuracy: An acceptable percentage deviation between the
                          setpoint and temperature
         :param interval: A time in seconds that controls the refresh rate
         :param sensor: The desired sensor to read, either A or B

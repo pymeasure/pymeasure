@@ -72,7 +72,7 @@ class KeithleyBuffer(object):
 
     def wait_for_buffer(self, should_stop=lambda: False,
                         timeout=60, interval=0.1):
-        """ Blocks the program, waiting for a full buffer. This function 
+        """ Blocks the program, waiting for a full buffer. This function
         returns early if the :code:`should_stop` function returns True or
         the timeout is reached before the buffer is full.
 
@@ -106,7 +106,7 @@ class KeithleyBuffer(object):
 
     def stop_buffer(self):
         """ Aborts the buffering measurement, by stopping the measurement
-        arming and triggering sequence. If possible, a Selected Device 
+        arming and triggering sequence. If possible, a Selected Device
         Clear (SDC) is used. """
         if type(self.adapter) is PrologixAdapter:
             self.write("++clr")

@@ -53,7 +53,7 @@ class HP33120A(Instrument):
         "SOUR:FREQ?", "SOUR:FREQ %g",
         """ A floating point property that controls the frequency of the
         output in Hz. The allowed range depends on the waveform shape
-        and can be queried with :attr:`~.max_frequency` and 
+        and can be queried with :attr:`~.max_frequency` and
         :attr:`~.min_frequency`. """
     )
     max_frequency = Instrument.measurement(
@@ -68,7 +68,7 @@ class HP33120A(Instrument):
         "SOUR:VOLT?", "SOUR:VOLT %g",
         """ A floating point property that controls the voltage amplitude of the
         output signal. The default units are in  peak-to-peak Volts, but can be
-        controlled by :attr:`~.amplitude_units`. The allowed range depends 
+        controlled by :attr:`~.amplitude_units`. The allowed range depends
         on the waveform shape and can be queried with :attr:`~.max_amplitude`
         and :attr:`~.min_amplitude`. """
     )

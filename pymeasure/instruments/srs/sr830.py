@@ -161,7 +161,7 @@ class SR830(Instrument):
     channel1 = Instrument.control(
         "DDEF?1;", "DDEF1,%d,0",
         """ A string property that represents the type of Channel 1,
-        taking the values X, R, X Noise, Aux In 1, or Aux In 2. 
+        taking the values X, R, X Noise, Aux In 1, or Aux In 2.
         This property can be set.""",
         validator=strict_discrete_set,
         values=['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2'],
@@ -237,7 +237,7 @@ class SR830(Instrument):
     )
     input_notch_config = Instrument.control(
         "ILIN?", "ILIN %d",
-        """ An string property that controls the input line notch filter 
+        """ An string property that controls the input line notch filter
         status. Allowed values are: {}""".format(INPUT_NOTCH_CONFIGS),
         validator=strict_discrete_set,
         values=INPUT_NOTCH_CONFIGS,

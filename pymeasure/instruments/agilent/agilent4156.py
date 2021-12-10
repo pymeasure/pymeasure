@@ -148,7 +148,7 @@ class Agilent4156(Instrument):
     analyzer_mode = Instrument.control(
         ":PAGE:CHAN:MODE?", ":PAGE:CHAN:MODE %s",
         """ A string property that controls the instrument operating mode.
-        
+
         - Values: :code:`SWEEP`, :code:`SAMPLING`
 
         .. code-block:: python
@@ -165,7 +165,7 @@ class Agilent4156(Instrument):
     integration_time = Instrument.control(
         ":PAGE:MEAS:MSET:ITIM?", ":PAGE:MEAS:MSET:ITIM %s",
         """ A string property that controls the integration time.
-        
+
         - Values: :code:`SHORT`, :code:`MEDIUM`, :code:`LONG`
 
         .. code-block:: python
@@ -994,8 +994,8 @@ class VARD(Instrument):
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VAR1’ = VAR1 * RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function
-        (FCTN) is VAR1'. 
-        
+        (FCTN) is VAR1'.
+
         .. code-block:: python
 
             instr.vard.ratio = 1

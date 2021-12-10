@@ -107,7 +107,7 @@ class FWBell5080(Instrument):
         self.write(":SENS:FLUX:RANG %d" % i)
 
     def read(self):
-        """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>` 
+        """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
         method to remove the last 2 characters from the output.
         """
         return super(FWBell5080, self).read()[:-2]
@@ -119,7 +119,7 @@ class FWBell5080(Instrument):
         return super(FWBell5080, self).ask()[:-2]
 
     def values(self, command):
-        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>` 
+        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
         method to remove the lastv2 characters from the output.
         """
         return super(FWBell5080, self).values()[:-2]

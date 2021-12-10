@@ -37,7 +37,7 @@ if find_spec('pycomedi'):  # Guard against pycomedi not being installed
 
 
 def getAI(device, channel, range=None):
-    """ Returns the analog input channel as specified for a given device    
+    """ Returns the analog input channel as specified for a given device
     """
     ai = device.find_subdevice_by_type(
         SUBDEVICE_TYPE.ai, factory=StreamingSubdevice
@@ -48,7 +48,7 @@ def getAI(device, channel, range=None):
 
 
 def getAO(device, channel, range=None):
-    """ Returns the analog output channel as specified for a given device    
+    """ Returns the analog output channel as specified for a given device
     """
     ao = device.find_subdevice_by_type(
         SUBDEVICE_TYPE.ao, factory=StreamingSubdevice
@@ -59,9 +59,9 @@ def getAO(device, channel, range=None):
 
 
 def readAI(device, channel, range=None, count=1):
-    """ Reads a single measurement (count==1) from the analog input channel 
+    """ Reads a single measurement (count==1) from the analog input channel
     of the device specified. Multiple readings can be preformed with count
-    not equal to one, which are seperated by an arbitrary time   
+    not equal to one, which are seperated by an arbitrary time
     """
     ai = getAI(device, channel, range)
     converter = ai.get_converter()
@@ -73,7 +73,7 @@ def readAI(device, channel, range=None, count=1):
 
 def writeAO(device, channel, voltage, range=None):
     """ Writes a single voltage to the analog output channel of the
-    device specified    
+    device specified
     """
     ao = getAO(device, channel, range)
     converter = ao.get_converter()
@@ -110,7 +110,7 @@ class SynchronousAI(object):
 
     def _verifyCommand(self):
         """ Checks the command over three times and allows comedi to correct
-        the command given any device specific conflicts       
+        the command given any device specific conflicts
         """
         for i in range(3):
             rc = self.subdevice.command_test()  # Verify command is correct
@@ -168,7 +168,7 @@ class SynchronousAI(object):
 
 """ Command for limited samples
 
-command = self.subdevice.get_cmd_generic_timed(len(self.channels), 
+command = self.subdevice.get_cmd_generic_timed(len(self.channels),
                 self.scanPeriod)
 command.start_src = TRIG_SRC.int
 command.start_arg = 0

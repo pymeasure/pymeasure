@@ -119,7 +119,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
     line_frequency = Instrument.control(
         ":SYST:LFR?", ":SYST:LFR %d",
-        """ An integer property that controls the line frequency in Hertz. 
+        """ An integer property that controls the line frequency in Hertz.
         Valid values are 50 and 60. """,
         validator=strict_discrete_set,
         values=[50, 60],
@@ -128,7 +128,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
     line_frequency_auto = Instrument.control(
         ":SYST:LFR:AUTO?", ":SYST:LFR:AUTO %d",
-        """ A boolean property that enables or disables auto line frequency. 
+        """ A boolean property that enables or disables auto line frequency.
         Valid values are True and False. """,
         values={True: 1, False: 0},
         map_values=True,
@@ -335,7 +335,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
     filter_count = Instrument.control(
         ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
-        """ A integer property that controls the number of readings that are 
+        """ A integer property that controls the number of readings that are
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
         values=[1, 100],
@@ -356,9 +356,9 @@ class Keithley2400(Instrument, KeithleyBuffer):
         ":OUTP:SMOD?", ":OUTP:SMOD %s",
         """ Select the output-off state of the SourceMeter.
         HIMP : output relay is open, disconnects external circuitry.
-        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5%
         full scale of the present current range.
-        ZERO : V-Source is selected and set to 0V, compliance is set to the 
+        ZERO : V-Source is selected and set to 0V, compliance is set to the
         programmed Source I value or to 0.5% full scale of the present current
         range, whichever is greater.
         GUAR : I-Source is selected and set to 0A""",

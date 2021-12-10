@@ -27,8 +27,8 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 
 
 class Agilent8257D(Instrument):
-    """Represents the Agilent 8257D Signal Generator and 
-    provides a high-level interface for interacting with 
+    """Represents the Agilent 8257D Signal Generator and
+    provides a high-level interface for interacting with
     the instrument.
 
     .. code-block:: python
@@ -86,7 +86,7 @@ class Agilent8257D(Instrument):
     dwell_time = Instrument.control(
         ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f",
         """ A floating point property that represents the settling time
-        in seconds at the current frequency or power setting. 
+        in seconds at the current frequency or power setting.
         This property can be set.
         """
     )

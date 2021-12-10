@@ -32,7 +32,7 @@ class Fluke7341(Instrument):
     """
 
     set_point = Instrument.control("s", "s=%g",
-                                   """ A `float` property to set the bath temperature set-point. 
+                                   """ A `float` property to set the bath temperature set-point.
                                    Valid values are  in the range –40 to 150 °C.
                                    The unit is as defined in property :attr:`~.unit`. This property can be read
                                    """,

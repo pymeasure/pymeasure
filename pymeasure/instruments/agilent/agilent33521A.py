@@ -55,7 +55,7 @@ class Agilent33521A(Agilent33500):
 
     arb_srate = Instrument.control(
         "FUNC:ARB:SRAT?", "FUNC:ARB:SRAT %f",
-        """ An floating point property that sets the sample rate of the currently selected 
+        """ An floating point property that sets the sample rate of the currently selected
         arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s. This can be set. """,
         validator=strict_range,
         values=[1e-6, 250e6],

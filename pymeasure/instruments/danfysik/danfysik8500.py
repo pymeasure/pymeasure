@@ -273,7 +273,7 @@ class Danfysik8500(Instrument):
 
         :param current: The final current in Amps
         :param points: The number of linear points to traverse
-        :param delay_time: A delay time in seconds 
+        :param delay_time: A delay time in seconds
         """
         initial_current = self.current
         self.clear_ramp_set()
@@ -314,7 +314,7 @@ class Danfysik8500(Instrument):
     def clear_sequence(self, stack):
         """ Clears the sequence by the stack number.
 
-        :param stack: A stack number between 0-15 
+        :param stack: A stack number between 0-15
         """
         self.write("CSS %i" % stack)
 
@@ -331,7 +331,7 @@ class Danfysik8500(Instrument):
     def start_sequence(self, stack):
         """ Starts a sequence by the stack number.
 
-        :param stack: A stack number between 0-15 
+        :param stack: A stack number between 0-15
         """
         self.write("TS %i" % stack)
 
@@ -343,6 +343,6 @@ class Danfysik8500(Instrument):
     def is_sequence_running(self, stack):
         """ Returns True if a sequence is running with a given stack number
 
-        :param stack: A stack number between 0-15 
+        :param stack: A stack number between 0-15
         """
         return re.search("R%i," % stack, self.ask("S2")) is not None

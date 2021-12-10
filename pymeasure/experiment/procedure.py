@@ -98,7 +98,7 @@ class Procedure(object):
 
     def _update_parameters(self):
         """ Collects all the Parameter objects for the procedure and stores
-        them in a meta dictionary so that the actual values can be set in 
+        them in a meta dictionary so that the actual values can be set in
         their stead
         """
         if not self._parameters:

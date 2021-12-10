@@ -66,7 +66,7 @@ class SerialAdapter(Adapter):
         return b"\n".join(self.connection.readlines()).decode()
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
+        """ Returns a numpy array from a query for binary data
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header

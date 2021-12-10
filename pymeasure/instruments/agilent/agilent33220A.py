@@ -202,7 +202,7 @@ class Agilent33220A(Instrument):
         """ A floating point property that controls the the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between 0.1 and 0.9 of the threshold. Valid values are between
-        5 ns to 100 ns. The transition time has to be smaller than 
+        5 ns to 100 ns. The transition time has to be smaller than
         0.625 * the pulse width. Can be set. """,
         validator=strict_range,
         values=[5e-9, 100e-9],

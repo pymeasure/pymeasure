@@ -1,5 +1,5 @@
 """
-This example demonstrates how to make a command line interface with a 
+This example demonstrates how to make a command line interface with a
 live-plotting interface, and uses a random number generator to simulate
 data so that it does not require an instrument to use.
 

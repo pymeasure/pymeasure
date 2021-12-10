@@ -73,16 +73,16 @@ class Channel():
 
     label = Instrument.control(
         "LABel?", 'LABel "%s"',
-        """ A string to label the channel. Labels with more than 10 characters are truncated to 10 
-        characters. May contain commonly used ASCII characters. Lower case characters are converted 
+        """ A string to label the channel. Labels with more than 10 characters are truncated to 10
+        characters. May contain commonly used ASCII characters. Lower case characters are converted
         to upper case.""",
         get_process=lambda v: str(v[1:-1])
     )
 
     offset = Instrument.control(
         "OFFSet?", "OFFSet %f",
-        """ A float parameter to set value that is represented at center of screen in 
-        Volts. The range of legal values varies depending on range and scale. If the specified value 
+        """ A float parameter to set value that is represented at center of screen in
+        Volts. The range of legal values varies depending on range and scale. If the specified value
         is outside of the legal range, the offset value is automatically set to the nearest legal value. """
     )
 
@@ -96,7 +96,7 @@ class Channel():
 
     range = Instrument.control(
         "RANGe?", "RANGe %f",
-        """ A float parameter that specifies the full-scale vertical axis in Volts. 
+        """ A float parameter that specifies the full-scale vertical axis in Volts.
         When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V."""
     )
 
@@ -263,7 +263,7 @@ class KeysightDSOX1102G(Instrument):
 
     timebase_mode = Instrument.control(
         ":TIMebase:MODE?", ":TIMebase:MODE %s",
-        """ A string parameter that sets the current time base. Can be "main", 
+        """ A string parameter that sets the current time base. Can be "main",
         "window", "xy", or "roll".""",
         validator=strict_discrete_set,
         values={"main": "MAIN", "window": "WIND", "xy": "XY", "roll": "ROLL"},
@@ -272,19 +272,19 @@ class KeysightDSOX1102G(Instrument):
 
     timebase_offset = Instrument.control(
         ":TIMebase:POSition?", ":TIMebase:REFerence CENTer;:TIMebase:POSition %f",
-        """ A float parameter that sets the time interval in seconds between the trigger 
+        """ A float parameter that sets the time interval in seconds between the trigger
         event and the reference position (at center of screen by default)."""
     )
 
     timebase_range = Instrument.control(
         ":TIMebase:RANGe?", ":TIMebase:RANGe %f",
-        """ A float parameter that sets the full-scale horizontal time in seconds for the 
+        """ A float parameter that sets the full-scale horizontal time in seconds for the
         main window."""
     )
 
     timebase_scale = Instrument.control(
         ":TIMebase:SCALe?", ":TIMebase:SCALe %f",
-        """ A float parameter that sets the horizontal scale (units per division) in seconds 
+        """ A float parameter that sets the horizontal scale (units per division) in seconds
         for the main window."""
     )
 
@@ -351,17 +351,17 @@ class KeysightDSOX1102G(Instrument):
     waveform_points = Instrument.control(
         ":waveform:points?", ":waveform:points %d",
         """ An integer parameter that sets the number of waveform points to be transferred with
-        the waveform_data method. Can be any of the following values: 
+        the waveform_data method. Can be any of the following values:
         100, 250, 500, 1000, 2 000, 5 000, 10 000, 20 000, 50 000, 62 500.
-        
+
         Note that the oscilloscope may provide less than the specified nb of points. """,
         validator=strict_discrete_set,
         values=[100, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 62500]
     )
     waveform_source = Instrument.control(
         ":waveform:source?", ":waveform:source %s",
-        """ A string parameter that selects the analog channel, function, or reference waveform 
-        to be used as the source for the waveform methods. Can be "channel1", "channel2", "function", 
+        """ A string parameter that selects the analog channel, function, or reference waveform
+        to be used as the source for the waveform methods. Can be "channel1", "channel2", "function",
         "fft", "wmemory1", "wmemory2", or "ext".""",
         validator=strict_discrete_set,
         values={"channel1": "CHAN1", "channel2": "CHAN2", "function": "FUNC", "fft": "FFT",
@@ -370,7 +370,7 @@ class KeysightDSOX1102G(Instrument):
     )
     waveform_format = Instrument.control(
         ":waveform:format?", ":waveform:format %s",
-        """ A string parameter that controls how the data is formatted when sent from the 
+        """ A string parameter that controls how the data is formatted when sent from the
         oscilloscope. Can be "ascii", "word" or "byte". Words are transmitted in big endian by default.""",
         validator=strict_discrete_set,
         values={"ascii": "ASC", "word": "WORD", "byte": "BYTE"},
