@@ -41,8 +41,8 @@ class VISAAdapter(Adapter):
     with instruments.
 
     :param resource: VISA resource name that identifies the address
-    :param visa_library: VisaLibrary Instance, path of the VISA library or VisaLibrary spec string (@py or @ni).
-                         if not given, the default for the platform will be used.
+    :param visa_library: VisaLibrary Instance, path of the VISA library or VisaLibrary spec
+        string (@py or @ni). If not given, the default for the platform will be used.
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
     :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
@@ -132,7 +132,8 @@ class VISAAdapter(Adapter):
         """
         self.connection.write(command)
         binary = self.connection.read_raw()
-        header, data = binary[:header_bytes], binary[header_bytes:]
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
     def write_binary_values(self, command, values, **kwargs):

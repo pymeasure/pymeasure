@@ -40,7 +40,8 @@ class PrologixAdapter(SerialAdapter):
 
     :param port: The Serial port name or a serial.Serial object
     :param address: Integer GPIB address of the desired instrument
-    :param rw_delay: An optional delay to set between a write and read call for slow to respond instruments.
+    :param rw_delay: An optional delay to set between a write and read call for
+        slow to respond instruments.
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
     :param kwargs: Key-word arguments if constructing a new serial object

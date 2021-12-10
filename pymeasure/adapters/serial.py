@@ -75,7 +75,8 @@ class SerialAdapter(Adapter):
         """
         self.connection.write(command.encode())
         binary = self.connection.read().decode()
-        header, data = binary[:header_bytes], binary[header_bytes:]
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
