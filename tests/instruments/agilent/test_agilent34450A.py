@@ -89,7 +89,7 @@ class TestAgilent34450A:
         # The pure python VISA library (pyvisa-py) raises a ValueError while the
         # PyVISA library raises a VisaIOError.
         with pytest.raises((ValueError, VisaIOError)):
-            dmm = Agilent34450A(bad_resource)
+            _ = Agilent34450A(bad_resource)
 
     def test_reset(self, make_reseted_dmm):
         dmm = make_reseted_dmm

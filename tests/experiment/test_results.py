@@ -22,22 +22,21 @@
 # THE SOFTWARE.
 #
 
-import pytest
+import os
+import pickle
+import tempfile
 from unittest import mock
 
-import os
-import tempfile
-import pickle
-from importlib.machinery import SourceFileLoader
 import pandas as pd
 import numpy as np
+
 from pymeasure.experiment.results import Results, CSVFormatter
 from pymeasure.experiment.procedure import Procedure, Parameter
 from pymeasure.experiment import BooleanParameter
 
 # Load the procedure, without it being in a module
-#data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-#RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
+# data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
+# RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
 from data.procedure_for_testing import RandomProcedure
 
 
@@ -136,6 +135,6 @@ def test_parameter_reading():
     assert results.parameters["delay"].value == delay
     assert results.parameters["seed"].value == seed
 
-    assert results.parameters["check_true"].value == True
-    assert results.parameters["check_false"].value == False
+    assert results.parameters["check_true"].value is True
+    assert results.parameters["check_false"].value is False
     assert results.parameters["check_dir"].value == test_string

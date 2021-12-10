@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-import pytest
-from unittest import mock
+# import pytest
+# from unittest import mock
 
-from pymeasure.display.Qt import QtGui, QtCore
-from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment.procedure import Procedure
+# from pymeasure.display.Qt import QtGui, QtCore
+# from pymeasure.display.windows import ManagedWindow
+# from pymeasure.experiment.procedure import Procedure
 
 # TODO: Repair this unit test
 # class TestManagedWindow:

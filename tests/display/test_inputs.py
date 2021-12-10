@@ -25,7 +25,6 @@
 import pytest
 from unittest import mock
 
-from pymeasure.display.Qt import QtGui, QtCore
 from pymeasure.display.inputs import ScientificInput, BooleanInput, ListInput
 from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter
 
@@ -79,7 +78,7 @@ class TestBooleanInput:
             bool_input.show()
 
             # TODO: fix: fails to toggle on Windows
-            #qtbot.mouseClick(bool_input, QtCore.Qt.LeftButton)
+            # qtbot.mouseClick(bool_input, QtCore.Qt.LeftButton)
             bool_input.setValue(not default_value)
 
             assert bool_input.value() == (not default_value)
@@ -112,7 +111,7 @@ class TestListInput:
         list_input = ListInput(list_param)
         qtbot.addWidget(list_input)
 
-        assert list_input.isEditable() == False
+        assert list_input.isEditable() is False
         assert list_input.value() == check_value
 
     def test_setValue_should_update_value(self, qtbot):
