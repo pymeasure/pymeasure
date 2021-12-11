@@ -24,6 +24,37 @@
 
 from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
 
+def anritsu_get_trace_mode(mode):
+    mode_map = {
+        'WRIT;OFF': 'WRIT',
+        'WRIT;MINH': 'MINH',
+        'WRIT;MAXH': 'MAXH',
+        'WRIT;AVER': 'WRIT',
+        'WRIT;LAV': 'WRIT',
+        'BLAN;OFF': 'BLANK',
+        'BLAN;MINH': 'BLANK',
+        'BLAN;MAXH': 'BLANK',
+        'BLAN;AVER': 'BLANK',
+        'BLAN;LAV': 'BLANK',
+        'VIEW;OFF': 'VIEW',
+        'VIEW;MINH': 'VIEW',
+        'VIEW;MAXH': 'VIEW',
+        'VIEW;AVER': 'VIEW',
+        'VIEW;LAV': 'VIEW',
+    }
+    return mode_map[mode]
+    
+def anritsu_set_trace_mode(mode):
+    mode_map = {
+    'WRITE': "WRITE;:TRACe:STORAGE:MODE OFF",
+    'BLANK': "BLANK",
+    'VIEW': "VIEW",
+    'MAXHOLD': "WRITE;:TRACe:STORAGE:MODE MAXHOLD",
+    'MINHOLD': "WRITE;:TRACe:STORAGE:MODE MINHOLD",
+    }
+    return mode_map[mode]
+    
+
 class AnritsuMS2830A(SpectrumAnalyzer):
     """ This class represent an Anritsu MS2830A Spectrum Analyzer """
 
@@ -51,9 +82,21 @@ class AnritsuMS2830A(SpectrumAnalyzer):
 
     center_frequency_set_command = ":SENS:FREQ:CENT %e ;"
 
-    trace_mode_get_command = ":TRACE:TYPE?;"
+    trace_mode_get_command = ":TRACE:TYPE?;:TRACE:STORAGE:MODE?"
+    trace_mode_get_process = anritsu_get_trace_mode
     trace_mode_set_command = ":TRACe:TYPE %s;"
-    
+    trace_mode_set_process = anritsu_set_trace_mode
+
+    average_type_get_command = ":TRACE:STORAGE:MODE?"
+    average_type_set_command = ":TRACE:STORAGE:MODE %s;"
+    average_type_values = {"POWER" : "AVER",
+                           "VOLTAGE" : "LAV",
+                           "_MAXHOLD": "MAXH",
+                           "_MINHOLD": "MINH",
+                           "OFF": "OFF",
+                           
+            }
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
