@@ -1,7 +1,7 @@
 {
     "problemMatcher": [
         {
-            "owner": "sphinx",
+            "owner": "sphinx-docstring",
             "pattern": [
                 {
                     "regexp": "^(?<path>.+?):(?<message>.*? (?<severity>WARNING|ERROR): .+)$",
