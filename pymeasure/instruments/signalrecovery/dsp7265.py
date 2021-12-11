@@ -477,22 +477,19 @@ class DSP7265(Instrument):
         return data
 
     def buffer_to_float(self, buffer_data, sensitivity=None, sensitivity2=None, raise_error=True):
-        """
-        Method that converts the fixed-point buffer data to floating point data.
-        The provided data is converted as much as possible, but there are some
-        requirements to the data if all provided columns are to be converted; if
-        a key in the provided data cannot be converted it will be omitted in the
-        returned data or an exception will be raised, depending on the value of
-        raise_error.
+        """Method that converts fixed-point buffer data to floating point data.
+
+        The provided data is converted as much as possible, but there are some requirements to the
+        data if all provided columns are to be converted; if a key in the provided data cannot be
+        converted it will be omitted in the returned data or an exception will be raised,
+        depending on the value of raise_error.
 
         The requirements for converting the data are as follows:
 
-        - Converting X, Y, magnitude and noise requires sensitivity data, which
-          can either be part of the provided data or can be provided via the
-          sensitivity argument
-        - The same holds for X2, Y2, magnitude2 and noise2 with sensitivity2.
-        - Converting the frequency requires both 'frequency part 1' and
-          'frequency part 2'.
+        - Converting X, Y, magnitude and noise requires sensitivity data, which can either be part
+          of the provided data or can be provided via the sensitivity argument
+        - The same holds for X2, Y2 and magnitude2 with sensitivity2.
+        - Converting the frequency requires both 'frequency part 1' and 'frequency part 2'.
 
         :param dict buffer_data:
             The data to be converted. Must be in the format as returned by the
@@ -500,21 +497,34 @@ class DSP7265(Instrument):
 
         :param sensitivity:
             If provided, the sensitivity used to convert X, Y, magnitude and noise.
-            Can be provided as a float or as an array that matches the length elements
-            in the buffer_data. If both a sensitivity is provided and present in the
-            buffer_data, the provided value is used for the conversion, but the
-            sensitivity in the buffer_data is stored in the returned dict.
+            Can be provided as a float or as an array that matches the length of elements in
+            `buffer_data`. If both a sensitivity is provided and present in the buffer_data, the
+            provided value is used for the conversion, but the sensitivity in the buffer_data is
+            stored in the returned dict.
 
         :param sensitivity2:
             Same as the first sensitivity argument, but for X2, Y2, magnitude2 and noise2.
 
         :param bool raise_error:
-            Boolean that determines whether an exception is raised in case not all keys
-            provided in buffer_data can be converted. If False, the columns that cannot
-            be converted are omitted in the returned dict.
+            Determines whether an exception is raised in case not all keys provided in buffer_data
+            can be converted. If False, the columns that cannot be converted are omitted in the
+            returned dict.
 
+        :return: Floating-point buffer data
+        :rtype: dict
         """
         data = {}
+
+        def maybe_raise(message):
+            if raise_error:
+                raise ValueError(message)
+
+        def convert_if_present(keys, multiply_by=1):
+            """Copy any available entries from buffer_data to data, scale with multiply_by.
+            """
+            for key in keys:
+                if key in buffer_data:
+                    data[key] = buffer_data[key] * multiply_by
 
         # Sensitivity (for both single and dual modes)
         for key in ["sensitivity", "sensitivity2"]:
@@ -523,31 +533,23 @@ class DSP7265(Instrument):
                     self.SENSITIVITIES[v % 32] * self.SEN_MULTIPLIER[v // 32]
                     for v in buffer_data[key]
                 ])
+        # Try to set sensitivity values from arg or data
+        sensitivity = sensitivity or data.get('sensitivity', None)
+        sensitivity2 = sensitivity2 or data.get('sensitivity2', None)
 
-        # X, Y, magnitude, and noise data
         if any(["x" in buffer_data,
                 "y" in buffer_data,
                 "magnitude" in buffer_data,
                 "noise" in buffer_data, ]):
-            # Requires a sensitivity
-            if sensitivity is not None:
-                pass
-            elif "sensitivity" in data:
-                sensitivity = data["sensitivity"]
-            elif raise_error:
-                raise ValueError("X, Y, magnitude and noise cannot be converted as no "
-                                 "sensitivity is provided, neither as argument or as "
-                                 "part of the buffer_data. ")
-
-            if sensitivity is not None:
-                for key in ["x", "y", "magnitude", "noise"]:
-                    if key in buffer_data:
-                        data[key] = buffer_data[key] * sensitivity / 10000
+            if sensitivity is None:
+                maybe_raise("X, Y, magnitude and noise cannot be converted as no "
+                            "sensitivity is provided, neither as argument nor as "
+                            "part of the buffer_data. ")
+            else:
+                convert_if_present(["x", "y", "magnitude", "noise"], sensitivity / 10000)
 
         # phase data (for both single and dual modes)
-        for key in ["phase", "phase2"]:
-            if key in buffer_data:
-                data[key] = buffer_data[key] / 100
+        convert_if_present(["phase", "phase2"], 1 / 100)
 
         # frequency data from frequency part 1 and 2
         if "frequency part 1" in buffer_data or "frequency part 2" in buffer_data:
@@ -556,41 +558,30 @@ class DSP7265(Instrument):
                     int(format(v2, "016b") + format(v1, "016b"), 2) / 1000 for
                     v1, v2 in zip(buffer_data["frequency part 1"], buffer_data["frequency part 2"])
                 ])
-            elif raise_error:
-                raise ValueError("Cannot calculate the frequency when not both"
-                                 "frequency part 1 and 2 are provided.")
+            else:
+                maybe_raise("Can calculate the frequency only when both"
+                            "frequency part 1 and 2 are provided.")
 
         # conversion for, adc1, adc2, dac1, dac2, ratio, and log ratio
-        for key in ["adc1", "adc2", "dac1", "dac2", "ratio", "log ratio"]:
-            if key in buffer_data:
-                data[key] = buffer_data[key] / 1000
+        convert_if_present(["adc1", "adc2", "dac1", "dac2", "ratio", "log ratio"], 1 / 1000)
 
         # adc3 (integrating converter); requires a call to adc3_time
         if "adc3" in buffer_data:
             data["adc3"] = buffer_data["adc3"] / (50000 * self.adc3_time)
 
         # event does not require a conversion
-        if "event" in buffer_data:
-            data['event'] = buffer_data['event']
+        convert_if_present(["event"])
 
         # X, Y, and magnitude data for both dual modes
         if any(["x2" in buffer_data,
                 "y2" in buffer_data,
                 "magnitude2" in buffer_data, ]):
-            # Requires a sensitivity
-            if sensitivity2 is not None:
-                pass
-            elif "sensitivity2" in data:
-                sensitivity2 = data["sensitivity2"]
-            elif raise_error:
-                raise ValueError("X2, Y2, magnitude2 and noise2 cannot be converted as no "
-                                 "sensitivity2 is provided, neither as argument or as "
-                                 "part of the buffer_data. ")
-
-            if sensitivity2 is not None:
-                for key in ["x2", "y2", "magnitude2"]:
-                    if key in buffer_data:
-                        data[key] = buffer_data[key] * sensitivity2 / 10000
+            if sensitivity2 is None:
+                maybe_raise("X2, Y2 and magnitude2 cannot be converted as no "
+                            "sensitivity2 is provided, neither as argument nor as "
+                            "part of the buffer_data. ")
+            else:
+                convert_if_present(["x2", "y2", "magnitude2"], sensitivity2 / 10000)
 
         return data
 
