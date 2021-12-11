@@ -22,18 +22,14 @@
 # THE SOFTWARE.
 #
 
-import sys
 import logging
 import time
 import traceback
-from logging.handlers import QueueHandler
-from importlib.machinery import SourceFileLoader
 from queue import Queue
 
 from .listeners import Recorder
-from .procedure import Procedure, ProcedureWrapper
+from .procedure import Procedure
 from .results import Results
-from ..log import TopicQueueHandler
 from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
@@ -92,7 +88,8 @@ class Worker(StoppableThread):
                 self.publisher = self.context.socket(zmq.PUB)
                 self.publisher.bind('tcp://*:%d' % self.port)
                 log.info("Worker connected to tcp://*:%d" % self.port)
-                time.sleep(0.3)  # wait so that the socket will be ready before starting to emit messages
+                # wait so that the socket will be ready before starting to emit messages
+                time.sleep(0.3)
             except Exception:
                 log.exception("Couldn't establish ZMQ publisher!")
                 self.context = None
@@ -162,7 +159,7 @@ class Worker(StoppableThread):
         self.recorder = Recorder(self.results, self.recorder_queue)
         self.recorder.start()
 
-        #locals()[self.procedures_file] = __import__(self.procedures_file)
+        # locals()[self.procedures_file] = __import__(self.procedures_file)
 
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop

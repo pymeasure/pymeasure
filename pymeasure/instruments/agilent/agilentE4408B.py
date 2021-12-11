@@ -85,11 +85,11 @@ class AgilentE4408B(Instrument):
 
     @property
     def frequencies(self):
-        """ Returns a numpy array of frequencies in Hz that 
+        """ Returns a numpy array of frequencies in Hz that
         correspond to the current settings of the instrument.
         """
         return np.linspace(
-            self.start_frequency, 
+            self.start_frequency,
             self.stop_frequency,
             self.frequency_points,
             dtype=np.float64
@@ -109,11 +109,10 @@ class AgilentE4408B(Instrument):
 
     def trace_df(self, number=1):
         """ Returns a pandas DataFrame containing the frequency
-        and peak data for a particular trace, based on the 
+        and peak data for a particular trace, based on the
         trace number (1, 2, or 3).
         """
         return pd.DataFrame({
-            'Frequency (GHz)': self.frequencies*1e-9,
+            'Frequency (GHz)': self.frequencies * 1e-9,
             'Peak (dB)': self.trace(number)
         })
-        
