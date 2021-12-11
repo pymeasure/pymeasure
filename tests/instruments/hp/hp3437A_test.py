@@ -19,11 +19,11 @@ svm = HP3437A('GPIB0::24')
 #Set timeout for this device to about 60 min = 60000ms
 # svm.adapter.connection.timeout = 36000000
 
-svm.number_readings = 10
+svm.number_readings = 5000
 
 
 # svm.delay = 0.1234567
-svm.delay = 0.1
+svm.delay = 0.00001
 
 svm.trigger = "internal"
 
@@ -38,7 +38,7 @@ print(f"Range {svm.range}")
 
 print(svm.status)
 
-print(svm.delay)
+# print(svm.delay)
 # handlers = log.handlers[:]
 # for handler in handlers:
 #     handler.close()
