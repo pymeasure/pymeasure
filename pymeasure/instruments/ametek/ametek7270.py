@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
+
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
 
 
 class Ametek7270(Instrument):

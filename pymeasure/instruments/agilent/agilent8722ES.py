@@ -64,8 +64,7 @@ class Agilent8722ES(Instrument):
         """ An integer representing the number of averages to take. Note that
         averaging must be enabled for this to take effect. This property can be set.
         """,
-        cast=lambda x: int(
-            float(x))  # int() doesn't like converting scientific notation values directly from strings
+        cast=lambda x: int(float(x))  # need float() to convert scientific notation in strings
     )
     averaging_enabled = Instrument.control(
         "AVERO?", "AVERO%d",
@@ -172,7 +171,9 @@ class Agilent8722ES(Instrument):
         """
         if averages is not None or blocking is not None or timeout is not None or delay is not None:
             warnings.warn(
-                "averages, blocking, timeout, and delay arguments are no longer used by scan()", FutureWarning)
+                "averages, blocking, timeout, and delay arguments are no longer used by scan()",
+                FutureWarning
+            )
         self.write("*CLS")
         self.scan_single()
         # All queries will block until the scan is done, so use NOOP? to check.

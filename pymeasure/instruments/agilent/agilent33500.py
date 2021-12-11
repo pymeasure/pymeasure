@@ -355,10 +355,11 @@ class Agilent33500(Instrument):
 
     def data_arb(self, arb_name, data_points, data_format='DAC'):
         """
-        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be given
-        as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma separated floating
-        point values (ranging from -1.0 to +1.0) or as a binary data stream. Check the manual for more
-        information. The storage depends on the device type and ranges from 8 Sa to 16 MSa (maximum).
+        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be
+        given as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma
+        separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
+        Check the manual for more information. The storage depends on the device type and ranges
+        from 8 Sa to 16 MSa (maximum).
         TODO: *Binary is not yet implemented*
 
         :param arb_name: The name of the trace in the volatile memory. This is used to access the

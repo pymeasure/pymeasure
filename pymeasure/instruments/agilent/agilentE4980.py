@@ -24,7 +24,7 @@
 
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pyvisa.errors import VisaIOError
 
 
@@ -47,9 +47,10 @@ class AgilentE4980(Instrument):
                                    values=[20, 2e6])
 
     # FETCH? returns [A,B,state]: impedance returns only A,B
-    impedance = Instrument.measurement(":FETCH?",
-                                       "Measured data A and B, according to :attr:`~.AgilentE4980.mode`",
-                                       get_process=lambda x: x[:2])
+    impedance = Instrument.measurement(
+        ":FETCH?",
+        "Measured data A and B, according to :attr:`~.AgilentE4980.mode`",
+        get_process=lambda x: x[:2])
 
     mode = Instrument.control("FUNCtion:IMPedance:TYPE?", "FUNCtion:IMPedance:TYPE %s",
                               """
@@ -150,7 +151,8 @@ Select trigger source; accept the values:
         """
         Set and get aperture.
 
-        :param time: integration time as string: SHORT, MED, LONG (case insensitive); if None, get values
+        :param time: integration time as string: SHORT, MED, LONG (case insensitive);
+            if None, get values
         :param averages: number of averages, numeric
         """
         if time is None:

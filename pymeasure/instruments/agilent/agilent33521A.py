@@ -34,8 +34,9 @@ log.addHandler(logging.NullHandler())
 
 class Agilent33521A(Agilent33500):
     """Represents the Agilent 33521A Function/Arbitrary Waveform Generator.
-    This documentation page shows only methods different from the parent class :doc:`Agilent33500 <agilent33500>`.
 
+    This documentation page shows only methods different from the parent class
+    :doc:`Agilent33500 <agilent33500>`.
     """
 
     def __init__(self, adapter, **kwargs):

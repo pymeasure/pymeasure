@@ -23,19 +23,18 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+import time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
-import numpy as np
-import time
-from io import BytesIO
-import re
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Keithley2400(Instrument, KeithleyBuffer):
@@ -739,7 +738,8 @@ class Keithley2400(Instrument, KeithleyBuffer):
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay, backward=True))
         self.disable_source()
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay))
-        data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay, backward=True))
+        data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay,
+                              backward=True))
         self.disable_source()
         return data
 

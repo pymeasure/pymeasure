@@ -29,7 +29,8 @@ class Agilent34410A(Instrument):
     """
     Represent the HP/Agilent/Keysight 34410A and related multimeters.
 
-    Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance, resistance_4w
+    Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance,
+    resistance_4w
     """
     # only the most simple functions are implemented
     voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")

@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
+
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
 
 
 class HP33120A(Instrument):

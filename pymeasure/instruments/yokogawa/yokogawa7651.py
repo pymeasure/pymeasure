@@ -21,19 +21,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from time import sleep
+import re
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     truncated_discrete_set, strict_discrete_set,
     truncated_range
 )
-from time import sleep
-import numpy as np
-import re
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Yokogawa7651(Instrument):

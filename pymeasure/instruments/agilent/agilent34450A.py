@@ -25,11 +25,11 @@
 import re
 import logging
 
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 
 class Agilent34450A(Instrument):
@@ -81,7 +81,7 @@ class Agilent34450A(Instrument):
                     self.mode = 'ac voltage'
                 self.write(":configure:freq")
         else:
-            raise ValueError('Value %s is not a supported mode for this device.'.format(value))
+            raise ValueError('Value {} is not a supported mode for this device.'.format(value))
 
     ###############
     # Current (A) #
@@ -285,7 +285,7 @@ class Agilent34450A(Instrument):
     )
     frequency_current_auto_range = Instrument.control(
         ":SENS:FREQ:CURR:RANG:AUTO?", ":SENS:FREQ:CURR:RANG:AUTO %d",
-        """ A boolean property that toggles auto ranging for AC current in frequency measurements. """,
+        """ Boolean property that toggles auto ranging for AC current in frequency measurements.""",
         validator=strict_discrete_set,
         values=BOOLS,
         map_values=True
@@ -301,7 +301,7 @@ class Agilent34450A(Instrument):
     )
     frequency_voltage_auto_range = Instrument.control(
         ":SENS:FREQ:VOLT:RANG:AUTO?", ":SENS:FREQ:VOLT:RANG:AUTO %d",
-        """ A boolean property that toggles auto ranging for AC voltage in frequency measurements. """,
+        """Boolean property that toggles auto ranging for AC voltage in frequency measurements. """,
         validator=strict_discrete_set,
         values=BOOLS,
         map_values=True
@@ -527,8 +527,8 @@ class Agilent34450A(Instrument):
 
         Use cases:
 
-        ['"CURR +1.000000E-01', '+1.500000E-06"']   ** Obtained from Instrument.measurement or Instrument.control
-        '"CURR +1.000000E-01,+1.500000E-06"'        ** Obtained from Instrument.ask
+        ['"CURR +1.000000E-01', '+1.500000E-06"'] from Instrument.measurement or Instrument.control
+        '"CURR +1.000000E-01,+1.500000E-06"'      from Instrument.ask
 
         becomes
 

@@ -72,13 +72,15 @@ class DPSeriesErrors(IntFlag):
 
 
 class DPSeriesMotorController(Instrument):
-    """Base class to interface with Anaheim Automation DP series stepper motor controllers. This driver has been tested
-       with the DPY50601 and DPE25601 motor controllers.
+    """Base class to interface with Anaheim Automation DP series stepper motor controllers.
+
+    This driver has been tested with the DPY50601 and DPE25601 motor controllers.
     """
 
     address = Instrument.control(
         "%", "~%i",
-        """Integer property representing the address that the motor controller uses for serial communications.""",
+        """Integer property representing the address that the motor controller uses for serial
+        communications.""",
         validator=strict_range,
         values=[0, 99],
         cast=int,
@@ -86,7 +88,8 @@ class DPSeriesMotorController(Instrument):
 
     basespeed = Instrument.control(
         "VB", "B%i",
-        """Integer property that represents the motor controller's starting/homing speed. This property can be set.""",
+        """Integer property that represents the motor controller's starting/homing speed. This
+        property can be set.""",
         validator=truncated_range,
         values=[1, 5000],
         cast=int,
@@ -95,7 +98,7 @@ class DPSeriesMotorController(Instrument):
     maxspeed = Instrument.control(
         "VM", "M%i",
         """Integer property that represents the motor controller's maximum (running) speed.
-           This property can be set.""",
+        This property can be set.""",
         validator=truncated_range,
         values=[1, 50000],
         cast=int,
@@ -103,9 +106,9 @@ class DPSeriesMotorController(Instrument):
 
     direction = Instrument.control(
         "V+", "%s",
-        """A string property that represents the direction in which the stepper motor will rotate upon subsequent
-           step commands. This property can be set. 'CW' corresponds to clockwise rotation and 'CCW' corresponds to
-           counter-clockwise rotation.""",
+        """A string property that represents the direction in which the stepper motor will rotate
+        upon subsequent step commands. This property can be set. 'CW' corresponds to clockwise
+        rotation and 'CCW' corresponds to counter-clockwise rotation.""",
         map_values=True,
         validator=strict_discrete_set,
         values={"CW": "+", "CCW": "-"},
@@ -114,7 +117,8 @@ class DPSeriesMotorController(Instrument):
 
     encoder_autocorrect = Instrument.control(
         "VEA", "EA%i",
-        """A boolean property to enable or disable the encoder auto correct function. This property can be set.""",
+        """A boolean property to enable or disable the encoder auto correct function. This property
+        can be set.""",
         map_values=True,
         values={True: 1, False: 0},
         validator=strict_discrete_set,
@@ -124,7 +128,8 @@ class DPSeriesMotorController(Instrument):
     encoder_delay = Instrument.control(
         "VED", "ED%i",
         """An integer property that represents the wait time in ms. after a move is finished before
-           the encoder is read for a potential encoder auto-correct action to take place. This property can be set.""",
+        the encoder is read for a potential encoder auto-correct action to take place. This
+        property can be set.""",
         validator=truncated_range,
         values=[0, 65535],
         cast=int,
@@ -132,8 +137,8 @@ class DPSeriesMotorController(Instrument):
 
     encoder_motor_ratio = Instrument.control(
         "VEM", "EM%i",
-        """An integer property that represents the ratio of the number of encoder pulses per motor step.
-           This property can be set.""",
+        """An integer property that represents the ratio of the number of encoder pulses per motor
+        step. This property can be set.""",
         validator=truncated_range,
         values=[1, 255],
         cast=int,
@@ -141,8 +146,8 @@ class DPSeriesMotorController(Instrument):
 
     encoder_retries = Instrument.control(
         "VER", "ER%i",
-        """An integer property that represents the number of times the motor controller will try
-           the encoder auto correct function before setting an error flag. This property can be set.""",
+        """An integer property that represents the number of times the motor controller will try the
+        encoder auto correct function before setting an error flag. This property can be set.""",
         validator=truncated_range,
         values=[0, 255],
         cast=int,
@@ -180,13 +185,14 @@ class DPSeriesMotorController(Instrument):
 
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
         """
-        Initialize communication with the motor controller with the address given by the 'address' parameter.
-        In addition to the keyword arguments that can be set for the Instrument base class, this class has the following
-        kwargs:
+        Initialize communication with the motor controller with the address given by `address`.
+
+        In addition to the keyword arguments that can be set for the Instrument base class, this
+        class has the following kwargs:
 
         :param address: (int) Address that the motor controller uses for serial communiation.
-        :param encoder_enabled: (bool) Flag to indicate if the driver should use an encoder input to set its position
-                                 property.
+        :param encoder_enabled: (bool) Flag to indicate if the driver should use an encoder input
+            to set its position property.
         """
         self._address = address
         self._encoder_enabled = encoder_enabled
@@ -206,8 +212,8 @@ class DPSeriesMotorController(Instrument):
 
     @property
     def encoder_enabled(self):
-        """ A boolean property to represent whether an external encoder is connected and should be used to set the
-            step_position property.
+        """ A boolean property to represent whether an external encoder is connected and should be
+        used to set the step_position property.
         """
         return self._encoder_enabled
 
@@ -217,11 +223,12 @@ class DPSeriesMotorController(Instrument):
 
     @property
     def step_position(self):
-        """ Integer property representing the value of the motor position measured in steps counted by the motor
-            controller or, if encoder_enabled is set, the steps counted by an externally connected encoder. Note that in
-            the DP series motor controller instrument manuals, this property would be referred to as the 'absolute
-            position' while this driver implements a conversion between steps and absolute units for the `absolute
-            position` property. This property can be set.
+        """ Integer property representing the value of the motor position measured in steps counted
+        by the motor controller or, if encoder_enabled is set, the steps counted by an
+        externally connected encoder. Note that in the DP series motor controller instrument
+        manuals, this property would be referred to as the 'absolute position' while this
+        driver implements a conversion between steps and absolute units for the `absolute
+        position` property. This property can be set.
         """
         if self._encoder_enabled:
             pos = self.ask("VEP")
@@ -237,12 +244,13 @@ class DPSeriesMotorController(Instrument):
 
     @property
     def absolute_position(self):
-        """ Float property representing the value of the motor position measured in absolute units. Note that in DP
-            series motor controller instrument manuals, `absolute position` refers to the 'step_position' property
-            rather than this property. Also note that use of this property relies on steps_to_absolute() and
-            absolute_to_steps() being implemented in a subclass. In this way, the user can define the conversion from
-            a motor step position into any desired absolute unit. Absolute units could be the position in meters of a
-            linear stage or the angular position of a gimbal mount, etc. This property can be set.
+        """ Float property representing the value of the motor position measured in absolute units.
+        Note that in DP series motor controller instrument manuals, `absolute position` refers to
+        the 'step_position' property rather than this property. Also note that use of this property
+        relies on steps_to_absolute() and absolute_to_steps() being implemented in a subclass. In
+        this way, the user can define the conversion from a motor step position into any desired
+        absolute unit. Absolute units could be the position in meters of a linear stage or the
+        angular position of a gimbal mount, etc. This property can be set.
         """
         step_pos = self.step_position
         return self.steps_to_absolute(step_pos)
@@ -253,9 +261,11 @@ class DPSeriesMotorController(Instrument):
         self.step_position = steps_pos
 
     def absolute_to_steps(self, pos):
-        """ Convert an absolute position to a number of steps to move. This must be implemented in subclasses.
+        """ Convert an absolute position to a number of steps to move. This must be implemented in
+        subclasses.
 
-        :param pos: Absolute position in the units determined by the subclassed absolute_to_steps() method.
+        :param pos: Absolute position in the units determined by the subclassed absolute_to_steps()
+            method.
         """
         raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")
 
@@ -279,8 +289,9 @@ class DPSeriesMotorController(Instrument):
         self.write(".")
 
     def move(self, direction):
-        """ Move the stepper motor continuously in the given direction until a stop command is sent or a limit switch
-            is reached. This method corresponds to the 'slew' command in the DP series instrument manuals.
+        """ Move the stepper motor continuously in the given direction until a stop command is sent
+        or a limit switch is reached. This method corresponds to the 'slew' command in the DP
+        series instrument manuals.
 
         :param direction: value to set on the direction property before moving the motor.
         """
@@ -292,11 +303,12 @@ class DPSeriesMotorController(Instrument):
 
         :param home_mode: 0 or 1 specifying which homing mode to run.
 
-                          0 will perform a homing operation where the controller moves the motor until a soft limit is
-                          reached, then will ramp down to base speed and continue motion until a home limit is reached.
+            0 will perform a homing operation where the controller moves the motor until a soft
+            limit is reached, then will ramp down to base speed and continue motion until a home
+            limit is reached.
 
-                          In mode 1, the controller will move the motor until a limit is reached, then will ramp down to
-                          base speed, change direction, and run until the limit is released.
+            In mode 1, the controller will move the motor until a limit is reached, then will ramp
+            down to base speed, change direction, and run until the limit is released.
         """
         hm = int(home_mode)
         if hm == 0 or hm == 1:
@@ -305,7 +317,8 @@ class DPSeriesMotorController(Instrument):
             raise ValueError("Invalid home mode %i specified!" % hm)
 
     def write(self, command):
-        """Override the instrument base write method to add the motor controller's address to the command string.
+        """Override the instrument base write method to add the motor controller's address to the
+        command string.
 
         :param command: command string to be sent to the motor controller.
         """
@@ -319,7 +332,8 @@ class DPSeriesMotorController(Instrument):
         super().write(cmd_str)
 
     def values(self, command, **kwargs):
-        """ Override the instrument base values method to add the motor controller's address to the command string.
+        """ Override the instrument base values method to add the motor controller's address to the
+        command string.
 
         :param command: command string to be sent to the motor controller.
         """
@@ -332,7 +346,8 @@ class DPSeriesMotorController(Instrument):
         return vals
 
     def ask(self, command):
-        """ Override the instrument base ask method to add the motor controller's address to the command string.
+        """ Override the instrument base ask method to add the motor controller's address to the
+        command string.
 
         :param command: command string to be sent to the instrument
         """

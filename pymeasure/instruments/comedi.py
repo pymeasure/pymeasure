@@ -22,18 +22,16 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.experiment import Procedure, Parameter, FloatParameter, IntegerParameter
 import numpy as np
-from time import time, sleep
-from threading import Event
+from time import sleep
 from importlib.util import find_spec
 
 if find_spec('pycomedi'):  # Guard against pycomedi not being installed
     from pycomedi.subdevice import StreamingSubdevice
-    from pycomedi.constant import *
+    from pycomedi.constant import AREF, CMDF, SUBDEVICE_TYPE, TRIG_SRC, UNIT
     from pycomedi.constant import _NamedInt
     from pycomedi.channel import AnalogChannel
-    from pycomedi.utility import inttrig_insn, Reader, CallbackReader
+    from pycomedi.utility import inttrig_insn
 
 
 def getAI(device, channel, range=None):
@@ -114,7 +112,7 @@ class SynchronousAI(object):
         """
         for i in range(3):
             rc = self.subdevice.command_test()  # Verify command is correct
-            if rc == None:
+            if rc is None:
                 break
 
     def measure(self, hasAborted=lambda: False):

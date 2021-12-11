@@ -23,15 +23,16 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from time import sleep, time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range
 from pymeasure.adapters import PrologixAdapter
 
-import numpy as np
-from time import sleep, time
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class KeithleyBuffer(object):

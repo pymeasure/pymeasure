@@ -26,8 +26,8 @@ from pymeasure.instruments import Instrument
 
 
 def clean_closed_channels(output):
-    """Cleans up the list returned by command ":ROUTe:CLOSe?", such that each entry is an integer denoting
-    the channel number.
+    """Cleans up the list returned by command ":ROUTe:CLOSe?", such that each entry is an integer
+    denoting the channel number.
     """
     if isinstance(output, str):
         s = output.replace("(", "").replace(")", "").replace("@", "")
@@ -51,8 +51,8 @@ def clean_closed_channels(output):
 
 
 class Keithley2750(Instrument):
-    """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for interacting
-    with the instrument.
+    """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for
+    interacting with the instrument.
     """
 
     closed_channels = Instrument.measurement(":ROUTe:CLOSe?",

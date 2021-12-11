@@ -31,11 +31,9 @@ import pandas as pd
 from enum import IntEnum
 from collections import Counter, namedtuple, OrderedDict
 from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_discrete_set,
                                               strict_range,
                                               strict_discrete_range)
-from pymeasure.instruments import (Instrument,
-                                   RangeException)
+from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

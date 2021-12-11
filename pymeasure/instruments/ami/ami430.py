@@ -22,19 +22,13 @@
 # THE SOFTWARE.
 #
 
+from pymeasure.instruments import Instrument
+from pymeasure.adapters import VISAAdapter
+from time import sleep, time
+
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter
-from pymeasure.instruments.validators import (
-    truncated_discrete_set, strict_discrete_set,
-    truncated_range
-)
-from time import sleep, time
-import numpy as np
-import re
 
 
 class AMI430(Instrument):

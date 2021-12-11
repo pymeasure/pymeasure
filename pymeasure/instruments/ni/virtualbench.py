@@ -28,14 +28,11 @@
 import logging
 import re
 # ctypes only required for VirtualBench_Direct class
-from ctypes import (c_bool, c_size_t, c_double, c_uint8, c_int32, c_uint32,
-                    c_int64, c_uint64, c_wchar, c_wchar_p, Structure, c_int,
-                    cdll, byref)
+from ctypes import (c_int, cdll, byref)
 from datetime import datetime, timezone, timedelta
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument, RangeException
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_discrete_range,
     truncated_discrete_set, strict_range

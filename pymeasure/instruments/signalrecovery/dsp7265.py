@@ -23,15 +23,16 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from time import sleep, time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, \
     modular_range_bidirectional, strict_discrete_set
 
-from time import sleep, time
-import numpy as np
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class DSP7265(Instrument):

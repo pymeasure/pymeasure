@@ -57,12 +57,12 @@ class Status_bits(ctypes.LittleEndianStructure):
     """
 
     _fields_ = [
-        #Byte 1: Function, Range and Number of Digits
-        ("digits",     c_uint8, 2), # bit 0..1
-        ("range",      c_uint8, 3), # bit 2..4
-        ("function",   c_uint8, 3), # bit 5..7
+        # Byte 1: Function, Range and Number of Digits
+        ("digits",     c_uint8, 2),  # bit 0..1
+        ("range",      c_uint8, 3),  # bit 2..4
+        ("function",   c_uint8, 3),  # bit 5..7
 
-        #Byte 2: Status Bits
+        # Byte 2: Status Bits
         ("int_trig",   c_uint8, 1),
         ("auto_range", c_uint8, 1),
         ("auto_zero",  c_uint8, 1),
@@ -72,7 +72,7 @@ class Status_bits(ctypes.LittleEndianStructure):
         ("ext_trig",   c_uint8, 1),
         ("res1",       c_uint8, 1),
 
-        #Byte 3: Serial Poll Mask (SRQ)
+        # Byte 3: Serial Poll Mask (SRQ)
         ("SRQ_data_rdy",         c_uint8, 1),
         ("res2",                 c_uint8, 1),
         ("SRQ_syntax_error",     c_uint8, 1),
@@ -82,7 +82,7 @@ class Status_bits(ctypes.LittleEndianStructure):
         ("res3",                 c_uint8, 1),
         ("SRQ_PON",              c_uint8, 1),
 
-        #Byte 4: Error Information
+        # Byte 4: Error Information
         ("ERR_cal",        c_uint8, 1),
         ("ERR_RAM",        c_uint8, 1),
         ("ERR_ROM",        c_uint8, 1),
@@ -92,7 +92,7 @@ class Status_bits(ctypes.LittleEndianStructure):
         ("res4",           c_uint8, 1),
         ("res5",           c_uint8, 1),
 
-        #Byte 5: DAC Value
+        # Byte 5: DAC Value
         ("DAC_value",       c_uint8, 8),
     ]
 

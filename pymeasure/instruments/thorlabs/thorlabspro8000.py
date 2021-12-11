@@ -22,13 +22,8 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, discreteTruncate
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range
-
-import numpy as np
-import time
-import re
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
 
 
 class ThorlabsPro8000(Instrument):

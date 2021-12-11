@@ -22,17 +22,13 @@
 # THE SOFTWARE.
 #
 import logging
-from time import sleep
-import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.anritsu import AnritsuMS9710C
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     truncated_discrete_set,
     truncated_range,
-    joined_validators
 )
-import re
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -65,7 +61,7 @@ class AnritsuMS9740A(AnritsuMS9710C):
 
     average_sweep = Instrument.control(
         "AVS?", "AVS %d",
-        "Number of averages to make on a sweep (1-1000), with 1 being a single (non-averaged) sweep",
+        "Nr. of averages to make on a sweep (1-1000), with 1 being a single (non-averaged) sweep",
         validator=truncated_range, values=[1, 1000]
     )
 

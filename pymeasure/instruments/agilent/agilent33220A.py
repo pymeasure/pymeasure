@@ -22,15 +22,15 @@
 # THE SOFTWARE.
 #
 
-import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
 from time import time
 from pyvisa.errors import VisaIOError
+
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 # Capitalize string arguments to allow for better conformity with other WFG's

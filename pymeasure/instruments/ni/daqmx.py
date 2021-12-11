@@ -133,7 +133,8 @@ class DAQmx(object):
         read = int32()
         self.CHK(nidaq.DAQmxReadAnalogF64(self.taskHandleAI, self.numSamples, float64(10.0),
                                           DAQmx_Val_GroupByChannel, self.dataBuffer.ctypes.data,
-                                          self.numChannels * self.numSamples, ctypes.byref(read), None))
+                                          self.numChannels * self.numSamples, ctypes.byref(read),
+                                          None))
         return self.dataBuffer.transpose()
 
     def acquire_average(self):

@@ -70,10 +70,11 @@ class Keithley2450(Instrument, KeithleyBuffer):
         map_values=True
     )
 
-    source_enabled = Instrument.measurement("OUTPUT?",
-                                            """ Reads a boolean value that is True if the source is enabled. """,
-                                            cast=bool
-                                            )
+    source_enabled = Instrument.measurement(
+        "OUTPUT?",
+        """ Reads a boolean value that is True if the source is enabled. """,
+        cast=bool
+    )
 
     ###############
     # Current (A) #
