@@ -53,7 +53,6 @@ def test_scribe_finish():
     assert s.is_alive() is False
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason='Mock.assert_called_once requires python 3.6')
 def test_setup_file_logging():
     with mock.patch('pymeasure.log.file_log') as mocked_file_log:
         setup_logging()
