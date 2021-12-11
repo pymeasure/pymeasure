@@ -173,7 +173,7 @@ class Instrument(object):
 
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete
+        """ This property allows synchronization between a controller and a device. The Operation Complete 
         query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
@@ -497,7 +497,6 @@ class Instrument(object):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
 
 class FakeInstrument(Instrument):
     """ Provides a fake implementation of the Instrument class
