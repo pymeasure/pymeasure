@@ -27,6 +27,7 @@ import logging
 import os
 import re
 import sys
+from importlib import import_module
 from importlib.machinery import SourceFileLoader
 from datetime import datetime
 from string import Formatter
@@ -297,15 +298,12 @@ class Results(object):
             if procedure_class is None:
                 raise ValueError("Header does not contain the Procedure class")
             try:
-                from importlib import import_module
                 procedure_module = import_module(procedure_module)
                 procedure_class = getattr(procedure_module, procedure_class)
                 procedure = procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
                 log.warning("Unknown Procedure being used")
-            except Exception as e:
-                raise e
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
