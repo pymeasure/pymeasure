@@ -41,6 +41,7 @@ c_uint8 = ctypes.c_uint8
 c_uint16 = ctypes.c_uint16
 c_uint32 = ctypes.c_uint32
 
+
 # classes for the decoding of the 5-byte status word
 class StatusBytes(ctypes.Structure):
     """
@@ -96,7 +97,7 @@ class StatusBits(ctypes.BigEndianStructure):
 
     def __str__(self):
         """
-        Returns a pretty formatted (human readable) string showing the status of the instrument
+        Returns a pretty formatted string showing the status of the instrument
 
         """
         return "format: {}, SRQ Mask:  {}, Trigger: {}, Range: {} \n".format(
@@ -139,12 +140,15 @@ class PackedBits(ctypes.BigEndianStructure):
         )
 
     def __float__(self):
+        # range decoding
+        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
+        # 1 indicates 0.1V range
         if self.range == 1:
             cur_range = 0.1
         # 2 indicates 10V range
         if self.range == 2:
             cur_range = 10.0
-        # 3 indicated 1V range (cf table 3-2, page 3-5 of the manua, HPAK document 9018-05946)
+        # 3 indicates 1V range
         if self.range == 3:
             cur_range = 1.0
 
@@ -156,7 +160,8 @@ class PackedBits(ctypes.BigEndianStructure):
             cur_range
             * sb
             * (
-                self.MSD + float(self.NSD) /10
+                self.MSD
+                + float(self.NSD) / 10
                 + float(self.OSD) / 100
                 + float(self.LSD) / 1000
             )
@@ -260,7 +265,7 @@ class HP3437A(Instrument):
 
     @classmethod
     def decode_status(cls, status_bytes, field=None):
-        """Method to handle the decoding of the status bytes into something meaningfull
+        """Method to decode the status bytes
 
         :param status_bytes: list of bytes to be decoded
         :param field: name of field to be returned
@@ -297,14 +302,17 @@ class HP3437A(Instrument):
         """
         cur_stat = Status(StatusBytes(*status_bytes))
         range_undecoded = cur_stat.b.range
+        # range decoding
+        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
         if range_undecoded == 0:
             cur_range = math.nan
+        # 1 indicates 0.1V range
         if range_undecoded == 1:
             cur_range = 0.1
         # 2 indicates 10V range
         if range_undecoded == 2:
             cur_range = 10.0
-        # 3 indicated 1V range (cf page 3-8 of the manua, HPAK document 9018-05946)
+        # 3 indicates 1V range
         if range_undecoded == 3:
             cur_range = 1.0
         return cur_range
@@ -332,28 +340,33 @@ class HP3437A(Instrument):
         return trigger_mode
 
     @staticmethod
-    def unpack_data(data_to_be_decoded):
+    def unpack_data(data):
         """
         Method to unpack the data from the returned bytes in packed mode
 
-        :param data_to_be_Decoded: list of bytes to be decoded
+        :param data: list of bytes to be decoded
         :return ret_data: float value
 
         """
-        ret_data = PackedData(PackedBytes(*data_to_be_decoded))
+        ret_data = PackedData(PackedBytes(*data))
         return float(ret_data.b)
 
     # commands overwriting the base implementaiton
     def read(self):
         """
-        Returns measured data
+        Reads measured data from instrument, returns a np.array.
 
-        :return data: np.array with the data
+        (This function also takes care of unpacking the data if required)
+
+        :return data: np.array containing the data
         """
         # Adjusting the timeout to match the number of counts and the delay
-        self.adapter.connection.timeout = (
-            self.number_readings * self.delay * 1.25 * 1000
-        )
+        current_timeout = self.adapter.connection.timeout
+        nr_delay = self.number_readings * self.delay
+        new_timeout = nr_delay * 5 * 1000
+        if new_timeout > current_timeout:
+            self.adapter.connection.timeout = new_timeout
+            log.info("HP3437A: timeout updated to %g", new_timeout)
         read_data = self.adapter.connection.read_raw()
         # check if data is in packed format format
         if read_data[0] == read_data[2]:
@@ -372,11 +385,7 @@ class HP3437A(Instrument):
         As this instrument does not have a error indication bit,
         this function alwyas returns 0.
 
-        :return error_status: one byte with the error status register content
-        :rtype error_status: int
         """
-        # Read the error status reigster only one time for this method, as
-        # the manual states that reading the error status register also clears it.
         return 0
 
     @property
@@ -384,17 +393,18 @@ class HP3437A(Instrument):
         """Return True if the instrument is set to ASCII communciation,
         this property can be set.
 
-        _Note:_
+        .. Note::
 
-        ASCII communciation is slower then the (packed) BCD based communication,
-        this may cause problems with measurment with short delay values.
+            ASCII communciation is slower then the packed (BCD) communication,
+            this may cause problems with measurments when short delays are used
+
+
 
         """
         return bool(self.decode_status(self.get_status(), "Format"))
 
     @talk_ascii.setter
     def talk_ascii(self, value):
-        # log.debug("ASCI STATUS bit %d",value)
         if value is True:
             self.write("F1")
         else:
@@ -402,7 +412,7 @@ class HP3437A(Instrument):
 
     @property
     def delay(self):
-        """Return the current value for the delay between two measurements programmed in the unit.
+        """Return the value (float) for the delay between two measurements
         This value can be set,
         valid range: 100ns - 0.999999s
 
@@ -418,7 +428,7 @@ class HP3437A(Instrument):
 
     @property
     def number_readings(self):
-        """Return current value for the number of consecutive measurements programmed.
+        """Return value (int) for the number of consecutive measurements
         This value can be set,
         valid range: 0 - 9999
 
@@ -433,12 +443,15 @@ class HP3437A(Instrument):
     @property
     def range(self):
         """Return the current measurement voltage range.
-        This value can be set,
-        valid values: 0.1,1,10 (V)
 
-        _Note:_
+        This value can be set, valid values: 0.1,1,10 (V).
 
-        THis instrument does not have autorange functionality
+        .. Note::
+
+            This instrument does not have autorange capability.
+
+            Overrange will be in indicated as 0.99,9.99 or 99.9
+
         """
         return self.decode_range(self.get_status())
 
@@ -501,11 +514,12 @@ class HP3437A(Instrument):
         trig_set = self.TRIGGERS[strict_discrete_set(value, self.TRIGGERS)]
         self.write(trig_set)
 
-    # Functions using low-level access via instrument.adapter.connection methods
+    # Functions using low-level access
 
     def GPIB_trigger(self):
         """
-        Initate trigger via low-level GPIB-command (aka GET - group execute trigger)
+        Initate trigger via low-level GPIB-command
+        (aka GET - group execute trigger)
 
         """
         self.adapter.connection.assert_trigger()
