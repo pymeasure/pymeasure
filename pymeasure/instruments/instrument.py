@@ -279,10 +279,6 @@ class Instrument(object):
         :param check_set_errors: Toggles checking errors after setting
         """
 
-        if map_values and isinstance(values, dict):
-            # Prepare the inverse values for performance
-            inverse = {v: k for k, v in values.items()}
-
         def fget(self):
             raise LookupError("Instrument.setting properties can not be read.")
 
