@@ -6,9 +6,9 @@ dependencies:
   - numpy=1.19.2
   - pandas=1.1.3
   - pyqt=5.12.3
-  - pyqtgraph=0.11.0
+  - pyqtgraph=0.12.3
   - pyserial=3.4
-  - pyvisa=1.10.1
+  - pyvisa=1.11.3
   - pyzmq=22.0.3
   - qt=5.12.9
 # Development dependencies below

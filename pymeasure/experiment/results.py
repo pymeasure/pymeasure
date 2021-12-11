@@ -27,7 +27,7 @@ import logging
 import os
 import re
 import sys
-from copy import deepcopy
+from importlib import import_module
 from importlib.machinery import SourceFileLoader
 from datetime import datetime
 from string import Formatter
@@ -35,7 +35,6 @@ from string import Formatter
 import pandas as pd
 
 from .procedure import Procedure, UnknownProcedure
-from .parameters import Parameter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,7 +42,7 @@ log.addHandler(logging.NullHandler())
 
 def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
     """Replace placeholders in string with values from procedure parameters.
-    
+
     Replaces the placeholders in the provided string with the values of the
     associated parameters, as provided by the procedure. This uses the standard
     python string.format syntax. Apart from the parameter in the procedure (which
@@ -237,10 +236,11 @@ class Results(object):
         h.append("Procedure: <%s>" % procedure)
         h.append("Parameters:")
         for name, parameter in self.parameters.items():
-            h.append("\t%s: %s" % (parameter.name, str(parameter).encode("unicode_escape").decode("utf-8")))
+            h.append("\t%s: %s" % (parameter.name, str(
+                parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
-        h = [Results.COMMENT + l for l in h]  # Comment each line
+        h = [Results.COMMENT + line for line in h]  # Comment each line
         return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
 
     def labels(self):
@@ -328,15 +328,12 @@ class Results(object):
             if procedure_class is None:
                 raise ValueError("Header does not contain the Procedure class")
             try:
-                from importlib import import_module
                 procedure_module = import_module(procedure_module)
                 procedure_class = getattr(procedure_module, procedure_class)
                 procedure = procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
                 log.warning("Unknown Procedure being used")
-            except Exception as e:
-                raise e
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():

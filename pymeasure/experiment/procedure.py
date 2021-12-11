@@ -49,7 +49,7 @@ class Procedure(object):
     Inheriting classes should define the startup, execute, and shutdown
     methods as needed. The shutdown method is called even with a
     software exception or abort event during the execute method.
-    
+
     If keyword arguments are provided, they are added to the object as
     attributes.
     """
@@ -100,7 +100,7 @@ class Procedure(object):
 
     def _update_parameters(self):
         """ Collects all the Parameter objects for the procedure and stores
-        them in a meta dictionary so that the actual values can be set in 
+        them in a meta dictionary so that the actual values can be set in
         their stead
         """
         if not self._parameters:
