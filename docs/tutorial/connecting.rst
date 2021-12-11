@@ -66,4 +66,26 @@ To use this type equipment the python-vxi11 library has to be installed which is
    adapter = VXI11Adapter("TCPIP::192.168.0.100::inst0::INSTR")
    instr = Instrument(adapter, "my_instrument")
 
+.. _connection_settings:
+
+Modifying connection settings
+=============================
+
+Sometimes you want to tweak the connection settings when talking to a device.
+This might be because you have a non-standard device or connection, or are troubleshooting why a device does not reply.
+
+When using a string or integer to connect to an instrument, a :py:class:`~pymeasure.adapters.VISAAdapter` is used internally.
+Additional settings need to be passed in as keyword arguments.
+For example, to use a fast baud rate on a quick connection when connecting to the Keithely2400 as above, do ::
+
+    sourcemeter = Keithley2400("ASRL2", timeout=500, baud_rate=115200)
+
+This overrides any defaults that may be defined for the instrument, either generally valid ones like ``timeout`` or interface-specific ones like ``baud_rate``.
+
+If you use an invalid argument, either misspelled or not valid for the chosen interface, an exception will be raised.
+
+When using a separately-created Adapter instance, you define any custom settings when creating the adapter. Any keyword arguments passed in are discarded.
+
+----
+
 The above examples illustrate different methods for communicating with instruments, using adapters to keep instrument code independent from the communication protocols. Next we present the methods for setting up measurements.

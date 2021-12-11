@@ -138,6 +138,15 @@ def test_incorrect_arg_is_flagged():
         _ = MultiprotocolInstrument(adapter='ASRL1::INSTR', bitrate=1234, visa_library='@sim')
 
 
+def test_improper_arg_is_flagged():
+    """As a user or instrument contributor that used a kwarg that is inappropriate for the present
+    connection, I want to be alerted to that fact.
+    """
+    with pytest.raises(ValueError, match='enable_repeat_addressing'):
+        _ = MultiprotocolInstrument(adapter='ASRL1::INSTR', enable_repeat_addressing=True,
+                                    visa_library='@sim')
+
+
 def test_common_kwargs_are_retained():
     instr1 = MultiprotocolInstrument(adapter='ASRL1::INSTR', visa_library='@sim')
     assert instr1.adapter.connection.timeout == 1500

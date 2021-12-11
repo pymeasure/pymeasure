@@ -36,15 +36,40 @@ log.addHandler(logging.NullHandler())
 
 # noinspection PyPep8Naming,PyUnresolvedReferences
 class VISAAdapter(Adapter):
-    """ Adapter class for the VISA library using PyVISA to communicate
-    with instruments.
+    """ Adapter class for the VISA library, using PyVISA to communicate with instruments.
 
-    :param resource: VISA resource name that identifies the address
-    :param visa_library: VisaLibrary Instance, path of the VISA library or VisaLibrary spec
-        string (@py or @ni). If not given, the default for the platform will be used.
+    The workhorse of our library, used by most instruments.
+
+    :param resource_name: A
+        `VISA resource string <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
+        or GPIB address integer that identifies the target of the connection
+    :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
+        string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
-    :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
+    :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
+
+    :Kwargs:
+        Keyword arguments are used to configure the connection created by PyVISA. This is
+        complicated by the fact that *which* arguments are valid depends on the interface (e.g.
+        serial, GPIB, TCPI/IP, USB) determined by the current ``resource_name``.
+
+        A flexible process is used to easily define reasonable *default values* for
+        different instrument interfaces, but also enable the instrument user to *override any
+        setting* if their situation demands it.
+
+        A kwarg that names a pyVISA interface type (most commonly ``asrl``, ``gpib``, ``tcpip`` or
+        ``usb``) is a dictionary with keyword arguments defining defaults specific to that
+        interface. Example: ``asrl={'baud_rate': 4200}``.
+
+        All other kwargs are either generally valid (e.g. ``timeout=500``) or override any default
+        settings from the interface-specific entries above. For example, passing
+        ``baud_rate=115200`` when connecting via a resource name ``ASRL1`` would override a
+        default of 4200 defined as above.
+
+        See :ref:`connection_settings` for how to tweak settings when *connecting* to an instrument.
+        See :ref:`default_connection_settings` for how to best define default settings when
+        *implementing an instrument*.
     """
 
     def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
