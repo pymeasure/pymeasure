@@ -57,14 +57,6 @@ class VISAAdapter(Adapter):
             resource_name = "GPIB0::%d::INSTR" % resource_name
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
-        safeKeywords = [
-            'resource_name', 'timeout', 'chunk_size', 'lock', 'query_delay', 'send_end',
-            'read_termination', 'write_termination'
-        ]
-        kwargsCopy = copy.deepcopy(kwargs)
-        for key in kwargsCopy:
-            if key not in safeKeywords:
-                kwargs.pop(key)
         self.connection = self.manager.open_resource(
             resource_name,
             **kwargs
