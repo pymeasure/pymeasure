@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-import pytest
+import pytest  # noqa
