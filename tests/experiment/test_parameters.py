@@ -97,7 +97,7 @@ def test_boolean_value():
     p.value = 0  # zero
     assert p.value is False
     p.value = True
-    assert p.value == True
+    assert p.value is True
     assert p.cli_args[0] == None
     assert p.cli_args[1] == [('units are', 'units'), 'default']
 
