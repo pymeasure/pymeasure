@@ -23,7 +23,6 @@
 #
 
 import pytest
-from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
@@ -64,7 +63,7 @@ def test_control_validator(dynamic):
     assert fake.read() == '5'
     fake.x = 5
     assert fake.x == 5
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         fake.x = 20
 
 
@@ -84,7 +83,7 @@ def test_control_validator_map(dynamic):
     assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         fake.x = 20
 
 

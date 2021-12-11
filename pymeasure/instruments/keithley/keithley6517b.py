@@ -298,7 +298,7 @@ class Keithley6517B(Instrument, KeithleyBuffer):
             t = time.time()
             log.info("Keithley 6517B reported error: %d, %s", code, message)
             code, message = self.error
-            if (time.time()-t) > 10:
+            if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 6517B error retrieval.")
 
     def reset(self):
