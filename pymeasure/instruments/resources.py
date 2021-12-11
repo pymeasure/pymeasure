@@ -28,7 +28,7 @@ import pyvisa
 def list_resources():
     """
     Prints the available resources, and returns a list of VISA resource names
-    
+
     .. code-block:: python
 
         resources = list_resources()
@@ -36,7 +36,7 @@ def list_resources():
             #0 : GPIB0::22::INSTR : Agilent Technologies,34410A,******
             #1 : GPIB0::26::INSTR : Keithley Instruments Inc., Model 2612, *****
         dmm = Agilent34410(resources[0])
-    
+
     """
     rm = pyvisa.ResourceManager()
     instrs = rm.list_resources()

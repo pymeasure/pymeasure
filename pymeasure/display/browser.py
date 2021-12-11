@@ -76,6 +76,7 @@ class BrowserItem(QtGui.QTreeWidgetItem):
     def setProgress(self, progress):
         self.progressbar.setValue(progress)
 
+
 class Browser(QtGui.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
     objects allowing the user to view the status of queued Experiments as well as
