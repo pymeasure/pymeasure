@@ -63,8 +63,8 @@ class Parameter(object):
             else:
                 self.group_by = {g: group_condition for g in group_by}
         elif group_by is not None:
-            raise TypeError("The provided group_by argument is not valid, should be either "
-                            "a string, a list of strings, or a dict with {string: condition} pairs.")
+            raise TypeError("The provided group_by argument is not valid, should be either a "
+                            "string, a list of strings, or a dict with {string: condition} pairs.")
 
     @property
     def value(self):

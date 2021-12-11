@@ -76,7 +76,7 @@ class SG380(Instrument):
     def frequency(self, frequency):
         """Defines RF frequency"""
         if self.has_doubler:
-            truncated_range(frequency, (SG380.MIN_RF, 2*SG380.MAX_RF))
+            truncated_range(frequency, (SG380.MIN_RF, 2 * SG380.MAX_RF))
         else:
             truncated_range(frequency, (SG380.MIN_RF, SG380.MAX_RF))
         self.write("FREQ%.6f" % frequency)
