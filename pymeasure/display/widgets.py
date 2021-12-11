@@ -490,7 +490,7 @@ class InputsWidget(QtGui.QWidget):
 
                 if isinstance(getattr(self, group_name), BooleanInput):
                     # Adjust the boolean condition to a condition suitable for a checkbox
-                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked  # noqa
+                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked  # noqa: E501
 
                 if group_name not in groups:
                     groups[group_name] = []

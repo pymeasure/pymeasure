@@ -23,10 +23,7 @@
 #
 
 import time
-import sys
 from unittest import mock
-
-import pytest
 
 from pymeasure.process import context
 from pymeasure.log import Scribe, setup_logging
