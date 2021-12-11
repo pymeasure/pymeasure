@@ -41,7 +41,8 @@ class Experiment(QtCore.QObject):
     is only a convenient container.
 
     :param results: :class:`.Results` object
-    :param curve_list: :class:`.ResultsCurve` list. List of curves associated with an experiment. They could represent different views of the same experiment.
+    :param curve_list: :class:`.ResultsCurve` list. List of curves associated with
+        an experiment. They could represent different views of the same experiment.
     :param browser_item: :class:`.BrowserItem` object
     """
 
@@ -52,6 +53,7 @@ class Experiment(QtCore.QObject):
         self.procedure = self.results.procedure
         self.curve_list = curve_list
         self.browser_item = browser_item
+
 
 class ExperimentQueue(QtCore.QObject):
     """ Represents a Queue of Experiments and allows queries to
