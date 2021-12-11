@@ -57,14 +57,6 @@ class VISAAdapter(Adapter):
             resource_name = "GPIB0::%d::INSTR" % resource_name
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
-        safeKeywords = [
-            'resource_name', 'timeout', 'chunk_size', 'lock', 'query_delay', 'send_end',
-            'read_termination', 'write_termination'
-        ]
-        kwargsCopy = copy.deepcopy(kwargs)
-        for key in kwargsCopy:
-            if key not in safeKeywords:
-                kwargs.pop(key)
         self.connection = self.manager.open_resource(
             resource_name,
             **kwargs
@@ -77,36 +69,6 @@ class VISAAdapter(Adapter):
             return parse_version(pyvisa.__version__) >= parse_version('1.8')
         else:
             return False
-
-    @staticmethod
-    def setdefaults(resource_name, interface_type, user_kwargs, **kwargs):
-        """ Change user_kwargs to add defaults specified by user for the selected interface type
-
-        :param resource_name: VISA resource name that identifies the address
-        :param interface_type: VISA interface type for which the defaults should be set
-        :param user_kwargs: keywords parameters dictionary passed by user, this dictionary can be modified by this method.
-        :param **kwargs: keywords argument to be set as default
-
-        """
-        # Get VISA interface type associated with resource_name
-        if isinstance(resource_name, int):
-            resource_name = "GPIB0::%d::INSTR" % resource_name
-        elif isinstance(resource_name, str):
-            pass
-        else:
-            # User defined adapter, do not touch anything
-            return
-
-        visa_kwargs = {}
-        if ('visa_library' in user_kwargs):
-            visa_kwargs = {'visa_library': user_kwargs['visa_library']}
-
-        if_type = pyvisa.ResourceManager(**visa_kwargs).resource_info(resource_name).interface_type
-
-        # Set default parameters if the interface matches
-        if if_type == interface_type:
-            for param, value in kwargs.items():
-                user_kwargs.setdefault(param, value)
 
     def write(self, command):
         """ Writes a command to the instrument
