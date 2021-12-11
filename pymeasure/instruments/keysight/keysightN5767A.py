@@ -25,14 +25,13 @@
 
 import logging
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range
 
-
 from pymeasure.adapters import VISAAdapter
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class KeysightN5767A(Instrument):
@@ -55,8 +54,8 @@ class KeysightN5767A(Instrument):
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
-        """ Reads a setting current in Amps. """
-     )
+                                     """ Reads a setting current in Amps. """
+                                     )
 
     ###############
     # Voltage (V) #
@@ -71,15 +70,15 @@ class KeysightN5767A(Instrument):
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
-        """ Reads a DC voltage measurement in Volts. """
-     )
+                                     """ Reads a DC voltage measurement in Volts. """
+                                     )
 
-    ##############
-    #_status (0/1) #
-    ##############
+    #################
+    # _status (0/1) #
+    #################
     _status = Instrument.measurement(":OUTP?",
-        """ Read power supply current output status. """,
-    )
+                                     """ Read power supply current output status. """,
+                                     )
 
     def enable(self):
         """ Enables the flow of current.
@@ -108,4 +107,3 @@ class KeysightN5767A(Instrument):
                 converter='f',
                 separator=','
             )
-
