@@ -364,6 +364,8 @@ class HP3437A(Instrument):
         current_timeout = self.adapter.connection.timeout
         nr_delay = self.number_readings * self.delay
         new_timeout = nr_delay * 5 * 1000
+        # TODO: check available timeouts in pyvisa-py/pyvisa-py/gpib.py
+
         if new_timeout > current_timeout:
             self.adapter.connection.timeout = new_timeout
             log.info("HP3437A: timeout updated to %g", new_timeout)
