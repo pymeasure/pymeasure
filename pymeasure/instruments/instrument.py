@@ -58,11 +58,6 @@ class Instrument(object):
         self.SCPI = includeSCPI
         self.adapter = adapter
 
-        class Object(object):
-            pass
-
-        self.get = Object()
-
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
 
