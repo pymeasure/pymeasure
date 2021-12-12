@@ -78,10 +78,10 @@ class SR510(Instrument):
                                     )
 
     def __init__(self, resourceName, **kwargs):
+        kwargs.setdefault('write_termination', '\r')
         super(SR510, self).__init__(
             resourceName,
             "Stanford Research Systems SR510 Lock-in amplifier",
             includeSCPI=False,
-            write_termination="\r",
             **kwargs,
         )
