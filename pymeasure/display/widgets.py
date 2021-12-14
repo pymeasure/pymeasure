@@ -899,14 +899,12 @@ class SequencerWidget(QtGui.QWidget):
 
                 procedure = self._parent.make_procedure()
                 procedure.set_parameters(parameters)
-                
                 procedure.first_in_sequence = False
                 procedure.last_in_sequence = False
                 if i == 0:
-                    procedure.last_in_sequence = True
+                    procedure.first_in_sequence = True
                 if i == len(sequence)-1:
                     procedure.last_in_sequence = True
-                
                 self._parent.queue(procedure=procedure)
 
         finally:
