@@ -94,9 +94,12 @@ class KeysightN7776C(Instrument):
                                    map_values=True, 
                                    values={True: 1, False: 0})
 
-    _output_power = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
+    output_power_mW = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
                                     """ Floating point value indicating the laser output power in the unit set by the user (see _output_power_unit).""")
-    
+
+    output_power_dBm = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
+                                    """ Floating point value indicating the laser output power in the unit set by the user (see _output_power_unit).""")
+
     _output_power_unit = Instrument.control('SOUR0:POW:UNIT?','SOUR0:POW:UNIT %g',
                                     """ String parameter controlling the power unit used internally by the laser.""",
                                     map_values=True,
@@ -155,7 +158,9 @@ class KeysightN7776C(Instrument):
     
     sweep_state = Instrument.control('sour0:wav:swe?','sour0:wav:swe %g',
                                     """ State of the wavelength sweep. Stops, starts, pauses 
-                                    or continues a wavelength sweep.""")
+                                    or continues a wavelength sweep. Possible state values are 0 (not running), 1 (running) and 2 (paused).""",
+                                    validator=strict_discrete_set,
+                                    values=[0,1,2])
 
     wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?','SOUR0:WAV:SWE:LLOG %g',
                                     """ State (on/off) of the lambda logging feature of the laser source.""",
