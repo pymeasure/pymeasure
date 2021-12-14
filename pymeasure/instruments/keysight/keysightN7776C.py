@@ -34,6 +34,8 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 WL_RANGE = [1480,1620]
 LOCK_PW = 1234
 
+
+
 class KeysightN7776C(Instrument):
     """
     This represents the Keysight N7776C Tunable Laser Source interface.
@@ -85,6 +87,20 @@ class KeysightN7776C(Instrument):
             else:
                 return power_reading
 
+    def _power_unit_conversion(self,value,desired_unit):
+        """ Function returning the value in the desired unit 
+        by checking which unit is set and converting it if needed 
+        """
+        if self._output_power_unit.lower() == desired_unit.lower():
+            return value
+        elif desired_unit.lower() == 'mw': #Need for conversion dBm -> mW
+            return 10.0**(value/10.0)
+        elif desired_unit.lower() == 'dbm': #Need for conversion mW -> dBm
+            return 10.0*np.log10(value)
+        else:
+            raise(ValueError("Unknown value for parameter desired_unit, only 'mW' or 'dBm' are accepted"))
+
+
     locked = Instrument.control(':LOCK?',':LOCK %g,'+str(LOCK_PW),
                                    """ Boolean property controlling the lock state (True/False) of the laser source""",
                                    validator=strict_discrete_set, 
@@ -97,11 +113,13 @@ class KeysightN7776C(Instrument):
                                    map_values=True, 
                                    values={True: 1, False: 0})
 
-    output_power_mW = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
-                                    """ Floating point value indicating the laser output power in the unit set by the user (see _output_power_unit).""")
+    output_power_mW = Instrument.control('SOUR0:POW?','SOUR0:POW %f mW',
+                                    """ Floating point value indicating the laser output power in mW.""",
+                                    get_process=lambda v:self._power_unit_conversion(v,'mW'))
 
-    output_power_dBm = Instrument.control('SOUR0:POW?','SOUR0:POW %f',
-                                    """ Floating point value indicating the laser output power in the unit set by the user (see _output_power_unit).""")
+    output_power_dBm = Instrument.control('SOUR0:POW?','SOUR0:POW %f dBm',
+                                    """ Floating point value indicating the laser output power in dBm.""",
+                                    get_process=lambda v: self._power_unit_conversion(v,'mW'))
 
     _output_power_unit = Instrument.control('SOUR0:POW:UNIT?','SOUR0:POW:UNIT %g',
                                     """ String parameter controlling the power unit used internally by the laser.""",
