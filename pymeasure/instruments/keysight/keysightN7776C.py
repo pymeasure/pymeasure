@@ -151,7 +151,7 @@ class KeysightN7776C(Instrument):
                                     """Sets the repeat mode. Applies in stepped,continuous and manual sweep mode.""",
                                     validator=strict_discrete_set, 
                                     map_values=True, 
-                                    values={True: 'ONEW', False: 'TWOW'})
+                                    values={False: 'ONEW', True: 'TWOW'})
     _sweep_check = Instrument.measurement('sour0:wav:swe:chec?',
                                     """Returns whether the currently set sweep parameters (sweep mode, sweep start, stop, width, etc.) are consistent. If there is a
                                     sweep configuration problem, the laser source is not able to pass a wavelength sweep.""")
@@ -161,7 +161,8 @@ class KeysightN7776C(Instrument):
     
     sweep_state = Instrument.control('sour0:wav:swe?','sour0:wav:swe %g',
                                     """ State of the wavelength sweep. Stops, starts, pauses 
-                                    or continues a wavelength sweep. Possible state values are 0 (not running), 1 (running) and 2 (paused).""",
+                                    or continues a wavelength sweep. Possible state values are 0 (not running), 1 (running) and 2 (paused).
+                                    Refer to the N7776C user manual for exact usage of the paused option. """,
                                     validator=strict_discrete_set,
                                     values=[0,1,2])
 
