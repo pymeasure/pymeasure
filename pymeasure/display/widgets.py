@@ -893,12 +893,20 @@ class SequencerWidget(QtGui.QWidget):
                 "Queuing %d measurements based on the entered sequences." % len(sequence)
             )
 
-            for entry in sequence:
+            for i, entry in enumerate(sequence):
                 QtGui.QApplication.processEvents()
                 parameters = dict(ChainMap(*entry[::-1]))
 
                 procedure = self._parent.make_procedure()
                 procedure.set_parameters(parameters)
+                
+                procedure.first_in_sequence = False
+                procedure.last_in_sequence = False
+                if i == 0:
+                    procedure.last_in_sequence = True
+                if i == len(sequence)-1:
+                    procedure.last_in_sequence = True
+                
                 self._parent.queue(procedure=procedure)
 
         finally:
