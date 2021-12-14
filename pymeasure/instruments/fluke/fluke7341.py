@@ -26,26 +26,28 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pymeasure.adapters import VISAAdapter
 
+
 class Fluke7341(Instrument):
     """ Represents the compact constant temperature bath from Fluke
     """
 
     set_point = Instrument.control("s", "s=%g",
-                                   """ A `float` property to set the bath temperature set-point. 
-                                   Valid values are  in the range –40 to 150 °C.
-                                   The unit is as defined in property :attr:`~.unit`. This property can be read
+                                   """ A `float` property to set the bath temperature set-point.
+                                   Valid values are  in the range -40 to 150 °C.
+                                   The unit is as defined in property :attr:`~.unit`. This property
+                                   can be read
                                    """,
                                    validator=strict_range,
-                                   values = (-40, 150),
+                                   values=(-40, 150),
                                    )
-    
+
     unit = Instrument.control("u", "u=%s",
                               """ A string property that controls the temperature
                               unit. Possible values are `c` for Celsius and `f` for Fahrenheit`.""",
                               validator=strict_discrete_set,
-                              values = ('c','f'),
+                              values=('c', 'f'),
                               )
-    
+
     temperature = Instrument.measurement("t",
                                          """ Read the current bath temperature.
                                          The unit is as defined in property :attr:`unit`.""",

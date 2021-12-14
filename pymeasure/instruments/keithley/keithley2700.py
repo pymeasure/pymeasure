@@ -23,18 +23,16 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
 import numpy as np
 import time
-from io import BytesIO
-import re
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def clist_validator(value, values):

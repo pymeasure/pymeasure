@@ -23,19 +23,17 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+import time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
-import numpy as np
-import time
-from io import BytesIO
-import re
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Keithley6221(Instrument, KeithleyBuffer):

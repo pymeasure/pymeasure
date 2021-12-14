@@ -46,6 +46,5 @@ def get_config(filename='default_config.ini'):
 def set_mpl_rcparams(config):
     if 'matplotlib.rcParams' in config._sections.keys():
         import matplotlib
-        from cycler import cycler
         for key in config._sections['matplotlib.rcParams']:
             matplotlib.rcParams[key] = eval(config._sections['matplotlib.rcParams'][key])

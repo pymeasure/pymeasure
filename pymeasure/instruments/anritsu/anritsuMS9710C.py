@@ -67,6 +67,11 @@ def _parse_trace_peak(vals):
 class AnritsuMS9710C(Instrument):
     """Anritsu MS9710C Optical Spectrum Analyzer."""
 
+    def __init__(self, adapter, name="Anritsu MS9710C Optical Spectrum Analyzer", **kwargs):
+        """Constructor."""
+        self.analysis_mode = None
+        super(AnritsuMS9710C, self).__init__(adapter, name=name, **kwargs)
+
     #############
     #  Mappings #
     #############
@@ -102,13 +107,17 @@ class AnritsuMS9710C(Instrument):
     ####################################
     # Spectrum Parameters - Wavelength #
     ####################################
-    wavelength_center = Instrument.control('CNT?', 'CNT %g', "Center Wavelength of Spectrum Scan in nm.")
+    wavelength_center = Instrument.control(
+        'CNT?', 'CNT %g', "Center Wavelength of Spectrum Scan in nm.")
 
-    wavelength_span = Instrument.control('SPN?', 'SPN %g', "Wavelength Span of Spectrum Scan in nm.")
+    wavelength_span = Instrument.control(
+        'SPN?', 'SPN %g', "Wavelength Span of Spectrum Scan in nm.")
 
-    wavelength_start = Instrument.control('STA?', 'STA %g', "Wavelength Start of Spectrum Scan in nm.")
+    wavelength_start = Instrument.control(
+        'STA?', 'STA %g', "Wavelength Start of Spectrum Scan in nm.")
 
-    wavelength_stop = Instrument.control('STO?', 'STO %g', "Wavelength Stop of Spectrum Scan in nm.")
+    wavelength_stop = Instrument.control(
+        'STO?', 'STO %g', "Wavelength Stop of Spectrum Scan in nm.")
 
     wavelength_marker_value = Instrument.control(
         'MKV?', 'MKV %s',
@@ -268,11 +277,6 @@ class AnritsuMS9710C(Instrument):
         "Sets the trace marker with a wavelength.  Returns the trace wavelength and power.",
         get_process=_parse_trace_peak
     )
-
-    def __init__(self, adapter, **kwargs):
-        """Constructor."""
-        self.analysis_mode = None
-        super(AnritsuMS9710C, self).__init__(adapter, "Anritsu MS9710C Optical Spectrum Analyzer", **kwargs)
 
     @property
     def wavelengths(self):
