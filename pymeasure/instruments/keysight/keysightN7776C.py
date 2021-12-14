@@ -37,7 +37,9 @@ LOCK_PW = 1234
 class KeysightN7776C(Instrument):
     """
     This represents the Keysight N7776C Tunable Laser Source interface.
+
     .. code-block:: python
+    
         laser = N7776C(address)
         laser.sweep_wl_start = 1550
         laser.sweep_wl_stop = 1560
@@ -47,6 +49,7 @@ class KeysightN7776C(Instrument):
         while laser.sweep_state == 1:
             log.info('Sweep in progress.')
         laser.output_enabled = 0
+
     """
     def __init__(self, address, **kwargs):
         super(KeysightN7776C, self).__init__(
@@ -132,7 +135,7 @@ class KeysightN7776C(Instrument):
                                     get_process=lambda v: v*1e9)
 
     sweep_step = Instrument.control('sour0:wav:swe:step?','sour0:wav:swe:step %fnm',
-                                    """ Step width of th[e sweep (in nanometers).""",
+                                    """ Step width of the sweep (in nanometers).""",
                                     validator=strict_range,
                                     values=[0.0001,WL_RANGE[1]-WL_RANGE[0]])
     sweep_speed = Instrument.control('sour0:wav:swe:speed?','sour0:wav:swe:speed %fnm/s',
