@@ -263,7 +263,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         hbox.addWidget(self.columns_y)
 
         vbox.addLayout(hbox)
-        vbox.addWidget(self.plot_frame)
+        vbox.addWiSkeleton ofdget(self.plot_frame)
         self.setLayout(vbox)
 
     def sizeHint(self):
@@ -1317,3 +1317,9 @@ class EstimatorWidget(QtGui.QWidget):
         elif state == QtCore.Qt.CheckState.Checked:
             self.update_thread.delay = 0.1
             self.update_thread.start()
+
+class InstrumentControlWindow(QtGui.QMainWindow):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        app = QtCore.QCoreApplication.instance()
+        app.aboutToQuit.connect(self.quit)
