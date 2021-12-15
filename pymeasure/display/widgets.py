@@ -29,7 +29,7 @@ import re
 import pyqtgraph as pg
 from functools import partial
 import numpy
-from collections import ChainMap
+from collections import ChainMap, OrderedDict
 from itertools import product
 from inspect import signature
 from datetime import datetime, timedelta
@@ -1322,12 +1322,16 @@ class EstimatorWidget(QtGui.QWidget):
 class InstrumentControlWidget(QtGui.QWidget):
     """
     TODO: Write Docstring
+
+    Measurements = WriteProtected Labels / Text
+    Settings = Boxes
+    Controls = Writable Boxes
+    Functions = Buttons
     """
     def __init__(self, instrument,
                  measurements=None, controls=None,
                  settings=None, functions=None,
-                 set_settings_continuously=False,
-                 get_settings_continuously=False,
+                 options=None,
                  parent=None):
         super().__init__(parent)
 
@@ -1336,3 +1340,31 @@ class InstrumentControlWidget(QtGui.QWidget):
         measurements = self.check_parameter_list(measurements, "measurement")
         controls = self.check_parameter_list(controls, "control")
         settings = self.check_parameter_list(settings, "setting")
+
+
+    @staticmethod
+    def check_parameter_list(params, field_type=None):
+        # Ensure the parameters is a list
+        if isinstance(params, (list, tuple)):
+            params = list(params)
+        elif params is None:
+            params = []
+        else:
+            params = [params]
+
+        # Convert all elements to FloatParameter whenever given as a string
+        for idx in range(len(params)):
+            if isinstance(params[idx], parameters.Parameter):
+                pass
+            elif isinstance(params[idx], str):
+                params[idx] = parameters.FloatParameter(params[idx])
+            else:
+                raise TypeError("All parameters (measurements, controls, & "
+                                "settings) should be given as a Parameter, a "
+                                "Parameter subclass, or a string.")
+
+            params[idx].field_type = field_type
+
+        params = OrderedDict((param.name, param) for param in params)
+
+        return params

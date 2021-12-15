@@ -31,7 +31,12 @@ log.addHandler(logging.NullHandler())
 class MockInstrumentControlWindow(InstrumentControlWindow):
 
     def __init__(self):
-        super(MockInstrumentControlWindow,self).__init__(MockInstrument())
+        super(MockInstrumentControlWindow,self).__init__(MockInstrument(),
+                                    measurements=["wave", "voltage"],
+                                    controls=["time", "output_voltage"],
+                                    settings=None,
+                                    options=None,
+                                    functions=["reset_time"])
         self.setWindowTitle('Instrument Control')
 
 if __name__ == "__main__":

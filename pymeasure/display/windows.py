@@ -36,6 +36,7 @@ from .curves import ResultsCurve
 from .manager import Manager, Experiment
 from .Qt import QtCore, QtGui
 from .widgets import (
+    InstrumentControlWidget,
     PlotWidget,
     BrowserWidget,
     InputsWidget,
@@ -690,10 +691,16 @@ class ManagedImageWindow(ManagedWindow):
         super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
 
 class InstrumentControlWindow(QtGui.QMainWindow):
-    def __init__(self,instrument,parent=None):
+    def __init__(self,instrument,measurements=None,settings=None,
+                                controls=None,functions=None,options=None,
+                                parent=None):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
+
+        self.inst_widget = InstrumentControlWidget(instrument,measurements=measurements,
+                                                    settings=settings,controls=controls,
+                                                    functions=functions,options=options)
 
     def quit(self, evt=None):
         self.close()
