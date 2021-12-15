@@ -15,18 +15,19 @@ import tempfile
 from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, \
-    FloatParameter
+    FloatParameter, BooleanParameter
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import InstrumentControlWindow
 from pymeasure.instruments.mock import Mock as MockInstrument
+
 
 import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
 
-
+bpar = BooleanParameter('Boolean Value',default=False)
 
 class MockInstrumentControlWindow(InstrumentControlWindow):
 
@@ -35,7 +36,7 @@ class MockInstrumentControlWindow(InstrumentControlWindow):
                                     measurements=["wave", "voltage"],
                                     controls=["time", "output_voltage"],
                                     settings=None,
-                                    options=None,
+                                    options=bpar,
                                     functions=["reset_time"])
         self.setWindowTitle('Instrument Control')
 

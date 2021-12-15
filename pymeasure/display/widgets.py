@@ -1332,20 +1332,230 @@ class InstrumentControlWidget(QtGui.QWidget):
                  measurements=None, controls=None,
                  settings=None, functions=None,
                  options=None,
-                 parent=None):
+                 parent=None,
+                 auto_get=True,
+                 auto_set=True):
         super().__init__(parent)
 
         self.instrument = instrument
 
-        measurements = self.check_parameter_list(measurements, "measurement")
-        controls = self.check_parameter_list(controls, "control")
-        settings = self.check_parameter_list(settings, "setting")
+        self.measurements = self.check_parameter_list(measurements, "measurement")
+        self.controls = self.check_parameter_list(controls, "control")
+        self.settings = self.check_parameter_list(settings, "setting")
+        self.options = self.check_parameter_list(options,"option")
 
+        self.auto_read = auto_get
+        self.auto_write = auto_set
+
+
+
+        update_list = list(measurements.keys())
+
+        self._setup_ui()
+        self._layout()
+        self.get_and_update_all_values()
+
+    def _setup_ui(self):
+        for name, param in self.measurements.items():
+            element = self.input_from_parameter(param)
+            setattr(self, name, element)
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
+
+            element.setEnabled(False)
+
+        for name, param in self.controls.items():
+            element = self.input_from_parameter(param)
+            setattr(self, name, element)
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
+
+            element.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+            element.stepEnabled = lambda: QtGui.QAbstractSpinBox.StepDownEnabled | \
+                                            QtGui.QAbstractSpinBox.StepUpEnabled
+            element.stepType = lambda: QtGui.QAbstractSpinBox.AdaptiveDecimalStepType
+
+            # connect to update functions
+            element.editingFinished.connect(partial(self.apply_setting, name))
+
+            if self.auto_write:
+                element.valueChanged.connect(partial(self.apply_setting, name))
+
+        for name, param in self.settings.items():
+            element = self.input_from_parameter(param)
+            setattr(self, name, element)
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
+
+            element.editingFinished.connect(partial(self.apply_setting, name))
+
+            if self.auto_write:
+                element.valueChanged.connect(partial(self.apply_setting, name))
+            
+
+        for name, param in self.options.items():
+            element = self.input_from_parameter(param)
+            setattr(self, name, element)
+            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                  QtGui.QSizePolicy.MinimumExpanding)
+
+        # Add a button for instant reading
+        self.read_button = QtGui.QPushButton("Read", self)
+        self.read_button.clicked.connect(self.get_and_update_all_values)
+        self.read_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                         QtGui.QSizePolicy.MinimumExpanding)
+        if not self.auto_read:
+            self.read_button.setEnabled(False)
+
+        # Adding a button for instant writing
+        self.write_button = QtGui.QPushButton("Write", self)
+        self.write_button.clicked.connect(self.apply_all_settings)
+        self.write_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
+                                         QtGui.QSizePolicy.MinimumExpanding)
+        if not self.auto_write:
+            self.read_button.setEnabled(False)
+
+    def _layout(self):
+        layout = QtGui.QGridLayout(self)
+
+        #Measurements
+        measurements_dock = QtGui.QWidget()
+        measurement_layout = QtGui.QGridLayout(measurements_dock)
+        dock = QtGui.QDockWidget('Measurements')
+        for idx, name in enumerate(self.measurements):
+            measurement_layout.addWidget(QtGui.QLabel(name),idx,0)
+            measurement_layout.addWidget(getattr(self, name), idx,1)
+
+
+        measurements_dock.setLayout(measurement_layout)
+        dock.setWidget(measurements_dock)
+        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        layout.addWidget(dock,0,0)
+
+        #Controls
+        controls_dock = QtGui.QWidget()
+        controls_layout = QtGui.QGridLayout(controls_dock)
+        dock = QtGui.QDockWidget('Controls')
+        for idx, name in enumerate(self.controls):
+            controls_layout.addWidget(QtGui.QLabel(name),idx,0)
+            controls_layout.addWidget(getattr(self, name), idx,1)
+
+
+        controls_dock.setLayout(controls_layout)
+        dock.setWidget(controls_dock)
+        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        layout.addWidget(dock,0,1)
+        
+        #Settings and options
+        settings_dock = QtGui.QWidget()
+        settings_layout = QtGui.QGridLayout(settings_dock)
+        dock = QtGui.QDockWidget('Settings')
+        for idx, name in enumerate(self.settings):
+            settings_layout.addWidget(QtGui.QLabel(name),idx,0)
+            settings_layout.addWidget(getattr(self, name), idx,1)
+        
+        for idx, name in enumerate(self.options):
+            settings_layout.addWidget(getattr(self, name), idx,1)
+
+
+        settings_dock.setLayout(settings_layout)
+        dock.setWidget(settings_dock)
+        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        layout.addWidget(dock,0,2)
+
+        #Global Options and controls
+        global_dock = QtGui.QWidget()
+        global_layout = QtGui.QGridLayout(global_dock)
+        global_layout.addWidget(self.read_button,0,0)
+        global_layout.addWidget(self.write_button,0,1)
+        global_dock.setLayout(global_layout)
+        layout.addWidget(global_dock,1,0)
+
+
+
+    def update_value(self, name, value):
+        QtGui.QGuiApplication.processEvents()
+        element = getattr(self, name)
+
+        if not element.hasFocus():
+            element.setValue(value)
+
+    def get_and_update_all_values(self):
+        for name in self.measurements:
+            if hasattr(self.instrument, name):
+                value = getattr(self.instrument, name)
+                self.update_value(name, value)
+        for name in self.settings:
+            if hasattr(self.instrument, name):
+                value = getattr(self.instrument, name)
+                self.update_value(name, value)
+        for name in self.options:
+            if hasattr(self.instrument, name):
+                value = getattr(self.instrument, name)
+                self.update_value(name, value)
+        for name in self.controls:
+            if hasattr(self.instrument, name):
+                value = getattr(self.instrument, name)
+                self.update_value(name, value)
+
+    def apply_setting(self, name):
+        element = getattr(self, name)
+        setattr(self.instrument, name, element.value())
+
+    def apply_all_settings(self, name):
+        for name in self.controls:
+            if hasattr(self.instrument, name):
+                self.apply_setting(name)
+
+        for name in self.settings:
+            if hasattr(self.instrument, name):
+                self.apply_setting(name)
+
+    def input_from_parameter(self,parameter):
+        """ Get the corresponding type of input for a given parameter.
+        :param parameter: A parameter
+        """
+
+        if parameter.ui_class is not None:
+            element = parameter.ui_class(parameter)
+
+        elif isinstance(parameter, parameters.FloatParameter):
+            element = ScientificInput(parameter)
+
+        elif isinstance(parameter, parameters.IntegerParameter):
+            element = IntegerInput(parameter)
+
+        elif isinstance(parameter, parameters.BooleanParameter):
+            element = BooleanInput(parameter)
+
+        elif isinstance(parameter, parameters.ListParameter):
+            element = ListInput(parameter)
+
+        elif isinstance(parameter, parameters.Parameter):
+            element = StringInput(parameter)
+
+        else:
+            raise TypeError("parameter has to be an instance of Parameter or one "
+                            "of its subclasses.")
+
+        return element
+
+    def _set_auto_read(self):
+        state = self.auto_read_box.checkState()
+
+        self.update_thread.stop()
+        self.update_thread.join()
+
+        if state == 0:
+            pass
+        elif state == 1:
+            self.update_thread.delay = 1
+            self.update_thread.start()
 
     @staticmethod
     def check_parameter_list(params, field_type=None):
         # Ensure the parameters is a list
-        if isinstance(params, (list, tuple)):
+        if isinstance(params, (list, tuple)):   
             params = list(params)
         elif params is None:
             params = []
