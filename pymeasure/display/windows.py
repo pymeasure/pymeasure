@@ -690,7 +690,10 @@ class ManagedImageWindow(ManagedWindow):
         super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
 
 class InstrumentControlWindow(QtGui.QMainWindow):
-    def __init__(self,parent=None):
+    def __init__(self,instrument,parent=None):
         super().__init__(parent)
         app = QtCore.QCoreApplication.instance()
         app.aboutToQuit.connect(self.quit)
+
+    def quit(self, evt=None):
+        self.close()

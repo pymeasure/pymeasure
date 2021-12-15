@@ -1317,3 +1317,22 @@ class EstimatorWidget(QtGui.QWidget):
         elif state == QtCore.Qt.CheckState.Checked:
             self.update_thread.delay = 0.1
             self.update_thread.start()
+
+
+class InstrumentControlWidget(QtGui.QWidget):
+    """
+    TODO: Write Docstring
+    """
+    def __init__(self, instrument,
+                 measurements=None, controls=None,
+                 settings=None, functions=None,
+                 set_settings_continuously=False,
+                 get_settings_continuously=False,
+                 parent=None):
+        super().__init__(parent)
+
+        self.instrument = instrument
+
+        measurements = self.check_parameter_list(measurements, "measurement")
+        controls = self.check_parameter_list(controls, "control")
+        settings = self.check_parameter_list(settings, "setting")
