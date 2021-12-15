@@ -702,5 +702,27 @@ class InstrumentControlWindow(QtGui.QMainWindow):
                                                     settings=settings,controls=controls,
                                                     functions=functions,options=options)
 
+        self._setup_ui()
+        self._layout()
+
+
+
+        
+
+    def _setup_ui(self):
+        pass
+
+    def _layout(self):
+        self.main = QtGui.QWidget(self)
+
+        self.layout = QtGui.QVBoxLayout(self.main)
+        self.layout.addWidget(self.inst_widget,0)
+        
+        self.main.setLayout(self.layout)
+        self.setCentralWidget(self.main)
+        self.main.show()
+
+
+
     def quit(self, evt=None):
         self.close()
