@@ -1317,9 +1317,3 @@ class EstimatorWidget(QtGui.QWidget):
         elif state == QtCore.Qt.CheckState.Checked:
             self.update_thread.delay = 0.1
             self.update_thread.start()
-
-class InstrumentControlWindow(QtGui.QMainWindow):
-    def __init__(self,parent=None):
-        super().__init__(parent)
-        app = QtCore.QCoreApplication.instance()
-        app.aboutToQuit.connect(self.quit)
