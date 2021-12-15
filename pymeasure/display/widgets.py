@@ -1352,18 +1352,31 @@ class InstrumentControlWidget(QtGui.QWidget):
         else:
             params = [params]
 
-        # Convert all elements to FloatParameter whenever given as a string
-        for idx in range(len(params)):
-            if isinstance(params[idx], parameters.Parameter):
-                pass
-            elif isinstance(params[idx], str):
-                params[idx] = parameters.FloatParameter(params[idx])
-            else:
-                raise TypeError("All parameters (measurements, controls, & "
-                                "settings) should be given as a Parameter, a "
-                                "Parameter subclass, or a string.")
+        if field_type == 'option':
+            #Convert all elements to BooleanParameters if given as a string
+            for idx in range(len(params)):
+                if isinstance(params[idx], parameters.BooleanParameter):
+                    pass
+                elif isinstance(params[idx], str):
+                    params[idx] = parameters.BooleanParameter(params[idx])
+                else:
+                    raise TypeError("All parameters (measurements, controls, & "
+                                    "settings) should be given as a BooleanParameter or a string.")
+                params[idx].field_type = field_type
 
-            params[idx].field_type = field_type
+        else:
+            # Convert all elements to FloatParameter whenever given as a string for everything but options
+            for idx in range(len(params)):
+                if isinstance(params[idx], parameters.Parameter):
+                    pass
+                elif isinstance(params[idx], str):
+                    params[idx] = parameters.FloatParameter(params[idx])
+                else:
+                    raise TypeError("All parameters (measurements, controls, & "
+                                    "settings) should be given as a Parameter, a "
+                                    "Parameter subclass, or a string.")
+
+                params[idx].field_type = field_type
 
         params = OrderedDict((param.name, param) for param in params)
 
