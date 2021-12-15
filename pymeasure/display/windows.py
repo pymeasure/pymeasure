@@ -688,3 +688,9 @@ class ManagedImageWindow(ManagedWindow):
         kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget, )
 
         super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
+
+class InstrumentControlWindow(QtGui.QMainWindow):
+    def __init__(self,parent=None):
+        super().__init__(parent)
+        app = QtCore.QCoreApplication.instance()
+        app.aboutToQuit.connect(self.quit)
