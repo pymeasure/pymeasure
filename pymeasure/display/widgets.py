@@ -263,7 +263,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         hbox.addWidget(self.columns_y)
 
         vbox.addLayout(hbox)
-        vbox.addWiSkeleton ofdget(self.plot_frame)
+        vbox.addWidget(self.plot_frame)
         self.setLayout(vbox)
 
     def sizeHint(self):
