@@ -24,7 +24,6 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.adapters import VISAAdapter
 
 
 class Fluke7341(Instrument):
