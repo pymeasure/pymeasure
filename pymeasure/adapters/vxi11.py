@@ -24,6 +24,8 @@
 
 import logging
 
+from .adapter import Adapter
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -31,8 +33,6 @@ try:
     import vxi11
 except ImportError:
     log.warning('Failed to import vxi11 package, which is required for the VXI11Adapter')
-
-from .adapter import Adapter
 
 
 class VXI11Adapter(Adapter):

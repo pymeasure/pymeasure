@@ -54,7 +54,7 @@ class Keithley2600(Instrument):
         # if tab delimitated message is greater than one, grab first two as code, message
         # otherwise, assign code & message to returned error
         if len(err) > 1:
-            err = (int(err[0]), err[1])
+            err = (int(float(err[0])), err[1])
             code = err[0]
             message = err[1].replace('"', '')
         else:
@@ -72,6 +72,7 @@ class Keithley2600(Instrument):
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2600 error retrieval.")
+
 
 class Channel(object):
 
@@ -92,7 +93,8 @@ class Channel(object):
         return self.instrument.values('print(smu%s.%s)' % (self.channel, cmd))
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
-        return self.instrument.binary_values('print(smu%s.%s)' % (self.channel, cmd,), header_bytes, dtype)
+        return self.instrument.binary_values('print(smu%s.%s)' %
+                                             (self.channel, cmd,), header_bytes, dtype)
 
     def check_errors(self):
         return self.instrument.check_errors()
@@ -287,8 +289,6 @@ class Channel(object):
             self.source_voltage_range = voltage_range
         self.compliance_current = compliance_current
         self.check_errors()
-
-
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=0.1):
         """ Ramps to a target voltage from the set voltage value over

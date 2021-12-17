@@ -100,7 +100,7 @@ class ParkerGV6(Instrument):
         """
         position = self.position
         if position is not None:
-            return position*self.degrees_per_count
+            return position * self.degrees_per_count
         else:
             return None
 
@@ -109,7 +109,7 @@ class ParkerGV6(Instrument):
         """ Gives the motor a setpoint in degrees based on an
         angle from a relative or absolution position
         """
-        self.position = int(angle*self.degrees_per_count**-1)
+        self.position = int(angle * self.degrees_per_count**-1)
 
     @property
     def angle_error(self):
@@ -118,7 +118,7 @@ class ParkerGV6(Instrument):
         """
         position_error = self.position_error
         if position_error is not None:
-            return position_error*self.degrees_per_count
+            return position_error * self.degrees_per_count
         else:
             return None
 
