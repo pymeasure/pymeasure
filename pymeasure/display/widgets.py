@@ -1348,9 +1348,6 @@ class InstrumentControlWidget(QtGui.QWidget):
         self.auto_write = auto_set
 
 
-
-        update_list = list(measurements.keys())
-
         self._setup_ui()
         self._layout()
         self.get_and_update_all_values()
