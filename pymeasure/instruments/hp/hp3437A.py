@@ -100,12 +100,7 @@ class StatusBits(ctypes.BigEndianStructure):
         Returns a pretty formatted string showing the status of the instrument
 
         """
-        return "format: {}, SRQ Mask:  {}, Trigger: {}, Range: {} \n".format(
-            self.Format,
-            self.SRQ,
-            self.trigger,
-            self.range,
-        )
+        return f"format: {self.Format}, SRQ Mask:  {self.SRQ}, Trigger: {self.trigger}, Range: {self.range} \n"
 
 
 class PackedBytes(ctypes.Structure):
@@ -129,15 +124,13 @@ class PackedBits(ctypes.BigEndianStructure):
         ("range", c_uint8, 2),  # bit 0..1
         ("sign_bit", c_uint8, 1),
         ("MSD", c_uint8, 1),
-        ("NSD", c_uint8, 4),
-        ("OSD", c_uint8, 4),
+        ("SSD", c_uint8, 4),
+        ("TSD", c_uint8, 4),
         ("LSD", c_uint8, 4),
     ]
 
     def __str__(self):
-        return "range: {}, sign_bit: {}, MSD: {}, 2SD: {}, 3SD: {}, LSD: {} \n".format(
-            self.range, self.sign_bit, self.MSD, self.NSD, self.OSD, self.LSD
-        )
+        return f"range: {self.range}, sign_bit: {self.sign_bit}, MSD: {self.MSD}, 2SD: {self.SSD}, 3SD: {self.TSD}, LSD: {self.LSD} \n"
 
     def __float__(self):
         # range decoding
@@ -152,17 +145,17 @@ class PackedBits(ctypes.BigEndianStructure):
         if self.range == 3:
             cur_range = 1.0
 
-        sb = 1
+        signbit = 1
         if self.sign_bit == 0:
-            sb = -1
+            signbit = -1
 
         return (
             cur_range
-            * sb
+            * signbit
             * (
                 self.MSD
-                + float(self.NSD) / 10
-                + float(self.OSD) / 100
+                + float(self.SSD) / 10
+                + float(self.TSD) / 100
                 + float(self.LSD) / 1000
             )
         )
@@ -219,21 +212,20 @@ class HP3437A(Instrument):
         IGNORE_TRIGGER = 2
         INVALID_PROGRAM = 1
 
-    def get_status(self):
+    def _get_status(self):
         """Method to read the status bytes from the instrument
+
         :return current_status: a byte array representing the instrument status
         :rtype current_status: bytes
         """
-        # self.write("B")
         self.adapter.connection.write_raw("B")
-        # current_status = self.adapter.read_bytes(7)
         return self.adapter.connection.read_raw()
 
     # decoder functions
     # decimal to BCD & BCD to decimal conversion copied from
     # https://pymodbus.readthedocs.io/en/latest/source/example/bcd_payload.html
     @classmethod
-    def convert_to_bcd(cls, decimal):
+    def _convert_to_bcd(cls, decimal):
         """Converts a decimal value to a bcd value
 
         :param value: The decimal value to to pack into bcd
@@ -248,7 +240,7 @@ class HP3437A(Instrument):
         return bcd
 
     @classmethod
-    def convert_from_bcd(cls, bcd):
+    def _convert_from_bcd(cls, bcd):
         """Converts a bcd value to a decimal value
 
         :param value: The value to unpack from bcd
@@ -264,7 +256,7 @@ class HP3437A(Instrument):
         return decimal
 
     @classmethod
-    def decode_status(cls, status_bytes, field=None):
+    def _decode_status(cls, status_bytes, field=None):
         """Method to decode the status bytes
 
         :param status_bytes: list of bytes to be decoded
@@ -281,18 +273,18 @@ class HP3437A(Instrument):
 
         if field == "Number":
             bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
-            return cls.convert_from_bcd(bcd_nr)
+            return cls._convert_from_bcd(bcd_nr)
 
         if field == "Delay":
             bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
             delay_value = (
-                cls.convert_from_bcd(bcd_delay) / 1.0e7
+                cls._convert_from_bcd(bcd_delay) / 1.0e7
             )  # delay resolution is 100ns
             return delay_value
         return getattr(ret_val.b, field)
 
     @staticmethod
-    def decode_range(status_bytes):
+    def _decode_range(status_bytes):
         """Method to decode current range
 
         :param range_undecoded: int to be decoded
@@ -318,7 +310,7 @@ class HP3437A(Instrument):
         return cur_range
 
     @staticmethod
-    def decode_trigger(status_bytes):
+    def _decode_trigger(status_bytes):
         """Method to decode trigger mode
 
         :param status_bytes: list of bytes to be decoded
@@ -340,7 +332,7 @@ class HP3437A(Instrument):
         return trigger_mode
 
     @staticmethod
-    def unpack_data(data):
+    def _unpack_data(data):
         """
         Method to unpack the data from the returned bytes in packed mode
 
@@ -362,23 +354,28 @@ class HP3437A(Instrument):
         """
         # Adjusting the timeout to match the number of counts and the delay
         current_timeout = self.adapter.connection.timeout
-        nr_delay = self.number_readings * self.delay
-        new_timeout = nr_delay * 5 * 1000
-        # TODO: check available timeouts in pyvisa-py/pyvisa-py/gpib.py
+        time_needed = self.number_readings * self.delay
+        new_timeout = time_needed * 3 * 1000  # safety factor 3
 
         if new_timeout > current_timeout:
+            if new_timeout >= 1e6:
+                # Disables timeout if measurement would take more then 1000 sec
+                new_timeout = 0
+                log.info("HP3437A: timeout deactivated")
             self.adapter.connection.timeout = new_timeout
-            log.info("HP3437A: timeout updated to %g", new_timeout)
+            log.info("HP3437A: timeout changed to %g", new_timeout)
         read_data = self.adapter.connection.read_raw()
         # check if data is in packed format format
         if read_data[0] == read_data[2]:
-            p_Data = list()
+            processed_data = []
             read_data_length = int(len(read_data) / 2)
             for i in range(0, read_data_length):
                 _from = i * 2
                 _to = _from + 2
-                p_Data.append(self.unpack_data(read_data[_from:_to]))
-            return np.array(p_Data)
+                processed_data.append(self._unpack_data(read_data[_from:_to]))
+            self.adapter.connection.timeout = current_timeout
+            return np.array(processed_data)
+        self.adapter.connection.timeout = current_timeout
         return np.array(read_data[:-2].decode("ASCII").split(","), dtype=float)
 
     # commands/properties for instrument control
@@ -403,7 +400,7 @@ class HP3437A(Instrument):
 
 
         """
-        return bool(self.decode_status(self.get_status(), "Format"))
+        return bool(self._decode_status(self._get_status(), "Format"))
 
     @talk_ascii.setter
     def talk_ascii(self, value):
@@ -414,12 +411,13 @@ class HP3437A(Instrument):
 
     @property
     def delay(self):
-        """Return the value (float) for the delay between two measurements
-        This value can be set,
+        """Return the value (float) for the delay between two measurements,
+        this property can be set,
+
         valid range: 100ns - 0.999999s
 
         """
-        return self.decode_status(self.get_status(), "Delay")
+        return self._decode_status(self._get_status(), "Delay")
 
     @delay.setter
     def delay(self, value):
@@ -430,12 +428,12 @@ class HP3437A(Instrument):
 
     @property
     def number_readings(self):
-        """Return value (int) for the number of consecutive measurements
-        This value can be set,
+        """Return value (int) for the number of consecutive measurements,
+        this property can be set,
         valid range: 0 - 9999
 
         """
-        return self.decode_status(self.get_status(), "Number")
+        return self._decode_status(self._get_status(), "Number")
 
     @number_readings.setter
     def number_readings(self, value):
@@ -446,7 +444,7 @@ class HP3437A(Instrument):
     def range(self):
         """Return the current measurement voltage range.
 
-        This value can be set, valid values: 0.1,1,10 (V).
+        This property can be set, valid values: 0.1, 1, 10 (V).
 
         .. Note::
 
@@ -455,7 +453,7 @@ class HP3437A(Instrument):
             Overrange will be in indicated as 0.99,9.99 or 99.9
 
         """
-        return self.decode_range(self.get_status())
+        return self._decode_range(self._get_status())
 
     @range.setter
     def range(self, value):
@@ -467,10 +465,10 @@ class HP3437A(Instrument):
     @property
     def status(self):
         """
-        Returns an object representing the current status of the unit.
+        Return an object representing the current status of the unit.
 
         """
-        return self.decode_status(self.get_status())
+        return self._decode_status(self._get_status())
 
     @property
     def SRQ_mask(self):
@@ -487,7 +485,7 @@ class HP3437A(Instrument):
         =========  ==========================
 
         """
-        return self.decode_status(self.get_status(), "SRQ")
+        return self._decode_status(self._get_status(), "SRQ")
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
@@ -496,20 +494,20 @@ class HP3437A(Instrument):
 
     @property
     def trigger(self):
-        """Return current selected trigger mode, this property can be set
+        """Return current selected trigger mode, this property can be set,
 
         Possibe values are:
 
-        ========  ===========================================
-        Value     Meaning
-        ========  ===========================================
-        internal  automatic trigger (internal)
-        external  external trigger (connector on back or GET)
-        hold/man  holds the measurement/issues a manual trigger
-        ========  ===========================================
+        ===========  ===========================================
+        Value        Explanation
+        ===========  ===========================================
+        internal     automatic trigger (internal)
+        external     external trigger (connector on back or GET)
+        hold/manual  holds the measurement/issues a manual trigger
+        ===========  ===========================================
 
         """
-        return self.decode_trigger(self.get_status())
+        return self._decode_trigger(self._get_status())
 
     @trigger.setter
     def trigger(self, value):
