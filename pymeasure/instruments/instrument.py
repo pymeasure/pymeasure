@@ -114,11 +114,6 @@ class Instrument(object):
         self.SCPI = includeSCPI
         self.adapter = adapter
 
-        class Object(object):
-            pass
-
-        self.get = Object()
-
         self.isShutdown = False
         self._special_names = self._compute_special_names()
 
