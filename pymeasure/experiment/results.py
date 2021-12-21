@@ -120,7 +120,7 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
     return filename
 
 
-class Formatter(logging.Formatter):
+class Results_Formatter(logging.Formatter):
     """Base class for formatters."""
     def __init__(self, columns, delimiter=',', line_break='\n'):
         """Prepares formatter for a given list of columns (=header).
@@ -139,7 +139,7 @@ class Formatter(logging.Formatter):
         self.line_break = line_break
 
 
-class CSVFormatter(Formatter):
+class CSVFormatter(Results_Formatter):
     """ Formatter of data results, single-line CSV """
 
     def format(self, record):
@@ -156,7 +156,7 @@ class CSVFormatter(Formatter):
         return self.delimiter.join(self.columns)
 
 
-class CSVFormatter_Pandas(logging.Formatter):
+class CSVFormatter_Pandas(Results_Formatter):
     """ Formatter of data results, pandas dataframe or single-line CSV """
 
     def format(self, record):
