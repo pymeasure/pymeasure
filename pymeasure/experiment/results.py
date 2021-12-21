@@ -40,29 +40,32 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
+def replace_placeholders(string, procedure, date_format="%Y-%m-%d",
+                         time_format="%H:%M:%S"):
     """Replace placeholders in string with values from procedure parameters.
 
     Replaces the placeholders in the provided string with the values of the
     associated parameters, as provided by the procedure. This uses the standard
-    python string.format syntax. Apart from the parameter in the procedure (which
-    should be called by their full names) "date" and "time" are also added as optional
-    placeholders.
+    python string.format syntax. Apart from the parameter in the procedure
+    (which should be called by their full names) "date" and "time" are also
+    added as optional placeholders.
 
     :param string:
-        The string in which the placeholders are to be replaced. Python string.format
-        syntax is used, e.g. "{Parameter Name}" to insert a FloatParameter called
-        "Parameter Name", or "{Parameter Name:.2f}" to also specifically format the
-        parameter.
+        The string in which the placeholders are to be replaced. Python
+        string.format syntax is used, e.g. "{Parameter Name}" to insert a
+        FloatParameter called "Parameter Name", or "{Parameter Name:.2f}"
+        to also specifically format the parameter.
 
     :param procedure:
         The procedure from which to get the parameter values.
 
     :param date_format:
-        A string to represent how the additional placeholder "date" will be formatted.
+        A string to represent how the additional placeholder "date" will
+        be formatted.
 
     :param time_format:
-        A string to represent how the additional placeholder "time" will be formatted.
+        A string to represent how the additional placeholder "time" will
+        be formatted.
 
     """
     now = datetime.now()
@@ -111,7 +114,8 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
             i += 1
             filename = "%s_%d%s.%s" % (basepath, i, suffix, ext)
     else:
-        basename = "%s%s%s.%s" % (prefix, now.strftime(datetimeformat), suffix, ext)
+        basename = "%s%s%s.%s" % (prefix, now.strftime(datetimeformat),
+                                  suffix, ext)
         filename = os.path.join(directory, basename)
     return filename
 
@@ -351,7 +355,8 @@ class Results(object):
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
                 if partitioned_line[1] != separator:
-                    raise Exception("Error partitioning header line %s." % line)
+                    raise Exception(
+                        "Error partitioning header line %s." % line)
                 else:
                     parameters[partitioned_line[0]] = partitioned_line[2]
 
@@ -372,8 +377,9 @@ class Results(object):
                 value = parameters[parameter.name]
                 setattr(procedure, name, value)
             else:
-                raise Exception("Missing '%s' parameter when loading '%s' class" % (
-                    parameter.name, procedure_class))
+                raise Exception(
+                    "Missing '%s' parameter when loading '%s' class" % (
+                        parameter.name, procedure_class))
 
         procedure.refresh_parameters()  # Enforce update of meta data
         return procedure
@@ -425,8 +431,8 @@ class Results(object):
                 tmp_frame = pd.concat(chunks, ignore_index=True)
                 # only append new data if there is any
                 # if no new data, tmp_frame dtype is object, which override's
-                # self._data's original dtype - this can cause problems plotting
-                # (e.g. if trying to plot int data on a log axis)
+                # self._data's original dtype - this can cause problems
+                # plotting (e.g. if trying to plot int data on a log axis)
                 if len(tmp_frame) > 0:
                     self._data = pd.concat([self._data, tmp_frame],
                                            ignore_index=True)
