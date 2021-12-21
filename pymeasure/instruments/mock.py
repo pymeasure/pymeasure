@@ -52,7 +52,7 @@ class Mock(Instrument):
         # mock image attributes # 
         self._w = 1920
         self._h = 1080
-        self._image_format = "mono_8"
+        self._frame_format = "mono_8"
 
     def get_time(self):
         """Get elapsed time"""
@@ -127,26 +127,28 @@ class Mock(Instrument):
 
     frame_height = property(fget=get_frame_height, fset=set_frame_height)
 
-    def get_image_format(self):
+    def get_frame_format(self):
         """ Format for image data returned from the get_frame() method. Allowed values are:
                 mono_8: single channel 8-bit image.
                 mono_16: single channel 16-bit image.
         """
         time.sleep(self._wait) 
-        return self._image_format 
+        return self._frame_format 
 
-    def set_image_format(self, format):
-        assert format in ["mono_8", "mono_16"], "Unsupported mock image format specified!"
-        self._image_format = format
+    def set_frame_format(self, form):
+        if not form in ["mono_8", "mono_16"]:
+            raise ValueError("Unsupported mock image format specified!")
+        self._frame_format = form
 
-    image_format = property(fget=get_image_format, fset=set_image_format)
+    frame_format = property(fget=get_frame_format, fset=set_frame_format)
 
     def get_frame(self):
         """ Get a new image frame."""
         im_format_maxval_dict = {"8": 255, "16": 65535} 
-        bit_depth = self.image_format.split("_")[1] 
+        im_format_type_dict = {"8": np.uint8, "16": np.uint16} 
+        bit_depth = self.frame_format.split("_")[1]
         time.sleep(self._wait)
-        return im_format_maxval_dict[bit_depth] * np.random.rand(self.frame_height, self.frame_width)        
+        return np.array(im_format_maxval_dict[bit_depth] * np.random.rand(self.frame_height, self.frame_width), dtype=im_format_type_dict[bit_depth]) 
 
     frame = property(fget=get_frame)
 
