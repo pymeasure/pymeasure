@@ -116,20 +116,27 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
     return filename
 
 
-class CSVFormatter(logging.Formatter):
-    """ Formatter of data results """
-
-    def __init__(self, columns, delimiter=','):
-        """Creates a csv formatter for a given list of columns (=header).
+class Formatter(logging.Formatter):
+    """Base class for formatters."""
+    def __init__(self, columns, delimiter=',', line_break='\n'):
+        """Prepares formatter for a given list of columns (=header).
 
         :param columns: list of column names.
         :type columns: list
-        :param delimiter: delimiter between columns.
+        :param delimiter: delimiter between columns, defaults to ','
+        :type delimiter: str
+        :param line_break: line termination character to use,
+                           defaults to '\n'
         :type delimiter: str
         """
         super().__init__()
         self.columns = columns
         self.delimiter = delimiter
+        self.line_break = line_break
+
+
+class CSVFormatter(Formatter):
+    """ Formatter of data results, single-line CSV """
 
     def format(self, record):
         """Formats a record as csv.
@@ -138,35 +145,35 @@ class CSVFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-        return self.delimiter.join('{}'.format(record[x]) for x in self.columns)
+        return self.delimiter.join(
+            '{}'.format(record[x]) for x in self.columns)
 
     def format_header(self):
         return self.delimiter.join(self.columns)
 
 
 class CSVFormatter_Pandas(logging.Formatter):
-    """ Formatter of data results """
-
-    def __init__(self, columns, delimiter=',', line_break='\n'):
-        """Creates a csv formatter for a given list of columns (=header).
-
-        :param columns: list of column names.
-        :type columns: list
-        :param delimiter: delimiter between columns.
-        :type delimiter: str
-        """
-        super().__init__()
-        self.columns = columns
-        self.delimiter = delimiter
-        self.line_break = line_break
+    """ Formatter of data results, pandas dataframe or single-line CSV """
 
     def format(self, record):
-        """Formats a record as csv.
+        """Formats a record as csv using pandas built-in ``to_csv`` method.
+        Accepts a pandas dataframe or a dict of values matching
+        the given list of columns.
 
         :param record: record to format.
-        :type record: pandas.DataFrame
-        :return: a string
+        :type record: pandas.DataFrame or dict
+        :return: str
         """
+        if isinstance(record, pd.DataFrame):
+            pass
+        elif isinstance(record, dict):
+            # ensure correct order of columns
+            record = (record[c] for c in self.columns)
+            record = pd.DataFrame(record)
+        else:
+            log.error('Formatting of data failed. ' +
+                      'Pandas dataframe or dict required.')
+            return ''
         return record.to_csv(
             sep=self.delimiter,
             header=False,
@@ -174,10 +181,16 @@ class CSVFormatter_Pandas(logging.Formatter):
             # explicit line_terminator required, otherwise Windows
             # uses \r\n which results in double blank lines
             line_terminator=self.line_break
-        )
+        ).strip()
 
     def format_header(self):
-        return self.delimiter.join(self.columns)
+        record = pd.DataFrame(columns=self.columns)
+        return record.to_csv(
+            sep=self.delimiter,
+            header=True,
+            index=False,
+            line_terminator=self.line_break
+        ).strip()
 
 
 class Results(object):
@@ -194,6 +207,7 @@ class Results(object):
                           stored
     :param output_format: Formatter which converts the emitted result data
                           so it can be written to file, defaults to CSV
+                          Possible options: CSV, CSV_PANDAS
     """
 
     COMMENT = '#'
@@ -209,14 +223,16 @@ class Results(object):
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
 
-        if output_format == 'CSV_PANDAS':
-            self.formatter = CSVFormatter_Pandas(
-                columns=self.procedure.DATA_COLUMNS,
-                delimiter=self.DELIMITER,
-                line_break=self.LINE_BREAK
+        # set formatter
+        formatter_class = {
+            'CSV': CSVFormatter,
+            'CSV_PANDAS': CSVFormatter_Pandas,
+        }[output_format]
+        self.formatter = formatter_class(
+            columns=self.procedure.DATA_COLUMNS,
+            delimiter=self.DELIMITER,
+            line_break=self.LINE_BREAK
             )
-        else:  # default to CSV
-            self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
         if isinstance(data_filename, (list, tuple)):
             data_filenames, data_filename = data_filename, data_filename[0]
