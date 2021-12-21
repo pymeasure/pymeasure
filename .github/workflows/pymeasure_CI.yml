@@ -25,7 +25,7 @@ jobs:
       - name: Install pymeasure requirements
         uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: "3.8"
+          python-version: "3.9"
           environment-file: requirements/pymeasure.yml
           activate-environment: pymeasure
           auto-update-conda: true
@@ -65,7 +65,7 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.7", "3.8", "3.9"]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
     steps:
       - uses: actions/checkout@v2
       - name: Cache conda
