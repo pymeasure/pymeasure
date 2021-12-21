@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
-import numpy
 import time
+import numpy as np
 
 from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments import Instrument
@@ -49,6 +49,10 @@ class Mock(Instrument):
                        'output_voltage': 'V',
                        'time': 's',
                        'wave': 'a.u.'}
+        # mock image attributes # 
+        self._w = 1920
+        self._h = 1080
+        self._image_format = "mono_8"
 
     def get_time(self):
         """Get elapsed time"""
@@ -77,7 +81,7 @@ class Mock(Instrument):
 
     def get_wave(self):
         """Get wave."""
-        return float(numpy.sin(self.time))
+        return float(np.sin(self.time))
 
     wave = property(fget=get_wave)
 
@@ -100,3 +104,50 @@ class Mock(Instrument):
         self._output_voltage = value
 
     output_voltage = property(fget=get_output_voltage, fset=set_output_voltage)
+
+    def get_frame_width(self):
+        """ Image frame width in pixels."""
+        time.sleep(self._wait) 
+        return self._w
+
+    def set_frame_width(self, w):
+        time.sleep(self._wait)
+        self._w = w
+
+    frame_width = property(fget=get_frame_width, fset=set_frame_width)
+
+    def get_frame_height(self):
+        """ Image frame height in pixels."""
+        time.sleep(self._wait) 
+        return self._h
+
+    def set_frame_height(self, h):
+        time.sleep(self._wait)
+        self._h = h
+
+    frame_height = property(fget=get_frame_height, fset=set_frame_height)
+
+    def get_image_format(self):
+        """ Format for image data returned from the get_frame() method. Allowed values are:
+                mono_8: single channel 8-bit image.
+                mono_16: single channel 16-bit image.
+        """
+        time.sleep(self._wait) 
+        return self._image_format 
+
+    def set_image_format(self, format):
+        assert format in ["mono_8", "mono_16"], "Unsupported mock image format specified!"
+        self._image_format = format
+
+    image_format = property(fget=get_image_format, fset=set_image_format)
+
+    def get_frame(self):
+        """ Get a new image frame."""
+        im_format_maxval_dict = {"8": 255, "16": 65535} 
+        bit_depth = self.image_format.split("_")[1] 
+        time.sleep(self._wait)
+        return im_format_maxval_dict[bit_depth] * np.random.rand(self.frame_height, self.frame_width)        
+
+    frame = property(fget=get_frame)
+
+
