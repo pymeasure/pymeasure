@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -100,7 +100,7 @@ class ParkerGV6(Instrument):
         """
         position = self.position
         if position is not None:
-            return position*self.degrees_per_count
+            return position * self.degrees_per_count
         else:
             return None
 
@@ -109,7 +109,7 @@ class ParkerGV6(Instrument):
         """ Gives the motor a setpoint in degrees based on an
         angle from a relative or absolution position
         """
-        self.position = int(angle*self.degrees_per_count**-1)
+        self.position = int(angle * self.degrees_per_count**-1)
 
     @property
     def angle_error(self):
@@ -118,7 +118,7 @@ class ParkerGV6(Instrument):
         """
         position_error = self.position_error
         if position_error is not None:
-            return position_error*self.degrees_per_count
+            return position_error * self.degrees_per_count
         else:
             return None
 

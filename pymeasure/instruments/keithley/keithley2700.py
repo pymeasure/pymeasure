@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,16 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
 import numpy as np
 import time
-from io import BytesIO
-import re
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def clist_validator(value, values):
@@ -171,6 +169,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
                 log.warning(
                     "Card type %s at slot %s is not yet implemented." % (card, slot)
                 )
+                continue
 
             channels = [100 * slot + ch for ch in channels]
 
@@ -179,7 +178,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
     def close_rows_to_columns(self, rows, columns, slot=None):
         """ Closes (connects) the channels between column(s) and row(s)
         of the 7709 connection matrix.
-        Only one of the parameters `rows' or 'columns' can be "all"
+        Only one of the parameters 'rows' or 'columns' can be "all"
 
         :param rows: row number or list of numbers; can also be "all"
         :param columns: column number or list of numbers; can also be "all"
@@ -192,7 +191,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
     def open_rows_to_columns(self, rows, columns, slot=None):
         """ Opens (disconnects) the channels between column(s) and row(s)
         of the 7709 connection matrix.
-        Only one of the parameters `rows' or 'columns' can be "all"
+        Only one of the parameters 'rows' or 'columns' can be "all"
 
         :param rows: row number or list of numbers; can also be "all"
         :param columns: column number or list of numbers; can also be "all"
@@ -205,7 +204,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
     def channels_from_rows_columns(self, rows, columns, slot=None):
         """ Determine the channel numbers between column(s) and row(s) of the
         7709 connection matrix. Returns a list of channel numbers.
-        Only one of the parameters `rows' or 'columns' can be "all"
+        Only one of the parameters 'rows' or 'columns' can be "all"
 
         :param rows: row number or list of numbers; can also be "all"
         :param columns: column number or list of numbers; can also be "all"
@@ -247,8 +246,8 @@ class Keithley2700(Instrument, KeithleyBuffer):
             columns = new_columns
 
         # Determine channel number from rows and columns number.
-        rows = np.array(rows)
-        columns = np.array(columns)
+        rows = np.array(rows, ndmin=1)
+        columns = np.array(columns, ndmin=1)
 
         channels = (rows - 1) * 8 + columns
 

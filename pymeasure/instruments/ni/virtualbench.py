@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2021 PyMeasure Developers
 # pyvirtualbench library: Copyright (c) 2015 Charles Armstrap <charles@armstrap.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,17 +28,15 @@
 import logging
 import re
 # ctypes only required for VirtualBench_Direct class
-from ctypes import (c_bool, c_size_t, c_double, c_uint8, c_int32, c_uint32,
-                    c_int64, c_uint64, c_wchar, c_wchar_p, Structure, c_int,
-                    cdll, byref)
+from ctypes import (c_int, cdll, byref)
 from datetime import datetime, timezone, timedelta
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument, RangeException
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import (
+    strict_discrete_set, strict_discrete_range,
+    truncated_discrete_set, strict_range
+)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -48,7 +46,6 @@ try:
     # https://github.com/armstrap/armstrap-pyvirtualbench
     import pyvirtualbench as pyvb
 except ModuleNotFoundError as err:
-    # catch here for logging
     log.info('Failed loading the pyvirtualbench package. '
              + 'Check the NI VirtualBench documentation on how to '
              + 'install this external dependency. '
@@ -101,7 +98,8 @@ class VirtualBench():
     These methods are not wrapped so far, checkout the pyvirtualbench file.
 
     All calibration methods and classes are not wrapped so far, since these
-    are not required on a very regular basis.
+    are not required on a very regular basis. Also the connections via network
+    are not yet implemented.
     Check the pyvirtualbench file, if you need the functionality.
 
     :param str device_name: Full unique device name
@@ -204,47 +202,6 @@ class VirtualBench():
         """
         return self.vb.expand_channel_string(names_in)
 
-    """
-    Wrappers not implented yet:
-    -   Handling Network Device
-    -   Setting Calibration Information
-
-    def add_network_device(self, ip_or_hostname, timeout_in_ms):
-        ''' Adds a networked device to the system.
-        '''
-
-    def remove_device(self, device_name = ''):
-        ''' Removes a device from the system. The device must not be connected
-            via USB to be removed.
-        '''
-
-    def login(self, device_name = '', username = 'admin', password = ''):
-        ''' Attempts to log in to a networked device. Logging in to
-        a device grants access to the permissions set for the
-        specified user in NI Web-Based Monitoring and Configuration.
-        '''
-
-    def logout(self, device_name = ''):
-        ''' Logs out of a networked device that you are logged in to.
-        Logging out of a device revokes access to the permissions set
-        for the specified user in NI Web-Based Monitoring and
-        Configuration.
-        '''
-
-    def set_calibration_information(self, calibration_date,
-                                    calibration_interval, device_name = '',
-                                    password = ''):
-        ''' Sets calibration information for the specified device.
-        '''
-
-    def set_calibration_password(self, current_password, new_password,
-                                 device_name = ''):
-        ''' Sets a new calibration password for the specified device. This
-            method requires the current password for the device, and returns an
-            error if the specified password is incorrect.
-        '''
-    """
-
     def get_calibration_information(self):
         """ Returns calibration information for the specified device,
         including the last calibration date and calibration interval.
@@ -265,7 +222,8 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.dio = self.DigitalInputOutput(self.vb, lines, reset, vb_name=self.name)
+        self.dio = self.DigitalInputOutput(self.vb, lines, reset,
+                                           vb_name=self.name)
 
     def acquire_power_supply(self, reset=False):
         """ Establishes communication with the PS module. This method should be
@@ -295,7 +253,8 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.mso = self.MixedSignalOscilloscope(self.vb, reset, vb_name=self.name)
+        self.mso = self.MixedSignalOscilloscope(self.vb, reset,
+                                                vb_name=self.name)
 
     def acquire_digital_multimeter(self, reset=False):
         """ Establishes communication with the DMM module. This method should
@@ -305,13 +264,54 @@ class VirtualBench():
         :type reset: bool, optional
         """
         reset = strict_discrete_set(reset, [True, False])
-        self.dmm = self.DigitalMultimeter(self.vb, reset=reset, vb_name=self.name)
+        self.dmm = self.DigitalMultimeter(self.vb, reset=reset,
+                                          vb_name=self.name)
 
-    class DigitalInputOutput():
+    class VirtualBenchInstrument():
+        def __init__(self, acquire_instr, reset,
+                     instr_identifier, vb_name=''):
+            """Initialize instrument of VirtualBench device.
+            Sets class variables and provides basic methods
+            common to all VB instruments.
+
+            :param acquire_instr: Method to acquire the instrument
+            :type acquire_instr: method
+            :param reset: Resets the instrument
+            :type reset: bool
+            :param instr_identifier: Shorthand identifier, e.g. mso or fgen
+            :type instr_identifier: str
+            :param vb_name: Name of VB device for logging, defaults to ''
+            :type vb_name: str, optional
+            """
+            # Parameters & Handle of VirtualBench Instance
+            self._vb_handle = acquire_instr.__self__
+            self._device_name = self._vb_handle.device_name
+            self.name = (vb_name + " " + instr_identifier.upper()).strip()
+            log.info("Initializing %s." % self.name)
+            self._instrument_handle = acquire_instr(self._device_name, reset)
+            self.isShutdown = False
+
+        def __del__(self):
+            """ Ensures the connection is closed upon deletion
+            """
+            if self.isShutdown is not True:
+                self._instrument_handle.release()
+
+        def shutdown(self):
+            ''' Removes the session and deallocates any resources acquired
+            during the session. If output is enabled on any channels, they
+            remain in their current state.
+            '''
+            log.info("Shutting down %s" % self.name)
+            self._instrument_handle.release()
+            self.isShutdown = True
+
+    class DigitalInputOutput(VirtualBenchInstrument):
         """ Represents Digital Input Output (DIO) Module of Virtual Bench
         device. Allows to read/write digital channels and/or set channels
         to export the start signal of FGEN module or trigger of MSO module.
         """
+
         def __init__(self, virtualbench, lines, reset, vb_name=''):
             """ Acquire DIO module
 
@@ -334,27 +334,14 @@ class VirtualBench():
             log.info("Initializing %s." % self.name)
             self.dio = self._vb_handle.acquire_digital_input_output(
                 self._line_names, reset)
+            # for methods provided by super class
+            self._instrument_handle = self.dio
             self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.dio.release()
-
-        def shutdown(self):
-            ''' Stops the session and deallocates any resources acquired during
-                the session. If output is enabled on any channels, they remain
-                in their current state and continue to output data.
-            '''
-            log.info("Shutting down %s" % self.name)
-            self.dio.release()
-            self.isShutdown = True
 
         def validate_lines(self, lines, return_single_lines=False,
                            validate_init=False):
-            """ Validate lines string
-                Allowed patterns (case sensitive):
+            """Validate lines string
+            Allowed patterns (case sensitive):
 
                 - ``'VBxxxx-xxxxxxx/dig/0:7'``
                 - ``'VBxxxx-xxxxxxx/dig/0'``
@@ -392,7 +379,9 @@ class VirtualBench():
                 else:
                     # split off line number by last '/'
                     try:
-                        (device, line) = re.match(r'(.*)(?:/)(.+)', line).groups()
+                        (device, line) = re.match(
+                            r'(.*)(?:/)(.+)',
+                            line).groups()
                     except IndexError:
                         error()
                 if (line == 'trig') and (device == self._device_name):
@@ -513,11 +502,12 @@ class VirtualBench():
             '''
             self.dio.reset_instrument()
 
-    class DigitalMultimeter():
+    class DigitalMultimeter(VirtualBenchInstrument):
         """ Represents Digital Multimeter (DMM) Module of Virtual Bench
         device. Allows to measure either DC/AC voltage or current,
         Resistance or Diodes.
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire DMM module
 
@@ -526,28 +516,10 @@ class VirtualBench():
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " DMM"
-            log.info("Initializing %s." % self.name)
-            self.dmm = self._vb_handle.acquire_digital_multimeter(
-                self._device_name, reset)
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.dmm.release()
-
-        def shutdown(self):
-            """ Stops the DMM session and deallocates any resources
-            acquired during the session.
-            """
-            log.info("Shutting down %s" % self.name)
-            self.dmm.release()
-            self.isShutdown = True
+            super().__init__(
+                virtualbench.acquire_digital_multimeter,
+                reset, 'dmm', vb_name)
+            self.dmm = self._instrument_handle
 
         @staticmethod
         def validate_range(dmm_function, range):
@@ -566,7 +538,7 @@ class VirtualBench():
                 3: [0.005, 0.05, 0.5, 5],
                 4: [100, 1000, 10000, 100000, 1000000,
                     10000000, 100000000],
-                }
+            }
             range = truncated_discrete_set(range, ref_ranges[dmm_function])
             return range
 
@@ -588,7 +560,7 @@ class VirtualBench():
                 pyvb.DmmFunction(dmm_function)
             except Exception:
                 try:
-                    dmm_function = pyvb.DmmFunction[dmm_function.Upper()]
+                    dmm_function = pyvb.DmmFunction[dmm_function.upper()]
                 except Exception:
                     raise ValueError(
                         "DMM Function may be 0-5, 'DC_VOLTS'," +
@@ -612,7 +584,7 @@ class VirtualBench():
             except Exception:
                 try:
                     auto_range_terminal = pyvb.DmmCurrentTerminal[
-                        auto_range_terminal.Upper()]
+                        auto_range_terminal.upper()]
                 except Exception:
                     raise ValueError(
                         "Current Auto Range Terminal may be 0, 1," +
@@ -653,7 +625,7 @@ class VirtualBench():
             except Exception:
                 try:
                     dmm_input_resistance = pyvb.DmmInputResistance[
-                        dmm_input_resistance.Upper()]
+                        dmm_input_resistance.upper()]
                 except Exception:
                     raise ValueError(
                         "Input Resistance may be 0, 1," +
@@ -716,10 +688,11 @@ class VirtualBench():
             """
             self.dmm.reset_instrument()
 
-    class FunctionGenerator():
+    class FunctionGenerator(VirtualBenchInstrument):
         """ Represents Function Generator (FGEN) Module of Virtual
         Bench device.
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire FGEN module
 
@@ -728,13 +701,10 @@ class VirtualBench():
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " FGEN"
-            log.info("Initializing %s." % self.name)
-            self.fgen = self._vb_handle.acquire_function_generator(
-                self._device_name, reset)
+            super().__init__(
+                virtualbench.acquire_function_generator,
+                reset, 'fgen', vb_name)
+            self.fgen = self._instrument_handle
 
             self._waveform_functions = {"SINE": 0, "SQUARE": 1,
                                         "TRIANGLE/RAMP": 2, "DC": 3}
@@ -742,22 +712,6 @@ class VirtualBench():
             # v: k for k, v in self._waveform_functions.items()}
             self._max_frequency = {"SINE": 20000000, "SQUARE": 5000000,
                                    "TRIANGLE/RAMP": 1000000, "DC": 20000000}
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.fgen.release()
-
-        def shutdown(self):
-            ''' Stops the session and deallocates any resources acquired during
-            the session. If output is enabled on any channels, they remain
-            in their current state and continue to output data.
-            '''
-            log.info("Shutting down %s" % self.name)
-            self.fgen.release()
-            self.isShutdown = True
 
         def configure_standard_waveform(self, waveform_function, amplitude,
                                         dc_offset, frequency, duty_cycle):
@@ -781,16 +735,13 @@ class VirtualBench():
             max_frequency = self._max_frequency[waveform_function.upper()]
             waveform_function = self._waveform_functions[
                 waveform_function.upper()]
-            amplitude = strict_range(
-                amplitude, [x/100 for x in range(0, 2401)])
-            dc_offset = strict_range(
-                dc_offset, [x/100 for x in range(-1201, 1201)])
-            if (amplitude/2 + abs(dc_offset)) > 12:
+            amplitude = strict_range(amplitude, (0, 24))
+            dc_offset = strict_range(dc_offset, (-12, 12))
+            if (amplitude / 2 + abs(dc_offset)) > 12:
                 raise ValueError(
                     "Amplitude and DC Offset may not exceed +/-12V")
-            duty_cycle = strict_range(duty_cycle, range(0, 101))
-            frequency = strict_range(
-                frequency, [x/1000 for x in range(0, max_frequency*1000 + 1)])
+            duty_cycle = strict_range(duty_cycle, (0, 100))
+            frequency = strict_range(frequency, (0, max_frequency))
             self.fgen.configure_standard_waveform(
                 waveform_function, amplitude, dc_offset, frequency, duty_cycle)
 
@@ -805,10 +756,8 @@ class VirtualBench():
                                   (maximum of 125MS/s, which equals 80ns)
             :type sample_period: float
             """
-            strict_range(len(waveform), range(1, 1000001))  # 1MS
-            if not ((sample_period >= 8e-8) and (sample_period <= 1)):
-                raise ValueError(
-                    "Sample Period allows a maximum of 125MS/s (80ns)")
+            strict_range(len(waveform), (1, 1e6))  # 1MS
+            sample_period = strict_range(sample_period, (8e-8, 1))
             self.fgen.configure_arbitrary_waveform(waveform, sample_period)
 
         def configure_arbitrary_waveform_gain_and_offset(self, gain,
@@ -823,8 +772,7 @@ class VirtualBench():
             :param dc_offset: DC offset in volts
             :type dc_offset: float
             """
-            dc_offset = strict_range(
-                dc_offset, [x/100 for x in range(-1201, 1201)])
+            dc_offset = strict_range(dc_offset, (-12, 12))
             self.fgen.configure_arbitrary_waveform_gain_and_offset(
                 gain, dc_offset)
 
@@ -840,17 +788,6 @@ class VirtualBench():
         def filter(self, enable_filter):
             enable_filter = strict_discrete_set(enable_filter, [True, False])
             self.fgen.enable_filter(enable_filter)
-
-        # def enable_filter(self, enable_filter):
-        #     ''' Enables or disables the filter on the instrument.
-        #     '''
-        #     enable_filter = strict_discrete_set(enable_filter,[True,False])
-        #     self.fgen.enable_filter(enable_filter)
-
-        # def query_filter(self):
-        #     ''' Indicates whether the filter is enabled on the instrument.
-        #     '''
-        #     self.fgen.query_filter()
 
         def query_waveform_mode(self):
             """ Indicates whether the waveform output by the instrument is a
@@ -922,42 +859,45 @@ class VirtualBench():
             '''
             self.fgen.reset_instrument()
 
-    class MixedSignalOscilloscope():
+    class MixedSignalOscilloscope(VirtualBenchInstrument):
         """ Represents Mixed Signal Oscilloscope (MSO) Module of Virtual Bench
         device. Allows to measure oscilloscope data from analog and digital
         channels.
+
+        Methods from pyvirtualbench not implemented in pymeasure yet:
+
+            - ``enable_digital_channels``
+            - ``configure_digital_threshold``
+            - ``configure_advanced_digital_timing``
+            - ``configure_state_mode``
+            - ``configure_digital_edge_trigger``
+            - ``configure_digital_pattern_trigger``
+            - ``configure_digital_glitch_trigger``
+            - ``configure_digital_pulse_width_trigger``
+            - ``query_digital_channel``
+            - ``query_enabled_digital_channels``
+            - ``query_digital_threshold``
+            - ``query_advanced_digital_timing``
+            - ``query_state_mode``
+            - ``query_digital_edge_trigger``
+            - ``query_digital_pattern_trigger``
+            - ``query_digital_glitch_trigger``
+            - ``query_digital_pulse_width_trigger``
+            - ``read_digital_u64``
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
-            """ Acquire FGEN module
+            """ Acquire MSO module
 
             :param virtualbench: Instance of the VirtualBench class
             :type virtualbench: VirtualBench
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " MSO"
-            log.info("Initializing %s." % self.name)
-            self.mso = self._vb_handle.acquire_mixed_signal_oscilloscope(
-                self._device_name, reset)
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.mso.release()
-
-        def shutdown(self):
-            ''' Removes the session and deallocates any resources acquired
-            during the session. If output is enabled on any channels, they
-            remain in their current state.
-            '''
-            log.info("Shutting down %s" % self.name)
-            self.mso.release()
-            self.isShutdown = True
+            super().__init__(
+                virtualbench.acquire_mixed_signal_oscilloscope,
+                reset, 'mso', vb_name)
+            self.mso = self._instrument_handle
 
         @staticmethod
         def validate_trigger_instance(trigger_instance):
@@ -973,16 +913,11 @@ class VirtualBench():
             except Exception:
                 try:
                     trigger_instance = pyvb.MsoTriggerInstance[
-                        trigger_instance.Upper()]
+                        trigger_instance.upper()]
                 except Exception:
                     raise ValueError(
                         "Trigger Instance may be 0, 1, 'A' or 'B'")
             return trigger_instance
-
-        def auto_setup(self):
-            """ Automatically configure the instrument
-            """
-            self.mso.auto_setup()
 
         def validate_channel(self, channel):
             """ Check if ``channel`` is a correct specification
@@ -1025,8 +960,17 @@ class VirtualBench():
 
             return_value = ', '.join(return_value)
             return_value = self._vb_handle.collapse_channel_string(
-                return_value)
+                return_value)[0]  # drop number of channels
             return return_value
+
+        # --------------------------
+        # Configure Instrument
+        # --------------------------
+
+        def auto_setup(self):
+            """ Automatically configure the instrument
+            """
+            self.mso.auto_setup()
 
         def configure_analog_channel(self, channel, enable_channel,
                                      vertical_range, vertical_offset,
@@ -1035,10 +979,13 @@ class VirtualBench():
 
             :param str channel: Channel string
             :param bool enable_channel: Enable/Disable channel
-            :param float vertical_range: Vertical measurement range (0V - 20V)
+            :param float vertical_range: Vertical measurement range (0V - 20V),
+                the instrument discretizes to these ranges:
+                ``[20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05]``
+                which are 5x the values shown in the native UI.
             :param float vertical_offset: Vertical offset to correct for
                                           (inverted compared to VB native UI,
-                                          -20V - +20V)
+                                          -20V - +20V, resolution 0.1mV)
             :param probe_attenuation: Probe attenuation (``'ATTENUATION_10X'``
                                       or ``'ATTENUATION_1X'``)
             :type probe_attenuation: int or str
@@ -1048,16 +995,16 @@ class VirtualBench():
             channel = self.validate_channel(channel)
             enable_channel = strict_discrete_set(
                 enable_channel, [True, False])
-            if (vertical_range < 0) or (vertical_range > 20):
-                raise ValueError("Vertical Range takes value 0 to 20V")
-            if (vertical_offset < -20) or (vertical_offset > 20):
-                raise ValueError("Vertical Offset takes value -20 to +20V")
+            vertical_range = strict_range(vertical_range, (0, 20))
+            vertical_offset = strict_discrete_range(
+                vertical_offset, [-20, 20], 1e-4
+            )
             try:
                 pyvb.MsoProbeAttenuation(probe_attenuation)
             except Exception:
                 try:
                     probe_attenuation = pyvb.MsoProbeAttenuation[
-                        probe_attenuation.Upper()]
+                        probe_attenuation.upper()]
                 except Exception:
                     raise ValueError(
                         "Probe Attenuation may be 1, 10," +
@@ -1067,7 +1014,7 @@ class VirtualBench():
             except Exception:
                 try:
                     vertical_coupling = pyvb.MsoCoupling[
-                        vertical_coupling.Upper()]
+                        vertical_coupling.upper()]
                 except Exception:
                     raise ValueError(
                         "Probe Attenuation may be 0, 1, 'AC' or 'DC'")
@@ -1093,7 +1040,7 @@ class VirtualBench():
             except Exception:
                 try:
                     input_impedance = pyvb.MsoInputImpedance[
-                        input_impedance.Upper()]
+                        input_impedance.upper()]
                 except Exception:
                     raise ValueError(
                         "Probe Attenuation may be 0, 1," +
@@ -1103,58 +1050,33 @@ class VirtualBench():
             self.mso.configure_analog_channel_characteristics(
                 channel, input_impedance, bandwidth_limit)
 
-        # def enable_digital_channels(self, channel, enable_channel):
-        #     ''' Enables or disables the specified digital channels.
-        #     '''
-
-        # def configure_digital_threshold(self, threshold):
-        #     ''' Configures the threshold level for logic analyzer lines.
-        #     '''
-
         def configure_timing(self, sample_rate, acquisition_time,
                              pretrigger_time, sampling_mode):
             """ Configure timing settings of the MSO
 
-            :param int sample_rate: Sample rate (15.26kS - 1MS)
+            :param int sample_rate: Sample rate (15.26kS - 1GS)
             :param float acquisition_time: Acquisition time (1ns - 68.711s)
             :param float pretrigger_time: Pretrigger time (0s - 10s)
             :param sampling_mode: Sampling mode (``'SAMPLE'`` or
                                   ``'PEAK_DETECT'``)
             """
-            sample_rate = strict_range(sample_rate, range(15260, 1000000001))
-            if not ((acquisition_time >= 1e-09) and
-                    (acquisition_time <= 68.711)):
-                raise ValueError(
-                    "Acquisition Time must be between 1ns and 68.7s")
+            sample_rate = strict_range(sample_rate, (15260, 1e9))
+            acquisition_time = strict_discrete_range(
+                acquisition_time, (1e-09, 68.711), 1e-09)
             # acquisition is also limited by buffer size,
             # which depends on sample rate as well as acquisition time
-            if not ((pretrigger_time >= 0) and (pretrigger_time <= 10)):
-                raise ValueError("Pretrigger Time must be between 1ns and 10s")
+            pretrigger_time = strict_range(pretrigger_time, (0, 10))
             try:
                 pyvb.MsoSamplingMode(sampling_mode)
             except Exception:
                 try:
-                    sampling_mode = pyvb.MsoSamplingMode[sampling_mode.Upper()]
+                    sampling_mode = pyvb.MsoSamplingMode[sampling_mode.upper()]
                 except Exception:
                     raise ValueError(
                         "Sampling Mode may be 0, 1, 'SAMPLE' or 'PEAK_DETECT'")
 
             self.mso.configure_timing(
                 sample_rate, acquisition_time, pretrigger_time, sampling_mode)
-
-        # def configure_advanced_digital_timing(self,
-        #   digital_sample_rate_control,
-        #   digital_sample_rate, buffer_control, buffer_pretrigger_percent):
-        #     ''' Configures the rate and buffer settings of the logic
-        #     analyzer.
-        #         This method allows for more advanced configuration options
-        #     than MSO Configure Timing.
-        #     '''
-
-        # def configure_state_mode(self, enable, clock_channel, clock_edge):
-        #     ''' Configures how to clock data on the logic analyzer channels
-        #         that are enabled.
-        #     '''
 
         def configure_immediate_trigger(self):
             """ Configures a trigger to immediately activate on the specified
@@ -1182,7 +1104,7 @@ class VirtualBench():
                 pyvb.EdgeWithEither(trigger_slope)
             except Exception:
                 try:
-                    trigger_slope = pyvb.EdgeWithEither[trigger_slope.Upper()]
+                    trigger_slope = pyvb.EdgeWithEither[trigger_slope.upper()]
                 except Exception:
                     raise ValueError(
                         "Trigger Slope may be 0, 1, 2, 'RISING'," +
@@ -1191,34 +1113,6 @@ class VirtualBench():
             self.mso.configure_analog_edge_trigger(
                 trigger_source, trigger_slope, trigger_level,
                 trigger_hysteresis, trigger_instance)
-
-        # def configure_digital_edge_trigger(self, trigger_source,
-        #   trigger_slope, trigger_instance):
-        #     ''' Configures a trigger to activate on the specified source when
-        #         the digital edge reaches the specified levels.
-        #     '''
-
-        # def configure_digital_pattern_trigger(self, trigger_source,
-        #   trigger_pattern, trigger_instance):
-        #     ''' Configures a trigger to activate on the specified channels
-        #         when
-        #         a digital pattern is matched. A trigger is produced when
-        #         every
-        #         level (high/low) requirement specified in Trigger Pattern is
-        #         met, and when at least one toggling (toggle/fall/rise)
-        #         requirement is met. If no toggling requirements are set, then
-        #         only the level requirements must be met to produce a trigger.
-        #     '''
-
-        # def configure_digital_glitch_trigger(self, trigger_source,
-        #   trigger_instance):
-        #     ''' Configures a trigger to activate on the specified channels
-        #         when
-        #         a digital glitch occurs. A glitch occurs when a channel in
-        #         Trigger Source toggles between two edges of the sample clock,
-        #         but has the same state for both samples. This may happen when
-        #         the sampling rate is less than 1 GHz.
-        #     '''
 
         def configure_analog_pulse_width_trigger(self, trigger_source,
                                                  trigger_polarity,
@@ -1252,7 +1146,7 @@ class VirtualBench():
             except Exception:
                 try:
                     trigger_polarity = pyvb.MsoTriggerPolarity[
-                        trigger_polarity.Upper()]
+                        trigger_polarity.upper()]
                 except Exception:
                     raise ValueError(
                         "Comparison Mode may be 0, 1, 2, 3," +
@@ -1264,7 +1158,7 @@ class VirtualBench():
             except Exception:
                 try:
                     comparison_mode = pyvb.MsoComparisonMode[
-                        comparison_mode.Upper()]
+                        comparison_mode.upper()]
                 except Exception:
                     raise ValueError(
                         "Trigger Polarity may be 0, 1," +
@@ -1273,16 +1167,6 @@ class VirtualBench():
             self.mso.configure_analog_pulse_width_trigger(
                 trigger_source, trigger_polarity, trigger_level,
                 comparison_mode, lower_limit, upper_limit, trigger_instance)
-
-        def configure_digital_pulse_width_trigger(self, trigger_source,
-                                                  trigger_polarity,
-                                                  comparison_mode,
-                                                  lower_limit, upper_limit,
-                                                  trigger_instance):
-            ''' Configures a trigger to activate on the specified source when
-            the digital edge reaches the specified levels within a specified
-            window of time.
-            '''
 
         def configure_trigger_delay(self, trigger_delay):
             """ Configures the amount of time to wait after a trigger condition
@@ -1321,19 +1205,6 @@ class VirtualBench():
             """
             return self.mso.query_analog_channel_characteristics(channel)
 
-        # def query_digital_channel(self):
-        #     ''' Indicates whether the specified digital channel is enabled.
-        #     '''
-
-        # def query_enabled_digital_channels(self):
-        #     ''' No documentation
-        #     '''
-
-        # def query_digital_threshold(self):
-        #     ''' Indicates the threshold configuration of the logic analyzer
-        #         channels.
-        #     '''
-
         def query_timing(self):
             """ Indicates the timing configuration of the MSO.
             Call directly before measurement to read the actual timing
@@ -1350,14 +1221,6 @@ class VirtualBench():
              self.sampling_mode) = self.mso.query_timing()
             return (self.sample_rate, self.acquisition_time,
                     self.pretrigger_time, self.sampling_mode)
-
-        # def query_advanced_digital_timing(self):
-        #     ''' Indicates the buffer configuration of the logic analyzer.
-        #     '''
-
-        # def query_state_mode(self, clockChannelSize):
-        #     ''' Indicates the clock configuration of the logic analyzer.
-        #     '''
 
         def query_trigger_type(self, trigger_instance):
             """ Indicates the trigger type of the specified instance.
@@ -1379,29 +1242,6 @@ class VirtualBench():
             trigger_instance = self.validate_trigger_instance(trigger_instance)
             return self.mso.query_analog_edge_trigger(trigger_instance)
 
-        # def query_digital_edge_trigger(self, trigger_instance):
-        #     ''' Indicates the digital trigger configuration of the specified
-        #         instance.
-        #     '''
-
-        # def query_digital_pattern_trigger(self, trigger_instance):
-        #     ''' Indicates the digital pattern trigger configuration of the
-        #         specified instance. A trigger is produced when every level
-        #         (high/low) requirement specified in Trigger Pattern is met,
-        #         and
-        #         when at least one toggling (toggle/fall/rise) requirement is
-        #         met. If no toggling requirements are set, then only the level
-        #         requirements must be met to produce a trigger.
-        #     '''
-
-        # def query_digital_glitch_trigger(self, trigger_instance):
-        #     ''' Indicates the digital glitch trigger configuration of the
-        #         specified instance. A glitch occurs when a channel in Trigger
-        #         Source toggles between two edges of the sample clock. This
-        #         may
-        #         happen when the sampling rate is less than 1 GHz.
-        #     '''
-
         def query_trigger_delay(self):
             """ Indicates the trigger delay setting of the MSO.
 
@@ -1421,15 +1261,14 @@ class VirtualBench():
             trigger_instance = self.validate_trigger_instance(trigger_instance)
             return self.mso.query_analog_pulse_width_trigger(trigger_instance)
 
-        # def query_digital_pulse_width_trigger(self, trigger_instance):
-        #     ''' Indicates the digital pulse width trigger configuration of
-        #         the specified instance.
-        #     '''
-
         def query_acquisition_status(self):
             """ Returns the status of a completed or ongoing acquisition.
             """
             return self.mso.query_acquisition_status()
+
+        # --------------------------
+        # Measurement Control
+        # --------------------------
 
         def run(self, autoTrigger=True):
             """ Transitions the acquisition from the Stopped state to the
@@ -1453,27 +1292,6 @@ class VirtualBench():
             Running state to the Stopped state.
             """
             self.mso.stop()
-
-        # def read_analog(self, data_size):
-        #     ''' Transfers data from the instrument as long as the acquisition
-        #     state is Acquisition Complete. If the state is either Running or
-        #     Triggered, this method will wait until the state transitions to
-        #     Acquisition Complete. If the state is Stopped, this method
-        #     returns an error.
-        #     '''
-        #     #return (data.value, data_stride.value, initial_timestamp,
-        #              trigger_timestamp,
-        #              MsoTriggerReason(trigger_reason.value))
-
-        # def read_digital_u64(self, data_size, sample_timestamps_size):
-        #     ''' Transfers data from the instrument as long as the acquisition
-        #         state is Acquisition Complete. If the state is either
-        #         Running or
-        #         Triggered, this method will wait until the state transitions
-        #         to
-        #         Acquisition Complete. If the state is Stopped, this method
-        #         returns an error.
-        #     '''
 
         def read_analog_digital_u64(self):
             """ Transfers data from the instrument as long as the acquisition
@@ -1501,7 +1319,7 @@ class VirtualBench():
             (analog_data_out, analog_data_stride
              # , analog_t0, digital_data_out, digital_timestamps_out,
              # digital_t0, trigger_timestamp, trigger_reason
-             ) = self.read_analog_digital_u64()[0:1]
+             ) = self.read_analog_digital_u64()[0:2]
 
             number_of_samples = int(self.sample_rate *
                                     self.acquisition_time) + 1
@@ -1516,11 +1334,12 @@ class VirtualBench():
                     raise ValueError(
                         "Length of Analog Data does not match" +
                         " Timing Parameters")
+
             pretrigger_samples = int(self.sample_rate * self.pretrigger_time)
             times = (
                 list(range(-pretrigger_samples, 0))
-                + list(range(0, number_of_samples - pretrigger_samples + 1)))
-            times = [list(map(lambda x: x*1/self.sample_rate, times))]
+                + list(range(0, number_of_samples - pretrigger_samples)))
+            times = [list(map(lambda x: x * 1 / self.sample_rate, times))]
 
             np_array = np.array(analog_data_out)
             np_array = np.split(np_array, analog_data_stride)
@@ -1534,20 +1353,10 @@ class VirtualBench():
             """
             self.mso.reset()
 
-        # def export_configuration(self, configuration_filename):
-        #     ''' Exports a configuration file for use with the MSO.
-        #     '''
-
-        # def import_configuration(self, configuration_filename):
-        #     ''' Imports a configuration file for use with the MSO. You can
-        #         import PNG files exported from the VirtualBench Application
-        #         or
-        #         files created from MSO Export Configuration.
-        #     '''
-
-    class PowerSupply():
+    class PowerSupply(VirtualBenchInstrument):
         """ Represents Power Supply (PS) Module of Virtual Bench device
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire PS module
 
@@ -1556,31 +1365,10 @@ class VirtualBench():
             :param reset: Resets the instrument
             :type reset: bool
             """
-            # Parameters & Handle of VirtualBench Instance
-            self._device_name = virtualbench.device_name
-            self._vb_handle = virtualbench
-            self.name = vb_name + " PS"
-            # Create DIO Instance
-            reset = strict_discrete_set(reset, [True, False])
-            log.info("Initializing %s." % self.name)
-            self.ps = self._vb_handle.acquire_power_supply(
-                self._device_name, reset)
-            self.isShutdown = False
-
-        def __del__(self):
-            """ Ensures the connection is closed upon deletion
-            """
-            if self.isShutdown is not True:
-                self.ps.release()
-
-        def shutdown(self):
-            ''' Stops the session and deallocates any resources acquired during
-            the session. If output is enabled on any channels, they remain
-            in their current state and continue to output data.
-            '''
-            log.info("Releasing %s" % self.name)
-            self.ps.release()
-            self.isShutdown = True
+            super().__init__(
+                virtualbench.acquire_power_supply,
+                reset, 'ps', vb_name)
+            self.ps = self._instrument_handle
 
         def validate_channel(self, channel, current=False, voltage=False):
             """ Check if channel string is valid and if output current/voltage
@@ -1602,17 +1390,15 @@ class VirtualBench():
                 channel = strict_discrete_set(
                     channel, ["ps/+6V", "ps/+25V", "ps/-25V"])
                 if channel == "ps/+6V":
-                    current_range = range(0, 1001)
-                    voltage_range = range(0, 6001)
+                    current_range = (0, 1)
+                    voltage_range = (0, 6)
                 else:
-                    current_range = range(0, 501)
-                    voltage_range = range(0, 25001)
+                    current_range = (0, 5)
+                    voltage_range = (0, 25)
                     if channel == "ps/-25V":
-                        voltage_range = map(lambda x: -x, voltage_range)
-                current_range = map(lambda x: x/1000, current_range)
-                voltage_range = map(lambda x: x/1000, voltage_range)
-                current = strict_range(current, current_range)
-                voltage = strict_range(voltage, voltage_range)
+                        voltage_range = (0, -25)
+                current = strict_discrete_range(current, current_range, 1e-3)
+                voltage = strict_discrete_range(voltage, voltage_range, 1e-3)
                 return (channel, current, voltage)
 
         def configure_voltage_output(self, channel, voltage_level,
@@ -1665,19 +1451,6 @@ class VirtualBench():
             log.info("%s Output %s." % (self.name, enable_outputs))
             self.ps.enable_all_outputs(enable_outputs)
 
-        # def enable_all_outputs(self, enable_outputs):
-        #     ''' Enables or disables all outputs on all channels of the
-        #         instrument.
-        #     '''
-        #     enable_outputs = strict_discrete_set(
-        #       enable_outputs, [True,False])
-        #     self.ps.enable_all_outputs(enable_outputs)
-
-        # def query_outputs_enabled(self):
-        #     ''' Indicates whether the outputs are enabled for the instrument.
-        #     '''
-        #     self.ps.query_outputs_enabled()
-
         @property
         def tracking(self):
             ''' Enables or disables tracking between the positive and negative
@@ -1694,23 +1467,6 @@ class VirtualBench():
             enable_tracking = strict_discrete_set(
                 enable_tracking, [True, False])
             self.ps.enable_tracking(enable_tracking)
-
-        # def query_tracking(self):
-        #     ''' Indicates whether voltage tracking is enabled on
-        #       the instrument.
-        #     '''
-        #     self.ps.query_tracking()
-
-        # def enable_tracking(self, enable_tracking):
-        #     ''' Enables or disables tracking between the positive and
-        #           negative
-        #         25V channels. If enabled, any configuration change on the
-        #         positive 25V channel is mirrored to the negative 25V channel,
-        #         and any writes to the negative 25V channel are ignored.
-        #     '''
-        #     enable_tracking = strict_discrete_set(
-        #       enable_tracking,[True,False])
-        #     self.ps.enable_tracking(enable_tracking)
 
         def read_output(self, channel):
             ''' Reads the voltage and current levels and outout mode of the

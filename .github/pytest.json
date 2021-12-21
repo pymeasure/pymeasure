@@ -1,0 +1,23 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "pytest-warnings",
+            "severity": "warning",
+            "pattern": [
+                {
+                    "regexp": "^=+ warnings summary =+$"
+                },
+                {
+                    "regexp": "^(?<path>.+?):(?<line>\\d+)$",
+                    "file": 1,
+                    "line": 2
+                },
+                {
+                    "regexp": "^  (?<message>.+)$",
+                    "message": 1,
+                    "loop": true
+                }
+            ]
+        }
+    ]
+}
