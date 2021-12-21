@@ -79,14 +79,21 @@ Now you are ready to write your new feature and make changes to the code. To ens
 Making a pull-request
 =====================
 
-While you are working, its helpful to start a pull-request (PR) on the :code:`master` branch of :code:`pymeasure/pymeasure`. This will allow you to discuss your feature with other contributors. We encourage you to start this pull-request after your first commit.
+While you are working, its helpful to start a pull-request (PR) targeting the :code:`master` branch of :code:`pymeasure/pymeasure`. This will allow you to discuss your feature with other contributors. We encourage you to start this pull-request after your first commit.
 
 `Start a pull-request`_ on the `PyMeasure GitHub page`_.
 
 .. _`Start a pull-request`: https://help.github.com/articles/using-pull-requests/
 .. _PyMeasure GitHub page: https://github.com/pymeasure/pymeasure
 
-Your pull-request will be merged by the PyMeasure maintainers once it meets the coding standards and passes unit tests. You will notice that your pull-request is automatically checked with the unit tests.
+There is some automation in place to run the unit tests and check some coding standards. Annotations in the "Files changed" tab indicate problems for you to correct (e.g. linting or docstring warnings).
+
+Your pull-request will be reviewed by the PyMeasure maintainers. Frequently there is some iteration and discussion based on that feedback until a pull request can be merged. This will happen either in the conversation tab or in inline code comments.
+
+Be aware that due to maintainer manpower limitations it might take a long time until PRs get reviewed and/or merged.
+In general, review effort scales badly with PR size. Therefore, smaller PRs are much preferred. Try to limit your contribution to one "aspect", e.g. one instrument (or a few if closely related), one bug fix, or one feature contribution.
+
+If you placed your contribution in a separate branch as suggested above, you can easily use your contribution in the meantime -- just check out your feature branch instead of `master`.
 
 Unit testing
 ============

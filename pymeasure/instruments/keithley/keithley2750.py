@@ -26,8 +26,8 @@ from pymeasure.instruments import Instrument
 
 
 def clean_closed_channels(output):
-    """Cleans up the list returned by command ":ROUTe:CLOSe?", such that each entry is an integer denoting
-    the channel number.
+    """Cleans up the list returned by command ":ROUTe:CLOSe?", such that each entry is an integer
+    denoting the channel number.
     """
     if isinstance(output, str):
         s = output.replace("(", "").replace(")", "").replace("@", "")
@@ -51,8 +51,8 @@ def clean_closed_channels(output):
 
 
 class Keithley2750(Instrument):
-    """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for interacting
-    with the instrument.
+    """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for
+    interacting with the instrument.
     """
 
     closed_channels = Instrument.measurement(":ROUTe:CLOSe?",
@@ -78,7 +78,8 @@ class Keithley2750(Instrument):
         :param int channel: 3-digit number for the channel
         :return: None
         """
-        # Note: if `MULTiple` is omitted, then the specified channel will close, but all other channels will open.
+        # Note: if `MULTiple` is omitted, then the specified channel will close,
+        # but all other channels will open.
         self.write(":ROUTe:MULTiple:CLOSe (@{})".format(channel))
 
     def open_all(self):
@@ -87,5 +88,3 @@ class Keithley2750(Instrument):
         :return: None
         """
         self.write(":ROUTe:OPEN:ALL")
-
-

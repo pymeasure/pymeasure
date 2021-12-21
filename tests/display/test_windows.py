@@ -22,17 +22,17 @@
 # THE SOFTWARE.
 #
 
-import pytest
-from unittest import mock
+# import pytest
+# from unittest import mock
 
-from pymeasure.display.Qt import QtGui, QtCore
-from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment.procedure import Procedure
+# from pymeasure.display.Qt import QtGui, QtCore
+# from pymeasure.display.windows import ManagedWindow
+# from pymeasure.experiment.procedure import Procedure
 
 # TODO: Repair this unit test
 # class TestManagedWindow:
 #     # TODO: More thorough unit (or integration?) tests.
-# 
+#
 #     # TODO: Could we make this more testable? These patches are a bit ridiculous.
 #     @mock.patch('pymeasure.display.windows.Manager')
 #     @mock.patch('pymeasure.display.windows.InputsWidget')

@@ -25,6 +25,8 @@ import logging
 
 from .adapter import Adapter, FakeAdapter
 
+from pymeasure.adapters.telnet import TelnetAdapter
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -43,5 +45,3 @@ try:
     from pymeasure.adapters.vxi11 import VXI11Adapter
 except ImportError:
     log.warning("VXI-11 library could not be loaded")
-
-from pymeasure.adapters.telnet import TelnetAdapter
