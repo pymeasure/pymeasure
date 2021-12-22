@@ -32,6 +32,7 @@ Instruments by manufacturer:
    bkprecision/index
    danfysik/index
    deltaelektronica/index
+   diamondengineering/index
    edwards/index
    fluke/index
    fwbell/index
