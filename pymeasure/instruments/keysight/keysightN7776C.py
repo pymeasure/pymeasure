@@ -70,7 +70,8 @@ class KeysightN7776C(Instrument):
                                    values={True: 1, False: 0})
 
     _output_power_mW = Instrument.control('SOUR0:POW?','SOUR0:POW %f mW',
-                                    """ Floating point value indicating the laser output power in mW.""")
+                                    """ Floating point value indicating the laser output power in mW.""",
+                                    get_process = lambda v: v*1e3)
 
     _output_power_dBm = Instrument.control('SOUR0:POW?','SOUR0:POW %f dBm',
                                     """ Floating point value indicating the laser output power in dBm.""")
@@ -93,7 +94,7 @@ class KeysightN7776C(Instrument):
     @property
     def output_power_dBm(self):
         self._output_power_unit = 'dBm'
-        return self._output_power_mW
+        return self._output_power_dBm
 
     @output_power_dBm.setter
     def output_power_dBm(self,new_power):
