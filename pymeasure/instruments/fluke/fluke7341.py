@@ -24,7 +24,6 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.adapters import VISAAdapter
 
 
 class Fluke7341(Instrument):
@@ -60,15 +59,13 @@ class Fluke7341(Instrument):
                                 )
 
     def __init__(self, resource_name, **kwargs):
+        kwargs.setdefault('timeout', 2000)
+        kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
             resource_name,
             "Fluke 7341",
-            timeout=2000,
-            write_termination='\r\n',
             preprocess_reply=lambda x: x.split()[1],
             includeSCPI=False,
+            asrl={'baud_rate': 2400},
             **kwargs
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 2400
