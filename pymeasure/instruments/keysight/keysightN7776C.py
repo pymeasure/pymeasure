@@ -57,48 +57,48 @@ class KeysightN7776C(Instrument):
         super(KeysightN7776C, self).__init__(
             address, "N7776C Tunable Laser Source",**kwargs)
 
-    def set_power(self,value,unit='mW'):
-        """
-        Function wrapper to set the power in an arbitrary unit
-        """
-        if not unit in ['dBm','mW']:
-            raise ValueError('Unknown Power Unit.')
+    # def set_power(self,value,unit='mW'):
+    #     """
+    #     Function wrapper to set the power in an arbitrary unit
+    #     """
+    #     if not unit in ['dBm','mW']:
+    #         raise ValueError('Unknown Power Unit.')
 
-        self._output_power_unit = unit
-        if unit == 'mW':
-            self._output_power = value*1e-3 #Conversion to mW
-        else:
-            self._output_power = value
+    #     self._output_power_unit = unit
+    #     if unit == 'mW':
+    #         self._output_power = value*1e-3 #Conversion to mW
+    #     else:
+    #         self._output_power = value
 
-    def get_power(self,unit_output=False):
-        """
-        Function wrapper to get the power including the unit directly if neccessary.
-        """
-        power_reading = self._output_power
-        power_unit = self._output_power_unit
-        if power_unit == 'mW':
-            if unit_output:
-                return (power_reading*1e3,power_unit)
-            else:
-                return power_reading*1e3
-        else:
-            if unit_output:
-                return (power_reading,power_unit)
-            else:
-                return power_reading
+    # def get_power(self,unit_output=False):
+    #     """
+    #     Function wrapper to get the power including the unit directly if neccessary.
+    #     """
+    #     power_reading = self._output_power
+    #     power_unit = self._output_power_unit
+    #     if power_unit == 'mW':
+    #         if unit_output:
+    #             return (power_reading*1e3,power_unit)
+    #         else:
+    #             return power_reading*1e3
+    #     else:
+    #         if unit_output:
+    #             return (power_reading,power_unit)
+    #         else:
+    #             return power_reading
 
-    def _power_unit_conversion(self,value,desired_unit):
-        """ Function returning the value in the desired unit 
-        by checking which unit is set and converting it if needed 
-        """
-        if self._output_power_unit.lower() == desired_unit.lower():
-            return value
-        elif desired_unit.lower() == 'mw': #Need for conversion dBm -> mW
-            return 10.0**(value/10.0)
-        elif desired_unit.lower() == 'dbm': #Need for conversion mW -> dBm
-            return 10.0*np.log10(value)
-        else:
-            raise(ValueError("Unknown value for parameter desired_unit, only 'mW' or 'dBm' are accepted"))
+    # def _power_unit_conversion(self,value,desired_unit):
+    #     """ Function returning the value in the desired unit 
+    #     by checking which unit is set and converting it if needed 
+    #     """
+    #     if self._output_power_unit.lower() == desired_unit.lower():
+    #         return value
+    #     elif desired_unit.lower() == 'mw': #Need for conversion dBm -> mW
+    #         return 10.0**(value/10.0)
+    #     elif desired_unit.lower() == 'dbm': #Need for conversion mW -> dBm
+    #         return 10.0*np.log10(value)
+    #     else:
+    #         raise(ValueError("Unknown value for parameter desired_unit, only 'mW' or 'dBm' are accepted"))
 
 
     locked = Instrument.control(':LOCK?',':LOCK %g,'+str(LOCK_PW),
@@ -113,13 +113,31 @@ class KeysightN7776C(Instrument):
                                    map_values=True, 
                                    values={True: 1, False: 0})
 
-    output_power_mW = Instrument.control('SOUR0:POW?','SOUR0:POW %f mW',
-                                    """ Floating point value indicating the laser output power in mW.""",
-                                    get_process=lambda v:self._power_unit_conversion(v,'mW'))
+    _output_power_mW = Instrument.control('SOUR0:POW?','SOUR0:POW %f mW',
+                                    """ Floating point value indicating the laser output power in mW.""")
 
-    output_power_dBm = Instrument.control('SOUR0:POW?','SOUR0:POW %f dBm',
-                                    """ Floating point value indicating the laser output power in dBm.""",
-                                    get_process=lambda v: self._power_unit_conversion(v,'mW'))
+    _output_power_dBm = Instrument.control('SOUR0:POW?','SOUR0:POW %f dBm',
+                                    """ Floating point value indicating the laser output power in dBm.""")
+
+    @property
+    def output_power_mW(self):
+        self._output_power_unit = 'mW'
+        return self._output_power_mW
+
+    @output_power_mW.setter
+    def output_power_mW(self,new_power):
+        self._output_power_mW = new_power
+    
+    @property
+    def output_power_dBm(self):
+        self._output_power_unit = 'dBm'
+        return self._output_power_mW
+
+    @output_power_dBm.setter
+    def output_power_dBm(self,new_power):
+        self._output_power_dBm = new_power
+
+    
 
     _output_power_unit = Instrument.control('SOUR0:POW:UNIT?','SOUR0:POW:UNIT %g',
                                     """ String parameter controlling the power unit used internally by the laser.""",
