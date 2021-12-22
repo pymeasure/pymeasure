@@ -37,7 +37,7 @@ from datetime import datetime, timedelta
 from .browser import Browser
 from .curves import ResultsCurve, Crosshairs, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
-from .thread import StoppableQThread
+from .thread import StoppableQThread, InstrumentThread
 from .log import LogHandler
 from .Qt import QtCore, QtGui
 from ..experiment import parameters, Procedure
@@ -1333,7 +1333,7 @@ class InstrumentControlWidget(QtGui.QWidget):
                  settings=None, functions=None,
                  options=None,
                  parent=None,
-                 auto_get=True,
+                 auto_get=False,
                  auto_set=True):
         super().__init__(parent)
 
@@ -1348,11 +1348,20 @@ class InstrumentControlWidget(QtGui.QWidget):
         self.auto_write = auto_set
 
 
+        self.update_list = []
+        self.update_list.extend(list(self.measurements.keys()))
+        self.update_list.extend(list(self.controls.keys()))
+        
+
+        self.update_thread = InstrumentThread(self.instrument, self.update_list)
+        self.update_thread.new_value.connect(self.update_value)
+
         self._setup_ui()
         self._layout()
         self.get_and_update_all_values()
 
     def _setup_ui(self):
+        self._elements = []
         for name, param in self.measurements.items():
             element = self.input_from_parameter(param)
             setattr(self, name, element)
@@ -1401,16 +1410,26 @@ class InstrumentControlWidget(QtGui.QWidget):
         self.read_button.clicked.connect(self.get_and_update_all_values)
         self.read_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
                                          QtGui.QSizePolicy.MinimumExpanding)
-        if not self.auto_read:
-            self.read_button.setEnabled(False)
+
+        self.read_button.setEnabled(not self.auto_read)
 
         # Adding a button for instant writing
         self.write_button = QtGui.QPushButton("Write", self)
         self.write_button.clicked.connect(self.apply_all_settings)
         self.write_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
                                          QtGui.QSizePolicy.MinimumExpanding)
-        if not self.auto_write:
-            self.read_button.setEnabled(False)
+
+        self.write_button.setEnabled(not self.auto_write)
+
+        # Adding a checkbox for changing auto_read property
+        self.auto_read_box = QtGui.QCheckBox("Auto Read")
+        self.auto_read_box.setChecked(self.auto_read)
+        self.auto_read_box.stateChanged.connect(self.auto_settings_changed)
+
+        # Adding a checkbox for changing auto_write property
+        self.auto_write_box = QtGui.QCheckBox("Auto Write")
+        self.auto_write_box.setChecked(self.auto_write)
+        self.auto_write_box.stateChanged.connect(self.auto_settings_changed)
 
     def _layout(self):
         layout = QtGui.QGridLayout(self)
@@ -1465,6 +1484,11 @@ class InstrumentControlWidget(QtGui.QWidget):
         global_layout = QtGui.QGridLayout(global_dock)
         global_layout.addWidget(self.read_button,0,0)
         global_layout.addWidget(self.write_button,0,1)
+
+        global_layout.addWidget(self.auto_read_box,1,0)
+        global_layout.addWidget(self.auto_write_box,1,1)
+
+
         global_dock.setLayout(global_layout)
         layout.addWidget(global_dock,1,0)
 
@@ -1508,6 +1532,22 @@ class InstrumentControlWidget(QtGui.QWidget):
             if hasattr(self.instrument, name):
                 self.apply_setting(name)
 
+    def auto_settings_changed(self):
+        self.auto_read = self.auto_read_box.isChecked()
+        self.auto_write = self.auto_write_box.isChecked()
+        self.read_button.setEnabled(not self.auto_read)
+        self.write_button.setEnabled(not self.auto_write)
+
+
+        self.update_thread.stop()
+        self.update_thread.join()
+
+        if self.auto_read:
+            self.update_thread.start()
+
+
+        
+
     def input_from_parameter(self,parameter):
         """ Get the corresponding type of input for a given parameter.
         :param parameter: A parameter
@@ -1537,17 +1577,17 @@ class InstrumentControlWidget(QtGui.QWidget):
 
         return element
 
-    def _set_auto_read(self):
-        state = self.auto_read_box.checkState()
+    # def _set_auto_read(self):
+    #     state = self.auto_read_box.checkState()
 
-        self.update_thread.stop()
-        self.update_thread.join()
+    #     self.update_thread.stop()
+    #     self.update_thread.join()
 
-        if state == 0:
-            pass
-        elif state == 1:
-            self.update_thread.delay = 1
-            self.update_thread.start()
+    #     if state == 0:
+    #         pass
+    #     elif state == 1:
+    #         self.update_thread.delay = 1
+    #         self.update_thread.start()
 
     @staticmethod
     def check_parameter_list(params, field_type=None):

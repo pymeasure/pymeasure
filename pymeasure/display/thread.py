@@ -59,6 +59,38 @@ class StoppableQThread(QtCore.QThread):
     def should_stop(self):
         return self._should_stop.is_set()
 
+    def stoppable_sleep(self, timeout=None):
+        return self._should_stop.wait(timeout=timeout)
+
     def __repr__(self):
         return "<%s(should_stop=%s)>" % (
             self.__class__.__name__, self.should_stop())
+
+class InstrumentThread(StoppableQThread):
+    new_value = QtCore.QSignal(str, object)
+
+    def __init__(self, instrument, update_list,delay=0.01):
+        StoppableQThread.__init__(self)
+        self.instrument = instrument
+        self.update_list = update_list
+
+        self.delay = delay
+
+    def __del__(self):
+        self.wait()
+
+    def _get_value(self, name):
+        value = getattr(self.instrument, name)
+        self.new_value.emit(name, value)
+
+    def _get_values(self):
+        for name in self.update_list:
+            self._get_value(name)
+            if self.should_stop():
+                break
+
+    def run(self):
+        self._should_stop.clear()
+
+        while not self.stoppable_sleep(self.delay):
+            self._get_values()
