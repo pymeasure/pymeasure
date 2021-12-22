@@ -184,47 +184,34 @@ class KeysightN7776C(Instrument):
             return True
         elif response[0] == 368:
             log.warning('End Wavelength <= Start Wavelength.')
-            return False
         elif response[0] == 369:
             log.warning('Sweep time too small.')
-            return False
         elif response[0] == 370:
             log.warning('Sweep time too big.')
-            return False
         elif response[0] == 371:
             log.warning('Trigger Frequency too large.')
-            return False
         elif response[0] == 372:
             log.warning('Stepsize too small.')
-            return False
         elif response[0] == 373 or response[0] == 378:
             log.warning('Number of triggers exceeds allowed limit.')
-            return False
         elif response[0] == 374:
             log.warning('The only allowed modulation source with lambda logging \
                         function is coherence control.')
-            return False
         elif response[0] == 375:
             log.warning('Lambda logging only works Step Finished output trigger configuration')
-            return False
         elif response[0] == 376:
             log.warning('Lambda logging can only be done in continuous sweep mode')
-            return False
         elif response[0] == 377:
             log.warning('The step size must be a multiple of the smallest possible step size')
-            return False
         elif response[0] == 379:
             log.warning('Continuous Sweep and Modulation on.')
-            return False
         elif response[0] == 380:
             log.warning('Start Wavelength is too small.')
-            return False
         elif response[0] == 381:
             log.warning('End Wavelength is too large.')
-            return False
         else:
             log.warning('Unknown Error!')
-            return False
+        return False
 
     def next_step(self):
         """
