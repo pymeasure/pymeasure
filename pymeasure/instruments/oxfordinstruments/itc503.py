@@ -193,12 +193,12 @@ class ITC503(Instrument):
 
     def __init__(self, resourceName, clear_buffer=True,
                  max_temperature=301, min_temperature=0, **kwargs):
+        kwargs.setdefault('read_termination', '\r')
+        kwargs.setdefault('send_end', True)
         super(ITC503, self).__init__(
             resourceName,
             "Oxford ITC503",
             includeSCPI=False,
-            send_end=True,
-            read_termination="\r",
             **kwargs
         )
 
