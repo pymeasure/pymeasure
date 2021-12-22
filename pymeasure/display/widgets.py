@@ -1677,7 +1677,8 @@ class InstrumentControlWidget(QtGui.QWidget):
                 params[idx].field_type = field_type
 
         else:
-            # Convert all elements to FloatParameter whenever given as a string for everything but options
+            # Convert all elements to FloatParameter whenever given as
+            # a string for everything but options
             for idx in range(len(params)):
                 if isinstance(params[idx], parameters.Parameter):
                     pass
