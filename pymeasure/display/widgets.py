@@ -23,43 +23,45 @@
 #
 
 import logging
-
 import os
 import re
-import pyqtgraph as pg
-from functools import partial
-import numpy
 from collections import ChainMap, OrderedDict
-from itertools import product
-from inspect import signature
 from datetime import datetime, timedelta
+from functools import partial
+from inspect import signature
+from itertools import product
 
+import numpy
+import pyqtgraph as pg
+
+from ..experiment import Procedure, parameters
+from ..experiment.results import Results
 from .browser import Browser
-from .curves import ResultsCurve, Crosshairs, ResultsImage
+from .curves import Crosshairs, ResultsCurve, ResultsImage
 from .inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
-from .thread import StoppableQThread, InstrumentThread
 from .log import LogHandler
 from .Qt import QtCore, QtGui
-from ..experiment import parameters, Procedure
-from ..experiment.results import Results
+from .thread import InstrumentThread, StoppableQThread
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class PlotFrame(QtGui.QFrame):
-    """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
+    """Combines a PyQtGraph Plot with Crosshairs. Refreshes
     the plot based on the refresh_time, and allows the axes
     to be changed on the fly, which updates the plotted data
     """
 
-    LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
+    LABEL_STYLE = {"font-size": "10pt", "font-family": "Arial", "color": "#000000"}
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
     y_axis_changed = QtCore.QSignal(str)
 
-    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
+    def __init__(
+        self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None
+    ):
         super().__init__(parent)
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -76,13 +78,14 @@ class PlotFrame(QtGui.QFrame):
 
         vbox = QtGui.QVBoxLayout(self)
 
-        self.plot_widget = pg.PlotWidget(self, background='#ffffff')
+        self.plot_widget = pg.PlotWidget(self, background="#ffffff")
         self.coordinates = QtGui.QLabel(self)
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
         self.coordinates.setStyleSheet("background: #fff")
         self.coordinates.setText("")
         self.coordinates.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter
+        )
 
         vbox.addWidget(self.plot_widget)
         vbox.addWidget(self.coordinates)
@@ -90,8 +93,9 @@ class PlotFrame(QtGui.QFrame):
 
         self.plot = self.plot_widget.getPlotItem()
 
-        self.crosshairs = Crosshairs(self.plot,
-                                     pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
+        self.crosshairs = Crosshairs(
+            self.plot, pen=pg.mkPen(color="#AAAAAA", style=QtCore.Qt.DashLine)
+        )
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
         self.timer = QtCore.QTimer()
@@ -113,8 +117,7 @@ class PlotFrame(QtGui.QFrame):
                     item.update_data()
 
     def parse_axis(self, axis):
-        """ Returns the units of an axis by searching the string
-        """
+        """Returns the units of an axis by searching the string"""
         units_pattern = r"\((?P<units>\w+)\)"
         try:
             match = re.search(units_pattern, axis)
@@ -122,9 +125,9 @@ class PlotFrame(QtGui.QFrame):
             match = None
 
         if match:
-            if 'units' in match.groupdict():
-                label = re.sub(units_pattern, '', axis)
-                return label, match.groupdict()['units']
+            if "units" in match.groupdict():
+                label = re.sub(units_pattern, "", axis)
+                return label, match.groupdict()["units"]
         else:
             return axis, None
 
@@ -134,7 +137,7 @@ class PlotFrame(QtGui.QFrame):
                 item.x = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
-        self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
+        self.plot.setLabel("bottom", label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
 
@@ -144,19 +147,26 @@ class PlotFrame(QtGui.QFrame):
                 item.y = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
-        self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
+        self.plot.setLabel("left", label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
 
 
 class ImageFrame(PlotFrame):
-    """ Extends PlotFrame to plot also axis Z using colors
-    """
+    """Extends PlotFrame to plot also axis Z using colors"""
+
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.QSignal(str)
 
-    def __init__(self, x_axis, y_axis, z_axis=None,
-                 refresh_time=0.2, check_status=True, parent=None):
+    def __init__(
+        self,
+        x_axis,
+        y_axis,
+        z_axis=None,
+        refresh_time=0.2,
+        check_status=True,
+        parent=None,
+    ):
         super().__init__(x_axis, y_axis, refresh_time, check_status, parent)
         self.change_z_axis(z_axis)
 
@@ -167,7 +177,7 @@ class ImageFrame(PlotFrame):
                 item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + ' (%s)' % units)
+            self.plot.setTitle(label + " (%s)" % units)
         else:
             self.plot.setTitle(label)
         self.z_axis = axis
@@ -175,10 +185,10 @@ class ImageFrame(PlotFrame):
 
 
 class TabWidget(object):
-    """ Utility class to define default implementation for some basic methods.
+    """Utility class to define default implementation for some basic methods.
 
-        When defining a widget to be used in subclasses of ManagedWindowBase, users should inherit
-        from this class and provide the specialized implementation of these method's
+    When defining a widget to be used in subclasses of ManagedWindowBase, users should inherit
+    from this class and provide the specialized implementation of these method's
     """
 
     def __init__(self, name, *args, **kwargs):
@@ -186,29 +196,38 @@ class TabWidget(object):
         self.name = name
 
     def new_curve(self, *args, **kwargs):
-        """ Create a new curve """
+        """Create a new curve"""
         return None
 
     def load(self, curve):
-        """ Add curve to widget """
+        """Add curve to widget"""
         pass
 
     def remove(self, curve):
-        """ Remove curve from widget """
+        """Remove curve from widget"""
         pass
 
     def set_color(self, curve, color):
-        """ Set color for widget """
+        """Set color for widget"""
         pass
 
 
 class PlotWidget(TabWidget, QtGui.QWidget):
-    """ Extends the PlotFrame to allow different columns
+    """Extends the PlotFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, linewidth=1, parent=None):
+    def __init__(
+        self,
+        name,
+        columns,
+        x_axis=None,
+        y_axis=None,
+        refresh_time=0.2,
+        check_status=True,
+        linewidth=1,
+        parent=None,
+    ):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
@@ -226,10 +245,10 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
         self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_x_label.setText('X Axis:')
+        self.columns_x_label.setText("X Axis:")
         self.columns_y_label = QtGui.QLabel(self)
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_y_label.setText('Y Axis:')
+        self.columns_y_label.setText("Y Axis:")
 
         self.columns_x = QtGui.QComboBox(self)
         self.columns_y = QtGui.QComboBox(self)
@@ -240,10 +259,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.columns_y.activated.connect(self.update_y_column)
 
         self.plot_frame = PlotFrame(
-            self.columns[0],
-            self.columns[1],
-            self.refresh_time,
-            self.check_status
+            self.columns[0], self.columns[1], self.refresh_time, self.check_status
         )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
@@ -270,15 +286,13 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         return QtCore.QSize(300, 600)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
-        if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
-        if 'antialias' not in kwargs:
-            kwargs['antialias'] = False
-        curve = ResultsCurve(results,
-                             x=self.plot_frame.x_axis,
-                             y=self.plot_frame.y_axis,
-                             **kwargs
-                             )
+        if "pen" not in kwargs:
+            kwargs["pen"] = pg.mkPen(color=color, width=self.linewidth)
+        if "antialias" not in kwargs:
+            kwargs["antialias"] = False
+        curve = ResultsCurve(
+            results, x=self.plot_frame.x_axis, y=self.plot_frame.y_axis, **kwargs
+        )
         curve.setSymbol(None)
         curve.setSymbolBrush(None)
         return curve
@@ -301,18 +315,27 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.plot.removeItem(curve)
 
     def set_color(self, curve, color):
-        """ Change the color of the pen of the curve """
+        """Change the color of the pen of the curve"""
         curve.pen.setColor(color)
         curve.updateItems(styleUpdate=True)
 
 
 class ImageWidget(TabWidget, QtGui.QWidget):
-    """ Extends the ImageFrame to allow different columns
+    """Extends the ImageFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2,
-                 check_status=True, parent=None):
+    def __init__(
+        self,
+        name,
+        columns,
+        x_axis,
+        y_axis,
+        z_axis=None,
+        refresh_time=0.2,
+        check_status=True,
+        parent=None,
+    ):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
@@ -328,7 +351,7 @@ class ImageWidget(TabWidget, QtGui.QWidget):
     def _setup_ui(self):
         self.columns_z_label = QtGui.QLabel(self)
         self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_z_label.setText('Z Axis:')
+        self.columns_z_label.setText("Z Axis:")
 
         self.columns_z = QtGui.QComboBox(self)
         for column in self.columns:
@@ -340,7 +363,7 @@ class ImageWidget(TabWidget, QtGui.QWidget):
             self.y_axis,
             self.columns[0],
             self.refresh_time,
-            self.check_status
+            self.check_status,
         )
         self.updated = self.image_frame.updated
         self.plot = self.image_frame.plot
@@ -364,12 +387,13 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         return QtCore.QSize(300, 600)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
-        """ Creates a new image """
-        image = ResultsImage(results,
-                             x=self.image_frame.x_axis,
-                             y=self.image_frame.y_axis,
-                             z=self.image_frame.z_axis
-                             )
+        """Creates a new image"""
+        image = ResultsImage(
+            results,
+            x=self.image_frame.x_axis,
+            y=self.image_frame.y_axis,
+            z=self.image_frame.z_axis,
+        )
         return image
 
     def update_z_column(self, index):
@@ -394,13 +418,13 @@ class BrowserWidget(QtGui.QWidget):
 
     def _setup_ui(self):
         self.browser = Browser(*self.browser_args, parent=self)
-        self.clear_button = QtGui.QPushButton('Clear all', self)
+        self.clear_button = QtGui.QPushButton("Clear all", self)
         self.clear_button.setEnabled(False)
-        self.hide_button = QtGui.QPushButton('Hide all', self)
+        self.hide_button = QtGui.QPushButton("Hide all", self)
         self.hide_button.setEnabled(False)
-        self.show_button = QtGui.QPushButton('Show all', self)
+        self.show_button = QtGui.QPushButton("Show all", self)
         self.show_button.setEnabled(False)
-        self.open_button = QtGui.QPushButton('Open', self)
+        self.open_button = QtGui.QPushButton("Open", self)
         self.open_button.setEnabled(True)
 
     def _layout(self):
@@ -490,7 +514,11 @@ class InputsWidget(QtGui.QWidget):
 
                 if isinstance(getattr(self, group_name), BooleanInput):
                     # Adjust the boolean condition to a condition suitable for a checkbox
-                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked  # noqa: E501
+                    condition = (
+                        QtCore.Qt.CheckState.Checked
+                        if condition
+                        else QtCore.Qt.CheckState.Unchecked
+                    )  # noqa: E501
 
                 if group_name not in groups:
                     groups[group_name] = []
@@ -514,14 +542,16 @@ class InputsWidget(QtGui.QWidget):
                 toggle(group_el.currentText())
             else:
                 raise NotImplementedError(
-                    "Grouping based on %s (%s) is not implemented." % (group_name, group_el))
+                    "Grouping based on %s (%s) is not implemented."
+                    % (group_name, group_el)
+                )
 
     def toggle_group(self, state, group_name, group):
         for (name, condition, group_state) in group:
             if callable(condition):
                 group_state[group_name] = condition(state)
             else:
-                group_state[group_name] = (state == condition)
+                group_state[group_name] = state == condition
 
             visible = all(group_state.values())
 
@@ -542,7 +572,7 @@ class InputsWidget(QtGui.QWidget):
             element.set_parameter(parameter_objects[name])
 
     def get_procedure(self):
-        """ Returns the current procedure """
+        """Returns the current procedure"""
         self._procedure = self._procedure_class()
         parameter_values = {}
         for name in self._inputs:
@@ -553,7 +583,7 @@ class InputsWidget(QtGui.QWidget):
 
 
 class LogWidget(TabWidget, QtGui.QWidget):
-    """ Widget to display logging information in GUI
+    """Widget to display logging information in GUI
 
     It is recommended to include this widget in all subclasses of ManagedWindowBase
     """
@@ -567,10 +597,12 @@ class LogWidget(TabWidget, QtGui.QWidget):
         self.view = QtGui.QPlainTextEdit()
         self.view.setReadOnly(True)
         self.handler = LogHandler()
-        self.handler.setFormatter(logging.Formatter(
-            fmt='%(asctime)s : %(message)s (%(levelname)s)',
-            datefmt='%m/%d/%Y %I:%M:%S %p'
-        ))
+        self.handler.setFormatter(
+            logging.Formatter(
+                fmt="%(asctime)s : %(message)s (%(levelname)s)",
+                datefmt="%m/%d/%Y %I:%M:%S %p",
+            )
+        )
         self.handler.connect(self.view.appendPlainText)
 
     def _layout(self):
@@ -596,8 +628,9 @@ class ResultsDialog(QtGui.QFileDialog):
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
 
-        self.plot_widget = PlotWidget("Results", self.columns,
-                                      self.x_axis, self.y_axis, parent=self)
+        self.plot_widget = PlotWidget(
+            "Results", self.columns, self.x_axis, self.y_axis, parent=self
+        )
         self.plot = self.plot_widget.plot
         self.preview_param = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
@@ -621,7 +654,7 @@ class ResultsDialog(QtGui.QFileDialog):
 
     def update_plot(self, filename):
         self.plot.clear()
-        if not os.path.isdir(filename) and filename != '':
+        if not os.path.isdir(filename) and filename != "":
             try:
                 results = Results.load(str(filename))
             except ValueError:
@@ -629,16 +662,17 @@ class ResultsDialog(QtGui.QFileDialog):
             except Exception as e:
                 raise e
 
-            curve = ResultsCurve(results,
-                                 x=self.plot_widget.plot_frame.x_axis,
-                                 y=self.plot_widget.plot_frame.y_axis,
-                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
-                                 # circumvent plotting slowdown. Once the issue
-                                 # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
-                                 # it can be reverted
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
-                                 antialias=True
-                                 )
+            curve = ResultsCurve(
+                results,
+                x=self.plot_widget.plot_frame.x_axis,
+                y=self.plot_widget.plot_frame.y_axis,
+                # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
+                # circumvent plotting slowdown. Once the issue
+                # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
+                # it can be reverted
+                pen=pg.mkPen(color=(255, 0, 0), width=1),
+                antialias=True,
+            )
             curve.update_data()
 
             self.plot.addItem(curve)
@@ -652,43 +686,44 @@ class ResultsDialog(QtGui.QFileDialog):
 
 """ This defines a list of functions that can be used to generate a sequence. """
 SAFE_FUNCTIONS = {
-    'range': range,
-    'sorted': sorted,
-    'list': list,
-    'arange': numpy.arange,
-    'linspace': numpy.linspace,
-    'arccos': numpy.arccos,
-    'arcsin': numpy.arcsin,
-    'arctan': numpy.arctan,
-    'arctan2': numpy.arctan2,
-    'ceil': numpy.ceil,
-    'cos': numpy.cos,
-    'cosh': numpy.cosh,
-    'degrees': numpy.degrees,
-    'e': numpy.e,
-    'exp': numpy.exp,
-    'fabs': numpy.fabs,
-    'floor': numpy.floor,
-    'fmod': numpy.fmod,
-    'frexp': numpy.frexp,
-    'hypot': numpy.hypot,
-    'ldexp': numpy.ldexp,
-    'log': numpy.log,
-    'log10': numpy.log10,
-    'modf': numpy.modf,
-    'pi': numpy.pi,
-    'power': numpy.power,
-    'radians': numpy.radians,
-    'sin': numpy.sin,
-    'sinh': numpy.sinh,
-    'sqrt': numpy.sqrt,
-    'tan': numpy.tan,
-    'tanh': numpy.tanh,
+    "range": range,
+    "sorted": sorted,
+    "list": list,
+    "arange": numpy.arange,
+    "linspace": numpy.linspace,
+    "arccos": numpy.arccos,
+    "arcsin": numpy.arcsin,
+    "arctan": numpy.arctan,
+    "arctan2": numpy.arctan2,
+    "ceil": numpy.ceil,
+    "cos": numpy.cos,
+    "cosh": numpy.cosh,
+    "degrees": numpy.degrees,
+    "e": numpy.e,
+    "exp": numpy.exp,
+    "fabs": numpy.fabs,
+    "floor": numpy.floor,
+    "fmod": numpy.fmod,
+    "frexp": numpy.frexp,
+    "hypot": numpy.hypot,
+    "ldexp": numpy.ldexp,
+    "log": numpy.log,
+    "log10": numpy.log10,
+    "modf": numpy.modf,
+    "pi": numpy.pi,
+    "power": numpy.power,
+    "radians": numpy.radians,
+    "sin": numpy.sin,
+    "sinh": numpy.sinh,
+    "sqrt": numpy.sqrt,
+    "tan": numpy.tan,
+    "tanh": numpy.tanh,
 }
 
 
 class SequenceEvaluationException(Exception):
     """Raised when the evaluation of a sequence string goes wrong."""
+
     pass
 
 
@@ -733,7 +768,7 @@ class SequencerWidget(QtGui.QWidget):
 
         call_signature = signature(self._parent.queue)
 
-        if 'procedure' not in call_signature.parameters:
+        if "procedure" not in call_signature.parameters:
             raise AttributeError(
                 "The queue method of of the ManagedWindow does not accept the 'procedure'"
                 "keyword argument. Accepting this keyword argument is required when using"
@@ -747,10 +782,11 @@ class SequencerWidget(QtGui.QWidget):
 
         parameter_objects = self._parent.procedure_class().parameter_objects()
 
-        self.names = {key: parameter.name
-                      for key, parameter
-                      in parameter_objects.items()
-                      if key in self._inputs}
+        self.names = {
+            key: parameter.name
+            for key, parameter in parameter_objects.items()
+            if key in self._inputs
+        }
 
         self.names_inv = {name: key for key, name in self.names.items()}
 
@@ -763,9 +799,7 @@ class SequencerWidget(QtGui.QWidget):
         self.tree.setColumnWidth(2, int(0.9 * width))
 
         self.add_root_item_btn = QtGui.QPushButton("Add root item")
-        self.add_root_item_btn.clicked.connect(
-            partial(self._add_tree_item, level=0)
-        )
+        self.add_root_item_btn.clicked.connect(partial(self._add_tree_item, level=0))
 
         self.add_tree_item_btn = QtGui.QPushButton("Add item")
         self.add_tree_item_btn.clicked.connect(self._add_tree_item)
@@ -845,8 +879,8 @@ class SequencerWidget(QtGui.QWidget):
             self.tree.itemWidget(item, 1).setCurrentIndex(idx)
             if idx == -1:
                 log.error(
-                    "Parameter '{}' not found while loading sequence".format(
-                        parameter) + ", probably mistyped."
+                    "Parameter '{}' not found while loading sequence".format(parameter)
+                    + ", probably mistyped."
                 )
 
         if sequence is not None:
@@ -887,10 +921,13 @@ class SequencerWidget(QtGui.QWidget):
         try:
             sequence = self.get_sequence_from_tree()
         except SequenceEvaluationException:
-            log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
+            log.error(
+                "Evaluation of one of the sequence strings went wrong, no sequence queued."
+            )
         else:
             log.info(
-                "Queuing %d measurements based on the entered sequences." % len(sequence)
+                "Queuing %d measurements based on the entered sequences."
+                % len(sequence)
             )
 
             for entry in sequence:
@@ -912,7 +949,7 @@ class SequencerWidget(QtGui.QWidget):
         """
 
         if fileName is None:
-            fileName, _ = QtGui.QFileDialog.getOpenFileName(self, 'OpenFile')
+            fileName, _ = QtGui.QFileDialog.getOpenFileName(self, "OpenFile")
 
         if len(fileName) == 0:
             return
@@ -922,7 +959,7 @@ class SequencerWidget(QtGui.QWidget):
         with open(fileName, "r") as file:
             content = file.readlines()
 
-        pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
+        pattern = re.compile('([-]+) "(.*?)", "(.*?)"')
         for line in content:
             line = line.strip()
             match = pattern.search(line)
@@ -962,15 +999,14 @@ class SequencerWidget(QtGui.QWidget):
             parameter = self.names_inv[name]
             values = self.eval_string(
                 self.tree.itemWidget(item, 2).text(),
-                name, depth,
+                name,
+                depth,
             )
 
             try:
                 sequence_entry = [{parameter: value} for value in values]
             except TypeError:
-                log.error(
-                    "TypeError, likely no sequence for one of the parameters"
-                )
+                log.error("TypeError, likely no sequence for one of the parameters")
             else:
                 current_sequence[depth].extend(sequence_entry)
 
@@ -981,22 +1017,23 @@ class SequencerWidget(QtGui.QWidget):
                 temp_sequence[depth_idx].extend(current_sequence[depth_idx])
 
                 if depth_idx != 0:
-                    sequence_products = list(product(
-                        current_sequence[depth_idx - 1],
-                        temp_sequence[depth_idx]
-                    ))
+                    sequence_products = list(
+                        product(
+                            current_sequence[depth_idx - 1], temp_sequence[depth_idx]
+                        )
+                    )
 
                     for i in range(len(sequence_products)):
                         try:
                             element = sequence_products[i][1]
                         except IndexError:
-                            log.error(
-                                "IndexError, likely empty nested parameter"
-                            )
+                            log.error("IndexError, likely empty nested parameter")
                         else:
                             if isinstance(element, tuple):
                                 sequence_products[i] = (
-                                    sequence_products[i][0], *element)
+                                    sequence_products[i][0],
+                                    *element,
+                                )
 
                     temp_sequence[depth_idx - 1].extend(sequence_products)
                     temp_sequence[depth_idx] = []
@@ -1046,26 +1083,30 @@ class SequencerWidget(QtGui.QWidget):
         evaluated_string = None
         if len(string) > 0:
             try:
-                evaluated_string = eval(
-                    string, {"__builtins__": None}, SAFE_FUNCTIONS
-                )
+                evaluated_string = eval(string, {"__builtins__": None}, SAFE_FUNCTIONS)
             except TypeError:
-                log.error("TypeError, likely a typo in one of the " +
-                          "functions for parameter '{}', depth {}".format(
-                              name, depth
-                          ))
+                log.error(
+                    "TypeError, likely a typo in one of the "
+                    + "functions for parameter '{}', depth {}".format(name, depth)
+                )
                 raise SequenceEvaluationException()
             except SyntaxError:
-                log.error("SyntaxError, likely unbalanced brackets " +
-                          "for parameter '{}', depth {}".format(name, depth))
+                log.error(
+                    "SyntaxError, likely unbalanced brackets "
+                    + "for parameter '{}', depth {}".format(name, depth)
+                )
                 raise SequenceEvaluationException()
             except ValueError:
-                log.error("ValueError, likely wrong function argument " +
-                          "for parameter '{}', depth {}".format(name, depth))
+                log.error(
+                    "ValueError, likely wrong function argument "
+                    + "for parameter '{}', depth {}".format(name, depth)
+                )
                 raise SequenceEvaluationException()
         else:
-            log.error("No sequence entered for " +
-                      "for parameter '{}', depth {}".format(name, depth))
+            log.error(
+                "No sequence entered for "
+                + "for parameter '{}', depth {}".format(name, depth)
+            )
             raise SequenceEvaluationException()
 
         evaluated_string = numpy.array(evaluated_string)
@@ -1086,22 +1127,27 @@ class DirectoryLineEdit(QtGui.QLineEdit):
         completer.setCompletionMode(QtGui.QCompleter.PopupCompletion)
 
         model = QtGui.QDirModel(completer)
-        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives |
-                        QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+        model.setFilter(
+            QtCore.QDir.Dirs
+            | QtCore.QDir.Drives
+            | QtCore.QDir.NoDotAndDotDot
+            | QtCore.QDir.AllDirs
+        )
         completer.setModel(model)
 
         self.setCompleter(completer)
 
         browse_action = QtGui.QAction(self)
-        browse_action.setIcon(self.style().standardIcon(
-            getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
+        browse_action.setIcon(
+            self.style().standardIcon(getattr(QtGui.QStyle, "SP_DialogOpenButton"))
+        )
         browse_action.triggered.connect(self.browse_triggered)
 
         self.addAction(browse_action, QtGui.QLineEdit.TrailingPosition)
 
     def browse_triggered(self):
-        path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
-        if path != '':
+        path = QtGui.QFileDialog.getExistingDirectory(self, "Directory", "/")
+        if path != "":
             self.setText(path)
 
 
@@ -1141,6 +1187,7 @@ class EstimatorWidget(QtGui.QWidget):
     `sequence_length`, respectively.
 
     """
+
     provide_sequence = False
     provide_sequence_length = False
     number_of_estimates = 0
@@ -1163,7 +1210,7 @@ class EstimatorWidget(QtGui.QWidget):
         self.update_box.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
 
     def check_get_estimates_signature(self):
-        """ Method that checks the signature of the get_estimates function.
+        """Method that checks the signature of the get_estimates function.
         It checks which input arguments are allowed and, if the output is
         correct for the EstimatorWidget, stores the number of estimates.
         """
@@ -1230,7 +1277,7 @@ class EstimatorWidget(QtGui.QWidget):
         f_layout.addRow("Update continuously", update_hbox)
 
     def get_estimates(self):
-        """ Method that makes a procedure with the currently entered
+        """Method that makes a procedure with the currently entered
         parameters and returns the estimates for these parameters.
         """
         # Make a procedure
@@ -1262,14 +1309,14 @@ class EstimatorWidget(QtGui.QWidget):
         return estimates
 
     def update_estimates(self):
-        """ Method that gets and displays the estimates.
+        """Method that gets and displays the estimates.
         Implemented for connecting to the 'update'-button.
         """
         estimates = self.get_estimates()
         self.display_estimates(estimates)
 
     def display_estimates(self, estimates):
-        """ Method that updates the shown estimates for the given set of
+        """Method that updates the shown estimates for the given set of
         estimates.
 
         :param estimates: The set of estimates to be shown in the form of a
@@ -1292,14 +1339,26 @@ class EstimatorWidget(QtGui.QWidget):
 
         if hasattr(self._parent, "sequencer"):
             estimates.append(("Sequence length", str(sequence_length)))
-            estimates.append(("Sequence duration", "%d s" % int(sequence_length * duration)))
+            estimates.append(
+                ("Sequence duration", "%d s" % int(sequence_length * duration))
+            )
 
-        estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
-            seconds=duration))[:-7]))
+        estimates.append(
+            (
+                "Measurement finished at",
+                str(datetime.now() + timedelta(seconds=duration))[:-7],
+            )
+        )
 
         if hasattr(self._parent, "sequencer"):
-            estimates.append(('Sequence finished at', str(datetime.now() + timedelta(
-                seconds=duration * sequence_length))[:-7]))
+            estimates.append(
+                (
+                    "Sequence finished at",
+                    str(datetime.now() + timedelta(seconds=duration * sequence_length))[
+                        :-7
+                    ],
+                )
+            )
 
         return estimates
 
@@ -1328,13 +1387,19 @@ class InstrumentControlWidget(QtGui.QWidget):
     Controls = Writable Boxes
     Functions = Buttons
     """
-    def __init__(self, instrument,
-                 measurements=None, controls=None,
-                 settings=None, functions=None,
-                 options=None,
-                 parent=None,
-                 auto_get=False,
-                 auto_set=True):
+
+    def __init__(
+        self,
+        instrument,
+        measurements=None,
+        controls=None,
+        settings=None,
+        functions=None,
+        options=None,
+        parent=None,
+        auto_get=False,
+        auto_set=True,
+    ):
         super().__init__(parent)
 
         self.instrument = instrument
@@ -1342,16 +1407,14 @@ class InstrumentControlWidget(QtGui.QWidget):
         self.measurements = self.check_parameter_list(measurements, "measurement")
         self.controls = self.check_parameter_list(controls, "control")
         self.settings = self.check_parameter_list(settings, "setting")
-        self.options = self.check_parameter_list(options,"option")
+        self.options = self.check_parameter_list(options, "option")
 
         self.auto_read = auto_get
         self.auto_write = auto_set
 
-
         self.update_list = []
         self.update_list.extend(list(self.measurements.keys()))
         self.update_list.extend(list(self.controls.keys()))
-        
 
         self.update_thread = InstrumentThread(self.instrument, self.update_list)
         self.update_thread.new_value.connect(self.update_value)
@@ -1365,20 +1428,25 @@ class InstrumentControlWidget(QtGui.QWidget):
         for name, param in self.measurements.items():
             element = self.input_from_parameter(param)
             setattr(self, name, element)
-            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
-                                  QtGui.QSizePolicy.MinimumExpanding)
+            element.setSizePolicy(
+                QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
+            )
 
             element.setEnabled(False)
 
         for name, param in self.controls.items():
             element = self.input_from_parameter(param)
             setattr(self, name, element)
-            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
-                                  QtGui.QSizePolicy.MinimumExpanding)
+            element.setSizePolicy(
+                QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
+            )
 
             element.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
-            element.stepEnabled = lambda: QtGui.QAbstractSpinBox.StepDownEnabled | \
-                                            QtGui.QAbstractSpinBox.StepUpEnabled
+            element.stepEnabled = (
+                lambda: QtGui.QAbstractSpinBox.StepDownEnabled
+                | QtGui.QAbstractSpinBox.StepUpEnabled
+            )
+
             element.stepType = lambda: QtGui.QAbstractSpinBox.AdaptiveDecimalStepType
 
             # connect to update functions
@@ -1390,34 +1458,37 @@ class InstrumentControlWidget(QtGui.QWidget):
         for name, param in self.settings.items():
             element = self.input_from_parameter(param)
             setattr(self, name, element)
-            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
-                                  QtGui.QSizePolicy.MinimumExpanding)
+            element.setSizePolicy(
+                QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
+            )
 
             element.editingFinished.connect(partial(self.apply_setting, name))
 
             if self.auto_write:
                 element.valueChanged.connect(partial(self.apply_setting, name))
-            
 
         for name, param in self.options.items():
             element = self.input_from_parameter(param)
             setattr(self, name, element)
-            element.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
-                                  QtGui.QSizePolicy.MinimumExpanding)
+            element.setSizePolicy(
+                QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
+            )
 
         # Add a button for instant reading
         self.read_button = QtGui.QPushButton("Read", self)
         self.read_button.clicked.connect(self.get_and_update_all_values)
-        self.read_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
-                                         QtGui.QSizePolicy.MinimumExpanding)
+        self.read_button.setSizePolicy(
+            QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
+        )
 
         self.read_button.setEnabled(not self.auto_read)
 
         # Adding a button for instant writing
         self.write_button = QtGui.QPushButton("Write", self)
         self.write_button.clicked.connect(self.apply_all_settings)
-        self.write_button.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding,
-                                         QtGui.QSizePolicy.MinimumExpanding)
+        self.write_button.setSizePolicy(
+            QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
+        )
 
         self.write_button.setEnabled(not self.auto_write)
 
@@ -1434,65 +1505,59 @@ class InstrumentControlWidget(QtGui.QWidget):
     def _layout(self):
         layout = QtGui.QGridLayout(self)
 
-        #Measurements
+        # Measurements
         measurements_dock = QtGui.QWidget()
         measurement_layout = QtGui.QGridLayout(measurements_dock)
-        dock = QtGui.QDockWidget('Measurements')
+        dock = QtGui.QDockWidget("Measurements")
         for idx, name in enumerate(self.measurements):
-            measurement_layout.addWidget(QtGui.QLabel(name),idx,0)
-            measurement_layout.addWidget(getattr(self, name), idx,1)
-
+            measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
+            measurement_layout.addWidget(getattr(self, name), idx, 1)
 
         measurements_dock.setLayout(measurement_layout)
         dock.setWidget(measurements_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        layout.addWidget(dock,0,0)
+        layout.addWidget(dock, 0, 0)
 
-        #Controls
+        # Controls
         controls_dock = QtGui.QWidget()
         controls_layout = QtGui.QGridLayout(controls_dock)
-        dock = QtGui.QDockWidget('Controls')
+        dock = QtGui.QDockWidget("Controls")
         for idx, name in enumerate(self.controls):
-            controls_layout.addWidget(QtGui.QLabel(name),idx,0)
-            controls_layout.addWidget(getattr(self, name), idx,1)
-
+            controls_layout.addWidget(QtGui.QLabel(name), idx, 0)
+            controls_layout.addWidget(getattr(self, name), idx, 1)
 
         controls_dock.setLayout(controls_layout)
         dock.setWidget(controls_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        layout.addWidget(dock,0,1)
-        
-        #Settings and options
+        layout.addWidget(dock, 0, 1)
+
+        # Settings and options
         settings_dock = QtGui.QWidget()
         settings_layout = QtGui.QGridLayout(settings_dock)
-        dock = QtGui.QDockWidget('Settings')
+        dock = QtGui.QDockWidget("Settings")
         for idx, name in enumerate(self.settings):
-            settings_layout.addWidget(QtGui.QLabel(name),idx,0)
-            settings_layout.addWidget(getattr(self, name), idx,1)
-        
-        for idx, name in enumerate(self.options):
-            settings_layout.addWidget(getattr(self, name), idx,1)
+            settings_layout.addWidget(QtGui.QLabel(name), idx, 0)
+            settings_layout.addWidget(getattr(self, name), idx, 1)
 
+        for idx, name in enumerate(self.options):
+            settings_layout.addWidget(getattr(self, name), idx, 1)
 
         settings_dock.setLayout(settings_layout)
         dock.setWidget(settings_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        layout.addWidget(dock,0,2)
+        layout.addWidget(dock, 0, 2)
 
-        #Global Options and controls
+        # Global Options and controls
         global_dock = QtGui.QWidget()
         global_layout = QtGui.QGridLayout(global_dock)
-        global_layout.addWidget(self.read_button,0,0)
-        global_layout.addWidget(self.write_button,0,1)
+        global_layout.addWidget(self.read_button, 0, 0)
+        global_layout.addWidget(self.write_button, 0, 1)
 
-        global_layout.addWidget(self.auto_read_box,1,0)
-        global_layout.addWidget(self.auto_write_box,1,1)
-
+        global_layout.addWidget(self.auto_read_box, 1, 0)
+        global_layout.addWidget(self.auto_write_box, 1, 1)
 
         global_dock.setLayout(global_layout)
-        layout.addWidget(global_dock,1,0)
-
-
+        layout.addWidget(global_dock, 1, 0)
 
     def update_value(self, name, value):
         QtGui.QGuiApplication.processEvents()
@@ -1538,18 +1603,14 @@ class InstrumentControlWidget(QtGui.QWidget):
         self.read_button.setEnabled(not self.auto_read)
         self.write_button.setEnabled(not self.auto_write)
 
-
         self.update_thread.stop()
         self.update_thread.join()
 
         if self.auto_read:
             self.update_thread.start()
 
-
-        
-
-    def input_from_parameter(self,parameter):
-        """ Get the corresponding type of input for a given parameter.
+    def input_from_parameter(self, parameter):
+        """Get the corresponding type of input for a given parameter.
         :param parameter: A parameter
         """
 
@@ -1572,8 +1633,10 @@ class InstrumentControlWidget(QtGui.QWidget):
             element = StringInput(parameter)
 
         else:
-            raise TypeError("parameter has to be an instance of Parameter or one "
-                            "of its subclasses.")
+            raise TypeError(
+                "parameter has to be an instance of Parameter or one "
+                "of its subclasses."
+            )
 
         return element
 
@@ -1592,23 +1655,25 @@ class InstrumentControlWidget(QtGui.QWidget):
     @staticmethod
     def check_parameter_list(params, field_type=None):
         # Ensure the parameters is a list
-        if isinstance(params, (list, tuple)):   
+        if isinstance(params, (list, tuple)):
             params = list(params)
         elif params is None:
             params = []
         else:
             params = [params]
 
-        if field_type == 'option':
-            #Convert all elements to BooleanParameters if given as a string
+        if field_type == "option":
+            # Convert all elements to BooleanParameters if given as a string
             for idx in range(len(params)):
                 if isinstance(params[idx], parameters.BooleanParameter):
                     pass
                 elif isinstance(params[idx], str):
                     params[idx] = parameters.BooleanParameter(params[idx])
                 else:
-                    raise TypeError("All parameters (measurements, controls, & "
-                                    "settings) should be given as a BooleanParameter or a string.")
+                    raise TypeError(
+                        "All parameters (measurements, controls, & "
+                        "settings) should be given as a BooleanParameter or a string."
+                    )
                 params[idx].field_type = field_type
 
         else:
@@ -1619,9 +1684,11 @@ class InstrumentControlWidget(QtGui.QWidget):
                 elif isinstance(params[idx], str):
                     params[idx] = parameters.FloatParameter(params[idx])
                 else:
-                    raise TypeError("All parameters (measurements, controls, & "
-                                    "settings) should be given as a Parameter, a "
-                                    "Parameter subclass, or a string.")
+                    raise TypeError(
+                        "All parameters (measurements, controls, & "
+                        "settings) should be given as a Parameter, a "
+                        "Parameter subclass, or a string."
+                    )
 
                 params[idx].field_type = field_type
 
