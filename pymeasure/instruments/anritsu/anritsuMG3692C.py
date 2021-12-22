@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, discreteTruncate, RangeException
+from pymeasure.instruments import Instrument
 
 
 class AnritsuMG3692C(Instrument):
