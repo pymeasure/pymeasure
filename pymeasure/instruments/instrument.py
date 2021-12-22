@@ -37,7 +37,7 @@ log.addHandler(logging.NullHandler())
 class Instrument(object):
     """ The base class for all Instrument definitions.
 
-    It makes use of an array of :py:class:`~pymeasure.adapters.Adapter` classes for communication
+    It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
     with the connected hardware device. This decouples the instrument/command definition from the
     specific communication interface used.
 

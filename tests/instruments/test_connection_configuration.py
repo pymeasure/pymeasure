@@ -138,6 +138,21 @@ def test_incorrect_arg_is_flagged():
         _ = MultiprotocolInstrument(adapter='ASRL1::INSTR', bitrate=1234, visa_library='@sim')
 
 
+def test_incorrect_interface_type_is_flagged():
+    """As a user or instrument contributor that used an incorrect/invalid interface type,
+    I want to be alerted to that fact.
+    """
+    class WrongInterfaceInstrument(Instrument):
+        def __init__(self, adapter, name="Instrument with incorrect interface name", **kwargs):
+            super().__init__(adapter,
+                             name=name,
+                             arsl={'read_termination': '\r\n'},  # typo here
+                             **kwargs,
+                             )
+    with pytest.raises(ValueError, match='arsl'):
+        _ = WrongInterfaceInstrument(adapter='ASRL1::INSTR', visa_library='@sim')
+
+
 def test_improper_arg_is_flagged():
     """As a user or instrument contributor that used a kwarg that is inappropriate for the present
     connection, I want to be alerted to that fact.
