@@ -690,6 +690,7 @@ class ManagedImageWindow(ManagedWindow):
 
         super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
 
+
 class InstrumentControlWindow(QtGui.QMainWindow):
     def __init__(self,instrument,measurements=None,settings=None,
                                 controls=None,functions=None,options=None,
