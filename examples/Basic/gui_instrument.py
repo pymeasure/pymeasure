@@ -9,36 +9,33 @@ python gui_sequencer.py
 
 """
 
+import logging
 import sys
-import random
-import tempfile
-from time import sleep
 
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, \
-    FloatParameter, BooleanParameter
-from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import InstrumentControlWindow
+from pymeasure.experiment import BooleanParameter
 from pymeasure.instruments.mock import Mock as MockInstrument
 
-
-import logging
-log = logging.getLogger('')
+log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
 
 
-bpar = BooleanParameter('Boolean Value',default=False)
+bpar = BooleanParameter("Boolean Value", default=False)
+
 
 class MockInstrumentControlWindow(InstrumentControlWindow):
-
     def __init__(self):
-        super(MockInstrumentControlWindow,self).__init__(MockInstrument(),
-                                    measurements=["wave", "voltage"],
-                                    controls=["time", "output_voltage"],
-                                    settings=None,
-                                    options=bpar,
-                                    functions=["reset_time"])
-        self.setWindowTitle('Instrument Control')
+        super(MockInstrumentControlWindow, self).__init__(
+            MockInstrument(),
+            measurements=["wave", "voltage"],
+            controls=["time", "output_voltage"],
+            settings=None,
+            options=bpar,
+            functions=["reset_time"],
+        )
+        self.setWindowTitle("Instrument Control")
+
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
