@@ -22,14 +22,13 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from pymeasure.instruments.keithley.keithley2750 import clean_closed_channels
 
 
 def test_clean_closed_channels():
     # Example outputs from `self.ask(":ROUTe:CLOSe?")`
-    example_outputs = ["(@)",  # if no channels are open. Note that it's a string and not a list
-                       "(@101)",  # if only 1 channel is open. Note that it's a string and not a list
+    example_outputs = ["(@)",  # if no channels are open. It is a string and not a list
+                       "(@101)",  # if only 1 channel is open. It is a string and not a list
                        ["(@101", "105)"],  # if only 2 channels are open
                        ["(@101", 102.0, 103.0, 104.0, "105)"]]  # if more than 2 channels are open
 

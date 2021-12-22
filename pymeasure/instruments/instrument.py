@@ -58,17 +58,12 @@ class Instrument(object):
         self.SCPI = includeSCPI
         self.adapter = adapter
 
-        class Object(object):
-            pass
-
-        self.get = Object()
-
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
 
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete 
+        """ This property allows synchronization between a controller and a device. The Operation Complete
         query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
@@ -279,10 +274,6 @@ class Instrument(object):
         :param check_set_errors: Toggles checking errors after setting
         """
 
-        if map_values and isinstance(values, dict):
-            # Prepare the inverse values for performance
-            inverse = {v: k for k, v in values.items()}
-
         def fget(self):
             raise LookupError("Instrument.setting properties can not be read.")
 
@@ -346,6 +337,7 @@ class Instrument(object):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
 
 class FakeInstrument(Instrument):
     """ Provides a fake implementation of the Instrument class
