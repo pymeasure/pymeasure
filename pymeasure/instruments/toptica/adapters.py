@@ -44,10 +44,9 @@ class TopticaAdapter(VISAAdapter):
         kwargs.setdefault('preprocess_reply', self.extract_value)
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
-        super().__init__(port, **kwargs)
-        # hack to set baud_rate since VISAAdapter filters it out when spcified
-        # as keyword argument. issue #334
-        self.connection.baud_rate = baud_rate
+        super().__init__(port,
+                         asrl=dict(baud_rate=baud_rate),
+                         **kwargs)
         # configure communication mode
         super().write('echo off')
         super().write('prom off')
