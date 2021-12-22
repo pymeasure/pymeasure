@@ -46,5 +46,6 @@ class HP34401A(Instrument):
         super(HP34401A, self).__init__(
             resourceName,
             "HP 34401A",
+            asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs
         )
