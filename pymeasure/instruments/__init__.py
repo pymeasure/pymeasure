@@ -32,6 +32,7 @@ from . import advantest
 from . import agilent
 from . import ametek
 from . import ami
+from . import anaheimautomation
 from . import anapico
 from . import anritsu
 from . import attocube
@@ -48,6 +49,7 @@ from . import ni
 from . import oxfordinstruments
 from . import parker
 from . import razorbill
+from . import rohdeschwarz
 from . import signalrecovery
 from . import srs
 from . import tektronix

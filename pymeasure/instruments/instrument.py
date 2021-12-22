@@ -36,17 +36,38 @@ log.addHandler(logging.NullHandler())
 
 
 class Instrument(object):
-    """ This provides the base class for all Instruments, which is
-    independent of the particular Adapter used to connect for
-    communication to the instrument. It provides basic SCPI commands
-    by default, but can be toggled with :code:`includeSCPI`.
+    """ The base class for all Instrument definitions.
 
-    :param adapter: An :class:`Adapter<pymeasure.adapters.Adapter>` object
-    :param name: A string name
+    It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
+    with the connected hardware device. This decouples the instrument/command definition from the
+    specific communication interface used.
+
+    When ``adapter`` is a string, this is taken as an appropriate resource name. Depending on your
+    installed VISA library, this can be something simple like ``COM1`` or ``ASRL2``, or a more
+    complicated
+    `VISA resource name <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
+    defining the target of your connection.
+
+    When ``adapter`` is an integer, a GPIB resource name is created based on that.
+    In either case a :py:class:`~pymeasure.adapters.VISAAdapter` is constructed based on that
+    resource name.
+    Keyword arguments can be used to further configure the connection.
+
+    Otherwise, the passed :py:class:`~pymeasure.adapters.Adapter` object is used and any keyword
+    arguments are discarded.
+
+    This class defines basic SCPI commands by default. This can be disabled with
+    :code:`includeSCPI` for instruments not compatible with the standard SCPI commands.
+
+    :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
+    :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
     :param write_delay: A float that enables to ensure a minimum time (in seconds) between
         consecutive writes (also includes the writes in a query); if sufficient time has
         already passed after the previous write, the write will not be delayed any further.
+    :param \\**kwargs: In case ``adapter`` is a string or
+        integer, additional arguments passed on to
+        :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details). Discarded otherwise.
     """
 
     # noinspection PyPep8Naming
@@ -64,11 +85,6 @@ class Instrument(object):
         self.write_delay = write_delay
         self.last_write_time = time()
 
-        class Object(object):
-            pass
-
-        self.get = Object()
-
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
 
@@ -80,7 +96,7 @@ class Instrument(object):
 
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete 
+        """ This property allows synchronization between a controller and a device. The Operation Complete
         query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
@@ -294,10 +310,6 @@ class Instrument(object):
                             before value mapping, returning the processed value
         :param check_set_errors: Toggles checking errors after setting
         """
-
-        if map_values and isinstance(values, dict):
-            # Prepare the inverse values for performance
-            inverse = {v: k for k, v in values.items()}
 
         def fget(self):
             raise LookupError("Instrument.setting properties can not be read.")

@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from time import time
+
+import pytest
+
 from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -61,7 +63,7 @@ def test_control_validator():
     assert fake.read() == '5'
     fake.x = 5
     assert fake.x == 5
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         fake.x = 20
 
 
@@ -79,7 +81,7 @@ def test_control_validator_map():
     assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         fake.x = 20
 
 

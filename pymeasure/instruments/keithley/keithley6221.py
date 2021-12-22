@@ -23,19 +23,17 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+import time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
-import numpy as np
-import time
-from io import BytesIO
-import re
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Keithley6221(Instrument, KeithleyBuffer):
@@ -95,6 +93,15 @@ class Keithley6221(Instrument, KeithleyBuffer):
         between 1e-3 [seconds] and 999999.999 [seconds].""",
         validator=truncated_range,
         values=[1e-3, 999999.999],
+    )
+
+    output_low_grounded = Instrument.control(
+        ":OUTP:LTE?", "OUTP:LTE %d",
+        """ A boolean property that controls whether the low output of the triax
+        connection is connected to earth ground (True) or is floating (False). """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
     )
 
     ##########
