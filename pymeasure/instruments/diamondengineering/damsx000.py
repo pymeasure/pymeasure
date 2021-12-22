@@ -74,7 +74,7 @@ class Axis(object):
                                                    "HALF": 1},
                                      )
     
-    step_rel = Instrument.setting("0RN%d",
+    step_rel = Instrument.setting("0RN%+d",
                                   """ A integer property to start a relative movement for the desired steps
                                   """,
                                   validator=strict_range,
@@ -190,6 +190,10 @@ class YAxis(Axis):
     angle_min = -45.1 # Actually it is -45, extra 0.1 is to deal with roundings errors
     angle_max = 45.1 # Actually it is 45, extra 0.1 is to deal with roundings errors
 
+    def distance(self,x1,y1,x2,y2):
+        """ Compute distance between two points """
+        return sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
     def get_intersections(self, r_motor):
         """ return point of intersection between two circles """
         # circle 1: (x0, y0), radius r_motor
@@ -204,17 +208,17 @@ class YAxis(Axis):
         r1 = self.R1
 
         # Center distance
-        d=sqrt((x1-x0)**2 + (y1-y0)**2)
+        d = self.distance(x1, y1, x0, y0)
 
-        a=(r0**2-r1**2+d**2)/(2*d)
-        h=sqrt(r0**2-a**2)
-        x2=x0+a*(x1-x0)/d   
-        y2=y0+a*(y1-y0)/d   
-        x3=x2+h*(y1-y0)/d     
-        y3=y2-h*(x1-x0)/d 
+        a = (r0**2-r1**2+d**2)/(2*d)
+        h = sqrt(r0**2-a**2)
+        x2 = x0+a*(x1-x0)/d   
+        y2 = y0+a*(y1-y0)/d   
+        x3 = x2+h*(y1-y0)/d     
+        y3 = y2-h*(x1-x0)/d 
         
-        x4=x2-h*(y1-y0)/d
-        y4=y2+h*(x1-x0)/d
+        x4 = x2-h*(y1-y0)/d
+        y4 = y2+h*(x1-x0)/d
 
         return (x3, y3, x4, y4)
 
@@ -222,50 +226,50 @@ class YAxis(Axis):
         """ Steps required to move of degrees from current position """
 
         # Assume angle is zero, if not set. This is useful to allow
-        # movements to center elevation axis
-        current_angle = self.current_angle if self.zero_set else 0
+        # relative movements to center elevation axis
+        angle = self.current_angle if self.zero_set else 0
 
          # Check limits if any
         if self.angle_min is not None:
-            assert((current_angle+degrees) >= self.angle_min)
+            assert((angle+degrees) >= self.angle_min)
 
         if self.angle_max is not None:
-            print ("*", self.current_angle, current_angle, degrees, self.angle_max)
-            assert((current_angle+degrees) <= self.angle_max)
+            assert((angle+degrees) <= self.angle_max)
 
-        current_angle = radians(current_angle)
+        angle_rad = radians(angle)
         # Calculate current x and y coordinates from current_angle
         R = self.R
         h = self.h
 
-        xs = -R*cos(current_angle)+h*sin(current_angle)
-        ys = R*sin(current_angle)+h*cos(current_angle)
-        ds = sqrt((xs-self.x0)**2+(ys-self.y0)**2)
+        xs = -R*cos(angle_rad)+h*sin(angle_rad)
+        ys = R*sin(angle_rad)+h*cos(angle_rad)
+        ds = self.distance(xs, ys, self.x0, self.y0)
 
-        angle = radians(degrees)
-        x1 = -R*cos(angle)+h*sin(angle)
-        y1 = R*sin(angle)+h*cos(angle)
-        d1 = sqrt((x1-self.x0)**2+(y1-self.y0)**2)
+        new_angle_rad = radians(degrees + angle)
+        x1 = -R*cos(new_angle_rad)+h*sin(new_angle_rad)
+        y1 = R*sin(new_angle_rad)+h*cos(new_angle_rad)
+        d1 = self.distance(x1, y1, self.x0, self.y0)
         return round((d1-ds) * self.steps_per_meter)
 
     def steps2degrees(self, steps):
         """ Translate steps to absolute degrees """
-        current_angle = self.current_angle if self.zero_set else 0
-        current_angle = radians(current_angle)
+
+        # Assume angle is zero, if not set. This is useful to allow
+        # relative movements to center elevation axis
+        angle = self.current_angle if self.zero_set else 0
+        angle_rad = radians(angle)
         # Calculate current x and y coordinates from current_angle
         R = self.R
         h = self.h
-        xs = -R*cos(current_angle)+h*sin(current_angle)
-        ys = R*sin(current_angle)+h*cos(current_angle)
-        x0 = self.x0
-        y0 = self.y0
-        ds = sqrt((xs-x0)**2+(ys-y0)**2)
+        xs = -R * cos(angle_rad) + h * sin(angle_rad)
+        ys = R * sin(angle_rad) + h * cos(angle_rad)
+        ds = self.distance(xs, ys, self.x0, self.y0)
 
         d1 = steps/self.steps_per_meter + ds
         x1,y1,x2,y2 = self.get_intersections(d1)
-        angle = -(degrees(atan(y2/x2))+self.offset_angle)
+        new_angle = -(degrees(atan(y2/x2))+self.offset_angle)
 
-        return angle
+        return new_angle - angle
 
     def __init__(self, instrument):
         super().__init__(instrument, 'Y')
@@ -274,12 +278,12 @@ class DAMSx000(Instrument):
     """ Represents the DAMS x000 series 2-axis positioner from Diamond Engineering
     """
 
-    def __init__(self, resource_name, **kwargs):
+    def __init__(self, resource_name, debug=False, **kwargs):
         super().__init__(
             resource_name,
             "DAMS x000",
             timeout=2000,
-            write_termination='\r\n',
+            write_termination='\r',
             includeSCPI=False,
             **kwargs
         )
@@ -287,30 +291,34 @@ class DAMSx000(Instrument):
         if isinstance(self.adapter, VISAAdapter):
             self.adapter.connection.baud_rate = 57600
 
-        self.x = Axis(self, 'X')
-        self.y = Axis(self, 'Y')
+        self.debug = debug
+
+        self.x = XAxis(self)
+        self.y = YAxis(self)
 
         # Init controller
         self.write("GG*")
-        self.write("GGN+0c")
+        self.write("GGN+0cz")
 
     @property
     def zero_set(self):
         return self.x.zero_set and self.y.zero_set
 
     @property
-    def azimuth_angle(self):
+    def azimuth(self):
         return self.x.angle
+
+    @azimuth.setter
+    def azimuth(self, degrees):
+        self.x.angle = degrees
 
     @property
-    def elevation_angle(self):
+    def elevation(self):
         return self.y.angle
 
-    def azimuth(self, degree):
-        """ Bring the positioner to absolute azimuth angle """
-
-        self.x.angle = degree
-        return self.x.angle
+    @elevation.setter
+    def elevation(self, degrees):
+        self.y.angle = degrees
 
     def azimuth_rel(self, degree):
         """ Move the positioner of degrees relative to current position.
@@ -318,20 +326,21 @@ class DAMSx000(Instrument):
         This method may be useful to center the azimuth to zero
         """
 
-        self.x.angle_rel = degree
-
-    def elevation(self, degree):
-        """ Bring the positioner to absolute elevation angle (range -45, 45) """
-        self.y.angle = degree
-        return self.y.angle
+        self.x.angle_rel(degree)
 
     def elevation_rel(self, degree):
         """ Move the positioner of degrees relative to current position.
         
         This method may be useful to center the elevation to zero
         """
-        self.y.angle_rel = degree
+        self.y.angle_rel(degree)
 
     def set_zero_position(self):
         self.x.set_zero()
         self.y.set_zero()
+
+    def write(self, command):
+        if self.debug:
+            print ("=>", command)
+        return super().write(command)
+
