@@ -34,8 +34,8 @@ class MockInstrumentControlWindow(InstrumentControlWindow):
         super(MockInstrumentControlWindow, self).__init__(
             MockInstrument(),
             measurements=["wave", "voltage"],
-            controls=["time", "output_voltage"],
-            settings=None,
+            controls=["time"],
+            settings=["output_voltage"],
             options=[bpar, 'running'],
             functions=[print_random_number, 'start', 'stop']
         )

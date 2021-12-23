@@ -1557,7 +1557,7 @@ class InstrumentControlWidget(QtGui.QWidget):
             settings_layout.addWidget(QtGui.QLabel(name), idx, 0)
             settings_layout.addWidget(getattr(self, name), idx, 1)
 
-        for idx, name in enumerate(self.options):
+        for idx, name in enumerate(self.options, len(self.settings)):
             settings_layout.addWidget(getattr(self, name), idx, 1)
 
         settings_dock.setLayout(settings_layout)
