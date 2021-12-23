@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set
 
@@ -61,17 +60,16 @@ class LakeShore421(Instrument):
         super(LakeShore421, self).__init__(
             resource_name,
             "Lake Shore 421 Gaussmeter",
+            asrl=dict(
+                baud_rate=9600,
+                data_bits=7,
+                stop_bits=10,
+                parity=1,
+                read_termination='\r',
+                write_termination='\n',
+            ),
             **kwargs
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 9600
-            self.adapter.connection.data_bits = 7
-            self.adapter.connection.stop_bits = 10
-            self.adapter.connection.parity = 1
-
-            self.adapter.connection.read_termination = '\r'
-            self.adapter.connection.write_termination = '\n'
         self.last_write_time = time()
 
     def _raw_to_field(self, field_raw, multiplier_name):
