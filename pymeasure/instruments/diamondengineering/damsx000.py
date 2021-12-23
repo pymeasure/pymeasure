@@ -285,11 +285,9 @@ class DAMSx000(Instrument):
             timeout=2000,
             write_termination='\r',
             includeSCPI=False,
+            asrl={'baud_rate': 57600},
             **kwargs
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 57600
 
         self.debug = debug
 
