@@ -27,8 +27,8 @@ from decimal import Decimal
 
 def strict_range(value, values):
     """ Provides a validator function that returns the value
-    if its value is less than or equal than the maximum and
-    greater than or equal than the minimum of ``values``.
+    if its value is less than or equal to the maximum and
+    greater than or equal to the minimum of ``values``.
     Otherwise it raises a ValueError.
 
     :param value: A value to test
