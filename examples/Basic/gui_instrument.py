@@ -17,11 +17,16 @@ from pymeasure.display.windows import InstrumentControlWindow
 from pymeasure.experiment import BooleanParameter
 from pymeasure.instruments.mock import Mock as MockInstrument
 
+import numpy as np
+
 log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
 
+bpar = BooleanParameter("Ext. Boolean", default=False)
 
-bpar = BooleanParameter("Boolean Value", default=False)
+
+def print_random_number():
+    print(np.random.rand())
 
 
 class MockInstrumentControlWindow(InstrumentControlWindow):
@@ -31,8 +36,8 @@ class MockInstrumentControlWindow(InstrumentControlWindow):
             measurements=["wave", "voltage"],
             controls=["time", "output_voltage"],
             settings=None,
-            options=bpar,
-            functions=["reset_time"],
+            options=[bpar, 'running'],
+            functions=[print_random_number, 'start', 'stop']
         )
         self.setWindowTitle("Instrument Control")
 

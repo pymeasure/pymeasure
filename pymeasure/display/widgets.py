@@ -1408,13 +1408,20 @@ class InstrumentControlWidget(QtGui.QWidget):
         self.controls = self.check_parameter_list(controls, "control")
         self.settings = self.check_parameter_list(settings, "setting")
         self.options = self.check_parameter_list(options, "option")
+        self.functions = functions if isinstance(functions, list) else [functions]
 
         self.auto_read = auto_get
         self.auto_write = auto_set
 
         self.update_list = []
-        self.update_list.extend(list(self.measurements.keys()))
-        self.update_list.extend(list(self.controls.keys()))
+        self.update_list.extend(
+            [m for m in self.measurements.keys() if hasattr(self.instrument, str(m))])
+        self.update_list.extend(
+            [m for m in self.controls.keys() if hasattr(self.instrument, str(m))])
+        self.update_list.extend(
+            [m for m in self.options.keys() if hasattr(self.instrument, str(m))])
+        self.update_list.extend(
+            [m for m in self.settings.keys() if hasattr(self.instrument, str(m))])
 
         self.update_thread = InstrumentThread(self.instrument, self.update_list)
         self.update_thread.new_value.connect(self.update_value)
@@ -1473,6 +1480,17 @@ class InstrumentControlWidget(QtGui.QWidget):
             element.setSizePolicy(
                 QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
             )
+
+        for name in self.functions:
+            element = QtGui.QPushButton()
+            if hasattr(self.instrument, str(name)):
+                setattr(self, name, element)
+                element.setText(name)
+                element.clicked.connect(getattr(self.instrument, name))
+            else:
+                setattr(self, name.__name__, element)
+                element.setText(self._parse_function_name(name.__name__))
+                element.clicked.connect(name)
 
         # Add a button for instant reading
         self.read_button = QtGui.QPushButton("Read", self)
@@ -1547,6 +1565,21 @@ class InstrumentControlWidget(QtGui.QWidget):
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         layout.addWidget(dock, 0, 2)
 
+        # Functions
+        function_dock = QtGui.QWidget()
+        function_layout = QtGui.QVBoxLayout(function_dock)
+        dock = QtGui.QDockWidget("Functions")
+        for idx, name in enumerate(self.functions):
+            if hasattr(self.instrument, str(name)):
+                function_layout.addWidget(getattr(self, name), idx)
+            else:
+                function_layout.addWidget(getattr(self, name.__name__), idx)
+
+        function_dock.setLayout(function_layout)
+        dock.setWidget(function_dock)
+        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        layout.addWidget(dock, 0, 3)
+
         # Global Options and controls
         global_dock = QtGui.QWidget()
         global_layout = QtGui.QGridLayout(global_dock)
@@ -1558,6 +1591,9 @@ class InstrumentControlWidget(QtGui.QWidget):
 
         global_dock.setLayout(global_layout)
         layout.addWidget(global_dock, 1, 0)
+
+    def _parse_function_name(self, name):
+        return name.replace('_', ' ')
 
     def update_value(self, name, value):
         QtGui.QGuiApplication.processEvents()
@@ -1639,18 +1675,6 @@ class InstrumentControlWidget(QtGui.QWidget):
             )
 
         return element
-
-    # def _set_auto_read(self):
-    #     state = self.auto_read_box.checkState()
-
-    #     self.update_thread.stop()
-    #     self.update_thread.join()
-
-    #     if state == 0:
-    #         pass
-    #     elif state == 1:
-    #         self.update_thread.delay = 1
-    #         self.update_thread.start()
 
     @staticmethod
     def check_parameter_list(params, field_type=None):
