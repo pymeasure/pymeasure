@@ -68,7 +68,7 @@ class TelnetAdapter(Adapter):
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read_some().decode() + \
-                self.connection.read_very_eager().decode()
+            self.connection.read_very_eager().decode()
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII

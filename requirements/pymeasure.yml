@@ -3,21 +3,21 @@ channels:
   - conda-forge
 dependencies:
   - cloudpickle=1.6.0
-  - numpy=1.19.2
-  - pandas=1.1.3
+  - numpy=1.21.4
+  - pandas=1.3.5
   - pyqt=5.12.3
-  - pyqtgraph=0.11.0
+  - pyqtgraph=0.12.3
   - pyserial=3.4
-  - pyvisa=1.10.1
-  - pyzmq=22.0.3
+  - pyvisa=1.11.3
+  - pyzmq=22.3.0
   - qt=5.12.9
 # Development dependencies below
   - pytest-qt=3.3.0
   - pytest-runner=5.2
-  - pytest=6.1.1
-  - flake8=3.8.4
-  - sphinx=4.0.2
-  - sphinx_rtd_theme=0.5.2
+  - pytest=6.2.5
+  - flake8=4.0.1
+  - sphinx=4.3.1
+  - sphinx_rtd_theme=1.0.0
   - pip  # don't pin, to gain newest conda compatibility fixes
   - pip:
     - pyvisa-sim==0.4.0

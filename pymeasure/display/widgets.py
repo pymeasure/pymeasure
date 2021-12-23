@@ -242,13 +242,15 @@ class PlotFrame(QtGui.QFrame):
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
 
+
 class ImageFrame(PlotFrame):
     """ Extends PlotFrame to plot also axis Z using colors
     """
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.QSignal(str)
 
-    def __init__(self, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True, parent=None):
+    def __init__(self, x_axis, y_axis, z_axis=None,
+                 refresh_time=0.2, check_status=True, parent=None):
         super().__init__(x_axis, y_axis, refresh_time, check_status, parent)
         self.change_z_axis(z_axis)
 
@@ -259,11 +261,12 @@ class ImageFrame(PlotFrame):
                 item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + ' (%s)'%units)
+            self.plot.setTitle(label + ' (%s)' % units)
         else:
             self.plot.setTitle(label)
         self.z_axis = axis
         self.z_axis_changed.emit(axis)
+
 
 class TabWidget(object):
     """ Utility class to define default implementation for some basic methods.
@@ -291,6 +294,7 @@ class TabWidget(object):
     def set_color(self, curve, color):
         """ Set color for widget """
         pass
+
 
 class PlotWidget(TabWidget, QtGui.QWidget):
     """ Extends the PlotFrame to allow different columns
@@ -433,13 +437,14 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             i_curve.pen.setColor(color)
             i_curve.updateItems(styleUpdate=True)
 
+
 class ImageWidget(TabWidget, QtGui.QWidget):
     """ Extends the ImageFrame to allow different columns
     of the data to be dynamically choosen
     """
 
-    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True,
-                 parent=None):
+    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2,
+                 check_status=True, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
@@ -483,7 +488,6 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         hbox.addWidget(self.columns_z_label)
         hbox.addWidget(self.columns_z)
 
-
         vbox.addLayout(hbox)
         vbox.addWidget(self.image_frame)
         self.setLayout(vbox)
@@ -511,6 +515,7 @@ class ImageWidget(TabWidget, QtGui.QWidget):
 
     def remove(self, curve):
         self.plot.removeItem(curve)
+
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):
@@ -546,6 +551,7 @@ class BrowserWidget(QtGui.QWidget):
         vbox.addLayout(hbox)
         vbox.addWidget(self.browser)
         self.setLayout(vbox)
+
 
 class InputsWidget(QtGui.QWidget):
     # tuple of Input classes that do not need an external label
@@ -616,7 +622,7 @@ class InputsWidget(QtGui.QWidget):
 
                 if isinstance(getattr(self, group_name), BooleanInput):
                     # Adjust the boolean condition to a condition suitable for a checkbox
-                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked
+                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked  # noqa: E501
 
                 if group_name not in groups:
                     groups[group_name] = []
@@ -677,6 +683,7 @@ class InputsWidget(QtGui.QWidget):
         self._procedure.set_parameters(parameter_values)
         return self._procedure
 
+
 class LogWidget(TabWidget, QtGui.QWidget):
     """ Widget to display logging information in GUI
 
@@ -705,6 +712,7 @@ class LogWidget(TabWidget, QtGui.QWidget):
         vbox.addWidget(self.view)
         self.setLayout(vbox)
 
+
 class ResultsDialog(QtGui.QFileDialog):
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
         super().__init__(parent)
@@ -720,7 +728,8 @@ class ResultsDialog(QtGui.QFileDialog):
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
 
-        self.plot_widget = PlotWidget("Results", self.columns, self.x_axis, self.y_axis, parent=self)
+        self.plot_widget = PlotWidget("Results", self.columns,
+                                      self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
         self.preview_param = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
@@ -757,6 +766,10 @@ class ResultsDialog(QtGui.QFileDialog):
                 curve[column] = ResultsCurve(results,
                                              x=self.plot_widget.plot_frame.x_axis,
                                              y=column,
+                                             # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
+                                             # circumvent plotting slowdown. Once the issue
+                                             # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
+                                             # it can be reverted
                                              pen=pg.mkPen(color=(255, 0, 0), width=1),
                                              antialias=True
                                          )
@@ -1066,8 +1079,8 @@ class SequencerWidget(QtGui.QWidget):
             sequence = match.group(3)
 
             self._add_tree_item(
-                level=level, 
-                parameter=parameter, 
+                level=level,
+                parameter=parameter,
                 sequence=sequence,
             )
 
@@ -1198,6 +1211,7 @@ class SequencerWidget(QtGui.QWidget):
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
 
+
 class DirectoryLineEdit(QtGui.QLineEdit):
     """
     Widget that allows to choose a directory path.
@@ -1212,13 +1226,15 @@ class DirectoryLineEdit(QtGui.QLineEdit):
         completer.setCompletionMode(QtGui.QCompleter.PopupCompletion)
 
         model = QtGui.QDirModel(completer)
-        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives |
+                        QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
         completer.setModel(model)
 
         self.setCompleter(completer)
 
         browse_action = QtGui.QAction(self)
-        browse_action.setIcon(self.style().standardIcon(getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
+        browse_action.setIcon(self.style().standardIcon(
+            getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
         browse_action.triggered.connect(self.browse_triggered)
 
         self.addAction(browse_action, QtGui.QLineEdit.TrailingPosition)

@@ -32,6 +32,7 @@ def test_process_stopping():
     assert process.should_stop() is True
     process.join()
 
+
 def test__process_joining():
     process = StoppableProcess()
     process.start()
