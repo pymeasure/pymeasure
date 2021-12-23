@@ -29,7 +29,6 @@ import numpy as np
 
 from pymeasure.adapters import FakeAdapter
 from pymeasure.adapters.visa import VISAAdapter
-from time import time, sleep
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -62,16 +61,13 @@ class Instrument(object):
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
-    :param write_delay: A float that enables to ensure a minimum time (in seconds) between
-        consecutive writes (also includes the writes in a query); if sufficient time has
-        already passed after the previous write, the write will not be delayed any further.
     :param \\**kwargs: In case ``adapter`` is a string or
         integer, additional arguments passed on to
         :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details). Discarded otherwise.
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, write_delay=None, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
             if isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -82,8 +78,6 @@ class Instrument(object):
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
-        self.write_delay = write_delay
-        self.last_write_time = time()
 
         self.isShutdown = False
         log.info("Initializing %s." % self.name)
@@ -136,7 +130,6 @@ class Instrument(object):
 
         :param command: command string to be sent to the instrument
         """
-        self.delay_write()
         return self.adapter.ask(command)
 
     def write(self, command):
@@ -144,7 +137,6 @@ class Instrument(object):
 
         :param command: command string to be sent to the instrument
         """
-        self.delay_write()
         self.adapter.write(command)
 
     def read(self):
@@ -157,11 +149,9 @@ class Instrument(object):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        self.delay_write()
         return self.adapter.values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        self.delay_write()
         return self.adapter.binary_values(command, header_bytes, dtype)
 
     @staticmethod
@@ -373,15 +363,6 @@ class Instrument(object):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-    def delay_write(self):
-        if self.write_delay is None:
-            return
-
-        while time() - self.last_write_time < self.write_delay:
-            sleep(self.write_delay / 10)
-
-        self.last_write_time = time()
 
 
 class FakeInstrument(Instrument):

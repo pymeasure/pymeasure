@@ -28,13 +28,13 @@ from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set
 
 import numpy as np
-from time import sleep
+from time import time, sleep
 
 
 class LakeShore421(Instrument):
     """
-    Represents the Lake Shore 421 Gaussmeter and provides
-    a high-level interface for interacting with the instrument.
+    Represents the Lake Shore 421 Gaussmeter and provides a high-level interface for interacting
+    with the instrument.
     .. code-block:: python
 
         gaussmeter = LakeShore421("COM1")
@@ -42,6 +42,9 @@ class LakeShore421(Instrument):
         gaussmeter.auto_range = True        # Turn on auto-range
         gaussmeter.fast_mode = True         # Turn on fast-mode
 
+
+    A delay of 50 ms is ensured between subsequent writes, as the instrument cannot correctly
+    handle writes any faster.
     """
 
     MULTIPLIERS = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
@@ -52,12 +55,12 @@ class LakeShore421(Instrument):
     RANGE_MULTIPLIER_PROBE = [1, 10, 0.01]
     RANGE_MULTIPLIER_UNIT = {'G': 1, 'T': 1e-4}
     UNITS = ['G', 'T']
+    WRITE_DELAY = 0.05
 
     def __init__(self, resource_name, **kwargs):
         super(LakeShore421, self).__init__(
             resource_name,
             "Lake Shore 421 Gaussmeter",
-            write_delay=0.05,
             **kwargs
         )
 
@@ -69,6 +72,7 @@ class LakeShore421(Instrument):
 
             self.adapter.connection.read_termination = '\r'
             self.adapter.connection.write_termination = '\n'
+        self.last_write_time = time()
 
     def _raw_to_field(self, field_raw, multiplier_name):
         if not field_raw == "OL":
@@ -415,3 +419,32 @@ class LakeShore421(Instrument):
         """ Closes the serial connection to the system. """
         self.adapter.connection.close()
         super().shutdown()
+
+    ###################################################
+    # Redefined methods to ensure time between writes #
+    ###################################################
+
+    def delay_write(self):
+        if self.WRITE_DELAY is None:
+            return
+
+        while time() - self.last_write_time < self.WRITE_DELAY:
+            sleep(self.WRITE_DELAY / 10)
+
+        self.last_write_time = time()
+
+    def ask(self, command):
+        self.delay_write()
+        return super().ask(command)
+
+    def write(self, command):
+        self.delay_write()
+        super().write(command)
+
+    def values(self, command, **kwargs):
+        self.delay_write()
+        return super().values(command, **kwargs)
+
+    def binary_values(self, command, *args, **kwargs):
+        self.delay_write()
+        return super().binary_values(command, *args, **kwargs)
