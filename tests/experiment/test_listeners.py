@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-import time
-from queue import Queue
+# import time
+# from queue import Queue
 
-from pymeasure.experiment.listeners import Listener, Recorder
-from pymeasure.experiment.results import Results
+# from pymeasure.experiment.listeners import Listener, Recorder
+# from pymeasure.experiment.results import Results
 
 # TODO: Make results_for_testing.csv
 # TODO: Make procedure_for_testing.py

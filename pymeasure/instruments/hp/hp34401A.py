@@ -24,26 +24,28 @@
 
 from pymeasure.instruments import Instrument
 
+
 class HP34401A(Instrument):
     """ Represents the HP 34401A instrument.
     """
 
     voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
-    
+
     voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
-    
+
     current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
-    
+
     current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
-    
+
     resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
-    
-    resistance_4w = Instrument.measurement("MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
+
+    resistance_4w = Instrument.measurement(
+        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
 
     def __init__(self, resourceName, **kwargs):
         super(HP34401A, self).__init__(
             resourceName,
             "HP 34401A",
+            asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs
         )
-

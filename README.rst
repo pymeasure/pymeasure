@@ -10,7 +10,7 @@ PyMeasure is currently under active development, so please report any issues you
 
 .. _Issues page: https://github.com/pymeasure/pymeasure/issues
 
-PyMeasure runs on Python 3.6, 3.7, 3.8 and 3.9, and is tested with continous-integration on Linux, macOS, and Windows.
+PyMeasure runs on Python 3.7-3.10, and is tested with continous-integration on Linux, macOS, and Windows.
 
 .. image:: https://github.com/pymeasure/pymeasure/workflows/Pymeasure%20CI/badge.svg
     :target: https://github.com/pymeasure/pymeasure/actions
