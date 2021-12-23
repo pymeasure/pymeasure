@@ -48,8 +48,8 @@ class LakeShore421(Instrument):
 
     MULTIPLIERS = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
     PROBE_TYPES = {"High Sensitivity": 0,
-                  "High Stability": 1,
-                  "Ultra-High Sensitivity": 2}
+                   "High Stability": 1,
+                   "Ultra-High Sensitivity": 2}
     RANGES = [30e3, 3e3, 300, 30]  # in Gauss
     RANGE_MULTIPLIER_PROBE = [1, 10, 0.01]
     RANGE_MULTIPLIER_UNIT = {'G': 1, 'T': 1e-4}

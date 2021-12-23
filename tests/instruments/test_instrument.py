@@ -22,11 +22,9 @@
 # THE SOFTWARE.
 #
 
-from time import time
 
 import pytest
 
-from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.instrument import Instrument, FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -262,7 +260,7 @@ def test_with_statement():
         assert isinstance(fake, FakeInstrument)
 
         # Check whether the shutdown function is already called
-        assert fake.isShutdown == False
+        assert fake.isShutdown is False
 
     # Check whether the shutdown function is called upon
-    assert fake.isShutdown == True
+    assert fake.isShutdown is True
