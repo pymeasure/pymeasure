@@ -284,8 +284,8 @@ class DAMSx000(Instrument):
             "DAMS x000",
             timeout=2000,
             write_termination='\r',
+            baud_rate=57600,
             includeSCPI=False,
-            asrl={'baud_rate': 57600},
             **kwargs
         )
 
