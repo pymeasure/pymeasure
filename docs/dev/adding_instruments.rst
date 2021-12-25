@@ -98,6 +98,107 @@ In principle you are free to write any functions that are necessary for interact
 
 In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences and are highly encouraged.
 
+.. _default_connection_settings:
+
+Defining default connection settings
+====================================
+
+When implementing instruments, it's sometimes necessary to define default connection settings.
+This might be because an instrument connection requires *specific non-default settings*, or because your instrument actually supports *multiple interfaces*.
+
+The :py:class:`~pymeasure.adapters.VISAAdapter` class offers a flexible way of dealing with connection settings fully within the initializer of your instrument.
+
+Single interface
+****************
+
+The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``resourceName`` is a string or integer.
+
+.. code-block:: python
+
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            **kwargs
+        )
+
+If you want to set defaults that should be prominently visible to the user and may be overridden, place them in the signature.
+This is suitable when the instrument has one type of interface, or any defaults are valid for all interface types, see the documentation in :py:class:`~pymeasure.adapters.VISAAdapter` for details.
+
+.. code-block:: python
+
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            baud_rate=baud_rate,
+            **kwargs
+        )
+
+If you want to set defaults, but they don't need to be prominently exposed for replacement, use this pattern, which sets the value only when there is no entry in ``kwargs``, yet.
+
+.. code-block:: python
+
+    def __init__(self, resourceName, **kwargs):
+        kwargs.setdefault('timeout', 1500)
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            **kwargs
+        )
+
+Multiple interfaces
+*******************
+
+Now, if you have instruments with multiple interfaces (e.g. serial, TCPI/IP, USB), things get interesting.
+You might have settings common to all interfaces (like ``timeout``), but also settings that are only valid for one interface type, but not others.
+
+The trick is to add keyword arguments that name the interface type, like ``asrl`` or ``gpib``, below (see `here <https://pyvisa.readthedocs.io/en/latest/api/constants.html#pyvisa.constants.InterfaceType>`__ for the full list).
+These then contain a *dictionary* with the settings specific to the respective interface:
+
+.. code-block:: python
+
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        kwargs.setdefault('timeout', 1500)
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            gpib=dict(enable_repeat_addressing=False,
+                      read_termination='\r'),
+            asrl={'baud_rate': baud_rate,
+                  'read_termination': '\r\n'},
+            **kwargs
+        )
+
+When the instrument instance is created, the interface-specific settings for the actual interface being used get merged with ``**kwargs`` before passing them on to PyVISA, the rest is discarded. 
+This way, we always pass on a valid set of arguments.
+In addition, any entries in ``**kwargs**`` take precedence, so if they need to, it is *still* possible for users to override any defaults you set in the instrument definition.
+
+For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, pymeasure has your back!
+
+Non-VISA Adapters
+*****************
+
+The approaches described above make use of the :py:class:`~pymeasure.adapters.VISAAdapter` and are recommended for use.
+
+If, however, you are unable to use the :py:class:`~pymeasure.adapters.VISAAdapter` in your instrument, you can create your own :py:class:`~pymeasure.adapters.Adapter` instance internally:
+
+.. code-block:: python
+
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        kwargs.setdefault('timeout', 0.5)
+        kwargs.setdefault('xonxoff', True)
+        adapter = SerialAdapter(resourceName, 
+                                baudrate=baud_rate,  # different arg name!
+                                **kwargs)
+        super().__init__(
+            adapter,
+            "Extreme 5000",
+        )
+
+Follow the user interface patterns presented above as closely as feasible (the code example shows how) so there is the least surprise for users used to other instruments.
+Please document well what kind of arguments may be passed into your instrument.
+
 Writing properties
 ==================
 
