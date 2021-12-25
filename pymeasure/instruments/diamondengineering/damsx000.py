@@ -284,12 +284,10 @@ class DAMSx000(Instrument):
             "DAMS x000",
             timeout=2000,
             write_termination='\r',
+            baud_rate=57600,
             includeSCPI=False,
             **kwargs
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 57600
 
         self.debug = debug
 
