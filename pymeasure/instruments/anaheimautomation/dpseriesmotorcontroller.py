@@ -25,7 +25,6 @@
 import logging
 from time import sleep
 from enum import IntFlag
-from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
 
@@ -196,19 +195,17 @@ class DPSeriesMotorController(Instrument):
         """
         self._address = address
         self._encoder_enabled = encoder_enabled
+        kwargs.setdefault('write_termination', '\r')
+        kwargs.setdefault('read_termination', '\r')
+        kwargs.setdefault('timeout', 2000)
 
         super().__init__(
             resourceName,
             "Anaheim Automation Stepper Motor Controller",
             includeSCPI=False,
-            write_termination="\r",
-            read_termination="\r",
-            timeout=2000,
+            asrl={'baud_rate': 38400},
             **kwargs
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 38400
 
     @property
     def encoder_enabled(self):

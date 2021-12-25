@@ -47,11 +47,11 @@ class CNT91(Instrument):
     MAX_BUFFER_SIZE = 32000  # User Manual 8-38
 
     def __init__(self, resourceName, **kwargs):
+        kwargs.setdefault('timeout', 120000)
+        kwargs.setdefault('read_termination', '\n')
         super().__init__(
             resourceName,
             "Pendulum CNT-91",
-            timeout=120000,
-            read_termination="\n",
             **kwargs,
         )
 

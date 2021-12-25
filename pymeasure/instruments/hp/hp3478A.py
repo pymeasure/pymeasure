@@ -150,12 +150,12 @@ class HP3478A(Instrument):
     """
 
     def __init__(self, resourceName, **kwargs):
+        kwargs.setdefault('read_termination', '\r\n')
+        kwargs.setdefault('send_end', True)
         super(HP3478A, self).__init__(
             resourceName,
             "Hewlett-Packard HP3478A",
             includeSCPI=False,
-            send_end=True,
-            read_termination="\r\n",
             **kwargs
         )
 
