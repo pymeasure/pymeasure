@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter
 from time import sleep, time
 
 import logging
@@ -59,9 +58,9 @@ class AMI430(Instrument):
     """
 
     def __init__(self, resourceName, **kwargs):
-        adapter = VISAAdapter(resourceName, read_termination='\n')
+        kwargs.setdefault('read_termination', '\n')
         super(AMI430, self).__init__(
-            adapter,
+            resourceName,
             "AMI superconducting magnet power supply.",
             includeSCPI=True,
             **kwargs
