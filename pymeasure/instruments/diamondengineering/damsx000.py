@@ -173,6 +173,11 @@ class YAxis(Axis):
     
     Elevation axis is achieve using a threaded rod that rotates using a stepper motor.
     The elevation can  be moved from -45 degrees to + 45 degrees.
+    The number of steps is calculated using formula according to following picture.
+
+.. image:: elevation-diagram.png
+    :alt: Elevation diagram
+
     """
 
     def inches2m(a):
@@ -300,10 +305,21 @@ class DAMSx000(Instrument):
 
     @property
     def zero_set(self):
+        """ This property return True, if the reference position has been set.
+
+        See also :meth:`set_zero_position`
+
+        """
         return self.x.zero_set and self.y.zero_set
 
     @property
     def azimuth(self):
+        """ This property allows to set and read the absolute azimuth position in degrees.
+
+        An exception `ZeroPositionNotSet` is raised if the reference position has not been set
+
+        See also :meth:`set_zero_position`
+        """
         return self.x.angle
 
     @azimuth.setter
@@ -312,6 +328,12 @@ class DAMSx000(Instrument):
 
     @property
     def elevation(self):
+        """ This property allows to set and read the absolute elevation position in degrees.
+
+        An exception `ZeroPositionNotSet` is raised if the reference position has not been set.
+
+        See also :meth:`set_zero_position`
+        """
         return self.y.angle
 
     @elevation.setter
@@ -319,17 +341,25 @@ class DAMSx000(Instrument):
         self.y.angle = degrees
 
     def azimuth_rel(self, degree):
-        """ Move the positioner of degrees relative to current position.
+        """ Move the positioner azimuth angle relative to current position.
         
-        This method may be useful to center the azimuth to zero
+        This method may be useful to center the azimuth to zero.
+
+        See also :meth:`set_zero_position`
+
+        :param degree: angle in degrees
         """
 
         self.x.angle_rel(degree)
 
     def elevation_rel(self, degree):
-        """ Move the positioner of degrees relative to current position.
+        """ Move the positioner elevation angle relative to current position.
         
-        This method may be useful to center the elevation to zero
+        This method may be useful to center the elevation to zero.
+
+        See also :meth:`set_zero_position`
+
+        :param degree: angle in degrees
         """
         self.y.angle_rel(degree)
 
@@ -338,7 +368,8 @@ class DAMSx000(Instrument):
         self.y.set_zero()
 
     def write(self, command):
+        """ Wrapper method for :meth:`Instrument.write <pymeasure.instruments.Instrument.write>` method to allow logging debug information """
         if self.debug:
-            print ("=>", command)
+            log.debug ("=>{}".format(command))
         return super().write(command)
 
