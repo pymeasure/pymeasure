@@ -152,17 +152,32 @@ class Axis(object):
         print(splitbuffer[1])
         self.xcount = (splitbuffer[1])
 
+    def steps2degrees(self, steps):
+        """ Translate steps to angle expressed in degrees
+
+        :param steps: motor steps
+        :return: angle movement from current position in degrees
+        """
+        raise NotImplemented("Subclasses should implement this method")
+
+    def degrees2steps(self, degrees):
+        """ Translate angle movement from current position to motor steps
+
+        :param degrees: Relative angle from current position in degrees
+
+        :return: the actual angle expressed in degrees of movement after rounding with motor steps
+        """
+        raise NotImplemented("Subclasses should implement this method")
+
 class XAxis(Axis):
     """ Implementation of a DAMS x000 stepper motor X axis (azimuth)."""
 
     steps_per_full_revolution = 2880 # 360 degree revolution
     def degrees2steps(self, degrees):
-        """ Translate degrees to steps """
         # TODO: Check that 2880 is OK both for full step and half step
         return (self.steps_per_full_revolution * degrees) / 360
 
     def steps2degrees(self, steps):
-        """ Translate steps to degrees """
         return (360 * steps) / self.steps_per_full_revolution
 
     def __init__(self, instrument):
@@ -173,10 +188,31 @@ class YAxis(Axis):
     
     Elevation axis is achieve using a threaded rod that rotates using a stepper motor.
     The elevation can  be moved from -45 degrees to + 45 degrees.
-    The number of steps is calculated using formula according to following picture.
+    The number of steps are calculated using formula derived from the following picture.
 
 .. image:: elevation-diagram.png
     :alt: Elevation diagram
+
+
+Picture details are as follow:
+
+    - Positioner is observed from side
+    - (0, 0) are the coordinates of the elevation rotation axis
+    - (|x0|, |y0|) are the coordinates of the motor axis
+    - |d0| is the distance of (|x0|, |y0|) to coordinates (-R, h), that is the rod length when plate is in horizontal position
+    - (|x1|, |y1|) are the coordinated of the rod joint with bottom plate for an arbitrary angle :math:`{\\alpha}` 
+    - |d1| is the distance of (|x0|, |y0|) to coordinates (|x1|, |y1|), that is the rod length when plate is in forming an angle :math:`{\\alpha}` with horizontal plane
+    - :math:`{\\alpha}` is an arbitrary angle with horizontal plane
+    - R is the distance of the rod joint with bottom plate to the center of the positioner
+    - h is the distance of rotation axis from the center of the positioner
+    - the two circles represent the circle of arbitrary radius |d1| and center (|x0|, |y0|) and the circle of radius :math:`\sqrt {R^2 + h^2}` and center (0, 0)
+
+.. |d0| replace:: d\ :sub:`0`
+.. |d1| replace:: d\ :sub:`1`
+.. |x0| replace:: x\ :sub:`0`
+.. |x1| replace:: x\ :sub:`1`
+.. |y0| replace:: y\ :sub:`0`
+.. |y1| replace:: y\ :sub:`1`
 
     """
 
@@ -228,8 +264,6 @@ class YAxis(Axis):
         return (x3, y3, x4, y4)
 
     def degrees2steps(self, degrees):
-        """ Steps required to move of degrees from current position """
-
         # Assume angle is zero, if not set. This is useful to allow
         # relative movements to center elevation axis
         angle = self.current_angle if self.zero_set else 0
@@ -257,7 +291,6 @@ class YAxis(Axis):
         return round((d1-ds) * self.steps_per_meter)
 
     def steps2degrees(self, steps):
-        """ Translate steps to absolute degrees """
 
         # Assume angle is zero, if not set. This is useful to allow
         # relative movements to center elevation axis
@@ -364,6 +397,10 @@ class DAMSx000(Instrument):
         self.y.angle_rel(degree)
 
     def set_zero_position(self):
+        """ Set current position to zero degrees both for azimuth and elevation
+
+        See also :meth:`elevation_rel` and :meth:`azimuth_rel`
+        """
         self.x.set_zero()
         self.y.set_zero()
 
