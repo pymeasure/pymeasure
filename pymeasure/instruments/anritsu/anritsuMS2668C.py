@@ -46,11 +46,11 @@ def anritsu_get_trace_mode(mode):
 def anritsu_set_trace_mode(mode):
     # TODO check these settings
     mode_map = {
-    'WRITE': "AWR 1 ; AMD 0",
+    'WRITE': "1 ; AMD 0",
     # 'BLANK': "BLANK", # To be checked
-    'VIEW': "AWR 0 ; AMD 0",
-    'MAXHOLD': "AWR 1 ; AMD 1",
-    'MINHOLD': "AWR 1 ; AMD 3",
+    'VIEW': "0 ; AMD 0",
+    'MAXHOLD': "1 ; AMD 1",
+    'MINHOLD': "1 ; AMD 3",
     }
     return mode_map[mode]
     
@@ -98,7 +98,7 @@ class AnritsuMS2668C(SpectrumAnalyzer):
     sweep_time_set_command = "ST %eS ;"
     sweep_time_get_command = "ST? ;" # TODO check if the returned value is uS
 
-    detector_values = ("NRM" : "NORM", "POS" : "POS", "SMP": "SAMP", "NEG" : "NEG")
+    detector_values = ("NORM" : "NRM", "POS" : "POS", "SAMP": "SMP", "NEG" : "NEG")
     detector_map_values = True
     detector_set_command = "DET %s ;"
     detector_get_command = "DET? ;"
