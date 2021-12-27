@@ -51,6 +51,7 @@ Let's extend our SimpleProcedure with a RandomProcedure, which generates random 
                 }
                 self.emit('results', data)
                 log.debug("Emitting results: %s" % data)
+                self.emit('progress', 100 * i / self.iterations)
                 sleep(self.delay)
                 if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -138,6 +139,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
                 }
                 self.emit('results', data)
                 log.debug("Emitting results: %s" % data)
+                self.emit('progress', 100 * i / self.iterations)
                 sleep(self.delay)
                 if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
