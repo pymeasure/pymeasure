@@ -33,7 +33,8 @@ from pymeasure.adapters.visa import VISAAdapter
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-reserved_prefix = "___" # Prefix used to store reserved variables
+reserved_prefix = "___"  # Prefix used to store reserved variables
+
 
 class DynamicProperty(property):
     """ Class that allows to manage python property behaviour in a "dynamic" fashion
@@ -52,6 +53,7 @@ class DynamicProperty(property):
     :param fdel: class property fdel parameter
     :param doc: class property doc parameter
     """
+
     def __init__(self, fget_list, fset_list, fget=None, fset=None, fdel=None, doc=None):
         super().__init__(fget, fset, fdel, doc)
         self.fget_list = fget_list
@@ -61,15 +63,15 @@ class DynamicProperty(property):
     def __get__(self, obj, objtype=None):
         if obj is None:
             # Property return itself when invoked from a class
-            return self 
+            return self
         if self.fget is None:
             raise AttributeError("unreadable attribute")
 
         kwargs = {}
         for attr in self.fget_list:
-            attr1 = reserved_prefix + "_".join([self.name,attr])
+            attr1 = reserved_prefix + "_".join([self.name, attr])
             if hasattr(obj, attr1):
-                kwargs[attr]=getattr(obj, attr1)
+                kwargs[attr] = getattr(obj, attr1)
         return self.fget(obj, **kwargs)
 
     def __set__(self, obj, value):
@@ -77,13 +79,14 @@ class DynamicProperty(property):
             raise AttributeError("can't set attribute")
         kwargs = {}
         for attr in self.fset_list:
-            attr1 = reserved_prefix + "_".join([self.name,attr])
+            attr1 = reserved_prefix + "_".join([self.name, attr])
             if hasattr(obj, attr1):
-                kwargs[attr]=getattr(obj, attr1)
+                kwargs[attr] = getattr(obj, attr1)
         self.fset(obj, value, **kwargs)
 
     def __set_name__(self, owner, name):
         self.name = name
+
 
 class Instrument(object):
     """ The base class for all Instrument definitions.
@@ -112,9 +115,9 @@ class Instrument(object):
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
-    :param \\**kwargs: In case ``adapter`` is a string or
-        integer, additional arguments passed on to
-        :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details). Discarded otherwise.
+    :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
+        to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
+        Discarded otherwise.
     """
 
     # Variable holding the list of DynamicProperty parameters that are configurable
@@ -151,9 +154,9 @@ class Instrument(object):
     def _compute_special_names(self):
         """ Return list of class/instance special names
 
-        Compute the list of special names based on the list of 
+        Compute the list of special names based on the list of
         class variable names defined as DynamicProperty. Check also for class variables
-        with special name and copy them at instance level 
+        with special name and copy them at instance level
         Internal method, not intended to be accessed at user level."""
         special_names = []
         # Check if class variable of DynamicProperty type are present
@@ -166,7 +169,7 @@ class Instrument(object):
             for attr in obj.__dict__:
                 if attr in special_names:
                     # Copy class special variable at instance level, prefixing reserved_prefix
-                    setattr(self,reserved_prefix + attr, obj.__dict__[attr])
+                    setattr(self, reserved_prefix + attr, obj.__dict__[attr])
         return special_names
 
     def __setattr__(self, name, value):
@@ -183,7 +186,8 @@ class Instrument(object):
             return super().__getattribute__(name)
         if '_special_names' in self.__dict__:
             if name in self._special_names:
-                raise AttributeError("{} is a reserved variable name and it cannot be read".format(name))
+                raise AttributeError(
+                    "{} is a reserved variable name and it cannot be read".format(name))
         return super().__getattribute__(name)
 
     @property
@@ -271,40 +275,43 @@ class Instrument(object):
         instrument. See also :meth:`measurement` and :meth:`setting`.
 
         :param get_command: A string command that asks for the value, set to `None`
-                            if get is not supported (see also :meth:`setting`).
+            if get is not supported (see also :meth:`setting`).
         :param set_command: A string command that writes the value, set to `None`
-                            if set is not supported (see also :meth:`measurement`).
+            if set is not supported (see also :meth:`measurement`).
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
-                          and returns a valid value, while it otherwise raises an exception
+            and returns a valid value, while it otherwise raises an exception
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
-                       as to map values if :code:`map_values` is True.
+            as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
-                          interpreted as a map
+            interpreted as a map
         :param get_process: A function that take a value and allows processing
-                            before value mapping, returning the processed value
+            before value mapping, returning the processed value
         :param set_process: A function that takes a value and allows processing
-                            before value mapping, returning the processed value
+            before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
-                            before executing the command, for getting
+            before executing the command, for getting
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting
-        :param dynamic: Specify whether the property parameters are meant to be changed in instances or subclasses.
+        :param dynamic: Specify whether the property parameters are meant to be changed in
+            instances or subclasses.
 
         Example of usage of dynamic parameter is as follow:
 
         .. code-block:: python
-        
+
             class GenericInstrument(Instrument):
                 center_frequency = Instrument.control(
                     ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e Hz;",
                     " A floating point property that represents the frequency ... ",
                     validator=strict_range,
-                    values=(1, 26.5e9), # Redefine this in subclasses to reflect actual instrument value
-                    dynamic=True # declare property dynamic
+                    # Redefine this in subclasses to reflect actual instrument value:
+                    values=(1, 26.5e9),
+                    dynamic=True  # declare property dynamic
                 )
 
-            class SpecificInstrument(Instrument): # Identical to GenericInstrument, except for frequency range
+            class SpecificInstrument(Instrument):
+                # Identical to GenericInstrument, except for frequency range
                 center_frequency_values = (1, 13e9) # Redefined at subclass level
 
             instrument = SpecificInstrument()
@@ -312,11 +319,12 @@ class Instrument(object):
 
         .. warning:: Unexepected side effects when using dynamic properties
 
-        Users must pay attention when using dynamic properties, since definition of class and/or instance 
-        attributes matching specific patterns could have unwanted side effect.
-        The attribute name pattern `property_param`, where `property` is the name of the dynamic property (e.g. `center_frequency` in the example)
-        and `param` is any of this method parameters name except `dynamic` (e.g. `values` in the example) has to be considered reserved for
-        dynamic property control.
+        Users must pay attention when using dynamic properties, since definition of class and/or
+        instance attributes matching specific patterns could have unwanted side effect.
+        The attribute name pattern `property_param`, where `property` is the name of the dynamic
+        property (e.g. `center_frequency` in the example) and `param` is any of this method
+        parameters name except `dynamic` (e.g. `values` in the example) has to be considered
+        reserved for dynamic property control.
         """
 
         if get_command is None:
@@ -324,13 +332,13 @@ class Instrument(object):
                 raise LookupError("Instrument property can not be read.")
         else:
             def fget(self,
-                     get_command=get_command, 
+                     get_command=get_command,
                      values=values,
                      map_values=map_values,
-                     get_process = get_process,
+                     get_process=get_process,
                      command_process=command_process,
                      check_get_errors=check_get_errors,
-            ):
+                     ):
                 vals = self.values(command_process(get_command), **kwargs)
                 if check_get_errors:
                     self.check_errors()
@@ -341,7 +349,7 @@ class Instrument(object):
                     elif isinstance(values, (list, tuple, range)):
                         return values[int(value)]
                     elif isinstance(values, dict):
-                        for k,v in values.items():
+                        for k, v in values.items():
                             if v == value:
                                 return k
                         raise KeyError("Value {} not found in mapped values".format(value))
@@ -360,13 +368,13 @@ class Instrument(object):
         else:
             def fset(self,
                      value,
-                     set_command=set_command, 
+                     set_command=set_command,
                      validator=validator,
-                     values=values, 
+                     values=values,
                      map_values=map_values,
                      set_process=set_process,
                      check_set_errors=check_set_errors,
-            ):
+                     ):
 
                 value = set_process(validator(value, values))
                 if not map_values:
@@ -415,16 +423,16 @@ class Instrument(object):
         :param get_command: A string command that asks for the value
         :param docs: A docstring that will be included in the documentation
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
-                       as to map values if :code:`map_values` is True.
+            as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
-                          interpreted as a map
+            interpreted as a map
         :param get_process: A function that take a value and allows processing
-                            before value mapping, returning the processed value
+            before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
-                            before executing the command, for getting
+            before executing the command, for getting
         :param check_get_errors: Toggles checking errors after getting
-        :param dynamic: Specify whether the property parameters are meant to be changed in instances or subclasses. See :meth:`control` for an usage example.
-
+        :param dynamic: Specify whether the property parameters are meant to be changed in
+            instances or subclasses. See :meth:`control` for an usage example.
         """
 
         return Instrument.control(get_command=get_command,
@@ -451,15 +459,16 @@ class Instrument(object):
         :param set_command: A string command that writes the value
         :param docs: A docstring that will be included in the documentation
         :param validator: A function that takes both a value and a group of valid values
-                          and returns a valid value, while it otherwise raises an exception
+            and returns a valid value, while it otherwise raises an exception
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
-                       as to map values if :code:`map_values` is True.
+            as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
-                          interpreted as a map
+            interpreted as a map
         :param set_process: A function that takes a value and allows processing
-                            before value mapping, returning the processed value
+            before value mapping, returning the processed value
         :param check_set_errors: Toggles checking errors after setting
-        :param dynamic: Specify whether the property parameters are meant to be changed in instances or subclasses. See :meth:`control` for an usage example.
+        :param dynamic: Specify whether the property parameters are meant to be changed in
+            instances or subclasses. See :meth:`control` for an usage example.
         """
 
         return Instrument.control(get_command=None,
@@ -472,7 +481,6 @@ class Instrument(object):
                                   check_set_errors=check_set_errors,
                                   dynamic=dynamic,
                                   **kwargs)
-
 
     def clear(self):
         """ Clears the instrument status byte
