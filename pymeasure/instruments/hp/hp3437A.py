@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-import ctypes
+# import ctypes
 import logging
 import math
 import struct
@@ -32,145 +32,146 @@ import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.hp.hphelper import HPsupport
 
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-c_uint8 = ctypes.c_uint8
-c_uint16 = ctypes.c_uint16
-c_uint32 = ctypes.c_uint32
+# c_uint8 = ctypes.c_uint8
+# c_uint16 = ctypes.c_uint16
+# c_uint32 = ctypes.c_uint32
 
 
-# classes for the decoding of the 5-byte status word
-class StatusBytes(ctypes.Structure):
-    """
-    Support-Class for the 7 status bytes of the HP3437A
-    """
+# # classes for the decoding of the 5-byte status word
+# class StatusBytes(ctypes.Structure):
+#     """
+#     Support-Class for the 7 status bytes of the HP3437A
+#     """
 
-    _fields_ = [
-        ("byte1", c_uint8),
-        ("byte2", c_uint8),
-        ("byte3", c_uint8),
-        ("byte4", c_uint8),
-        ("byte5", c_uint8),
-        ("byte6", c_uint8),
-        ("byte7", c_uint8),
-    ]
-
-
-class StatusBits(ctypes.BigEndianStructure):
-    """
-    Support-Class with the bit assignments for the 5 status byte of the HP3437A
-    """
-
-    _pack_ = 1
-    _fields_ = [
-        # Byte 1: Function, Range and Number of Digits
-        ("Format", c_uint8, 1),  # Bit 7
-        ("SRQ", c_uint8, 3),  # bit 4..6
-        ("trigger", c_uint8, 2),  # bit 2..3
-        ("range", c_uint8, 2),  # bit 0..1
-        # Byte 2 & 3:
-        ("Number", c_uint16, 16),
-        # Byte 2:
-        # ("NRDGS_MSD", c_uint8, 4),
-        # ("NRDGS_2SD", c_uint8, 4),
-        # Byte 3:
-        # ("NRDGS_3SD", c_uint8, 4),
-        # ("NRDGS_LSD", c_uint8, 4),
-        ("not_used", c_uint8(), 4),
-        ("Delay", c_uint32, 28),
-        # Byte 4:
-        # ("Not_Used", c_uint8, 4),
-        # ("Delay_MSD", c_uint8, 4),
-        # # Byte 5:
-        # ("Delay_2SD", c_uint8, 4),
-        # ("Delay_3SD", c_uint8, 4),
-        # # Byte 6:
-        # ("Delay_4SD", c_uint8, 4),
-        # ("Delay_5SD", c_uint8, 4),
-        # # Byte 7:
-        # ("Delay_6SD", c_uint8, 4),
-        # ("Delay_LSD", c_uint8, 4),
-    ]
-
-    def __str__(self):
-        """
-        Returns a pretty formatted string showing the status of the instrument
-
-        """
-        return f"format: {self.Format}, SRQ Mask:  {self.SRQ}, Trigger: {self.trigger}, Range: {self.range} \n"
+#     _fields_ = [
+#         ("byte1", c_uint8),
+#         ("byte2", c_uint8),
+#         ("byte3", c_uint8),
+#         ("byte4", c_uint8),
+#         ("byte5", c_uint8),
+#         ("byte6", c_uint8),
+#         ("byte7", c_uint8),
+#     ]
 
 
-class PackedBytes(ctypes.Structure):
-    """
-    Support-Class for the 2 bytes of the HP3437A packed data transfer
-    """
+# class StatusBits(ctypes.BigEndianStructure):
+#     """
+#     Support-Class with the bit assignments for the 5 status byte of the HP3437A
+#     """
 
-    _fields_ = [
-        ("byte1", c_uint8),
-        ("byte2", c_uint8),
-    ]
+#     _pack_ = 1
+#     _fields_ = [
+#         # Byte 1: Function, Range and Number of Digits
+#         ("Format", c_uint8, 1),  # Bit 7
+#         ("SRQ", c_uint8, 3),  # bit 4..6
+#         ("trigger", c_uint8, 2),  # bit 2..3
+#         ("range", c_uint8, 2),  # bit 0..1
+#         # Byte 2 & 3:
+#         ("Number", c_uint16, 16),
+#         # Byte 2:
+#         # ("NRDGS_MSD", c_uint8, 4),
+#         # ("NRDGS_2SD", c_uint8, 4),
+#         # Byte 3:
+#         # ("NRDGS_3SD", c_uint8, 4),
+#         # ("NRDGS_LSD", c_uint8, 4),
+#         ("not_used", c_uint8(), 4),
+#         ("Delay", c_uint32, 28),
+#         # Byte 4:
+#         # ("Not_Used", c_uint8, 4),
+#         # ("Delay_MSD", c_uint8, 4),
+#         # # Byte 5:
+#         # ("Delay_2SD", c_uint8, 4),
+#         # ("Delay_3SD", c_uint8, 4),
+#         # # Byte 6:
+#         # ("Delay_4SD", c_uint8, 4),
+#         # ("Delay_5SD", c_uint8, 4),
+#         # # Byte 7:
+#         # ("Delay_6SD", c_uint8, 4),
+#         # ("Delay_LSD", c_uint8, 4),
+#     ]
 
+#     def __str__(self):
+#         """
+#         Returns a pretty formatted string showing the status of the instrument
 
-class PackedBits(ctypes.BigEndianStructure):
-    """
-    Support-Class for the bits in the HP3437A packed data transfer
-    """
-
-    _pack_ = 1
-    _fields_ = [
-        ("range", c_uint8, 2),  # bit 0..1
-        ("sign_bit", c_uint8, 1),
-        ("MSD", c_uint8, 1),
-        ("SSD", c_uint8, 4),
-        ("TSD", c_uint8, 4),
-        ("LSD", c_uint8, 4),
-    ]
-
-    def __str__(self):
-        return f"range: {self.range}, sign_bit: {self.sign_bit}, MSD: {self.MSD}, 2SD: {self.SSD}, 3SD: {self.TSD}, LSD: {self.LSD} \n"
-
-    def __float__(self):
-        # range decoding
-        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-        # 1 indicates 0.1V range
-        if self.range == 1:
-            cur_range = 0.1
-        # 2 indicates 10V range
-        if self.range == 2:
-            cur_range = 10.0
-        # 3 indicates 1V range
-        if self.range == 3:
-            cur_range = 1.0
-
-        signbit = 1
-        if self.sign_bit == 0:
-            signbit = -1
-
-        return (
-            cur_range
-            * signbit
-            * (
-                self.MSD
-                + float(self.SSD) / 10
-                + float(self.TSD) / 100
-                + float(self.LSD) / 1000
-            )
-        )
+#         """
+#         return f"format: {self.Format}, SRQ Mask:  {self.SRQ}, Trigger: {self.trigger}, Range: {self.range} \n"
 
 
-class PackedData(ctypes.Union):
-    """Union type element for the decoding of the packed data bit-fields"""
+# class PackedBytes(ctypes.Structure):
+#     """
+#     Support-Class for the 2 bytes of the HP3437A packed data transfer
+#     """
 
-    _fields_ = [("B", PackedBytes), ("b", PackedBits)]
+#     _fields_ = [
+#         ("byte1", c_uint8),
+#         ("byte2", c_uint8),
+#     ]
 
 
-class Status(ctypes.Union):
-    """Union type element for the decoding of the status bit-fields"""
+# class PackedBits(ctypes.BigEndianStructure):
+#     """
+#     Support-Class for the bits in the HP3437A packed data transfer
+#     """
 
-    _fields_ = [("B", StatusBytes), ("b", StatusBits)]
+#     _pack_ = 1
+#     _fields_ = [
+#         ("range", c_uint8, 2),  # bit 0..1
+#         ("sign_bit", c_uint8, 1),
+#         ("MSD", c_uint8, 1),
+#         ("SSD", c_uint8, 4),
+#         ("TSD", c_uint8, 4),
+#         ("LSD", c_uint8, 4),
+#     ]
+
+#     def __str__(self):
+#         return f"range: {self.range}, sign_bit: {self.sign_bit}, MSD: {self.MSD}, 2SD: {self.SSD}, 3SD: {self.TSD}, LSD: {self.LSD} \n"
+
+#     def __float__(self):
+#         # range decoding
+#         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
+#         # 1 indicates 0.1V range
+#         if self.range == 1:
+#             cur_range = 0.1
+#         # 2 indicates 10V range
+#         if self.range == 2:
+#             cur_range = 10.0
+#         # 3 indicates 1V range
+#         if self.range == 3:
+#             cur_range = 1.0
+
+#         signbit = 1
+#         if self.sign_bit == 0:
+#             signbit = -1
+
+#         return (
+#             cur_range
+#             * signbit
+#             * (
+#                 self.MSD
+#                 + float(self.SSD) / 10
+#                 + float(self.TSD) / 100
+#                 + float(self.LSD) / 1000
+#             )
+#         )
+
+
+# class PackedData(ctypes.Union):
+#     """Union type element for the decoding of the packed data bit-fields"""
+
+#     _fields_ = [("B", PackedBytes), ("b", PackedBits)]
+
+
+# class Status(ctypes.Union):
+#     """Union type element for the decoding of the status bit-fields"""
+
+#     _fields_ = [("B", StatusBytes), ("b", StatusBits)]
 
 
 class HP3437A(Instrument):
@@ -189,6 +190,14 @@ class HP3437A(Instrument):
             write_termination="\r\n",
             **kwargs,
         )
+        S = HPsupport(3437)
+        self.Status = S.Status
+        self.StatusBits = S.StatusBits
+        self.StatusBytes = S.StatusBytes
+        self.PackedData = S.PackedData
+        self.PackedBits = S.PackedBits
+        self.PackedBytes = S.PackedBytes
+
         log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
@@ -255,8 +264,8 @@ class HP3437A(Instrument):
             place *= 10
         return decimal
 
-    @classmethod
-    def _decode_status(cls, status_bytes, field=None):
+    @staticmethod
+    def _decode_status(self, status_bytes, field=None):
         """Method to decode the status bytes
 
         :param status_bytes: list of bytes to be decoded
@@ -264,27 +273,27 @@ class HP3437A(Instrument):
         :return ret_val: int status value
 
         """
-        ret_val = Status(StatusBytes(*status_bytes))
+        ret_val = self.Status(self.StatusBytes(*status_bytes))
         if field is None:
             return ret_val.b
 
         if field == "SRQ":
-            return cls.SRQ(getattr(ret_val.b, field))
+            return self.SRQ(getattr(ret_val.b, field))
 
         if field == "Number":
             bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
-            return cls._convert_from_bcd(bcd_nr)
+            return self._convert_from_bcd(bcd_nr)
 
         if field == "Delay":
             bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
             delay_value = (
-                cls._convert_from_bcd(bcd_delay) / 1.0e7
+                self._convert_from_bcd(bcd_delay) / 1.0e7
             )  # delay resolution is 100ns
             return delay_value
         return getattr(ret_val.b, field)
 
     @staticmethod
-    def _decode_range(status_bytes):
+    def _decode_range(self, status_bytes):
         """Method to decode current range
 
         :param range_undecoded: int to be decoded
@@ -292,7 +301,7 @@ class HP3437A(Instrument):
         :rtype cur_range: float
 
         """
-        cur_stat = Status(StatusBytes(*status_bytes))
+        cur_stat = self.Status(self.StatusBytes(*status_bytes))
         range_undecoded = cur_stat.b.range
         # range decoding
         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
@@ -310,7 +319,7 @@ class HP3437A(Instrument):
         return cur_range
 
     @staticmethod
-    def _decode_trigger(status_bytes):
+    def _decode_trigger(self, status_bytes):
         """Method to decode trigger mode
 
         :param status_bytes: list of bytes to be decoded
@@ -318,7 +327,7 @@ class HP3437A(Instrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = Status(StatusBytes(*status_bytes))
+        cur_stat = self.Status(self.StatusBytes(*status_bytes))
         trig = cur_stat.b.trigger
         if trig == 0:
             log.error("HP3437A invalid trigger detected!")
@@ -332,7 +341,7 @@ class HP3437A(Instrument):
         return trigger_mode
 
     @staticmethod
-    def _unpack_data(data):
+    def _unpack_data(self, data):
         """
         Method to unpack the data from the returned bytes in packed mode
 
@@ -340,7 +349,7 @@ class HP3437A(Instrument):
         :return ret_data: float value
 
         """
-        ret_data = PackedData(PackedBytes(*data))
+        ret_data = self.PackedData(self.PackedBytes(*data))
         return float(ret_data.b)
 
     # commands overwriting the base implementaiton
@@ -356,7 +365,7 @@ class HP3437A(Instrument):
         current_timeout = self.adapter.connection.timeout
         time_needed = self.number_readings * self.delay
         new_timeout = time_needed * 3 * 1000  # safety factor 3
-
+        # TODO Review required! (2021/12/29)
         if new_timeout > current_timeout:
             if new_timeout >= 1e6:
                 # Disables timeout if measurement would take more then 1000 sec
@@ -372,7 +381,7 @@ class HP3437A(Instrument):
             for i in range(0, read_data_length):
                 _from = i * 2
                 _to = _from + 2
-                processed_data.append(self._unpack_data(read_data[_from:_to]))
+                processed_data.append(self._unpack_data(self, read_data[_from:_to]))
             self.adapter.connection.timeout = current_timeout
             return np.array(processed_data)
         self.adapter.connection.timeout = current_timeout
@@ -400,7 +409,7 @@ class HP3437A(Instrument):
 
 
         """
-        return bool(self._decode_status(self._get_status(), "Format"))
+        return bool(self._decode_status(self, self._get_status(), "Format"))
 
     @talk_ascii.setter
     def talk_ascii(self, value):
@@ -417,7 +426,7 @@ class HP3437A(Instrument):
         valid range: 100ns - 0.999999s
 
         """
-        return self._decode_status(self._get_status(), "Delay")
+        return self._decode_status(self, self._get_status(), "Delay")
 
     @delay.setter
     def delay(self, value):
@@ -433,7 +442,7 @@ class HP3437A(Instrument):
         valid range: 0 - 9999
 
         """
-        return self._decode_status(self._get_status(), "Number")
+        return self._decode_status(self, self._get_status(), "Number")
 
     @number_readings.setter
     def number_readings(self, value):
@@ -453,7 +462,7 @@ class HP3437A(Instrument):
             Overrange will be in indicated as 0.99,9.99 or 99.9
 
         """
-        return self._decode_range(self._get_status())
+        return self._decode_range(self, self._get_status())
 
     @range.setter
     def range(self, value):
@@ -468,7 +477,7 @@ class HP3437A(Instrument):
         Return an object representing the current status of the unit.
 
         """
-        return self._decode_status(self._get_status())
+        return self._decode_status(self, self._get_status())
 
     @property
     def SRQ_mask(self):
@@ -485,7 +494,7 @@ class HP3437A(Instrument):
         =========  ==========================
 
         """
-        return self._decode_status(self._get_status(), "SRQ")
+        return self._decode_status(self, self._get_status(), "SRQ")
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
@@ -507,7 +516,7 @@ class HP3437A(Instrument):
         ===========  ===========================================
 
         """
-        return self._decode_trigger(self._get_status())
+        return self._decode_trigger(self, self._get_status())
 
     @trigger.setter
     def trigger(self, value):
