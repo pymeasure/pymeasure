@@ -30,6 +30,14 @@ c_uint32 = ctypes.c_uint32
 
 
 class HPsupport():
+    """
+    Support module containing the bitfield & bytefield definitions for currentlly
+
+        HP3437A
+        HP3478A
+
+
+    """
 
     def __init__(self, handle):
         self.handle = handle
@@ -48,8 +56,8 @@ class HPsupport():
             self.StatusBits = HP3478A_StatusBits
             self.StatusBytes = HP3478A_StatusBytes
             return None
-        else:
-            raise ValueError("handle not defined yet")
+
+        raise ValueError("handle not defined yet")
 
 
 # definitions for the HP3437A

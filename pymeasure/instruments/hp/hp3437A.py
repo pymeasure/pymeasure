@@ -22,156 +22,17 @@
 # THE SOFTWARE.
 #
 
-# import ctypes
 import logging
 import math
 import struct
 from enum import IntFlag
 import numpy as np
-
-
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pymeasure.instruments.hp.hphelper import HPsupport
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-# c_uint8 = ctypes.c_uint8
-# c_uint16 = ctypes.c_uint16
-# c_uint32 = ctypes.c_uint32
-
-
-# # classes for the decoding of the 5-byte status word
-# class StatusBytes(ctypes.Structure):
-#     """
-#     Support-Class for the 7 status bytes of the HP3437A
-#     """
-
-#     _fields_ = [
-#         ("byte1", c_uint8),
-#         ("byte2", c_uint8),
-#         ("byte3", c_uint8),
-#         ("byte4", c_uint8),
-#         ("byte5", c_uint8),
-#         ("byte6", c_uint8),
-#         ("byte7", c_uint8),
-#     ]
-
-
-# class StatusBits(ctypes.BigEndianStructure):
-#     """
-#     Support-Class with the bit assignments for the 5 status byte of the HP3437A
-#     """
-
-#     _pack_ = 1
-#     _fields_ = [
-#         # Byte 1: Function, Range and Number of Digits
-#         ("Format", c_uint8, 1),  # Bit 7
-#         ("SRQ", c_uint8, 3),  # bit 4..6
-#         ("trigger", c_uint8, 2),  # bit 2..3
-#         ("range", c_uint8, 2),  # bit 0..1
-#         # Byte 2 & 3:
-#         ("Number", c_uint16, 16),
-#         # Byte 2:
-#         # ("NRDGS_MSD", c_uint8, 4),
-#         # ("NRDGS_2SD", c_uint8, 4),
-#         # Byte 3:
-#         # ("NRDGS_3SD", c_uint8, 4),
-#         # ("NRDGS_LSD", c_uint8, 4),
-#         ("not_used", c_uint8(), 4),
-#         ("Delay", c_uint32, 28),
-#         # Byte 4:
-#         # ("Not_Used", c_uint8, 4),
-#         # ("Delay_MSD", c_uint8, 4),
-#         # # Byte 5:
-#         # ("Delay_2SD", c_uint8, 4),
-#         # ("Delay_3SD", c_uint8, 4),
-#         # # Byte 6:
-#         # ("Delay_4SD", c_uint8, 4),
-#         # ("Delay_5SD", c_uint8, 4),
-#         # # Byte 7:
-#         # ("Delay_6SD", c_uint8, 4),
-#         # ("Delay_LSD", c_uint8, 4),
-#     ]
-
-#     def __str__(self):
-#         """
-#         Returns a pretty formatted string showing the status of the instrument
-
-#         """
-#         return f"format: {self.Format}, SRQ Mask:  {self.SRQ}, Trigger: {self.trigger}, Range: {self.range} \n"
-
-
-# class PackedBytes(ctypes.Structure):
-#     """
-#     Support-Class for the 2 bytes of the HP3437A packed data transfer
-#     """
-
-#     _fields_ = [
-#         ("byte1", c_uint8),
-#         ("byte2", c_uint8),
-#     ]
-
-
-# class PackedBits(ctypes.BigEndianStructure):
-#     """
-#     Support-Class for the bits in the HP3437A packed data transfer
-#     """
-
-#     _pack_ = 1
-#     _fields_ = [
-#         ("range", c_uint8, 2),  # bit 0..1
-#         ("sign_bit", c_uint8, 1),
-#         ("MSD", c_uint8, 1),
-#         ("SSD", c_uint8, 4),
-#         ("TSD", c_uint8, 4),
-#         ("LSD", c_uint8, 4),
-#     ]
-
-#     def __str__(self):
-#         return f"range: {self.range}, sign_bit: {self.sign_bit}, MSD: {self.MSD}, 2SD: {self.SSD}, 3SD: {self.TSD}, LSD: {self.LSD} \n"
-
-#     def __float__(self):
-#         # range decoding
-#         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-#         # 1 indicates 0.1V range
-#         if self.range == 1:
-#             cur_range = 0.1
-#         # 2 indicates 10V range
-#         if self.range == 2:
-#             cur_range = 10.0
-#         # 3 indicates 1V range
-#         if self.range == 3:
-#             cur_range = 1.0
-
-#         signbit = 1
-#         if self.sign_bit == 0:
-#             signbit = -1
-
-#         return (
-#             cur_range
-#             * signbit
-#             * (
-#                 self.MSD
-#                 + float(self.SSD) / 10
-#                 + float(self.TSD) / 100
-#                 + float(self.LSD) / 1000
-#             )
-#         )
-
-
-# class PackedData(ctypes.Union):
-#     """Union type element for the decoding of the packed data bit-fields"""
-
-#     _fields_ = [("B", PackedBytes), ("b", PackedBits)]
-
-
-# class Status(ctypes.Union):
-#     """Union type element for the decoding of the status bit-fields"""
-
-#     _fields_ = [("B", StatusBytes), ("b", StatusBits)]
 
 
 class HP3437A(Instrument):
