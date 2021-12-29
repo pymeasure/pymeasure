@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-# import ctypes
 import logging
 import math
 from enum import IntFlag
@@ -32,115 +31,6 @@ from pymeasure.instruments.hp.hphelper import HPsupport
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-# c_uint8 = ctypes.c_uint8
-
-# classes for the decoding of the 5-byte status word
-
-
-# class Status_bytes(ctypes.Structure):
-#     """
-#     Support-Class for the 5 status byte of the HP3478A
-#     """
-#     _fields_ = [
-#         ("byte1", c_uint8),
-#         ("byte2", c_uint8),
-#         ("byte3", c_uint8),
-#         ("byte4", c_uint8),
-#         ("byte5", c_uint8)
-#     ]
-
-
-# class Status_bits(ctypes.LittleEndianStructure):
-#     """
-#     Support-Class with the bit assignments for the 5 status byte of the HP3478A
-#     """
-
-#     _fields_ = [
-#         # Byte 1: Function, Range and Number of Digits
-#         ("digits",     c_uint8, 2),  # bit 0..1
-#         ("range",      c_uint8, 3),  # bit 2..4
-#         ("function",   c_uint8, 3),  # bit 5..7
-
-#         # Byte 2: Status Bits
-#         ("int_trig",   c_uint8, 1),
-#         ("auto_range", c_uint8, 1),
-#         ("auto_zero",  c_uint8, 1),
-#         ("fifty_hz",   c_uint8, 1),
-#         ("front_rear", c_uint8, 1),
-#         ("cal_enable", c_uint8, 1),
-#         ("ext_trig",   c_uint8, 1),
-#         ("res1",       c_uint8, 1),
-
-#         # Byte 3: Serial Poll Mask (SRQ)
-#         ("SRQ_data_rdy",         c_uint8, 1),
-#         ("res2",                 c_uint8, 1),
-#         ("SRQ_syntax_error",     c_uint8, 1),
-#         ("SRQ_internal_error",   c_uint8, 1),
-#         ("SRQ_front_panel",      c_uint8, 1),
-#         ("SRQ_cal_error",        c_uint8, 1),
-#         ("res3",                 c_uint8, 1),
-#         ("SRQ_PON",              c_uint8, 1),
-
-#         # Byte 4: Error Information
-#         ("ERR_cal",        c_uint8, 1),
-#         ("ERR_RAM",        c_uint8, 1),
-#         ("ERR_ROM",        c_uint8, 1),
-#         ("ERR_slope",      c_uint8, 1),
-#         ("ERR_AD",         c_uint8, 1),
-#         ("ERR_AD_Link",    c_uint8, 1),
-#         ("res4",           c_uint8, 1),
-#         ("res5",           c_uint8, 1),
-
-#         # Byte 5: DAC Value
-#         ("DAC_value",       c_uint8, 8),
-#     ]
-
-#     def __str__(self):
-#         """
-#         Returns a pretty formatted (human readable) string showing the status of the instrument
-
-#         """
-#         cur_mode = HP3478A.INV_MODES["F" + str(self.function)]
-#         cur_range = list(HP3478A.RANGES[cur_mode].keys())[self.range - 1]
-#         if cur_range >= 1E6:
-#             r_str = str(cur_range / 1E6) + ' M'
-#         elif cur_range >= 1000:
-#             r_str = str(cur_range / 1000) + ' k'
-#         elif cur_range <= 1:
-#             r_str = str(cur_range * 1000) + ' m'
-#         else:
-#             r_str = str(cur_range) + ' '
-#         return (
-#             "function: {}, range: {}, digits: {}\
-#                 \nStatus:\n  internal | external trigger: {} | {}\
-#                 \n  Auto ranging: {}\n  AutoZero: {}\
-#                 \n  50Hz mode: {}\n  Front/Rear selection: {} \
-#                 \n  Calibration enable: {}\
-#                 \nSerial poll mask (SRQ):\n  SRQ for Data ready: {}\
-#                 \n  SRQ for Syntax error: {}\n  SRQ for Internal error: {}\
-#                 \n  SRQ Front Panel button: {}\
-#                 \n  SRQ for Cal err: {}\n  SQR for Power on: {}\
-#                 \nError information: \n  Calibration: {} \n  RAM: {}\n  ROM: {}\
-#                 \n  AD Slope: {}\n  AD: {}\n  AD-Link: {} \
-#                 \nDAC value: {}".format(
-#                 cur_mode, r_str, 6 - self.digits, self.int_trig, self.ext_trig,
-#                 self.auto_range, self.auto_zero, self.fifty_hz,
-#                 self.front_rear, self.cal_enable, self.SRQ_data_rdy,
-#                 self.SRQ_syntax_error, self.SRQ_internal_error,
-#                 self.SRQ_front_panel, self.SRQ_cal_error, self.SRQ_PON,
-#                 self.ERR_cal, self.ERR_RAM, self.ERR_ROM, self.ERR_slope,
-#                 self.ERR_AD, self.ERR_AD_Link, self.DAC_value)
-#         )
-
-
-# class Status(ctypes.Union):
-#     """Union type element for the decoding of the status bit-fields
-#     """
-#     _fields_ = [
-#         ("B", Status_bytes),
-#         ("b", Status_bits)
-#     ]
 
 
 class HP3478A(Instrument):
