@@ -51,13 +51,12 @@ class HP3437A(Instrument):
             write_termination="\r\n",
             **kwargs,
         )
-        S = HPsupport(3437)
-        self.status = S.status
-        self.status_bits = S.status_bits
-        self.status_bytes = S.status_bytes
-        self.packed_data = S.packed_data
-        self.packed_bits = S.packed_bits
-        self.packed_bytes = S.packed_bytes
+        self._Status = HPsupport(3437).status
+        self._status_bits = HPsupport(3437).status_bits
+        self._status_bytes = HPsupport(3437).status_bytes
+        self._packed_data = HPsupport(3437).packed_data
+        self._packed_bits = HPsupport(3437).packed_bits
+        self._packed_bytes = HPsupport(3437).packed_bytes
 
         log.info("Initialized HP3437A")
 
@@ -134,7 +133,7 @@ class HP3437A(Instrument):
         :return ret_val: int status value
 
         """
-        ret_val = self.status(self.status_bytes(*status_bytes))
+        ret_val = self.Status(self.status_bytes(*status_bytes))
         if field is None:
             return ret_val.b
 
@@ -162,7 +161,7 @@ class HP3437A(Instrument):
         :rtype cur_range: float
 
         """
-        cur_stat = self.status(self.status_bytes(*status_bytes))
+        cur_stat = self.Status(self.status_bytes(*status_bytes))
         range_undecoded = cur_stat.b.range
         # range decoding
         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
@@ -188,7 +187,7 @@ class HP3437A(Instrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = self.status(self.status_bytes(*status_bytes))
+        cur_stat = self.Status(self.status_bytes(*status_bytes))
         trig = cur_stat.b.trigger
         if trig == 0:
             log.error("HP3437A invalid trigger detected!")
