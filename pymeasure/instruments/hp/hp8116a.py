@@ -23,8 +23,7 @@
 #
 
 import logging
-import math
-from enum import IntFlag
+import time
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -83,49 +82,33 @@ class HP8116A(Instrument):
         'pulse': 'W4',
     }
 
-    @property
-    def operating_mode(self):
-        """ The operating mode of the instrument.
-        """
-        raise NotImplementedError
-    
-    @operating_mode.setter
-    def operating_mode(self, mode):
-        mode_set = self.OPERATING_MODES[strict_discrete_set(mode, self.OPERATING_MODES)]
-        self.write(mode_set)
+    _units_freqency = {
+        'milli': 'MZ',
+        'no_prefix': 'HZ',
+        'kilo': 'KHZ',
+        'mega': 'MHZ',
+    }
 
-    @property
-    def control_mode(self):
-        """ The control mode of the instrument.
-        """
-        raise NotImplementedError
-    
-    @control_mode.setter
-    def control_mode(self, mode):
-        mode_set = self.CONTROL_MODES[strict_discrete_set(mode, self.CONTROL_MODES)]
-        self.write(mode_set)
-    
-    @property
-    def trigger_slope(self):
-        """ The trigger slope of the instrument.
-        """
-        raise NotImplementedError
-    
-    @trigger_slope.setter
-    def trigger_slope(self, slope):
-        slope_set = self.TRIGGER_SLOPE[strict_discrete_set(slope, self.TRIGGER_SLOPE)]
-        self.write(slope_set)
-    
-    @property
-    def shape(self):
-        """ The shape of the waveform.
-        """
-        raise NotImplementedError
-    
-    @shape.setter
-    def shape(self, shape):
-        shape_set = self.SHAPES[strict_discrete_set(shape, self.SHAPES)]
-        self.write(shape_set)
+    _units_voltage = {
+        'milli': 'MV',
+        'no_prefix': 'V',
+    }
+
+    _units_time = {
+        'nano': 'NS',
+        'micro': 'US',
+        'milli': 'MS',
+        'no_prefix': 'S',
+    }
+
+    _si_prefixes = {
+        'nano': 1e-9,
+        'micro': 1e-6,
+        'milli': 1e-3,
+        'no_prefix': 1,
+        'kilo': 1e3,
+        'mega': 1e6,
+    }
     
     @property
     def haversine(self):
@@ -142,35 +125,151 @@ class HP8116A(Instrument):
         haversine_cmd = "Z" + str(int(strict_discrete_set(haversine_set, [0, 1])))
         self.write(haversine_cmd)
 
-    @property
-    def frequency(self):
-        """ A floating point property that controls the frequency of the
+    ## Instrument communication ##
+
+    def write(self, command):
+        """ Write a command to the instrument.
+        If the command is a query (interrogate or CST for instrument state),
+        we wait for the 8116A to respond before returning.
+        """
+        self.adapter.write(command)
+
+        if command.strip().lower()[0] in ('i', 'c'):
+            time.sleep(0.001)
+    
+    def read(self):
+        """Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
+        Therefore reads with automatic end-of-transmission detection will timeout.
+        Instead, adapter.read_bytes() has to be used.
+        """
+        raise NotImplementedError('Use adapter.read_bytes() instead')
+    
+    def ask(self, command, num_bytes):
+        """ Writes a command to the instrument, reads the response, and
+        returns the response.
+
+        :param command: The command to send to the instrument.
+        :param num_bytes: The number of bytes to read from the instrument.
+        """
+
+        self.write(command)
+        return self.adapter.read_bytes(num_bytes).decode('ascii')
+    
+    def values(self, command, num_bytes, separator=',', cast=float, preprocess_reply=None, **kwargs):
+        results = str(self.ask(command, num_bytes)).strip(' ,\r\n')
+        if callable(preprocess_reply):
+            results = preprocess_reply(results)
+        elif callable(self.adapter.preprocess_reply):
+            results = self.adapter.preprocess_reply(results)
+        results = results.split(separator)
+        for i, result in enumerate(results):
+            try:
+                if cast == bool:
+                    # Need to cast to float first since results are usually
+                    # strings and bool of a non-empty string is always True
+                    results[i] = bool(float(result))
+                else:
+                    results[i] = cast(result)
+            except Exception:
+                pass  # Keep as string
+        return results
+
+    ## Numeric parameter parsing ##
+
+    def get_value_with_unit(value, units):
+        if value < 1e-6:
+            value_str = f'{value*1e9:.3g} {units["nano"]}'
+        elif value < 1e-3:
+            value_str = f'{value*1e6:.3g} {units["micro"]}'
+        elif value < 1:
+            value_str = f'{value*1e3:.3g} {units["milli"]}'
+        elif value < 1e3:
+            value_str = f'{value:.3g} {units["no_prefix"]}'
+        elif value < 1e6:
+            value_str = f'{value*1e-3:.3g} {units["kilo"]}'
+        else:
+            value_str = f'{value*1e-6:.3g} {units["mega"]}'
+        
+        return value_str
+    
+    def parse_value_with_unit(value_str, units):
+        value_str = value_str.strip()
+        value = float(value_str[3:7].strip())
+        unit = value_str[8:].strip()
+        units_inverse = {v: k for k, v in units.items()}
+        value *= HP8116A._si_prefixes[units_inverse[unit]]
+
+        return value
+    
+    ## Controls and settings ##
+
+    frequency = Instrument.control(
+        'IFRQ', 'FRQ %s',
+        """ A floating point value that controls the frequency of the
         output in Hz. The allowed frequency range is 1 mHz to 52.5 MHz.
         The resolution is 3 digits.
-        """
-        raise NotImplementedError
+        """,
+        validator=strict_range,
+        values=[1e-3, 52.5001e6],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
+        num_bytes=14,
+    )
+
+    amplitude = Instrument.control(
+        'IAMP', 'AMP %s',
+        """ A floating point value that controls the amplitude of the
+        output in V. The allowed amplitude range is 10 mV to 16 V.
+        """,
+        validator=strict_range,
+        values=[10e-3, 16.001],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
+        num_bytes=14,
+    )
+
+    offset = Instrument.control(
+        'IOFS', 'OFS %s',
+        """ A floating point value that controls the offset of the
+        output in V. The allowed offset range is -7.95 V to 7.95 V
+        """,
+        validator=strict_range,
+        values=[-7.95, 7.95001],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
+        num_bytes=14,
+    )
+
+    pulse_width = Instrument.control(
+        'IWID', 'WID %s',
+        """ A floating point value that controls the pulse width.
+        The allowed pulse width range is 8 ns to 999 ms.
+        The pulse width may not be larger than the period.
+        """,
+        validator=strict_range,
+        values=[8e-9, 999.001e-3],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time),
+        num_bytes=14,
+    )
     
-    @frequency.setter
-    def frequency(self, frequency):
-        frequency = float(strict_range(frequency, [1e-3, 52.5e6]))
+    ## Functions using low-level access via instrument.adapter.connection methods ##
 
-        # Send frequency in mHz, Hz, kHz or MHz as appropriate
-        if frequency < 1:
-            freq_cmd = f'FRQ {frequency*1e3:.3g} MZ'  # mHz
-        elif frequency < 1e3:
-            freq_cmd = f'FRQ {frequency:.3g} HZ'
-        elif frequency < 1e6:
-            freq_cmd = f'FRQ {frequency*1e-3:.3g} KHZ'
-        else:
-            freq_cmd = f'FRQ {frequency*1e-6:.3g} MHZ'
-        
-        self.write(freq_cmd)
-
-    @property
-    def amplitude(self):
-        """ A floating point property that controls the amplitude of the
-        output in V. The allowed amplitude range is -10 V to 10 V.
+    def GPIB_trigger(self):
+        """ Initate trigger via low-level GPIB-command (aka GET - group execute trigger)
         """
-        raise NotImplementedError
+        self.adapter.connection.assert_trigger()
+
+    def reset(self):
+        """ Initatiates a reset (like a power-on reset) of the HP3478A
+        """
+        self.adapter.connection.clear()
+
+    def shutdown(self):
+        """ Provides a way to gracefully close the connection to the HP3478A
+        """
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super().shutdown()
 
 
