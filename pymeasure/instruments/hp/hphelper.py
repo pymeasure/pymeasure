@@ -31,11 +31,15 @@ c_uint32 = ctypes.c_uint32
 
 class HPsupport():
     """
-    Support module containing the bitfield & bytefield definitions for currentlly
+    Support module containing the bitfield & bytefield definitions for the following instruments:
 
         HP3437A
+
         HP3478A
 
+    For example of usage see the implmentations of the instruments mentioned above.
+
+    :param handle: int part of the instrument ID (e.g. HP3478A -->`3478`)
 
     """
 
@@ -161,6 +165,9 @@ def bytefield_factory(n_bytes, type_of_entry=c_uint8):
         listing.append(("byte" + str(i), type_of_entry))
 
     class ByteStruct(ctypes.Structure):
+        """
+        Struct type element for the data in the bitfield expressed as bytes
+        """
         _fields_ = listing
 
         def __str__(self):
@@ -170,7 +177,7 @@ def bytefield_factory(n_bytes, type_of_entry=c_uint8):
             """
             ret_str = ""
             for field in self._fields_:
-                ret_str = ret_str + f"{field[0]}: {getattr(self, field[0])} {hex(getattr(self, field[0]))}\n"
+                ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
             return ret_str
 
     return ByteStruct
@@ -191,6 +198,9 @@ def bitfield_factory(field_list, bigendianess=0, packing=0):
         used_struct = ctypes.BigEndianStructure
 
     class BitStruct(used_struct):
+        """
+        Struct type element for the data in the bitfield
+        """
         if packing == 1:
             _pack_ = 1
         _fields_ = field_list
@@ -202,7 +212,7 @@ def bitfield_factory(field_list, bigendianess=0, packing=0):
             """
             ret_str = ""
             for field in self._fields_:
-                ret_str = ret_str + f"{field[0]}: {getattr(self, field[0])} {hex(getattr(self, field[0]))}\n"
+                ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
 
             return ret_str
 
