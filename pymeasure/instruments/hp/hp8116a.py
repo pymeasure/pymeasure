@@ -32,8 +32,8 @@ log.addHandler(logging.NullHandler())
 
 class HP8116A(Instrument):
     """ Represents the Hewlett-Packard 8116A 50 MHz Pulse/Function Generator
-    and provides a high-level interface for interacting
-    with the instrument.
+    and provides a high-level interface for interacting with the instrument.
+    The resolution for all floating point instrument parameters is 3 digits.
     """
 
     def __init__(self, resourceName, **kwargs):
@@ -130,7 +130,7 @@ class HP8116A(Instrument):
     def write(self, command):
         """ Write a command to the instrument.
         If the command is a query (interrogate or CST for instrument state),
-        we wait for the 8116A to respond before returning.
+        wait for the 8116A to respond before returning.
         """
         self.adapter.write(command)
 
@@ -138,20 +138,18 @@ class HP8116A(Instrument):
             time.sleep(0.001)
     
     def read(self):
-        """Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
+        """ Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
         Therefore reads with automatic end-of-transmission detection will timeout.
-        Instead, adapter.read_bytes() has to be used.
+        Instead, :code:`adapter.read_bytes()` has to be used.
         """
-        raise NotImplementedError('Use adapter.read_bytes() instead')
+        raise NotImplementedError('Not supported, use adapter.read_bytes() instead')
     
     def ask(self, command, num_bytes):
-        """ Writes a command to the instrument, reads the response, and
-        returns the response.
+        """ Write a command to the instrument, read the response, and return the response.
 
         :param command: The command to send to the instrument.
         :param num_bytes: The number of bytes to read from the instrument.
         """
-
         self.write(command)
         return self.adapter.read_bytes(num_bytes).decode('ascii')
     
@@ -176,7 +174,14 @@ class HP8116A(Instrument):
 
     ## Numeric parameter parsing ##
 
+    @staticmethod
     def get_value_with_unit(value, units):
+        """ Convert a floating point value to a string with the appropriate unit.
+
+        :param value: The value to convert.
+        :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
+            the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
+        """
         if value < 1e-6:
             value_str = f'{value*1e9:.3g} {units["nano"]}'
         elif value < 1e-3:
@@ -192,7 +197,14 @@ class HP8116A(Instrument):
         
         return value_str
     
+    @staticmethod
     def parse_value_with_unit(value_str, units):
+        """ Convert a string with a value and a unit as returned by the HP8116A to a float.
+        
+        :param value_str: The string to parse.
+        :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
+            the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
+        """
         value_str = value_str.strip()
         value = float(value_str[3:7].strip())
         unit = value_str[8:].strip()
@@ -207,7 +219,6 @@ class HP8116A(Instrument):
         'IFRQ', 'FRQ %s',
         """ A floating point value that controls the frequency of the
         output in Hz. The allowed frequency range is 1 mHz to 52.5 MHz.
-        The resolution is 3 digits.
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
@@ -219,7 +230,8 @@ class HP8116A(Instrument):
     amplitude = Instrument.control(
         'IAMP', 'AMP %s',
         """ A floating point value that controls the amplitude of the
-        output in V. The allowed amplitude range is 10 mV to 16 V.
+        output in V. The allowed amplitude range generally is 10 mV to 16 V,
+        but it is also limited by the current offset.
         """,
         validator=strict_range,
         values=[10e-3, 16.001],
@@ -231,7 +243,8 @@ class HP8116A(Instrument):
     offset = Instrument.control(
         'IOFS', 'OFS %s',
         """ A floating point value that controls the offset of the
-        output in V. The allowed offset range is -7.95 V to 7.95 V
+        output in V. The allowed offset range generally is -7.95 V to 7.95 V,
+        but it is also limited by the amplitude.
         """,
         validator=strict_range,
         values=[-7.95, 7.95001],
@@ -256,18 +269,15 @@ class HP8116A(Instrument):
     ## Functions using low-level access via instrument.adapter.connection methods ##
 
     def GPIB_trigger(self):
-        """ Initate trigger via low-level GPIB-command (aka GET - group execute trigger)
-        """
+        """ Initate trigger via low-level GPIB-command (aka GET - group execute trigger). """
         self.adapter.connection.assert_trigger()
 
     def reset(self):
-        """ Initatiates a reset (like a power-on reset) of the HP3478A
-        """
+        """ Initatiate a reset (like a power-on reset) of the 8116A. """
         self.adapter.connection.clear()
 
     def shutdown(self):
-        """ Provides a way to gracefully close the connection to the HP3478A
-        """
+        """ Gracefully close the connection to the 8116A. """
         self.adapter.connection.clear()
         self.adapter.connection.close()
         super().shutdown()
