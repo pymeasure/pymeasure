@@ -24,8 +24,9 @@
 
 import logging
 import time
+import numpy as np
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -221,7 +222,7 @@ class HP8116A(Instrument):
 
         return value
     
-    ## Controls and settings ##
+    ## Instrument controls ##
 
     @staticmethod
     def boolean_control(identifier, state_index, docs, inverted=False):
@@ -233,6 +234,18 @@ class HP8116A(Instrument):
             set_process=lambda x: int(inverted ^ x),
             num_bytes=91,
         )
+
+    @staticmethod
+    def generate_1_2_5_sequence(min, max):
+        exp_min = int(np.log10(min))
+        exp_max = int(np.log10(max))
+
+        seq_1_2_5 = np.array([1, 2, 5])
+        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min, exp_max + 1)])
+        sequence = sequence.flatten()
+        sequence = sequence[(sequence >= min) & (sequence <= max)]
+
+        return list(sequence)
 
     operating_mode = Instrument.control(
         'CST', '%s',
@@ -326,6 +339,31 @@ class HP8116A(Instrument):
         num_bytes=14,
     )
 
+    duty_cycle = Instrument.control(
+        'IDTY', 'DTY %s %%',
+        """ An integer value that controls the duty cycle of the output in percent.
+        The allowed range is 10% to 90%. It is valid for all shapes except 'pulse',
+        where :py:attr:`pulse_width` is used.
+        """,
+        validator=strict_range,
+        values=[10, 90.0001],
+        get_process=lambda x: int(x[6:8]),
+        num_bytes=14,
+    )
+
+    pulse_width = Instrument.control(
+        'IWID', 'WID %s',
+        """ A floating point value that controls the pulse width.
+        The allowed pulse width range is 8 ns to 999 ms.
+        The pulse width may not be larger than the period.
+        """,
+        validator=strict_range,
+        values=[8e-9, 999.001e-3],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time),
+        num_bytes=14,
+    )
+
     amplitude = Instrument.control(
         'IAMP', 'AMP %s',
         """ A floating point value that controls the amplitude of the
@@ -352,19 +390,105 @@ class HP8116A(Instrument):
         num_bytes=14,
     )
 
-    pulse_width = Instrument.control(
-        'IWID', 'WID %s',
-        """ A floating point value that controls the pulse width.
-        The allowed pulse width range is 8 ns to 999 ms.
-        The pulse width may not be larger than the period.
+    high_level = Instrument.control(
+        'IHIL', 'HIL %s',
+        """ A floating point value that controls the high level of the
+        output in V. The allowed high level range generally is -7.9 V to 8 V,
+        but it must be at least 10 mV greater than the low level.
         """,
         validator=strict_range,
-        values=[8e-9, 999.001e-3],
+        values=[-7.9, 8.001],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
+        num_bytes=14,
+    )
+
+    low_level = Instrument.control(
+        'ILOL', 'LOL %s',
+        """ A floating point value that controls the low level of the
+        output in V. The allowed low level range generally is -8 V to 7.9 V,
+        but it must be at least 10 mV less than the high level.
+        """,
+        validator=strict_range,
+        values=[-8, 7.9001],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
+        num_bytes=14,
+    )
+
+    burst_number = Instrument.control(
+        'IBUR', 'BUR %s #',
+        """ An integer value that controls the number of periods generated in a burst.
+        The allowed range is 1 to 1999. It is only valid for units with Option 001 
+        in one of the burst modes.
+        """,
+        validator=strict_range,
+        values=[1, 1999],
+        get_process=lambda x: int(x[4:8]),
+        num_bytes=14,
+    )
+
+    repetition_rate = Instrument.control(
+        'IRPT', 'RPT %s',
+        """ A floating point value that controls the repetition rate (= the time between bursts)
+        in internal_burst mode. The allowed range is 20 ns to 999 ms.
+        """,
+        validator=strict_range,
+        values=[20e-9, 999.001e-3],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
         get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time),
         num_bytes=14,
     )
-    
+
+    sweep_start = Instrument.control(
+        'ISTA', 'STA %s',
+        """ A floating point value that controls the start frequency in both sweep modes.
+        The allowed range is 1 mHz to 52.5 MHz.
+        """,
+        validator=strict_range,
+        values=[1e-3, 52.5001e6],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
+        num_bytes=14,
+    )
+
+    sweep_stop = Instrument.control(
+        'ISTP', 'STP %s',
+        """ A floating point value that controls the stop frequency in both sweep modes.
+        The allowed range is 1 mHz to 52.5 MHz.
+        """,
+        validator=strict_range,
+        values=[1e-3, 52.5001e6],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
+        num_bytes=14,
+    )
+
+    sweep_marker_frequency = Instrument.control(
+        'IMRK', 'MRK %s',
+        """ A floating point value that controls the frequency marker in both sweep modes.
+        At this frequency, the marker output switches from low to high.
+        The allowed range is 1 mHz to 52.5 MHz.
+        """,
+        validator=strict_range,
+        values=[1e-3, 52.5001e6],
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
+        num_bytes=14,
+    )   
+
+    sweep_time = Instrument.control(
+        'ISWT', 'SWT %s',
+        """ A floating point value that controls the sweep time per decade in both sweep modes.
+        The sweep time is selectable in a 1-2-5 sequence between 10 ms and 500 s.
+        """,
+        validator=truncated_discrete_set,
+        values=generate_1_2_5_sequence(10e-3, 500),
+        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time),
+        num_bytes=14,
+    )
+
     ## Functions using low-level access via instrument.adapter.connection methods ##
 
     def GPIB_trigger(self):
@@ -380,5 +504,3 @@ class HP8116A(Instrument):
         self.adapter.connection.clear()
         self.adapter.connection.close()
         super().shutdown()
-
-
