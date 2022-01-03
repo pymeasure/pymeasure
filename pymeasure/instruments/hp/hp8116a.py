@@ -51,14 +51,16 @@ class HP8116A(Instrument):
         'normal': 'M1',
         'triggered': 'M2',
         'gate': 'M3',
-        'E.WID': 'M4',
+        'external_width': 'M4',
         
         # Option 001 only
-        'I.SWP': 'M5',
-        'E.SWP': 'M6',
-        'I.BUR': 'M7',
-        'E.BUR': 'M8',
+        'internal_sweep': 'M5',
+        'external_sweep': 'M6',
+        'internal_burst': 'M7',
+        'external_burst': 'M8',
     }
+
+    OPERATING_MODES_INV = {v: k for k, v in OPERATING_MODES.items()}
 
     CONTROL_MODES = {
         'off': 'CT0',
@@ -68,11 +70,15 @@ class HP8116A(Instrument):
         'VCO': 'CT4',
     }
 
-    TRIGGER_SLOPE = {
+    CONTROL_MODES_INV = {v: k for k, v in CONTROL_MODES.items()}
+
+    TRIGGER_SLOPES = {
         'off': 'T0',
-        'pos': 'T1',
-        'neg': 'T2',
+        'positive': 'T1',
+        'negative': 'T2',
     }
+
+    TRIGGER_SLOPES_INV = {v: k for k, v in TRIGGER_SLOPES.items()}
 
     SHAPES = {
         'dc': 'W0',
@@ -81,6 +87,8 @@ class HP8116A(Instrument):
         'square': 'W3',
         'pulse': 'W4',
     }
+
+    SHAPES_INV = {v: k for k, v in SHAPES.items()}
 
     _units_freqency = {
         'milli': 'MZ',
@@ -214,6 +222,56 @@ class HP8116A(Instrument):
         return value
     
     ## Controls and settings ##
+
+    operating_mode = Instrument.control(
+        'CST', '%s',
+        """ A string property that controls the operating mode of the instrument.
+        Possible values (without Option 001) are: 'normal', 'triggered', 'gate', 'external_width'.
+        With Option 001, 'internal_sweep', 'external_sweep', 'external_width', 'external_pulse'
+        are also available.
+        """,
+        validator=strict_discrete_set,
+        values=OPERATING_MODES,
+        map_values=True,
+        get_process=lambda x: HP8116A.OPERATING_MODES_INV[x[0]],
+        num_bytes=91,
+    )
+
+    control_mode = Instrument.control(
+        'CST', '%s',
+        """ A string property that controls the control mode of the instrument.
+        Possible values are 'off', 'FM', 'AM', 'PWM', 'VCO'.
+        """,
+        validator=strict_discrete_set,
+        values=CONTROL_MODES,
+        map_values=True,
+        get_process=lambda x: HP8116A.CONTROL_MODES_INV[x[1]],
+        num_bytes=91,
+    )
+
+    trigger_slope = Instrument.control(
+        'CST', '%s',
+        """ A string property that controls the slope the trigger triggers on.
+        Possible values are: 'off', 'positive', 'negative'.
+        """,
+        validator=strict_discrete_set,
+        values=TRIGGER_SLOPES,
+        map_values=True,
+        get_process=lambda x: HP8116A.TRIGGER_SLOPES_INV[x[2]],
+        num_bytes=91,
+    )
+
+    shape = Instrument.control(
+        'CST', '%s',
+        """ A string property that controls the shape of the output waveform.
+        Possible values are: 'dc', 'sine', 'triangle', 'square', 'pulse'.
+        """,
+        validator=strict_discrete_set,
+        values=SHAPES,
+        map_values=True,
+        get_process=lambda x: HP8116A.SHAPES_INV[x[3]],
+        num_bytes=91,
+    )    
 
     frequency = Instrument.control(
         'IFRQ', 'FRQ %s',
