@@ -49,9 +49,9 @@ class HP3478A(Instrument):
             **kwargs
         )
         S = HPsupport(3478)
-        self.Status = S.status
-        self.Status_Bits = S.status_bits
-        self.Status_Bytes = S.status_bytes
+        self.status = S.status
+        self.status_bits = S.status_bits
+        self.status_bytes = S.status_bytes
 
     # Definitions for different specifics of this instrument
     MODES = {"DCV": "F1",
@@ -126,7 +126,7 @@ class HP3478A(Instrument):
         :return ret_val: int status value
 
         """
-        ret_val = self.Status(self.Status_Bytes(*status_bytes))
+        ret_val = self.status(self.status_bytes(*status_bytes))
         if field is None:
             return ret_val.b
         elif field == "SRQ":
@@ -175,7 +175,7 @@ class HP3478A(Instrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = self.Status(self.Status_Bytes(*status_bytes))
+        cur_stat = self.status(self.status_sytes(*status_bytes))
         i_trig = cur_stat.b.int_trig
         e_trig = cur_stat.b.ext_trig
         if i_trig == 0:
