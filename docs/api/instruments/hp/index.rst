@@ -14,4 +14,4 @@ This section contains specific documentation on the Hewlett Packard instruments 
    hp3437A
    hp3478A
    hp8116A
-
+   hphelper

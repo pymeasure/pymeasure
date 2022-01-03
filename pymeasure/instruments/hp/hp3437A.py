@@ -211,7 +211,6 @@ class HP3437A(Instrument):
 
         """
         ret_data = self.packed_data(self.packed_bytes(*data))
-        print(ret_data.b)
         return float(ret_data.b)
 
     # commands overwriting the base implementaiton
@@ -232,7 +231,7 @@ class HP3437A(Instrument):
         if new_timeout > current_timeout:
             if new_timeout >= 1e6:
                 # Disables timeout if measurement would take more then 1000 sec
-                new_timeout = 300000
+                new_timeout = 1000000
                 log.info("HP3437A: timeout deactivated")
             self.adapter.connection.timeout = new_timeout
             log.info("HP3437A: timeout changed to %g", new_timeout)
