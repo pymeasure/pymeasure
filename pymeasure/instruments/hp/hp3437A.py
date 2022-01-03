@@ -51,12 +51,13 @@ class HP3437A(Instrument):
             write_termination="\r\n",
             **kwargs,
         )
-        self._Status = HPsupport(3437).status
-        self._status_bits = HPsupport(3437).status_bits
-        self._status_bytes = HPsupport(3437).status_bytes
-        self._packed_data = HPsupport(3437).packed_data
-        self._packed_bits = HPsupport(3437).packed_bits
-        self._packed_bytes = HPsupport(3437).packed_bytes
+        S = HPsupport(3437)
+        self.Status = S.status
+        self.status_bits = S.status_bits
+        self.status_bytes = S.status_bytes
+        self.packed_data = S.packed_data
+        self.packed_bits = S.packed_bits
+        self.packed_bytes = S.packed_bytes
 
         log.info("Initialized HP3437A")
 
@@ -81,7 +82,7 @@ class HP3437A(Instrument):
         IGNORE_TRIGGER = 2
         INVALID_PROGRAM = 1
 
-    def _get_status(self):
+    def _fetch_status(self):
         """Method to read the status bytes from the instrument
 
         :return current_status: a byte array representing the instrument status
@@ -210,6 +211,7 @@ class HP3437A(Instrument):
 
         """
         ret_data = self.packed_data(self.packed_bytes(*data))
+        print(ret_data.b)
         return float(ret_data.b)
 
     # commands overwriting the base implementaiton
@@ -222,6 +224,7 @@ class HP3437A(Instrument):
         :return data: np.array containing the data
         """
         # Adjusting the timeout to match the number of counts and the delay
+
         current_timeout = self.adapter.connection.timeout
         time_needed = self.number_readings * self.delay
         new_timeout = time_needed * 3 * 1000  # safety factor 3
@@ -229,13 +232,13 @@ class HP3437A(Instrument):
         if new_timeout > current_timeout:
             if new_timeout >= 1e6:
                 # Disables timeout if measurement would take more then 1000 sec
-                new_timeout = 0
+                new_timeout = 300000
                 log.info("HP3437A: timeout deactivated")
             self.adapter.connection.timeout = new_timeout
             log.info("HP3437A: timeout changed to %g", new_timeout)
         read_data = self.adapter.connection.read_raw()
         # check if data is in packed format format
-        if read_data[0] == read_data[2]:
+        if self.talk_ascii is not True:
             processed_data = []
             read_data_length = int(len(read_data) / 2)
             for i in range(0, read_data_length):
@@ -269,7 +272,7 @@ class HP3437A(Instrument):
 
 
         """
-        return bool(self._decode_status(self, self._get_status(), "Format"))
+        return bool(self._decode_status(self, self._fetch_status(), "Format"))
 
     @talk_ascii.setter
     def talk_ascii(self, value):
@@ -286,7 +289,7 @@ class HP3437A(Instrument):
         valid range: 100ns - 0.999999s
 
         """
-        return self._decode_status(self, self._get_status(), "Delay")
+        return self._decode_status(self, self._fetch_status(), "Delay")
 
     @delay.setter
     def delay(self, value):
@@ -302,7 +305,7 @@ class HP3437A(Instrument):
         valid range: 0 - 9999
 
         """
-        return self._decode_status(self, self._get_status(), "Number")
+        return self._decode_status(self, self._fetch_status(), "Number")
 
     @number_readings.setter
     def number_readings(self, value):
@@ -322,7 +325,7 @@ class HP3437A(Instrument):
             Overrange will be in indicated as 0.99,9.99 or 99.9
 
         """
-        return self._decode_range(self, self._get_status())
+        return self._decode_range(self, self._fetch_status())
 
     @range.setter
     def range(self, value):
@@ -337,7 +340,7 @@ class HP3437A(Instrument):
         Return an object representing the current status of the unit.
 
         """
-        return self._decode_status(self, self._get_status())
+        return self._decode_status(self, self._fetch_status())
 
     @property
     def SRQ_mask(self):
@@ -354,7 +357,7 @@ class HP3437A(Instrument):
         =========  ==========================
 
         """
-        return self._decode_status(self, self._get_status(), "SRQ")
+        return self._decode_status(self, self._fetch_status(), "SRQ")
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
@@ -376,7 +379,7 @@ class HP3437A(Instrument):
         ===========  ===========================================
 
         """
-        return self._decode_trigger(self, self._get_status())
+        return self._decode_trigger(self, self._fetch_status())
 
     @trigger.setter
     def trigger(self, value):
