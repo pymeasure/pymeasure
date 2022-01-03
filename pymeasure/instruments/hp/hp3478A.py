@@ -49,9 +49,9 @@ class HP3478A(Instrument):
             **kwargs
         )
         S = HPsupport(3478)
-        self.Status = S.Status
-        self.Status_Bits = S.StatusBits
-        self.Status_Bytes = S.StatusBytes
+        self.Status = S.status
+        self.Status_Bits = S.status_bits
+        self.Status_Bytes = S.status_bytes
 
     # Definitions for different specifics of this instrument
     MODES = {"DCV": "F1",
