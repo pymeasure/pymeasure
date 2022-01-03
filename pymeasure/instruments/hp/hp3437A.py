@@ -52,12 +52,12 @@ class HP3437A(Instrument):
             **kwargs,
         )
         S = HPsupport(3437)
-        self.Status = S.Status
-        self.StatusBits = S.StatusBits
-        self.StatusBytes = S.StatusBytes
-        self.PackedData = S.PackedData
-        self.PackedBits = S.PackedBits
-        self.PackedBytes = S.PackedBytes
+        self.Status = S.status
+        self.StatusBits = S.status_bits
+        self.StatusBytes = S.status_bytes
+        self.PackedData = S.packed_pata
+        self.PackedBits = S.packed_bits
+        self.PackedBytes = S.packed_bytes
 
         log.info("Initialized HP3437A")
 
