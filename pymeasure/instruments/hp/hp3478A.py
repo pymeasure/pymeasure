@@ -46,10 +46,10 @@ class HP3478A(Instrument):
             includeSCPI=False,
             send_end=True,
             read_termination="\r\n",
-            **kwargs
+            **kwargs,
         )
         S = HPsupport(3478)
-        self.status = S.status
+        self.Status = S.status
         self.status_bits = S.status_bits
         self.status_bytes = S.status_bytes
 
@@ -107,7 +107,7 @@ class HP3478A(Instrument):
         Syntax_error = 4
         Data_ready = 1
 
-    def get_status(self):
+    def fetch_status(self):
         """Method to read the status bytes from the instrument
         :return current_status: a byte array representing the instrument status
         :rtype current_status: bytes
@@ -126,11 +126,11 @@ class HP3478A(Instrument):
         :return ret_val: int status value
 
         """
-        ret_val = self.status(self.status_bytes(*status_bytes))
+        ret_val = self.Status(self.status_bytes(*status_bytes))
         if field is None:
             return ret_val.b
         elif field == "SRQ":
-            return self.SRQ(getattr(ret_val.B, "byte3"))
+            return self.SRQ(getattr(ret_val.B, "byte2"))
         else:
             return getattr(ret_val.b, field)
 
@@ -175,7 +175,7 @@ class HP3478A(Instrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = self.status(self.status_sytes(*status_bytes))
+        cur_stat = self.Status(self.status_bytes(*status_bytes))
         i_trig = cur_stat.b.int_trig
         e_trig = cur_stat.b.ext_trig
         if i_trig == 0:
@@ -426,7 +426,7 @@ class HP3478A(Instrument):
         Returns an object representing the current status of the unit.
 
         """
-        current_status = self.decode_status(self, self.get_status())
+        current_status = self.decode_status(self, self.fetch_status())
         return current_status
 
     @property
@@ -446,7 +446,7 @@ class HP3478A(Instrument):
         =========  ==========================
 
         """
-        mask = self.decode_status(self, self.get_status(), "SRQ")
+        mask = self.decode_status(self, self.fetch_status(), "SRQ")
         return mask
 
     @SRQ_mask.setter
@@ -471,7 +471,7 @@ class HP3478A(Instrument):
         ========  ===========================================
 
         """
-        trigger = self.decode_trigger(self, self.get_status())
+        trigger = self.decode_trigger(self, self.fetch_status())
         return trigger
 
     @trigger.setter

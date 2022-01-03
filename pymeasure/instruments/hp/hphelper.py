@@ -41,23 +41,22 @@ class HPsupport():
 
     def __init__(self, handle):
         self.handle = handle
-        print(handle)
         if handle == 3437:
             self.status_bits = bitfield_factory(HP3437A_Status_bitfield, bigendianess=1,
                                                 packing=1)
             self.status_bytes = bytefield_factory(HP3437A_STATUS_BYTES)
-            self.status = union_factory(self.status_bits, self.status_bytes)
+            self.status = union_factory(self.status_bytes, self.status_bits)
 
             self.packed_bits = bitfield_factory(HP3437A_Packed_bitfield, bigendianess=1,
                                                 packing=1)
             self.packed_bytes = bytefield_factory(HP3437A_PACKED_BYTES)
-            self.packed_data = union_factory(self.packed_bits, self.packed_bytes)
+            self.packed_data = union_factory(self.packed_bytes, self.packed_bits)
             return None
 
         if handle == 3478:
             self.status_bits = bitfield_factory(HP3478A_Status_bitfield)
             self.status_bytes = bytefield_factory(HP3478A_STATUS_BYTES)
-            self.status = union_factory(self.status_bits, self.status_bytes)
+            self.status = union_factory(self.status_bytes, self.status_bits)
             return None
 
         raise ValueError("handle not defined yet")
@@ -382,7 +381,7 @@ def union_factory(byte_struct, bit_struct):
 #     _fields_ = [("B", HP3437A_StatusBytes), ("b", HP3437A_StatusBits)]
 
 
-# # definitions for the HP3437A
+# # definitions for the HP3478A
 # class HP3478A_StatusBytes(ctypes.Structure):
 #     """
 #     Support-Class for the 5 status byte of the HP3478A
