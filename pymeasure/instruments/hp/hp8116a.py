@@ -223,6 +223,17 @@ class HP8116A(Instrument):
     
     ## Controls and settings ##
 
+    @staticmethod
+    def boolean_control(identifier, state_index, docs, inverted=False):
+        return Instrument.control(
+            'CST', identifier + '%d', docs,
+            validator=strict_discrete_set,
+            values=[True, False],
+            get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
+            set_process=lambda x: int(inverted ^ x),
+            num_bytes=91,
+        )
+
     operating_mode = Instrument.control(
         'CST', '%s',
         """ A string property that controls the operating mode of the instrument.
@@ -271,7 +282,37 @@ class HP8116A(Instrument):
         map_values=True,
         get_process=lambda x: HP8116A.SHAPES_INV[x[3]],
         num_bytes=91,
-    )    
+    )
+    
+    haversine_enabled = boolean_control(
+        'H', 4,
+        """ A boolean property that controls whether a haversine/havertriangle signal
+        is generated under certain conditions.
+        """,
+    )
+
+    autovernier_enabled = boolean_control(
+        'A', 5,
+        """ A boolean property that controls whether the autovernier is enabled. """,
+    )
+
+    limit_enabled = boolean_control(
+        'L', 6,
+        """ A boolean property that controls whether parameter limiting is enabled. """,
+    )
+
+    complement_enabled = boolean_control(
+        'C', 7,
+        """ A boolean property that controls whether the complement
+        of the signal is generated.
+        """,
+    )
+
+    output_enabled = boolean_control(
+        'D', 8,
+        """ A boolean property that controls whether the output is enabled. """,
+        inverted=True,  # The actual command is "Disable output"...
+    )
 
     frequency = Instrument.control(
         'IFRQ', 'FRQ %s',
