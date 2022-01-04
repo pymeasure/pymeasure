@@ -674,19 +674,3 @@ class Keithley2306(Instrument):
             return self.relay4
         else:
             raise ValueError("Invalid relay number. Must be 1, 2, 3, or 4")
-
-    def check_errors(self):
-        """ Read all errors from the instrument.
-
-        :return: list of error entries
-        """
-        errors = []
-        while True:
-            err = self.values("SYST:ERR?")
-            if err[0] != '' and int(err[0]) != 0:
-                log.error("{}: {}, {}".format(self.name, err[0], err[1]))
-                errors.append(err)
-            else:
-                break
-
-        return errors
