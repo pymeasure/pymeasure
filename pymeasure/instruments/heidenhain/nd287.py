@@ -93,7 +93,7 @@ class Nd287(Instrument):
     def units(self):
         """ String property representing the unit of measure set on the device. Valid values are 'mm' and 'inch'
         """
-        return self._units
+        return Nd287._units
     
     @units.setter
     def units(self, unit):
@@ -103,7 +103,6 @@ class Nd287(Instrument):
         """
         val_units = ["mm", "inch"]
         if unit in val_units:
-            self._units = unit
             Nd287._units = unit
 
     def check_errors(self):
