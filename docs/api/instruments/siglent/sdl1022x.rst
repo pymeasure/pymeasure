@@ -1,0 +1,7 @@
+##########################
+SDL1022X Electronic Load
+##########################
+
+.. autoclass:: pymeasure.instruments.siglent.sdl1022x
+    :members:
+    :show-inheritance:
