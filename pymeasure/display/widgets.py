@@ -1526,33 +1526,26 @@ class InstrumentControlWidget(QtGui.QWidget):
         # Measurements
         measurements_dock = QtGui.QWidget()
         measurement_layout = QtGui.QGridLayout(measurements_dock)
-        # dock = QtGui.QDockWidget("Measurements")
         for idx, name in enumerate(self.measurements):
             measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
             measurement_layout.addWidget(getattr(self, name), idx, 1)
 
         measurements_dock.setLayout(measurement_layout)
-        # dock.setWidget(measurements_dock)
-        # dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         layout.addWidget(measurements_dock, 0, 0)
 
         # Controls
         controls_dock = QtGui.QWidget()
         controls_layout = QtGui.QGridLayout(controls_dock)
-        dock = QtGui.QDockWidget("Controls")
         for idx, name in enumerate(self.controls):
             controls_layout.addWidget(QtGui.QLabel(name), idx, 0)
             controls_layout.addWidget(getattr(self, name), idx, 1)
 
         controls_dock.setLayout(controls_layout)
-        dock.setWidget(controls_dock)
-        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         layout.addWidget(controls_dock, 1, 0)
 
         # Settings and options
         settings_dock = QtGui.QWidget()
         settings_layout = QtGui.QGridLayout(settings_dock)
-        dock = QtGui.QDockWidget("Settings")
         for idx, name in enumerate(self.settings):
             settings_layout.addWidget(QtGui.QLabel(name), idx, 0)
             settings_layout.addWidget(getattr(self, name), idx, 1)
@@ -1561,14 +1554,11 @@ class InstrumentControlWidget(QtGui.QWidget):
             settings_layout.addWidget(getattr(self, name), idx, 1)
 
         settings_dock.setLayout(settings_layout)
-        dock.setWidget(settings_dock)
-        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         layout.addWidget(settings_dock, 2, 0)
 
         # Functions
         function_dock = QtGui.QWidget()
         function_layout = QtGui.QVBoxLayout(function_dock)
-        dock = QtGui.QDockWidget("Functions")
         for idx, name in enumerate(self.functions):
             if hasattr(self.instrument, str(name)):
                 function_layout.addWidget(getattr(self, name), idx)
@@ -1576,8 +1566,6 @@ class InstrumentControlWidget(QtGui.QWidget):
                 function_layout.addWidget(getattr(self, name.__name__), idx)
 
         function_dock.setLayout(function_layout)
-        dock.setWidget(function_dock)
-        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         layout.addWidget(function_dock, 3, 0)
 
         # Global Options and controls
