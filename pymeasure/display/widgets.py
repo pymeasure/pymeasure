@@ -1524,28 +1524,29 @@ class InstrumentControlWidget(QtGui.QWidget):
         layout = QtGui.QGridLayout(self)
 
         # Measurements
-        measurements_dock = QtGui.QWidget()
-        measurement_layout = QtGui.QGridLayout(measurements_dock)
+        measurements_widget = QtGui.QWidget()
+        measurement_layout = QtGui.QGridLayout(measurements_widget)
         for idx, name in enumerate(self.measurements):
             measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
             measurement_layout.addWidget(getattr(self, name), idx, 1)
 
-        measurements_dock.setLayout(measurement_layout)
-        layout.addWidget(measurements_dock, 0, 0)
+        measurements_widget.setLayout(measurement_layout)
+
+        layout.addWidget(measurements_widget, 0, 0)
 
         # Controls
-        controls_dock = QtGui.QWidget()
-        controls_layout = QtGui.QGridLayout(controls_dock)
+        controls_widget = QtGui.QWidget()
+        controls_layout = QtGui.QGridLayout(controls_widget)
         for idx, name in enumerate(self.controls):
             controls_layout.addWidget(QtGui.QLabel(name), idx, 0)
             controls_layout.addWidget(getattr(self, name), idx, 1)
 
-        controls_dock.setLayout(controls_layout)
-        layout.addWidget(controls_dock, 1, 0)
+        controls_widget.setLayout(controls_layout)
+        layout.addWidget(controls_widget, 1, 0)
 
         # Settings and options
-        settings_dock = QtGui.QWidget()
-        settings_layout = QtGui.QGridLayout(settings_dock)
+        settings_widget = QtGui.QWidget()
+        settings_layout = QtGui.QGridLayout(settings_widget)
         for idx, name in enumerate(self.settings):
             settings_layout.addWidget(QtGui.QLabel(name), idx, 0)
             settings_layout.addWidget(getattr(self, name), idx, 1)
@@ -1553,32 +1554,32 @@ class InstrumentControlWidget(QtGui.QWidget):
         for idx, name in enumerate(self.options, len(self.settings)):
             settings_layout.addWidget(getattr(self, name), idx, 1)
 
-        settings_dock.setLayout(settings_layout)
-        layout.addWidget(settings_dock, 2, 0)
+        settings_widget.setLayout(settings_layout)
+        layout.addWidget(settings_widget, 2, 0)
 
         # Functions
-        function_dock = QtGui.QWidget()
-        function_layout = QtGui.QVBoxLayout(function_dock)
+        function_widget = QtGui.QWidget()
+        function_layout = QtGui.QVBoxLayout(function_widget)
         for idx, name in enumerate(self.functions):
             if hasattr(self.instrument, str(name)):
                 function_layout.addWidget(getattr(self, name), idx)
             else:
                 function_layout.addWidget(getattr(self, name.__name__), idx)
 
-        function_dock.setLayout(function_layout)
-        layout.addWidget(function_dock, 3, 0)
+        function_widget.setLayout(function_layout)
+        layout.addWidget(function_widget, 3, 0)
 
         # Global Options and controls
-        global_dock = QtGui.QWidget()
-        global_layout = QtGui.QGridLayout(global_dock)
+        global_widget = QtGui.QWidget()
+        global_layout = QtGui.QGridLayout(global_widget)
         global_layout.addWidget(self.read_button, 0, 0)
         global_layout.addWidget(self.write_button, 0, 1)
 
         global_layout.addWidget(self.auto_read_box, 1, 0)
         global_layout.addWidget(self.auto_write_box, 1, 1)
 
-        global_dock.setLayout(global_layout)
-        layout.addWidget(global_dock, 4, 0)
+        global_widget.setLayout(global_layout)
+        layout.addWidget(global_widget, 4, 0)
 
     def _parse_function_name(self, name):
         return name.replace('_', ' ')
