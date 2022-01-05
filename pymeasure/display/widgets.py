@@ -1526,15 +1526,15 @@ class InstrumentControlWidget(QtGui.QWidget):
         # Measurements
         measurements_dock = QtGui.QWidget()
         measurement_layout = QtGui.QGridLayout(measurements_dock)
-        dock = QtGui.QDockWidget("Measurements")
+        # dock = QtGui.QDockWidget("Measurements")
         for idx, name in enumerate(self.measurements):
             measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
             measurement_layout.addWidget(getattr(self, name), idx, 1)
 
         measurements_dock.setLayout(measurement_layout)
-        dock.setWidget(measurements_dock)
-        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        layout.addWidget(dock, 0, 0)
+        # dock.setWidget(measurements_dock)
+        # dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
+        layout.addWidget(measurements_dock, 0, 0)
 
         # Controls
         controls_dock = QtGui.QWidget()
@@ -1547,7 +1547,7 @@ class InstrumentControlWidget(QtGui.QWidget):
         controls_dock.setLayout(controls_layout)
         dock.setWidget(controls_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        layout.addWidget(dock, 0, 1)
+        layout.addWidget(controls_dock, 1, 0)
 
         # Settings and options
         settings_dock = QtGui.QWidget()
@@ -1563,7 +1563,7 @@ class InstrumentControlWidget(QtGui.QWidget):
         settings_dock.setLayout(settings_layout)
         dock.setWidget(settings_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        layout.addWidget(dock, 0, 2)
+        layout.addWidget(settings_dock, 2, 0)
 
         # Functions
         function_dock = QtGui.QWidget()
@@ -1578,7 +1578,7 @@ class InstrumentControlWidget(QtGui.QWidget):
         function_dock.setLayout(function_layout)
         dock.setWidget(function_dock)
         dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        layout.addWidget(dock, 0, 3)
+        layout.addWidget(function_dock, 3, 0)
 
         # Global Options and controls
         global_dock = QtGui.QWidget()
@@ -1590,7 +1590,7 @@ class InstrumentControlWidget(QtGui.QWidget):
         global_layout.addWidget(self.auto_write_box, 1, 1)
 
         global_dock.setLayout(global_layout)
-        layout.addWidget(global_dock, 1, 0)
+        layout.addWidget(global_dock, 4, 0)
 
     def _parse_function_name(self, name):
         return name.replace('_', ' ')
