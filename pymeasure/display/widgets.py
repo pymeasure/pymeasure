@@ -1522,6 +1522,8 @@ class InstrumentControlWidget(QtGui.QWidget):
 
     def _layout(self):
         layout = QtGui.QGridLayout(self)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
 
         # Measurements
         measurements_widget = QtGui.QWidget()
@@ -1530,32 +1532,22 @@ class InstrumentControlWidget(QtGui.QWidget):
             measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
             measurement_layout.addWidget(getattr(self, name), idx, 1)
 
-        measurements_widget.setLayout(measurement_layout)
-
-        layout.addWidget(measurements_widget, 0, 0)
-
         # Controls
-        controls_widget = QtGui.QWidget()
-        controls_layout = QtGui.QGridLayout(controls_widget)
-        for idx, name in enumerate(self.controls):
-            controls_layout.addWidget(QtGui.QLabel(name), idx, 0)
-            controls_layout.addWidget(getattr(self, name), idx, 1)
-
-        controls_widget.setLayout(controls_layout)
-        layout.addWidget(controls_widget, 1, 0)
+        for idx, name in enumerate(self.controls,len(self.measurements)):
+            measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
+            measurement_layout.addWidget(getattr(self, name), idx, 1)
 
         # Settings and options
-        settings_widget = QtGui.QWidget()
-        settings_layout = QtGui.QGridLayout(settings_widget)
-        for idx, name in enumerate(self.settings):
-            settings_layout.addWidget(QtGui.QLabel(name), idx, 0)
-            settings_layout.addWidget(getattr(self, name), idx, 1)
+        for idx, name in enumerate(self.settings, len(self.measurements)+len(self.controls)):
+            measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
+            measurement_layout.addWidget(getattr(self, name), idx, 1)
 
-        for idx, name in enumerate(self.options, len(self.settings)):
-            settings_layout.addWidget(getattr(self, name), idx, 1)
+        idx0 = len(self.measurements)+len(self.controls)+len(self.settings)
+        for idx, name in enumerate(self.options):
+            measurement_layout.addWidget(getattr(self, name), idx0 + idx//2, idx%2)
 
-        settings_widget.setLayout(settings_layout)
-        layout.addWidget(settings_widget, 2, 0)
+        measurements_widget.setLayout(measurement_layout)
+        layout.addWidget(measurements_widget, 2, 0)
 
         # Functions
         function_widget = QtGui.QWidget()
@@ -1579,7 +1571,10 @@ class InstrumentControlWidget(QtGui.QWidget):
         global_layout.addWidget(self.auto_write_box, 1, 1)
 
         global_widget.setLayout(global_layout)
+
         layout.addWidget(global_widget, 4, 0)
+
+        
 
     def _parse_function_name(self, name):
         return name.replace('_', ' ')
