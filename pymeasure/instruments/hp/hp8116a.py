@@ -25,11 +25,30 @@
 import logging
 import time
 import numpy as np
+from enum import IntFlag
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_discrete_set
+from pymeasure.instruments.validators import (
+    strict_discrete_set, strict_range, truncated_discrete_set
+)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class Status(IntFlag):
+    """ IntFlag type for the GPIB status byte which is returned by the :py:attr:`status` property.
+    When the timing_error or programming_error flag is set, a more detailed error description
+    can be obtained by calling :py:method:`check_errors()`.
+    """
+    timing_error = 1 << 0
+    programming_error = 1 << 1
+    syntax_error = 1 << 2
+    system_failure = 1 << 3
+    autovernier_in_progress = 1 << 4
+    sweep_in_progress = 1 << 5
+    service_request = 1 << 6
+    buffer_not_empty = 1 << 7
+
 
 class HP8116A(Instrument):
     """ Represents the Hewlett-Packard 8116A 50 MHz Pulse/Function Generator
@@ -47,13 +66,13 @@ class HP8116A(Instrument):
             includeSCPI=False,
             **kwargs
         )
-    
+
     OPERATING_MODES = {
         'normal': 'M1',
         'triggered': 'M2',
         'gate': 'M3',
         'external_width': 'M4',
-        
+
         # Option 001 only
         'internal_sweep': 'M5',
         'external_sweep': 'M6',
@@ -118,41 +137,30 @@ class HP8116A(Instrument):
         'kilo': 1e3,
         'mega': 1e6,
     }
-    
-    @property
-    def haversine(self):
-        """ With triggered, gate or E.BUR operating mode selected and shape
-        set to sine or triangle, this setting shifts the start phase of the
-        waveform is -90°. As a result, haversine and havertriangle signals
-        can be generated.
-        """
-        raise NotImplementedError
-    
-    @haversine.setter
-    def haversine(self, haversine):
-        haversine_set = int(haversine)
-        haversine_cmd = "Z" + str(int(strict_discrete_set(haversine_set, [0, 1])))
-        self.write(haversine_cmd)
 
-    ## Instrument communication ##
+    @property
+    def status(self):
+        """ Returns the status byte of the 8116A as an IntFlag-type enum. """
+        return Status(self.adapter.connection.read_stb())
+
+    # Instrument communication #
 
     def write(self, command):
-        """ Write a command to the instrument.
-        If the command is a query (interrogate or CST for instrument state),
-        wait for the 8116A to respond before returning.
-        """
+        """ Write a command to the instrument and wait until the 8116A has interpreted it. """
         self.adapter.write(command)
 
-        if command.strip().lower()[0] in ('i', 'c'):
+        # We need to read the status byte and wait until this bit is cleared
+        # because some older units lock up if we don't.
+        while self.status & Status.buffer_not_empty:
             time.sleep(0.001)
-    
+
     def read(self):
         """ Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
         Therefore reads with automatic end-of-transmission detection will timeout.
         Instead, :code:`adapter.read_bytes()` has to be used.
         """
         raise NotImplementedError('Not supported, use adapter.read_bytes() instead')
-    
+
     def ask(self, command, num_bytes):
         """ Write a command to the instrument, read the response, and return the response.
 
@@ -161,8 +169,9 @@ class HP8116A(Instrument):
         """
         self.write(command)
         return self.adapter.read_bytes(num_bytes).decode('ascii')
-    
-    def values(self, command, num_bytes, separator=',', cast=float, preprocess_reply=None, **kwargs):
+
+    def values(self, command, num_bytes, separator=',', cast=float,
+               preprocess_reply=None, **kwargs):
         results = str(self.ask(command, num_bytes)).strip(' ,\r\n')
         if callable(preprocess_reply):
             results = preprocess_reply(results)
@@ -181,7 +190,7 @@ class HP8116A(Instrument):
                 pass  # Keep as string
         return results
 
-    ## Numeric parameter parsing ##
+    # Numeric parameter parsing #
 
     @staticmethod
     def get_value_with_unit(value, units):
@@ -203,13 +212,13 @@ class HP8116A(Instrument):
             value_str = f'{value*1e-3:.3g} {units["kilo"]}'
         else:
             value_str = f'{value*1e-6:.3g} {units["mega"]}'
-        
+
         return value_str
-    
+
     @staticmethod
     def parse_value_with_unit(value_str, units):
         """ Convert a string with a value and a unit as returned by the HP8116A to a float.
-        
+
         :param value_str: The string to parse.
         :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
             the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
@@ -221,8 +230,8 @@ class HP8116A(Instrument):
         value *= HP8116A._si_prefixes[units_inverse[unit]]
 
         return value
-    
-    ## Instrument controls ##
+
+    # Instrument controls #
 
     @staticmethod
     def boolean_control(identifier, state_index, docs, inverted=False):
@@ -296,11 +305,11 @@ class HP8116A(Instrument):
         get_process=lambda x: HP8116A.SHAPES_INV[x[3]],
         num_bytes=91,
     )
-    
+
     haversine_enabled = boolean_control(
         'H', 4,
         """ A boolean property that controls whether a haversine/havertriangle signal
-        is generated under certain conditions.
+        is generated when in 'triggered', 'internal_burst' or 'external_burst' operating mode.
         """,
     )
 
@@ -419,7 +428,7 @@ class HP8116A(Instrument):
     burst_number = Instrument.control(
         'IBUR', 'BUR %s #',
         """ An integer value that controls the number of periods generated in a burst.
-        The allowed range is 1 to 1999. It is only valid for units with Option 001 
+        The allowed range is 1 to 1999. It is only valid for units with Option 001
         in one of the burst modes.
         """,
         validator=strict_range,
@@ -475,7 +484,7 @@ class HP8116A(Instrument):
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
         get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
         num_bytes=14,
-    )   
+    )
 
     sweep_time = Instrument.control(
         'ISWT', 'SWT %s',
@@ -489,7 +498,7 @@ class HP8116A(Instrument):
         num_bytes=14,
     )
 
-    ## Functions using low-level access via instrument.adapter.connection methods ##
+    # Functions using low-level access via instrument.adapter.connection methods #
 
     def GPIB_trigger(self):
         """ Initate trigger via low-level GPIB-command (aka GET - group execute trigger). """
