@@ -253,10 +253,10 @@ class HP3437A(Instrument):
     def check_errors(self):
         """
         As this instrument does not have a error indication bit,
-        this function alwyas returns 0.
+        this function alwyas returns an empty list.
 
         """
-        return 0
+        return []
 
     @property
     def talk_ascii(self):
