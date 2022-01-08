@@ -485,6 +485,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_source_voltage_protection_enabled(self, instr, channel):
         assert not instr.ch(channel).source_voltage_protection_enabled
+        assert type(instr.ch(channel).source_voltage_protection_enabled) == type(False)
 
     @pytest.mark.parametrize("channel", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
@@ -510,6 +511,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_source_current_limit_enabled(self, instr, channel):
         assert not instr.ch(channel).source_current_limit_enabled
+        assert type(instr.ch(channel).source_current_limit_enabled) == type(False)
 
     @pytest.mark.parametrize("sense_mode", SENSE_MODES)
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)

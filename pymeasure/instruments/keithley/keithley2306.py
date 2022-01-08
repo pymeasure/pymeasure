@@ -302,7 +302,8 @@ class Channel():
 
     source_voltage_protection_enabled = Instrument.measurement(
         ":SOUR<ch>:VOLT:PROT:STAT?",
-        """A boolean property that returns the source voltage protection state. """
+        """A boolean property that returns the source voltage protection state. """,
+        cast=bool
     )
 
     source_voltage_protection_clamp_enabled = Instrument.control(
@@ -333,7 +334,8 @@ class Channel():
 
     source_current_limit_enabled = Instrument.measurement(
         ":SOUR<ch>:CURR:STAT?",
-        """A boolean property that returns the source current limit state. """
+        """A boolean property that returns the source current limit state. """,
+        cast=bool
     )
 
     last_reading = Instrument.measurement(
