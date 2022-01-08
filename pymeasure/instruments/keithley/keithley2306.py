@@ -346,7 +346,7 @@ class Channel():
     last_readings = Instrument.measurement(
         ":FETCH<ch>:ARR?",
         """A floating point array property that returns the last readings. """,
-        get_process=lambda v: v if type(v) == list else [v]
+        get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     reading = Instrument.measurement(
@@ -359,7 +359,7 @@ class Channel():
         ":READ<ch>:ARR?",
         """A floating point array property that triggers and returns readings
         in accordance with sense_mode. """,
-        get_process=lambda v: v if type(v) == list else [v]
+        get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     measured_voltage = Instrument.measurement(
@@ -372,7 +372,7 @@ class Channel():
         ":MEAS<ch>:ARR:VOLT?",
         """A floating point array property that triggers and returns
         voltage readings. """,
-        get_process=lambda v: v if type(v) == list else [v]
+        get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     measured_current = Instrument.measurement(
@@ -385,7 +385,7 @@ class Channel():
         ":MEAS<ch>:ARR:CURR?",
         """A floating point array property that triggers and returns
         current readings. """,
-        get_process=lambda v: v if type(v) == list else [v]
+        get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     dvm_voltage = Instrument.measurement(
@@ -398,7 +398,7 @@ class Channel():
         ":MEAS<ch>:ARR:DVM?",
         """A floating point array property that triggers and returns
         DVM voltage readings. """,
-        get_process=lambda v: v if type(v) == list else [v]
+        get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     pulse_current = Instrument.measurement(
@@ -410,7 +410,7 @@ class Channel():
         ":MEAS<ch>:ARR:PCUR?",
         """A floating point array property that triggers and returns
         pulse current readings. """,
-        get_process=lambda v: v if type(v) == list else [v]
+        get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     long_integration_current = Instrument.measurement(
@@ -423,7 +423,7 @@ class Channel():
         ":MEAS<ch>:ARR:LINT?",
         """A floating point array property that triggers and returns
         long integration current readings. """,
-        get_process=lambda v: v if type(v) == list else [v]
+        get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     def __init__(self, instrument, number):
