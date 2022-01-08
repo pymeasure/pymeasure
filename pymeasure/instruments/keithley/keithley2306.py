@@ -302,7 +302,10 @@ class Channel():
 
     source_voltage_protection_enabled = Instrument.measurement(
         ":SOUR<ch>:VOLT:PROT:STAT?",
-        """A boolean property that returns the source voltage protection state. """,
+        """A boolean property that returns the source voltage protection state.
+        If this property is True, the source has been shut off in accordance
+        with the source voltage protection settings. If this property is False,
+        the source has not been shut off due to voltage protection. """,
         cast=bool
     )
 
@@ -334,7 +337,11 @@ class Channel():
 
     source_current_limit_enabled = Instrument.measurement(
         ":SOUR<ch>:CURR:STAT?",
-        """A boolean property that returns the source current limit state. """,
+        """A boolean property that returns the source current limit state. If
+        this property is True, the source is in either in current limit mode,
+        or has tripped (shut off), based on the `source_current_limit_type`
+        setting. If this property is False, the source is not being limited and
+        has not been tripped. """,
         cast=bool
     )
 
