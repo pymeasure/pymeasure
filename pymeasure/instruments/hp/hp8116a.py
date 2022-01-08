@@ -187,22 +187,31 @@ class HP8116A(Instrument):
         """
         raise NotImplementedError('Not supported, use adapter.read_bytes() instead')
 
-    def ask(self, command, num_bytes):
-        """ Write a command to the instrument, read the response, and return the response.
+    def ask(self, command, num_bytes=None):
+        """ Write a command to the instrument, read the response, and return the response as ASCII text.
 
         :param command: The command to send to the instrument.
-        :param num_bytes: The number of bytes to read from the instrument.
         """
         self.write(command)
+
+        if num_bytes is None:
+            if command == 'CST':
+                # We usually only need the first 29 bytes of the state response since they contain
+                # the current boolean parameters. The other parameters all have corresponding
+                # 'interrogate' commands.
+                num_bytes = 29
+            elif command[0] == 'I':
+                num_bytes = 14
 
         # The first character is always a space or a leftover character from the previous command,
         # when the number of bytes read was too large or too small.
         bytes = self.adapter.read_bytes(num_bytes)[1:]
         return bytes.decode('ascii').strip(' ,\r\n')
 
-    def values(self, command, num_bytes, separator=',', cast=float,
-               preprocess_reply=None, **kwargs):
-        results = str(self.ask(command, num_bytes)).strip(' ,\r\n')
+    def values(self, command, separator=',', cast=float, preprocess_reply=None, **kwargs):
+        # I had to copy the values method from the adapter class since we need to call
+        # our own ask() method instead of the adapter's default one.
+        results = str(self.ask(command)).strip(' ,\r\n')
         if callable(preprocess_reply):
             results = preprocess_reply(results)
         elif callable(self.adapter.preprocess_reply):
@@ -274,8 +283,7 @@ class HP8116A(Instrument):
             validator=strict_discrete_set,
             values=[True, False],
             get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
-            set_process=lambda x: int(inverted ^ x),
-            num_bytes=91,
+            set_process=lambda x: int(inverted ^ x)
         )
 
     @staticmethod
@@ -300,8 +308,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=OPERATING_MODES,
         map_values=True,
-        get_process=lambda x: HP8116A.OPERATING_MODES_INV[x[0]],
-        num_bytes=91,
+        get_process=lambda x: HP8116A.OPERATING_MODES_INV[x[0]]
     )
 
     control_mode = Instrument.control(
@@ -312,8 +319,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=CONTROL_MODES,
         map_values=True,
-        get_process=lambda x: HP8116A.CONTROL_MODES_INV[x[1]],
-        num_bytes=91,
+        get_process=lambda x: HP8116A.CONTROL_MODES_INV[x[1]]
     )
 
     trigger_slope = Instrument.control(
@@ -324,8 +330,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=TRIGGER_SLOPES,
         map_values=True,
-        get_process=lambda x: HP8116A.TRIGGER_SLOPES_INV[x[2]],
-        num_bytes=91,
+        get_process=lambda x: HP8116A.TRIGGER_SLOPES_INV[x[2]]
     )
 
     shape = Instrument.control(
@@ -336,8 +341,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=SHAPES,
         map_values=True,
-        get_process=lambda x: HP8116A.SHAPES_INV[x[3]],
-        num_bytes=91,
+        get_process=lambda x: HP8116A.SHAPES_INV[x[3]]
     )
 
     haversine_enabled = boolean_control(
@@ -378,8 +382,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[1e-3, 52.5001e6],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     duty_cycle = Instrument.control(
@@ -390,8 +393,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[10, 90.0001],
-        get_process=lambda x: int(x[6:8]),
-        num_bytes=14,
+        get_process=lambda x: int(x[6:8])
     )
 
     pulse_width = Instrument.control(
@@ -403,8 +405,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[8e-9, 999.001e-3],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time)
     )
 
     amplitude = Instrument.control(
@@ -416,8 +417,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[10e-3, 16.001],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     offset = Instrument.control(
@@ -429,8 +429,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[-7.95, 7.95001],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     high_level = Instrument.control(
@@ -442,8 +441,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[-7.9, 8.001],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     low_level = Instrument.control(
@@ -455,8 +453,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[-8, 7.9001],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     burst_number = Instrument.control(
@@ -467,8 +464,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1, 1999],
-        get_process=lambda x: int(x[4:8]),
-        num_bytes=14,
+        get_process=lambda x: int(x[4:8])
     )
 
     repetition_rate = Instrument.control(
@@ -479,8 +475,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[20e-9, 999.001e-3],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time)
     )
 
     sweep_start = Instrument.control(
@@ -491,8 +486,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[1e-3, 52.5001e6],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     sweep_stop = Instrument.control(
@@ -503,8 +497,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[1e-3, 52.5001e6],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     sweep_marker_frequency = Instrument.control(
@@ -516,8 +509,7 @@ class HP8116A(Instrument):
         validator=strict_range,
         values=[1e-3, 52.5001e6],
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     sweep_time = Instrument.control(
@@ -528,8 +520,7 @@ class HP8116A(Instrument):
         validator=truncated_discrete_set,
         values=generate_1_2_5_sequence(10e-3, 500),
         set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time),
-        num_bytes=14,
+        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time)
     )
 
     # Functions using low-level access via instrument.adapter.connection methods #
