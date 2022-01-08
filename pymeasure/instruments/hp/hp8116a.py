@@ -66,6 +66,7 @@ class HP8116A(Instrument):
             includeSCPI=False,
             **kwargs
         )
+        self.has_option_001 = self.check_has_option_001()
 
     OPERATING_MODES = {
         'normal': 'M1',
@@ -143,16 +144,41 @@ class HP8116A(Instrument):
         """ Returns the status byte of the 8116A as an IntFlag-type enum. """
         return Status(self.adapter.connection.read_stb())
 
+    def wait_for_commands_processed(self, timeout=1):
+        """ Wait until the commands have been processed by the 8116A. """
+        start = time.time()
+        while self.status & Status.buffer_not_empty:
+            time.sleep(0.001)
+            if time.time() - start > timeout:
+                raise RuntimeError('Timeout waiting for commands to be processed.')
+
+    def check_has_option_001(self):
+        """ Return True if the 8116A has option 001 and False otherwise.
+
+        This is done by checking the length of the response to the CST (current status) command
+        which includes sweep parameters and burst parameters only if the 8116A has option 001.
+        """
+
+        # The longest possible state string is 163 characters long including termination characters
+        state_string = self.ask('CST', 163).split('\r\n')[0].strip(' ,\r\n')
+
+        if len(state_string) == 159:
+            return True
+        elif len(state_string) == 87:
+            return False
+        else:
+            log.warning('Could not determine if 8116A has option 001. Assuming it has.')
+            return True
+
     # Instrument communication #
 
     def write(self, command):
         """ Write a command to the instrument and wait until the 8116A has interpreted it. """
         self.adapter.write(command)
 
-        # We need to read the status byte and wait until this bit is cleared
-        # because some older units lock up if we don't.
-        while self.status & Status.buffer_not_empty:
-            time.sleep(0.001)
+        # We need to read the status byte and wait until the buffer_not_empty bit
+        # is cleared because some older units lock up if we don't.
+        self.wait_for_commands_processed()
 
     def read(self):
         """ Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
@@ -168,7 +194,11 @@ class HP8116A(Instrument):
         :param num_bytes: The number of bytes to read from the instrument.
         """
         self.write(command)
-        return self.adapter.read_bytes(num_bytes).decode('ascii')
+
+        # The first character is always a space or a leftover character from the previous command,
+        # when the number of bytes read was too large or too small.
+        bytes = self.adapter.read_bytes(num_bytes)[1:]
+        return bytes.decode('ascii').strip(' ,\r\n')
 
     def values(self, command, num_bytes, separator=',', cast=float,
                preprocess_reply=None, **kwargs):
@@ -194,7 +224,8 @@ class HP8116A(Instrument):
 
     @staticmethod
     def get_value_with_unit(value, units):
-        """ Convert a floating point value to a string with the appropriate unit.
+        """ Convert a floating point value to a string with 3 digits resolution
+        and the appropriate unit.
 
         :param value: The value to convert.
         :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
@@ -223,8 +254,11 @@ class HP8116A(Instrument):
         :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
             the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
         """
+
+        # Example value_str: 'FRQ 1.00KHZ'
+        # Ditigs and unit are always positioned the same for all parameters
         value_str = value_str.strip()
-        value = float(value_str[3:7].strip())
+        value = float(value_str[3:8].strip())
         unit = value_str[8:].strip()
         units_inverse = {v: k for k, v in units.items()}
         value *= HP8116A._si_prefixes[units_inverse[unit]]
@@ -250,7 +284,7 @@ class HP8116A(Instrument):
         exp_max = int(np.log10(max))
 
         seq_1_2_5 = np.array([1, 2, 5])
-        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min, exp_max + 1)])
+        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
         sequence = sequence.flatten()
         sequence = sequence[(sequence >= min) & (sequence <= max)]
 
@@ -507,6 +541,7 @@ class HP8116A(Instrument):
     def reset(self):
         """ Initatiate a reset (like a power-on reset) of the 8116A. """
         self.adapter.connection.clear()
+        self.wait_for_commands_processed()
 
     def shutdown(self):
         """ Gracefully close the connection to the 8116A. """
