@@ -110,8 +110,8 @@ class Channel():
 
     pulse_current_measure_enabled = Instrument.control(
         ":SENS<ch>:PCUR:SYNC?", ":SENS<ch>:PCUR:SYNC %d",
-        """A boolean property that controls whether pulse current 
-        measurements are enabled (True) or whether the channel is in 
+        """A boolean property that controls whether pulse current
+        measurements are enabled (True) or whether the channel is in
         digitization mode (False). """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -137,7 +137,7 @@ class Channel():
 
     pulse_current_mode = Instrument.control(
         ":SENS<ch>:PCUR:MODE?", ":SENS<ch>:PCUR:MODE %s",
-        """A string property that controls the pulse current measurement 
+        """A string property that controls the pulse current measurement
         mode, which can take the values 'high', 'low', or 'average'. """,
         validator=strict_discrete_set,
         values={'high': 'HIGH', 'low': 'LOW', 'average': 'AVER'},
@@ -150,8 +150,8 @@ class Channel():
 
     pulse_current_time_high = Instrument.control(
         ":SENS<ch>:PCUR:TIME:HIGH?", ":SENS<ch>:PCUR:TIME:HIGH %g",
-        """A floating point property that controls the integration time (in 
-        seconds) for high pulse measurements. Takes on values between 
+        """A floating point property that controls the integration time (in
+        seconds) for high pulse measurements. Takes on values between
         33.33333e-06 and 0.8333. """,
         validator=truncated_range,
         values=[33.33333e-06, 0.8333],
@@ -159,8 +159,8 @@ class Channel():
 
     pulse_current_time_low = Instrument.control(
         ":SENS<ch>:PCUR:TIME:LOW?", ":SENS<ch>:PCUR:TIME:LOW %g",
-        """A floating point property that controls the integration time (in 
-        seconds) for low pulse measurements. Takes on values between 
+        """A floating point property that controls the integration time (in
+        seconds) for low pulse measurements. Takes on values between
         33.33333e-06 and 0.8333. """,
         validator=truncated_range,
         values=[33.33333e-06, 0.8333],
@@ -168,8 +168,8 @@ class Channel():
 
     pulse_current_time_average = Instrument.control(
         ":SENS<ch>:PCUR:TIME:AVER?", ":SENS<ch>:PCUR:TIME:AVER %g",
-        """A floating point property that controls the integration time (in 
-        seconds) for average pulse measurements. Takes on values between 
+        """A floating point property that controls the integration time (in
+        seconds) for average pulse measurements. Takes on values between
         33.33333e-06 and 0.8333. """,
         validator=truncated_range,
         values=[33.33333e-06, 0.8333],
@@ -177,8 +177,8 @@ class Channel():
 
     pulse_current_time_digitize = Instrument.control(
         ":SENS<ch>:PCUR:TIME:DIG?", ":SENS<ch>:PCUR:TIME:DIG %g",
-        """A floating point property that controls the integration time (in 
-        seconds) for digitizing or burst pulse measurements. Takes on values 
+        """A floating point property that controls the integration time (in
+        seconds) for digitizing or burst pulse measurements. Takes on values
         between 33.33333e-06 and 0.8333. """,
         validator=truncated_range,
         values=[33.33333e-06, 0.8333],
@@ -186,7 +186,7 @@ class Channel():
 
     pulse_current_fast_enabled = Instrument.control(
         ":SENS<ch>:PCUR:FAST?", ":SENS<ch>:PCUR:FAST %d",
-        """A boolean property that controls whether pulse current fast readings 
+        """A boolean property that controls whether pulse current fast readings
         are enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -195,7 +195,7 @@ class Channel():
 
     pulse_current_search_enabled = Instrument.control(
         ":SENS<ch>:PCUR:SEAR?", ":SENS<ch>:PCUR:SEAR %d",
-        """A boolean property that controls whether pulse current search 
+        """A boolean property that controls whether pulse current search
         is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -204,7 +204,7 @@ class Channel():
 
     pulse_current_detect_enabled = Instrument.control(
         ":SENS<ch>:PCUR:DET?", ":SENS<ch>:PCUR:DET %d",
-        """A boolean property that controls whether pulse current detection 
+        """A boolean property that controls whether pulse current detection
         mode is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -259,7 +259,7 @@ class Channel():
 
     long_integration_fast_enabled = Instrument.control(
         ":SENS<ch>:LINT:FAST?", ":SENS<ch>:LINT:FAST %d",
-        """A boolean property that controls whether long integration fast 
+        """A boolean property that controls whether long integration fast
         readings are enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -268,7 +268,7 @@ class Channel():
 
     long_integration_search_enabled = Instrument.control(
         ":SENS<ch>:LINT:SEAR?", ":SENS<ch>:LINT:SEAR %d",
-        """A boolean property that controls whether long integration search 
+        """A boolean property that controls whether long integration search
         is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -277,7 +277,7 @@ class Channel():
 
     long_integration_detect_enabled = Instrument.control(
         ":SENS<ch>:LINT:DET?", ":SENS<ch>:LINT:DET %d",
-        """A boolean property that controls whether long integration detection 
+        """A boolean property that controls whether long integration detection
         mode is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -286,7 +286,7 @@ class Channel():
 
     source_voltage = Instrument.control(
         ":SOUR<ch>:VOLT?", ":SOUR<ch>:VOLT %g",
-        """A floating point property that controls the source voltage in volts, 
+        """A floating point property that controls the source voltage in volts,
         which takes values between 0 and 15. """,
         validator=truncated_range,
         values=[0, 15],
@@ -294,7 +294,7 @@ class Channel():
 
     source_voltage_protection = Instrument.control(
         ":SOUR<ch>:VOLT:PROT?", ":SOUR<ch>:VOLT:PROT %g",
-        """A floating point property that controls the source voltage protection 
+        """A floating point property that controls the source voltage protection
         offset in volts, which takes values between 0 and 8. """,
         validator=truncated_range,
         values=[0, 8],
@@ -307,7 +307,7 @@ class Channel():
 
     source_voltage_protection_clamp_enabled = Instrument.control(
         ":SOUR<ch>:VOLT:PROT:CLAM?", ":SOUR<ch>:VOLT:PROT:CLAM %d",
-        """A boolean property that controls whether source voltage protection 
+        """A boolean property that controls whether source voltage protection
         clamp is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -316,7 +316,7 @@ class Channel():
 
     source_current_limit = Instrument.control(
         ":SOUR<ch>:CURR?", ":SOUR<ch>:CURR %g",
-        """A floating point property that controls the source current limit in 
+        """A floating point property that controls the source current limit in
         amps, which takes values between 0.006 and 5. """,
         validator=truncated_range,
         values=[0.006, 5],
@@ -324,7 +324,7 @@ class Channel():
 
     source_current_limit_type = Instrument.control(
         ":SOUR<ch>:CURR:TYPE?", ":SOUR<ch>:CURR:TYPE %s",
-        """A string property that controls source current limit type, which can 
+        """A string property that controls source current limit type, which can
         take the values 'limit' or 'trip'. """,
         validator=strict_discrete_set,
         values={'limit': 'LIM', 'trip': 'TRIP'},
@@ -364,39 +364,39 @@ class Channel():
 
     measured_voltage = Instrument.measurement(
         ":MEAS<ch>:VOLT?",
-        """A floating point property that triggers and returns a voltage 
+        """A floating point property that triggers and returns a voltage
         reading. """
     )
 
     measured_voltages = Instrument.measurement(
         ":MEAS<ch>:ARR:VOLT?",
-        """A floating point array property that triggers and returns 
+        """A floating point array property that triggers and returns
         voltage readings. """,
         get_process=lambda v: v if type(v) == list else [v]
     )
 
     measured_current = Instrument.measurement(
         ":MEAS<ch>:CURR?",
-        """A floating point property that triggers and returns a current 
+        """A floating point property that triggers and returns a current
         reading. """
     )
 
     measured_currents = Instrument.measurement(
         ":MEAS<ch>:ARR:CURR?",
-        """A floating point array property that triggers and returns 
+        """A floating point array property that triggers and returns
         current readings. """,
         get_process=lambda v: v if type(v) == list else [v]
     )
 
     dvm_voltage = Instrument.measurement(
         ":MEAS<ch>:DVM?",
-        """A floating point property that triggers and returns a DVM voltage 
+        """A floating point property that triggers and returns a DVM voltage
         reading. """
     )
 
     dvm_voltages = Instrument.measurement(
         ":MEAS<ch>:ARR:DVM?",
-        """A floating point array property that triggers and returns 
+        """A floating point array property that triggers and returns
         DVM voltage readings. """,
         get_process=lambda v: v if type(v) == list else [v]
     )
@@ -408,20 +408,20 @@ class Channel():
 
     pulse_currents = Instrument.measurement(
         ":MEAS<ch>:ARR:PCUR?",
-        """A floating point array property that triggers and returns 
+        """A floating point array property that triggers and returns
         pulse current readings. """,
         get_process=lambda v: v if type(v) == list else [v]
     )
 
     long_integration_current = Instrument.measurement(
         ":MEAS<ch>:LINT?",
-        """A floating point property that returns a long integration current 
+        """A floating point property that returns a long integration current
         reading. """
     )
 
     long_integration_currents = Instrument.measurement(
         ":MEAS<ch>:ARR:LINT?",
-        """A floating point array property that triggers and returns 
+        """A floating point array property that triggers and returns
         long integration current readings. """,
         get_process=lambda v: v if type(v) == list else [v]
     )
@@ -443,7 +443,7 @@ class BatteryChannel(Channel):
 
     impedance = Instrument.control(
         ":OUTPUT<ch>:IMP?", ":OUTPUT<ch>:IMP %g",
-        """A floating point property that controls the output impedance in ohms. 
+        """A floating point property that controls the output impedance in ohms.
         Takes values from 0 to 1, in 10 milliohm steps.""",
         validator=truncated_range,
         values=[0, 1],
@@ -451,7 +451,7 @@ class BatteryChannel(Channel):
 
     pulse_current_step_enabled = Instrument.control(
         ":SENS<ch>:PCUR:STEP?", ":SENS<ch>:PCUR:STEP %d",
-        """A boolean property that controls whether a series of pulse current 
+        """A boolean property that controls whether a series of pulse current
         step measurements is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -460,7 +460,7 @@ class BatteryChannel(Channel):
 
     pulse_current_step_up_count = Instrument.control(
         ":SENS<ch>:PCUR:STEP:UP?", ":SENS<ch>:PCUR:STEP:UP %d",
-        """An integer property that controls the number of up steps. Takes 
+        """An integer property that controls the number of up steps. Takes
         values from 0 to 20 (max is both up and down combined). """,
         validator=truncated_range,
         values=[0, 20],
@@ -468,7 +468,7 @@ class BatteryChannel(Channel):
 
     pulse_current_step_down_count = Instrument.control(
         ":SENS<ch>:PCUR:STEP:DOWN?", ":SENS<ch>:PCUR:STEP:DOWN %d",
-        """An integer property that controls the number of down steps. Takes 
+        """An integer property that controls the number of down steps. Takes
         values from 0 to 20 (max is both up and down combined). """,
         validator=truncated_range,
         values=[0, 20],
@@ -476,7 +476,7 @@ class BatteryChannel(Channel):
 
     pulse_current_step_time = Instrument.control(
         ":SENS<ch>:PCUR:STEP:TIME?", ":SENS<ch>:PCUR:STEP:TIME %g",
-        """A floating point property that controls the integration time for up 
+        """A floating point property that controls the integration time for up
         plus down steps in seconds. Takes values from 33.33333e-06 to 100e-3. """,
         validator=truncated_range,
         values=[33.33333e-06, 100e-3],
@@ -484,8 +484,8 @@ class BatteryChannel(Channel):
 
     pulse_current_step_timeout = Instrument.control(
         ":SENS<ch>:PCUR:STEP:TOUT?", ":SENS<ch>:PCUR:STEP:TOUT %g",
-        """A floating point property that controls the integration timeout for 
-        pulse current steps in seconds (for all but the first step). Takes values 
+        """A floating point property that controls the integration timeout for
+        pulse current steps in seconds (for all but the first step). Takes values
         from 2e-3 to 200e-3. """,
         validator=truncated_range,
         values=[2e-3, 200e-3],
@@ -493,8 +493,8 @@ class BatteryChannel(Channel):
 
     pulse_current_step_timeout_initial = Instrument.control(
         ":SENS<ch>:PCUR:STEP:TOUT:INIT?", ":SENS<ch>:PCUR:STEP:TOUT:INIT %g",
-        """A floating point property that controls the integration timeout for 
-        the initial pulse current step in seconds. Takes values from 10e-3 
+        """A floating point property that controls the integration timeout for
+        the initial pulse current step in seconds. Takes values from 10e-3
         to 60. """,
         validator=truncated_range,
         values=[10e-3, 60],
@@ -502,7 +502,7 @@ class BatteryChannel(Channel):
 
     pulse_current_step_delay = Instrument.control(
         ":SENS<ch>:PCUR:STEP:DEL?", ":SENS<ch>:PCUR:STEP:DEL %g",
-        """A floating point property that controls the pulse current step delay 
+        """A floating point property that controls the pulse current step delay
         in seconds. Takes values from 0 to 100e-3 in 10e-6 increments. """,
         validator=truncated_range,
         values=[0, 100e-3],
@@ -510,7 +510,7 @@ class BatteryChannel(Channel):
 
     pulse_current_step_range = Instrument.control(
         ":SENS<ch>:PCUR:STEP:RANG?", ":SENS<ch>:PCUR:STEP:RANG %g",
-        """A floating point property that controls the pulse current step trigger 
+        """A floating point property that controls the pulse current step trigger
         level range in amps. Takes values of 100e-3, 1, or 5. """,
         validator=strict_discrete_set,
         values=[100e-3, 1, 5],
@@ -541,8 +541,8 @@ class Step():
 
     trigger_level = Instrument.control(
         ":SENS:PCUR:STEP:TLEV<step>?", ":SENS:PCUR:STEP:TLEV<step> %g",
-        """A floating point property that controls the pulse current step trigger 
-        level range in amps. Takes values from 0 up to the range set via 
+        """A floating point property that controls the pulse current step trigger
+        level range in amps. Takes values from 0 up to the range set via
         pulse_current_step_range.""",
         validator=truncated_range,
         values=[0, 5],
@@ -565,7 +565,7 @@ class Relay():
 
     closed = Instrument.control(
         "?", " %s",
-        """A boolean property that controls whether the relay is closed (True) 
+        """A boolean property that controls whether the relay is closed (True)
         or open (False). """,
         validator=strict_discrete_set,
         values={True: 'ONE', False: 'ZERO'},
@@ -603,7 +603,7 @@ class Keithley2306(Instrument):
 
     display_enabled = Instrument.control(
         ":DISP:ENAB?", ":DISP:ENAB %d",
-        """A boolean property that controls whether the display is enabled, 
+        """A boolean property that controls whether the display is enabled,
         takes values True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -612,11 +612,11 @@ class Keithley2306(Instrument):
 
     display_brightness = Instrument.control(
         ":DISP:BRIG?", ":DISP:BRIG %g",
-        """A floating point property that controls the display brightness, 
-        takes values beteween 0.0 and 1.0. A blank display is 0.0, 
-        1/4 brightness is for values less or equal to 0.25, otherwise 1/2 
-        brightness for values less than or equal to 0.5, otherwise 3/4 
-        brightness for values less than or equal to 0.75, otherwise full 
+        """A floating point property that controls the display brightness,
+        takes values beteween 0.0 and 1.0. A blank display is 0.0,
+        1/4 brightness is for values less or equal to 0.25, otherwise 1/2
+        brightness for values less than or equal to 0.5, otherwise 3/4
+        brightness for values less than or equal to 0.75, otherwise full
         brightness. """,
         validator=truncated_range,
         values=[0, 1],
@@ -624,7 +624,7 @@ class Keithley2306(Instrument):
 
     display_channel = Instrument.control(
         ":DISP:CHAN?", ":DISP:CHAN %d",
-        """An integer property that controls the display channel, takes 
+        """An integer property that controls the display channel, takes
         values 1 or 2. """,
         validator=strict_discrete_set,
         values=[1, 2],
@@ -632,14 +632,14 @@ class Keithley2306(Instrument):
 
     display_text_data = Instrument.control(
         ":DISP:TEXT:DATA?", ":DISP:TEXT:DATA \"%s\"",
-        """A string property that control text to be displayed, takes strings 
+        """A string property that control text to be displayed, takes strings
         up to 32 characters. """,
         get_process=lambda v: v.replace('"', '')
     )
 
     display_text_enabled = Instrument.control(
         ":DISP:TEXT:STAT?", ":DISP:TEXT:STAT %d",
-        """A boolean property that controls whether display text is enabled, 
+        """A boolean property that controls whether display text is enabled,
         takes values True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -648,7 +648,7 @@ class Keithley2306(Instrument):
 
     both_channels_enabled = Instrument.setting(
         ":BOTHOUT%s",
-        """A boolean setting that controls whether both channel outputs are 
+        """A boolean setting that controls whether both channel outputs are
         enabled, takes values of True or False. """,
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
