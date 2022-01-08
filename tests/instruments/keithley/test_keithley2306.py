@@ -80,7 +80,7 @@ class TestKeithley2306:
     LONG_INTEGRATION_TIMEOUTS = [1, 30, 63]
     LONG_INTEGRATION_TRIGGER_LEVEL_RANGES = [100e-3, 1, 5]
     SOURCE_VOLTAGES = [0, 3.3, 15]
-    SOURCE_VOLTAGE_PROTETIONS = [0, 4, 8]
+    SOURCE_VOLTAGE_PROTECTIONS = [0, 4, 8]
     SOURCE_CURRENTS = [0.006, 1, 5]
     SOURCE_CURRENT_LIMIT_TYPES = ['limit', 'trip']
 
@@ -476,7 +476,7 @@ class TestKeithley2306:
         assert instr.ch(channel).source_voltage == case
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    @pytest.mark.parametrize("case", SOURCE_VOLTAGE_PROTETIONS)
+    @pytest.mark.parametrize("case", SOURCE_VOLTAGE_PROTECTIONS)
     def test_source_voltage_protection(self, instr, channel, case):
         assert instr.ch(channel).source_voltage_protection == 8
         instr.ch(channel).source_voltage_protection = case
