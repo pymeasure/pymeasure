@@ -144,10 +144,22 @@ class HP8116A(Instrument):
         """ Returns the status byte of the 8116A as an IntFlag-type enum. """
         return Status(self.adapter.connection.read_stb())
 
+    @property
+    def complete(self):
+        return not (self.status & Status.buffer_not_empty)
+
+    @property
+    def options(self):
+        """ Return the device options installed. The only possible option is 001. """
+        if self.has_option_001:
+            return ['001']
+        else:
+            return []
+
     def wait_for_commands_processed(self, timeout=1):
         """ Wait until the commands have been processed by the 8116A. """
         start = time.time()
-        while self.status & Status.buffer_not_empty:
+        while not self.complete:
             time.sleep(0.001)
             if time.time() - start > timeout:
                 raise RuntimeError('Timeout waiting for commands to be processed.')
@@ -539,3 +551,17 @@ class HP8116A(Instrument):
         self.adapter.connection.clear()
         self.adapter.connection.close()
         super().shutdown()
+
+    def check_errors(self):
+        """ Check for errors in the 8116A.
+
+        :return: list of error entries or empty list if no error occurred.
+        """
+        errors_response = self.ask('IERR', 100).split('\r\n')[0].strip(' ,\r\n')
+        errors = errors_response.split('ERROR')[:-1]
+        errors = [e.strip() + " ERROR" for e in errors]
+
+        if errors[0] == 'NO ERROR':
+            return []
+        else:
+            return errors
