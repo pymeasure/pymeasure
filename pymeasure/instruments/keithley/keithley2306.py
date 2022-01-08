@@ -340,8 +340,7 @@ class Channel():
 
     last_reading = Instrument.measurement(
         ":FETCH<ch>?",
-        """A floating point property that returns the last reading. """,
-        get_process=lambda v: float(v)
+        """A floating point property that returns the last reading. """
     )
 
     last_readings = Instrument.measurement(
@@ -353,8 +352,7 @@ class Channel():
     reading = Instrument.measurement(
         ":READ<ch>?",
         """A floating point property that triggers and returns a reading
-        in accordance with sense_mode. """,
-        get_process=lambda v: float(v),
+        in accordance with sense_mode. """
     )
 
     readings = Instrument.measurement(
