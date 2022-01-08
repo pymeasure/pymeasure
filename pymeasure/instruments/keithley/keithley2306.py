@@ -44,8 +44,8 @@ class Channel():
 
     bandwidth = Instrument.control(
         ":OUTPUT<ch>:BAND?", ":OUTPUT<ch>:BAND %s",
-        """A string property that controls the output bandwidth when the output 
-        is enabled and the current range is set to 5 A. Takes values 'HIGH' or 
+        """A string property that controls the output bandwidth when the output
+        is enabled and the current range is set to 5 A. Takes values 'HIGH' or
         'LOW'. If the output is disabled or the current range is set to 5 mA the
         bandwidth is 'LOW'. """,
         validator=strict_discrete_set,
@@ -55,8 +55,8 @@ class Channel():
 
     sense_mode = Instrument.control(
         ":SENS<ch>:FUNC?", ":SENS<ch>:FUNC \"%s\"",
-        """A string property that controls the channel sense mode, which can 
-        take the values 'voltage', 'current', 'dvm', 'pulse_current', 
+        """A string property that controls the channel sense mode, which can
+        take the values 'voltage', 'current', 'dvm', 'pulse_current',
         or 'long_integration'. """,
         validator=strict_discrete_set,
         values={'voltage': 'VOLT', 'current': 'CURR', 'dvm': 'DVM',
@@ -67,8 +67,8 @@ class Channel():
 
     nplc = Instrument.control(
         ":SENS<ch>:NPLC?", ":SENS<ch>:NPLC %g",
-        """A floating point property that controls the number of power line 
-        cycles (NPLC) for voltage, current, and DVM measurements. Takes 
+        """A floating point property that controls the number of power line
+        cycles (NPLC) for voltage, current, and DVM measurements. Takes
         values from 0.01 to 10. """,
         validator=truncated_range,
         values=[0.01, 10],
@@ -76,7 +76,7 @@ class Channel():
 
     average_count = Instrument.control(
         ":SENS<ch>:AVER?", ":SENS<ch>:AVER %d",
-        """An integer property that controls the average count for voltage, 
+        """An integer property that controls the average count for voltage,
         current, and DVM measurements. Takes values from 1 to 10. """,
         validator=truncated_range,
         values=[1, 10],
@@ -84,7 +84,7 @@ class Channel():
 
     current_range = Instrument.control(
         ":SENS<ch>:CURR:RANG?", ":SENS<ch>:CURR:RANG %g",
-        """A floating point property that controls the current range which 
+        """A floating point property that controls the current range which
         takes values of 5 mA and 5 A (or 500 mA and 5 A for the 2306-PJ).""",
         validator=strict_discrete_set,
         values=[0.005, 0.5, 5],
@@ -92,7 +92,7 @@ class Channel():
 
     current_range_auto = Instrument.control(
         ":SENS<ch>:CURR:RANG:AUTO?", ":SENS<ch>:CURR:RANG:AUTO %d",
-        """A boolean point property that controls whether current range 
+        """A boolean point property that controls whether current range
         is in auto mode. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -101,7 +101,7 @@ class Channel():
 
     pulse_current_average_count = Instrument.control(
         ":SENS<ch>:PCUR:AVER?", ":SENS<ch>:PCUR:AVER %d",
-        """An integer property that controls the average count for pulse 
+        """An integer property that controls the average count for pulse
         current measurements. Takes values from 1 to either 100 if
         pulse_current_measure_enabled is set to True, 5000 otherwise. """,
         validator=truncated_range,
@@ -533,7 +533,7 @@ class BatteryChannel(Channel):
     )
 
     def pulse_current_step(self, step_number):
-        return Step(self.instrument, step_number);
+        return Step(self.instrument, step_number)
 
 
 class Step():
