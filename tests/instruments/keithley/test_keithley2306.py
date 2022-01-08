@@ -310,28 +310,28 @@ class TestKeithley2306:
         assert instr.ch1.pulse_current_step_time == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_TIMEOUTS)
-    def test_pulse_current_step_time(self, instr, case):
+    def test_pulse_current_step_timeout(self, instr, case):
         instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_timeout == 2e-3
         instr.ch1.pulse_current_step_timeout = case
         assert instr.ch1.pulse_current_step_timeout == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_TIMEOUT_INITIALS)
-    def test_pulse_current_step_time(self, instr, case):
+    def test_pulse_current_step_timeout_initial(self, instr, case):
         instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_timeout_initial == 2
         instr.ch1.pulse_current_step_timeout_initial = case
         assert instr.ch1.pulse_current_step_timeout_initial == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_DELAYS)
-    def test_pulse_current_step_time(self, instr, case):
+    def test_pulse_current_step_delay(self, instr, case):
         instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_delay == 0
         instr.ch1.pulse_current_step_delay = case
         assert instr.ch1.pulse_current_step_delay == case
 
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_RANGES)
-    def test_pulse_current_step_time(self, instr, case):
+    def test_pulse_current_step_range(self, instr, case):
         instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step_range == 5
         instr.ch1.pulse_current_step_range = case
@@ -340,7 +340,7 @@ class TestKeithley2306:
     @pytest.mark.parametrize("range", PULSE_CURRENT_STEP_RANGES)
     @pytest.mark.parametrize("step", PULSE_CURRENT_STEP_INDICES)
     @pytest.mark.parametrize("case", PULSE_CURRENT_STEP_TRIGGER_LEVELS)
-    def test_pulse_current_step_time(self, instr, range, step, case):
+    def test_pulse_current_step_trigger_level(self, instr, range, step, case):
         instr.ch1.pulse_current_fast_enabled = True
         assert instr.ch1.pulse_current_step(step).trigger_level == 0.0
         if case <= range:
