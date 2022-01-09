@@ -65,7 +65,7 @@ class DynamicProperty(property):
             # Property return itself when invoked from a class
             return self
         if self.fget is None:
-            raise AttributeError("unreadable attribute")
+            raise AttributeError("Unreadable attribute")
 
         kwargs = {}
         for attr in self.fget_list:
