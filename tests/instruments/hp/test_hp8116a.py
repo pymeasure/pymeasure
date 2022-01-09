@@ -24,6 +24,7 @@
 
 import pytest
 import math
+import time
 from pymeasure.instruments.hp import HP8116A, hp8116a
 
 # pytest.skip('Only work with connected hardware', allow_module_level=True)
@@ -209,3 +210,57 @@ class TestHP8116A:
     def test_check_has_option_001(self, make_resetted_instr):
         instr = make_resetted_instr
         assert instr.check_has_option_001() == self.HAS_OPTION_001
+
+    def test_given_resetted_when_check_errors_then_no_error(self, make_resetted_instr):
+        instr = make_resetted_instr
+        errors = instr.check_errors()
+        assert type(errors) is list
+        assert len(errors) == 0
+
+    def test_given_invalid_duty_cycle_when_check_errors_then_error(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.frequency = 50e6
+        instr.duty_cycle = 90
+        errors = instr.check_errors()
+        assert len(errors) == 1
+        assert errors[0] == 'DUTY C. ERROR'
+
+    def test_given_two_error_conditions_when_check_errors_then_two_errors(self,
+                                                                          make_resetted_instr):
+        instr = make_resetted_instr
+
+        # Triggering duty cycle error since 90 % is too high at 50 MHz
+        instr.frequency = 50e6
+        instr.duty_cycle = 90
+
+        # Triggering handling error since autovernier is not possible in triggered mode
+        instr.operating_mode = 'triggered'
+        instr.autovernier_enabled = True
+
+        errors = instr.check_errors()
+        assert len(errors) == 2
+        assert 'DUTY C. ERROR' in errors
+        assert 'HANDLING ERROR' in errors
+
+    def test_given_autovernier_disabled_when_start_autovernier_then_error(self,
+                                                                          make_resetted_instr):
+        instr = make_resetted_instr
+        with pytest.raises(RuntimeError):
+            instr.start_autovernier(HP8116A.frequency, HP8116A.Digit.LEAST_SIGNIFICANT,
+                                    HP8116A.Direction.UP)
+
+    def test_given_invalid_control_when_start_autovernier_then_error(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.autovernier_enabled = True
+        with pytest.raises(ValueError):
+            instr.start_autovernier(HP8116A.sweep_start, HP8116A.Digit.LEAST_SIGNIFICANT,
+                                    HP8116A.Direction.UP)
+
+    def test_autovernier(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.autovernier_enabled = True
+        instr.start_autovernier(HP8116A.amplitude, HP8116A.Digit.SECOND_SIGNIFICANT,
+                                HP8116A.Direction.UP, 100e-3)
+        time.sleep(0.5)
+        instr.autovernier_enabled = False
+        assert instr.amplitude > 120e-3

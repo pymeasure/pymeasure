@@ -25,7 +25,7 @@
 import logging
 import time
 import numpy as np
-from enum import IntFlag
+from enum import Enum, IntFlag
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, truncated_discrete_set
@@ -62,11 +62,26 @@ class HP8116A(Instrument):
         kwargs.setdefault('send_end', True)
         super(HP8116A, self).__init__(
             resourceName,
-            'Hewlett-Packard 8116A Pulse/Function Generator',
+            'Hewlett-Packard 8116A',
             includeSCPI=False,
             **kwargs
         )
         self.has_option_001 = self.check_has_option_001()
+
+    class Digit(Enum):
+        """ Enum of the digits used with the autovernier
+        (see :py:meth:`HP8116A.start_autovernier()`).
+        """
+        MOST_SIGNIFICANT = 'M'
+        SECOND_SIGNIFICANT = 'S'
+        LEAST_SIGNIFICANT = 'L'
+
+    class Direction(Enum):
+        """ Enum of the directions used with the autovernier
+        (see :py:meth:`HP8116A.start_autovernier()`).
+        """
+        UP = 'U'
+        DOWN = 'D'
 
     OPERATING_MODES = {
         'normal': 'M1',
@@ -182,6 +197,31 @@ class HP8116A(Instrument):
             log.warning('Could not determine if 8116A has option 001. Assuming it has.')
             return True
 
+    def start_autovernier(self, control, digit, direction, start_value=None):
+        """ Start the autovernier on the specified control.
+
+        :param control: The control to change, pass as :code:`HP8116A.some_control`. Allowed
+                        controls are frequency, amplitude, offset, duty_cycle, and pulse_width
+        :param digit: The digit to change, type: :py:class:`HP8116A.Digit`.
+        :param direction: The direction in which to change the control,
+                          type: :py:class:`HP8116A.Direction`.
+        :param start_value: An optional value to start the autovernier at. If not specified,
+                            the current value of the control is used.
+        """
+        if not self.autovernier_enabled:
+            raise RuntimeError('Autovernier has to be enabled first.')
+
+        if control not in (HP8116A.frequency, HP8116A.amplitude, HP8116A.offset,
+                           HP8116A.duty_cycle, HP8116A.pulse_width):
+            raise ValueError('Control must be one of frequency, amplitude, offset, ' +
+                             'duty_cycle, or pulse_width.')
+
+        start_value = control.fget(self) if start_value is None else start_value
+        # The control always has to be set to select it for the autovernier.
+        control.fset(self, start_value)
+
+        self.write(digit.value + direction.value)
+
     # Instrument communication #
 
     def write(self, command):
@@ -223,7 +263,7 @@ class HP8116A(Instrument):
     def values(self, command, separator=',', cast=float, preprocess_reply=None, **kwargs):
         # I had to copy the values method from the adapter class since we need to call
         # our own ask() method instead of the adapter's default one.
-        results = str(self.ask(command)).strip(' ,\r\n')
+        results = str(self.ask(command))
         if callable(preprocess_reply):
             results = preprocess_reply(results)
         elif callable(self.adapter.preprocess_reply):
@@ -289,13 +329,14 @@ class HP8116A(Instrument):
     # Instrument controls #
 
     @staticmethod
-    def boolean_control(identifier, state_index, docs, inverted=False):
+    def boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
         return Instrument.control(
             'CST', identifier + '%d', docs,
             validator=strict_discrete_set,
             values=[True, False],
             get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
-            set_process=lambda x: int(inverted ^ x)
+            set_process=lambda x: int(inverted ^ x),
+            **kwargs
         )
 
     @staticmethod
@@ -366,6 +407,7 @@ class HP8116A(Instrument):
     autovernier_enabled = boolean_control(
         'A', 5,
         """ A boolean property that controls whether the autovernier is enabled. """,
+        check_set_errors=True
     )
 
     limit_enabled = boolean_control(
@@ -564,4 +606,6 @@ class HP8116A(Instrument):
         if errors[0] == 'NO ERROR':
             return []
         else:
+            for error in errors:
+                log.error(f'{self.name}: {error}')
             return errors
