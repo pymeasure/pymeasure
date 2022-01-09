@@ -27,7 +27,7 @@ import math
 import time
 from pymeasure.instruments.hp import HP8116A, hp8116a
 
-# pytest.skip('Only work with connected hardware', allow_module_level=True)
+pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestHP8116A:
@@ -128,7 +128,7 @@ class TestHP8116A:
         instr = make_resetted_instr
         instr.adapter.write('W4')  # Takes about 330 ms to process according to the service manual
         assert (instr.status & hp8116a.Status.buffer_not_empty)
-        instr.wait_for_commands_processed()  # Now wait so that the instrument doesn't lock up
+        instr._wait_for_commands_processed()  # Now wait so that the instrument doesn't lock up
 
     def test_write(self, make_resetted_instr):
         instr = make_resetted_instr
@@ -150,12 +150,12 @@ class TestHP8116A:
 
     @pytest.mark.parametrize('case, expected', VALUES_WITH_UNITS)
     def test_get_value_with_unit(self, case, expected):
-        ret = HP8116A.get_value_with_unit(case, self.UNITS)
+        ret = HP8116A._get_value_with_unit(case, self.UNITS)
         assert ret == expected
 
     @pytest.mark.parametrize('case, expected', VALUES_WITH_UNITS_TO_PARSE)
     def test_parse_value_with_unit(self, case, expected):
-        ret = HP8116A.parse_value_with_unit(case, self.UNITS)
+        ret = HP8116A._parse_value_with_unit(case, self.UNITS)
         assert math.isclose(ret, expected)
 
     def test_generate_1_2_5_sequence(self):
@@ -163,7 +163,7 @@ class TestHP8116A:
         max = 1
         expected = [200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3, 50e-3,
                     100e-3, 200e-3, 500e-3, 1]
-        ret = HP8116A.generate_1_2_5_sequence(min, max)
+        ret = HP8116A._generate_1_2_5_sequence(min, max)
         assert ret == expected
 
     @pytest.mark.parametrize('case', BOOLEANS)
@@ -209,7 +209,7 @@ class TestHP8116A:
 
     def test_check_has_option_001(self, make_resetted_instr):
         instr = make_resetted_instr
-        assert instr.check_has_option_001() == self.HAS_OPTION_001
+        assert instr._check_has_option_001() == self.HAS_OPTION_001
 
     def test_given_resetted_when_check_errors_then_no_error(self, make_resetted_instr):
         instr = make_resetted_instr

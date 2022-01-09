@@ -66,7 +66,7 @@ class HP8116A(Instrument):
             includeSCPI=False,
             **kwargs
         )
-        self.has_option_001 = self.check_has_option_001()
+        self.has_option_001 = self._check_has_option_001()
 
     class Digit(Enum):
         """ Enum of the digits used with the autovernier
@@ -154,73 +154,72 @@ class HP8116A(Instrument):
         'mega': 1e6,
     }
 
-    @property
-    def status(self):
-        """ Returns the status byte of the 8116A as an IntFlag-type enum. """
-        return Status(self.adapter.connection.read_stb())
+    @staticmethod
+    def _get_value_with_unit(value, units):
+        """ Convert a floating point value to a string with 3 digits resolution
+        and the appropriate unit.
 
-    @property
-    def complete(self):
-        return not (self.status & Status.buffer_not_empty)
-
-    @property
-    def options(self):
-        """ Return the device options installed. The only possible option is 001. """
-        if self.has_option_001:
-            return ['001']
+        :param value: The value to convert.
+        :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
+            the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
+        """
+        if value < 1e-6:
+            value_str = f'{value*1e9:.3g} {units["nano"]}'
+        elif value < 1e-3:
+            value_str = f'{value*1e6:.3g} {units["micro"]}'
+        elif value < 1:
+            value_str = f'{value*1e3:.3g} {units["milli"]}'
+        elif value < 1e3:
+            value_str = f'{value:.3g} {units["no_prefix"]}'
+        elif value < 1e6:
+            value_str = f'{value*1e-3:.3g} {units["kilo"]}'
         else:
-            return []
+            value_str = f'{value*1e-6:.3g} {units["mega"]}'
 
-    def wait_for_commands_processed(self, timeout=1):
-        """ Wait until the commands have been processed by the 8116A. """
-        start = time.time()
-        while not self.complete:
-            time.sleep(0.001)
-            if time.time() - start > timeout:
-                raise RuntimeError('Timeout waiting for commands to be processed.')
+        return value_str
 
-    def check_has_option_001(self):
-        """ Return True if the 8116A has option 001 and False otherwise.
+    @staticmethod
+    def _parse_value_with_unit(value_str, units):
+        """ Convert a string with a value and a unit as returned by the HP8116A to a float.
 
-        This is done by checking the length of the response to the CST (current status) command
-        which includes sweep parameters and burst parameters only if the 8116A has option 001.
+        :param value_str: The string to parse.
+        :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
+            the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
         """
 
-        # The longest possible state string is 163 characters long including termination characters
-        state_string = self.ask('CST', 163).split('\r\n')[0].strip(' ,\r\n')
+        # Example value_str: 'FRQ 1.00KHZ'
+        # Digits and unit are always positioned the same for all parameters
+        value_str = value_str.strip()
+        value = float(value_str[3:8].strip())
+        unit = value_str[8:].strip()
+        units_inverse = {v: k for k, v in units.items()}
+        value *= HP8116A._si_prefixes[units_inverse[unit]]
 
-        if len(state_string) == 159:
-            return True
-        elif len(state_string) == 87:
-            return False
-        else:
-            log.warning('Could not determine if 8116A has option 001. Assuming it has.')
-            return True
+        return value
 
-    def start_autovernier(self, control, digit, direction, start_value=None):
-        """ Start the autovernier on the specified control.
+    @staticmethod
+    def _generate_1_2_5_sequence(min, max):
+        """ Generate a list of a 1-2-5 sequence between min and max. """
+        exp_min = int(np.log10(min))
+        exp_max = int(np.log10(max))
 
-        :param control: The control to change, pass as :code:`HP8116A.some_control`. Allowed
-                        controls are frequency, amplitude, offset, duty_cycle, and pulse_width
-        :param digit: The digit to change, type: :py:class:`HP8116A.Digit`.
-        :param direction: The direction in which to change the control,
-                          type: :py:class:`HP8116A.Direction`.
-        :param start_value: An optional value to start the autovernier at. If not specified,
-                            the current value of the control is used.
-        """
-        if not self.autovernier_enabled:
-            raise RuntimeError('Autovernier has to be enabled first.')
+        seq_1_2_5 = np.array([1, 2, 5])
+        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
+        sequence = sequence.flatten()
+        sequence = sequence[(sequence >= min) & (sequence <= max)]
 
-        if control not in (HP8116A.frequency, HP8116A.amplitude, HP8116A.offset,
-                           HP8116A.duty_cycle, HP8116A.pulse_width):
-            raise ValueError('Control must be one of frequency, amplitude, offset, ' +
-                             'duty_cycle, or pulse_width.')
+        return list(sequence)
 
-        start_value = control.fget(self) if start_value is None else start_value
-        # The control always has to be set to select it for the autovernier.
-        control.fset(self, start_value)
-
-        self.write(digit.value + direction.value)
+    @staticmethod
+    def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
+        return Instrument.control(
+            'CST', identifier + '%d', docs,
+            validator=strict_discrete_set,
+            values=[True, False],
+            get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
+            set_process=lambda x: int(inverted ^ x),
+            **kwargs
+        )
 
     # Instrument communication #
 
@@ -230,7 +229,7 @@ class HP8116A(Instrument):
 
         # We need to read the status byte and wait until the buffer_not_empty bit
         # is cleared because some older units lock up if we don't.
-        self.wait_for_commands_processed()
+        self._wait_for_commands_processed()
 
     def read(self):
         """ Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
@@ -243,6 +242,8 @@ class HP8116A(Instrument):
         """ Write a command to the instrument, read the response, and return the response as ASCII text.
 
         :param command: The command to send to the instrument.
+        :param num_bytes: The number of bytes to read from the instrument. If not specified,
+                          the number of bytes is automatically determined by the command.
         """
         self.write(command)
 
@@ -281,75 +282,7 @@ class HP8116A(Instrument):
                 pass  # Keep as string
         return results
 
-    # Numeric parameter parsing #
-
-    @staticmethod
-    def get_value_with_unit(value, units):
-        """ Convert a floating point value to a string with 3 digits resolution
-        and the appropriate unit.
-
-        :param value: The value to convert.
-        :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
-            the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
-        """
-        if value < 1e-6:
-            value_str = f'{value*1e9:.3g} {units["nano"]}'
-        elif value < 1e-3:
-            value_str = f'{value*1e6:.3g} {units["micro"]}'
-        elif value < 1:
-            value_str = f'{value*1e3:.3g} {units["milli"]}'
-        elif value < 1e3:
-            value_str = f'{value:.3g} {units["no_prefix"]}'
-        elif value < 1e6:
-            value_str = f'{value*1e-3:.3g} {units["kilo"]}'
-        else:
-            value_str = f'{value*1e-6:.3g} {units["mega"]}'
-
-        return value_str
-
-    @staticmethod
-    def parse_value_with_unit(value_str, units):
-        """ Convert a string with a value and a unit as returned by the HP8116A to a float.
-
-        :param value_str: The string to parse.
-        :param units: Dictionary containing a mapping of SI-prefixes to the unit strings
-            the instrument uses, eg. 'milli' -> 'MZ' for millihertz.
-        """
-
-        # Example value_str: 'FRQ 1.00KHZ'
-        # Ditigs and unit are always positioned the same for all parameters
-        value_str = value_str.strip()
-        value = float(value_str[3:8].strip())
-        unit = value_str[8:].strip()
-        units_inverse = {v: k for k, v in units.items()}
-        value *= HP8116A._si_prefixes[units_inverse[unit]]
-
-        return value
-
     # Instrument controls #
-
-    @staticmethod
-    def boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
-        return Instrument.control(
-            'CST', identifier + '%d', docs,
-            validator=strict_discrete_set,
-            values=[True, False],
-            get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
-            set_process=lambda x: int(inverted ^ x),
-            **kwargs
-        )
-
-    @staticmethod
-    def generate_1_2_5_sequence(min, max):
-        exp_min = int(np.log10(min))
-        exp_max = int(np.log10(max))
-
-        seq_1_2_5 = np.array([1, 2, 5])
-        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
-        sequence = sequence.flatten()
-        sequence = sequence[(sequence >= min) & (sequence <= max)]
-
-        return list(sequence)
 
     operating_mode = Instrument.control(
         'CST', '%s',
@@ -397,32 +330,32 @@ class HP8116A(Instrument):
         get_process=lambda x: HP8116A.SHAPES_INV[x[3]]
     )
 
-    haversine_enabled = boolean_control(
+    haversine_enabled = _boolean_control(
         'H', 4,
         """ A boolean property that controls whether a haversine/havertriangle signal
         is generated when in 'triggered', 'internal_burst' or 'external_burst' operating mode.
         """,
     )
 
-    autovernier_enabled = boolean_control(
+    autovernier_enabled = _boolean_control(
         'A', 5,
         """ A boolean property that controls whether the autovernier is enabled. """,
         check_set_errors=True
     )
 
-    limit_enabled = boolean_control(
+    limit_enabled = _boolean_control(
         'L', 6,
         """ A boolean property that controls whether parameter limiting is enabled. """,
     )
 
-    complement_enabled = boolean_control(
+    complement_enabled = _boolean_control(
         'C', 7,
         """ A boolean property that controls whether the complement
         of the signal is generated.
         """,
     )
 
-    output_enabled = boolean_control(
+    output_enabled = _boolean_control(
         'D', 8,
         """ A boolean property that controls whether the output is enabled. """,
         inverted=True,  # The actual command is "Disable output"...
@@ -435,15 +368,15 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     duty_cycle = Instrument.control(
         'IDTY', 'DTY %s %%',
         """ An integer value that controls the duty cycle of the output in percent.
-        The allowed range is 10% to 90%. It is valid for all shapes except 'pulse',
-        where :py:attr:`pulse_width` is used.
+        The allowed range generally is 10 % to 90 %, but it also depends on the current frequency.
+        It is valid for all shapes except 'pulse', where :py:attr:`pulse_width` is used instead.
         """,
         validator=strict_range,
         values=[10, 90.0001],
@@ -458,8 +391,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[8e-9, 999.001e-3],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
 
     amplitude = Instrument.control(
@@ -470,8 +403,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[10e-3, 16.001],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     offset = Instrument.control(
@@ -482,8 +415,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-7.95, 7.95001],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     high_level = Instrument.control(
@@ -494,8 +427,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-7.9, 8.001],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     low_level = Instrument.control(
@@ -506,8 +439,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-8, 7.9001],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_voltage),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_voltage)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
 
     burst_number = Instrument.control(
@@ -524,12 +457,12 @@ class HP8116A(Instrument):
     repetition_rate = Instrument.control(
         'IRPT', 'RPT %s',
         """ A floating point value that controls the repetition rate (= the time between bursts)
-        in internal_burst mode. The allowed range is 20 ns to 999 ms.
+        in 'internal_burst' mode. The allowed range is 20 ns to 999 ms.
         """,
         validator=strict_range,
         values=[20e-9, 999.001e-3],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
 
     sweep_start = Instrument.control(
@@ -539,8 +472,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     sweep_stop = Instrument.control(
@@ -550,8 +483,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     sweep_marker_frequency = Instrument.control(
@@ -562,8 +495,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
     )
 
     sweep_time = Instrument.control(
@@ -572,12 +505,52 @@ class HP8116A(Instrument):
         The sweep time is selectable in a 1-2-5 sequence between 10 ms and 500 s.
         """,
         validator=truncated_discrete_set,
-        values=generate_1_2_5_sequence(10e-3, 500),
-        set_process=lambda x: HP8116A.get_value_with_unit(x, HP8116A._units_time),
-        get_process=lambda x: HP8116A.parse_value_with_unit(x, HP8116A._units_time)
+        values=_generate_1_2_5_sequence(10e-3, 500),
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
 
-    # Functions using low-level access via instrument.adapter.connection methods #
+    @property
+    def status(self):
+        """ Returns the status byte of the 8116A as an IntFlag-type enum. """
+        return Status(self.adapter.connection.read_stb())
+
+    @property
+    def complete(self):
+        return not (self.status & Status.buffer_not_empty)
+
+    @property
+    def options(self):
+        """ Return the device options installed. The only possible option is 001. """
+        if self.has_option_001:
+            return ['001']
+        else:
+            return []
+
+    def start_autovernier(self, control, digit, direction, start_value=None):
+        """ Start the autovernier on the specified control.
+
+        :param control: The control to change, pass as :code:`HP8116A.some_control`. Allowed
+                        controls are frequency, amplitude, offset, duty_cycle, and pulse_width
+        :param digit: The digit to change, type: :py:class:`HP8116A.Digit`.
+        :param direction: The direction in which to change the control,
+                          type: :py:class:`HP8116A.Direction`.
+        :param start_value: An optional value to start the autovernier at. If not specified,
+                            the current value of the control is used.
+        """
+        if not self.autovernier_enabled:
+            raise RuntimeError('Autovernier has to be enabled first.')
+
+        if control not in (HP8116A.frequency, HP8116A.amplitude, HP8116A.offset,
+                           HP8116A.duty_cycle, HP8116A.pulse_width):
+            raise ValueError('Control must be one of frequency, amplitude, offset, ' +
+                             'duty_cycle, or pulse_width.')
+
+        start_value = control.fget(self) if start_value is None else start_value
+        # The control always has to be set to select it for the autovernier.
+        control.fset(self, start_value)
+
+        self.write(digit.value + direction.value)
 
     def GPIB_trigger(self):
         """ Initate trigger via low-level GPIB-command (aka GET - group execute trigger). """
@@ -586,7 +559,7 @@ class HP8116A(Instrument):
     def reset(self):
         """ Initatiate a reset (like a power-on reset) of the 8116A. """
         self.adapter.connection.clear()
-        self.wait_for_commands_processed()
+        self._wait_for_commands_processed()
 
     def shutdown(self):
         """ Gracefully close the connection to the 8116A. """
@@ -609,3 +582,29 @@ class HP8116A(Instrument):
             for error in errors:
                 log.error(f'{self.name}: {error}')
             return errors
+
+    def _wait_for_commands_processed(self, timeout=1):
+        """ Wait until the commands have been processed by the 8116A. """
+        start = time.time()
+        while not self.complete:
+            time.sleep(0.001)
+            if time.time() - start > timeout:
+                raise RuntimeError('Timeout waiting for commands to be processed.')
+
+    def _check_has_option_001(self):
+        """ Return True if the 8116A has option 001 and False otherwise.
+
+        This is done by checking the length of the response to the CST (current status) command
+        which includes sweep parameters and burst parameters only if the 8116A has option 001.
+        """
+
+        # The longest possible state string is 163 characters long including termination characters
+        state_string = self.ask('CST', 163).split('\r\n')[0].strip(' ,\r\n')
+
+        if len(state_string) == 159:
+            return True
+        elif len(state_string) == 87:
+            return False
+        else:
+            log.warning('Could not determine if 8116A has option 001. Assuming it has.')
+            return True
