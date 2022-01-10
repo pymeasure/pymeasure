@@ -186,8 +186,8 @@ class VISAAdapter(Adapter):
         self.connection.wait_for_srq(timeout * 1000)
 
     def flush_read_buffer(self):
-        """ Flush and discard the input buffer 
-        
+        """ Flush and discard the input buffer
+
         As detailed by pyvisa, discard the read buffer contents and if data was present
         in the read buffer and no END-indicator was present, read from the device until
         encountering an END indicator (which causes loss of data).
