@@ -23,8 +23,8 @@
 #
 import ctypes
 import logging
-# import math
-# import struct
+import math
+import struct
 # from enum import IntFlag
 # import numpy as np
 from pymeasure.instruments import Instrument
@@ -110,7 +110,50 @@ class HPLegacyInstrument(Instrument):
             return ret_val.b
         if field == "SRQ":
             return self.SRQ(getattr(ret_val.b, field))
+        if field == "Number":
+            bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
+            return self._convert_from_bcd(bcd_nr)
+        if field == "Delay":
+            bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
+            delay_value = (
+                self._convert_from_bcd(bcd_delay) / 1.0e7
+            )  # delay resolution is 100ns
+            return delay_value
         return getattr(ret_val.b, field)
+
+    # decoder functions
+    # decimal to BCD & BCD to decimal conversion copied from
+    # https://pymodbus.readthedocs.io/en/latest/source/example/bcd_payload.html
+    @classmethod
+    def _convert_to_bcd(cls, decimal):
+        """Converts a decimal value to a bcd value
+
+        :param value: The decimal value to to pack into bcd
+        :returns: The number in bcd form
+        """
+        place, bcd = 0, 0
+        while decimal > 0:
+            nibble = decimal % 10
+            bcd += nibble << place
+            decimal /= 10
+            place += 4
+        return bcd
+
+    @classmethod
+    def _convert_from_bcd(cls, bcd):
+        """Converts a bcd value to a decimal value
+
+        :param value: The value to unpack from bcd
+        :returns: The number in decimal form
+        """
+        bcd = int.from_bytes(bcd, "big")
+        place, decimal = 1, 0
+        while bcd > 0:
+            nibble = bcd & 0xF
+            decimal += nibble * place
+            bcd >>= 4
+            place *= 10
+        return decimal
 
     # facotry components
     def bytefield_factory(self, n_bytes, type_of_entry=c_uint8):

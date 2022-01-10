@@ -184,68 +184,6 @@ class HP3437A(HPLegacyInstrument):
         IGNORE_TRIGGER = 2
         INVALID_PROGRAM = 1
 
-    # decoder functions
-    # decimal to BCD & BCD to decimal conversion copied from
-    # https://pymodbus.readthedocs.io/en/latest/source/example/bcd_payload.html
-    @classmethod
-    def _convert_to_bcd(cls, decimal):
-        """Converts a decimal value to a bcd value
-
-        :param value: The decimal value to to pack into bcd
-        :returns: The number in bcd form
-        """
-        place, bcd = 0, 0
-        while decimal > 0:
-            nibble = decimal % 10
-            bcd += nibble << place
-            decimal /= 10
-            place += 4
-        return bcd
-
-    @classmethod
-    def _convert_from_bcd(cls, bcd):
-        """Converts a bcd value to a decimal value
-
-        :param value: The value to unpack from bcd
-        :returns: The number in decimal form
-        """
-        bcd = int.from_bytes(bcd, "big")
-        place, decimal = 1, 0
-        while bcd > 0:
-            nibble = bcd & 0xF
-            decimal += nibble * place
-            bcd >>= 4
-            place *= 10
-        return decimal
-
-    # @staticmethod
-    # def _decode_status(self, status_bytes, field=None):
-    #     """Method to decode the status bytes
-
-    #     :param status_bytes: list of bytes to be decoded
-    #     :param field: name of field to be returned
-    #     :return ret_val: int status value
-
-    #     """
-    #     ret_val = self.Status(self.status_bytes(*status_bytes))
-    #     if field is None:
-    #         return ret_val.b
-
-    #     if field == "SRQ":
-    #         return self.SRQ(getattr(ret_val.b, field))
-
-    #     if field == "Number":
-    #         bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
-    #         return self._convert_from_bcd(bcd_nr)
-
-    #     if field == "Delay":
-    #         bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
-    #         delay_value = (
-    #             self._convert_from_bcd(bcd_delay) / 1.0e7
-    #         )  # delay resolution is 100ns
-    #         return delay_value
-    #     return getattr(ret_val.b, field)
-
     @staticmethod
     def _decode_range(self, status_bytes):
         """Method to decode current range
@@ -255,7 +193,7 @@ class HP3437A(HPLegacyInstrument):
         :rtype cur_range: float
 
         """
-        cur_stat = self.Status(self.status_bytes(*status_bytes))
+        cur_stat = self.status_union(self.status_bytes(*status_bytes))
         range_undecoded = cur_stat.b.range
         # range decoding
         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
@@ -281,7 +219,7 @@ class HP3437A(HPLegacyInstrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = self.Status(self.status_bytes(*status_bytes))
+        cur_stat = self.status_union(self.status_bytes(*status_bytes))
         trig = cur_stat.b.trigger
         if trig == 0:
             log.error("HP3437A invalid trigger detected!")
@@ -353,18 +291,7 @@ class HP3437A(HPLegacyInstrument):
 
     @property
     def talk_ascii(self):
-        """Return True if the instrument is set to ASCII communciation,
-        this property can be set.
-
-        .. Note::
-
-            ASCII communciation is slower then the packed (BCD) communication,
-            this may cause problems with measurments when short delays are used
-
-
-
-        """
-        return bool(self.decode_status(self, self.fetch_status(), "Format"))
+        return bool(self.status.Format)
 
     @talk_ascii.setter
     def talk_ascii(self, value):
@@ -373,6 +300,18 @@ class HP3437A(HPLegacyInstrument):
         else:
             self.write("F2")
 
+    # TODO: this needs more work
+    # talk_ascii = HPLegacyInstrument.control(
+    #     "B", "%s",
+    #     """
+    #     Return True if the instrument is set to ASCII communication,
+    #     this property can be set.
+    #     This property can be read
+    #     """,
+    #     values={True: "F1", False: "F2"},
+    #     map_values=True,
+    #     get_process= lambda x : str("F"+(str(decode_status( x, field="Format"))+1)),
+    #     )
     @property
     def delay(self):
         """Return the value (float) for the delay between two measurements,
