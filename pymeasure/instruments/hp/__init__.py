@@ -27,4 +27,4 @@ from .hp34401A import HP34401A
 from .hp3437A import HP3437A
 from .hp3478A import HP3478A
 from .hp8116a import HP8116A
-from .hphelper import HPsupport
+from .hplegacyinstrument import HPLegacyInstrument

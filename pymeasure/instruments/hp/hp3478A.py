@@ -22,18 +22,66 @@
 # THE SOFTWARE.
 #
 
+import ctypes
 import logging
 import math
 from enum import IntFlag
-from pymeasure.instruments import Instrument
+# from pymeasure.instruments import Instrument
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.instruments.hp.hphelper import HPsupport
+# from pymeasure.instruments.hp.hphelper import HPsupport
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class HP3478A(Instrument):
+c_uint8 = ctypes.c_uint8
+c_uint16 = ctypes.c_uint16
+c_uint32 = ctypes.c_uint32
+
+STATUS_BYTES = 5
+
+
+class Status_bits(ctypes.LittleEndianStructure):
+    """
+    Support-Class with the bit assignments for the 5 status byte of the HP3478A
+    """
+
+    _fields_ = [
+        # Byte 1: Function, Range and Number of Digits
+        ("digits",     c_uint8, 2),  # bit 0..1
+        ("range",      c_uint8, 3),  # bit 2..4
+        ("function",   c_uint8, 3),  # bit 5..7
+
+        # Byte 2: Status Bits
+        ("int_trig",   c_uint8, 1),
+        ("auto_range", c_uint8, 1),
+        ("auto_zero",  c_uint8, 1),
+        ("fifty_hz",   c_uint8, 1),
+        ("front_rear", c_uint8, 1),
+        ("cal_enable", c_uint8, 1),
+        ("ext_trig",   c_uint8, 1),
+        ("res1",       c_uint8, 1),
+
+        # Byte 3: Serial Poll Mask (SRQ)
+        ("SRQ", c_uint8, 8),
+
+        # Byte 4: Error Information
+        ("ERR_cal",        c_uint8, 1),
+        ("ERR_RAM",        c_uint8, 1),
+        ("ERR_ROM",        c_uint8, 1),
+        ("ERR_slope",      c_uint8, 1),
+        ("ERR_AD",         c_uint8, 1),
+        ("ERR_AD_Link",    c_uint8, 1),
+        ("res4",           c_uint8, 1),
+        ("res5",           c_uint8, 1),
+
+        # Byte 5: DAC Value
+        ("DAC_value",       c_uint8, 8),
+    ]
+
+
+class HP3478A(HPLegacyInstrument):
     """ Represents the Hewlett Packard 3478A 5 1/2 digit multimeter
     and provides a high-level interface for interacting
     with the instrument.
@@ -45,13 +93,10 @@ class HP3478A(Instrument):
         super().__init__(
             resourceName,
             "Hewlett-Packard HP3478A",
-            includeSCPI=False,
-            **kwargs
+            status_bytes=STATUS_BYTES,
+            status_bitfield=Status_bits,
+            **kwargs,
         )
-        S = HPsupport(3478)
-        self.Status = S.status
-        self.status_bits = S.status_bits
-        self.status_bytes = S.status_bytes
 
     # Definitions for different specifics of this instrument
     MODES = {"DCV": "F1",
@@ -107,33 +152,6 @@ class HP3478A(Instrument):
         Syntax_error = 4
         Data_ready = 1
 
-    def fetch_status(self):
-        """Method to read the status bytes from the instrument
-        :return current_status: a byte array representing the instrument status
-        :rtype current_status: bytes
-        """
-        self.write("B")
-        current_status = self.adapter.read_bytes(5)
-        return current_status
-
-    # decoder functions
-    @staticmethod
-    def decode_status(self, status_bytes, field=None):
-        """Method to handle the decoding of the status bytes into something meaningfull
-
-        :param status_bytes: list of bytes to be decoded
-        :param field: name of field to be returned
-        :return ret_val: int status value
-
-        """
-        ret_val = self.Status(self.status_bytes(*status_bytes))
-        if field is None:
-            return ret_val.b
-        elif field == "SRQ":
-            return self.SRQ(getattr(ret_val.B, "byte2"))
-        else:
-            return getattr(ret_val.b, field)
-
     @staticmethod
     def decode_mode(self, function):
         """Method to decode current mode
@@ -175,7 +193,7 @@ class HP3478A(Instrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = self.Status(self.status_bytes(*status_bytes))
+        cur_stat = self.status_union(self.status_bytes(*status_bytes))
         i_trig = cur_stat.b.int_trig
         e_trig = cur_stat.b.ext_trig
         if i_trig == 0:
@@ -265,7 +283,7 @@ class HP3478A(Instrument):
             log.error("HP3478A error detected: %s", self.ERRORS(current_errors))
         return self.ERRORS(current_errors)
 
-    error_status = Instrument.measurement(
+    error_status = HPLegacyInstrument.measurement(
         "E",
         """Checks the error status register
 
@@ -279,7 +297,7 @@ class HP3478A(Instrument):
         """
         self.write("D1")
 
-    display_text = Instrument.setting(
+    display_text = HPLegacyInstrument.setting(
         "D2%s",
         """Displays up to 12 upper-case ASCII characters on the display.
 
@@ -287,7 +305,7 @@ class HP3478A(Instrument):
         set_process=(lambda x: str.upper(x[0:12])),
     )
 
-    display_text_no_symbol = Instrument.setting(
+    display_text_no_symbol = HPLegacyInstrument.setting(
         "D3%s",
         """Displays up to 12 upper-case ASCII characters on the display and
         disables all symbols on the display.
@@ -296,7 +314,7 @@ class HP3478A(Instrument):
         set_process=(lambda x: str.upper(x[0:12])),
     )
 
-    measure_ACI = Instrument.measurement(
+    measure_ACI = HPLegacyInstrument.measurement(
         MODES["ACI"],
         """
         Returns the measured value for AC current as a float in A.
@@ -304,7 +322,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_ACV = Instrument.measurement(
+    measure_ACV = HPLegacyInstrument.measurement(
         MODES["ACV"],
         """
         Returns the measured value for AC Voltage as a float in V.
@@ -312,7 +330,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_DCI = Instrument.measurement(
+    measure_DCI = HPLegacyInstrument.measurement(
         MODES["DCI"],
         """
         Returns the measured value for DC current as a float in A.
@@ -320,7 +338,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_DCV = Instrument.measurement(
+    measure_DCV = HPLegacyInstrument.measurement(
         MODES["DCV"],
         """
         Returns the measured value for DC Voltage as a float in V.
@@ -328,7 +346,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_R2W = Instrument.measurement(
+    measure_R2W = HPLegacyInstrument.measurement(
         MODES["R2W"],
         """
         Returns the measured value for 2-wire resistance as a float in Ohm.
@@ -336,7 +354,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_R4W = Instrument.measurement(
+    measure_R4W = HPLegacyInstrument.measurement(
         MODES["R4W"],
         """
         Returns the measured value for 4-wire resistance as a float in Ohm.
@@ -344,7 +362,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_Rext = Instrument.measurement(
+    measure_Rext = HPLegacyInstrument.measurement(
         MODES["Rext"],
         """
         Returns the measured value for extended resistance mode (>30M, 2-wire)
@@ -421,15 +439,6 @@ class HP3478A(Instrument):
         self.write(resolution_string)
 
     @property
-    def status(self):
-        """
-        Returns an object representing the current status of the unit.
-
-        """
-        current_status = self.decode_status(self, self.fetch_status())
-        return current_status
-
-    @property
     def SRQ_mask(self):
         """Return current SRQ mask, this property can be set,
 
@@ -478,28 +487,3 @@ class HP3478A(Instrument):
     def trigger(self, value):
         trig_set = self.TRIGGERS[strict_discrete_set(value, self.TRIGGERS)]
         self.write(trig_set)
-
-    # Functions using low-level access via instrument.adapter.connection methods
-
-    def GPIB_trigger(self):
-        """
-        Initate trigger via low-level GPIB-command (aka GET - group execute trigger)
-
-        """
-        self.adapter.connection.assert_trigger()
-
-    def reset(self):
-        """
-        Initatiates a reset (like a power-on reset) of the HP3478A
-
-        """
-        self.adapter.connection.clear()
-
-    def shutdown(self):
-        """
-        provides a way to gracefully close the connection to the HP3478A
-
-        """
-        self.adapter.connection.clear()
-        self.adapter.connection.close()
-        super().shutdown()
