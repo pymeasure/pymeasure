@@ -80,6 +80,17 @@ class Status_bits(ctypes.LittleEndianStructure):
         ("DAC_value",       c_uint8, 8),
     ]
 
+    def __str__(self):
+        """
+        Returns a pretty formatted string showing the status of the instrument
+
+        """
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
+
+        return ret_str
+
 
 class HP3478A(HPLegacyInstrument):
     """ Represents the Hewlett Packard 3478A 5 1/2 digit multimeter
