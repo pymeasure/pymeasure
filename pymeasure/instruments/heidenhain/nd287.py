@@ -27,38 +27,32 @@ from pyvisa.errors import VisaIOError
 from pymeasure.instruments import Instrument
 
 
-class Nd287(Instrument):
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class ND287(Instrument):
     """ Represents the Heidenhain ND287 position display unit used to readout and display absolute position measured by
         Heidenhain encoders.
     """
     
     position = Instrument.measurement(
         "\x1BA0200", "Read the encoder's current position.",
-        get_process=lambda p: Nd287.position_proc(float(p.split("\x02")[-1])),
+        get_process=lambda p: ND287.position_proc(float(p.split("\x02")[-1])),
     )
 
     status = Instrument.measurement(
         "\x1BA0800", "Read the encoder's status bar"
     )
 
-    # additional configuration properties that cannot be controlled through software, but should be configurable
-    # to match the values on the local device. #
-    _units = "mm"
-    
-    @classmethod
-    def position_proc(cls, pos):
-        """ Apply the appropriate scaling factor to the position read-out from the encoder based on the value of the
-            units property.
-        """
-        if cls._units == "mm":
-            pos *= 1e-4
-        elif cls._units == "inch":
-            pos *= 1e-5
-        return pos
-    
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, resourceName, units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
+
+        :param: units: Specify the units that the gauge is working in. Note that this parameter can only be set
+                       manually on the device. And this argument is to synchronize the driver with the device settings.
         """
+
+        self._units = units
 
         super().__init__(
             resourceName,
@@ -67,6 +61,16 @@ class Nd287(Instrument):
             write_termination="\r",
             **kwargs
         )
+
+    def position_proc(self, pos):
+        """ Apply the appropriate scaling factor to the position read-out from the encoder based on the value of the
+            units property.
+        """
+        if self._units == "mm":
+            pos *= 1e-4
+        elif self._units == "inch":
+            pos *= 1e-5
+        return pos
 
     @property
     def id(self):
@@ -77,23 +81,10 @@ class Nd287(Instrument):
         return id_str
 
     @property
-    def error(self):
-        """ String property representing the on screen error message. Note that ND287 only returns an error message
-            string when there is actually an error message present. Otherwise, nothing is returned and the query times
-            out. In this case, this property returns None.
-        """
-        self.adapter.connection.write("\x1BA0301")
-        try:
-            err_str = self.adapter.connection.read_bytes(36).decode("utf-8")
-        except VisaIOError:
-            err_str = None
-        return err_str
-
-    @property
     def units(self):
         """ String property representing the unit of measure set on the device. Valid values are 'mm' and 'inch'
         """
-        return Nd287._units
+        return self._units
     
     @units.setter
     def units(self, unit):
@@ -103,15 +94,21 @@ class Nd287(Instrument):
         """
         val_units = ["mm", "inch"]
         if unit in val_units:
-            Nd287._units = unit
+            ND287._units = unit
 
     def check_errors(self):
         """ Method to read an error status message and log when an error is detected.
 
         :return: String with the error message as its contents.
         """
-        err_msg = self.error
-        if err_msg is not None:
-            logging.error("Heidenhain ND287 error message received: %s" % err_msg)
-        return err_msg
+        self.adapter.connection.write("\x1BA0301")
+        try:
+            err_str = self.adapter.connection.read_bytes(36).decode("utf-8")
+        except VisaIOError:
+            err_str = None
+
+        if err_str is not None:
+            log.error("Heidenhain ND287 error message received: %s" % err_str)
+
+        return err_str
 
