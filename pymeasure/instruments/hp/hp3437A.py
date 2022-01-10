@@ -40,46 +40,108 @@ c_uint8 = ctypes.c_uint8
 c_uint16 = ctypes.c_uint16
 c_uint32 = ctypes.c_uint32
 
-HP3437A_STATUS_BYTES = 7
-HP3437A_Status_bitfield = [
-    # Byte 0: Function, Range and Number of Digits
-    ("Format", c_uint8, 1),  # Bit 7
-    ("SRQ", c_uint8, 3),  # bit 4..6
-    ("trigger", c_uint8, 2),  # bit 2..3
-    ("range", c_uint8, 2),  # bit 0..1
-    # Byte 1 & 2:
-    ("Number", c_uint16, 16),
-    # Byte 1:
-    # ("NRDGS_MSD", c_uint8, 4),
-    # ("NRDGS_2SD", c_uint8, 4),
-    # Byte 2:
-    # ("NRDGS_3SD", c_uint8, 4),
-    # ("NRDGS_LSD", c_uint8, 4),
-    ("not_used", c_uint8, 4),
-    ("Delay", c_uint32, 28),
-    # Byte 3:
-    # ("Not_Used", c_uint8, 4),
-    # ("Delay_MSD", c_uint8, 4),
-    # Byte 4:
-    # ("Delay_2SD", c_uint8, 4),
-    # ("Delay_3SD", c_uint8, 4),
-    # Byte 5:
-    # ("Delay_4SD", c_uint8, 4),
-    # ("Delay_5SD", c_uint8, 4),
-    # Byte 6:
-    # ("Delay_6SD", c_uint8, 4),
-    # ("Delay_LSD", c_uint8, 4),
-]
+STATUS_BYTES = 7
 
-HP3437A_PACKED_BYTES = 2
-HP3437A_Packed_bitfield = [
-    ("range", c_uint8, 2),  # bit 0..1
-    ("sign_bit", c_uint8, 1),
-    ("MSD", c_uint8, 1),
-    ("SSD", c_uint8, 4),
-    ("TSD", c_uint8, 4),
-    ("LSD", c_uint8, 4),
-]
+
+class Status_bits(ctypes.BigEndianStructure):
+    _pack_ = 1
+    _fields_ = [
+        # Byte 0: Function, Range and Number of Digits
+        ("Format", c_uint8, 1),  # Bit 7
+        ("SRQ", c_uint8, 3),  # bit 4..6
+        ("trigger", c_uint8, 2),  # bit 2..3
+        ("range", c_uint8, 2),  # bit 0..1
+        # Byte 1 & 2:
+        ("Number", c_uint16, 16),
+        # Byte 1:
+        # ("NRDGS_MSD", c_uint8, 4),
+        # ("NRDGS_2SD", c_uint8, 4),
+        # Byte 2:
+        # ("NRDGS_3SD", c_uint8, 4),
+        # ("NRDGS_LSD", c_uint8, 4),
+        ("not_used", c_uint8, 4),
+        ("Delay", c_uint32, 28),
+        # Byte 3:
+        # ("Not_Used", c_uint8, 4),
+        # ("Delay_MSD", c_uint8, 4),
+        # Byte 4:
+        # ("Delay_2SD", c_uint8, 4),
+        # ("Delay_3SD", c_uint8, 4),
+        # Byte 5:
+        # ("Delay_4SD", c_uint8, 4),
+        # ("Delay_5SD", c_uint8, 4),
+        # Byte 6:
+        # ("Delay_6SD", c_uint8, 4),
+        # ("Delay_LSD", c_uint8, 4),
+        ]
+
+    def __str__(self):
+        """
+        Returns a pretty formatted string showing the status of the instrument
+
+        """
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
+
+        return ret_str
+
+
+PACKED_BYTES = 2
+
+
+class Packed_bits(ctypes.BigEndianStructure):
+    _pack_ = 1
+    _fields_ = [
+        ("range", c_uint8, 2),  # bit 0..1
+        ("sign_bit", c_uint8, 1),
+        ("MSD", c_uint8, 1),
+        ("SSD", c_uint8, 4),
+        ("TSD", c_uint8, 4),
+        ("LSD", c_uint8, 4),
+        ]
+
+    def __str__(self):
+        """
+        Returns a pretty formatted string showing the status of the instrument
+
+        """
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
+        return ret_str
+
+    def __float__(self):
+        """
+        Return a float value from the packed data of the HP3437A
+
+        """
+        # range decoding
+        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
+        # 1 indicates 0.1V range
+        if self.range == 1:
+            cur_range = 0.1
+        # 2 indicates 10V range
+        if self.range == 2:
+            cur_range = 10.0
+        # 3 indicates 1V range
+        if self.range == 3:
+            cur_range = 1.0
+
+        signbit = 1
+        if self.sign_bit == 0:
+            signbit = -1
+
+        return (
+            cur_range
+            * signbit
+            * (
+                self.MSD
+                + float(self.SSD) / 10
+                + float(self.TSD) / 100
+                + float(self.LSD) / 1000
+            )
+        )
 
 
 class HP3437A(HPLegacyInstrument):
@@ -92,20 +154,13 @@ class HP3437A(HPLegacyInstrument):
         super(HP3437A, self).__init__(
             resourceName,
             "Hewlett-Packard HP3437A",
-            includeSCPI=False,
-            send_end=True,
-            read_termination="\r\n",
-            write_termination="\r\n",
+            status_bytes=STATUS_BYTES,
+            status_bitfield=Status_bits,
             **kwargs,
         )
-        # S = HPsupport(3437)
-        # self.Status = S.status
-        # self.status_bits = S.status_bits
-        # self.status_bytes = S.status_bytes
-        # self.packed_data = S.packed_data
-        # self.packed_bits = S.packed_bits
-        # self.packed_bytes = S.packed_bytes
-
+        self.packed_bits = Packed_bits
+        self.packed_bytes = self.bytefield_factory(PACKED_BYTES)
+        self.packed_data = self.union_factory(self.packed_bytes, self.packed_bits)
         log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
@@ -128,15 +183,6 @@ class HP3437A(HPLegacyInstrument):
         DATA_READY = 4
         IGNORE_TRIGGER = 2
         INVALID_PROGRAM = 1
-
-    def _fetch_status(self):
-        """Method to read the status bytes from the instrument
-
-        :return current_status: a byte array representing the instrument status
-        :rtype current_status: bytes
-        """
-        self.adapter.connection.write_raw("B")
-        return self.adapter.connection.read_raw()
 
     # decoder functions
     # decimal to BCD & BCD to decimal conversion copied from
@@ -318,7 +364,7 @@ class HP3437A(HPLegacyInstrument):
 
 
         """
-        return bool(self._decode_status(self, self._fetch_status(), "Format"))
+        return bool(self.decode_status(self, self.fetch_status(), "Format"))
 
     @talk_ascii.setter
     def talk_ascii(self, value):
@@ -335,7 +381,7 @@ class HP3437A(HPLegacyInstrument):
         valid range: 100ns - 0.999999s
 
         """
-        return self._decode_status(self, self._fetch_status(), "Delay")
+        return self.decode_status(self, self.fetch_status(), "Delay")
 
     @delay.setter
     def delay(self, value):
@@ -351,7 +397,7 @@ class HP3437A(HPLegacyInstrument):
         valid range: 0 - 9999
 
         """
-        return self._decode_status(self, self._fetch_status(), "Number")
+        return self.decode_status(self, self.fetch_status(), "Number")
 
     @number_readings.setter
     def number_readings(self, value):
@@ -371,7 +417,7 @@ class HP3437A(HPLegacyInstrument):
             Overrange will be in indicated as 0.99,9.99 or 99.9
 
         """
-        return self._decode_range(self, self._fetch_status())
+        return self._decode_range(self, self.fetch_status())
 
     @range.setter
     def range(self, value):
@@ -379,14 +425,6 @@ class HP3437A(HPLegacyInstrument):
             round(math.log10(strict_discrete_set(value, [0.1, 1, 10])) + 2), "d"
         )
         self.write(range_str)
-
-    # @property
-    # def status(self):
-    #     """
-    #     Return an object representing the current status of the unit.
-
-    #     """
-    #     return self._decode_status(self, self._fetch_status())
 
     @property
     def SRQ_mask(self):
@@ -403,7 +441,7 @@ class HP3437A(HPLegacyInstrument):
         =========  ==========================
 
         """
-        return self._decode_status(self, self._fetch_status(), "SRQ")
+        return self.decode_status(self, self.fetch_status(), "SRQ")
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
@@ -425,35 +463,9 @@ class HP3437A(HPLegacyInstrument):
         ===========  ===========================================
 
         """
-        return self._decode_trigger(self, self._fetch_status())
+        return self._decode_trigger(self, self.fetch_status())
 
     @trigger.setter
     def trigger(self, value):
         trig_set = self.TRIGGERS[strict_discrete_set(value, self.TRIGGERS)]
         self.write(trig_set)
-
-    # Functions using low-level access
-
-    # def GPIB_trigger(self):
-    #     """
-    #     Initate trigger via low-level GPIB-command
-    #     (aka GET - group execute trigger)
-
-    #     """
-    #     self.adapter.connection.assert_trigger()
-
-    # def reset(self):
-    #     """
-    #     Initatiates a reset (like a power-on reset) of the HP3437A
-
-    #     """
-    #     self.adapter.connection.clear()
-
-    # def shutdown(self):
-    #     """
-    #     provides a way to gracefully close the connection to the HP3437A
-
-    #     """
-    #     self.adapter.connection.clear()
-    #     self.adapter.connection.close()
-    #     super().shutdown()

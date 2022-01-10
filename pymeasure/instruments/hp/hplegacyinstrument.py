@@ -59,15 +59,12 @@ class HPLegacyInstrument(Instrument):
         self.adapter = adapter
         self.status_bytes_count = status_bytes
         self.status_bits = status_bitfield
-        # print(status_bitfield)
-        # self.status_bits = self.bitfield_factory(status_bitfield)
         self.status_bytes = self.bytefield_factory(status_bytes)
         self.status_union = self.union_factory(self.status_bytes, self.status_bits)
 
         log.info(f"Initializing {self.name}")
 
     def write(self, command):
-        """ This is needed only if 'B' cannot be followed by a termination character (to be checked) """
         if command == "B":
             self.adapter.connection.write("B", termination="")
         else:
@@ -147,74 +144,10 @@ class HPLegacyInstrument(Instrument):
 
         return ByteStruct
 
-    def bitfield_factory(self, field_list, bigendianess=0, packing=0):
-        """
-        create structure for the bit part of the structured unions
-
-        :param field_list: list of field entries
-        :param bigendianess: int set to 1 if bigendian is required (defaults to 0)
-        :param packing: int
-        :return byte_struct: bitfield struct
-        :rtype ctypes.Structure:
-        """
-        used_struct = ctypes.Structure
-        if bigendianess == 1:
-            used_struct = ctypes.BigEndianStructure
-
-        class BitStruct(used_struct):
-            """
-            Struct type element for the data in the bitfield
-            """
-            if packing == 1:
-                _pack_ = 1
-            _fields_ = field_list
-
-            def __str__(self):
-                """
-                Returns a pretty formatted string showing the status of the instrument
-
-                """
-                ret_str = ""
-                for field in self._fields_:
-                    ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
-
-                return ret_str
-
-            def __float__(self):
-                """
-                Return a float value from the packed data of the HP3437A
-
-                """
-                # range decoding
-                # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-                # 1 indicates 0.1V range
-                if self.range == 1:
-                    cur_range = 0.1
-                # 2 indicates 10V range
-                if self.range == 2:
-                    cur_range = 10.0
-                # 3 indicates 1V range
-                if self.range == 3:
-                    cur_range = 1.0
-
-                signbit = 1
-                if self.sign_bit == 0:
-                    signbit = -1
-
-                return (
-                    cur_range
-                    * signbit
-                    * (
-                        self.MSD
-                        + float(self.SSD) / 10
-                        + float(self.TSD) / 100
-                        + float(self.LSD) / 1000
-                    )
-                )
-
-        return BitStruct
-
     def union_factory(self, byte_struct, bit_struct):
+        """
+        Returns a union based on two structures (Bytefield & Bitfield)
+        """
         class Combined(ctypes.Union):
             """Union type element for the decoding of the bit-fields
             """
