@@ -25,7 +25,6 @@
 import ctypes
 import logging
 import math
-import struct
 from enum import IntFlag
 import numpy as np
 # from pymeasure.instruments import Instrument
@@ -245,7 +244,7 @@ class HP3437A(HPLegacyInstrument):
         return float(ret_data.b)
 
     # commands overwriting the base implementaiton
-    def read(self):
+    def read_data(self):
         """
         Reads measured data from instrument, returns a np.array.
 

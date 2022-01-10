@@ -471,8 +471,7 @@ class HP3478A(HPLegacyInstrument):
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
-        mask_str = "M" + format(strict_range(value, [0, 63]), "2o")
-        self.write(mask_str)
+        self.write(f"M{strict_range(value, [0, 63]):02o}")
 
     @property
     def trigger(self):
