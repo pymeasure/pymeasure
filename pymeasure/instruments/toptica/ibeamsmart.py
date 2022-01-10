@@ -40,7 +40,7 @@ class IBeamSmart(Instrument):
         super().__init__(
             TopticaAdapter(port, baud_rate, **kwargs),
             "toptica IBeam Smart laser diode",
-            includeSCPI = False,
+            includeSCPI=False,
         )
 
     version = Instrument.measurement(
