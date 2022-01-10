@@ -35,11 +35,6 @@ class ND287(Instrument):
     """ Represents the Heidenhain ND287 position display unit used to readout and display absolute position measured by
         Heidenhain encoders.
     """
-    
-    position = Instrument.measurement(
-        "\x1BA0200", "Read the encoder's current position.",
-        get_process=lambda p: ND287.position_proc(float(p.split("\x02")[-1])),
-    )
 
     status = Instrument.measurement(
         "\x1BA0800", "Read the encoder's status bar"
@@ -48,8 +43,8 @@ class ND287(Instrument):
     def __init__(self, resourceName, units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
 
-        :param: units: Specify the units that the gauge is working in. Note that this parameter can only be set
-                       manually on the device. And this argument is to synchronize the driver with the device settings.
+        :param: units: Specify the units that the gauge is working in. Valid values are "inch" and "mm" with "mm" being
+                       the default.
         """
 
         self._units = units
@@ -62,39 +57,37 @@ class ND287(Instrument):
             **kwargs
         )
 
-    def position_proc(self, pos):
-        """ Apply the appropriate scaling factor to the position read-out from the encoder based on the value of the
-            units property.
+    @property
+    def position(self):
+        """Float property representing the encoder's current position. This property has been implemented manually
+           rather than using :meth:`Instrument.measurement` so that the instance attribute _units can be queried.
         """
-        if self._units == "mm":
-            pos *= 1e-4
-        elif self._units == "inch":
-            pos *= 1e-5
-        return pos
+        pos_map = {"mm": 1e-4, "inch": 1e-5}
+        pos = self.values("\x1BA0200")[0]
+        return float(pos.split("\x02")[-1])*pos_map[self._units]
 
     @property
     def id(self):
         """ String identification property for the device.
         """
         self.adapter.connection.write("\x1BA0000")
-        id_str = self.adapter.connection.read_bytes(36).decode("utf-8")
+        id_str = self.adapter.connection.read_bytes(37).decode("utf-8")
         return id_str
 
     @property
     def units(self):
-        """ String property representing the unit of measure set on the device. Valid values are 'mm' and 'inch'
+        """ String property representing the unit of measure set on the device. Valid values are 'mm' and 'inch' Note
+            that this parameter can only be set manually on the device. So this argument is only to ensure that the
+            instance units and physical device settings match. I.e., this property does not change any physical device
+            setting.
         """
         return self._units
     
     @units.setter
     def units(self, unit):
-        """ Setter for the 'units' property.
-        
-        :param unit: String argument with value 'mm' or 'inch'
-        """
         val_units = ["mm", "inch"]
         if unit in val_units:
-            ND287._units = unit
+            self._units = unit
 
     def check_errors(self):
         """ Method to read an error status message and log when an error is detected.

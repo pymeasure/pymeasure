@@ -22,5 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .nd287 import Nd287
+from .nd287 import ND287
 
