@@ -22,20 +22,67 @@
 # THE SOFTWARE.
 #
 
+import ctypes
 import logging
 import math
 import struct
 from enum import IntFlag
 import numpy as np
-from pymeasure.instruments import Instrument
+# from pymeasure.instruments import Instrument
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.instruments.hp.hphelper import HPsupport
+# from pymeasure.instruments.hp.hphelper import HPsupport
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+c_uint8 = ctypes.c_uint8
+c_uint16 = ctypes.c_uint16
+c_uint32 = ctypes.c_uint32
 
-class HP3437A(Instrument):
+HP3437A_STATUS_BYTES = 7
+HP3437A_Status_bitfield = [
+    # Byte 0: Function, Range and Number of Digits
+    ("Format", c_uint8, 1),  # Bit 7
+    ("SRQ", c_uint8, 3),  # bit 4..6
+    ("trigger", c_uint8, 2),  # bit 2..3
+    ("range", c_uint8, 2),  # bit 0..1
+    # Byte 1 & 2:
+    ("Number", c_uint16, 16),
+    # Byte 1:
+    # ("NRDGS_MSD", c_uint8, 4),
+    # ("NRDGS_2SD", c_uint8, 4),
+    # Byte 2:
+    # ("NRDGS_3SD", c_uint8, 4),
+    # ("NRDGS_LSD", c_uint8, 4),
+    ("not_used", c_uint8, 4),
+    ("Delay", c_uint32, 28),
+    # Byte 3:
+    # ("Not_Used", c_uint8, 4),
+    # ("Delay_MSD", c_uint8, 4),
+    # Byte 4:
+    # ("Delay_2SD", c_uint8, 4),
+    # ("Delay_3SD", c_uint8, 4),
+    # Byte 5:
+    # ("Delay_4SD", c_uint8, 4),
+    # ("Delay_5SD", c_uint8, 4),
+    # Byte 6:
+    # ("Delay_6SD", c_uint8, 4),
+    # ("Delay_LSD", c_uint8, 4),
+]
+
+HP3437A_PACKED_BYTES = 2
+HP3437A_Packed_bitfield = [
+    ("range", c_uint8, 2),  # bit 0..1
+    ("sign_bit", c_uint8, 1),
+    ("MSD", c_uint8, 1),
+    ("SSD", c_uint8, 4),
+    ("TSD", c_uint8, 4),
+    ("LSD", c_uint8, 4),
+]
+
+
+class HP3437A(HPLegacyInstrument):
     """Represents the Hewlett Packard 3737A system voltmeter
     and provides a high-level interface for interacting
     with the instrument.
@@ -51,13 +98,13 @@ class HP3437A(Instrument):
             write_termination="\r\n",
             **kwargs,
         )
-        S = HPsupport(3437)
-        self.Status = S.status
-        self.status_bits = S.status_bits
-        self.status_bytes = S.status_bytes
-        self.packed_data = S.packed_data
-        self.packed_bits = S.packed_bits
-        self.packed_bytes = S.packed_bytes
+        # S = HPsupport(3437)
+        # self.Status = S.status
+        # self.status_bits = S.status_bits
+        # self.status_bytes = S.status_bytes
+        # self.packed_data = S.packed_data
+        # self.packed_bits = S.packed_bits
+        # self.packed_bytes = S.packed_bytes
 
         log.info("Initialized HP3437A")
 
@@ -125,33 +172,33 @@ class HP3437A(Instrument):
             place *= 10
         return decimal
 
-    @staticmethod
-    def _decode_status(self, status_bytes, field=None):
-        """Method to decode the status bytes
+    # @staticmethod
+    # def _decode_status(self, status_bytes, field=None):
+    #     """Method to decode the status bytes
 
-        :param status_bytes: list of bytes to be decoded
-        :param field: name of field to be returned
-        :return ret_val: int status value
+    #     :param status_bytes: list of bytes to be decoded
+    #     :param field: name of field to be returned
+    #     :return ret_val: int status value
 
-        """
-        ret_val = self.Status(self.status_bytes(*status_bytes))
-        if field is None:
-            return ret_val.b
+    #     """
+    #     ret_val = self.Status(self.status_bytes(*status_bytes))
+    #     if field is None:
+    #         return ret_val.b
 
-        if field == "SRQ":
-            return self.SRQ(getattr(ret_val.b, field))
+    #     if field == "SRQ":
+    #         return self.SRQ(getattr(ret_val.b, field))
 
-        if field == "Number":
-            bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
-            return self._convert_from_bcd(bcd_nr)
+    #     if field == "Number":
+    #         bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
+    #         return self._convert_from_bcd(bcd_nr)
 
-        if field == "Delay":
-            bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
-            delay_value = (
-                self._convert_from_bcd(bcd_delay) / 1.0e7
-            )  # delay resolution is 100ns
-            return delay_value
-        return getattr(ret_val.b, field)
+    #     if field == "Delay":
+    #         bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
+    #         delay_value = (
+    #             self._convert_from_bcd(bcd_delay) / 1.0e7
+    #         )  # delay resolution is 100ns
+    #         return delay_value
+    #     return getattr(ret_val.b, field)
 
     @staticmethod
     def _decode_range(self, status_bytes):
@@ -333,13 +380,13 @@ class HP3437A(Instrument):
         )
         self.write(range_str)
 
-    @property
-    def status(self):
-        """
-        Return an object representing the current status of the unit.
+    # @property
+    # def status(self):
+    #     """
+    #     Return an object representing the current status of the unit.
 
-        """
-        return self._decode_status(self, self._fetch_status())
+    #     """
+    #     return self._decode_status(self, self._fetch_status())
 
     @property
     def SRQ_mask(self):
@@ -387,26 +434,26 @@ class HP3437A(Instrument):
 
     # Functions using low-level access
 
-    def GPIB_trigger(self):
-        """
-        Initate trigger via low-level GPIB-command
-        (aka GET - group execute trigger)
+    # def GPIB_trigger(self):
+    #     """
+    #     Initate trigger via low-level GPIB-command
+    #     (aka GET - group execute trigger)
 
-        """
-        self.adapter.connection.assert_trigger()
+    #     """
+    #     self.adapter.connection.assert_trigger()
 
-    def reset(self):
-        """
-        Initatiates a reset (like a power-on reset) of the HP3437A
+    # def reset(self):
+    #     """
+    #     Initatiates a reset (like a power-on reset) of the HP3437A
 
-        """
-        self.adapter.connection.clear()
+    #     """
+    #     self.adapter.connection.clear()
 
-    def shutdown(self):
-        """
-        provides a way to gracefully close the connection to the HP3437A
+    # def shutdown(self):
+    #     """
+    #     provides a way to gracefully close the connection to the HP3437A
 
-        """
-        self.adapter.connection.clear()
-        self.adapter.connection.close()
-        super().shutdown()
+    #     """
+    #     self.adapter.connection.clear()
+    #     self.adapter.connection.close()
+    #     super().shutdown()
