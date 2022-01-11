@@ -37,9 +37,7 @@ c_uint32 = ctypes.c_uint32
 
 class HPLegacyInstrument(Instrument):
     """
-    Class for legacy HP instruments from the time before SPCI, based on pymeasure.Instrument
-
-    more details to be entered later
+    Class for legacy HP instruments from the era before SPCI, based on `pymeasure.Instrument`
 
     """
 
