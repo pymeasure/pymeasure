@@ -43,6 +43,9 @@ STATUS_BYTES = 7
 
 
 class Status_bits(ctypes.BigEndianStructure):
+    """
+    A bitfield structure containing the assignments for the status decoding
+    """
     _pack_ = 1
     _fields_ = [
         # Byte 0: Function, Range and Number of Digits
@@ -90,6 +93,9 @@ PACKED_BYTES = 2
 
 
 class Packed_bits(ctypes.BigEndianStructure):
+    """
+    A bitfield structure containing the assignments for the data transfer in packed/binary mode
+    """
     _pack_ = 1
     _fields_ = [
         ("range", c_uint8, 2),  # bit 0..1
@@ -290,6 +296,10 @@ class HP3437A(HPLegacyInstrument):
 
     @property
     def talk_ascii(self):
+        """
+        A boolean property, True if the instrument is set to ASCII-based communication.
+        This property can be set.
+        """
         return bool(self.status.Format)
 
     @talk_ascii.setter

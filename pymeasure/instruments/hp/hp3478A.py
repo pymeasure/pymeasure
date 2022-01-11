@@ -488,8 +488,7 @@ class HP3478A(HPLegacyInstrument):
         ========  ===========================================
 
         """
-        trigger = self.decode_trigger(self, self.fetch_status())
-        return trigger
+        return self.decode_trigger(self, self.fetch_status())
 
     @trigger.setter
     def trigger(self, value):
