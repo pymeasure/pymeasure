@@ -278,69 +278,116 @@ def test_fakeinstrument_control(set_command, given, expected, dynamic):
     assert fake.x == expected
 
 
-def test_instrument_dynamic_parameter():
-    class GenericInstrument(FakeInstrument):
-        fake_ctrl = Instrument.control(
-            ":PARAM?;", ":PARAM %e Hz;",
-            """ A property that represents ...
-            """,
-            validator=strict_range,
-            values=(1, 10),
-            dynamic=True
-        )
-        fake_setting = Instrument.setting(
-            ":PARAM1 %e Hz;",
-            """ A property that represents ...
-            """,
-            validator=strict_range,
-            values=(1, 10),
-            dynamic=True
-        )
-        fake_measurement = Instrument.measurement(
-            "",
-            """ A property that represents ...
-            """,
-            values={'X': 1, 'Y': 2, 'Z': 3},
-            map_values=True,
-            dynamic=True
-        )
+class GenericInstrument(FakeInstrument):
+    #  Use truncated_range as this easily lets us test for the range boundaries
+    fake_ctrl = Instrument.control(
+        "", "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_setting = Instrument.setting(
+        "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_measurement = Instrument.measurement(
+        "", "docs",
+        values={'X': 1, 'Y': 2, 'Z': 3},
+        map_values=True,
+        dynamic=True,
+    )
 
-    class SpecificInstrument1(GenericInstrument):
-        # Set properties' values specific to SpecificInstrument1
-        fake_ctrl_values = (1, 10)
-        fake_setting_values = (1, 10)
-        fake_measurement_values = {'X': 1, 'Y': 2, 'Z': 3}
 
-    class SpecificInstrument2(GenericInstrument):
-        # Set properties' values specific to SpecificInstrument2
-        fake_ctrl_values = (10, 20)
-        fake_setting_values = (10, 20)
-        fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
+class ExtendedInstrument(GenericInstrument):
+    # Keep values unchanged, just derive another instrument, e.g. to add more properties
+    pass
 
-    s1 = SpecificInstrument1()
-    s2 = SpecificInstrument2()
 
-    s2.fake_ctrl = 15
+class StrictExtendedInstrument(ExtendedInstrument):
+    # Use strict instead of truncated range validator
+    fake_ctrl_validator = strict_range
+    fake_setting_validator = strict_range
+
+
+class NewRangeInstrument(GenericInstrument):
+    # Choose different properties' values, like you would for another device model
+    fake_ctrl_values = (10, 20)
+    fake_setting_values = (10, 20)
+    fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
+
+
+def test_dynamic_property_unchanged_by_inheritance():
+    generic = GenericInstrument()
+    extended = ExtendedInstrument()
+
+    generic.fake_ctrl = 50
+    assert generic.fake_ctrl == 10
+    extended.fake_ctrl = 50
+    assert extended.fake_ctrl == 10
+
+    generic.fake_setting = 50
+    assert generic.read() == '10'
+    extended.fake_setting = 50
+    assert extended.read() == '10'
+
+    generic.write('1')
+    assert generic.fake_measurement == 'X'
+    extended.write('1')
+    assert extended.fake_measurement == 'X'
+
+
+def test_dynamic_property_strict_raises():
+    strict = StrictExtendedInstrument()
+
     with pytest.raises(ValueError):
-        s1.fake_ctrl = 15
-
-    s2.fake_setting = 15
+        strict.fake_ctrl = 50
     with pytest.raises(ValueError):
-        s1.fake_setting = 15
+        strict.fake_setting = 50
 
-    s1.read()
-    s2.read()
-    s1.write('1')
-    s2.write('4')
-    assert s1.fake_measurement == 'X'
-    assert s2.fake_measurement == 'X'
 
-    s1.fake_ctrl_validator = truncated_range  # Try truncated range
+def test_dynamic_property_values_update_in_subclass():
+    newrange = NewRangeInstrument()
+
+    newrange.fake_ctrl = 50
+    assert newrange.fake_ctrl == 20
+
+    newrange.fake_setting = 50
+    assert newrange.read() == '20'
+
+    newrange.write('4')
+    assert newrange.fake_measurement == 'X'
+
+
+def test_dynamic_property_values_update_in_instance():
+    generic = GenericInstrument()
+
+    generic.fake_ctrl_values = (0, 33)
+    generic.fake_ctrl = 50
+    assert generic.fake_ctrl == 33
+
+    generic.fake_setting_values = (0, 33)
+    generic.fake_setting = 50
+    assert generic.read() == '33'
+
+    generic.fake_measurement_values = {'X': 7}
+    generic.write('7')
+    assert generic.fake_measurement == 'X'
+
+
+def test_dynamic_property_values_update_in_one_instance_leaves_other_unchanged():
+    generic1 = GenericInstrument()
+    generic2 = GenericInstrument()
+
+    generic1.fake_ctrl_values = (0, 33)
+    generic1.fake_ctrl = 50
+    generic2.fake_ctrl = 50
+    assert generic1.fake_ctrl == 33
+    assert generic2.fake_ctrl == 10
+
+
+def test_dynamic_property_reading_special_attributes_forbidden():
+    generic = GenericInstrument()
     with pytest.raises(AttributeError):
-        # Reading a special variable is not allowed
-        s1.fake_ctrl_validator
-
-    s1.fake_ctrl = 15
-    s1.fake_ctrl_validator = strict_range  # Back to strict_range
-    with pytest.raises(ValueError):
-        s1.fake_ctrl = 15
+        generic.fake_ctrl_validator

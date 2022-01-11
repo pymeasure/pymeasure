@@ -318,17 +318,17 @@ class Instrument(object):
 
             class GenericInstrument(Instrument):
                 center_frequency = Instrument.control(
-                    ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e Hz;",
+                    ":SENS:FREQ:CENT?;", ":SENS:FREQ:CENT %e GHz;",
                     " A floating point property that represents the frequency ... ",
                     validator=strict_range,
                     # Redefine this in subclasses to reflect actual instrument value:
-                    values=(1, 26.5e9),
+                    values=(1, 20),
                     dynamic=True  # declare property dynamic
                 )
 
             class SpecificInstrument(GenericInstrument):
                 # Identical to GenericInstrument, except for frequency range
-                center_frequency_values = (1, 13e9) # Redefined at subclass level
+                center_frequency_values = (1, 10) # Redefined at subclass level
 
             instrument = SpecificInstrument()
             instrument.center_frequency_values = (1, 6e9) # Redefined at instance level
@@ -409,9 +409,13 @@ class Instrument(object):
         # Add the specified document string to the getter
         fget.__doc__ = docs
 
-        return DynamicProperty(fget=fget, fset=fset, fget_params_list=Instrument._fget_params_list,
-                               fset_params_list=Instrument._fset_params_list,
-                               prefix=Instrument.__reserved_prefix)
+        if dynamic:
+            return DynamicProperty(fget=fget, fset=fset,
+                                   fget_params_list=Instrument._fget_params_list,
+                                   fset_params_list=Instrument._fset_params_list,
+                                   prefix=Instrument.__reserved_prefix)
+        else:
+            return property(fget, fset)
 
     @staticmethod
     def measurement(get_command, docs, values=(), map_values=None,
