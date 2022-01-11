@@ -36,7 +36,8 @@ class AH2500A(Instrument):
     """ Andeen Hagerling 2500A Precision Capacitance Bridge implementation
     """
     # regular expression to extract measurement values
-    _reclv = re.compile(r"[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS V=\s*(-?[0-9.]+)\s*V")
+    _reclv = re.compile(
+        r"[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS V=\s*(-?[0-9.]+)\s*V")
     _renumeric = re.compile(r'[-+]?(\d*\.?\d+)')
 
     def __init__(self, adapter, name=None, timeout=3000,
