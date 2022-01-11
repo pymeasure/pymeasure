@@ -36,8 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class Plotter(StoppableThread):
-    """ Plotter dynamically plots data from a file through the Results
-    object and supports error bars.
+    """ Plotter dynamically plots data from a file through the Results object.
 
     .. seealso::
 
