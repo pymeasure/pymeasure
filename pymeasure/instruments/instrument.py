@@ -84,7 +84,7 @@ class DynamicProperty(property):
 
     def __set__(self, obj, value):
         if self.fset is None:
-            raise AttributeError("can't set attribute")
+            raise AttributeError("Can't set attribute")
         kwargs = {}
         for attr in self.fset_params_list:
             attr_instance_name = self.prefix + "_".join([self.name, attr])
