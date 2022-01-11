@@ -50,10 +50,10 @@ class AH2700A(AH2500A):
         get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
     )
 
-    def __init__(self, adapter, timeout=5000, **kwargs):
+    def __init__(self, adapter, name="Andeen Hagerling 2700A Precision Capacitance Bridge", timeout=5000, **kwargs):
         super(AH2700A, self).__init__(
             adapter,
-            name="Andeen Hagerling 2700A Precision Capacitance Bridge",
+            name=name,
             timeout=timeout,
             **kwargs
         )
