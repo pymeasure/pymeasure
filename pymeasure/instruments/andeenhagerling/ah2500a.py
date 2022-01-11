@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,28 +39,19 @@ class AH2500A(Instrument):
     _reclv = re.compile(r"[FHZ0-9.=\s]*C=\s*(-?[0-9.]+)\s*PF L=\s*(-?[0-9.]+)\s*NS V=\s*(-?[0-9.]+)\s*V")
     _renumeric = re.compile(r'[-+]?(\d*\.?\d+)')
 
-    @classmethod
-    def _parse_reply(cls, string):
-        """
-        parse reply string from Andeen Hagerling capacitance bridges.
-
-        :param string: reply string from the instrument. This commonly is:
-          2500A:
-            "C= 1.234567    PF L= 0.000014    NS V= 0.750   V"
-          2700A:
-            "F= 1000.00 HZ C= 4.20188     PF L=-0.0260      NS V= 15.0     V"
-        :returns: tuple with C, L, V values
-        """
-        m = cls._reclv.match(string)
-        if m is not None:
-            values = tuple(map(float, m.groups()))
-            return values
-        # if an invalid string is returned ('EXCESS NOISE')
-        if string.strip() == "EXCESS NOISE":
-            log.warning("Excess noise, check your experiment setup")
-            return (math.nan, math.nan, math.nan)
-        else:  # some unknown return string (e.g. misconfigured units)
-            raise Exception(f'Returned string "{string}" could not be parsed')
+    def __init__(self, adapter, name=None, timeout=3000,
+                 write_termination="\n", read_termination="\n",
+                 **kwargs):
+        kwargs.setdefault("includeSCPI", False)
+        super(AH2500A, self).__init__(
+            adapter,
+            name or "Andeen Hagerling 2500A Precision Capacitance Bridge",
+            write_termination=write_termination,
+            read_termination=read_termination,
+            timeout=timeout,
+            **kwargs
+        )
+        self._triggered = False
 
     config = Instrument.measurement(
         "SHOW",
@@ -87,19 +78,28 @@ class AH2500A(Instrument):
         get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
     )
 
-    def __init__(self, adapter, name=None, timeout=3000,
-                 write_termination="\n", read_termination="\n",
-                 **kwargs):
-        kwargs.setdefault("write_termination", write_termination)
-        kwargs.setdefault("read_termination", read_termination)
-        kwargs.setdefault("timeout", timeout)
-        kwargs.setdefault("includeSCPI", False)
-        super(AH2500A, self).__init__(
-            adapter,
-            name or "Andeen Hagerling 2500A Precision Capacitance Bridge",
-            **kwargs
-        )
-        self._triggered = False
+    @classmethod
+    def _parse_reply(cls, string):
+        """
+        parse reply string from Andeen Hagerling capacitance bridges.
+
+        :param string: reply string from the instrument. This commonly is:
+          2500A:
+            "C= 1.234567    PF L= 0.000014    NS V= 0.750   V"
+          2700A:
+            "F= 1000.00 HZ C= 4.20188     PF L=-0.0260      NS V= 15.0     V"
+        :returns: tuple with C, L, V values
+        """
+        m = cls._reclv.match(string)
+        if m is not None:
+            values = tuple(map(float, m.groups()))
+            return values
+        # if an invalid string is returned ('EXCESS NOISE')
+        if string.strip() == "EXCESS NOISE":
+            log.warning("Excess noise, check your experiment setup")
+            return (math.nan, math.nan, math.nan)
+        else:  # some unknown return string (e.g. misconfigured units)
+            raise Exception(f'Returned string "{string}" could not be parsed')
 
     def trigger(self):
         """

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,15 @@ from .ah2500a import AH2500A
 class AH2700A(AH2500A):
     """ Andeen Hagerling 2700A Precision Capacitance Bridge implementation
     """
+    def __init__(self, adapter, name="Andeen Hagerling 2700A Precision Capacitance Bridge",
+                 timeout=5000, **kwargs):
+        super(AH2700A, self).__init__(
+            adapter,
+            name=name,
+            timeout=timeout,
+            **kwargs
+        )
+
     id = Instrument.measurement(
         "*IDN?", """ Reads the instrument identification """
     )
@@ -49,14 +58,6 @@ class AH2700A(AH2500A):
         # typical reply: "FREQUENCY      1200.0 Hz"
         get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
     )
-
-    def __init__(self, adapter, name="Andeen Hagerling 2700A Precision Capacitance Bridge", timeout=5000, **kwargs):
-        super(AH2700A, self).__init__(
-            adapter,
-            name=name,
-            timeout=timeout,
-            **kwargs
-        )
 
     def reset(self):
         """ Resets the instrument. """
