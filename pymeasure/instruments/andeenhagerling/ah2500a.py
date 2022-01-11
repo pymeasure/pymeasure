@@ -63,7 +63,8 @@ class AH2500A(Instrument):
         """ Perform a single capacitance, loss measurement and return the
         values in units of pF and nS. The used measurement voltage is returned
         as third value.""",
-        get_process=AH2500A._parse_reply,
+        # lambda function is needed here since AH2500A is otherwise undefined
+        get_process=lambda v: AH2500A._parse_reply(v),
     )
 
     vhighest = Instrument.control(
