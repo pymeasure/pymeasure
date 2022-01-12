@@ -25,6 +25,7 @@
 import logging
 
 from os.path import basename
+from os import remove as rmfile
 
 from .Qt import QtCore
 from .listeners import Monitor
@@ -203,8 +204,12 @@ class Manager(QtCore.QObject):
         """ Remove all Experiments
         """
         for experiment in self.experiments[:]:
-            if experiment.procedure.status != Procedure.FINISHED:
+            if experiment.procedure.status == Procedure.QUEUED:
+                pathtofile = experiment.results.data_filenames
                 self.remove(experiment)
+                if len(pathtofile) != 1:
+                    raise ValueError("Not implemented for multiple recording locations")
+                rmfile(pathtofile[0])
 
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
