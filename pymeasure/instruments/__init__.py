@@ -54,6 +54,7 @@ from . import rohdeschwarz
 from . import signalrecovery
 from . import srs
 from . import tektronix
+from . import thermotron
 from . import thorlabs
 from . import toptica
 from . import yokogawa
