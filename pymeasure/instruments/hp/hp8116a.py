@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -126,7 +126,7 @@ class HP8116A(Instrument):
 
     SHAPES_INV = {v: k for k, v in SHAPES.items()}
 
-    _units_freqency = {
+    _units_frequency = {
         'milli': 'MZ',
         'no_prefix': 'HZ',
         'kilo': 'KHZ',
@@ -366,8 +366,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
 
     duty_cycle = Instrument.control(
@@ -470,8 +470,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
 
     sweep_stop = Instrument.control(
@@ -481,8 +481,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
 
     sweep_marker_frequency = Instrument.control(
@@ -493,8 +493,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
-        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_freqency),
-        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_freqency)
+        set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
+        get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
 
     sweep_time = Instrument.control(
