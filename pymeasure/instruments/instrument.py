@@ -37,7 +37,7 @@ log.addHandler(logging.NullHandler())
 class DynamicProperty(property):
     """ Class that allows managing python property behaviour in a "dynamic" fashion
 
-    The class allows to pass, in addition to regular property parameters, a list of
+    The class allows passing, in addition to regular property parameters, a list of
     runtime configurable parameters.
     The effect is that the behaviour of fget/fset not only depends on the obj parameter, but
     also on a set of keyword parameters with a default value.
