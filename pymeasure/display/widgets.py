@@ -391,6 +391,8 @@ class BrowserWidget(QtGui.QWidget):
         self.browser = Browser(*self.browser_args, parent=self)
         self.clear_button = QtGui.QPushButton('Clear all', self)
         self.clear_button.setEnabled(False)
+        self.clear_unfinished_button = QtGui.QPushButton('Clear unfinished', self)
+        self.clear_unfinished_button.setEnabled(False)
         self.hide_button = QtGui.QPushButton('Hide all', self)
         self.hide_button.setEnabled(False)
         self.show_button = QtGui.QPushButton('Show all', self)
@@ -408,6 +410,7 @@ class BrowserWidget(QtGui.QWidget):
         hbox.addWidget(self.show_button)
         hbox.addWidget(self.hide_button)
         hbox.addWidget(self.clear_button)
+        hbox.addWidget(self.clear_unfinished_button)
         hbox.addStretch()
         hbox.addWidget(self.open_button)
 

@@ -242,6 +242,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.browser_widget.show_button.clicked.connect(self.show_experiments)
         self.browser_widget.hide_button.clicked.connect(self.hide_experiments)
         self.browser_widget.clear_button.clicked.connect(self.clear_experiments)
+        self.browser_widget.clear_unfinished_button.clicked.connect(self.clear_unfinished)
         self.browser_widget.open_button.clicked.connect(self.open_experiment)
         self.browser = self.browser_widget.browser
 
@@ -264,6 +265,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.manager.queued.connect(self.queued)
         self.manager.running.connect(self.running)
         self.manager.finished.connect(self.finished)
+        self.manager.failed.connect(self.failed)
         self.manager.log.connect(self.log.handle)
 
         if self.use_sequencer:
@@ -430,6 +432,9 @@ class ManagedWindowBase(QtGui.QMainWindow):
     def clear_experiments(self):
         self.manager.clear()
 
+    def clear_unfinished(self):
+        self.manager.clear_unfinished()
+
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
         if dialog.exec_():
@@ -584,9 +589,18 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.browser_widget.show_button.setEnabled(True)
         self.browser_widget.hide_button.setEnabled(True)
         self.browser_widget.clear_button.setEnabled(True)
+        self.browser_widget.clear_unfinished_button.setEnabled(True)
+
+    def failed(self, experiment):
+        self.abort_button.setText("Resume")
+        self.abort_button.clicked.disconnect()
+        self.abort_button.clicked.connect(self.resume)
+        self.browser_widget.clear_button.setEnabled(True)
+        self.browser_widget.clear_unfinished_button.setEnabled(True)
 
     def running(self, experiment):
         self.browser_widget.clear_button.setEnabled(False)
+        self.browser_widget.clear_unfinished_button.setEnabled(False)
 
     def abort_returned(self, experiment):
         if self.manager.experiments.has_next():
@@ -594,11 +608,14 @@ class ManagedWindowBase(QtGui.QMainWindow):
             self.abort_button.setEnabled(True)
         else:
             self.browser_widget.clear_button.setEnabled(True)
+            self.browser_widget.clear_unfinished_button.setEnabled(True)
 
     def finished(self, experiment):
         if not self.manager.experiments.has_next():
             self.abort_button.setEnabled(False)
             self.browser_widget.clear_button.setEnabled(True)
+            self.browser_widget.clear_unfinished_button.setEnabled(True)
+
 
     @property
     def directory(self):

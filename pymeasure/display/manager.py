@@ -25,6 +25,7 @@
 import logging
 
 from os.path import basename
+from os import remove as rmfile
 
 from .Qt import QtCore
 from .listeners import Monitor
@@ -199,6 +200,17 @@ class Manager(QtCore.QObject):
         for experiment in self.experiments[:]:
             self.remove(experiment)
 
+    def clear_unfinished(self):
+        """ Remove all Experiments
+        """
+        for experiment in self.experiments[:]:
+            if experiment.procedure.status != Procedure.FINISHED:
+                pathtofile = experiment.results.data_filenames
+                self.remove(experiment)
+                if len(pathtofile) != 1:
+                    raise ValueError("Not implemented for multiple recording locations")
+                rmfile(pathtofile[0])
+
     def next(self):
         """ Initiates the start of the next experiment in the queue as long
         as no other experiments are currently running and there is a procedure
@@ -234,7 +246,8 @@ class Manager(QtCore.QObject):
         self._monitor.stop = True
         success = self._monitor.wait(100)
         if not success:
-            raise ValueError('Monitor did not properly exit')
+            log.debug('Monitor did not properly exit')
+            raise ValueError('Monitor did not exit properly')
         else:
             self._monitor.terminate()
         del self._worker
