@@ -204,7 +204,7 @@ class Manager(QtCore.QObject):
         """ Remove all Experiments
         """
         for experiment in self.experiments[:]:
-            if experiment.procedure.status == Procedure.QUEUED:
+            if experiment.procedure.status != Procedure.FINISHED:
                 pathtofile = experiment.results.data_filenames
                 self.remove(experiment)
                 if len(pathtofile) != 1:
@@ -247,8 +247,7 @@ class Manager(QtCore.QObject):
         success = self._monitor.wait(100)
         if not success:
             log.debug('Monitor did not properly exit')
-            log.debug('Forcing termination')
-            self._monitor.terminate()
+            raise ValueError('Monitor did not exit properly')
         else:
             self._monitor.terminate()
         del self._worker
