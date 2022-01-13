@@ -49,6 +49,13 @@ class Mock(Instrument):
                        'output_voltage': 'V',
                        'time': 's',
                        'wave': 'a.u.'}
+        self.running = False
+
+    def start(self):
+        self.running = True
+
+    def stop(self):
+        self.running = False
 
     def get_time(self):
         """Get elapsed time"""
