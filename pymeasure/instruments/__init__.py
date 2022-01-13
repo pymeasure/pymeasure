@@ -34,6 +34,7 @@ from . import ametek
 from . import ami
 from . import anaheimautomation
 from . import anapico
+from . import andeenhagerling
 from . import anritsu
 from . import attocube
 from . import danfysik
