@@ -305,7 +305,7 @@ class Instrument(object):
             before value mapping, returning the processed value
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
-        :param command_process: A function that take a command and allows processing
+        :param command_process: A function that takes a command and allows processing
             before executing the command
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting
