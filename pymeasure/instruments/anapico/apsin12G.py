@@ -25,6 +25,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
+
 class APSIN12G(Instrument):
     """ Represents the Anapico APSIN12G Signal Generator with option 9K,
     HP and GPIB. """
@@ -51,14 +52,14 @@ class APSIN12G(Instrument):
         when frequency is changed. ON makes the output to be blanked (off) while
         changing frequency. This property can be set. """,
         validator=strict_discrete_set,
-        values=['ON','OFF']
+        values=['ON', 'OFF']
     )
     reference_output = Instrument.control(
         "SOUR:ROSC:OUTP:STAT?", "SOUR:ROSC:OUTP:STAT %s",
         """ A string property that represents the 10MHz reference output from
         the synth. This property can be set. """,
         validator=strict_discrete_set,
-        values=['ON','OFF']
+        values=['ON', 'OFF']
     )
 
     def __init__(self, resourceName, **kwargs):

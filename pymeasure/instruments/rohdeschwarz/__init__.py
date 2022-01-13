@@ -23,3 +23,4 @@
 #
 
 from .sfm import SFM
+from .fsl import FSL

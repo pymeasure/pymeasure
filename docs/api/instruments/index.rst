@@ -23,7 +23,9 @@ Instruments by manufacturer:
    agilent/index
    ametek/index
    ami/index
+   anaheimautomation/index
    anapico/index
+   andeenhagerling/index
    anritsu/index
    attocube/index
    bkprecision/index
@@ -40,10 +42,12 @@ Instruments by manufacturer:
    ni/index
    oxfordinstruments/index
    parker/index
+   pendulum/index
    razorbill/index
    rohdeschwarz/index
    signalrecovery/index
    srs/index
    tektronix/index
    thorlabs/index
+   toptica/index
    yokogawa/index

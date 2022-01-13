@@ -25,7 +25,8 @@
 import logging
 
 import os
-import subprocess, platform
+import platform
+import subprocess
 
 
 import pyqtgraph as pg
@@ -71,7 +72,8 @@ class PlotterWindow(QtGui.QMainWindow):
     .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
 
     """
-    def __init__(self, plotter, refresh_time=0.1, parent=None):
+
+    def __init__(self, plotter, refresh_time=0.1, linewidth=1, parent=None):
         super().__init__(parent)
         self.plotter = plotter
         self.refresh_time = refresh_time
@@ -97,7 +99,8 @@ class PlotterWindow(QtGui.QMainWindow):
         hbox.addWidget(self.file)
         vbox.addLayout(hbox)
 
-        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time, check_status=False)
+        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time,
+                                      check_status=False, linewidth=linewidth)
         self.plot = self.plot_widget.plot
 
         vbox.addWidget(self.plot_widget)
@@ -108,7 +111,8 @@ class PlotterWindow(QtGui.QMainWindow):
         self.resize(800, 600)
 
         self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
-                                  pen=pg.mkPen(color=pg.intColor(0), width=2), antialias=False)
+                                  pen=pg.mkPen(color=pg.intColor(0), width=linewidth),
+                                  antialias=False)
         self.plot.addItem(self.curve)
 
         self.plot_widget.updated.connect(self.check_stop)
@@ -140,7 +144,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
     overridden by the child class.
 
     The ManagedWindowBase allow user to define a set of widget that display information about the
-    experiment. The information displayed may include: plots, tabular view, logging information, etc.
+    experiment. The information displayed may include: plots, tabular view, logging information,...
 
     This class is not intended to be used directy, but it should be subclassed to provide some
     appropriate widget list. Example of classes usable as element of widget list are:
@@ -149,7 +153,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
     - :class:`~pymeasure.display.widgets.PlotWidget`
     - :class:`~pymeasure.display.widgets.ImageWidget`
 
-    Of course, users can define its own widget making sure that inherits from :class:`~pymeasure.display.widgets.TabWidget`.
+    Of course, users can define its own widget making sure that inherits from
+    :class:`~pymeasure.display.widgets.TabWidget`.
 
     Examples of ready to use classes inherited from ManagedWindowBase are:
 
@@ -163,20 +168,27 @@ class ManagedWindowBase(QtGui.QMainWindow):
 
     Parameters for :code:`__init__` constructor.
 
-    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param procedure_class: procedure class describing the experiment (see
+        :class:`~pymeasure.experiment.procedure.Procedure`)
     :param widget_list: list of widget to be displayed in the GUI
-    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names, which the display will generate graphical fields for
-    :param displays: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names displayed in the browser window
+    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable
+        names, which the display will generate graphical fields for
+    :param displays: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable
+        names displayed in the browser window
     :param log_channel: :code:`logging.Logger` instance to use for logging output
     :param log_level: logging level
     :param parent: Parent widget or :code:`None`
-    :param sequencer: a boolean stating whether or not the sequencer has to be included into the window
-    :param sequencer_inputs: either :code:`None` or a list of the parameter names to be scanned over. If no list of parameters is given, the parameters displayed in the manager queue are used
-    :param sequence_file: simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button
+    :param sequencer: a boolean stating whether or not the sequencer has to be included into the
+        window
+    :param sequencer_inputs: either :code:`None` or a list of the parameter names to be scanned
+        over. If no list of parameters is given, the parameters displayed in the manager queue
+        are used.
+    :param sequence_file: simple text file to quickly load a pre-defined sequence with the
+        code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
     :param directory_input: specify, if present, where the experiment's result will be saved.
-    :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default) or disabled/grayed-out (False) when the group conditions are not met.
-
+    :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
+        or disabled/grayed-out (False) when the group conditions are not met.
     """
 
     def __init__(self,
@@ -235,7 +247,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.browser_widget = BrowserWidget(
             self.procedure_class,
             self.displays,
-            [], # This value will be patched by subclasses, if needed
+            [],  # This value will be patched by subclasses, if needed
             parent=self
         )
         self.browser_widget.show_button.clicked.connect(self.show_experiments)
@@ -435,9 +447,10 @@ class ManagedWindowBase(QtGui.QMainWindow):
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
                 if filename in self.manager.experiments:
-                    QtGui.QMessageBox.warning(self, "Load Error",
-                                              "The file %s cannot be opened twice." % os.path.basename(
-                                                  filename))
+                    QtGui.QMessageBox.warning(
+                        self, "Load Error",
+                        "The file %s cannot be opened twice." % os.path.basename(filename)
+                    )
                 elif filename == '':
                     return
                 else:
@@ -467,14 +480,16 @@ class ManagedWindowBase(QtGui.QMainWindow):
         """
         system = platform.system()
         if (system == 'Windows'):
-            # The empty argument after the start is needed to be able to cope correctly with filenames with spaces
-            proc = subprocess.Popen(['start', '', filename], shell=True)
+            # The empty argument after the start is needed to be able to cope
+            # correctly with filenames with spaces
+            _ = subprocess.Popen(['start', '', filename], shell=True)
         elif (system == 'Linux'):
-            proc = subprocess.Popen(['xdg-open', filename])
+            _ = subprocess.Popen(['xdg-open', filename])
         elif (system == 'Darwin'):
-            proc = subprocess.Popen(['open', filename])
+            _ = subprocess.Popen(['open', filename])
         else:
-            raise Exception("{cls} method open_file_externally does not support {system} OS".format(cls=type(self).__name__,system=system))
+            raise Exception("{cls} method open_file_externally does not support {system} OS".format(
+                cls=type(self).__name__, system=system))
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
@@ -563,7 +578,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.abort_button.clicked.connect(self.resume)
         try:
             self.manager.abort()
-        except:
+        except:  # noqa
             log.error('Failed to abort experiment', exc_info=True)
             self.abort_button.setText("Abort")
             self.abort_button.clicked.disconnect()
@@ -615,65 +630,61 @@ class ManagedWindow(ManagedWindowBase):
         Tutorial :ref:`tutorial-managedwindow`
             A tutorial and example on the basic configuration and usage of ManagedWindow.
 
+    :param procedure_class: procedure class describing the experiment (see
+        :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param x_axis: the initial data-column for the x-axis of the plot
+    :param y_axis: the initial data-column for the y-axis of the plot
+    :param linewidth: linewidth for the displayed curves, default is 1
+    :param \\**kwargs: optional keyword arguments that will be passed to
+        :class:`~pymeasure.display.windows.ManagedWindowBase`
+
     """
 
-    def __init__(self, procedure_class, inputs=(), displays=(), x_axis=None, y_axis=None,
-                 log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
-                 wdg_list=(), hide_groups=True):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
         self.x_axis = x_axis
         self.y_axis = y_axis
         self.log_widget = LogWidget("Experiment Log")
-        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis,
+                                      self.y_axis, linewidth=linewidth)
         self.plot_widget.setMinimumSize(100, 200)
-        super().__init__(
-            procedure_class=procedure_class,
-            widget_list=wdg_list+(self.plot_widget, self.log_widget),
-            inputs=inputs,
-            displays=displays,
-            parent=parent,
-            sequencer=sequencer,
-            sequencer_inputs=sequencer_inputs,
-            sequence_file=sequence_file,
-            inputs_in_scrollarea=inputs_in_scrollarea,
-            directory_input=directory_input,
-            hide_groups=hide_groups,
-        )
+
+        if "widget_list" not in kwargs:
+            kwargs["widget_list"] = ()
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.plot_widget, self.log_widget)
+
+        super().__init__(procedure_class, **kwargs)
 
         # Setup measured_quantities once we know x_axis and y_axis
         self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
-        log.setLevel(log_level)
+        log.setLevel(self.log_level)
         log.info("ManagedWindow connected to logging")
+
 
 class ManagedImageWindow(ManagedWindow):
     """
     Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
 
+    :param procedure_class: procedure class describing the experiment (see
+        :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param x_axis: the data-column for the x-axis of the plot, cannot be changed afterwards for
+        the image-plot
+    :param y_axis: the data-column for the y-axis of the plot, cannot be changed afterwards for
+        the image-plot
+    :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
+    :param \\**kwargs: optional keyword arguments that will be passed to
+        :class:`~pymeasure.display.windows.ManagedWindow`
+
     """
 
-    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, inputs=(), displays=(),
-                 log_channel='', log_level=logging.INFO, parent=None, sequencer=False,
-                 sequencer_inputs=None, sequence_file=None, inputs_in_scrollarea=False, directory_input=False,
-                 hide_groups=True):
+    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
         self.z_axis = z_axis
-        self.image_widget = ImageWidget("Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
-        wdg_list = (self.image_widget, )
-        super().__init__(
-            procedure_class = procedure_class,
-            inputs=inputs,
-            displays=displays,
-            x_axis=x_axis,
-            y_axis=y_axis,
-            log_channel=log_channel,
-            log_level=log_level,
-            parent=parent,
-            sequencer=sequencer,
-            sequencer_inputs=sequencer_inputs,
-            sequence_file=sequence_file,
-            inputs_in_scrollarea=inputs_in_scrollarea,
-            directory_input=directory_input,
-            wdg_list=wdg_list,
-            hide_groups=hide_groups,
-        )
+        self.image_widget = ImageWidget(
+            "Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
+
+        if "widget_list" not in kwargs:
+            kwargs["widget_list"] = ()
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget, )
+
+        super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)

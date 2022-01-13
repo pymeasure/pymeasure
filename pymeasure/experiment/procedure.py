@@ -24,6 +24,7 @@
 
 import logging
 import sys
+import inspect
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
 
@@ -48,7 +49,7 @@ class Procedure(object):
     Inheriting classes should define the startup, execute, and shutdown
     methods as needed. The shutdown method is called even with a
     software exception or abort event during the execute method.
-    
+
     If keyword arguments are provided, they are added to the object as
     attributes.
     """
@@ -57,7 +58,7 @@ class Procedure(object):
     MEASURE = {}
     FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
     STATUS_STRINGS = {
-        FINISHED: 'Finished', FAILED: 'Failed', 
+        FINISHED: 'Finished', FAILED: 'Failed',
         ABORTED: 'Aborted', QUEUED: 'Queued',
         RUNNING: 'Running'
     }
@@ -78,8 +79,7 @@ class Procedure(object):
         # TODO: Refactor measurable-s implementation to be consistent with parameters
 
         self.MEASURE = {}
-        for item in dir(self):
-            parameter = getattr(self, item)
+        for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Measurable):
                 if parameter.measure:
                     self.MEASURE.update({parameter.name: item})
@@ -98,13 +98,12 @@ class Procedure(object):
 
     def _update_parameters(self):
         """ Collects all the Parameter objects for the procedure and stores
-        them in a meta dictionary so that the actual values can be set in 
+        them in a meta dictionary so that the actual values can be set in
         their stead
         """
         if not self._parameters:
             self._parameters = {}
-        for item in dir(self):
-            parameter = getattr(self, item)
+        for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Parameter):
                 self._parameters[item] = deepcopy(parameter)
                 if parameter.is_set():

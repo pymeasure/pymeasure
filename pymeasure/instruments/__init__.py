@@ -32,7 +32,9 @@ from . import advantest
 from . import agilent
 from . import ametek
 from . import ami
+from . import anaheimautomation
 from . import anapico
+from . import andeenhagerling
 from . import anritsu
 from . import attocube
 from . import danfysik
@@ -53,4 +55,5 @@ from . import signalrecovery
 from . import srs
 from . import tektronix
 from . import thorlabs
+from . import toptica
 from . import yokogawa
