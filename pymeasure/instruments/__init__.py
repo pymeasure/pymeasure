@@ -48,6 +48,7 @@ from . import newport
 from . import ni
 from . import oxfordinstruments
 from . import parker
+from . import philips
 from . import razorbill
 from . import rohdeschwarz
 from . import signalrecovery
