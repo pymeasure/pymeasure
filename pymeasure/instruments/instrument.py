@@ -312,7 +312,7 @@ class Instrument(object):
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses.
 
-        Example of usage of dynamic parameter is as follow:
+        Example of usage of dynamic parameter is as follows:
 
         .. code-block:: python
 
