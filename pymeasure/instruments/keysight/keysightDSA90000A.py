@@ -485,6 +485,24 @@ class KeysightDSA90000A(Instrument):
             - "yreference": data point associated with yorigin (int)"""
         return self._waveform_preamble()
 
+    def get_waveform_subpart(self, start, size, format='word', byteorder='little'):
+        """
+        Function to grab only a subpart of the waveform acquired. Start is the integer of the starting point in the
+        record, size is the integer length of the record you want to get back. You will likely need to calculate
+        this from the xincrement as acquired from waveform_preamble. You can specify the format as "word" [default]
+        or "ascii". The default byteorder is little.
+        """
+
+        self.waveform_format = format
+        self.waveform_byteorder = byteorder
+        if not isinstance(start, int):
+            raise TypeError(f"start is of type {type(start)} not int")
+        if not isinstance(size, int):
+            raise TypeError(f"size is of type {type(size)} not int")
+        data = self.values(f"waveform:data? {start},{size}")
+
+        return data
+
     @property
     def waveform_data_ascii(self):
         """ Get the ascii block of sampled data points transmitted using the IEEE 488.2 arbitrary
