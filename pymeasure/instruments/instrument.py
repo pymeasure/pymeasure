@@ -60,11 +60,11 @@ class DynamicProperty(property):
                    parameters.
     """
 
-    def __init__(self, fget=None, fset=None, fdel=None, doc=None, fget_params_list=[],
-                 fset_params_list=[], prefix="" ):
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None, fget_params_list=None,
+                 fset_params_list=None, prefix="" ):
         super().__init__(fget, fset, fdel, doc)
-        self.fget_params_list = fget_params_list
-        self.fset_params_list = fset_params_list
+        self.fget_params_list = () if fget_params_list is None else fget_params_list
+        self.fset_params_list = () if fset_params_list is None else fset_params_list
         self.name = ""
         self.prefix = prefix
 
@@ -73,7 +73,7 @@ class DynamicProperty(property):
             # Property return itself when invoked from a class
             return self
         if self.fget is None:
-            raise AttributeError("Unreadable attribute")
+            raise AttributeError(f'Unreadable attribute {self.name}')
 
         kwargs = {}
         for attr in self.fget_params_list:
@@ -84,7 +84,7 @@ class DynamicProperty(property):
 
     def __set__(self, obj, value):
         if self.fset is None:
-            raise AttributeError("Can't set attribute")
+            raise AttributeError(f'Can\'t set attribute {self.name}')
         kwargs = {}
         for attr in self.fset_params_list:
             attr_instance_name = self.prefix + "_".join([self.name, attr])
@@ -170,18 +170,18 @@ class Instrument(object):
         """ Return list of class/instance special names
 
         Compute the list of special names based on the list of
-        class variable names defined as DynamicProperty. Check also for class variables
+        class attributes that are a DynamicProperty. Check also for class variables
         with special name and copy them at instance level
         Internal method, not intended to be accessed at user level."""
         special_names = []
         dynamic_params = tuple(set(self._fget_params_list + self._fset_params_list))
         # Check whether class variables of DynamicProperty type are present
-        for obj in [self] + self.__class__.mro():
-            for attr in obj.__dict__:
-                if isinstance(obj.__dict__[attr], DynamicProperty):
-                    special_names += [attr + "_" + key for key in dynamic_params]
+        for obj in (self,) + self.__class__.__mro__:
+            for attr_name, attr in obj.__dict__.items():
+                if isinstance(attr, DynamicProperty):
+                    special_names += [attr_name + "_" + key for key in dynamic_params]
         # Check if special variables are defined at class level
-        for obj in [self] + self.__class__.mro():
+        for obj in (self,) + self.__class__.__mro__:
             for attr in obj.__dict__:
                 if attr in special_names:
                     # Copy class special variable at instance level, prefixing reserved_prefix
@@ -190,7 +190,7 @@ class Instrument(object):
 
     def __setattr__(self, name, value):
         """ Add reserved_prefix in front of special variables """
-        if '_special_names' in self.__dict__:
+        if hasattr(self, '_special_names'):
             if name in self._special_names:
                 name = self.__reserved_prefix + name
         super().__setattr__(name, value)
@@ -200,7 +200,7 @@ class Instrument(object):
         support dynamic property behaviour """
         if name in ('_special_names', '__dict__'):
             return super().__getattribute__(name)
-        if '_special_names' in self.__dict__:
+        if hasattr(self, '_special_names'):
             if name in self._special_names:
                 raise AttributeError(
                     "{} is a reserved variable name and it cannot be read".format(name))
@@ -323,24 +323,25 @@ class Instrument(object):
                     validator=strict_range,
                     # Redefine this in subclasses to reflect actual instrument value:
                     values=(1, 20),
-                    dynamic=True  # declare property dynamic
+                    dynamic=True  # enable changing property parameters on-the-fly
                 )
 
             class SpecificInstrument(GenericInstrument):
                 # Identical to GenericInstrument, except for frequency range
+                # Override the "values" parameter of the "center_frequency" property
                 center_frequency_values = (1, 10) # Redefined at subclass level
 
             instrument = SpecificInstrument()
             instrument.center_frequency_values = (1, 6e9) # Redefined at instance level
 
-        .. warning:: Unexepected side effects when using dynamic properties
+        .. warning:: Unexpected side effects when using dynamic properties
 
         Users must pay attention when using dynamic properties, since definition of class and/or
         instance attributes matching specific patterns could have unwanted side effect.
         The attribute name pattern `property_param`, where `property` is the name of the dynamic
         property (e.g. `center_frequency` in the example) and `param` is any of this method
-        parameters name except `dynamic` (e.g. `values` in the example) has to be considered
-        reserved for dynamic property control.
+        parameters name except `dynamic` and `docs` (e.g. `values` in the example) has to be
+        considered reserved for dynamic property control.
         """
 
         def fget(self,
