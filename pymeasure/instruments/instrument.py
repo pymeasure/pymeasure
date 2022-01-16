@@ -273,7 +273,7 @@ class Instrument(object):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
     @staticmethod
-    def control(get_command,
+    def control(get_command,  # noqa: C901 accept that this is a complex method
                 set_command,
                 docs,
                 validator=lambda v, vs: v,
