@@ -45,7 +45,8 @@ def test_control_doc(dynamic):
             dynamic=dynamic
         )
 
-    assert Fake.x.__doc__ == doc
+    expected_doc = doc + "(dynamic)" if dynamic else doc
+    assert Fake.x.__doc__ == expected_doc
 
 
 @pytest.mark.parametrize("dynamic", [False, True])

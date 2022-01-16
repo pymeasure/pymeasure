@@ -73,7 +73,7 @@ class DynamicProperty(property):
             # Property return itself when invoked from a class
             return self
         if self.fget is None:
-            raise AttributeError(f'Unreadable attribute {self.name}')
+            raise AttributeError(f"Unreadable attribute {self.name}")
 
         kwargs = {}
         for attr in self.fget_params_list:
@@ -84,7 +84,7 @@ class DynamicProperty(property):
 
     def __set__(self, obj, value):
         if self.fset is None:
-            raise AttributeError(f'Can\'t set attribute {self.name}')
+            raise AttributeError(f"Can't set attribute {self.name}")
         kwargs = {}
         for attr in self.fset_params_list:
             attr_instance_name = self.prefix + "_".join([self.name, attr])
@@ -162,11 +162,11 @@ class Instrument(object):
         self.adapter = adapter
 
         self.isShutdown = False
-        self._special_names = self._compute_special_names()
+        self._special_names = self._setup_special_names()
 
         log.info("Initializing %s." % self.name)
 
-    def _compute_special_names(self):
+    def _setup_special_names(self):
         """ Return list of class/instance special names
 
         Compute the list of special names based on the list of
@@ -411,6 +411,7 @@ class Instrument(object):
         fget.__doc__ = docs
 
         if dynamic:
+            fget.__doc__ += "(dynamic)"
             return DynamicProperty(fget=fget, fset=fset,
                                    fget_params_list=Instrument._fget_params_list,
                                    fset_params_list=Instrument._fset_params_list,
