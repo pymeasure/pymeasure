@@ -1,0 +1,8 @@
+###########################################
+Andeen Hagerling AH2700A capacitance bridge
+###########################################
+
+.. autoclass:: pymeasure.instruments.andeenhagerling.AH2700A
+    :members:
+    :show-inheritance:
+    :inherited-members: Instrument
