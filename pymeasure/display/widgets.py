@@ -647,6 +647,7 @@ SAFE_FUNCTIONS = {
     'range': range,
     'sorted': sorted,
     'list': list,
+    'bool': bool,
     'arange': numpy.arange,
     'linspace': numpy.linspace,
     'arccos': numpy.arccos,
