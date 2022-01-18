@@ -61,7 +61,7 @@ class DynamicProperty(property):
     """
 
     def __init__(self, fget=None, fset=None, fdel=None, doc=None, fget_params_list=None,
-                 fset_params_list=None, prefix="" ):
+                 fset_params_list=None, prefix=""):
         super().__init__(fget, fset, fdel, doc)
         self.fget_params_list = () if fget_params_list is None else fget_params_list
         self.fset_params_list = () if fset_params_list is None else fset_params_list
