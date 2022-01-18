@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
+from numpy import bool_
 
 class Parameter(object):
     """ Encapsulates the information for an experiment parameter
@@ -180,6 +180,8 @@ class BooleanParameter(Parameter):
         elif isinstance(value, (int, float)) and value in [0, 1]:
             self._value = bool(value)
         elif isinstance(value, bool):
+            self._value = value
+        elif isinstance(value, bool_):
             self._value = value
         else:
             raise ValueError("BooleanParameter given non-boolean value of "
