@@ -9,5 +9,5 @@ recursive-include tests *
 recursive-include docs *
 prune docs/_build
 recursive-exclude * __pycache__
-recursive-exclude * *.pycinclude
+recursive-exclude * *.pyc
 include pymeasure/_version.py
