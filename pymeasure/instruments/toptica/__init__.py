@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2020 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hp3478A import HP3478A
-from .hp8116a import HP8116A
-from .hpD4000A import HPD4000A
+from .adapters import TopticaAdapter
+from .ibeamsmart import IBeamSmart

@@ -22,8 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hp3478A import HP3478A
-from .hp8116a import HP8116A
-from .hpD4000A import HPD4000A
+from .ah2500a import AH2500A
+from .ah2700a import AH2700A
