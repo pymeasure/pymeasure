@@ -1,0 +1,7 @@
+###########################################
+HP 8116A 50 MHz Pulse/Function Generator
+###########################################
+
+.. autoclass:: pymeasure.instruments.hp.HP8116A
+    :members:
+    :show-inheritance:

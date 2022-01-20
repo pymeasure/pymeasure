@@ -34,6 +34,7 @@ from . import ametek
 from . import ami
 from . import anaheimautomation
 from . import anapico
+from . import andeenhagerling
 from . import anritsu
 from . import attocube
 from . import danfysik
@@ -56,4 +57,5 @@ from . import srs
 from . import stmicroelectronics
 from . import tektronix
 from . import thorlabs
+from . import toptica
 from . import yokogawa
