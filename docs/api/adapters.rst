@@ -15,14 +15,14 @@ Adapter base class
     :undoc-members:
 
 ============
-Fake adapter
+VISA adapter
 ============
 
-.. autoclass:: pymeasure.adapters.FakeAdapter
+.. autoclass:: pymeasure.adapters.VISAAdapter
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:
 
 ==============
 Serial adapter
@@ -46,16 +46,6 @@ Prologix adapter
     :show-inheritance:
     :private-members: _format_binary_values
 
-============
-VISA adapter
-============
-
-.. autoclass:: pymeasure.adapters.VISAAdapter
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance: 
-
 ==============
 VXI-11 adapter
 ==============
@@ -71,6 +61,16 @@ Telnet adapter
 ==============
 
 .. autoclass:: pymeasure.adapters.TelnetAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+============
+Fake adapter
+============
+
+.. autoclass:: pymeasure.adapters.FakeAdapter
     :members:
     :undoc-members:
     :inherited-members:

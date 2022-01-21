@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter
 from time import sleep, time
 
 import logging
@@ -59,9 +58,9 @@ class AMI430(Instrument):
     """
 
     def __init__(self, resourceName, **kwargs):
-        adapter = VISAAdapter(resourceName, read_termination='\n')
+        kwargs.setdefault('read_termination', '\n')
         super(AMI430, self).__init__(
-            adapter,
+            resourceName,
             "AMI superconducting magnet power supply.",
             includeSCPI=True,
             **kwargs

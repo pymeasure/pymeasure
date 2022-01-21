@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,5 +46,6 @@ class HP34401A(Instrument):
         super(HP34401A, self).__init__(
             resourceName,
             "HP 34401A",
+            asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs
         )
