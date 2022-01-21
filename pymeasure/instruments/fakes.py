@@ -184,7 +184,7 @@ class SwissArmyFake(FakeInstrument):
         strict_discrete_set(form, allowed_formats)
         self._frame_format = form
 
-    @property 
+    @property
     def frame(self):
         """ Get a new image frame."""
         im_format_maxval_dict = {"8": 255, "16": 65535}
@@ -198,4 +198,3 @@ class SwissArmyFake(FakeInstrument):
 
     def __getitem__(self, keys):
         return keys
-
