@@ -164,31 +164,31 @@ class SwissArmyFake(FakeInstrument):
         time.sleep(self._wait)
         return self._h
 
-    @frame_height.setter 
+    @frame_height.setter
     def frame_height(self, h):
         time.sleep(self._wait)
         self._h = h
 
-    @property 
+    @property
     def frame_format(self):
         """ Format for image data returned from the get_frame() method. Allowed values are:
                 mono_8: single channel 8-bit image.
                 mono_16: single channel 16-bit image.
         """
-        time.sleep(self._wait) 
-        return self._frame_format 
+        time.sleep(self._wait)
+        return self._frame_format
 
-    @frame_format.setter 
+    @frame_format.setter
     def frame_format(self, form):
-        allowed_formats = ["mono_8", "mono_16"] 
-        strict_discrete_set(form, allowed_formats) 
+        allowed_formats = ["mono_8", "mono_16"]
+        strict_discrete_set(form, allowed_formats)
         self._frame_format = form
 
     @property 
     def frame(self):
         """ Get a new image frame."""
-        im_format_maxval_dict = {"8": 255, "16": 65535} 
-        im_format_type_dict = {"8": np.uint8, "16": np.uint16} 
+        im_format_maxval_dict = {"8": 255, "16": 65535}
+        im_format_type_dict = {"8": np.uint8, "16": np.uint16}
         bit_depth = self.frame_format.split("_")[1]
         time.sleep(self._wait)
         return np.array(
