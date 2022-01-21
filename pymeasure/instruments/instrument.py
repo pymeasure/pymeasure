@@ -354,5 +354,3 @@ class Instrument(object):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-
