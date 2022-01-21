@@ -31,7 +31,61 @@ import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
-BOOLS = {True: 1, False: 0}
+BOOLS = {True: 'ON', False: 'OFF'}
+
+class Channel():
+    """ Implementation of a Picoscope9400 Oscilloscope channel.
+    Implementation modeled on Channel object of Tektronix AFG3152C instrument. """
+
+    bwlimit = Instrument.control(
+        "Band?", "Band %s",
+        """ A string parameter that sets the bandwidth of the channel. Options are:
+        "full", "middle", "narrow""",
+        validator=strict_discrete_set,
+        values=['full', 'middle', 'narrow'],
+    )
+
+    display = Instrument.control(
+        "DISPlay?", "DISPlay %s",
+        """ A boolean parameter that toggles the display.""",
+        validator=strict_discrete_set,
+        values=BOOLS,
+        map_values=True
+    )
+
+    offset = Instrument.control(
+        "OFFSet?", "OFFSet %g",
+        """ A float parameter to set value that is represented at center of screen in 
+        Volts. From [-1,1]""",
+        validator=strict_range,
+        values=[-1,1]
+    )
+
+    scale = Instrument.control(
+        "SCALe?", "SCALe %g",
+        """ A float parameter that specifies the vertical scale V/div. From [0.01, .25]""",
+        validator=strict_range,
+        values = [0.01, 0.25]
+    )
+
+    def __init__(self, instrument, number):
+        self.instrument = instrument
+        self.number = number
+
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values("Ch%d:%s" % (
+            self.number, command), **kwargs)
+
+    def ask(self, command):
+        self.instrument.ask("Ch%d:%s" % (self.number, command))
+
+    def write(self, command):
+        self.instrument.write("Ch%d:%s" % (self.number, command))
+
+
 
 class Picoscope9400(Instrument):
     """ Represents the Picotech Picoscope 9400 series SRXTO Oscilloscope interface for interacting
@@ -54,13 +108,17 @@ class Picoscope9400(Instrument):
       to scope.
     """
 
-    BOOLS = {True: 'ON', False: 'OFF'}
+
 
     def __init__(self, adapter, **kwargs):
         super(Picoscope9400, self).__init__(
             adapter, "Picotech Picscope9400 SXRTO Oscilloscope", **kwargs
         )
         self.header = False
+        self.ch1 = Channel(self, 1)
+        self.ch2 = Channel(self, 2)
+        self.ch3 = Channel(self, 3)
+        self.ch4 = Channel(self, 4)
 
     header = Instrument.control(
         "Header?", "Header %s",
@@ -77,6 +135,7 @@ class Picoscope9400(Instrument):
     def autoscale(self):
         """ Autoscale displayed channels. """
         self.write("*Autoscale")
+
 
     ##################
     # Timebase Setup #
@@ -101,7 +160,7 @@ class Picoscope9400(Instrument):
     )
 
     timebase_secondary_priority = Instrument.control(
-        "TB:Secondary:Primary?", "TB:Secondary:Primary %s",
+        "TB:Priority:Secondary?", "TB:Priority:Secondary %s",
         """ A string parameter that sets the secondary priority of the timebase. Options are 
         "recordlength", "samplerate", or "horizontalscale". Set the primary priority with
          timebase_primary_priority""",
@@ -205,7 +264,7 @@ class Picoscope9400(Instrument):
     )
 
     trigger_type = Instrument.control(
-        "Tri:Analog:Style?", "Tri:Analog:Style %s",
+        "Trig:Analog:Style?", "Trig:Analog:Style %s",
         """ A string parameter that sets trigger type. Can be "edge", "divider", 
         "clkrecovery", "intclock", or "extprescal".
          """,
