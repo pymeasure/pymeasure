@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyMeasure'
-copyright = u'2013-2021, PyMeasure Developers'
+copyright = u'2013-2022, PyMeasure Developers'
 
 from pymeasure._version import get_versions
 __version__ = get_versions()['version']
