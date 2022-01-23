@@ -75,7 +75,7 @@ class LakeShore425(Instrument):
     )
 
     def __init__(self, port):
-        super(LakeShore425, self).__init__(
+        super().__init__(
             LakeShoreUSBAdapter(port),
             "LakeShore 425 Gaussmeter",
         )

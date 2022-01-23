@@ -68,7 +68,7 @@ class AdvantestR3767CG(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(AdvantestR3767CG, self).__init__(
+        super().__init__(
             resourceName,
             "Advantest R3767CG",
             **kwargs

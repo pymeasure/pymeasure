@@ -40,7 +40,7 @@ class AnritsuMS9740A(AnritsuMS9710C):
     def __init__(self, adapter, **kwargs):
         """Constructor."""
         self.analysis_mode = None
-        super(AnritsuMS9740A, self).__init__(
+        super().__init__(
             adapter, name="Anritsu MS9740A Optical Spectrum Analyzer", **kwargs)
 
     ####################################

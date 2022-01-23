@@ -34,7 +34,7 @@ log = logging.getLogger()
 log.addHandler(logging.NullHandler())
 
 
-class Procedure(object):
+class Procedure:
     """Provides the base class of a procedure to organize the experiment
     execution. Procedures should be run by Workers to ensure that
     asynchronous execution is properly managed.
@@ -71,7 +71,7 @@ class Procedure(object):
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
-                log.info('Setting parameter %s to %s' % (key, kwargs[key]))
+                log.info(f'Setting parameter {key} to {kwargs[key]}')
         self.gen_measurement()
 
     def gen_measurement(self):
@@ -127,7 +127,7 @@ class Procedure(object):
         for name, parameter in self._parameters.items():
             value = getattr(self, name)
             if value is None:
-                raise NameError("Missing %s '%s' in %s" % (
+                raise NameError("Missing {} '{}' in {}".format(
                     parameter.__class__, name, self.__class__))
 
     def parameter_values(self):
@@ -177,7 +177,7 @@ class Procedure(object):
                 setattr(self, name, self._parameters[name].value)
             else:
                 if except_missing:
-                    raise NameError("Parameter '%s' does not belong to '%s'" % (
+                    raise NameError("Parameter '{}' does not belong to '{}'".format(
                         name, repr(self)))
 
     def startup(self):
@@ -240,7 +240,7 @@ class UnknownProcedure(Procedure):
         raise NotImplementedError("UnknownProcedure can not be run")
 
 
-class ProcedureWrapper(object):
+class ProcedureWrapper:
 
     def __init__(self, procedure):
         self.procedure = procedure

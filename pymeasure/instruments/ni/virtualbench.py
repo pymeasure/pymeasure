@@ -49,7 +49,7 @@ except ModuleNotFoundError as err:
     log.info('Failed loading the pyvirtualbench package. '
              + 'Check the NI VirtualBench documentation on how to '
              + 'install this external dependency. '
-             + 'ImportError: {}'.format(err))
+             + f'ImportError: {err}')
     raise
 
 
@@ -143,7 +143,7 @@ class VirtualBench():
         :rtype: (int, float)
         """
         if not isinstance(timestamp, pyvb.Timestamp):
-            raise ValueError("{0} is not a VirtualBench Timestamp object"
+            raise ValueError("{} is not a VirtualBench Timestamp object"
                              .format(timestamp))
         return self.vb.convert_timestamp_to_values(timestamp)
 
@@ -186,7 +186,7 @@ class VirtualBench():
         :rtype: (str, int)
         """
         if not isinstance(names_in, str):
-            raise ValueError("{0} is not a string".format(names_in))
+            raise ValueError(f"{names_in} is not a string")
         return self.vb.collapse_channel_string(names_in)
 
     def expand_channel_string(self, names_in):
@@ -366,7 +366,7 @@ class VirtualBench():
 
             def error(lines=lines):
                 raise ValueError(
-                    "Line specification {0} is not valid!".format(lines))
+                    f"Line specification {lines} is not valid!")
 
             lines = self._vb_handle.expand_channel_string(lines)[0]
             lines = lines.split(', ')
@@ -411,7 +411,7 @@ class VirtualBench():
                 if validate_init is True:
                     if line not in self._line_numbers:
                         raise ValueError(
-                            "Digital Line {} is not initialized".format(line))
+                            f"Digital Line {line} is not initialized")
 
             # create comma separated channel string
             return_lines = ', '.join(return_lines)
@@ -478,8 +478,8 @@ class VirtualBench():
                     strict_discrete_set(value, [True, False])
             except Exception:
                 raise ValueError(
-                    "Data {} is not iterable (list or tuple).".format(data))
-            log.debug("{}: {} output {}.".format(self.name, lines, data))
+                    f"Data {data} is not iterable (list or tuple).")
+            log.debug(f"{self.name}: {lines} output {data}.")
             self.dio.write(lines, data)
 
         def read(self, lines):
@@ -928,7 +928,7 @@ class VirtualBench():
             """
             def error(channel=channel):
                 raise ValueError(
-                    "Channel specification {0} is not valid!".format(channel))
+                    f"Channel specification {channel} is not valid!")
             channels = self._vb_handle.expand_channel_string(channel)[0]
             channels = channels.split(', ')
             return_value = []
@@ -1448,7 +1448,7 @@ class VirtualBench():
         def outputs_enabled(self, enable_outputs):
             enable_outputs = strict_discrete_set(
                 enable_outputs, [True, False])
-            log.info("%s Output %s." % (self.name, enable_outputs))
+            log.info(f"{self.name} Output {enable_outputs}.")
             self.ps.enable_all_outputs(enable_outputs)
 
         @property

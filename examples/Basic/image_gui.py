@@ -75,7 +75,7 @@ class TestImageGUI(ManagedImageWindow):
     def __init__(self):
         # Note the new z axis. This can be changed in the GUI. the X and Y axes
         # must be the DATA_COLUMNS corresponding to our special parameters.
-        super(TestImageGUI, self).__init__(
+        super().__init__(
             procedure_class=TestImageProcedure,
             x_axis='X',
             y_axis='Y',
