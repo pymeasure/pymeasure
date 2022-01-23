@@ -117,20 +117,19 @@ class IPS120_10(Instrument):
                  field_range=None,
                  **kwargs):
 
+        kwargs.setdefault('read_termination', '\r')
         super().__init__(
             resourceName,
             "Oxford IPS",
             includeSCPI=False,
-            send_end=True,
-            read_termination="\r",
-            **kwargs
+            gpib={'send_end': True},
+            asrl={'baud_rate': 9600,
+                  'data_bits': 8,
+                  'parity': 0,
+                  'stop_bits': 20,
+                  },
+            **kwargs,
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 9600
-            self.adapter.connection.data_bits = 8
-            self.adapter.connection.parity = 0
-            self.adapter.connection.stop_bits = 20
 
         if switch_heater_heating_delay is not None:
             self._SWITCH_HEATER_HEATING_DELAY = switch_heater_heating_delay
