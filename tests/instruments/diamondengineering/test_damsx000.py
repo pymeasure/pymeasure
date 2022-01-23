@@ -97,4 +97,4 @@ class TestDAMSx000:
         dams.elevation_rel(30)
         dams.azimuth_rel(30)
         dams.set_zero_position()
-        dams.elevation_angle
+        dams.elevation
