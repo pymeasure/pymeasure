@@ -592,20 +592,27 @@ Using a combination of the decribed abilities also complex communication schemes
 Dynamic properties
 ===================
 
-As described in previous sections, python properties
-are a very powerful tool to easily code instrument's programming  interface.
+As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
+One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
+This feature allows accomodating some interesting use cases with a very compact syntax.
 
-One very interesting feature provided in PyMeasure is also the ability to change properties behaviour in subclasses or dynamically in instances.
+Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
 
-This feature allows coding some interesting use cases with a very compact syntax.
+Afterwards, creating specifically-named attributes (either in class definitions or on instances) allows modifying the parameters used at the time of property definition.
+You need to define an attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value.
+Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
 
-Dynamic properties are declared by setting the :code:`dynamic` parameter to :code:`True`.
+.. note::
+   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read. 
+
+The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+
+Let us now consider a couple of common use cases for this functionality:
 
 Dynamic validity range
 **********************
-Let's assume we have an instrument with command that accept a different valid ranges of values according to its current state.
-
-Code below shows how this can be coded with dynamic properties.
+Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
+The code below shows how this can be accomplished with dynamic properties.
 
 .. testcode::
   
@@ -617,83 +624,72 @@ Code below shows how this can be coded with dynamic properties.
         values=[-1, 1],
         dynamic = True,
     )
-    def set_bipolar_mode(self, enable = True):
-        # Procedure to safely switch to
-        # bipolar/unipolar mode
+    def set_bipolar_mode(self, enabled = True):
+        """Safely switch between bipolar/unipolar mode."""
 
-        # switch off supply
-        #
-        # some code here to implement switch off sequence...
-        #
+        # some code to switch off the output first
+        # ...
 
-        # enable bipolar mode
-        if enable:
+        if enabled:
             self.mode = "BIPOLAR"
-        
-            # set valid range
+            # set valid range of "voltage" property
             self.voltage_values = [-1, 1]
         else:
             self.mode = "UNIPOLAR"
-        
-            # set valid range
+            # note the "propertyname_parametername" form of the attribute
             self.voltage_values = [0, 1]
 
 
-Now our voltage property has a dynamic validity range either [-1, 1] or [0, 1].
-
-It is worth to pay attention on how this is achieved and limitations imposed. The user needs to define an instance attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value. User should pay attention to define inadvertently class attribute or instance attribute names matching the pattern `<property name>_<property_parameter>` since they could, unintentinally, modify the property behaviour.
-
-In the example above, the property name was :code:`voltage` and the parameter name was :code:`values`, the same mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs`.
-
-See also :class:`Instrument <pymeasure.instruments.instrument.Instrument>`
+Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
+In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
 
 Family of instruments with similar features
 *******************************************
 
-A common case is to have a family of similar instruments with some parameter range different for each family member, in this case  you would update the specific class parameter range without rewriting the entire property.
-
-A code example follows:
+A common case is to have a family of similar instruments with some parameter range different for each family member.
+In this case you would update the specific class parameter range without rewriting the entire property:
 
 .. testcode::
 
     class FictionalInstrumentFamily(Instrument):
-        frequency = Instrument.setting("FREQ %g",
-                                       """ Command doc tests goes here
-                                       """,
-                                       validator=strict_range,
-                                       values=[0, 1e9],
-                                       # list of other possible parameters
-				       )
+        frequency = Instrument.setting(
+            "FREQ %g",
+            """ Command docstring""",
+            validator=strict_range,
+            values=[0, 1e9],
+            # ... other possible parameters follow
+        )
         #
-        # complete class impementation here
+        # ... complete class implementation here
         #
 
     class FictionalInstrument_1GHz(FictionalInstrumentFamily):
         pass
+
     class FictionalInstrument_3GHz(FictionalInstrumentFamily):
         frequency_values = [0, 3e9]
 
     class FictionalInstrument_9GHz(FictionalInstrumentFamily):
-        frequency_values = [0, 6e9]
+        frequency_values = [0, 9e9]
 
-
-Notice, how easily you can define the different family members from a common class and the fact that the attribute is now defined at class level and not at instance level.
+Notice how easily you can derive the different family members from a common class, and the fact that the attribute is now defined at class level and not at instance level.
 
 Compatibility of instruments with similar features
 **************************************************
 
-Another use case involves maitaining compatibility between instruments with commands having different syntax.
+Another use case involves maintaining compatibility between instruments with commands having different syntax.
 
 .. code-block:: python
 
     class MultimeterA(Instrument):
         voltage = Instrument.measurement(get_command="VOLT?",...)
-        #
-        # full class definition code here
+
+        # ...full class definition code here
 
     class MultimeterB(MultimeterA):
-        # Same as brand A multimeter, but the command to read voltage slightly different
-         voltage_get_command = "VOLTAGE?"
+        # Same as brand A multimeter, but the command to read voltage 
+        # is slightly different
+        voltage_get_command = "VOLTAGE?"
 
-In the above example, *MultimeterA* and *MultimeterB* use a different command to read the voltage, but they are identical for the rest, so *MultimeterB*
-can be defined subclassing *MultimeterA* and just amending the difference.
+In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a different command to read the voltage, but the rest of the behaviour is identical.
+:code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
