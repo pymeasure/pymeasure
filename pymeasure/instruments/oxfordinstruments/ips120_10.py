@@ -169,28 +169,32 @@ class IPS120_10(Instrument):
         "R1",
         """ A floating point property that returns the measured magnet current of
         the IPS in amps. """,
-        get_process=lambda v: float(v[1:]) * 1e-2,
+        get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     demand_current = Instrument.measurement(
         "R0",
         """ A floating point property that returns the demand magnet current of
         the IPS in amps. """,
-        get_process=lambda v: float(v[1:]) * 1e-2,
+        get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     demand_field = Instrument.measurement(
         "R7",
         """ A floating point property that returns the demand magnetic field of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[1:]) * 1e-2,
+        get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     persistent_field = Instrument.measurement(
         "R18",
         """ A floating point property that returns the persistent magnetic field of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[1:]) * 1e-2,
+        get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     switch_heater_status = Instrument.control(
@@ -248,31 +252,31 @@ class IPS120_10(Instrument):
         self.switch_heater_status = status_value
 
     current_setpoint = Instrument.control(
-        "R0", "$I%d",
+        "R0", "$I%f",
         """ A floating point property that controls the magnet current set-point of
         the IPS in ampere. """,
-        get_process=lambda v: float(v[1:]) * 1e-2,
-        set_process=lambda v: int(v * 1e2),
+        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
-        values=[0, _MAX_CURRENT]
+        values=[0, _MAX_CURRENT],
+        dynamic=True,
     )
 
     field_setpoint = Instrument.control(
-        "R8", "$J%d",
+        "R8", "$J%f",
         """ A floating point property that controls the magnetic field set-point of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[1:]) * 1e-2,
-        set_process=lambda v: int(v * 1e2),
+        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=_FIELD_RANGE,
+        dynamic=True,
     )
 
     sweep_rate = Instrument.control(
-        "R9", "$T%d",
+        "R9", "$T%f",
         """ A floating point property that controls the sweep-rate of
         the IPS in Tesla/minute. """,
-        get_process=lambda v: float(v[1:]) * 1e-2,
-        set_process=lambda v: int(v * 1e2),
+        get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     activity = Instrument.control(
