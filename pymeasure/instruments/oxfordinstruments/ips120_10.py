@@ -25,12 +25,10 @@
 
 import logging
 from time import sleep, time
-import numpy
 
 from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_range, strict_range
+from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import truncated_range
 
 
 # Setup logging
