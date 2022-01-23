@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Sound_Channel(object):
+class Sound_Channel:
     """
     Class object for the two sound channels
 
@@ -203,7 +203,7 @@ class SFM(Instrument):
     """
 
     def __init__(self, resourceName, **kwargs):
-        super(SFM, self).__init__(
+        super().__init__(
             resourceName,
             "Rohde&Schwarz SFM",
             includeSCPI=True,
