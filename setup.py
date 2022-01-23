@@ -25,9 +25,13 @@
 
 from setuptools import setup, find_packages
 
+import versioneer
+
 setup(
     name='PyMeasure',
-    version='0.9.0',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
+#    version='0.9.0',
     author='PyMeasure Developers',
     packages=find_packages(),
     scripts=[],
