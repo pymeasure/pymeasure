@@ -37,9 +37,11 @@ def PS_custom_set_process(v):
 
 class PS120_10(IPS120_10):
     """Represents the Oxford Superconducting Magnet Power Supply PS 120-10.
-    This device differs from the IPS 120-10 in only minor ways, e.g. it does
-        only allow ints as input numbers, compared to floats
 
+    This device is derived from the IPS 120-10. The PS differs from the IPS in only minor ways, e.g. it does
+        only allow ints as input numbers, compared to floats in case of the IPS.
+        Therefore, all the functionality for the PS is the same as for the IPS,
+        only the communication under the hood differs slightly.
 
     .. code-block:: python
 
