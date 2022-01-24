@@ -698,7 +698,7 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 Naming derived instruments
 **************************
 
-When deriving an instrument from an existing implementation, you might want to give separate names to any derived instrument. The suggested scheme for this is the following: 
+When deriving an instrument from an existing implementation, you might want to give separate names to any derived instrument. Two possible schemes for this are the following: 
 
 .. code-block:: python
     class BaseClass:
