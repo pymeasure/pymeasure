@@ -96,7 +96,7 @@ class DynamicProperty(property):
         self.name = name
 
 
-class Instrument(object):
+class Instrument:
     """ The base class for all Instrument definitions.
 
     It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
@@ -203,7 +203,7 @@ class Instrument(object):
         if hasattr(self, '_special_names'):
             if name in self._special_names:
                 raise AttributeError(
-                    "{} is a reserved variable name and it cannot be read".format(name))
+                    f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
 
     @property
@@ -367,7 +367,7 @@ class Instrument(object):
                     for k, v in values.items():
                         if v == value:
                             return k
-                    raise KeyError("Value {} not found in mapped values".format(value))
+                    raise KeyError(f"Value {value} not found in mapped values")
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
@@ -519,7 +519,7 @@ class Instrument(object):
             while True:
                 err = self.values("SYST:ERR?")
                 if int(err[0]) != 0:
-                    log.error("{}: {}, {}".format(self.name, err[0], err[1]))
+                    log.error(f"{self.name}: {err[0]}, {err[1]}")
                     errors.append(err)
                 else:
                     break

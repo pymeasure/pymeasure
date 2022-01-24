@@ -149,7 +149,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=RandomProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],
@@ -254,7 +254,7 @@ In order to implement the sequencer into the previous example, only the :class:`
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=TestProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],
@@ -304,7 +304,7 @@ An example of such a sequence file is given below, resulting in the sequence sho
 
 .. literalinclude:: gui_sequencer_example_sequence.txt
 
-This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super(MainWindow, self).__init__` call, as was done in the example.
+This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super().__init__` call, as was done in the example.
 
 Using the directory input
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -319,7 +319,7 @@ Only the MainWindow needs to be modified in order to use this option (modified l
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=TestProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],

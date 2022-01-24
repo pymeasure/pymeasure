@@ -60,7 +60,7 @@ class HP8116A(Instrument):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
         kwargs.setdefault('send_end', True)
-        super(HP8116A, self).__init__(
+        super().__init__(
             resourceName,
             'Hewlett-Packard 8116A',
             includeSCPI=False,

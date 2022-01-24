@@ -96,7 +96,7 @@ class KeysightN5767A(Instrument):
         return bool(self._status)
 
     def __init__(self, adapter, **kwargs):
-        super(KeysightN5767A, self).__init__(
+        super().__init__(
             adapter, "Keysight N5767A power supply", **kwargs
         )
         # Set up data transfer format
