@@ -81,6 +81,17 @@ class PS120_10(IPS120_10):
 
     """
 
+    def __init__(self,
+                 adapter,
+                 name="Oxford PS",
+                 **kwargs):
+
+        super().__init__(
+            adapter=adapter,
+            name=name,
+            **kwargs,
+        )
+
     current_measured_get_process = PS_custom_get_process
 
     demand_current_get_process = PS_custom_get_process
