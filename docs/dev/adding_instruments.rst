@@ -693,3 +693,29 @@ Another use case involves maintaining compatibility between instruments with com
 
 In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a different command to read the voltage, but the rest of the behaviour is identical.
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
+
+
+Naming derived instruments
+**************************
+
+When deriving an instrument from an existing implementation, you might want to give separate names to any derived instrument. The suggested scheme for this is the following: 
+
+.. code-block:: python
+    class BaseClass:
+        def __init__(self, adapter, name=None, **kwargs):
+            #...
+            super().__init__(
+                adapter,
+                name or "Base instrument name",
+                **kwargs,
+            )
+
+    class DerivedClass(BaseClass):
+        # or do the name handling like this
+        def __init__(self, adapter, name="Derived instrument name", **kwargs):
+            #...
+            super().__init__(
+                adapter,
+                name=name,
+                **kwargs,
+            )
