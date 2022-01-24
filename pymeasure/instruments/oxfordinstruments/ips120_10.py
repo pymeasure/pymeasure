@@ -110,7 +110,7 @@ class IPS120_10(Instrument):
 
     def __init__(self,
                  adapter,
-                 name=None,
+                 name="Oxford IPS",
                  clear_buffer=True,
                  switch_heater_heating_delay=None,
                  switch_heater_cooling_delay=None,
@@ -120,7 +120,7 @@ class IPS120_10(Instrument):
         kwargs.setdefault('read_termination', '\r')
         super().__init__(
             adapter=adapter,
-            name=name or "Oxford IPS",
+            name=name,
             includeSCPI=False,
             gpib={'send_end': True},
             asrl={'baud_rate': 9600,
