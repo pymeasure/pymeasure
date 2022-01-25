@@ -43,37 +43,6 @@ class Channel():
 
     BOOLS = {True: 1, False: 0}
 
-    bwlimit = Instrument.control(
-        "ISIM:BANDwidth?", "ISIM:BANDwidth %g",
-        """ A float parameter that sets a custom bandwidth (cutoff frequency). Must be enable
-        or disabled by setting the enable_bwlimit parameter.
-        Can be anywhere from 1e3 to sample rate/2. Currently implemented as [1e9,50e9].""",
-        validator=strict_range,
-        values=[1e3,50e9],
-    )
-
-    enable_bwlimit = Instrument.control(
-        "ISIM:BWLimit?", "ISIM:BWLimit %d",
-        """ A boolean parameter that enables or disables the bw cutoff specified by 
-        bwlimit.""",
-        validator=strict_discrete_set,
-        values=BOOLS,
-        map_values=True
-    )
-
-    bwlimit_type = Instrument.control(
-        "ISIM:BWLimit:TYPE?", "ISIM:BWLimit:TYPE %s",
-        """ A string parameter that specifies the type of filter that implements the 
-        bandwidth limit specified in bwlimit and enabled by enable_bwlimit. Options are:
-        'WALL': Specifies a Brick-Wall response filter. Sharp roll-off
-        'BESSEL4': Specifies a 4-th order Bessel filter. More gradual roll off.
-        'BANDPASS': This option is for use with the Phase Noise analysis application [not
-        implemented in this driver]. Included for completeness.""",
-        validator=strict_discrete_set,
-        values=['WALL', 'BESSEL4', 'BANDPASS']
-    )
-
-
     display = Instrument.control(
         "DISPlay?", "DISPlay %d",
         """ A boolean parameter that toggles the display.""",
