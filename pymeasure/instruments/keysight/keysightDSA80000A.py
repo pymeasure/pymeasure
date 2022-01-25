@@ -344,6 +344,12 @@ class KeysightDSA80000A(Instrument):
         12e9, 10e9, 8e9, 6e9, 4e9, 3e9, 2.5e9, 2e9, 1e9"""
     )
 
+    acquisition_srate = Instrument.control(
+        ":ACQuire:SRATe?", "ACQuire:SRATe %s",
+        """A mixed parameter that sets the acquisition sample rate. Can be 'AUTO', 'MAX',
+        or a very specific set of real numbers according to you model."""
+    )
+
     acquisition_done = Instrument.measurement(
         ":ADER?",
         """Returns the acquisition state of the oscilloscope. If done, will return a one, else 0."""
