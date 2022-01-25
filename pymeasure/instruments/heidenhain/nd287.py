@@ -43,8 +43,8 @@ class ND287(Instrument):
     def __init__(self, resourceName, units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
 
-        :param: units: Specify the units that the gauge is working in. Valid values are "inch" and "mm" with "mm" being
-                       the default.
+        :param: units: Specify the units that the gauge is working in. 
+        Valid values are "inch" and "mm" with "mm" being the default.
         """
 
         self._units = units
@@ -59,8 +59,10 @@ class ND287(Instrument):
 
     @property
     def position(self):
-        """Float property representing the encoder's current position. This property has been implemented manually
-           rather than using :meth:`Instrument.measurement` so that the instance attribute _units can be queried.
+        """Float property representing the encoder's current position. 
+            This property has been implemented manually rather than using 
+            :meth:`Instrument.measurement` so that the instance attribute 
+            _units can be queried.
         """
         pos_map = {"mm": 1e-4, "inch": 1e-5}
         pos = self.values("\x1BA0200")[0]
@@ -76,10 +78,11 @@ class ND287(Instrument):
 
     @property
     def units(self):
-        """ String property representing the unit of measure set on the device. Valid values are 'mm' and 'inch' Note
-            that this parameter can only be set manually on the device. So this argument is only to ensure that the
-            instance units and physical device settings match. I.e., this property does not change any physical device
-            setting.
+        """ String property representing the unit of measure set on the device. 
+            Valid values are 'mm' and 'inch' Note that this parameter can only be set 
+            manually on the device. So this argument only ensures that the instance units 
+            and physical device settings match. I.e., this property does not change any 
+            physical device setting.
         """
         return self._units
     
@@ -104,4 +107,3 @@ class ND287(Instrument):
             log.error("Heidenhain ND287 error message received: %s" % err_str)
 
         return err_str
-
