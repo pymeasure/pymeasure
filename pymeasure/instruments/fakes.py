@@ -195,6 +195,3 @@ class SwissArmyFake(FakeInstrument):
             im_format_maxval_dict[bit_depth] * np.random.rand(self.frame_height, self.frame_width),
             dtype=im_format_type_dict[bit_depth]
         )
-
-    def __getitem__(self, keys):
-        return keys
