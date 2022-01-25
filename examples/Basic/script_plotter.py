@@ -1,5 +1,5 @@
 """
-This example demonstrates how to make a command line interface with a 
+This example demonstrates how to make a command line interface with a
 live-plotting interface, and uses a random number generator to simulate
 data so that it does not require an instrument to use.
 
@@ -13,14 +13,14 @@ import random
 import tempfile
 from time import sleep
 
+from pymeasure.log import console_log
+from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+from pymeasure.experiment import Results, Worker
+from pymeasure.display import Plotter
+
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, Worker, unique_filename
-from pymeasure.display import Plotter
 
 
 class TestProcedure(Procedure):
@@ -44,7 +44,7 @@ class TestProcedure(Procedure):
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
-            self.emit('progress', 100.*i/self.iterations)
+            self.emit('progress', 100. * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -55,7 +55,7 @@ class TestProcedure(Procedure):
 
 
 if __name__ == "__main__":
-    
+
     scribe = console_log(log, level=logging.DEBUG)
     scribe.start()
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     worker.start()
 
     log.info("Joining with the worker in at most 20 min")
-    worker.join(60*20)
+    worker.join(60 * 20)
     log.info("Waiting for Plotter to close")
     plotter.wait_for_close()
     log.info("Plotter closed")

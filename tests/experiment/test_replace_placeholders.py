@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 
 import pytest
 
-import os
 from datetime import datetime
 
 from pymeasure.experiment.results import replace_placeholders
@@ -48,7 +47,8 @@ def test_replace_placeholders():
     assert replace_placeholders("{String Parameter}", fake) == "test"
     assert replace_placeholders("{Boolean Parameter}", fake) == "False"
     assert replace_placeholders("{Float Parameter:.2f}", fake) == "1.25"
-    assert replace_placeholders("{String Parameter}_{Float Parameter}_{Boolean Parameter}", fake) == "test_1.252_False"
+    assert replace_placeholders(
+        "{String Parameter}_{Float Parameter}_{Boolean Parameter}", fake) == "test_1.252_False"
 
     with pytest.raises(KeyError):
         replace_placeholders("{Unknown Parameter}", fake)
@@ -58,5 +58,6 @@ def test_replace_placeholders():
     now = datetime.now()
     date = now.strftime(date_format)
     time = now.strftime(time_format)
-    assert replace_placeholders("{date}--{time}", fake,
-                                date_format=date_format, time_format=time_format) == date + '--' + time
+    assert replace_placeholders(
+        "{date}--{time}", fake, date_format=date_format, time_format=time_format
+    ) == date + '--' + time

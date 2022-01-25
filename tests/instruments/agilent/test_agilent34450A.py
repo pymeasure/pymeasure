@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -86,9 +86,10 @@ class TestAgilent34450A:
 
     def test_dmm_initialization_bad(self):
         bad_resource = "USB0::10893::45848::MY12345678::0::INSTR"
-        # The pure python VISA library (pyvisa-py) raises a ValueError while the PyVISA library raises a VisaIOError.
+        # The pure python VISA library (pyvisa-py) raises a ValueError while the
+        # PyVISA library raises a VisaIOError.
         with pytest.raises((ValueError, VisaIOError)):
-            dmm = Agilent34450A(bad_resource)
+            _ = Agilent34450A(bad_resource)
 
     def test_reset(self, make_reseted_dmm):
         dmm = make_reseted_dmm

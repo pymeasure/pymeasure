@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,9 @@ import numpy as np
 from copy import copy
 
 
-class Adapter(object):
-    """ Base class for Adapter child classes, which adapt between the Instrument 
-    object and the connection, to allow flexible use of different connection 
+class Adapter:
+    """ Base class for Adapter child classes, which adapt between the Instrument
+    object and the connection, to allow flexible use of different connection
     techniques.
 
     This class should only be inherited from.
@@ -37,6 +37,7 @@ class Adapter(object):
         received from the instrument. The callable returns the processed string.
     :param kwargs: all other keyword arguments are ignored.
     """
+
     def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
         self.connection = None
@@ -54,7 +55,7 @@ class Adapter(object):
         raise NameError("Adapter (sub)class has not implemented writing")
 
     def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting 
+        """ Writes the command to the instrument and returns the resulting
         ASCII response
 
         :param command: SCPI command string to be sent to the instrument
@@ -73,7 +74,7 @@ class Adapter(object):
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
         """ Writes a command to the instrument and returns a list of formatted
-        values from the result 
+        values from the result
 
         :param command: SCPI command to be sent to the instrument
         :param separator: A separator character to split the string into a list
@@ -103,7 +104,7 @@ class Adapter(object):
         return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
+        """ Returns a numpy array from a query for binary data
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
@@ -116,7 +117,7 @@ class Adapter(object):
 
 class FakeAdapter(Adapter):
     """Provides a fake adapter for debugging purposes,
-    which bounces back the command so that arbitrary values 
+    which bounces back the command so that arbitrary values
     testing is possible.
 
     .. code-block:: python

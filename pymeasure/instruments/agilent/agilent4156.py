@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import time
+import os
+import json
+
+import numpy as np
+import pandas as pd
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import (strict_discrete_set,
+                                              truncated_discrete_set,
+                                              strict_range)
 
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.instruments import (Instrument,
-                                   RangeException)
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_discrete_set,
-                                              strict_range)
-import numpy as np
-import time
-import pandas as pd
-import os
-import json
 
 ######
 # MAIN
@@ -51,7 +51,8 @@ class Agilent4156(Instrument):
         from pymeasure.instruments.agilent import Agilent4156
 
         # explicitly define r/w terminations; set sufficiently large timeout or None.
-        smu = Agilent4156("GPIB0::25", read_termination = '\\n', write_termination = '\\n', timeout=None)
+        smu = Agilent4156("GPIB0::25", read_termination = '\\n', write_termination = '\\n',
+                          timeout=None)
 
         # reset the instrument
         smu.reset()
@@ -68,7 +69,10 @@ class Agilent4156(Instrument):
         # measured data is a pandas dataframe and can be exported to csv.
         data = smu.get_data(path='./t1.csv')
 
-    The JSON file is an ascii text configuration file that defines the settings of each channel on the instrument. The JSON file is used to configure the instrument using the convenience function :meth:`~.Agilent4156.configure` as shown in the example above. For example, the instrument setup for a bipolar transistor measurement is shown below.
+    The JSON file is an ascii text configuration file that defines the settings of each channel
+    on the instrument. The JSON file is used to configure the instrument using the convenience
+    function :meth:`~.Agilent4156.configure` as shown in the example above. For example, the
+    instrument setup for a bipolar transistor measurement is shown below.
 
     .. code-block:: json
 
@@ -148,7 +152,7 @@ class Agilent4156(Instrument):
     analyzer_mode = Instrument.control(
         ":PAGE:CHAN:MODE?", ":PAGE:CHAN:MODE %s",
         """ A string property that controls the instrument operating mode.
-        
+
         - Values: :code:`SWEEP`, :code:`SAMPLING`
 
         .. code-block:: python
@@ -165,7 +169,7 @@ class Agilent4156(Instrument):
     integration_time = Instrument.control(
         ":PAGE:MEAS:MSET:ITIM?", ":PAGE:MEAS:MSET:ITIM %s",
         """ A string property that controls the integration time.
-        
+
         - Values: :code:`SHORT`, :code:`MEDIUM`, :code:`LONG`
 
         .. code-block:: python
@@ -223,8 +227,10 @@ class Agilent4156(Instrument):
         Performs a single measurement and waits for completion in sweep mode.
         In sampling mode, the measurement period and number of points can be specified.
 
-        :param period: Period of sampling measurement from 6E-6 to 1E11 seconds. Default setting is :code:`INF`.
-        :param points: Number of samples to be measured, from 1 to 10001. Default setting is :code:`100`.
+        :param period: Period of sampling measurement from 6E-6 to 1E11 seconds.
+            Default setting is :code:`INF`.
+        :param points: Number of samples to be measured, from 1 to 10001.
+            Default setting is :code:`100`.
 
         .. code-block::python
 
@@ -235,8 +241,8 @@ class Agilent4156(Instrument):
             self.write(":PAGE:SCON:MEAS:SING; *OPC?")
 
         else:
-            self.write(":PAGE:MEAS:SAMP:PER {}".format(period))
-            self.write(":PAGE:MEAS:SAMP:POIN {}".format(points))
+            self.write(f":PAGE:MEAS:SAMP:PER {period}")
+            self.write(f":PAGE:MEAS:SAMP:POIN {points}")
             self.write(":PAGE:SCON:MEAS:SING; *OPC?")
 
     def disable_all(self):
@@ -260,9 +266,11 @@ class Agilent4156(Instrument):
         time.sleep(0.1)
 
     def configure(self, config_file):
-        """ Convenience function to configure the channel setup and sweep using a `JSON (JavaScript Object Notation)`_ configuration file.
+        """ Configure the channel setup and sweep using a JSON configuration file.
 
-        .. _`JSON (JaVaScript Object Notation)`: https://www.json.org/
+        (JSON is the `JavaScript Object Notation`_)
+
+        .. _`JavaScript Object Notation`: https://www.json.org/
 
         :param config_file: JSON file to configure instrument channels.
 
@@ -283,7 +291,7 @@ class Agilent4156(Instrument):
                     'VAR2': self.var2,
                     'VARD': self.vard
                     }
-        with open(config_file, 'r') as stream:
+        with open(config_file) as stream:
             try:
                 instr_settings = json.load(stream)
             except json.JSONDecodeError as e:
@@ -302,7 +310,9 @@ class Agilent4156(Instrument):
     def save(self, trace_list):
         """ Save the voltage or current in the instrument display list
 
-        :param trace_list: A list of channel variables whose measured data should be saved. A maximum of 8 variables are allowed. If only one variable is being saved, a string can be specified.
+        :param trace_list: A list of channel variables whose measured data should be saved.
+            A maximum of 8 variables are allowed. If only one variable is being saved, a string
+            can be specified.
 
         .. code-block:: python
 
@@ -311,15 +321,13 @@ class Agilent4156(Instrument):
         """
         self.write(":PAGE:DISP:MODE LIST")
         if isinstance(trace_list, list):
-            try:
-                len(trace_list) > 8
-            except:
+            if len(trace_list) > 8:
                 raise RuntimeError('Maximum of 8 variables allowed')
             else:
                 for name in trace_list:
-                    self.write(":PAGE:DISP:LIST \'{}\'".format(name))
+                    self.write(f":PAGE:DISP:LIST \'{name}\'")
         elif isinstance(trace_list, str):
-            self.write(":PAGE:DISP:LIST \'{}\'".format(trace_list))
+            self.write(f":PAGE:DISP:LIST \'{trace_list}\'")
         else:
             raise TypeError(
                 'Must be a string if only one variable is saved, or else a list if'
@@ -327,9 +335,14 @@ class Agilent4156(Instrument):
             )
 
     def save_var(self, trace_list):
-        """ Save the voltage or current in the instrument variable list. This is useful if one or two more variables need to be saved in addition to the 8 variables allowed by :meth:`~.Agilent4156.save`.
+        """ Save the voltage or current in the instrument variable list.
 
-        :param trace_list: A list of channel variables whose measured data should be saved. A maximum of 2 variables are allowed. If only one variable is being saved, a string can be specified.
+        This is useful if one or two more variables need to be saved in addition to the 8
+        variables allowed by :meth:`~.Agilent4156.save`.
+
+        :param trace_list: A list of channel variables whose measured   data should be saved.
+            A maximum of 2 variables are allowed. If only one variable is being saved, a string
+            can be specified.
 
         .. code-block:: python
 
@@ -337,15 +350,13 @@ class Agilent4156(Instrument):
         """
         self.write(":PAGE:DISP:MODE LIST")
         if isinstance(trace_list, list):
-            try:
-                len(trace_list) > 2
-            except:
+            if len(trace_list) > 2:
                 raise RuntimeError('Maximum of 2 variables allowed')
             else:
                 for name in trace_list:
-                    self.write(":PAGE:DISP:DVAR \'{}\'".format(name))
+                    self.write(f":PAGE:DISP:DVAR \'{name}\'")
         elif isinstance(trace_list, str):
-            self.write(":PAGE:DISP:DVAR \'{}\'".format(trace_list))
+            self.write(f":PAGE:DISP:DVAR \'{trace_list}\'")
         else:
             raise TypeError(
                 'Must be a string if only one variable is saved, or else a list if'
@@ -355,8 +366,11 @@ class Agilent4156(Instrument):
     @property
     def data_variables(self):
         """
-        Gets a string list of data variables for which measured data
-        is available. This looks for all the variables saved by the :meth:`~.Agilent4156.save` and :meth:`~.Agilent4156.save_var` methods and returns it. This is useful for creation of dataframe headers.
+        Get a string list of data variables for which measured data is available.
+
+        This looks for all the variables saved by the :meth:`~.Agilent4156.save` and
+        :meth:`~.Agilent4156.save_var` methods and returns it. This is useful for creation
+        of dataframe headers.
 
         :returns: List
 
@@ -371,7 +385,11 @@ class Agilent4156(Instrument):
 
     def get_data(self, path=None):
         """
-        Gets the measurement data from the instrument after completion. If the measurement period is set to :code:`INF` in the :meth:`~.Agilent4156.measure` method, then the measurement must be stopped using :meth:`~.Agilent4156.stop` before getting valid data.
+        Get the measurement data from the instrument after completion.
+
+        If the measurement period is set to :code:`INF` in the :meth:`~.Agilent4156.measure`
+        method, then the measurement must be stopped using :meth:`~.Agilent4156.stop` before
+        getting valid data.
 
         :param path: Path for optional data export to CSV.
         :returns: Pandas Dataframe
@@ -385,7 +403,7 @@ class Agilent4156(Instrument):
         self.write(":FORM:DATA ASC")
         # recursively get data for each variable
         for i, listvar in enumerate(header):
-            data = self.values(":DATA? \'{}\'".format(listvar))
+            data = self.values(f":DATA? \'{listvar}\'")
             time.sleep(0.01)
             if i == 0:
                 lastdata = data
@@ -428,7 +446,7 @@ class SMU(Instrument):
 
             instr.smu1.channel_mode = "V"
         """
-        value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
+        value = self.ask(f":PAGE:CHAN:{self.channel}:MODE?")
         self.check_errors()
         return value
 
@@ -437,7 +455,7 @@ class SMU(Instrument):
         validator = strict_discrete_set
         values = ["V", "I", "COMM"]
         value = validator(mode, values)
-        self.write(":PAGE:CHAN:{0}:MODE {1}".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:MODE {value}")
         self.check_errors()
 
     @property
@@ -450,7 +468,7 @@ class SMU(Instrument):
 
             instr.smu1.channel_function = "VAR1"
         """
-        value = self.ask(":PAGE:CHAN:{}:FUNC?".format(self.channel))
+        value = self.ask(f":PAGE:CHAN:{self.channel}:FUNC?")
         self.check_errors()
         return value
 
@@ -459,12 +477,12 @@ class SMU(Instrument):
         validator = strict_discrete_set
         values = ["VAR1", "VAR2", "VARD", "CONS"]
         value = validator(function, values)
-        self.write(":PAGE:CHAN:{0}:FUNC {1}".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:FUNC {value}")
         self.check_errors()
 
     @property
     def series_resistance(self):
-        """ This command controls the series resistance of SMU<n>.
+        """ Controls the series resistance of SMU<n>.
 
         - Values: :code:`0OHM`, :code:`10KOHM`, :code:`100KOHM`, or :code:`1MOHM`
 
@@ -473,7 +491,7 @@ class SMU(Instrument):
             instr.smu1.series_resistance = "10KOHM"
 
         """
-        value = self.ask(":PAGE:CHAN:{}:SRES?".format(self.channel))
+        value = self.ask(f":PAGE:CHAN:{self.channel}:SRES?")
         self.check_errors()
         return value
 
@@ -482,26 +500,29 @@ class SMU(Instrument):
         validator = strict_discrete_set
         values = ["0OHM", "10KOHM", "100KOHM", "1MOHM"]
         value = validator(sres, values)
-        self.write(":PAGE:CHAN:{0}:SRES {1}".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:SRES {value}")
         self.check_errors()
 
     @property
     def disable(self):
-        """ This command deletes the settings of SMU<n>.
+        """ Deletes the settings of SMU<n>.
 
         .. code-block:: python
 
             instr.smu1.disable()
         """
-        self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
+        self.write(f":PAGE:CHAN:{self.channel}:DIS")
         self.check_errors()
 
     @property
     def constant_value(self):
-        """ This command sets the constant source value of SMU<n>. You use this command only if :meth:`~.SMU.channel_function`
+        """ Set the constant source value of SMU<n>.
+
+        You use this command only if :meth:`~.SMU.channel_function`
         is :code:`CONS` and also :meth:`~.SMU.channel_mode` should not be :code:`COMM`.
 
-        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A). Voltage or current depends on if :meth:`~.SMU.channel_mode` is set to :code:`V` or :code:`I`.
+        :param const_value: Voltage in (-200V, 200V) and current in (-1A, 1A). Voltage or current
+            depends on if :meth:`~.SMU.channel_mode` is set to :code:`V` or :code:`I`.
 
         .. code-block:: python
 
@@ -509,9 +530,9 @@ class SMU(Instrument):
 
         """
         if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
-            value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
+            value = self.ask(f":PAGE:MEAS:CONS:{self.channel}?")
         else:
-            value = self.ask(":PAGE:MEAS:SAMP:CONS:{}?".format(self.channel))
+            value = self.ask(f":PAGE:MEAS:SAMP:CONS:{self.channel}?")
         self.check_errors()
         return value
 
@@ -521,15 +542,18 @@ class SMU(Instrument):
         values = self.__validate_cons()
         value = validator(const_value, values)
         if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
-            self.write(":PAGE:MEAS:CONS:{0} {1}".format(self.channel, value))
+            self.write(f":PAGE:MEAS:CONS:{self.channel} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{0} {1}".format(
+            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
                 self.channel, value))
         self.check_errors()
 
     @property
     def compliance(self):
-        """ This command sets the *constant* compliance value of SMU<n>. If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are set by the variable definition.
+        """ Sets the *constant* compliance value of SMU<n>.
+
+        If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are
+        set by the variable definition.
 
         - Value: Voltage in (-200V, 200V) and current in (-1A, 1A) based
           on :meth:`~.SMU.channel_mode`.
@@ -539,10 +563,10 @@ class SMU(Instrument):
             instr.smu1.compliance = 0.1
         """
         if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
-            value = self.ask(":PAGE:MEAS:CONS:{}:COMP?".format(self.channel))
+            value = self.ask(f":PAGE:MEAS:CONS:{self.channel}:COMP?")
         else:
             value = self.ask(
-                ":PAGE:MEAS:SAMP:CONS:{}:COMP?".format(self.channel))
+                f":PAGE:MEAS:SAMP:CONS:{self.channel}:COMP?")
         self.check_errors()
         return value
 
@@ -552,10 +576,10 @@ class SMU(Instrument):
         values = self.__validate_compl()
         value = validator(comp, values)
         if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
-            self.write(":PAGE:MEAS:CONS:{0}:COMP {1}".format(
+            self.write(":PAGE:MEAS:CONS:{}:COMP {}".format(
                 self.channel, value))
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{0}:COMP {1}".format(
+            self.write(":PAGE:MEAS:SAMP:CONS:{}:COMP {}".format(
                 self.channel, value))
         self.check_errors()
 
@@ -570,13 +594,13 @@ class SMU(Instrument):
 
             instr.smu1.voltage_name = "Vbase"
         """
-        value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
+        value = self.ask(f"PAGE:CHAN:{self.channel}:VNAME?")
         return value
 
     @voltage_name.setter
     def voltage_name(self, vname):
         value = check_current_voltage_name(vname)
-        self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:VNAME \'{value}\'")
 
     @property
     def current_name(self):
@@ -589,24 +613,23 @@ class SMU(Instrument):
 
             instr.smu1.current_name = "Ibase"
         """
-        value = self.ask("PAGE:CHAN:{}:INAME?".format(self.channel))
+        value = self.ask(f"PAGE:CHAN:{self.channel}:INAME?")
         return value
 
     @current_name.setter
     def current_name(self, iname):
         value = check_current_voltage_name(iname)
-        self.write(":PAGE:CHAN:{0}:INAME \'{1}\'".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:INAME \'{value}\'")
 
     def __validate_cons(self):
         """Validates the instrument settings for operation in constant mode.
         """
-        try:
-            not((self.channel_mode != 'COMM') and (
-                self.channel_function == 'CONS'))
-        except:
+        if not((self.channel_mode != 'COMM') and (
+                self.channel_function == 'CONS')):
             raise ValueError(
                 'Cannot set constant SMU function when SMU mode is COMMON, '
-                'or when SMU function is not CONSTANT.')
+                'or when SMU function is not CONSTANT.'
+            )
         else:
             values = valid_iv(self.channel_mode)
         return values
@@ -614,13 +637,12 @@ class SMU(Instrument):
     def __validate_compl(self):
         """Validates the instrument compliance for operation in constant mode.
         """
-        try:
-            not((self.channel_mode != 'COMM') and (
-                self.channel_function == 'CONS'))
-        except:
+        if not((self.channel_mode != 'COMM') and (
+                self.channel_function == 'CONS')):
             raise ValueError(
                 'Cannot set constant SMU parameters when SMU mode is COMMON, '
-                'or when SMU function is not CONSTANT.')
+                'or when SMU function is not CONSTANT.'
+            )
         else:
             values = valid_compliance(self.channel_mode)
         return values
@@ -646,23 +668,23 @@ class VMU(Instrument):
 
             instr.vmu1.voltage_name = "Vanode"
         """
-        value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
+        value = self.ask(f"PAGE:CHAN:{self.channel}:VNAME?")
         return value
 
     @voltage_name.setter
     def voltage_name(self, vname):
         value = check_current_voltage_name(vname)
-        self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:VNAME \'{value}\'")
 
     @property
     def disable(self):
-        """ This command disables the settings of VMU<n>.
+        """ Disables the settings of VMU<n>.
 
         .. code-block:: python
 
             instr.vmu1.disable()
         """
-        self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
+        self.write(f":PAGE:CHAN:{self.channel}:DIS")
         self.check_errors()
 
     @property
@@ -671,7 +693,7 @@ class VMU(Instrument):
 
         - Values: :code:`V`, :code:`DVOL`
         """
-        value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
+        value = self.ask(f":PAGE:CHAN:{self.channel}:MODE?")
         self.check_errors()
         return value
 
@@ -680,7 +702,7 @@ class VMU(Instrument):
         validator = strict_discrete_set
         values = ["V", "DVOL"]
         value = validator(mode, values)
-        self.write(":PAGE:CHAN:{0}:MODE {1}".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:MODE {value}")
         self.check_errors()
 
 
@@ -704,44 +726,44 @@ class VSU(Instrument):
 
             instr.vsu1.voltage_name = "Ve"
         """
-        value = self.ask("PAGE:CHAN:{}:VNAME?".format(self.channel))
+        value = self.ask(f"PAGE:CHAN:{self.channel}:VNAME?")
         return value
 
     @voltage_name.setter
     def voltage_name(self, vname):
         value = check_current_voltage_name(vname)
-        self.write(":PAGE:CHAN:{0}:VNAME \'{1}\'".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:VNAME \'{value}\'")
 
     @property
     def disable(self):
-        """ This command deletes the settings of VSU<n>.
+        """ Deletes the settings of VSU<n>.
 
         .. code-block:: python
 
             instr.vsu1.disable()
         """
-        self.write(":PAGE:CHAN:{}:DIS".format(self.channel))
+        self.write(f":PAGE:CHAN:{self.channel}:DIS")
         self.check_errors()
 
     @property
     def channel_mode(self):
         """ Get channel mode of VSU<n>."""
-        value = self.ask(":PAGE:CHAN:{}:MODE?".format(self.channel))
+        value = self.ask(f":PAGE:CHAN:{self.channel}:MODE?")
         self.check_errors()
         return value
 
     @property
     def constant_value(self):
-        """ This command sets the constant source value of VSU<n>.
+        """ Sets the constant source value of VSU<n>.
 
         .. code-block:: python
 
             instr.vsu1.constant_value = 0
         """
         if Agilent4156.analyzer_mode.fget(self) == "SWEEP":
-            value = self.ask(":PAGE:MEAS:CONS:{}?".format(self.channel))
+            value = self.ask(f":PAGE:MEAS:CONS:{self.channel}?")
         else:
-            value = self.ask(":PAGE:MEAS:SAMP:CONS:{}?".format(self.channel))
+            value = self.ask(f":PAGE:MEAS:SAMP:CONS:{self.channel}?")
         self.check_errors()
         return value
 
@@ -751,9 +773,9 @@ class VSU(Instrument):
         values = [-200, 200]
         value = validator(const_value, values)
         if Agilent4156.analyzer_mode.fget(self) == 'SWEEP':
-            self.write(":PAGE:MEAS:CONS:{0} {1}".format(self.channel, value))
+            self.write(f":PAGE:MEAS:CONS:{self.channel} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{0} {1}".format(
+            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
                 self.channel, value))
         self.check_errors()
 
@@ -763,7 +785,7 @@ class VSU(Instrument):
 
         - Value: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
         """
-        value = self.ask(":PAGE:CHAN:{}:FUNC?".format(self.channel))
+        value = self.ask(f":PAGE:CHAN:{self.channel}:FUNC?")
         self.check_errors()
         return value
 
@@ -772,7 +794,7 @@ class VSU(Instrument):
         validator = strict_discrete_set
         values = ["VAR1", "VAR2", "VARD", "CONS"]
         value = validator(function, values)
-        self.write(":PAGE:CHAN:{0}:FUNC {1}".format(self.channel, value))
+        self.write(f":PAGE:CHAN:{self.channel}:FUNC {value}")
         self.check_errors()
 
 #################
@@ -795,9 +817,9 @@ class VARX(Instrument):
     def channel_mode(self):
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
-            ch_func = self.ask(":PAGE:CHAN:{}:FUNC?".format(ch))
+            ch_func = self.ask(f":PAGE:CHAN:{ch}:FUNC?")
             if ch_func == self.var:
-                ch_mode = self.ask(":PAGE:CHAN:{}:MODE?".format(ch))
+                ch_mode = self.ask(f":PAGE:CHAN:{ch}:MODE?")
         return ch_mode
 
     @property
@@ -808,7 +830,7 @@ class VARX(Instrument):
 
             instr.var1.start = 0
         """
-        value = self.ask(":PAGE:MEAS:{}:STAR?".format(self.var))
+        value = self.ask(f":PAGE:MEAS:{self.var}:STAR?")
         self.check_errors()
         return value
 
@@ -817,7 +839,7 @@ class VARX(Instrument):
         validator = strict_range
         values = valid_iv(self.channel_mode)
         set_value = validator(value, values)
-        self.write(":PAGE:MEAS:{}:STAR {}".format(self.var, set_value))
+        self.write(f":PAGE:MEAS:{self.var}:STAR {set_value}")
         self.check_errors()
 
     @property
@@ -828,7 +850,7 @@ class VARX(Instrument):
 
             instr.var1.stop = 3
         """
-        value = self.ask(":PAGE:MEAS:{}:STOP?".format(self.var))
+        value = self.ask(f":PAGE:MEAS:{self.var}:STOP?")
         self.check_errors()
         return value
 
@@ -837,7 +859,7 @@ class VARX(Instrument):
         validator = strict_range
         values = valid_iv(self.channel_mode)
         set_value = validator(value, values)
-        self.write(":PAGE:MEAS:{}:STOP {}".format(self.var, set_value))
+        self.write(f":PAGE:MEAS:{self.var}:STOP {set_value}")
         self.check_errors()
 
     @property
@@ -848,16 +870,16 @@ class VARX(Instrument):
 
             instr.var1.step = 0.1
         """
-        value = self.ask(":PAGE:MEAS:{}:STEP?".format(self.var))
+        value = self.ask(f":PAGE:MEAS:{self.var}:STEP?")
         self.check_errors()
         return value
 
     @step.setter
     def step(self, value):
         validator = strict_range
-        values = 2*valid_iv(self.channel_mode)
+        values = 2 * valid_iv(self.channel_mode)
         set_value = validator(value, values)
-        self.write(":PAGE:MEAS:{}:STEP {}".format(self.var, set_value))
+        self.write(f":PAGE:MEAS:{self.var}:STEP {set_value}")
         self.check_errors()
 
     @property
@@ -875,9 +897,9 @@ class VARX(Instrument):
     @compliance.setter
     def compliance(self, value):
         validator = strict_range
-        values = 2*valid_compliance(self.channel_mode)
+        values = 2 * valid_compliance(self.channel_mode)
         set_value = validator(value, values)
-        self.write(":PAGE:MEAS:{}:COMP {}".format(self.var, set_value))
+        self.write(f":PAGE:MEAS:{self.var}:COMP {set_value}")
         self.check_errors()
 
 
@@ -897,7 +919,7 @@ class VAR1(VARX):
         ":PAGE:MEAS:VAR1:SPAC?",
         ":PAGE:MEAS:VAR1:SPAC %s",
         """
-        This command selects the sweep type of VAR1.
+        Selects the sweep type of VAR1.
 
         - Values: :code:`LINEAR`, :code:`LOG10`, :code:`LOG25`, :code:`LOG50`.
         """,
@@ -926,7 +948,7 @@ class VAR2(VARX):
         ":PAGE:MEAS:VAR2:POINTS?",
         ":PAGE:MEAS:VAR2:POINTS %g",
         """
-        This command sets the number of sweep steps of VAR2.
+        Sets the number of sweep steps of VAR2.
         You use this command only if there is an SMU or VSU
         whose function (FCTN) is VAR2.
 
@@ -957,15 +979,15 @@ class VARD(Instrument):
     def channel_mode(self):
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
-            ch_func = self.ask(":PAGE:CHAN:{}:FUNC?".format(ch))
+            ch_func = self.ask(f":PAGE:CHAN:{ch}:FUNC?")
             if ch_func == "VARD":
-                ch_mode = self.ask(":PAGE:CHAN:{}:MODE?".format(ch))
+                ch_mode = self.ask(f":PAGE:CHAN:{ch}:MODE?")
         return ch_mode
 
     @property
     def offset(self):
         """
-        This command sets the OFFSET value of VARD.
+        Sets the OFFSET value of VARD.
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VARD = VAR1 X RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function is VARD.
@@ -981,21 +1003,21 @@ class VARD(Instrument):
     @offset.setter
     def offset(self, offset_value):
         validator = strict_range
-        values = 2*valid_iv(self.channel_mode)
+        values = 2 * valid_iv(self.channel_mode)
         value = validator(offset_value, values)
-        self.write(":PAGE:MEAS:VARD:OFFSET {}".format(value))
+        self.write(f":PAGE:MEAS:VARD:OFFSET {value}")
         self.check_errors()
 
     ratio = Instrument.control(
         ":PAGE:MEAS:VARD:RATIO?",
         ":PAGE:MEAS:VARD:RATIO %g",
         """
-        This command sets the RATIO of VAR1'.
+        Sets the RATIO of VAR1'.
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VAR1’ = VAR1 * RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function
-        (FCTN) is VAR1'. 
-        
+        (FCTN) is VAR1'.
+
         .. code-block:: python
 
             instr.vard.ratio = 1
@@ -1004,7 +1026,7 @@ class VARD(Instrument):
 
     @property
     def compliance(self):
-        """ This command sets the sweep COMPLIANCE value of VARD.
+        """ Sets the sweep COMPLIANCE value of VARD.
 
         .. code-block:: python
 
@@ -1017,16 +1039,16 @@ class VARD(Instrument):
     @compliance.setter
     def compliance(self, value):
         validator = strict_range
-        values = 2*valid_compliance(self.channel_mode)
+        values = 2 * valid_compliance(self.channel_mode)
         set_value = validator(value, values)
-        self.write(":PAGE:MEAS:VARD:COMP {}".format(set_value))
+        self.write(f":PAGE:MEAS:VARD:COMP {set_value}")
         self.check_errors()
 
 
 def check_current_voltage_name(name):
     if (len(name) > 6) or not name[0].isalpha():
         new_name = 'a' + name[:5]
-        log.info("Renaming %s to %s..." % (name, new_name))
+        log.info(f"Renaming {name} to {new_name}...")
         name = new_name
     return name
 

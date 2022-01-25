@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,10 +36,11 @@ class SR510(Instrument):
                      50e-3: 21, 100e-3: 22, 200e-3: 23, 500e-3: 24, }
 
     phase = Instrument.control("P", "P %g",
-                               """A float property that represents the SR510 reference to input phase offset in degrees.
-                                  Queries return values between -180 and 180 degrees. This property can be set with a
-                                  range of values between -999 to 999 degrees. Set values are mapped internal in the 
-                                  lockin to -180 and 180 degrees.""",
+                               """A float property that represents the SR510 reference to input
+                               phase offset in degrees. Queries return values between -180 and
+                               180 degrees. This property can be set with a range of values
+                               between -999 to 999 degrees. Set values are mapped internal in the
+                               lockin to -180 and 180 degrees.""",
                                validator=truncated_range,
                                values=[-999, 999],
                                )
@@ -61,23 +62,26 @@ class SR510(Instrument):
                                      )
 
     frequency = Instrument.measurement("F",
-                                       """A float property representing the SR510 input reference frequency""",
+                                       """A float property representing the SR510 input reference
+                                       frequency""",
                                        )
 
     status = Instrument.measurement("Y",
-                                    """A string property representing the bits set within the SR510 status byte""",
+                                    """A string property representing the bits set within the SR510
+                                    status byte""",
                                     get_process=lambda s: bin(int(s))[2:],
                                     )
 
     output = Instrument.measurement("Q",
-                                    """A float property that represents the SR510 output voltage in Volts.""",
+                                    """A float property that represents the SR510 output voltage in
+                                    Volts.""",
                                     )
 
     def __init__(self, resourceName, **kwargs):
-        super(SR510, self).__init__(
+        kwargs.setdefault('write_termination', '\r')
+        super().__init__(
             resourceName,
             "Stanford Research Systems SR510 Lock-in amplifier",
             includeSCPI=False,
-            write_termination="\r",
             **kwargs,
         )

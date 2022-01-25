@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 from pymeasure.experiment import (
-    Procedure, IntegerParameter, 
+    Procedure, IntegerParameter,
     Parameter, FloatParameter
 )
 import random
@@ -48,7 +48,7 @@ class RandomProcedure(Procedure):
                 'Random Number': random.random()
             }
             self.emit('results', data)
-            self.emit('progress', 100.*i/self.iterations)
+            self.emit('progress', 100. * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 break

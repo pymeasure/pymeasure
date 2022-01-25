@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,12 @@
 # THE SOFTWARE.
 #
 
+from pymeasure.instruments import Instrument
+from time import sleep, time
+
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter
-from pymeasure.instruments.validators import (
-    truncated_discrete_set, strict_discrete_set,
-    truncated_range
-)
-from time import sleep, time
-import numpy as np
-import re
 
 
 class AMI430(Instrument):
@@ -45,7 +38,7 @@ class AMI430(Instrument):
 
         magnet = AMI430("TCPIP::web.address.com::7180::SOCKET")
 
-        
+
         magnet.coilconst = 1.182                 # kGauss/A
         magnet.voltage_limit = 2.2               # Sets the voltage limit in V
 
@@ -57,16 +50,17 @@ class AMI430(Instrument):
         magnet.ramp                             # Initiates the ramping
         magnet.pause                            # Pauses the ramping
         magnet.status                           # Returns the status of the magnet
-    
+
         magnet.ramp_to_current(5)             # Ramps the current to 5 A
 
         magnet.shutdown()                     # Ramps the current to zero and disables output
 
     """
+
     def __init__(self, resourceName, **kwargs):
-        adapter = VISAAdapter(resourceName, read_termination='\n')
-        super(AMI430, self).__init__(
-            adapter,
+        kwargs.setdefault('read_termination', '\n')
+        super().__init__(
+            resourceName,
             "AMI superconducting magnet power supply.",
             includeSCPI=True,
             **kwargs
@@ -104,35 +98,35 @@ class AMI430(Instrument):
 
     ramp_rate_current = Instrument.control(
         "RAMP:RATE:CURR:1?", "CONF:RAMP:RATE:CURR 1,%g",
-        """ A floating point property that sets the current ramping 
+        """ A floating point property that sets the current ramping
         rate in A/s. """
     )
 
     ramp_rate_field = Instrument.control(
         "RAMP:RATE:FIELD:1?", "CONF:RAMP:RATE:FIELD 1,%g,1.00",
-        """ A floating point property that sets the field ramping 
+        """ A floating point property that sets the field ramping
         rate in kGauss/s. """
     )
 
     magnet_current = Instrument.measurement("CURR:MAG?",
-        """ Reads the current in Amps of the magnet.
+                                            """ Reads the current in Amps of the magnet.
         """
-    )
+                                            )
 
     supply_current = Instrument.measurement("CURR:SUPP?",
-        """ Reads the current in Amps of the power supply.
+                                            """ Reads the current in Amps of the power supply.
         """
-    )
+                                            )
 
     field = Instrument.measurement("FIELD:MAG?",
-        """ Reads the field in kGauss of the magnet.
+                                   """ Reads the field in kGauss of the magnet.
         """
-    )
+                                   )
 
     state = Instrument.measurement("STATE?",
-        """ Reads the field in kGauss of the magnet.
+                                   """ Reads the field in kGauss of the magnet.
         """
-    )
+                                   )
 
     def zero(self):
         """ Initiates the ramping of the magnetic field to zero
@@ -213,7 +207,7 @@ class AMI430(Instrument):
             sleep(interval)
             if should_stop():
                 return
-            if (time()-t) > timeout:
+            if (time() - t) > timeout:
                 raise Exception("Timed out waiting for AMI430 switch to warm up.")
 
     def shutdown(self, ramp_rate=0.0357):

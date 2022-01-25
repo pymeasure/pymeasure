@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ log = logging.getLogger()
 log.addHandler(logging.NullHandler())
 
 
-class Procedure(object):
+class Procedure:
     """Provides the base class of a procedure to organize the experiment
     execution. Procedures should be run by Workers to ensure that
     asynchronous execution is properly managed.
@@ -49,7 +49,7 @@ class Procedure(object):
     Inheriting classes should define the startup, execute, and shutdown
     methods as needed. The shutdown method is called even with a
     software exception or abort event during the execute method.
-    
+
     If keyword arguments are provided, they are added to the object as
     attributes.
     """
@@ -58,7 +58,7 @@ class Procedure(object):
     MEASURE = {}
     FINISHED, FAILED, ABORTED, QUEUED, RUNNING = 0, 1, 2, 3, 4
     STATUS_STRINGS = {
-        FINISHED: 'Finished', FAILED: 'Failed', 
+        FINISHED: 'Finished', FAILED: 'Failed',
         ABORTED: 'Aborted', QUEUED: 'Queued',
         RUNNING: 'Running'
     }
@@ -71,7 +71,7 @@ class Procedure(object):
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
-                log.info('Setting parameter %s to %s' % (key, kwargs[key]))
+                log.info(f'Setting parameter {key} to {kwargs[key]}')
         self.gen_measurement()
 
     def gen_measurement(self):
@@ -98,7 +98,7 @@ class Procedure(object):
 
     def _update_parameters(self):
         """ Collects all the Parameter objects for the procedure and stores
-        them in a meta dictionary so that the actual values can be set in 
+        them in a meta dictionary so that the actual values can be set in
         their stead
         """
         if not self._parameters:
@@ -127,7 +127,7 @@ class Procedure(object):
         for name, parameter in self._parameters.items():
             value = getattr(self, name)
             if value is None:
-                raise NameError("Missing %s '%s' in %s" % (
+                raise NameError("Missing {} '{}' in {}".format(
                     parameter.__class__, name, self.__class__))
 
     def parameter_values(self):
@@ -177,7 +177,7 @@ class Procedure(object):
                 setattr(self, name, self._parameters[name].value)
             else:
                 if except_missing:
-                    raise NameError("Parameter '%s' does not belong to '%s'" % (
+                    raise NameError("Parameter '{}' does not belong to '{}'".format(
                         name, repr(self)))
 
     def startup(self):
@@ -240,7 +240,7 @@ class UnknownProcedure(Procedure):
         raise NotImplementedError("UnknownProcedure can not be run")
 
 
-class ProcedureWrapper(object):
+class ProcedureWrapper:
 
     def __init__(self, procedure):
         self.procedure = procedure
