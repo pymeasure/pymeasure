@@ -32,7 +32,7 @@ log.addHandler(logging.NullHandler())
 log.warning('not implemented yet')
 
 
-class ProgressBar(object):
+class ProgressBar:
     """ ProgressBar keeps track of the progress, predicts the
     estimated time of arrival (ETA), and formats the bar for
     display in the console

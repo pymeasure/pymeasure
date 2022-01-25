@@ -51,7 +51,7 @@ class StoppableQThread(QtCore.QThread):
         self._should_stop.wait(timeout)
         if not self.should_stop():
             self.stop()
-        super(StoppableQThread, self).wait()
+        super().wait()
 
     def stop(self):
         self._should_stop.set()
@@ -60,5 +60,5 @@ class StoppableQThread(QtCore.QThread):
         return self._should_stop.is_set()
 
     def __repr__(self):
-        return "<%s(should_stop=%s)>" % (
+        return "<{}(should_stop={})>".format(
             self.__class__.__name__, self.should_stop())

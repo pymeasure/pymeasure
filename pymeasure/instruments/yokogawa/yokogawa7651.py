@@ -132,7 +132,7 @@ class Yokogawa7651(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Yokogawa7651, self).__init__(
+        super().__init__(
             adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
         )
 
@@ -218,4 +218,4 @@ class Yokogawa7651(Instrument):
         self.ramp_to_current(0.0, steps=25)
         self.source_current = 0.0
         self.disable_source()
-        super(Yokogawa7651, self).shutdown()
+        super().shutdown()
