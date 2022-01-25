@@ -32,8 +32,8 @@ log.addHandler(logging.NullHandler())
 
 
 class ND287(Instrument):
-    """ Represents the Heidenhain ND287 position display unit used to readout and display absolute position measured by
-        Heidenhain encoders.
+    """ Represents the Heidenhain ND287 position display unit used to readout and display 
+        absolute position measured by Heidenhain encoders.
     """
 
     status = Instrument.measurement(
@@ -43,10 +43,9 @@ class ND287(Instrument):
     def __init__(self, resourceName, units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
 
-        :param: units: Specify the units that the gauge is working in. 
+        :param: units: Specify the units that the gauge is working in.
         Valid values are "inch" and "mm" with "mm" being the default.
         """
-
         self._units = units
 
         super().__init__(
@@ -60,8 +59,8 @@ class ND287(Instrument):
     @property
     def position(self):
         """Float property representing the encoder's current position. 
-            This property has been implemented manually rather than using 
-            :meth:`Instrument.measurement` so that the instance attribute 
+            This property has been implemented manually rather than using
+            :meth:`Instrument.measurement` so that the instance attribute
             _units can be queried.
         """
         pos_map = {"mm": 1e-4, "inch": 1e-5}
@@ -79,9 +78,9 @@ class ND287(Instrument):
     @property
     def units(self):
         """ String property representing the unit of measure set on the device. 
-            Valid values are 'mm' and 'inch' Note that this parameter can only be set 
-            manually on the device. So this argument only ensures that the instance units 
-            and physical device settings match. I.e., this property does not change any 
+            Valid values are 'mm' and 'inch' Note that this parameter can only be set
+            manually on the device. So this argument only ensures that the instance units
+            and physical device settings match. I.e., this property does not change any
             physical device setting.
         """
         return self._units
