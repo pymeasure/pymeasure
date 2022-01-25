@@ -364,7 +364,7 @@ class KeysightDSA80000A(Instrument):
 
     @property
     def opc(self):
-        return self.ask(':OPC?')
+        return self.ask('*OPC?')
 
     def wait_for_op(self, tdelta=.1, n_it=1000 ):
         breaker = 0
