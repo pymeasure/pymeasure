@@ -23,13 +23,12 @@
 #
 
 import pytest
-from pymeasure.instruments.fakes import SwissArmyFake
-from pymeasure.instruments.instrument import Instrument
+from pymeasure.instruments.instrument import FakeInstrument, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 def test_fake_instrument():
-    fake = SwissArmyFake()
+    fake = FakeInstrument()
     fake.write("Testing")
     assert fake.read() == "Testing"
     assert fake.read() == ""
@@ -48,7 +47,7 @@ def test_control_doc():
 
 
 def test_control_validator():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
@@ -65,7 +64,7 @@ def test_control_validator():
 
 
 def test_control_validator_map():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
@@ -83,7 +82,7 @@ def test_control_validator_map():
 
 
 def test_control_dict_map():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
@@ -101,7 +100,7 @@ def test_control_dict_map():
 
 
 def test_control_dict_str_map():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_discrete_set,
@@ -119,7 +118,7 @@ def test_control_dict_str_map():
 
 
 def test_control_process():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d", "",
             validator=strict_range,
@@ -136,7 +135,7 @@ def test_control_process():
 
 
 def test_control_get_process():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "JUNK%d", "",
             validator=strict_range,
@@ -153,7 +152,7 @@ def test_control_get_process():
 
 def test_control_preprocess_reply_property():
     # test setting preprocess_reply at property-level
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "JUNK%d",
             "",
@@ -174,7 +173,7 @@ def test_control_preprocess_reply_property():
 
 def test_control_preprocess_reply_adapter():
     # test setting preprocess_reply at Adapter-level
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         def __init__(self):
             super().__init__(preprocess_reply=lambda v: v.replace('JUNK', ''))
 
@@ -193,7 +192,7 @@ def test_control_preprocess_reply_adapter():
 
 
 def test_measurement_dict_str_map():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.measurement(
             "", "",
             values={'X': 1, 'Y': 2, 'Z': 3},
@@ -210,7 +209,7 @@ def test_measurement_dict_str_map():
 
 
 def test_setting_process():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.setting(
             "OUT %d", "",
             set_process=lambda v: int(bool(v)),
@@ -224,7 +223,7 @@ def test_setting_process():
 
 
 def test_control_multivalue():
-    class Fake(SwissArmyFake):
+    class Fake(FakeInstrument):
         x = Instrument.control(
             "", "%d,%d", "",
         )
@@ -240,10 +239,10 @@ def test_control_multivalue():
      ("%d, %d", (5, 6), [5, 6]),  # input has to be a tuple, not a list
      ])
 def test_fakeinstrument_control(set_command, given, expected):
-    """SwissArmyFake's custom simple control needs to process values correctly.
+    """FakeInstrument's custom simple control needs to process values correctly.
     """
-    class Fake(SwissArmyFake):
-        x = SwissArmyFake.control(
+    class Fake(FakeInstrument):
+        x = FakeInstrument.control(
             "", set_command, "",
         )
 

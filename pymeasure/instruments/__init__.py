@@ -26,7 +26,6 @@ from ..errors import RangeError, RangeException
 from .instrument import Instrument
 from .resources import list_resources
 from .validators import discreteTruncate
-from .fakes import SwissArmyFake, FakeInstrument
 
 from . import advantest
 from . import agilent
