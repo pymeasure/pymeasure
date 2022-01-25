@@ -40,6 +40,22 @@ class ND287(Instrument):
         "\x1BA0800", "Read the encoder's status bar"
     )
 
+    # get_process lambda functions used in the position property
+    position_get_process_map = {
+        "mm": lambda p: float(p.split("\x02")[-1])*1e-4,
+        "inch": lambda p: float(p.split("\x02")[-1])*1e-5
+    }
+
+    position = Instrument.measurement(
+        "\x1BA0200", """Float property representing the encoder's current position.
+                        Note that the get_process performs a mapping from the returned
+                        value to a float measured in the units specified by :attr:`.ND287.units`.
+                        The get_process is modified dynamically as this mapping changes slightly
+                        between different units.""",
+        get_process=position_get_process_map["mm"],
+        dynamic=True
+    )
+
     def __init__(self, resourceName, units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
 
@@ -55,17 +71,6 @@ class ND287(Instrument):
             write_termination="\r",
             **kwargs
         )
-
-    @property
-    def position(self):
-        """Float property representing the encoder's current position. 
-            This property has been implemented manually rather than using
-            :meth:`Instrument.measurement` so that the instance attribute
-            _units can be queried.
-        """
-        pos_map = {"mm": 1e-4, "inch": 1e-5}
-        pos = self.values("\x1BA0200")[0]
-        return float(pos.split("\x02")[-1])*pos_map[self._units]
 
     @property
     def id(self):
@@ -87,9 +92,9 @@ class ND287(Instrument):
     
     @units.setter
     def units(self, unit):
-        val_units = ["mm", "inch"]
-        if unit in val_units:
+        if unit in self.position_get_process_map.keys():
             self._units = unit
+            self.position_get_process = self.position_get_process_map[unit]
 
     def check_errors(self):
         """ Method to read an error status message and log when an error is detected.
