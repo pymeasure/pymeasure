@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,7 @@ def test_parameters():
 
 # TODO: Add tests for measureables
 
+
 def test_procedure_wrapper():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
@@ -61,12 +62,14 @@ def test_procedure_wrapper():
 # The test ensure that property is evaluated only when the Parameter has been processed during
 # class initialization.
 
+
 def test_procedure_properties():
     class TestProcedure(Procedure):
         @property
         def a(self):
             assert(isinstance(self.x, int))
             return self.x
+
         @property
         def z(self):
             assert(isinstance(self.x, int))
@@ -78,6 +81,8 @@ def test_procedure_properties():
 
 # Make sure that a procedure can be initialized even though some properties are raising
 # errors at initialization time
+
+
 def test_procedure_init_with_invalid_property():
     class TestProcedure(Procedure):
         @property
@@ -85,6 +90,6 @@ def test_procedure_init_with_invalid_property():
             return self.x
     p = TestProcedure()
     with pytest.raises(AttributeError):
-        v = p.prop  # AttributeError
+        _ = p.prop  # AttributeError
     p.x = 5
     assert p.prop == 5

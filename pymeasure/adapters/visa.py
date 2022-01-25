@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 
 import logging
 
-import copy
 import pyvisa
 import numpy as np
 from pkg_resources import parse_version
@@ -37,15 +36,40 @@ log.addHandler(logging.NullHandler())
 
 # noinspection PyPep8Naming,PyUnresolvedReferences
 class VISAAdapter(Adapter):
-    """ Adapter class for the VISA library using PyVISA to communicate
-    with instruments.
+    """ Adapter class for the VISA library, using PyVISA to communicate with instruments.
 
-    :param resource: VISA resource name that identifies the address
-    :param visa_library: VisaLibrary Instance, path of the VISA library or VisaLibrary spec string (@py or @ni).
-                         if not given, the default for the platform will be used.
+    The workhorse of our library, used by most instruments.
+
+    :param resource_name: A
+        `VISA resource string <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
+        or GPIB address integer that identifies the target of the connection
+    :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
+        string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
-    :param kwargs: Any valid key-word arguments for constructing a PyVISA instrument
+    :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
+
+    :Kwargs:
+        Keyword arguments are used to configure the connection created by PyVISA. This is
+        complicated by the fact that *which* arguments are valid depends on the interface (e.g.
+        serial, GPIB, TCPI/IP, USB) determined by the current ``resource_name``.
+
+        A flexible process is used to easily define reasonable *default values* for
+        different instrument interfaces, but also enable the instrument user to *override any
+        setting* if their situation demands it.
+
+        A kwarg that names a pyVISA interface type (most commonly ``asrl``, ``gpib``, ``tcpip`` or
+        ``usb``) is a dictionary with keyword arguments defining defaults specific to that
+        interface. Example: ``asrl={'baud_rate': 4200}``.
+
+        All other kwargs are either generally valid (e.g. ``timeout=500``) or override any default
+        settings from the interface-specific entries above. For example, passing
+        ``baud_rate=115200`` when connecting via a resource name ``ASRL1`` would override a
+        default of 4200 defined as above.
+
+        See :ref:`connection_settings` for how to tweak settings when *connecting* to an instrument.
+        See :ref:`default_connection_settings` for how to best define default settings when
+        *implementing an instrument*.
     """
 
     def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
@@ -57,14 +81,20 @@ class VISAAdapter(Adapter):
             resource_name = "GPIB0::%d::INSTR" % resource_name
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
-        safeKeywords = [
-            'resource_name', 'timeout', 'chunk_size', 'lock', 'query_delay', 'send_end',
-            'read_termination', 'write_termination'
-        ]
-        kwargsCopy = copy.deepcopy(kwargs)
-        for key in kwargsCopy:
-            if key not in safeKeywords:
-                kwargs.pop(key)
+
+        # Clean up kwargs considering the interface type matching resource_name
+        if_type = self.manager.resource_info(self.resource_name).interface_type
+        for key in list(kwargs.keys()):  # iterate over a copy of the keys as we modify kwargs
+            # Remove all interface-specific kwargs:
+            if key in pyvisa.constants.InterfaceType.__members__:
+                if getattr(pyvisa.constants.InterfaceType, key) is if_type:
+                    # For the present interface, dump contents into kwargs first if they are not
+                    # present already. This way, it is possible to override default values with
+                    # kwargs passed to Instrument.__init__()
+                    for k, v in kwargs[key].items():
+                        kwargs.setdefault(k, v)
+                del kwargs[key]
+
         self.connection = self.manager.open_resource(
             resource_name,
             **kwargs
@@ -132,7 +162,8 @@ class VISAAdapter(Adapter):
         """
         self.connection.write(command)
         binary = self.connection.read_raw()
-        header, data = binary[:header_bytes], binary[header_bytes:]
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
     def write_binary_values(self, command, values, **kwargs):
@@ -153,6 +184,15 @@ class VISAAdapter(Adapter):
         :param delay: Time delay between checking SRQ in seconds
         """
         self.connection.wait_for_srq(timeout * 1000)
+
+    def flush_read_buffer(self):
+        """ Flush and discard the input buffer
+
+        As detailed by pyvisa, discard the read buffer contents and if data was present
+        in the read buffer and no END-indicator was present, read from the device until
+        encountering an END indicator (which causes loss of data).
+        """
+        self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resource_name

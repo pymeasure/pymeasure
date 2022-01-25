@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,8 @@ from pymeasure.instruments import Instrument
 
 
 def clean_closed_channels(output):
-    """Cleans up the list returned by command ":ROUTe:CLOSe?", such that each entry is an integer denoting
-    the channel number.
+    """Cleans up the list returned by command ":ROUTe:CLOSe?", such that each entry is an integer
+    denoting the channel number.
     """
     if isinstance(output, str):
         s = output.replace("(", "").replace(")", "").replace("@", "")
@@ -51,8 +51,8 @@ def clean_closed_channels(output):
 
 
 class Keithley2750(Instrument):
-    """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for interacting
-    with the instrument.
+    """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for
+    interacting with the instrument.
     """
 
     closed_channels = Instrument.measurement(":ROUTe:CLOSe?",
@@ -60,7 +60,7 @@ class Keithley2750(Instrument):
                                              get_process=clean_closed_channels)
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2750, self).__init__(
+        super().__init__(
             adapter, "Keithley 2750 Multimeter/Switch System", **kwargs
         )
 
@@ -70,7 +70,7 @@ class Keithley2750(Instrument):
         :param int channel: 3-digit number for the channel
         :return: None
         """
-        self.write(":ROUTe:MULTiple:OPEN (@{})".format(channel))
+        self.write(f":ROUTe:MULTiple:OPEN (@{channel})")
 
     def close(self, channel):
         """ Closes (connects) the specified channel.
@@ -78,8 +78,9 @@ class Keithley2750(Instrument):
         :param int channel: 3-digit number for the channel
         :return: None
         """
-        # Note: if `MULTiple` is omitted, then the specified channel will close, but all other channels will open.
-        self.write(":ROUTe:MULTiple:CLOSe (@{})".format(channel))
+        # Note: if `MULTiple` is omitted, then the specified channel will close,
+        # but all other channels will open.
+        self.write(f":ROUTe:MULTiple:CLOSe (@{channel})")
 
     def open_all(self):
         """ Opens (disconnects) all the channels on the switch matrix.
@@ -87,5 +88,3 @@ class Keithley2750(Instrument):
         :return: None
         """
         self.write(":ROUTe:OPEN:ALL")
-
-

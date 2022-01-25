@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,19 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from time import sleep, time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range
 from pymeasure.adapters import PrologixAdapter
 
-import numpy as np
-from time import sleep, time
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
-class KeithleyBuffer(object):
+class KeithleyBuffer:
     """ Implements the basic buffering capability found in
     many Keithley instruments. """
 
@@ -72,7 +73,7 @@ class KeithleyBuffer(object):
 
     def wait_for_buffer(self, should_stop=lambda: False,
                         timeout=60, interval=0.1):
-        """ Blocks the program, waiting for a full buffer. This function 
+        """ Blocks the program, waiting for a full buffer. This function
         returns early if the :code:`should_stop` function returns True or
         the timeout is reached before the buffer is full.
 
@@ -81,13 +82,13 @@ class KeithleyBuffer(object):
         :param interval: A time in seconds for how often to check if the buffer is full
         """
         # TODO: Use SRQ initially instead of constant polling
-        #self.adapter.wait_for_srq()
+        # self.adapter.wait_for_srq()
         t = time()
         while not self.is_buffer_full():
             sleep(interval)
             if should_stop():
                 return
-            if (time()-t)>timeout:
+            if (time() - t) > timeout:
                 raise Exception("Timed out waiting for Keithley buffer to fill.")
 
     @property
@@ -106,7 +107,7 @@ class KeithleyBuffer(object):
 
     def stop_buffer(self):
         """ Aborts the buffering measurement, by stopping the measurement
-        arming and triggering sequence. If possible, a Selected Device 
+        arming and triggering sequence. If possible, a Selected Device
         Clear (SDC) is used. """
         if type(self.adapter) is PrologixAdapter:
             self.write("++clr")

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ class Plotter(StoppableThread):
     """
 
     def __init__(self, results, refresh_time=0.1, linewidth=1):
-        super(Plotter, self).__init__()
+        super().__init__()
         self.results = results
         self.refresh_time = refresh_time
         self.linewidth = linewidth

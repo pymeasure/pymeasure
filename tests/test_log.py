@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,7 @@
 #
 
 import time
-import sys
 from unittest import mock
-
-import pytest
 
 from pymeasure.process import context
 from pymeasure.log import Scribe, setup_logging
@@ -53,7 +50,6 @@ def test_scribe_finish():
     assert s.is_alive() is False
 
 
-@pytest.mark.skipif(sys.version_info < (3, 6), reason='Mock.assert_called_once requires python 3.6')
 def test_setup_file_logging():
     with mock.patch('pymeasure.log.file_log') as mocked_file_log:
         setup_logging()

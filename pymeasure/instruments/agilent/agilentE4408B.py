@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -77,7 +77,7 @@ class AgilentE4408B(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(AgilentE4408B, self).__init__(
+        super().__init__(
             resourceName,
             "Agilent E4408B Spectrum Analyzer",
             **kwargs
@@ -85,11 +85,11 @@ class AgilentE4408B(Instrument):
 
     @property
     def frequencies(self):
-        """ Returns a numpy array of frequencies in Hz that 
+        """ Returns a numpy array of frequencies in Hz that
         correspond to the current settings of the instrument.
         """
         return np.linspace(
-            self.start_frequency, 
+            self.start_frequency,
             self.stop_frequency,
             self.frequency_points,
             dtype=np.float64
@@ -109,11 +109,10 @@ class AgilentE4408B(Instrument):
 
     def trace_df(self, number=1):
         """ Returns a pandas DataFrame containing the frequency
-        and peak data for a particular trace, based on the 
+        and peak data for a particular trace, based on the
         trace number (1, 2, or 3).
         """
         return pd.DataFrame({
-            'Frequency (GHz)': self.frequencies*1e-9,
+            'Frequency (GHz)': self.frequencies * 1e-9,
             'Peak (dB)': self.trace(number)
         })
-        
