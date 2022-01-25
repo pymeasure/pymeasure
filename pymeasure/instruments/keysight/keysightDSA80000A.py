@@ -338,7 +338,7 @@ class KeysightDSA80000A(Instrument):
     )
 
     acquisition_bandwidth = Instrument.control(
-        ":ACQuire:BANDwidth?", "ACQuire:BANDwidth %g",
+        ":ACQuire:BANDwidth?", "ACQuire:BANDwidth %s",
         """A mixed parameter that sets the acquisition bandwith. Can be 'AUTO', 'MAX',
         or a very specific set of real numbers according to you model. For the 91204A it is:
         12e9, 10e9, 8e9, 6e9, 4e9, 3e9, 2.5e9, 2e9, 1e9"""
