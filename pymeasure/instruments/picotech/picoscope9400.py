@@ -390,3 +390,7 @@ class Picoscope9400(Instrument):
                      'yunit': self.waveform_yunit,
                      }
         return vals_dict
+
+    def clear_status(self):
+        """ Compatibility method. Does nothing. """
+        pass
