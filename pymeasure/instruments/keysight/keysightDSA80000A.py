@@ -500,7 +500,19 @@ class KeysightDSA80000A(Instrument):
 
         return data
 
+    def get_waveform_data_word_subpart(self,start,points):
+        """ Get the block of sampled data points transmitted using the IEEE 488.2 arbitrary
+        block data format."""
+        # Other waveform formats raise UnicodeDecodeError
+        self.waveform_format = "word"
+        self.waveform_byteorder = 'little'
+        self.waveform_streaming = False
 
+        data = self.adapter.connection.query_binary_values(f":waveform:data? {start}, {points}", datatype = 'h')
+        # Strip header from first data element
+        #data[0] = float(data[0][10:])
+
+        return data
 
     ################
     # System Setup #
