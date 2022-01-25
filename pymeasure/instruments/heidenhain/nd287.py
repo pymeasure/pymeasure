@@ -32,7 +32,7 @@ log.addHandler(logging.NullHandler())
 
 
 class ND287(Instrument):
-    """ Represents the Heidenhain ND287 position display unit used to readout and display 
+    """ Represents the Heidenhain ND287 position display unit used to readout and display
         absolute position measured by Heidenhain encoders.
     """
 
@@ -82,14 +82,14 @@ class ND287(Instrument):
 
     @property
     def units(self):
-        """ String property representing the unit of measure set on the device. 
+        """ String property representing the unit of measure set on the device.
             Valid values are 'mm' and 'inch' Note that this parameter can only be set
             manually on the device. So this argument only ensures that the instance units
             and physical device settings match. I.e., this property does not change any
             physical device setting.
         """
         return self._units
-    
+
     @units.setter
     def units(self, unit):
         if unit in self.position_get_process_map.keys():
