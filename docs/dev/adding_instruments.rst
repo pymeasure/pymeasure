@@ -701,6 +701,7 @@ Naming derived instruments
 When deriving an instrument from an existing implementation, you might want to give separate names to any derived instrument. Two possible schemes for this are the following: 
 
 .. code-block:: python
+
     class BaseClass:
         def __init__(self, adapter, name=None, **kwargs):
             #...
