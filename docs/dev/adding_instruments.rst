@@ -698,7 +698,9 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 Naming derived instruments
 **************************
 
-When deriving an instrument from an existing implementation, you might want to give separate names to any derived instrument. Two possible schemes for this are the following: 
+When deriving an instrument from an existing implementation, the derived instrument typically has a different name (e.g. another model number).
+In addition, a user might want to give instantiated instruments setup-specific names (e.g. `Helmholtz_coil_driver` instead of `GenericPSU123`), especially if there is more than one device of the same make in a setup.
+To accomodate these needs, there are two similar ways: 
 
 .. code-block:: python
 
