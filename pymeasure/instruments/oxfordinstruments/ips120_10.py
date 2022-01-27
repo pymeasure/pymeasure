@@ -159,7 +159,7 @@ class IPS120_10(Instrument):
     )
 
     control_mode = Instrument.control(
-        "X", "$C%d",
+        "X", "C%d",
         """ A string property that sets the IPS in LOCAL or REMOTE and LOCKED,
         or UNLOCKED, the LOC/REM button. Allowed values are:
         :code:`"LL"`: local & locked,
@@ -205,7 +205,7 @@ class IPS120_10(Instrument):
     )
 
     switch_heater_status = Instrument.control(
-        "X", "$H%d",
+        "X", "H%d",
         """ An integer property that returns the switch heater status of
         the IPS. Use the :py:attr:`~switch_heater_enabled` property for controlling
         and reading the switch heater. When using this property, the user
@@ -259,7 +259,7 @@ class IPS120_10(Instrument):
         self.switch_heater_status = status_value
 
     current_setpoint = Instrument.control(
-        "R0", "$I%f",
+        "R0", "I%f",
         """ A floating point property that controls the magnet current set-point of
         the IPS in ampere. """,
         get_process=lambda v: float(v[1:]),
@@ -269,7 +269,7 @@ class IPS120_10(Instrument):
     )
 
     field_setpoint = Instrument.control(
-        "R8", "$J%f",
+        "R8", "J%f",
         """ A floating point property that controls the magnetic field set-point of
         the IPS in Tesla. """,
         get_process=lambda v: float(v[1:]),
@@ -279,7 +279,7 @@ class IPS120_10(Instrument):
     )
 
     sweep_rate = Instrument.control(
-        "R9", "$T%f",
+        "R9", "T%f",
         """ A floating point property that controls the sweep-rate of
         the IPS in Tesla/minute. """,
         get_process=lambda v: float(v[1:]),
@@ -287,7 +287,7 @@ class IPS120_10(Instrument):
     )
 
     activity = Instrument.control(
-        "X", "$A%d",
+        "X", "A%d",
         """ A string property that controls the activity of the IPS. Valid values
         are "hold", "to setpoint", "to zero" and "clamp" """,
         get_process=lambda v: int(v[4]),
