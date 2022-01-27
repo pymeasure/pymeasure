@@ -91,6 +91,13 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         """
         try:
             answer = self.connection.query(command)
+        except VisaIOError as e_visa:
+            if (isinstance(e_visa, type(self.timeoutError))
+                    and e_visa.args == self.timeoutError.args):
+                pass
+            else:
+                raise e_visa
+        else:
             log.debug(
                 "writing command to instrument: %s; instrument answered: %s",
                 command,
@@ -100,14 +107,6 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                 raise RetryVISAError(
                     f"The instrument did not understand this command: {command}"
                 )
-        except VisaIOError as e_visa:
-            if (
-                isinstance(e_visa, type(self.timeoutError))
-                and e_visa.args == self.timeoutError.args
-            ):
-                pass
-            else:
-                raise e_visa
 
     def sanity_handling(self, device_output, command, count=0, *args, **kwargs):
         """match the reply from a device with the specifying regex
