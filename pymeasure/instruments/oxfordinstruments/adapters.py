@@ -56,9 +56,9 @@ class OxfordInstrumentsAdapter(VISAAdapter):
     visaIOError = VisaIOError(-1073807298)
     visaNotFoundError = VisaIOError(-1073807343)
 
-    def __init__(self, resource_name, sanity="{}.*", max_attempts=5, **kwargs):
+    def __init__(self, resource_name, regex_pattern="^{}[\d.]+", max_attempts=5, **kwargs):
         super().__init__(resource_name, **kwargs)
-        self.sanity_regex = sanity
+        self.regex_pattern = regex_pattern
         self.max_attempts = max_attempts
 
     def ask(self, command, count=0):
@@ -78,7 +78,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                                  f"no sane reply, maybe there is something worse at hand")
         else:
             count += 1
-        device_output = self.connection.query(command)
+        device_output = super().ask(command)
         log.debug("query for command %s; device_output: %s", command, device_output)
         reply_sane = self.sanity_handling(device_output, command, count=count)
         return reply_sane
@@ -94,7 +94,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         super().write(command)
 
         if not command[0] == "$":
-            answer = super().read()
+            answer = self.read()
 
             log.debug(
                 "writing command to instrument: %s; instrument answered: %s",
@@ -123,41 +123,28 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         :returns:   in case it matches: device_output,
                     else: recursively retry self.ask(command)
         """
-
-        san_regex = self.sanity_regex.format(command[0])
+        current_pattern = self.regex_pattern.format(command[0])
 
         try:
-            if not re.match(san_regex, device_output):
-                log.debug(
-                    "reply '%s' is not sane for command '%s', trying again, this is trial nr. %s",
-                    device_output,
-                    command,
-                    count,
-                )
-                try:
-                    self.read()
-                except VisaIOError as e_visa:
-                    if (
-                        isinstance(e_visa, type(self.timeoutError))
-                        and e_visa.args == self.timeoutError.args
-                    ):
-                        pass
-                    else:
-                        raise e_visa
-                return self.ask(command, count=count)
+            match = re.match(current_pattern, device_output)
         except TypeError:
-            try:
-                self.read()
-            except VisaIOError as e_visa:
-                if (
-                    isinstance(e_visa, type(self.timeoutError))
-                    and e_visa.args == self.timeoutError.args
-                ):
-                    pass
-                else:
-                    raise e_visa
-            return self.ask(command, count=count)
-        return device_output
+            pass
+        else:
+            if match:
+                return device_output
+
+        try:
+            self.read()
+        except VisaIOError as e_visa:
+            if (
+                isinstance(e_visa, type(self.timeoutError))
+                and e_visa.args == self.timeoutError.args
+            ):
+                pass
+            else:
+                raise e_visa
+
+        return self.ask(command, count=count)
 
     def __repr__(self):
         return "<OxfordInstrumentsAdapter(resource='%s')>" % self.connection.resource_name
