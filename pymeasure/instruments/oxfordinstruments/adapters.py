@@ -43,10 +43,11 @@ class OxfordInstrumentsAdapter(VISAAdapter):
     with instruments.
     Checks replies from instruments for sanity
 
+    :param resource_name: VISA resource name that identifies the address
     :param sanity: regex string of how a reply from the device must look like
-                        defaults to accepting all replies
-                        default is for devices from Oxford Instruments
-    :param resource: VISA resource name that identifies the address
+        default is for devices from Oxford Instruments
+    :param max_attempts: Integer that sets how many attempts at getting a
+        sensible response to a query can be made
     :param kwargs: key-word arguments for constructing a PyVISA Adapter
     """
 
@@ -55,9 +56,10 @@ class OxfordInstrumentsAdapter(VISAAdapter):
     visaIOError = VisaIOError(-1073807298)
     visaNotFoundError = VisaIOError(-1073807343)
 
-    def __init__(self, resource_name, sanity="{}.*", **kwargs):
+    def __init__(self, resource_name, sanity="{}.*", max_attempts=5, **kwargs):
         super().__init__(resource_name, **kwargs)
         self.sanity_regex = sanity
+        self.max_attempts = max_attempts
 
     def ask(self, command, count=0):
         """Write the command to the instrument and return the resulting
@@ -71,10 +73,9 @@ class OxfordInstrumentsAdapter(VISAAdapter):
 
         :returns: String ASCII response of the instrument
         """
-        if count > 5:
-            raise RetryVISAError(
-                "5 times retried, no sane reply, maybe there is something worse at hand"
-            )
+        if count > self.max_attempts:
+            raise RetryVISAError(f"{self.max_attempts} times retried, "
+                                 f"no sane reply, maybe there is something worse at hand")
         else:
             count += 1
         # log.debug(f"query for command {command} ")
