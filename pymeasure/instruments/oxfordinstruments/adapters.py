@@ -78,11 +78,9 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                                  f"no sane reply, maybe there is something worse at hand")
         else:
             count += 1
-        # log.debug(f"query for command {command} ")
         device_output = self.connection.query(command)
         log.debug("query for command %s; device_output: %s", command, device_output)
         reply_sane = self.sanity_handling(device_output, command, count=count)
-        # log.debug(f"reply_sane: {reply_sane}")
         return reply_sane
 
     def write(self, command):
@@ -125,11 +123,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                     else: recursively retry self.ask(command)
         """
 
-        # log.debug(f"now handling sanity, this is trial nr. {count}")
-        # log.debug(f"sanity regex pristine = {self.sanity_regex}, command={command}")
         san_regex = self.sanity_regex.format(command[0])
-        # log.debug(f"sanity regex = {san_regex}")
-        # log.debug(f"device_output = {device_output}")
 
         try:
             if not re.match(san_regex, device_output):
