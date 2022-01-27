@@ -66,6 +66,9 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         repeat
 
         :param command: ASCII command string to be sent to the instrument
+        :param count: Integer that counts how many attempts at getting a sane
+            reply have been done.
+
         :returns: String ASCII response of the instrument
         """
         if count > 5:
@@ -114,6 +117,9 @@ class OxfordInstrumentsAdapter(VISAAdapter):
 
         :param device_output: String ASCII response of the device
         :param command: command used in the initial query
+        :param count: Integer that counts how many attempts at getting a sane
+            reply have been done.
+
         :returns:   in case it matches: device_output,
                     else: recursively retry self.ask(command)
         """
