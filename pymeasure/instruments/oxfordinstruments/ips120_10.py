@@ -25,12 +25,10 @@
 
 import logging
 from time import sleep, time
-import numpy
 
 from pymeasure.instruments import Instrument
-from pymeasure.adapters import VISAAdapter
-from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_range, strict_range
+from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import truncated_range
 
 
 # Setup logging
@@ -110,27 +108,28 @@ class IPS120_10(Instrument):
         8: "No switch fitted",  # No switch fitted
     }
 
-    def __init__(self, resourceName,
+    def __init__(self,
+                 adapter,
+                 name="Oxford IPS",
                  clear_buffer=True,
                  switch_heater_heating_delay=None,
                  switch_heater_cooling_delay=None,
                  field_range=None,
                  **kwargs):
 
+        kwargs.setdefault('read_termination', '\r')
         super().__init__(
-            resourceName,
-            "Oxford IPS",
+            adapter=adapter,
+            name=name,
             includeSCPI=False,
-            send_end=True,
-            read_termination="\r",
-            **kwargs
+            gpib={'send_end': True},
+            asrl={'baud_rate': 9600,
+                  'data_bits': 8,
+                  'parity': 0,
+                  'stop_bits': 20,
+                  },
+            **kwargs,
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 9600
-            self.adapter.connection.data_bits = 8
-            self.adapter.connection.parity = 0
-            self.adapter.connection.stop_bits = 20
 
         if switch_heater_heating_delay is not None:
             self._SWITCH_HEATER_HEATING_DELAY = switch_heater_heating_delay
@@ -171,6 +170,7 @@ class IPS120_10(Instrument):
         """ A floating point property that returns the measured magnet current of
         the IPS in amps. """,
         get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     demand_current = Instrument.measurement(
@@ -178,6 +178,7 @@ class IPS120_10(Instrument):
         """ A floating point property that returns the demand magnet current of
         the IPS in amps. """,
         get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     demand_field = Instrument.measurement(
@@ -185,6 +186,7 @@ class IPS120_10(Instrument):
         """ A floating point property that returns the demand magnetic field of
         the IPS in Tesla. """,
         get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     persistent_field = Instrument.measurement(
@@ -192,6 +194,7 @@ class IPS120_10(Instrument):
         """ A floating point property that returns the persistent magnetic field of
         the IPS in Tesla. """,
         get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     switch_heater_status = Instrument.control(
@@ -254,7 +257,8 @@ class IPS120_10(Instrument):
         the IPS in ampere. """,
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
-        values=[0, _MAX_CURRENT]
+        values=[0, _MAX_CURRENT],
+        dynamic=True,
     )
 
     field_setpoint = Instrument.control(
@@ -264,6 +268,7 @@ class IPS120_10(Instrument):
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=_FIELD_RANGE,
+        dynamic=True,
     )
 
     sweep_rate = Instrument.control(
@@ -271,6 +276,7 @@ class IPS120_10(Instrument):
         """ A floating point property that controls the sweep-rate of
         the IPS in Tesla/minute. """,
         get_process=lambda v: float(v[1:]),
+        dynamic=True,
     )
 
     activity = Instrument.control(
@@ -312,6 +318,7 @@ class IPS120_10(Instrument):
         """ Enable active control of the IPS by setting control to remote and
         turning off the clamp.
         """
+        log.debug("start enabling control")
         self.control_mode = "RU"
 
         # Turn off clamping if still clamping
@@ -320,15 +327,18 @@ class IPS120_10(Instrument):
 
         # Turn on switch-heater if field at zero
         if self.field == 0:
+            log.debug("enabling switch heater")
             self.switch_heater_enabled = True
 
     def disable_control(self):
         """ Disable active control of the IPS (if at 0T) by turning off the switch heater,
         clamping the output and setting control to local.
         Raise a :class:`.MagnetError` if field not at 0T. """
+        log.debug("start disabling control")
         if not self.field == 0:
             raise MagnetError("IPS 120-10: field not at 0T; cannot disable the supply. ")
 
+        log.debug("disabling switch heater")
         self.switch_heater_enabled = False
         self.activity = "clamp"
         self.control_mode = "LU"
@@ -337,10 +347,12 @@ class IPS120_10(Instrument):
         """ Enable the persistent magnetic field mode.
          Raise a :class:`.MagnetError` if the magnet is not at rest. """
         # Check if system idle
+        log.debug("enabling persistent mode")
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot enable persistent mode")
 
         if not self.switch_heater_enabled:
+            log.debug("magnet already in persistent mode")
             return  # Magnet already in persistent mode
         else:
             self.activity = "hold"
@@ -354,6 +366,7 @@ class IPS120_10(Instrument):
         """ Disable the persistent magnetic field mode.
          Raise a :class:`.MagnetError` if the magnet is not at rest. """
         # Check if system idle
+        log.debug("disabling persistent mode")
         if not self.sweep_status == "at rest":
             raise MagnetError("IPS 120-10: magnet not at rest; cannot disable persistent mode")
 
@@ -364,11 +377,15 @@ class IPS120_10(Instrument):
             self.field_setpoint = self.field
 
         if self.switch_heater_enabled:
+            log.debug("magnet already in demand mode or at 0 field")
             return  # Magnet already in demand mode or at 0 field
         else:
+            log.debug("set activity to 'to setpoint'")
             self.activity = "to setpoint"
             self.wait_for_idle()
+            log.debug("set activity to 'hold'")
             self.activity = "hold"
+            log.debug("enable switch heater")
             self.switch_heater_enabled = True
             log.info("IPS 120-10: Wait for for switch heater delay")
             sleep(self._SWITCH_HEATER_HEATING_DELAY)
@@ -385,21 +402,26 @@ class IPS120_10(Instrument):
             as no maximum time.
         :param should_stop: A function that returns :code:`True` when this function should return early.
         """
+        log.debug("waiting for magnet to be idle")
         error_ct = 0
         start_time = time()
         status = None
         while True:
+            log.debug("sleeping for %d s", delay)
             sleep(delay)
 
             try:
+                log.debug("checking the status of the sweep")
                 status = self.sweep_status
             except ValueError as e:
                 log.error("IPS 120-10: Issue with getting status (#%d): %s" % (error_ct, e))
                 error_ct += 1
 
             if status == "at rest":
+                log.debug("status is 'at rest', waiting is done")
                 break
             if should_stop():
+                log.debug("external function signals to stop waiting")
                 break
 
             if max_errors is not None and error_ct > max_errors:
@@ -431,9 +453,12 @@ class IPS120_10(Instrument):
 
         if self.switch_heater_enabled:
             pass  # Magnet in demand mode
+            log.debug("Magnet in demand mode, continuing")
         else:
             # Magnet in persistent mode
+            log.debug("Magnet in persistent mode")
             if persistent_mode_control:
+                log.debug("trying to disable persistent mode")
                 self.disable_persistent_mode()
             else:
                 raise MagnetError(
@@ -442,18 +467,27 @@ class IPS120_10(Instrument):
                 )
 
         if sweep_rate is not None:
+            log.debug("setting the sweep rate to %s", sweep_rate)
             self.sweep_rate = sweep_rate
 
         if field == 0:
+            log.debug("setting activity to 'to zero' - running down the field")
             self.activity = "to zero"
         else:
+            log.debug("setting activity to 'to setpoint'")
             self.activity = "to setpoint"
+            log.debug("setting the field_setpoint to %d", field)
             self.field_setpoint = field
 
+        log.debug("waiting for magnet to be finished")
         self.wait_for_idle()
+        log.debug("sleeping for additional 10s (whatever the reason)")
         sleep(10)
 
         if persistent_mode_control and field != 0:
+            log.debug(
+                "persistent mode control is on, and setpoint_field !=0 - enabling persistent mode"
+            )
             self.enable_persistent_mode()
 
     def train_magnet(self, training_scheme):
