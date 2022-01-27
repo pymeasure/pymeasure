@@ -52,7 +52,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
     """
 
     connError = VisaIOError(-1073807194)
-    timeouterror = VisaIOError(-1073807339)
+    timeoutError = VisaIOError(-1073807339)
     visaIOError = VisaIOError(-1073807298)
     visaNotFoundError = VisaIOError(-1073807343)
 
@@ -102,8 +102,8 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                 )
         except VisaIOError as e_visa:
             if (
-                isinstance(e_visa, type(self.timeouterror))
-                and e_visa.args == self.timeouterror.args
+                isinstance(e_visa, type(self.timeoutError))
+                and e_visa.args == self.timeoutError.args
             ):
                 pass
             else:
@@ -137,8 +137,8 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                     self.read()
                 except VisaIOError as e_visa:
                     if (
-                        isinstance(e_visa, type(self.timeouterror))
-                        and e_visa.args == self.timeouterror.args
+                        isinstance(e_visa, type(self.timeoutError))
+                        and e_visa.args == self.timeoutError.args
                     ):
                         pass
                     else:
@@ -149,8 +149,8 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                 self.read()
             except VisaIOError as e_visa:
                 if (
-                    isinstance(e_visa, type(self.timeouterror))
-                    and e_visa.args == self.timeouterror.args
+                    isinstance(e_visa, type(self.timeoutError))
+                    and e_visa.args == self.timeoutError.args
                 ):
                     pass
                 else:
