@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,8 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 
 
 class Agilent8257D(Instrument):
-    """Represents the Agilent 8257D Signal Generator and 
-    provides a high-level interface for interacting with 
+    """Represents the Agilent 8257D Signal Generator and
+    provides a high-level interface for interacting with
     the instrument.
 
     .. code-block:: python
@@ -86,7 +86,7 @@ class Agilent8257D(Instrument):
     dwell_time = Instrument.control(
         ":SOUR:SWE:DWEL1?", ":SOUR:SWE:DWEL1 %.3f",
         """ A floating point property that represents the settling time
-        in seconds at the current frequency or power setting. 
+        in seconds at the current frequency or power setting.
         This property can be set.
         """
     )
@@ -96,11 +96,13 @@ class Agilent8257D(Instrument):
         can be set.
         """
     )
-    is_enabled = Instrument.measurement(":OUTPUT?",
+    is_enabled = Instrument.measurement(
+        ":OUTPUT?",
         """ Reads a boolean value that is True if the output is on. """,
         cast=bool
     )
-    has_modulation = Instrument.measurement(":OUTPUT:MOD?",
+    has_modulation = Instrument.measurement(
+        ":OUTPUT:MOD?",
         """ Reads a boolean value that is True if the modulation is enabled. """,
         cast=bool
     )
@@ -109,7 +111,8 @@ class Agilent8257D(Instrument):
     # Amplitude modulation #
     ########################
 
-    has_amplitude_modulation = Instrument.measurement(":SOUR:AM:STAT?",
+    has_amplitude_modulation = Instrument.measurement(
+        ":SOUR:AM:STAT?",
         """ Reads a boolean value that is True if the amplitude modulation is enabled. """,
         cast=bool
     )
@@ -121,8 +124,8 @@ class Agilent8257D(Instrument):
         values=[0, 100]
     )
     AMPLITUDE_SOURCES = {
-        'internal':'INT', 'internal 2':'INT2', 
-        'external':'EXT', 'external 2':'EXT2'
+        'internal': 'INT', 'internal 2': 'INT2',
+        'external': 'EXT', 'external 2': 'EXT2'
     }
     amplitude_source = Instrument.control(
         ":SOUR:AM:SOUR?", ":SOUR:AM:SOUR %s",
@@ -138,12 +141,13 @@ class Agilent8257D(Instrument):
     # Pulse modulation #
     ####################
 
-    has_pulse_modulation = Instrument.measurement(":SOUR:PULM:STAT?",
+    has_pulse_modulation = Instrument.measurement(
+        ":SOUR:PULM:STAT?",
         """ Reads a boolean value that is True if the pulse modulation is enabled. """,
         cast=bool
     )
     PULSE_SOURCES = {
-        'internal':'INT', 'external':'EXT', 'scalar':'SCAL'
+        'internal': 'INT', 'external': 'EXT', 'scalar': 'SCAL'
     }
     pulse_source = Instrument.control(
         ":SOUR:PULM:SOUR?", ":SOUR:PULM:SOUR %s",
@@ -155,8 +159,8 @@ class Agilent8257D(Instrument):
         map_values=True
     )
     PULSE_INPUTS = {
-        'square':'SQU', 'free-run':'FRUN',
-        'triggered':'TRIG', 'doublet':'DOUB', 'gated':'GATE'
+        'square': 'SQU', 'free-run': 'FRUN',
+        'triggered': 'TRIG', 'doublet': 'DOUB', 'gated': 'GATE'
     }
     pulse_input = Instrument.control(
         ":SOUR:PULM:SOUR:INT?", ":SOUR:PULM:SOUR:INT %s",
@@ -185,11 +189,11 @@ class Agilent8257D(Instrument):
         """A floating point property that controls the peak voltage (amplitude) of the
         low frequency output in volts, which can take values from 0-3.5V""",
         validator=truncated_range,
-        values=[0,3.5]
+        values=[0, 3.5]
     )
 
     LOW_FREQUENCY_SOURCES = {
-        'internal':'INT', 'internal 2':'INT2', 'function':'FUNC', 'function 2':'FUNC2'
+        'internal': 'INT', 'internal 2': 'INT2', 'function': 'FUNC', 'function 2': 'FUNC2'
     }
 
     low_freq_out_source = Instrument.control(
@@ -232,8 +236,8 @@ class Agilent8257D(Instrument):
         values=[0.5, 1e6]
     )
     INTERNAL_SHAPES = {
-        'sine':'SINE', 'triangle':'TRI', 'square':'SQU', 'ramp':'RAMP', 
-        'noise':'NOIS', 'dual-sine':'DUAL', 'swept-sine':'SWEP'
+        'sine': 'SINE', 'triangle': 'TRI', 'square': 'SQU', 'ramp': 'RAMP',
+        'noise': 'NOIS', 'dual-sine': 'DUAL', 'swept-sine': 'SWEP'
     }
     internal_shape = Instrument.control(
         ":SOUR:AM:INT:FUNC:SHAP?", ":SOUR:AM:INT:FUNC:SHAP %s",
@@ -246,7 +250,7 @@ class Agilent8257D(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent8257D, self).__init__(
+        super().__init__(
             adapter, "Agilent 8257D RF Signal Generator", **kwargs
         )
 

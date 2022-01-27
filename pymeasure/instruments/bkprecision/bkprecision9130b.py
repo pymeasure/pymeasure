@@ -43,7 +43,7 @@ class BKPrecision9130B(Instrument):
     source_enabled = Instrument.control(
         'SOURce:CHANnel:OUTPut:STATe?',
         'SOURce:CHANnel:OUTPut:STATe %d',
-        """A boolean property that controls whether the source is enabled, takes values 
+        """A boolean property that controls whether the source is enabled, takes values
         True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -53,7 +53,7 @@ class BKPrecision9130B(Instrument):
     channel = Instrument.control(
         'INSTrument:SELect?',
         'INSTrument:SELect CH%d',
-        f"""An integer property used to control which channel is selected. Can only take 
+        f"""An integer property used to control which channel is selected. Can only take
         values {CHANNEL_NUMS}.""",
         validator=strict_discrete_set,
         values=CHANNEL_NUMS,
@@ -61,7 +61,7 @@ class BKPrecision9130B(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(BKPrecision9130B, self).__init__(
+        super().__init__(
             adapter, "BK Precision 9130B Source", **kwargs
         )
 

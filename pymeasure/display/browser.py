@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -74,7 +74,8 @@ class BrowserItem(QtGui.QTreeWidgetItem):
             """)
 
     def setProgress(self, progress):
-        self.progressbar.setValue(progress)
+        self.progressbar.setValue(int(progress))
+
 
 class Browser(QtGui.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`

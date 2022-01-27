@@ -12,8 +12,9 @@ Using the Plotter
 While it lacks the nice features of the ManagedWindow, the Plotter object is the simplest way of getting live-plotting. The Plotter takes a Results object and plots the data at a regular interval, grabbing the latest data each time from the file.
 
 .. warning::
-   The example in this section is known to raise issues when executed on recent versions of macOS (10.12 Sierra and later): a `QApplication was not created in the main thread` / `nextEventMatchingMask should only be called from the Main Thread` warning is raised.
-   macOS users are hence adviced to skip this example and continue with the `Using the ManagedWindow`_ section.
+   The example in this section is known to raise issues when executed: a `QApplication was not created in the main thread` / `nextEventMatchingMask should only be called from the Main Thread` warning is raised.
+   While the example works without issues on some operating systems and python configurations, users are advised not to rely on the plotter while this issue is unresolved.
+   Users can hence skip this example and continue with the `Using the ManagedWindow`_ section.
 
 
 Let's extend our SimpleProcedure with a RandomProcedure, which generates random numbers during our loop. This example does not include instruments to provide a simpler example. ::
@@ -50,6 +51,7 @@ Let's extend our SimpleProcedure with a RandomProcedure, which generates random 
                 }
                 self.emit('results', data)
                 log.debug("Emitting results: %s" % data)
+                self.emit('progress', 100 * i / self.iterations)
                 sleep(self.delay)
                 if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -137,6 +139,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
                 }
                 self.emit('results', data)
                 log.debug("Emitting results: %s" % data)
+                self.emit('progress', 100 * i / self.iterations)
                 sleep(self.delay)
                 if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -146,7 +149,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=RandomProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],
@@ -197,6 +200,14 @@ If you abort a measurement, the resume button must be pressed to continue the ne
 
 Now that you have learned about the ManagedWindow, you have all of the basics to get up and running quickly with a measurement and produce an easy to use graphical interface with PyMeasure.
 
+.. note::
+   For performance reasons, the default linewidth of all the graphs has been set to 1.
+   If performance is not an issue, the linewidth can be changed to 2 (or any other value) for better visibility by using the `linewidth` keyword-argument in the `Plotter` or the `ManagedWindow`.
+   Whenever a linewidth of 2 is prefered and a better performance is required, it is possible to enable using OpenGL in the import section of the file: ::
+
+      import pyqtgraph as pg
+      pg.setConfigOption("useOpenGL", True)
+
 Customising the plot options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -243,7 +254,7 @@ In order to implement the sequencer into the previous example, only the :class:`
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=TestProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],
@@ -293,7 +304,7 @@ An example of such a sequence file is given below, resulting in the sequence sho
 
 .. literalinclude:: gui_sequencer_example_sequence.txt
 
-This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super(MainWindow, self).__init__` call, as was done in the example.
+This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super().__init__` call, as was done in the example.
 
 Using the directory input
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -308,7 +319,7 @@ Only the MainWindow needs to be modified in order to use this option (modified l
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=TestProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],

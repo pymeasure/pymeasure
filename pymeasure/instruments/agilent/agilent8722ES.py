@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,7 @@ class Agilent8722ES(Instrument):
         """ An integer representing the number of averages to take. Note that
         averaging must be enabled for this to take effect. This property can be set.
         """,
-        cast=lambda x: int(float(x))  # int() doesn't like converting scientific notation values directly from strings
+        cast=lambda x: int(float(x))  # need float() to convert scientific notation in strings
     )
     averaging_enabled = Instrument.control(
         "AVERO?", "AVERO%d",
@@ -74,7 +74,7 @@ class Agilent8722ES(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(Agilent8722ES, self).__init__(
+        super().__init__(
             resourceName,
             "Agilent 8722ES Vector Network Analyzer",
             **kwargs
@@ -146,12 +146,14 @@ class Agilent8722ES(Instrument):
 
     def disable_averaging(self):
         """Disables averaging"""
-        warnings.warn("Don't use disable_averaging(), use averaging_enabled = False instead", FutureWarning)
+        warnings.warn(
+            "Don't use disable_averaging(), use averaging_enabled = False instead", FutureWarning)
         self.averaging_enabled = False
 
     def enable_averaging(self):
         """Enables averaging"""
-        warnings.warn("Don't use enable_averaging(), use averaging_enabled = True instead", FutureWarning)
+        warnings.warn(
+            "Don't use enable_averaging(), use averaging_enabled = True instead", FutureWarning)
         self.averaging_enabled = True
 
     def is_averaging(self):
@@ -168,11 +170,14 @@ class Agilent8722ES(Instrument):
         blocks until the operation is complete.
         """
         if averages is not None or blocking is not None or timeout is not None or delay is not None:
-            warnings.warn("averages, blocking, timeout, and delay arguments are no longer used by scan()", FutureWarning)
+            warnings.warn(
+                "averages, blocking, timeout, and delay arguments are no longer used by scan()",
+                FutureWarning
+            )
         self.write("*CLS")
         self.scan_single()
         # All queries will block until the scan is done, so use NOOP? to check.
-        # These queries will time out after several seconds though, 
+        # These queries will time out after several seconds though,
         # so query repeatedly until the scan finishes.
         while True:
             try:
@@ -221,7 +226,7 @@ class Agilent8722ES(Instrument):
     def data_log_magnitude(self):
         """ Returns the absolute magnitude values in dB from the last scan
         """
-        return 20*np.log10(self.data_magnitude)
+        return 20 * np.log10(self.data_magnitude)
 
     @property
     def data_magnitude(self):
@@ -234,7 +239,7 @@ class Agilent8722ES(Instrument):
         """ Returns the phase in degrees from the last scan
         """
         return np.degrees(np.angle(self.data_complex))
-    
+
     @property
     def data(self):
         """ Returns the real and imaginary data from the last scan
@@ -248,7 +253,7 @@ class Agilent8722ES(Instrument):
         number or numpy arrays
         """
         warnings.warn("Don't use log_magnitude(), use data_log_magnitude instead", FutureWarning)
-        return 20*np.log10(self.magnitude(real, imaginary))
+        return 20 * np.log10(self.magnitude(real, imaginary))
 
     def magnitude(self, real, imaginary):
         """ Returns the magnitude from a real and imaginary
@@ -262,4 +267,4 @@ class Agilent8722ES(Instrument):
         number or numpy arrays
         """
         warnings.warn("Don't use phase(), use data_phase instead", FutureWarning)
-        return np.arctan2(imaginary, real)*180/np.pi
+        return np.arctan2(imaginary, real) * 180 / np.pi

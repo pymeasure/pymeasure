@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -57,10 +57,13 @@ class SR860(Instrument):
     INPUT_RANGE = ['1V', '300M', '100M', '30M', '10M']
     INPUT_GAIN = ['1MEG', '100MEG']
     INPUT_FILTER = ['Off', 'On']
-    LIST_PARAMETER = ['i=', '0=Xoutput', '1=Youtput', '2=Routput', 'Thetaoutput', '4=Aux IN1', '5=Aux IN2', '6=Aux IN3', '7=Aux IN4', '8=Xnoise', '9=Ynoise',
-                      '10=AUXOut1', '11=AuxOut2', '12=Phase', '13=Sine Out amplitude', '14=DCLevel', '15I=nt.referenceFreq', '16=Ext.referenceFreq']
-    LIST_HORIZONTAL_TIME_DIV = ['0=0.5s', '1=1s', '2=2s', '3=5s', '4=10s', '5=30s', '6=1min', '7=2min',
-                                '8=5min', '9=10min', '10=30min', '11=1hour', '12=2hour', '13=6hour', '14=12hour', '15=1day', '16=2days']
+    LIST_PARAMETER = ['i=', '0=Xoutput', '1=Youtput', '2=Routput', 'Thetaoutput', '4=Aux IN1',
+                      '5=Aux IN2', '6=Aux IN3', '7=Aux IN4', '8=Xnoise', '9=Ynoise',
+                      '10=AUXOut1', '11=AuxOut2', '12=Phase', '13=Sine Out amplitude',
+                      '14=DCLevel', '15I=nt.referenceFreq', '16=Ext.referenceFreq']
+    LIST_HORIZONTAL_TIME_DIV = ['0=0.5s', '1=1s', '2=2s', '3=5s', '4=10s', '5=30s', '6=1min',
+                                '7=2min', '8=5min', '9=10min', '10=30min', '11=1hour', '12=2hour',
+                                '13=6hour', '14=12hour', '15=1day', '16=2days']
 
     x = Instrument.measurement("OUTP? 0",
                                """ Reads the X value in Volts """
@@ -225,7 +228,8 @@ class SR860(Instrument):
     )
     filter_slope = Instrument.control(
         "OFSL?", "OFSL %d",
-        """A integer property that sets the filter slope to 6 dB/oct(i=0), 12 DB/oct(i=1), 18 dB/oct(i=2), 24 dB/oct(i=3).""",
+        """A integer property that sets the filter slope to 6 dB/oct(i=0), 12 DB/oct(i=1),
+        18 dB/oct(i=2), 24 dB/oct(i=3).""",
         validator=strict_discrete_set,
         values=range(0, 3)
     )
@@ -275,28 +279,28 @@ class SR860(Instrument):
     )
     sine_amplitudepreset1 = Instrument.control(
         "PSTA? 0", "PSTA0, %0.9e",
-        """A floating point property that represents the preset sine out amplitude, for the A1 preset button.
+        """Floating point property representing the preset sine out amplitude, for the A1 preset button.
         This property can be set.""",
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset2 = Instrument.control(
         "PSTA? 1", "PSTA1, %0.9e",
-        """A floating point property that represents the preset sine out amplitude, for the A2 preset button.
+        """Floating point property representing the preset sine out amplitude, for the A2 preset button.
         This property can be set.""",
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset3 = Instrument.control(
         "PSTA? 2", "PSTA2, %0.9e",
-        """A floating point property that represents the preset sine out amplitude, for the A3 preset button.
+        """Floating point property representing the preset sine out amplitude, for the A3 preset button.
         This property can be set.""",
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset4 = Instrument.control(
         "PSTA? 3", "PSTA 3, %0.9e",
-        """A floating point property that represents the preset sine out amplitude, for the A3 preset button.
+        """Floating point property representing the preset sine out amplitude, for the A3 preset button.
         This property can be set.""",
         validator=truncated_range,
         values=[1e-9, 2]
@@ -375,8 +379,8 @@ class SR860(Instrument):
     dac4 = aux_out_4
 
     aux_in_1 = Instrument.measurement(
-            "OAUX? 0",
-            """ Reads the Aux input 1 value in Volts with 1/3 mV resolution. """
+        "OAUX? 0",
+        """ Reads the Aux input 1 value in Volts with 1/3 mV resolution. """
     )
     # For consistency with other lock-in instrument classes
     adc1 = aux_in_1
@@ -417,7 +421,7 @@ class SR860(Instrument):
         6 IN3         Aux In3      15 FInt        Int. Ref. Frequency
         7 IN4         Aux In4      16 FExt        Ext. Ref. Frequency
         8 XNOise      Xnoise
-        
+
         :param val1: parameter enumeration/index
         :param val2: parameter enumeration/index
         :param val3: parameter enumeration/index (optional)
@@ -470,8 +474,9 @@ class SR860(Instrument):
     )
     screen_layout = Instrument.control(
         "DLAY?", "DLAY %i",
-        """A integer property that Sets the screen layout to trend(i=0), full strip chart history(i=1), half strip chart history(i=2),
-        full FFT(i=3), half FFT(i=4) or big numerical(i=5).""",
+        """A integer property that Sets the screen layout to trend(i=0), full strip chart
+        history(i=1), half strip chart history(i=2), full FFT(i=3), half FFT(i=4) or big
+        numerical(i=5).""",
         validator=strict_discrete_set,
         values=SCREEN_LAYOUT_VALUES,
         map_values=True
@@ -548,14 +553,14 @@ class SR860(Instrument):
     # Strip Chart commands
     horizontal_time_div = Instrument.control(
         "GSPD?", "GSDP %i",
-        """A integer property that sets the horizontal time/div according to the following table:{}""".format(
-            LIST_HORIZONTAL_TIME_DIV),
+        """A integer property for the horizontal time/div according to the following table:{}
+        """.format(LIST_HORIZONTAL_TIME_DIV),
         validator=strict_discrete_set,
         values=range(0, 16)
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(SR860, self).__init__(
+        super().__init__(
             resourceName,
             "Stanford Research Systems SR860 Lock-in amplifier",
             **kwargs

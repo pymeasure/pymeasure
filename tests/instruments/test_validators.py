@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ from pymeasure.instruments.validators import (
 def test_strict_range():
     assert strict_range(5, range(10)) == 5
     assert strict_range(5.1, range(10)) == 5.1
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         strict_range(20, range(10))
 
 
@@ -44,19 +44,19 @@ def test_strict_discrete_range():
     assert strict_discrete_range(5.1, range(10), 0.1) == 5.1
     assert strict_discrete_range(5.1, range(10), 0.001) == 5.1
     assert strict_discrete_range(-5.1, [-20, 20], 0.001) == -5.1
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         strict_discrete_range(5.1, range(5), 0.001)
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         strict_discrete_range(5.01, range(5), 0.1)
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         strict_discrete_range(0.003, [0, 0.2], 0.002)
 
 
 def test_strict_discrete_set():
     assert strict_discrete_set(5, range(10)) == 5
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         strict_discrete_set(5.1, range(10))
-    with pytest.raises(ValueError) as e_info:
+    with pytest.raises(ValueError):
         strict_discrete_set(20, range(10))
 
 
@@ -95,10 +95,11 @@ def test_modular_range_bidirectional():
 
 def test_joined_validators():
     tst_validator = joined_validators(strict_discrete_set, strict_range)
-    assert tst_validator(5, [["ON", "OFF"], range(10)]) == 5
-    assert tst_validator(5.1, [["ON", "OFF"], range(10)]) == 5.1
-    assert tst_validator("ON", [["ON", "OFF"], range(10)]) == "ON"
-    with pytest.raises(ValueError) as e_info:
-        tst_validator("OUT", [["ON", "OFF"], range(10)])
-    with pytest.raises(ValueError) as e_info:
-        tst_validator(20, [["ON", "OFF"], range(10)])
+    values = [["ON", "OFF"], range(10)]
+    assert tst_validator(5, values) == 5
+    assert tst_validator(5.1, values) == 5.1
+    assert tst_validator("ON", values) == "ON"
+    with pytest.raises(ValueError):
+        tst_validator("OUT", values)
+    with pytest.raises(ValueError):
+        tst_validator(20, values)

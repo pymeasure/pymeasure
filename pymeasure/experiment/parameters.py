@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 
-class Parameter(object):
+class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 
@@ -61,10 +61,8 @@ class Parameter(object):
             else:
                 self.group_by = {g: group_condition for g in group_by}
         elif group_by is not None:
-            raise TypeError("The provided group_by argument is not valid, should be either "
-                            "a string, a list of strings, or a dict with {string: condition} pairs.")
-
-
+            raise TypeError("The provided group_by argument is not valid, should be either a "
+                            "string, a list of strings, or a dict with {string: condition} pairs.")
 
     @property
     def value(self):
@@ -86,7 +84,7 @@ class Parameter(object):
         return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,default=%s)>" % (
+        return "<{}(name={},value={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.default)
 
 
@@ -146,7 +144,7 @@ class IntegerParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -245,7 +243,7 @@ class FloatParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -313,12 +311,13 @@ class VectorParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,length=%s)>" % (
+        return "<{}(name={},value={},units={},length={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
 class ListParameter(Parameter):
     """ :class:`.Parameter` sub-class that stores the value as a list.
+    String representation of choices must be unique.
 
     :param name: The parameter name
     :param choices: An explicit list of choices, which is disregarded if None
@@ -329,7 +328,15 @@ class ListParameter(Parameter):
 
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
-        self._choices = tuple(choices) if choices is not None else None
+        if choices is not None:
+            keys = [str(c) for c in choices]
+            # check that string representation is unique
+            if not len(keys) == len(set(keys)):
+                raise ValueError(
+                    "String representation of choices is not unique!")
+            self._choices = {k: c for k, c in zip(keys, choices)}
+        else:
+            self._choices = None
         self.units = units
 
     @property
@@ -341,13 +348,17 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        if self._choices is None:
+            raise ValueError("ListParameter cannot be set since "
+                             "allowed choices are set to None.")
+
         # strip units if included
         if isinstance(value, str):
             if self.units is not None and value.endswith(" " + self.units):
                 value = value[:-len(self.units)].strip()
 
-        if self._choices is not None and value in self._choices:
-            self._value = value
+        if str(value) in self._choices.keys():
+            self._value = self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
@@ -355,7 +366,7 @@ class ListParameter(Parameter):
     @property
     def choices(self):
         """ Returns an immutable iterable of choices, or None if not set. """
-        return self._choices
+        return tuple(self._choices.values())
 
 
 class PhysicalParameter(VectorParameter):
@@ -442,7 +453,7 @@ class PhysicalParameter(VectorParameter):
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%g +/- %g" % (self._value[0], self._value[1])
+        result = f"{self._value[0]:g} +/- {self._value[1]:g}"
         if self.units:
             result += " %s" % self.units
         if self._utype.value is not None:
@@ -450,11 +461,11 @@ class PhysicalParameter(VectorParameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,uncertaintyType=%s)>" % (
+        return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
 
-class Measurable(object):
+class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.
     The value property is called when the procedure retrieves a datapoint

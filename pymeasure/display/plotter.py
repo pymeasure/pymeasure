@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,8 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class Plotter(StoppableThread):
-    """ Plotter dynamically plots data from a file through the Results
-    object and supports error bars.
+    """ Plotter dynamically plots data from a file through the Results object.
 
     .. seealso::
 
@@ -45,14 +44,15 @@ class Plotter(StoppableThread):
             A tutorial and example on using the Plotter and PlotterWindow.
     """
 
-    def __init__(self, results, refresh_time=0.1):
-        super(Plotter, self).__init__()
+    def __init__(self, results, refresh_time=0.1, linewidth=1):
+        super().__init__()
         self.results = results
         self.refresh_time = refresh_time
+        self.linewidth = linewidth
 
     def run(self):
         app = QtGui.QApplication(sys.argv)
-        window = PlotterWindow(self, refresh_time=self.refresh_time)
+        window = PlotterWindow(self, refresh_time=self.refresh_time, linewidth=self.linewidth)
         self.setup_plot(window.plot)
         app.aboutToQuit.connect(window.quit)
         window.show()

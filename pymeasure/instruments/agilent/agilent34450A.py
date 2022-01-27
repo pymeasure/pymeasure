@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,11 @@
 import re
 import logging
 
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 
 class Agilent34450A(Instrument):
@@ -81,7 +81,7 @@ class Agilent34450A(Instrument):
                     self.mode = 'ac voltage'
                 self.write(":configure:freq")
         else:
-            raise ValueError('Value %s is not a supported mode for this device.'.format(value))
+            raise ValueError(f'Value {value} is not a supported mode for this device.')
 
     ###############
     # Current (A) #
@@ -98,7 +98,7 @@ class Agilent34450A(Instrument):
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %s",
         """ A property that controls the DC current range in
-        Amps, which can take values 100E-6, 1E-3, 10E-3, 100E-3, 1, 10, 
+        Amps, which can take values 100E-6, 1E-3, 10E-3, 100E-3, 1, 10,
         as well as "MIN", "MAX", or "DEF" (100 mA).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -114,14 +114,14 @@ class Agilent34450A(Instrument):
     current_resolution = Instrument.control(
         ":SENS:CURR:RES?", ":SENS:CURR:RES %s",
         """ A property that controls the resolution in the DC current
-        readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits), 
+        readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", and "DEF" (3.00E-5). """,
         validator=strict_discrete_set,
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
     )
     current_ac_range = Instrument.control(
         ":SENS:CURR:AC:RANG?", ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %s",
-        """ A property that controls the AC current range in Amps, which can take 
+        """ A property that controls the AC current range in Amps, which can take
         values 10E-3, 100E-3, 1, 10, as well as "MIN", "MAX", or "DEF" (100 mA).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -137,7 +137,7 @@ class Agilent34450A(Instrument):
     current_ac_resolution = Instrument.control(
         ":SENS:CURR:AC:RES?", ":SENS:CURR:AC:RES %s",
         """ An property that controls the resolution in the AC current
-        readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits), 
+        readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
@@ -157,8 +157,8 @@ class Agilent34450A(Instrument):
                                         )
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %s",
-        """ A property that controls the DC voltage range in Volts, which 
-        can take values 100E-3, 1, 10, 100, 1000, as well as "MIN", "MAX", or 
+        """ A property that controls the DC voltage range in Volts, which
+        can take values 100E-3, 1, 10, 100, 1000, as well as "MIN", "MAX", or
         "DEF" (10 V). Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
         values=[100E-3, 1, 10, 100, 1000, "MAX", "MIN", "DEF"]
@@ -173,15 +173,15 @@ class Agilent34450A(Instrument):
     voltage_resolution = Instrument.control(
         ":SENS:VOLT:RES?", ":SENS:VOLT:RES %s",
         """ A property that controls the resolution in the DC voltage
-        readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits), 
+        readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
     )
     voltage_ac_range = Instrument.control(
         ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %s",
-        """ A property that controls the AC voltage range in Volts, which can 
-        take values 100E-3, 1, 10, 100, 750, as well as "MIN", "MAX", or "DEF" 
+        """ A property that controls the AC voltage range in Volts, which can
+        take values 100E-3, 1, 10, 100, 750, as well as "MIN", "MAX", or "DEF"
         (10 V).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -196,8 +196,8 @@ class Agilent34450A(Instrument):
     )
     voltage_ac_resolution = Instrument.control(
         ":SENS:VOLT:AC:RES?", ":SENS:VOLT:AC:RES %s",
-        """ A property that controls the resolution in the AC voltage readings, 
-        which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits), 
+        """ A property that controls the resolution in the AC voltage readings,
+        which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
@@ -208,19 +208,19 @@ class Agilent34450A(Instrument):
     ####################
 
     resistance = Instrument.measurement(":READ?",
-                                        """ Reads a resistance measurement in Ohms for 2-wire 
-                                        configuration, based on the active 
+                                        """ Reads a resistance measurement in Ohms for 2-wire
+                                        configuration, based on the active
                                         :attr:`~.Agilent34450A.mode`. """
                                         )
     resistance_4w = Instrument.measurement(":READ?",
-                                           """ Reads a resistance measurement in Ohms for 
-                                           4-wire configuration, based on the active 
+                                           """ Reads a resistance measurement in Ohms for
+                                           4-wire configuration, based on the active
                                            :attr:`~.Agilent34450A.mode`. """
                                            )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %s",
-        """ A property that controls the 2-wire resistance range in Ohms, which can 
-        take values 100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, as well as "MIN", "MAX", 
+        """ A property that controls the 2-wire resistance range in Ohms, which can
+        take values 100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, as well as "MIN", "MAX",
         or "DEF" (1E3).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -236,7 +236,7 @@ class Agilent34450A(Instrument):
     resistance_resolution = Instrument.control(
         ":SENS:RES:RES?", ":SENS:RES:RES %s",
         """ A property that controls the resolution in the 2-wire
-        resistance readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits), 
+        resistance readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
@@ -244,7 +244,7 @@ class Agilent34450A(Instrument):
     resistance_4w_range = Instrument.control(
         ":SENS:FRES:RANG?", ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %s",
         """ A property that controls the 4-wire resistance range
-        in Ohms, which can take values 100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, 
+        in Ohms, which can take values 100, 1E3, 10E3, 100E3, 1E6, 10E6, 100E6,
         as well as "MIN", "MAX", or "DEF" (1E3).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -260,7 +260,7 @@ class Agilent34450A(Instrument):
     resistance_4w_resolution = Instrument.control(
         ":SENS:FRES:RES?", ":SENS:FRES:RES %s",
         """ A property that controls the resolution in the 4-wire
-        resistance readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits), 
+        resistance readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
         as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
         validator=strict_discrete_set,
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
@@ -277,7 +277,7 @@ class Agilent34450A(Instrument):
     frequency_current_range = Instrument.control(
         ":SENS:FREQ:CURR:RANG?", ":SENS:FREQ:CURR:RANG:AUTO 0;:SENS:FREQ:CURR:RANG %s",
         """ A property that controls the current range in Amps for frequency on AC current
-        measurements, which can take values 10E-3, 100E-3, 1, 10, as well as "MIN", 
+        measurements, which can take values 10E-3, 100E-3, 1, 10, as well as "MIN",
         "MAX", or "DEF" (100 mA).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -285,15 +285,15 @@ class Agilent34450A(Instrument):
     )
     frequency_current_auto_range = Instrument.control(
         ":SENS:FREQ:CURR:RANG:AUTO?", ":SENS:FREQ:CURR:RANG:AUTO %d",
-        """ A boolean property that toggles auto ranging for AC current in frequency measurements. """,
+        """ Boolean property that toggles auto ranging for AC current in frequency measurements.""",
         validator=strict_discrete_set,
         values=BOOLS,
         map_values=True
     )
     frequency_voltage_range = Instrument.control(
         ":SENS:FREQ:VOLT:RANG?", ":SENS:FREQ:VOLT:RANG:AUTO 0;:SENS:FREQ:VOLT:RANG %s",
-        """ A property that controls the voltage range in Volts for frequency on AC voltage 
-        measurements, which can take values 100E-3, 1, 10, 100, 750, 
+        """ A property that controls the voltage range in Volts for frequency on AC voltage
+        measurements, which can take values 100E-3, 1, 10, 100, 750,
         as well as "MIN", "MAX", or "DEF" (10 V).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -301,7 +301,7 @@ class Agilent34450A(Instrument):
     )
     frequency_voltage_auto_range = Instrument.control(
         ":SENS:FREQ:VOLT:RANG:AUTO?", ":SENS:FREQ:VOLT:RANG:AUTO %d",
-        """ A boolean property that toggles auto ranging for AC voltage in frequency measurements. """,
+        """Boolean property that toggles auto ranging for AC voltage in frequency measurements. """,
         validator=strict_discrete_set,
         values=BOOLS,
         map_values=True
@@ -329,7 +329,7 @@ class Agilent34450A(Instrument):
     #############
 
     diode = Instrument.measurement(":READ?",
-                                   """ Reads a diode measurement in Volts, based on the 
+                                   """ Reads a diode measurement in Volts, based on the
                                    active :attr:`~.Agilent34450A.mode`. """
                                    )
 
@@ -338,13 +338,13 @@ class Agilent34450A(Instrument):
     ###################
 
     capacitance = Instrument.measurement(":READ?",
-                                         """ Reads a capacitance measurement in Farads, 
+                                         """ Reads a capacitance measurement in Farads,
                                          based on the active :attr:`~.Agilent34450A.mode`. """
                                          )
     capacitance_range = Instrument.control(
         ":SENS:CAP:RANG?", ":SENS:CAP:RANG:AUTO 0;:SENS:CAP:RANG %s",
         """ A property that controls the capacitance range
-        in Farads, which can take values 1E-9, 10E-9, 100E-9, 1E-6, 10E-6, 100E-6, 
+        in Farads, which can take values 1E-9, 10E-9, 100E-9, 1E-6, 10E-6, 100E-6,
         1E-3, 10E-3, as well as "MIN", "MAX", or "DEF" (1E-6).
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
@@ -363,12 +363,12 @@ class Agilent34450A(Instrument):
     ####################
 
     continuity = Instrument.measurement(":READ?",
-                                        """ Reads a continuity measurement in Ohms, 
+                                        """ Reads a continuity measurement in Ohms,
                                         based on the active :attr:`~.Agilent34450A.mode`. """
                                         )
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent34450A, self).__init__(
+        super().__init__(
             adapter, "HP/Agilent/Keysight 34450A Multimeter", **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
@@ -527,8 +527,8 @@ class Agilent34450A(Instrument):
 
         Use cases:
 
-        ['"CURR +1.000000E-01', '+1.500000E-06"']   ** Obtained from Instrument.measurement or Instrument.control
-        '"CURR +1.000000E-01,+1.500000E-06"'        ** Obtained from Instrument.ask
+        ['"CURR +1.000000E-01', '+1.500000E-06"'] from Instrument.measurement or Instrument.control
+        '"CURR +1.000000E-01,+1.500000E-06"'      from Instrument.ask
 
         becomes
 
@@ -555,7 +555,3 @@ class Agilent34450A(Instrument):
                 log.error(e)
 
         return list_without_empty_elements
-
-
-
-

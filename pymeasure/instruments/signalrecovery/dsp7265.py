@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,36 +23,37 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from time import sleep, time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_discrete_set, truncated_range, \
     modular_range_bidirectional, strict_discrete_set
 
-from time import sleep, time
-import numpy as np
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class DSP7265(Instrument):
     """This is the class for the DSP 7265 lockin amplifier"""
 
     SENSITIVITIES = [
-            np.nan, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
-            200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
-            20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
-            2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0
-        ]
+        np.nan, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
+        200.0e-9, 500.0e-9, 1.0e-6, 2.0e-6, 5.0e-6, 10.0e-6,
+        20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6, 1.0e-3,
+        2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+        200.0e-3, 500.0e-3, 1.0
+    ]
     SEN_MULTIPLIER = [1, 1e-6, 1e-8]
 
     TIME_CONSTANTS = [
-            10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
-            640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
-            200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
-            100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
-            20.0e3, 50.0e3
-        ]
+        10.0e-6, 20.0e-6, 40.0e-6, 80.0e-6, 160.0e-6, 320.0e-6,
+        640.0e-6, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
+        200.0e-3, 500.0e-3, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0,
+        100.0, 200.0, 500.0, 1.0e3, 2.0e3, 5.0e3, 10.0e3,
+        20.0e3, 50.0e3
+    ]
     REFERENCES = ['internal', 'external rear', 'external front']
     IMODES = ['voltage mode', 'current mode', 'low noise current mode']
 
@@ -77,42 +78,42 @@ class DSP7265(Instrument):
         """ A floating point property that represents the voltage
         in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[0,5]
+        values=[0, 5]
     )
     frequency = Instrument.control(
         "OF.", "OF. %g",
         """ A floating point property that represents the lock-in
         frequency in Hz. This property can be set. """,
         validator=truncated_range,
-        values=[0,2.5e5]
+        values=[0, 2.5e5]
     )
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
         """ A floating point property that represents the output
         value on DAC1 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
         """ A floating point property that represents the output
         value on DAC2 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
         """ A floating point property that represents the output
         value on DAC3 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
         """ A floating point property that represents the output
         value on DAC4 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-12,12]
+        values=[-12, 12]
     )
     harmonic = Instrument.control(
         "REFN", "REFN %d",
@@ -127,38 +128,38 @@ class DSP7265(Instrument):
         """ A floating point property that represents the reference
         harmonic phase in degrees. This property can be set. """,
         validator=modular_range_bidirectional,
-        values=[0,360]
+        values=[0, 360]
     )
     x = Instrument.measurement("X.",
-        """ Reads the X value in Volts """
-    )
+                               """ Reads the X value in Volts """
+                               )
     y = Instrument.measurement("Y.",
-        """ Reads the Y value in Volts """
-    )
+                               """ Reads the Y value in Volts """
+                               )
     xy = Instrument.measurement("XY.",
-        """ Reads both the X and Y values in Volts """
-    )
+                                """ Reads both the X and Y values in Volts """
+                                )
     mag = Instrument.measurement("MAG.",
-        """ Reads the magnitude in Volts """
-    )
+                                 """ Reads the magnitude in Volts """
+                                 )
     phase = Instrument.measurement("PHA.",
-        """ Reads the phase in degrees """
-    )
+                                   """ Reads the phase in degrees """
+                                   )
     adc1 = Instrument.measurement("ADC. 1",
-        """ Reads the input value of ADC1 in Volts """
-    )
+                                  """ Reads the input value of ADC1 in Volts """
+                                  )
     adc2 = Instrument.measurement("ADC. 2",
-        """ Reads the input value of ADC2 in Volts """
-    )
+                                  """ Reads the input value of ADC2 in Volts """
+                                  )
     id = Instrument.measurement("ID",
-        """ Reads the instrument identification """
-    )
+                                """ Reads the instrument identification """
+                                )
     ratio = Instrument.measurement("RT.",
-        """ Reads the ratio output, defined as X/ADC1 """
-    )
+                                   """ Reads the ratio output, defined as X/ADC1 """
+                                   )
     log_ratio = Instrument.measurement("LR.",
-        """ Reads the log ratio output, defined as log(X/ADC1) """
-    )
+                                       """ Reads the log ratio output, defined as log(X/ADC1) """
+                                       )
     reference = Instrument.control(
         "IE", "IE %d",
         """Controls the oscillator reference. Can be "internal",
@@ -238,18 +239,18 @@ class DSP7265(Instrument):
     def adc3(self):
         # 50,000 for 1V signal over 1 s
         integral = self.values("ADC 3")[0]
-        return integral/(50000.0*self.adc3_time)
+        return integral / (50000.0 * self.adc3_time)
 
     @property
     def adc3_time(self):
         # Returns time in seconds
-        return self.values("ADC3TIME")[0]/1000.0
+        return self.values("ADC3TIME")[0] / 1000.0
 
     @adc3_time.setter
     def adc3_time(self, value):
         # Takes time in seconds
-        self.write("ADC3TIME %g" % int(1000*value))
-        sleep(value*1.2)
+        self.write("ADC3TIME %g" % int(1000 * value))
+        sleep(value * 1.2)
 
     @property
     def auto_gain(self):
@@ -274,7 +275,7 @@ class DSP7265(Instrument):
 
     @gain.setter
     def gain(self, value):
-        self.write("ACGAIN %d" % int(value/10.0))
+        self.write("ACGAIN %d" % int(value / 10.0))
 
     curve_buffer_bits = Instrument.control(
         "CBD", "CBD %d",
@@ -318,13 +319,13 @@ class DSP7265(Instrument):
         "M",
         """ A property that represents the status of the curve buffer acquisition
         with four values:
-        the first value represents the status with 5 possibilities (0: no activity, 
+        the first value represents the status with 5 possibilities (0: no activity,
         1: acquisition via TD command running, 2: acquisition bya TDC command running,
         5: acquisition via TD command halted, 6: acquisition bia TDC command halted);
         the second value is the number of sweeps that is acquired;
         the third value is the decimal representation of the status byte (the same
         response as the ST command;
-        the fourth value is the number of points acquired in the curve buffer. 
+        the fourth value is the number of points acquired in the curve buffer.
         """,
         cast=int,
     )
@@ -366,7 +367,7 @@ class DSP7265(Instrument):
             ])
 
         # remove all possible duplicates
-        quantities = list(set([q.lower() for q in quantities]))
+        quantities = list({q.lower() for q in quantities})
 
         bits = 0
         for q in quantities:
@@ -443,9 +444,9 @@ class DSP7265(Instrument):
             else:
                 raise KeyError("The selected quantity '%s' is not recorded;"
                                "quantity should be one of: %s" % (
-                                    quantity, ", ".join(
-                                        [self.CURVE_BITS[q] for q in quantity_enums]
-                                    )))
+                                   quantity, ", ".join(
+                                       [self.CURVE_BITS[q] for q in quantity_enums]
+                                   )))
 
         # Retrieve the data
         data = {}
@@ -476,22 +477,19 @@ class DSP7265(Instrument):
         return data
 
     def buffer_to_float(self, buffer_data, sensitivity=None, sensitivity2=None, raise_error=True):
-        """
-        Method that converts the fixed-point buffer data to floating point data.
-        The provided data is converted as much as possible, but there are some
-        requirements to the data if all provided columns are to be converted; if
-        a key in the provided data cannot be converted it will be omitted in the
-        returned data or an exception will be raised, depending on the value of
-        raise_error.
+        """Method that converts fixed-point buffer data to floating point data.
+
+        The provided data is converted as much as possible, but there are some requirements to the
+        data if all provided columns are to be converted; if a key in the provided data cannot be
+        converted it will be omitted in the returned data or an exception will be raised,
+        depending on the value of raise_error.
 
         The requirements for converting the data are as follows:
-        
-        - Converting X, Y, magnitude and noise requires sensitivity data, which
-          can either be part of the provided data or can be provided via the
-          sensitivity argument
-        - The same holds for X2, Y2, magnitude2 and noise2 with sensitivity2.
-        - Converting the frequency requires both 'frequency part 1' and
-          'frequency part 2'.
+
+        - Converting X, Y, magnitude and noise requires sensitivity data, which can either be part
+          of the provided data or can be provided via the sensitivity argument
+        - The same holds for X2, Y2 and magnitude2 with sensitivity2.
+        - Converting the frequency requires both 'frequency part 1' and 'frequency part 2'.
 
         :param dict buffer_data:
             The data to be converted. Must be in the format as returned by the
@@ -499,21 +497,34 @@ class DSP7265(Instrument):
 
         :param sensitivity:
             If provided, the sensitivity used to convert X, Y, magnitude and noise.
-            Can be provided as a float or as an array that matches the length elements
-            in the buffer_data. If both a sensitivity is provided and present in the
-            buffer_data, the provided value is used for the conversion, but the
-            sensitivity in the buffer_data is stored in the returned dict.
+            Can be provided as a float or as an array that matches the length of elements in
+            `buffer_data`. If both a sensitivity is provided and present in the buffer_data, the
+            provided value is used for the conversion, but the sensitivity in the buffer_data is
+            stored in the returned dict.
 
         :param sensitivity2:
             Same as the first sensitivity argument, but for X2, Y2, magnitude2 and noise2.
 
         :param bool raise_error:
-            Boolean that determines whether an exception is raised in case not all keys
-            provided in buffer_data can be converted. If False, the columns that cannot
-            be converted are omitted in the returned dict.
+            Determines whether an exception is raised in case not all keys provided in buffer_data
+            can be converted. If False, the columns that cannot be converted are omitted in the
+            returned dict.
 
+        :return: Floating-point buffer data
+        :rtype: dict
         """
         data = {}
+
+        def maybe_raise(message):
+            if raise_error:
+                raise ValueError(message)
+
+        def convert_if_present(keys, multiply_by=1):
+            """Copy any available entries from buffer_data to data, scale with multiply_by.
+            """
+            for key in keys:
+                if key in buffer_data:
+                    data[key] = buffer_data[key] * multiply_by
 
         # Sensitivity (for both single and dual modes)
         for key in ["sensitivity", "sensitivity2"]:
@@ -522,31 +533,23 @@ class DSP7265(Instrument):
                     self.SENSITIVITIES[v % 32] * self.SEN_MULTIPLIER[v // 32]
                     for v in buffer_data[key]
                 ])
+        # Try to set sensitivity values from arg or data
+        sensitivity = sensitivity or data.get('sensitivity', None)
+        sensitivity2 = sensitivity2 or data.get('sensitivity2', None)
 
-        # X, Y, magnitude, and noise data
         if any(["x" in buffer_data,
                 "y" in buffer_data,
                 "magnitude" in buffer_data,
                 "noise" in buffer_data, ]):
-            # Requires a sensitivity
-            if sensitivity is not None:
-                pass
-            elif "sensitivity" in data:
-                sensitivity = data["sensitivity"]
-            elif raise_error:
-                raise ValueError("X, Y, magnitude and noise cannot be converted as no "
-                                 "sensitivity is provided, neither as argument or as "
-                                 "part of the buffer_data. ")
-
-            if sensitivity is not None:
-                for key in ["x", "y", "magnitude", "noise"]:
-                    if key in buffer_data:
-                        data[key] = buffer_data[key] * sensitivity / 10000
+            if sensitivity is None:
+                maybe_raise("X, Y, magnitude and noise cannot be converted as no "
+                            "sensitivity is provided, neither as argument nor as "
+                            "part of the buffer_data. ")
+            else:
+                convert_if_present(["x", "y", "magnitude", "noise"], sensitivity / 10000)
 
         # phase data (for both single and dual modes)
-        for key in ["phase", "phase2"]:
-            if key in buffer_data:
-                data[key] = buffer_data[key] / 100
+        convert_if_present(["phase", "phase2"], 1 / 100)
 
         # frequency data from frequency part 1 and 2
         if "frequency part 1" in buffer_data or "frequency part 2" in buffer_data:
@@ -555,41 +558,30 @@ class DSP7265(Instrument):
                     int(format(v2, "016b") + format(v1, "016b"), 2) / 1000 for
                     v1, v2 in zip(buffer_data["frequency part 1"], buffer_data["frequency part 2"])
                 ])
-            elif raise_error:
-                raise ValueError("Cannot calculate the frequency when not both"
-                                 "frequency part 1 and 2 are provided.")
+            else:
+                maybe_raise("Can calculate the frequency only when both"
+                            "frequency part 1 and 2 are provided.")
 
         # conversion for, adc1, adc2, dac1, dac2, ratio, and log ratio
-        for key in ["adc1", "adc2", "dac1", "dac2", "ratio", "log ratio"]:
-            if key in buffer_data:
-                data[key] = buffer_data[key] / 1000
+        convert_if_present(["adc1", "adc2", "dac1", "dac2", "ratio", "log ratio"], 1 / 1000)
 
         # adc3 (integrating converter); requires a call to adc3_time
         if "adc3" in buffer_data:
             data["adc3"] = buffer_data["adc3"] / (50000 * self.adc3_time)
 
         # event does not require a conversion
-        if "event" in buffer_data:
-            data['event'] = buffer_data['event']
+        convert_if_present(["event"])
 
         # X, Y, and magnitude data for both dual modes
         if any(["x2" in buffer_data,
                 "y2" in buffer_data,
                 "magnitude2" in buffer_data, ]):
-            # Requires a sensitivity
-            if sensitivity2 is not None:
-                pass
-            elif "sensitivity2" in data:
-                sensitivity2 = data["sensitivity2"]
-            elif raise_error:
-                raise ValueError("X2, Y2, magnitude2 and noise2 cannot be converted as no "
-                                 "sensitivity2 is provided, neither as argument or as "
-                                 "part of the buffer_data. ")
-
-            if sensitivity2 is not None:
-                for key in ["x2", "y2", "magnitude2"]:
-                    if key in buffer_data:
-                        data[key] = buffer_data[key] * sensitivity2 / 10000
+            if sensitivity2 is None:
+                maybe_raise("X2, Y2 and magnitude2 cannot be converted as no "
+                            "sensitivity2 is provided, neither as argument nor as "
+                            "part of the buffer_data. ")
+            else:
+                convert_if_present(["x2", "y2", "magnitude2"], sensitivity2 / 10000)
 
         return data
 

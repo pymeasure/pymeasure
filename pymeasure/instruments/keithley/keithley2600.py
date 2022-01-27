@@ -36,7 +36,7 @@ class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2600, self).__init__(
+        super().__init__(
             adapter,
             "Keithley 2600 SourceMeter",
             **kwargs
@@ -54,12 +54,12 @@ class Keithley2600(Instrument):
         # if tab delimitated message is greater than one, grab first two as code, message
         # otherwise, assign code & message to returned error
         if len(err) > 1:
-            err = (int(err[0]), err[1])
+            err = (int(float(err[0])), err[1])
             code = err[0]
             message = err[1].replace('"', '')
         else:
             code = message = err[0]
-        log.info("ERROR %s,%s - len %s" % (str(code), str(message), str(len(err))))
+        log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
         return (code, message)
 
     def check_errors(self):
@@ -73,26 +73,28 @@ class Keithley2600(Instrument):
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2600 error retrieval.")
 
-class Channel(object):
+
+class Channel:
 
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel = channel
 
     def ask(self, cmd):
-        return float(self.instrument.ask('print(smu%s.%s)' % (self.channel, cmd)))
+        return float(self.instrument.ask(f'print(smu{self.channel}.{cmd})'))
 
     def write(self, cmd):
-        self.instrument.write('smu%s.%s' % (self.channel, cmd))
+        self.instrument.write(f'smu{self.channel}.{cmd}')
 
     def values(self, cmd, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values('print(smu%s.%s)' % (self.channel, cmd))
+        return self.instrument.values(f'print(smu{self.channel}.{cmd})')
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
-        return self.instrument.binary_values('print(smu%s.%s)' % (self.channel, cmd,), header_bytes, dtype)
+        return self.instrument.binary_values('print(smu%s.%s)' %
+                                             (self.channel, cmd,), header_bytes, dtype)
 
     def check_errors(self):
         return self.instrument.check_errors()
@@ -287,8 +289,6 @@ class Channel(object):
             self.source_voltage_range = voltage_range
         self.compliance_current = compliance_current
         self.check_errors()
-
-
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=0.1):
         """ Ramps to a target voltage from the set voltage value over

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,39 +25,36 @@
 import logging
 import sys
 
+import numpy as np
+import pyqtgraph as pg
+from .Qt import QtCore
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-import pyqtgraph as pg
-import numpy as np
 try:
     from matplotlib.cm import viridis
 except ImportError:
     log.warning("Matplotlib not found. Images will be greyscale")
 
-from .Qt import QtCore
 
 def _greyscale_colormap(x):
     """Simple greyscale colormap. Assumes x is already normalized."""
-    return np.array([x,x,x,1])
+    return np.array([x, x, x, 1])
+
 
 class ResultsCurve(pg.PlotDataItem):
-    """ Creates a curve loaded dynamically from a file through the Results
-    object and supports error bars. The data can be forced to fully reload
-    on each update, useful for cases when the data is changing across the full
-    file instead of just appending.
+    """ Creates a curve loaded dynamically from a file through the Results object. The data can
+    be forced to fully reload on each update, useful for cases when the data is changing across
+    the full file instead of just appending.
     """
 
-    def __init__(self, results, x, y, xerr=None, yerr=None,
-                 force_reload=False, **kwargs):
+    def __init__(self, results, x, y, force_reload=False, **kwargs):
         super().__init__(**kwargs)
         self.results = results
         self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
         self.force_reload = force_reload
-        if xerr or yerr:
-            self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
-            self.xerr, self.yerr = xerr, yerr
 
     def update_data(self):
         """Updates the data by polling the results"""
@@ -68,24 +65,13 @@ class ResultsCurve(pg.PlotDataItem):
         # Set x-y data
         self.setData(data[self.x], data[self.y])
 
-        # Set error bars if enabled at construction
-        if hasattr(self, '_errorBars'):
-            self._errorBars.setOpts(
-                x=data[self.x],
-                y=data[self.y],
-                top=data[self.yerr],
-                bottom=data[self.yerr],
-                left=data[self.xerr],
-                right=data[self.yerr],
-                beam=max(data[self.xerr], data[self.yerr])
-            )
-
 
 # TODO: Add method for changing x and y
 
 class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
+
     def __init__(self, results, x, y, z, force_reload=False):
         self.results = results
         self.x = x
@@ -99,7 +85,7 @@ class ResultsImage(pg.ImageItem):
         self.yend = getattr(self.results.procedure, self.y + '_end')
         self.ystep = getattr(self.results.procedure, self.y + '_step')
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
-        self.img_data = np.zeros((self.ysize,self.xsize,4))
+        self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
         if 'matplotlib.cm' in sys.modules:
             self.colormap = viridis
@@ -107,12 +93,12 @@ class ResultsImage(pg.ImageItem):
             self.colormap = _greyscale_colormap
 
         super().__init__(image=self.img_data)
-        
+
         # Scale and translate image so that the pixels are in the coorect
         # position in "data coordinates"
         self.scale(self.xstep, self.ystep)
-        self.translate(int(self.xstart/self.xstep)-0.5,
-                       int(self.ystart/self.ystep)-0.5) # 0.5 so pixels centered
+        self.translate(int(self.xstart / self.xstep) - 0.5,
+                       int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
 
     def update_data(self):
         if self.force_reload:
@@ -127,27 +113,27 @@ class ResultsImage(pg.ImageItem):
             xdat = row[self.x]
             ydat = row[self.y]
             xidx, yidx = self.find_img_index(xdat, ydat)
-            self.img_data[yidx,xidx,:] = self.colormap((row[self.z] - zmin)/(zmax-zmin))
+            self.img_data[yidx, xidx, :] = self.colormap((row[self.z] - zmin) / (zmax - zmin))
 
         # set image data, need to transpose since pyqtgraph assumes column-major order
-        self.setImage(image=np.transpose(self.img_data,axes=(1,0,2)))
+        self.setImage(image=np.transpose(self.img_data, axes=(1, 0, 2)))
 
     def find_img_index(self, x, y):
         """ Finds the integer image indices corresponding to the
         closest x and y points of the data given some x and y data.
         """
 
-        indices = [self.xsize-1,self.ysize-1] # default to the final pixel
-        if self.xstart <= x <= self.xend: # only change if within reasonable range
-            indices[0] = self.round_up((x - self.xstart)/self.xstep)
+        indices = [self.xsize - 1, self.ysize - 1]  # default to the final pixel
+        if self.xstart <= x <= self.xend:  # only change if within reasonable range
+            indices[0] = self.round_up((x - self.xstart) / self.xstep)
         if self.ystart <= y <= self.yend:
-            indices[1] = self.round_up((y - self.ystart)/self.ystep)
+            indices[1] = self.round_up((y - self.ystart) / self.ystep)
 
         return indices
 
     def round_up(self, x):
         """Convenience function since numpy rounds to even"""
-        if x%1 >= 0.5:
+        if x % 1 >= 0.5:
             return int(x) + 1
         else:
             return int(x)
@@ -156,27 +142,21 @@ class ResultsImage(pg.ImageItem):
 
 
 class BufferCurve(pg.PlotDataItem):
-    """ Creates a curve based on a predefined buffer size and allows
-    data to be added dynamically, in additon to supporting error bars
+    """ Creates a curve based on a predefined buffer size and allows data to be added dynamically.
     """
 
     data_updated = QtCore.QSignal()
 
-    def __init__(self, errors=False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if errors:
-            self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
         self._buffer = None
 
     def prepare(self, size, dtype=np.float32):
         """ Prepares the buffer based on its size, data type """
-        if hasattr(self, '_errorBars'):
-            self._buffer = np.empty((size, 4), dtype=dtype)
-        else:
-            self._buffer = np.empty((size, 2), dtype=dtype)
+        self._buffer = np.empty((size, 2), dtype=dtype)
         self._ptr = 0
 
-    def append(self, x, y, xError=None, yError=None):
+    def append(self, x, y):
         """ Appends data to the curve with optional errors """
         if self._buffer is None:
             raise Exception("BufferCurve buffer must be prepared")
@@ -186,19 +166,6 @@ class BufferCurve(pg.PlotDataItem):
         # Set x-y data
         self._buffer[self._ptr, :2] = [x, y]
         self.setData(self._buffer[:self._ptr, :2])
-
-        # Set error bars if enabled at construction
-        if hasattr(self, '_errorBars'):
-            self._buffer[self._ptr, 2:] = [xError, yError]
-            self._errorBars.setOpts(
-                x=self._buffer[:self._ptr, 0],
-                y=self._buffer[:self._ptr, 1],
-                top=self._buffer[:self._ptr, 3],
-                bottom=self._buffer[:self._ptr, 3],
-                left=self._buffer[:self._ptr, 2],
-                right=self._buffer[:self._ptr, 2],
-                beam=np.max(self._buffer[:self._ptr, 2:])
-            )
 
         self._ptr += 1
         self.data_updated.emit()

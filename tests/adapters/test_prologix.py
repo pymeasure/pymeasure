@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,8 @@ import serial
 
 from pymeasure.adapters import PrologixAdapter
 
-prefix="\n".join(["++auto 0", "++eoi 1", "++eos 2"])+"\n"
+prefix = "\n".join(["++auto 0", "++eoi 1", "++eos 2"]) + "\n"
+
 
 def make_adapter(**kwargs):
     return PrologixAdapter(serial.serial_for_url("loop://", **kwargs))
@@ -38,12 +39,18 @@ def make_adapter(**kwargs):
 def test_adapter_write(test_input, expected):
     adapter = make_adapter(timeout=0.2)
     adapter.write(test_input)
-    assert(adapter.connection.read(len(expected)+10) == expected.encode())
+    assert(adapter.connection.read(len(expected) + 10) == expected.encode())
 
-@pytest.mark.parametrize("test_input,expected", [([1,2,3], prefix.encode() + b'OUTP#13\x01\x02\x03' + "\n".encode()),
-                                                 ([43, 27, 10,13, 97, 98, 99], prefix.encode() + b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc'+ "\n".encode())])
+
+@pytest.mark.parametrize(
+    "test_input,expected", [
+        ([1, 2, 3], prefix.encode() + b'OUTP#13\x01\x02\x03' + b"\n"),
+        ([43, 27, 10, 13, 97, 98, 99], prefix.encode() +
+         b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc' + b"\n")
+    ]
+)
 def test_adapter_write_binary_values(test_input, expected):
     adapter = make_adapter(timeout=0.2)
     adapter.write_binary_values("OUTP", test_input, datatype='B')
     # Add 10 bytes more, just to check that no extra bytes are present
-    assert(adapter.connection.read(len(expected)+10) == expected)
+    assert(adapter.connection.read(len(expected) + 10) == expected)

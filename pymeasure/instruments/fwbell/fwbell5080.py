@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_discrete_set, strict_discrete_set
 from pymeasure.adapters import SerialAdapter
 from numpy import array, float64
@@ -37,14 +37,14 @@ class FWBell5080(Instrument):
 
     .. code-block:: python
 
-        meter = FWBell5080('/dev/ttyUSB0')      # Connects over serial port /dev/ttyUSB0 (Linux)
+        meter = FWBell5080('/dev/ttyUSB0')  # Connects over serial port /dev/ttyUSB0 (Linux)
 
-        meter.units = 'gauss'                   # Sets the measurement units to Gauss
-        meter.range = 3e3                       # Sets the range to 3 kG
-        print(meter.field)                      # Reads and prints a field measurement in G
+        meter.units = 'gauss'               # Sets the measurement units to Gauss
+        meter.range = 3e3                   # Sets the range to 3 kG
+        print(meter.field)                  # Reads and prints a field measurement in G
 
-        fields = meter.fields(100)              # Samples 100 field measurements
-        print(fields.mean(), fields.std())      # Prints the mean and standard deviation of the samples
+        fields = meter.fields(100)          # Samples 100 field measurements
+        print(fields.mean(), fields.std())  # Prints the mean and standard deviation of the samples
 
     """
 
@@ -55,12 +55,12 @@ class FWBell5080(Instrument):
         ":MEAS:FLUX?",
         """ Reads a floating point value of the field in the appropriate units.
         """,
-        get_process=lambda v: v.split(' ')[0] # Remove units
+        get_process=lambda v: v.split(' ')[0]  # Remove units
     )
     UNITS = {
-        'gauss':'DC:GAUSS', 'gauss ac':'AC:GAUSS',
-        'tesla':'DC:TESLA', 'tesla ac':'AC:TESLA',
-        'amp-meter':'DC:AM', 'amp-meter ac':'AC:AM'
+        'gauss': 'DC:GAUSS', 'gauss ac': 'AC:GAUSS',
+        'tesla': 'DC:TESLA', 'tesla ac': 'AC:TESLA',
+        'amp-meter': 'DC:AM', 'amp-meter ac': 'AC:AM'
     }
     units = Instrument.control(
         ":UNIT:FLUX?", ":UNIT:FLUX%s",
@@ -71,11 +71,11 @@ class FWBell5080(Instrument):
         validator=strict_discrete_set,
         values=UNITS,
         map_values=True,
-        get_process=lambda v: v.replace(' ', ':') # Make output consistent with input
+        get_process=lambda v: v.replace(' ', ':')  # Make output consistent with input
     )
 
     def __init__(self, port):
-        super(FWBell5080, self).__init__(
+        super().__init__(
             SerialAdapter(port, 2400, timeout=0.5),
             "F.W. Bell 5080 Handheld Gaussmeter"
         )
@@ -87,7 +87,6 @@ class FWBell5080(Instrument):
         3 kG, and 30 kG for Gauss, 30 mT, 300 mT, and 3 T for Tesla,
         and 23.88 kAm, 238.8 kAm, and 2388 kAm for Amp-meter. """
         i = self.values(":SENS:FLUX:RANG?", cast=int)
-        units = self.units
         if 'gauss' in self.units:
             return [300, 3e3, 30e3][i]
         elif 'tesla' in self.units:
@@ -97,7 +96,6 @@ class FWBell5080(Instrument):
 
     @range.setter
     def range(self, value):
-        units = self.units
         if 'gauss' in self.units:
             i = truncated_discrete_set(value, [300, 3e3, 30e3])
         elif 'tesla' in self.units:
@@ -107,22 +105,22 @@ class FWBell5080(Instrument):
         self.write(":SENS:FLUX:RANG %d" % i)
 
     def read(self):
-        """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>` 
+        """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
         method to remove the last 2 characters from the output.
         """
-        return super(FWBell5080, self).read()[:-2]
+        return super().read()[:-2]
 
     def ask(self, command):
         """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
         method to remove the last 2 characters from the output.
         """
-        return super(FWBell5080, self).ask()[:-2]
+        return super().ask()[:-2]
 
     def values(self, command):
-        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>` 
+        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
         method to remove the lastv2 characters from the output.
         """
-        return super(FWBell5080, self).values()[:-2]
+        return super().values()[:-2]
 
     def reset(self):
         """ Resets the instrument. """

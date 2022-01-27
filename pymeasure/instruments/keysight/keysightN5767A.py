@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,14 +25,13 @@
 
 import logging
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range
 
-
 from pymeasure.adapters import VISAAdapter
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class KeysightN5767A(Instrument):
@@ -55,8 +54,8 @@ class KeysightN5767A(Instrument):
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
-        """ Reads a setting current in Amps. """
-     )
+                                     """ Reads a setting current in Amps. """
+                                     )
 
     ###############
     # Voltage (V) #
@@ -71,15 +70,15 @@ class KeysightN5767A(Instrument):
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
-        """ Reads a DC voltage measurement in Volts. """
-     )
+                                     """ Reads a DC voltage measurement in Volts. """
+                                     )
 
-    ##############
-    #_status (0/1) #
-    ##############
+    #################
+    # _status (0/1) #
+    #################
     _status = Instrument.measurement(":OUTP?",
-        """ Read power supply current output status. """,
-    )
+                                     """ Read power supply current output status. """,
+                                     )
 
     def enable(self):
         """ Enables the flow of current.
@@ -97,7 +96,7 @@ class KeysightN5767A(Instrument):
         return bool(self._status)
 
     def __init__(self, adapter, **kwargs):
-        super(KeysightN5767A, self).__init__(
+        super().__init__(
             adapter, "Keysight N5767A power supply", **kwargs
         )
         # Set up data transfer format
@@ -108,4 +107,3 @@ class KeysightN5767A(Instrument):
                 converter='f',
                 separator=','
             )
-

@@ -41,7 +41,7 @@ class YokogawaGS200(Instrument):
     source_enabled = Instrument.control(
         "OUTPut:STATe?",
         "OUTPut:STATe %d",
-        """A boolean property that controls whether the source is enabled, takes values 
+        """A boolean property that controls whether the source is enabled, takes values
         True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -60,7 +60,7 @@ class YokogawaGS200(Instrument):
     source_range = Instrument.control(
         ":SOURce:RANGe?",
         "SOURce:RANGe %g",
-        """Floating point number that controls the range (either in voltage or current) 
+        """Floating point number that controls the range (either in voltage or current)
         of the output. "Range" refers to the maximum source level. """,
         validator=truncated_discrete_set,
         values=[1e-3, 10e-3, 100e-3, 200e-3, 1, 10, 30]
@@ -69,8 +69,8 @@ class YokogawaGS200(Instrument):
     voltage_limit = Instrument.control(
         "SOURce:PROTection:VOLTage?",
         "SOURce:PROTection:VOLTage %g",
-        """Floating point number that controls the voltage limit. "Limit" refers to maximum 
-        value of the electrical value that is conjugate to the mode (current is conjugate to 
+        """Floating point number that controls the voltage limit. "Limit" refers to maximum
+        value of the electrical value that is conjugate to the mode (current is conjugate to
         voltage, and vice versa). Thus, voltage limit is only applicable when in 'current' mode""",
         validator=truncated_range,
         values=[1, 30]
@@ -79,15 +79,15 @@ class YokogawaGS200(Instrument):
     current_limit = Instrument.control(
         "SOURce:PROTection:CURRent?",
         "SOURce:PROTection:CURRent %g",
-        """Floating point number that controls the current limit. "Limit" refers to maximum value 
-        of the electrical value that is conjugate to the mode (current is conjugate to voltage, 
+        """Floating point number that controls the current limit. "Limit" refers to maximum value
+        of the electrical value that is conjugate to the mode (current is conjugate to voltage,
         and vice versa). Thus, current limit is only applicable when in 'voltage' mode""",
         validator=truncated_range,
         values=[1e-3, 200e-3]
     )
 
     def __init__(self, adapter, **kwargs):
-        super(YokogawaGS200, self).__init__(
+        super().__init__(
             adapter, "Yokogawa GS200 Source", **kwargs
         )
 
@@ -131,20 +131,18 @@ class YokogawaGS200(Instrument):
         else:
             # Use the Yokogawa's "program" mode to create the ramp
             ramp_program = (
-                f":program:edit:start;" 
+                f":program:edit:start;"
                 f":source:level {level};"
                 f":program:edit:end;"
             )
             # set "interval time" equal to "slope time" to make a continuous ramp
             ramp_program += (
-                f":program:interval {ramp_time};" 
+                f":program:interval {ramp_time};"
                 f":program:slope {ramp_time};"
             )
             # run it once
             ramp_program += (
-                ":program:repeat 0;" 
+                ":program:repeat 0;"
                 ":program:run"
             )
             self.write(ramp_program)
-
-
