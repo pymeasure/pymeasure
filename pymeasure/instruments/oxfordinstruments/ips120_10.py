@@ -87,14 +87,12 @@ class IPS120_10(Instrument):
     :param field_range: A numeric value or a tuple of two values to indicate the
         lowest and highest allowed magnetic fields. If a numeric value is provided
         the range is expected to be from :code:`-field_range` to :code:`+field_range`.
+        The default range is -7 to +7 Tesla.
 
     """
 
-    _MAX_CURRENT = 120  # Ampere
-    _MAX_VOLTAGE = 10  # Volts
     _SWITCH_HEATER_HEATING_DELAY = 20  # Seconds
     _SWITCH_HEATER_COOLING_DELAY = 20  # Seconds
-    _FIELD_RANGE = [-7, 7]  # Tesla
 
     _SWITCH_HEATER_SET_VALUES = {
         False: 0,  # Heater off
@@ -145,9 +143,9 @@ class IPS120_10(Instrument):
 
         if field_range is not None:
             if isinstance(field_range, (float, int)):
-                self._FIELD_RANGE[:] = [-field_range, +field_range]
+                self.field_setpoint_values = [-field_range, +field_range]
             elif isinstance(field_range, (list, tuple)):
-                self._FIELD_RANGE[:] = field_range
+                self.field_setpoint_values = field_range
 
         # Clear the buffer in order to prevent communication problems
         if clear_buffer:
@@ -264,7 +262,7 @@ class IPS120_10(Instrument):
         the IPS in ampere. """,
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
-        values=[0, _MAX_CURRENT],
+        values=[0, 120],  # Ampere
         dynamic=True,
     )
 
@@ -274,7 +272,7 @@ class IPS120_10(Instrument):
         the IPS in Tesla. """,
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
-        values=_FIELD_RANGE,
+        values=[-7, 7],  # Tesla
         dynamic=True,
     )
 
