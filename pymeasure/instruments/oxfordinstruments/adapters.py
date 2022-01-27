@@ -73,15 +73,28 @@ class OxfordInstrumentsAdapter(VISAAdapter):
 
         :returns: String ASCII response of the instrument
         """
-        if count > self.max_attempts:
-            raise RetryVISAError(f"{self.max_attempts} times retried, "
-                                 f"no sane reply, maybe there is something worse at hand")
-        else:
-            count += 1
-        device_output = super().ask(command)
-        log.debug("query for command %s; device_output: %s", command, device_output)
-        reply_sane = self.sanity_handling(device_output, command, count=count)
-        return reply_sane
+
+        for attempt in range(self.max_attempts):
+            response = super().ask(command)
+
+            if self.is_valid_response(response, command):
+                return response
+
+            log.debug("Received invalid response to '%s': %s", command, response)
+
+            # Clear the buffer and try again
+            try:
+                self.read()
+            except VisaIOError as e_visa:
+                if (isinstance(e_visa, type(self.timeoutError))
+                        and e_visa.args == self.timeoutError.args):
+                    pass
+                else:
+                    raise e_visa
+
+        # No valid response has been received within the maximum allowed number of attempts
+        raise RetryVISAError(f"Retried {self.max_attempts} times without getting a valid response, "
+                             f"maybe there is something worse at hand.")
 
     def write(self, command):
         """Write command to instrument and check whether the reply indicates that the given command
@@ -110,41 +123,23 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                 raise RetryVISAError(f"The instrument responded in an unexpected manner to "
                                      f"'{command}': '{answer}'")
 
-    def sanity_handling(self, device_output, command, count=0, *args, **kwargs):
-        """match the reply from a device with the specifying regex
-        retry the request in case of a mismatch
-            use the custom sanity regex incorporating the command message
+    def is_valid_response(self, response, command):
+        """Match the response from a device with a specified regex to check if the response is valid
+        The regex is filled with the first letter of the command
 
-        :param device_output: String ASCII response of the device
+        :param response: String ASCII response of the device
         :param command: command used in the initial query
-        :param count: Integer that counts how many attempts at getting a sane
-            reply have been done.
 
-        :returns:   in case it matches: device_output,
-                    else: recursively retry self.ask(command)
+        :returns:   True if the response matched the regex
         """
         current_pattern = self.regex_pattern.format(command[0])
 
         try:
-            match = re.match(current_pattern, device_output)
+            match = re.match(current_pattern, response)
         except TypeError:
-            pass
-        else:
-            if match:
-                return device_output
+            match = False
 
-        try:
-            self.read()
-        except VisaIOError as e_visa:
-            if (
-                isinstance(e_visa, type(self.timeoutError))
-                and e_visa.args == self.timeoutError.args
-            ):
-                pass
-            else:
-                raise e_visa
-
-        return self.ask(command, count=count)
+        return bool(match)
 
     def __repr__(self):
         return "<OxfordInstrumentsAdapter(resource='%s')>" % self.connection.resource_name
