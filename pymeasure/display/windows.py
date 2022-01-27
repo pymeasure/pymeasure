@@ -187,6 +187,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
     :param directory_input: specify, if present, where the experiment's result will be saved.
+    :param default_directory_path: specify default path for directory input
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
     """
@@ -204,6 +205,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  sequence_file=None,
                  inputs_in_scrollarea=False,
                  directory_input=False,
+                 default_directory_path='',
                  hide_groups=True,
                  ):
 
@@ -219,6 +221,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
         self.directory_input = directory_input
+        self.default_directory_path = default_directory_path
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -236,6 +239,8 @@ class ManagedWindowBase(QtGui.QMainWindow):
             self.directory_label = QtGui.QLabel(self)
             self.directory_label.setText('Directory')
             self.directory_line = DirectoryLineEdit(parent=self)
+            if self.default_directory_path:
+                self.directory_line.setText(self.default_directory_path)
 
         self.queue_button = QtGui.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
