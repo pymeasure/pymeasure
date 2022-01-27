@@ -56,9 +56,10 @@ class OxfordInstrumentsAdapter(VISAAdapter):
     visaIOError = VisaIOError(-1073807298)
     visaNotFoundError = VisaIOError(-1073807343)
 
-    def __init__(self, resource_name, regex_pattern="^{}[\d.]+", max_attempts=5, **kwargs):
+    regex_pattern = r"^([?]?)([a-zA-Z])[\d.]*$"
+
+    def __init__(self, resource_name, max_attempts=5, **kwargs):
         super().__init__(resource_name, **kwargs)
-        self.regex_pattern = regex_pattern
         self.max_attempts = max_attempts
 
     def ask(self, command, count=0):
@@ -107,21 +108,20 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         super().write(command)
 
         if not command[0] == "$":
-            answer = self.read()
+            response = self.read()
 
             log.debug(
-                "writing command to instrument: %s; instrument answered: %s",
+                "Wrote '%s' to instrument; instrument responded with: '%s'",
                 command,
-                answer,
+                response,
             )
-            if answer[0] == command[0]:
-                # This is expected if the command is recognized and the instrument answers
-                pass
-            elif answer[0] == "?":
-                raise RetryVISAError(f"The instrument did not understand this command: {command}")
-            else:
-                raise RetryVISAError(f"The instrument responded in an unexpected manner to "
-                                     f"'{command}': '{answer}'")
+            if not self.is_valid_response(response, command):
+                if response[0] == "?":
+                    raise RetryVISAError(f"The instrument did not understand this command: "
+                                         f"{command}")
+                else:
+                    raise RetryVISAError(f"The response of the instrument to command '{command}' "
+                                         f"is not valid: '{response}'")
 
     def is_valid_response(self, response, command):
         """Match the response from a device with a specified regex to check if the response is valid
@@ -132,11 +132,18 @@ class OxfordInstrumentsAdapter(VISAAdapter):
 
         :returns:   True if the response matched the regex
         """
-        current_pattern = self.regex_pattern.format(command[0])
 
         try:
-            match = re.match(current_pattern, response)
+            match = re.match(self.regex_pattern, response)
         except TypeError:
+            match = False
+
+        # Check if the response indicates that the command is not recognized
+        if match and match.groups()[0] == "?":
+            log.debug("The instrument did not understand this command: %s", command)
+            match = False
+
+        if match and not match.groups()[1] == command[0]:
             match = False
 
         return bool(match)
