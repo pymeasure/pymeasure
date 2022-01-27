@@ -60,7 +60,7 @@ class Keithley2750(Instrument):
                                              get_process=clean_closed_channels)
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2750, self).__init__(
+        super().__init__(
             adapter, "Keithley 2750 Multimeter/Switch System", **kwargs
         )
 
@@ -70,7 +70,7 @@ class Keithley2750(Instrument):
         :param int channel: 3-digit number for the channel
         :return: None
         """
-        self.write(":ROUTe:MULTiple:OPEN (@{})".format(channel))
+        self.write(f":ROUTe:MULTiple:OPEN (@{channel})")
 
     def close(self, channel):
         """ Closes (connects) the specified channel.
@@ -80,7 +80,7 @@ class Keithley2750(Instrument):
         """
         # Note: if `MULTiple` is omitted, then the specified channel will close,
         # but all other channels will open.
-        self.write(":ROUTe:MULTiple:CLOSe (@{})".format(channel))
+        self.write(f":ROUTe:MULTiple:CLOSe (@{channel})")
 
     def open_all(self):
         """ Opens (disconnects) all the channels on the switch matrix.

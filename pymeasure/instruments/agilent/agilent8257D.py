@@ -250,7 +250,7 @@ class Agilent8257D(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent8257D, self).__init__(
+        super().__init__(
             adapter, "Agilent 8257D RF Signal Generator", **kwargs
         )
 

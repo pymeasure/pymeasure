@@ -26,7 +26,7 @@ import numpy as np
 from copy import copy
 
 
-class Adapter(object):
+class Adapter:
     """ Base class for Adapter child classes, which adapt between the Instrument
     object and the connection, to allow flexible use of different connection
     techniques.

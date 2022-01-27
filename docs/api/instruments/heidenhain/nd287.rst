@@ -1,0 +1,9 @@
+###########################################
+Heidenhain ND287 Position Display Unit
+###########################################
+
+.. autoclass:: pymeasure.instruments.heidenhain.nd287
+    :members:
+    :show-inheritance:
+    
+    

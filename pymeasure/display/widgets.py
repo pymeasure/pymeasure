@@ -195,7 +195,7 @@ class PlotFrame(QtGui.QFrame):
         self.timer.start(int(self.refresh_time * 1e3))
 
     def update_coordinates(self, x, y):
-        self.coordinates.setText("(%g, %g)" % (x, y))
+        self.coordinates.setText(f"({x:g}, {y:g})")
 
     def update_curves(self):
         for item in self.plot.items:
@@ -268,7 +268,7 @@ class ImageFrame(PlotFrame):
         self.z_axis_changed.emit(axis)
 
 
-class TabWidget(object):
+class TabWidget:
     """ Utility class to define default implementation for some basic methods.
 
         When defining a widget to be used in subclasses of ManagedWindowBase, users should inherit
@@ -646,7 +646,7 @@ class InputsWidget(QtGui.QWidget):
                 toggle(group_el.currentText())
             else:
                 raise NotImplementedError(
-                    "Grouping based on %s (%s) is not implemented." % (group_name, group_el))
+                    f"Grouping based on {group_name} ({group_el}) is not implemented.")
 
     def toggle_group(self, state, group_name, group):
         for (name, condition, group_state) in group:
@@ -970,7 +970,7 @@ class SequencerWidget(QtGui.QWidget):
 
         item = QtGui.QTreeWidgetItem(parent, [""])
         depth = self._depth_of_child(item)
-        item.setText(0, "{:d}".format(depth))
+        item.setText(0, f"{depth:d}")
 
         self.tree.setItemWidget(item, 1, comboBox)
         self.tree.setItemWidget(item, 2, lineEdit)
@@ -1059,7 +1059,7 @@ class SequencerWidget(QtGui.QWidget):
 
         content = []
 
-        with open(fileName, "r") as file:
+        with open(fileName) as file:
             content = file.readlines()
 
         pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
@@ -1197,15 +1197,15 @@ class SequencerWidget(QtGui.QWidget):
                 raise SequenceEvaluationException()
             except SyntaxError:
                 log.error("SyntaxError, likely unbalanced brackets " +
-                          "for parameter '{}', depth {}".format(name, depth))
+                          f"for parameter '{name}', depth {depth}")
                 raise SequenceEvaluationException()
             except ValueError:
                 log.error("ValueError, likely wrong function argument " +
-                          "for parameter '{}', depth {}".format(name, depth))
+                          f"for parameter '{name}', depth {depth}")
                 raise SequenceEvaluationException()
         else:
             log.error("No sequence entered for " +
-                      "for parameter '{}', depth {}".format(name, depth))
+                      f"for parameter '{name}', depth {depth}")
             raise SequenceEvaluationException()
 
         evaluated_string = numpy.array(evaluated_string)
