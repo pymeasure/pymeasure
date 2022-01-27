@@ -86,14 +86,16 @@ class OxfordInstrumentsAdapter(VISAAdapter):
     def write(self, command):
         """write command to instrument
         check whether the reply indicates that the given command was not understood
-        The devices from oxford instruments reply with '?xxx' to
-            a command 'xxx' if this command is not known
+        The devices from oxford instruments reply with '?xxx' to a command 'xxx' if this command is
+        not known, and replies with 'x' if the command is understood (or not if the command is
+        prefixed with a '$')
         """
         try:
             answer = self.connection.query(command)
         except VisaIOError as e_visa:
             if (isinstance(e_visa, type(self.timeoutError))
                     and e_visa.args == self.timeoutError.args):
+                # No response received, can't check if the command is understood
                 pass
             else:
                 raise e_visa
@@ -103,10 +105,14 @@ class OxfordInstrumentsAdapter(VISAAdapter):
                 command,
                 answer,
             )
-            if answer[0] == "?":
-                raise RetryVISAError(
-                    f"The instrument did not understand this command: {command}"
-                )
+            if answer[0] == command[0]:
+                # This is expected if the command is recognized and the instrument answers
+                pass
+            elif answer[0] == "?":
+                raise RetryVISAError(f"The instrument did not understand this command: {command}")
+            else:
+                raise RetryVISAError(f"The instrument responded in an unexpected manner to "
+                                     f"'{command}': '{answer}'")
 
     def sanity_handling(self, device_output, command, count=0, *args, **kwargs):
         """match the reply from a device with the specifying regex
