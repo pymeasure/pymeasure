@@ -58,7 +58,7 @@ class Danfysik8500(Instrument):
     )
 
     def __init__(self, port):
-        super(Danfysik8500, self).__init__(
+        super().__init__(
             DanfysikAdapter(port),
             "Danfysik 8500 Current Supply",
             includeSCPI=False

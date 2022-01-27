@@ -38,7 +38,7 @@ class DanfysikAdapter(SerialAdapter):
     """
 
     def __init__(self, port):
-        super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
+        super().__init__(port, baudrate=9600, timeout=0.5)
 
     def write(self, command):
         """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`

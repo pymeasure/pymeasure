@@ -181,7 +181,7 @@ class Worker(StoppableThread):
             self.stop()
 
     def __repr__(self):
-        return "<%s(port=%s,procedure=%s,should_stop=%s)>" % (
+        return "<{}(port={},procedure={},should_stop={})>".format(
             self.__class__.__name__, self.port,
             self.procedure.__class__.__name__,
             self.should_stop()

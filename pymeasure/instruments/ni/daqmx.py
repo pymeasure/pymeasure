@@ -40,7 +40,7 @@ except OSError as err:
     log.info('Failed loading the NI-DAQmx library. '
              + 'Check the NI-DAQmx documentation on how to '
              + 'install this external dependency. '
-             + 'OSError: {}'.format(err))
+             + f'OSError: {err}')
     raise
 
 # Data Types
@@ -57,11 +57,11 @@ DAQmx_Val_FiniteSamps = 10178
 DAQmx_Val_GroupByChannel = 1
 
 
-class DAQmx(object):
+class DAQmx:
     """Instrument object for interfacing with NI-DAQmx devices."""
 
     def __init__(self, name, *args, **kwargs):
-        super(DAQmx, self).__init__()
+        super().__init__()
         self.resourceName = name  # NOTE: Device number, e.g. Dev1 or PXI1Slot2
         self.numChannels = 0
         self.numSamples = 0

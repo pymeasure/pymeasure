@@ -23,7 +23,9 @@
 #
 
 import pytest
-from pymeasure.instruments.instrument import Instrument, FakeInstrument
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 

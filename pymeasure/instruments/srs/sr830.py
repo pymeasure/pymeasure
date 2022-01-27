@@ -325,7 +325,7 @@ class SR830(Instrument):
     adc4 = aux_in_4
 
     def __init__(self, resourceName, **kwargs):
-        super(SR830, self).__init__(
+        super().__init__(
             resourceName,
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs

@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Input(object):
+class Input:
     """
     Mix-in class that connects a :mod:`Parameter <.parameters>` object to a GUI
     input box.
@@ -254,7 +254,7 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
             return self._parameter.default
 
     def textFromValue(self, value):
-        string = "{:g}".format(value).replace("e+", "e")
+        string = f"{value:g}".replace("e+", "e")
         string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
         return string
 
