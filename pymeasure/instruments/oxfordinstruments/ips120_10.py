@@ -30,6 +30,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments.validators import truncated_range
 
+from .adapters import OxfordInstrumentsAdapter
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -117,18 +118,24 @@ class IPS120_10(Instrument):
                  field_range=None,
                  **kwargs):
 
-        kwargs.setdefault('read_termination', '\r')
+        if isinstance(adapter, (int, str)):
+            kwargs.setdefault('read_termination', '\r')
+            kwargs.setdefault('send_end', True)
+            adapter = OxfordInstrumentsAdapter(
+                adapter,
+                asrl={
+                    'baud_rate': 9600,
+                    'data_bits': 8,
+                    'parity': 0,
+                    'stop_bits': 20,
+                },
+                **kwargs,
+            )
+
         super().__init__(
             adapter=adapter,
             name=name,
             includeSCPI=False,
-            gpib={'send_end': True},
-            asrl={'baud_rate': 9600,
-                  'data_bits': 8,
-                  'parity': 0,
-                  'stop_bits': 20,
-                  },
-            **kwargs,
         )
 
         if switch_heater_heating_delay is not None:
@@ -206,7 +213,7 @@ class IPS120_10(Instrument):
         values. """,
         get_process=lambda v: int(v[8]),
     )
-    
+
     @property
     def switch_heater_enabled(self):
         """ A boolean property that controls whether the switch heater
@@ -240,7 +247,7 @@ class IPS120_10(Instrument):
                 "switch heater: %s" % status)
 
         return status
-    
+
     @switch_heater_enabled.setter
     def switch_heater_enabled(self, value):
 

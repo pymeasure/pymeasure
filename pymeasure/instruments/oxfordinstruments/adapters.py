@@ -38,7 +38,7 @@ class RetryVISAError(Exception):
     pass
 
 
-class RetryingVISAAdapter_oxfordinstruments(VISAAdapter):
+class OxfordInstrumentsAdapter(VISAAdapter):
     """Adapter class for the VISA library using PyVISA to communicate
     with instruments.
     Checks replies from instruments for sanity
