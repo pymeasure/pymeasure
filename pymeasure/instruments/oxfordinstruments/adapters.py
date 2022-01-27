@@ -84,22 +84,18 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         return reply_sane
 
     def write(self, command):
-        """write command to instrument
-        check whether the reply indicates that the given command was not understood
+        """Write command to instrument and check whether the reply indicates that the given command
+        was not understood
         The devices from oxford instruments reply with '?xxx' to a command 'xxx' if this command is
-        not known, and replies with 'x' if the command is understood (or not if the command is
-        prefixed with a '$')
+        not known, and replies with 'x' if the command is understood.
+        If the command starts with an "$" the instrument will not reply at all; hence in that case
+        there will be done no checking for a reply.
         """
-        try:
-            answer = self.connection.query(command)
-        except VisaIOError as e_visa:
-            if (isinstance(e_visa, type(self.timeoutError))
-                    and e_visa.args == self.timeoutError.args):
-                # No response received, can't check if the command is understood
-                pass
-            else:
-                raise e_visa
-        else:
+        super().write(command)
+
+        if not command[0] == "$":
+            answer = super().read()
+
             log.debug(
                 "writing command to instrument: %s; instrument answered: %s",
                 command,
