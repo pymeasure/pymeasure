@@ -158,4 +158,4 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         return device_output
 
     def __repr__(self):
-        return "<RetryingVISAAdapter(resource='%s')>" % self.connection.resource_name
+        return "<OxfordInstrumentsAdapter(resource='%s')>" % self.connection.resource_name
