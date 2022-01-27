@@ -404,10 +404,11 @@ class IPS120_10(Instrument):
         :param max_errors: Maximum number of errors that is allowed in the communication with the
             instrument before the wait is terminated (by raising a :class:`.MagnetError`).
             :code:`None` is interpreted as no maximum error count.
-        :param max_wait_time: Maximum time in seconds to wait before is at rest. If the system is not
-            at rest within this time a :class:`TimeoutError` is raised. :code:`None` is interpreted
-            as no maximum time.
-        :param should_stop: A function that returns :code:`True` when this function should return early.
+        :param max_wait_time: Maximum time in seconds to wait before is at rest. If the system is
+            not at rest within this time a :class:`TimeoutError` is raised. :code:`None` is
+            interpreted as no maximum time.
+        :param should_stop: A function that returns :code:`True` when this function should return
+            early.
         """
         log.debug("waiting for magnet to be idle")
         error_ct = 0
@@ -432,7 +433,9 @@ class IPS120_10(Instrument):
                 break
 
             if max_errors is not None and error_ct > max_errors:
-                raise MagnetError("IPS 120-10: Too many exceptions occurred during getting IPS status.")
+                raise MagnetError(
+                    "IPS 120-10: Too many exceptions occurred during getting IPS status."
+                )
             if max_wait_time is not None and time() - start_time > max_wait_time:
                 raise TimeoutError("IPS 120-10: Magnet not idle within max wait time.")
 
