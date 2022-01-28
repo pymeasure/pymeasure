@@ -30,8 +30,10 @@ from math import sqrt, atan, pi
 
 def test_peak_search_with_sin():
     sin = np.sin
+
     def func(x):
         return sin(x) + sin(2*x)
+
     # Calculate peaks
     # temporary value
     val1 = 2*atan(sqrt(6-sqrt(33)))

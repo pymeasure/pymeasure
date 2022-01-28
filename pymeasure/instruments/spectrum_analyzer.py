@@ -114,7 +114,8 @@ Single sweep acquisition and peak value calculation
 
     @property
     def x_axis(self):
-        """ Returns a numpy array of x_axis values which can be frequencies(Hz) or time (seconds) in case of zero span.
+        """ Returns a numpy array of x_axis values which can be frequencies(Hz) or time (seconds)
+        in case of zero span.
         """
         if self.frequency_span == 0:
             x_min = 0
@@ -137,7 +138,7 @@ Single sweep acquisition and peak value calculation
         This property can be set.
         """,
         validator=truncated_range,
-        values=(0, float("inf")), # Limit not specified
+        values=(0, float("inf")),  # Limit not specified for generic instrument
         dynamic=True
     )
 
@@ -147,7 +148,7 @@ Single sweep acquisition and peak value calculation
         This property can be set.
         """,
         validator=truncated_range,
-        values=(0, float("inf")), # Limit not specified for generic instrument
+        values=(0, float("inf")),  # Limit not specified for generic instrument
         dynamic=True
     )
 
@@ -157,7 +158,7 @@ Single sweep acquisition and peak value calculation
         in Hz. This property can be set.
         """,
         validator=truncated_range,
-        values=(0, float("inf")),# Limit not specified for generic instrument
+        values=(0, float("inf")),  # Limit not specified for generic instrument
         dynamic=True
     )
 
@@ -167,7 +168,7 @@ Single sweep acquisition and peak value calculation
         in Hz. This property can be set.
         """,
         validator=truncated_range,
-        values=(0, float("inf")),# Limit not specified for generic instrument
+        values=(0, float("inf")),  # Limit not specified for generic instrument
         dynamic=True
     )
 
@@ -177,7 +178,7 @@ Single sweep acquisition and peak value calculation
         in Hz. This property can be set.
         """,
         validator=truncated_range,
-        values=(0, float("inf")),# Limit not specified for generic instrument
+        values=(0, float("inf")),  # Limit not specified for generic instrument
         dynamic=True
     )
 
@@ -187,7 +188,7 @@ Single sweep acquisition and peak value calculation
         in Hz. This property can be set.
         """,
         validator=truncated_range,
-        values=(0, float("inf")),# Limit not specified for generic instrument
+        values=(0, float("inf")),  # Limit not specified for generic instrument
         dynamic=True
     )
 
@@ -197,7 +198,9 @@ Single sweep acquisition and peak value calculation
         points in the sweep. This property can take values according to specific spectrum analyzer.
         """,
         validator=truncated_range,
-        values=(0, 10000000), # Intentional very high number but in reality limit not specified for generic instrument
+        # Intentional very high upper limit but in reality limit not specified for generic
+        # instrument
+        values=(0, 10000000),
         cast=int,
         dynamic=True
     )
@@ -208,20 +211,20 @@ Single sweep acquisition and peak value calculation
         in seconds. This property can be set.
         """,
         validator=truncated_range,
-        values=(0, float("inf")), # Limit not specified for generic instrument
+        values=(0, float("inf")),  # Limit not specified for generic instrument
         dynamic=True
     )
 
     sweep_mode_continuous = Instrument.control(
         ":INITiate:CONTinuous?;", ":INITiate:CONTinuous %s;",
-        """ A boolean property that allows you to switches the analyzer between continuous-sweep and single-sweep mode.
-        This property can be set.
+        """ A boolean property that allows you to switches the analyzer between continuous-sweep and
+        single-sweep mode. This property can be set.
         """,
         validator=strict_discrete_set,
-        values={"ON" : 1,
-                "OFF" : 0},
-        cast = int,
-        map_values = True,
+        values={"ON": 1,
+                "OFF": 0},
+        cast=int,
+        map_values=True,
         dynamic=True
     )
 
@@ -262,11 +265,10 @@ Single sweep acquisition and peak value calculation
         - "VIDEO": Sets Log-Power (video) averaging
         """,
         validator=strict_discrete_set,
-        values={"POWER" : "RMS",
-                "VOLTAGE" : "SCAL",
-                "VIDEO" : "LOG"
-            },
-        map_values = True,
+        values={"POWER": "RMS",
+                "VOLTAGE": "SCAL",
+                "VIDEO": "LOG"},
+        map_values=True,
         dynamic=True
     )
 
