@@ -80,10 +80,6 @@ class ConexCC(Instrument):
         """ Move to absolute position
         :param pos Absolute position to move to.
         """
-        # If position is to big or to small,
-        # ignore command
-        if pos > 25 or pos < 0:
-            return
         cmd = 'PA%f' % (pos)
         self.write(cmd)
 
