@@ -24,7 +24,7 @@
 
 import logging
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 log = logging.getLogger(__name__)
@@ -57,24 +57,52 @@ class ConexCC(Instrument):
             str(self.index)+command, **kwargs)[0][len(str(self.index))+2:]
         return reply
 
-    acceleration = Instrument.control('AC?',
-                                      'AC%f',
-                                      """ Acceleration of the stage in
-                                       units/s^2. """,
-                                      get_process=lambda v: float(v),
-                                      validator=strict_range,
-                                      values=(1e-6, 1e12))
+    acceleration = Instrument.control(
+        'AC?', 'AC%f',
+        """ Acceleration of the stage in
+        units/s^2. """,
+        get_process=lambda v: float(v),
+        validator=strict_range,
+        values=(1e-6, 1e12))
 
-    velocity = Instrument.control('VA?',
-                                  'VA%f',
-                                  """ Acceleration of the stage in
-                                  units/s. """,
-                                  get_process=lambda v: float(v),
-                                  validator=strict_range,
-                                  values=(1e-6, 1e12))
+    velocity = Instrument.control(
+        'VA?', 'VA%f',
+        """ Acceleration of the stage in
+        units/s. """,
+        get_process=lambda v: float(v),
+        validator=strict_range,
+        values=(1e-6, 1e12))
 
-    position = Instrument.measurement('TP',
-                                      """ Get Current Stage Position. """)
+    position = Instrument.measurement(
+        'TP', """ Get current Stage Position. """)
+
+    Kp = Instrument.control(
+        'KP?', 'KP%f',
+        """ Proportional Gain for PID control loop.""",
+        validator=strict_range,
+        values=(0, 1e12)
+    )
+
+    Ki = Instrument.control(
+        'KI?', 'KI%f',
+        """ Integral Gain for PID control loop.""",
+        validator=strict_range,
+        values=(0, 1e12)
+    )
+
+    Kd = Instrument.control(
+        'KD?', 'KD%f',
+        """ Derivative Gain for PID control loop.""",
+        validator=strict_range,
+        values=(0.001, 1e12)
+    )
+
+    PID_enabled = Instrument.control(
+        'SC?', 'SC%g',
+        """ PID Control Loop State (enabled/disabled).""",
+        map_values=True, values={True: 1, False: 0},
+        validator=strict_discrete_set
+    )
 
     def move_to(self, pos):
         """ Move to absolute position
@@ -89,6 +117,17 @@ class ConexCC(Instrument):
         """
         cmd = 'PR%f' % (amount)
         self.write(cmd)
+
+    def setup_pid(self, Kp, Ki, Kd):
+        """ Setup function for setting proportional, integral
+        and derivative gain in one command.
+        :param Kp Proportional Gain
+        :param Ki Integral Gain
+        :param Kd Derivative Gain
+        """
+        self.Kp = Kp
+        self.Kd = Kd
+        self.Ki = Ki
 
     def reset(self):
         """ Reset the device. """
