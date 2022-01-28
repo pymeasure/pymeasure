@@ -135,7 +135,7 @@ class ConexCC(Instrument):
 
     def zero(self):
         """ Set the current position as the new zero/home. """
-        self.write('TH1')
+        self.write('HT1')
 
     def home(self, pos=None):
         """ Do homing process. """
