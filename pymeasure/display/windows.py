@@ -724,6 +724,34 @@ class ManagedImageWindow(ManagedWindow):
 
 
 class InstrumentControlWindow(QtGui.QMainWindow):
+    """
+    Class for instrument control GUI.
+
+    The InstrumentControlWindow provides an interface for controlling
+    instruments. It allows the user to choose instrument attributes and
+    automatically chooses the right widget type for its control.
+
+    The user has to distinguish between read-only variables (measurements),
+    write-only variables (settings), read/writable variables (settings for
+    non-boolean variables, options for boolean variables), and functions.
+    Alternatively to instrument attributes the user can provide
+    :class:`~pymeasure.experiment.parameters.Parameter` instance variables.
+
+    Parameters for :code:`__init__` constructor.
+
+    :param instrument: Instrument instance which should be controlled
+    :param measurements: List of measurement variables of the instrument
+        (strings) and/or :class:`~pymeasure.experiment.parameters.Parameter` instance variables
+    :param settings: List of setting variables of the instrument
+        (strings) and/or :class:`~pymeasure.experiment.parameters.Parameter` instance variables
+    :param controls: List of control variables of the instrument
+        (strings) and/or :class:`~pymeasure.experiment.parameters.Parameter` instance variables
+    :param functions: List of member functions of the instrument
+    :param options: List of boolean variables of the instrument or
+        :class:`~pymeasure.experiment.parameters.BooleanParameter`
+    :param parent: Parent widget or :code:`None`
+    """
+
     def __init__(
         self,
         instrument,
