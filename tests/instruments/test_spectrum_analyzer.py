@@ -22,16 +22,16 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from pytest import approx
-from pymeasure.instruments.spectrum_analyzer  import SpectrumAnalyzer
+from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
 import numpy as np
 from math import sqrt, atan, pi
 
 
 def test_peak_search_with_sin():
     sin = np.sin
-    func = lambda x: sin(x) + sin(2*x)
+    def func(x):
+        return sin(x) + sin(2*x)
     # Calculate peaks
     # temporary value
     val1 = 2*atan(sqrt(6-sqrt(33)))
@@ -51,9 +51,8 @@ def test_peak_search_with_sin():
 
     # Check that only relevant peaks are detected
     assert len(peak_idx) == len(x_max)
-    
+
     # Check maximum values found
     for i, (x, y) in enumerate(zip(x_max, y_max)):
         assert x_peaks[i] == approx(x, rel=0.001)
         assert y_peaks[i] == approx(y, rel=0.001)
-

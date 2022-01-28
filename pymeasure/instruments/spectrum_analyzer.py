@@ -28,19 +28,26 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 import numpy as np
 from scipy.signal import find_peaks
 
+
 class SpectrumAnalyzer(Instrument):
-    """Represents a generic SCPI Spectrum Analyzer and provides a high-level interface for controlling basic instrument parameters and capturing traces.
+    """Represents a generic SCPI Spectrum Analyzer
 
     The key features of the generic instrument implementation are as follow:
-    - interface is intentionally simple to be easily adapted to wide range of spectrum analyzers.
-    - all the functions that could efficiently implemented in python are not implemented (e.g. peak search, mathematical operations on the traces,
-    unit translation, etc.), this can be referred as pure software implementation of part of the instrument.
-    - all the features which are relevant for interactive use of the instrument are not implemented (e.g. markers, display control, multiple traces, etc.)
-    - a default implementation using commands based on SCPI specification 1999 is provided, but all properties are declared dynamic so subclasses
+    - interface is intentionally simple to be easily adapted to wide range of
+    spectrum analyzers.
+    - all the functions that could efficiently implemented in python are not
+    implemented (e.g. peak search, mathematical operations on the traces, unit
+    translation, etc.), this can be referred as pure software implementation
+    of part of the instrument.
+    - all the features which are relevant for interactive use of the instrument
+    are not implemented(e.g. markers, display control, multiple traces, etc.)
+    - a default implementation using commands based on SCPI specification 1999
+    is provided, but all properties are declared dynamic so subclasses
     can easily modify them.
 
-    The default implementation could be good to address also spectrum analyzers not yet implemented, since the default SCPI commands are quite common with
-    major vendors.
+    The default implementation could be good to address also spectrum
+    analyzers not yet implemented, since the default SCPI commands are quite
+    common with major vendors.
 
     This class is normally subclassed to implement specific instruments.
 
@@ -95,7 +102,8 @@ Single sweep acquisition and peak value calculation
 
         :param values: list of floating points numbers
         :param \\**kwargs: keyword arguments to be passed to find peak algorithm
-        :return: a list of indexes identifing the peaks, the list indexes are sorted by peak magnitude
+        :return: a list of indexes identifing the peaks, the list indexes are
+        sorted by peak magnitude
         """
 
         peaks_idx, _ = find_peaks(values, **kwargs)
