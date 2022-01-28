@@ -75,7 +75,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
 
     # Behind the scene, replace Instrument with FakeInstrument to enable
     # doctesting all this
-    from pymeasure.instruments.instrument import FakeInstrument as Instrument
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument
 
 This is a minimal instrument definition:
 

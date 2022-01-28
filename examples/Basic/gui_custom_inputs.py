@@ -59,7 +59,7 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindow):
 
     def __init__(self):
-        super(MainWindow, self).__init__(
+        super().__init__(
             procedure_class=TestProcedure,
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
@@ -68,7 +68,7 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
     def _setup_ui(self):
-        super(MainWindow, self)._setup_ui()
+        super()._setup_ui()
         self.inputs.hide()
         self.inputs = fromUi('gui_custom_inputs.ui')
 
