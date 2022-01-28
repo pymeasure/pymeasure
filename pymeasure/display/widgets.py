@@ -1445,12 +1445,12 @@ class InstrumentControlWidget(QtGui.QWidget):
             element.setSizePolicy(
                 QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
             )
-
-            element.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
-            element.stepEnabled = (
-                lambda: QtGui.QAbstractSpinBox.StepDownEnabled
-                | QtGui.QAbstractSpinBox.StepUpEnabled
-            )
+            if isinstance(param, parameters.FloatParameter):
+                element.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
+                element.stepEnabled = (
+                    lambda: QtGui.QAbstractSpinBox.StepDownEnabled
+                    | QtGui.QAbstractSpinBox.StepUpEnabled
+                )
 
             element.stepType = lambda: QtGui.QAbstractSpinBox.AdaptiveDecimalStepType
 
