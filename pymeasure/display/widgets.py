@@ -1380,12 +1380,10 @@ class EstimatorWidget(QtGui.QWidget):
 
 class InstrumentControlWidget(QtGui.QWidget):
     """
-    TODO: Write Docstring
+    Widget for setting up an instrument control user interface.
 
-    Measurements = WriteProtected Labels / Text
-    Settings = Boxes
-    Controls = Writable Boxes
-    Functions = Buttons
+    Currently implemented through the `InstrumentControlWindow` class, but can 
+    be inherited from to include in custom windows.
     """
 
     def __init__(
@@ -1513,12 +1511,12 @@ class InstrumentControlWidget(QtGui.QWidget):
         # Adding a checkbox for changing auto_read property
         self.auto_read_box = QtGui.QCheckBox("Auto Read")
         self.auto_read_box.setChecked(self.auto_read)
-        self.auto_read_box.stateChanged.connect(self.auto_settings_changed)
+        self.auto_read_box.stateChanged.connect(self._auto_settings_changed)
 
         # Adding a checkbox for changing auto_write property
         self.auto_write_box = QtGui.QCheckBox("Auto Write")
         self.auto_write_box.setChecked(self.auto_write)
-        self.auto_write_box.stateChanged.connect(self.auto_settings_changed)
+        self.auto_write_box.stateChanged.connect(self._auto_settings_changed)
 
     def _layout(self):
         layout = QtGui.QGridLayout(self)
@@ -1580,6 +1578,11 @@ class InstrumentControlWidget(QtGui.QWidget):
         return name.replace('_', ' ')
 
     def update_value(self, name, value):
+        """
+        Set the value of an element
+        :param name Name of the element
+        :param value New value
+        """
         QtGui.QGuiApplication.processEvents()
         element = getattr(self, name)
 
@@ -1587,6 +1590,10 @@ class InstrumentControlWidget(QtGui.QWidget):
             element.setValue(value)
 
     def get_and_update_all_values(self):
+        """
+        Method to read all parameter values from the instrument and 
+        updating them in the interface.
+        """
         for name in self.measurements:
             if hasattr(self.instrument, name):
                 value = getattr(self.instrument, name)
@@ -1605,10 +1612,18 @@ class InstrumentControlWidget(QtGui.QWidget):
                 self.update_value(name, value)
 
     def apply_setting(self, name):
+        """
+        Apply a setting change of the instrument
+        :param name Name of the setting attribute of the instrument
+        """
         element = getattr(self, name)
         setattr(self.instrument, name, element.value())
 
-    def apply_all_settings(self, name):
+    def apply_all_settings(self):
+        """
+        Apply all implemented settings by looping through all controls and 
+        settings and calling `apply_setting`
+        """
         for name in self.controls:
             if hasattr(self.instrument, name):
                 self.apply_setting(name)
@@ -1617,7 +1632,7 @@ class InstrumentControlWidget(QtGui.QWidget):
             if hasattr(self.instrument, name):
                 self.apply_setting(name)
 
-    def auto_settings_changed(self):
+    def _auto_settings_changed(self):
         self.auto_read = self.auto_read_box.isChecked()
         self.auto_write = self.auto_write_box.isChecked()
         self.read_button.setEnabled(not self.auto_read)
@@ -1661,37 +1676,45 @@ class InstrumentControlWidget(QtGui.QWidget):
         return element
 
     @staticmethod
-    def check_parameter_list(params, field_type=None):
+    def check_parameter_list(parameter_list, field_type=None):
+        """
+        Convert all elements of a list to valid `Parameters` or a subclass by either
+        checking for an attribute of the instrument with a given name or 
+        checking the validity of a given parameter.
+
+        :param parameter_list A list of strings, `Parameters` or `Parameter` subclasses
+        :param field_type optional argument for options which require the parameter to be Boolean
+        """
         # Ensure the parameters is a list
-        if isinstance(params, (list, tuple)):
-            params = list(params)
-        elif params is None:
-            params = []
+        if isinstance(parameter_list, (list, tuple)):
+            parameter_list = list(parameter_list)
+        elif parameter_list is None:
+            parameter_list = []
         else:
-            params = [params]
+            parameter_list = [parameter_list]
 
         if field_type == "option":
             # Convert all elements to BooleanParameters if given as a string
-            for idx in range(len(params)):
-                if isinstance(params[idx], parameters.BooleanParameter):
+            for idx in range(len(parameter_list)):
+                if isinstance(parameter_list[idx], parameters.BooleanParameter):
                     pass
-                elif isinstance(params[idx], str):
-                    params[idx] = parameters.BooleanParameter(params[idx])
+                elif isinstance(parameter_list[idx], str):
+                    parameter_list[idx] = parameters.BooleanParameter(parameter_list[idx])
                 else:
                     raise TypeError(
                         "All parameters (measurements, controls, & "
                         "settings) should be given as a BooleanParameter or a string."
                     )
-                params[idx].field_type = field_type
+                parameter_list[idx].field_type = field_type
 
         else:
             # Convert all elements to FloatParameter whenever given as
             # a string for everything but options
-            for idx in range(len(params)):
-                if isinstance(params[idx], parameters.Parameter):
+            for idx in range(len(parameter_list)):
+                if isinstance(parameter_list[idx], parameters.Parameter):
                     pass
-                elif isinstance(params[idx], str):
-                    params[idx] = parameters.FloatParameter(params[idx])
+                elif isinstance(parameter_list[idx], str):
+                    parameter_list[idx] = parameters.FloatParameter(parameter_list[idx])
                 else:
                     raise TypeError(
                         "All parameters (measurements, controls, & "
@@ -1699,8 +1722,8 @@ class InstrumentControlWidget(QtGui.QWidget):
                         "Parameter subclass, or a string."
                     )
 
-                params[idx].field_type = field_type
+                parameter_list[idx].field_type = field_type
 
-        params = OrderedDict((param.name, param) for param in params)
+        params = OrderedDict((param.name, param) for param in parameter_list)
 
         return params
