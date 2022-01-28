@@ -99,7 +99,7 @@ Select trigger source; accept the values:
                                         values=["HOLD", "INT", "BUS", "EXT"])
 
     def __init__(self, adapter, **kwargs):
-        super(AgilentE4980, self).__init__(
+        super().__init__(
             adapter, "Agilent E4980A/AL LCR meter", **kwargs
         )
         self.timeout = 30000
@@ -160,6 +160,6 @@ Select trigger source; accept the values:
             return read_values[0], int(read_values[1])
         else:
             if time.upper() in ["SHORT", "MED", "LONG"]:
-                self.write(":APER {0}, {1}".format(time, averages))
+                self.write(f":APER {time}, {averages}")
             else:
                 raise Exception("Time must be a string: SHORT, MED, LONG")

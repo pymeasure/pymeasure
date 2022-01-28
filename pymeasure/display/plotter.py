@@ -36,8 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class Plotter(StoppableThread):
-    """ Plotter dynamically plots data from a file through the Results
-    object and supports error bars.
+    """ Plotter dynamically plots data from a file through the Results object.
 
     .. seealso::
 
@@ -46,7 +45,7 @@ class Plotter(StoppableThread):
     """
 
     def __init__(self, results, refresh_time=0.1, linewidth=1):
-        super(Plotter, self).__init__()
+        super().__init__()
         self.results = results
         self.refresh_time = refresh_time
         self.linewidth = linewidth

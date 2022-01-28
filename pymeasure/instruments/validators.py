@@ -173,7 +173,7 @@ def joined_validators(*validators):
                 return validator(value, vals)
             except (ValueError, TypeError):
                 pass
-        raise ValueError("Value of {} does not match any of the joined validators".format(value))
+        raise ValueError(f"Value of {value} does not match any of the joined validators")
 
     return validate
 
