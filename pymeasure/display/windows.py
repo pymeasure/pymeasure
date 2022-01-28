@@ -772,7 +772,7 @@ class InstrumentControlWindow(QtGui.QMainWindow):
             settings=settings,
             controls=controls,
             functions=functions,
-            options=options,
+            options=options
         )
 
         self._setup_ui()
