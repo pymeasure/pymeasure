@@ -28,9 +28,6 @@ class ConexCC(Instrument):
         super(ConexCC, self).write(str(self.index)+command)
 
     def values(self, command, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
-        passing on any key-word arguments.
-        """
         # Cut off the repetition of the command that is included in the reply
         reply = super(ConexCC, self).values(
             str(self.index)+command, **kwargs)[0][len(str(self.index))+2:]
@@ -74,12 +71,15 @@ class ConexCC(Instrument):
         self.write(cmd)
 
     def reset(self):
+        """ Reset the device. """
         self.write('RS')
 
     def zero(self):
+        """ Set the current position as the new zero/home. """
         self.write('TH1')
 
     def home(self, pos=None):
+        """ Do homing process. """
         # If a certain position should be defined as home,
         # move there and set new zero
         if pos:
