@@ -1382,7 +1382,7 @@ class InstrumentControlWidget(QtGui.QWidget):
     """
     Widget for setting up an instrument control user interface.
 
-    Currently implemented through the `InstrumentControlWindow` class, but can 
+    Currently implemented through the `InstrumentControlWindow` class, but can
     be inherited from to include in custom windows.
     """
 
@@ -1521,7 +1521,7 @@ class InstrumentControlWidget(QtGui.QWidget):
     def _layout(self):
         layout = QtGui.QGridLayout(self)
         layout.setSpacing(0)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # Measurements
         measurements_widget = QtGui.QWidget()
@@ -1531,7 +1531,7 @@ class InstrumentControlWidget(QtGui.QWidget):
             measurement_layout.addWidget(getattr(self, name), idx, 1)
 
         # Controls
-        for idx, name in enumerate(self.controls,len(self.measurements)):
+        for idx, name in enumerate(self.controls, len(self.measurements)):
             measurement_layout.addWidget(QtGui.QLabel(name), idx, 0)
             measurement_layout.addWidget(getattr(self, name), idx, 1)
 
@@ -1542,7 +1542,7 @@ class InstrumentControlWidget(QtGui.QWidget):
 
         idx0 = len(self.measurements)+len(self.controls)+len(self.settings)
         for idx, name in enumerate(self.options):
-            measurement_layout.addWidget(getattr(self, name), idx0 + idx//2, idx%2)
+            measurement_layout.addWidget(getattr(self, name), idx0 + idx//2, idx % 2)
 
         measurements_widget.setLayout(measurement_layout)
         layout.addWidget(measurements_widget, 2, 0)
@@ -1572,8 +1572,6 @@ class InstrumentControlWidget(QtGui.QWidget):
 
         layout.addWidget(global_widget, 4, 0)
 
-        
-
     def _parse_function_name(self, name):
         return name.replace('_', ' ')
 
@@ -1591,7 +1589,7 @@ class InstrumentControlWidget(QtGui.QWidget):
 
     def get_and_update_all_values(self):
         """
-        Method to read all parameter values from the instrument and 
+        Method to read all parameter values from the instrument and
         updating them in the interface.
         """
         for name in self.measurements:
@@ -1621,7 +1619,7 @@ class InstrumentControlWidget(QtGui.QWidget):
 
     def apply_all_settings(self):
         """
-        Apply all implemented settings by looping through all controls and 
+        Apply all implemented settings by looping through all controls and
         settings and calling `apply_setting`
         """
         for name in self.controls:
@@ -1679,7 +1677,7 @@ class InstrumentControlWidget(QtGui.QWidget):
     def check_parameter_list(parameter_list, field_type=None):
         """
         Convert all elements of a list to valid `Parameters` or a subclass by either
-        checking for an attribute of the instrument with a given name or 
+        checking for an attribute of the instrument with a given name or
         checking the validity of a given parameter.
 
         :param parameter_list A list of strings, `Parameters` or `Parameter` subclasses
