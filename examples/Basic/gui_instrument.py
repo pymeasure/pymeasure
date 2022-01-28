@@ -14,7 +14,7 @@ import sys
 
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import InstrumentControlWindow
-from pymeasure.experiment import BooleanParameter
+from pymeasure.experiment import BooleanParameter, ListParameter
 from pymeasure.instruments.mock import Mock as MockInstrument
 
 import numpy as np
@@ -23,6 +23,7 @@ log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
 
 bpar = BooleanParameter("Ext. Boolean", default=False)
+listpar = ListParameter('Choice', choices=['A', 'B', 'C', 'D'], default='A')
 
 
 def print_random_number():
@@ -35,7 +36,7 @@ class MockInstrumentControlWindow(InstrumentControlWindow):
             MockInstrument(),
             measurements=["wave", "voltage"],
             controls=["time"],
-            settings=["output_voltage"],
+            settings=["output_voltage", listpar],
             options=[bpar, 'running'],
             functions=[print_random_number, 'start', 'stop']
         )

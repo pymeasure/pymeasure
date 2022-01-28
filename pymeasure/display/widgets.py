@@ -1454,11 +1454,11 @@ class InstrumentControlWidget(QtGui.QWidget):
 
             element.stepType = lambda: QtGui.QAbstractSpinBox.AdaptiveDecimalStepType
 
-            # connect to update functions
-            element.editingFinished.connect(partial(self.apply_setting, name))
-
             if self.auto_write:
-                element.valueChanged.connect(partial(self.apply_setting, name))
+                if isinstance(param, parameters.FloatParameter):
+                    element.valueChanged.connect(partial(self.apply_setting, name))
+                elif isinstance(param, parameters.ListParameter):
+                    element.currentIndexChanged.connect(partial(self.apply_setting, name))
 
         for name, param in self.settings.items():
             element = self.input_from_parameter(param)
@@ -1467,10 +1467,11 @@ class InstrumentControlWidget(QtGui.QWidget):
                 QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding
             )
 
-            element.editingFinished.connect(partial(self.apply_setting, name))
-
             if self.auto_write:
-                element.valueChanged.connect(partial(self.apply_setting, name))
+                if isinstance(param, parameters.FloatParameter):
+                    element.valueChanged.connect(partial(self.apply_setting, name))
+                elif isinstance(param, parameters.ListParameter):
+                    element.currentIndexChanged.connect(partial(self.apply_setting, name))
 
         for name, param in self.options.items():
             element = self.input_from_parameter(param)
@@ -1691,36 +1692,49 @@ class InstrumentControlWidget(QtGui.QWidget):
         else:
             parameter_list = [parameter_list]
 
-        if field_type == "option":
-            # Convert all elements to BooleanParameters if given as a string
-            for idx in range(len(parameter_list)):
-                if isinstance(parameter_list[idx], parameters.BooleanParameter):
-                    pass
-                elif isinstance(parameter_list[idx], str):
-                    parameter_list[idx] = parameters.BooleanParameter(parameter_list[idx])
-                else:
-                    raise TypeError(
-                        "All parameters (measurements, controls, & "
-                        "settings) should be given as a BooleanParameter or a string."
-                    )
-                parameter_list[idx].field_type = field_type
+        for idx, param in enumerate(parameter_list):
+            if isinstance(param, parameters.Parameter):
+                pass
+            # If a string is given, a float parameter is assumed
+            elif isinstance(param, str):
+                parameter_list[idx] = parameters.FloatParameter(param)
+            else:
+                raise TypeError(
+                    "All parameters should be given as a Parameter, a \
+                    Parameter subclass, or a string."
+                )
+            parameter_list[idx].field_type = field_type
 
-        else:
-            # Convert all elements to FloatParameter whenever given as
-            # a string for everything but options
-            for idx in range(len(parameter_list)):
-                if isinstance(parameter_list[idx], parameters.Parameter):
-                    pass
-                elif isinstance(parameter_list[idx], str):
-                    parameter_list[idx] = parameters.FloatParameter(parameter_list[idx])
-                else:
-                    raise TypeError(
-                        "All parameters (measurements, controls, & "
-                        "settings) should be given as a Parameter, a "
-                        "Parameter subclass, or a string."
-                    )
+        # if field_type == "option":
+        #     # Convert all elements to BooleanParameters if given as a string
+        #     for idx in range(len(parameter_list)):
+        #         if isinstance(parameter_list[idx], parameters.BooleanParameter):
+        #             pass
+        #         elif isinstance(parameter_list[idx], str):
+        #             parameter_list[idx] = parameters.BooleanParameter(parameter_list[idx])
+        #         else:
+        #             raise TypeError(
+        #                 "All parameters (measurements, controls, & "
+        #                 "settings) should be given as a BooleanParameter or a string."
+        #             )
+        #         parameter_list[idx].field_type = field_type
 
-                parameter_list[idx].field_type = field_type
+        # else:
+        #     # Convert all elements to FloatParameter whenever given as
+        #     # a string for everything but options
+        #     for idx in range(len(parameter_list)):
+        #         if isinstance(parameter_list[idx], parameters.Parameter):
+        #             pass
+        #         elif isinstance(parameter_list[idx], str):
+        #             parameter_list[idx] = parameters.FloatParameter(parameter_list[idx])
+        #         else:
+        #             raise TypeError(
+        #                 "All parameters (measurements, controls, & "
+        #                 "settings) should be given as a Parameter, a "
+        #                 "Parameter subclass, or a string."
+        #             )
+
+        #         parameter_list[idx].field_type = field_type
 
         params = OrderedDict((param.name, param) for param in parameter_list)
 
