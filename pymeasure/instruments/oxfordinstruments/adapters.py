@@ -34,27 +34,22 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class RetryVISAError(Exception):
+class OxfordVISAError(Exception):
     pass
 
 
 class OxfordInstrumentsAdapter(VISAAdapter):
     """Adapter class for the VISA library using PyVISA to communicate
     with instruments.
-    Checks replies from instruments for sanity
+    Checks the replies from instruments for validity.
 
     :param resource_name: VISA resource name that identifies the address
-    :param sanity: regex string of how a reply from the device must look like
-        default is for devices from Oxford Instruments
     :param max_attempts: Integer that sets how many attempts at getting a
-        sensible response to a query can be made
+        valid response to a query can be made
     :param kwargs: key-word arguments for constructing a PyVISA Adapter
     """
 
-    connError = VisaIOError(-1073807194)
     timeoutError = VisaIOError(-1073807339)
-    visaIOError = VisaIOError(-1073807298)
-    visaNotFoundError = VisaIOError(-1073807343)
 
     regex_pattern = r"^([?]?)([a-zA-Z])[\d.]*$"
 
@@ -62,17 +57,18 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         super().__init__(resource_name, **kwargs)
         self.max_attempts = max_attempts
 
-    def ask(self, command, count=0):
-        """Write the command to the instrument and return the resulting
-        ASCII response
-        Do a sanity check for the returned value, if this fails recursively
-        repeat
+    def ask(self, command):
+        """Write the command to the instrument and return the resulting ASCII response. Also check
+        the validity of the response before returning it; if the response is not valid, another
+        attempt is made at getting a valid response, until the maximum amount of attempts is
+        reached.
 
         :param command: ASCII command string to be sent to the instrument
-        :param count: Integer that counts how many attempts at getting a sane
-            reply have been done.
 
         :returns: String ASCII response of the instrument
+
+        :raises: :class:`~.OxfordVISAError` if the maximum number of attempts is surpassed without
+            getting a valid response
         """
 
         for attempt in range(self.max_attempts):
@@ -87,23 +83,25 @@ class OxfordInstrumentsAdapter(VISAAdapter):
             try:
                 self.read()
             except VisaIOError as e_visa:
-                if (isinstance(e_visa, type(self.timeoutError))
-                        and e_visa.args == self.timeoutError.args):
+                if e_visa.args == self.timeoutError.args:
                     pass
                 else:
                     raise e_visa
 
         # No valid response has been received within the maximum allowed number of attempts
-        raise RetryVISAError(f"Retried {self.max_attempts} times without getting a valid response, "
-                             f"maybe there is something worse at hand.")
+        raise OxfordVISAError(f"Retried {self.max_attempts} times without getting a valid "
+                              "response, maybe there is something worse at hand.")
 
     def write(self, command):
         """Write command to instrument and check whether the reply indicates that the given command
-        was not understood
-        The devices from oxford instruments reply with '?xxx' to a command 'xxx' if this command is
+        was not understood.
+        The devices from Oxford Instruments reply with '?xxx' to a command 'xxx' if this command is
         not known, and replies with 'x' if the command is understood.
         If the command starts with an "$" the instrument will not reply at all; hence in that case
         there will be done no checking for a reply.
+
+        :raises: :class:`~.OxfordVISAError` if the instrument does not recognise the supplied
+            command or if the response of the instrument is not understood
         """
         super().write(command)
 
@@ -117,20 +115,21 @@ class OxfordInstrumentsAdapter(VISAAdapter):
             )
             if not self.is_valid_response(response, command):
                 if response[0] == "?":
-                    raise RetryVISAError(f"The instrument did not understand this command: "
-                                         f"{command}")
+                    raise OxfordVISAError("The instrument did not understand this command: "
+                                          f"{command}")
                 else:
-                    raise RetryVISAError(f"The response of the instrument to command '{command}' "
-                                         f"is not valid: '{response}'")
+                    raise OxfordVISAError(f"The response of the instrument to command '{command}' "
+                                          f"is not valid: '{response}'")
 
     def is_valid_response(self, response, command):
-        """Match the response from a device with a specified regex to check if the response is valid
-        The regex is filled with the first letter of the command
+        """Check if the response received from the instrument after a command is valid and
+        understood by the instrument.
 
         :param response: String ASCII response of the device
         :param command: command used in the initial query
 
-        :returns:   True if the response matched the regex
+        :returns: True if the response is valid and the response indicates the instrument
+            recognised the command
         """
 
         try:
