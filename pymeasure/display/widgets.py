@@ -715,8 +715,16 @@ class DirectoryLineEdit(QtGui.QLineEdit):
 
         self.addAction(browse_action, QtGui.QLineEdit.TrailingPosition)
 
+    def _get_starting_directory(self):
+        current_text = self.text()
+        if current_text != '' and QtCore.QDir(current_text).exists():
+            return current_text
+
+        else:
+            return '/'
+
     def browse_triggered(self):
-        path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', '/')
+        path = QtGui.QFileDialog.getExistingDirectory(self, 'Directory', self._get_starting_directory())
         if path != '':
             self.setText(path)
 
