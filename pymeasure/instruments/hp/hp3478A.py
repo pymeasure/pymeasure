@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -150,12 +150,12 @@ class HP3478A(Instrument):
     """
 
     def __init__(self, resourceName, **kwargs):
-        super(HP3478A, self).__init__(
+        kwargs.setdefault('read_termination', '\r\n')
+        kwargs.setdefault('send_end', True)
+        super().__init__(
             resourceName,
             "Hewlett-Packard HP3478A",
             includeSCPI=False,
-            send_end=True,
-            read_termination="\r\n",
             **kwargs
         )
 

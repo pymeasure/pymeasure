@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -47,11 +47,11 @@ class CNT91(Instrument):
     MAX_BUFFER_SIZE = 32000  # User Manual 8-38
 
     def __init__(self, resourceName, **kwargs):
+        kwargs.setdefault('timeout', 120000)
+        kwargs.setdefault('read_termination', '\n')
         super().__init__(
             resourceName,
             "Pendulum CNT-91",
-            timeout=120000,
-            read_termination="\n",
             **kwargs,
         )
 

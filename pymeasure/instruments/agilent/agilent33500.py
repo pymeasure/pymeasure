@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -79,7 +79,7 @@ class Agilent33500(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent33500, self).__init__(
+        super().__init__(
             adapter,
             "Agilent 33500 Function/Arbitrary Waveform generator family",
             **kwargs
@@ -381,15 +381,15 @@ class Agilent33500(Instrument):
             separator = ', '
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
-            self.write("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
+            print(f"DATA:ARB:DAC {arb_name}, {data_string}")
+            self.write(f"DATA:ARB:DAC {arb_name}, {data_string}")
             return
         elif data_format == 'float':
             separator = ', '
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print("DATA:ARB {}, {}".format(arb_name, data_string))
-            self.write("DATA:ARB {}, {}".format(arb_name, data_string))
+            print(f"DATA:ARB {arb_name}, {data_string}")
+            self.write(f"DATA:ARB {arb_name}, {data_string}")
             return
         elif data_format == 'binary':
             raise NotImplementedError(

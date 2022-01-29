@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -44,9 +44,9 @@ def test_adapter_write(test_input, expected):
 
 @pytest.mark.parametrize(
     "test_input,expected", [
-        ([1, 2, 3], prefix.encode() + b'OUTP#13\x01\x02\x03' + "\n".encode()),
+        ([1, 2, 3], prefix.encode() + b'OUTP#13\x01\x02\x03' + b"\n"),
         ([43, 27, 10, 13, 97, 98, 99], prefix.encode() +
-         b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc' + "\n".encode())
+         b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc' + b"\n")
     ]
 )
 def test_adapter_write_binary_values(test_input, expected):
