@@ -95,7 +95,7 @@ class SM7045D(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(SM7045D, self).__init__(
+        super().__init__(
             resourceName,
             "Delta Elektronika SM 70-45 D",
             **kwargs

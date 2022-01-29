@@ -92,7 +92,7 @@ class IVProcedure(Procedure):
 class MainWindow(ManagedWindow):
 
     def __init__(self):
-        super(MainWindow, self).__init__(
+        super().__init__(
             procedure_class=IVProcedure,
             inputs=[
                 'max_current', 'min_current', 'current_step',

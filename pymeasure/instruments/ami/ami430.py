@@ -59,7 +59,7 @@ class AMI430(Instrument):
 
     def __init__(self, resourceName, **kwargs):
         kwargs.setdefault('read_termination', '\n')
-        super(AMI430, self).__init__(
+        super().__init__(
             resourceName,
             "AMI superconducting magnet power supply.",
             includeSCPI=True,

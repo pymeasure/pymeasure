@@ -106,7 +106,7 @@ class HP33120A(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(HP33120A, self).__init__(
+        super().__init__(
             resourceName,
             "Hewlett Packard 33120A Function Generator",
             **kwargs

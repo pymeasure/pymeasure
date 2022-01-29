@@ -51,7 +51,7 @@ class FSL(Instrument):
     """
 
     def __init__(self, resourceName, **kwargs):
-        super(FSL, self).__init__(
+        super().__init__(
             resourceName, "Rohde&Schwarz FSL", includeSCPI=True, **kwargs
         )
 
