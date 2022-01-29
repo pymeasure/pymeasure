@@ -625,7 +625,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         if not self.directory_input:
             raise ValueError("No directory input in the ManagedWindow")
 
-        self.directory_line.setText(value)
+        self.directory_line.setText(str(value))
 
 
 class ManagedWindow(ManagedWindowBase):
