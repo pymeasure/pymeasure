@@ -44,7 +44,7 @@ class AH2500A(Instrument):
                  write_termination="\n", read_termination="\n",
                  **kwargs):
         kwargs.setdefault("includeSCPI", False)
-        super(AH2500A, self).__init__(
+        super().__init__(
             adapter,
             name or "Andeen Hagerling 2500A Precision Capacitance Bridge",
             write_termination=write_termination,

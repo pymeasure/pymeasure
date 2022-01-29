@@ -176,7 +176,7 @@ class Ametek7270(Instrument):
                                 )
 
     def __init__(self, resourceName, **kwargs):
-        super(Ametek7270, self).__init__(
+        super().__init__(
             resourceName,
             "Ametek DSP 7270",
             **kwargs

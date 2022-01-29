@@ -437,7 +437,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2000, self).__init__(
+        super().__init__(
             adapter, "Keithley 2000 Multimeter", **kwargs
         )
 
@@ -592,4 +592,4 @@ class Keithley2000(Instrument, KeithleyBuffer):
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
-        self.write(":SYST:BEEP %g, %g" % (frequency, duration))
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")

@@ -78,7 +78,7 @@ class LakeShore331(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(LakeShore331, self).__init__(
+        super().__init__(
             adapter,
             "Lake Shore 331 Temperature Controller",
             **kwargs

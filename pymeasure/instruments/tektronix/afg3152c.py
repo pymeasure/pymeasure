@@ -26,7 +26,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 
-class Channel(object):
+class Channel:
     SHAPES = {
         "sinusoidal": "SIN",
         "square": "SQU",
@@ -198,7 +198,7 @@ class AFG3152C(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
-        super(AFG3152C, self).__init__(
+        super().__init__(
             adapter,
             "Tektronix AFG3152C arbitrary function generator",
             **kwargs

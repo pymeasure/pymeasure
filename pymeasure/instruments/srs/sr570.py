@@ -30,7 +30,7 @@ from pymeasure.instruments.validators import strict_discrete_set, \
 class SR570(Instrument):
 
     def __init__(self, resourceName, **kwargs):
-        super(SR570, self).__init__(
+        super().__init__(
             resourceName,
             "Stanford Research Systems SR570 Lock-in amplifier",
             **kwargs

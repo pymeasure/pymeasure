@@ -42,7 +42,7 @@ class NIDAQ(Instrument):
 
     def __init__(self, name='Dev1', *args, **kwargs):
         self._daq = ni.NIDAQ(name)
-        super(NIDAQ, self).__init__(
+        super().__init__(
             None,
             "NIDAQ",
             includeSCPI=False,

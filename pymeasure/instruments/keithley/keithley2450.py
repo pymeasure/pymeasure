@@ -362,7 +362,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
     ####################
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2450, self).__init__(
+        super().__init__(
             adapter, "Keithley 2450 SourceMeter", **kwargs
         )
 
@@ -476,7 +476,7 @@ class Keithley2450(Instrument, KeithleyBuffer):
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
-        self.write(":SYST:BEEP %g, %g" % (frequency, duration))
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.

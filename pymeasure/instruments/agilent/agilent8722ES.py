@@ -74,7 +74,7 @@ class Agilent8722ES(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(Agilent8722ES, self).__init__(
+        super().__init__(
             resourceName,
             "Agilent 8722ES Vector Network Analyzer",
             **kwargs

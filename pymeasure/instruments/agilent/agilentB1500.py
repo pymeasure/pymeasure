@@ -124,7 +124,7 @@ class AgilentB1500(Instrument):
                     # i+1: channels start at 1 not at 0
                 except Exception:
                     raise NotImplementedError(
-                        'Module {} is not implented yet!'.format(module[0]))
+                        f'Module {module[0]} is not implented yet!')
         return out
 
     def initialize_smu(self, channel, smu_type, name):
@@ -194,8 +194,8 @@ class AgilentB1500(Instrument):
         if int(error[0]) == 0:
             return
         else:
-            raise IOError(
-                "Agilent B1500 Error {0}: {1}".format(error[0], error[1]))
+            raise OSError(
+                f"Agilent B1500 Error {error[0]}: {error[1]}")
 
     def check_idle(self):
         """ Check if instrument is idle (``*OPC?``)
@@ -304,7 +304,7 @@ class AgilentB1500(Instrument):
                 self.size = sizes[output_format_str]
             except Exception:
                 raise NotImplementedError(
-                    ("Data Format {0} is not "
+                    ("Data Format {} is not "
                      "implemented so far.").format(output_format_str))
             self.format = output_format_str
             data_names_C = {
@@ -358,7 +358,7 @@ class AgilentB1500(Instrument):
             if name is False:
                 name = ''
             else:
-                name = ' {}'.format(name)
+                name = f' {name}'
 
             status = re.search(
                 r'(?P<number>[0-9]*)(?P<letter>[ A-Z]*)',
@@ -384,7 +384,7 @@ class AgilentB1500(Instrument):
                 if status not in ['N', 'W', 'E']:
                     try:
                         status = self.status[status]
-                        log.info('Agilent B1500{}: {}'.format(name, status))
+                        log.info(f'Agilent B1500{name}: {status}')
                     except KeyError:
                         log_failed()
             else:
@@ -498,7 +498,7 @@ class AgilentB1500(Instrument):
             format_class = classes[output_format_str]
         except KeyError:
             log.error((
-                "Data Format {0} is not implemented "
+                "Data Format {} is not implemented "
                 "so far. Please set appropriate Data Format."
             ).format(output_format_str))
             return
@@ -528,13 +528,15 @@ class AgilentB1500(Instrument):
         self.check_errors()
         if self._smu_names == {}:
             print(
-                ('No SMU names available for formatting, '
-                 'instead channel numbers will be used. '
-                 'Call data_format after initializing all SMUs.'))
+                'No SMU names available for formatting, '
+                'instead channel numbers will be used. '
+                'Call data_format after initializing all SMUs.'
+            )
             log.info(
-                ('No SMU names available for formatting, '
-                 'instead channel numbers will be used. '
-                 'Call data_format after initializing all SMUs.'))
+                'No SMU names available for formatting, '
+                'instead channel numbers will be used. '
+                'Call data_format after initializing all SMUs.'
+            )
         self._data_format = self._data_formatting(
             "FMT%d" % output_format, self._smu_names)
 
@@ -810,13 +812,13 @@ class AgilentB1500(Instrument):
                     raise ValueError(
                         'Bias hold time does not match either '
                         + 'of the two possible specifications: '
-                        + '{} {}'.format(error1, error2))
+                        + f'{error1} {error2}')
             if interval >= 0.0001 + 0.00002 * (n_channels - 1):
                 interval = strict_discrete_range(interval,
                                                  (0, 0.00199), 0.00001)
             else:
                 raise ValueError(
-                    'Sampling interval {} is too short.'.format(interval))
+                    f'Sampling interval {interval} is too short.')
         number = strict_discrete_range(number, (0, int(100001 / n_channels)), 1)
         # ToDo: different restrictions apply for logarithmic sampling!
         hold_base = strict_discrete_range(hold_base, (0, 655.35), 0.01)
@@ -1148,8 +1150,8 @@ class SMU():
             start = float(status[cmd][1])  # current output value
         else:
             log.info(
-                ("{0} in different state. "
-                 "Changing to {1} Source.").format(self.name, source_type))
+                ("{} in different state. "
+                 "Changing to {} Source.").format(self.name, source_type))
             start = 0
 
         # calculate number of points based on maximum stepsize
@@ -1274,8 +1276,9 @@ class SMU():
                 pass
             else:
                 raise ValueError(
-                    ("For Log Sweep Start and Stop Values must "
-                     "have the same polarity."))
+                    "For Log Sweep Start and Stop Values must "
+                    "have the same polarity."
+                )
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
         cmd += ("%d, %d, %d, %g, %g, %g, %g" %

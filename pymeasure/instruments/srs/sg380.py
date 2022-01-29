@@ -51,7 +51,7 @@ class SG380(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(SG380, self).__init__(
+        super().__init__(
             resourceName,
             "Stanford Research Systems SG380 RF Signal Generator",
             **kwargs

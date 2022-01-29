@@ -39,7 +39,7 @@ class Nxds(Instrument):
                                 values=(0, 1),)
 
     def __init__(self, resourceName, **kwargs):
-        super(Nxds, self).__init__(
+        super().__init__(
             resourceName,
             "Edwards NXDS Vacuum Pump",
             includeSCPI=False,

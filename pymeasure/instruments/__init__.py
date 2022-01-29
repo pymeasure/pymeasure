@@ -24,7 +24,6 @@
 
 from ..errors import RangeError, RangeException
 from .instrument import Instrument
-from .mock import Mock
 from .resources import list_resources
 from .validators import discreteTruncate
 
@@ -42,6 +41,7 @@ from . import deltaelektronika
 from . import diamondengineering
 from . import fluke
 from . import fwbell
+from . import heidenhain
 from . import hp
 from . import keithley
 from . import keysight
