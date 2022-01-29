@@ -23,11 +23,7 @@
 #
 
 import logging
-import re
-
 import numpy as np
-
-from pymeasure.adapters import FakeAdapter
 from pymeasure.adapters.visa import VISAAdapter
 
 log = logging.getLogger(__name__)
@@ -96,7 +92,7 @@ class DynamicProperty(property):
         self.name = name
 
 
-class Instrument(object):
+class Instrument:
     """ The base class for all Instrument definitions.
 
     It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
@@ -203,12 +199,12 @@ class Instrument(object):
         if hasattr(self, '_special_names'):
             if name in self._special_names:
                 raise AttributeError(
-                    "{} is a reserved variable name and it cannot be read".format(name))
+                    f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
 
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete 
+        """ This property allows synchronization between a controller and a device. The Operation Complete
         query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
@@ -367,7 +363,7 @@ class Instrument(object):
                     for k, v in values.items():
                         if v == value:
                             return k
-                    raise KeyError("Value {} not found in mapped values".format(value))
+                    raise KeyError(f"Value {value} not found in mapped values")
                 else:
                     raise ValueError(
                         'Values of type `{}` are not allowed '
@@ -519,7 +515,7 @@ class Instrument(object):
             while True:
                 err = self.values("SYST:ERR?")
                 if int(err[0]) != 0:
-                    log.error("{}: {}, {}".format(self.name, err[0], err[1]))
+                    log.error(f"{self.name}: {err[0]}, {err[1]}")
                     errors.append(err)
                 else:
                     break
@@ -527,51 +523,3 @@ class Instrument(object):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-class FakeInstrument(Instrument):
-    """ Provides a fake implementation of the Instrument class
-    for testing purposes.
-    """
-
-    def __init__(self, adapter=None, name=None, includeSCPI=False, **kwargs):
-        super().__init__(
-            FakeAdapter(**kwargs),
-            name or "Fake Instrument",
-            includeSCPI=includeSCPI,
-            **kwargs
-        )
-
-    @staticmethod
-    def control(get_command, set_command, docs,
-                validator=lambda v, vs: v, values=(), map_values=False,
-                get_process=lambda v: v, set_process=lambda v: v,
-                check_set_errors=False, check_get_errors=False,
-                **kwargs):
-        """Fake Instrument.control.
-
-        Strip commands and only store and return values indicated by
-        format strings to mimic many simple commands.
-        This is analogous how the tests in test_instrument are handled.
-        """
-
-        # Regex search to find first format specifier in the command
-        fmt_spec_pattern = r'(%[\w.#-+ *]*[diouxXeEfFgGcrsa%])'
-        match = re.findall(fmt_spec_pattern, set_command)
-        if match:
-            # format_specifier = match.group(0)
-            format_specifier = ','.join(match)
-        else:
-            format_specifier = ''
-        # To preserve as much functionality as possible, call the real
-        # control method with modified get_command and set_command.
-        return Instrument.control(get_command="",
-                                  set_command=format_specifier,
-                                  docs=docs,
-                                  validator=validator,
-                                  values=values,
-                                  map_values=map_values,
-                                  get_process=get_process,
-                                  set_process=set_process,
-                                  check_set_errors=check_set_errors,
-                                  check_get_errors=check_get_errors,
-                                  **kwargs)

@@ -113,4 +113,4 @@ class VXI11Adapter(Adapter):
         return self.connection.ask_raw(command)
 
     def __repr__(self):
-        return '<VXI11Adapter(host={})>'.format(self.connection.host)
+        return f'<VXI11Adapter(host={self.connection.host})>'

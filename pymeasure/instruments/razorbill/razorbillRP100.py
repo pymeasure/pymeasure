@@ -108,7 +108,7 @@ class razorbillRP100(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(razorbillRP100, self).__init__(
+        super().__init__(
             adapter, "Razorbill RP100 Piezo Stack Powersupply", **kwargs
         )
         self.timeout = 20

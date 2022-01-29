@@ -367,7 +367,7 @@ class DSP7265(Instrument):
             ])
 
         # remove all possible duplicates
-        quantities = list(set([q.lower() for q in quantities]))
+        quantities = list({q.lower() for q in quantities})
 
         bits = 0
         for q in quantities:
