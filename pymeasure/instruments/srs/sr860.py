@@ -560,7 +560,7 @@ class SR860(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(SR860, self).__init__(
+        super().__init__(
             resourceName,
             "Stanford Research Systems SR860 Lock-in amplifier",
             **kwargs

@@ -66,7 +66,7 @@ class Listener(StoppableThread):
         self.port = port
         self.topic = topic
         self.context = zmq.Context()
-        log.debug("%s has ZMQ Context: %r" % (self.__class__.__name__, self.context))
+        log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
         self.subscriber.connect('tcp://localhost:%d' % port)
@@ -89,7 +89,7 @@ class Listener(StoppableThread):
         return self.poller.poll(self.timeout * 1000)  # poll timeout is in ms
 
     def __repr__(self):
-        return "<%s(port=%s,topic=%s,should_stop=%s)>" % (
+        return "<{}(port={},topic={},should_stop={})>".format(
             self.__class__.__name__, self.port, self.topic, self.should_stop())
 
 

@@ -77,7 +77,7 @@ class AgilentE4408B(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(AgilentE4408B, self).__init__(
+        super().__init__(
             resourceName,
             "Agilent E4408B Spectrum Analyzer",
             **kwargs

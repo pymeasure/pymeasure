@@ -23,7 +23,7 @@
 #
 
 
-class Parameter(object):
+class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 
@@ -98,7 +98,7 @@ class Parameter(object):
         return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,default=%s)>" % (
+        return "<{}(name={},value={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.default)
 
 
@@ -160,7 +160,7 @@ class IntegerParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 class BooleanParameter(Parameter):
@@ -262,7 +262,7 @@ class FloatParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -332,7 +332,7 @@ class VectorParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,length=%s)>" % (
+        return "<{}(name={},value={},units={},length={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
@@ -475,7 +475,7 @@ class PhysicalParameter(VectorParameter):
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%g +/- %g" % (self._value[0], self._value[1])
+        result = f"{self._value[0]:g} +/- {self._value[1]:g}"
         if self.units:
             result += " %s" % self.units
         if self._utype.value is not None:
@@ -483,11 +483,11 @@ class PhysicalParameter(VectorParameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,uncertaintyType=%s)>" % (
+        return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
 
-class Measurable(object):
+class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.
     The value property is called when the procedure retrieves a datapoint

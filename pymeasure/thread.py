@@ -76,5 +76,5 @@ class StoppableThread(Thread):
         return self._should_stop.is_set()
 
     def __repr__(self):
-        return "<%s(should_stop=%s)>" % (
+        return "<{}(should_stop={})>".format(
             self.__class__.__name__, self.should_stop())

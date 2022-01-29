@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class KeithleyBuffer(object):
+class KeithleyBuffer:
     """ Implements the basic buffering capability found in
     many Keithley instruments. """
 
