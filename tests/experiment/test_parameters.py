@@ -42,8 +42,9 @@ def test_parameter_default():
 def test_integer_units():
     p = IntegerParameter('Test', units='V')
     assert p.units == 'V'
-    assert p.cli_args[0] == None
+    assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default', 'minimum', 'maximum']
+
 
 def test_integer_value():
     p = IntegerParameter('Test', units='tests')
@@ -119,7 +120,7 @@ def test_float_value():
     assert p.units == 'tests'
     with pytest.raises(ValueError):
         p.value = '31.3 incorrect units'  # not the correct units
-    assert p.cli_args[0] == None
+    assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default', 'decimals']
 
 
@@ -155,7 +156,7 @@ def test_list_value():
     assert p.value == 'and four'
     with pytest.raises(ValueError):
         p.value = 5
-    assert p.cli_args[0] == None
+    assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
 
 
@@ -171,7 +172,7 @@ def test_list_value_with_units():
     assert p.value == 'three'
     p.value = 'and four tests'
     assert p.value == 'and four'
-    assert p.cli_args[0] == None
+    assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
 
 
@@ -179,7 +180,7 @@ def test_list_order():
     p = ListParameter('Test', choices=[1, 2.2, 'three', 'and four'])
     # check if order is preserved, choices are internally stored as dict
     assert p.choices == (1, 2.2, 'three', 'and four')
-    assert p.cli_args[0] == None
+    assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
 
 
@@ -200,7 +201,7 @@ def test_vector():
     with pytest.raises(ValueError):
         p.value = '0, 1, 2'
 
-    assert p.cli_args[0] == None
+    assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default', '_length']
 
 # TODO: Add tests for Measurable
