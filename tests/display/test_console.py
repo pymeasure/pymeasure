@@ -26,7 +26,7 @@ import pytest
 
 from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter, IntegerParameter, Parameter, VectorParameter, PhysicalParameter
 from pymeasure.experiment.procedure import Procedure
-from pymeasure.display.console import ManagedConsole, ConsoleArgumentParser
+from pymeasure.display.console import ConsoleArgumentParser
 
 
 class TestArgParsing:
@@ -35,7 +35,7 @@ class TestArgParsing:
         ('int_param', 100),
         ('float_param', 0.5),
         ('bool_param', True),
-        ('vector_param', [1.0,2,3]),
+        ('vector_param', [1.0, 2, 3]),
         ('list_param', '2'),
         ('physical_param', [1.0, 0.1])
     ])
