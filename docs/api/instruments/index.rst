@@ -36,6 +36,7 @@ Instruments by manufacturer:
    edwards/index
    fluke/index
    fwbell/index
+   heidenhain/index
    hp/index
    keithley/index
    keysight/index

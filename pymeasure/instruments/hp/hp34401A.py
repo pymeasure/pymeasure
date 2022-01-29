@@ -43,7 +43,7 @@ class HP34401A(Instrument):
         "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
 
     def __init__(self, resourceName, **kwargs):
-        super(HP34401A, self).__init__(
+        super().__init__(
             resourceName,
             "HP 34401A",
             asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},

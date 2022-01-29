@@ -70,7 +70,7 @@ class Agilent33220A(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent33220A, self).__init__(
+        super().__init__(
             adapter,
             "Agilent 33220A Arbitrary Waveform generator",
             **kwargs

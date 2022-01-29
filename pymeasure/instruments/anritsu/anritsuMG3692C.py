@@ -40,7 +40,7 @@ class AnritsuMG3692C(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(AnritsuMG3692C, self).__init__(
+        super().__init__(
             resourceName,
             "Anritsu MG3692C Signal Generator",
             **kwargs

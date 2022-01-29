@@ -40,7 +40,7 @@ class Agilent33521A(Agilent33500):
     """
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent33521A, self).__init__(
+        super().__init__(
             adapter,
             **kwargs
         )

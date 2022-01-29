@@ -5,9 +5,6 @@ Instrument classes
 .. autoclass:: pymeasure.instruments.Instrument
     :members:
 
-.. autoclass:: pymeasure.instruments.instrument.DynamicProperty
+.. autoclass:: pymeasure.instruments.SwissArmyFake
     :members:
-
-.. autoclass:: pymeasure.instruments.Mock
-    :members:
-    :show-inheritance: 
+    :show-inheritance:

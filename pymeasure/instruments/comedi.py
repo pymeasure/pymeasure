@@ -78,7 +78,7 @@ def writeAO(device, channel, voltage, range=None):
     ao.data_write(converter.from_physical(voltage))
 
 
-class SynchronousAI(object):
+class SynchronousAI:
 
     def __init__(self, channels, period, samples):
         self.channels = channels
