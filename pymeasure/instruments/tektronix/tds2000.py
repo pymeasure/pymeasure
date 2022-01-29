@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ class TDS2000(Instrument):
     and provides a high-level for interacting with the instrument
     """
 
-    class Measurement(object):
+    class Measurement:
 
         SOURCE_VALUES = ['CH1', 'CH2', 'MATH']
 
@@ -56,9 +56,9 @@ class TDS2000(Instrument):
         @source.setter
         def source(self, value):
             if value in TDS2000.Measurement.SOURCE_VALUES:
-                self.parent.write("%sSOU %s" % (self.preamble, value))
+                self.parent.write(f"{self.preamble}SOU {value}")
             else:
-                raise ValueError("Invalid source ('%s') provided to %s" % (
+                raise ValueError("Invalid source ('{}') provided to {}".format(
                                  self.parent, value))
 
         @property
@@ -68,9 +68,9 @@ class TDS2000(Instrument):
         @type.setter
         def type(self, value):
             if value in TDS2000.Measurement.TYPE_VALUES:
-                self.parent.write("%sTYP %s" % (self.preamble, value))
+                self.parent.write(f"{self.preamble}TYP {value}")
             else:
-                raise ValueError("Invalid type ('%s') provided to %s" % (
+                raise ValueError("Invalid type ('{}') provided to {}".format(
                                  self.parent, value))
 
         @property
@@ -80,13 +80,13 @@ class TDS2000(Instrument):
         @unit.setter
         def unit(self, value):
             if value in TDS2000.Measurement.UNIT_VALUES:
-                self.parent.write("%sUNI %s" % (self.preamble, value))
+                self.parent.write(f"{self.preamble}UNI {value}")
             else:
-                raise ValueError("Invalid unit ('%s') provided to %s" % (
+                raise ValueError("Invalid unit ('{}') provided to {}".format(
                                  self.parent, value))
 
     def __init__(self, resourceName, **kwargs):
-        super(TDS2000, self).__init__(
+        super().__init__(
             resourceName,
             "Tektronix TDS 2000 Oscilliscope",
             **kwargs

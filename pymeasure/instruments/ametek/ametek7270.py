@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -176,7 +176,7 @@ class Ametek7270(Instrument):
                                 )
 
     def __init__(self, resourceName, **kwargs):
-        super(Ametek7270, self).__init__(
+        super().__init__(
             resourceName,
             "Ametek DSP 7270",
             **kwargs

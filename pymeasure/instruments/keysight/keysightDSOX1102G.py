@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -244,7 +244,7 @@ class KeysightDSOX1102G(Instrument):
     BOOLS = {True: 1, False: 0}
 
     def __init__(self, adapter, **kwargs):
-        super(KeysightDSOX1102G, self).__init__(
+        super().__init__(
             adapter, "Keysight DSOX1102G Oscilloscope", **kwargs
         )
         # Account for setup time for timebase_mode, waveform_points_mode

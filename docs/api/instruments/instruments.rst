@@ -5,6 +5,6 @@ Instrument classes
 .. autoclass:: pymeasure.instruments.Instrument
     :members:
 
-.. autoclass:: pymeasure.instruments.Mock
+.. autoclass:: pymeasure.instruments.SwissArmyFake
     :members:
-    :show-inheritance: 
+    :show-inheritance:
