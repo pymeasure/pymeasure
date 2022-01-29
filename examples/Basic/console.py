@@ -13,14 +13,12 @@ import sys
 import random
 import tempfile
 from time import sleep
-import pyqtgraph as pg
 
 import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter, BooleanParameter, ListParameter
+from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.console import ManagedConsole
 from pymeasure.display.Qt import QtGui
@@ -96,5 +94,5 @@ if __name__ == "__main__":
         app = QtGui.QApplication(sys.argv)
         window = MainWindow()
         window.show()
-        
+
     sys.exit(app.exec_())

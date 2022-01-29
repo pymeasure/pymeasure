@@ -23,14 +23,12 @@
 #
 
 import pytest
-from unittest import mock
 
 from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter, IntegerParameter, Parameter, VectorParameter, PhysicalParameter
 from pymeasure.experiment.procedure import Procedure
 from pymeasure.display.console import ManagedConsole, ConsoleArgumentParser
 
 
-#@pytest.mark.parametrize("default_value", [True, False])
 class TestArgParsing:
     @pytest.mark.parametrize("param", [
         ('plain_param', 'a'),

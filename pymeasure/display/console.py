@@ -25,7 +25,6 @@
 import logging
 
 import os, copy
-import subprocess, platform
 import argparse
 import progressbar
 from .Qt import QtCore
@@ -248,7 +247,7 @@ class ManagedConsole(QtCore.QCoreApplication):
             self.bar = None
         scribe = console_log(self.log, level=self.log_level)
         scribe.start()
-        
+
         results = Results(procedure, self.get_filename(self.directory))
         log.debug("Set up Results")
 
