@@ -109,9 +109,9 @@ class ITC503(Instrument):
             self.adapter.connection.clear()
 
         if min_temperature is not None:
-            self.temperature_setpoint[0] = min_temperature
+            self.temperature_setpoint_values[0] = min_temperature
         if max_temperature is not None:
-            self.temperature_setpoint[1] = max_temperature
+            self.temperature_setpoint_values[1] = max_temperature
 
     class FLOW_CONTROL_STATUS(IntFlag):
         """ IntFlag class for decoding the flow control status. Contains the following
