@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ class Fluke7341(Instrument):
     id = Instrument.measurement("*ver",
                                 """ Read the instrument model """,
                                 preprocess_reply=lambda x: x,
-                                get_process=lambda x: "Fluke,{},NA,{}".format(x[0][4:], x[1])
+                                get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}"
                                 )
 
     def __init__(self, resource_name, **kwargs):

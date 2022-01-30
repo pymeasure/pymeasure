@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ class ThorlabsPro8000(Instrument):
     STATUS = ['ON', 'OFF']
 
     def __init__(self, resourceName, **kwargs):
-        super(ThorlabsPro8000, self).__init__(
+        super().__init__(
             resourceName,
             "Thorlabs Pro 8000",
             **kwargs
@@ -56,7 +56,7 @@ class ThorlabsPro8000(Instrument):
     )
     LDCPolarity = Instrument.control(
         ":LIMC:SET?", ":LIMC:SET %s",
-        """Set laser diode polarity. Allowed values are: {}""".format(LDC_POLARITIES),
+        f"""Set laser diode polarity. Allowed values are: {LDC_POLARITIES}""",
         validator=strict_discrete_set,
         values=LDC_POLARITIES,
         map_values=False
@@ -72,7 +72,7 @@ class ThorlabsPro8000(Instrument):
 
     # Code for TED-xxxx daughter boards (TEC driver)
     TEDStatus = Instrument.control(":TEC?", ":TEC %s",
-                                   """Set TEC status. Allowed values are: {}""".format(STATUS),
+                                   f"""Set TEC status. Allowed values are: {STATUS}""",
                                    validator=strict_discrete_set,
                                    values=STATUS,
                                    map_values=False)

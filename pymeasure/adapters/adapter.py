@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import numpy as np
 from copy import copy
 
 
-class Adapter(object):
+class Adapter:
     """ Base class for Adapter child classes, which adapt between the Instrument
     object and the connection, to allow flexible use of different connection
     techniques.

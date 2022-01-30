@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ class NIDAQ(Instrument):
 
     def __init__(self, name='Dev1', *args, **kwargs):
         self._daq = ni.NIDAQ(name)
-        super(NIDAQ, self).__init__(
+        super().__init__(
             None,
             "NIDAQ",
             includeSCPI=False,

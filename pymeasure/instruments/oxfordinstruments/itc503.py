@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -414,7 +414,7 @@ class ITC503(Instrument):
                  max_temperature=None, min_temperature=None, **kwargs):
         kwargs.setdefault('read_termination', '\r')
         kwargs.setdefault('send_end', True)
-        super(ITC503, self).__init__(
+        super().__init__(
             resourceName,
             "Oxford ITC503",
             includeSCPI=False,
