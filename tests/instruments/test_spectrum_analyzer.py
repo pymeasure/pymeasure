@@ -22,18 +22,21 @@
 # THE SOFTWARE.
 #
 
+import pytest
 from pytest import approx
-from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer, find_peaks
 import numpy as np
 from math import sqrt, atan, pi
 
 
+@pytest.mark.skipif("find_peaks is None")
 def test_peak_search_with_sin():
     sin = np.sin
 
     def func(x):
         return sin(x) + sin(2*x)
 
+    assert find_peaks is not None
     # Calculate peaks
     # temporary value
     val1 = 2*atan(sqrt(6-sqrt(33)))

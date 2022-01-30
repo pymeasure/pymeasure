@@ -26,7 +26,11 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 import numpy as np
-from scipy.signal import find_peaks
+
+try:
+    from scipy.signal import find_peaks
+except ImportError:
+    find_peaks = None
 
 
 class SpectrumAnalyzer(Instrument):
@@ -106,9 +110,11 @@ Single sweep acquisition and peak value calculation
         sorted by peak magnitude
         """
 
-        peaks_idx, _ = find_peaks(values, **kwargs)
-        peaks_idx = list(peaks_idx)
-        peaks_idx.sort(key=lambda x: values[x], reverse=True)
+        peaks_idx = None
+        if find_peaks is not None:
+            peaks_idx, _ = find_peaks(values, **kwargs)
+            peaks_idx = list(peaks_idx)
+            peaks_idx.sort(key=lambda x: values[x], reverse=True)
 
         return peaks_idx
 
