@@ -75,7 +75,6 @@ class ITC503(Instrument):
         print(itc.temperature_1)        # Print the temperature at sensor 1
 
     """
-    _T_RANGE = [0, 1677.7]
 
     def __init__(self,
                  adapter,
@@ -110,9 +109,9 @@ class ITC503(Instrument):
             self.adapter.connection.clear()
 
         if min_temperature is not None:
-            self._T_RANGE[0] = min_temperature
+            self.temperature_setpoint[0] = min_temperature
         if max_temperature is not None:
-            self._T_RANGE[1] = max_temperature
+            self.temperature_setpoint[1] = max_temperature
 
     class FLOW_CONTROL_STATUS(IntFlag):
         """ IntFlag class for decoding the flow control status. Contains the following
@@ -267,7 +266,8 @@ class ITC503(Instrument):
         the ITC in kelvin. """,
         get_process=lambda v: float(v[1:]),
         validator=truncated_range,
-        values=_T_RANGE
+        values=[0, 1677.7],  # Kelvin, 0 - 1677.7K is the maximum range of the instrument
+        dynamic=True,
     )
 
     temperature_1 = Instrument.measurement(
