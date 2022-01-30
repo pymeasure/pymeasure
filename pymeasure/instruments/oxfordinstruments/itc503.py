@@ -32,6 +32,8 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
 
+from .adapters import OxfordInstrumentsAdapter
+
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -74,6 +76,43 @@ class ITC503(Instrument):
 
     """
     _T_RANGE = [0, 1677.7]
+
+    def __init__(self,
+                 adapter,
+                 name="Oxford ITC503",
+                 clear_buffer=True,
+                 max_temperature=None,
+                 min_temperature=None,
+                 **kwargs):
+
+        if isinstance(adapter, (int, str)):
+            kwargs.setdefault('read_termination', '\r')
+            kwargs.setdefault('send_end', True)
+            adapter = OxfordInstrumentsAdapter(
+                adapter,
+                asrl={
+                    'baud_rate': 9600,
+                    'data_bits': 8,
+                    'parity': 0,
+                    'stop_bits': 20,
+                },
+                **kwargs,
+            )
+
+        super().__init__(
+            adapter=adapter,
+            name=name,
+            includeSCPI=False,
+        )
+
+        # Clear the buffer in order to prevent communication problems
+        if clear_buffer:
+            self.adapter.connection.clear()
+
+        if min_temperature is not None:
+            self._T_RANGE[0] = min_temperature
+        if max_temperature is not None:
+            self._T_RANGE[1] = max_temperature
 
     class FLOW_CONTROL_STATUS(IntFlag):
         """ IntFlag class for decoding the flow control status. Contains the following
@@ -409,26 +448,6 @@ class ITC503(Instrument):
         valid if gas-flow in auto mode. """,
         get_process=lambda v: float(v[1:]),
     )
-
-    def __init__(self, resourceName, clear_buffer=True,
-                 max_temperature=None, min_temperature=None, **kwargs):
-        kwargs.setdefault('read_termination', '\r')
-        kwargs.setdefault('send_end', True)
-        super().__init__(
-            resourceName,
-            "Oxford ITC503",
-            includeSCPI=False,
-            **kwargs
-        )
-
-        # Clear the buffer in order to prevent communication problems
-        if clear_buffer:
-            self.adapter.connection.clear()
-
-        if min_temperature is not None:
-            self._T_RANGE[0] = min_temperature
-        if max_temperature is not None:
-            self._T_RANGE[1] = max_temperature
 
     def wait_for_temperature(self, error=0.01, timeout=3600,
                              check_interval=0.5, stability_interval=10,
