@@ -51,7 +51,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
 
     timeoutError = VisaIOError(-1073807339)
 
-    regex_pattern = r"^([?]?)([a-zA-Z])[\d.]*$"
+    regex_pattern = r"^([?]?)([a-zA-Z])[\d.+-]*$"
 
     def __init__(self, resource_name, max_attempts=5, **kwargs):
         super().__init__(resource_name, **kwargs)
