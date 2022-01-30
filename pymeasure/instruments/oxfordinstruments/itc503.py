@@ -80,8 +80,8 @@ class ITC503(Instrument):
                  adapter,
                  name="Oxford ITC503",
                  clear_buffer=True,
-                 max_temperature=0,
-                 min_temperature=1677.7,
+                 min_temperature=0,
+                 max_temperature=1677.7,
                  **kwargs):
 
         if isinstance(adapter, (int, str)):
