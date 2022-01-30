@@ -449,11 +449,14 @@ class ITC503(Instrument):
         get_process=lambda v: float(v[1:]),
     )
 
-    def wait_for_temperature(self, error=0.01, timeout=3600,
-                             check_interval=0.5, stability_interval=10,
+    def wait_for_temperature(self,
+                             error=0.01,
+                             timeout=3600,
+                             check_interval=0.5,
+                             stability_interval=10,
                              thermalize_interval=300,
                              should_stop=lambda: False,
-                             max_comm_errors=None):
+                             ):
         """
         Wait for the ITC to reach the set-point temperature.
 
@@ -461,7 +464,7 @@ class ITC503(Instrument):
                       is considered at set-point
         :param timeout: The maximum time the waiting is allowed to take. If
                         timeout is exceeded, a TimeoutError is raised. If
-                        timeout is set to zero, no timeout will be used.
+                        timeout is None, no timeout will be used.
         :param check_interval: The time between temperature queries to the ITC.
         :param stability_interval: The time over which the temperature_error is
                                    to be below error to be considered stable.
@@ -469,45 +472,28 @@ class ITC503(Instrument):
                                     system to thermalize.
         :param should_stop: Optional function (returning a bool) to allow the
                             waiting to be stopped before its end.
-        :param max_comm_errors: The maximum number of communication errors that
-                                are allowed before the wait is stopped. if set
-                                to None (default), no maximum will be used.
         """
 
         number_of_intervals = int(stability_interval / check_interval)
         stable_intervals = 0
         attempt = 0
-        comm_errors = 0
 
         t0 = time()
         while True:
-            try:
-                temp_error = self.temperature_error
-            except ValueError:
-                comm_errors += 1
-                log.error(
-                    "No temperature-error returned. "
-                    "Communication error # %d." % comm_errors
-                )
+            temp_error = self.temperature_error
+            if abs(temp_error) < error:
+                stable_intervals += 1
             else:
-                if abs(temp_error) < error:
-                    stable_intervals += 1
-                else:
-                    stable_intervals = 0
-                    attempt += 1
+                stable_intervals = 0
+                attempt += 1
 
             if stable_intervals >= number_of_intervals:
                 break
 
-            if timeout > 0 and (time() - t0) > timeout:
+            if timeout is not None and (time() - t0) > timeout:
                 raise TimeoutError(
-                    "Timeout expired while waiting for the Oxford ITC305 to \
-                    reach the set-point temperature"
-                )
-
-            if max_comm_errors is not None and comm_errors > max_comm_errors:
-                raise ValueError(
-                    "Too many communication errors have occurred."
+                    "Timeout expired while waiting for the Oxford ITC305 to "
+                    "reach the set-point temperature"
                 )
 
             if should_stop():
