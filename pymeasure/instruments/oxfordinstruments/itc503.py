@@ -80,8 +80,8 @@ class ITC503(Instrument):
                  adapter,
                  name="Oxford ITC503",
                  clear_buffer=True,
-                 max_temperature=None,
-                 min_temperature=None,
+                 max_temperature=0,
+                 min_temperature=1677.7,
                  **kwargs):
 
         if isinstance(adapter, (int, str)):
@@ -108,10 +108,7 @@ class ITC503(Instrument):
         if clear_buffer:
             self.adapter.connection.clear()
 
-        if min_temperature is not None:
-            self.temperature_setpoint_values[0] = min_temperature
-        if max_temperature is not None:
-            self.temperature_setpoint_values[1] = max_temperature
+        self.temperature_setpoint_values = [min_temperature, max_temperature]
 
     class FLOW_CONTROL_STATUS(IntFlag):
         """ IntFlag class for decoding the flow control status. Contains the following
