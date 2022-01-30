@@ -139,7 +139,7 @@ class ITC503(Instrument):
         "X", "$C%d",
         """ A string property that sets the ITC in `local` or `remote` and `locked`
         or `unlocked`, locking the LOC/REM button. Allowed values are:
-        
+
         =====   =================
         value   state
         =====   =================
@@ -166,7 +166,7 @@ class ITC503(Instrument):
         MANUAL   heater & gas manual
         AM       heater auto, gas manual
         MA       heater manual, gas auto
-        AUTO     heater & gas auto 
+        AUTO     heater & gas auto
         ======   =======================
         """,
         get_process=lambda v: int(v[3:4]),
@@ -360,10 +360,10 @@ class ITC503(Instrument):
         :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
         :class:`ITC503.pointer`) to point at the location in the table that is
         to be set or read.
-        
+
         The x-pointer selects the step of the sweep (1 to 16); the y-pointer
         selects the parameter:
-    
+
         =========   =======================
         y-pointer   parameter
         =========   =======================
@@ -381,10 +381,10 @@ class ITC503(Instrument):
         :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
         :class:`ITC503.pointer`) to point at the location in the table that
         is to be set or read.
-        
+
         The x-pointer selects the table entry (1 to 16); the y-pointer
         selects the parameter:
-    
+
         =========   =======================
         y-pointer   parameter
         =========   =======================
