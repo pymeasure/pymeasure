@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -619,6 +619,13 @@ class ManagedWindowBase(QtGui.QMainWindow):
         if not self.directory_input:
             raise ValueError("No directory input in the ManagedWindow")
         return self.directory_line.text()
+
+    @directory.setter
+    def directory(self, value):
+        if not self.directory_input:
+            raise ValueError("No directory input in the ManagedWindow")
+
+        self.directory_line.setText(str(value))
 
 
 class ManagedWindow(ManagedWindowBase):

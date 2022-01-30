@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ class LakeShoreUSBAdapter(SerialAdapter):
     """
 
     def __init__(self, port):
-        super(LakeShoreUSBAdapter, self).__init__(
+        super().__init__(
             port,
             baudrate=57600,
             timeout=0.5,
@@ -51,4 +51,4 @@ class LakeShoreUSBAdapter(SerialAdapter):
 
         :param command: SCPI command string to be sent to the instrument
         """
-        super(LakeShoreUSBAdapter, self).write(command + "\n")
+        super().write(command + "\n")

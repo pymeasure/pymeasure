@@ -1,0 +1,7 @@
+###########################################
+Andeen Hagerling AH2500A capacitance bridge
+###########################################
+
+.. autoclass:: pymeasure.instruments.andeenhagerling.AH2500A
+    :members:
+    :show-inheritance:
