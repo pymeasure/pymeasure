@@ -179,7 +179,7 @@ class KeysightN7776C(Instrument):
                                     map_values=True,
                                     values={True: 1, False: 0})
 
-    def check_sweep_params(self):
+    def valid_sweep_params(self):
         response = self._sweep_params_consistent
         if response[0] == 0.0:
             return True
