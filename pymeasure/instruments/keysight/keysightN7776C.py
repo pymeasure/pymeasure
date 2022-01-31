@@ -56,30 +56,30 @@ class KeysightN7776C(Instrument):
             address, "N7776C Tunable Laser Source", **kwargs)
 
     locked = Instrument.control(':LOCK?', ':LOCK %g,'+str(LOCK_PW),
-                                """ Boolean property controlling the lock state (True/False) of \
+                                """ Boolean property controlling the lock state (True/False) of
                                 the laser source""",
                                 validator=strict_discrete_set,
                                 map_values=True,
                                 values={True: 1, False: 0})
 
     output_enabled = Instrument.control('SOUR0:POW:STAT?', 'SOUR0:POW:STAT %g',
-                                        """ Boolean Property that controls the state (on/off) of \
+                                        """ Boolean Property that controls the state (on/off) of
                                         the laser source """,
                                         validator=strict_discrete_set,
                                         map_values=True,
                                         values={True: 1, False: 0})
 
     _output_power_mW = Instrument.control('SOUR0:POW?', 'SOUR0:POW %f mW',
-                                          """ Floating point value indicating the laser output power \
+                                          """ Floating point value indicating the laser output power
                                           in mW.""",
                                           get_process=lambda v: v*1e3)
 
     _output_power_dBm = Instrument.control('SOUR0:POW?', 'SOUR0:POW %f dBm',
-                                           """ Floating point value indicating the laser output power \n
+                                           """ Floating point value indicating the laser output power
                                            in dBm.""")
 
     _output_power_unit = Instrument.control('SOUR0:POW:UNIT?', 'SOUR0:POW:UNIT %g',
-                                            """ String parameter controlling the power unit used internally \n
+                                            """ String parameter controlling the power unit used internally
                                             by the laser.""",
                                             map_values=True,
                                             values={'dBm': 0, 'mW': 1})
@@ -103,7 +103,7 @@ class KeysightN7776C(Instrument):
         self._output_power_dBm = new_power
 
     trigger_out = Instrument.control('TRIG0:OUTP?', 'TRIG0:OUTP %s',
-                                     """ Specifies if and at which point in a sweep cycle an output trigger \n
+                                     """ Specifies if and at which point in a sweep cycle an output trigger
                                      is generated and arms the module. """,
                                      validator=strict_discrete_set,
                                      values=['DIS', 'STF', 'SWF', 'SWST'])
@@ -145,41 +145,42 @@ class KeysightN7776C(Instrument):
                                     validator=strict_discrete_set,
                                     values=['STEP', 'MAN', 'CONT'])
     sweep_twoway = Instrument.control('sour0:wav:swe:rep?', 'sour0:wav:swe:rep %s',
-                                      """Sets the repeat mode. Applies in stepped,continuous and \
+                                      """Sets the repeat mode. Applies in stepped,continuous and
                                       manual sweep mode.""",
                                       validator=strict_discrete_set,
                                       map_values=True,
                                       values={False: 'ONEW', True: 'TWOW'})
-    _sweep_check = Instrument.measurement('sour0:wav:swe:chec?',
-                                          """Returns whether the currently set sweep parameters (sweep mode, sweep start, \
-                                          stop, width, etc.) are consistent. If there is a \
-                                          sweep configuration problem, the laser source is not \
-                                          able to pass a wavelength sweep.""")
+    _sweep_params_consistent = Instrument.measurement(
+        'sour0:wav:swe:chec?',
+        """Returns whether the currently set sweep parameters (sweep mode, sweep start,
+        stop, width, etc.) are consistent. If there is a
+        sweep configuration problem, the laser source is not
+        able to pass a wavelength sweep.""")
 
     sweep_points = Instrument.measurement('sour0:read:points? llog',
-                                          """Returns the number of datapoints that the :READout:DATA? \
+                                          """Returns the number of datapoints that the :READout:DATA?
                                           command will return.""")
 
     sweep_state = Instrument.control('sour0:wav:swe?', 'sour0:wav:swe %g',
-                                     """ State of the wavelength sweep. Stops, starts, pauses \
-                                     or continues a wavelength sweep. Possible state values are \
+                                     """ State of the wavelength sweep. Stops, starts, pauses
+                                     or continues a wavelength sweep. Possible state values are
                                      0 (not running),
                                      1 (running) and
                                      2 (paused).
-                                     Refer to the N7776C user manual for exact usage of the \
+                                     Refer to the N7776C user manual for exact usage of the
                                      paused option. """,
                                      validator=strict_discrete_set,
                                      values=[0, 1, 2])
 
     wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?', 'SOUR0:WAV:SWE:LLOG %g',
-                                    """ State (on/off) of the lambda logging feature of the \
+                                    """ State (on/off) of the lambda logging feature of the
                                     laser source.""",
                                     validator=strict_discrete_set,
                                     map_values=True,
                                     values={True: 1, False: 0})
 
     def check_sweep_params(self):
-        response = self._sweep_check
+        response = self._sweep_params_consistent
         if response[0] == 0.0:
             return True
         elif response[0] == 368:
