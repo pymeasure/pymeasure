@@ -180,35 +180,35 @@ class KeysightN7776C(Instrument):
                                     values={True: 1, False: 0})
 
     def valid_sweep_params(self):
-        response = self._sweep_params_consistent
-        if response[0] == 0.0:
+        response = int(self._sweep_params_consistent[0])
+        if response == 0:
             return True
-        elif response[0] == 368:
+        elif response == 368:
             log.warning('End Wavelength <= Start Wavelength.')
-        elif response[0] == 369:
+        elif response == 369:
             log.warning('Sweep time too small.')
-        elif response[0] == 370:
+        elif response == 370:
             log.warning('Sweep time too big.')
-        elif response[0] == 371:
+        elif response == 371:
             log.warning('Trigger Frequency too large.')
-        elif response[0] == 372:
+        elif response == 372:
             log.warning('Stepsize too small.')
-        elif response[0] == 373 or response[0] == 378:
+        elif response == 373 or response == 378:
             log.warning('Number of triggers exceeds allowed limit.')
-        elif response[0] == 374:
+        elif response == 374:
             log.warning('The only allowed modulation source with lambda logging \
                         function is coherence control.')
-        elif response[0] == 375:
+        elif response == 375:
             log.warning('Lambda logging only works Step Finished output trigger configuration')
-        elif response[0] == 376:
+        elif response == 376:
             log.warning('Lambda logging can only be done in continuous sweep mode')
-        elif response[0] == 377:
+        elif response == 377:
             log.warning('The step size must be a multiple of the smallest possible step size')
-        elif response[0] == 379:
+        elif response == 379:
             log.warning('Continuous Sweep and Modulation on.')
-        elif response[0] == 380:
+        elif response == 380:
             log.warning('Start Wavelength is too small.')
-        elif response[0] == 381:
+        elif response == 381:
             log.warning('End Wavelength is too large.')
         else:
             log.warning('Unknown Error!')
