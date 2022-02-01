@@ -24,7 +24,13 @@
 
 import pytest
 
-from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter, IntegerParameter, Parameter, VectorParameter, PhysicalParameter
+from pymeasure.experiment.parameters import (BooleanParameter,
+                                             ListParameter,
+                                             FloatParameter,
+                                             IntegerParameter,
+                                             Parameter,
+                                             VectorParameter,
+                                             PhysicalParameter)
 from pymeasure.experiment.procedure import Procedure
 from pymeasure.display.console import ConsoleArgumentParser
 
@@ -45,15 +51,19 @@ class TestArgParsing:
             int_param = IntegerParameter('Integer parameter', default=100)
             float_param = FloatParameter('Float parameter', units='s', default=0.2)
             bool_param = BooleanParameter('Boolean parameter', default=True)
-            list_param = ListParameter('List parameter', default='1', choices=['1','2','3'])
-            vector_param = VectorParameter('Vector parameter', default=[1,5,3])
-            physical_param = PhysicalParameter('Physical parameter', units='s', default=[1.0, 0.1])
+            list_param = ListParameter('List parameter',
+                                       default='1', choices=['1', '2', '3'])
+            vector_param = VectorParameter('Vector parameter',
+                                           default=[1, 5, 3])
+            physical_param = PhysicalParameter('Physical parameter', units='s',
+                                               default=[1.0, 0.1])
 
         name, value = param
         console = ConsoleArgumentParser(TestProcedure)
         console.setup_parser([name])
         args = vars(console.parse_args(['--' + name, str(value)]))
-        assert(args[name]==value)
+        assert(args[name] == value)
+
 
 class TestArgHelpString:
     @pytest.mark.parametrize("klass, kwargs", [
@@ -61,9 +71,11 @@ class TestArgHelpString:
         (IntegerParameter, {'name': 'Integer parameter', 'default': 100}),
         (FloatParameter, {'name': 'Float parameter', 'default': 0.5}),
         (BooleanParameter, {'name': 'Boolean parameter', 'default': True}),
-        (VectorParameter, {'name': 'Vector parameter', 'default': [1.0,2,3]}),
-        (ListParameter, {'name': 'List parameter', 'default': '2', 'choices': ['1','2','3']}),
-        (PhysicalParameter, {'name': 'Physical parameter', 'default': [1.0, 0.1]})
+        (VectorParameter, {'name': 'Vector parameter', 'default': [1.0, 2, 3]}),
+        (ListParameter, {'name': 'List parameter',
+                         'default': '2', 'choices': ['1', '2', '3']}),
+        (PhysicalParameter, {'name': 'Physical parameter',
+                             'default': [1.0, 0.1]})
     ])
     def test_init_from_param(self, klass, kwargs):
         class TestProcedure(Procedure):

@@ -14,15 +14,14 @@ import random
 import tempfile
 from time import sleep
 
-import logging
-log = logging.getLogger('')
-log.addHandler(logging.NullHandler())
-
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.console import ManagedConsole
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
+import logging
+log = logging.getLogger('')
+log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
@@ -64,6 +63,7 @@ class Console(ManagedConsole):
             procedure_class=TestProcedure,
             inputs=['iterations', 'delay', 'seed'],
         )
+
 
 class MainWindow(ManagedWindow):
 
