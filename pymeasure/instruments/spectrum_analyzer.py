@@ -148,6 +148,16 @@ Single sweep acquisition and peak value calculation
         dynamic=True
     )
 
+    video_bw = Instrument.control(
+        ":SENSe:BANDwidth:VIDeo?;", ":SENSe:BANDwidth:VIDeo %d Hz;",
+        """ A floating point property that represents the instrument video bandwidth (VBW) in Hz.
+        This property can be set.
+        """,
+        validator=truncated_range,
+        values=(0, float("inf")),  # Limit not specified for generic instrument
+        dynamic=True
+    )
+
     input_attenuation = Instrument.control(
         ":SENSe:POWer:ATTenuation?;", ":SENSe:POWer:ATTenuation %d;",
         """ An floating point property that represents the instrument the input attenuation in dB.
