@@ -127,6 +127,7 @@ class IPS120_10(Instrument):
                     'parity': 0,
                     'stop_bits': 20,
                 },
+                preprocess_reply=lambda v: v[1:],
                 **kwargs,
             )
 
@@ -153,7 +154,8 @@ class IPS120_10(Instrument):
 
     version = Instrument.measurement(
         "V",
-        """ A string property that returns the version of the IPS. """
+        """ A string property that returns the version of the IPS. """,
+        preprocess_reply=lambda v: v,
     )
 
     control_mode = Instrument.control(
@@ -164,7 +166,8 @@ class IPS120_10(Instrument):
         :code:`"RL"`: remote & locked,
         :code:`"LU"`: local & unlocked,
         :code:`"RU"`: remote & unlocked. """,
-        get_process=lambda v: int(v[6]),
+        preprocess_reply=lambda v: v[6],
+        cast=int,
         validator=strict_discrete_set,
         values={"LL": 0, "RL": 1, "LU": 2, "RU": 3},
         map_values=True,
@@ -174,7 +177,6 @@ class IPS120_10(Instrument):
         "R1",
         """ A floating point property that returns the measured magnet current of
         the IPS in amps. """,
-        get_process=lambda v: float(v[1:]),
         dynamic=True,
     )
 
@@ -182,7 +184,6 @@ class IPS120_10(Instrument):
         "R0",
         """ A floating point property that returns the demand magnet current of
         the IPS in amps. """,
-        get_process=lambda v: float(v[1:]),
         dynamic=True,
     )
 
@@ -190,7 +191,6 @@ class IPS120_10(Instrument):
         "R7",
         """ A floating point property that returns the demand magnetic field of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[1:]),
         dynamic=True,
     )
 
@@ -198,7 +198,6 @@ class IPS120_10(Instrument):
         "R18",
         """ A floating point property that returns the persistent magnetic field of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[1:]),
         dynamic=True,
     )
 
@@ -209,7 +208,8 @@ class IPS120_10(Instrument):
         and reading the switch heater. When using this property, the user
         is referred to the IPS120-10 manual for the meaning of the integer
         values. """,
-        get_process=lambda v: int(v[8]),
+        preprocess_reply=lambda v: v[8],
+        cast=int,
     )
 
     @property
@@ -260,7 +260,6 @@ class IPS120_10(Instrument):
         "R0", "I%f",
         """ A floating point property that controls the magnet current set-point of
         the IPS in ampere. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 120],  # Ampere
         dynamic=True,
@@ -270,7 +269,6 @@ class IPS120_10(Instrument):
         "R8", "J%f",
         """ A floating point property that controls the magnetic field set-point of
         the IPS in Tesla. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[-7, 7],  # Tesla
         dynamic=True,
@@ -280,7 +278,6 @@ class IPS120_10(Instrument):
         "R9", "T%f",
         """ A floating point property that controls the sweep-rate of
         the IPS in Tesla/minute. """,
-        get_process=lambda v: float(v[1:]),
         dynamic=True,
     )
 
@@ -288,7 +285,8 @@ class IPS120_10(Instrument):
         "X", "A%d",
         """ A string property that controls the activity of the IPS. Valid values
         are "hold", "to setpoint", "to zero" and "clamp" """,
-        get_process=lambda v: int(v[4]),
+        preprocess_reply=lambda v: v[4],
+        cast=int,
         values={"hold": 0, "to setpoint": 1, "to zero": 2, "clamp": 4},
         map_values=True,
     )
@@ -296,7 +294,8 @@ class IPS120_10(Instrument):
     sweep_status = Instrument.measurement(
         "X",
         """ A string property that returns the current sweeping mode of the IPS. """,
-        get_process=lambda v: int(v[11]),
+        preprocess_reply=lambda v: v[11],
+        cast=int,
         values={"at rest": 0, "sweeping": 1, "sweep limiting": 2, "sweeping & sweep limiting": 3},
         map_values=True,
     )

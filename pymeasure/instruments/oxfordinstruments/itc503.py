@@ -95,6 +95,7 @@ class ITC503(Instrument):
                     'parity': 0,
                     'stop_bits': 20,
                 },
+                preprocess_reply=lambda v: v[1:],
                 **kwargs,
             )
 
@@ -134,6 +135,7 @@ class ITC503(Instrument):
     version = Instrument.measurement(
         "V",
         """ A string property that returns the version of the IPS. """,
+        preprocess_reply=lambda v: v,
     )
 
     control_mode = Instrument.control(
@@ -150,7 +152,8 @@ class ITC503(Instrument):
         RU      remote & unlocked
         =====   =================
         """,
-        get_process=lambda v: int(v[5:6]),
+        preprocess_reply=lambda v: v[5:6],
+        cast=int,
         validator=strict_discrete_set,
         values={"LL": 0, "RL": 1, "LU": 2, "RU": 3},
         map_values=True,
@@ -170,7 +173,8 @@ class ITC503(Instrument):
         AUTO     heater & gas auto
         ======   =======================
         """,
-        get_process=lambda v: int(v[3:4]),
+        preprocess_reply=lambda v: v[3:4],
+        cast=int,
         validator=strict_discrete_set,
         values={"MANUAL": 0, "AM": 1, "MA": 2, "AUTO": 3},
         map_values=True,
@@ -181,7 +185,6 @@ class ITC503(Instrument):
         """ A floating point property that represents the heater output power
         as a percentage of the maximum voltage. Can be set if the heater is in
         manual mode. Valid values are in range 0 [off] to 99.9 [%]. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 99.9]
     )
@@ -191,7 +194,6 @@ class ITC503(Instrument):
         """ A floating point property that represents the heater output power
         in volts. For controlling the heater, use the :class:`ITC503.heater`
         property. """,
-        get_process=lambda v: float(v[1:]),
     )
 
     gasflow = Instrument.control(
@@ -199,7 +201,6 @@ class ITC503(Instrument):
         """ A floating point property that controls gas flow when in manual
         mode. The value is expressed as a percentage of the maximum gas flow.
         Valid values are in range 0 [off] to 99.9 [%]. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 99.9]
     )
@@ -209,7 +210,6 @@ class ITC503(Instrument):
         """ A floating point property that controls the proportional band
         for the PID controller in Kelvin. Can be set if the PID controller
         is in manual mode. Valid values are 0 [K] to 1677.7 [K]. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 1677.7]
     )
@@ -219,7 +219,6 @@ class ITC503(Instrument):
         """ A floating point property that controls the integral action time
         for the PID controller in minutes. Can be set if the PID controller
         is in manual mode. Valid values are 0 [min.] to 140 [min.]. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 140]
     )
@@ -229,7 +228,6 @@ class ITC503(Instrument):
         """ A floating point property that controls the derivative action time
         for the PID controller in minutes. Can be set if the PID controller
         is in manual mode. Valid values are 0 [min.] to 273 [min.]. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 273]
     )
@@ -238,7 +236,8 @@ class ITC503(Instrument):
         "X", "L%d",
         """ A boolean property that sets the Auto-PID mode on (True) or off (False).
         """,
-        get_process=lambda v: int(v[12:13]),
+        preprocess_reply=lambda v: v[12:13],
+        cast=int,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -257,7 +256,8 @@ class ITC503(Instrument):
         2P          Holding at set-point P
         =========   =========================================
         """,
-        get_process=lambda v: int(v[7:9]),
+        preprocess_reply=lambda v: v[7:9],
+        cast=int,
         validator=strict_range,
         values=[0, 32]
     )
@@ -266,7 +266,6 @@ class ITC503(Instrument):
         "R0", "T%f",
         """ A floating point property that controls the temperature set-point of
         the ITC in kelvin. """,
-        get_process=lambda v: float(v[1:]),
         validator=truncated_range,
         values=[0, 1677.7],  # Kelvin, 0 - 1677.7K is the maximum range of the instrument
         dynamic=True,
@@ -275,19 +274,16 @@ class ITC503(Instrument):
     temperature_1 = Instrument.measurement(
         "R1",
         """ Reads the temperature of the sensor 1 in Kelvin. """,
-        get_process=lambda v: float(v[1:]),
     )
 
     temperature_2 = Instrument.measurement(
         "R2",
         """ Reads the temperature of the sensor 2 in Kelvin. """,
-        get_process=lambda v: float(v[1:]),
     )
 
     temperature_3 = Instrument.measurement(
         "R3",
         """ Reads the temperature of the sensor 3 in Kelvin. """,
-        get_process=lambda v: float(v[1:]),
     )
 
     temperature_error = Instrument.measurement(
@@ -295,7 +291,6 @@ class ITC503(Instrument):
         """ Reads the difference between the set-point and the measured
         temperature in Kelvin. Positive when set-point is larger than
         measured. """,
-        get_process=lambda v: float(v[1:]),
     )
 
     front_panel_display = Instrument.setting(
@@ -374,7 +369,6 @@ class ITC503(Instrument):
         3           hold-time at set-point
         =========   =======================
         """,
-        get_process=lambda v: float(v[1:]),
     )
 
     auto_pid_table = Instrument.control(
@@ -396,7 +390,6 @@ class ITC503(Instrument):
         4           derivative action time
         =========   =======================
         """,
-        get_process=lambda v: float(v[1:]),
     )
 
     target_voltage_table = Instrument.control(
@@ -405,7 +398,6 @@ class ITC503(Instrument):
         Relies on the :class:`ITC503.x_pointer` to select the entry in the table
         that is to be set or read (1 to 64).
         """,
-        get_process=lambda v: float(v[1:]),
     )
 
     gasflow_configuration_parameter = Instrument.control(
@@ -425,7 +417,6 @@ class ITC503(Instrument):
         6           minimum gas valve in auto
         =========   =====================================
         """,
-        get_process=lambda v: float(v[1:]),
     )
 
     gasflow_control_status = Instrument.measurement(
@@ -433,7 +424,8 @@ class ITC503(Instrument):
         """ A property that reads the gas-flow control status. Returns
         the status in the form of a :class:`ITC503.FLOW_CONTROL_STATUS`
         IntFlag. """,
-        get_process=lambda v: ITC503.FLOW_CONTROL_STATUS(int(v[1:])),
+        cast=int,
+        get_process=lambda v: ITC503.FLOW_CONTROL_STATUS(v),
     )
 
     target_voltage = Instrument.measurement(
@@ -441,14 +433,12 @@ class ITC503(Instrument):
         """ A float property that reads the current heater target voltage
         with which the actual heater voltage is being compared. Only valid
         if gas-flow in auto mode. """,
-        get_process=lambda v: float(v[1:]),
     )
 
     valve_scaling = Instrument.measurement(
         "o",
         """ A float property that reads the valve scaling parameter. Only
         valid if gas-flow in auto mode. """,
-        get_process=lambda v: float(v[1:]),
     )
 
     def wait_for_temperature(self,
