@@ -400,13 +400,10 @@ class IPS120_10(Instrument):
             log.info("IPS 120-10: Wait for for switch heater delay")
             sleep(self._SWITCH_HEATER_HEATING_DELAY)
 
-    def wait_for_idle(self, delay=1, max_errors=10, max_wait_time=None, should_stop=lambda: False):
+    def wait_for_idle(self, delay=1, max_wait_time=None, should_stop=lambda: False):
         """ Wait until the system is at rest (i.e. current of field not ramping).
 
         :param delay: Time in seconds between each query into the state of the instrument.
-        :param max_errors: Maximum number of errors that is allowed in the communication with the
-            instrument before the wait is terminated (by raising a :class:`.MagnetError`).
-            :code:`None` is interpreted as no maximum error count.
         :param max_wait_time: Maximum time in seconds to wait before is at rest. If the system is
             not at rest within this time a :class:`TimeoutError` is raised. :code:`None` is
             interpreted as no maximum time.
@@ -414,19 +411,14 @@ class IPS120_10(Instrument):
             early.
         """
         log.debug("waiting for magnet to be idle")
-        error_ct = 0
         start_time = time()
-        status = None
+
         while True:
             log.debug("sleeping for %d s", delay)
             sleep(delay)
 
-            try:
-                log.debug("checking the status of the sweep")
-                status = self.sweep_status
-            except ValueError as e:
-                log.error("IPS 120-10: Issue with getting status (#%d): %s" % (error_ct, e))
-                error_ct += 1
+            log.debug("checking the status of the sweep")
+            status = self.sweep_status
 
             if status == "at rest":
                 log.debug("status is 'at rest', waiting is done")
@@ -435,10 +427,6 @@ class IPS120_10(Instrument):
                 log.debug("external function signals to stop waiting")
                 break
 
-            if max_errors is not None and error_ct > max_errors:
-                raise MagnetError(
-                    "IPS 120-10: Too many exceptions occurred during getting IPS status."
-                )
             if max_wait_time is not None and time() - start_time > max_wait_time:
                 raise TimeoutError("IPS 120-10: Magnet not idle within max wait time.")
 
