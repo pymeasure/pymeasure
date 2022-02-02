@@ -131,6 +131,11 @@ class ITC503(Instrument):
         COOLDOWN_TERMINATION = 2
         FAST_COOLDOWN = 1
 
+    version = Instrument.measurement(
+        "V",
+        """ A string property that returns the version of the IPS. """,
+    )
+
     control_mode = Instrument.control(
         "X", "C%d",
         """ A string property that sets the ITC in `local` or `remote` and `locked`
