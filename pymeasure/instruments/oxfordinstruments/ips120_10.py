@@ -160,12 +160,18 @@ class IPS120_10(Instrument):
 
     control_mode = Instrument.control(
         "X", "C%d",
-        """ A string property that sets the IPS in LOCAL or REMOTE and LOCKED,
-        or UNLOCKED, the LOC/REM button. Allowed values are:
-        :code:`"LL"`: local & locked,
-        :code:`"RL"`: remote & locked,
-        :code:`"LU"`: local & unlocked,
-        :code:`"RU"`: remote & unlocked. """,
+        """ A string property that sets the IPS in `local` or `remote` and `locked`
+        or `unlocked`, locking the LOC/REM button. Allowed values are:
+
+        =====   =================
+        value   state
+        =====   =================
+        LL      local & locked
+        RL      remote & locked
+        LU      local & unlocked
+        RU      remote & unlocked
+        =====   =================
+        """,
         preprocess_reply=lambda v: v[6],
         cast=int,
         validator=strict_discrete_set,
