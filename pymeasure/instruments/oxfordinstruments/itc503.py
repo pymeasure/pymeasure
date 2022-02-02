@@ -132,7 +132,7 @@ class ITC503(Instrument):
         FAST_COOLDOWN = 1
 
     control_mode = Instrument.control(
-        "X", "$C%d",
+        "X", "C%d",
         """ A string property that sets the ITC in `local` or `remote` and `locked`
         or `unlocked`, locking the LOC/REM button. Allowed values are:
 
@@ -152,7 +152,7 @@ class ITC503(Instrument):
     )
 
     heater_gas_mode = Instrument.control(
-        "X", "$A%d",
+        "X", "A%d",
         """ A string property that sets the heater and gas flow control to
         `auto` or `manual`. Allowed values are:
 
@@ -172,7 +172,7 @@ class ITC503(Instrument):
     )
 
     heater = Instrument.control(
-        "R5", "$O%f",
+        "R5", "O%f",
         """ A floating point property that represents the heater output power
         as a percentage of the maximum voltage. Can be set if the heater is in
         manual mode. Valid values are in range 0 [off] to 99.9 [%]. """,
@@ -190,7 +190,7 @@ class ITC503(Instrument):
     )
 
     gasflow = Instrument.control(
-        "R7", "$G%f",
+        "R7", "G%f",
         """ A floating point property that controls gas flow when in manual
         mode. The value is expressed as a percentage of the maximum gas flow.
         Valid values are in range 0 [off] to 99.9 [%]. """,
@@ -200,7 +200,7 @@ class ITC503(Instrument):
     )
 
     proportional_band = Instrument.control(
-        "R8", "$P%f",
+        "R8", "P%f",
         """ A floating point property that controls the proportional band
         for the PID controller in Kelvin. Can be set if the PID controller
         is in manual mode. Valid values are 0 [K] to 1677.7 [K]. """,
@@ -210,7 +210,7 @@ class ITC503(Instrument):
     )
 
     integral_action_time = Instrument.control(
-        "R9", "$I%f",
+        "R9", "I%f",
         """ A floating point property that controls the integral action time
         for the PID controller in minutes. Can be set if the PID controller
         is in manual mode. Valid values are 0 [min.] to 140 [min.]. """,
@@ -220,7 +220,7 @@ class ITC503(Instrument):
     )
 
     derivative_action_time = Instrument.control(
-        "R10", "$D%f",
+        "R10", "D%f",
         """ A floating point property that controls the derivative action time
         for the PID controller in minutes. Can be set if the PID controller
         is in manual mode. Valid values are 0 [min.] to 273 [min.]. """,
@@ -230,7 +230,7 @@ class ITC503(Instrument):
     )
 
     auto_pid = Instrument.control(
-        "X", "$L%d",
+        "X", "L%d",
         """ A boolean property that sets the Auto-PID mode on (True) or off (False).
         """,
         get_process=lambda v: int(v[12:13]),
@@ -240,7 +240,7 @@ class ITC503(Instrument):
     )
 
     sweep_status = Instrument.control(
-        "X", "$S%d",
+        "X", "S%d",
         """ An integer property that sets the sweep status. Values are:
 
         =========   =========================================
@@ -258,7 +258,7 @@ class ITC503(Instrument):
     )
 
     temperature_setpoint = Instrument.control(
-        "R0", "$T%f",
+        "R0", "T%f",
         """ A floating point property that controls the temperature set-point of
         the ITC in kelvin. """,
         get_process=lambda v: float(v[1:]),
@@ -294,7 +294,7 @@ class ITC503(Instrument):
     )
 
     front_panel_display = Instrument.setting(
-        "$F%d",
+        "F%d",
         """ A string property that controls what value is displayed on
         the front panel of the ITC. Valid values are:
         'temperature setpoint', 'temperature 1', 'temperature 2',
@@ -324,7 +324,7 @@ class ITC503(Instrument):
     )
 
     x_pointer = Instrument.setting(
-        "$x%d",
+        "x%d",
         """ An integer property to set pointers into tables for loading and
         examining values in the table. The significance and valid values for
         the pointer depends on what property is to be read or set. """,
@@ -333,7 +333,7 @@ class ITC503(Instrument):
     )
 
     y_pointer = Instrument.setting(
-        "$y%d",
+        "y%d",
         """ An integer property to set pointers into tables for loading and
         examining values in the table. The significance and valid values for
         the pointer depends on what property is to be read or set. """,
@@ -352,7 +352,7 @@ class ITC503(Instrument):
     )
 
     sweep_table = Instrument.control(
-        "r", "$s%f",
+        "r", "s%f",
         """ A property that controls values in the sweep table. Relies on
         :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
         :class:`ITC503.pointer`) to point at the location in the table that is
@@ -373,7 +373,7 @@ class ITC503(Instrument):
     )
 
     auto_pid_table = Instrument.control(
-        "q", "$p%f",
+        "q", "p%f",
         """ A property that controls values in the auto-pid table. Relies on
         :class:`ITC503.x_pointer` and :class:`ITC503.y_pointer` (or
         :class:`ITC503.pointer`) to point at the location in the table that
@@ -395,7 +395,7 @@ class ITC503(Instrument):
     )
 
     target_voltage_table = Instrument.control(
-        "t", "$v%f",
+        "t", "v%f",
         """ A property that controls values in the target heater voltage table.
         Relies on the :class:`ITC503.x_pointer` to select the entry in the table
         that is to be set or read (1 to 64).
@@ -404,7 +404,7 @@ class ITC503(Instrument):
     )
 
     gasflow_configuration_parameter = Instrument.control(
-        "d", "$c%f",
+        "d", "c%f",
         """ A property that controls the gas flow configuration parameters.
         Relies on the :class:`ITC503.x_pointer` to select which parameter
         is set or read:
@@ -577,4 +577,4 @@ class ITC503(Instrument):
 
     def wipe_sweep_table(self):
         """ Wipe the currently programmed sweep table. """
-        self.write("$w")
+        self.write("w")
