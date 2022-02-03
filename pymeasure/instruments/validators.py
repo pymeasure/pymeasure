@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,9 @@ from decimal import Decimal
 
 def strict_range(value, values):
     """ Provides a validator function that returns the value
-    if its value is less than the maximum and greater than the
-    minimum of the range. Otherwise it raises a ValueError.
+    if its value is less than or equal to the maximum and
+    greater than or equal to the minimum of ``values``.
+    Otherwise it raises a ValueError.
 
     :param value: A value to test
     :param values: A range of values (range, list, etc.)
@@ -140,8 +141,28 @@ def truncated_discrete_set(value, values):
 
 
 def joined_validators(*validators):
-    """ Join a list of validators together as a single.
-    Expects a list of validator functions and values.
+    """Returns a validator function that represents a list of validators joined together.
+
+    A value passed to the validator is returned if it passes any validator (not all of them).
+    Otherwise it raises a ValueError.
+
+    Note: the joined validator expects ``values`` to be a sequence of ``values``
+    appropriate for the respective validators (often sequences themselves).
+
+    :Example:
+
+    >>> from pymeasure.instruments.validators import strict_discrete_set, strict_range
+    >>> from pymeasure.instruments.validators import joined_validators
+    >>> joined_v = joined_validators(strict_discrete_set, strict_range)
+    >>> values = [['MAX','MIN'], range(10)]
+    >>> joined_v(5, values)
+    5
+    >>> joined_v('MAX', values)
+    'MAX'
+    >>> joined_v('NONSENSE', values)
+    Traceback (most recent call last):
+    ...
+    ValueError: Value of NONSENSE does not match any of the joined validators
 
     :param validators: an iterable of other validators
     """
@@ -152,7 +173,7 @@ def joined_validators(*validators):
                 return validator(value, vals)
             except (ValueError, TypeError):
                 pass
-        raise ValueError("Value of {} not in chained validator set".format(value))
+        raise ValueError(f"Value of {value} does not match any of the joined validators")
 
     return validate
 

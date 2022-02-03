@@ -36,7 +36,7 @@ class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2600, self).__init__(
+        super().__init__(
             adapter,
             "Keithley 2600 SourceMeter",
             **kwargs
@@ -59,7 +59,7 @@ class Keithley2600(Instrument):
             message = err[1].replace('"', '')
         else:
             code = message = err[0]
-        log.info("ERROR %s,%s - len %s" % (str(code), str(message), str(len(err))))
+        log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
         return (code, message)
 
     def check_errors(self):
@@ -74,23 +74,23 @@ class Keithley2600(Instrument):
                 log.warning("Timed out for Keithley 2600 error retrieval.")
 
 
-class Channel(object):
+class Channel:
 
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel = channel
 
     def ask(self, cmd):
-        return float(self.instrument.ask('print(smu%s.%s)' % (self.channel, cmd)))
+        return float(self.instrument.ask(f'print(smu{self.channel}.{cmd})'))
 
     def write(self, cmd):
-        self.instrument.write('smu%s.%s' % (self.channel, cmd))
+        self.instrument.write(f'smu{self.channel}.{cmd}')
 
     def values(self, cmd, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values('print(smu%s.%s)' % (self.channel, cmd))
+        return self.instrument.values(f'print(smu{self.channel}.{cmd})')
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
         return self.instrument.binary_values('print(smu%s.%s)' %

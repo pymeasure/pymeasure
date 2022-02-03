@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pymeasure.adapters import VISAAdapter
 
 
 class Fluke7341(Instrument):
@@ -56,19 +55,17 @@ class Fluke7341(Instrument):
     id = Instrument.measurement("*ver",
                                 """ Read the instrument model """,
                                 preprocess_reply=lambda x: x,
-                                get_process=lambda x: "Fluke,{},NA,{}".format(x[0][4:], x[1])
+                                get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}"
                                 )
 
     def __init__(self, resource_name, **kwargs):
+        kwargs.setdefault('timeout', 2000)
+        kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
             resource_name,
             "Fluke 7341",
-            timeout=2000,
-            write_termination='\r\n',
             preprocess_reply=lambda x: x.split()[1],
             includeSCPI=False,
+            asrl={'baud_rate': 2400},
             **kwargs
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 2400

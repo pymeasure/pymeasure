@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,7 +58,7 @@ truncated_int_array_strict_length = joined_validators(strict_length,
                                                       truncated_int_array)
 
 
-class Axis(object):
+class Axis:
     """ Represents a single open loop axis of the Attocube ANC350
 
     :param axis: axis identifier, integer from 1 to 7

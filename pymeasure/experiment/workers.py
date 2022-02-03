@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -181,7 +181,7 @@ class Worker(StoppableThread):
             self.stop()
 
     def __repr__(self):
-        return "<%s(port=%s,procedure=%s,should_stop=%s)>" % (
+        return "<{}(port={},procedure={},should_stop={})>".format(
             self.__class__.__name__, self.port,
             self.procedure.__class__.__name__,
             self.should_stop()

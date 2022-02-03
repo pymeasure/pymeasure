@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ class DanfysikAdapter(SerialAdapter):
     """
 
     def __init__(self, port):
-        super(DanfysikAdapter, self).__init__(port, baudrate=9600, timeout=0.5)
+        super().__init__(port, baudrate=9600, timeout=0.5)
 
     def write(self, command):
         """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
