@@ -150,7 +150,7 @@ class AnritsuMS2668C(SpectrumAnalyzer):
         trace = chr(64+number) # 'A' or 'B'
         self.write("BIN 0;")
         data = np.loadtxt(
-            StringIO(self.ask("XM%c? 0,501;" % trace)),
+            StringIO(self.ask("XM%c? 0,501" % trace)),
             delimiter=',',
             dtype=np.float64
         ) / 100
