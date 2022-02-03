@@ -21,25 +21,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+
+from io import StringIO
+import numpy as np
+import pandas as pd
 
 def anritsu_get_trace_mode(mode):
     # TODO check this function
     mode_map = {
-        'AWR OFF; AMD 0': 'VIEW',
-        'AWR OFF; AMD 1': 'VIEW',
-        'AWR OFF; AMD 2': 'VIEW',
-        'AWR OFF; AMD 3': 'VIEW',
-        'AWR OFF; AMD 4': 'VIEW',
-        'AWR OFF; AMD 5': 'VIEW',
+        'AWR OFF;AMD 0': 'VIEW',
+        'AWR OFF;AMD 1': 'VIEW',
+        'AWR OFF;AMD 2': 'VIEW',
+        'AWR OFF;AMD 3': 'VIEW',
+        'AWR OFF;AMD 4': 'VIEW',
+        'AWR OFF;AMD 5': 'VIEW',
 
-        'AWR ON; AMD 0': 'WRIT',
-        'AWR ON; AMD 1': 'MAXH',
-        'AWR ON; AMD 2': 'AVER',
-        'AWR ON; AMD 3': 'MINH',
-        'AWR ON; AMD 4': 'CUMU',
-        'AWR ON; AMD 5': 'OVWR',
+        'AWR ON;AMD 0': 'WRIT',
+        'AWR ON;AMD 1': 'MAXH',
+        'AWR ON;AMD 2': 'AVER',
+        'AWR ON;AMD 3': 'MINH',
+        'AWR ON;AMD 4': 'CUMU',
+        'AWR ON;AMD 5': 'OVWR',
     }
     return mode_map[mode]
     
@@ -60,48 +65,48 @@ class AnritsuMS2668C(SpectrumAnalyzer):
 
     # Customize parameters with values taken from datasheet/user manual 
     reference_level_values = (-100, 30)
-    reference_level_set_command = "RL %e ;"
-    reference_level_get_command = "RL?;"
+    reference_level_set_command = "RL %g DBM"
+    reference_level_get_command = "RL?"
     
     resolution_bw_values = (10, 3e6)
-    resolution_bw_set_command = "RB %d ;"
-    resolution_bw_get_command = "RB? ;"
+    resolution_bw_set_command = "RB %d"
+    resolution_bw_get_command = "RB?"
     
-    input_attenuation_values = {0:0, 1:10, 2:20, 3:30, 4:40, 5:50, 12:60, 13:70)
-    input_attenuation_map_values = True
-    input_attenuation_set_command = "AT %d ;"
-    input_attenuation_get_command = "AT? ;"
+    input_attenuation_values = (0, 10, 20, 30, 40, 50, 60, 70)
+    input_attenuation_validator = strict_discrete_set
+    input_attenuation_set_command = "AT %d"
+    input_attenuation_get_command = "AT?"
 
     frequency_span_values = (0, 40.1e9)
-    frequency_span_set_command = "SP %d ;"
-    frequency_span_get_command = "SP? ;"
+    frequency_span_set_command = "SP %d"
+    frequency_span_get_command = "SP?"
 
     start_frequency_values = (-100e6, 40e9)
-    start_frequency_set_command = "FA %e ;"
-    start_frequency_get_command = "FA? ;"
+    start_frequency_set_command = "FA %d"
+    start_frequency_get_command = "FA?"
 
     stop_frequency_values = (-100e6, 40e9)
-    stop_frequency_set_command = "FB %e ;"
-    stop_frequency_get_command = "FB? ;"
+    stop_frequency_set_command = "FB %d"
+    stop_frequency_get_command = "FB?"
 
     frequency_points = None # Not available
 
     frequency_step_values = (1, 40e9)
-    frequency_step_set_command = "SS %e ;"
-    frequency_step_get_command = "SS? ;"
+    frequency_step_set_command = "SS %d"
+    frequency_step_get_command = "SS?"
     
     center_frequency_values = (-100e6, 40e9)
-    center_frequency_set_command = "CF %e ;"
-    center_frequency_get_command = "CF? ;"
+    center_frequency_set_command = "CF %d"
+    center_frequency_get_command = "CF?"
 
     sweep_time_values = (0.02, 1000)
-    sweep_time_set_command = "ST %eS ;"
-    sweep_time_get_command = "ST? ;" # TODO check if the returned value is uS
+    sweep_time_set_command = "ST %eS"
+    sweep_time_get_command = "ST?" # Returned value is uS
 
-    detector_values = ("NORM" : "NRM", "POS" : "POS", "SAMP": "SMP", "NEG" : "NEG")
+    detector_values = {"NORM" : "NRM", "POS" : "POS", "SAMP": "SMP", "NEG" : "NEG"}
     detector_map_values = True
-    detector_set_command = "DET %s ;"
-    detector_get_command = "DET? ;"
+    detector_set_command = "DET %s"
+    detector_get_command = "DET?"
 
     sweep_mode_continuous = Instrument.setting(
         "%s;",
@@ -114,15 +119,13 @@ class AnritsuMS2668C(SpectrumAnalyzer):
         dynamic=True
     )
 
-    # TODO check trace_mode
     trace_mode_get_command = "AWR? ; AMD?"
     trace_mode_get_process = anritsu_get_trace_mode
-    trace_mode_set_command = "AWR %s;"
+    trace_mode_set_command = "AWR %s"
     trace_mode_set_process = anritsu_set_trace_mode
     
-    # TODO check average_mode
     average_type_get_command = "AMD?"
-    average_type_set_command = "%s;"
+    average_type_set_command = "%s"
     average_type_values = {
         "POWER" : "AMD 2",
         "_NORMAL" : "AMD 0",
@@ -150,7 +153,7 @@ class AnritsuMS2668C(SpectrumAnalyzer):
             StringIO(self.ask("XM%c? 0,501;" % trace)),
             delimiter=',',
             dtype=np.float64
-        )
+        ) / 100
         return data
 
     def sweep_single(self):
