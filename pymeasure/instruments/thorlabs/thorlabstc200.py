@@ -44,16 +44,17 @@ class ThorlabsTC200(Instrument):
     and the write_termination = '\r'
     """
 
+    MAX_TEMP = 205
 
-    temperature_setpoint = Instrument.control("tset?", "tset %.1f",
+    temperature_setpoint = Instrument.control("tset?", "tset=%.1f",
                                     """Set the temperature setpoint. from 20.0 to 200.0 to TMAX""")
 
-    tmax = Instrument.control("TMAX?", "TMAX %.1f",
+    tmax = Instrument.control("tmax?", "tmax=%.1f",
                                               """Set the max temperature, [20.0, 205.0]""",
                               validator=strict_range,
                               values=[20.0, 205.0])
 
-    pmax = Instrument.control("PMAX?", "PMAX %.1f",
+    pmax = Instrument.control("pmax?", "pmax=%.1f",
                               """Set the max power output, [0.1,18.0]""",
                               validator=strict_range,
                               values=[0.1, 18.0])
@@ -67,6 +68,12 @@ class ThorlabsTC200(Instrument):
         if '\r' in val:
             val = val.split('\r')[-1]
 
+        if 'stat' in val:
+            val = val.replace('stat',"")
+
+        if '?' in val:
+            val = val.replace('?', "")
+
         return val
 
     @property
@@ -79,35 +86,13 @@ class ThorlabsTC200(Instrument):
 
     @enabled.setter
     def enabled(self, bool):
-        if (self.enabled and not bool) or (not self.enabled and bool):
+        state = self.enabled
+        if (state and not bool) or (not state and bool):
             self.toggle_enable()
-
-    @property
-    def config(self):
-        """
-        Returns a class with attributes corresponding to the device config.
-        :return:
-        """
-        out = self.ask('config?')
-        out = out.split('\r')[::2]
-        class props():
-            tset = float(out[0].split('=')[-1][:-1])
-            gains = out[1].split(',')
-            pgain = float(gains[0].split('=')[-1])
-            igain = float(gains[1].split('=')[-1])
-            dgain = float(gains[2].split('=')[-1])
-            sensor = out[2].split('=')[-1].strip()
-            tmax = float(out[3].split('=')[-1][:-1])
-            pmax = float(out[4].split('=')[-1].split()[0])
-            if 'Normal' in out[6]:
-                mode = 'normal'
-            else:
-                mode = 'cycle'
-        return props
 
     id = Instrument.measurement('*idn?', "Returns the instrument id")
 
-    sensor = Instrument.control("sns?", "sns %s",
+    sensor = Instrument.control("sns?", "sns=%s",
                                 """Select the sensor type:
                                 ptc100, ptc1000, th10k""",
                                 validator=strict_discrete_set,
@@ -125,20 +110,30 @@ class ThorlabsTC200(Instrument):
 
     def write(self, command):
         self.adapter.connection.write(command)
-        sleep(2)
+        sleep(.2)
         self.adapter.connection.read() #this read takes care of the echo that the instrument reports
 
     def ask(self, command):
         self.write(command)
-        return self.read()
+        out = self.read()
+        out = out.replace(command, "")
+        print(out)
+        return out
 
     def values(self, command, **kwargs):
-        return self.ask(command)
+        out = self.ask(command)
+        try:
+            return [float(out)]
+        except:
+            return [out]
 
     def read(self):
         buff = self.adapter.connection.read_bytes(self.adapter.connection.bytes_in_buffer)
-        return buff.decode()
-
+        decoded = buff.decode()
+        for string in ['Celsius', 'C', '\r','>' ]:
+            if string in decoded:
+                decoded = decoded.replace(string,"")
+        return decoded.strip()
 
     def toggle_enable(self):
         """

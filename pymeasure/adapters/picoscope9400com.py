@@ -80,3 +80,8 @@ class COMAdapter(Adapter):
         """ Reads method
         """
         raise ValueError("Picoscope 9400 doesn't implement a read method. All asks/queries immediately return.")
+
+    def __del__(self):
+        """Close connection upon garbage collection of the device"""
+        if self.connection is not None:
+            del self.connection
