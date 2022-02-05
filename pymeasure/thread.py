@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -76,5 +76,5 @@ class StoppableThread(Thread):
         return self._should_stop.is_set()
 
     def __repr__(self):
-        return "<%s(should_stop=%s)>" % (
+        return "<{}(should_stop={})>".format(
             self.__class__.__name__, self.should_stop())

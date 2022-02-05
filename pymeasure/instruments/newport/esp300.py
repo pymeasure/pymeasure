@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -74,7 +74,7 @@ class AxisError(Exception):
         self.message = self.MESSAGES[self.error]
 
     def __str__(self):
-        return "Newport ESP300 axis %s reported the error: %s" % (
+        return "Newport ESP300 axis {} reported the error: {}".format(
             self.axis, self.message)
 
 
@@ -127,7 +127,7 @@ class GeneralError(Exception):
             self.message)
 
 
-class Axis(object):
+class Axis:
     """ Represents an axis of the Newport ESP300 Motor Controller,
     which can have independent parameters from the other axes.
     """
@@ -250,7 +250,7 @@ class ESP300(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(ESP300, self).__init__(
+        super().__init__(
             resourceName,
             "Newport ESP 300 Motion Controller",
             **kwargs
