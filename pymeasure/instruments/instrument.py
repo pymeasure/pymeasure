@@ -119,6 +119,7 @@ class Instrument:
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    :param error_query: The string to be sent to the instrument to query for errors.
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
         to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
         Discarded otherwise.
@@ -145,7 +146,7 @@ class Instrument:
     __reserved_prefix = "___"
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, error_query="SYST:ERR?", **kwargs):
         try:
             if isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -156,6 +157,7 @@ class Instrument:
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
+        self.error_query = error_query
 
         self.isShutdown = False
         self._special_names = self._setup_special_names()
@@ -519,7 +521,7 @@ class Instrument:
         if self.SCPI:
             errors = []
             while True:
-                err = self.values("SYST:ERR?")
+                err = self.values(self.error_query)
                 if int(err[0]) != 0:
                     log.error(f"{self.name}: {err[0]}, {err[1]}")
                     errors.append(err)
