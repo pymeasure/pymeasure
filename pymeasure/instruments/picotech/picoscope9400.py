@@ -30,6 +30,7 @@ log.addHandler(logging.NullHandler())
 import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.adapters.picoscope9400com import COMAdapter
 
 BOOLS = {True: 'ON', False: 'OFF'}
 
@@ -64,8 +65,8 @@ class Channel():
     scale = Instrument.control(
         "SCALe?", "SCALe %g",
         """ A float parameter that specifies the vertical scale V/div. From [0.01, .25]""",
-        validator=strict_range,
-        values = [0.01, 0.25]
+        #validator=strict_range,
+        #values = [0.01, 0.25]
     )
 
     def __init__(self, instrument, number):
@@ -111,6 +112,8 @@ class Picoscope9400(Instrument):
 
 
     def __init__(self, adapter, **kwargs):
+        if isinstance(adapter, str):
+            adapter = COMAdapter(adapter)
         super(Picoscope9400, self).__init__(
             adapter, "Picotech Picscope9400 SXRTO Oscilloscope", **kwargs
         )
@@ -256,7 +259,7 @@ class Picoscope9400(Instrument):
     )
 
     trigger_source = Instrument.control(
-        "Trig:Analog:Style?", "Trig:Analog:Style %s",
+        "Trig:Analog:Source?", "Trig:Analog:Source %s",
         """ String parameter that sets or queries the trigger source options are "CHn" where n = 1,2,3,4}
          """,
         validator=strict_discrete_set,
