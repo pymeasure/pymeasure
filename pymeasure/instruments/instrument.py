@@ -144,9 +144,6 @@ class Instrument:
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
-    # The command to be sent to the instrument to query for errors
-    _error_query = "SYST:ERR?"
-
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
@@ -522,12 +519,22 @@ class Instrument:
         if self.SCPI:
             errors = []
             while True:
-                err = self.values(self._error_query)
+                err = self.next_error()
                 if int(err[0]) != 0:
                     log.error(f"{self.name}: {err[0]}, {err[1]}")
                     errors.append(err)
                 else:
                     break
             return errors
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    def next_error(self):
+        """ Read the next error from the instrument.
+
+        :return: error entry
+        """
+        if self.SCPI:
+            return self.values("SYST:ERR?")
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
