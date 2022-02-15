@@ -356,38 +356,16 @@ class BN_A2255(Instrument):
     def stop_awg(self):
         self.write('STAT OFF')
 
-    def transfer_array(self, array):
+    def transfer(self, array, normalized_input=False):
         """
-        Takes an array and saves it to the Edit Memory (EMEM) of the A2255.
+        Takes an array and saves it to the Edit Memory (EMEM) of the A2255, then loads it.
+        If normalized_input is True, the array is scaled to go from 0 to 2**13 (13 bit DAC).
         """
         array = np.array(array)
-        self.adapter.write_binary_values("DATA:DATA EMEM,",array,datatype='d',is_big_endian=True)
+        if normalized_input:
+            array = (array+1) * 2**13
+        if len(array) < 16384:
+            array = np.repeat(array, np.ceil(16384/len(array)))
+        array = np.array(array, dtype=int)
+        self.adapter.write_binary_values("DATA:DATA EMEM,", array, datatype='H', is_big_endian=True)
 
-    def transfer_and_load(self, array, wfname):
-        """
-        Creates a file in the 'C:\\Users\\AWG3000\\Pictures\\Saved Pictures\\' directory
-         with the filename wfname + '.txt' out of the input array (must be a single column).
-         That file is then loaded to the waveform list with name wfname. If wfname.txt or wfname
-         already exist in then they are overwritten.
-        """
-        wlist = self.waveform_list
-        if wfname in wlist:
-            self.delete_waveform(wfname)
-        self.transfer_array(array, wfname+".txt")
-        self.load_waveform_from_file(wfname, self.default_dir+wfname+".txt")
-
-
-    def load_waveform_from_file(self, name, pathtofile):
-        #todo implement analog, digital specification
-
-        """
-        Loads a waveform at pathtofile to the waveform list with name. The default behavior assumes analog data
-        """
-        self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile))
-
-
-    def delete_waveform(self, name):
-        """
-        Defines an empty waveform of name, of integer length size of datatype ('INT' or 'REAL'
-        """
-        self.write("wlist:waveform:delete \"%s\"" % name)
