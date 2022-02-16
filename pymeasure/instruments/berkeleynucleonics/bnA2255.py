@@ -183,6 +183,17 @@ class Channel():
         mapper = {True: 'ON', False: 'OFF'}
         self.instrument.write("output%d %s" % (self.number, mapper[state]))
 
+    @property
+    def output(self):
+        mapper = {1: True, 0: False}
+        out = int(self.instrument.ask("output%d?" % self.number))
+        return mapper[out]
+
+    @output.setter
+    def output(self, state):
+        mapper = {True: 'ON', False: 'OFF'}
+        self.instrument.write("output%d %s" % (self.number, mapper[state]))
+
 class BN_A2255(Instrument):
     """Represents the Berkeley Nucleonics A2255 Arbitrary Waveform Generator."""
 
