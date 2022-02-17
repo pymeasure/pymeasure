@@ -15,7 +15,6 @@ import os
 import platform
 import subprocess
 
-
 import pyqtgraph as pg
 
 from ..browser import BrowserItem
@@ -28,7 +27,6 @@ from ..widgets import (
     LogWidget,
     ResultsDialog,
     SequencerWidget,
-    ImageWidget,
     DirectoryLineEdit,
     EstimatorWidget,
 )
@@ -36,6 +34,7 @@ from ...experiment import Results, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
 
 class ManagedWindowBase(QtGui.QMainWindow):
     """
