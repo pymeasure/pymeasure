@@ -24,7 +24,6 @@
 
 import logging
 
-import os
 import re
 import pyqtgraph as pg
 
@@ -136,4 +135,3 @@ class PlotFrame(QtGui.QFrame):
         self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)
-

@@ -24,15 +24,12 @@
 
 import logging
 
-from functools import partial
-
 from ..browser import Browser
-from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
-from ..Qt import QtCore, QtGui
-from ...experiment import parameters
+from ..Qt import QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
 
 class BrowserWidget(QtGui.QWidget):
     def __init__(self, *args, parent=None):
@@ -68,4 +65,3 @@ class BrowserWidget(QtGui.QWidget):
         vbox.addLayout(hbox)
         vbox.addWidget(self.browser)
         self.setLayout(vbox)
-
