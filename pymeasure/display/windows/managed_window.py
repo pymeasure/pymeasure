@@ -1,16 +1,3 @@
-#
-# This file is part of the PyMeasure package.
-#
-# Copyright (c) 2013-2022 PyMeasure Developers
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -31,11 +18,10 @@ import subprocess
 
 import pyqtgraph as pg
 
-from .browser import BrowserItem
-from .curves import ResultsCurve
-from .manager import Manager, Experiment
-from .Qt import QtCore, QtGui
-from .widgets import (
+from ..browser import BrowserItem
+from ..manager import Manager, Experiment
+from ..Qt import QtCore, QtGui
+from ..widgets import (
     PlotWidget,
     BrowserWidget,
     InputsWidget,
@@ -46,88 +32,10 @@ from .widgets import (
     DirectoryLineEdit,
     EstimatorWidget,
 )
-from ..experiment import Results, Procedure
+from ...experiment import Results, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-class PlotterWindow(QtGui.QMainWindow):
-    """
-    A window for plotting experiment results. Should not be
-    instantiated directly, but only via the
-    :class:`~pymeasure.display.plotter.Plotter` class.
-
-    .. seealso::
-
-        Tutorial :ref:`tutorial-plotterwindow`
-            A tutorial and example code for using the Plotter and PlotterWindow.
-
-    .. attribute plot::
-
-        The `pyqtgraph.PlotItem`_ object for this window. Can be
-        accessed to further customise the plot view programmatically, e.g.,
-        display log-log or semi-log axes by default, change axis range, etc.
-
-    .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
-    """
-
-    def __init__(self, plotter, refresh_time=0.1, linewidth=1, parent=None):
-        super().__init__(parent)
-        self.plotter = plotter
-        self.refresh_time = refresh_time
-        columns = plotter.results.procedure.DATA_COLUMNS
-
-        self.setWindowTitle('Results Plotter')
-        self.main = QtGui.QWidget(self)
-
-        vbox = QtGui.QVBoxLayout(self.main)
-        vbox.setSpacing(0)
-
-        hbox = QtGui.QHBoxLayout()
-        hbox.setSpacing(6)
-        hbox.setContentsMargins(-1, 6, -1, -1)
-
-        file_label = QtGui.QLabel(self.main)
-        file_label.setText('Data Filename:')
-
-        self.file = QtGui.QLineEdit(self.main)
-        self.file.setText(plotter.results.data_filename)
-
-        hbox.addWidget(file_label)
-        hbox.addWidget(self.file)
-        vbox.addLayout(hbox)
-
-        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time,
-                                      check_status=False, linewidth=linewidth)
-        self.plot = self.plot_widget.plot
-
-        vbox.addWidget(self.plot_widget)
-
-        self.main.setLayout(vbox)
-        self.setCentralWidget(self.main)
-        self.main.show()
-        self.resize(800, 600)
-
-        self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
-                                  pen=pg.mkPen(color=pg.intColor(0), width=linewidth),
-                                  antialias=False)
-        self.plot.addItem(self.curve)
-
-        self.plot_widget.updated.connect(self.check_stop)
-
-    def quit(self, evt=None):
-        log.info("Quitting the Plotter")
-        self.close()
-        self.plotter.stop()
-
-    def check_stop(self):
-        """ Checks if the Plotter should stop and exits the Qt main loop if so
-        """
-        if self.plotter.should_stop():
-            QtCore.QCoreApplication.instance().quit()
-
 
 class ManagedWindowBase(QtGui.QMainWindow):
     """
@@ -667,31 +575,3 @@ class ManagedWindow(ManagedWindowBase):
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)
         log.info("ManagedWindow connected to logging")
-
-
-class ManagedImageWindow(ManagedWindow):
-    """
-    Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
-
-    :param procedure_class: procedure class describing the experiment (see
-        :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param x_axis: the data-column for the x-axis of the plot, cannot be changed afterwards for
-        the image-plot
-    :param y_axis: the data-column for the y-axis of the plot, cannot be changed afterwards for
-        the image-plot
-    :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
-    :param \\**kwargs: optional keyword arguments that will be passed to
-        :class:`~pymeasure.display.windows.ManagedWindow`
-
-    """
-
-    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
-        self.z_axis = z_axis
-        self.image_widget = ImageWidget(
-            "Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
-
-        if "widget_list" not in kwargs:
-            kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget, )
-
-        super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
