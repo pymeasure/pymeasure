@@ -37,7 +37,7 @@ import time
 
 class Channel(object):
     """
-    Represents a channel of the RC-2SP4T-26 switch from minicircuits.
+    Represents a channel of the RC-2SPDT switch from minicircuits.
     """
 
     @property
@@ -56,14 +56,14 @@ class Channel(object):
             setattr(self, key, item)
 
     def ask(self, command):
-        return self.instrument.ask("SP4T%s:%s" % (self.number, command))
+        return self.instrument.ask("SPDT%s:%s" % (self.number, command))
 
     def write(self, command):
-        self.instrument.write("SP4T%s:%s" % (self.number, command))
+        self.instrument.write("SPDT%s:%s" % (self.number, command))
 
 
-class RC_2SP4T_26():
-    """ Represents the RC_2SP4T_26 solid state switch and provides a high level
+class RC_2SPDT_26():
+    """ Represents the RC_2SPDT_26 switch and provides a high level
     interface to the SCIPI commands. Requires that the mcl_SolidStateSwitch_NET45 be in the path
     or same directory as the running code.
 
@@ -73,12 +73,12 @@ class RC_2SP4T_26():
     def __init__(self, adapter, **kwargs):
         if isinstance(adapter, (str, int)) or adapter is None:
             adapter = MinicircuitsUSB(adapter)
-        super(RC_2SP4T_26, self).__init__(
-            adapter, "RC_2SP4T switch", **kwargs
+        super(RC_2SPDT_26, self).__init__(
+            adapter, "RC_2SPDT switch", **kwargs
         )
-
-        model = ['RC-2SP4T-26','RC-2SP4T-A18']
-        actual = self.connection.Read_ModelName("")[1]
+        
+        model = ['RC-2SPDT-A26','RC-2SPDT-A18']
+        actual = self.adapter.connection.Read_ModelName("")[1]
         if actual not in model:
             raise ValueError(f'Got different model {actual}')
 
