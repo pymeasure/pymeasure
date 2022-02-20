@@ -22,12 +22,28 @@
 # THE SOFTWARE.
 #
 
+from enum import IntFlag
 from time import sleep
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 class HardwareErrorException(Exception):
     pass
+
+
+class SpollStatus(IntFlag):
+    """ IntFlag type that represents the status of the device
+    """
+
+    MEASUREMENT_READY = 1
+    READY_FOR_TRIGGERING = 2
+    MEASURING_START_ENABLE = 4
+    MEASURING_STOP_ENABLE = 8
+    PROGRAMMING_ERROR = 16
+    HARDWARE_FAULT = 32
+    TIMEOUT = 64
+    UNUSED = 128
+
 
 class PM6669(Instrument):
     """ Represents the Philips PM 6669 instrument.
@@ -44,10 +60,10 @@ class PM6669(Instrument):
 
     def wait_for_measurement(self, poll_interval = 1):
         s = self.spoll()
-        while not (s &0b1):
+        while not (s & SpollStatus.MEASUREMENT_READY):
             sleep(poll_interval)
             s = self.spoll()
-            if (s & 0x10000):
+            if (s & SpollStatus.HARDWARE_FAULT):
                 raise HardwareErrorException()
 
     def spoll(self):
