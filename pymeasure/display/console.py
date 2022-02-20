@@ -24,8 +24,8 @@
 
 import logging
 
-import os, copy
-import subprocess, platform
+import os
+import copy
 import argparse
 import progressbar
 from .Qt import QtCore
@@ -38,28 +38,30 @@ from ..experiment import Results, Procedure, Worker, unique_filename
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class ConsoleArgumentParser(argparse.ArgumentParser):
     special_options = {
-        "no-progressbar":  {"default" : False,
+        "no-progressbar":  {"default": False,
                             "desc": "Disable progressbar",
                             "help_fields": ["default"],
                             "action": 'store_true'},
-        "log-level":       {"default" :logging.INFO,
+        "log-level":       {"default": logging.INFO,
                             "desc": "Set log level (logging module values)",
                             "help_fields": ["default"]},
-        "sequence-file":   {"default" :None,
+        "sequence-file":   {"default": None,
                             "desc": "Sequencer file",
                             "help_fields": ["default"]},
-        "log-directory":   {"default" :".",
+        "log-directory":   {"default": ".",
                             "desc": "Log directory",
                             "help_fields": ["default"]},
-        "log-file":        {"default" : None,
+        "log-file":        {"default": None,
                             "desc": "Log filename (string or callable which return a string)",
                             "help_fields": ["default"]},
-        "use-log-file":    {"default" :None,
+        "use-log-file":    {"default": None,
                             "desc": "File to retrieve params from",
                             "help_fields": ["default"]},
     }
+
     def __init__(self, procedure_class, **kwargs):
         super().__init__(**kwargs)
         self.procedure_class = procedure_class
@@ -70,12 +72,12 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
         self.procedure = self.procedure_class()
         parameter_objects = self.procedure.parameter_objects()
         for name in inputs:
-            kwargs={}
+            kwargs = {}
             parameter = parameter_objects[name]
-            default, help_fields,_type = parameter.cli_args
+            default, help_fields, _type = parameter.cli_args
             kwargs['help'] = self._cli_help_fields(parameter.name, parameter, help_fields)
             kwargs['default'] = default
-            if _type != None:
+            if _type is not None:
                 kwargs['type'] = _type
             self.add_argument("--"+name, **kwargs)
 
@@ -91,6 +93,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
     def _cli_help_fields(self, name, inst, help_fields):
         def hasattr_dict(inst, key):
             return key in inst
+
         def getattr_dict(inst, key):
             return inst[key]
 
@@ -106,13 +109,14 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             if isinstance(field, str):
                 field = ["{} is".format(field), field]
 
-            if hasattribute(inst, field[1]) and getattribute(inst, field[1]) != None:
+            if hasattribute(inst, field[1]) and getattribute(inst, field[1]) is not None:
                 prefix = field[0]
-                value = getattribute(inst,field[1])
+                value = getattribute(inst, field[1])
                 message += ", {} {}".format(prefix, value)
 
         message = message.replace("%", "%%")
         return message
+
 
 class ManagedConsole(QtCore.QCoreApplication):
     """
@@ -120,12 +124,16 @@ class ManagedConsole(QtCore.QCoreApplication):
 
     Parameters for :code:`__init__` constructor.
 
-    :param procedure_class: procedure class describing the experiment (see :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter` instance variable names, which the display will generate graphical fields for
+    :param procedure_class: procedure class describing the experiment
+    (see :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter`
+    instance variable names, which the display will generate graphical fields for
     :param log_channel: :code:`logging.Logger` instance to use for logging output
     :param log_level: logging level
-    :param sequence_file: simple text file to quickly load a pre-defined sequence with the :code:`Load sequence` button
-    :param directory_input: specify, if present, where the experiment's result will be saved.
+    :param sequence_file: simple text file to quickly load a pre-defined
+    sequence with the :code:`Load sequence` button
+    :param directory_input: specify, if present, where the experiment's result
+    will be saved.
     """
     def __init__(self,
                  args,
@@ -155,14 +163,14 @@ class ManagedConsole(QtCore.QCoreApplication):
         if self.use_estimator:
             log.warning("Estimator not yet implemented")
         # Handle Ctrl+C nicely
-        signal.signal(signal.SIGINT, lambda sig,_: self.abort())
+        signal.signal(signal.SIGINT, lambda sig, _: self.abort())
 
     def get_filename(self, directory):
         """ Return filename for logging.
 
         User can override this method to define their own filename
         """
-        if self.filename != None:
+        if self.filename is not None:
             return os.path.join(directory, self.filename)
         else:
             return unique_filename(directory)
@@ -219,7 +227,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         log.setLevel(self.log_level)
         self.log.setLevel(self.log_level)
 
-        if args['sequence_file'] != None:
+        if args['sequence_file'] is not None:
             raise NotImplementedError("Sequencer not yet implemented")
 
         bar_enabled = not args['no_progressbar']
@@ -227,7 +235,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         # Set procedure parameters
         parameter_values = {}
 
-        if args['use_log_file'] != None:
+        if args['use_log_file'] is not None:
             # Special case set parameters from log file
             results = Results.load(args['use_log_file'])
             for name in results.parameters:
@@ -248,7 +256,7 @@ class ManagedConsole(QtCore.QCoreApplication):
             self.bar = None
         scribe = console_log(self.log, level=self.log_level)
         scribe.start()
-        
+
         results = Results(procedure, self.get_filename(self.directory))
         log.debug("Set up Results")
 
