@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -113,4 +113,4 @@ class VXI11Adapter(Adapter):
         return self.connection.ask_raw(command)
 
     def __repr__(self):
-        return '<VXI11Adapter(host={})>'.format(self.connection.host)
+        return f'<VXI11Adapter(host={self.connection.host})>'
