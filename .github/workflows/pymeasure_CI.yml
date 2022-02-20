@@ -37,26 +37,24 @@ jobs:
       - name: Set up flake8 annotations
         uses: rbialon/flake8-annotations@v1
       - name: Lint with flake8
-        continue-on-error: true
         run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings
-          flake8 . --count --exit-zero --statistics
+          # Be sure to check for Python syntax errors or undefined names
+          flake8 . --count --extend-select=E9,F63,F7,F82 --show-source --statistics
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
+        if: always()  # run even if the previous step failed
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
-          make html
+          make html SPHINXOPTS="-W --keep-going"
       - name: Run doctests
+        if: always()  # run even if the previous step failed
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
-          make doctest
+          make doctest SPHINXOPTS="-W --keep-going"
   test:
     name: Python ${{ matrix.python-version }}, ${{ matrix.os }}
-    needs: docs_lint  # no need to continue if the docs/lint job fails
     runs-on: ${{ matrix.os }}
     defaults:
       run:
