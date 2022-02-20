@@ -21,6 +21,18 @@
                     "message": 3
                 }
             ]
+        },
+        {
+            "owner": "sphinx-extension",
+            "pattern": [
+                {
+                    "regexp": "^(?<severity>WARNING|ERROR): (?<code>\\S+): (?<message>.+)(?<dummy_file_entry>)$",
+                    "severity": 1,
+                    "code": 2,
+                    "message": 3,
+                    "file": 4
+                }
+            ]
         }
     ]
 }
