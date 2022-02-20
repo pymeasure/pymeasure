@@ -118,7 +118,11 @@ class AgilentE4438C(RFSignalGeneratorDM):
         """ This property returns free volatile memory value in bytes """,
         get_process=lambda v: int(v[1]),
     )
+
     name = "Agilent E4438C Signal Generator"
+
+    _iq_data_bits = 16
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
@@ -129,8 +133,9 @@ class AgilentE4438C(RFSignalGeneratorDM):
 
     def _get_iqdata(self, iq_seq):
         data = []
+        iq_data_max_value = 2**(self._iq_data_bits - 1)
         for iq in iq_seq:
-            data.append(round(iq.real*32767), round(iq.imag*32767))
+            data.append(round(iq.real*iq_data_max_value), round(iq.imag*iq_data_max_value))
         return data
 
     def _get_markerdata(self, markers_list):
@@ -144,29 +149,41 @@ class AgilentE4438C(RFSignalGeneratorDM):
             data.append()
         return data
 
-    def data_iq_load(self, iqdata, markers, sampling_rate, filename="IQTestData"):
-        """ Load IQ data into signal generator
+    def _process_iq_sequence(self, sequence):
+        """ Identify repetition in sequence and return processed list
 
-        The parameters are:
-        :param iqdata: list I/Q complex data with magnitude normalized to 1
-        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
-        :param filename: optional string for name of the internal IQ file
+        :param sequence: List of string names
+        :return : List of items, each item is a list of two elements: name and repetitions
+
         """
-        self.write_binary_values(f'MEM:DATA "WFM1:{filename}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
-        self.write_binary_values(f'MEM:DATA "MKR1:{filename}",', self._get_iqdata(markers), timeout=20000, is_big_endian=True, datatype='B')
+        return_value = []
+        for i, name in enumerate(sequence):
+            next_name = (sequence + [None])[i+1]
+            if (next_name != name):
+                return_value.append([name, repetitions])
+                repetitions = 0
+            repetitions += 1
+
+        return return_value
+
+    def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
+        self.write_binary_values(f'MEM:DATA "WFM1:{name}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
+        if markers is not None:
+            assert (len(iqdata) == len(markers))
+            self.write_binary_values(f'MEM:DATA "MKR1:{name}",',
+                                     self._get_markerdata(markers),
+                                     timeout=20000,
+                                     is_big_endian=True,
+                                     datatype='B')
         self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
 
-    def data_iq_sequence_load(self, iqdata, markers, sampling_rate, filename="IQTestData"):
-        """ Load IQ sequence into signal generator
+    def data_iq_sequence_load(self, iqdata_seq, name):
+        # Output is like this
+        # :RAD:ARB:SEQ "SEQ:Test_Data","WFM1:ramp_test_wfm",25,ALL,"WFM1:sine_test_wfm",100,ALL
 
-        The parameters are:
-        :param iqdata: list I/Q complex data with magnitude normalized to 1
-        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
-        :param filename: optional string for name of the internal IQ file
-        """
-        self.write_binary_values(f'MEM:DATA "WFM1:{filename}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
-        self.write_binary_values(f'MEM:DATA "MKR1:{filename}",', self._get_iqdata(markers), timeout=20000, is_big_endian=True, datatype='B')
-        self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+        # Process list and identify sequences repetitions
+        parameters = ",".join(f'"WFM1:{name:s}",{rep:d},ALL' for (name, rep) in self._process_iq_sequence(iqdata_seq))
+        self.write(f':SOURce:RADio:ARB:SEQ "SEQ:{name:s}",' + parameters)
 
     def data_load(self, bitsequences, spacings):
         """ Load data into signal generator for transmission.
