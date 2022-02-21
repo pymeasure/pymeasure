@@ -131,13 +131,6 @@ class AgilentE4438C(RFSignalGeneratorDM):
         )
         self.data_ramping_workaround = True
 
-    def _get_iqdata(self, iq_seq):
-        data = []
-        iq_data_max_value = 2**(self._iq_data_bits - 1)
-        for iq in iq_seq:
-            data.append(round(iq.real*iq_data_max_value), round(iq.imag*iq_data_max_value))
-        return data
-
     def _get_markerdata(self, markers_list):
         data = []
         for markers in markers_list:
@@ -146,7 +139,7 @@ class AgilentE4438C(RFSignalGeneratorDM):
             # Compute value
             value = sum([1 << (i - 1) for i in markers])
             assert(value <= 15)
-            data.append()
+            data.append(value)
         return data
 
     def _process_iq_sequence(self, sequence):
@@ -176,14 +169,19 @@ class AgilentE4438C(RFSignalGeneratorDM):
                                      is_big_endian=True,
                                      datatype='B')
         self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+        # Select waveform
+        self.write(f':SOURce:RADio:ARB:WAVeform "WFM1:{name:s}"')
 
-    def data_iq_sequence_load(self, iqdata_seq, name):
+    def data_iq_sequence_load(self, iqdata_seq, sampling_rate, name):
         # Output is like this
         # :RAD:ARB:SEQ "SEQ:Test_Data","WFM1:ramp_test_wfm",25,ALL,"WFM1:sine_test_wfm",100,ALL
 
         # Process list and identify sequences repetitions
         parameters = ",".join(f'"WFM1:{name:s}",{rep:d},ALL' for (name, rep) in self._process_iq_sequence(iqdata_seq))
         self.write(f':SOURce:RADio:ARB:SEQ "SEQ:{name:s}",' + parameters)
+        self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+        # Select sequence
+        self.write(f':SOURce:RADio:ARB:WAVeform "SEQ:{name:s}"')
 
     def data_load(self, bitsequences, spacings):
         """ Load data into signal generator for transmission.

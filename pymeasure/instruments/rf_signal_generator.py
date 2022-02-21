@@ -220,6 +220,14 @@ Another example for user data loading
     memory = None
     """ Memory size for loading user defined patterns """ 
 
+    def _get_iqdata(self, iq_seq):
+        """ Utility method that translate iq samples into a list of integers """
+        data = []
+        iq_data_max_value = 2**(self._iq_data_bits - 1)
+        for iq in iq_seq:
+            data.append(round(iq.real*iq_data_max_value), round(iq.imag*iq_data_max_value))
+        return data
+
     def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
         """ Load IQ data into signal generator
 
