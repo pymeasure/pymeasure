@@ -272,7 +272,7 @@ class RS_SGT100A(RFSignalGeneratorDM):
     def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
         stream = BytesIO()
         tag_list = [TypeTag(magic="SMU-WV"),
-                    IntegerTag(name="CLOCK", value=sampling_rate)
+                    IntegerTag(name="CLOCK", value=sampling_rate),
                     WaveformTag(self._get_iqdata(iqdata))]
         if markers is not None:
             tag_list.append(CLWTag(self._get_markerdata(markers)))
