@@ -28,7 +28,7 @@ Documentation
 PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_. All functions, classes, and methods should be documented in the code using a `docstring`_.
 
 .. _Sphinx documentation generator: http://www.sphinx-doc.org/en/stable/
-.. _docstring: http://www.sphinx-doc.org/en/stable/ext/example_numpy.html?highlight=docstring
+.. _docstring: https://www.sphinx-doc.org/en/master/usage/extensions/example_numpy.html?highlight=numpy+example
 
 
 Usage of getter and setter functions
