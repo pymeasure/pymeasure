@@ -132,12 +132,18 @@ class AgilentE4438C(RFSignalGeneratorDM):
         self.data_ramping_workaround = True
 
     def _get_markerdata(self, markers_list):
+        # Check list item type
+        if len(markers_list):
+            item_list = isinstance(markers_list[0], (list, tuple))
         data = []
         for markers in markers_list:
-            # Remove duplicates
-            markers = list(set(markers))
-            # Compute value
-            value = sum([1 << (i - 1) for i in markers])
+            if item_list:
+                # Remove duplicates
+                markers = list(set(markers))
+                # Compute value
+                value = sum([1 << (i - 1) for i in markers])
+            else:
+                value = markers
             assert(value <= 15)
             data.append(value)
         return data
@@ -150,6 +156,7 @@ class AgilentE4438C(RFSignalGeneratorDM):
 
         """
         return_value = []
+        repetitions = 0
         for i, name in enumerate(sequence):
             next_name = (sequence + [None])[i+1]
             if (next_name != name):
@@ -160,14 +167,12 @@ class AgilentE4438C(RFSignalGeneratorDM):
         return return_value
 
     def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
-        self.write_binary_values(f'MEM:DATA "WFM1:{name}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
+        self.adapter.write_binary_values(f'MEM:DATA "WFM1:{name}",', self._get_iqdata(iqdata), is_big_endian=True, datatype='h')
         if markers is not None:
             assert (len(iqdata) == len(markers))
-            self.write_binary_values(f'MEM:DATA "MKR1:{name}",',
-                                     self._get_markerdata(markers),
-                                     timeout=20000,
-                                     is_big_endian=True,
-                                     datatype='B')
+            self.adapter.write_binary_values(f'MEM:DATA "MKR1:{name}",',
+                                             self._get_markerdata(markers),
+                                             datatype='B')
         self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
         # Select waveform
         self.write(f':SOURce:RADio:ARB:WAVeform "WFM1:{name:s}"')
@@ -179,6 +184,9 @@ class AgilentE4438C(RFSignalGeneratorDM):
         # Process list and identify sequences repetitions
         parameters = ",".join(f'"WFM1:{name:s}",{rep:d},ALL' for (name, rep) in self._process_iq_sequence(iqdata_seq))
         self.write(f':SOURce:RADio:ARB:SEQ "SEQ:{name:s}",' + parameters)
+        # After previous command, we always get a missing parameters error
+        error = self.values("SYST:ERR?")
+        assert(error[0]==-109)
         self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
         # Select sequence
         self.write(f':SOURce:RADio:ARB:WAVeform "SEQ:{name:s}"')
