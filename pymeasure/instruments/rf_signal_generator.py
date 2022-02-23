@@ -223,9 +223,10 @@ Another example for user data loading
     def _get_iqdata(self, iq_seq):
         """ Utility method that translate iq samples into a list of integers """
         data = []
-        iq_data_max_value = 2**(self._iq_data_bits - 1)
+        iq_data_max_value = 2**(self._iq_data_bits - 1) - 1
         for iq in iq_seq:
-            data.append(round(iq.real*iq_data_max_value), round(iq.imag*iq_data_max_value))
+            data.append(round(iq.real*iq_data_max_value))
+            data.append(round(iq.imag*iq_data_max_value))
         return data
 
     def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
@@ -242,8 +243,8 @@ Another example for user data loading
         :param sampling_rate: IQ data sampling rate in samples per seconds.
         :param name: string defining the name associated with the data. This can be useful to compose
         sequences.
-        :param markers: list of markers items, each marker item is a list of integers (marker
-        identifier) that are used to mark specific points on a waveform. The length of this list,
+        :param markers: list of markers items, each marker item is etiher a list of integers (marker
+        identifier) or integer (representing a bitmask of markers) that are used to mark specific points on a waveform. The length of this list,
         if different from None, must be equal to length of iqdata list.
         """
 
