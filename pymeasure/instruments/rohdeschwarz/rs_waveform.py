@@ -170,19 +170,28 @@ class WaveformTag(BinaryTag):
 encrypted format from Rohde & Schwarz and so it is not possible to correctly decode the content.
 
     """
-    pattern = "{(?P<name>W?WAVEFORM)-(?P<size>\d+):#"
-    def __init__(self, name, value):
+    pattern = "{(?P<name>W?WAVEFORM)-(?P<size>\d+):(?P<extra_chars>0,)?#"
+    @classmethod
+    def match(cls, content):
+        """ Specific match method for waveform tags """
+
+        m, content = super(WaveformTag, cls).match(content)
+        if m and (content['extra_chars'] is None):
+            content['extra_chars'] = ""
+        return m, content
+
+    def __init__(self, value, name="WAVEFORM", extra_chars=""):
         if isinstance(value, bytes):
             length = int(len(value)/2)
             value = struct.unpack("<" + "h"*length, value)
             # Group I/Q samples in sublist
             value = list((value[i], value[i+1]) for i in range(0, len(value), 2))
         # value is a list of (i,q) list, each i and q are signed 16 bit numbers.
-        super().__init__(name=name, size=0, value=value)
+        super().__init__(name=name, size=0, value=value, extra_chars=extra_chars)
 
     @property
     def size (self):
-        return len(self.value) * 4 + 1
+        return len(self.value) * 4 + 1 + len(self.extra_chars)
 
     @size.setter
     def size (self, value):
@@ -190,7 +199,7 @@ encrypted format from Rohde & Schwarz and so it is not possible to correctly dec
 
     def to_binary_value(self):
         val = list(chain.from_iterable(self.value))
-        val = b'#' + struct.pack("<" + "h"*len(val), *val)
+        val = self.extra_chars.encode() + b'#' + struct.pack("<" + "h"*len(val), *val)
         return val
 
     def checksum(self):
@@ -255,6 +264,8 @@ class StringTag(GenericTag):
 
 class TypeTag(GenericTag):
     pattern = "{(?P<name>TYPE):(?P<magic>.*?),(?P<checksum>.*?)}"
+    def __init__(self, name="TYPE", **kwargs):
+        super().__init__(name=name, **kwargs)
 
 class LevelOffsetTag(GenericTag):
     pattern = "{(?P<name>LEVEL OFFS):(?P<rms>.*?),(?P<peak>.*?)}"
@@ -408,4 +419,4 @@ if __name__ == "__main__":
         gen = RSGenerator(rs.get_tags())
         stream = open(args.output, "wb")
         gen.generate(stream)
-        strem.close()
+        stream.close()

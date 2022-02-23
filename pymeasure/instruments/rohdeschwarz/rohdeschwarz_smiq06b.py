@@ -26,6 +26,8 @@ from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorDM
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 import struct
+from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag, IntegerTag
+from io import BytesIO
 
 class RS_SMIQ0xB(RFSignalGeneratorDM):
     # Define instrument limits according to datasheet
@@ -34,6 +36,8 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
     # ALC syntax adaptation
     alc_values = ("ON", "OFF", "AUTO")
     alc_map_values = False
+
+    _iq_data_bits = 16
 
     ####################################################################
     # 3.5.14.5 SOURce:DM (Digital Modulation) Subsystem ([:SOURce]:DM)
@@ -130,6 +134,63 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
             desc,
             **kwargs
         )
+
+    def _get_markerdata(self, markers_list):
+        # Check list item type
+        if len(markers_list):
+            item_list = isinstance(markers_list[0], (list, tuple))
+        data = []
+        for i, markers in enumerate(markers_list):
+            if item_list:
+                # Remove duplicates
+                markers = list(set(markers))
+                # Compute value
+                value = sum([1 << (i - 1) for i in markers])
+            else:
+                value = markers
+            assert(value <= 15)
+            if (i % 2):
+                value_byte |= value
+                data.append(value_byte)
+            else:
+                value_byte = (value << 4)
+
+        return data
+
+    def _get_iqdata(self, iq_seq):
+        data = []
+        for iq in iq_seq:
+            i = round(32768 + iq.real*32000)
+            q = round(32768 + iq.imag*32000)
+            # Translate this in c2s numbers
+            if (i & 0x8000):
+                i = i - 2**16
+            if (q & 0x8000):
+                q = q - 2**16
+            data.append((i, q))
+        return data
+
+    def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
+        stream = BytesIO()
+        tag_list = [TypeTag(name="TYPE", magic="SMU-WV"),
+                    IntegerTag(name="CLOCK", value=sampling_rate),
+                    WaveformTag(value=self._get_iqdata(iqdata), extra_chars="0,")]
+        if markers is not None:
+            mkrs = self._get_markerdata(markers)
+            raise NotImplementedError("Markers not implemented")
+        
+        RSGenerator(tag_list).generate(stream)
+        stream.seek(0)
+        self.adapter.write_binary_values(f':ARB:WAV:DATA "{name}",',
+                                         stream.read(),
+                                         datatype='B')
+        self.write(f':ARB:CLOC:SOUR INT')
+        self.write(f':ARB:CLOC {sampling_rate:d}Hz')
+        # Select waveform
+        self.write(f":ARB:WAV:SEL '{name:s}'")
+
+    def data_iq_sequence_load(self, iqdata_seq, sampling_rate, name):
+        raise Exception("Sequence mode not yet implemented in this instrument")
 
     def _get_symbol_length(self):
         modulation = self.custom_modulation

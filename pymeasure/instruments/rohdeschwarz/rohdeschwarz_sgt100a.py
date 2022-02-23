@@ -278,10 +278,10 @@ class RS_SGT100A(RFSignalGeneratorDM):
             tag_list.append(CLWTag(self._get_markerdata(markers)))
         
         RSGenerator(tag_list).generate(stream)
-        self.write_binary_values(f'BB:ARB:WAV:DATA "{name}",',
-                                 stream,
-                                 timeout=20000,
-                                 datatype='B')
+        stream.seek(0)
+        self.adapter.write_binary_values(f'BB:ARB:WAV:DATA "{name}",',
+                                         stream.read(),
+                                         datatype='B')
         # self.write(f':BB:ARBitrary:WAVeform:CLOCk "{name}", {sampling_rate:d}')
         # Select waveform
         self.write(f"BB:ARB:WAV:SEL '{name:s}'")
