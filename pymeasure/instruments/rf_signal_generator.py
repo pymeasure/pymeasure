@@ -220,28 +220,47 @@ Another example for user data loading
     memory = None
     """ Memory size for loading user defined patterns """ 
 
-    def data_iq_load(self, iqdata, markers, sampling_rate):
+    def _get_iqdata(self, iq_seq):
+        """ Utility method that translate iq samples into a list of integers """
+        data = []
+        iq_data_max_value = 2**(self._iq_data_bits - 1) - 1
+        for iq in iq_seq:
+            data.append(round(iq.real*iq_data_max_value))
+            data.append(round(iq.imag*iq_data_max_value))
+        return data
+
+    def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
         """ Load IQ data into signal generator
 
+        IQ data is composed of complex number with magnitude normalized to 1 representing the
+        waveform points. Users must provide also the sampling rate to define the playing speed and
+        optionally a list of markes for specific relvant points in the waveform.
+        Markers are very important to enable function like amplitude calibration and/or provide
+        sychronization signals.
+
         The parameters are:
-        :param iqdata: list I/Q complex data with magnitude normalized to 1
-        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
-        :param sampling_rate: IQ data sampling rate
+        :param iqdata: list I/Q complex samples with magnitude normalized to 1
+        :param sampling_rate: IQ data sampling rate in samples per seconds.
+        :param name: string defining the name associated with the data. This can be useful to compose
+        sequences.
+        :param markers: list of markers items, each marker item is etiher a list of integers (marker
+        identifier) or integer (representing a bitmask of markers) that are used to mark specific points on a waveform. The length of this list,
+        if different from None, must be equal to length of iqdata list.
         """
 
-        assert len(iqdata) == len (markers)
         # Subclasses should implement this
         raise Exception ("Not supported/implemented")
 
-    def data_iq_sequence_load(self, iq_data_sequence):
+    def data_iq_sequence_load(self, iqdata_sequence):
         """ Load IQ sequence into signal generator
 
-        TBD
+        :param iqdata_sequence: list of names representing valid data loaded with :meth:`data_iq_load`
         """
         raise Exception ("Not supported/implemented")
 
     def data_load_repeated(self, bitsequence, spacing, repetitions):
         """ Load digital data into signal generator for transmission, the parameters are:
+
         :param bitsequence: string of '1' or '0' in transmission order
         :param spacing: integer, gap between repetition expressed in number of bit
         :param repetitions: integer, how many times the bit sequence is repeated

@@ -25,20 +25,21 @@
 from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorDM
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
-import struct
-from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag, IntegerTag
+from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag
 from io import BytesIO
+import struct
 
-class RS_SMIQ0xB(RFSignalGeneratorDM):
+class RS_SGT100A(RFSignalGeneratorDM):
     # Define instrument limits according to datasheet
-    power_values = (-144.0, 16.0)
+    power_values = (-120.0, 17.0)
+    frequency_values = (1e6, 6e9)
 
     # ALC syntax adaptation
     alc_values = ("ON", "OFF", "AUTO")
     alc_map_values = False
 
     _iq_data_bits = 16
-
+    _waveform_path = '/var/user/waveform'
     ####################################################################
     # 3.5.14.5 SOURce:DM (Digital Modulation) Subsystem ([:SOURce]:DM)
     ####################################################################
@@ -95,20 +96,18 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         values=[100, 7e6]
     )
 
-    custom_modulation_ask_depth = Instrument.control(
-        ":DM:ASK:DEPTh?", 
-        ":DM:ASK:DEPTh %e",
-        """ An integer property that allow to set/read the depth for the amplitude shift keying (ASK) modulation.
+    custom_modulation_ask_depth = Instrument.setting(
+        ":DM:ASK:DEPTh %e", 
+        """ An integer property that allow to set the depth for the amplitude shift keying (ASK) modulation.
         Depth is set as a percentage of the full power on level.
         """,
         validator=strict_range,
         values=[0, 100]
     )
 
-    custom_modulation_fsk_deviation = Instrument.control(
-        ":DM:FSK:DEViation?", 
-        ":DM:FSK:DEViation %e",
-        """ An integer property that allow to set/read the FSK frequency deviation value.
+    custom_modulation_fsk_deviation = Instrument.setting(
+        ":DM:FSK:DEViation %e", 
+        """ An integer property that allow to set the FSK frequency deviation value.
         Unit is Hz.
         """,
         validator=strict_range,
@@ -130,69 +129,12 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         get_process=lambda v: int(v[0]),
     )
 
-    def __init__(self, resourceName, desc, **kwargs):
+    def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
-            desc,
+            "Rohde & Schwarz SGT100A Signal Generator",
             **kwargs
         )
-
-    def _get_markerdata(self, markers_list):
-        # Check list item type
-        if len(markers_list):
-            item_list = isinstance(markers_list[0], (list, tuple))
-        data = []
-        for i, markers in enumerate(markers_list):
-            if item_list:
-                # Remove duplicates
-                markers = list(set(markers))
-                # Compute value
-                value = sum([1 << (i - 1) for i in markers])
-            else:
-                value = markers
-            assert(value <= 15)
-            if (i % 2):
-                value_byte |= value
-                data.append(value_byte)
-            else:
-                value_byte = (value << 4)
-
-        return data
-
-    def _get_iqdata(self, iq_seq):
-        data = []
-        for iq in iq_seq:
-            i = round(32768 + iq.real*32000)
-            q = round(32768 + iq.imag*32000)
-            # Translate this in c2s numbers
-            if (i & 0x8000):
-                i = i - 2**16
-            if (q & 0x8000):
-                q = q - 2**16
-            data.append((i, q))
-        return data
-
-    def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
-        stream = BytesIO()
-        tag_list = [TypeTag(name="TYPE", magic="SMU-WV"),
-                    IntegerTag(name="CLOCK", value=sampling_rate),
-                    WaveformTag(value=self._get_iqdata(iqdata), extra_chars="0,")]
-        if markers is not None:
-            mkrs = self._get_markerdata(markers)
-            raise NotImplementedError("Markers not implemented")
-        
-        RSGenerator(tag_list).generate(stream)
-        stream.seek(0)
-        self.adapter.write_binary_values(f':ARB:WAV:DATA "{name}",',
-                                         stream.read(),
-                                         datatype='B')
-        self.write(f':ARB:CLOC:SOUR INT')
-        self.write(f':ARB:CLOC {sampling_rate:d}Hz')
-        # Select waveform
-        self.write(f":ARB:WAV:SEL '{name:s}'")
-
-    def data_iq_sequence_load(self, iqdata_seq, sampling_rate, name):
-        raise Exception("Sequence mode not yet implemented in this instrument")
 
     def _get_symbol_length(self):
         modulation = self.custom_modulation
@@ -310,20 +252,69 @@ class RS_SMIQ0xB(RFSignalGeneratorDM):
         self.write(":SOUR:DM:MLIS:DATA {}".format(cmd_params))
         self.write(":DM:FORMat USER")
 
-class RS_SMIQ03B(RS_SMIQ0xB):
-    frequency_values = (300e3, 3.3e9)
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-            "Rohde & Schwarz SMIQ03B Signal Generator",
-            **kwargs
-        )
+    def _get_markerdata(self, markers_list):
+        # Markers are integer from 1 to 4
+        data = []
+        for i, markers in enumerate(markers_list):
+            # Remove duplicates
+            markers = list(set(markers))
+            # Compute value
+            value = sum([1 << (i - 1) for i in markers])
+            assert(value <= 15)
+            if (i % 2):
+                value_byte |= value
+                data.append(value_byte)
+            else:
+                value_byte = (value << 4)
 
-class RS_SMIQ06B(RS_SMIQ0xB):
-    frequency_values = (300e3, 6.4e9)
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-            "Rohde & Schwarz SMIQ06B Signal Generator",
-            **kwargs
-        )
+        return data
+
+    def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
+        stream = BytesIO()
+        tag_list = [TypeTag(magic="SMU-WV"),
+                    IntegerTag(name="CLOCK", value=sampling_rate),
+                    WaveformTag(self._get_iqdata(iqdata))]
+        if markers is not None:
+            tag_list.append(CLWTag(self._get_markerdata(markers)))
+        
+        RSGenerator(tag_list).generate(stream)
+        stream.seek(0)
+        self.adapter.write_binary_values(f'BB:ARB:WAV:DATA "{name}",',
+                                         stream.read(),
+                                         datatype='B')
+        # self.write(f':BB:ARBitrary:WAVeform:CLOCk "{name}", {sampling_rate:d}')
+        # Select waveform
+        self.write(f"BB:ARB:WAV:SEL '{name:s}'")
+
+    def data_iq_sequence_load(self, iqdata_seq, sampling_rate, name):
+        # Output is like this
+        # :RAD:ARB:SEQ "SEQ:Test_Data","WFM1:ramp_test_wfm",25,ALL,"WFM1:sine_test_wfm",100,ALL
+
+        # Create configuration file
+        self.write(f"BB:ARB:WSEG:CONF:SEL '{name:s}_conf'")
+        # Define multisegment file name
+        self.write(f"BB:ARB:WSEG:CONF:OFIL '{name:s}'")
+        # Set sampling rate, if defined
+        if sampling_rate is not None:
+            self.write(f'BB:ARB:WSEG:CONF:CLOC:MODE USER')
+            self.write(f'BB:ARB:WSEG:CONF:CLOC {sampling_rate:d}Hz')
+        self.write('BB:ARB:WSEG:CONF:LEV:MODE UNCH')
+        # Process list and identify sequences repetitions
+        segment_list = self._process_iq_sequence(iqdata_seq)
+        # Identify unique segments
+        unique_segments = list(set([item[0] for item in segment_list]))
+        # Create a convenience dictionary
+        unique_segments_idx = {v:i for (i,v) in enumerate(unique_segments)}
+        
+        for seg_name in unique_segments:
+            self.write('BB:ARB:WSEG:CONF:SEGM:APP {seg_name:s}')
+
+        self.write(f"BB:ARB:WSEG:CRE")
+
+        # Make playlist
+        self.write('BB:ARB:WSEG:SEQ:SEL {name:s}_pl')
+        for i, (seg_name, rep) in enumerate(segment_list):
+            last = (i == (len(segment_list) - 1))
+            next_p = 'BLANK' if last else 'NEXT'
+            idx = unique_segments_idx[seg_name]
+            self.write('BB:ARB:WSEG:SEQ:APP ON,{idx:d},{rep:d},{next_p:s}')

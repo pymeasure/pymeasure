@@ -118,7 +118,11 @@ class AgilentE4438C(RFSignalGeneratorDM):
         """ This property returns free volatile memory value in bytes """,
         get_process=lambda v: int(v[1]),
     )
+
     name = "Agilent E4438C Signal Generator"
+
+    _iq_data_bits = 16
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
@@ -127,46 +131,65 @@ class AgilentE4438C(RFSignalGeneratorDM):
         )
         self.data_ramping_workaround = True
 
-    def _get_iqdata(self, iq_seq):
-        data = []
-        for iq in iq_seq:
-            data.append(round(iq.real*32767), round(iq.imag*32767))
-        return data
-
     def _get_markerdata(self, markers_list):
+        # Check list item type
+        if len(markers_list):
+            item_list = isinstance(markers_list[0], (list, tuple))
         data = []
         for markers in markers_list:
-            # Remove duplicates
-            markers = list(set(markers))
-            # Compute value
-            value = sum([1 << (i - 1) for i in markers])
+            if item_list:
+                # Remove duplicates
+                markers = list(set(markers))
+                # Compute value
+                value = sum([1 << (i - 1) for i in markers])
+            else:
+                value = markers
             assert(value <= 15)
-            data.append()
+            data.append(value)
         return data
 
-    def data_iq_load(self, iqdata, markers, sampling_rate, filename="IQTestData"):
-        """ Load IQ data into signal generator
+    def _process_iq_sequence(self, sequence):
+        """ Identify repetition in sequence and return processed list
 
-        The parameters are:
-        :param iqdata: list I/Q complex data with magnitude normalized to 1
-        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
-        :param filename: optional string for name of the internal IQ file
+        :param sequence: List of string names
+        :return : List of items, each item is a list of two elements: name and repetitions
+
         """
-        self.write_binary_values(f'MEM:DATA "WFM1:{filename}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
-        self.write_binary_values(f'MEM:DATA "MKR1:{filename}",', self._get_iqdata(markers), timeout=20000, is_big_endian=True, datatype='B')
-        self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+        return_value = []
+        repetitions = 0
+        for i, name in enumerate(sequence):
+            next_name = (sequence + [None])[i+1]
+            if (next_name != name):
+                return_value.append([name, repetitions])
+                repetitions = 0
+            repetitions += 1
 
-    def data_iq_sequence_load(self, iqdata, markers, sampling_rate, filename="IQTestData"):
-        """ Load IQ sequence into signal generator
+        return return_value
 
-        The parameters are:
-        :param iqdata: list I/Q complex data with magnitude normalized to 1
-        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
-        :param filename: optional string for name of the internal IQ file
-        """
-        self.write_binary_values(f'MEM:DATA "WFM1:{filename}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
-        self.write_binary_values(f'MEM:DATA "MKR1:{filename}",', self._get_iqdata(markers), timeout=20000, is_big_endian=True, datatype='B')
+    def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
+        self.adapter.write_binary_values(f'MEM:DATA "WFM1:{name}",', self._get_iqdata(iqdata), is_big_endian=True, datatype='h')
+        if markers is not None:
+            assert (len(iqdata) == len(markers))
+            self.adapter.write_binary_values(f'MEM:DATA "MKR1:{name}",',
+                                             self._get_markerdata(markers),
+                                             datatype='B')
         self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+        # Select waveform
+        self.write(f':SOURce:RADio:ARB:WAVeform "WFM1:{name:s}"')
+
+    def data_iq_sequence_load(self, iqdata_seq, sampling_rate, name):
+        # Output is like this
+        # :RAD:ARB:SEQ "SEQ:Test_Data","WFM1:ramp_test_wfm",25,ALL,"WFM1:sine_test_wfm",100,ALL
+
+        # Process list and identify sequences repetitions
+        parameters = ",".join(f'"WFM1:{name:s}",{rep:d},ALL' for (name, rep) in self._process_iq_sequence(iqdata_seq))
+        self.write(f':SOURce:RADio:ARB:SEQ "SEQ:{name:s}",' + parameters)
+        # After previous command, we always get a missing parameters error
+        error = self.values("SYST:ERR?")
+        assert(error[0]==-109)
+        self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+        # Select sequence
+        self.write(f':SOURce:RADio:ARB:WAVeform "SEQ:{name:s}"')
 
     def data_load(self, bitsequences, spacings):
         """ Load data into signal generator for transmission.
