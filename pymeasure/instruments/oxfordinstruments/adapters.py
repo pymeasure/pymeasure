@@ -51,7 +51,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
 
     timeoutError = VisaIOError(-1073807339)
 
-    regex_pattern = r"^([?]?)([a-zA-Z])[\d.]*$"
+    regex_pattern = r"^([a-zA-Z])[\d.+-]*$"
 
     def __init__(self, resource_name, max_attempts=5, **kwargs):
         super().__init__(resource_name, **kwargs)
@@ -132,17 +132,27 @@ class OxfordInstrumentsAdapter(VISAAdapter):
             recognised the command
         """
 
+        # Handle special cases
+        # Check if the response indicates that the command is not recognized
+        if response[0] == "?":
+            log.debug("The instrument did not understand this command: %s", command)
+            return False
+
+        # Handle a special case for when the status is queried
+        if command[0] == "X" and response[0] == "X":
+            return True
+
+        # Handle a special case for when the version is queried
+        if command[0] == "V":
+            return True
+
+        # Handle the other, standard cases
         try:
             match = re.match(self.regex_pattern, response)
         except TypeError:
             match = False
 
-        # Check if the response indicates that the command is not recognized
-        if match and match.groups()[0] == "?":
-            log.debug("The instrument did not understand this command: %s", command)
-            match = False
-
-        if match and not match.groups()[1] == command[0]:
+        if match and not match.groups()[0] == command[0]:
             match = False
 
         return bool(match)
