@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 
-class Parameter(object):
+class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 
@@ -45,12 +45,13 @@ class Parameter(object):
     """
 
     _type = None
+
     def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
         self.name = name
         self._value = default
         self.default = default
         self.ui_class = ui_class
-        self._help_fields=[('units are', 'units'), 'default']
+        self._help_fields = [('units are', 'units'), 'default']
 
         self.group_by = {}
         if isinstance(group_by, dict):
@@ -84,7 +85,9 @@ class Parameter(object):
         This property returns a list of data to help formatting a command line
         interface interpreter, the list is composed of the following elements:
         - index 0: default value
-        - index 1: List of value to format an help string, that is either, the name of the fields to be documented or a tuple with (helps_string, field)
+        - index 1: List of value to format an help string, that is either,
+        the name of the fields to be documented or a tuple with (helps_string,
+        field)
         - index 2: type
         """
         return (self.default, self._help_fields, self._type)
@@ -98,7 +101,7 @@ class Parameter(object):
         return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,default=%s)>" % (
+        return "<{}(name={},value={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.default)
 
 
@@ -116,6 +119,7 @@ class IntegerParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
     _type = int
+
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
@@ -160,8 +164,9 @@ class IntegerParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
+
 
 class BooleanParameter(Parameter):
     """ :class:`.Parameter` sub-class that uses the boolean type to
@@ -174,7 +179,7 @@ class BooleanParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    _type = lambda inst, x: bool(eval(x))
+    _type = lambda inst, x: bool(eval(x))  # noqa: E731, accept lambda definition
 
     @property
     def value(self):
@@ -217,6 +222,7 @@ class FloatParameter(Parameter):
     """
 
     _type = float
+
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
                  decimals=15, **kwargs):
         super().__init__(name, **kwargs)
@@ -262,7 +268,7 @@ class FloatParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -280,6 +286,7 @@ class VectorParameter(Parameter):
     """
 
     _type = eval
+
     def __init__(self, name, length=3, units=None, **kwargs):
         super().__init__(name, **kwargs)
         self._length = length
@@ -332,7 +339,7 @@ class VectorParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,length=%s)>" % (
+        return "<{}(name={},value={},units={},length={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
@@ -475,7 +482,7 @@ class PhysicalParameter(VectorParameter):
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%g +/- %g" % (self._value[0], self._value[1])
+        result = f"{self._value[0]:g} +/- {self._value[1]:g}"
         if self.units:
             result += " %s" % self.units
         if self._utype.value is not None:
@@ -483,11 +490,11 @@ class PhysicalParameter(VectorParameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,uncertaintyType=%s)>" % (
+        return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
 
-class Measurable(object):
+class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.
     The value property is called when the procedure retrieves a datapoint

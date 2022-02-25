@@ -32,7 +32,7 @@ class AH2700A(AH2500A):
     """
     def __init__(self, adapter, name="Andeen Hagerling 2700A Precision Capacitance Bridge",
                  timeout=5000, **kwargs):
-        super(AH2700A, self).__init__(
+        super().__init__(
             adapter,
             name=name,
             timeout=timeout,

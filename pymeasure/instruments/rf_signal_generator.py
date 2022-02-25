@@ -220,6 +220,26 @@ Another example for user data loading
     memory = None
     """ Memory size for loading user defined patterns """ 
 
+    def data_iq_load(self, iqdata, markers, sampling_rate):
+        """ Load IQ data into signal generator
+
+        The parameters are:
+        :param iqdata: list I/Q complex data with magnitude normalized to 1
+        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
+        :param sampling_rate: IQ data sampling rate
+        """
+
+        assert len(iqdata) == len (markers)
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
+
+    def data_iq_sequence_load(self, iq_data_sequence):
+        """ Load IQ sequence into signal generator
+
+        TBD
+        """
+        raise Exception ("Not supported/implemented")
+
     def data_load_repeated(self, bitsequence, spacing, repetitions):
         """ Load digital data into signal generator for transmission, the parameters are:
         :param bitsequence: string of '1' or '0' in transmission order

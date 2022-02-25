@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -146,7 +146,7 @@ class PrologixAdapter(SerialAdapter):
             address_command = "++addr %d\n" % self.address
             self.connection.write(address_command.encode())
         super().write_binary_values(command, values, **kwargs)
-        self.connection.write('\n'.encode())
+        self.connection.write(b'\n')
 
     def read(self):
         """ Reads the response of the instrument

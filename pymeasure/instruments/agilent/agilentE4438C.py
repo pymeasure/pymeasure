@@ -127,6 +127,47 @@ class AgilentE4438C(RFSignalGeneratorDM):
         )
         self.data_ramping_workaround = True
 
+    def _get_iqdata(self, iq_seq):
+        data = []
+        for iq in iq_seq:
+            data.append(round(iq.real*32767), round(iq.imag*32767))
+        return data
+
+    def _get_markerdata(self, markers_list):
+        data = []
+        for markers in markers_list:
+            # Remove duplicates
+            markers = list(set(markers))
+            # Compute value
+            value = sum([1 << (i - 1) for i in markers])
+            assert(value <= 15)
+            data.append()
+        return data
+
+    def data_iq_load(self, iqdata, markers, sampling_rate, filename="IQTestData"):
+        """ Load IQ data into signal generator
+
+        The parameters are:
+        :param iqdata: list I/Q complex data with magnitude normalized to 1
+        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
+        :param filename: optional string for name of the internal IQ file
+        """
+        self.write_binary_values(f'MEM:DATA "WFM1:{filename}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
+        self.write_binary_values(f'MEM:DATA "MKR1:{filename}",', self._get_iqdata(markers), timeout=20000, is_big_endian=True, datatype='B')
+        self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+
+    def data_iq_sequence_load(self, iqdata, markers, sampling_rate, filename="IQTestData"):
+        """ Load IQ sequence into signal generator
+
+        The parameters are:
+        :param iqdata: list I/Q complex data with magnitude normalized to 1
+        :param markers: list of markers items, each marker item is a list of integers (marker identifier)
+        :param filename: optional string for name of the internal IQ file
+        """
+        self.write_binary_values(f'MEM:DATA "WFM1:{filename}",', self._get_iqdata(iqdata), timeout=20000, is_big_endian=True, datatype='h')
+        self.write_binary_values(f'MEM:DATA "MKR1:{filename}",', self._get_iqdata(markers), timeout=20000, is_big_endian=True, datatype='B')
+        self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
+
     def data_load(self, bitsequences, spacings):
         """ Load data into signal generator for transmission.
 
