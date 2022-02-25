@@ -66,7 +66,7 @@ class Plotter(StoppableThread):
 
         :param plot: This window's PlotItem_ instance.
 
-        .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+        .. _PlotItem: https://pyqtgraph.readthedocs.io/en/latest/graphicsItems/plotitem.html
         """
         pass
 
