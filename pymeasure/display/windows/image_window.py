@@ -32,14 +32,14 @@ from ..widgets import (
 )
 from .managed_window import ManagedWindow
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class ManagedImageWindow(ManagedWindow):
     """
-    Display experiment output with an :class:`~pymeasure.display.widgets.image_widget.ImageWidget` class.
+    Display experiment output with an :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
+    class.
 
     :param procedure_class: procedure class describing the experiment (see
         :class:`~pymeasure.experiment.procedure.Procedure`)
@@ -60,6 +60,6 @@ class ManagedImageWindow(ManagedWindow):
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget, )
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget,)
 
         super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
