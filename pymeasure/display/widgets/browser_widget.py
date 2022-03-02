@@ -32,6 +32,9 @@ log.addHandler(logging.NullHandler())
 
 
 class BrowserWidget(QtGui.QWidget):
+    """
+    Widget wrapper for :class:`Browser<pymeasure.display.browser.Browser>` class
+    """
     def __init__(self, *args, parent=None):
         super().__init__(parent)
         self.browser_args = args

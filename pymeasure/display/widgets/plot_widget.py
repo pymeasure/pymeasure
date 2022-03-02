@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class PlotWidget(TabWidget, QtGui.QWidget):
-    """ Extends the PlotFrame to allow different columns
+    """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>` to allow different columns
     of the data to be dynamically choosen
     """
 

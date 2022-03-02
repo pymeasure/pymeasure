@@ -35,7 +35,7 @@ log.addHandler(logging.NullHandler())
 
 
 class ImageWidget(TabWidget, QtGui.QWidget):
-    """ Extends the ImageFrame to allow different columns
+    """ Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>` to allow different columns
     of the data to be dynamically choosen
     """
 
