@@ -47,7 +47,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
 
     The ManagedWindowBase uses a Manager to control Workers in a Queue,
     and provides a simple interface.
-    The :meth:`~pymeasure.display.windows.ManagedWindowBase.queue` method must be
+    The :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method must be
     overridden by the child class.
 
     The ManagedWindowBase allow user to define a set of widget that display information about the
@@ -56,17 +56,17 @@ class ManagedWindowBase(QtGui.QMainWindow):
     This class is not intended to be used directy, but it should be subclassed to provide some
     appropriate widget list. Example of classes usable as element of widget list are:
 
-    - :class:`~pymeasure.display.widgets.LogWidget`
-    - :class:`~pymeasure.display.widgets.PlotWidget`
-    - :class:`~pymeasure.display.widgets.ImageWidget`
+    - :class:`~pymeasure.display.widgets.log_widget.LogWidget`
+    - :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
+    - :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
 
     Of course, users can define its own widget making sure that inherits from
-    :class:`~pymeasure.display.widgets.TabWidget`.
+    :class:`~pymeasure.display.widgets.tab_widget.TabWidget`.
 
     Examples of ready to use classes inherited from ManagedWindowBase are:
 
-    - :class:`~pymeasure.display.windows.ManagedWindow`
-    - :class:`~pymeasure.display.windows.ManagedImageWindow`
+    - :class:`~pymeasure.display.windows.managed_window.ManagedWindow`
+    - :class:`~pymeasure.display.windows.image_window.ManagedImageWindow`
 
     .. seealso::
 
@@ -458,7 +458,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         :class:`~pymeasure.experiment.procedure.Procedure` to be run.
 
         The optional `procedure` argument is not required for a basic implementation,
-        but is required when the :class:`~pymeasure.display.widgets.SequencerWidget`
+        but is required when the :class:`~pymeasure.display.widgets.sequencer_widget.SequencerWidget`
         is used.
 
         For example:
@@ -537,7 +537,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
 
 class ManagedWindow(ManagedWindowBase):
     """
-    Display experiment output with an :class:`~pymeasure.display.widget.PlotWidget` class.
+    Display experiment output with an :class:`~pymeasure.display.widgets.plot_widget.PlotWidget` class.
 
     .. seealso::
 
@@ -550,7 +550,7 @@ class ManagedWindow(ManagedWindowBase):
     :param y_axis: the initial data-column for the y-axis of the plot
     :param linewidth: linewidth for the displayed curves, default is 1
     :param \\**kwargs: optional keyword arguments that will be passed to
-        :class:`~pymeasure.display.windows.ManagedWindowBase`
+        :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
 
     """
 

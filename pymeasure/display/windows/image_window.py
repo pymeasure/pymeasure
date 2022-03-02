@@ -39,7 +39,7 @@ log.addHandler(logging.NullHandler())
 
 class ManagedImageWindow(ManagedWindow):
     """
-    Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
+    Display experiment output with an :class:`~pymeasure.display.widgets.image_widget.ImageWidget` class.
 
     :param procedure_class: procedure class describing the experiment (see
         :class:`~pymeasure.experiment.procedure.Procedure`)
@@ -49,7 +49,7 @@ class ManagedImageWindow(ManagedWindow):
         the image-plot
     :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
     :param \\**kwargs: optional keyword arguments that will be passed to
-        :class:`~pymeasure.display.windows.ManagedWindow`
+        :class:`~pymeasure.display.windows.managed_window.ManagedWindow`
 
     """
 
