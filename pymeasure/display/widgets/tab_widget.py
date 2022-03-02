@@ -33,8 +33,8 @@ class TabWidget:
 
         When defining a widget to be used in subclasses of
         :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`,
-        users should inherit from this class and provide the specialized
-        implementation of these method's
+        users should inherit from this class and provide an
+        implementation of these methods
     """
 
     def __init__(self, name, *args, **kwargs):
