@@ -131,7 +131,7 @@ class Channel:
     
     phase_deg = Instrument.control(
         "phase:adjust?", "phase:adjust %e DEG",
-        """ A floating point property that controls the phase in degree units.
+        """ A floating point property that controls the phase in degrees.
         This property can be set.""",
         validator=strict_range,
         values = PHASE_LIMIT['DEG']
