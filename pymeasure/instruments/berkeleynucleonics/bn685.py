@@ -55,7 +55,6 @@ class BN685_AWG(BN675_AWG):
     def __init__(self, adapter, **kwargs):
         super(BN685_AWG, self).__init__(
             adapter,
-            "BN685 arbitrary waveform generator",
             **kwargs
         )
         self.default_dir = 'C:\\Users\\AWG5000\\Pictures\\Saved Pictures\\'
