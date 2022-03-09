@@ -1402,7 +1402,7 @@ class VersioneerBadRootError(Exception):
     """The project root directory is unknown or missing key files."""
 
 
-def get_versions(verbose=False):
+def get_versions(verbose=False):  # noqa: C901 accept that this is a complex method
     """Get the project version from whatever source is available.
 
     Returns dict with two keys: 'version' and 'full'.
@@ -1483,7 +1483,7 @@ def get_version():
     return get_versions()["version"]
 
 
-def get_cmdclass(cmdclass=None):
+def get_cmdclass(cmdclass=None):  # noqa: C901 accept that this is a complex method
     """Get the custom setuptools/distutils subclasses used by Versioneer.
 
     If the package uses a different cmdclass (e.g. one from numpy), it
