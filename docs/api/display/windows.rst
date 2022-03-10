@@ -2,7 +2,7 @@
 Windows classes
 ###############
 
-.. automodule:: pymeasure.display.windows.image_window
+.. automodule:: pymeasure.display.windows.managed_image_window
     :members:
     :show-inheritance:
 
