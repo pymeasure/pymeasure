@@ -49,7 +49,7 @@ class ManagedImageWindow(ManagedWindow):
         the image-plot
     :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
     :param \\**kwargs: optional keyword arguments that will be passed to
-        :class:`~pymeasure.display.windows.managed_window.ManagedWindow`
+        :class:`~pymeasure.display.windows.managed_image_window.ManagedWindow`
 
     """
 
