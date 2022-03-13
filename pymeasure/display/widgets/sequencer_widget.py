@@ -21,61 +21,285 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
 import logging
-
-import re
+from pymeasure.display.Qt import QtCore, QtGui
+from pymeasure.experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
 from functools import partial
-import numpy
-from collections import ChainMap
-from itertools import product
 from inspect import signature
-
-from ..Qt import QtGui
+from collections import ChainMap
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-""" This defines a list of functions that can be used to generate a sequence. """
-SAFE_FUNCTIONS = {
-    'range': range,
-    'sorted': sorted,
-    'list': list,
-    'arange': numpy.arange,
-    'linspace': numpy.linspace,
-    'arccos': numpy.arccos,
-    'arcsin': numpy.arcsin,
-    'arctan': numpy.arctan,
-    'arctan2': numpy.arctan2,
-    'ceil': numpy.ceil,
-    'cos': numpy.cos,
-    'cosh': numpy.cosh,
-    'degrees': numpy.degrees,
-    'e': numpy.e,
-    'exp': numpy.exp,
-    'fabs': numpy.fabs,
-    'floor': numpy.floor,
-    'fmod': numpy.fmod,
-    'frexp': numpy.frexp,
-    'hypot': numpy.hypot,
-    'ldexp': numpy.ldexp,
-    'log': numpy.log,
-    'log10': numpy.log10,
-    'modf': numpy.modf,
-    'pi': numpy.pi,
-    'power': numpy.power,
-    'radians': numpy.radians,
-    'sin': numpy.sin,
-    'sinh': numpy.sinh,
-    'sqrt': numpy.sqrt,
-    'tan': numpy.tan,
-    'tanh': numpy.tanh,
-}
+debug_modules_enabled = (
+    #    "rowCount",
+    #    "index",
+    #    "data",
+    #    "parent",
+    #    "add_node",
+    #    "remove_node",
+    #    "headerData",
+)
 
 
-class SequenceEvaluationException(Exception):
-    """Raised when the evaluation of a sequence string goes wrong."""
-    pass
+def print_debug(module, *args):
+    if module in debug_modules_enabled:
+        print(module, *args)
+
+
+class SequencerTreeModel(QtCore.QAbstractItemModel):
+    """ TODO: Documentation
+    """
+
+    def __init__(self, header, data, parent=None):
+        """ TreeModel constructor
+        :param header: The header to use
+        :type header: Iterable
+        :param parent: A QWidget that QT will give ownership of this Widget too.
+        """
+        super().__init__(parent)
+
+        self.header = header
+        self.root = data
+
+    def add_node(self, parameter, parent=None):
+        """ Add a row in the sequencer """
+        print_debug("add_node", parameter, parent)
+        if parent is None:
+            parent = self.createIndex(-1, -1)
+
+        idx = len(self.root.children(parent))
+        print_debug("add_node", " idx", idx)
+        parent_seq_item = parent.internalPointer()
+
+        self.beginInsertRows(parent, idx, idx)
+        seq_item, child_row = self.root.add_node(parameter, parent_seq_item)
+        self.endInsertRows()
+        return self.createIndex(child_row, 0, seq_item)
+
+    def remove_node(self, index):
+        """ Remove a row in the sequencer """
+        print_debug("remove_node", index, index.internalPointer())
+        children = self.rowCount(index)
+        print_debug("remove_node", "children", children)
+        seq_item = index.internalPointer()
+        # Remove children from last to first
+        while (children > 0):
+            child = children - 1
+            children_seq_item = self.root.get_children(seq_item, child)
+            self.remove_node(self.createIndex(child, 0, children_seq_item))
+            children = self.rowCount(index)
+
+        self.beginRemoveRows(index.parent(), index.row(), index.row())
+        parent_seq_item, parent_row = self.root.remove_node(seq_item)
+        self.endRemoveRows()
+        return self.createIndex(parent_row, 0, parent_seq_item)
+
+    def flags(self, index):
+        """ QAbstractItemModel override method that is used to set the flags
+            for the item at the given QModelIndex.
+
+            Here, we just set all indexes to enabled, and selectable.
+        """
+        if not index.isValid():
+            return_value = QtCore.Qt.NoItemFlags
+        else:
+            return_value = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+            if index.column() >= 1:
+                return_value |= QtCore.Qt.ItemIsEditable
+        return return_value
+
+    def data(self, index, role):
+        """ Return the data to display for the given index and the given role.
+
+            This method should not be called directly.
+            This method is called implicitly by the QTreeView that is
+            displaying us, as the way of finding out what to display where.
+        """
+        if not index.isValid():
+            return
+
+        elif not role == QtCore.Qt.DisplayRole:
+            return
+
+        print_debug("data", index.row(), index.column(), index.internalPointer())
+        data = index.internalPointer()[index.column()]
+
+        if not isinstance(data, QtCore.QObject):
+            data = str(data)
+
+        print_debug("data", "ret", data)
+        return data
+
+    def index(self, row, col, parent):
+        """ Return a QModelIndex instance pointing the row and column underneath the parent given.
+            This method should not be called directly. This method is called implicitly by the
+            QTreeView that is displaying us, as the way of finding out what to display where.
+        """
+        print_debug("index", row, col, parent.row(), parent.column(), parent.internalPointer())
+        if not parent or not parent.isValid():
+            parent_data = None
+        else:
+            parent_data = parent.internalPointer()
+
+        seq_item = self.root.get_children(parent_data, row)
+        child = seq_item
+        if child is None:
+            return QtCore.QModelIndex()
+        index = self.createIndex(row, col, child)
+        print_debug("index", "ret", index.row(), index.column(), index.internalPointer())
+        return index
+
+    def parent(self, index=None):
+        """ Return the index of the parent of a given index. If index is not supplied,
+        return an invalid QModelIndex.
+            Optional args: index
+
+        :param index: QModelIndex
+        :return:
+        """
+
+        if index:
+            print_debug("parent", index.row(), index.column(), index.internalPointer())
+        else:
+            print_debug("parent", index)
+
+        if not index or not index.isValid():
+            return QtCore.QModelIndex()
+
+        child = index.internalPointer()
+        parent, parent_row = self.root.get_parent(child)
+
+        if parent is None:
+            return QtCore.QModelIndex()
+
+        index = self.createIndex(parent_row, 0, parent)
+        print_debug("parent", "ret", parent_row, index.row(), index.column(), child)
+        return index
+
+    def rowCount(self, parent):
+        """ Return the number of children of a given parent.
+
+            If an invalid QModelIndex is supplied, return the number of children under the root.
+
+        :param parent: QModelIndex
+        """
+        print_debug("rowCount", parent, parent.internalPointer())
+        if parent.column() > 0:
+            return 0
+
+        if not parent.isValid():
+            parent = None
+        else:
+            parent = parent.internalPointer()
+
+        rows = len(self.root.children(parent))
+        print_debug("rowCount", "ret", rows, parent)
+        return rows
+
+    def columnCount(self, parent):
+        """ Return the number of columns in the model header.
+
+            The parent parameter exists only to support the signature of QAbstractItemModel.
+        """
+        return len(self.header)
+
+    def headerData(self, section, orientation, role):
+        """ Return the header data for the given section, orientation and role.
+
+            This method should not be called directly.
+            This method is called implicitly by the QTreeView that is displaying us,
+            as the way of finding out what to display where.
+        """
+        print_debug("headerData", section, orientation, role)
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return self.header[section]
+
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+        print_debug("setData", index, value, role)
+        return_value = False
+        if role == QtCore.Qt.EditRole:
+            return_value = self.root.set_data(index.internalPointer(), index.row(),
+                                              index.column(), value)
+            if return_value:
+                self.dataChanged.emit(index, index, value)
+        return return_value
+
+    def __iter__(self):
+        for row, child in enumerate(self.root.children()):
+            yield self.createIndex(row, 0, None)
+
+    def save(self, filename=None):
+        self.root.save(filename)
+
+
+class ComboBoxDelegate(QtGui.QStyledItemDelegate):
+    def __init__(self, owner, choices):
+        super().__init__(owner)
+        self.items = choices
+
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QComboBox(parent)
+        editor.currentIndexChanged.connect(self.commit_editor)
+        editor.addItems(self.items)
+        return editor
+
+    def commit_editor(self):
+        editor = self.sender()
+        self.commitData.emit(editor)
+
+    def setEditorData(self, editor, index):
+        value = index.data(QtCore.Qt.DisplayRole)
+        num = self.items.index(value)
+        editor.setCurrentIndex(num)
+
+    def setModelData(self, editor, model, index):
+        value = editor.currentText()
+        model.setData(index, value, QtCore.Qt.EditRole)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+
+class ExpressionValidator(QtGui.QValidator):
+    def validate(self, input_string, pos):
+        return_value = QtGui.QValidator.Acceptable
+        try:
+            SequenceFileHandler.eval_string(input_string, log_enabled=False)
+        except SequenceEvaluationError:
+            return_value = QtGui.QValidator.Intermediate
+        return return_value
+
+
+class LineEditDelegate(QtGui.QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QLineEdit(parent)
+        editor.setValidator(ExpressionValidator())
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.data(QtCore.Qt.DisplayRole)
+        editor.setText(value)
+
+    def setModelData(self, editor, model, index):
+        value = editor.text()
+        model.setData(index, value, QtCore.Qt.EditRole)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+
+class SequencerTreeView(QtGui.QTreeView):
+    def save(self, filename=None):
+        self.model().save(filename)
+
+    def selectRow(self, index):
+        selection_model = self.selectionModel()
+        selection_model.select(index, QtCore.QItemSelectionModel.Clear)
+        for column in range(self.model().columnCount(index)):
+            idx = self.model().createIndex(index.row(), column,
+                                           index.internalPointer())
+            selection_model.select(idx, QtCore.QItemSelectionModel.Select)
 
 
 class SequencerWidget(QtGui.QWidget):
@@ -139,15 +363,17 @@ class SequencerWidget(QtGui.QWidget):
                       if key in self._inputs}
 
         self.names_inv = {name: key for key, name in self.names.items()}
+        self.names_choices = list(sorted(self.names_inv.keys()))
 
     def _setup_ui(self):
-        self.tree = QtGui.QTreeWidget(self)
-        self.tree.setHeaderLabels(["Level", "Parameter", "Sequence"])
+        self.tree = SequencerTreeView(self)
+        self.tree.setHeaderHidden(False)
         width = self.tree.viewport().size().width()
         self.tree.setColumnWidth(0, int(0.7 * width))
         self.tree.setColumnWidth(1, int(0.9 * width))
         self.tree.setColumnWidth(2, int(0.9 * width))
-
+        self.tree.setItemDelegateForColumn(1, ComboBoxDelegate(self, self.names_choices))
+        self.tree.setItemDelegateForColumn(2, LineEditDelegate(self))
         self.add_root_item_btn = QtGui.QPushButton("Add root item")
         self.add_root_item_btn.clicked.connect(
             partial(self._add_tree_item, level=0)
@@ -195,72 +421,40 @@ class SequencerWidget(QtGui.QWidget):
         :param sequence: If given, the sequence field is pre-filled
         """
 
-        selected = self.tree.selectedItems()
+        selected = self.tree.selectionModel().selection().indexes()
 
         if len(selected) >= 1 and level != 0:
             parent = selected[0]
         else:
-            parent = self.tree.invisibleRootItem()
+            parent = None
 
-        if level is not None and level > 0:
-            p_depth = self._depth_of_child(parent)
+        if parameter is None:
+            parameter = self.names_choices[0]
 
-            while p_depth > level - 1:
-                parent = parent.parent()
-                p_depth = self._depth_of_child(parent)
-
-        comboBox = QtGui.QComboBox()
-        lineEdit = QtGui.QLineEdit()
-
-        comboBox.addItems(list(sorted(self.names_inv.keys())))
-
-        item = QtGui.QTreeWidgetItem(parent, [""])
-        depth = self._depth_of_child(item)
-        item.setText(0, f"{depth:d}")
-
-        self.tree.setItemWidget(item, 1, comboBox)
-        self.tree.setItemWidget(item, 2, lineEdit)
+        model = self.tree.model()
+        node_index = model.add_node(parameter=parameter, parent=parent)
 
         self.tree.expandAll()
 
-        for selected_item in selected:
-            selected_item.setSelected(False)
-
-        if parameter is not None:
-            idx = self.tree.itemWidget(item, 1).findText(parameter)
-            self.tree.itemWidget(item, 1).setCurrentIndex(idx)
-            if idx == -1:
-                log.error(
-                    "Parameter '{}' not found while loading sequence".format(
-                        parameter) + ", probably mistyped."
-                )
-
-        if sequence is not None:
-            self.tree.itemWidget(item, 2).setText(sequence)
-
-        item.setSelected(True)
+        self.tree.selectRow(node_index)
 
     def _remove_selected_tree_item(self):
         """
         Remove the selected item (and any child items) from the sequence tree.
         """
 
-        selected = self.tree.selectedItems()
+        selected = self.tree.selectionModel().selection().indexes()
+
         if len(selected) == 0:
             return
 
-        item = selected[0]
-        parent = item.parent()
+        node_index = self.tree.model().remove_node(selected[0])
 
-        if parent is None:
-            parent = self.tree.invisibleRootItem()
+        if node_index.isValid():
+            self.tree.selectRow(node_index)
 
-        parent.removeChild(item)
-
-        for selected_item in self.tree.selectedItems():
-            selected_item.setSelected(False)
-
-        parent.setSelected(True)
+    def get_sequence(self):
+        return self.data.parameters_sequence(self.names_inv)
 
     def queue_sequence(self):
         """
@@ -271,8 +465,8 @@ class SequencerWidget(QtGui.QWidget):
         self.queue_button.setEnabled(False)
 
         try:
-            sequence = self.get_sequence_from_tree()
-        except SequenceEvaluationException:
+            sequence = self.get_sequence()
+        except SequenceEvaluationError:
             log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
         else:
             log.info(
@@ -303,156 +497,8 @@ class SequencerWidget(QtGui.QWidget):
         if len(fileName) == 0:
             return
 
-        content = []
-
-        with open(fileName) as file:
-            content = file.readlines()
-
-        pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
-        for line in content:
-            line = line.strip()
-            match = pattern.search(line)
-
-            if not match:
-                continue
-
-            level = len(match.group(1)) - 1
-
-            if level < 0:
-                continue
-
-            parameter = match.group(2)
-            sequence = match.group(3)
-
-            self._add_tree_item(
-                level=level,
-                parameter=parameter,
-                sequence=sequence,
-            )
-
-    def get_sequence_from_tree(self):
-        """
-        Generate a list of parameters from the sequence tree.
-        """
-
-        iterator = QtGui.QTreeWidgetItemIterator(self.tree)
-        sequences = []
-        current_sequence = [[] for i in range(self.MAXDEPTH)]
-        temp_sequence = [[] for i in range(self.MAXDEPTH)]
-
-        while iterator.value():
-            item = iterator.value()
-            depth = self._depth_of_child(item)
-
-            name = self.tree.itemWidget(item, 1).currentText()
-            parameter = self.names_inv[name]
-            values = self.eval_string(
-                self.tree.itemWidget(item, 2).text(),
-                name, depth,
-            )
-
-            try:
-                sequence_entry = [{parameter: value} for value in values]
-            except TypeError:
-                log.error(
-                    "TypeError, likely no sequence for one of the parameters"
-                )
-            else:
-                current_sequence[depth].extend(sequence_entry)
-
-            iterator += 1
-            next_depth = self._depth_of_child(iterator.value())
-
-            for depth_idx in range(depth, next_depth, -1):
-                temp_sequence[depth_idx].extend(current_sequence[depth_idx])
-
-                if depth_idx != 0:
-                    sequence_products = list(product(
-                        current_sequence[depth_idx - 1],
-                        temp_sequence[depth_idx]
-                    ))
-
-                    for i in range(len(sequence_products)):
-                        try:
-                            element = sequence_products[i][1]
-                        except IndexError:
-                            log.error(
-                                "IndexError, likely empty nested parameter"
-                            )
-                        else:
-                            if isinstance(element, tuple):
-                                sequence_products[i] = (
-                                    sequence_products[i][0], *element)
-
-                    temp_sequence[depth_idx - 1].extend(sequence_products)
-                    temp_sequence[depth_idx] = []
-
-                current_sequence[depth_idx] = []
-                current_sequence[depth_idx - 1] = []
-
-            if depth == next_depth:
-                temp_sequence[depth].extend(current_sequence[depth])
-                current_sequence[depth] = []
-
-        sequences = temp_sequence[0]
-
-        for idx in range(len(sequences)):
-            if not isinstance(sequences[idx], tuple):
-                sequences[idx] = (sequences[idx],)
-
-        return sequences
-
-    @staticmethod
-    def _depth_of_child(item):
-        """
-        Determine the level / depth of a child item in the sequence tree.
-        """
-
-        depth = -1
-        while item:
-            item = item.parent()
-            depth += 1
-        return depth
-
-    @staticmethod
-    def eval_string(string, name=None, depth=None):
-        """
-        Evaluate the given string. The string is evaluated using a list of
-        pre-defined functions that are deemed safe to use, to prevent the
-        execution of malicious code. For this purpose, also any built-in
-        functions or global variables are not available.
-
-        :param string: String to be interpreted.
-        :param name: Name of the to-be-interpreted string, only used for
-            error messages.
-        :param depth: Depth of the to-be-interpreted string, only used
-            for error messages.
-        """
-
-        evaluated_string = None
-        if len(string) > 0:
-            try:
-                evaluated_string = eval(
-                    string, {"__builtins__": None}, SAFE_FUNCTIONS
-                )
-            except TypeError:
-                log.error("TypeError, likely a typo in one of the " +
-                          "functions for parameter '{}', depth {}".format(
-                              name, depth
-                          ))
-                raise SequenceEvaluationException()
-            except SyntaxError:
-                log.error("SyntaxError, likely unbalanced brackets " +
-                          f"for parameter '{name}', depth {depth}")
-                raise SequenceEvaluationException()
-            except ValueError:
-                log.error("ValueError, likely wrong function argument " +
-                          f"for parameter '{name}', depth {depth}")
-                raise SequenceEvaluationException()
-        else:
-            log.error("No sequence entered for " +
-                      f"for parameter '{name}', depth {depth}")
-            raise SequenceEvaluationException()
-
-        evaluated_string = numpy.array(evaluated_string)
-        return evaluated_string
+        self.data = SequenceFileHandler(open(fileName, "r"))
+        self.tree_model = SequencerTreeModel(header=["Level", "Parameter", "Sequence"],
+                                             data=self.data)
+        self.tree.setModel(self.tree_model)
+        self.tree.expandAll()
