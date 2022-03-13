@@ -11,8 +11,8 @@ The easiest way to install the necessary Python environment for PyMeasure is thr
 
 Download and install the appropriate Python version of `Anaconda`_ for your operating system.
 
-.. _Anaconda distribution: https://www.continuum.io/why-anaconda
-.. _Anaconda: https://www.continuum.io/downloads
+.. _Anaconda distribution: https://www.anaconda.com/
+.. _Anaconda: https://www.anaconda.com/products/individual
 
 Installing PyMeasure
 ====================
