@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-import logging, re, numpy
+import logging
+import re
+import numpy
 from itertools import product
-
-from logging import Handler
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -35,6 +35,7 @@ class SequenceEvaluationError(Exception):
     """Raised when the evaluation of a sequence string goes wrong."""
     pass
 
+
 class SequenceItem(object):
     """ Class representing a sequence row """
     column_map = {
@@ -42,6 +43,7 @@ class SequenceItem(object):
         1: "parameter",
         2: "expression",
     }
+
     def __init__(self, level, parameter, expression, parent):
         self.level = level
         self.parameter = parameter
@@ -63,6 +65,7 @@ class SequenceItem(object):
     def __str__(self):
         return "{} \"{}\" \"{}\"".format("-"*(self.level + 1), self.parameter, self.expression)
 
+
 class SequenceFileHandler():
     """ Represent a sequence file and its methods
 
@@ -71,7 +74,8 @@ class SequenceFileHandler():
 
     - Level: that is the distance from the root node
     - Parameter: A string that is the parameter name
-    - Expression: A python expression which describe the list of values to be assumed by the Parameter.
+    - Expression: A python expression which describe the list of values to be assumed
+      by the Parameter.
 
     The syntax of the file is as follow: ::
 
@@ -124,7 +128,8 @@ class SequenceFileHandler():
         'tan': numpy.tan,
         'tanh': numpy.tanh,
     }
-    def __init__ (self, file_obj):
+
+    def __init__(self, file_obj):
         self.file_obj = file_obj
         self._sequences = None
         self.parse()
@@ -190,8 +195,8 @@ class SequenceFileHandler():
         """ Return the index and level of the list whose value correspond to sequence """
         try:
             idx = self._sequences.index(seq_item)
-        except:
-            idx = -1 # Sequence not found, assuming idenx does not exist
+        except ValueError:
+            idx = -1  # Sequence not found, assuming idenx does not exist
 
         if idx < 0:
             level = -1
@@ -203,7 +208,7 @@ class SequenceFileHandler():
     def add_node(self, name, parent_seq_item=None):
         """ Add a node under the parent identified by parent_seq_item """
         parent_idx, level = self._get_idx(parent_seq_item)
-        
+
         seq_item = SequenceItem(level+1,
                                 name,
                                 "",
@@ -217,17 +222,17 @@ class SequenceFileHandler():
 
         self._sequences.insert(idx, seq_item)
         return seq_item, self.get_children_order(seq_item)
-    
+
     def remove_node(self, seq_item):
         """ Remove node identified by seq_item """
         # if node identified by idx has children, we need to remove them first
         for child_seq_item in self.children(seq_item):
             self.remove_node(child_seq_item)
-        
+
         self._sequences.remove(seq_item)
 
         return seq_item.parent, self.get_children_order(seq_item.parent)
-        
+
     def children(self, seq_item):
         """ return a list of children of node identified by seq_item """
         idx, current_level = self._get_idx(seq_item)
@@ -240,7 +245,7 @@ class SequenceFileHandler():
                 break
             idx += 1
         return child_list
-        
+
     def get_children(self, seq_item, index):
         """ Return the children of order index of the node seq_item """
 
@@ -275,7 +280,7 @@ class SequenceFileHandler():
 
     def set_data(self, seq_item, row, column, value):
         """ Set data for node identified by seq_item """
-        
+
         idx, _ = self._get_idx(seq_item)
 
         if idx < 0:
@@ -286,7 +291,7 @@ class SequenceFileHandler():
 
     def __len__(self):
         return len(self.sequences)
-    
+
     def __getitem__(self, key):
         return self.sequences[key]
 
@@ -316,13 +321,13 @@ class SequenceFileHandler():
 
             parameter = match.group(2)
             sequence = match.group(3)
-            parent_level = -1 if current_parent == None else current_parent.level
+            parent_level = -1 if current_parent is None else current_parent.level
             if level == (parent_level + 1):
                 pass
             elif (level <= parent_level):
                 # Find parent
                 current_parent = current_parent.parent
-                while current_parent != None:
+                while current_parent is not None:
                     if level == (current_parent.level + 1):
                         break
                     current_parent = current_parent.parent
@@ -334,7 +339,6 @@ class SequenceFileHandler():
                                 sequence,
                                 current_parent)
             current_parent = data
-            
             self._sequences.append(data)
 
     def save(self, filename=None):
@@ -412,6 +416,7 @@ class SequenceFileHandler():
                 sequences[idx] = (sequences[idx],)
         return sequences
 
+
 if __name__ == "__main__":
     import sys
 
@@ -419,10 +424,9 @@ if __name__ == "__main__":
     names_map = {
         "Delay Time": "delay",
         "Random Seed": "seed",
-        "Loop Iterations" : "iterations",
+        "Loop Iterations": "iterations",
     }
-    s=SequenceFileHandler(fd)
-    print (s.parameters_sequence(names_map))
-    print (s.sequences)
-    print (s[2])
-    
+    s = SequenceFileHandler(fd)
+    print(s.parameters_sequence(names_map))
+    print(s.sequences)
+    print(s[2])

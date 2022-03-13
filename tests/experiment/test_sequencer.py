@@ -26,7 +26,7 @@ import pytest
 
 from io import StringIO
 from pymeasure.experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
-from pymeasure.experiment.parameters import Parameter
+
 
 def non_empty_lines(text):
     lines = text.split("\n")
@@ -35,6 +35,7 @@ def non_empty_lines(text):
         if line.strip() != "":
             linect += 1
     return linect
+
 
 seq_file_text_1 = """
 - "P1", "[1,2]"
@@ -53,14 +54,23 @@ seq_file_text_3 = """
 --- "P3", "[4, 5, 6]"
 """
 
+
 @pytest.mark.parametrize("seq_file_text",
                          [
-                             (seq_file_text_1, (0,1),   (1, 0),    ("P1", "P2")),
-                             (seq_file_text_2, (0,1,0), (1, 0, 0), ("P1", "P2", "P1")),
-                             (seq_file_text_3, (0,1,2), (1, 1, 0), ("P1", "P2", "P3")),
+                             (seq_file_text_1,
+                              (0, 1),
+                              (1, 0),
+                              ("P1", "P2")),
+                             (seq_file_text_2,
+                              (0, 1, 0),
+                              (1, 0, 0),
+                              ("P1", "P2", "P1")),
+                             (seq_file_text_3,
+                              (0, 1, 2),
+                              (1, 1, 0),
+                              ("P1", "P2", "P3")),
                          ])
 def test_sequencer(seq_file_text):
-
 
     file_text, levels, children, params = seq_file_text
     fd = StringIO(file_text)
@@ -75,6 +85,7 @@ def test_sequencer(seq_file_text):
 
     for index, c in enumerate(params):
         assert(s[index].parameter == c)
+
 
 seq_file_text_err1 = """
 - "P1", "[1,2"
@@ -93,10 +104,17 @@ seq_file_text_err3 = """
 --- "P3", ""
 """
 
+
 @pytest.mark.parametrize("seq_file_text_err",
-                         [(seq_file_text_err1, SequenceEvaluationError, "SyntaxError, likely unbalanced brackets"),
-                          (seq_file_text_err2, SequenceEvaluationError, 'Invalid file format: level missing ?'),
-                          (seq_file_text_err3, SequenceEvaluationError, "No sequence entered")])
+                         [(seq_file_text_err1,
+                           SequenceEvaluationError,
+                           "SyntaxError, likely unbalanced brackets"),
+                          (seq_file_text_err2,
+                           SequenceEvaluationError,
+                           'Invalid file format: level missing ?'),
+                          (seq_file_text_err3,
+                           SequenceEvaluationError,
+                           "No sequence entered")])
 def test_sequencer_errors(seq_file_text_err):
 
     file_text, exception, exc_text = seq_file_text_err
