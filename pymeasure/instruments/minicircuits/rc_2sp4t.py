@@ -29,7 +29,7 @@ log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument, RangeException
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-from pymeasure.adapters.minicircuitsusb import MinicircuitsUSB
+from pymeasure.adapters.minicircuitsusbswitch import MinicircuitsUSBSwitch
 
 import numpy as np
 import time
@@ -72,7 +72,7 @@ class RC_2SP4T(Instrument):
 
     def __init__(self, adapter, **kwargs):
         if isinstance(adapter, (str, int)) or adapter is None:
-            adapter = MinicircuitsUSB(adapter)
+            adapter = MinicircuitsUSBSwitch(adapter)
         super(RC_2SP4T, self).__init__(
             adapter, "RC_2SP4T switch", **kwargs
         )

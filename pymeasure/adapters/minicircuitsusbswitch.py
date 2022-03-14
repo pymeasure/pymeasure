@@ -43,7 +43,7 @@ log.addHandler(logging.NullHandler())
 DEFAULT_BUFFER_SIZE = 1000
 
 
-class MinicircuitsUSB(Adapter):
+class MinicircuitsUSBSwitch(Adapter):
     """
     Adapter for the minicircuits net45 dll switch matrix interface. Requires pythonnet to be installed and only works on windows.
 
