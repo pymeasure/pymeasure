@@ -67,6 +67,16 @@ Telnet adapter
     :show-inheritance:
 
 ============
+USBTMC adapter
+============
+
+.. autoclass:: pymeasure.adapters.USBTMCAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+============
 Fake adapter
 ============
 
