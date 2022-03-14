@@ -24,3 +24,6 @@
 
 
 from .usb_2sp2t_dch import USB_2SP2T_DCH
+from .rc_2sp4t import RC_2SP4T
+from .rc_2spdt import RC_2SPDT
+from .rc_dat import RC_DAT
