@@ -131,8 +131,8 @@ def test_zmq_topic_filtering_works(caplog):
     results = Results(procedure, file)
     received = []
     worker = Worker(results, port=5888, log_level=logging.DEBUG)
-    listener = Listener(port=5888, topic='results', timeout=0.1)
-    sleep(0.5)  # leave time for subscriber and publisher to establish a connection
+    listener = Listener(port=5888, topic='results', timeout=4.0)
+    sleep(4.0)  # leave time for subscriber and publisher to establish a connection
     worker.start()
     while True:
         if not listener.message_waiting():
