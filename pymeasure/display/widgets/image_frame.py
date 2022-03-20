@@ -33,7 +33,8 @@ log.addHandler(logging.NullHandler())
 
 
 class ImageFrame(PlotFrame):
-    """ Extends PlotFrame to plot also axis Z using colors
+    """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
+    to plot also axis Z using colors
     """
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.QSignal(str)
