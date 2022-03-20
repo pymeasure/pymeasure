@@ -35,7 +35,8 @@ log.addHandler(logging.NullHandler())
 class LogWidget(TabWidget, QtGui.QWidget):
     """ Widget to display logging information in GUI
 
-    It is recommended to include this widget in all subclasses of ManagedWindowBase
+    It is recommended to include this widget in all subclasses of
+    :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`
     """
 
     def __init__(self, name, parent=None):

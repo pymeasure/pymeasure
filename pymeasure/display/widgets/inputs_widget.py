@@ -35,6 +35,10 @@ log.addHandler(logging.NullHandler())
 
 
 class InputsWidget(QtGui.QWidget):
+    """
+    Widget wrapper for various :doc:`inputs`
+    """
+
     # tuple of Input classes that do not need an external label
     NO_LABEL_INPUTS = (BooleanInput,)
 

@@ -37,6 +37,14 @@ log.addHandler(logging.NullHandler())
 
 
 class ResultsDialog(QtGui.QFileDialog):
+    """
+    Widget that displays a dialog box for loading a past experiment run.
+    It shows a preview of curves from the results file when selected in the dialog box.
+
+    This widget used by the `open_experiment` method in
+    :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>` class
+    """
+
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
         super().__init__(parent)
         self.columns = columns
