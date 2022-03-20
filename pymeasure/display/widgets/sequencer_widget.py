@@ -153,7 +153,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
     def parent(self, index=None):
         """ Return the index of the parent of a given index. If index is not supplied,
         return an invalid QModelIndex.
-            Optional args: index
+        Optional args: index
 
         :param index: QModelIndex
         :return:
