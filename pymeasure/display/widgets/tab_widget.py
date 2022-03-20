@@ -31,8 +31,10 @@ log.addHandler(logging.NullHandler())
 class TabWidget:
     """ Utility class to define default implementation for some basic methods.
 
-        When defining a widget to be used in subclasses of ManagedWindowBase, users should inherit
-        from this class and provide the specialized implementation of these method's
+        When defining a widget to be used in subclasses of
+        :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`,
+        users should inherit from this class and provide an
+        implementation of these methods
     """
 
     def __init__(self, name, *args, **kwargs):

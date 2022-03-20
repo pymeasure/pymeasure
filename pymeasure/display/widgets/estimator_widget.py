@@ -61,14 +61,15 @@ class EstimatorWidget(QtGui.QWidget):
     Widget that allows to display up-front estimates of the measurement
     procedure.
 
-    This widget relies on a `get_estimates` method of the `Procedure` class.
+    This widget relies on a `get_estimates` method of the
+    :class:`Procedure<pymeasure.experiment.procedure.Procedure>` class.
     `get_estimates` is expected to return a list of tuples, where each tuple
     contains two strings: a label and the estimate.
 
-    If the `SequencerWidget` is also used, it is possible to ask for the
-    current sequencer or its length by asking for two keyword arguments in the
-    Implementation of the `get_estimates` function: `sequence` and
-    `sequence_length`, respectively.
+    If the :class:`SequencerWidget<pymeasure.display.widgets.sequencer_widget.SequencerWidget>`
+    is also used, it is possible to ask for the current sequencer or its length by
+    asking for two keyword arguments in the Implementation of the `get_estimates` function:
+    `sequence` and `sequence_length`, respectively.
 
     """
     provide_sequence = False
