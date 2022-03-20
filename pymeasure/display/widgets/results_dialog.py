@@ -42,7 +42,7 @@ class ResultsDialog(QtGui.QFileDialog):
     It shows a preview of curves from the results file when selected in the dialog box.
 
     This widget used by the `open_experiment` method in
-    :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>` class
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>` class
     """
 
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
