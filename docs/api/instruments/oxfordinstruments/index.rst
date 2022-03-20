@@ -9,4 +9,7 @@ This section contains specific documentation on the Oxford Instruments instrumen
 .. toctree::
    :maxdepth: 2
 
+   adapters
    ITC503
+   IPS120_10
+   PS120_10

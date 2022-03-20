@@ -22,8 +22,37 @@
 # THE SOFTWARE.
 #
 
+import logging
 
-from .adapters import OxfordInstrumentsAdapter
-from .itc503 import ITC503
-from .ips120_10 import IPS120_10
-from .ps120_10 import PS120_10
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class TabWidget:
+    """ Utility class to define default implementation for some basic methods.
+
+        When defining a widget to be used in subclasses of
+        :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`,
+        users should inherit from this class and provide an
+        implementation of these methods
+    """
+
+    def __init__(self, name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = name
+
+    def new_curve(self, *args, **kwargs):
+        """ Create a new curve """
+        return None
+
+    def load(self, curve):
+        """ Add curve to widget """
+        pass
+
+    def remove(self, curve):
+        """ Remove curve from widget """
+        pass
+
+    def set_color(self, curve, color):
+        """ Set color for widget """
+        pass
