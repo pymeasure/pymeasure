@@ -49,7 +49,7 @@ def test_metadata_formatting():
 def test_metadata_notset():
     p = Metadata('Test')
     with pytest.raises(ValueError):
-        v = p.value
+        p.value
 
 
 def test_metadata_object_replacement():
@@ -115,5 +115,3 @@ def test_metadata_fget_evaluation():
     assert pr._metadata["md_str_prop"].value == 24
     assert pr._metadata["md_nest_call"].value == 84
     assert pr._metadata["md_nest_prop"].value == 48
-
-
