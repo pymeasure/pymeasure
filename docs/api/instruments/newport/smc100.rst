@@ -1,0 +1,7 @@
+#########################
+SMC 100 Motion Controller
+#########################
+
+.. autoclass:: pymeasure.instruments.newport.SMC100
+    :members:
+    :show-inheritance:
