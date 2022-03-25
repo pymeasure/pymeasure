@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .fluke7341 import Fluke7341
+from .thermotron3800 import Thermotron3800
