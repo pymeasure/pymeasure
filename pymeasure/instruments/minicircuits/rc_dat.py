@@ -38,7 +38,8 @@ import time
 class RC_DAT(Instrument):
     """ Represents the RC_DAT programmable attenuator and provides a high level
     interface to the SCPI commands. Requires that the mcl_RUDAT_NET45 be in the path
-    or same directory as the running code.
+    or same directory as the running code. You may need to unblock the dll by right clicking
+    and opening the properties.
 
     """
 
@@ -53,7 +54,6 @@ class RC_DAT(Instrument):
         actual = self.adapter.connection.Read_ModelName("")[1]
         if actual not in model:
             raise ValueError(f'Got different model {actual}')
-        self._current_atten = self.adapter.connection.Get_StartUpAtt()
 
     def disconnect(self):
         self.adapter.connection.Disconnect()
@@ -65,11 +65,8 @@ class RC_DAT(Instrument):
 
     @property
     def attenuation(self):
-        return self._current_atten
+        return float(self.adapter.connection.Send_SCPI(':ATT?',"")[1])
 
     @attenuation.setter
     def attenuation(self, val):
-        if self.adapter.connection.SetAttenuation(val) == 1:
-            self._current_atten = val
-        else:
-            raise ValueError('Command to USB Attenuator failed')
+        self.adapter.connection.Send_SCPI(':SETATT=%.2E' % val,"")

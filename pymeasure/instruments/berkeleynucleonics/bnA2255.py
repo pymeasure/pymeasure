@@ -23,7 +23,7 @@
 #
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set, joined_validators
-from time import time
+from time import time, sleep
 import numpy as np
 from pyvisa.errors import VisaIOError
 
@@ -37,15 +37,16 @@ class Channel():
     """ Implementation of a BN A2255 channel
      """
     BOOLS = {True:1 , False:0}
+    shape_vals = ["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
+                 "PULSE", "PULS", "NOISE", "NOIS", "DC", "EMEM"]
+    for val in range(32):
+        shape_vals.append(f'USER{val}')
 
     shape = Instrument.control(
         'FUNC:SHAP?', 'FUNC:SHAP %s',
         """This sets the function shape. SIN, SQU, PULS, RAMP are most commonly used.""",
-        validator=joined_validators(
-            strict_discrete_set, string_validator
-        ),
-        values=[["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
-                 "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER", "EMEM"], ],
+        validator=string_validator,
+        values=shape_vals,
     )
 
     output_impedance = Instrument.control( # this one is output rather than source for some reason???
@@ -367,7 +368,7 @@ class BN_A2255(Instrument):
     def stop_awg(self):
         self.write('STAT OFF')
 
-    def transfer(self, array, normalized_input=False):
+    def transfer(self, array, normalized_input=False, wfnumber=None):
         """
         Takes an array and saves it to the Edit Memory (EMEM) of the A2255, then loads it.
         If normalized_input is True, the array is scaled to go from 0 to 2**13 (13 bit DAC).
@@ -379,4 +380,10 @@ class BN_A2255(Instrument):
             array = np.repeat(array, np.ceil(16384/len(array)))
         array = np.array(array, dtype=int)
         self.adapter.write_binary_values("DATA:DATA EMEM,", array, datatype='H', is_big_endian=True)
+        if wfnumber is not None:
+            sleep(1)
+            if not isinstance(wfnumber, int):
+                raise TypeError(f'{type(wfnumber)} not allowed, must be an int')
+            else:
+                self.write(f"DATA:COPY USER{wfnumber},EMEM")
 

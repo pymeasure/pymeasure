@@ -42,11 +42,11 @@ class Channel(object):
 
     @property
     def state(self):
-        return self.ask('STATE?')
+        return self.ask('SWPORT?')
 
     @state.setter
     def state(self, cmd):
-        self.write('STATE:%d' % cmd)
+        self.write('%d' % cmd)
 
     def __init__(self, instrument, number, **kwargs):
         self.instrument = instrument
@@ -56,10 +56,10 @@ class Channel(object):
             setattr(self, key, item)
 
     def ask(self, command):
-        return self.instrument.ask("SPDT%s:%s" % (self.number, command))
+        return self.instrument.ask("SET%s=%s" % (self.number, command))
 
     def write(self, command):
-        self.instrument.write("SPDT%s:%s" % (self.number, command))
+        self.instrument.write("SET%s=%s" % (self.number, command))
 
 
 class RC_2SPDT(Instrument):

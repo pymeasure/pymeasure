@@ -48,7 +48,7 @@ class Channel():
 
     active_input = Instrument.control(
         # good?
-        "ActiveInput?", """ActiveInput = "%s" """,
+        "ActiveInput", """ActiveInput = "%s" """,
         """ A string parameter that sets which input is active on the channel.
         Each channel has an upper row (A) and lower row (B). Ch3 is special,
         it can go to InputBHBW which disables all other inputs and diverts their
@@ -60,7 +60,7 @@ class Channel():
 
     average_sweeps = Instrument.control(
         # good?
-        "AverageSweeps?", """AverageSweeps = %d """,
+        "AverageSweeps", """AverageSweeps = %d """,
         """ An integer parameter that sets the number of sweeps to average on this channel.
         Range is 1 to 1,000,000""",
         validator=strict_range,
@@ -70,7 +70,7 @@ class Channel():
 
     display = Instrument.control(
         #good?
-        "View?", "View = %d",
+        "View", "View = %d",
         """ A boolean parameter that toggles the display.""",
         validator=strict_discrete_set,
         values=BOOLS,
@@ -80,7 +80,7 @@ class Channel():
 
     offset = Instrument.control(
         #good?
-        "VerOffset?", "VerOffset = %f",
+        "VerOffset", "VerOffset = %f",
         """ A float parameter to set value that is represented at center of screen in 
         Volts. The range of legal values varies depending on range and scale. If the specified value 
         is outside of the legal range, the offset value is automatically set to the nearest legal value. """
@@ -89,7 +89,7 @@ class Channel():
 
     scale = Instrument.control(
         #good
-        "VerScale?", "VerScale = %f",
+        "VerScale", "VerScale = %f",
         """ A float parameter that specifies the vertical scale, or units per division, in Volts. 
         Limits are [1e-3,1]"""
     )
@@ -103,16 +103,16 @@ class Channel():
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values("""vbs? 'return = app.Acquisition.C%d.:%s'""" % (
+        return self.instrument.values("""vbs? 'return = app.acquisition.C%d.%s'""" % (
             self.number, command), **kwargs)
 
     def ask(self, command):
         #good
-        self.instrument.ask("""vbs? 'return = app.Acquisition.C%d.:%s'""" % (self.number, command))
+        self.instrument.ask("""vbs? 'return = app.acquisition.C%d.%s'""" % (self.number, command))
 
     def write(self, command):
         #good
-        self.instrument.write("""vbs 'app.Acquisition.C%d.:%s'""" % (self.number, command))
+        self.instrument.write("""vbs 'app.acquisition.C%d.%s'""" % (self.number, command))
 
 
 
