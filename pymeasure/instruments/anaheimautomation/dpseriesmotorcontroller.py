@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -325,7 +325,7 @@ class DPSeriesMotorController(Instrument):
         elif "%" in command or "~" in command:
             cmd_str = "@%s" % command
         else:
-            cmd_str = "@%i%s" % (self.address, command)
+            cmd_str = "@%i%s" % (self._address, command)
         super().write(cmd_str)
 
     def values(self, command, **kwargs):
@@ -338,7 +338,7 @@ class DPSeriesMotorController(Instrument):
         if "%" in command or "~" in command:
             vals = super().values("@%s" % command, **kwargs)
         else:
-            vals = super().values("@%i%s" % (self.address, command))
+            vals = super().values("@%i%s" % (self._address, command))
 
         return vals
 
@@ -352,7 +352,7 @@ class DPSeriesMotorController(Instrument):
         if "%" in command or "~" in command:
             val = super().ask("@%s" % command)
         else:
-            val = super().ask("@%i%s" % (self.address, command))
+            val = super().ask("@%i%s" % (self._address, command))
 
         return val
 

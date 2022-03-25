@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -184,6 +184,15 @@ class VISAAdapter(Adapter):
         :param delay: Time delay between checking SRQ in seconds
         """
         self.connection.wait_for_srq(timeout * 1000)
+
+    def flush_read_buffer(self):
+        """ Flush and discard the input buffer
+
+        As detailed by pyvisa, discard the read buffer contents and if data was present
+        in the read buffer and no END-indicator was present, read from the device until
+        encountering an END indicator (which causes loss of data).
+        """
+        self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resource_name

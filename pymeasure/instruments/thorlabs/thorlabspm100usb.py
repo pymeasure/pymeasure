@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ class ThorlabsPM100USB(Instrument):
     """Represents Thorlabs PM100USB powermeter."""
 
     def __init__(self, adapter, **kwargs):
-        super(ThorlabsPM100USB, self).__init__(
+        super().__init__(
             adapter, "ThorlabsPM100USB powermeter", **kwargs
         )
         self.timout = 3000
@@ -68,7 +68,7 @@ class ThorlabsPM100USB(Instrument):
             value = truncated_range(
                 value, [self._wavelength_min, self._wavelength_max]
             )
-            self.write("SENSE:CORR:WAV {}".format(value))
+            self.write(f"SENSE:CORR:WAV {value}")
         else:
             raise AttributeError(
                 f"{self.sensor_name} does not allow setting the wavelength."
@@ -96,7 +96,7 @@ class ThorlabsPM100USB(Instrument):
         """Get sensor info and write flags."""
         response = self.values("SYST:SENSOR:IDN?")
         if response[0] == "no sensor":
-            raise IOError("No sensor connected.")
+            raise OSError("No sensor connected.")
         self.sensor_name = response[0]
         self.sensor_sn = response[1]
         self.sensor_cal_msg = response[2]
