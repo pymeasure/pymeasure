@@ -26,6 +26,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 class Thermotron3800(Instrument):
     """ Represents the Thermotron 3800 Oven.
+    For now, this driver only supports using Control Channel 1.
     """
 
     def __init__(self, resourceName, **kwargs):
@@ -36,24 +37,93 @@ class Thermotron3800(Instrument):
         )
 
     id = Instrument.measurement(
-        "IDEN?", """ Reads the instrument identification """
+        "IDEN?", """ Reads the instrument identification 
+        
+        :return: String
+        """
     )
 
     temperature = Instrument.measurement(
         "PVAR1?", """ Reads the current temperature of the oven 
         via built in thermocouple
+        
+        :return: float
         """
+    )
+
+    mode = Instrument.measurement(
+        "MODE??", """ Gets the operating mode of the oven.
+        
+        :return: Tuple(String, int)
+        """,
+        get_process=lambda mode: Thermotron3800.__translate_mode(mode)
     )
     
     setpoint = Instrument.control(
         "SETP1?", "SETP1,%g",
-        """ A loating point property that controls the setpoint 
+        """ A floating point property that controls the setpoint 
         of the oven in Celsius. This property can be set. 
+        
+        Insert wait time after this command. This wait time should be >1000ms for consistent results.
+        Failing to wait for an adequate time may cause errors in subsequent oven commands.
+        
+        :return: None
         """,
         validator=strict_range,
         values=[-55, 150]
     )
 
-if __name__ == "__main__":
-    thermotron = Thermotron3800("GPIB::1::INSTR")
-    print(thermotron.id)
+    def run(self):
+        '''
+        Insert wait time after this command. This wait time should be >1000ms for consistent results.
+        Failing to wait for an adequate time may cause errors in subsequent oven commands.
+        :return: None
+        '''
+        self.write("RUNM")
+
+    def stop(self):
+        '''
+        Insert wait time after this command. This wait time should be >1000ms for consistent results.
+        Failing to wait for an adequate time may cause errors in subsequent oven commands.
+        :return: None
+        '''
+        self.write("STOP")
+
+    def initalize_oven(self):
+        '''
+        Please wait 3 seconds after calling initialize_oven before running
+        any other oven commands (per manufacterer's instructions).
+
+        :return: None
+        '''
+        self.write("INIT")
+
+    @staticmethod
+    def __translate_mode(mode_coded_integer):
+        '''
+        Bit 0 = Program mode
+        Bit 1 = Edit mode (controller in stop mode)
+        Bit 2 = View program mode
+        Bit 3 = Edit mode (controller in hold mode)
+        Bit 4 = Manual mode
+        Bit 5 = Delayed start mode
+        Bit 6 = Unused
+        Bit 7 = Calibration mode
+        '''
+        map = {
+            1: "Program mode",
+            2: "Edit mode (controller in stop mode)",
+            4: "View program mode",
+            8: "Edit mode (controller in hold mode)",
+            16: "Manual mode",
+            32: "Delayed start mode",
+            64: "Unused (Error)",
+            128: "Calibration mode"
+        }
+
+        mode_coded_integer_int = int(mode_coded_integer)
+
+        if mode_coded_integer in map:
+            return tuple( (map[mode_coded_integer_int], mode_coded_integer_int) )
+        else:
+            return tuple( ("Unknown or combined mode.", mode_coded_integer_int) )
