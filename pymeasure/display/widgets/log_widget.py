@@ -22,8 +22,41 @@
 # THE SOFTWARE.
 #
 
+import logging
 
-from .adapters import OxfordInstrumentsAdapter
-from .itc503 import ITC503
-from .ips120_10 import IPS120_10
-from .ps120_10 import PS120_10
+from ..log import LogHandler
+from ..Qt import QtGui
+from .tab_widget import TabWidget
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class LogWidget(TabWidget, QtGui.QWidget):
+    """ Widget to display logging information in GUI
+
+    It is recommended to include this widget in all subclasses of
+    :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`
+    """
+
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent)
+        self._setup_ui()
+        self._layout()
+
+    def _setup_ui(self):
+        self.view = QtGui.QPlainTextEdit()
+        self.view.setReadOnly(True)
+        self.handler = LogHandler()
+        self.handler.setFormatter(logging.Formatter(
+            fmt='%(asctime)s : %(message)s (%(levelname)s)',
+            datefmt='%m/%d/%Y %I:%M:%S %p'
+        ))
+        self.handler.connect(self.view.appendPlainText)
+
+    def _layout(self):
+        vbox = QtGui.QVBoxLayout(self)
+        vbox.setSpacing(0)
+
+        vbox.addWidget(self.view)
+        self.setLayout(vbox)

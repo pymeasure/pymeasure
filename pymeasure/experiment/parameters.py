@@ -554,7 +554,8 @@ class Metadata(object):
 
     def evaluate(self, parent=None, new_value=None):
         if new_value is not None and self.fget is not None:
-            raise ValueError("Metadata with a defined fget method cannot be manually assigned a value")
+            raise ValueError("Metadata with a defined fget method"
+                             " cannot be manually assigned a value")
         elif new_value is not None:
             self._value = new_value
         elif self.fget is not None:

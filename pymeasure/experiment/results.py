@@ -270,10 +270,11 @@ class Results:
 
         m = ["Metadata:"]
         for _, metadata in self.procedure.metadata_objects().items():
-            m.append("\t%s: %s" % (metadata.name, str(metadata).encode("unicode_escape").decode("utf-8")))
+            value = str(metadata).encode("unicode_escape").decode("utf-8")
+            m.append(f"\t{metadata.name}: {value}")
 
         self._metadata_count = len(m)
-        m = [Results.COMMENT + l for l in m]  # Comment each line
+        m = [Results.COMMENT + line for line in m]  # Comment each line
         return Results.LINE_BREAK.join(m) + Results.LINE_BREAK
 
     def store_metadata(self):

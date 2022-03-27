@@ -162,6 +162,12 @@ class Instrument:
 
         log.info("Initializing %s." % self.name)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.shutdown()
+
     def _setup_special_names(self):
         """ Return list of class/instance special names
 
@@ -519,7 +525,6 @@ class Instrument:
                     errors.append(err)
                 else:
                     break
-
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
