@@ -152,7 +152,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             self.columns_y.setCurrentIndex(self.columns_y.findText(y_list[0]))
             for y in y_list:
                 self.columns_y.set_check_state(y, True)
-            self.plot_frame.change_y_axis(y_list[0])
+            self.plot_frame.change_y_axis(y_list)
 
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
@@ -241,10 +241,10 @@ class PlotWidget(TabWidget, QtGui.QWidget):
                 if item.y == axis:
                     if checked:
                         item.show()
-                        item.update_data()
                     else:
                         item.hide()
-                        item.update_data()
+                    item.update_data()
+        self.plot_frame.change_y_axis(self.columns_y.checked_items())
 
     def load(self, curve):
         # Add new set of curves
