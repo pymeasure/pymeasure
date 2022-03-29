@@ -45,7 +45,7 @@ class PlotFrame(QtGui.QFrame):
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(str)
+    y_axis_changed = QtCore.QSignal(list)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)
@@ -137,4 +137,4 @@ class PlotFrame(QtGui.QFrame):
         label = ",".join(label_list)
         self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis_list
-        self.y_axis_changed.emit(axis_list)
+        self.y_axis_changed.emit(list(axis_list))
