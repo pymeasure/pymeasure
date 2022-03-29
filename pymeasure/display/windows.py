@@ -456,7 +456,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    for curve in experiment.curve_list:
+                    for curve in experiment.curve_list[0].values():
                         if curve:
                             curve.update_data()
                     experiment.browser_item.progressbar.setValue(100.)
@@ -469,7 +469,11 @@ class ManagedWindowBase(QtGui.QMainWindow):
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
+            # setIcon trigger browser itemChanged signal on colunm 0,
+            # which in turn call the browser_item_changed, so a block signals is needed.
+            self.browser.blockSignals(True)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
+            self.browser.blockSignals(False)
             for wdg, curve in zip(self.widget_list, experiment.curve_list):
                 wdg.set_color(curve, color=color)
 
@@ -513,8 +517,9 @@ class ManagedWindowBase(QtGui.QMainWindow):
         curve_color = pg.intColor(0)
         for wdg, curve in zip(self.widget_list, curve_list):
             if isinstance(wdg, PlotWidget):
-                curve_color = curve.opts['pen'].color()
-                break
+                for i_curve in curve.values():
+                    curve_color = i_curve.opts['pen'].color()
+                    break
 
         browser_item = BrowserItem(results, curve_color)
         return Experiment(results, curve_list, browser_item)
@@ -662,7 +667,10 @@ class ManagedWindow(ManagedWindowBase):
         super().__init__(procedure_class, **kwargs)
 
         # Setup measured_quantities once we know x_axis and y_axis
-        self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
+        y_axis = self.y_axis
+        if not isinstance(y_axis, (list, tuple)):
+            y_axis = [y_axis]
+        self.browser_widget.browser.measured_quantities = [self.x_axis] + list(y_axis)
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)

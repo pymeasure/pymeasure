@@ -45,7 +45,7 @@ class PlotFrame(QtGui.QFrame):
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(str)
+    y_axis_changed = QtCore.QSignal(list)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)
@@ -53,6 +53,8 @@ class PlotFrame(QtGui.QFrame):
         self.check_status = check_status
         self._setup_ui()
         self.change_x_axis(x_axis)
+        if isinstance(y_axis, str):
+            y_axis = [y_axis,]
         self.change_y_axis(y_axis)
 
     def _setup_ui(self):
@@ -126,12 +128,13 @@ class PlotFrame(QtGui.QFrame):
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
 
-    def change_y_axis(self, axis):
-        for item in self.plot.items:
-            if isinstance(item, self.ResultsClass):
-                item.y = axis
-                item.update_data()
-        label, units = self.parse_axis(axis)
+    def change_y_axis(self, axis_list):
+        label_list = []
+        units = None
+        for axis in axis_list:
+            label, units = self.parse_axis(axis)
+            label_list.append(label)
+        label = ",".join(label_list)
         self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
-        self.y_axis = axis
-        self.y_axis_changed.emit(axis)
+        self.y_axis = axis_list
+        self.y_axis_changed.emit(list(axis_list))

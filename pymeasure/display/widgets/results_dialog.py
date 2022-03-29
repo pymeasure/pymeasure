@@ -103,19 +103,27 @@ class ResultsDialog(QtGui.QFileDialog):
             except Exception as e:
                 raise e
 
-            curve = ResultsCurve(results,
-                                 x=self.plot_widget.plot_frame.x_axis,
-                                 y=self.plot_widget.plot_frame.y_axis,
-                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
-                                 # circumvent plotting slowdown. Once the issue
-                                 # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
-                                 # it can be reverted
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
-                                 antialias=True
-                                 )
-            curve.update_data()
+            curve = {}
+            for column in self.columns:
+                curve[column] = ResultsCurve(results,
+                                             x=self.plot_widget.plot_frame.x_axis,
+                                             y=column,
+                                             # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
+                                             # circumvent plotting slowdown. Once the issue
+                                             # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
+                                             # it can be reverted
+                                             pen=pg.mkPen(color=(255, 0, 0), width=1),
+                                             antialias=True
+                                         )
+                curve[column].update_data()
 
-            self.plot.addItem(curve)
+            for i_curve in curve.values():
+                checked = self.plot_widget.columns_y.checked_items()
+                self.plot.addItem(i_curve)
+                i_curve.update_data()
+                if not i_curve.y in checked:
+                    i_curve.hide()
+                    i_curve.update_data()
 
             self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():
