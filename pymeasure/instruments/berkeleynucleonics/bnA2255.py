@@ -376,8 +376,6 @@ class BN_A2255(Instrument):
         array = np.array(array)
         if normalized_input:
             array = (array+1) * 2**13
-        if len(array) < 16384:
-            array = np.repeat(array, np.ceil(16384/len(array)))
         array = np.array(array, dtype=int)
         self.adapter.write_binary_values("DATA:DATA EMEM,", array, datatype='H', is_big_endian=True)
         if wfnumber is not None:
