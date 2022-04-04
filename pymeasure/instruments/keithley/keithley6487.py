@@ -160,6 +160,63 @@ class Keithley6487(Instrument, KeithleyBuffer):
         is 60Hz and 5.0 is 50Hz"""
     )
 
+    ###########
+    # Trigger #
+    ###########
+
+    trigger_count = Instrument.control(
+        ":TRIG:COUN?", ":TRIG:COUN %d",
+        """ An integer property that controls the trigger count,
+        which can take values from 1 to 2048. """,
+        validator=truncated_range,
+        values=[1, 2048],
+        cast=int
+    )
+
+    trigger_count_inf = Instrument.control(
+        ":TRIG:COUNT?", "TRIG:COUNT %s",
+        """A string that controls the trigger count,
+        sets trigger count to INF mode instead of an integer""",
+        validator=strict_discrete_set,
+        values=['INF'],
+        cast=str
+    )
+
+    trigger_delay = Instrument.control(
+        ":TRIG:SEQ:DEL?", ":TRIG:SEQ:DEL %g",
+        """ A floating point property that controls the trigger delay
+        in seconds, which can take values from 0 to 999.9999 s. """,
+        validator=truncated_range,
+        values=[0, 999.9999]
+    )
+
+    ###########
+    # Filters #
+    ###########
+
+    filter_type = Instrument.control(
+        ":SENS:AVER:TCON?", ":SENS:AVER:TCON %s",
+        """ A String property that controls the filter's type.
+        REP : Repeating filter
+        MOV : Moving filter""",
+        validator=strict_discrete_set,
+        values=['REP', 'MOV'],
+        map_values=False)
+
+    filter_count = Instrument.control(
+        ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
+        """ A integer property that controls the number of readings that are
+        acquired and stored in the filter buffer for the averaging""",
+        validator=truncated_range,
+        values=[2, 100],
+        cast=int)
+
+    filter_state = Instrument.control(
+        ":SENS:AVER?", ":SENS:AVER %s",
+        """ A string property that controls if the filter is active.""",
+        validator=strict_discrete_set,
+        values=['ON', 'OFF'],
+        map_values=False)
 
     ####################
     #   Methods        #
@@ -178,3 +235,168 @@ class Keithley6487(Instrument, KeithleyBuffer):
         """Disables the source voltage of the instrument"""
         self.write(":SOUR:STAT: OFF")
     
+    def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
+        """ Configures the measurement of current.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param current: Upper limit of current in Amps, from -0.021 A to 0.021 A
+        :param auto_range: Enables auto_range if True, else uses the set current
+        """
+        log.info("%s is measuring current." % self.name)
+        self.write(":SENS:FUNC 'CURR';"
+                   ":SENS:CURR:NPLC %f;:FORM:ELEM READ;" % nplc)
+        if auto_range:
+            self.write(":SENS:CURR:RANG:AUTO 1;")
+        else:
+            self.current_range = current
+        self.check_errors()
+
+    def auto_range_source(self):
+        """ Configures the source to use an automatic range.
+        """
+        self.write(":SOUR:CURR:RANG:AUTO 1")
+
+    display_enabled = Instrument.control(
+        ":DISP:ENAB?", ":DISP:ENAB %d",
+        """ A boolean property that controls whether or not the display of the
+        sourcemeter is enabled. Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    @property
+
+    def error(self):
+        """ Returns a tuple of an error code and message from a
+        single error. """
+        err = self.values(":system:error?")
+        if len(err) < 2:
+            err = self.read()  # Try reading again
+        code = err[0]
+        message = err[1].replace('"', '')
+        return (code, message)
+
+    def check_errors(self):
+        """ Logs any system errors reported by the instrument.
+        """
+        code, message = self.error
+        while code != 0:
+            t = time.time()
+            log.info("Keithley 6487 reported error: %d, %s" % (code, message))
+            code, message = self.error
+            if (time.time() - t) > 10:
+                log.warning("Timed out for Keithley 6487 error retrieval.")
+    
+    def reset(self):
+        """ Resets the instrument and clears the queue.  """
+        self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
+
+    def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
+        """ Ramps to a target voltage from the set voltage value over
+        a certain number of linear steps, each separated by a pause duration.
+
+        :param target_voltage: A voltage in Volts
+        :param steps: An integer number of steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
+        voltages = np.linspace(
+            self.source_voltage,
+            target_voltage,
+            steps
+        )
+        for voltage in voltages:
+            self.source_voltage = voltage
+            time.sleep(pause)
+
+    def trigger(self):
+        """ Executes a bus trigger, which can be used when
+        :meth:`~.trigger_on_bus` is configured.
+        """
+        return self.write("*TRG")
+
+    def trigger_immediately(self):
+        """ Configures measurements to be taken with the internal
+        trigger at the maximum sampling rate.
+        """
+        self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
+
+    def trigger_on_bus(self):
+        """ Configures the trigger to detect events based on the bus
+        trigger, which can be activated by :meth:`~.trigger`.
+        """
+        self.write(":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;")
+
+    def set_trigger_counts(self, arm, trigger):
+        """ Sets the number of counts for both the sweeps (arm) and the
+        points in those sweeps (trigger), where the total number of
+        points can not exceed 2048 for finite count measurements
+        """
+        if arm * trigger > 2048 or arm * trigger < 0:
+            raise RangeException("Keithley 6487 has a combined maximum "
+                                 "of 2048 counts")
+        if arm < trigger:
+            self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
+        else:
+            self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
+    
+    def set_trigger_counts_inf(self):
+        """ Sets the number of counts for both sweeps and the points in those
+        sweeps to INF"""
+        self.write(":ARM:COUN INF;:TRIG:COUN INF")
+    
+    def sample_continuously(self):
+        """ Causes the instrument to continuously read samples
+        and turns off any buffer or output triggering
+        """
+        self.disable_buffer()
+        self.disable_output_trigger()
+        self.trigger_immediately()
+
+    def disable_output_trigger(self):
+        """ Disables the output trigger for the Trigger layer
+        """
+        self.write(":TRIG:OUTP NONE")
+
+    def set_timed_arm(self, interval):
+        """ Sets up the measurement to be taken with the internal
+        trigger at a variable sampling rate defined by the interval
+        in seconds between sampling points
+        """
+        if interval > 99999.99 or interval < 0.001:
+            raise RangeException("Keithley 6487 can only be time"
+                                 " triggered between 1 mS and 1 Ms")
+        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
+
+    def trigger_on_external(self, line=1):
+        """ Configures the measurement trigger to be taken from a
+        specific line of an external trigger
+
+        :param line: A trigger line from 1 to 6
+        """
+        cmd = ":ARM:SOUR TLIN;:TRIG:SOUR TLIN;"
+        cmd += ":ARM:ILIN %d;:TRIG:ILIN %d;" % (line, line)
+        self.write(cmd)
+
+    def output_trigger_on_external(self, line=1, after='DEL'):
+        """ Configures the output trigger on the specified trigger link
+        line number, with the option of supplying the part of the
+        measurement after which the trigger should be generated
+        (default to delay, which is right before the measurement)
+
+        :param line: A trigger line from 1 to 6
+        :param after: An event string that determines when to trigger
+        """
+        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
+
+    def disable_output_trigger(self):
+        """ Disables the output trigger for the Trigger layer
+        """
+        self.write(":TRIG:OUTP NONE")
+
+    def shutdown(self):
+        """ Ensures that the voltage is turned to zero
+        and disables the output. """
+        log.info("Shutting down %s." % self.name)
+        self.ramp_to_voltage(0.0)
+        self.stop_buffer()
+        self.disable_source()
