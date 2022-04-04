@@ -59,14 +59,37 @@ class Keithley6487(Instrument, KeithleyBuffer):
         keithley.shutdown()                     # Ramps the voltage to 0 V and
         disables output
         """
+    
+    auto_zero = Instrument.control(
+        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %s",
+        """ A property that controls the auto zero option. Valid values are
+        True (enabled) and False (disabled) and 'ONCE' (force immediate). """,
+        values={True: 1, False: 0, "ONCE": "ONCE"},
+        map_values=True,
+    )
 
+    line_frequency = Instrument.control(
+        ":SYST:LFR?", ":SYST:LFR %d",
+        """ An integer property that controls the line frequency in Hertz.
+        Valid values are 50 and 60. """,
+        validator=strict_discrete_set,
+        values=[50, 60],
+        cast=int,
+    )
 
+    line_frequency_auto = Instrument.control(
+        ":SYST:LFR:AUTO?", ":SYST:LFR:AUTO %d",
+        """ A boolean property that enables or disables auto line frequency.
+        Valid values are True and False. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
     
     #####################
     #   Voltage (V)     #
     #####################
-    source_enables = Instrument.control(
-        ":SOUR:STAT?", ":SOUR:STAT %s",
+    source_enabled = Instrument.control(
+        ":SOUR:VOLT:STAT?", ":SOUR:VOLT:STAT %s",
         """A string property that controls whether the voltage source is
         enabled, takes values OFF or ON. The convenience methods :meth:
         `~.Keithley6487.enable_source` and
@@ -74,6 +97,40 @@ class Keithley6487(Instrument, KeithleyBuffer):
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
+    )
+
+    auto_output_off = Instrument.control(
+        ":SOUR:CLE:AUTO?", ":SOUR:CLE:AUTO %d",
+        """ A boolean property that enables or disables the auto output-off.
+        Valid values are True (output off after measurement) and False (output
+        stays on after measurement). """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+    
+    source_delay = Instrument.control(
+        ":SOUR:VOLT:DEL?", ":SOUR:VOLT:DEL %g",
+        """ A floating point property that sets a manual delay for the source
+        after the output is turned on before a measurement is taken. When this
+        property is set, the auto delay is turned off. Valid values are
+        between 0 [seconds] and 999.9999 [seconds].""",
+        validator=truncated_range,
+        values=[0, 999.9999],
+    )
+
+    source_voltage = Instrument.control(
+        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
+        """ A floating point property that controls the source voltage
+        in Volts. """
+    )
+
+    source_voltage_range = Instrument.control(
+        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
+        """ A floating point property that controls the source voltage
+        range in Volts, which can take values of 10, 50, or 500V.
+        Auto-range is disabled when this property is set. """,
+        validator=strict_discrete_set,
+        values=[10.0, 50.0, 500.0]
     )
 
     #####################
@@ -95,7 +152,13 @@ class Keithley6487(Instrument, KeithleyBuffer):
         values=[-0.021, 0.021]
     )
 
-
+    current_nplc = Instrument.control(
+        ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
+        """ A floating point property that controls the number of power line cycles
+        (NPLC) for the DC current measurements, which sets the integration period
+        and measurement speed. Takes values from 0.001 to 6.0 or 5.0, where 6.0
+        is 60Hz and 5.0 is 50Hz"""
+    )
 
 
     ####################
