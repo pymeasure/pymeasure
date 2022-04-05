@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from numpy import bool_
 
 class Parameter:
     """ Encapsulates the information for an experiment parameter
@@ -177,7 +178,7 @@ class BooleanParameter(Parameter):
                 raise ValueError("BooleanParameter given string value of '%s'" % value)
         elif isinstance(value, (int, float)) and value in [0, 1]:
             self._value = bool(value)
-        elif isinstance(value, bool):
+        elif isinstance(value, (bool, bool_)):
             self._value = value
         else:
             raise ValueError("BooleanParameter given non-boolean value of "
