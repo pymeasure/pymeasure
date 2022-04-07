@@ -120,6 +120,8 @@ class Adapter:
                         "binary_values method")
 
     def __getattribute__(self, name):
+        """ Override to acquire the 'connection_lock' lock through the duration of attribute access.
+        """
         if not name == "connection_lock" and object.__getattribute__(self, "connection_lock_initialized"):
             with object.__getattribute__(self, "connection_lock"):
                 ret = object.__getattribute__(self, name)
@@ -129,6 +131,8 @@ class Adapter:
         return ret
 
     def __setattr__(self, name, value):
+        """ Override to acquire the 'connection_lock' lock through the duration of attribute setting.
+        """
         if not name == "connection_lock" and object.__getattribute__(self, "connection_lock_initialized"):
             with object.__getattribute__(self, "connection_lock"):
                 object.__setattr__(self, name, value)
