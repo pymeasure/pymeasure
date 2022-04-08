@@ -122,29 +122,24 @@ class Adapter:
     def __getattribute__(self, name):
         """ Override to acquire the 'connection_lock' lock through the duration of attribute access.
         """
-        if not name == "connection_lock" and \
-                object.__getattribute__(self, "connection_lock_initialized"):
-            with object.__getattribute__(self, "connection_lock"):
-                ret = object.__getattribute__(self, name)
+        if name not in ("connection_lock", "connection_lock_initialized") and self.connection_lock_initialized:
+            with self.connection_lock:
+                ret = super().__getattribute__(name)
         else:
-            ret = object.__getattribute__(self, name)
+            ret = super().__getattribute__(name)
 
         return ret
 
     def __setattr__(self, name, value):
         """ Override to acquire the 'connection_lock' lock through the duration of attribute setting.
         """
-        if not name == "connection_lock" and \
-                object.__getattribute__(self, "connection_lock_initialized"):
-            with object.__getattribute__(self, "connection_lock"):
-                object.__setattr__(self, name, value)
-
-        elif name == "connection_lock" and \
-                object.__getattribute__(self, "connection_lock_initialized"):
+        if name != "connection_lock" and self.connection_lock_initialized:
+            with self.connection_lock:
+                super().__setattr__(name, value)
+        elif name == "connection_lock" and self.connection_lock_initialized:
             raise ValueError("Adapter connection_lock cannot be modified!")
-
         else:
-            object.__setattr__(self, name, value)
+            super().__setattr__(name, value)
 
 
 class FakeAdapter(Adapter):
