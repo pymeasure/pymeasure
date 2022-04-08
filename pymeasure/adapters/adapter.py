@@ -122,7 +122,8 @@ class Adapter:
     def __getattribute__(self, name):
         """ Override to acquire the 'connection_lock' lock through the duration of attribute access.
         """
-        if name not in ("connection_lock", "connection_lock_initialized") and self.connection_lock_initialized:
+        if name not in ("connection_lock", "connection_lock_initialized") \
+                and self.connection_lock_initialized:
             with self.connection_lock:
                 ret = super().__getattribute__(name)
         else:
