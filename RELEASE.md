@@ -35,8 +35,7 @@ Official guide [here](https://packaging.python.org/en/latest/tutorials/packaging
 1. Release to PyPI first (the feedstock pulls from there)
 2. Pull the latest `master` branch
 3. `git checkout -b v<version>_release`
-4. Download the tarball and determine the sha256 checksum
-    - `wget -qO- https://github.com/pymeasure/pymeasure/archive/<version>.tar.gz | sha256sum`
+4. Get the SHA256 hash of the PyPI package at https://pypi.org/project/PyMeasure/#files
 5. Update recipe/meta.yml with the checksum and version number
 6. Push the changes up as a PR
 7. Verify that the builds complete
