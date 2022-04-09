@@ -36,6 +36,7 @@ setup(
     license='MIT License',
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
+    long_description_content_type='text/x-rst',
     install_requires=[
         "numpy >= 1.6.1",
         "pandas >= 0.14",
