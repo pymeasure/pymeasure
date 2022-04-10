@@ -71,6 +71,7 @@ class Thermotron3800(Instrument):
         "SETP1?", "SETP1,%g",
         """ A floating point property that controls the setpoint 
         of the oven in Celsius. This property can be set.  
+        Setpoint may not return the correct value until the "run" command is sent. 
         
         :return: None
         """,
