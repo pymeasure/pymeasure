@@ -83,7 +83,7 @@ jobs:
           use-only-tar-bz2: true  # for caching to work properly
       - name: Install Pymeasure
         # If the pytest problem matcher stops working because of bad paths, to an editable install
-        run: pip install .
+        run: pip install .[tests]
       - name: Conda info & list
         run: |
           conda info
