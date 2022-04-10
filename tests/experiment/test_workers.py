@@ -43,15 +43,6 @@ RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomP
 # from data.procedure_for_testing import RandomProcedure
 
 
-def test_procedure():
-    """ Ensure that the loaded test procedure is properly functioning
-    """
-    procedure = RandomProcedure()
-    assert procedure.iterations == 100
-    assert procedure.delay == 0.001
-    assert hasattr(procedure, 'execute')
-
-
 def test_worker_stop():
     procedure = RandomProcedure()
     file = tempfile.mktemp()
