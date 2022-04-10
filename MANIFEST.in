@@ -1,8 +1,5 @@
-include AUTHORS.txt
-include CHANGES.rst
-include RELEASE.md
-recursive-include docs *
+# Files get pulled from Git repo by setuptools_scm, we only have to exclude what we don't want
 prune docs/_build
-recursive-include examples *
-recursive-include requirements *
-recursive-include tests *
+prune .github
+exclude .gitignore
+exclude .readthedocs.yml
