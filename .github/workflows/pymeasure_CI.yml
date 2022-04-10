@@ -81,6 +81,9 @@ jobs:
           activate-environment: pymeasure
           auto-update-conda: true
           use-only-tar-bz2: true  # for caching to work properly
+      - name: Install Pymeasure
+        # If the pytest problem matcher stops working because of bad paths, to an editable install
+        run: pip install .
       - name: Conda info & list
         run: |
           conda info
@@ -89,9 +92,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "::add-matcher::.github/pytest.json"
-          xvfb-run -a python setup.py test
+          xvfb-run -a pytest
       - name: Run pytest
         if: runner.os != 'Linux'
         run: |
           echo "::add-matcher::.github/pytest.json"
-          python setup.py test
+          pytest
