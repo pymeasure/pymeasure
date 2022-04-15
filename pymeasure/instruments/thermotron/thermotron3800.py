@@ -22,9 +22,10 @@
 # THE SOFTWARE.
 #
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_range
 from time import sleep
 from enum import IntFlag
+
 
 class Thermotron3800(Instrument):
     """ Represents the Thermotron 3800 Oven.
@@ -42,38 +43,39 @@ class Thermotron3800(Instrument):
 
     def write(self, command):
         super().write(command)
-        # Insert wait time after sending command. This wait time should be >1000ms for consistent results.
+        # Insert wait time after sending command.
+        # This wait time should be >1000ms for consistent results.
         sleep(1)
 
     id = Instrument.measurement(
-        "IDEN?", """ Reads the instrument identification 
-        
+        "IDEN?", """ Reads the instrument identification
+
         :return: String
         """
     )
 
     temperature = Instrument.measurement(
-        "PVAR1?", """ Reads the current temperature of the oven 
+        "PVAR1?", """ Reads the current temperature of the oven
         via built in thermocouple
-        
+
         :return: float
         """
     )
 
     mode = Instrument.measurement(
         "MODE?", """ Gets the operating mode of the oven.
-        
+
         :return: Tuple(String, int)
         """,
         get_process=lambda mode: Thermotron3800.__translate_mode(mode)
     )
-    
+
     setpoint = Instrument.control(
         "SETP1?", "SETP1,%g",
-        """ A floating point property that controls the setpoint 
-        of the oven in Celsius. This property can be set.  
-        Setpoint may not return the correct value until the "run" command is sent. 
-        
+        """ A floating point property that controls the setpoint
+        of the oven in Celsius. This property can be set.
+        Setpoint may not return the correct value until the "run" command is sent.
+
         :return: None
         """,
         validator=strict_range,
