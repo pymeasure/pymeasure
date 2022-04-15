@@ -132,7 +132,7 @@ class Channel():
         """ This control reads and sets the DC offset of the source 1 output. 
         Range is -2.5 - +2.5 V""",
         validator=strict_range,
-        values=[-2.5, 2.55],
+        values=[-5, 5],
     )
 
     trigger_source = Instrument.control(
