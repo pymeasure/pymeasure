@@ -96,14 +96,18 @@ class Thermotron3800(Instrument):
         '''
         self.write("STOP")
 
-    def initalize_oven(self):
+    def initalize_oven(self, wait=True):
         '''
-        Please wait 3 seconds after calling initialize_oven before running
-        any other oven commands (per manufacturer's instructions).
+        The manufacturer recommends a 3 second wait time after after initializing the oven.
+        The optional "wait" variable should remain true, unless the 3 second wait time is
+        taken care of on the user end. The wait time is split up in the following way:
+            1 second (built into the write function) +
+            2 seconds (optional wait time from this function (initialize_oven)).
 
         :return: None
         '''
         self.write("INIT")
+        if wait: sleep(2)
 
     class Thermotron3800Mode(IntFlag):
         '''
