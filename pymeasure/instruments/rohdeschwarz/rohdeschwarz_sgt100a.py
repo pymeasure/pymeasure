@@ -25,7 +25,7 @@
 from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorDM
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
-from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag
+from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag, IntegerTag
 from io import BytesIO
 import struct
 
@@ -269,11 +269,23 @@ class RS_SGT100A(RFSignalGeneratorDM):
 
         return data
 
+    def _get_iqdata(self, iq_seq):
+        """ Utility method that translate iq samples into a list of integers couples """
+        data = []
+        iq_data_max_value = 2**(self._iq_data_bits - 1) - 1
+        for iq in iq_seq:
+            data.append((round(iq.real*iq_data_max_value),
+                         round(iq.imag*iq_data_max_value)))
+        return data
+
     def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
         stream = BytesIO()
+        waveform_tag = WaveformTag(self._get_iqdata(iqdata))
         tag_list = [TypeTag(magic="SMU-WV"),
                     IntegerTag(name="CLOCK", value=sampling_rate),
-                    WaveformTag(self._get_iqdata(iqdata))]
+                    IntegerTag(name="SAMPLES", value=waveform_tag.samples),
+                    waveform_tag,
+                    ]
         if markers is not None:
             tag_list.append(CLWTag(self._get_markerdata(markers)))
         
