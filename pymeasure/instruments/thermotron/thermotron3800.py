@@ -24,6 +24,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import sleep
+from enum import IntFlag
 
 class Thermotron3800(Instrument):
     """ Represents the Thermotron 3800 Oven.
@@ -102,8 +103,7 @@ class Thermotron3800(Instrument):
         '''
         self.write("INIT")
 
-    @staticmethod
-    def __translate_mode(mode_coded_integer):
+    class Thermotron3800Mode(IntFlag):
         '''
         Bit 0 = Program mode
         Bit 1 = Edit mode (controller in stop mode)
@@ -114,20 +114,40 @@ class Thermotron3800(Instrument):
         Bit 6 = Unused
         Bit 7 = Calibration mode
         '''
-        map = {
-            1: "Program mode",
-            2: "Edit mode (controller in stop mode)",
-            4: "View program mode",
-            8: "Edit mode (controller in hold mode)",
-            16: "Manual mode",
-            32: "Delayed start mode",
-            64: "Unused (Error)",
-            128: "Calibration mode"
-        }
+        PROGRAM_MODE = 1
+        EDIT_MODE_STOP = 2
+        VIEW_PROGRAM_MODE = 4
+        EDIT_MODE_HOLD = 8
+        MANUAL_MODE = 16
+        DELAYED_START_MODE = 32
+        UNUSED = 64
+        CALIBRATION_MODE = 128
+        UNKNOWN_MODE = -1
 
-        mode_coded_integer_int = int(mode_coded_integer)
+    @staticmethod
+    def get_bit_array_from_int(mode_int):
+        mode_bits = []
+        mask = 0x1
+        while mask <= mode_int:
 
-        if mode_coded_integer in map:
-            return tuple( (map[mode_coded_integer_int], mode_coded_integer_int) )
-        else:
-            return tuple( ("Unknown mode.", mode_coded_integer_int) )
+            bit = (mode_int & mask)
+            mask = mask << 1
+
+            if bit != 0:
+                mode_bits.append(bit)
+
+        return mode_bits
+
+    @staticmethod
+    def __translate_mode(mode_coded_integer):
+
+        mode_bits = Thermotron3800.get_bit_array_from_int(int(mode_coded_integer))
+
+        mode = 0
+        for bit in mode_bits:
+            if Thermotron3800.Thermotron3800Mode(bit) in Thermotron3800.Thermotron3800Mode:
+                mode |= Thermotron3800.Thermotron3800Mode(bit)
+            else:
+                mode |= Thermotron3800.Thermotron3800Mode.UNKNOWN_MODE
+
+        return mode if mode != 0 else Thermotron3800.Thermotron3800Mode.UNKNOWN_MODE
