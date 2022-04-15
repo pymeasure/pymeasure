@@ -74,6 +74,7 @@ class Thermotron3800(Instrument):
         "SETP1?", "SETP1,%g",
         """ A floating point property that controls the setpoint
         of the oven in Celsius. This property can be set.
+        "setpoint" will not update until the "run()" command is called.
         After setpoint is set to a new value, the "run()" command
         must be called to tell the oven to run to the new temperature.
 
