@@ -190,6 +190,10 @@ encrypted format from Rohde & Schwarz and so it is not possible to correctly dec
         super().__init__(name=name, size=0, value=value, extra_chars=extra_chars)
 
     @property
+    def samples (self):
+        return len(self.value)
+
+    @property
     def size (self):
         return len(self.value) * 4 + 1 + len(self.extra_chars)
 
