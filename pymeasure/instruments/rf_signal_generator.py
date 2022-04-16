@@ -220,6 +220,24 @@ Another example for user data loading
     memory = None
     """ Memory size for loading user defined patterns """ 
 
+    def _process_iq_sequence(self, sequence):
+        """ Identify repetition in sequence and return processed list
+
+        :param sequence: List of string names
+        :return : List of items, each item is a list of two elements: name and repetitions
+
+        """
+        return_value = []
+        repetitions = 0
+        for i, name in enumerate(sequence):
+            next_name = (sequence + [None])[i+1]
+            if (next_name != name):
+                return_value.append([name, repetitions+1])
+                repetitions = 0
+            repetitions += 1
+
+        return return_value
+
     def _get_iqdata(self, iq_seq):
         """ Utility method that translate iq samples into a list of integers """
         data = []
