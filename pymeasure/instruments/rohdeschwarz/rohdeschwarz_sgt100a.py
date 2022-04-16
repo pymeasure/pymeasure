@@ -27,7 +27,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag, IntegerTag
 from io import BytesIO
-import struct
+import re
 
 class RS_SGT100A(RFSignalGeneratorDM):
     # Define instrument limits according to datasheet
@@ -41,92 +41,38 @@ class RS_SGT100A(RFSignalGeneratorDM):
     _iq_data_bits = 16
     _waveform_path = '/var/user/waveform'
     ####################################################################
-    # 3.5.14.5 SOURce:DM (Digital Modulation) Subsystem ([:SOURce]:DM)
+    # 11.14.4 SOURce:BB:ARB Subsystem
     ####################################################################
-    CUSTOM_MODULATION_DATA = {
-        'Pattern0011' : None, # Not supported
-        'Pattern0101' : "PATT;PATT ALT",
-        'PatternPN9' :  "PRBS;PRBS 9",
-        'DATA' : "DLIST",
-    }
 
     CUSTOM_MODULATION_ENABLE_MAP = {
-        1: "ON",
-        0: "OFF"
+        True: 1,
+        False: 0
     }
 
     custom_modulation_enable = Instrument.control(
-        ":DM:STATE?", ":DM:STATE %s", 
-        """ A boolean property that enables or disables the Custom modulation. 
+        "SOURce1:BB:ARBitrary:STATe?", "SOURce1:BB:ARBitrary:STATe %d", 
+        """ A boolean property that activates the standard and deactivates
+        all the other digital standards and digital modulation modes in the same path.
+        You have to selecta an waveform first.
         This property can be set. """,
         validator=strict_discrete_set,
         values=CUSTOM_MODULATION_ENABLE_MAP,
         map_values=True
     )
 
-    custom_modulation = Instrument.control(
-        ":DM:FORMat?", ":DM:FORMat %s", 
-        """ A string property that allow to selects the modulation. QWCDma is only available with option SMIQB47.
-        """,
-        validator=strict_discrete_set,
-        values=RFSignalGeneratorDM.MODULATION_TYPES
-    )
-
-    custom_modulation_filter = Instrument.setting(
-        ":DM:FILTer:TYPE %s", 
-        """ A string property that allow to set the type of filter.
-        """,
-        validator=strict_discrete_set,
-        values=RFSignalGeneratorDM.MODULATION_FILTERS
-    )
-
-    custom_modulation_bbt = Instrument.setting(
-        ":DM:FILTer:PARameter %f", 
-        """ A  property that allow to set filter parameter (Roff Off or BxT rate).
-        """,
-        validator=strict_range,
-        values=[0.1,1.0]
-    )
-
-    custom_modulation_symbol_rate = Instrument.setting(
-        ":DM:SRATe %e", 
-        """ A integer property that allow to set the transmission symbol rate
-        This property can be set. """,
-        validator=strict_range,
-        values=[100, 7e6]
-    )
-
-    custom_modulation_ask_depth = Instrument.setting(
-        ":DM:ASK:DEPTh %e", 
-        """ An integer property that allow to set the depth for the amplitude shift keying (ASK) modulation.
-        Depth is set as a percentage of the full power on level.
-        """,
-        validator=strict_range,
-        values=[0, 100]
-    )
-
-    custom_modulation_fsk_deviation = Instrument.setting(
-        ":DM:FSK:DEViation %e", 
-        """ An integer property that allow to set the FSK frequency deviation value.
-        Unit is Hz.
-        """,
-        validator=strict_range,
-        values=[100, 2.5e6]
-    )
-
-    custom_modulation_data = Instrument.setting(
-        ":DM:SOURce %s", 
-        """ A string property that allow to set the data source.
-        """,
-        validator=strict_discrete_set,
-        values=CUSTOM_MODULATION_DATA,
-        map_values=True
-    )
-
+    ####################################################################
+    # 11.9 MMEMory Subsystem
+    ####################################################################
     memory = Instrument.measurement(
-        ":DM:DLISt:FREE?",
-        """ This property returns a list of data list names separated by commas.""",
+        ":MEMory:HFRee?",
+        """ This property returns the total physical memory in Kb. """,
         get_process=lambda v: int(v[0]),
+    )
+
+    file_list = Instrument.measurement(
+        ":MMEMory:CATalog?",
+        """ This property returns the list of filenames in the current directory """,
+        get_process=lambda v: RS_SGT100A. _get_file_list(v)
     )
 
     def __init__(self, resourceName, **kwargs):
@@ -136,82 +82,22 @@ class RS_SGT100A(RFSignalGeneratorDM):
             **kwargs
         )
 
-    def _get_symbol_length(self):
-        modulation = self.custom_modulation
-        symbol_length = 1
-        if modulation in ("FSK4", "QPSK", "PSK4", "P4QPsk", "AFSK4"):
-            symbol_length = 2
-        elif modulation == "USER":
-            symbol_length = int(float(self.ask("DM:MLIST:DATA?").split(",")[1]))
-        return symbol_length
-            
+    @staticmethod
+    def _get_file_list(command_output):
+        """ Extract file names from output of command :MMEMory:CATalog? """
+        # Search all the strings between double quotes
+        command_output = ",".join([str(v) for v in command_output])
+        pattern = r'"([^\"]*)"'
+        m = re.findall(pattern, command_output)
+        return [v.split(",")[0] for v in m]
+
     def data_load(self, bitsequences, spacings):
         """ Load data into signal generator for transmission, the parameters are:
         bitsequences: list of items. Each item is a string of '1' or '0' in transmission order
         spacings: integer list, gap to be inserted between each bitsequence  expressed in number of bit
         """
         
-        # Switch line terminator to EOI to send data in packed format
-        self.write(":SYST:COMM:GPIB:LTER EOI")
-        # Select data list
-        self.write("SOURce:DM:DLISt:DELete 'data2tx'")
-        self.write("SOURce:DM:DLISt:SELect 'data2tx'")
-
-        # Write data list and store positions when switch between sequence and spacing occurs
-        sympos = 0
-        ctrls = []
-        val = ''
-        symbol_length = self._get_symbol_length()
-        for bitseq, spacing in zip(bitsequences, spacings):
-            # Position to switch on RF
-            ctrls.append(sympos)
-            val += bitseq + "0"*spacing
-            sympos += (len(bitseq)//symbol_length)
-            # Position to switch off RF
-            ctrls.append(sympos)
-            sympos += (spacing//symbol_length)
-        length = len(val)
-
-        # Pad to have size multiple of 8
-        if (length % 8):
-            val = val + "0"*(8-(length % 8))
-            length = len(val)
-
-        # Define a xor mask to invert bit for ask/ook
-        # For some weird reason, 1 correspond to OFF and 0 to ON
-        xor_mask = 0xff if (self.custom_modulation == "ASK") else 0
-
-        # Group bit data in byte format
-        values = []
-        for i in range(0, length, 8):
-            value = int(val[i:i+8], 2) ^ xor_mask
-            values.append(value)
-
-        self.adapter.write_binary_values("SOURce:DM:DLISt:DATA ", values, timeout=20000, datatype='B')
-        self.complete
-
-        # Write control list
-        # The control list is used to switch on the RF during sequence transmission and switch it off
-        # during spacing
-        self.write("SOURce:DM:CLISt:DELete 'datactrl'")
-        self.write("SOURce:DM:CLISt:SELect 'datactrl'")
-        self.complete
-
-        values = []
-        index_mask = (1 << 26) - 1 # 26 bits
-        for i,v in enumerate(ctrls):
-            # Switch on the power at the beginning of each sequence and switch it off at end of the sequences
-            values.append( (((i+1)%2) << 31) + (v & index_mask))
-        self.adapter.write_binary_values("SOURce:DM:CLISt:DATA ", values, timeout=20000, datatype="I", is_big_endian=True)
-        self.complete
-
-        # Switch back to normal mode
-        self.write(":SYST:COMM:GPIB:LTER STANDARD")
-
-        self.write(":DM:CLISt:CONTrol ON")
-        self.write(":DM:PRAMp:SOURce CLISt")
-        self.write(":DM:PRAMp:STATe ON")
-        self.complete
+        raise NotImplementedError("Method not implemented")
 
     def enable_modulation(self):
         # Do nothing since  each modulation type should be enabled with relevant command
@@ -219,38 +105,40 @@ class RS_SGT100A(RFSignalGeneratorDM):
 
     def disable_modulation(self):
         """ Disables the signal modulation. """
-        self.amplitude_modulation_enable = "OFF"
-        self.pulse_modulation_enable = "OFF"
-        self.custom_modulation_enable = 0
-        self.write("SOUR:PDC:STAT OFF")
+        # TBD
+        pass
 
-    def data_trigger_setup(self, mode='SINGLE'):
+    def data_trigger_setup(self, mode=None):
         """ Configure the trigger system for bitsequence transmission
         """
-        self.write(":SOUR:DM:TRIGger:SOURce INT")
-        self.write(":SOUR:DM:SEQ %s"%mode)
+        self.write(":BB:ARBitrary:TRIGger:SOURce INT")
+        playlist = self.ask(":BB:ARBitrary:WSEG:SEQ:SEL?").strip() != '""'
+        if (mode is None):
+            mode = 'AUTO' if playlist else 'SINGLE'
+            
+        self.write(f":BB:ARBitrary:TRIGger:SEQ {mode:s}")
+        if mode == 'AUTO' and playlist:
+            self.write(":BB:ARB:TRIG:SMOD SEQ")
+        else:
+            self.write(":BB:ARB:TRIG:SMOD NEXT")
 
     def data_trigger(self):
         """ Trigger a bitsequence transmission
         """
-        self.write(":TRIG:DM:IMM")
+        playlist = self.ask(":BB:ARBitrary:WSEG:SEQ:SEL?").strip() != '""'
+        if playlist:
+            # When the playlist is defined, the only way to start/restart the play is to
+            # send the command below (trigger mode must be AUTO)
+            self.write(":BB:ARB:TRIG:SMOD SEQ")
+        else:
+            self.write("BB:ARB:TRIG:EXEC")
 
     def set_fsk_constellation(self, constellation, fsk_dev):
         """ For multi level FSK modulation, we need to define the constellation mapping.
 
         For R&S SMIQ06B, there is a dedicated user modulation to define FSK constellation.
         """
-        self.bit_per_symbol = len(format(max(constellation.keys()), "b"))
-        if (self.bit_per_symbol > 8):
-            raise Exception("Multi level FSK is dupported up to 256 levels, i.e 8bit per symbol")
-
-        cmd_params = "3,{},0,0,0,0".format(self.bit_per_symbol)
-        for val in sorted(constellation.keys()):
-            cmd_params += ",{:.3f},0".format(1/constellation[val])
-        self.write("SOURce:DM:MLISt:DELete 'datamod'")
-        self.write("SOURce:DM:MLISt:SELect 'datamod'")
-        self.write(":SOUR:DM:MLIS:DATA {}".format(cmd_params))
-        self.write(":DM:FORMat USER")
+        raise NotImplementedError("Method not implemented")
 
     def _get_markerdata(self, markers_list):
         # Markers are integer from 1 to 4
@@ -298,19 +186,29 @@ class RS_SGT100A(RFSignalGeneratorDM):
         # Select waveform
         self.write(f"BB:ARB:WAV:SEL '{name:s}'")
 
-    def data_iq_sequence_load(self, iqdata_seq, sampling_rate, name):
-        # Output is like this
-        # :RAD:ARB:SEQ "SEQ:Test_Data","WFM1:ramp_test_wfm",25,ALL,"WFM1:sine_test_wfm",100,ALL
+    def data_iq_sequence_load(self, iqdata_seq, name=None, sampling_rate=None):
+
+        if name is None:
+            name = "IQSequence"
 
         # Create configuration file
-        self.write(f"BB:ARB:WSEG:CONF:SEL '{name:s}_conf'")
+        conf_file = f"{name:s}_conf.inf_mswv"
+        self.delete_file(conf_file)
+        self.write(f"BB:ARB:WSEG:CONF:SEL '{conf_file:s}'")
+
         # Define multisegment file name
-        self.write(f"BB:ARB:WSEG:CONF:OFIL '{name:s}'")
+        seq_file = f"{name:s}.wv"
+        self.delete_file(seq_file)
+        self.write(f"BB:ARB:WSEG:CONF:OFIL '{seq_file:s}'")
+
         # Set sampling rate, if defined
         if sampling_rate is not None:
             self.write(f'BB:ARB:WSEG:CONF:CLOC:MODE USER')
             self.write(f'BB:ARB:WSEG:CONF:CLOC {sampling_rate:d}Hz')
-        self.write('BB:ARB:WSEG:CONF:LEV:MODE UNCH')
+        else:
+            self.write(f'BB:ARB:WSEG:CONF:CLOC:MODE UNCHanged')
+        self.write('BB:ARB:WSEG:CONF:LEV:MODE UNCHanged')
+
         # Process list and identify sequences repetitions
         segment_list = self._process_iq_sequence(iqdata_seq)
         # Identify unique segments
@@ -319,14 +217,26 @@ class RS_SGT100A(RFSignalGeneratorDM):
         unique_segments_idx = {v:i for (i,v) in enumerate(unique_segments)}
         
         for seg_name in unique_segments:
-            self.write('BB:ARB:WSEG:CONF:SEGM:APP {seg_name:s}')
+            self.write(f"BB:ARB:WSEG:CONF:SEGM:APP '{seg_name:s}'")
 
-        self.write(f"BB:ARB:WSEG:CRE")
+        self.write(f"BB:ARB:WSEG:CRE '{conf_file:s}'")
 
         # Make playlist
-        self.write('BB:ARB:WSEG:SEQ:SEL {name:s}_pl')
+        # Define multisegment file name
+        pl_file = f"{name:s}_pl.wvs"
+        self.delete_file(pl_file)
+        self.write(f"BB:ARB:WSEG:SEQ:SEL '{pl_file:s}'")
         for i, (seg_name, rep) in enumerate(segment_list):
             last = (i == (len(segment_list) - 1))
             next_p = 'BLANK' if last else 'NEXT'
             idx = unique_segments_idx[seg_name]
-            self.write('BB:ARB:WSEG:SEQ:APP ON,{idx:d},{rep:d},{next_p:s}')
+            self.write(f'BB:ARB:WSEG:SEQ:APP ON,{idx:d},{rep:d},{next_p:s}')
+ 
+        # Select waveform
+        self.complete
+        self.write(f"BB:ARB:WAV:SEL '{seq_file:s}'")
+
+    def delete_file(self, filename):
+        """ Delete a file in the instrument memory """
+        if filename in self.file_list:
+            self.write(f":MMEM:DEL '{filename:s}'")
