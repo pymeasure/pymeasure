@@ -148,24 +148,6 @@ class AgilentE4438C(RFSignalGeneratorDM):
             data.append(value)
         return data
 
-    def _process_iq_sequence(self, sequence):
-        """ Identify repetition in sequence and return processed list
-
-        :param sequence: List of string names
-        :return : List of items, each item is a list of two elements: name and repetitions
-
-        """
-        return_value = []
-        repetitions = 0
-        for i, name in enumerate(sequence):
-            next_name = (sequence + [None])[i+1]
-            if (next_name != name):
-                return_value.append([name, repetitions])
-                repetitions = 0
-            repetitions += 1
-
-        return return_value
-
     def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
         self.adapter.write_binary_values(f'MEM:DATA "WFM1:{name}",', self._get_iqdata(iqdata), is_big_endian=True, datatype='h')
         if markers is not None:
