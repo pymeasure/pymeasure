@@ -132,32 +132,10 @@ class Thermotron3800(Instrument):
         DELAYED_START_MODE = 32
         UNUSED = 64
         CALIBRATION_MODE = 128
-        UNKNOWN_MODE = -1
-
-    @staticmethod
-    def get_bit_array_from_int(mode_int):
-        mode_bits = []
-        mask = 0x1
-        while mask <= mode_int:
-
-            bit = (mode_int & mask)
-            mask = mask << 1
-
-            if bit != 0:
-                mode_bits.append(bit)
-
-        return mode_bits
 
     @staticmethod
     def __translate_mode(mode_coded_integer):
 
-        mode_bits = Thermotron3800.get_bit_array_from_int(int(mode_coded_integer))
+        mode = Thermotron3800.Thermotron3800Mode(int(mode_coded_integer))
 
-        mode = 0
-        for bit in mode_bits:
-            if Thermotron3800.Thermotron3800Mode(bit) in Thermotron3800.Thermotron3800Mode:
-                mode |= Thermotron3800.Thermotron3800Mode(bit)
-            else:
-                mode |= Thermotron3800.Thermotron3800Mode.UNKNOWN_MODE
-
-        return mode if mode != 0 else Thermotron3800.Thermotron3800Mode.UNKNOWN_MODE
+        return mode
