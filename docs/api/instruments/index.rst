@@ -49,6 +49,7 @@ Instruments by manufacturer:
    signalrecovery/index
    srs/index
    tektronix/index
+   thermotron/index
    thorlabs/index
    toptica/index
    yokogawa/index
