@@ -57,7 +57,7 @@ class Thermotron3800(Instrument):
     temperature = Instrument.measurement(
         "PVAR1?", """ Reads the current temperature of the oven
         via built in thermocouple. Default unit is Celsius, unless
-        changed by the user. 
+        changed by the user.
 
         :return: float
         """
