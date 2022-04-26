@@ -30,6 +30,7 @@ from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range
 from time import time
 from pyvisa.errors import VisaIOError
+import numpy as np
 
 
 log = logging.getLogger(__name__)
@@ -88,6 +89,16 @@ class Agilent33500(Instrument):
     def beep(self):
         """ Causes a system beep. """
         self.write("SYST:BEEP")
+
+    is_big_endian = Instrument.control(
+        "FORM:BORD?", "FORM:BORD %s",
+        """A boolean property that controls if the binary transfers are [True] big endian (MSB first) or 
+        [False] little endian. Per the manual: '[Default = True] use this setting if you are using Keysight IO Libraries
+        [False] most computers use this'""",
+        validator=strict_discrete_set,
+        values={True: 'NORM', False: 'SWAP'},
+        map_values=True
+    )
 
     shape = Instrument.control(
         "FUNC?", "FUNC %s",
@@ -245,6 +256,14 @@ class Agilent33500(Instrument):
         Can be set. """,
     )
 
+    sync_polarity = Instrument.control(
+        "OUTP:SYNC:POL?", "OUTP:SYNC:POL %s",
+        """ Sets the Sync output polarity. NORM : sync is low until sync even occurs, falling to zero at marker point
+        INV: sync normally high, set low at sync event, back to high at marker point""",
+        validator=strict_discrete_set,
+        values= ['NORM', 'INV']
+    )
+
     burst_state = Instrument.control(
         "BURS:STAT?", "BURS:STAT %d",
         """ A boolean property that controls whether the burst mode is on
@@ -367,21 +386,16 @@ class Agilent33500(Instrument):
                             parameter.
 
                             format = 'DAC' (default): Accepts list of integer values ranging from
-                            -32767 to +32767. Minimum of 8 a maximum of 65536 points.
+                            -32767 to +32767 (32767 == 2**15-1). Minimum of 8 a maximum of 65536 points.
+                            Transfer is binary
 
                             format = 'float': Accepts list of floating point values ranging from
-                            -1.0 to +1.0. Minimum of 8 a maximum of 65536 points.
-
-                            format = 'binary': Accepts a binary stream of 8 bit data.
-        :param data_format: Defines the format of data_points. Can be 'DAC' (default), 'float' or
-                            'binary'. See documentation on parameter data_points above.
+                            -1.0 to +1.0. Minimum of 8 a maximum of 65536 points. Transfer is ASCII
         """
         if data_format == 'DAC':
-            separator = ', '
-            data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
-            data_string = separator.join(data_points_str)  # Join strings with separator
-            print("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
-            self.write("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
+            data = np.array(data_points, dtype=int)
+            endianness = self.is_big_endian
+            self.adapter.write_binary_values(f"DATA:ARB:DAC {arb_name}, ", data, is_big_endian=endianness, datatype='h')
             return
         elif data_format == 'float':
             separator = ', '
@@ -390,10 +404,8 @@ class Agilent33500(Instrument):
             print("DATA:ARB {}, {}".format(arb_name, data_string))
             self.write("DATA:ARB {}, {}".format(arb_name, data_string))
             return
-        elif data_format == 'binary':
-            raise NotImplementedError('The binary format has not yet been implemented. Use "DAC" or "float" instead.')
         else:
-            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
+            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float"')
 
     display = Instrument.setting(
         "DISP:TEXT '%s'",
