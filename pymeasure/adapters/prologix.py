@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,8 @@ class PrologixAdapter(SerialAdapter):
 
     :param port: The Serial port name or a serial.Serial object
     :param address: Integer GPIB address of the desired instrument
-    :param rw_delay: An optional delay to set between a write and read call for slow to respond instruments.
+    :param rw_delay: An optional delay to set between a write and read call for
+        slow to respond instruments.
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
     :param kwargs: Key-word arguments if constructing a new serial object
@@ -103,7 +104,7 @@ class PrologixAdapter(SerialAdapter):
         command += "\n"
         self.connection.write(command.encode())
 
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt = "ieee"):
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
         :param values: data to be writen to the device.
@@ -145,7 +146,7 @@ class PrologixAdapter(SerialAdapter):
             address_command = "++addr %d\n" % self.address
             self.connection.write(address_command.encode())
         super().write_binary_values(command, values, **kwargs)
-        self.connection.write('\n'.encode())
+        self.connection.write(b'\n')
 
     def read(self):
         """ Reads the response of the instrument until timeout

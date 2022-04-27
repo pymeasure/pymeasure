@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 # pyvirtualbench library: Copyright (c) 2015 Charles Armstrap <charles@armstrap.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,14 +28,11 @@
 import logging
 import re
 # ctypes only required for VirtualBench_Direct class
-from ctypes import (c_bool, c_size_t, c_double, c_uint8, c_int32, c_uint32,
-                    c_int64, c_uint64, c_wchar, c_wchar_p, Structure, c_int,
-                    cdll, byref)
+from ctypes import (c_int, cdll, byref)
 from datetime import datetime, timezone, timedelta
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument, RangeException
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_discrete_range,
     truncated_discrete_set, strict_range
@@ -52,7 +49,7 @@ except ModuleNotFoundError as err:
     log.info('Failed loading the pyvirtualbench package. '
              + 'Check the NI VirtualBench documentation on how to '
              + 'install this external dependency. '
-             + 'ImportError: {}'.format(err))
+             + f'ImportError: {err}')
     raise
 
 
@@ -146,7 +143,7 @@ class VirtualBench():
         :rtype: (int, float)
         """
         if not isinstance(timestamp, pyvb.Timestamp):
-            raise ValueError("{0} is not a VirtualBench Timestamp object"
+            raise ValueError("{} is not a VirtualBench Timestamp object"
                              .format(timestamp))
         return self.vb.convert_timestamp_to_values(timestamp)
 
@@ -189,7 +186,7 @@ class VirtualBench():
         :rtype: (str, int)
         """
         if not isinstance(names_in, str):
-            raise ValueError("{0} is not a string".format(names_in))
+            raise ValueError(f"{names_in} is not a string")
         return self.vb.collapse_channel_string(names_in)
 
     def expand_channel_string(self, names_in):
@@ -314,6 +311,7 @@ class VirtualBench():
         device. Allows to read/write digital channels and/or set channels
         to export the start signal of FGEN module or trigger of MSO module.
         """
+
         def __init__(self, virtualbench, lines, reset, vb_name=''):
             """ Acquire DIO module
 
@@ -368,7 +366,7 @@ class VirtualBench():
 
             def error(lines=lines):
                 raise ValueError(
-                    "Line specification {0} is not valid!".format(lines))
+                    f"Line specification {lines} is not valid!")
 
             lines = self._vb_handle.expand_channel_string(lines)[0]
             lines = lines.split(', ')
@@ -413,7 +411,7 @@ class VirtualBench():
                 if validate_init is True:
                     if line not in self._line_numbers:
                         raise ValueError(
-                            "Digital Line {} is not initialized".format(line))
+                            f"Digital Line {line} is not initialized")
 
             # create comma separated channel string
             return_lines = ', '.join(return_lines)
@@ -480,8 +478,8 @@ class VirtualBench():
                     strict_discrete_set(value, [True, False])
             except Exception:
                 raise ValueError(
-                    "Data {} is not iterable (list or tuple).".format(data))
-            log.debug("{}: {} output {}.".format(self.name, lines, data))
+                    f"Data {data} is not iterable (list or tuple).")
+            log.debug(f"{self.name}: {lines} output {data}.")
             self.dio.write(lines, data)
 
         def read(self, lines):
@@ -509,6 +507,7 @@ class VirtualBench():
         device. Allows to measure either DC/AC voltage or current,
         Resistance or Diodes.
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire DMM module
 
@@ -539,7 +538,7 @@ class VirtualBench():
                 3: [0.005, 0.05, 0.5, 5],
                 4: [100, 1000, 10000, 100000, 1000000,
                     10000000, 100000000],
-                }
+            }
             range = truncated_discrete_set(range, ref_ranges[dmm_function])
             return range
 
@@ -693,6 +692,7 @@ class VirtualBench():
         """ Represents Function Generator (FGEN) Module of Virtual
         Bench device.
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire FGEN module
 
@@ -737,7 +737,7 @@ class VirtualBench():
                 waveform_function.upper()]
             amplitude = strict_range(amplitude, (0, 24))
             dc_offset = strict_range(dc_offset, (-12, 12))
-            if (amplitude/2 + abs(dc_offset)) > 12:
+            if (amplitude / 2 + abs(dc_offset)) > 12:
                 raise ValueError(
                     "Amplitude and DC Offset may not exceed +/-12V")
             duty_cycle = strict_range(duty_cycle, (0, 100))
@@ -928,7 +928,7 @@ class VirtualBench():
             """
             def error(channel=channel):
                 raise ValueError(
-                    "Channel specification {0} is not valid!".format(channel))
+                    f"Channel specification {channel} is not valid!")
             channels = self._vb_handle.expand_channel_string(channel)[0]
             channels = channels.split(', ')
             return_value = []
@@ -1339,7 +1339,7 @@ class VirtualBench():
             times = (
                 list(range(-pretrigger_samples, 0))
                 + list(range(0, number_of_samples - pretrigger_samples)))
-            times = [list(map(lambda x: x*1/self.sample_rate, times))]
+            times = [list(map(lambda x: x * 1 / self.sample_rate, times))]
 
             np_array = np.array(analog_data_out)
             np_array = np.split(np_array, analog_data_stride)
@@ -1356,6 +1356,7 @@ class VirtualBench():
     class PowerSupply(VirtualBenchInstrument):
         """ Represents Power Supply (PS) Module of Virtual Bench device
         """
+
         def __init__(self, virtualbench, reset, vb_name=''):
             """ Acquire PS module
 
@@ -1447,7 +1448,7 @@ class VirtualBench():
         def outputs_enabled(self, enable_outputs):
             enable_outputs = strict_discrete_set(
                 enable_outputs, [True, False])
-            log.info("%s Output %s." % (self.name, enable_outputs))
+            log.info(f"{self.name} Output {enable_outputs}.")
             self.ps.enable_all_outputs(enable_outputs)
 
         @property

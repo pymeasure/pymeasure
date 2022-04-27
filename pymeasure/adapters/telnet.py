@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -68,7 +68,7 @@ class TelnetAdapter(Adapter):
         :returns: String ASCII response of the instrument.
         """
         return self.connection.read_some().decode() + \
-                self.connection.read_very_eager().decode()
+            self.connection.read_very_eager().decode()
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII

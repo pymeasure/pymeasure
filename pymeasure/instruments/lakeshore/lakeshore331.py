@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,14 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 from time import sleep, time
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class LakeShore331(Instrument):
@@ -72,12 +73,12 @@ class LakeShore331(Instrument):
         can take the values: off, low, medium, and high. These values
         correlate to 0, 0.5, 5 and 50 W respectively. """,
         validator=strict_discrete_set,
-        values={'off':0, 'low':1, 'medium':2, 'high':3},
+        values={'off': 0, 'low': 1, 'medium': 2, 'high': 3},
         map_values=True
     )
 
     def __init__(self, adapter, **kwargs):
-        super(LakeShore331, self).__init__(
+        super().__init__(
             adapter,
             "Lake Shore 331 Temperature Controller",
             **kwargs
@@ -87,13 +88,13 @@ class LakeShore331(Instrument):
         """ Turns the :attr:`~.heater_range` to :code:`off` to disable the heater. """
         self.heater_range = 'off'
 
-    def wait_for_temperature(self, accuracy=0.1, 
-            interval=0.1, sensor='A', setpoint=1, timeout=360,
-            should_stop=lambda: False):
+    def wait_for_temperature(self, accuracy=0.1,
+                             interval=0.1, sensor='A', setpoint=1, timeout=360,
+                             should_stop=lambda: False):
         """ Blocks the program, waiting for the temperature to reach the setpoint
         within the accuracy (%), checking this each interval time in seconds.
 
-        :param accuracy: An acceptable percentage deviation between the 
+        :param accuracy: An acceptable percentage deviation between the
                          setpoint and temperature
         :param interval: A time in seconds that controls the refresh rate
         :param sensor: The desired sensor to read, either A or B
@@ -106,16 +107,16 @@ class LakeShore331(Instrument):
         setpoint_name = 'setpoint_%d' % setpoint
         # Only get the setpoint once, assuming it does not change
         setpoint_value = getattr(self, setpoint_name)
+
         def percent_difference(temperature):
-            return abs(100*(temperature - setpoint_value)/setpoint_value)
+            return abs(100 * (temperature - setpoint_value) / setpoint_value)
         t = time()
         while percent_difference(getattr(self, temperature_name)) > accuracy:
             sleep(interval)
-            if (time()-t) > timeout:
+            if (time() - t) > timeout:
                 raise Exception((
                     "Timeout occurred after waiting %g seconds for "
                     "the LakeShore 331 temperature to reach %g K."
                 ) % (timeout, setpoint))
             if should_stop():
                 return
-

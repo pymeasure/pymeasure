@@ -15,15 +15,14 @@ import random
 import tempfile
 from time import sleep
 
-import logging
-log = logging.getLogger('')
-log.addHandler(logging.NullHandler())
-
-from pymeasure.log import console_log
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui, fromUi
 from pymeasure.display.windows import ManagedWindow
+
+import logging
+log = logging.getLogger('')
+log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
@@ -47,7 +46,7 @@ class TestProcedure(Procedure):
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
-            self.emit('progress', 100*i/self.iterations)
+            self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -60,7 +59,7 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindow):
 
     def __init__(self):
-        super(MainWindow, self).__init__(
+        super().__init__(
             procedure_class=TestProcedure,
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
@@ -69,7 +68,7 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
     def _setup_ui(self):
-        super(MainWindow, self)._setup_ui()
+        super()._setup_ui()
         self.inputs.hide()
         self.inputs = fromUi('gui_custom_inputs.ui')
 

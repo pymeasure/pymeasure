@@ -6,7 +6,7 @@ PyMeasure uses an object-oriented approach for communicating with scientific ins
 
 Instruments with VISA (GPIB, Serial, etc) are supported through the `PyVISA package`_ under the hood. `Prologix GPIB`_ adapters are also supported. Communication protocols can be swapped, so that instrument classes can be used with all supported protocols interchangeably.
 
-.. _PyVISA package: http://pyvisa.readthedocs.org/en/master/
+.. _PyVISA package: https://pyvisa.readthedocs.io/en/latest/
 .. _Prologix GPIB: http://prologix.biz/
 
 Before using PyMeasure, you may find it helpful to be acquainted with `basic Python programming for the sciences`_ and understand the concept of objects.

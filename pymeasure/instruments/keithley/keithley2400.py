@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,19 +23,18 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+import time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
-import numpy as np
-import time
-from io import BytesIO
-import re
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Keithley2400(Instrument, KeithleyBuffer):
@@ -110,10 +109,27 @@ class Keithley2400(Instrument, KeithleyBuffer):
     )
 
     auto_zero = Instrument.control(
-        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %d",
+        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %s",
         """ A property that controls the auto zero option. Valid values are
         True (enabled) and False (disabled) and 'ONCE' (force immediate). """,
         values={True: 1, False: 0, "ONCE": "ONCE"},
+        map_values=True,
+    )
+
+    line_frequency = Instrument.control(
+        ":SYST:LFR?", ":SYST:LFR %d",
+        """ An integer property that controls the line frequency in Hertz.
+        Valid values are 50 and 60. """,
+        validator=strict_discrete_set,
+        values=[50, 60],
+        cast=int,
+    )
+
+    line_frequency_auto = Instrument.control(
+        ":SYST:LFR:AUTO?", ":SYST:LFR:AUTO %d",
+        """ A boolean property that enables or disables auto line frequency.
+        Valid values are True and False. """,
+        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -191,7 +207,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=[-210, 210]
     )
     voltage_nplc = Instrument.control(
-        ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
+        ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line cycles
         (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
@@ -318,7 +334,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
 
     filter_count = Instrument.control(
         ":SENS:AVER:COUNT?", ":SENS:AVER:COUNT %d",
-        """ A integer property that controls the number of readings that are 
+        """ A integer property that controls the number of readings that are
         acquired and stored in the filter buffer for the averaging""",
         validator=truncated_range,
         values=[1, 100],
@@ -331,7 +347,6 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=['ON', 'OFF'],
         map_values=False)
 
-
     #####################
     # Output subsystem #
     #####################
@@ -340,9 +355,9 @@ class Keithley2400(Instrument, KeithleyBuffer):
         ":OUTP:SMOD?", ":OUTP:SMOD %s",
         """ Select the output-off state of the SourceMeter.
         HIMP : output relay is open, disconnects external circuitry.
-        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5% 
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5%
         full scale of the present current range.
-        ZERO : V-Source is selected and set to 0V, compliance is set to the 
+        ZERO : V-Source is selected and set to 0V, compliance is set to the
         programmed Source I value or to 0.5% full scale of the present current
         range, whichever is greater.
         GUAR : I-Source is selected and set to 0A""",
@@ -350,13 +365,12 @@ class Keithley2400(Instrument, KeithleyBuffer):
         values=['HIMP', 'NORM', 'ZERO', 'GUAR'],
         map_values=False)
 
-    
     ####################
     # Methods        #
     ####################
-    
+
     def __init__(self, adapter, **kwargs):
-        super(Keithley2400, self).__init__(
+        super().__init__(
             adapter, "Keithley 2400 SourceMeter", **kwargs
         )
 
@@ -471,7 +485,7 @@ class Keithley2400(Instrument, KeithleyBuffer):
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
-        self.write(":SYST:BEEP %g, %g" % (frequency, duration))
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.
@@ -724,7 +738,8 @@ class Keithley2400(Instrument, KeithleyBuffer):
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay, backward=True))
         self.disable_source()
         data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay))
-        data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay, backward=True))
+        data.extend(self.RvsI(-minI, -maxI, -stepI, compliance=compliance, delay=delay,
+                              backward=True))
         self.disable_source()
         return data
 

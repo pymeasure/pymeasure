@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -79,7 +79,7 @@ class Agilent33500(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent33500, self).__init__(
+        super().__init__(
             adapter,
             "Agilent 33500 Function/Arbitrary Waveform generator family",
             **kwargs
@@ -227,7 +227,7 @@ class Agilent33500(Instrument):
 
     output = Instrument.control(
         "OUTP?", "OUTP %d",
-        """ A boolean property that turns on (True, 'on') or off (False, 'off') 
+        """ A boolean property that turns on (True, 'on') or off (False, 'off')
         the output of the function generator. Can be set. """,
         validator=strict_discrete_set,
         map_values=True,
@@ -297,7 +297,7 @@ class Agilent33500(Instrument):
 
     arb_filter = Instrument.control(
         "FUNC:ARB:FILT?", "FUNC:ARB:FILT %s",
-        """ A string property that selects the filter setting for arbitrary signals. 
+        """ A string property that selects the filter setting for arbitrary signals.
         Can be set to 'NORM<AL>', 'STEP' and 'OFF'. """,
         validator=strict_discrete_set,
         values=["NORM", "NORMAL", "STEP", "OFF"],
@@ -338,7 +338,7 @@ class Agilent33500(Instrument):
 
     arb_srate = Instrument.control(
         "FUNC:ARB:SRAT?", "FUNC:ARB:SRAT %f",
-        """ An floating point property that sets the sample rate of the currently selected 
+        """ An floating point property that sets the sample rate of the currently selected
         arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
         depending on your device). This can be set. """,
         validator=strict_range,
@@ -355,10 +355,11 @@ class Agilent33500(Instrument):
 
     def data_arb(self, arb_name, data_points, data_format='DAC'):
         """
-        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be given
-        as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma separated floating
-        point values (ranging from -1.0 to +1.0) or as a binary data stream. Check the manual for more
-        information. The storage depends on the device type and ranges from 8 Sa to 16 MSa (maximum).
+        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be
+        given as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma
+        separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
+        Check the manual for more information. The storage depends on the device type and ranges
+        from 8 Sa to 16 MSa (maximum).
         TODO: *Binary is not yet implemented*
 
         :param arb_name: The name of the trace in the volatile memory. This is used to access the
@@ -380,20 +381,22 @@ class Agilent33500(Instrument):
             separator = ', '
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
-            self.write("DATA:ARB:DAC {}, {}".format(arb_name, data_string))
+            print(f"DATA:ARB:DAC {arb_name}, {data_string}")
+            self.write(f"DATA:ARB:DAC {arb_name}, {data_string}")
             return
         elif data_format == 'float':
             separator = ', '
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print("DATA:ARB {}, {}".format(arb_name, data_string))
-            self.write("DATA:ARB {}, {}".format(arb_name, data_string))
+            print(f"DATA:ARB {arb_name}, {data_string}")
+            self.write(f"DATA:ARB {arb_name}, {data_string}")
             return
         elif data_format == 'binary':
-            raise NotImplementedError('The binary format has not yet been implemented. Use "DAC" or "float" instead.')
+            raise NotImplementedError(
+                'The binary format has not yet been implemented. Use "DAC" or "float" instead.')
         else:
-            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
+            raise ValueError(
+                'Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
 
     display = Instrument.setting(
         "DISP:TEXT '%s'",

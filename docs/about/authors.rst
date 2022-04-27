@@ -17,14 +17,23 @@ The following developers have contributed to the PyMeasure package:
 | Neal Reynolds
 | Christoph Buchner
 | Julian Dlugosch
+| Sylvain Karlen
+| Joseph Mittelstaedt
+| Troy Fox
 | Vikram Sekar
 | Casper Schippers
 | Sumatran Tiger
+| Michael Schneider
 | Dennis Feng
 | Stefano Pirotta
-| Mathieu Jeannin
 | Moritz Jung
+| Richard Schlitz
 | Manuel Zahn
+| Mikhaël Myara
+| Domenic Prete
+| Mathieu Jeannin
+| Paul Goulain
+| John McMaster
 | Dominik Kriegner
 | Jonathan Larochelle
 | Dominic Caron
@@ -32,5 +41,15 @@ The following developers have contributed to the PyMeasure package:
 | Michele Sardo
 | Steven Siegl
 | Benjamin Klebel-Knobloch
+| Demetra Adrahtas
+| Dan McDonald
 | Hud Wahab
 | Nicola Corna
+| Robert Eckelmann
+| Sam Condon
+| Andreas Maeder
+| Bastian Leykauf
+| Matthew Delaney
+| Marco von Rosenberg
+| Jack Van Sambeek
+| JC Arbelbide

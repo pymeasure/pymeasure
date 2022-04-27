@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,7 +58,7 @@ class Danfysik8500(Instrument):
     )
 
     def __init__(self, port):
-        super(Danfysik8500, self).__init__(
+        super().__init__(
             DanfysikAdapter(port),
             "Danfysik 8500 Current Supply",
             includeSCPI=False
@@ -129,14 +129,14 @@ class Danfysik8500(Instrument):
         """ The actual current in Amps. This property can be set through
         :attr:`~.current_ppm`.
         """
-        return int(self.ask("AD 8"))*1e-2*self.polarity
+        return int(self.ask("AD 8")) * 1e-2 * self.polarity
 
     @current.setter
     def current(self, amps):
         if amps > 160 or amps < -160:
             raise RangeException("Danfysik 8500 is only capable of sourcing "
                                  "+/- 160 Amps")
-        self.current_ppm = int((1e6/160)*amps)
+        self.current_ppm = int((1e6 / 160) * amps)
 
     @property
     def current_ppm(self):
@@ -156,7 +156,7 @@ class Danfysik8500(Instrument):
         """ The setpoint for the current, which can deviate from the actual current
         (:attr:`~.Danfysik8500.current`) while the supply is in the process of setting the value.
         """
-        return self.current_ppm*(160/1e6)
+        return self.current_ppm * (160 / 1e6)
 
     @property
     def slew_rate(self):
@@ -260,7 +260,7 @@ class Danfysik8500(Instrument):
 
         :param current: A current in Amps
         """
-        self.write("R %.6f" % (current/160.))
+        self.write("R %.6f" % (current / 160.))
 
     def stop_ramp(self):
         """ Stops the current ramp.
@@ -273,13 +273,13 @@ class Danfysik8500(Instrument):
 
         :param current: The final current in Amps
         :param points: The number of linear points to traverse
-        :param delay_time: A delay time in seconds 
+        :param delay_time: A delay time in seconds
         """
         initial_current = self.current
         self.clear_ramp_set()
         self.set_ramp_delay(delay_time)
         steps = np.linspace(initial_current, current, num=points)
-        cmds = ["R %.6f" % (step/160.) for step in steps]
+        cmds = ["R %.6f" % (step / 160.) for step in steps]
         self.write("\r".join(cmds))
 
     def ramp_to_current(self, current, points, delay_time=1):
@@ -299,22 +299,22 @@ class Danfysik8500(Instrument):
             self.write("SLOW %i" % stack)
         elif min(times) >= 0.1 and max(times) <= 6553.5:
             self.write("FAST %i" % stack)
-            times = [0.1*x for x in times]
+            times = [0.1 * x for x in times]
         else:
             raise RangeException("Timing for Danfysik 8500 ramp sequence is"
                                  " out of range")
         for i in range(len(times)):
             self.write("WSA %i,%i,%i,%i" % (
                 stack,
-                int(6250*abs(currents[i])),
-                int(6250*abs(currents[i+1])), times[i])
+                int(6250 * abs(currents[i])),
+                int(6250 * abs(currents[i + 1])), times[i])
             )
         self.write("MULT %i,%i" % (stack, multiplier))
 
     def clear_sequence(self, stack):
         """ Clears the sequence by the stack number.
-        
-        :param stack: A stack number between 0-15 
+
+        :param stack: A stack number between 0-15
         """
         self.write("CSS %i" % stack)
 
@@ -331,7 +331,7 @@ class Danfysik8500(Instrument):
     def start_sequence(self, stack):
         """ Starts a sequence by the stack number.
 
-        :param stack: A stack number between 0-15 
+        :param stack: A stack number between 0-15
         """
         self.write("TS %i" % stack)
 
@@ -343,6 +343,6 @@ class Danfysik8500(Instrument):
     def is_sequence_running(self, stack):
         """ Returns True if a sequence is running with a given stack number
 
-        :param stack: A stack number between 0-15 
+        :param stack: A stack number between 0-15
         """
         return re.search("R%i," % stack, self.ask("S2")) is not None

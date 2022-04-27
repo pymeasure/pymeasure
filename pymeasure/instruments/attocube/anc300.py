@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -43,9 +43,9 @@ def truncated_int_array(value, values):
     for i, v in enumerate(value):
         if values[0] <= v <= values[1]:
             if float(v).is_integer():
-               ret.append(int(v))
+                ret.append(int(v))
             else:
-               raise ValueError(f"Entry {v} at index {i} has no integer value")
+                raise ValueError(f"Entry {v} at index {i} has no integer value")
         elif float(v).is_integer():
             ret.append(max(min(values[1], v), values[0]))
         else:
@@ -58,7 +58,7 @@ truncated_int_array_strict_length = joined_validators(strict_length,
                                                       truncated_int_array)
 
 
-class Axis(object):
+class Axis:
     """ Represents a single open loop axis of the Attocube ANC350
 
     :param axis: axis identifier, integer from 1 to 7
@@ -69,72 +69,72 @@ class Axis(object):
                                        "Serial number of the axis")
 
     voltage = Instrument.control(
-            "getv", "setv %.3f",
-            """ Amplitude of the stepping voltage in volts from 0 to 150 V. This
-            property can be set. """,
-            validator=strict_range, values=[0, 150])
+        "getv", "setv %.3f",
+        """ Amplitude of the stepping voltage in volts from 0 to 150 V. This
+        property can be set. """,
+        validator=strict_range, values=[0, 150])
 
     frequency = Instrument.control(
-            "getf", "setf %.3f",
-            """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
-            This property can be set. """,
-            validator=strict_range, values=[1, 10000],
-            cast=int)
+        "getf", "setf %.3f",
+        """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
+        This property can be set. """,
+        validator=strict_range, values=[1, 10000],
+        cast=int)
 
     mode = Instrument.control(
-            "getm", "setm %s",
-            """ Axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
-            'stp+', 'stp-'. Available modes depend on the actual axis model""",
-            validator=strict_discrete_set,
-            values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'])
+        "getm", "setm %s",
+        """ Axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
+        'stp+', 'stp-'. Available modes depend on the actual axis model""",
+        validator=strict_discrete_set,
+        values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'])
 
     offset_voltage = Instrument.control(
-            "geta", "seta %.3f",
-            """ Offset voltage in Volts from 0 to 150 V.
-            This property can be set. """,
-            validator=strict_range, values=[0, 150])
+        "geta", "seta %.3f",
+        """ Offset voltage in Volts from 0 to 150 V.
+        This property can be set. """,
+        validator=strict_range, values=[0, 150])
 
     pattern_up = Instrument.control(
-            "getpu", "setpu %s",
-            """ step up pattern of the piezo drive. 256 values ranging from 0
-            to 255 representing the the sequence of output voltages within one
-            step of the piezo drive. This property can be set, the set value
-            needs to be an array with 256 integer values. """,
-            validator=truncated_int_array_strict_length,
-            values=[256, [0, 255]],
-            set_process=lambda a: " ".join("%d" % v for v in a),
-            separator='\r\n', cast=int)
+        "getpu", "setpu %s",
+        """ step up pattern of the piezo drive. 256 values ranging from 0
+        to 255 representing the the sequence of output voltages within one
+        step of the piezo drive. This property can be set, the set value
+        needs to be an array with 256 integer values. """,
+        validator=truncated_int_array_strict_length,
+        values=[256, [0, 255]],
+        set_process=lambda a: " ".join("%d" % v for v in a),
+        separator='\r\n', cast=int)
 
     pattern_down = Instrument.control(
-            "getpd", "setpd %s",
-            """ step down pattern of the piezo drive. 256 values ranging from 0
-            to 255 representing the the sequence of output voltages within one
-            step of the piezo drive. This property can be set, the set value
-            needs to be an array with 256 integer values. """,
-            validator=truncated_int_array_strict_length,
-            values=[256, [0, 255]],
-            set_process=lambda a: " ".join("%d" % v for v in a),
-            separator='\r\n', cast=int)
+        "getpd", "setpd %s",
+        """ step down pattern of the piezo drive. 256 values ranging from 0
+        to 255 representing the the sequence of output voltages within one
+        step of the piezo drive. This property can be set, the set value
+        needs to be an array with 256 integer values. """,
+        validator=truncated_int_array_strict_length,
+        values=[256, [0, 255]],
+        set_process=lambda a: " ".join("%d" % v for v in a),
+        separator='\r\n', cast=int)
 
     output_voltage = Instrument.measurement(
-            "geto",
-            """ Output voltage in volts.""")
+        "geto",
+        """ Output voltage in volts.""")
 
     capacity = Instrument.measurement(
-            "getc",
-            """ Saved capacity value in nF of the axis.""")
+        "getc",
+        """ Saved capacity value in nF of the axis.""")
 
     stepu = Instrument.setting(
-            "stepu %d",
-            """ Step upwards for N steps. Mode must be 'stp' and N must be
-            positive.""",
-            validator=strict_range, values=[0, inf])
+        "stepu %d",
+        """ Step upwards for N steps. Mode must be 'stp' and N must be
+        positive.""",
+        validator=strict_range, values=[0, inf])
 
     stepd = Instrument.setting(
-            "stepd %d",
-            """ Step downwards for N steps. Mode must be 'stp' and N must be
-            positive.""",
-            validator=strict_range, values=[0, inf])
+        "stepd %d",
+        """ Step downwards for N steps. Mode must be 'stp' and N must be
+        positive.""",
+        validator=strict_range, values=[0, inf])
 
     def __init__(self, controller, axis):
         self.axis = str(axis)
@@ -212,34 +212,35 @@ class ANC300Controller(Instrument):
     :param kwargs: Any valid key-word argument for TelnetAdapter
     """
     version = Instrument.measurement(
-           "ver", """ Version number and instrument identification """
-           )
+        "ver", """ Version number and instrument identification """
+    )
 
     controllerBoardVersion = Instrument.measurement(
-           "getcser", """ Serial number of the controller board """
-           )
+        "getcser", """ Serial number of the controller board """
+    )
 
     def __init__(self, host, axisnames, passwd, query_delay=0.05, **kwargs):
         kwargs['query_delay'] = query_delay
         super().__init__(
             AttocubeConsoleAdapter(host, 7230, passwd, **kwargs),
             "attocube ANC300 Piezo Controller",
-            includeSCPI = False,
+            includeSCPI=False,
             **kwargs
         )
+        self._axisnames = axisnames
         for i, axis in enumerate(axisnames):
-            setattr(self, axis, Axis(self, i+1))
+            setattr(self, axis, Axis(self, i + 1))
 
     def ground_all(self):
         """ Grounds all axis of the controller. """
-        for attr in dir(self):
+        for attr in self._axisnames:
             attribute = getattr(self, attr)
             if isinstance(attribute, Axis):
                 attribute.mode = 'gnd'
 
     def stop_all(self):
         """ Stop all movements of the axis. """
-        for attr in dir(self):
+        for attr in self._axisnames:
             attribute = getattr(self, attr)
             if isinstance(attribute, Axis):
                 attribute.stop()

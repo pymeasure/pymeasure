@@ -14,16 +14,15 @@ import random
 import tempfile
 from time import sleep
 
-import logging
-log = logging.getLogger('')
-log.addHandler(logging.NullHandler())
-
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, \
     FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.display.widgets import SequencerWidget
+
+import logging
+log = logging.getLogger('')
+log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
@@ -60,7 +59,7 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindow):
 
     def __init__(self):
-        super(MainWindow, self).__init__(
+        super().__init__(
             procedure_class=TestProcedure,
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],

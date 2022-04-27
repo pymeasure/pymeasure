@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
 import logging
+
+import numpy as np
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-import numpy as np
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class Channel():
@@ -73,17 +73,19 @@ class Channel():
 
     label = Instrument.control(
         "LABel?", 'LABel "%s"',
-        """ A string to label the channel. Labels with more than 10 characters are truncated to 10 
-        characters. May contain commonly used ASCII characters. Lower case characters are converted 
+        """ A string to label the channel. Labels with more than 10 characters are truncated to 10
+        characters. May contain commonly used ASCII characters. Lower case characters are converted
         to upper case.""",
         get_process=lambda v: str(v[1:-1])
     )
 
     offset = Instrument.control(
         "OFFSet?", "OFFSet %f",
-        """ A float parameter to set value that is represented at center of screen in 
-        Volts. The range of legal values varies depending on range and scale. If the specified value 
-        is outside of the legal range, the offset value is automatically set to the nearest legal value. """
+        """ A float parameter to set value that is represented at center of screen in
+        Volts. The range of legal values varies depending on range and scale. If the specified
+        value is outside of the legal range, the offset value is automatically set to the nearest
+        legal value.
+        """
     )
 
     probe_attenuation = Instrument.control(
@@ -96,7 +98,7 @@ class Channel():
 
     range = Instrument.control(
         "RANGe?", "RANGe %f",
-        """ A float parameter that specifies the full-scale vertical axis in Volts. 
+        """ A float parameter that specifies the full-scale vertical axis in Volts.
         When using 1:1 probe attenuation, legal values for the range are from 8 mV to 40V."""
     )
 
@@ -125,34 +127,44 @@ class Channel():
     def setup(self, bwlimit=None, coupling=None, display=None, invert=None, label=None, offset=None,
               probe_attenuation=None, vertical_range=None, scale=None):
         """ Setup channel. Unspecified settings are not modified. Modifying values such as
-        probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and make
-        multiple consecutive calls to setup() if needed.
+        probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
+        make multiple consecutive calls to setup() if needed.
 
         :param bwlimit: A boolean, which enables 25 MHz internal low-pass filter.
         :param coupling: "ac" or "dc".
         :param display: A boolean, which enables channel display.
         :param invert: A boolean, which enables input signal inversion.
-        :param label: Label string with max. 10 characters, may contain commonly used ASCII characters.
-        :param offset: Numerical value represented at center of screen, must be inside the legal range.
+        :param label: Label string with max. 10 commonly used ASCII characters.
+        :param offset: Numerical value represented at center of screen, must be inside
+            the legal range.
         :param probe_attenuation: Probe attenuation values from 0.1 to 1000.
-        :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1 probe
-                                attenuation, legal values for the range are  from 8mV to 40 V. If the
-                                probe attenuation is changed, the range value is multiplied by the
-                                probe attenuation factor.
+        :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1
+            probe attenuation, legal values for the range are  from 8mV to 40 V. If the probe
+            attenuation is changed, the range value is multiplied by the probe attenuation factor.
         :param scale: Units per division. """
 
         if vertical_range is not None and scale is not None:
-            log.warning('Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
+            log.warning(
+                'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
 
-        if probe_attenuation is not None: self.probe_attenuation = probe_attenuation
-        if bwlimit is not None: self.bwlimit = bwlimit
-        if coupling is not None: self.coupling = coupling
-        if display is not None: self.display = display
-        if invert is not None: self.invert = invert
-        if label is not None: self.label = label
-        if offset is not None: self.offset = offset
-        if vertical_range is not None: self.range = vertical_range
-        if scale is not None: self.scale = scale
+        if probe_attenuation is not None:
+            self.probe_attenuation = probe_attenuation
+        if bwlimit is not None:
+            self.bwlimit = bwlimit
+        if coupling is not None:
+            self.coupling = coupling
+        if display is not None:
+            self.display = display
+        if invert is not None:
+            self.invert = invert
+        if label is not None:
+            self.label = label
+        if offset is not None:
+            self.offset = offset
+        if vertical_range is not None:
+            self.range = vertical_range
+        if scale is not None:
+            self.scale = scale
 
     @property
     def current_configuration(self):
@@ -171,8 +183,9 @@ class Channel():
             - "STYP": probe signal type (str)
         """
 
-        # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and to query the
-        # configuration details, we actually need to ask ":channelX?", without a second ":"
+        # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and
+        # to query the configuration details, we actually need to ask ":channelX?", without a
+        # second ":"
         ch_setup_raw = self.instrument.ask(":channel%d?" % self.number).strip("\n")
 
         # ch_setup_raw hat the following format:
@@ -213,7 +226,7 @@ class KeysightDSOX1102G(Instrument):
     using the lower-level methods to interact directly with the scope.
 
     .. code-block:: python
-    
+
         scope = KeysightDSOX1102G(resource)
         scope.autoscale()
         ch1_data_array, ch1_preamble = scope.download_data(source="channel1", points=2000)
@@ -221,7 +234,7 @@ class KeysightDSOX1102G(Instrument):
         scope.shutdown()
 
     Known issues:
-    
+
     - The digitize command will be completed before the operation is. May lead to
       VI_ERROR_TMO (timeout) occuring when sending commands immediately after digitize.
       Current fix: if deemed necessary, add delay between digitize and follow-up command
@@ -231,7 +244,7 @@ class KeysightDSOX1102G(Instrument):
     BOOLS = {True: 1, False: 0}
 
     def __init__(self, adapter, **kwargs):
-        super(KeysightDSOX1102G, self).__init__(
+        super().__init__(
             adapter, "Keysight DSOX1102G Oscilloscope", **kwargs
         )
         # Account for setup time for timebase_mode, waveform_points_mode
@@ -262,7 +275,7 @@ class KeysightDSOX1102G(Instrument):
 
     timebase_mode = Instrument.control(
         ":TIMebase:MODE?", ":TIMebase:MODE %s",
-        """ A string parameter that sets the current time base. Can be "main", 
+        """ A string parameter that sets the current time base. Can be "main",
         "window", "xy", or "roll".""",
         validator=strict_discrete_set,
         values={"main": "MAIN", "window": "WIND", "xy": "XY", "roll": "ROLL"},
@@ -271,19 +284,19 @@ class KeysightDSOX1102G(Instrument):
 
     timebase_offset = Instrument.control(
         ":TIMebase:POSition?", ":TIMebase:REFerence CENTer;:TIMebase:POSition %f",
-        """ A float parameter that sets the time interval in seconds between the trigger 
+        """ A float parameter that sets the time interval in seconds between the trigger
         event and the reference position (at center of screen by default)."""
     )
 
     timebase_range = Instrument.control(
         ":TIMebase:RANGe?", ":TIMebase:RANGe %f",
-        """ A float parameter that sets the full-scale horizontal time in seconds for the 
+        """ A float parameter that sets the full-scale horizontal time in seconds for the
         main window."""
     )
 
     timebase_scale = Instrument.control(
         ":TIMebase:SCALe?", ":TIMebase:SCALe %f",
-        """ A float parameter that sets the horizontal scale (units per division) in seconds 
+        """ A float parameter that sets the horizontal scale (units per division) in seconds
         for the main window."""
     )
 
@@ -309,7 +322,10 @@ class KeysightDSOX1102G(Instrument):
     )
 
     def run(self):
-        """ Starts repetitive acquisitions. This is the same as pressing the Run key on the front panel."""
+        """ Starts repetitive acquisitions.
+
+        This is the same as pressing the Run key on the front panel.
+        """
         self.write(":run")
 
     def stop(self):
@@ -323,9 +339,9 @@ class KeysightDSOX1102G(Instrument):
 
     _digitize = Instrument.setting(
         ":DIGitize %s",
-        """ Acquire waveforms according to the settings of the :ACQuire commands and specified source,
-         as a string parameter that can take the following values: "channel1", "channel2", "function",
-         "math", "fft", "abus", or "ext". """,
+        """ Acquire waveforms according to the settings of the :ACQuire commands and specified
+        source, as a string parameter that can take the following values: "channel1", "channel2",
+        "function", "math", "fft", "abus", or "ext". """,
         validator=strict_discrete_set,
         values={"channel1": "CHAN1", "channel2": "CHAN2", "function": "FUNC", "math": "MATH",
                 "fft": "FFT", "abus": "ABUS", "ext": "EXT"},
@@ -350,18 +366,18 @@ class KeysightDSOX1102G(Instrument):
     waveform_points = Instrument.control(
         ":waveform:points?", ":waveform:points %d",
         """ An integer parameter that sets the number of waveform points to be transferred with
-        the waveform_data method. Can be any of the following values: 
+        the waveform_data method. Can be any of the following values:
         100, 250, 500, 1000, 2 000, 5 000, 10 000, 20 000, 50 000, 62 500.
-        
+
         Note that the oscilloscope may provide less than the specified nb of points. """,
         validator=strict_discrete_set,
         values=[100, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 62500]
     )
     waveform_source = Instrument.control(
         ":waveform:source?", ":waveform:source %s",
-        """ A string parameter that selects the analog channel, function, or reference waveform 
-        to be used as the source for the waveform methods. Can be "channel1", "channel2", "function", 
-        "fft", "wmemory1", "wmemory2", or "ext".""",
+        """ A string parameter that selects the analog channel, function, or reference waveform
+        to be used as the source for the waveform methods. Can be "channel1", "channel2",
+        "function", "fft", "wmemory1", "wmemory2", or "ext".""",
         validator=strict_discrete_set,
         values={"channel1": "CHAN1", "channel2": "CHAN2", "function": "FUNC", "fft": "FFT",
                 "wmemory1": "WMEM1", "wmemory2": "WMEM2", "ext": "EXT"},
@@ -369,8 +385,9 @@ class KeysightDSOX1102G(Instrument):
     )
     waveform_format = Instrument.control(
         ":waveform:format?", ":waveform:format %s",
-        """ A string parameter that controls how the data is formatted when sent from the 
-        oscilloscope. Can be "ascii", "word" or "byte". Words are transmitted in big endian by default.""",
+        """ A string parameter that controls how the data is formatted when sent from the
+        oscilloscope. Can be "ascii", "word" or "byte". Words are transmitted in big endian by
+        default.""",
         validator=strict_discrete_set,
         values={"ascii": "ASC", "word": "WORD", "byte": "BYTE"},
         map_values=True
@@ -439,19 +456,23 @@ class KeysightDSOX1102G(Instrument):
         self.write(":SYSTem:PRESet")
 
     def timebase_setup(self, mode=None, offset=None, horizontal_range=None, scale=None):
-        """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter might
-        impact other parameters. Refer to oscilloscope documentation and make multiple consecutive calls
-        to channel_setup if needed.
+        """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
+        might impact other parameters. Refer to oscilloscope documentation and make multiple
+        consecutive calls to channel_setup if needed.
 
         :param mode: Timebase mode, can be "main", "window", "xy", or "roll".
         :param offset: Offset in seconds between trigger and center of screen.
         :param horizontal_range: Full-scale range in seconds.
         :param scale: Units-per-division in seconds."""
 
-        if mode is not None: self.timebase_mode = mode
-        if offset is not None: self.timebase_offset = offset
-        if horizontal_range is not None: self.timebase_range = horizontal_range
-        if scale is not None: self.timebase_scale = scale
+        if mode is not None:
+            self.timebase_mode = mode
+        if offset is not None:
+            self.timebase_offset = offset
+        if horizontal_range is not None:
+            self.timebase_range = horizontal_range
+        if scale is not None:
+            self.timebase_scale = scale
 
     def download_image(self, format_="png", color_palette="color"):
         """ Get image of oscilloscope screen in bytearray of specified file format.
@@ -465,19 +486,20 @@ class KeysightDSOX1102G(Instrument):
         return bytearray(img)
 
     def download_data(self, source, points=62500):
-        """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of data
-        values (no temporal axis) and a dict of the waveform preamble, which can be used to build the
-        corresponding time values for all data points.
+        """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of
+        data values (no temporal axis) and a dict of the waveform preamble, which can be used to
+        build the corresponding time values for all data points.
 
         Multimeter will be stopped for proper acquisition.
 
-        :param source: measurement source, can be "channel1", "channel2", "function", "fft", "wmemory1",
-                        "wmemory2", or "ext".
-        :param points: integer number of points to acquire. Note that oscilloscope may return less points than
-                        specified, this is not an issue of this library. Can be 100, 250, 500, 1000,
-                        2000, 5000, 10000, 20000, 50000, or 62500.
+        :param source: measurement source, can be "channel1", "channel2", "function", "fft",
+            "wmemory1", "wmemory2", or "ext".
+        :param points: integer number of points to acquire. Note that oscilloscope may return fewer
+            points than specified, this is not an issue of this library. Can be 100, 250, 500, 1000,
+            2000, 5000, 10000, 20000, 50000, or 62500.
 
-        :return data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict format.
+        :return data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict
+            format.
         """
         # TODO: Consider downloading from multiple sources at the same time.
         self.waveform_source = source
