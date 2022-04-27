@@ -256,6 +256,23 @@ class Agilent33500(Instrument):
         Can be set. """,
     )
 
+    burst_state = Instrument.control(
+        "BURS:STAT?", "BURS:STAT %d",
+        """ A boolean property that controls whether the burst mode is on
+        (True) or off (False). Can be set. """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+    polarity = Instrument.control(
+        "OUTP:POL?", "OUTP:POL %s",
+        """ Sets the output polarity. NORM : output polarity is normal
+        INV: polarity is reversed""",
+        validator=strict_discrete_set,
+        values=['NORM', 'INV']
+    )
+
     sync_polarity = Instrument.control(
         "OUTP:SYNC:POL?", "OUTP:SYNC:POL %s",
         """ Sets the Sync output polarity. NORM : sync is low until sync even occurs, falling to zero at marker point
@@ -406,6 +423,13 @@ class Agilent33500(Instrument):
             return
         else:
             raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float"')
+
+    def send_sequence(self, sequence_string):
+        strlen = len(sequence_string)
+        numlen = len(str(strlen))
+        command = f"DATA:SEQ #{numlen}{strlen}{sequence_string}"
+        self.write(command)
+
 
     display = Instrument.setting(
         "DISP:TEXT '%s'",
