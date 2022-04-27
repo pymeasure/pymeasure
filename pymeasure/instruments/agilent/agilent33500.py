@@ -313,7 +313,7 @@ class Agilent33500(Instrument):
         when a burst is triggered. Valid values are 1 to 100000. This can be
         set. """,
         validator=strict_range,
-        values=range(1, 100000),
+        values=range(1, 100000000),
     )
 
     arb_file = Instrument.control(
