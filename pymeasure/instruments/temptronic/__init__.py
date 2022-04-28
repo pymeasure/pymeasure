@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,5 @@
 #
 
 from .temptronic_base import ATSBase
-from .temptronic_ats515 import ATS515
-from .temptronic_ats525 import ATS525 
+from .temptronic_ats525 import ATS525
 from .temptronic_ats545 import ATS545
-from .temptronic_ats615 import ATS615

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,12 @@
 
 """
 Implementation of an interface class for ThermoStream® Systems devices.
-
 Reference Document for implementation:
-
-ATS-515/615, ATS 525/625 & ATS 535/635 ThermoStream® Systems
+ATS-545 & -645
+THERMOSTREAM
 Interface & Applications Manual
-Revision E
-September, 2019
-
+Revision B
+November, 2015
 """
 
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
@@ -40,20 +38,52 @@ from pymeasure.instruments.validators import truncated_range
 
 
 class ATS545(ATSBase):
-    """Represent the TemptronicATS545 instruments.
+    """Represents the TemptronicATS545 instrument.
+
+    Coding example
+
+    .. code-block:: python
+
+        ts = ATS545('ASRL3::INSTR')  # replace adapter address
+        ts.configure()  # basic configuration (defaults to T-DUT)
+        ts.start()  # starts flow (head position not changed)
+        ts.set_temperature(25)  # sets temperature to 25 degC
+        ts.wait_for_settling()  # blocks script execution and polls for settling
+        ts.shutdown(head=False)  # disables thermostream, keeps head down
+
     """
 
     temperature_limit_air_low = Instrument.control(
         "LLIM?", "LLIM %g",
-        """lower air temperature limit.
+        """Control lower air temperature limit.
 
-        Set or get the lower air temperature limit.
-        LLIM nnn -- where nnn is -80 to +25 °C
-        NOTE: LLIM limits the minimum air temperature in both air and
-        DUT control modes. Additionally, an “out of range” error generates
-        if a setpoint is less than this value.
+        :type: float
 
+        Valid range between -80 to 25 (°C). Setpoints below current value cause
+        “out of range” error in TS.
         """,
         validator=truncated_range,
         values=[-80, 25]
-        )
+    )
+
+    mode = Instrument.measurement(
+        "WHAT?",
+        """Returns an integer indicating what the system is doing at the time the query is processed.
+        5 = on Operator screen (manual mode)
+        6 = on Cycle screen (program mode)
+        """,
+        values={'manual': 10,  # 5  in ATSbase
+                'program': 0,  # 6 in ATSbase
+                'initial': 63},  # after power up, reading is 63
+        map_values=True
+    )
+
+    def next_setpoint(self):
+        """not implemented in ATS545
+
+        set ``self.set_point_number`` instead
+        """
+        raise NotImplementedError
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, name="Temptronic ATS-545 Thermostream", **kwargs)

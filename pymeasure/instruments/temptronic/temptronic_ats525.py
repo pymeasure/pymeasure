@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,11 @@
 
 """
 Implementation of an interface class for ThermoStream® Systems devices.
-
 Reference Document for implementation:
-
 ATS-515/615, ATS 525/625 & ATS 535/635 ThermoStream® Systems
 Interface & Applications Manual
 Revision E
 September, 2019
-
 """
 
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
@@ -45,15 +42,22 @@ class ATS525(ATSBase):
 
     temperature_limit_air_low = Instrument.control(
         "LLIM?", "LLIM %g",
-        """lower air temperature limit.
+        """Control lower air temperature limit.
 
-        Set or get the lower air temperature limit.
-        LLIM nnn -- where nnn is -60 to +25 °C
-        NOTE: LLIM limits the minimum air temperature in both air and
-        DUT control modes. Additionally, an “out of range” error generates
-        if a setpoint is less than this value.
+        :type: float
 
+        Valid range between -60 to 25 (°C). Setpoints below current value cause
+        “out of range” error in TS.
         """,
         validator=truncated_range,
         values=[-60, 25]
-        )
+    )
+
+    system_current = Instrument.measurement(
+        "AMPS?",
+        """Operating current.
+        """,
+    )
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, name="Temptronic ATS-525 Thermostream", **kwargs)
