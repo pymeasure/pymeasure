@@ -118,7 +118,7 @@ class ErrorCode(IntFlag):
     # bit 2  – reserved
     AIR_OPEN_LOOP = 2      # bit 1  – air open loop
     OVERHEAT = 1      # bit 0  – overheat
-    HEAD = 0  # ok state
+    OK = 0  # ok state
 
 
 class ATSBase(Instrument):
@@ -146,7 +146,7 @@ class ATSBase(Instrument):
         values=[0, 9999]
     )
 
-    dut_mode = Instrument.control(  # TODO change datatype to Bool
+    dut_mode = Instrument.control(
         "DUTM?", "DUTM %g",
         """ ``On`` enables DUT mode, ``OFF`` enables air mode
 
@@ -391,16 +391,6 @@ class ATSBase(Instrument):
         values=[1, 12]
     )
 
-    clear_errors = Instrument.setting(
-        "CLER",
-        """Clear device-specific errors. See :attr:`~.error_code` for further
-        information.
-
-        :type: :attr:`~.error_code`
-
-        """
-    )
-
     compressor_enable = Instrument.setting(
         "COOL %g",
         """ ``True`` enables compressors, ``False`` disables it.
@@ -584,11 +574,20 @@ class ATSBase(Instrument):
         return self
 
     def enter_ramp(self):
-        """Enter Ramp by sending ``RMPS 0``
+        """Enter Ramp by sending ``RMPS 0``.
 
         :returns: self
         """
         self.write("RMPS 0")
+
+        return self
+
+    def clear(self):
+        """Clear device-specific errors.
+
+        See :attr:`~.error_code` for further information.
+        """
+        self.write("CLER")
 
         return self
 
@@ -607,7 +606,7 @@ class ATSBase(Instrument):
                   temp_limit_air_dut=50,
                   maximum_test_time=1000
                   ):
-        """Convenience method for most relevant configuration properties
+        """Convenience method for most relevant configuration properties.
 
         :param dut_type:
             string: indicating which DUT type to use
@@ -762,7 +761,7 @@ class ATSBase(Instrument):
         return self
 
     def start(self, enable_air_flow=True):
-        """start TS in remote mode
+        """start TS in remote mode.
 
         :param enable_air_flow: flow starts if ``True``
 
@@ -775,7 +774,7 @@ class ATSBase(Instrument):
         return self
 
     def error_status(self):
-        """Returns error status code (maybe used for logging)
+        """Returns error status code (maybe used for logging).
 
         :returns: :class:`.ErrorCode`
         """

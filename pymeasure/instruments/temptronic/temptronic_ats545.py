@@ -69,8 +69,9 @@ class ATS545(ATSBase):
     mode = Instrument.measurement(
         "WHAT?",
         """Returns an integer indicating what the system is doing at the time the query is processed.
-        5 = on Operator screen (manual mode)
-        6 = on Cycle screen (program mode)
+        10 = on Operator screen (manual mode)
+        0 = on Cycle screen (program mode)
+        63 = initial state after power-up
         """,
         values={'manual': 10,  # 5  in ATSbase
                 'program': 0,  # 6 in ATSbase
