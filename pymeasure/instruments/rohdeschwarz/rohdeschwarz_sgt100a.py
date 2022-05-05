@@ -114,10 +114,10 @@ class RS_SGT100A(RFSignalGeneratorDM):
         self.write(":BB:ARBitrary:TRIGger:SOURce INT")
         playlist = self.ask(":BB:ARBitrary:WSEG:SEQ:SEL?").strip() != '""'
         if (mode is None):
-            mode = 'AUTO' if playlist else 'SINGLE'
+            mode = 'AAUT' if playlist else 'SINGLE'
             
         self.write(f":BB:ARBitrary:TRIGger:SEQ {mode:s}")
-        if mode == 'AUTO' and playlist:
+        if mode == 'AAUT' and playlist:
             self.write(":BB:ARB:TRIG:SMOD SEQ")
         else:
             self.write(":BB:ARB:TRIG:SMOD NEXT")
@@ -125,13 +125,7 @@ class RS_SGT100A(RFSignalGeneratorDM):
     def data_trigger(self):
         """ Trigger a bitsequence transmission
         """
-        playlist = self.ask(":BB:ARBitrary:WSEG:SEQ:SEL?").strip() != '""'
-        if playlist:
-            # When the playlist is defined, the only way to start/restart the play is to
-            # send the command below (trigger mode must be AUTO)
-            self.write(":BB:ARB:TRIG:SMOD SEQ")
-        else:
-            self.write("BB:ARB:TRIG:EXEC")
+        self.write("BB:ARB:TRIG:EXEC")
 
     def set_fsk_constellation(self, constellation, fsk_dev):
         """ For multi level FSK modulation, we need to define the constellation mapping.
