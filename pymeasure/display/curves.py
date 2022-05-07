@@ -32,15 +32,10 @@ from .Qt import QtCore
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-try:
-    from matplotlib.cm import viridis
-except ImportError:
-    log.warning("Matplotlib not found. Images will be greyscale")
-
-
-def _greyscale_colormap(x):
-    """Simple greyscale colormap. Assumes x is already normalized."""
-    return np.array([x, x, x, 1])
+def _default_colormap(x):
+    """ Use viridis as colormap """
+    color = pg.colormap.get('viridis')[x]
+    return (color.redF(),color.greenF(), color.blueF(), color.alphaF())
 
 
 class ResultsCurve(pg.PlotDataItem):
@@ -87,10 +82,7 @@ class ResultsImage(pg.ImageItem):
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
         self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
-        if 'matplotlib.cm' in sys.modules:
-            self.colormap = viridis
-        else:
-            self.colormap = _greyscale_colormap
+        self.colormap = _default_colormap
 
         super().__init__(image=self.img_data)
 
