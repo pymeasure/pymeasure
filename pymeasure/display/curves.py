@@ -32,10 +32,11 @@ from .Qt import QtCore
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 def _default_colormap(x):
     """ Use viridis as colormap """
     color = pg.colormap.get('viridis')[x]
-    return (color.redF(),color.greenF(), color.blueF(), color.alphaF())
+    return (color.redF(), color.greenF(), color.blueF(), color.alphaF())
 
 
 class ResultsCurve(pg.PlotDataItem):
