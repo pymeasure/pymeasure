@@ -53,6 +53,7 @@ Instruments by manufacturer:
    srs/index
    stmicroelectronics/index
    tektronix/index
+   thermotron/index
    thorlabs/index
    toptica/index
    yokogawa/index
