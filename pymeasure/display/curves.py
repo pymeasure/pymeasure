@@ -32,12 +32,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _default_colormap(x):
-    """ Use viridis as colormap """
-    color = pg.colormap.get('viridis')[x]
-    return (color.redF(), color.greenF(), color.blueF(), color.alphaF())
-
-
 class ResultsCurve(pg.PlotDataItem):
     """ Creates a curve loaded dynamically from a file through the Results object. The data can
     be forced to fully reload on each update, useful for cases when the data is changing across
@@ -82,7 +76,7 @@ class ResultsImage(pg.ImageItem):
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
         self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
-        self.colormap = _default_colormap
+        self.cm = pg.colormap.get('viridis')
 
         super().__init__(image=self.img_data)
 
@@ -129,6 +123,10 @@ class ResultsImage(pg.ImageItem):
             return int(x) + 1
         else:
             return int(x)
+
+    def colormap(self, x):
+        """ Return mapped color as 0.0-1.0 floats RGBA """
+        return self.cm.map(x, mode='float')
 
     # TODO: colormap selection
 
