@@ -1,4 +1,4 @@
-#
+
 # This file is part of the PyMeasure package.
 #
 # Copyright (c) 2013-2022 PyMeasure Developers
@@ -40,51 +40,22 @@ log.addHandler(logging.NullHandler())
 
 
 
-
-
-
-class EMCenter(Instrument):
-    """ Represents ETS-Lindgren EMCenter main frame.
-        used for direct access to the instrument, does not control sub-modules
-
-        
-
-       
-
-    
+class M7006_001(Instrument):
+    """ Position control card of EMCenter modular system.
+        Allows for controll and feedback of the positioner card.
+        Comunication happes transparently through the EMCenter mainframe.
+        devices share the resource name of the mainframe, and 
+        are identified by the slot number and the device number(if applicable to the modual).
     """
-    id = Instrument.measurement(
-         '*IDN?',
-         """ Returns the identification string of the EMCenter.""",
-    )
-    status = Instrument.measurement(
-            'STATUS?',  
-            """ Returns the status byte of the EMCenter.""",
-    )
-    local = Instrument.control(
-            'LOCAL',
-            """ Sets the EMCenter to local mode.""",
-    )
-    reboot = Instrument.control(
-            'REBOOT SYSTEM',
-            """ Reboots the EMCenter.""",
-    )
 
-    def __init__(self, resource_name, name='EMCenter', **kwargs):
-        kwargs.setdefault('timeout', 2000)
+    def __init__(self,resource_name, slot, device, **kwargs):
+
         kwargs.setdefault('write_termination', '\n')
         super().__init__(
             resource_name,
             "test",
             **kwargs
         )
-   
+        self._slot = slot
+        self._device = device
     
-
-    
-
-        
-            
-        
-
-   

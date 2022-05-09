@@ -44,6 +44,7 @@ from . import danfysik
 from . import deltaelektronika
 from . import edwards
 from . import eurotest
+from . import etslindgren
 from . import fluke
 from . import fwbell
 from . import hcp
