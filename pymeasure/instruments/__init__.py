@@ -38,6 +38,7 @@ from . import anritsu
 from . import attocube
 from . import danfysik
 from . import deltaelektronika
+from . import etslindgren
 from . import fluke
 from . import fwbell
 from . import heidenhain
