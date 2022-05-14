@@ -177,7 +177,7 @@ class Channel:
     )
 
     compliance_voltage = Instrument.control(
-        'source.limitv', 'source.limiv=%f',
+        'source.limitv', 'source.limitv=%f',
         """ Property controlling the source compliance voltage """,
         validator=truncated_range,
         values=[-200, 200]

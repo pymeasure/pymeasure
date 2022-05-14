@@ -33,19 +33,16 @@ import numpy as np
 from pymeasure.experiment.results import Results, CSVFormatter
 from pymeasure.experiment.procedure import Procedure, Parameter
 from pymeasure.experiment import BooleanParameter
-
-# Load the procedure, without it being in a module
-# data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-# RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
 from data.procedure_for_testing import RandomProcedure
 
 
 def test_procedure():
     """ Ensure that the loaded test procedure is properly functioning
     """
-    p = RandomProcedure()
-    assert p.iterations == 100
-    assert hasattr(p, 'execute')
+    procedure = RandomProcedure()
+    assert procedure.iterations == 100
+    assert procedure.delay == 0.001
+    assert hasattr(procedure, 'execute')
 
 
 def test_csv_formatter_format_header():
@@ -63,12 +60,12 @@ def test_csv_formatter_format():
     assert formatter.format(data) == '1,-1,2,3.0,abc'
 
 
-def test_procedure_wrapper():
+def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
     procedure.iterations = 101
-    file = tempfile.mktemp()
-    results = Results(procedure, file)
+    resultfile = tempfile.mktemp()
+    results = Results(procedure, resultfile)
 
     new_results = pickle.loads(pickle.dumps(results))
     assert hasattr(new_results, 'procedure')
