@@ -219,7 +219,8 @@ class ATSBase(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values={0, 1, True, False}
+        map_values=True,
+        values={True: 1, False: 0}
     )
 
     temperature_limit_air_low = Instrument.control(
@@ -399,7 +400,8 @@ class ATSBase(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values={0, 1, True, False}
+        map_values=True,
+        values={True: 1, False: 0}
     )
 
     total_cycle_count = Instrument.control(
@@ -425,7 +427,8 @@ class ATSBase(Instrument):
         cycling_enable = False (stop cycling)
         """,
         validator=strict_discrete_set,
-        values={0, 1, True, False}
+        map_values=True,
+        values={True: 1, False: 0}
     )
 
     current_cycle_count = Instrument.measurement(
@@ -470,7 +473,8 @@ class ATSBase(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values={0, 1, True, False}
+        map_values=True,
+        values={True: 1, False: 0}
     )
 
     ramp_rate = Instrument.control(
@@ -812,9 +816,3 @@ class ATSBase(Instrument):
         """:returns: ``True`` if at temperature.
         """
         return self.temperature_condition_status_code == TemperatureStatusCode.AT_TEMPERATURE
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self):
-        self.shutdown()
