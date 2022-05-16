@@ -1,4 +1,4 @@
-.. module:: pymeasure.instruments.hp
+.. module:: pymeasure.instruments.hcp
 
 ###############
 HC Photonics

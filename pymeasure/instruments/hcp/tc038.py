@@ -22,13 +22,8 @@
 # THE SOFTWARE.
 #
 
-import logging
-
 from pymeasure.instruments import Instrument
-import pyvisa
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from pyvisa.constants import Parity
 
 
 class TC038(Instrument):
@@ -41,7 +36,8 @@ class TC038(Instrument):
     application.
     """
 
-    def __init__(self, resourceName, address=1, timeout=1000):
+    def __init__(self, resourceName, address=1, timeout=1000,
+                 includeSCPI=False):
         """
         Initialize the communication.
 
@@ -56,7 +52,7 @@ class TC038(Instrument):
         """
         super().__init__(resourceName, "TC038", timeout=timeout,
                          write_termination="\r", read_termination="\r",
-                         parity=pyvisa.constants.Parity.even,)
+                         parity=Parity.even,)
         self.address = address
 
         self.monitorTemperature()  # start to monitor the temperature
@@ -68,9 +64,8 @@ class TC038(Instrument):
         Parameters
         ----------
         command : string, optional
-            Command to be sent, three chars. The default is "WRM".
-        commandData : string, optional
-            Additional data for the command. The default is "".
+            Command to be sent. Three chars indicating the type, and data for
+            the command, if necessary.
         """
         super().write(chr(2) + f"{self.address:02}" + "010"
                       + command + chr(3))
@@ -83,9 +78,8 @@ class TC038(Instrument):
         Parameters
         ----------
         command : string, optional
-            Command to be sent, three chars. The default is "WRM".
-        commandData : string, optional
-            Additional data for the command. The default is "".
+            Command to be sent. Three chars indicating the type, and data for
+            the command, if necessary.
 
         Returns
         -------
@@ -96,44 +90,39 @@ class TC038(Instrument):
         return super().ask(chr(2) + f"{self.address:02}" + "010"
                            + command + chr(3))
 
-    def monitorTemperature(self):
+    def monitor_temperature(self):
         """Configure the oven to monitor the current temperature."""
         self.ask(command="WRS" + "01" + "D0002")
         # WRS in order to setup to monitor a word
         # monitor 1 word
         # monitor the word in register D0002
 
-    @property
-    def setpoint(self):
-        """Read and return the current setpoint in °C."""
-        got = self.ask(command="WRD" + "D0120" + ",01")
-        # WRD: read words
-        # start with register D0003
-        # read a single word, separated by space or comma
-        return self.dataToTemp(got)
+    setpoint = Instrument.control(
+        "WRD" + "D0120" + ",01",
+        "D0120,01,%s",
+        """The current setpoint of the temperature controller in °C.""",
+        get_process=self._data_to_temp,
+        set_process=self._temp_to_data
+        )
 
-    @property
-    def temperature(self):
-        """Read and return the current temperature in °C."""
-        got = self.ask(command="WRD" + "D0002" + ",01")
-        return self.dataToTemp(got)
+    temperature = Instrument.measurement(
+        "WRD" + "D0002" + ",01",
+        """The currently measured temperature in °C.""",
+        get_process=self._data_to_temp
+        )
 
-    def getMonitored(self):
-        """Read and return the monitored value.
-        Normally it's the current temperature in °C."""
-        # returns the monitored words
-        got = self.ask(command="WRM")
-        return self.dataToTemp(got)
+    monitored_value = Instrument.measurement(
+        "WRM",
+        """The currently monitored value. For default it is the current
+        temperature in °C.""",
+        get_process=self._data_to_temp
+        )
 
-    @setpoint.setter
-    def setpoint(self, setpoint=27):
-        """Set the setpoint to a temperature in °C."""
-        commandData = f"D0120,01,{int(round(setpoint*10)):04X}"
-        # Temperature without decimal sign in hex representation
-        got = self.ask(command="WWR" + commandData)
-        return got[5:7]
-
-    def dataToTemp(self, data):
+    def _data_to_temp(self, data):
         """Convert the returned hex value "data" to a temperature in °C."""
         return int(data[7:11], 16) / 10.
         # get the hex number, convert to int and shift the decimal sign
+
+    def _temp_to_data(self, temp):
+        """Convert the temperature `temp` in °C to a command string."""
+        return f"{int(round(temp * 10)):04X}"
