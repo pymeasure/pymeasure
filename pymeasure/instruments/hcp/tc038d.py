@@ -22,12 +22,21 @@
 # THE SOFTWARE.
 #
 
-import logging
 
 from pymeasure.instruments import Instrument
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+
+def CRC16(data):
+    """Calculate the CRC16 checksum for the data byte array."""
+    CRC = 0xFFFF
+    for octet in data:
+        CRC ^= octet
+        for j in range(8):
+            lsb = CRC & 0x1  # least significant bit
+            CRC = CRC >> 1
+            if lsb:
+                CRC ^= 0xA001
+    return [CRC & 0xFF, CRC >> 8]
 
 
 class TC038D(Instrument):
@@ -38,9 +47,11 @@ class TC038D(Instrument):
 
     The oven expects raw bytes written, no ascii code, and sends raw bytes.
     For the variables are two or four-byte modes available. We use the
-    four-byte mode addresses, so do we. In that case element count has to be
+    four-byte mode addresses. In that case element count has to be
     double the variables read.
     """
+
+    byteMode = 4
 
     functions = {'read': 0x03, 'writeMultiple': 0x10,
                  'writeSingle': 0x06, 'echo': 0x08}
@@ -50,33 +61,22 @@ class TC038D(Instrument):
         super().__init__(resourceName, "TC038D", timeout=timeout)
         self.address = address
 
-    def CRC16(self, data):
-        """Calculate the CRC16 checksum for the data byte array."""
-        CRC = 0xFFFF
-        for octet in data:
-            CRC ^= octet
-            for j in range(8):
-                lsb = CRC & 0x1  # least significant bit
-                CRC = CRC >> 1
-                if lsb:
-                    CRC ^= 0xA001
-        return [CRC & 0xFF, CRC >> 8]
-
-    def readRegister(self, address, count=2):
+    def readRegister(self, address, count=1):
         """Read count variables from start address on."""
         # Count has to be double the number of elements in 4-byte-mode.
+        count *= self.byteMode // 2
         data = [self.address]
-        data.append(0x03)  # function code
+        data.append(self.functions['read'])  # function code
         data += [address >> 8, address & 0xFF]  # 2B address
         data += [count >> 8, count & 0xFF]  # 2B number of elements
-        data += self.CRC16(data)
+        data += CRC16(data)
         self.adapter.connection.write_raw(bytes(data))
-        got = self.adapter.connection.read_bytes(3)
         # Slave address, function, length
-        if got[1] == 0x03:
+        got = self.adapter.connection.read_bytes(3)
+        if got[1] == self.functions['read']:
             length = got[2]
+            # data length, 2 Byte CRC
             read = self.adapter.connection.read_bytes(length + 2)
-            # data, CRC
             return read[:-2]
         else:  # an error occurred
             end = self.adapter.connection.read_bytes(2)  # empty the buffer
@@ -86,32 +86,33 @@ class TC038D(Instrument):
                 raise ValueError("The number of elements exceeds the allowed range")
             raise ConnectionError(f"Unknown read error. Received: {got} {end}")
 
-    def writeMultiple(self, address, values, byteMode=4):
+    def writeMultiple(self, address, values):
         """Write multiple variables."""
         data = [self.address]
-        data.append(0x10)  # function code
+        data.append(self.functions['writeMultiple'])  # function code
         data += [address >> 8, address & 0xFF]  # 2B address
         if isinstance(values, int):
-            data += [0x0, byteMode // 2]  # 2B number of elements
-            data.append(byteMode)  # 1B number of write data
-            for i in range(byteMode - 1, -1, -1):
+            data += [0x0, self.byteMode // 2]  # 2B number of elements
+            data.append(self.byteMode)  # 1B number of write data
+            for i in range(self.byteMode - 1, -1, -1):
                 data.append(values >> i * 8 & 0xFF)
         elif hasattr(values, "__iter__"):
-            data += [len(values) >> 8, len(values) & 0xFF]  # 2B number of elements
-            data.append(len(values) * byteMode)  # 1B number of write data
+            elements = len(values) * self.byteMode // 2
+            data += [elements >> 8, elements & 0xFF]  # 2B number of elements
+            data.append(len(values) * self.byteMode)  # 1B number of write data
             for element in values:
-                for i in range(byteMode - 1, -1, -1):
+                for i in range(self.byteMode - 1, -1, -1):
                     data.append(element >> i * 8 & 0xFF)
         else:
             raise ValueError(("Values has to be an integer or an iterable of "
                               f"integers. values: {values}"))
-        data += self.CRC16(data)
+        data += CRC16(data)
         self.adapter.connection.write_raw(bytes(data))
         got = self.adapter.connection.read_bytes(2)
         # slave address, function
-        if got[1] == 0x10:
+        if got[1] == self.functions['writeMultiple']:
+            # start address, number elements, CRC; each 2 Bytes long
             return self.adapter.connection.read_bytes(2 + 2 + 2)
-            # start address, number elements, CRC
         else:
             end = self.adapter.connection.read_bytes(3)  # error code and CRC
             errors = {0x02: "Wrong start address",

@@ -26,6 +26,17 @@ from pymeasure.instruments import Instrument
 from pyvisa.constants import Parity
 
 
+def _data_to_temp(data):
+    """Convert the returned hex value "data" to a temperature in °C."""
+    return int(data[7:11], 16) / 10.
+    # get the hex number, convert to int and shift the decimal sign
+
+
+registers = {'temperature': "D0002",
+             'setpoint': "D0120",
+             }
+
+
 class TC038(Instrument):
     """
     Communication with the HCP TC038 oven.
@@ -55,7 +66,7 @@ class TC038(Instrument):
                          parity=Parity.even,)
         self.address = address
 
-        self.monitorTemperature()  # start to monitor the temperature
+        self.set_monitored_quantity()  # start to monitor the temperature
 
     def write(self, command):
         """
@@ -67,9 +78,9 @@ class TC038(Instrument):
             Command to be sent. Three chars indicating the type, and data for
             the command, if necessary.
         """
+        # 010 is CPU (01) and time to wait (0), which are fix
         super().write(chr(2) + f"{self.address:02}" + "010"
                       + command + chr(3))
-        # 010 is CPU (01) and time to wait (0), which are fix
 
     def ask(self, command):
         """
@@ -90,39 +101,41 @@ class TC038(Instrument):
         return super().ask(chr(2) + f"{self.address:02}" + "010"
                            + command + chr(3))
 
-    def monitor_temperature(self):
-        """Configure the oven to monitor the current temperature."""
-        self.ask(command="WRS" + "01" + "D0002")
+    def set_monitored_quantity(self, quantity='temperature'):
+        """
+        Configure the oven to monitor a certain `quantity`.
+
+        `quantity` may be any key of `registers`. Default is the current
+        temperature in °C.
+        """
         # WRS in order to setup to monitor a word
         # monitor 1 word
         # monitor the word in register D0002
+        self.ask(command="WRS" + "01" + registers[quantity])
 
     setpoint = Instrument.control(
-        "WRD" + "D0120" + ",01",
-        "D0120,01,%s",
+        "WRD" + registers['setpoint'] + ",01",
+        registers['setpoint'] + ",01,%s",
         """The current setpoint of the temperature controller in °C.""",
-        get_process=self._data_to_temp,
-        set_process=self._temp_to_data
+        get_process=_data_to_temp,
+        set_process=lambda temp: f"{int(round(temp * 10)):04X}",
         )
 
     temperature = Instrument.measurement(
-        "WRD" + "D0002" + ",01",
+        "WRD" + registers['temperature'] + ",01",
         """The currently measured temperature in °C.""",
-        get_process=self._data_to_temp
+        get_process=_data_to_temp
         )
 
     monitored_value = Instrument.measurement(
         "WRM",
         """The currently monitored value. For default it is the current
         temperature in °C.""",
-        get_process=self._data_to_temp
+        get_process=_data_to_temp
         )
 
-    def _data_to_temp(self, data):
-        """Convert the returned hex value "data" to a temperature in °C."""
-        return int(data[7:11], 16) / 10.
-        # get the hex number, convert to int and shift the decimal sign
-
-    def _temp_to_data(self, temp):
-        """Convert the temperature `temp` in °C to a command string."""
-        return f"{int(round(temp * 10)):04X}"
+    information = Instrument.measurement(
+        "INF",
+        """The information about the device and its capabilites.""",
+        get_process=lambda got: got[7:-1],
+        )
