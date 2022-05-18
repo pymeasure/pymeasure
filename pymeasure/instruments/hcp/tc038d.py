@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import collections.abc
 
 from pymeasure.instruments import Instrument
 
@@ -77,6 +78,8 @@ class TC038D(Instrument):
             length = got[2]
             # data length, 2 Byte CRC
             read = self.adapter.connection.read_bytes(length + 2)
+            if read[-2:] != bytes(CRC16(got + read[:-2])):
+                raise ConnectionError("Response CRC does not match.")
             return read[:-2]
         else:  # an error occurred
             end = self.adapter.connection.read_bytes(2)  # empty the buffer
@@ -96,7 +99,7 @@ class TC038D(Instrument):
             data.append(self.byteMode)  # 1B number of write data
             for i in range(self.byteMode - 1, -1, -1):
                 data.append(values >> i * 8 & 0xFF)
-        elif hasattr(values, "__iter__"):
+        elif isinstance(values, collections.abc.Sequence):
             elements = len(values) * self.byteMode // 2
             data += [elements >> 8, elements & 0xFF]  # 2B number of elements
             data.append(len(values) * self.byteMode)  # 1B number of write data
@@ -112,7 +115,9 @@ class TC038D(Instrument):
         # slave address, function
         if got[1] == self.functions['writeMultiple']:
             # start address, number elements, CRC; each 2 Bytes long
-            return self.adapter.connection.read_bytes(2 + 2 + 2)
+            got += self.adapter.connection.read_bytes(2 + 2 + 2)
+            if got[-2:] != bytes(CRC16(got[:-2])):
+                raise ConnectionError("Response CRC does not match.")
         else:
             end = self.adapter.connection.read_bytes(3)  # error code and CRC
             errors = {0x02: "Wrong start address",

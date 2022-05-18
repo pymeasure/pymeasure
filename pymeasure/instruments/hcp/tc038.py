@@ -45,6 +45,8 @@ class TC038(Instrument):
 
     It has parity or framing errors from time to time. Handle them in your
     application.
+
+    The oven always responds with an "OK" to all valid requests or commands.
     """
 
     def __init__(self, resourceName, address=1, timeout=1000,
@@ -79,21 +81,25 @@ class TC038(Instrument):
         return chr(2) + f"{self.address:02}" + "010" + command + chr(3)
         # Response is chr(2) + address:02 + "01" + response + chr(3)
 
+    def write_only(self, command):
+        """Send a `command` but do not read or clear the read buffer."""
+        super().write(self._adjust_command(command))
+
     def write(self, command):
-        """Send a "command" in its own protocol and clear the buffer."""
+        """Send a `command` in its own protocol and clear the read buffer."""
         # The oven responds, use therefore ask to clear the buffer.
         self.ask(command)
 
     def ask(self, command):
-        """Send a command to the oven and read its string response."""
+        """Send a `command` to the oven and read its string response."""
         got = super().ask(self._adjust_command(command))
         if got[5:7] != "OK":
             raise ConnectionError(f"Ask failed with message {got}")
         return got
 
-    def values(self, command):
+    def values(self, command, **kwargs):
         """Read the values of the oven in its own protocol."""
-        return super().values(self._adjust_command(command))
+        return super().values(self._adjust_command(command), **kwargs)
 
     def set_monitored_quantity(self, quantity='temperature'):
         """
