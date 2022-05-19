@@ -56,7 +56,7 @@ def _check_errors(response):
         EC1 = response[7:9]
         if EC1 in ("03", "04", "05", "08"):
             EC2 = response[9:11]
-            return [errors[EC1] + f"Wrong parameter has number {EC2}."]
+            return [errors[EC1] + f" Wrong parameter has number {EC2}."]
         return [errors[EC1]]
 
 
@@ -119,14 +119,17 @@ class TC038(Instrument):
     def values(self, command, **kwargs):
         """Read the values of the oven in its own protocol."""
         got = super().values(self._adjust_command(command), **kwargs)
-        errors = _check_errors(got)
+        errors = _check_errors(got[0])
         if errors:
             raise ConnectionError(errors[0])
         return got
 
     def check_errors(self):
         """Read the error from the instrument and return a list of errors."""
-        return _check_errors(super().read())
+        errors = _check_errors(super().read())
+        if errors:
+            raise ConnectionError(errors[0])
+        return errors
 
     def set_monitored_quantity(self, quantity='temperature'):
         """
