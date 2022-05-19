@@ -35,6 +35,7 @@ Instruments by manufacturer:
    fluke/index
    fwbell/index
    heidenhain/index
+   hcp/index
    hp/index
    keithley/index
    keysight/index
