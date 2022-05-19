@@ -68,38 +68,32 @@ class TC038(Instrument):
 
         self.set_monitored_quantity()  # start to monitor the temperature
 
-    def write(self, command):
+    def _adjust_command(self, command):
         """
-        Send "command" to the oven with "commandData".
+        Return an adjusted command string for the oven protocol.
 
-        Parameters
-        ----------
-        command : string, optional
-            Command to be sent. Three chars indicating the type, and data for
+        :param str command: Three chars indicating the type, and data for
             the command, if necessary.
         """
         # 010 is CPU (01) and time to wait (0), which are fix
-        super().write(chr(2) + f"{self.address:02}" + "010"
-                      + command + chr(3))
+        return chr(2) + f"{self.address:02}" + "010" + command + chr(3)
+        # Response is chr(2) + address:02 + "01" + response + chr(3)
+
+    def write(self, command):
+        """Send a "command" in its own protocol and clear the buffer."""
+        # The oven responds, use therefore ask to clear the buffer.
+        self.ask(command)
 
     def ask(self, command):
-        """
-        Send a command to the oven and read its response.
+        """Send a command to the oven and read its string response."""
+        got = super().ask(self._adjust_command(command))
+        if got[5:7] != "OK":
+            raise ConnectionError(f"Ask failed with message {got}")
+        return got
 
-        Parameters
-        ----------
-        command : string, optional
-            Command to be sent. Three chars indicating the type, and data for
-            the command, if necessary.
-
-        Returns
-        -------
-        string
-            response of the system.
-
-        """
-        return super().ask(chr(2) + f"{self.address:02}" + "010"
-                           + command + chr(3))
+    def values(self, command):
+        """Read the values of the oven in its own protocol."""
+        return super().values(self._adjust_command(command))
 
     def set_monitored_quantity(self, quantity='temperature'):
         """
@@ -115,7 +109,7 @@ class TC038(Instrument):
 
     setpoint = Instrument.control(
         "WRD" + registers['setpoint'] + ",01",
-        registers['setpoint'] + ",01,%s",
+        "WWR" + registers['setpoint'] + ",01,%s",
         """The current setpoint of the temperature controller in °C.""",
         get_process=_data_to_temp,
         set_process=lambda temp: f"{int(round(temp * 10)):04X}",
@@ -135,7 +129,7 @@ class TC038(Instrument):
         )
 
     information = Instrument.measurement(
-        "INF",
+        "INF6",
         """The information about the device and its capabilites.""",
         get_process=lambda got: got[7:-1],
         )
