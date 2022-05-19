@@ -37,6 +37,29 @@ registers = {'temperature': "D0002",
              }
 
 
+def _check_errors(response):
+    errors = {"02": "Command does not exist or is not executable.",
+              "03": "Register number does not exist.",
+              "04": "Out of setpoint range.",
+              "05": "Out of data number range.",
+              "06": "Executed monitor without specifying what do monitor.",
+              "08": "Illegal parameter is set.",
+              "42": "Sum does not match the expected value.",
+              "43": "Data value greater than specified received.",
+              "44": "End of data or end of text character is not received.",
+              }
+    if response[5:7] == "OK":
+        return []
+    else:  # got[5:7] == "ER"
+        """If communication is complete abnormally, TC038 return a
+        character string “ER” and error code (EC1 and EC2)"""
+        EC1 = response[7:9]
+        if EC1 in ("03", "04", "05", "08"):
+            EC2 = response[9:11]
+            return [errors[EC1] + f"Wrong parameter has number {EC2}."]
+        return [errors[EC1]]
+
+
 class TC038(Instrument):
     """
     Communication with the HCP TC038 oven.
@@ -81,25 +104,29 @@ class TC038(Instrument):
         return chr(2) + f"{self.address:02}" + "010" + command + chr(3)
         # Response is chr(2) + address:02 + "01" + response + chr(3)
 
-    def write_only(self, command):
-        """Send a `command` but do not read or clear the read buffer."""
-        super().write(self._adjust_command(command))
-
     def write(self, command):
-        """Send a `command` in its own protocol and clear the read buffer."""
-        # The oven responds, use therefore ask to clear the buffer.
-        self.ask(command)
+        """Send a `command` in its own protocol."""
+        super().write(self._adjust_command(command))
 
     def ask(self, command):
         """Send a `command` to the oven and read its string response."""
         got = super().ask(self._adjust_command(command))
-        if got[5:7] != "OK":
-            raise ConnectionError(f"Ask failed with message {got}")
+        errors = _check_errors(got)
+        if errors:
+            raise ConnectionError(errors[0])
         return got
 
     def values(self, command, **kwargs):
         """Read the values of the oven in its own protocol."""
-        return super().values(self._adjust_command(command), **kwargs)
+        got = super().values(self._adjust_command(command), **kwargs)
+        errors = _check_errors(got)
+        if errors:
+            raise ConnectionError(errors[0])
+        return got
+
+    def check_errors(self):
+        """Read the error from the instrument and return a list of errors."""
+        return _check_errors(super().read())
 
     def set_monitored_quantity(self, quantity='temperature'):
         """
@@ -119,6 +146,7 @@ class TC038(Instrument):
         """The current setpoint of the temperature controller in °C.""",
         get_process=_data_to_temp,
         set_process=lambda temp: f"{int(round(temp * 10)):04X}",
+        check_set_errors=True,
         )
 
     temperature = Instrument.measurement(
