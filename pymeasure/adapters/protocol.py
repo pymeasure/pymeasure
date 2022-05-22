@@ -39,3 +39,11 @@ class ProtocolAdapter(Adapter):
     def __init__(self, preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         # TODO: Make this skeleton implementation workable
+
+    # TODO: Harmonise ask being write+read (i.e., remove from VISAAdapter),
+    #   use protocol tests to confirm it works correctly
+    # TODO: Remove all now-unnecessary ask() implementations -
+    #   read and write implementations should have all (test this)
+    # TODO: Implement over-the-wire message-traffic logging here, first
+    # TODO: Check timing impact of non-firing logging messages
+    # TODO: Roll out message-traffic logging to all Adapters, try to DRY

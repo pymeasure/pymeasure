@@ -47,3 +47,5 @@ def test_simple_protocol():
 # TODO: Add protocol tests for a simple instrument
 # TODO: Add protocol tests for an instrument with multiple channels
 # TODO: Add protocol tests for a frame-based instrument (recommend: TC038, TC038D)
+# TODO: (Later) Add protocol tests for an instrument with a custom Adapter, refactor that (probably)
+# TODO: (Later) Search for any custom Adapters and refactor those

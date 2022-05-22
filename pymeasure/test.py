@@ -35,6 +35,9 @@ def expected_protocol(instrument_cls, comm_pairs):
     manager confirms that the code in the context manager block produces the expected
     messages.
 
+    Terminators are excluded from the protocol definition, as those are typically a detail of the
+     communication method (i.e. Adapter), and not the protocol.
+
     Parameters
     ----------
     instrument_cls : `~pymeasure.Instrument`
