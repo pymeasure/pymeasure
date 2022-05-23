@@ -22,10 +22,87 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters.protocol import ProtocolAdapter
+from pymeasure.adapters.protocol import to_bytes, ProtocolAdapter
+
+from pytest import mark, raises
+
+
+@mark.parametrize("input, output", (("superXY", b"superXY"),
+                                    ([1, 2, 3, 4], b"\x01\x02\x03\x04"),
+                                    (5, b"\x05"),
+                                    ))
+def test_to_bytes(input, output):
+    assert to_bytes(input) == output
+
+
+def test_to_bytes_invalid():
+    with raises(TypeError):
+        to_bytes(5.5)
 
 
 def test_protocol_instantiation():
-    a = ProtocolAdapter()
-    assert not a
+    a = ProtocolAdapter([("write", "read"), ("write_only",)])
+    assert a.comm_pairs == [("write", "read"), ("write_only",)]
     # TODO: Make this first test assert something useful
+
+
+class Test_write:
+    @mark.parametrize("command, written", (("hey Ho", b"hey Ho"),
+                                           (b"superX", "superX")
+                                           ))
+    def test_write(self, command, written):
+        a = ProtocolAdapter([(written, 5)])
+        a.write(command)
+        assert a.read_buffer == b"\x05"
+
+    def test_write_without_response(self):
+        a = ProtocolAdapter([("Hey ho",)])
+        a.write("Hey ho")
+        assert a.read_buffer == b""
+
+    def test_wrong_command(self):
+        a = ProtocolAdapter([("Hey ho",)])
+        with raises(AssertionError):
+            a.write("Something different")
+
+    def test_not_enough_pairs(self):
+        a = ProtocolAdapter([("a",)])
+        a.index = 1
+        with raises(IndexError):
+            a.write("b")
+
+
+class Test_read:
+    @mark.parametrize("buffer, returned", ((b"\x03\x65", "\x03e"),
+                                           (b"Bytes", "Bytes"),
+                                           ))
+    def test_works(self, buffer, returned):
+        a = ProtocolAdapter([])
+        a.read_buffer = buffer
+        assert a.read() == returned
+
+    def test_unsolicited_response(self):
+        a = ProtocolAdapter([(None, "Response")])
+        assert a.read() == "Response"
+
+    def test_not_enough_pairs(self):
+        a = ProtocolAdapter([("a",)])
+        a.index = 1
+        with raises(IndexError):
+            a.read()
+
+    def test_read_with_missing_write(self):
+        a = ProtocolAdapter([("a", "b")])
+        with raises(AssertionError):
+            a.read()
+
+
+def test_read_write_sequence():
+    a = ProtocolAdapter([("c1", "a1"), ("c2",), (None, "a3"), ("c4", "a4")])
+    a.write("c1")
+    assert a.read() == "a1"
+    a.write("c2")
+    assert a.read() == "a3"
+    a.write("c4")
+    assert a.read() == "a4"
+    
