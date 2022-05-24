@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from pytest import raises
+
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 
@@ -41,6 +43,36 @@ def test_simple_protocol():
                             ]) as instr:
         assert instr.simple == 3.14
         instr.simple = 4.5
+
+
+def test_not_all_communication_used():
+    """Test whether unused communication raises an error."""
+    with raises(AssertionError) as exc:
+        with expected_protocol(BasicTestInstrument,
+                               [('VOLT?', 3.14),
+                                ('VOLT 4.5 V',),
+                                ]) as instr:
+            assert instr.simple == 3.14
+    assert str(exc.value) == "Not all messages exchanged."
+
+
+def test_non_empty_write_buffer():
+    with raises(AssertionError) as exc:
+        with expected_protocol(BasicTestInstrument,
+                               [('VOLT?', 3.14),
+                                ]) as instr:
+            instr.adapter.write_bytes(b"VOLT")
+            instr.adapter._index = 1
+    assert str(exc.value) == "Non empty write buffer."
+
+
+def test_non_empty_read_buffer():
+    with raises(AssertionError) as exc:
+        with expected_protocol(BasicTestInstrument,
+                               [('VOLT?', 3.14),
+                                ]) as instr:
+            instr.write("VOLT?")
+    assert str(exc.value) == "Non empty read buffer."
 
 
 # After completing expected_protocol tests, add tests elsewhere:
