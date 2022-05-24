@@ -49,8 +49,11 @@ def expected_protocol(instrument_cls, comm_pairs):
          e.g. `(None, 'RESP1')`.
     """
     protocol = ProtocolAdapter(comm_pairs)
-    instr = instrument_cls(protocol, "Virtual instrument")
+    instr = instrument_cls(protocol, name="Virtual instrument")
     yield instr
+    assert protocol._index == len(comm_pairs), "Not all messages exchanged."
+    assert protocol._write_buffer == b"", "Non empty write buffer."
+    assert protocol._read_buffer == b"", "Non empty read buffer."
 
     # TODO: Make this skeleton implementation produce reasonable tests
     # TODO: Assert correct state of comm_pairs after yield

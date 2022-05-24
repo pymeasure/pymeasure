@@ -43,75 +43,80 @@ def to_bytes(command):
             return bytes(command)
         except TypeError:
             raise
-    elif isinstance(command, int):
-        return bytes((command,))
-    raise TypeError("Invalid input")
+    elif isinstance(command, (int, float)):
+        return str(command).encode("utf-8")
+    raise TypeError(f"Invalid input of type {type(command).__name__}.")
 
 
 class ProtocolAdapter(Adapter):
     """ Adapter class testing command exchange without instrument hardware.
 
+    :param list of lists comm_pairs: List of message pairs. First message is
+        the written one, the second one is the read message, it is optional.
+        'None' indicates that this message (write or read) does not exist.
     :param kwargs: TBD key-word arguments
     """
 
-    def __init__(self, comm_pairs, preprocess_reply=None, **kwargs):
+    def __init__(self, comm_pairs=[], preprocess_reply=None, **kwargs):
+        """Generate the adapter and initialize internal buffers."""
+        assert isinstance(comm_pairs, (list, tuple)), (
+            "Parameter comm_pairs has to be a list or tuple.")
         super().__init__(preprocess_reply=preprocess_reply)
-        self.read_buffer = b""
-        self.write_buffer = b""
+        self._read_buffer = b""
+        self._write_buffer = b""
         self.comm_pairs = comm_pairs
-        self.index = 0
+        self._index = 0
         # TODO: Make this skeleton implementation workable
 
     def write(self, command):
         """Compare the command with the expected one and fill the buffer."""
-        pair = self.comm_pairs[self.index]
-        self.index += 1
-        assert to_bytes(pair[0]) == to_bytes(command), (
+        pair = self.comm_pairs[self._index]
+        self._index += 1
+        assert to_bytes(pair[0]) == self._write_buffer + to_bytes(command), (
                 f"Command '{command}' written, but {pair[0]} expected.")
-        print(pair)
+        self._write_buffer = b""
         try:
-            self.read_buffer = to_bytes(pair[1])
+            self._read_buffer = to_bytes(pair[1])
         except IndexError:
             # No response in the pair.
-            self.read_buffer = b""
+            self._read_buffer = b""
 
     def write_bytes(self, content):
         """Write the bytes `content`. If a command is full, fill the read."""
-        self.write_buffer += content
-        pair = self.comm_pairs[self.index]
-        if self.write_buffer == pair[0]:
-            assert self.read_buffer == b"", "Responses have not been read yet."
+        self._write_buffer += content
+        pair = self.comm_pairs[self._index]
+        if self._write_buffer == to_bytes(pair[0]):
+            assert self._read_buffer == b"", "Responses have not been read yet."
             # Clear the write buffer
-            self.write_buffer = b""
-            self.index += 1
+            self._write_buffer = b""
+            self._index += 1
             try:
-                self.read_buffer = pair[1]
+                self._read_buffer = to_bytes(pair[1])
             except IndexError:
-                self.read_buffer = b""
+                self._read_buffer = b""
 
     def read(self):
         """Read the prepared read bufferr and return it as a string."""
-        if self.read_buffer:
-            return self.read_buffer.decode("utf-8")
+        if self._read_buffer:
+            return self._read_buffer.decode("utf-8")
         else:
-            pair = self.comm_pairs[self.index]
+            pair = self.comm_pairs[self._index]
             assert pair[0] is None, "Unexpected read without prior write."
-            self.index += 1
+            self._index += 1
             return to_bytes(pair[1]).decode("utf-8")
 
     def read_bytes(self, count):
         """Read `count` number of bytes."""
-        if self.read_buffer:
-            read = self.read_buffer[:count]
-            self.read_buffer = self.read_buffer[count:]
+        if self._read_buffer:
+            read = self._read_buffer[:count]
+            self._read_buffer = self._read_buffer[count:]
             return read
         else:
-            pair = self.comm_pairs[self.index]
+            pair = self.comm_pairs[self._index]
             assert pair[0] is None, "Unexpected read without prior write."
-            self.index += 1
-            read = pair[1][:count]
-            self.read_buffer = pair[1][count:]
-            return read
+            self._index += 1
+            self._read_buffer = to_bytes(pair[1])[count:]
+            return to_bytes(pair[1])[:count]
 
     # TODO: Harmonise ask being write+read (i.e., remove from VISAAdapter),
     #   use protocol tests to confirm it works correctly
