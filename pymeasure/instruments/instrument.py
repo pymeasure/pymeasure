@@ -24,6 +24,7 @@
 
 import logging
 import numpy as np
+from pymeasure.adapters.protocol import ProtocolAdapter
 from pymeasure.adapters.visa import VISAAdapter
 
 log = logging.getLogger(__name__)
@@ -146,12 +147,14 @@ class Instrument:
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
-        try:
-            if isinstance(adapter, (int, str)):
+        if adapter == "test":
+            adapter = ProtocolAdapter(**kwargs)
+        elif isinstance(adapter, (int, str)):
+            try:
                 adapter = VISAAdapter(adapter, **kwargs)
-        except ImportError:
-            raise Exception("Invalid Adapter provided for Instrument since "
-                            "PyVISA is not present")
+            except ImportError:
+                raise Exception("Invalid Adapter provided for Instrument since"
+                                " PyVISA is not present")
 
         self.name = name
         self.SCPI = includeSCPI
