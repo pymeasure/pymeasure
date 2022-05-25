@@ -129,9 +129,15 @@ class Test_read:
                                            (b"Bytes", "Bytes"),
                                            ))
     def test_works(self, buffer, returned):
-        a = ProtocolAdapter([])
+        a = ProtocolAdapter()
         a._read_buffer = buffer
         assert a.read() == returned
+
+    def test_read_buffer_emptied(self):
+        a = ProtocolAdapter()
+        a._read_buffer = b"jklasdf"
+        a.read()
+        assert a._read_buffer == b""
 
     def test_unsolicited_response(self):
         a = ProtocolAdapter([(None, "Response")])

@@ -61,7 +61,7 @@ class ProtocolAdapter(Adapter):
         """Generate the adapter and initialize internal buffers."""
         assert isinstance(comm_pairs, (list, tuple)), (
             "Parameter comm_pairs has to be a list or tuple.")
-        super().__init__(preprocess_reply=preprocess_reply)
+        super().__init__(preprocess_reply=preprocess_reply, **kwargs)
         self._read_buffer = b""
         self._write_buffer = b""
         self.comm_pairs = comm_pairs
@@ -98,7 +98,9 @@ class ProtocolAdapter(Adapter):
     def read(self):
         """Read the prepared read bufferr and return it as a string."""
         if self._read_buffer:
-            return self._read_buffer.decode("utf-8")
+            buffer = self._read_buffer.decode("utf-8")
+            self._read_buffer = b""
+            return buffer
         else:
             pair = self.comm_pairs[self._index]
             assert pair[0] is None, "Unexpected read without prior write."

@@ -35,6 +35,11 @@ class BasicTestInstrument(Instrument):
     )
 
 
+class InstrumentWithPreprocess(BasicTestInstrument):
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, preprocess_reply=lambda v: v+"2345", **kwargs)
+
+
 def test_simple_protocol():
     """Test a property without parsing or channel prefixes."""
     with expected_protocol(BasicTestInstrument,
@@ -74,6 +79,11 @@ def test_non_empty_read_buffer():
             instr.write("VOLT?")
     assert str(exc.value) == "Non empty read buffer."
 
+
+def test_preprocess():
+    with expected_protocol(InstrumentWithPreprocess,
+                           [("VOLT?", "3.1")]) as instr:
+        assert instr.simple == 3.12345
 
 # After completing expected_protocol tests, add tests elsewhere:
 # TODO: Add protocol tests for a simple instrument

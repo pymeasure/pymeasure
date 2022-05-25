@@ -48,9 +48,10 @@ def expected_protocol(instrument_cls, comm_pairs):
         To represent a response-only communication, use `None` for the command part,
          e.g. `(None, 'RESP1')`.
     """
-    protocol = ProtocolAdapter(comm_pairs)
-    instr = instrument_cls(protocol, name="Virtual instrument")
+    instr = instrument_cls("test", name="Virtual instrument",
+                           comm_pairs=comm_pairs)
     yield instr
+    protocol = instr.adapter
     assert protocol._index == len(comm_pairs), "Not all messages exchanged."
     assert protocol._write_buffer == b"", "Non empty write buffer."
     assert protocol._read_buffer == b"", "Non empty read buffer."
