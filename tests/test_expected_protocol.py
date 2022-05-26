@@ -36,7 +36,10 @@ class BasicTestInstrument(Instrument):
 
 
 class InstrumentWithPreprocess(BasicTestInstrument):
-    def __init__(self, adapter, **kwargs):
+    def values(self, command, **kwargs):
+        return super().values(command, preprocess_reply=lambda v: v+"2345", **kwargs)
+
+    def __init__2(self, adapter, **kwargs):
         super().__init__(adapter, preprocess_reply=lambda v: v+"2345", **kwargs)
 
 
@@ -44,7 +47,7 @@ def test_simple_protocol():
     """Test a property without parsing or channel prefixes."""
     with expected_protocol(BasicTestInstrument,
                            [('VOLT?', 3.14),
-                            ('VOLT 4.5 V',),
+                            ('VOLT 4.5 V', None),
                             ]) as instr:
         assert instr.simple == 3.14
         instr.simple = 4.5
@@ -52,32 +55,29 @@ def test_simple_protocol():
 
 def test_not_all_communication_used():
     """Test whether unused communication raises an error."""
-    with raises(AssertionError) as exc:
+    with raises(AssertionError, match="Unprocessed protocol definitions remain"):
         with expected_protocol(BasicTestInstrument,
                                [('VOLT?', 3.14),
-                                ('VOLT 4.5 V',),
+                                ('VOLT 4.5 V', None),
                                 ]) as instr:
             assert instr.simple == 3.14
-    assert str(exc.value) == "Not all messages exchanged."
 
 
 def test_non_empty_write_buffer():
-    with raises(AssertionError) as exc:
+    with raises(AssertionError, match="Non-empty write buffer"):
         with expected_protocol(BasicTestInstrument,
                                [('VOLT?', 3.14),
                                 ]) as instr:
             instr.adapter.write_bytes(b"VOLT")
             instr.adapter._index = 1
-    assert str(exc.value) == "Non empty write buffer."
 
 
 def test_non_empty_read_buffer():
-    with raises(AssertionError) as exc:
+    with raises(AssertionError, match="Non-empty read buffer"):
         with expected_protocol(BasicTestInstrument,
                                [('VOLT?', 3.14),
                                 ]) as instr:
             instr.write("VOLT?")
-    assert str(exc.value) == "Non empty read buffer."
 
 
 def test_preprocess():

@@ -29,14 +29,16 @@ from pymeasure.adapters.protocol import ProtocolAdapter
 
 @contextmanager
 def expected_protocol(instrument_cls, comm_pairs):
-    """Context manager that checks sent/received instrument commands without a device connected.
+    """Context manager that checks sent/received instrument commands without a
+    device connected.
 
-    Given an instrument class and a list of command-response pairs, this context
-    manager confirms that the code in the context manager block produces the expected
-    messages.
+    Given an instrument class and a list of command-response pairs, this
+    context manager confirms that the code in the context manager block
+    produces the expected messages.
 
-    Terminators are excluded from the protocol definition, as those are typically a detail of the
-     communication method (i.e. Adapter), and not the protocol.
+    Terminators are excluded from the protocol definition, as those are
+    typically a detail of the communication method (i.e. Adapter), and not the
+    protocol itself.
 
     Parameters
     ----------
@@ -44,17 +46,19 @@ def expected_protocol(instrument_cls, comm_pairs):
         `~pymeasure.Instrument` subclass to instantiate
     comm_pairs : list[2-tuples[str]]
         List of command-response pairs, i.e. 2-tuples like `('VOLT?', '3.14')`.
-        A tuple of length 1, e.g. `('MYCMD',)`, represents a command without expected response.
-        To represent a response-only communication, use `None` for the command part,
-         e.g. `(None, 'RESP1')`.
+        'None' indicates that a pair member (command or response) does not
+        exist, e.g. `(None, 'RESP1')`.
     """
-    instr = instrument_cls("test", name="Virtual instrument",
-                           comm_pairs=comm_pairs)
+    protocol = ProtocolAdapter(comm_pairs)
+    instr = instrument_cls(protocol, name="Virtual instrument")
     yield instr
-    protocol = instr.adapter
-    assert protocol._index == len(comm_pairs), "Not all messages exchanged."
-    assert protocol._write_buffer == b"", "Non empty write buffer."
-    assert protocol._read_buffer == b"", "Non empty read buffer."
+    assert protocol._index == len(comm_pairs), (
+        "Unprocessed protocol definitions remain: "
+        f"{comm_pairs[protocol._index:]}.")
+    assert protocol._write_buffer == b"", (
+        f"Non-empty write buffer: '{protocol._write_buffer}'.")
+    assert protocol._read_buffer == b"", (
+        f"Non-empty read buffer: '{protocol._read_buffer}'.")
 
     # TODO: Make this skeleton implementation produce reasonable tests
     # TODO: Assert correct state of comm_pairs after yield
