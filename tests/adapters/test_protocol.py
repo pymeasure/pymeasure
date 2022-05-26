@@ -42,70 +42,53 @@ def test_to_bytes_invalid():
 
 
 def test_protocol_instantiation():
-    a = ProtocolAdapter([("write", "read"), ("write_only",)])
-    assert a.comm_pairs == [("write", "read"), ("write_only",)]
-    # TODO: Make this first test assert something useful
+    a = ProtocolAdapter([("write", "read"), ("write_only", None)])
+    assert a.comm_pairs == [("write", "read"), ("write_only", None)]
 
 
 class Test_write:
-    @mark.parametrize("command, written", (("hey Ho", b"hey Ho"),
-                                           (b"superX", "superX")
-                                           ))
-    def test_write(self, command, written):
-        a = ProtocolAdapter([(written, 5)])
-        a.write(command)
+    def test_write(self):
+        a = ProtocolAdapter([("written 5", 5)])
+        a.write("written 5")
         assert a._read_buffer == b"5"
 
     def test_write_without_response(self):
-        a = ProtocolAdapter([("Hey ho",)])
+        a = ProtocolAdapter([("Hey ho", None)])
         a.write("Hey ho")
         assert a._read_buffer == b""
 
     def test_wrong_command(self):
-        a = ProtocolAdapter([("Hey ho",)])
-        with raises(AssertionError):
+        a = ProtocolAdapter([("Hey ho", None)])
+        with raises(AssertionError, match="do not match"):
             a.write("Something different")
 
     def test_not_enough_pairs(self):
-        a = ProtocolAdapter([("a",)])
-        a._index = 1
+        a = ProtocolAdapter([("a", None)])
+        a.write("a")
         with raises(IndexError):
             a.write("b")
 
 
 class Test_write_bytes:
-    @fixture(scope="class")
-    def written1(self):
+    @fixture(scope="class", params=[1, 2])
+    def written(self, request):
         """Write in a single turn."""
         a = ProtocolAdapter([("written", 5)])
-        a.write_bytes(b"written")
+        if request.param == 1:
+            a.write_bytes(b"written")
+        else:
+            a.write_bytes(b"writ")
+            a.write_bytes(b"ten")
         return a
 
-    @fixture(scope="class")
-    def written2(self):
-        """Write in two turns."""
-        a = ProtocolAdapter([("written", 5)])
-        a.write_bytes(b"writ")
-        a.write_bytes(b"ten")
-        return a
+    def test_write_write_buffer(self, written):
+        assert written._write_buffer == b""
 
-    def test_write_write_buffer1(self, written1):
-        assert written1._write_buffer == b""
+    def test_write_index(self, written):
+        assert written._index == 1
 
-    def test_write_write_buffer2(self, written2):
-        assert written2._write_buffer == b""
-
-    def test_write_index1(self, written1):
-        assert written1._index == 1
-
-    def test_write_index2(self, written2):
-        assert written2._index == 1
-
-    def test_write_read_buffer1(self, written1):
-        assert written1._read_buffer == b"5"
-
-    def test_write_read_buffer2(self, written2):
-        assert written2._read_buffer == b"5"
+    def test_write_read_buffer(self, written):
+        assert written._read_buffer == b"5"
 
     def test_partial_write(self):
         a = ProtocolAdapter([("written", 5)])
@@ -119,7 +102,7 @@ class Test_write_bytes:
             a.write_bytes(b"written")
 
     def test_no_response(self):
-        a = ProtocolAdapter([("written",)])
+        a = ProtocolAdapter([("written", None)])
         a.write_bytes(b"writ")
         assert a._read_buffer == b""
 
@@ -133,7 +116,7 @@ class Test_read:
         a._read_buffer = buffer
         assert a.read() == returned
 
-    def test_read_buffer_emptied(self):
+    def test_read_empties_read_buffer(self):
         a = ProtocolAdapter()
         a._read_buffer = b"jklasdf"
         a.read()
@@ -144,7 +127,7 @@ class Test_read:
         assert a.read() == "Response"
 
     def test_not_enough_pairs(self):
-        a = ProtocolAdapter([("a",)])
+        a = ProtocolAdapter([("a", None)])
         a._index = 1
         with raises(IndexError):
             a.read()
@@ -174,14 +157,14 @@ class Test_read_bytes:
             a.read_bytes(3)
 
     def test_no_messages(self):
-        a = ProtocolAdapter([])
+        a = ProtocolAdapter()
         with raises(IndexError):
             a.read_bytes(3)
 
 
 def test_read_write_sequence():
     """Test several consecutive writes and reads, including ask."""
-    a = ProtocolAdapter([("c1", "a1"), ("c2",), (None, "a3"), ("c4", "a4")])
+    a = ProtocolAdapter([("c1", "a1"), ("c2", None), (None, "a3"), ("c4", "a4")])
     a.write("c1")
     assert a.read() == "a1"
     a.write("c2")
@@ -191,7 +174,7 @@ def test_read_write_sequence():
 
 def test_write_and_read_with_and_without_bytes():
     """Test writing and reading, normal and bytes in combination."""
-    a = ProtocolAdapter([("c1", "a1"), ("c4", "a4")])
+    a = ProtocolAdapter([("c1", "a1")])
     a.write_bytes(b"c")
     a.write("1")
     assert a.read_bytes(1) == b"a"
