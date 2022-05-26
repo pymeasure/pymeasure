@@ -25,6 +25,7 @@ def test_write_multiple():
 
 
 def test_write_multiple_CRC_error():
+    """Test whether an invalid response CRC code raises an Exception."""
     with expected_protocol(
         TC038D,
         [(b"\x01\x10\x01\x06\x00\x02\x04\x00\x00\x01A\xbf\xb5",
@@ -34,26 +35,27 @@ def test_write_multiple_CRC_error():
             inst.setpoint = 32.1
 
 
-def test_write_multiple_wrong_values():
+def test_write_multiple_wrong_type():
     with expected_protocol(
         TC038D, []
     ) as inst:
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             inst.writeMultiple(0x010A, 5.5)
 
 
-def test_write_multiple_Value_error():
+def test_write_multiple_handle_wrong_start_address():
+    """Test whether the error code (byte 2) of 2 raises the right error."""
     with expected_protocol(
         TC038D,
         [(b"\x01\x10\x01\x06\x00\x02\x04\x00\x00\x01A\xbf\xb5",
           b"\x01\x90\x02\x06\x00")],
     ) as inst:
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match="Wrong start address"):
             inst.setpoint = 32.1
-            assert str(exc) == "Wrong start address"
 
 
 def test_read_CRC_error():
+    """Test whether an invalid response CRC code raises an Exception."""
     with expected_protocol(
         TC038D,
         [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
@@ -64,26 +66,29 @@ def test_read_CRC_error():
 
 
 def test_read_address_error():
+    """Test whether the error code (byte 2) of 2 raises the right error."""
     with expected_protocol(
             TC038D,
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
               b"\x01\x83\x02\01\02")],
     ) as inst:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="The read start address"):
             inst.temperature
 
 
 def test_read_elements_error():
+    """Test whether the error code (byte 2) of 3 raises the right error."""
     with expected_protocol(
             TC038D,
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
               b"\x01\x83\x03\01\02")],
     ) as inst:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="The number of elements"):
             inst.temperature
 
 
 def test_read_any_error():
+    """Test whether any wrong message (byte 1 is not 3) raises an error."""
     with expected_protocol(
             TC038D,
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",

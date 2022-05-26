@@ -85,9 +85,9 @@ class TC038D(Instrument):
         else:  # an error occurred
             end = self.adapter.read_bytes(2)  # empty the buffer
             if got[2] == 0x02:
-                raise ValueError("The read start address is incorrect.")
+                raise ValueError(f"The read start address {address} is invalid.")
             if got[2] == 0x03:
-                raise ValueError("The number of elements exceeds the allowed range")
+                raise ValueError(f"The number of elements {count} exceeds the allowed range.")
             raise ConnectionError(f"Unknown read error. Received: {got} {end}")
 
     def writeMultiple(self, address, values):
@@ -108,8 +108,8 @@ class TC038D(Instrument):
                 for i in range(self.byteMode - 1, -1, -1):
                     data.append(element >> i * 8 & 0xFF)
         else:
-            raise ValueError(("Values has to be an integer or an iterable of "
-                              f"integers. values: {values}"))
+            raise TypeError(("Values has to be an integer or an iterable of "
+                             f"integers. values: {values}"))
         data += CRC16(data)
         self.adapter.write_bytes(bytes(data))
         got = self.adapter.read_bytes(2)
