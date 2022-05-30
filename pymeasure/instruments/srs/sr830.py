@@ -86,6 +86,8 @@ class SR830(Instrument):
     SNAP_ENUMERATION = {"x": 1, "y": 2, "r": 3, "theta": 4,
                         "aux in 1": 5, "aux in 2": 6, "aux in 3": 7, "aux in 4": 8,
                         "frequency": 9, "ch1": 10, "ch2": 11}
+    REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
+    INPUT_FILTER = ['Off', 'On']
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -204,6 +206,14 @@ class SR830(Instrument):
         values=FILTER_SLOPES,
         map_values=True
     )
+    filer_synchronous = Instrument.control(
+        "SYNC?", "SYNC %d",
+        """A string property that represents the synchronous filter.
+        This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
+        validator=strict_discrete_set,
+        values=INPUT_FILTER,
+        map_values=True
+    )
     harmonic = Instrument.control(
         "HARM?", "HARM%d",
         """ An integer property that controls the harmonic that is measured.
@@ -249,6 +259,14 @@ class SR830(Instrument):
         values are: {}""".format(REFERENCE_SOURCES),
         validator=strict_discrete_set,
         values=REFERENCE_SOURCES,
+        map_values=True
+    )
+    reference_source_trigger = Instrument.control(
+        "RSLP?", "RSLP %d",
+        """ A string property that controls the reference source triggering. Allowed
+             values are: {}""".format(REFERENCE_SOURCE_TRIGGER),
+        validator=strict_discrete_set,
+        values=REFERENCE_SOURCE_TRIGGER,
         map_values=True
     )
 
