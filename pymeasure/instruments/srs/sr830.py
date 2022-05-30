@@ -206,7 +206,7 @@ class SR830(Instrument):
         values=FILTER_SLOPES,
         map_values=True
     )
-    filer_synchronous = Instrument.control(
+    filter_synchronous = Instrument.control(
         "SYNC?", "SYNC %d",
         """A string property that represents the synchronous filter.
         This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
