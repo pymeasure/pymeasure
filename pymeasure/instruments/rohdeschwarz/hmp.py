@@ -61,7 +61,7 @@ class HMP4040(Instrument):
     # System Setting Commands -------------------------------------------------
 
     def beep(self):
-        """Emit a single beep immediately."""
+        """Emit a single beep from the instrument."""
         self.write("SYST:BEEP")
 
     control = Instrument.setting(
