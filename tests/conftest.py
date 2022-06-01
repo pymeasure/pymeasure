@@ -22,4 +22,39 @@
 # THE SOFTWARE.
 #
 
-import pytest  # noqa
+import pytest
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--instrument-present",
+        action="store_true",
+        default=False,
+        help="""Run tests that need an instrument.
+                Provide the resource name via --resource-name."""
+    )
+    parser.addoption(
+        "--resource-name",
+        action="store",
+        default=None,
+        dest="resource_name",
+        help="""Pass a resource name for an instrument needed for a test.
+                See also --instrument-present."""
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", """needs_instrument:
+                        mark test that needs an instrument to be present."""
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption("--instrument-present"):
+        skipper = pytest.mark.skip(
+            reason="Only run when --instrument-present is given"
+            )
+        for item in items:
+            if "needs_instrument" in item.keywords:
+                item.add_marker(skipper)
