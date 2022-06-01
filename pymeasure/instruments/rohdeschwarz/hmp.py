@@ -96,7 +96,7 @@ class HMP4040(Instrument):
         "VOLT?", "VOLT %s", "Output voltage in V. Increment 0.001 V."
     )
 
-    minimum_voltage = Instrument.measurement(
+    min_voltage = Instrument.measurement(
         "VOLT? MIN", "Minimum voltage in V."
     )
 
