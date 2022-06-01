@@ -257,11 +257,15 @@ class HMP4040(Instrument):
         self.write(f"ARB:START {channel}")
 
     def stop_sequence(self, channel):
-        """Stop the sequence of the selected channel."""
+        """Stop the sequence defined in the sequence property of the selected
+        channel."""
         channel = strict_discrete_set(channel, [1, 2, 3, 4])
         self.write(f"ARB:STOP {channel}")
 
     def transfer_sequence(self, channel):
-        """Transfer the defined sequence to the selected channel."""
+        """
+        Transfer the sequence defined in the sequence property to the selected
+        channel.
+        """
         channel = strict_discrete_set(channel, [1, 2, 3, 4])
         self.write(f"ARB:TRAN {channel}")
