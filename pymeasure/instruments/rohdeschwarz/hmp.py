@@ -61,7 +61,7 @@ class HMP4040(Instrument):
     # System Setting Commands -------------------------------------------------
 
     def beep(self):
-        """Return a single beep immediately."""
+        """Emit a single beep immediately."""
         self.write("SYST:BEEP")
 
     control = Instrument.setting(
@@ -125,11 +125,11 @@ class HMP4040(Instrument):
         values=[0, 32.050],
     )
 
-    def voltage_up(self):
+    def step_voltage_up(self):
         """Increase voltage by one step."""
         self.write("VOLT UP")
 
-    def voltage_down(self):
+    def step_voltage_down(self):
         """Decrease voltage by one step."""
         self.write("VOLT DOWN")
 
@@ -161,11 +161,11 @@ class HMP4040(Instrument):
         "CURR:STEP?", "CURR:STEP %s", "Current step in A."
     )
 
-    def current_up(self):
+    def step_current_up(self):
         """Increase current by one step."""
         self.write("CURR UP")
 
-    def current_down(self):
+    def step_current_down(self):
         """Decreases current by one step."""
         self.write("CURR DOWN")
 
@@ -187,7 +187,7 @@ class HMP4040(Instrument):
         map_values=True,
     )
 
-    output_on = Instrument.control(
+    output_enabled = Instrument.control(
         "OUTP:GEN?",
         "OUTP:GEN %s",
         "Set the output on or off or check the output status.",
@@ -219,11 +219,11 @@ class HMP4040(Instrument):
     # Convenience functions to make turning on/off the output more natural.
     def turn_output_on(self):
         """Turn output on."""
-        self.output_on = True
+        self.output_enabled = True
 
     def turn_output_off(self):
         """Turn output off."""
-        self.output_on = False
+        self.output_enabled = False
 
     # Measurement Commands ----------------------------------------------------
 
@@ -253,7 +253,7 @@ class HMP4040(Instrument):
         "ARB:REP?",
         "ARB:REP %s",
         "Number of repetitions (0...255). If 0 is entered, the sequence is"
-        "repeated infinitely.",
+        "repeated indefinitely.",
         validator=strict_discrete_set,
         values=range(256),
         get_process=lambda x: int(x),
