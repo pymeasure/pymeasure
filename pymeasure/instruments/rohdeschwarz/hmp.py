@@ -251,7 +251,10 @@ class HMP4040(Instrument):
         self.write(f"ARB:REST {slot}")
 
     def save_sequence(self, slot):
-        """Save the sequence to internal memory (slot 1, 2 or 3)."""
+        """
+        Save the sequence defined in the sequence property to internal memory
+        (slot 1, 2 or 3).
+        """
         slot = strict_discrete_set(slot, [1, 2, 3])
         self.write(f"ARB:SAVE {slot}")
 
