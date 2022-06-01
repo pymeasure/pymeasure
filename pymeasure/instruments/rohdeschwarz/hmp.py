@@ -190,24 +190,17 @@ class HMP4040(Instrument):
         map_values=True,
     )
 
-    # The following commands are for making it easier to change selected the
-    # selected channel and activate/deactivate them.
+    # The following commands are for making it easier to change the selected
+    # channels and activate/deactivate them.
 
-    def activate_channel(self, channel):
-        """Activate a channel."""
+    def set_channel_state(self, channel: int, state: bool):
+        """
+        Set the state of the channel to active (True) or inactive (False).
+        """
         # Save current selected channel before switching.
         selected_channel = self.selected_channel
         self.selected_channel = channel
-        self.selected_channel_active = True
-        # Restore previously selected channel.
-        self.selected_channel = selected_channel
-
-    def deactivate_channel(self, channel):
-        """Deactivate a channel."""
-        # Save current selected channel before switching.
-        selected_channel = self.selected_channel
-        self.selected_channel = channel
-        self.selected_channel_active = False
+        self.selected_channel_active = state
         # Restore previously selected channel.
         self.selected_channel = selected_channel
 
