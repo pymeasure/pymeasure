@@ -23,33 +23,30 @@
 #
 
 import logging
+from typing import List
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (
-    strict_discrete_set,
-    truncated_range,
-)
+from pymeasure.instruments.validators import (strict_discrete_set,
+                                              truncated_range)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def process_sequence(sequence):
+def process_sequence(sequence: List[float]) -> str:
     """
     Check and prepare sequence data.
 
-    The form of the sequence data is Voltage1, Current1, Time1, Voltage2,
-    Current2, Time2,..., Voltage128, Current128, Time128 with voltages in V,
+    The form of the sequence data is "Voltage1,Current1,Time1,Voltage2,
+    Current2,Time2,...,Voltage128,Current128,Time128" with voltages in V,
     currents in A, and times in s. Dwell times are between 0.06 and 10 s.
     """
     if not len(sequence) % 3 == 0:
         raise ValueError("Sequence must contain multiple of 3 values.")
-    if any(t > 10 or t < 0.06 for t in sequence[2:3:-1]):
+    if any(t > 10 or t < 0.06 for t in sequence[2::3]):
         raise ValueError("Dwell times must be between 0.06 and 10 s.")
     # turn sequence data into a string
-    sequence = str(sequence).strip('[](){}')
-    sequence.replace(" ", "")
-    print(sequence)
+    sequence = ",".join(str(s) for s in sequence)
     return sequence
 
 
