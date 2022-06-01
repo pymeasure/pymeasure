@@ -87,7 +87,7 @@ class HMP4040(Instrument):
         "Selected channel.",
         validator=strict_discrete_set,
         values=[1, 2, 3, 4],
-        get_process=lambda x: int(x),
+        cast=int
     )
 
     # Voltage Settings --------------------------------------------------------
@@ -242,7 +242,7 @@ class HMP4040(Instrument):
         "repeated indefinitely.",
         validator=strict_discrete_set,
         values=range(256),
-        get_process=lambda x: int(x),
+        cast=int,
     )
 
     def load_sequence(self, slot):
