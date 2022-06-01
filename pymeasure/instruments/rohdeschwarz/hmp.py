@@ -64,7 +64,7 @@ class HMP4040(Instrument):
         """Emit a single beep from the instrument."""
         self.write("SYST:BEEP")
 
-    control = Instrument.setting(
+    control_method = Instrument.setting(
         "SYST:%s",
         """
         Enables manual front panel ('LOC'), remote ('REM') or manual/remote
