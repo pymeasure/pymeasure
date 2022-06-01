@@ -53,9 +53,9 @@ def process_sequence(sequence: List[float]) -> str:
 class HMP4040(Instrument):
     """Represents a Rohde&Schwarz HMP4040 power supply."""
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, resourceName, name="Rohde&Schwarz HMP4040", **kwargs):
         super().__init__(
-            resourceName, "Rohde&Schwarz HMP4040", includeSCPI=True, **kwargs
+            resourceName, name, includeSCPI=True, **kwargs
         )
 
     # System Setting Commands -------------------------------------------------
