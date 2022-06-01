@@ -90,11 +90,6 @@ class HMP4040(Instrument):
         get_process=lambda x: int(x),
     )
 
-    # Implemented as a more natural way of selecting a channel.
-    def select_channel(self, channel):
-        """Select a channel."""
-        self.selected_channel = channel
-
     # Voltage Settings --------------------------------------------------------
 
     voltage = Instrument.control(
@@ -215,15 +210,6 @@ class HMP4040(Instrument):
         self.selected_channel_active = False
         # Restore previously selected channel.
         self.selected_channel = selected_channel
-
-    # Convenience functions to make turning on/off the output more natural.
-    def turn_output_on(self):
-        """Turn output on."""
-        self.output_enabled = True
-
-    def turn_output_off(self):
-        """Turn output off."""
-        self.output_enabled = False
 
     # Measurement Commands ----------------------------------------------------
 
