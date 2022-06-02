@@ -179,3 +179,8 @@ def test_write_and_read_with_and_without_bytes():
     a.write("1")
     assert a.read_bytes(1) == b"a"
     assert a.read() == "1"
+
+
+def test_comm_pairs_are_all_length_2():
+    with raises(ValueError):
+        ProtocolAdapter([("c1", "a1"), ("c2",), (None, "a3", "c4")])
