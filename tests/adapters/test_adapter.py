@@ -30,6 +30,9 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+# TODO: When restructuring adapter logging, investigate timing impact of enabled debug logging
+
+
 def test_adapter_values():
     a = FakeAdapter()
     assert a.values("5,6,7") == [5, 6, 7]

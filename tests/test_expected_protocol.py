@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import pytest
 from pytest import raises
 
 from pymeasure.test import expected_protocol
@@ -33,16 +34,12 @@ class BasicTestInstrument(Instrument):
         "VOLT?", "VOLT %s V",
         """Simple property replying with plain floats""",
     )
-
-
-class InstrumentWithPreprocess(BasicTestInstrument):
-    def values(self, command, **kwargs):
-        return super().values(command, preprocess_reply=lambda v: v+"2345", **kwargs)
-
-    # For now preprocess_reply at init level is nonfunctional because this
-    # lives in the adapter, should be fixed with #567
-    def __broken__init__(self, adapter, **kwargs):
-        super().__init__(adapter, preprocess_reply=lambda v: v+"2345", **kwargs)
+    with_error_checks = Instrument.control(
+        "VOLT?", "VOLT %s V",
+        """Property with error checks after both setting and getting""",
+        check_set_errors=True,
+        check_get_errors=True,
+    )
 
 
 def test_simple_protocol():
@@ -53,6 +50,18 @@ def test_simple_protocol():
                             ]) as instr:
         assert instr.simple == 3.14
         instr.simple = 4.5
+
+
+def test_error_checks():
+    """Test protocol for getting and setting with error checks."""
+    with expected_protocol(BasicTestInstrument,
+                           [('VOLT?', 3.14),
+                            ('SYST:ERR?', '0, 0'),
+                            ('VOLT 4.5 V', None),
+                            ('SYST:ERR?', '0, 0'),
+                            ]) as instr:
+        assert instr.with_error_checks == 3.14
+        instr.with_error_checks = 4.5
 
 
 def test_not_all_communication_used():
@@ -82,10 +91,29 @@ def test_non_empty_read_buffer():
             instr.write("VOLT?")
 
 
-def test_preprocess():
+def test_preprocess_reply_on_values():
+    class InstrumentWithPreprocessValues(BasicTestInstrument):
+        """Workaround to get preprocess_reply working with protocol tests."""
+        def values(self, command, **kwargs):
+            return super().values(command, preprocess_reply=lambda v: v + "2345", **kwargs)
+
+    with expected_protocol(InstrumentWithPreprocessValues,
+                           [("VOLT?", "3.1")]) as instr:
+        assert instr.simple == 3.12345
+
+
+@pytest.mark.xfail
+def test_preprocess_reply_on_init():
+    # TODO: For now preprocess_reply at init level is nonfunctional because this
+    #  lives in the real adapter, should be fixed with #567
+    class InstrumentWithPreprocess(BasicTestInstrument):
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, preprocess_reply=lambda v: v + "2345", **kwargs)
+
     with expected_protocol(InstrumentWithPreprocess,
                            [("VOLT?", "3.1")]) as instr:
         assert instr.simple == 3.12345
+
 
 # After completing expected_protocol tests, add tests elsewhere:
 # TODO: Add protocol tests for a simple instrument

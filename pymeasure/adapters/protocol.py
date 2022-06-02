@@ -81,11 +81,15 @@ class ProtocolAdapter(Adapter):
         if self._write_buffer == to_bytes(p_write):
             assert self._read_buffer == b"", (
                 f"Unread response '{self._read_buffer}' present when writing. "
-                "Read the response or enable the property's 'check_set_errors'")
+                "Read the response; maybe a property's 'check_set_errors' is not accounted for?")
             # Clear the write buffer
             self._write_buffer = b""
             self._read_buffer = to_bytes(p_read)
             self._index += 1
+        # If _write_buffer does _not_ agree with p_write, this is not cause for
+        # concern, because you can in principle compose a message over several writes.
+        # It's not clear how relevant this is in real-world use, but it's analogous
+        # to the possibility to fetch a (binary) message over several reads.
 
     def read(self):
         """Return an already present or freshly fetched read buffer as a string."""

@@ -27,6 +27,10 @@ from pymeasure.adapters.protocol import to_bytes, ProtocolAdapter
 from pytest import mark, raises, fixture
 
 
+# TODO: add test for when an instrument sends too many commands (e.g. if command_pairs is too short)
+#   Currently, there is only an IndexError. That should be caught an appropriate message raised
+
+
 @mark.parametrize("input, output", (("superXY", b"superXY"),
                                     ([1, 2, 3, 4], b"\x01\x02\x03\x04"),
                                     (5, b"5"),
