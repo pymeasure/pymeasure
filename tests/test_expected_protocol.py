@@ -39,7 +39,9 @@ class InstrumentWithPreprocess(BasicTestInstrument):
     def values(self, command, **kwargs):
         return super().values(command, preprocess_reply=lambda v: v+"2345", **kwargs)
 
-    def __init__2(self, adapter, **kwargs):
+    # For now preprocess_reply at init level is nonfunctional because this
+    # lives in the adapter, should be fixed with #567
+    def __broken__init__(self, adapter, **kwargs):
         super().__init__(adapter, preprocess_reply=lambda v: v+"2345", **kwargs)
 
 

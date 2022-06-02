@@ -56,12 +56,12 @@ class ProtocolAdapter(Adapter):
 
     def __init__(self, comm_pairs=[], preprocess_reply=None, **kwargs):
         """Generate the adapter and initialize internal buffers."""
+        super().__init__(preprocess_reply=preprocess_reply, **kwargs)
         assert isinstance(comm_pairs, (list, tuple)), (
             "Parameter comm_pairs has to be a list or tuple.")
         for pair in comm_pairs:
             if len(pair) != 2:
                 raise ValueError(f'Comm_pairs element {pair} does not have two elements!')
-        super().__init__(preprocess_reply=preprocess_reply, **kwargs)
         self._read_buffer = b""
         self._write_buffer = b""
         self.comm_pairs = comm_pairs
