@@ -4,19 +4,19 @@
 
 1. Pull the latest `master` branch
 2. `git checkout -b v<version>_release`
-3. Update all version references (`grep -rnI '<previous_version>'`)
-    - setup.py
-    - docs/conf.py
-    - pymeasure/__init__.py
-4. Update CHANGES.txt with the changelog
-5. Push the changes up as a PR
-6. Verify that the builds complete
-7. Merge the PR
-8. Build and check the source packages
+3. Update CHANGES.txt with the changelog
+4. Push the changes up as a PR
+5. Verify that the builds complete
+6. Merge the PR
+7. Fetch `master`, build and check the source packages
     - `python -m pip install --upgrade build twine`
     - `python -m build`
+    - Check the distributions (`twine check dist/*`, version will not yet be correct)
+8. Create a git tag in the format "vX.Y.Z"
+9. Build final packages and confirm the correct version number is being used
+    - `python -m build`
     - Check the distributions (`twine check dist/*`)
-9. Create a tagged release on GitHub
+10. Create a tagged release on GitHub
 
 ## PyPI release
 

@@ -22,41 +22,42 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .resources import list_resources
-from .validators import discreteTruncate
+"""
+Implementation of an interface class for ThermoStream® Systems devices.
+Reference Document for implementation:
+ATS-515/615, ATS 525/625 & ATS 535/635 ThermoStream® Systems
+Interface & Applications Manual
+Revision E
+September, 2019
+"""
 
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anaheimautomation
-from . import anapico
-from . import andeenhagerling
-from . import anritsu
-from . import attocube
-from . import danfysik
-from . import deltaelektronika
-from . import fluke
-from . import fwbell
-from . import hcp
-from . import heidenhain
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import rohdeschwarz
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import temptronic
-from . import thermotron
-from . import thorlabs
-from . import toptica
-from . import yokogawa
+from pymeasure.instruments.temptronic.temptronic_base import ATSBase
+from pymeasure.instruments.instrument import Instrument
+from pymeasure.instruments.validators import truncated_range
+
+
+class ATS525(ATSBase):
+    """Represent the TemptronicATS525 instruments.
+    """
+
+    temperature_limit_air_low = Instrument.control(
+        "LLIM?", "LLIM %g",
+        """Control lower air temperature limit.
+
+        :type: float
+
+        Valid range between -60 to 25 (°C). Setpoints below current value cause
+        “out of range” error in TS.
+        """,
+        validator=truncated_range,
+        values=[-60, 25]
+    )
+
+    system_current = Instrument.measurement(
+        "AMPS?",
+        """Operating current.
+        """,
+    )
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, name="Temptronic ATS-525 Thermostream", **kwargs)
