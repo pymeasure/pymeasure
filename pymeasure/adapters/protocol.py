@@ -78,8 +78,12 @@ class ProtocolAdapter(Adapter):
     def write_bytes(self, content):
         """Write the bytes `content`. If a command is full, fill the read."""
         self._write_buffer += content
-        p_write, p_read = self.comm_pairs[self._index]
+        try:
+            p_write, p_read = self.comm_pairs[self._index]
+        except IndexError:
+            raise ValueError(f"No communication pair left to write {content}.")
         if self._write_buffer == to_bytes(p_write):
+            # TODO improve error message.
             assert self._read_buffer == b"", (
                 f"Unread response '{self._read_buffer}' present when writing. "
                 "Read the response; maybe a property's 'check_set_errors' is not accounted for?")
@@ -106,7 +110,7 @@ class ProtocolAdapter(Adapter):
             try:
                 p_write, p_read = self.comm_pairs[self._index]
             except IndexError:
-                raise IndexError("Not enough communication pairs.")
+                raise ValueError("No communication pair left for reading.")
             assert p_write is None, "Unexpected read without prior write."
             self._read_buffer = to_bytes(p_read)[count:]
             self._index += 1

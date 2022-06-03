@@ -60,8 +60,3 @@ def expected_protocol(instrument_cls, comm_pairs):
         f"Non-empty write buffer: '{protocol._write_buffer}'.")
     assert protocol._read_buffer == b"", (
         f"Non-empty read buffer: '{protocol._read_buffer}'.")
-
-    # TODO: Make this skeleton implementation produce reasonable tests
-    # TODO: Assert correct state of comm_pairs after yield
-    # TODO: Enable user query for responses
-    # TODO: Add explanatory documentation with examples in :doc:`adding-instruments`
