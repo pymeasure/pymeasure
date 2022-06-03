@@ -51,6 +51,7 @@ class ProtocolAdapter(Adapter):
     :param list of lists comm_pairs: List of message pairs. First message is
         the write one, the second one is the read message.
         'None' indicates that a pair member (write or read) does not exist.
+        The messages do not include the termination characters.
     :param kwargs: TBD key-word arguments
     """
 
@@ -102,7 +103,10 @@ class ProtocolAdapter(Adapter):
             self._read_buffer = self._read_buffer[count:]
             return read
         else:
-            p_write, p_read = self.comm_pairs[self._index]
+            try:
+                p_write, p_read = self.comm_pairs[self._index]
+            except IndexError:
+                raise IndexError("Not enough communication pairs.")
             assert p_write is None, "Unexpected read without prior write."
             self._read_buffer = to_bytes(p_read)[count:]
             self._index += 1

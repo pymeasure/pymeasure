@@ -47,7 +47,8 @@ def expected_protocol(instrument_cls, comm_pairs):
     comm_pairs : list[2-tuples[str]]
         List of command-response pairs, i.e. 2-tuples like `('VOLT?', '3.14')`.
         'None' indicates that a pair member (command or response) does not
-        exist, e.g. `(None, 'RESP1')`.
+        exist, e.g. `(None, 'RESP1')`. Commands and responses are without
+        termination characters.
     """
     protocol = ProtocolAdapter(comm_pairs)
     instr = instrument_cls(protocol, name="Virtual instrument")
