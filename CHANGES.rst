@@ -1,3 +1,107 @@
+Version 0.10.0 (2022-04-09)
+===========================
+Main items of this new release:
+
+- 23 new instrument drivers have been added
+- New dynamic Instrument properties can change their parameters at runtime
+- Communication settings can now be flexibly defined per protocol
+- Python 3.10 support was added and Python 3.6 support was removed.
+- Many additions, improvements and have been merged
+
+Instruments
+-----------
+- New Agilent B1500 Data Formats and Documentation (@moritzj29)
+- New Anaheim Automation stepper motor controllers (@samcondon4)
+- New Andeen Hagerling capacitance bridges (@dkriegner)
+- New Anritsu MS9740A Optical Spectrum Analyzer (@md12g12)
+- New BK Precision 9130B Instrument (@dennisfeng2)
+- New Edwards nXDS (10i) Vacuum Pump (@hududed)
+- New Fluke 7341 temperature bath instrument (@msmttchr)
+- New Heidenhain ND287 Position Display Unit Driver (@samcondon4)
+- New HP 3478A (@LongnoseRob)
+- New HP 8116A 50 MHz Pulse/Function Generator (@CodingMarco)
+- New Keithley 2260B DC Power Supply (@bklebel)
+- New Keithley 2306 Dual Channel Battery/Charger Simulator (@mfikes)
+- New Keithley 2600 SourceMeter series (@Daivesd)
+- New Keysight N7776C Swept Laser Source (@maederan201)
+- New Lakeshore 421 (@CasperSchippers)
+- New Oxford IPS120-10 (@CasperSchippers)
+- New Pendulum CNT-91 frequency counter (@bleykauf)
+- New Rohde&Schwarz - SFM TV test transmitter (@LongnoseRob)
+- New Rohde&Schwarz FSL spectrum analyzer (@bleykauf)
+- New SR570 current amplifier driver (@pyMatJ)
+- New Stanford Research Systems SR510 instrument driver (@samcondon4)
+- New Toptica Smart Laser diode (@dkriegner)
+- New Yokogawa GS200 Instrument (@dennisfeng2)
+- Add output low grounded property to Keithley 6221 (@CasperSchippers)
+- Add shutdown function for Keithley 2260B (@bklebel)
+- Add phase control for Agilent 33500 (@corna)
+- Add assigning "ONCE" to auto_zero to Keithley 2400 (@mfikes)
+- Add line frequency controls to Keithley 2400 (@mfikes)
+- Add LIA and ERR status byte read properties to the SRS Sr830 driver (@samcondon4)
+- Add all commands to Oxford Intelligent Temperature Controller 503 (@CasperSchippers)
+- Fix DSP 7265 lockin amplifier (@CasperSchippers)
+- Fix bug in Keithley 6517B Electrometer (@CasperSchippers)
+- Fix Keithley2000 deprecated call to visa.config (@bklebel)
+- Fix bug in the Keithley 2700 (@CasperSchippers)
+- Fix setting of sensor flags for Thorlabs PM100D (@bleykauf)
+- Fix SCPI used for Keithley 2400 voltage NPLC (@mfikes)
+- Fix missing return statements in Tektronix AFG3152C (@bleykauf)
+- Fix DPSeriesMotorController bug (@samcondon4)
+- Fix Keithley2600 error when retrieving error code (@bicarlsen)
+- Fix Attocube ANC300 with new SCPI Instrument properties (@dkriegner)
+- Fix bug in wait_for_trigger of Agilent33220A (neal-kepler)
+
+GUI
+---
+- Add time-estimator widget (@CasperSchippers)
+- Add management of progress bar (@msmttchr)
+- Remove broken errorbar feature (@CasperSchippers)
+- Change of pen width for pyqtgraph (@maederan201)
+- Make linewidth changeable (@CasperSchippers)
+- Generalise warning in plotter section (@CasperSchippers)
+- Implement visibility groups in InputsWidgets (@CasperSchippers)
+- Modify navigation of ManagedWindow directory widget (@jarvas24)
+- Improve Placeholder logic (@CasperSchippers)
+- Breakout widgets into separate modules (@mcdo0486)
+- Fix setSizePolicy bug with PySide2 (@msmttchr)
+- Fix managed window (@msmttchr)
+- Fix ListParameter for numbers (@moritzj29)
+- Fix incorrect columns on showing data (@CasperSchippers)
+- Fix procedure property issue (@msmttchr)
+- Fix pyside2 (@msmttchr)
+
+Miscellaneous
+-------------
+- Improve SCPI property support (@msmttchr)
+- Remove broken safeKeyword management (@msmttchr)
+- Add dynamic property support (@msmttchr)
+- Add flexible API for defining connection configuration (@bilderbuchi)
+- Add write_binary_values() to SerialAdapter (@msmttchr)
+- Change an outdated pyvisa ask() to query() (@LongnoseRob)
+- Fix ZMQ bug (@bilderbuchi)
+
+- Documentation for passing tuples to control property (@bklebel)
+- Documentation bugfix (@CasperSchippers)
+- Fixed broken links in documentation. (@samcondon4)
+- Updated widget documentation (@mcdo0486)
+- Fix typo SCIP->SCPI (@mfikes)
+
+- Remove Python 3.6, add Python 3.10 testing (@bilderbuchi)
+- Modernise the code base to use Python 3.7 features (@bilderbuchi)
+- Added image data generation to Mock Instrument class (@samcondon4)
+- Add autodoc warnings to the problem matcher (@bilderbuchi)
+- Update CI & annotations (@bilderbuchi)
+- Test workers (@mcdo0486)
+- Change copyright date to 2022 (@LongnoseRob)
+- Removed unused code (@msmttchr)
+
+New Contributors
+----------------
+@LongnoseRob, @neal, @hududed, @corna, @Daivesd, @samcondon4, @maederan201, @bleykauf, @mfikes, @bicarlsen, @md12g12, @CodingMarco, @jarvas24, @mcdo0486!
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.9...v0.10.0
+
 Version 0.9 -- released 2/7/21
 ==============================
 - PyMeasure is now officially at github.com/pymeasure/pymeasure

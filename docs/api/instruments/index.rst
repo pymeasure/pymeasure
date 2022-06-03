@@ -37,6 +37,7 @@ Instruments by manufacturer:
    fluke/index
    fwbell/index
    heidenhain/index
+   hcp/index
    hp/index
    keithley/index
    keysight/index
@@ -52,6 +53,8 @@ Instruments by manufacturer:
    srs/index
    stmicroelectronics/index
    tektronix/index
+   temptronic/index
+   thermotron/index
    thorlabs/index
    toptica/index
    yokogawa/index
