@@ -28,3 +28,4 @@ from .hp3478A import HP3478A
 from .hp3437A import HP3437A
 from .hp8116a import HP8116A
 from .hplegacyinstrument import HPLegacyInstrument
+from .hpsystempsu import HP6632A
