@@ -37,18 +37,7 @@ c_uint8 = ctypes.c_uint8
 
 # classes for the decoding of the 5-byte status word
 
-
-class Status_bytes(ctypes.Structure):
-    """
-    Support-Class for the 5 status byte of the HP3478A
-    """
-    _fields_ = [
-        ("byte1", c_uint8),
-        ("byte2", c_uint8),
-        ("byte3", c_uint8),
-        ("byte4", c_uint8),
-        ("byte5", c_uint8)
-    ]
+STATUS_BYTES = 5
 
 
 class Status_bits(ctypes.LittleEndianStructure):
@@ -120,7 +109,7 @@ class HP3478A(HPLegacyInstrument):
         super().__init__(
             resourceName,
             "Hewlett-Packard HP3478A",
-            status_bytes=Status_bytes,
+            status_bytes=STATUS_BYTES,
             status_bitfield=Status_bits,
             **kwargs,
         )

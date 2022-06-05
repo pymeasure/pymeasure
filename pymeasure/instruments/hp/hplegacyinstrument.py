@@ -42,12 +42,10 @@ class HPLegacyInstrument(Instrument):
     """
 
     def __init__(self, adapter, name, status_bytes, status_bitfield, **kwargs):
-        super(HPLegacyInstrument, self).__init__(
+        super().__init__(
             adapter, name,
             includeSCPI=False,
-            send_end=True,
-            read_termination="\r\n",
-            **kwargs,
+             **kwargs,
         )
 
         self.name = name
@@ -104,7 +102,10 @@ class HPLegacyInstrument(Instrument):
         if field is None:
             return ret_val.b
         if field == "SRQ":
-            return self.SRQ(getattr(ret_val.b, field))
+            if self.name == 'Hewlett-Packard HP3478A':
+                return ret_val.B.byte2
+            else:
+                return self.SRQ(getattr(ret_val.b, field))
         if field == "Number":
             bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
             return self._convert_from_bcd(bcd_nr)
