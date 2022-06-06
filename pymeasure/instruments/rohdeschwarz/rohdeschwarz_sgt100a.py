@@ -40,6 +40,41 @@ class RS_SGT100A(RFSignalGeneratorDM):
 
     _iq_data_bits = 16
     _waveform_path = '/var/user/waveform'
+
+    ####################################################################
+    # 11.14.2 SOURce:AWGN Subsystem
+    ####################################################################
+    awgn_mode = Instrument.control(
+        ":AWGN:MODE?", ":AWGN:MODE %s", 
+        """ A string property that define the mode for generating the interfering signal.
+        This property can be set. """,
+        validator=strict_discrete_set,
+        values=("ONLY", "ADD"),
+    )
+    awgn_bandwidth = Instrument.control(
+        ":AWGN:BWIDth?", ":AWGN:BWIDth %g", 
+        """ A float property to set the awgn bandwidth in Hz.
+        This property can be set. """,
+        validator=strict_range,
+        values=(1000, 5e6),
+    )
+
+    awgn_cn = Instrument.control(
+        ":AWGN:CNRatio?", ":AWGN:CNRatio %g", 
+        """ A float property to set or query C/N in the selected bandwidth
+        Unit is dB. """,
+        validator=truncated_range,
+        values=(-50, 40),
+    )
+
+    awgn_enable = Instrument.control(
+        ":AWGN:STATe?", ":AWGN:STATe %g", 
+        """ A bootlean property to enable/disable AWGN. """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
+
     ####################################################################
     # 11.14.4 SOURce:BB:ARB Subsystem
     ####################################################################
