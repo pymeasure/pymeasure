@@ -220,6 +220,90 @@ Another example for user data loading
     memory = None
     """ Memory size for loading user defined patterns """ 
 
+    def data_load_repeated(self, bitsequence, spacing, repetitions):
+        """ Load digital data into signal generator for transmission, the parameters are:
+
+        :param bitsequence: string of '1' or '0' in transmission order
+        :param spacing: integer, gap between repetition expressed in number of bit
+        :param repetitions: integer, how many times the bit sequence is repeated
+        """
+        self.data_load((bitsequence,)*repetitions, (spacing,)*repetitions)
+
+    def data_load(self, bitsequences, spacings):
+        """ Load data into signal generator for transmission.
+
+        :param bitsequences: items list. Each item is a string of '1' or '0' in transmission order
+        :param spacings: integer list, gap to be inserted between each bitsequence  expressed in number of bit
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
+
+    def data_trigger_setup(self, mode='SINGLE'):
+        """ Configure the trigger system for bitsequence transmission
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
+
+    def data_trigger(self):
+        """ Trigger a bitsequence transmission
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
+
+    def set_fsk_constellation(self, constellation, fdev):
+        """ For multi level FSK modulation, allow to define the constellation mapping.
+
+        :param constellation: a dictonary which maps to fdev dividers, for an hypothetical 4-FSK example see below.
+
+        :param fdev: Outer frequency deviation
+
+    ``constellation`` parameter example
+
+    .. code-block:: python
+
+        {
+            0:   1, # Symbol 00 -> fdev
+            1:   3, # Symbol 01 -> fdev/3
+            2:  -1, # Symbol 10 -> -fdev
+            3:  -3, # Symbol 11 -> -fdev/3
+        }
+        
+        """
+        # Subclasses should implement this
+        raise Exception ("Not supported/implemented")
+
+
+class RFSignalGeneratorIQ:
+    """ Represent IQ modulation part of a  generic signal generator.
+
+        The IQ modulation to create modulation signal by providing IQ sequences.
+
+        This class define a basic interface which should be implemented for each specific instrument.
+        This class is a mixin
+
+An example for data pattern generation
+
+        
+.. code-block:: python
+
+    # This example documents the usage of the interface, assuming that is implemented a specific subclass
+    # TBD
+
+
+Another example for user data loading
+
+
+.. code-block:: python
+
+    # Read instrument ID
+    # TBD
+
+    """
+    
+
+    memory = None
+    """ Memory size for loading user defined patterns """ 
+
     def _process_iq_sequence(self, sequence):
         """ Identify repetition in sequence and return processed list
 
@@ -276,23 +360,6 @@ Another example for user data loading
         """
         raise Exception ("Not supported/implemented")
 
-    def data_load_repeated(self, bitsequence, spacing, repetitions):
-        """ Load digital data into signal generator for transmission, the parameters are:
-
-        :param bitsequence: string of '1' or '0' in transmission order
-        :param spacing: integer, gap between repetition expressed in number of bit
-        :param repetitions: integer, how many times the bit sequence is repeated
-        """
-        self.data_load((bitsequence,)*repetitions, (spacing,)*repetitions)
-
-    def data_load(self, bitsequences, spacings):
-        """ Load data into signal generator for transmission.
-
-        :param bitsequences: items list. Each item is a string of '1' or '0' in transmission order
-        :param spacings: integer list, gap to be inserted between each bitsequence  expressed in number of bit
-        """
-        # Subclasses should implement this
-        raise Exception ("Not supported/implemented")
 
     def data_trigger_setup(self, mode='SINGLE'):
         """ Configure the trigger system for bitsequence transmission

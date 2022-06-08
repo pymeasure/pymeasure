@@ -22,14 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorDM
+from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorIQ, RFSignalGenerator
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag, IntegerTag
 from io import BytesIO
 import re
 
-class RS_SGT100A(RFSignalGeneratorDM):
+class RS_SGT100A(RFSignalGenerator, RFSignalGeneratorIQ):
     # Define instrument limits according to datasheet
     power_values = (-120.0, 17.0)
     frequency_values = (1e6, 6e9)
