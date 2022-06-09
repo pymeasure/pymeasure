@@ -27,10 +27,6 @@ from pymeasure.adapters.protocol import to_bytes, ProtocolAdapter
 from pytest import mark, raises, fixture
 
 
-# TODO: add test for when an instrument sends too many commands (e.g. if command_pairs is too short)
-#   Currently, there is only an IndexError. That should be caught an appropriate message raised
-
-
 @mark.parametrize("input, output", (("superXY", b"superXY"),
                                     ([1, 2, 3, 4], b"\x01\x02\x03\x04"),
                                     (5, b"5"),
@@ -65,12 +61,6 @@ class Test_write:
         a = ProtocolAdapter([("Hey ho", None)])
         with raises(AssertionError, match="do not match"):
             a.write("Something different")
-
-    def test_not_enough_pairs(self):
-        a = ProtocolAdapter([("a", None)])
-        a.write("a")
-        with raises(IndexError):
-            a.write("b")
 
 
 class Test_write_bytes:
@@ -110,6 +100,12 @@ class Test_write_bytes:
         a.write_bytes(b"writ")
         assert a._read_buffer == b""
 
+    def test_not_enough_pairs(self):
+        a = ProtocolAdapter([("a", None)])
+        a.write_bytes(b"a")
+        with raises(ValueError):
+            a.write_bytes(b"b")
+
 
 class Test_read:
     @mark.parametrize("buffer, returned", ((b"\x03\x65", "\x03e"),
@@ -125,21 +121,6 @@ class Test_read:
         a._read_buffer = b"jklasdf"
         a.read()
         assert a._read_buffer == b""
-
-    def test_unsolicited_response(self):
-        a = ProtocolAdapter([(None, "Response")])
-        assert a.read() == "Response"
-
-    def test_not_enough_pairs(self):
-        a = ProtocolAdapter([("a", None)])
-        a._index = 1
-        with raises(IndexError):
-            a.read()
-
-    def test_read_with_missing_write(self):
-        a = ProtocolAdapter([("a", "b")])
-        with raises(AssertionError):
-            a.read()
 
 
 class Test_read_bytes:
@@ -160,15 +141,37 @@ class Test_read_bytes:
         with raises(AssertionError):
             a.read_bytes(3)
 
+    def test_read_empties_read_buffer(self):
+        a = ProtocolAdapter()
+        a._read_buffer = b"jklasdf"
+        a.read_bytes(10)
+        assert a._read_buffer == b""
+
     def test_no_messages(self):
         a = ProtocolAdapter()
-        with raises(IndexError):
+        with raises(ValueError):
             a.read_bytes(3)
+
+    def test_not_enough_pairs(self):
+        a = ProtocolAdapter([(b"a", None)])
+        a.write_bytes(b"a")
+        with raises(ValueError):
+            a.read_bytes(10)
+
+    def test_unsolicited_response(self):
+        a = ProtocolAdapter([(None, b"Response")])
+        assert a.read_bytes(10) == b"Response"
+
+    def test_read_with_missing_write(self):
+        a = ProtocolAdapter([(b"a", b"b")])
+        with raises(AssertionError):
+            a.read_bytes(10)
 
 
 def test_read_write_sequence():
     """Test several consecutive writes and reads, including ask."""
-    a = ProtocolAdapter([("c1", "a1"), ("c2", None), (None, "a3"), ("c4", "a4")])
+    a = ProtocolAdapter(
+        [("c1", "a1"), ("c2", None), (None, "a3"), ("c4", "a4")])
     a.write("c1")
     assert a.read() == "a1"
     a.write("c2")
@@ -185,6 +188,11 @@ def test_write_and_read_with_and_without_bytes():
     assert a.read() == "1"
 
 
-def test_comm_pairs_are_all_length_2():
+@mark.parametrize("pairs", ([("c2",)],
+                            [(None, "a3", "c4")],
+                            [("c1", None), ("c2",)],
+                            [(None, "a3", "c4"), (None, None)],
+                            ))
+def test_comm_pairs_are_all_length_2(pairs):
     with raises(ValueError):
-        ProtocolAdapter([("c1", "a1"), ("c2",), (None, "a3", "c4")])
+        ProtocolAdapter(pairs)

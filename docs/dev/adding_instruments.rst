@@ -22,6 +22,17 @@ Updating the init file
 
 The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported. For a new manufacturer, the manufacturer should also be added to :code:`pymeasure/pymeasure/instruments/__init__.py`.
 
+Add test files
+**************
+
+Test files (pytest) for each instrument are highly encouraged, as they help verify the code and implement changes. Testing new code parts with a test (Test Driven Development) is a good way for fast and good programming, as you catch errors early on.
+
+.. code-block:: none
+
+    pymeasure/tests/instruments/extreme/
+        |--> test_extreme5000.py
+
+
 Adding documentation
 ********************
 
@@ -693,3 +704,53 @@ Another use case involves maintaining compatibility between instruments with com
 
 In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a different command to read the voltage, but the rest of the behaviour is identical.
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
+
+
+Writing tests
+=============
+
+Tests are an important method for writing good code. We distinguish two groups of tests for instruments: Tests which verify the working of the code against expectation (device manual) only, and tests with a device connected.
+
+Code tests
+**********
+
+In order to verify the expected working of the device code, it is good to test every part of the written code. The method `expected_protocol` with the `ProtocolAdapter` enables to simulate communication to a device.
+
+.. code-block:: python
+
+    import pytest
+
+    from pymeasure.test import expected_protocol
+
+    from pymeasure.instruments.extreme5000 import Extreme5000
+
+    def test_voltage():
+        """Verify the communication of the voltage getter."""
+        with expected_protocol(
+            Extreme5000,
+            [(":VOLT 0.345", None),
+             (":VOLT?",
+              "0.3000")],
+        ) as inst:
+            inst.voltage = 0.345
+            assert inst.voltage == 0.3
+
+In the above example, the imports import the pytest package, the expected_protocol and the instrument class to be tested.
+
+Here is the definition of expected_protocol:
+
+.. automodule:: pymeasure.test
+
+    :members: expected_protocol
+
+The first parameter, Extreme5000, is the class to be tested.
+Setting the voltage is expected to send a message (":VOLT 0.345"), but not to respond any (None). Getting the voltage (":VOLT?"), however, responds with a string. Therefore we expect two pairs of send/receive, the list of those pairs is the second argument.
+Finally an instance of the class is returned as `inst` with those messages prepared.
+If the communication of the driver does not correspond to the expected messages, an Exception is raised.
+
+The expected messages are **without** the termination characters, as they depend on the connection type and are handled by the adapter (e.g. VISA).
+
+Device tests
+************
+
+# TODO

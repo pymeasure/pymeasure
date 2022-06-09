@@ -14,6 +14,16 @@ Adapter base class
     :members:
     :undoc-members:
 
+================
+Protocol adapter
+================
+
+.. autoclass:: pymeasure.adapters.ProtocolAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
 ============
 VISA adapter
 ============
