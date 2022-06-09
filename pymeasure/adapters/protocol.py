@@ -46,13 +46,14 @@ def to_bytes(command):
 
 
 class ProtocolAdapter(Adapter):
-    """ Adapter class testing command exchange without instrument hardware.
+    """ Adapter class for testing the command exchange protocol without instrument hardware.
 
-    :param list of lists comm_pairs: List of message pairs. First message is
-        the write one, the second one is the read message.
+    This adapter is primarily meant for use within `pymeasure.test.expected_protocol()`.
+
+    :param list comm_pairs: List of "reference" message pair tuples. The first element is
+        what is sent to the instrument, the second one is the returned message.
         'None' indicates that a pair member (write or read) does not exist.
-        The messages do not include the termination characters.
-    :param kwargs: TBD key-word arguments
+        The messages do **not** include the termination characters.
     """
 
     def __init__(self, comm_pairs=[], preprocess_reply=None, **kwargs):
