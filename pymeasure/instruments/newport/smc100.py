@@ -100,7 +100,8 @@ class PositionerError(Exception):
         self.list = list
         self.message = ""
         for i, v in enumerate(self.list):
-            if v: self.message += "* " + self.MESSAGES[i] + "\n"
+            if v:
+                self.message += "* " + self.MESSAGES[i] + "\n"
         super().__init__(f"""Newport SMC100 controller {self.address}
             reported the positioner error(s):\n{self.message}""")
 
@@ -159,7 +160,7 @@ class SMC100(Instrument):
 
     In the description of the properties, u stands for the preset unit.
     Default is mm and degrees for Newport stages.
-    
+
     Three commands can be broadcast to all chained controllers:
     - Enter/Leave DISABLE state
     - Execute simultaneous started move
@@ -196,11 +197,11 @@ class SMC100(Instrument):
         smc.reset()
     """
 
-    #Class properties
+    # Class properties
     acceleration = Instrument.control(
         "AC?", "AC%g",
         """Get or set the acceleration.
-        
+
         Type: Floating point number
         Range: ]1e-6, 1e12[
         Unit: u/s2""",
@@ -212,7 +213,7 @@ class SMC100(Instrument):
     backlash = Instrument.control(
         "BA?", "BA%g",
         """Get or set the backlash compensation.
-        
+
         Type: Floating point number
         Range: [0, 1e12[
         Unit: u""",
@@ -224,7 +225,7 @@ class SMC100(Instrument):
     control_loop = Instrument.setting(
         "SC%g",
         """Set the state of the control loop to OPEN or CLOSED.
-        
+
         Type: String
         Range: "OPEN" or "CLOSED"
         Unit: None""",
@@ -237,7 +238,7 @@ class SMC100(Instrument):
         "QIL?", "QIL%g",
         """Get or set the maximum peak current that the controller can
         deliver to the stage.
-        
+
         Type: Floating point number
         Range: [5e-2, 3]
         Unit: A""",
@@ -250,7 +251,7 @@ class SMC100(Instrument):
         "QIR?", "QIR%g",
         """Get or set the maximum rms current that the controller can
         deliver to the stage.
-        
+
         Type: Floating point number
         Range: [5e-2, min(1.5, maximum peak current)]
         Unit: A""",
@@ -263,7 +264,7 @@ class SMC100(Instrument):
         "QIT?", "QIT%g",
         """Get or set the maximum time during which a current greater
         than the maximum rms current can be delivered to the stage.
-        
+
         Type: Floating point number
         Range: ]1e-2, 1e2]
         Unit: s""",
@@ -276,7 +277,7 @@ class SMC100(Instrument):
         "MM%g",
         """Change the state of the controller from READY to DISABLE or
         vice versa.
-        
+
         Type: Boolean
         Range: True or False
         Unit: None""",
@@ -289,7 +290,7 @@ class SMC100(Instrument):
         "PW%g",
         """Change the state of the controller from NOT REFERENCED to
         CONFIGURATION or vice versa.
-        
+
         Type: Boolean
         Range: True or False
         Unit: None""",
@@ -301,7 +302,7 @@ class SMC100(Instrument):
     error_command = Instrument.measurement(
         "TE",
         """Get the last command error code.
-        
+
         "@" means that there is no memorized command error.
 
         This is the only measurement that doesn't check errors as it
@@ -311,7 +312,7 @@ class SMC100(Instrument):
     error_following = Instrument.control(
         "FE?", "FE%g",
         """Get or set the limit for the following error.
-        
+
         Type: Floating point number
         Range: ]1e-6, 1e12[
         Unit: u""",
@@ -331,7 +332,7 @@ class SMC100(Instrument):
     filter_frequency = Instrument.control(
         "FD?", "FD%g",
         """Get or set the low-pass filter cut-off frequency.
-        
+
         Type: Floating point number
         Range: ]1e-6, 2e3[
         Unit: Hz""",
@@ -343,7 +344,7 @@ class SMC100(Instrument):
     friction = Instrument.control(
         "FF?", "FF%g",
         """Get or set the friction compensation.
-        
+
         Type: Floating point number
         Range: [0, driving voltage[
         Unit: V*s/u""",
@@ -355,7 +356,7 @@ class SMC100(Instrument):
     home_search_time_out = Instrument.control(
         "OT?", "T%g",
         """Get or set the velocity for home search.
-        
+
         Type: Floating point number
         Range: ]1, 1e3[
         Unit: s""",
@@ -367,7 +368,7 @@ class SMC100(Instrument):
     home_search_type = Instrument.control(
         "HT?", "HT%g",
         """Get or set the type of home search.
-        
+
         Type: Interger
         Range: [0, 4]""",
         validator=strict_discrete_set,
@@ -379,7 +380,7 @@ class SMC100(Instrument):
     home_search_velocity = Instrument.control(
         "OH?", "OH%g",
         """Get or set the velocity for home search.
-        
+
         Type: Floating point number
         Range: ]1e-6, 1e12[
         Unit: u/s""",
@@ -391,7 +392,7 @@ class SMC100(Instrument):
     hysteresis = Instrument.control(
         "BH?", "BH%g",
         """Get or set the hysteresis compensation.
-        
+
         Type: Floating point number
         Range: [0, 1e12[
         Unit: u""",
@@ -404,12 +405,12 @@ class SMC100(Instrument):
         "ID?",
         """Get the stage identifier.""",
         check_get_errors=True,
-        cast= str
+        cast=str
     )
     jerk = Instrument.control(
         "JR?", "JR%g",
         """Get or set the jerk time.
-        
+
         Type: floating point number
         Range: ]1e-3, 1e12[
         Unit: s""",
@@ -421,7 +422,7 @@ class SMC100(Instrument):
     limit_negative = Instrument.control(
         "SL?", "SL%g",
         """Get or set the negative software limit.
-        
+
         Type: Floating point number
         Range: ]-1e12, 0]
         Unit: u""",
@@ -433,7 +434,7 @@ class SMC100(Instrument):
     limit_positive = Instrument.control(
         "SR?", "SR%g",
         """Get or set the positive software limit.
-        
+
         Type: Floating point number
         Range: [0, 1e12[
         Unit: u""",
@@ -497,9 +498,9 @@ class SMC100(Instrument):
         Type: Floating point number
         Range: [left software limit, right software limit]
         Unit: u
-        
+
         Example use:
-        
+
         .. code-block:: python
         
             smc.position
@@ -511,7 +512,7 @@ class SMC100(Instrument):
     position_theoretical = Instrument.measurement(
         "TH",
         """Get the theoretical position.
-        
+
         Type: Floating point number
         Range: [left software limit, right software limit]
         Unit: u""",
@@ -526,7 +527,7 @@ class SMC100(Instrument):
     state = Instrument.measurement(  
         "TS",
         """Get the controller state.
-        
+
         Be careful: this command erases the last positioner error, which
         should be checked first if it is of interest.""",
         get_process=lambda v: ControllerState(v[-2:]),
@@ -537,7 +538,7 @@ class SMC100(Instrument):
         "SU?", "SU%g",
         """Get or set the value for one encoder count in the unit which
         is thus defined.
-        
+
         Type: Floating point number
         Range: ]1e-6, 1e12[
         Unit: u""",
@@ -561,7 +562,7 @@ class SMC100(Instrument):
     voltage = Instrument.control(
         "DV?", "DV%g",
         """Get or set the maximum driver voltage.
-        
+
         Type: Floating point number
         Range: [12, 48]
         Unit: V""",
@@ -571,7 +572,7 @@ class SMC100(Instrument):
         check_set_errors=True
     )
 
-    #Special methods
+    # Special methods
     def __init__(self, resourceName, address=1, name="SMC100", **kwargs):
         """Set up connection to the controller."""
         self.address = str(address)
@@ -601,7 +602,7 @@ class SMC100(Instrument):
                 message += f"* {k}: {v.fget(self)}{unit}\n"
         return message[:-1]
 
-    #Implementation or extension of Instrument parent class methods
+    # Implementation or extension of Instrument parent class methods
     def check_errors(self):
         """Check for command error except when broadcasting."""
         if self.address != "0":
@@ -623,7 +624,7 @@ class SMC100(Instrument):
     def write(self, command):
         super().write(self.address + command)
 
-    #Other methods
+    # Other methods
     def check_command_error(self):
         """Check for and raise any command error."""
         error_code = self.error_command
@@ -634,7 +635,7 @@ class SMC100(Instrument):
 
     def check_motion_error(self):
         """Check for and raise any motion error.
-        
+
         It implements this by verifying that the controller doesn't
         unexpectedly end up in DISABLE or NOT REFERENCED states, which
         indicates that an error happened during homing or moving. Using
@@ -666,7 +667,7 @@ class SMC100(Instrument):
         """Reset the controller."""
         self.write("RS")
         sleep(1)
-        #Sequence necessary to avoid error on next command
+        # Sequence necessary to avoid error on next command
         try:
             self.check_errors()
         except VisaIOError:
@@ -674,7 +675,7 @@ class SMC100(Instrument):
 
     def search_home(self, type=None, velocity=None, time_out=None):
         """Execute home search command.
-        
+
         Keyword arguments:
         * type: type of home search
         * velocity: velocity used for home search in u/s
@@ -700,10 +701,11 @@ class SMC100(Instrument):
     def wait_ready(self):
         """Wait until the state of the controller changes from HOMING
         or MOVING to READY.
-        
+
         The command also checks for motion errors to avoid infinite
         loops. Using this command may hide positioner errors.
         """
         while not self.state.ready:
             self.check_motion_error()
             sleep(0.1)
+            
