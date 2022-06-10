@@ -170,14 +170,10 @@ class SMC100(Instrument):
     commands. Broadcasting wrong commands will show delayed errors when
     executing next addressed command.
 
-    Stepper motor, analog and TTL inputs, and keypad related functions
-    are not implemented as they could not be tested. Setting address
-    command is not implemented as it is discouraged in the User Manual.
-    Simultaneous started move are not implemented because it's getting
-    late.
-
-    This code should not be trusted too much, and extensive tests must
-    be ran before executing critical moves.
+    Setting address command is not implemented as it is discouraged in
+    the User Manual.  Stepper motor, analog and TTL inputs, keypad and
+    simultaneous started move related functions are not yet
+    implemented.
 
     Example use:
 
