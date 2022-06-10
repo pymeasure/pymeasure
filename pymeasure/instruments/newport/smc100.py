@@ -166,7 +166,7 @@ class SMC100(Instrument):
     - Execute simultaneous started move
     - Stop motion
     These can be implemented by creating an SMC100 instance with
-    address=0. Be carefull: error checking is disabled for broadcast
+    address=0. Be careful: error checking is disabled for broadcast
     commands. Broadcasting wrong commands will show delayed errors when
     executing next addressed command.
 
