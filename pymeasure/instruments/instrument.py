@@ -377,7 +377,24 @@ class Instrument:
                     )
             else:
                 vals = get_process(vals)
-                return vals
+                if not map_values:
+                    return vals
+                elif isinstance(values, (list, tuple, range)):
+                    return [values[int(val)] for val in vals]
+                elif isinstance(values, dict):
+                    ret = []
+                    for i, val in enumerate(vals):
+                        for k, v in values.items():
+                            if v == val:
+                                ret.append(k)
+                        if len(ret) != i + 1:
+                            raise KeyError(f"Value {val} not found in mapped values")
+                    return ret
+                else:
+                    raise ValueError(
+                        'Values of type `{}` are not allowed '
+                        'for Instrument.control'.format(type(values))
+                    )
 
         def fset(self,
                  value,
