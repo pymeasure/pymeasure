@@ -22,42 +22,35 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .resources import list_resources
-from .validators import discreteTruncate
+from pymeasure.adapters import VISAAdapter
 
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anaheimautomation
-from . import anapico
-from . import andeenhagerling
-from . import anritsu
-from . import attocube
-from . import danfysik
-from . import deltaelektronika
-from . import fluke
-from . import fwbell
-from . import hcp
-from . import heidenhain
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import mksinst
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import rohdeschwarz
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import temptronic
-from . import thermotron
-from . import thorlabs
-from . import toptica
-from . import yokogawa
+
+class MKSVISAAdapter(VISAAdapter):
+
+    def __init__(self, resource_name, **kwargs):
+        kwargs.setdefault("write_termination", ";FF")
+        kwargs.setdefault("read_termination", ";")  # in reality its ";FF"
+        # which is, however, invalid for pyvisa. Therefore extra bytes have to
+        # be read in the read() method.
+        super().__init__(
+            resource_name,
+            **kwargs
+        )
+
+    def ask(self, command):
+        """ Writes the command to the instrument through the adapter
+        and returns the read response.
+        :param command: command string to be sent to the instrument
+        """
+        ret = super().ask(command)
+        t = super().read_bytes(2)  # read extra termination chars 'FF'
+        if t != b'FF':
+            raise ValueError(f"unexpected termination string received {t}")
+        return ret
+
+    def read(self):
+        ret = super().read()
+        t = super().read_bytes(2)  # read extra termination chars 'FF'
+        if t != b'FF':
+            raise ValueError(f"unexpected termination string received {t}")
+        return ret
