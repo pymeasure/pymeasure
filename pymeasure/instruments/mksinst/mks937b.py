@@ -63,7 +63,8 @@ class MKS937B(Instrument):
         )
         self.address = address
         # compiled regular expression for finding numerical values in reply strings
-        self._re_response = re.compile(fr"@{self.address:03d}ACK(.*)")
+        self._re_fullresponse = re.compile(fr"@{self.address:03d}(.*)")
+        self._re_response_value = re.compile(fr"@{self.address:03d}ACK(.*)")
         # set address in commands via dynamic properties
         for prop in ["serial", "pressure1", "pressure2", "pressure3",
                      "pressure4", "pressure5", "pressure6", "all_pressures",
@@ -78,7 +79,7 @@ class MKS937B(Instrument):
         :param reply: reply string
         :returns: string with only the response, or the original string
         """
-        r = self._re_response.search(reply)
+        r = self._re_response_value.search(reply)
         if r:
             return r.groups()[0]
         else:
@@ -88,9 +89,12 @@ class MKS937B(Instrument):
         """
         check reply string for acknowledgement string
         """
-        reply = self.extract_reply(self.read())
-        if not reply.startswith("ACK"):
-            raise ValueError(f"invalid reply '{reply}' found in check_errors")
+        reply = self._re_fullresponse.search(self.read())
+        if reply:
+            if r.groups()[0].startswith('ACK'):
+                return
+        # no valid acknowledgement message found
+        raise ValueError(f"invalid reply '{reply}' found in check_errors")
 
     def command_process(self, cmd):
         """
