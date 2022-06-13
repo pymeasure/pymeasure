@@ -89,12 +89,13 @@ class MKS937B(Instrument):
         """
         check reply string for acknowledgement string
         """
-        reply = self._re_fullresponse.search(self.read())
+        ret = self.read()
+        reply = self._re_fullresponse.search(ret)
         if reply:
-            if r.groups()[0].startswith('ACK'):
+            if reply.groups()[0].startswith('ACK'):
                 return
         # no valid acknowledgement message found
-        raise ValueError(f"invalid reply '{reply}' found in check_errors")
+        raise ValueError(f"invalid reply '{ret}' found in check_errors")
 
     def command_process(self, cmd):
         """
