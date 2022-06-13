@@ -28,14 +28,15 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 from .adapters import MKSVISAAdapter
 
+
 _sensor_types = {"Cold Cathode": "CC",
                  "Hot Cathode": "HC",
                  "Pirani": "PR",
                  "Convection Pirani": "CP",
                  "Capacitance Manometer": "CM",
-                 "unknown (MB)": "MB",
-                 "unknown (GB)": "GB",
-                 "unknown (24)": "24",
+                 "unknown (MB)": "MB",  # manual does not specify
+                 "unknown (GB)": "GB",  # manual does not specify
+                 "unknown (24)": "24",  # manual does not specify
                  "no gauge": "NG",
                  "no connection": "NC"}
 
@@ -84,11 +85,17 @@ class MKS937B(Instrument):
             return reply
 
     def check_errors(self):
+        """
+        check reply string for acknowledgement string
+        """
         reply = self.extract_reply(self.read())
         if not reply.startswith("ACK"):
-            raise ValueError(f"invalid reply in check_errors {reply}")
+            raise ValueError(f"invalid reply '{reply}' found in check_errors")
 
     def command_process(self, cmd):
+        """
+        create command string by adding device address
+        """
         return f"@{self.address:03d}{cmd}"
 
     serial = Instrument.measurement(
