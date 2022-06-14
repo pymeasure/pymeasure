@@ -252,9 +252,9 @@ class Keithley6487(Instrument, KeithleyBuffer):
         self.check_errors()
 
     def auto_range_source(self):
-        """ Configures the source to use an automatic range.
+        """ Configures the current measurement to use an automatic range.
         """
-        self.write(":SOUR:CURR:RANG:AUTO 1")
+        self.write(":SENS:CURR:RANG:AUTO 1")
 
     display_enabled = Instrument.control(
         ":DISP:ENAB?", ":DISP:ENAB %d",
