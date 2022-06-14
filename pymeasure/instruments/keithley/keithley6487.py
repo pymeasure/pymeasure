@@ -272,7 +272,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
         err = self.values(":system:error?")
         if len(err) < 2:
             err = self.read()  # Try reading again
-        code = err[0].replace('\\x130','')
+        code = err[0].replace("\\x13",'')
         message = err[1].replace('\\x11', '')
         return (code, message)
 
