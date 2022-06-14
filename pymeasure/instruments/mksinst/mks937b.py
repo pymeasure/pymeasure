@@ -40,6 +40,18 @@ _sensor_types = {"Cold Cathode": "CC",
                  "no gauge": "NG",
                  "no connection": "NC"}
 
+_ion_gauge_status = {"Wait": "W",
+                     "Off": "O",
+                     "Protect": "P",
+                     "Degas": "D",
+                     "Control": "C",
+                     "Rear panel Ctrl off": "R",
+                     "HC filament fault": "H",
+                     "No gauge": "N",
+                     "Good": "G",
+                     "NOT_IONGAUGE": "NAK152",
+                     }
+
 
 class MKS937B(Instrument):
     """ MKS 937B vacuum gauge controller
@@ -69,7 +81,11 @@ class MKS937B(Instrument):
         for prop in ["serial", "pressure1", "pressure2", "pressure3",
                      "pressure4", "pressure5", "pressure6", "all_pressures",
                      "combined_pressure1", "combined_pressure2",
-                     "sensor_typeA", "sensor_typeB", "sensor_typeC", "unit"]:
+                     "sensor_typeA", "sensor_typeB", "sensor_typeC",
+                     "ion_gauge_status1", "ion_gauge_status3",
+                     "ion_gauge_status5", "unit",
+                     "power_status1", "power_status2", "power_status3",
+                     "power_status4", "power_status5", "power_status6",]:
             setattr(self, f"{prop}_command_process", self.command_process)
 
     def extract_reply(self, reply):
@@ -79,11 +95,14 @@ class MKS937B(Instrument):
         :param reply: reply string
         :returns: string with only the response, or the original string
         """
-        r = self._re_response_value.search(reply)
-        if r:
-            return r.groups()[0]
+        rvalue = self._re_response_value.search(reply)
+        if rvalue:
+            return rvalue.groups()[0]
         else:
-            return reply
+            full_reply = self._re_fullresponse.search(reply)
+            if full_reply:
+                return full_reply.groups()[0]
+        return reply
 
     def check_errors(self):
         """
@@ -175,6 +194,30 @@ class MKS937B(Instrument):
         dynamic=True,
     )
 
+    ion_gauge_status1 = Instrument.measurement(
+        "T1?",
+        """Ion gauge status of channel 1""",
+        map_values=True,
+        values=_ion_gauge_status,
+        dynamic=True,
+    )
+
+    ion_gauge_status3 = Instrument.measurement(
+        "T3?",
+        """Ion gauge status of channel 3""",
+        map_values=True,
+        values=_ion_gauge_status,
+        dynamic=True,
+    )
+
+    ion_gauge_status5 = Instrument.measurement(
+        "T5?",
+        """Ion gauge status of channel 5""",
+        map_values=True,
+        values=_ion_gauge_status,
+        dynamic=True,
+    )
+
     unit = Instrument.control(
         "U?", "U!%s",
         """Pressure unit used for all pressure readings from the instrument""",
@@ -185,6 +228,60 @@ class MKS937B(Instrument):
                 "Pascal": "PASCAL",
                 "Micron": "MICRON",
                 },
+        check_set_errors=True,
+        dynamic=True,
+    )
+
+    power_status1 = Instrument.control(
+        "CP1?", "CP1!%s",
+        """Power status of channel 1""",
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
+        check_set_errors=True,
+        dynamic=True,
+    )
+
+    power_status2 = Instrument.control(
+        "CP2?", "CP2!%s",
+        """Power status of channel 2""",
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
+        check_set_errors=True,
+        dynamic=True,
+    )
+
+    power_status3 = Instrument.control(
+        "CP3?", "CP3!%s",
+        """Power status of channel 3""",
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
+        check_set_errors=True,
+        dynamic=True,
+    )
+
+    power_status4 = Instrument.control(
+        "CP4?", "CP4!%s",
+        """Power status of channel 4""",
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
+        check_set_errors=True,
+        dynamic=True,
+    )
+
+    power_status5 = Instrument.control(
+        "CP5?", "CP5!%s",
+        """Power status of channel 5""",
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
+        check_set_errors=True,
+        dynamic=True,
+    )
+
+    power_status6 = Instrument.control(
+        "CP6?", "CP6!%s",
+        """Power status of channel 6""",
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
         check_set_errors=True,
         dynamic=True,
     )
