@@ -233,7 +233,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     
     def disable_source(self):
         """Disables the source voltage of the instrument"""
-        self.write(":SOUR:STAT: OFF")
+        self.write(":SOUR:STAT OFF")
     
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
         """ Configures the measurement of current.
