@@ -138,7 +138,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     #####################
 
     current = Instrument.measurement(
-        ":READ?",
+        ":MEAS?",
         """ Reads the current in Amps.
         """
     )
