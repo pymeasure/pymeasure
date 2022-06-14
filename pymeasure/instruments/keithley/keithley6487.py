@@ -125,7 +125,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     )
 
     source_voltage_range = Instrument.control(
-        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %f",
+        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %f",
         """ A floating point property that controls the source voltage
         range in Volts, which can take values of 10, 50, or 500V.
         Auto-range is disabled when this property is set. """,
