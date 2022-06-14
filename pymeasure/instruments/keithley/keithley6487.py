@@ -130,7 +130,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
         range in Volts, which can take values of 10, 50, or 500V.
         Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[10.0, 50.0, 500.0]
+        values=[10, 50, 500]
     )
 
     #####################
