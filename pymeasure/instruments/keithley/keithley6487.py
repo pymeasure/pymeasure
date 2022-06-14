@@ -282,7 +282,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
         code, message = self.error
         while code != 0:
             t = time.time()
-            log.info("Keithley 6487 reported error: %d, %s" % (code, message))
+            log.info("Keithley 6487 reported error: %s, %s" % (code, message))
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 6487 error retrieval.")
