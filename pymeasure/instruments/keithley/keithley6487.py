@@ -109,7 +109,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     )
     
     source_delay = Instrument.control(
-        ":SOUR:VOLT:DEL?", ":SOUR:VOLT:DEL %g",
+        ":SOUR:VOLT:DEL?", ":SOUR:VOLT:DEL %f",
         """ A floating point property that sets a manual delay for the source
         after the output is turned on before a measurement is taken. When this
         property is set, the auto delay is turned off. Valid values are
@@ -119,13 +119,13 @@ class Keithley6487(Instrument, KeithleyBuffer):
     )
 
     source_voltage = Instrument.control(
-        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g",
+        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %f",
         """ A floating point property that controls the source voltage
         in Volts. """
     )
 
     source_voltage_range = Instrument.control(
-        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
+        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %f",
         """ A floating point property that controls the source voltage
         range in Volts, which can take values of 10, 50, or 500V.
         Auto-range is disabled when this property is set. """,
@@ -144,7 +144,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     )
 
     current_range = Instrument.control(
-        ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0; :SEND:CURR:RANG %g",
+        ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0; :SEND:CURR:RANG %f",
         """A floating point property that controls the measurement the current
         range in Amps, which can take values between -0.021 and +0.021 A.
         Auto-range is disabled when this property is set""",
@@ -153,7 +153,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     )
 
     current_nplc = Instrument.control(
-        ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
+        ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %f",
         """ A floating point property that controls the number of power line cycles
         (NPLC) for the DC current measurements, which sets the integration period
         and measurement speed. Takes values from 0.001 to 6.0 or 5.0, where 6.0
@@ -183,7 +183,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     )
 
     trigger_delay = Instrument.control(
-        ":TRIG:SEQ:DEL?", ":TRIG:SEQ:DEL %g",
+        ":TRIG:SEQ:DEL?", ":TRIG:SEQ:DEL %f",
         """ A floating point property that controls the trigger delay
         in seconds, which can take values from 0 to 999.9999 s. """,
         validator=truncated_range,
