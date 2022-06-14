@@ -134,7 +134,7 @@ class RFSignalGeneratorDM:
         Digital data is represented as string so 1 or 0 in transmission order. For non binary modulation, e.g 4FSK, symbols
         are represented as couple of bits.
 
-        This class is a mixin
+        This class is a mixin.
 
         This class define a basic interface which should be implemented for each specific instrument.
 
