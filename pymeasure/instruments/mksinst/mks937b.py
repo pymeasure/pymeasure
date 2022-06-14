@@ -85,7 +85,8 @@ class MKS937B(Instrument):
                      "ion_gauge_status1", "ion_gauge_status3",
                      "ion_gauge_status5", "unit",
                      "power_status1", "power_status2", "power_status3",
-                     "power_status4", "power_status5", "power_status6",]:
+                     "power_status4", "power_status5", "power_status6",
+                     ]:
             setattr(self, f"{prop}_command_process", self.command_process)
 
     def extract_reply(self, reply):
