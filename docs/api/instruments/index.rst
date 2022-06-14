@@ -40,6 +40,7 @@ Instruments by manufacturer:
    keithley/index
    keysight/index
    lakeshore/index
+   mksinst/index
    newport/index
    ni/index
    oxfordinstruments/index
