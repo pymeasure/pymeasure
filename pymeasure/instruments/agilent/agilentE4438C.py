@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorDM, RFSignalGeneratorIQ
+from pymeasure.instruments.rf_signal_generator import RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range, joined_validators
 import time
 
-class AgilentE4438C(RFSignalGeneratorDM, RFSignalGeneratorIQ):
+class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ):
     """ Class representing Agilent E4438C RF signal generator """
 
     # Define instrument limits according to datasheet
@@ -192,6 +192,7 @@ class AgilentE4438C(RFSignalGeneratorDM, RFSignalGeneratorIQ):
         self.write("RADIO:CUSTOM:DATA:PRAM \"PacketsToTransmit\"")
         self.data_ramping_workaround = True
         self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"RampingWorkaround\",", [0x94], timeout=20000, datatype='B')
+        self.custom_modulation_data = "DATA"
 
     def data_trigger_setup(self, mode='SINGLE'):
         """ Configure the trigger system for bitsequence transmission

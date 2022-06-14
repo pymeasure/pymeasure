@@ -127,12 +127,14 @@ Generate a tone at 868MHz:
         self.rf_enable = 0
         super().shutdown()
  
-class RFSignalGeneratorDM(RFSignalGenerator):
-    """ Represent a generic signal generator with digital modulation capability.
+class RFSignalGeneratorDM:
+    """ Represent the digital modulation capability of a generic signal generator.
 
         The digital modulation is the ability to send pattern or user data according to supported modulation.
         Digital data is represented as string so 1 or 0 in transmission order. For non binary modulation, e.g 4FSK, symbols
         are represented as couple of bits.
+
+        This class is a mixin
 
         This class define a basic interface which should be implemented for each specific instrument.
 
