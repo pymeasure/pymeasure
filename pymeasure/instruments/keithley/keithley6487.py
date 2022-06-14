@@ -243,7 +243,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
         :param auto_range: Enables auto_range if True, else uses the set current
         """
         log.info("%s is measuring current." % self.name)
-        self.write(":SENS:FUNC 'CURR';"
+        self.write(":SENS:FUNC CURR;"
                    ":SENS:CURR:NPLC %f;:FORM:ELEM READ;" % nplc)
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
