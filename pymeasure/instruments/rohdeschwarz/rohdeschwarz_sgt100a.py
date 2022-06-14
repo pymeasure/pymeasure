@@ -22,14 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorDM
+from pymeasure.instruments.rf_signal_generator import RFSignalGeneratorIQ, RFSignalGenerator
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 from .rs_waveform import RSGenerator, WaveformTag, TypeTag, CLW4Tag, IntegerTag
 from io import BytesIO
 import re
 
-class RS_SGT100A(RFSignalGeneratorDM):
+class RS_SGT100A(RFSignalGenerator, RFSignalGeneratorIQ):
     # Define instrument limits according to datasheet
     power_values = (-120.0, 17.0)
     frequency_values = (1e6, 6e9)
@@ -40,6 +40,41 @@ class RS_SGT100A(RFSignalGeneratorDM):
 
     _iq_data_bits = 16
     _waveform_path = '/var/user/waveform'
+
+    ####################################################################
+    # 11.14.2 SOURce:AWGN Subsystem
+    ####################################################################
+    awgn_mode = Instrument.control(
+        ":AWGN:MODE?", ":AWGN:MODE %s", 
+        """ A string property that define the mode for generating the interfering signal.
+        This property can be set. """,
+        validator=strict_discrete_set,
+        values=("ONLY", "ADD"),
+    )
+    awgn_bandwidth = Instrument.control(
+        ":AWGN:BWIDth?", ":AWGN:BWIDth %g", 
+        """ A float property to set the awgn bandwidth in Hz.
+        This property can be set. """,
+        validator=strict_range,
+        values=(1000, 5e6),
+    )
+
+    awgn_cn = Instrument.control(
+        ":AWGN:CNRatio?", ":AWGN:CNRatio %g", 
+        """ A float property to set or query C/N in the selected bandwidth
+        Unit is dB. """,
+        validator=truncated_range,
+        values=(-50, 40),
+    )
+
+    awgn_enable = Instrument.control(
+        ":AWGN:STATe?", ":AWGN:STATe %g", 
+        """ A bootlean property to enable/disable AWGN. """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
+
     ####################################################################
     # 11.14.4 SOURce:BB:ARB Subsystem
     ####################################################################
@@ -114,10 +149,10 @@ class RS_SGT100A(RFSignalGeneratorDM):
         self.write(":BB:ARBitrary:TRIGger:SOURce INT")
         playlist = self.ask(":BB:ARBitrary:WSEG:SEQ:SEL?").strip() != '""'
         if (mode is None):
-            mode = 'AUTO' if playlist else 'SINGLE'
+            mode = 'AAUT' if playlist else 'SINGLE'
             
         self.write(f":BB:ARBitrary:TRIGger:SEQ {mode:s}")
-        if mode == 'AUTO' and playlist:
+        if mode == 'AAUT' and playlist:
             self.write(":BB:ARB:TRIG:SMOD SEQ")
         else:
             self.write(":BB:ARB:TRIG:SMOD NEXT")
@@ -125,13 +160,7 @@ class RS_SGT100A(RFSignalGeneratorDM):
     def data_trigger(self):
         """ Trigger a bitsequence transmission
         """
-        playlist = self.ask(":BB:ARBitrary:WSEG:SEQ:SEL?").strip() != '""'
-        if playlist:
-            # When the playlist is defined, the only way to start/restart the play is to
-            # send the command below (trigger mode must be AUTO)
-            self.write(":BB:ARB:TRIG:SMOD SEQ")
-        else:
-            self.write("BB:ARB:TRIG:EXEC")
+        self.write("BB:ARB:TRIG:EXEC")
 
     def set_fsk_constellation(self, constellation, fsk_dev):
         """ For multi level FSK modulation, we need to define the constellation mapping.
