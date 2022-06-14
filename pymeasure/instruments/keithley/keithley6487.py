@@ -89,7 +89,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
     #   Voltage (V)     #
     #####################
     source_enabled = Instrument.control(
-        ":SOUR:VOLT:STAT?", ":SOUR:VOLT:STAT %s",
+        ":SOUR:VOLT:STAT?", ":SOUR:VOLT:STAT %d",
         """A string property that controls whether the voltage source is
         enabled, takes values OFF or ON. The convenience methods :meth:
         `~.Keithley6487.enable_source` and
