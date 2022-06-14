@@ -243,7 +243,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
         :param auto_range: Enables auto_range if True, else uses the set current
         """
         log.info("%s is measuring current." % self.name)
-        self.write(":SENS:FUNC CURR;"
+        self.write(":SENS:FUNC:CURR;"
                    ":SENS:CURR:NPLC %f;:FORM:ELEM READ;" % nplc)
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
@@ -272,8 +272,8 @@ class Keithley6487(Instrument, KeithleyBuffer):
         err = self.values(":system:error?")
         if len(err) < 2:
             err = self.read()  # Try reading again
-        code = err[0].replace("\\x13",'')
-        message = err[1].replace('\\x11', '')
+        code = err[0]
+        message = err[1].replace('""', '')
         return (code, message)
 
     def check_errors(self):
