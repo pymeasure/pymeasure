@@ -251,7 +251,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
             self.current_range = current
         self.check_errors()
 
-    def auto_range_source(self):
+    def auto_range_current(self):
         """ Configures the current measurement to use an automatic range.
         """
         self.write(":SENS:CURR:RANG:AUTO 1")
@@ -272,8 +272,8 @@ class Keithley6487(Instrument, KeithleyBuffer):
         err = self.values(":system:error?")
         if len(err) < 2:
             err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', '')
+        code = err[0].replace('\\x130','')
+        message = err[1].replace('\\x11', '')
         return (code, message)
 
     def check_errors(self):
