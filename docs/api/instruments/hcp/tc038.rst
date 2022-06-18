@@ -1,0 +1,7 @@
+######################
+HCP TC038 crystal oven
+######################
+
+.. autoclass:: pymeasure.instruments.hcp.tc038
+    :members:
+    :show-inheritance:

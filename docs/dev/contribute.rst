@@ -104,7 +104,7 @@ Running the unit tests while you develop is highly encouraged. This will ensure 
 
 .. code-block:: bash
 
-    python setup.py test
+    pytest
 
 If your feature can be tested, unit tests are required. This will ensure that your features keep working as new features are added.
 
