@@ -47,7 +47,8 @@ class SpollStatus(IntFlag):
 
 
 class MSRFlag(IntFlag):
-    """ IntFlag type to build the mask that triggers an service request (SRQ). Set this via the MSR command
+    """ IntFlag type to build the mask that triggers an service request (SRQ). Set this
+        via the MSR command
     """
     MEASUREMENT_READY = 1
     READY_FOR_TRIGGERING = 2
@@ -58,11 +59,10 @@ class MSRFlag(IntFlag):
     TIME_OUT = 64
     UNUSED = 128
 
+
 class PM6669(Instrument):
     """ Represents the Philips PM 6669 instrument.
     """
-
-
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
@@ -114,12 +114,12 @@ PM6669.freerun = Instrument.control(
     "MEAC?", "FRUN %s", """ Reads the freerun settings""",
     validator=strict_discrete_set,
     values={"OFF": "OFF", "ON": "ON", True: "ON", False: "OFF"},
-    get_process=lambda x:  x[1].split("\n")[0][6:] if x[0].startswith("MTIME") == True else 0
+    get_process=lambda x:  x[1].split("\n")[0][6:] if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.timeout = Instrument.measurement(
     "MEAC?", """ Reads Measurement timeout, this timeout only has meaning when freerun is off.""",
-    get_process=lambda x:  float(x[1].split("\n")[2][5:]) if x[0].startswith("MTIME") == True else 0
+    get_process=lambda x:  float(x[1].split("\n")[2][5:]) if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.meac = Instrument.measurement(
