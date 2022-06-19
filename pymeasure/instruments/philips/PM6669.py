@@ -27,6 +27,7 @@ from time import sleep
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
+
 class HardwareErrorException(Exception):
     pass
 
@@ -39,11 +40,23 @@ class SpollStatus(IntFlag):
     READY_FOR_TRIGGERING = 2
     MEASURING_START_ENABLE = 4
     MEASURING_STOP_ENABLE = 8
+    GATE_OPEN = 16
+    ERROR = 32
+    UNUSED = 64
+    UNUSED2 = 128
+
+
+class MSRFlag(IntFlag):
+    """ IntFlag type to build the mask that triggers an service request (SRQ). Set this via the MSR command
+    """
+    MEASUREMENT_READY = 1
+    READY_FOR_TRIGGERING = 2
+    MEASURING_START_ENABLE = 4
+    MEASURING_STOP_ENABLE = 8
     PROGRAMMING_ERROR = 16
     HARDWARE_FAULT = 32
-    TIMEOUT = 64
+    TIME_OUT = 64
     UNUSED = 128
-
 
 class PM6669(Instrument):
     """ Represents the Philips PM 6669 instrument.
@@ -58,7 +71,7 @@ class PM6669(Instrument):
         )
         self.write("EOI ON")
 
-    def wait_for_measurement(self, poll_interval = 1):
+    def wait_for_measurement(self, poll_interval=1):
         s = self.spoll()
         while not (s & SpollStatus.MEASUREMENT_READY):
             sleep(poll_interval)
@@ -72,7 +85,8 @@ class PM6669(Instrument):
 
     def trigger(self):
         self.write("X")
-    
+
+
 PM6669.id = Instrument.measurement(
     "ID?", """ Reads the instrument identification """
 )
@@ -93,7 +107,7 @@ PM6669.measurement_time = Instrument.control(
     "MEAC?", "MTIME %g", """ Reads Measurement time""",
     validator=strict_range,
     values=[0, 10],
-    get_process=lambda x:  float(x[0][5:]) if x[0].startswith("MTIME") == True else 0
+    get_process=lambda x:  float(x[0][5:]) if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.freerun = Instrument.control(
@@ -115,4 +129,3 @@ PM6669.meac = Instrument.measurement(
 PM6669.defaults = Instrument.measurement(
     "DCL", """ Reset to instrument defaults """
 )
-
