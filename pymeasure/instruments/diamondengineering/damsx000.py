@@ -136,9 +136,9 @@ class Axis(object):
         self.current_angle = angle
 
     def write(self, command):
-        if command == ("0RN+0") or command == ("0RN-0"):
+        if command == ("0rn+0") or command == ("0rn-0"):
             expected_responses = [f'{self.axis}0!']
-        if command.startswith("0RN"):
+        if command.startswith("0rn"):
             expected_responses = [f'{self.axis}0b', f'{self.axis}0f']
         elif command.startswith("0"):
             expected_responses = [f'{self.axis}0>']
@@ -148,7 +148,7 @@ class Axis(object):
         self.instrument.write("%s%s" % (self.axis, command))
         for response in expected_responses:
             actual_response = self.instrument.read()
-            if actual_response != response:
+            if actual_response.lower() != response:
                 raise Exception(f'Expected response "{response}" but got "{actual_response}"')
 
     def steps2degrees(self, steps):
@@ -195,6 +195,12 @@ class XAxis(Axis):
         setattr(self, prefix + 'speed_final_values', (20, 600))
         setattr(self, prefix + 'speed_slope_values', (1, 3))
         super().__init__(instrument, 'X', wrap=True)
+
+class Roll(XAxis):
+    """ Implementation of a DAMS x000 stepper motor Y axis (roll)."""
+    def __init__(self, instrument):
+        super().__init__(instrument)
+        self.axis = 'Y'
 
 
 class YAxis(Axis):
@@ -436,3 +442,23 @@ class DAMSx000(Instrument):
         if self.debug:
             log.debug("=>{}".format(command))
         return super().write(command)
+
+
+class DAMSx000_DFSM(DAMSx000):
+    """ Represents the DAMS x000 series 2-axis positioner from Diamond Engineering with full spherical option (DFSM_XX)
+    """
+
+    def __init__(self, resource_name, **kwargs):
+        super().__init__(resource_name, **kwargs)
+        self.y = Roll(self)
+    
+    @property
+    def roll(self):
+        return self.elevation
+
+    @roll.setter
+    def roll(self, degrees):
+        self.elevation = degrees
+    
+    def roll_rel(self, degree):
+        self.elevation_rel(degree)
