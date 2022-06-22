@@ -35,21 +35,16 @@ log.addHandler(logging.NullHandler())
 class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
     
-    number_of_pins = 14
-    
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
             "Keithley 2600 SourceMeter",
+            includeSCPI=False,
             **kwargs
         )
         self.ChA = Channel(self, 'a')
         self.ChB = Channel(self, 'b')
-        
-        self.dio_pins = []
-        for i in range(1, Keithley2600.number_of_pins + 1):
-            self.dio_pins[i] = DigitalIOPin(self, [i])
-
+    
     @property
     def error(self):
         """ Returns a tuple of an error code and message from a
@@ -79,54 +74,6 @@ class Keithley2600(Instrument):
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2600 error retrieval.")
                 
-class DigitalIOPin:
-    
-    def __init__(self, instrument, pin_number):
-        self.instrument = instrument
-        self.pin_number = pin_number
-
-    def ask(self, cmd):
-        return self.instrument.ask(f'print(digio.trigger[{self.pin_number}].{cmd})')
-
-    def write(self, cmd):
-        self.instrument.write(f'digio.trigger.[{self.pin_number}].{cmd}')
-        
-    def check_errors(self):
-        return self.instrument.check_errors()
-        
-    def assert_trigger(self):
-        """This function asserts a trigger pulse on one of the digital I/O lines.
-        """
-        log.info("Asserting a trigger pulse on pin number %s." % self.pin_number)
-        self.write('assert()')
-        self.check_errors()
-        
-    def clear_trigger(self):
-        """This function clears the trigger event on a digital I/O line.
-        """
-        log.info("Clearing trigger on pin number %s." % self.pin_number)
-        self.write('clear()')
-        self.check_errors()
-        
-    def get_event_id(self):
-        """This function gets the mode in which the trigger event detector and
-        the output trigger generator operate on the
-        given trigger line. 
-        """
-        id = self.ask('EVENT_ID')
-        self.check_errors()
-        return int(id)
-        
-    trigger_mode = Instrument.control(
-        'mode', 'mode=%d',
-        """Property controlling the mode in which the trigger event detector and 
-        the output trigger generator operate on the given trigger line.
-        """,
-        validator=strict_discrete_set,
-        values={'TRIG_BYPASS': 0, 'TRIG_FALLING': 1, 'TRIG_RISING': 2, 'TRIG_EITHER': 3, 'TRIG_SYNCHRONOUSA': 4, 
-                'TRIG_SYNCHRONOUS': 5, 'TRIG_SYNCHRONOUSM': 6, 'TRIG_RISINGA': 7, 'TRIG_RISINGM': 8},
-        map_values=True
-    )
 
 class Channel:
 
