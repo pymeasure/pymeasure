@@ -52,7 +52,8 @@ class Keithley2602B(Keithley2600):
         """Returns a list of the valid event IDs that can be used to select the event that
         causes a trigger to be asserted on the digital output line. The list can be indexed
         to set a digitial I/O line to assert a trigger given the described conditions. E.g.
-        to set digital line 4 to asser a trigger when the SMU completes a source action on channel A,
+        to set digital line 4 to asser a trigger when the SMU completes a source
+        action on channel A,
         use the following:
 
         .. code-block:: python
@@ -202,9 +203,9 @@ class DigitalIOPin:
     stimulus = Instrument.control(
         "stimulus",
         "stimulus=%s",
-        """Property controlling the event that causes a trigger to be asserted on the digital output line.
-        When setting this property, get the valid event descriptions using the get_trigger_event_description_strings
-        method in the Keithley2602B class.
+        """Property controlling the event that causes a trigger to be asserted on the digital output
+        line.When setting this property, get the valid event descriptions using the
+        get_trigger_event_description_strings method in the Keithley2602B class.
         """,
         validator=strict_discrete_set,
         values=Keithley2602B.get_trigger_event_description_strings(),

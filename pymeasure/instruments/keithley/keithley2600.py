@@ -97,7 +97,8 @@ class Keithley2600(Instrument):
     def id(self):
         """Requests and returns the identification of the instrument."""
         return self.ask(
-            "print([[Keithley Instruments, Model]]..localnode.model..[[,]]..localnode.serialno.. [[, ]]..localnode.revision)"
+            "print([[Keithley Instruments, Model]]..localnode.model..[[,]]..\
+            localnode.serialno.. [[, ]]..localnode.revision)"
         ).strip()
 
 
