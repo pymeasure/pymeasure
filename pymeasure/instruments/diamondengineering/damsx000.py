@@ -112,6 +112,10 @@ class Axis(object):
 
         if (not self.zero_set):
             raise ZeroPositionNotSet("Zero position not set")
+        
+        if self.wrap == False:
+            if abs(degrees) >= 360:
+                degrees %= 360
 
         movement_degrees = (degrees - self.current_angle)
         steps = self.angle_rel(movement_degrees)
@@ -136,9 +140,9 @@ class Axis(object):
         self.current_angle = angle
 
     def write(self, command):
-        if command == ("0rn+0") or command == ("0rn-0"):
+        if command == ("0RN+0") or command == ("0RN-0"):
             expected_responses = [f'{self.axis}0!']
-        if command.startswith("0rn"):
+        if command.startswith("0RN"):
             expected_responses = [f'{self.axis}0b', f'{self.axis}0f']
         elif command.startswith("0"):
             expected_responses = [f'{self.axis}0>']
@@ -148,7 +152,10 @@ class Axis(object):
         self.instrument.write("%s%s" % (self.axis, command))
         for response in expected_responses:
             actual_response = self.instrument.read()
-            if actual_response.lower() != response:
+            """ Answer given by the device is in lowercase
+            """
+            response = response.lower()
+            if actual_response != response:
                 raise Exception(f'Expected response "{response}" but got "{actual_response}"')
 
     def steps2degrees(self, steps):
@@ -181,20 +188,25 @@ class XAxis(Axis):
 
     def degrees2steps(self, degrees):
         # TODO: Check that 2880 is OK both for full step and half step
-        degrees = degrees % 360
-        if (abs(degrees) > 180):
-            degrees = degrees - 360
+
+        if self.wrap == False:
+            if abs(degrees >= 360):
+                degrees %= 360
+        else:
+            degrees = degrees % 360
+            if (abs(degrees) > 180):
+                degrees = degrees - 360
         return round((self.steps_per_full_revolution * degrees) / 360)
 
     def steps2degrees(self, steps):
         return (360 * steps) / self.steps_per_full_revolution
 
-    def __init__(self, instrument):
+    def __init__(self, instrument, wrap = True):
         prefix = Instrument._Instrument__reserved_prefix
         setattr(self, prefix + 'speed_base_values', (10, 300))
         setattr(self, prefix + 'speed_final_values', (20, 600))
         setattr(self, prefix + 'speed_slope_values', (1, 3))
-        super().__init__(instrument, 'X', wrap=True)
+        super().__init__(instrument, 'X', wrap=wrap)
 
 class Roll(XAxis):
     """ Implementation of a DAMS x000 stepper motor Y axis (roll)."""
@@ -445,7 +457,8 @@ class DAMSx000(Instrument):
 
 
 class DAMSx000_DFSM(DAMSx000):
-    """ Represents the DAMS x000 series 2-axis positioner from Diamond Engineering with full spherical option (DFSM_XX)
+    """ Represents the DAMS x000 series 2-axis positioner from Diamond Engineering
+        with full spherical option (DFSM_XX)
     """
 
     def __init__(self, resource_name, **kwargs):
@@ -454,11 +467,17 @@ class DAMSx000_DFSM(DAMSx000):
     
     @property
     def roll(self):
+        """ Re-using of elevation that manages Y axis in parent class
+        """
         return self.elevation
 
     @roll.setter
     def roll(self, degrees):
+        """ Re-using of elevation that manages Y axis in parent class
+        """
         self.elevation = degrees
     
     def roll_rel(self, degree):
+        """ Re-using of elevation that manages Y axis in parent class
+        """
         self.elevation_rel(degree)

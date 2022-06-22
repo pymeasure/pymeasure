@@ -23,7 +23,7 @@
 #
 
 import pytest
-from pymeasure.instruments.diamondengineering.damsx000 import (DAMSx000,
+from pymeasure.instruments.diamondengineering.damsx000 import (DAMSx000,DAMSx000_DFSM,
                                                                ZeroPositionNotSet)
 from pymeasure.instruments.fakes import FakeAdapter
 
@@ -42,7 +42,9 @@ class FakeDamsx000(FakeAdapter):
         if len(self._buffer) > 0:
             result = self._buffer.pop(0)
 
-        return result
+        """ Answer given by real device is in lower casing
+        """
+        return result.lower()
 
     def write(self, command):
         """ Writes the command to a buffer, so that it can
@@ -91,6 +93,97 @@ class TestXAxis:
             steps_m = self.x.degrees2steps(-angle)
             assert (abs(steps_p) <= steps_180)
             assert (abs(steps_m) <= steps_180)
+
+    def test_step_are_reversable(self):
+        for angle in range(0, 360, 5):
+            steps_p = self.x.degrees2steps(angle)
+            steps_m = self.x.degrees2steps(-angle)
+            if (angle != 180):
+                assert (steps_p == -steps_m)
+
+    def test_angle_approx_error(self):
+        self.x.set_zero()
+
+        for angle in range(0, 360):
+            self.x.angle = angle
+            assert(self.x.angle == pytest.approx(angle, abs=5e-3))
+
+    def test_zero_steps(self):
+        assert (self.x.angle_rel(0) == 0)
+
+class TestRoll:
+    """
+    Unit tests for Roll movement on Y axis
+
+    """
+    y = DAMSx000_DFSM(FakeDamsx000()).y
+
+    def test_zero_position_not_set(self):
+        with pytest.raises(ZeroPositionNotSet):
+            self.y.angle
+
+        with pytest.raises(ZeroPositionNotSet):
+            self.y.angle = 30
+
+        self.y.angle_rel(30)
+
+    def test_shortest_path(self):
+        # Always <= 180 degrees
+        for angle in range(0, 3600, 5):
+            steps_180 = self.y.degrees2steps(180)
+            steps_p = self.y.degrees2steps(angle)
+            steps_m = self.y.degrees2steps(-angle)
+            assert (abs(steps_p) <= steps_180)
+            assert (abs(steps_m) <= steps_180)
+
+    def test_step_are_reversable(self):
+        for angle in range(0, 360, 5):
+            steps_p = self.y.degrees2steps(angle)
+            steps_m = self.y.degrees2steps(-angle)
+            if (angle != 180):
+                assert (steps_p == -steps_m)
+
+    def test_angle_approx_error(self):
+        self.y.set_zero()
+
+        for angle in range(0, 360):
+            self.y.angle = angle
+            assert(self.y.angle == pytest.approx(angle, abs=5e-3))
+
+    def test_zero_steps(self):
+        assert (self.y.angle_rel(0) == 0)
+
+
+class TestXAxisWithRoll:
+    """
+        Unit tests for X axis when Roll movement is on Y axis
+        with no wrapping option.
+    """
+    x = DAMSx000_DFSM(FakeDamsx000()).x
+    x.wrap = False
+
+    def test_zero_position_not_set(self):
+        with pytest.raises(ZeroPositionNotSet):
+            self.x.angle
+
+        with pytest.raises(ZeroPositionNotSet):
+            self.x.angle = 30
+
+        self.x.angle_rel(30)
+
+    def test_longest_path(self):
+        """
+            Positioner must choose longest path to reach absolute position
+            (keep cables from twisting)
+        """
+        self.x.set_zero()
+        for angle in range(-3600, 3600, 5):
+            angle_wrapped = angle % 360
+            angle_rel = angle_wrapped - self.x.angle
+            self.x.angle = angle
+            steps = self.x.degrees2steps(angle_rel)
+            if (angle % 360 == 0 and angle != 0):
+                assert(steps <= 0)
 
     def test_step_are_reversable(self):
         for angle in range(0, 360, 5):
