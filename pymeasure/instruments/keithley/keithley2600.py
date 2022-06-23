@@ -41,6 +41,7 @@ class Keithley2600(Instrument):
         super().__init__(
             adapter, "Keithley 2600 SourceMeter", includeSCPI=False, **kwargs
         )
+
         self.ChA = Channel(self, "a")
         self.ChB = Channel(self, "b")
 

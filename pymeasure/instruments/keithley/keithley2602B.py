@@ -22,6 +22,8 @@
 #
 
 import logging
+import threading
+from socket import error as socket_error
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.keithley.keithley2600 import Keithley2600
@@ -36,6 +38,9 @@ class Keithley2602B(Keithley2600):
     functionality to the Keithley2600 series driver. Note that this driver can
     be used to control any of the other 2600 series models that support digital
     I/O (2601B, 2611B, 2612B, 2635B, 2636B).
+
+    Manual:
+    https://drive.google.com/file/d/19_jllFNPkVmcRw9TuJlywFlwgmDTnIuu/view?usp=sharing
     """
 
     number_of_pins = 14
@@ -50,12 +55,41 @@ class Keithley2602B(Keithley2600):
             f"smu{channel}.trigger.IDLE_EVENT_ID",
         ]
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, includeSCPI=False, **kwargs)
+    def __init__(self, hostname: str, port: int = 5025, **kwargs) -> None:
+        """Initializes LAN communication with the device.
+        Flushes the error queue and logs the system identification info.
+        If ID info cannot be retrieved, or communication was not successfully
+        initialized, the results are logged.
 
-        self.dio_pins = [
-            Keithley2600DigitalIOPin(self, i + 1) for i in range(self.number_of_pins)
-        ]
+        Args:
+            hostname (str): Hostname of the system (initial expected value is a concatenation of
+                product number and serial number. Note that the hostname can be overwritten.
+            port (int): Port used to communicate with the system
+        """
+        self.hostname = hostname
+        self.port = port
+        self._lock = threading.Lock()
+        adapter = f"TCPIP::{self.hostname}::{self.port}::SOCKET"
+        try:
+            super().__init__(adapter, includeSCPI=False, **kwargs)
+
+            self.dio_pins = [
+                Keithley2600DigitalIOPin(self, i + 1)
+                for i in range(self.number_of_pins)
+            ]
+
+            idn = self.id
+            if not idn.startswith("Keithley"):
+                log.warning(f"Could not retrieve ID for {self.hostname}")
+                self.communication_success = False
+            else:
+                log.info(f"IDN: {idn}")
+                log.info(f"Connected to {self.hostname}")
+                self.communication_success = True
+
+        except ValueError or socket_error:
+            log.exception(f"Could not connect to {self.hostname}", exc_info=True)
+            self.communication_success = False
 
     @staticmethod
     def get_trigger_event_description_strings():
@@ -63,8 +97,7 @@ class Keithley2602B(Keithley2600):
         causes a trigger to be asserted on the digital output line. The list can be indexed
         to set a digitial I/O line to assert a trigger given the described conditions. E.g.
         to set digital line 4 to assert a trigger when the SMU completes a source
-        action on channel A,
-        use the following:
+        action on channel A, use the following:
 
         .. code-block:: python
 
