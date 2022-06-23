@@ -33,6 +33,7 @@ from datetime import datetime
 from string import Formatter
 
 import pandas as pd
+from pint.util import to_units_container
 
 from .procedure import Procedure, UnknownProcedure
 
@@ -129,7 +130,24 @@ class CSVFormatter(logging.Formatter):
         """
         super().__init__()
         self.columns = columns
+        self.units = self._parse_columns(columns)
         self.delimiter = delimiter
+
+    @staticmethod
+    def _parse_columns(columns):
+        """Parse the columns to get units in parenthesis."""
+        units_pattern = r"\((?P<units>\w+)\)"
+        units = {}
+        for column in columns:
+            try:
+                match = re.search(units_pattern, column)
+            except TypeError:
+                match = None
+
+            if match:
+                if 'units' in (m:=match.groupdict()):
+                    units[column] = to_units_container(m['units'])
+        return units
 
     def format(self, record):
         """Formats a record as csv.
@@ -138,7 +156,16 @@ class CSVFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-        return self.delimiter.join(f'{record[x]}' for x in self.columns)
+        if self.units:
+            line = []
+            for x in self.columns:
+                if unit:=self.units.get(x):
+                    line.append(f'{record[x].m_as(unit)}')
+                else:
+                    line.append(f'{record[x]}')
+            return self.delimiter.join(line)
+        else:
+            return self.delimiter.join(f'{record[x]}' for x in self.columns)
 
     def format_header(self):
         return self.delimiter.join(self.columns)
