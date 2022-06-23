@@ -39,20 +39,30 @@ class Keithley2602B(Keithley2600):
     """
 
     number_of_pins = 14
+    _event_descriptions = []
+
+    for channel in ["a", "b"]:
+        _event_descriptions += [
+            f"smu{channel}.trigger.SOURCE_COMPLETE_EVENT_ID",
+            f"smu{channel}.trigger.MEASURE_COMPLETE_EVENT_ID",
+            f"smu{channel}.trigger.PULSE_COMPLETE_EVENT_ID",
+            f"smu{channel}.trigger.SWEEP_COMPLETE_EVENT_ID",
+            f"smu{channel}.trigger.IDLE_EVENT_ID",
+        ]
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, includeSCPI=False, **kwargs)
 
-        self.dio_pins = []
-        for i in range(1, Keithley2602B.number_of_pins + 1):
-            self.dio_pins[i] = DigitalIOPin(self, i)
+        self.dio_pins = [
+            Keithley2600DigitalIOPin(self, i + 1) for i in range(self.number_of_pins)
+        ]
 
     @staticmethod
     def get_trigger_event_description_strings():
         """Returns a list of the valid event IDs that can be used to select the event that
         causes a trigger to be asserted on the digital output line. The list can be indexed
         to set a digitial I/O line to assert a trigger given the described conditions. E.g.
-        to set digital line 4 to asser a trigger when the SMU completes a source
+        to set digital line 4 to assert a trigger when the SMU completes a source
         action on channel A,
         use the following:
 
@@ -65,19 +75,11 @@ class Keithley2602B(Keithley2600):
         See page 9-61 of the Reference Manual for more details about the various event
         descriptions.
         """
-        event_descriptions = []
 
-        for channel in ["a", "b"]:
-            event_descriptions.append(f"smu{channel}.trigger.SOURCE_COMPLETE_EVENT_ID")
-            event_descriptions.append(f"smu{channel}.trigger.MEASURE_COMPLETE_EVENT_ID")
-            event_descriptions.append(f"smu{channel}.trigger.PULSE_COMPLETE_EVENT_ID")
-            event_descriptions.append(f"smu{channel}.trigger.SWEEP_COMPLETE_EVENT_ID")
-            event_descriptions.append(f"smu{channel}.trigger.IDLE_EVENT_ID")
-
-        return event_descriptions
+        return Keithley2602B._event_descriptions
 
 
-class DigitalIOPin:
+class Keithley2600DigitalIOPin:
     def __init__(self, instrument, pin_number):
         self.instrument = instrument
         self.pin_number = pin_number
@@ -94,14 +96,14 @@ class DigitalIOPin:
     def assert_trigger(self):
         """This method asserts a trigger pulse on one of the digital I/O lines."""
 
-        log.info("Asserting a trigger pulse on pin number %d." % self.pin_number)
+        log.info(f"Asserting a trigger pulse on pin number {self.pin_number}.")
         self.write("assert()")
         self.check_errors()
 
     def clear_trigger(self):
         """This method clears the trigger event detector on a digital I/O line."""
 
-        log.info("Clearing trigger on pin number %d." % self.pin_number)
+        log.info(f"Clearing trigger on pin number {self.pin_number}.")
         self.write("clear()")
         self.check_errors()
 
@@ -138,7 +140,7 @@ class DigitalIOPin:
     def release_trigger(self):
         """This method releases an indefinite length or latched trigger."""
 
-        log.info("Releasing trigger on pin number %d." % self.pin_number)
+        log.info(f"Releasing trigger on pin number {self.pin_number}.")
         self.write("release()")
         self.check_errors()
 
@@ -149,8 +151,7 @@ class DigitalIOPin:
         """
 
         log.info(
-            "Resetting trigger values (to factory defaults) on pin number %d."
-            % self.pin_number
+            f"Resetting trigger values (to factory defaults) on pin number {self.pin_number}."
         )
         self.write("reset()")
         self.check_errors()
@@ -161,9 +162,7 @@ class DigitalIOPin:
         detected.
         """
 
-        log.info(
-            "Waiting for trigger for %f on pin number %d." % (timeout, self.pin_number)
-        )
+        log.info(f"Waiting for trigger for {timeout} on pin number {self.pin_number}.")
         self.write("wait(timeout)")
         self.check_errors()
 
