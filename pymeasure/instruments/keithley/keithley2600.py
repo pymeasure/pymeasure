@@ -23,9 +23,11 @@
 
 import logging
 import time
+
 import numpy as np
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -37,180 +39,213 @@ class Keithley2600(Instrument):
 
     def __init__(self, adapter, **kwargs):
         super().__init__(
-            adapter,
-            "Keithley 2600 SourceMeter",
-            **kwargs
+            adapter, "Keithley 2600 SourceMeter", includeSCPI=False, **kwargs
         )
-        self.ChA = Channel(self, 'a')
-        self.ChB = Channel(self, 'b')
+        self.ChA = Channel(self, "a")
+        self.ChB = Channel(self, "b")
 
     @property
     def error(self):
-        """ Returns a tuple of an error code and message from a
-        single error. """
-        err = self.ask('print(errorqueue.next())')
-        err = err.split('\t')
+        """Returns a tuple of an error code and message from a
+        single error."""
+        err = self.ask("print(errorqueue.next())")
+        err = err.split("\t")
         # Keithley Instruments Inc. sometimes on startup
         # if tab delimitated message is greater than one, grab first two as code, message
         # otherwise, assign code & message to returned error
         if len(err) > 1:
             err = (int(float(err[0])), err[1])
             code = err[0]
-            message = err[1].replace('"', '')
+            message = err[1].replace('"', "")
         else:
             code = message = err[0]
         log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
         return (code, message)
 
     def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
+        """Logs any system errors reported by the instrument."""
         code, message = self.error
         while code != 0:
             t = time.time()
-            log.info("Keithley 2600 reported error: %d, %s" % (code, message))
+            log.info(f"Keithley 2600 reported error: {code}, {message}")
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2600 error retrieval.")
 
+    def clear(self):
+        """Clears the instrument status byte"""
+        self.write("status.reset()")
+
+    def reset(self):
+        """Resets the instrument."""
+        self.write("*reset()")
+
+    @property
+    def complete(self):
+        """This property allows synchronization between a controller and a device. The Operation Complete
+        query places an ASCII character 1 into the device's Output Queue when all pending
+        selected device operations have been finished.
+        """
+        return self.ask("waitcomplete() print([[1]])").strip()
+
+    @property
+    def status(self):
+        """Requests and returns the status byte and Master Summary Status bit."""
+        return self.ask("print(tostring(status.condition))").strip()
+
+    @property
+    def id(self):
+        """Requests and returns the identification of the instrument."""
+        return self.ask(
+            "print([[Keithley Instruments, Model]]..localnode.model..[[,]]..\
+            localnode.serialno.. [[, ]]..localnode.revision)"
+        ).strip()
+
 
 class Channel:
-
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel = channel
 
     def ask(self, cmd):
-        return float(self.instrument.ask(f'print(smu{self.channel}.{cmd})'))
+        return float(self.instrument.ask(f"print(smu{self.channel}.{cmd})"))
 
     def write(self, cmd):
-        self.instrument.write(f'smu{self.channel}.{cmd}')
+        self.instrument.write(f"smu{self.channel}.{cmd}")
 
     def values(self, cmd, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
+        """Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values(f'print(smu{self.channel}.{cmd})')
+        return self.instrument.values(f"print(smu{self.channel}.{cmd})")
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
-        return self.instrument.binary_values('print(smu%s.%s)' %
-                                             (self.channel, cmd,), header_bytes, dtype)
+        return self.instrument.binary_values(
+            f"print(smu{self.channel}.{cmd})",
+            header_bytes,
+            dtype,
+        )
 
     def check_errors(self):
         return self.instrument.check_errors()
 
     source_output = Instrument.control(
-        'source.output', 'source.output=%d',
+        "source.output",
+        "source.output=%d",
         """Property controlling the channel output state (ON of OFF)
         """,
         validator=strict_discrete_set,
-        values={'OFF': 0, 'ON': 1},
-        map_values=True
+        values={"OFF": 0, "ON": 1},
+        map_values=True,
     )
 
     source_mode = Instrument.control(
-        'source.func', 'source.func=%d',
+        "source.func",
+        "source.func=%d",
         """Property controlling the channel soource function (Voltage or Current)
         """,
         validator=strict_discrete_set,
-        values={'voltage': 1, 'current': 0},
-        map_values=True
+        values={"voltage": 1, "current": 0},
+        map_values=True,
     )
 
     measure_nplc = Instrument.control(
-        'measure.nplc', 'measure.nplc=%f',
+        "measure.nplc",
+        "measure.nplc=%f",
         """ Property controlling the nplc value """,
         validator=truncated_range,
         values=[0.001, 25],
-        map_values=True
+        map_values=True,
     )
 
     ###############
     # Current (A) #
     ###############
-    current = Instrument.measurement(
-        'measure.i()',
-        """ Reads the current in Amps """
-    )
+    current = Instrument.measurement("measure.i()", """ Reads the current in Amps """)
 
     source_current = Instrument.control(
-        'source.leveli', 'source.leveli=%f',
+        "source.leveli",
+        "source.leveli=%f",
         """ Property controlling the applied source current """,
         validator=truncated_range,
-        values=[-1.5, 1.5]
+        values=[-1.5, 1.5],
     )
 
     compliance_current = Instrument.control(
-        'source.limiti', 'source.limiti=%f',
+        "source.limiti",
+        "source.limiti=%f",
         """ Property controlling the source compliance current """,
         validator=truncated_range,
-        values=[-1.5, 1.5]
+        values=[-1.5, 1.5],
     )
 
     source_current_range = Instrument.control(
-        'source.rangei', 'source.rangei=%f',
+        "source.rangei",
+        "source.rangei=%f",
         """Property controlling the source current range """,
         validator=truncated_range,
-        values=[-1.5, 1.5]
+        values=[-1.5, 1.5],
     )
 
     current_range = Instrument.control(
-        'measure.rangei', 'measure.rangei=%f',
+        "measure.rangei",
+        "measure.rangei=%f",
         """Property controlling the measurement current range """,
         validator=truncated_range,
-        values=[-1.5, 1.5]
+        values=[-1.5, 1.5],
     )
 
     ###############
     # Voltage (V) #
     ###############
-    voltage = Instrument.measurement(
-        'measure.v()',
-        """ Reads the voltage in Volts """
-    )
+    voltage = Instrument.measurement("measure.v()", """ Reads the voltage in Volts """)
 
     source_voltage = Instrument.control(
-        'source.levelv', 'source.levelv=%f',
+        "source.levelv",
+        "source.levelv=%f",
         """ Property controlling the applied source voltage """,
         validator=truncated_range,
-        values=[-200, 200]
+        values=[-200, 200],
     )
 
     compliance_voltage = Instrument.control(
-        'source.limitv', 'source.limitv=%f',
+        "source.limitv",
+        "source.limitv=%f",
         """ Property controlling the source compliance voltage """,
         validator=truncated_range,
-        values=[-200, 200]
+        values=[-200, 200],
     )
 
     source_voltage_range = Instrument.control(
-        'source.rangev', 'source.rangev=%f',
+        "source.rangev",
+        "source.rangev=%f",
         """Property controlling the source current range """,
         validator=truncated_range,
-        values=[-200, 200]
+        values=[-200, 200],
     )
 
     voltage_range = Instrument.control(
-        'measure.rangev', 'measure.rangev=%f',
+        "measure.rangev",
+        "measure.rangev=%f",
         """Property controlling the measurement voltage range """,
         validator=truncated_range,
-        values=[-200, 200]
+        values=[-200, 200],
     )
 
     ####################
     # Resistance (Ohm) #
     ####################
     resistance = Instrument.measurement(
-        'measure.r()',
-        """ Reads the resistance in Ohms """
+        "measure.r()", """ Reads the resistance in Ohms """
     )
 
     wires_mode = Instrument.control(
-        'sense', 'sense=%d',
+        "sense",
+        "sense=%d",
         """Property controlling the resistance measurement mode: 4 wires or 2 wires""",
         validator=strict_discrete_set,
-        values={'4': 1, '2': 0},
-        map_values=True
+        values={"4": 1, "2": 0},
+        map_values=True,
     )
 
     #######################
@@ -218,53 +253,52 @@ class Channel:
     #######################
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
-        """ Configures the measurement of voltage.
+        """Configures the measurement of voltage.
         :param nplc: Number of power line cycles (NPLC) from 0.001 to 25
         :param voltage: Upper limit of voltage in Volts, from -200 V to 200 V
         :param auto_range: Enables auto_range if True, else uses the set voltage
         """
-        log.info("%s is measuring voltage." % self.channel)
-        self.write('measure.v()')
-        self.write('measure.nplc=%f' % nplc)
+        log.info(f"{self.channel} is measuring voltage.")
+        self.write("measure.v()")
+        self.write(f"measure.nplc={nplc:f}")
         if auto_range:
-            self.write('measure.autorangev=1')
+            self.write("measure.autorangev=1")
         else:
             self.voltage_range = voltage
         self.check_errors()
 
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
-        """ Configures the measurement of current.
+        """Configures the measurement of current.
         :param nplc: Number of power line cycles (NPLC) from 0.001 to 25
         :param current: Upper limit of current in Amps, from -1.5 A to 1.5 A
         :param auto_range: Enables auto_range if True, else uses the set current
         """
-        log.info("%s is measuring current." % self.channel)
-        self.write('measure.i()')
-        self.write('measure.nplc=%f' % nplc)
+        log.info(f"{self.channel} is measuring current.")
+        self.write("measure.i()")
+        self.write(f"measure.nplc={nplc:f}")
         if auto_range:
-            self.write('measure.autorangei=1')
+            self.write("measure.autorangei=1")
         else:
             self.current_range = current
         self.check_errors()
 
     def auto_range_source(self):
-        """ Configures the source to use an automatic range.
-        """
-        if self.source_mode == 'current':
-            self.write('source.autorangei=1')
+        """Configures the source to use an automatic range."""
+        if self.source_mode == "current":
+            self.write("source.autorangei=1")
         else:
-            self.write('source.autorangev=1')
+            self.write("source.autorangev=1")
 
     def apply_current(self, current_range=None, compliance_voltage=0.1):
-        """ Configures the instrument to apply a source current, and
+        """Configures the instrument to apply a source current, and
         uses an auto range unless a current range is specified.
         The compliance voltage is also set.
         :param compliance_voltage: A float in the correct range for a
                                    :attr:`~.Keithley2600.compliance_voltage`
         :param current_range: A :attr:`~.Keithley2600.current_range` value or None
         """
-        log.info("%s is sourcing current." % self.channel)
-        self.source_mode = 'current'
+        log.info(f"{self.channel} is sourcing current.")
+        self.source_mode = "current"
         if current_range is None:
             self.auto_range_source()
         else:
@@ -272,17 +306,16 @@ class Channel:
         self.compliance_voltage = compliance_voltage
         self.check_errors()
 
-    def apply_voltage(self, voltage_range=None,
-                      compliance_current=0.1):
-        """ Configures the instrument to apply a source voltage, and
+    def apply_voltage(self, voltage_range=None, compliance_current=0.1):
+        """Configures the instrument to apply a source voltage, and
         uses an auto range unless a voltage range is specified.
         The compliance current is also set.
         :param compliance_current: A float in the correct range for a
                                    :attr:`~.Keithley2600.compliance_current`
         :param voltage_range: A :attr:`~.Keithley2600.voltage_range` value or None
         """
-        log.info("%s is sourcing voltage." % self.channel)
-        self.source_mode = 'voltage'
+        log.info(f"{self.channel} is sourcing voltage.")
+        self.source_mode = "voltage"
         if voltage_range is None:
             self.auto_range_source()
         else:
@@ -291,33 +324,33 @@ class Channel:
         self.check_errors()
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=0.1):
-        """ Ramps to a target voltage from the set voltage value over
+        """Ramps to a target voltage from the set voltage value over
         a certain number of linear steps, each separated by a pause duration.
         :param target_voltage: A voltage in Amps
         :param steps: An integer number of steps
-        :param pause: A pause duration in seconds to wait between steps """
+        :param pause: A pause duration in seconds to wait between steps"""
         voltages = np.linspace(self.source_voltage, target_voltage, steps)
         for voltage in voltages:
             self.source_voltage = voltage
             time.sleep(pause)
 
     def ramp_to_current(self, target_current, steps=30, pause=0.1):
-        """ Ramps to a target current from the set current value over
+        """Ramps to a target current from the set current value over
         a certain number of linear steps, each separated by a pause duration.
         :param target_current: A current in Amps
         :param steps: An integer number of steps
-        :param pause: A pause duration in seconds to wait between steps """
+        :param pause: A pause duration in seconds to wait between steps"""
         currents = np.linspace(self.source_current, target_current, steps)
         for current in currents:
             self.source_current = current
             time.sleep(pause)
 
     def shutdown(self):
-        """ Ensures that the current or voltage is turned to zero
-        and disables the output. """
-        log.info("Shutting down channel %s." % self.channel)
-        if self.source_mode == 'current':
+        """Ensures that the current or voltage is turned to zero
+        and disables the output."""
+        log.info(f"Shutting down channel {self.channel}.")
+        if self.source_mode == "current":
             self.ramp_to_current(0.0)
         else:
             self.ramp_to_voltage(0.0)
-        self.source_output = 'OFF'
+        self.source_output = "OFF"
