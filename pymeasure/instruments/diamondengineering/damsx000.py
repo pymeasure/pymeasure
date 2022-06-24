@@ -114,14 +114,19 @@ class Axis(object):
             raise ZeroPositionNotSet("Zero position not set")
         
         if self.wrap == False:
-            if abs(degrees) >= 360:
+            """ Limit range between -180 and 180 """
+
+            if (degrees % 360) > 180:
+                degrees %= -360
+            elif (degrees % -360) <= -180:
                 degrees %= 360
 
         movement_degrees = (degrees - self.current_angle)
         steps = self.angle_rel(movement_degrees)
         self.current_angle += self.steps2degrees(steps)
-        if self.wrap:
-            self.current_angle %= 360
+
+        if abs(self.current_angle) >= 360:
+            self.current_angle %= (360)
 
     def __init__(self, instrument, axis_name, wrap):
         self.instrument = instrument
@@ -190,7 +195,7 @@ class XAxis(Axis):
         # TODO: Check that 2880 is OK both for full step and half step
 
         if self.wrap == False:
-            if abs(degrees >= 360):
+            if abs(degrees) >= 360:
                 degrees %= 360
         else:
             degrees = degrees % 360
@@ -464,20 +469,21 @@ class DAMSx000_DFSM(DAMSx000):
     def __init__(self, resource_name, **kwargs):
         super().__init__(resource_name, **kwargs)
         self.y = Roll(self)
+        self.x.wrap = False
     
     @property
     def roll(self):
-        """ Re-using of elevation that manages Y axis in parent class
+        """ Reuse of elevation that manages Y axis in parent class
         """
         return self.elevation
 
     @roll.setter
     def roll(self, degrees):
-        """ Re-using of elevation that manages Y axis in parent class
+        """ Reuse of elevation that manages Y axis in parent class
         """
         self.elevation = degrees
     
     def roll_rel(self, degree):
-        """ Re-using of elevation that manages Y axis in parent class
+        """ Reuse of elevation that manages Y axis in parent class
         """
         self.elevation_rel(degree)

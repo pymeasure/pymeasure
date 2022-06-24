@@ -156,11 +156,9 @@ class TestRoll:
 
 class TestXAxisWithRoll:
     """
-        Unit tests for X axis when Roll movement is on Y axis
-        with no wrapping option.
+    Unit tests for X axis when Roll movement is on Y axis.
     """
     x = DAMSx000_DFSM(FakeDamsx000()).x
-    x.wrap = False
 
     def test_zero_position_not_set(self):
         with pytest.raises(ZeroPositionNotSet):
@@ -171,19 +169,14 @@ class TestXAxisWithRoll:
 
         self.x.angle_rel(30)
 
-    def test_longest_path(self):
-        """
-            Positioner must choose longest path to reach absolute position
-            (keep cables from twisting)
-        """
+    def test_limited_range(self):
         self.x.set_zero()
+        # Get always an angle between -180 and 180
+        i = 1
         for angle in range(-3600, 3600, 5):
-            angle_wrapped = angle % 360
-            angle_rel = angle_wrapped - self.x.angle
-            self.x.angle = angle
-            steps = self.x.degrees2steps(angle_rel)
-            if (angle % 360 == 0 and angle != 0):
-                assert(steps <= 0)
+            i *= -1
+            self.x.angle = angle*i
+            assert(abs(self.x.angle) <= 180)
 
     def test_step_are_reversable(self):
         for angle in range(0, 360, 5):
@@ -195,7 +188,7 @@ class TestXAxisWithRoll:
     def test_angle_approx_error(self):
         self.x.set_zero()
 
-        for angle in range(0, 360):
+        for angle in range(0, 180):
             self.x.angle = angle
             assert(self.x.angle == pytest.approx(angle, abs=5e-3))
 
