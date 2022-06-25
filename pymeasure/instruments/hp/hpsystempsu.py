@@ -36,8 +36,6 @@ c_uint8 = ctypes.c_uint8
 
 
 # classes for the decoding of the 12-bit status word
-
-
 class Status_bytes(ctypes.Structure):
     """
     Support-Class for the 5 status byte of the HP6632A
@@ -95,6 +93,12 @@ class Status(ctypes.Union):
     ]
 
 
+limits = {
+          "HP6632A": {"Volt_lim": 20.475, "OVP_lim": 22.0, "Cur_lim": 5.118},
+          "HP6633A": {"Volt_lim": 51.118, "OVP_lim": 55.0, "Cur_lim": 2.0475},
+          "HP6634A": {"Volt_lim": 102.38, "OVP_lim": 110.0, "Cur_lim": 1.0238}}
+
+
 class HP6632A(Instrument):
     """ Represents the Hewlett Packard 6632A system power supply
     and provides a high-level interface for interacting
@@ -109,6 +113,10 @@ class HP6632A(Instrument):
             "Hewlett-Packard HP6632A",
             **kwargs,
         )
+
+    _Cur_lim = [0, limits["HP6632A"]["Cur_lim"]]
+    _Volt_lim = [0, limits["HP6632A"]["Volt_lim"]]
+    _OVP_lim = [0, limits["HP6632A"]["OVP_lim"]]
 
     class ERRORS(Enum):
         NO_ERR = 0
@@ -273,7 +281,7 @@ class HP6632A(Instrument):
 
         """,
         validator=strict_range,
-        values=[0, 5.1188],
+        values=_Cur_lim,
     )
 
     over_voltage_limit = Instrument.setting(
@@ -283,7 +291,7 @@ class HP6632A(Instrument):
 
         """,
         validator=strict_range,
-        values=[0, 22.0],
+        values=_OVP_lim,
     )
 
     OCP_enabled = Instrument.setting(
@@ -344,5 +352,5 @@ class HP6632A(Instrument):
 
         """,
         validator=strict_range,
-        values=[0, 20.475],
+        values=_Volt_lim,
     )
