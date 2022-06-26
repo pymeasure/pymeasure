@@ -47,42 +47,42 @@ class Status_bits(ctypes.LittleEndianStructure):
 
     _fields_ = [
         # Byte 1: Function, Range and Number of Digits
-        ("digits",     c_uint8, 2),  # bit 0..1
-        ("range",      c_uint8, 3),  # bit 2..4
-        ("function",   c_uint8, 3),  # bit 5..7
+        ("digits", c_uint8, 2),  # bit 0..1
+        ("range", c_uint8, 3),  # bit 2..4
+        ("function", c_uint8, 3),  # bit 5..7
 
         # Byte 2: Status Bits
-        ("int_trig",   c_uint8, 1),
+        ("int_trig", c_uint8, 1),
         ("auto_range", c_uint8, 1),
-        ("auto_zero",  c_uint8, 1),
-        ("fifty_hz",   c_uint8, 1),
+        ("auto_zero", c_uint8, 1),
+        ("fifty_hz", c_uint8, 1),
         ("front_rear", c_uint8, 1),
         ("cal_enable", c_uint8, 1),
-        ("ext_trig",   c_uint8, 1),
-        ("res1",       c_uint8, 1),
+        ("ext_trig", c_uint8, 1),
+        ("res1", c_uint8, 1),
 
         # Byte 3: Serial Poll Mask (SRQ)
-        ("SRQ_data_rdy",         c_uint8, 1),
-        ("res2",                 c_uint8, 1),
-        ("SRQ_syntax_error",     c_uint8, 1),
-        ("SRQ_internal_error",   c_uint8, 1),
-        ("SRQ_front_panel",      c_uint8, 1),
-        ("SRQ_cal_error",        c_uint8, 1),
-        ("res3",                 c_uint8, 1),
-        ("SRQ_PON",              c_uint8, 1),
+        ("SRQ_data_rdy", c_uint8, 1),
+        ("res2", c_uint8, 1),
+        ("SRQ_syntax_error", c_uint8, 1),
+        ("SRQ_internal_error", c_uint8, 1),
+        ("SRQ_front_panel", c_uint8, 1),
+        ("SRQ_cal_error", c_uint8, 1),
+        ("res3", c_uint8, 1),
+        ("SRQ_PON", c_uint8, 1),
 
         # Byte 4: Error Information
-        ("ERR_cal",        c_uint8, 1),
-        ("ERR_RAM",        c_uint8, 1),
-        ("ERR_ROM",        c_uint8, 1),
-        ("ERR_slope",      c_uint8, 1),
-        ("ERR_AD",         c_uint8, 1),
-        ("ERR_AD_Link",    c_uint8, 1),
-        ("res4",           c_uint8, 1),
-        ("res5",           c_uint8, 1),
+        ("ERR_cal", c_uint8, 1),
+        ("ERR_RAM", c_uint8, 1),
+        ("ERR_ROM", c_uint8, 1),
+        ("ERR_slope", c_uint8, 1),
+        ("ERR_AD", c_uint8, 1),
+        ("ERR_AD_Link", c_uint8, 1),
+        ("res4", c_uint8, 1),
+        ("res5", c_uint8, 1),
 
         # Byte 5: DAC Value
-        ("DAC_value",       c_uint8, 8),
+        ("DAC_value", c_uint8, 8),
     ]
 
     def __str__(self):

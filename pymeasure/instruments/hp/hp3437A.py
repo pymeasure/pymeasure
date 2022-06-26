@@ -101,8 +101,7 @@ class Packed_bits(ctypes.BigEndianStructure):
         ("MSD", c_uint8, 1),
         ("SSD", c_uint8, 4),
         ("TSD", c_uint8, 4),
-        ("LSD", c_uint8, 4),
-        ]
+        ("LSD", c_uint8, 4), ]
 
     def __str__(self):
         """
@@ -136,13 +135,8 @@ class Packed_bits(ctypes.BigEndianStructure):
             signbit = -1
 
         return (
-            cur_range
-            * signbit
-            * (
-                self.MSD
-                + float(self.SSD) / 10
-                + float(self.TSD) / 100
-                + float(self.LSD) / 1000
+            cur_range * signbit * (
+                self.MSD + float(self.SSD) / 10 + float(self.TSD) / 100 + float(self.LSD) / 1000
             )
         )
 

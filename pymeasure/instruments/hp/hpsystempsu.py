@@ -53,22 +53,22 @@ class Status_bits(ctypes.LittleEndianStructure):
 
     _fields_ = [
         # Byte 1: Function, Range and Number of Digits
-        ("CV",                  c_uint8, 1),  # bit 0
-        ("CCpos",                 c_uint8, 1),  # bit 1
-        ("Unregulated",         c_uint8, 1),  # bit 2
-        ("Overvoltage",        c_uint8, 1),  # bit 3
-        ("Overtempeature",     c_uint8, 1),  # bit 4
-        ("not_assigned",        c_uint8, 1),  # bit 5
-        ("Overcurrent",        c_uint8, 1),  # bit 6
-        ("Error_pending",       c_uint8, 1),  # bit 7
+        ("CV", c_uint8, 1),  # bit 0
+        ("CCpos", c_uint8, 1),  # bit 1
+        ("Unregulated", c_uint8, 1),  # bit 2
+        ("Overvoltage", c_uint8, 1),  # bit 3
+        ("Overtempeature", c_uint8, 1),  # bit 4
+        ("not_assigned", c_uint8, 1),  # bit 5
+        ("Overcurrent", c_uint8, 1),  # bit 6
+        ("Error_pending", c_uint8, 1),  # bit 7
 
 
         # Byte 2: Status Bits
-        ("Inhibit_active",      c_uint8, 1),  # bit 8
-        ("CCneg",                 c_uint8, 1),  # bit 9
-        ("FAST",    c_uint8, 1),  # bit 10
-        ("NORM",    c_uint8, 1),  # bit 11
-        ("not_assigned",        c_uint8, 4),
+        ("Inhibit_active", c_uint8, 1),  # bit 8
+        ("CCneg", c_uint8, 1),  # bit 9
+        ("FAST", c_uint8, 1),  # bit 10
+        ("NORM", c_uint8, 1),  # bit 11
+        ("not_assigned", c_uint8, 4),
 
     ]
 
@@ -94,9 +94,9 @@ class Status(ctypes.Union):
 
 
 limits = {
-          "HP6632A": {"Volt_lim": 20.475, "OVP_lim": 22.0, "Cur_lim": 5.118},
-          "HP6633A": {"Volt_lim": 51.118, "OVP_lim": 55.0, "Cur_lim": 2.0475},
-          "HP6634A": {"Volt_lim": 102.38, "OVP_lim": 110.0, "Cur_lim": 1.0238}}
+    "HP6632A": {"Volt_lim": 20.475, "OVP_lim": 22.0, "Cur_lim": 5.118},
+    "HP6633A": {"Volt_lim": 51.118, "OVP_lim": 55.0, "Cur_lim": 2.0475},
+    "HP6634A": {"Volt_lim": 102.38, "OVP_lim": 110.0, "Cur_lim": 1.0238}}
 
 
 class HP6632A(Instrument):
@@ -324,8 +324,7 @@ class HP6632A(Instrument):
 
     @output_enabled.getter
     def output_enabled(self):
-        output_status = bool(self.status.CV or self.status.CCpos or
-                             self.status.CCneg or self.status.Unregulated)
+        output_status = bool(self.status.CV or self.status.CCpos or self.status.CCneg or self.status.Unregulated)
         return output_status
 
     def reset_OVP_OCP(self):
