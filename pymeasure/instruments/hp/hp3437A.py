@@ -301,18 +301,6 @@ class HP3437A(HPLegacyInstrument):
         else:
             self.write("F2")
 
-    # TODO: this needs more work
-    # talk_ascii = HPLegacyInstrument.control(
-    #     "B", "%s",
-    #     """
-    #     Return True if the instrument is set to ASCII communication,
-    #     this property can be set.
-    #     This property can be read
-    #     """,
-    #     values={True: "F1", False: "F2"},
-    #     map_values=True,
-    #     get_process= lambda x : str("F"+(str(decode_status( x, field="Format"))+1)),
-    #     )
     @property
     def delay(self):
         """Return the value (float) for the delay between two measurements,
