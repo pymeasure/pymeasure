@@ -45,7 +45,7 @@ class HPLegacyInstrument(Instrument):
         super().__init__(
             adapter, name,
             includeSCPI=False,
-             **kwargs,
+            **kwargs,
         )
 
         self.name = name

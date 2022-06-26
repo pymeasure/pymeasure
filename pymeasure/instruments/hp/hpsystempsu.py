@@ -114,11 +114,11 @@ class HP6632A(Instrument):
             **kwargs,
         )
 
-    _Cur_lim = [0, limits["HP6632A"]["Cur_lim"]]
-    _Volt_lim = [0, limits["HP6632A"]["Volt_lim"]]
-    _OVP_lim = [0, limits["HP6632A"]["OVP_lim"]]
-
     class ERRORS(Enum):
+        """
+        Enum class for error messages
+
+        """
         NO_ERR = 0
         EEPROM = 1
         PON_2ND = 2
@@ -147,6 +147,10 @@ class HP6632A(Instrument):
         CAL_JMP_ERR = 59
 
     class ST_ERRORS(Enum):
+        """
+        Enum class for selftest errors
+
+        """
         NO_ST_ERR = 0
         ROM_CKSSUM = 1
         RAM_TEST = 2
@@ -169,6 +173,10 @@ class HP6632A(Instrument):
         EEPROM_CHKSUM = 51
 
     class SRQ (IntFlag):
+        """
+        IniFlag class for the SRQ mask assignment
+
+        """
         RQS = 64
         ERR = 32
         RDY = 16
@@ -205,7 +213,7 @@ class HP6632A(Instrument):
 
     def clear(self):
         """
-        Resets the instrument to Power-on default settings
+        Resets the instrument to power-on default settings
 
         """
         self.write("CLR")
@@ -228,7 +236,7 @@ class HP6632A(Instrument):
     display_active = Instrument.setting(
         "DIS %d",
         """
-        A boot property which controls if the OCP (OverCurrent Protection) is enabled
+        A boot property which controls if the display is enabled
         """,
         validator=strict_discrete_set,
         values={False: 0, True: 1},
@@ -277,11 +285,11 @@ class HP6632A(Instrument):
     current = Instrument.control(
         "IOUT?", "ISET %g",
         """
-        A floating point proptery that controls the output current of the device.
+        A floating point property that controls the output current of the device.
 
         """,
         validator=strict_range,
-        values=_Cur_lim,
+        values=[0, limits["HP6632A"]["Cur_lim"]],
     )
 
     over_voltage_limit = Instrument.setting(
@@ -291,13 +299,13 @@ class HP6632A(Instrument):
 
         """,
         validator=strict_range,
-        values=_OVP_lim,
+        values=[0, limits["HP6632A"]["OVP_lim"]],
     )
 
     OCP_enabled = Instrument.setting(
         "OCP %d",
         """
-        A boot property which controls if the OCP (OverCurrent Protection) is enabled
+        A bool property which controls if the OCP (OverCurrent Protection) is enabled
         """,
         validator=strict_discrete_set,
         values={False: 0, True: 1},
@@ -307,7 +315,7 @@ class HP6632A(Instrument):
     output_enabled = Instrument.setting(
         "OUT %d",
         """
-        A boot property which controls if the OCP (OverCurrent Protection) is enabled
+        A bool property which controls if the OCP (OverCurrent Protection) is enabled
         """,
         validator=strict_discrete_set,
         values={False: 0, True: 1},
@@ -318,7 +326,7 @@ class HP6632A(Instrument):
     def output_enabled(self):
         output_status = bool(self.status.CV or self.status.CCpos or
                              self.status.CCneg or self.status.Unregulated)
-        return(output_status)
+        return output_status
 
     def reset_OVP_OCP(self):
         """
@@ -338,7 +346,7 @@ class HP6632A(Instrument):
     SRQ_enabled = Instrument.setting(
         "SRQ %d",
         """
-        A boot property which controls if the SRQ (ServiceReQuest) is enabled
+        A bool property which controls if the SRQ (ServiceReQuest) is enabled
         """,
         validator=strict_discrete_set,
         values={False: 0, True: 1},
@@ -352,5 +360,29 @@ class HP6632A(Instrument):
 
         """,
         validator=strict_range,
-        values=_Volt_lim,
+        values=[0, limits["HP6632A"]["Volt_lim"]],
     )
+
+
+class HP6633A(HP6632A):
+    """ Represents the Hewlett Packard 6633A system power supply
+    and provides a high-level interface for interacting
+    with the instrument.
+    """
+
+    name = "Hewlett Packard HP6633A"
+    current_values = [0, limits["HP6633A"]["Cur_lim"]]
+    OVP_values = [0, limits["HP6633A"]["OVP_lim"]]
+    voltage_values = [0, limits["HP6633A"]["Volt_lim"]]
+
+
+class HP6634A(HP6632A):
+    """ Represents the Hewlett Packard 6634A system power supply
+    and provides a high-level interface for interacting
+    with the instrument.
+    """
+
+    name = "Hewlett Packard HP6634A"
+    current_values = [0, limits["HP6634A"]["Cur_lim"]]
+    OVP_values = [0, limits["HP6634A"]["OVP_lim"]]
+    voltage_values = [0, limits["HP6634A"]["Volt_lim"]]
