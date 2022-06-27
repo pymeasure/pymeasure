@@ -84,8 +84,8 @@ class Keithley2602B(Keithley2600):
         # to avoid potential damage to diodes
         # This does not work as expected
         # for channel_name in [self.ChA, self.ChB]:
-        # channel_name.source_voltage_values = [-0.7, 0.7]
-        # channel_name.__compliance_voltage_values = [-0.7, 0.7]
+        #   channel_name.source_voltage_values = [-0.7, 0.7]
+        #   channel_name.compliance_voltage_values = [-0.7, 0.7]
 
     @staticmethod
     def get_trigger_event_description_strings() -> Union[List[str], None]:
