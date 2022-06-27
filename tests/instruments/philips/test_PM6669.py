@@ -27,9 +27,8 @@ import pytest
 from pymeasure.instruments.philips.PM6669 import PM6669, Functions
 from pymeasure.adapters import prologix
 
+
 @pytest.skip('Only work with connected hardware', allow_module_level=True)
-
-
 class TestPhilipsPM6669:
     """
     Unit tests for PM6669 class.
@@ -58,7 +57,7 @@ class TestPhilipsPM6669:
         self.instr.defaults
         self.instr.read()
         return self.instr
- 
+
     @pytest.mark.parametrize('case, expected', FUNCTION_STRINGS)
     def test_function_modes(self, make_resetted_instr, case, expected):
         instr = make_resetted_instr
