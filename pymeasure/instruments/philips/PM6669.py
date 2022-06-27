@@ -24,7 +24,6 @@
 
 from enum import IntFlag, Enum
 from queue import Queue
-from time import sleep
 from datetime import datetime
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -97,7 +96,7 @@ class PM6669(Instrument):
     def trigger(self):
         """Trigger the device when not in freerun mode"""
         self.write("X")
-    
+
     def read_measurement(self):
         """Waits for an SRQ from the device and then reads the result. Require MSR to be set to
            MSRFlag.MEASUREMENT_READY
@@ -108,14 +107,14 @@ class PM6669(Instrument):
             return float(reply.split(" ")[-1])
         else:
             return None
-    
+
     def ask(self, s):
         """Overriden ask method to use our own read function"""
         self.write(s)
         return self.read()
 
     def read(self):
-        """If a request is made to the device while a measurement is ready, both the reply and the 
+        """If a request is made to the device while a measurement is ready, both the reply and the
            measurement are returned. The measurement is filtered out and put in a backlog Queue.
         """
         reply = ''
@@ -138,7 +137,7 @@ PM6669.id = Instrument.measurement(
 PM6669.function = Instrument.control(
     "FNC?", "%s", """A string or keyowrd property that sets measuring function on the device.""",
     validator=strict_discrete_set,
-    values={"FREQ A": "FREQ A", "FREQ B": "FREQ B", "RPM A": "RPM A", "PER A": "PER A", 
+    values={"FREQ A": "FREQ A", "FREQ B": "FREQ B", "RPM A": "RPM A", "PER A": "PER A",
             "WIDTH A": "WIDTH A", "TOTM A": "TOTM A",
             Functions.FREQUENCY_A: "FREQ   A",
             Functions.FREQUENCY_B: "FREQ   B", Functions.PER_A: "PER    A",
@@ -174,7 +173,7 @@ PM6669.freerun = Instrument.control(
 )
 
 PM6669.timeout = Instrument.control(
-    "MEAC?", "TOUT %s", 
+    "MEAC?", "TOUT %s",
     """ A float property that controls the measurement timeout, this timeout only has meaning when freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],

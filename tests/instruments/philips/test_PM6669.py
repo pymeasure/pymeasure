@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-from ctypes.wintypes import BOOLEAN
 import pytest
 
 from pymeasure.instruments.philips.PM6669 import PM6669, Functions
@@ -41,7 +40,7 @@ class TestPhilipsPM6669:
     """
 
     RESOURCE = prologix.PrologixAdapter("/dev/tty.usbmodem1421301", 7)
-    
+
     FUNCTION_STRINGS = [
         ("FREQ A", Functions.FREQUENCY_A),
         ("PER A", Functions.PER_A),
@@ -59,7 +58,7 @@ class TestPhilipsPM6669:
         self.instr.defaults
         self.instr.read()
         return self.instr
-    
+ 
     @pytest.mark.parametrize('case, expected', FUNCTION_STRINGS)
     def test_function_modes(self, make_resetted_instr, case, expected):
         instr = make_resetted_instr
