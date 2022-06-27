@@ -22,7 +22,10 @@
 # THE SOFTWARE.
 #
 
+
+import abc
 import logging
+import threading
 from socket import error as socket_error
 from time import sleep, time
 
@@ -144,7 +147,6 @@ class Instrument:
         "map_values",
         "get_process",
         "command_process",
-        "check_get_errors",
     )
 
     _fset_params_list = (
@@ -154,17 +156,24 @@ class Instrument:
         "map_values",
         "set_process",
         "command_process",
-        "check_set_errors",
     )
 
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
+    @property
+    @abc.abstractmethod
+    def id_starts_with(self):
+        ...
+
+    def connect(self, temp_adapter, kwargs):
+        return VISAAdapter(temp_adapter, **kwargs)
+
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, wait_timeout=10, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
         try:
             if isinstance(adapter, (int, str)):
-                adapter = VISAAdapter(adapter, **kwargs)
+                adapter = self.connect(adapter, **kwargs)
         except ImportError:
             raise Exception(
                 "Invalid Adapter provided for Instrument since " "PyVISA is not present"
@@ -173,13 +182,20 @@ class Instrument:
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
-        self.wait_timeout = wait_timeout
+        self._lock = threading.Lock()
         self._flush_errors()
+
+        idn = self.get_id()
+        if not idn.startswith(self.id_starts_with):
+            log.warning(f"Could not retrieve ID for {self.adapter}")
+            self.communication_success = False
+        else:
+            log.info(f"IDN: {idn}")
+            log.info(f"Connected to {self.name}")
+            self.communication_success = True
 
         self.isShutdown = False
         self._special_names = self._setup_special_names()
-
-        log.info("Initializing %s." % self.name)
 
     def __enter__(self):
         return self
@@ -249,13 +265,30 @@ class Instrument:
 
     @property
     def status(self):
-        """Requests and returns the status byte and Master Summary Status bit."""
-        if self.SCPI:
-            return self.ask("*STB?").strip()
+        """Checks the status of the system.
+
+        Returns:
+            "ok: busy" if the threading lock cannot be acquired, "ok: ON"
+            if the system is on and the lock was acquired. If communication
+            was not initially successfull, the system is queried again and
+            the ID is checked. If the system does not return an expected response,
+            status is set to warning: Cannot communicate with device".
+        """
+        if not self.communication_success:
+            id = self.get_id(check_for_errors=False)
+
+            if id.startswith(self.id_starts_with):
+                curr_status = "ok: ON"
+                self.communication_success = True
+            else:
+                curr_status = "warning: Cannot communicate with device"
         else:
-            raise NotImplementedError(
-                "Non SCPI instruments require implementation in subclasses"
-            )
+            if self._lock.locked():
+                curr_status = "ok: busy"
+            else:
+                curr_status = "ok: ON"
+
+        return curr_status
 
     @property
     def options(self):
@@ -267,35 +300,48 @@ class Instrument:
                 "Non SCPI instruments require implementation in subclasses"
             )
 
-    @property
-    def id(self):
+    def get_id(self, check_errs=True):
         """Requests and returns the identification of the instrument."""
         if self.SCPI:
-            return self.ask("*IDN?").strip()
+            return self.ask("*IDN?", check_errs).strip()
         else:
             raise NotImplementedError(
                 "Non SCPI instruments require implementation in subclasses"
             )
 
-    def _wait_until_ready(self):
-        end = time() + self.wait_timeout
+    def _wait_until_ready(self, timeout=10):
+        """Polls the system busy parameter until the device is ready to execute a new
+        operation. This method must be called after _lock has been acquired by the
+        respective process.
+
+        Args:
+            timeout: The number of seconds to wait before raising a TimeoutError.
+
+        """
+        end = time() + timeout
         while not self.complete:
             if time() > end:
                 raise TimeoutError(
-                    f"The operation did not complete in the timeout specified ({self.wait_timeout} s)"
+                    f"The operation did not complete in the timeout specified ({timeout} s)"
                 )
             sleep(0.1)
 
     # Wrapper functions for the Adapter object
-    def ask(self, command):
+    def ask(self, command, check_for_errors=True):
         """Writes the command to the instrument through the adapter
         and returns the read response.
 
         :param command: command string to be sent to the instrument
+        :param check_for_errors Flag indicating if error checking should be performed
         """
-        self._wait_until_ready()
-        response = self.adapter.ask(command)
-        self.check_errors()
+        with self._lock:
+            if check_for_errors:
+                self._wait_until_ready()
+
+            response = self.adapter.ask(command)
+
+            if check_for_errors:
+                self.check_errors()
         return response
 
     def ask_no_lock(self, command):
@@ -306,33 +352,72 @@ class Instrument:
 
         :param command: command string to be sent to the instrument
         """
-        self._wait_until_ready()
-        self.adapter.write(command)
-        self.check_errors()
+        with self._lock:
+            self._wait_until_ready()
+            self.adapter.write(command)
+            self.check_errors()
 
     def read(self):
         """Reads from the instrument through the adapter and returns the
         response.
         """
-        self._wait_until_ready()
-        response = self.adapter.read()
-        self.check_errors()
+        with self._lock:
+            self._wait_until_ready()
+            response = self.adapter.read()
+            self.check_errors()
         return response
 
     def values(self, command, **kwargs):
         """Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        self._wait_until_ready()
-        response = self.adapter.values(command, **kwargs)
-        self.check_errors()
+        with self._lock:
+            self._wait_until_ready()
+            response = self.adapter.values(command, **kwargs)
+            self.check_errors()
         return response
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        self._wait_until_ready()
-        response = self.adapter.binary_values(command, header_bytes, dtype)
-        self.check_errors()
+        with self._lock:
+            self._wait_until_ready()
+            response = self.adapter.binary_values(command, header_bytes, dtype)
+            self.check_errors()
         return response
+
+    def check_errors(self):
+
+        errors = self._flush_errors()
+
+        # Check if the errors list is empty
+        if errors:
+            raise RuntimeError(
+                f"Error read from error queue. First error read from the error queue is: {errors[0]}\nSee logs for more details"
+            )
+
+    def _flush_errors(self):
+        """Flushs the system's error queue and logs all errors. This method must be called
+        after _lock has been acquired by the respective process.
+
+        Returns:
+            List of strings giving all the errors read from the error queue - each element
+            contains an error code with the respective error description. If no errors are
+            read from the error queue, an empty list is returned.
+        """
+        if self.SCPI:
+            self._wait_until_ready()
+            errors = []
+            while True:
+                current_err = self.ask_no_lock("SYST:ERR?")
+                if not (current_err.startswith("+0")):
+                    log.error(f"Error read from error queue: {current_err}")
+                    errors.append(current_err)
+                else:
+                    break
+            return errors
+        else:
+            raise NotImplementedError(
+                "Non SCPI instruments require implementation in subclasses"
+            )
 
     # flake8: noqa: C901
     @staticmethod
@@ -346,8 +431,6 @@ class Instrument:
         get_process=lambda v: v,
         set_process=lambda v: v,
         command_process=lambda c: c,
-        check_set_errors=False,
-        check_get_errors=False,
         dynamic=False,
         **kwargs,
     ):
@@ -372,8 +455,6 @@ class Instrument:
             before value mapping, returning the processed value
         :param command_process: A function that takes a command and allows processing
             before executing the command
-        :param check_set_errors: Toggles checking errors after setting
-        :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses.
 
@@ -416,13 +497,10 @@ class Instrument:
             map_values=map_values,
             get_process=get_process,
             command_process=command_process,
-            check_get_errors=check_get_errors,
         ):
             if get_command is None:
                 raise LookupError("Instrument property can not be read.")
             vals = self.values(command_process(get_command), **kwargs)
-            if check_get_errors:
-                self.check_errors()
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
@@ -452,7 +530,6 @@ class Instrument:
             map_values=map_values,
             set_process=set_process,
             command_process=command_process,
-            check_set_errors=check_set_errors,
         ):
 
             if set_command is None:
@@ -471,8 +548,6 @@ class Instrument:
                     "for Instrument.control".format(type(values))
                 )
             self.write(command_process(set_command) % value)
-            if check_set_errors:
-                self.check_errors()
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
@@ -497,7 +572,6 @@ class Instrument:
         map_values=None,
         get_process=lambda v: v,
         command_process=lambda c: c,
-        check_get_errors=False,
         dynamic=False,
         **kwargs,
     ):
@@ -515,7 +589,6 @@ class Instrument:
             before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
             before executing the command, for getting
-        :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
         """
@@ -528,7 +601,6 @@ class Instrument:
             map_values=map_values,
             get_process=get_process,
             command_process=command_process,
-            check_get_errors=check_get_errors,
             dynamic=dynamic,
             **kwargs,
         )
@@ -541,7 +613,6 @@ class Instrument:
         values=(),
         map_values=False,
         set_process=lambda v: v,
-        check_set_errors=False,
         dynamic=False,
         **kwargs,
     ):
@@ -559,7 +630,6 @@ class Instrument:
             interpreted as a map
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
-        :param check_set_errors: Toggles checking errors after setting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
         """
@@ -572,7 +642,6 @@ class Instrument:
             values=values,
             map_values=map_values,
             set_process=set_process,
-            check_set_errors=check_set_errors,
             dynamic=dynamic,
             **kwargs,
         )
@@ -599,33 +668,3 @@ class Instrument:
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
         log.info("Shutting down %s" % self.name)
-
-    def check_errors(self):
-
-        errors = self._exec_flush_errors()
-
-        # Check if the errors list is empty
-        if errors:
-            raise RuntimeError(
-                f"Error read from error queue. First error read from the error queue is: {errors[0]}\nSee logs for more details"
-            )
-
-    def _flush_errors(self):
-        """Read all errors from the instrument.
-
-        :return: list of error entries
-        """
-        if self.SCPI:
-            errors = []
-            while True:
-                current_err = self.ask_no_lock("SYST:ERR?")
-                if not (current_err.startswith("+0") or current_err.startswith("1")):
-                    log.error(f"Error read from error queue: {current_err}")
-                    errors.append(current_err)
-                else:
-                    break
-            return errors
-        else:
-            raise NotImplementedError(
-                "Non SCPI instruments require implementation in subclasses"
-            )
