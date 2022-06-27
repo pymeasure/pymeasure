@@ -22,10 +22,22 @@
 # THE SOFTWARE.
 #
 
-from enum import IntFlag
+from enum import IntFlag, Enum
+from queue import Queue
 from time import sleep
+from datetime import datetime
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+
+class Functions(Enum):
+    FREQUENCY_A = 1
+    FREQUENCY_B = 2
+    RPM_A = 4
+    PER_A = 8
+    WIDTH_A = 16
+    PWIDTH_A = 32
+    TOT_A = 64
 
 
 class HardwareErrorException(Exception):
@@ -42,7 +54,7 @@ class SpollStatus(IntFlag):
     MEASURING_STOP_ENABLE = 8
     GATE_OPEN = 16
     ERROR = 32
-    UNUSED = 64
+    SRQ = 64
     UNUSED2 = 128
 
 
@@ -63,6 +75,8 @@ class MSRFlag(IntFlag):
 class PM6669(Instrument):
     """ Represents the Philips PM 6669 instrument.
     """
+    KEYWORDS = ["FRE", "PER", "WID", "RPM", "PWI"]
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
@@ -70,56 +84,107 @@ class PM6669(Instrument):
             **kwargs
         )
         self.write("EOI ON")
-
-    def wait_for_measurement(self, poll_interval=1):
-        s = self.spoll()
-        while not (s & SpollStatus.MEASUREMENT_READY):
-            sleep(poll_interval)
-            s = self.spoll()
-            if (s & SpollStatus.HARDWARE_FAULT):
-                raise HardwareErrorException()
+        self.freerun = False
+        self.backlog = Queue()
 
     def spoll(self):
-        self.adapter.connection.write("++spoll\n".encode())
-        return SpollStatus(int(self.adapter.connection.readlines()[0].decode()))
+        """Read the status of the device"""
+        try:
+            return SpollStatus(int(self.ask("++spoll")))
+        except TypeError:
+            return SpollStatus(0)
 
     def trigger(self):
+        """Trigger the device when not in freerun mode"""
         self.write("X")
+    
+    def read_measurement(self):
+        """Waits for an SRQ from the device and then reads the result. Require MSR to be set to
+           MSRFlag.MEASUREMENT_READY
+        """
+        self.adapter.wait_for_srq(delay=0)
+        reply = super().read()
+        if reply[:3] in self.KEYWORDS:
+            return float(reply.split(" ")[-1])
+        else:
+            return None
+    
+    def ask(self, s):
+        """Overriden ask method to use our own read function"""
+        self.write(s)
+        return self.read()
+
+    def read(self):
+        """If a request is made to the device while a measurement is ready, both the reply and the 
+           measurement are returned. The measurement is filtered out and put in a backlog Queue.
+        """
+        reply = ''
+        result = None
+        while reply == '':
+            reply = super().read()
+            reply = reply.strip('\x00')
+            for line in reply.splitlines():
+                if line[:3] in self.KEYWORDS:
+                    self.backlog.put([datetime.now(), line])
+                elif line != '':
+                    result = line
+        return result
 
 
 PM6669.id = Instrument.measurement(
     "ID?", """ Reads the instrument identification """
 )
 
-PM6669.frequency = Instrument.measurement(
-    "FREQ", "Reads the freqeuncy in Hertz",
-    get_process=lambda x: float(x.split("\n")[0][5:])
+PM6669.function = Instrument.control(
+    "FNC?", "%s", """A string or keyowrd property that sets measuring function on the device.""",
+    validator=strict_discrete_set,
+    values={"FREQ A": "FREQ A", "FREQ B": "FREQ B", "RPM A": "RPM A", "PER A": "PER A", 
+            "WIDTH A": "WIDTH A", "TOTM A": "TOTM A",
+            Functions.FREQUENCY_A: "FREQ   A",
+            Functions.FREQUENCY_B: "FREQ   B", Functions.PER_A: "PER    A",
+            Functions.RPM_A: "RPM    A", # Functions.PWIDTH_A: "PWIDTH A",
+            Functions.WIDTH_A: "PWIDTH A", Functions.TOT_A: "TOTM   A"
+            },
+    map_values=True
 )
 
-PM6669.channel = Instrument.control(
-    "FNC?", "FREQ %s", """ Sets the channel, valid values are A or B """,
-    validator=strict_discrete_set,
-    values=['A', 'B'],
-    get_process=lambda x: x[7]
+PM6669.gate_open = Instrument.measurement(
+    "GATE OPEN", """Open the gate and return the current count""",
+    get_process=lambda x: float(x[6:])
+)
+
+PM6669.gate_close = Instrument.measurement(
+    "GATE CLOSE", """Close the gate and return the current count""",
+    get_process=lambda x: float(x[6:])
 )
 
 PM6669.measurement_time = Instrument.control(
-    "MEAC?", "MTIME %g", """ Reads Measurement time""",
+    "MEAC?", "MTIME %g", """ A float property that controls the measurement time""",
     validator=strict_range,
     values=[0, 10],
     get_process=lambda x:  float(x[0][5:]) if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.freerun = Instrument.control(
-    "MEAC?", "FRUN %s", """ Reads the freerun settings""",
+    "MEAC?", "FRUN %s", """ A boolean property that controls the freerun settings""",
     validator=strict_discrete_set,
-    values={"OFF": "OFF", "ON": "ON", True: "ON", False: "OFF"},
-    get_process=lambda x:  x[1].split("\n")[0][6:] if x[0].startswith("MTIME") is True else 0
+    values={True: "ON", False: "OFF"},
+    map_values=True,
+    get_process=lambda x:  (x[1].split("\n")[0][5:] == " ON") if x[0].startswith("MTIME") is True else 0
 )
 
-PM6669.timeout = Instrument.measurement(
-    "MEAC?", """ Reads Measurement timeout, this timeout only has meaning when freerun is off.""",
+PM6669.timeout = Instrument.control(
+    "MEAC?", "TOUT %s", 
+    """ A float property that controls the measurement timeout, this timeout only has meaning when freerun is off.""",
+    validator=strict_range,
+    values=[0, 25.5],
     get_process=lambda x:  float(x[1].split("\n")[2][5:]) if x[0].startswith("MTIME") is True else 0
+)
+
+PM6669.SRQMask = Instrument.control(
+    "BUS?", "MSR %i",
+    """A integer property that controls the SRQ mask""",
+    get_process=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1]))
 )
 
 PM6669.meac = Instrument.measurement(
