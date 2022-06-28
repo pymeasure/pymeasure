@@ -41,7 +41,7 @@ log.addHandler(logging.NullHandler())
 class Keithley6487(Instrument, KeithleyBuffer):
     """Represents the Keithley 6487 Picoammeter and provides a
     high-level interface for interactin gwith the instrument
-    
+
     .. code-block:: python
 
         keithley = Keithley6487("GPIB::1")
@@ -84,7 +84,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
         values={True: 1, False: 0},
         map_values=True,
     )
-    
+
     #####################
     #   Voltage (V)     #
     #####################
@@ -107,7 +107,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
         values={True: 1, False: 0},
         map_values=True,
     )
-    
+
     source_delay = Instrument.control(
         ":SOUR:VOLT:DEL?", ":SOUR:VOLT:DEL %f",
         """ A floating point property that sets a manual delay for the source
@@ -229,11 +229,11 @@ class Keithley6487(Instrument, KeithleyBuffer):
     def enable_source(self):
         """Enables the source voltage of the instrument"""
         self.write(":SOUR:VOLT:STAT ON")
-    
+
     def disable_source(self):
         """Disables the source voltage of the instrument"""
         self.write(":SOUR:VOLT:STAT OFF")
-    
+
     def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
         """ Configures the measurement of current.
 
@@ -284,7 +284,7 @@ class Keithley6487(Instrument, KeithleyBuffer):
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 6487 error retrieval.")
-    
+
     def reset(self):
         """ Resets the instrument and clears the queue.  """
         self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
@@ -336,12 +336,12 @@ class Keithley6487(Instrument, KeithleyBuffer):
             self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
         else:
             self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
-    
+
     def set_trigger_counts_inf(self):
         """ Sets the number of counts for both sweeps and the points in those
         sweeps to INF"""
         self.write(":ARM:COUN INF;:TRIG:COUN INF")
-    
+
     def sample_continuously(self):
         """ Causes the instrument to continuously read samples
         and turns off any buffer or output triggering
