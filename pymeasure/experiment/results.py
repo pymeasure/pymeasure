@@ -33,12 +33,14 @@ from datetime import datetime
 from string import Formatter
 
 import pandas as pd
+import pint
 from pint.util import to_units_container
 
 from .procedure import Procedure, UnknownProcedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+u = pint.get_application_registry()
 
 
 def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
@@ -156,16 +158,27 @@ class CSVFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-        if self.units:
-            line = []
-            for x in self.columns:
-                if unit:=self.units.get(x):
-                    line.append(f'{record[x].m_as(unit)}')
-                else:
-                    line.append(f'{record[x]}')
-            return self.delimiter.join(line)
-        else:
-            return self.delimiter.join(f'{record[x]}' for x in self.columns)
+        line = []
+        for x in self.columns:
+            value = record.get(x, float("nan"))
+            units = self.units.get(x, u.dimensionless)
+            if isinstance(value, str):
+                try:
+                    value = pint.Quantity(value)
+                except pint.UndefinedUnitError:
+                    pass  # Keep it as a string
+            if isinstance(value, pint.Quantity):
+                try:
+                    line.append(f"{value.m_as(units)}")
+                except pint.DimensionalityError:
+                    line.append("nan")
+            elif units == u.dimensionless:
+                # Dimensionless quantities can be given as numbers.
+                line.append(f"{value}")
+            else:
+                # No dimension given, but one required: Incompatible.
+                line.append("nan")
+        return self.delimiter.join(line)
 
     def format_header(self):
         return self.delimiter.join(self.columns)

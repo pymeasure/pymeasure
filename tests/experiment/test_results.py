@@ -28,12 +28,16 @@ import tempfile
 from unittest import mock
 
 import pandas as pd
+import pint
 import numpy as np
 
 from pymeasure.experiment.results import Results, CSVFormatter
 from pymeasure.experiment.procedure import Procedure, Parameter
 from pymeasure.experiment import BooleanParameter
 from data.procedure_for_testing import RandomProcedure
+
+
+u = pint.get_application_registry()
 
 
 def test_procedure():
@@ -52,13 +56,30 @@ def test_csv_formatter_format_header():
     assert formatter.format_header() == 't,x,y,z,V'
 
 
-def test_csv_formatter_format():
-    """Tests CSVFormatter.format() method."""
-    columns = ['t', 'x', 'y', 'z', 'V']
-    formatter = CSVFormatter(columns=columns)
-    data = {'t': 1, 'y': 2, 'z': 3.0, 'x': -1, 'V': 'abc'}
-    assert formatter.format(data) == '1,-1,2,3.0,abc'
+class Test_csv_formatter_format:
+    def test_csv_formatter_format(self):
+        """Tests CSVFormatter.format() method."""
+        columns = ['t', 'x', 'y', 'z', 'V']
+        formatter = CSVFormatter(columns=columns)
+        data = {'t': 1, 'y': 2, 'z': 3.0, 'x': -1, 'V': 'abc'}
+        assert formatter.format(data) == '1,-1,2,3.0,abc'
 
+    def test_unitful(self):
+        """Test, whether units are appended correctly"""
+        columns = ['index', 'length (m)', 'voltage (V)', 'count']
+        formatter = CSVFormatter(columns=columns)
+        data = {'index': 10, 'length (m)': "50 cm",
+                'voltage (V)': u.Quantity(-7, u.V),
+                'count': 9 * u.dimensionless}
+        assert formatter.format(data) == "10,0.5,-7.0,9"
+
+    def test_unitful_erroneous(self):
+        """Test, whether wrong units are rejected"""
+        columns = ['index', 'length (m)', 'voltage (V)', 'count']
+        formatter = CSVFormatter(columns=columns)
+        data = {'index': 10 *u.m, 'length (m)': "50 cV", 'voltage (V)': 8,
+                'count': 9 * u.km}
+        assert formatter.format(data) == "nan,nan,nan,nan"
 
 def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100
