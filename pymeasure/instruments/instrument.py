@@ -279,19 +279,20 @@ class Instrument:
                 "Non SCPI instruments require implementation in subclasses"
             )
 
-    def check_errors_and_wait(func):
-        """Decorator used to check errors and wait until the system is ready
-        to process the next command
+    def wait_and_check_errorsfunc):
+        """
+        Decorator used to wait until the system is ready to process the next
+        command, and subsequently check for errors.
         """
 
-        def wait_and_check_errors(self, *args, **kwargs):
+        def wrapper(self, *args, **kwargs):
             with self._lock:
                 self._wait_until_ready()
                 result = func(self, *args, **kwargs)
                 self.check_errors()
                 return result
 
-        return wait_and_check_errors
+        return wrapper
 
     def get_id(self, check_for_errors=True) -> str:
         """Requests and returns the identification of the instrument."""
