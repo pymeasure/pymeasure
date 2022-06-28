@@ -166,7 +166,8 @@ class Instrument:
     def id_starts_with(self):
         ...
 
-    def connect(self, temp_adapter, kwargs):
+    @staticmethod
+    def connect(temp_adapter, **kwargs):
         return VISAAdapter(temp_adapter, **kwargs)
 
     # noinspection PyPep8Naming
@@ -176,7 +177,7 @@ class Instrument:
                 adapter = self.connect(adapter, **kwargs)
         except ImportError:
             raise Exception(
-                "Invalid Adapter provided for Instrument since " "PyVISA is not present"
+                "Invalid Adapter provided for Instrument since PyVISA is not present"
             )
 
         self.name = name
@@ -264,31 +265,9 @@ class Instrument:
             )
 
     @property
-    def status(self):
-        """Checks the status of the system.
-
-        Returns:
-            "ok: busy" if the threading lock cannot be acquired, "ok: ON"
-            if the system is on and the lock was acquired. If communication
-            was not initially successfull, the system is queried again and
-            the ID is checked. If the system does not return an expected response,
-            status is set to warning: Cannot communicate with device".
-        """
-        if not self.communication_success:
-            id = self.get_id(check_for_errors=False)
-
-            if id.startswith(self.id_starts_with):
-                curr_status = "ok: ON"
-                self.communication_success = True
-            else:
-                curr_status = "warning: Cannot communicate with device"
-        else:
-            if self._lock.locked():
-                curr_status = "ok: busy"
-            else:
-                curr_status = "ok: ON"
-
-        return curr_status
+    @abc.abstractmethod
+    def status(self) -> str:
+        """Checks the status of the system. Must be implemented in all concrete drivers."""
 
     @property
     def options(self):
@@ -300,10 +279,24 @@ class Instrument:
                 "Non SCPI instruments require implementation in subclasses"
             )
 
-    def get_id(self, check_errs=True):
+    def check_errors_and_wait(func):
+        """Decorator used to check errors and wait until the system is ready
+        to process the next command
+        """
+
+        def wait_and_check_errors(self, *args, **kwargs):
+            with self._lock:
+                self._wait_until_ready()
+                result = func(self, *args, **kwargs)
+                self.check_errors()
+                return result
+
+        return wait_and_check_errors
+
+    def get_id(self, check_for_errors=True) -> str:
         """Requests and returns the identification of the instrument."""
         if self.SCPI:
-            return self.ask("*IDN?", check_errs).strip()
+            return self.ask("*IDN?", check_for_errors).strip()
         else:
             raise NotImplementedError(
                 "Non SCPI instruments require implementation in subclasses"
@@ -347,42 +340,31 @@ class Instrument:
     def ask_no_lock(self, command):
         return self.adapter.ask(command)
 
+    @check_errors_and_wait
     def write(self, command):
         """Writes the command to the instrument through the adapter.
 
         :param command: command string to be sent to the instrument
         """
-        with self._lock:
-            self._wait_until_ready()
-            self.adapter.write(command)
-            self.check_errors()
+        self.adapter.write(command)
 
+    @check_errors_and_wait
     def read(self):
         """Reads from the instrument through the adapter and returns the
         response.
         """
-        with self._lock:
-            self._wait_until_ready()
-            response = self.adapter.read()
-            self.check_errors()
-        return response
+        return self.adapter.read()
 
+    @check_errors_and_wait
     def values(self, command, **kwargs):
         """Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        with self._lock:
-            self._wait_until_ready()
-            response = self.adapter.values(command, **kwargs)
-            self.check_errors()
-        return response
+        return self.adapter.values(command, **kwargs)
 
+    @check_errors_and_wait
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        with self._lock:
-            self._wait_until_ready()
-            response = self.adapter.binary_values(command, header_bytes, dtype)
-            self.check_errors()
-        return response
+        return self.adapter.binary_values(command, header_bytes, dtype)
 
     def check_errors(self):
 
@@ -668,3 +650,8 @@ class Instrument:
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
         log.info("Shutting down %s" % self.name)
+
+
+class BaseChannel(Instrument):
+    def __init__(self):
+        self._special_names = self._setup_special_names()

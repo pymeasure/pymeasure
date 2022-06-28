@@ -42,6 +42,9 @@ class TestKeithley2602B:
         with pytest.raises(ValueError):
             driver.ChA.compliance_voltage = 1
 
+    def test_status(self, driver):
+        assert driver.status == "ok: ON"
+
     @pytest.mark.parametrize(
         "current",
         [-1, 0.5, 1],

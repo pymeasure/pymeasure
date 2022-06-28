@@ -26,7 +26,7 @@ import time
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import BaseChannel, Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
@@ -44,12 +44,11 @@ class Keithley2600(Instrument):
     id_starts_with = "Keithley"
 
     def __init__(self, adapter, **kwargs):
+        self.ChA = Channel(self, "a")
+        self.ChB = Channel(self, "b")
         super().__init__(
             adapter, "Keithley 2600 SourceMeter", includeSCPI=False, **kwargs
         )
-
-        self.ChA = Channel(self, "a")
-        self.ChB = Channel(self, "b")
 
     def _flush_errors(self):
         """Returns a list of errors where each element includes the error code
@@ -84,6 +83,33 @@ class Keithley2600(Instrument):
         self.write("*reset()")
 
     @property
+    def status(self) -> str:
+        """Checks the status of the system.
+
+        Returns:
+            "ok: busy" if the threading lock cannot be acquired, "ok: ON"
+            if the system is on and the lock was acquired. If communication
+            was not initially successfull, the system is queried again and
+            the ID is checked. If the system does not return an expected response,
+            status is set to warning: Cannot communicate with device".
+        """
+        if not self.communication_success:
+            id = self.get_id(check_for_errors=False)
+
+            if id.startswith(self.id_starts_with):
+                curr_status = "ok: ON"
+                self.communication_success = True
+            else:
+                curr_status = "warning: Cannot communicate with device"
+        else:
+            if self._lock.locked():
+                curr_status = "ok: busy"
+            else:
+                curr_status = "ok: ON"
+
+        return curr_status
+
+    @property
     def complete(self):
         """This property allows synchronization between a controller and a device. The Operation Complete
         query places an ASCII character 1 into the device's Output Queue when all pending
@@ -97,18 +123,19 @@ class Keithley2600(Instrument):
         else:
             return None
 
-    def get_id(self, check_errs=True):
+    def get_id(self, check_errors=True):
         """Requests and returns the identification of the instrument."""
         return self.ask(
             "print([[Keithley Instruments, Model]]..localnode.model..[[,]]..localnode.serialno.. [[, ]]..localnode.revision))",
-            check_errs,
+            check_errors,
         ).strip()
 
 
-class Channel:
+class Channel(BaseChannel):
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel = channel
+        super().__init__()
 
     def ask(self, cmd):
         return float(self.instrument.ask(f"print(smu{self.channel}.{cmd})"))
@@ -208,7 +235,7 @@ class Channel:
         "source.levelv=%f",
         """ Property controlling the applied source voltage """,
         validator=strict_range,
-        values=[-0.7, 0.7],
+        values=[-200, 200],
         dynamic=True,
     )
 
@@ -217,7 +244,7 @@ class Channel:
         "source.limitv=%f",
         """ Property controlling the source compliance voltage """,
         validator=strict_range,
-        values=[-0.7, 0.7],
+        values=[-200, 200],
         dynamic=True,
     )
 
