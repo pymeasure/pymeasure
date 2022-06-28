@@ -1,1 +1,1 @@
-from . import PM6669
+from .PM6669 import PM6669
