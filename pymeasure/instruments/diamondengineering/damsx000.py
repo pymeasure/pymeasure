@@ -112,8 +112,8 @@ class Axis(object):
 
         if (not self.zero_set):
             raise ZeroPositionNotSet("Zero position not set")
-        
-        if self.wrap == False:
+
+        if self.wrap is False:
             """ Limit range between -180 and 180 """
 
             if (degrees % 360) > 180:
@@ -194,7 +194,7 @@ class XAxis(Axis):
     def degrees2steps(self, degrees):
         # TODO: Check that 2880 is OK both for full step and half step
 
-        if self.wrap == False:
+        if self.wrap is False:
             if abs(degrees) >= 360:
                 degrees %= 360
         else:
@@ -206,12 +206,13 @@ class XAxis(Axis):
     def steps2degrees(self, steps):
         return (360 * steps) / self.steps_per_full_revolution
 
-    def __init__(self, instrument, wrap = True):
+    def __init__(self, instrument, wrap=True):
         prefix = Instrument._Instrument__reserved_prefix
         setattr(self, prefix + 'speed_base_values', (10, 300))
         setattr(self, prefix + 'speed_final_values', (20, 600))
         setattr(self, prefix + 'speed_slope_values', (1, 3))
         super().__init__(instrument, 'X', wrap=wrap)
+
 
 class Roll(XAxis):
     """ Implementation of a DAMS x000 stepper motor Y axis (roll)."""
@@ -470,7 +471,7 @@ class DAMSx000_DFSM(DAMSx000):
         super().__init__(resource_name, **kwargs)
         self.y = Roll(self)
         self.x.wrap = False
-    
+
     @property
     def roll(self):
         """ Reuse of elevation that manages Y axis in parent class
@@ -482,7 +483,7 @@ class DAMSx000_DFSM(DAMSx000):
         """ Reuse of elevation that manages Y axis in parent class
         """
         self.elevation = degrees
-    
+
     def roll_rel(self, degree):
         """ Reuse of elevation that manages Y axis in parent class
         """

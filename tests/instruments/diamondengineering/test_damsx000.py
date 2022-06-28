@@ -23,7 +23,7 @@
 #
 
 import pytest
-from pymeasure.instruments.diamondengineering.damsx000 import (DAMSx000,DAMSx000_DFSM,
+from pymeasure.instruments.diamondengineering.damsx000 import (DAMSx000, DAMSx000_DFSM,
                                                                ZeroPositionNotSet)
 from pymeasure.instruments.fakes import FakeAdapter
 
@@ -110,6 +110,7 @@ class TestXAxis:
 
     def test_zero_steps(self):
         assert (self.x.angle_rel(0) == 0)
+
 
 class TestRoll:
     """
