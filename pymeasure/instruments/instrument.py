@@ -24,6 +24,7 @@
 
 
 import abc
+import functools
 import logging
 import threading
 from socket import error as socket_error
@@ -279,12 +280,13 @@ class Instrument:
                 "Non SCPI instruments require implementation in subclasses"
             )
 
-    def wait_and_check_errorsfunc):
+    def wait_and_check_errors(func):
         """
         Decorator used to wait until the system is ready to process the next
         command, and subsequently check for errors.
         """
 
+        @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             with self._lock:
                 self._wait_until_ready()
@@ -341,7 +343,7 @@ class Instrument:
     def ask_no_lock(self, command):
         return self.adapter.ask(command)
 
-    @check_errors_and_wait
+    @wait_and_check_errors
     def write(self, command):
         """Writes the command to the instrument through the adapter.
 
@@ -349,21 +351,21 @@ class Instrument:
         """
         self.adapter.write(command)
 
-    @check_errors_and_wait
+    @wait_and_check_errors
     def read(self):
         """Reads from the instrument through the adapter and returns the
         response.
         """
         return self.adapter.read()
 
-    @check_errors_and_wait
+    @wait_and_check_errors
     def values(self, command, **kwargs):
         """Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
         return self.adapter.values(command, **kwargs)
 
-    @check_errors_and_wait
+    @wait_and_check_errors
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
 
