@@ -37,6 +37,7 @@ from .buffer import KeithleyBuffer
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class Keithley6487(Instrument, KeithleyBuffer):
     """Represents the Keithley 6487 Picoammeter and provides a 
     high-level interface for interactin gwith the instrument
@@ -265,7 +266,6 @@ class Keithley6487(Instrument, KeithleyBuffer):
     )
 
     @property
-
     def error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
