@@ -39,13 +39,13 @@ log.addHandler(logging.NullHandler())
 
 
 class Keithley6487(Instrument, KeithleyBuffer):
-    """Represents the Keithley 6487 Picoammeter and provides a 
+    """Represents the Keithley 6487 Picoammeter and provides a
     high-level interface for interactin gwith the instrument
     
     .. code-block:: python
-        
+
         keithley = Keithley6487("GPIB::1")
-        
+
         keithley.apply_voltage()                # Sets up a source voltage
         keithley.source_voltage_range = 10e-3   # Sets the voltage range
         to 10 mV
@@ -60,7 +60,6 @@ class Keithley6487(Instrument, KeithleyBuffer):
         keithley.shutdown()                     # Ramps the voltage to 0 V and
         disables output
         """
-    
     auto_zero = Instrument.control(
         ":SYST:AZER:STAT?", ":SYST:AZER:STAT %s",
         """ A property that controls the auto zero option. Valid values are
@@ -173,7 +172,6 @@ class Keithley6487(Instrument, KeithleyBuffer):
         values=[1, 2048],
         cast=int
     )
-
     trigger_count_inf = Instrument.control(
         ":TRIG:COUNT?", "TRIG:COUNT %s",
         """A string that controls the trigger count,
@@ -387,11 +385,6 @@ class Keithley6487(Instrument, KeithleyBuffer):
         :param after: An event string that determines when to trigger
         """
         self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
-
-    def disable_output_trigger(self):
-        """ Disables the output trigger for the Trigger layer
-        """
-        self.write(":TRIG:OUTP NONE")
 
     def shutdown(self):
         """ Ensures that the voltage is turned to zero
