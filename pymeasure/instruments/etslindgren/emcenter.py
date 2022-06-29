@@ -53,14 +53,7 @@ class EMCenter(Instrument):
 
     
     """
-    id = Instrument.measurement(
-         '*IDN?',
-         """ Returns the identification string of the EMCenter.""",
-    )
-    status = Instrument.measurement(
-            'STATUS?',  
-            """ Returns the status byte of the EMCenter.""",
-    )
+
     local = Instrument.control(
             'LOCAL',
             """ Sets the EMCenter to local mode.""",
@@ -75,7 +68,7 @@ class EMCenter(Instrument):
         kwargs.setdefault('write_termination', '\n')
         super().__init__(
             resource_name,
-            "test",
+            "EmCenter",
             **kwargs
         )
    
