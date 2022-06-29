@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .damsx000 import DAMSx000
+from .damsx000 import DAMSx000, DAMSx000_DFSM
