@@ -48,7 +48,7 @@ class M7006_001(Instrument):
         are identified by the slot number and the device number(if applicable to the modual).
     """
 
-    def __init__(self,resource_name, slot, device, **kwargs):
+    def __init__(self,resource_name, slot=1, device='A', **kwargs):
 
         kwargs.setdefault('write_termination', '\n')
         super().__init__(
@@ -58,4 +58,8 @@ class M7006_001(Instrument):
         )
         self._slot = slot
         self._device = device
+
+    acceleration = Instrument.control(
+        f'{self._slot}{self._device}:ACCEL',
     
+cla
