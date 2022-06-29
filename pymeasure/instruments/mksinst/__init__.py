@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .adapters import MKSVISAAdapter
 from .mks937b import MKS937B

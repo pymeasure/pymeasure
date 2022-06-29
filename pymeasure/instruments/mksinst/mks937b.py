@@ -26,7 +26,6 @@ import re
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
-from .adapters import MKSVISAAdapter
 
 
 _sensor_types = {"Cold Cathode": "CC",
@@ -56,19 +55,20 @@ _ion_gauge_status = {"Wait": "W",
 class MKS937B(Instrument):
     """ MKS 937B vacuum gauge controller
 
-    :param adapter: pyvisa resource name of the instrument or an instance of
-                    MKSSerialAdapter, or MKSVISAAdapter.
+    :param resource_name: pyvisa resource name of the instrument
     :param address: device address included in every message to the instrument
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
     """
 
-    def __init__(self, adapter, address=253, **kwargs):
-        kwargs.setdefault("preprocess_reply", self.extract_reply)
-        if isinstance(adapter, str):
-            adapter = MKSVISAAdapter(adapter, **kwargs)
+    def __init__(self, resource_name, address=253, **kwargs):
+        kwargs.setdefault("preprocess_reply", self._extract_reply)
+        kwargs.setdefault("write_termination", ";FF")
+        kwargs.setdefault("read_termination", ";")  # in reality its ";FF"
+        # which is, however, invalid for pyvisa. Therefore extra bytes have to
+        # be read in the read() method.
         super().__init__(
-            adapter,
+            resource_name,
             "MKS 937B vacuum gauge controller",
             includeSCPI=False,
             **kwargs
@@ -77,19 +77,8 @@ class MKS937B(Instrument):
         # compiled regular expression for finding numerical values in reply strings
         self._re_fullresponse = re.compile(fr"@{self.address:03d}(.*)")
         self._re_response_value = re.compile(fr"@{self.address:03d}ACK(.*)")
-        # set address in commands via dynamic properties
-        for prop in ["serial", "pressure1", "pressure2", "pressure3",
-                     "pressure4", "pressure5", "pressure6", "all_pressures",
-                     "combined_pressure1", "combined_pressure2",
-                     "sensor_typeA", "sensor_typeB", "sensor_typeC",
-                     "ion_gauge_status1", "ion_gauge_status3",
-                     "ion_gauge_status5", "unit",
-                     "power_status1", "power_status2", "power_status3",
-                     "power_status4", "power_status5", "power_status6",
-                     ]:
-            setattr(self, f"{prop}_command_process", self.command_process)
 
-    def extract_reply(self, reply):
+    def _extract_reply(self, reply):
         """ preprocess_reply function which tries to extract <Response> from
         '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the orignal string
         is returned.
@@ -105,6 +94,49 @@ class MKS937B(Instrument):
                 return full_reply.groups()[0]
         return reply
 
+    def _command_process(self, cmd):
+        """
+        create command string by adding device address
+        """
+        return f"@{self.address:03d}{cmd}"
+
+    def _check_extra_termination(self):
+        """
+        Check the read termination to correspond to the protocol
+        """
+        t = self.adapter.read_bytes(2)  # read extra termination chars 'FF'
+        if t != b'FF':
+            raise ValueError(f"unexpected termination string received {t}")
+
+    def read(self):
+        """
+        Reads from the instrument including the correct termination characters
+        """
+        ret = super().read()
+        self._check_extra_termination()
+        return ret
+
+    def write(self, command):
+        """
+        Writes to the instrument including the device address
+
+        :param command: command string to be sent to the instrument
+        """
+        super().write(self._command_process(command))
+
+    def values(self, command, **kwargs):
+        """
+        Reads a set of values from the instrument through the adapter.
+        The device address is added to the command and the correct reply
+        termination characters are checked.
+        key-word arguments are passed to the adapter method.
+
+        :param command: command string to be sent to the instrument
+        """
+        ret = super().values(self._command_process(command), **kwargs)
+        self._check_extra_termination()
+        return ret
+
     def check_errors(self):
         """
         check reply string for acknowledgement string
@@ -117,82 +149,63 @@ class MKS937B(Instrument):
         # no valid acknowledgement message found
         raise ValueError(f"invalid reply '{ret}' found in check_errors")
 
-    def command_process(self, cmd):
-        """
-        create command string by adding device address
-        """
-        return f"@{self.address:03d}{cmd}"
-
     serial = Instrument.measurement(
         "SN?", """ Serial number of the instrument """,
         cast=str,
-        dynamic=True,
     )
 
     pressure1 = Instrument.measurement(
         "PR1?", """ Pressure on channel 1 in selected units """,
-        dynamic=True,
     )
 
     pressure2 = Instrument.measurement(
         "PR2?", """ Pressure on channel 2 in selected units """,
-        dynamic=True,
     )
 
     pressure3 = Instrument.measurement(
         "PR3?", """ Pressure on channel 3 in selected units """,
-        dynamic=True,
     )
 
     pressure4 = Instrument.measurement(
         "PR4?", """ Pressure on channel 4 in selected units """,
-        dynamic=True,
     )
 
     pressure5 = Instrument.measurement(
         "PR5?", """ Pressure on channel 5 in selected units """,
-        dynamic=True,
     )
 
     pressure6 = Instrument.measurement(
         "PR6?", """ Pressure on channel 6 in selected units """,
-        dynamic=True,
     )
 
     all_pressures = Instrument.measurement(
         "PRZ?", """ Read pressures on all channels in selected units """,
-        dynamic=True,
     )
 
     combined_pressure1 = Instrument.measurement(
         "PC1?", """ Read pressure on channel 1 and its combination sensor """,
-        dynamic=True,
     )
 
     combined_pressure2 = Instrument.measurement(
         "PC2?", """ Read pressure on channel 2 and its combination sensor """,
-        dynamic=True,
     )
 
     sensor_typeA = Instrument.measurement(
         "STA?", """ show sensor types connected to module A """,
         map_values=True,
         values=_sensor_types,
-        dynamic=True,
     )
 
     sensor_typeB = Instrument.measurement(
         "STB?", """ show sensor types connected to module B """,
         map_values=True,
         values=_sensor_types,
-        dynamic=True,
     )
 
     sensor_typeC = Instrument.measurement(
         "STC?", """ show sensor types connected to module C """,
         map_values=True,
         values=_sensor_types,
-        dynamic=True,
     )
 
     ion_gauge_status1 = Instrument.measurement(
@@ -200,7 +213,6 @@ class MKS937B(Instrument):
         """Ion gauge status of channel 1""",
         map_values=True,
         values=_ion_gauge_status,
-        dynamic=True,
     )
 
     ion_gauge_status3 = Instrument.measurement(
@@ -208,7 +220,6 @@ class MKS937B(Instrument):
         """Ion gauge status of channel 3""",
         map_values=True,
         values=_ion_gauge_status,
-        dynamic=True,
     )
 
     ion_gauge_status5 = Instrument.measurement(
@@ -216,7 +227,6 @@ class MKS937B(Instrument):
         """Ion gauge status of channel 5""",
         map_values=True,
         values=_ion_gauge_status,
-        dynamic=True,
     )
 
     unit = Instrument.control(
@@ -230,7 +240,6 @@ class MKS937B(Instrument):
                 "Micron": "MICRON",
                 },
         check_set_errors=True,
-        dynamic=True,
     )
 
     power_status1 = Instrument.control(
@@ -239,7 +248,6 @@ class MKS937B(Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         check_set_errors=True,
-        dynamic=True,
     )
 
     power_status2 = Instrument.control(
@@ -248,7 +256,6 @@ class MKS937B(Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         check_set_errors=True,
-        dynamic=True,
     )
 
     power_status3 = Instrument.control(
@@ -257,7 +264,6 @@ class MKS937B(Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         check_set_errors=True,
-        dynamic=True,
     )
 
     power_status4 = Instrument.control(
@@ -266,7 +272,6 @@ class MKS937B(Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         check_set_errors=True,
-        dynamic=True,
     )
 
     power_status5 = Instrument.control(
@@ -275,7 +280,6 @@ class MKS937B(Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         check_set_errors=True,
-        dynamic=True,
     )
 
     power_status6 = Instrument.control(
@@ -284,5 +288,4 @@ class MKS937B(Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         check_set_errors=True,
-        dynamic=True,
     )

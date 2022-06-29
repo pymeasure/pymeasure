@@ -9,5 +9,4 @@ This section contains specific documentation on the MKS Instruments devices that
 .. toctree::
    :maxdepth: 2
 
-   adapters
    mks937b
