@@ -47,127 +47,110 @@ class M7006_001(Instrument):
         self._slot = slot
         self._device = device
 
-    @property
-    def acceleration(self):
-        """Return the acceleration of the device, im seconds"""
-        return self.adapter.ask(f"{self._slot}lf{self._device}ACC?")
+    def write(self, command):
+        super().write(f"{self._slot}{self._device}{command}")
 
-    @acceleration.setter
-    def acceleration(self, value):
-        """Set the acceleration of the device, in seconds.
+    def values(self, command, **kwargs):
+        return super().values(f"{self._slot}{self._device}{command}", **kwargs)
 
-        vaule must bebetween 0.1 and 30.0
-        """
-        value = strict_range(value, 0.1, 30.0)
-        return self.adapter.ask(f"{self._slot}{self._device}ACC {value}")
+    acceleration = Instrument.control(
+        "ACC?",
+        "ACC %g",
+        """Acceleration of the device in seconds. Settable 0.1 and 30,
+        and gettable.
+        """,
+        values=(0.1, 30),
+        validator=strict_range,
+    )
 
-    @property
-    def speed(self):
-        """Return the speed of the device, as a percentage of the max speed."""
-        return self.adapter.ask(f"{self._slot}{self._device}SPEED?")
+    speed = Instrument.control(
+        "SPEED?",
+        "SPEED %g",
+        """Speed of the device, as a percentage of the max speed.
+        Settable 0.0 to 100.0, and gettable.""",
+        values=(0.0, 100.0),
+        validator=strict_range,
+    )
 
-    @speed.setter
-    def speed(self, value):
-        """Set the speed of the device, as a percentage of the max speed."""
-        value = strict_range(value, 0.0, 100.0)
-        return self.adapter.write(f"{self._slot}{self._device}SPEED {value}")
+    aux1 = Instrument.control(
+        "AUX1?",
+        "AUX1 %g",
+        """Auxiliary input 1, Settable to ON or OFF, and gettable.""",
+        values=("ON", "OFF"),
+        validator=strict_discrete_set,
+    )
 
-    @property
-    def aux_output(self, number=1):
-        """Return the state of the specified aux output."""
-        number = strict_discrete_set(number, 1, 2)
-        return self.adapter.write(f"{self._slot}{self._device}AUX{number}?")
+    aux2 = Instrument.control(
+        "AUX2?",
+        "AUX2 %g",
+        """Auxiliary input 2, Settable to ON or OFF, and gettable.""",
+        values=("ON", "OFF"),
+        validator=strict_discrete_set,
+    )
 
-    @aux_output.setter
-    def aux_output(self, value, number=1):
-        """Set the state of the specified aux output.
+    ccw = Instrument.setting(
+        "CCW",
+        """Move the TurnTable in the counter clockwise direction.""",
+    )
 
-        AUX outputs are numbered 1 and 2. value must be either ON or OFF.
-        """
-        number = strict_discrete_set(number, 1, 2)
-        value = strict_discrete_set(value, "ON", "OFF")
-        return self.adapter.write(f"{self._slot}{self._device}AUX{number} {value}")
+    cw = Instrument.setting(
+        "CW",
+        """Move the TurnTable in the clockwise direction.""",
+    )
 
-    def counter_clockwise(self):
-        """Move the TurnTable in the counter clockwise direction."""
-        return self.adapter.write(f"{self._slot}{self._device}CC")
+    down = Instrument.setting(
+        "DN",
+        """Move the mast down.""",
+    )
+    up = Instrument.setting(
+        "UP",
+        """Move the mast up.""",
+    )
+    stop = Instrument.setting("ST", """Stop the device.""")
 
-    def clockwise(self):
-        """Move the Turntable in the clockwise direction."""
-        return self.adapter.write(f"{self._slot}{self._device}CW")
+    polarity = Instrument.control(
+        "P?",
+        "P %g",
+        """Polarity of the antenna boom. Returns either H or V.""",
+        values=("H", "V"),
+        validator=strict_discrete_set,
+    )
 
-    def down(self):
-        """Move the mast down."""
-        return self.adapter.write(f"{self._slot}{self._device}DN")
-
-    def up(self):
-        """Move the mast up."""
-        return self.adapter.write(f"{self._slot}{self._device}UP")
-
-    def stop(self):
-        """Stop the device."""
-        return self.adapter.write(f"{self._slot}{self._device}ST")
-
-    @property
-    def polarity(self):
-        """Return the polarity of the antenna boom. returns either H or V."""
-        result = self.adapter.write(f"{self._slot}{self._device}P?")
-        if result == 1:
-            return "H"
-        elif result == 0:
-            return "V"
-        else:
-            raise ValueError("Polarity not recognized")
-
-    @polarity.setter
-    def polarity(self, value):
-        """Set the polarity of the antenna boom.
-
-        Value must be either H or V.
-        """
-        value = strict_discrete_set(value, "H", "V")
-        value = map()
-        return self.adapter.write(f"{self._slot}{self._device}P{value}")
-
-    @property
-    def position(self):
-        """Return the current position of the device."""
-        return self.adapter.ask(f"{self._slot}{self._device}CP?")
-
-    @position.setter
-    def position(self, value):
-        """Set the current position of the device.
-
+    position = Instrument.control(
+        "CP?",
+        "CP %g",
+        """Current position of the device. Settable and gettable.
         does not move the device.
-        """
-        value = strict_range(value, -999.9, 999.9)
-        return self.adapter.write(f"{self._slot}{self._device}CP {value}")
+        """,
+    )
 
-    def direction(self):
-        return self.adapter.write(f"{self._slot}{self._device}DIR?")
+    direction = Instrument.measurement(
+        "DIR?",
+        """Direction of the device. Returns either -1,0 , or 1.""",
+    )
 
-    def seek_position(self, position):
-        """Move the device to the given position, by the shortest distance."""
-        position = strict_range(position, -999.9, 999.9)
-        return self.adapter.write(f"{self._slot}{self._device}SK {position}")
+    seek_position = Instrument.setting(
+        "SK %g",
+        """Move the device to the given position, by the shortest distance.""",
+    )
 
-    def seek_negative_postion(self, position):
+    seek_negative_positon = Instrument.setting(
+        "SKN %g",
         """Moves the device to the given position, in the down or
         counter clockwise direction.
-        """
-        position = strict_range(position, -999.9, 999.9)
-        return self.adapter.write(f"{self._slot}{self._device}SKN {position}")
+        """,
+    )
 
-    def seek_positive_postion(self, position):
+    seek_positive_position = Instrument.setting(
+        "SKP %g",
         """Moves the device to the given position, in the up or
         clockwise direction.
-        """
-        position = strict_range(position, -999.9, 999.9)
-        return self.adapter.write(f"{self._slot}{self._device}SKP {position}")
+        """,
+    )
 
-    def seek_relative_postion_rela(self, position):
+    seek_relative_postion = Instrument.setting(
+        "SKR %g",
         """Moves the device to the given position relative to the current
         position.
-        """
-        position = strict_range(position, -999.9, 999.9)
-        return self.adapter.write(f"{self._slot}{self._device}SKR {position}")
+        """,
+    )

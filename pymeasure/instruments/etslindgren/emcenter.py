@@ -38,14 +38,14 @@ class EMCenter(Instrument):
     used for direct access to the instrument, does not control sub-modules
     """
 
-    local = Instrument.control(
+    local = Instrument.setting(
         "LOCAL",
         """ Set the EMCenter to local mode.""",
     )
-    reboot = Instrument.control(
-        "REBOOT SYSTEM",
-        """ Reboot the EMCenter.""",
-    )
+
+    def reboot(self):
+        """Reboot the EMCenter"""
+        self.write("REBOOT SYSTEM")
 
     def __init__(self, resource_name, name="EMCenter", **kwargs):
         kwargs.setdefault("timeout", 2000)
