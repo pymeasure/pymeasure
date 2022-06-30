@@ -25,59 +25,29 @@
 
 
 import logging
-import re
-from datetime import datetime, timezone, timedelta
-import numpy as np
-import pandas as pd
+
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (
-    strict_discrete_set, strict_discrete_range,
-    truncated_discrete_set, strict_range
-)
+
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-
-
-
-
 class EMCenter(Instrument):
-    """ Represents ETS-Lindgren EMCenter main frame.
-        used for direct access to the instrument, does not control sub-modules
-
-        
-
-       
-
-    
+    """Represents ETS-Lindgren EMCenter main frame.
+    used for direct access to the instrument, does not control sub-modules
     """
 
     local = Instrument.control(
-            'LOCAL',
-            """ Sets the EMCenter to local mode.""",
+        "LOCAL",
+        """ Set the EMCenter to local mode.""",
     )
     reboot = Instrument.control(
-            'REBOOT SYSTEM',
-            """ Reboots the EMCenter.""",
+        "REBOOT SYSTEM",
+        """ Reboot the EMCenter.""",
     )
 
-    def __init__(self, resource_name, name='EMCenter', **kwargs):
-        kwargs.setdefault('timeout', 2000)
-        kwargs.setdefault('write_termination', '\n')
-        super().__init__(
-            resource_name,
-            "EmCenter",
-            **kwargs
-        )
-   
-    
-
-    
-
-        
-            
-        
-
-   
+    def __init__(self, resource_name, name="EMCenter", **kwargs):
+        kwargs.setdefault("timeout", 2000)
+        kwargs.setdefault("write_termination", "\n")
+        super().__init__(resource_name, "EmCenter", **kwargs)
