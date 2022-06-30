@@ -8,5 +8,7 @@ This section contains specific documentation on the Ets-lindgren instruments tha
 
 .. toctree::
    :maxdepth: 2
-
+   
+   emcenter
+   m7006_001
  
