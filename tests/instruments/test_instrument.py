@@ -132,6 +132,28 @@ def test_control_dict_str_map(dynamic):
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
+def test_control_array_map(dynamic):
+    class Fake(FakeInstrument):
+        x = Instrument.measurement(
+            "", "",
+            validator=strict_discrete_set,
+            values={'X': 1, 'Y': 2, 'Z': 3},
+            map_values=True,
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    # using write here since mapping multiple values is currently supported
+    # only in a measurement
+    fake.write('1, 2')
+    assert fake.read() == '1, 2'
+    fake.write('1, 2')
+    assert fake.x == ['X', 'Y']
+    fake.write('3, 2')
+    assert fake.x == ['Z', 'Y']
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
 def test_control_process(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.control(
