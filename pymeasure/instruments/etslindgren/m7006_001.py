@@ -63,51 +63,63 @@ class M7006_001(Instrument):
   
     @property
     def acceleration(self):
-        return self.adapter.ask(f'{self._slot}lf._device}ACC?')
+        """ Returns the acceleration of the device, im seconds """
+        return self.adapter.ask(f'{self._slot}lf{self._device}ACC?')
     
     @acceleration.setter
     def acceleration(self, value):
+        """ Sets the acceleration of the device, in seconds. vaule must be between 0.1 and 30.0 """
         value = strict_range(value, 0.1, 30.0)
         return self.adapter.ask(f'{self._slot}{self._device}ACC {value}')
 
     @property
     def speed(self):
+        """ Returns the speed of the device, as a percentage of the maximum speed. """
         return self.adapter.ask(f'{self._slot}{self._device}SPEED?')
     
     @speed.setter
     def speed(self, value):
+        """ Sets the speed of the device, as a percentage of the maximum speed. """
         value = strict_range(value, 0.0, 100.0)
         return self.adapter.write(f'{self._slot}{self._device}SPEED {value}')
     
     @property
     def aux_output(self, number=1):
+        """ Returns the state of the specified aux output. """
         number = strict_discrete_set(number, 1, 2)
         return self.adapter.write(f'{self._slot}{self._device}AUX{number}?')
     
     @aux_output.setter
     def aux_output(self, value, number=1):
+        """ Sets the state of the specified aux output. AUX outputs are numbered 1 and 2.
+            value must be either ON or OFF. """
         number = strict_discrete_set(number, 1, 2)
         value = strict_discrete_set(value, 'ON', 'OFF')
         return self.adapter.write(f'{self._slot}{self._device}AUX{number} {value}')
 
     def counter_clockwise(self):
+        """ Moves the TurnTable in the counter clockwise direction. """
         return self.adapter.write(f'{self._slot}{self._device}CC')
     
     def clockwise(self):
+        """ Moves the Turntable in the clockwise direction. """
         return self.adapter.write(f'{self._slot}{self._device}CW')
 
     def down(self):
+        """ Moves the mast down. """
         return self.adapter.write(f'{self._slot}{self._device}DN')
     
     def up(self):
+        """ Moves the mast up. """
         return self.adapter.write(f'{self._slot}{self._device}UP')
 
     def stop(self):
+        """ Stops the device. """
         return self.adapter.write(f'{self._slot}{self._device}ST')
     
     @property
     def polarity(self):
-        
+        """ Returns the polarity of the antenna boom. returns either H or V. """
         result = self.adapter.write(f'{self._slot}{self._device}P?')
         if result== 1:
             return 'H'
@@ -116,11 +128,9 @@ class M7006_001(Instrument):
         else:
             raise ValueError('Polarity not recognized')
     
-    
-
-    
     @polarity.setter
     def polarity(self, value):
+        """ Sets the polarity of the antenna boom.  Value must be either H or V. """
         value = strict_discrete_set(value, 'H', 'V')
         value = map()
         return self.adapter.write(f'{self._slot}{self._device}P{value}')
