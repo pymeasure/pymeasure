@@ -88,25 +88,23 @@ class M7006_001(Instrument):
         validator=strict_discrete_set,
     )
 
-    ccw = Instrument.setting(
-        "CCW",
-        """Move the TurnTable in the counter clockwise direction.""",
+    rotate = Instrument.setting(
+        "%g",
+        """Rotate the device in the given direction. CW or CCW.""",
+        values=("CW", "CCW"),
+        validator=strict_discrete_set,
     )
 
-    cw = Instrument.setting(
-        "CW",
-        """Move the TurnTable in the clockwise direction.""",
+    move = Instrument.setting(
+        "%g",
+        """Move the tower up or down.""",
+        values={"up": "UP", "down": "DN"},
+        map_values=True,
     )
 
-    down = Instrument.setting(
-        "DN",
-        """Move the mast down.""",
-    )
-    up = Instrument.setting(
-        "UP",
-        """Move the mast up.""",
-    )
-    stop = Instrument.setting("ST", """Stop the device.""")
+    def stop(self):
+        """Stop the device."""
+        self.write("ST")
 
     polarity = Instrument.control(
         "P?",
