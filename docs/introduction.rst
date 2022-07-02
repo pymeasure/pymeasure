@@ -34,3 +34,5 @@ These features are explored in the :doc:`Using a graphical interface <tutorial/g
 
 .. image:: tutorial/pymeasure-managedwindow-running.png
     :alt: ManagedWindow Running Example
+
+The GUIs are not restricted to the instruments included in this package. Any python instrument may be used.
