@@ -43,7 +43,7 @@ class AgilentE4407B(Instrument):
     # frequency Setting commands
     start_frequency = Instrument.control(
         ":SENS:FREQ:STAR?;",
-        ":SENS:FREQ:STAR %e Hz;",
+        ":SENS:FREQ:STAR %g Hz;",
         """ A floating point property that represents the start frequency
         in Hz. This property can be set.
         """,
@@ -53,7 +53,7 @@ class AgilentE4407B(Instrument):
     )
     stop_frequency = Instrument.control(
         ":SENS:FREQ:STOP?;",
-        ":SENS:FREQ:STOP %e Hz;",
+        ":SENS:FREQ:STOP %g Hz;",
         """ A floating point property that represents the stop frequency
         in Hz. This property can be set.
         """,
@@ -71,7 +71,7 @@ class AgilentE4407B(Instrument):
     )
     center_frequency = Instrument.control(
         ":SENS:FREQ:CENT?;",
-        ":SENS:FREQ:CENT %e Hz;",
+        ":SENS:FREQ:CENT %g Hz;",
         """ A floating point property that represents the center frequency
         in Hz. This property can be set.
         """,
@@ -82,27 +82,26 @@ class AgilentE4407B(Instrument):
 
     span = Instrument.control(
         ":SENS:FREQ:SPAN?;",
-        ":SENS:FREQ:SPAN %e Hz;",
+        ":SENS:FREQ:SPAN %g Hz;",
         """ A floating point property that represents the span
         in Hz. This property can be set.
         """,
     )
-    full_span = Instrument.setting(
-        ":SENS:FREQ:SPAN:FULL;",
-        """
-        A command that sets the span to the full span of the instrument.
-     """,
-    )
-    last_span = Instrument.setting(
-        ":SENS:FREQ:SPAN:PREV;",
+
+    def full_span(self):
+        """Sets the span to the full span of the instrument."""
+        self.write(":SENS:FREQ:SPAN:FULL;")
+
+    def last_span(self):
         """
         A command that sets the span to the previous span.
-        """,
-    )
+        """
+        self.write(":SENS:FREQ:SPAN:PREV;")
+
     # sweep commands
     frequency_points = Instrument.control(
         ":SENSe:SWEEp:POINts?;",
-        ":SENSe:SWEEp:POINts %d;",
+        ":SENSe:SWEEp:POINts %g;",
         """ An integer property that represents the number of frequency
         points in the sweep. This property can take values from 101 to 8192.
         """,
@@ -112,7 +111,7 @@ class AgilentE4407B(Instrument):
     )
     sweep_time = Instrument.control(
         ":SENS:SWE:TIME?;",
-        ":SENS:SWE:TIME %.2e;",
+        ":SENS:SWE:TIME %g;",
         """ A floating point property that represents the sweep time
         in seconds. This property can be set.
         """,
@@ -125,27 +124,27 @@ class AgilentE4407B(Instrument):
     )
     set_all_segments_sst = Instrument.control(
         ":SENS:SWE:SEGM:DATA? SST",
-        ":SENS:SWE:SEGM:DATA SST,%s;",
+        ":SENS:SWE:SEGM:DATA SST,%g;",
         """ A command that sets all the segments of a sweep, at once, with a string.
         format is start, stop, rbw, vbw, points, time
         """,
     )
     set_all_segments_csp = Instrument.control(
         ":SENS:SWE:SEGM:DATA? CSP",
-        ":SENS:SWE:SEGM:DATA CSP,%s;",
+        ":SENS:SWE:SEGM:DATA CSP,%g;",
         """ A command that sets all the segments of a sweep, at once, with a string.
         format is center, span, rbw, vbw, points, time
         """,
     )
     merge_segments_sst = Instrument.setting(
-        ":SENS:SWE:SEGM:DATA:MERge SST",
+        ":SENS:SWE:SEGM:DATA:MERge SST %g",
         """
         A command that merges the data with current the segments of a sweep with a string.
         format is start, stop, rbw, vbw, points, time
         """,
     )
     merge_segments_csp = Instrument.setting(
-        ":SENS:SWE:SEGM:DATA:MERge CSP",
+        ":SENS:SWE:SEGM:DATA:MERge CSP %g",
         """
         A command that merges the data with current the segments of a sweep with a string.
         format is center, span, rbw, vbw, points, time
@@ -155,14 +154,14 @@ class AgilentE4407B(Instrument):
     # dectector commands
     resolution_bandwidth = Instrument.control(
         ":SENS:BAND:RES?;",
-        ":SENS:BAND:RES %e Hz;",
+        ":SENS:BAND:RES %g Hz;",
         """ A floating point property that represents the resolution bandwidth
         in Hz. This property can be set.
         """,
     )
     video_bandwidth = Instrument.control(
         ":SENS:BAND:VID?;",
-        ":SENS:BAND:VID %e Hz;",
+        ":SENS:BAND:VID %g Hz;",
         """ A floating point property that represents the video bandwidth
         in Hz. This property can be set.
         """,
@@ -183,14 +182,14 @@ class AgilentE4407B(Instrument):
     )
     video_resolution_bandwidth_ratio = Instrument.control(
         ":SENS:BAND:VID:RAT?;",
-        ":SENS:BAND:VID:RAT %e;",
+        ":SENS:BAND:VID:RAT %g;",
         """ A floating point property that represents the video to resolution
         bandwidth ratio. This property can be set.
         """,
     )
     video_resolution_bandwidth_ratio_auto = Instrument.control(
         ":SENS:BAND:VID:RAT:AUTO?;",
-        ":SENS:BAND:VID:RAT:AUTO %d;",
+        ":SENS:BAND:VID:RAT:AUTO %g;",
         """ A boolean property that represents the video to resolution
         bandwidth ratio auto mode. This property can be set.
         """,
@@ -204,7 +203,7 @@ class AgilentE4407B(Instrument):
     )
     detector_type = Instrument.control(
         ":SENS:DET:?;",
-        ":SENS:DET %s;",
+        ":SENS:DET %g;",
         """ A string property that represents the detector type.
         This property can be set.
         """,
@@ -213,7 +212,7 @@ class AgilentE4407B(Instrument):
     )
     emi_detector_type = Instrument.control(
         ":SENS:DET:EMI?;",
-        ":SENS:DET:EMI %s;",
+        ":SENS:DET:EMI %g;",
         """ A string property that represents the detector type.
         This property can be set.
         """,
@@ -222,7 +221,7 @@ class AgilentE4407B(Instrument):
     )
     emi_view_type = Instrument.control(
         ":SENS:DET:EMI:VIEW?;",
-        ":SENS:DET:EMI:VIEW %s;",
+        ":SENS:DET:EMI:VIEW %g;",
         """ A string property that represents the detector type.
         This property can be set.
         """,
@@ -238,7 +237,7 @@ class AgilentE4407B(Instrument):
     )
     input_attenuation = Instrument.control(
         ":SENS:POW:ATT?;",
-        ":SENS:POW:ATT %e;",
+        ":SENS:POW:ATT %g;",
         """ A floating point property that represents the input attenuation
         in dB. This property can be set.
         """,
@@ -254,11 +253,50 @@ class AgilentE4407B(Instrument):
     )
     max_mixer_power = Instrument.control(
         ":SENS:POW:MIX:RANG?;",
-        ":SENS:POW:MIX:RANG %e;",
+        ":SENS:POW:MIX:RANG %g;",
         """ A floating point property that represents the maximum mixer power
         in dBm. This property can be set.
         """,
     )
+    # system commands
+
+    def reset(self):
+        """
+        A command that resets the instrument.
+        """
+        self.write("*RST")
+
+    def preset(self):
+        """Reset the instrument to the preset conditions."""
+        self.write("SYST:PRES;")
+
+    def persistant_reset(self):
+        """Reset the instrument persistant state vakues to there factory defaults."""
+        self.write("SYST:PRES:PERS;")
+
+    def save_user_preset(self):
+        """Save the current instrument state as a user preset."""
+        self.write("SYST:PRES:USER:SAVE;")
+
+    time = Instrument.control(
+        ":SENS:SWE:TIME?;",
+        ":SENS:SWE:TIME %g;",
+        """Set the real time clock of the instrument. <hours>,<minutes>,<seconds>""",
+    )
+
+    preset_type = Instrument.setting(
+        ":SYST:PRES:TYPE %g;",
+        """ A string property that represents the preset type. can be set to FACT, USER, or MODE.""",
+        validator=strict_discrete_set,
+        values=["FACT", "USER", "MODE"],
+    )
+    # trace commands
+
+    def copy_trace(self, source, destination):
+        """Copy a trace from one trace to another."""
+        source = strict_discrete_set(source, [1, 2, 3])
+        destination = strict_discrete_set(destination, [1, 2, 3])
+        self.write(f":COPY:TRAC TRACE{source},TRACE{destination};")
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(resourceName, "Agilent E4407B Spectrum Analyzer", **kwargs)
