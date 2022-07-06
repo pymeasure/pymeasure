@@ -39,10 +39,10 @@ class Keithley2602B(Keithley2600):
     """
 
     number_of_pins = 14
-    _event_descriptions = []
+    event_descriptions = []
 
     for channel in ["a", "b"]:
-        _event_descriptions += [
+        event_descriptions += [
             f"smu{channel}.trigger.SOURCE_COMPLETE_EVENT_ID",
             f"smu{channel}.trigger.MEASURE_COMPLETE_EVENT_ID",
             f"smu{channel}.trigger.PULSE_COMPLETE_EVENT_ID",
@@ -56,27 +56,6 @@ class Keithley2602B(Keithley2600):
         self.dio_pins = [
             Keithley2600DigitalIOPin(self, i + 1) for i in range(self.number_of_pins)
         ]
-
-    @staticmethod
-    def get_trigger_event_description_strings():
-        """Returns a list of the valid event IDs that can be used to select the event that
-        causes a trigger to be asserted on the digital output line. The list can be indexed
-        to set a digitial I/O line to assert a trigger given the described conditions. E.g.
-        to set digital line 4 to assert a trigger when the SMU completes a source
-        action on channel A,
-        use the following:
-
-        .. code-block:: python
-
-            #Assume a Keithley2602B object called "smu" has been successully instaniated
-            trigger_event_lists = smu.get_trigger_event_description_strings()
-            smu.dio_pins[3].stimulus = trigger_event_lists[0]
-
-        See page 9-61 of the Reference Manual for more details about the various event
-        descriptions.
-        """
-
-        return Keithley2602B._event_descriptions
 
 
 class Keithley2600DigitalIOPin:
@@ -107,36 +86,6 @@ class Keithley2600DigitalIOPin:
         self.write("clear()")
         self.check_errors()
 
-    def get_event_id(self):
-        """This method returns the mode in which the trigger event detector and
-        the output trigger generator operate on the given trigger line. See description
-        of all the possible EVENT_IDs on page 9-57 of the Series 2600B Reference Manual.
-        """
-
-        id = self.ask("EVENT_ID")
-        self.check_errors()
-        return int(id)
-
-    def get_overrun_status(self):
-        """This method returns the event detector overrun status. If this is
-        true, an event was ignored because the event detector was already in the
-        detected state when the event occurred. This is an indication of the
-        state of the event detector built into the line itself. It does not
-        indicate if an overrun occurred in any other part of the trigger model
-        or in any other detector that is monitoring the event."""
-
-        response_status = self.ask("overrun")
-        self.check_errors()
-
-        if response_status == "false":
-            status = False
-        elif response_status == "true":
-            status = True
-        else:
-            status = None
-
-        return status
-
     def release_trigger(self):
         """This method releases an indefinite length or latched trigger."""
 
@@ -165,6 +114,23 @@ class Keithley2600DigitalIOPin:
         log.info(f"Waiting for trigger for {timeout} on pin number {self.pin_number}.")
         self.write("wait(timeout)")
         self.check_errors()
+
+    event_id = Instrument.measurement(
+        "EVENT_ID",
+        """ Gets the mode in which the trigger event detector and
+        the output trigger generator operate on the given trigger line. See description
+        of all the possible EVENT_IDs on page 9-57 of the Series 2600B Reference Manual. """,
+    )
+
+    overrun_status = Instrument.measurement(
+        "overrun",
+        """ Gets the event detector overrun status. If this is
+        true, an event was ignored because the event detector was already in the
+        detected state when the event occurred. This is an indication of the
+        state of the event detector built into the line itself. It does not
+        indicate if an overrun occurred in any other part of the trigger model
+        or in any other detector that is monitoring the event. """,
+    )
 
     trigger_mode = Instrument.control(
         "mode",
