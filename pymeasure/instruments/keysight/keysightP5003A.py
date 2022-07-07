@@ -22,7 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.spectrum_analyzer import *
+from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+
+from io import StringIO
+import numpy as np
 
 
 class KeysightP5003A(SpectrumAnalyzer):
@@ -40,8 +45,7 @@ class KeysightP5003A(SpectrumAnalyzer):
 
     frequency_points_values = (1, 100003)
 
-    detector_values = ("PEAK","AVER","SAMP","NORM","NEGP","PSAM","PAV")
-
+    detector_values = ("PEAK", "AVER", "SAMP", "NORM", "NEGP", "PSAM", "PAV")
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
@@ -78,7 +82,7 @@ class KeysightP5003A(SpectrumAnalyzer):
         in seconds. This property can be set.
         """,
         validator=strict_discrete_set,
-        values=("PEAK","AVER","SAMP","NORM","NEGP","PSAM","PAV"),
+        values=("PEAK", "AVER", "SAMP", "NORM", "NEGP", "PSAM", "PAV"),
         dynamic=True
     )
 
@@ -103,7 +107,7 @@ class KeysightP5003A(SpectrumAnalyzer):
         - "VIDEO": Sets Log-Power (video) averaging
         """,
         validator=strict_discrete_set,
-        values=("VOLT","POW","LOG","VMAX","VMIN"),
+        values=("VOLT", "POW", "LOG", "VMAX", "VMIN"),
         cast=str,
         dynamic=True
     )
@@ -114,7 +118,7 @@ class KeysightP5003A(SpectrumAnalyzer):
         """
         self.write(":FORMat:DATA ASCII;")
         data = np.loadtxt(
-            StringIO(self.ask("CALCulate%d:MEASure%d:DATA:FDATA?;" %(number,number))),
+            StringIO(self.ask("CALCulate%d:MEASure%d:DATA:FDATA?;" % (number, number))),
             delimiter=',',
             dtype=np.float64
         )
