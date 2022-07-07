@@ -231,7 +231,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         values=[-180, 180],
     )
     waveform_phasemarker_line = Instrument.control(
-        ":SOUR:WAVE:PMAR:OLIN?", ":SOUR:WAVE:PMAR:OLIN %s",
+        ":SOUR:WAVE:PMAR:OLIN?", ":SOUR:WAVE:PMAR:OLIN %d",
         """ A numerical property that controls the line of the phase marker.""",
         validator=truncated_range,
         values=[1, 6],
