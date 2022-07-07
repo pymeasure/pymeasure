@@ -225,7 +225,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         map_values=True,
     )
     waveform_phasemarker_phase = Instrument.control(
-        ":SOUR:WAVE:PMAR?", ":SOUR:WAVE:PMAR %s",
+        ":SOUR:WAVE:PMAR?", ":SOUR:WAVE:PMAR %g",
         """ A numerical property that controls the phase of the phase marker.""",
         validator=truncated_range,
         values=[-180, 180],
