@@ -208,10 +208,10 @@ class SR830(Instrument):
     )
     filter_synchronous = Instrument.control(
         "SYNC?", "SYNC %d",
-        """A string property that represents the synchronous filter.
-        This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
+        """A boolean property that controls the synchronous filter.
+        This property can be set. Allowed values are: True or False """,
         validator=strict_discrete_set,
-        values=INPUT_FILTER,
+        values={True: 1, False: 0},
         map_values=True
     )
     harmonic = Instrument.control(
