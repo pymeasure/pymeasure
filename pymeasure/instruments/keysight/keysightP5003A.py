@@ -23,15 +23,13 @@
 #
 
 from pymeasure.instruments.spectrum_analyzer import SpectrumAnalyzer
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from io import StringIO
 import numpy as np
 
 
 class KeysightP5003A(SpectrumAnalyzer):
-    """ This class represent a Keysight P5003A VNA with S97090B	Spectrum analysis option  """
+    """ This class represents a Keysight P5003A VNA with S97090B Spectrum analysis option """
 
     # Customize parameters with values taken from datasheet/user manual 
 
@@ -47,6 +45,25 @@ class KeysightP5003A(SpectrumAnalyzer):
 
     detector_values = ("PEAK", "AVER", "SAMP", "NORM", "NEGP", "PSAM", "PAV")
 
+    trace_mode_values = ("OFF", "MIN", "MAX")
+
+    average_type_values = {"VOLTAGE":"VOLT", "POWER":"POW", "VIDEO":"LOG", "VMAX":"VMAX", "VMIN":"VMIN"}
+
+    input_attenuation_get_command = "SOURce:POWer:ATTenuation:RECeiver:TEST?;"
+    input_attenuation_set_command = "SOURce:POWer:ATTenuation:RECeiver:TEST %d;"
+
+    frequency_step_get_command = "SENSe:FREQuency:CENTer:STEP:SIZE?;"
+    frequency_step_set_command = "SENSe:FREQuency:CENTer:STEP:SIZE %g Hz;"
+
+    detector_get_command = "SENSe:SA:DET:FUNC?;"
+    detector_set_command = "SENSe:SA:DET:FUNC %s;"
+
+    trace_mode_get_command = "CALCulate:MEASure:HOLD:TYPE?;"
+    trace_mode_set_command = "CALCulate:MEASure:HOLD:TYPE %s;"
+
+    average_type_get_command = "SENSe:SA:BANDwidth:VIDeo:AVER:TYPE?;"
+    average_type_set_command = "SENSe:SA:BANDwidth:VIDeo:AVER:TYPE %s;"
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
@@ -57,60 +74,6 @@ class KeysightP5003A(SpectrumAnalyzer):
         self.write("CALCulate1:MEASure1:DELete")
         self.write("CALCulate:MEASure:DEFine 'a1:Spectrum Analyzer'")
         self.write("DISP:MEAS:FEED 1")
-
-    input_attenuation = Instrument.control(
-        "SOURce:POWer:ATTenuation:RECeiver:TEST?;", "SOURce:POWer:ATTenuation:RECeiver:TEST %d;",
-        """ An integer property that represents the instrument the input attenuation in dB.
-        This property can be set.
-        """,
-        validator=truncated_range,
-        values=(0, 70),
-        dynamic=True
-    )
-
-    frequency_step = Instrument.control(
-        "SENSe:FREQuency:CENTer:STEP:SIZE?;", "SENSe:FREQuency:CENTer:STEP:SIZE %g Hz;",
-        """ A floating point property that represents the frequency step
-        in Hz. This property can be set.
-        """,
-        dynamic=True
-    )
-
-    detector = Instrument.control(
-        "SENSe:SA:DET:FUNC?;", "SENSe:SA:DET:FUNC %s;",
-        """ A string property that allows you to select a specific type of detector
-        in seconds. This property can be set.
-        """,
-        validator=strict_discrete_set,
-        values=("PEAK", "AVER", "SAMP", "NORM", "NEGP", "PSAM", "PAV"),
-        dynamic=True
-    )
-
-    trace_mode = Instrument.control(
-        "CALCulate:MEASure:HOLD:TYPE?;",  "CALCulate:MEASure:HOLD:TYPE %s;",
-        """ A string property that enable you to set how trace information is stored and displayed.
-        allowed values are "OFF", "MAX", "MIN"
-        This property can be set.
-        """,
-        validator=strict_discrete_set,
-        values=("OFF", "MIN", "MAX"),
-        cast=str,
-        dynamic=True        
-    )
-
-    average_type = Instrument.control(
-        "SENSe:SA:BANDwidth:VIDeo:AVER:TYPE?;",  "SENSe:SA:BANDwidth:VIDeo:AVER:TYPE %s;",
-        """ A string property that enable you to set and read the averaging type.
-        Allowed values are:
-        - "POWER": Sets Power (RMS) averaging
-        - "VOLTAGE": Sets Voltage averaging (linear)
-        - "VIDEO": Sets Log-Power (video) averaging
-        """,
-        validator=strict_discrete_set,
-        values=("VOLT", "POW", "LOG", "VMAX", "VMIN"),
-        cast=str,
-        dynamic=True
-    )
 
     def trace(self, number=1):
         """ Returns a numpy array of the data for a particular trace
@@ -125,7 +88,7 @@ class KeysightP5003A(SpectrumAnalyzer):
         return data
     
     def reset(self):
-        self.write("*RST")
+        super().reset()
         """Reset disables Spectrum Analysis"""
         self.write("CALCulate1:MEASure1:DELete")
         self.write("CALCulate:MEASure:DEFine 'a1:Spectrum Analyzer'")
