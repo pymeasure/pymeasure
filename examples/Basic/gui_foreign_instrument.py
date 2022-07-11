@@ -1,7 +1,7 @@
 """
 This example demonstrates how to use an instrument from another library, here
 InstrumentKit, in the pymeasure graphical interface.
-It is a modification of the `gui_custom_inputs.py`: The `MainWindow` is the
+It is a modification of the `gui.py` example: The `MainWindow` is the
 same, the `TestProcedure` was adjusted to use an instrumentKit instrument
 instead of a random number generator.
 
@@ -11,18 +11,21 @@ python gui_foreign_instrument.py
 """
 
 import sys
+import random
 import tempfile
 from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, FloatParameter
 from pymeasure.experiment import Results
-from pymeasure.display.Qt import QtGui, fromUi
+from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
 
 # Import the InstrumentKit package
 from instruments.thorlabs.pm100usb import PM100USB
 import instruments.units as u
 
+# For simulating communication
+from io import BytesIO
 
 import logging
 log = logging.getLogger('')
@@ -31,15 +34,21 @@ log.addHandler(logging.NullHandler())
 
 class TestProcedure(Procedure):
 
-    iterations = IntegerParameter('Loop Iterations', default=100)
+    iterations = IntegerParameter('Loop Iterations', default=10, maximum=100)
     delay = FloatParameter('Delay Time', units='s', default=0.2)
 
     DATA_COLUMNS = ['Iteration', 'Power (W)']
 
     def startup(self):
-        log.info("Setting up random number generator")
-        # Open the connection to the powermeter.
-        self.powermeter = PM100USB.open_serial("COM5")
+        log.info("Setting up the power meter")
+        # Open the test connection to the powermeter with some sample responses
+        responses = ["POW"]
+        responses.extend(f"{random.random()}" for i in range(100))
+        communication = b"\n".join(item.encode() for item in responses)
+        self.powermeter = PM100USB.open_test(BytesIO(communication))
+        self.powermeter.cache_units = True
+        # In order to connect to an actual device at COM Port 5, use instead:
+        # self.powermeter = PM100USB.open_serial("COM5")
 
     def execute(self):
         log.info("Starting to measure the laser power")
@@ -66,27 +75,18 @@ class MainWindow(ManagedWindow):
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
+            inputs=['iterations', 'delay'],
             displays=['iterations', 'delay'],
             x_axis='Iteration',
-            y_axis='Power (W)'
+            y_axis='Power (W)',
         )
-        self.setWindowTitle('GUI Foreign Instrument Example')
-
-    def _setup_ui(self):
-        super()._setup_ui()
-        self.inputs.hide()
-        self.inputs = fromUi('gui_custom_inputs.ui')
+        self.setWindowTitle('GUI Example for Foreign Instrument')
 
     def queue(self):
         filename = tempfile.mktemp()
 
-        procedure = TestProcedure()
-        procedure.seed = str(self.inputs.seed.text())
-        procedure.iterations = self.inputs.iterations.value()
-        procedure.delay = self.inputs.delay.value()
-
+        procedure = self.make_procedure()
         results = Results(procedure, filename)
-
         experiment = self.new_experiment(results)
 
         self.manager.queue(experiment)
