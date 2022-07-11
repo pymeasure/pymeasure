@@ -19,7 +19,7 @@ from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtGui, fromUi
 from pymeasure.display.windows import ManagedWindow
 
-# Import the InstrumentKit
+# Import the InstrumentKit package
 from instruments.thorlabs.pm100usb import PM100USB
 import instruments.units as u
 
