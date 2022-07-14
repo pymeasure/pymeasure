@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ import numpy as np
 class KeysightP5003A(SpectrumAnalyzer):
     """ This class represents a Keysight P5003A VNA with S97090B Spectrum analysis option """
 
-    # Customize parameters with values taken from datasheet/user manual 
+    # Customize parameters with values taken from datasheet/user manual
 
     reference_level_values = (-500, 500)
 
@@ -47,7 +47,7 @@ class KeysightP5003A(SpectrumAnalyzer):
 
     trace_mode_values = ("OFF", "MIN", "MAX")
 
-    average_type_values = {"VOLTAGE":"VOLT", "POWER":"POW", "VIDEO":"LOG", "VMAX":"VMAX", "VMIN":"VMIN"}
+    average_type_values = {"VOLTAGE" : "VOLT", "POWER" : "POW", "VIDEO" : "LOG", "VMAX" : "VMAX", "VMIN" : "VMIN"}
 
     input_attenuation_get_command = "SOURce:POWer:ATTenuation:RECeiver:TEST?;"
     input_attenuation_set_command = "SOURce:POWer:ATTenuation:RECeiver:TEST %d;"
@@ -86,7 +86,7 @@ class KeysightP5003A(SpectrumAnalyzer):
             dtype=np.float64
         )
         return data
-    
+
     def reset(self):
         super().reset()
         """Reset disables Spectrum Analysis"""
