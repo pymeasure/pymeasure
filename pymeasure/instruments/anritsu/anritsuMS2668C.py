@@ -109,7 +109,7 @@ class AnritsuMS2668C(SpectrumAnalyzer):
     detector_get_command = "DET?"
 
     sweep_mode_continuous = Instrument.setting(
-        "%s;",
+        "%s",
         """ A boolean property that allows you to switches the analyzer between continuous-sweep and single-sweep mode.
         """,
         validator=strict_discrete_set,
@@ -148,7 +148,7 @@ class AnritsuMS2668C(SpectrumAnalyzer):
         based on the trace number (1, 2).
         """
         trace = chr(64+number) # 'A' or 'B'
-        self.write("BIN 0;")
+        self.write("BIN 0")
         data = np.loadtxt(
             StringIO(self.ask("XM%c? 0,501" % trace)),
             delimiter=',',
@@ -160,3 +160,7 @@ class AnritsuMS2668C(SpectrumAnalyzer):
         """ Perform a single sweep and wait for completion. 'sweep_mode_continuous' must be OFF """
         self.write("TS")
         self.complete
+
+    def check_errors(self):
+        # To be implemented
+        return []
