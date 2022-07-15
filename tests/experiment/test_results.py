@@ -24,6 +24,7 @@
 
 import os
 import pickle
+import pytest
 import tempfile
 from unittest import mock
 
@@ -66,20 +67,34 @@ class Test_csv_formatter_format:
 
     def test_unitful(self):
         """Test, whether units are appended correctly"""
-        columns = ['index', 'length (m)', 'voltage (V)', 'count']
+        columns = ['index', 'length (m)', 'voltage (V)', 'count',
+                   'speed (m/s)', 'magnetic (T)', 'string']
         formatter = CSVFormatter(columns=columns)
         data = {'index': 10, 'length (m)': "50 cm",
                 'voltage (V)': u.Quantity(-7, u.V),
-                'count': 9 * u.dimensionless}
-        assert formatter.format(data) == "10,0.5,-7.0,9"
+                'count': 9 * u.dimensionless,
+                'speed (m/s)': 15 * u.cm / u.s,
+                'magnetic (T)': 7,
+                'string': "aabc",
+                }
+        assert formatter.format(data) == "10,0.5,-7,9,0.15,7,aabc"
 
     def test_unitful_erroneous(self):
         """Test, whether wrong units are rejected"""
         columns = ['index', 'length (m)', 'voltage (V)', 'count']
         formatter = CSVFormatter(columns=columns)
-        data = {'index': 10 *u.m, 'length (m)': "50 cV", 'voltage (V)': 8,
-                'count': 9 * u.km}
+        data = {'index': 10 * u.m, 'length (m)': "50 cV", 'count': 9 * u.km}
         assert formatter.format(data) == "nan,nan,nan,nan"
+
+
+@pytest.mark.parametrize("header, units", (
+    ("x (m)", u.m),
+    ("x (m/s)", u.m/u.s),
+    ("x (V/(m*s))", u.V / u.m / u.s),
+    ))
+def test_csv_formatter_parse_columns(header, units):
+    assert CSVFormatter._parse_columns([header])[header] == u.Quantity(1, units)
+
 
 def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100

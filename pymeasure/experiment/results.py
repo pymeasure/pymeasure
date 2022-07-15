@@ -34,7 +34,6 @@ from string import Formatter
 
 import pandas as pd
 import pint
-from pint.util import to_units_container
 
 from .procedure import Procedure, UnknownProcedure
 
@@ -138,7 +137,7 @@ class CSVFormatter(logging.Formatter):
     @staticmethod
     def _parse_columns(columns):
         """Parse the columns to get units in parenthesis."""
-        units_pattern = r"\((?P<units>\w+)\)"
+        units_pattern = r"\((?P<units>[\w/\(\)\*\t]+)\)"
         units = {}
         for column in columns:
             try:
@@ -148,7 +147,7 @@ class CSVFormatter(logging.Formatter):
 
             if match:
                 if 'units' in (m:=match.groupdict()):
-                    units[column] = to_units_container(m['units'])
+                    units[column] = pint.Unit(m['units'])
         return units
 
     def format(self, record):
@@ -176,8 +175,8 @@ class CSVFormatter(logging.Formatter):
                 # Dimensionless quantities can be given as numbers.
                 line.append(f"{value}")
             else:
-                # No dimension given, but one required: Incompatible.
-                line.append("nan")
+                # No dimension given, but one required: Store it as is.
+                line.append(f"{value}")
         return self.delimiter.join(line)
 
     def format_header(self):
