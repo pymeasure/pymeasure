@@ -152,6 +152,16 @@ class AgilentE4407B(Instrument):
         """,
     )
 
+    def delete_segments(self):
+        """Deletes all the segmented sweep data."""
+        self.write(":SENS:SWE:SEGM:DEL")
+
+    delete_segment = Instrument.setting(
+        ":SENS:SWE:SEGM:DEL %g",
+        """
+        Deletes the specifed segment of a sweep.""",
+    )
+
     # Sensor commands
     resolution_bandwidth = Instrument.control(
         ":SENS:BAND:RES?",
@@ -232,9 +242,11 @@ class AgilentE4407B(Instrument):
     qp_detector_gain = Instrument.control(
         ":SENS:POW:QPG?",
         ":SENS:POW:QPG %d",
-        """ A boolean property that represents the detector gain.
+        """ Turn on or off the linear x10 gain stage in the quasi-peak and emi average detector only valid with the emi detector enabled.
         This property can be set.
         """,
+        validator=strict_discrete_set,
+        values=[0, 1, " ON", "OFF"],
     )
     input_attenuation = Instrument.control(
         ":SENS:POW:ATT?",
