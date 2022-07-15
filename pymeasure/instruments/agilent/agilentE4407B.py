@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from distutils.file_util import copy_file
+from gettext import Catalog
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_range,
@@ -40,6 +42,8 @@ class AgilentE4407B(Instrument):
     and provides a high-level interface for taking scans of
     high-frequency spectrums
     """
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(resourceName, "Agilent E4407B Spectrum Analyzer", **kwargs)
 
     # frequency Setting commands
     start_frequency = Instrument.control(
@@ -221,6 +225,16 @@ class AgilentE4407B(Instrument):
         validator=strict_discrete_set,
         values=["NEG", "POS", "SAMPL", "AVER", "RMS"],
     )
+    average_type = Instrument.control(
+        ":SENS:AVER:TYPE?",
+        ":SENS:AVER:TYPE %g",
+        """ A string property that represents the average type. LPOW is log power
+        and POW is linear power. This property can be set.
+        """,
+        validator=strict_discrete_set,
+        values=["LPOW", "POW"]
+        ) 
+
     emi_detector_type = Instrument.control(
         ":SENS:DET:EMI?",
         ":SENS:DET:EMI %g",
@@ -296,6 +310,18 @@ class AgilentE4407B(Instrument):
         A command that aborts the sweep or measurement in progress.
         """
         self.write("ABOR")
+    
+    def hardware_configuration(self):
+        """
+        A command that returns information about the current hardware in the instrument.
+        """
+        self.write("SYS:CONF:HARD?")
+    
+    def system_configuration(self):
+        """
+        A command that returns information about the configuration in the instrument.
+        """
+        self.write("SYS:CONF:SYST?")
 
     recall = Instrument.setting(
         "*RCL %g",
@@ -315,6 +341,21 @@ class AgilentE4407B(Instrument):
         ":SENS:SWE:TIME %g",
         """Set the real time clock of the instrument. <hours>,<minutes>,<seconds>""",
     )
+    
+    date = Instrument.control(
+        "SYS:DATE?","SYS:DATE %g",
+        """Set the date of the instrument. <year>,<month>,<day> ####,##,##""",
+    )
+
+    error_queue = Instrument.measurement(
+        ":SYST:ERR?"
+    )
+
+    options  =  Instrument.measurement(
+        "SYS:OPT?"
+    )
+
+
 
     preset_type = Instrument.setting(
         ":SYST:PRES:TYPE %g",
@@ -397,6 +438,48 @@ class AgilentE4407B(Instrument):
     # Mesurement commands
     # Fetch commands
     # Mass memory commands
+    catalog = Instrument.measurement(
+        ":MMEM:CAT? %g",
+        """A command that returns the list of mass memory files in specified drive.""",
+        validator=strict_discrete_set,
+        values=["A:", "C:"],
+    )
+    def copy_file(self, source, destination):
+        """
+        A command that copies a file to another.
+        """
+        self.write(":MMEM:COPY %s,%s" % (source, destination))
+    
+    def send_file(self, filename, data_block):
+        """
+        A command that sends a file to the instrument.
+        """
+        self.write(f":MMEM:DATA {filename},{data_block}")
+    
+    recive_file = Instrument.measurement( 
+        ":MMEM:DATA? %g",
+        """A command that returns the contents of a file.""",
+    )
+    delet_file = Instrument.setting(
+        ":MMEM:DEL %g",
+        """A command that deletes a file from the mass memory.""",
+    )
+
+
+    save_screen = Instrument.setting(
+        ":MMEM:STOR:SCR %g",
+        """Save the current screen to the specified mass memory. eg C:myscreen.gif""",
+        )
+
+    def get_screen(self):
+        """
+        A command that returns the contents of the screen.
+        """
+        self.save_screen("C:tempScreen.gif")
+        data = self.recive_file("C:tempScreen.gif")
+        self.delet_file("C:tempScreen.gif")
+        return data
+        
 
     # Format commands
     byte_order = Instrument.control(
@@ -448,8 +531,73 @@ class AgilentE4407B(Instrument):
         destination = strict_discrete_set(destination, [1, 2, 3])
         self.write(f":COPY:TRAC TRACE{source},TRACE{destination}")
 
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(resourceName, "Agilent E4407B Spectrum Analyzer", **kwargs)
+    # def transfer_trace(self, destination, trace_data):
+    #     """Transfer a trace from the controller to the instrument."""
+
+    #     destination = strict_discrete_set(destination, [1,2 , 3,])
+        
+    #     self.write(f":TRAC TRACE{source})
+
+    def get_trace(self, trace):
+        """Get a trace from the instrument."""
+        trace = strict_discrete_set(trace, [1, 2, 3])
+        return self.ask(f":TRAC? TRACE{trace}")
+    
+    get_raw_trace = Instrument.measurement(
+        ":TRAC? rawtrace",
+        """Get raw trace from the instrument.""",
+    )
+    peaks = Instrument.measurement(
+        ":TRAC:MATH:PEAK?",
+        """Get peaks from the instrument.""",
+    )
+    peaks_number = Instrument.measurement(
+        ":TRAC:MATH:PEAK:POIN?",
+        """Get the number of peaks from the instrument.""",
+    )
+    peak_sorting = Instrument.control(
+        ":TRAC:MATH:PEAK:SORT?",
+        ":TRAC:MATH:PEAK:SORT %g",
+        """ determine werther to sort peaks by frequency or amplitude"""
+        validator=strict_discrete_set,
+        values=["FREQ", "AMPL"],
+    )
+    peak_threshold = Instrument.control(
+        ":TRAC:MATH:PEAK:THRES?",
+        ":TRAC:MATH:PEAK:THRES %g",
+        """ determine werther to sort peaks by frequency or amplitude"""
+        validator=strict_discrete_set,
+        values=["FREQ", "AMPL"],
+    )
+    peak_width = Instrument.control(
+        ":TRAC:MATH:PEAK:WID?",
+        ":TRAC:MATH:PEAK:WID %g",
+        """ determine werther to sort peaks by frequency or amplitude"""
+        validator=strict_discrete_set,
+        values=["FREQ", "AMPL"],
+    )
+    peak_width_units = Instrument.control(
+        ":TRAC:MATH:PEAK:WID:UNIT?",
+        ":TRAC:MATH:PEAK:WID:UNIT %g",
+        """ determine werther to sort peaks by frequency or amplitude"""
+        validator=strict_discrete_set,
+        values=["POINTS", "SECONDS"],
+    )
+    peak_width_type = Instrument.control(
+        ":TRAC:MATH:PEAK:WID:TYPE?",
+        ":TRAC:MATH:PEAK:WID:TYPE %g",
+        """ determine werther to sort peaks by frequency or amplitude"""
+        validator=strict_discrete_set,
+        values=["PEAK", "RMS"],
+    )
+    peak_width_type = Instrument.control (
+        ":TRAC:MATH:PEAK:WID:TYPE?",
+        ":TRAC:MATH:PEAK:WID:TYPE %g",
+        """ determine werther to sort peaks by frequency or amplitude""",
+        validator=strict_discrete_set,
+        values=["PEAK", "RMS"],
+    )
+    
 
     @property
     def frequencies(self):
