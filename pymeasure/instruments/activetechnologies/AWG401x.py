@@ -666,13 +666,12 @@ class AWG401x_AWG(AWG401x_base):
         Clock."""
     )
 
-    _run_state_dict = {0: "STOPPED", 1: "WAITING_TRIGGER", 2: "RUNNING"}
-
     run_status = Instrument.measurement(
         "AWGControl:RSTATe?",
         """This property returns the run state of the AWG. The possible values
         are: STOPPED, WAITING_TRIGGER, RUNNING""",
-        get_process=lambda v: AWG401x_AWG._run_state_dict[v]
+        values={"STOPPED": 0, "WAITING_TRIGGER": 1, "RUNNING": 2},
+        map_values=True
     )
 
     enabled = Instrument.control(
