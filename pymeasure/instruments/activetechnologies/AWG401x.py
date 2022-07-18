@@ -33,8 +33,6 @@ import numpy as np
 
 import pprint
 
-from pymeasure.adapters.visa import VISAAdapter
-
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
@@ -391,15 +389,9 @@ class AWG401x_base(Instrument):
 
     def __init__(self, adapter, **kwargs):
 
-        try:
-            if isinstance(adapter, (int, str)):
-                adapter = VISAAdapter(adapter, **kwargs)
-                # Insert an higher timeout because often, when starting the
-                # instrument, can pass some time
-                adapter.connection.timeout = 7500
-        except ImportError:
-            raise Exception("Invalid Adapter provided for Instrument since "
-                            "PyVISA is not present")
+        # Insert an higher timeout because, often, when starting the
+        # instrument, can pass some time and the adapted goes in timeout
+        kwargs.setdefault('timeout', 7500)
 
         super().__init__(
             adapter,
@@ -495,7 +487,7 @@ class AWG401x_AFG(AWG401x_base):
     )
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(adapter)
+        super().__init__(adapter, **kwargs)
 
         model = self.id.split(",")[1]
         if model == "AWG4012":
@@ -712,7 +704,7 @@ class AWG401x_AWG(AWG401x_base):
         values, delete them or create new waveforms""")
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(adapter)
+        super().__init__(adapter, **kwargs)
 
         self.setting_ch = {}
         for i in range(1, self.num_ch+1):
