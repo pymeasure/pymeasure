@@ -40,7 +40,7 @@ from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
 
 
-class Channel_base(Instrument):
+class ChannelBase(Instrument):
     """Implementation of a base Active Technologies AWG-4000 channel."""
 
     enabled = Instrument.control(
@@ -104,7 +104,7 @@ class Channel_base(Instrument):
                                               str(self.channel_number)))
 
 
-class Channel_AFG(Channel_base):
+class ChannelAFG(ChannelBase):
     """Implementation of a Active Technologies AWG-4000 channel in AFG mode."""
 
     load_impedance = Instrument.control(
@@ -357,7 +357,7 @@ class Channel_AFG(Channel_base):
             [self.baseline_offset_min, self.baseline_offset_max]))
 
 
-class Channel_AWG(Channel_base):
+class ChannelAWG(ChannelBase):
     """Implementation of a Active Technologies AWG-4000 channel in AWG mode."""
 
     # Default delay override
@@ -450,7 +450,7 @@ class AWG401x_base(Instrument):
         else:
             raise ValueError("position value outside permitted range [0,4]")
 
-    def waitLast(self):
+    def wait_last(self):
         """Wait for last operation completition"""
 
         self.write("*WAI")
@@ -510,7 +510,7 @@ class AWG401x_AFG(AWG401x_base):
 
         self.ch = {}
         for i in range(1, num_ch+1):
-            self.ch[i] = Channel_AFG(self, i)
+            self.ch[i] = ChannelAFG(self, i)
 
 
 class AWG401x_AWG(AWG401x_base):
@@ -716,7 +716,7 @@ class AWG401x_AWG(AWG401x_base):
 
         self.setting_ch = {}
         for i in range(1, self.num_ch+1):
-            self.setting_ch[i] = Channel_AWG(self, i)
+            self.setting_ch[i] = ChannelAWG(self, i)
 
         self.entries = self.DummyEntriesElements(self, self.num_ch)
         # self.sequencer = Sequencer(self, self.num_ch)
@@ -734,45 +734,45 @@ class AWG401x_AWG(AWG401x_base):
         """Force a trigger event to occour."""
         self.write("TRIGger:SEQuence:IMMediate")
 
-    def saveFile(self,
-                 fileName: str,
-                 data,
-                 path: str = None,
-                 overrideExisting=False):
+    def save_file(self,
+                  file_name: str,
+                  data,
+                  path: str = None,
+                  override_existing=False):
         """Write a string in a file in the instrument"""
 
         if path is not None:
             raise NotImplementedError("Specify path is not implemented")
 
-        if fileName in [file.name
-                        for file in self.listFiles(path=path)
-                        if file.type == '']:
-            if overrideExisting:
-                self.removeFile(fileName, path=path)
+        if file_name in [file.name
+                         for file in self.list_files(path=path)
+                         if file.type == '']:
+            if override_existing:
+                self.remove_file(file_name, path=path)
             else:
                 raise ValueError("File already exist and override is disabled")
 
-        self.write('MMEM:DATA "' + fileName + '", 0, ' +
+        self.write('MMEM:DATA "' + file_name + '", 0, ' +
                    IEEE488DataBlock.encode(data))
 
         # HACK: Send an unuseful command to ensure the last command was
         # executed because if it is more than 1024 bytes it doesn't work
-        self.waitLast()
+        self.wait_last()
 
-    def removeFile(self, fileName: str, path: str = None):
+    def remove_file(self, file_name: str, path: str = None):
         """Remove a specified file"""
 
         if path is not None:
             raise NotImplementedError("Specify path is not implemented")
 
-        if fileName not in [file.name
-                            for file in self.listFiles(path=path)
-                            if file.type == '']:
+        if file_name not in [file.name
+                             for file in self.list_files(path=path)
+                             if file.type == '']:
             raise ValueError("File do not exist")
 
-        self.write('MMEMORY:DELETE "' + fileName + '"')
+        self.write('MMEMORY:DELETE "' + file_name + '"')
 
-    def listFiles(self, path: str = None):
+    def list_files(self, path: str = None):
         """Return a List of tuples with all file found in a directory. If the
         path is not specified the current directory will be used"""
 
@@ -803,7 +803,7 @@ class AWG401x_AWG(AWG401x_base):
         def __getitem__(self, key):
             """Load data from instrument if not present"""
             if self._data[key] is None:
-                self._data[key] = self._getWaveform(key)
+                self._data[key] = self._get_waveform(key)
             return self._data[key]
 
         def __setitem__(self, key, value):
@@ -829,9 +829,9 @@ class AWG401x_AWG(AWG401x_base):
                     f"which is "
                     f"{self.instrument.entries[1].ch[1].voltage_low_min}V")
 
-            self.instrument.saveFile(f"{key}.txt",
-                                     "\n".join(map(str, value)),
-                                     overrideExisting=True)
+            self.instrument.save_file(f"{key}.txt",
+                                      "\n".join(map(str, value)),
+                                      override_existing=True)
 
             try:
                 del self[key]
@@ -841,9 +841,9 @@ class AWG401x_AWG(AWG401x_base):
             self.instrument.write(f'WLISt:WAVeform:IMPort "{key}",'
                                   f'"{key}.txt",ANAlog')
 
-            self.instrument.waitLast()
+            self.instrument.wait_last()
 
-            self.instrument.removeFile(f"{key}.txt")
+            self.instrument.remove_file(f"{key}.txt")
 
             self._data[key] = None
             return
@@ -872,13 +872,13 @@ class AWG401x_AWG(AWG401x_base):
 
         def reset(self):
             """Reset the class reloading the waveforms from instrument"""
-            waveformsName = self.instrument.values("WLISt:LIST?")
-            self._data = {v: None for v in waveformsName}
+            waveforms_name = self.instrument.values("WLISt:LIST?")
+            self._data = {v: None for v in waveforms_name}
 
-        def _getWaveform(self, waveformName):
+        def _get_waveform(self, waveform_name):
             """Get the waveform point of a specified waveform"""
             bin_value = self.instrument.binary_values(
-                'WLISt:WAVeform:DATA? "' + waveformName + '"',
+                'WLISt:WAVeform:DATA? "' + waveform_name + '"',
                 dtype=np.byte)
 
             bin_wave = IEEE488DataBlock.decode(bin_value)
@@ -1117,8 +1117,8 @@ class IEEE488DataBlock():
     def encode(data: str):
         """Encode a string to IEEE 488.2 block data format"""
 
-        numBytes = str(len(data))
-        data = f"#{len(numBytes)}{numBytes}" + data
+        num_bytes = str(len(data))
+        data = f"#{len(num_bytes)}{num_bytes}" + data
         return data
 
     @staticmethod
@@ -1126,20 +1126,20 @@ class IEEE488DataBlock():
         """Decode a string to IEEE 488.2 block data format"""
 
         if data[0] == '#':
-            lengthData = 0
+            length_data = 0
             for i in range(2, 2 + int(data[1])):
-                lengthData *= 10
-                lengthData += int(data[i])
+                length_data *= 10
+                length_data += int(data[i])
         if chr(data[0]) == '#':
-            lengthData = 0
+            length_data = 0
             for i in range(2, 2 + int(chr(data[1]))):
-                lengthData *= 10
-                lengthData += int(chr(data[i]))
+                length_data *= 10
+                length_data += int(chr(data[i]))
         else:
             raise ValueError(f"Expected # but found {data[0]}")
 
-        if len(data) != 1+1+len(str(lengthData))+lengthData:
-            print(1+1+len(str(lengthData))+lengthData)
+        if len(data) != 1+1+len(str(length_data))+length_data:
+            print(1+1+len(str(length_data))+length_data)
             raise ValueError("Expected data length mismatch")
 
-        return data[1 + 1 + len(str(lengthData)):]
+        return data[1 + 1 + len(str(length_data)):]
