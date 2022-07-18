@@ -37,6 +37,8 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
 
+from pyvisa.util import from_ieee_block, to_ieee_block
+
 
 class ChannelBase(Instrument):
     """Implementation of a base Active Technologies AWG-4000 channel."""
@@ -744,7 +746,9 @@ class AWG401x_AWG(AWG401x_base):
                 raise ValueError("File already exist and override is disabled")
 
         self.write('MMEM:DATA "' + file_name + '", 0, ' +
-                   IEEE488DataBlock.encode(data))
+                   to_ieee_block(
+                       data.encode("ASCII"),
+                       datatype="s").decode("ASCII"))
 
         # HACK: Send an unuseful command to ensure the last command was
         # executed because if it is more than 1024 bytes it doesn't work
@@ -872,8 +876,10 @@ class AWG401x_AWG(AWG401x_base):
                 'WLISt:WAVeform:DATA? "' + waveform_name + '"',
                 dtype=np.byte)
 
-            bin_wave = IEEE488DataBlock.decode(bin_value)
-            return list(np.frombuffer(bin_wave, dtype='int16'))
+            bin_wave = from_ieee_block(bin_value.tobytes(), datatype="s")
+            return list(np.frombuffer(
+                np.array(bin_wave, dtype=np.byte),
+                dtype='int16'))
 
     class DummyEntriesElements(abc.Sequence):
         """Dummy List Class to list every sequencer entry. The content is
@@ -1098,39 +1104,3 @@ class SequenceEntry(Instrument):
             self.voltage_low_values = list(map(
                 float,
                 [self.voltage_low_max, self.voltage_low_min]))
-
-
-class IEEE488DataBlock():
-    """Class with only static methods used to encode and decode IEEE 488.2
-    Data Block"""
-
-    @staticmethod
-    def encode(data: str):
-        """Encode a string to IEEE 488.2 block data format"""
-
-        num_bytes = str(len(data))
-        data = f"#{len(num_bytes)}{num_bytes}" + data
-        return data
-
-    @staticmethod
-    def decode(data):
-        """Decode a string to IEEE 488.2 block data format"""
-
-        if data[0] == '#':
-            length_data = 0
-            for i in range(2, 2 + int(data[1])):
-                length_data *= 10
-                length_data += int(data[i])
-        if chr(data[0]) == '#':
-            length_data = 0
-            for i in range(2, 2 + int(chr(data[1]))):
-                length_data *= 10
-                length_data += int(chr(data[i]))
-        else:
-            raise ValueError(f"Expected # but found {data[0]}")
-
-        if len(data) != 1+1+len(str(length_data))+length_data:
-            print(1+1+len(str(length_data))+length_data)
-            raise ValueError("Expected data length mismatch")
-
-        return data[1 + 1 + len(str(length_data)):]
