@@ -88,14 +88,14 @@ class M7006_001(Instrument):
         validator=strict_discrete_set,
     )
 
-    rotate = Instrument.setting(
+    rotation = Instrument.setting(
         "%g",
         """Rotate the device in the given direction. CW or CCW.""",
         values=("CW", "CCW"),
         validator=strict_discrete_set,
     )
 
-    move = Instrument.setting(
+    movement = Instrument.setting(
         "%g",
         """Move the tower up or down.""",
         values={"up": "UP", "down": "DN"},
@@ -127,26 +127,26 @@ class M7006_001(Instrument):
         """Direction of the device. Returns either -1,0 , or 1.""",
     )
 
-    seek_position = Instrument.setting(
+    target_position = Instrument.setting(
         "SK %g",
         """Move the device to the given position, by the shortest distance.""",
     )
 
-    seek_negative_positon = Instrument.setting(
+    target_negative_positon = Instrument.setting(
         "SKN %g",
         """Moves the device to the given position, in the down or
         counter clockwise direction.
         """,
     )
 
-    seek_positive_position = Instrument.setting(
+    target_positive_position = Instrument.setting(
         "SKP %g",
         """Moves the device to the given position, in the up or
         clockwise direction.
         """,
     )
 
-    seek_relative_postion = Instrument.setting(
+    target_relative_postion = Instrument.setting(
         "SKR %g",
         """Moves the device to the given position relative to the current
         position.
