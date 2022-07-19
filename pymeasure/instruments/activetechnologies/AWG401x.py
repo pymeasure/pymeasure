@@ -160,13 +160,15 @@ class ChannelAFG(ChannelBase):
     frequency_max = Instrument.measurement(
         "SOURce<ch>:FREQuency? MAXimum",
         """This property queries the maximum frequency that can be set to the
-        output waveform."""
+        output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     frequency_min = Instrument.measurement(
         "SOURce<ch>:FREQuency? MINimum",
         """This property queries the minimum frequency that can be set to the
-        output waveform."""
+        output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     phase = Instrument.control(
@@ -180,13 +182,15 @@ class ChannelAFG(ChannelBase):
     phase_max = Instrument.measurement(
         "SOURce<ch>:PHASe:ADJust? MAXimum",
         """This property queries the maximum phase that can be set to the
-        output waveform."""
+        output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     phase_min = Instrument.measurement(
         "SOURce<ch>:PHASe:ADJust? MINimum",
         """This property queries the minimum phase that can be set to the
-        output waveform."""
+        output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     voltage_unit = Instrument.control(
@@ -212,13 +216,15 @@ class ChannelAFG(ChannelBase):
     voltage_low_max = Instrument.measurement(
         "SOURce<ch>:VOLTage:LEVel:IMMediate:LOW? MAXimum",
         """This property queries the maximum low voltage level that can be set
-        to the output waveform."""
+        to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     voltage_low_min = Instrument.measurement(
         "SOURce<ch>:VOLTage:LEVel:IMMediate:LOW? MINimum",
         """This property queries the minimum low voltage level that can be set
-        to the output waveform."""
+        to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     voltage_high = Instrument.control(
@@ -235,13 +241,15 @@ class ChannelAFG(ChannelBase):
     voltage_high_max = Instrument.measurement(
         "SOURce<ch>:VOLTage:LEVel:IMMediate:HIGH? MAXimum",
         """This property queries the maximum high voltage level that can be set
-        to the output waveform."""
+        to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     voltage_high_min = Instrument.measurement(
         "SOURce<ch>:VOLTage:LEVel:IMMediate:HIGH? MINimum",
         """This property queries the minimum high voltage level that can be set
-        to the output waveform."""
+        to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     voltage_amplitude = Instrument.control(
@@ -262,14 +270,14 @@ class ChannelAFG(ChannelBase):
         "SOURce<ch>:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum",
         """This property queries the maximum amplitude voltage level that can
         be set to the output waveform.""",
-        get_process=lambda value: value.replace("VPP", "")
+        get_process=lambda value: float(value.replace("VPP", ""))
     )
 
     voltage_amplitude_min = Instrument.measurement(
         "SOURce<ch>:VOLTage:LEVel:IMMediate:AMPLitude? MINimum",
         """This property queries the minimum amplitude voltage level that can
         be set to the output waveform.""",
-        get_process=lambda value: value.replace("VPP", "")
+        get_process=lambda value: float(value.replace("VPP", ""))
     )
 
     voltage_offset = Instrument.control(
@@ -285,13 +293,15 @@ class ChannelAFG(ChannelBase):
     voltage_offset_max = Instrument.measurement(
         "SOURce<ch>:VOLTage:LEVel:IMMediate:OFFSet? MAXimum",
         """This property queries the maximum offset voltage level that can be
-        set to the output waveform."""
+        set to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     voltage_offset_min = Instrument.measurement(
         "SOURce<ch>:VOLTage:LEVel:IMMediate:OFFSet? MINimum",
         """This property queries the minimum offset voltage level that can be
-        set to the output waveform."""
+        set to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     baseline_offset = Instrument.control(
@@ -307,50 +317,40 @@ class ChannelAFG(ChannelBase):
     baseline_offset_max = Instrument.measurement(
         "SOURce<ch>:VOLTage:BASELINE:OFFSET? MAXimum",
         """This property queries the maximum offset voltage level that can be
-        set to the output waveform."""
+        set to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     baseline_offset_min = Instrument.measurement(
         "SOURce<ch>:VOLTage:BASELINE:OFFSET? MINimum",
         """This property queries the minimum offset voltage level that can be
-        set to the output waveform."""
+        set to the output waveform.""",
+        get_process=lambda v: float(v)
     )
 
     def __init__(self, instrument, channel_number):
         super().__init__(instrument, channel_number)
 
         self.calculate_voltage_range()
-        self.delay_values = [
-            list(map(float, [self.delay_min, self.delay_max])),
-            0]
-        self.frequency_values = list(map(
-            float,
-            [self.frequency_min, self.frequency_max]))
+        self.delay_values = [self.delay_min, self.delay_max]
+        self.frequency_values = [self.frequency_min, self.frequency_max]
 
-        self.phase_values = list(map(
-            float,
-            [self.phase_min, self.phase_max]))
+        self.phase_values = [self.phase_min, self.phase_max]
 
     def calculate_voltage_range(self):
-        self.voltage_low_values = list(map(
-            float,
-            [self.voltage_low_min, self.voltage_low_max]))
+        self.voltage_low_values = [self.voltage_low_min, self.voltage_low_max]
 
-        self.voltage_high_values = list(map(
-            float,
-            [self.voltage_high_min, self.voltage_high_max]))
+        self.voltage_high_values = [self.voltage_high_min,
+                                    self.voltage_high_max]
 
-        self.voltage_amplitude_values = list(map(
-                float,
-                [self.voltage_amplitude_max, self.voltage_amplitude_min]))
+        self.voltage_amplitude_values = [self.voltage_amplitude_max,
+                                         self.voltage_amplitude_min]
 
-        self.voltage_offset_values = list(map(
-                float,
-                [self.voltage_offset_max, self.voltage_offset_min]))
+        self.voltage_offset_values = [self.voltage_offset_max,
+                                      self.voltage_offset_min]
 
-        self.baseline_offset_values = list(map(
-            float,
-            [self.baseline_offset_min, self.baseline_offset_max]))
+        self.baseline_offset_values = [self.baseline_offset_min,
+                                       self.baseline_offset_max]
 
 
 class ChannelAWG(ChannelBase):
@@ -377,9 +377,6 @@ class ChannelAWG(ChannelBase):
 
     def __init__(self, instrument, channel_number):
         super().__init__(instrument, channel_number)
-        self.delay_values = [
-            list(map(float, [self.delay_min, self.delay_max])),
-            ]
 
 
 class AWG401x_base(Instrument):
@@ -635,12 +632,14 @@ class AWG401x_AWG(AWG401x_base):
 
     burst_count_max = Instrument.measurement(
         "AWGControl:BURST? MAXimum",
-        """This property queries the maximum burst count parameter."""
+        """This property queries the maximum burst count parameter.""",
+        get_process=lambda v: int(v)
     )
 
     burst_count_min = Instrument.measurement(
         "AWGControl:BURST? MINimum",
-        """This property queries the minimum burst count parameter."""
+        """This property queries the minimum burst count parameter.""",
+        get_process=lambda v: int(v)
     )
 
     sampling_rate = Instrument.control(
@@ -655,13 +654,15 @@ class AWG401x_AWG(AWG401x_base):
     sampling_rate_max = Instrument.measurement(
         "AWGControl:SRATe? MAXimum",
         """This property queries the maximum sample rate for the Sampling
-        Clock."""
+        Clock.""",
+        get_process=lambda v: float(v)
     )
 
     sampling_rate_min = Instrument.measurement(
         "AWGControl:SRATe? MINimum",
         """This property queries the minimum sample rate for the Sampling
-        Clock."""
+        Clock.""",
+        get_process=lambda v: float(v)
     )
 
     run_status = Instrument.measurement(
@@ -708,13 +709,10 @@ class AWG401x_AWG(AWG401x_base):
             self.setting_ch[i] = ChannelAWG(self, i)
 
         self.entries = self.DummyEntriesElements(self, self.num_ch)
-        self.burst_count_values = list(map(
-            int,
-            [self.burst_count_min, self.burst_count_max]))
+        self.burst_count_values = [self.burst_count_min, self.burst_count_max]
 
-        self.sampling_rate_values = list(map(
-            float,
-            [self.sampling_rate_min, self.sampling_rate_max]))
+        self.sampling_rate_values = [self.sampling_rate_min,
+                                     self.sampling_rate_max]
 
         self._waveforms = self.WaveformsLazyDict(self)
 
@@ -910,12 +908,14 @@ class SequenceEntry(Instrument):
 
     length_max = Instrument.measurement(
         "SEQuence:ELEM<ent>:LENGth? MAXimum",
-        """This property queries the maximum entry samples length."""
+        """This property queries the maximum entry samples length.""",
+        get_process=lambda v: int(v)
     )
 
     length_min = Instrument.measurement(
         "SEQuence:ELEM<ent>:LENGth? MINimum",
-        """This property queries the minimum entry samples length."""
+        """This property queries the minimum entry samples length.""",
+        get_process=lambda v: int(v)
     )
 
     loop_count = Instrument.control(
@@ -931,13 +931,15 @@ class SequenceEntry(Instrument):
     loop_count_max = Instrument.measurement(
         "SEQuence:ELEM<ent>:LOOP:COUNt? MAXimum",
         """This property queries the maximum number of waveform repetitions for
-        the entry."""
+        the entry.""",
+        get_process=lambda v: int(v)
     )
 
     loop_count_min = Instrument.measurement(
         "SEQuence:ELEM<ent>:LOOP:COUNt? MINimum",
         """This property queries the minimum number of waveform repetitions for
-        the entry."""
+        the entry.""",
+        get_process=lambda v: int(v)
     )
 
     def __init__(self, instrument, number_of_channels, sequence_number):
@@ -947,10 +949,8 @@ class SequenceEntry(Instrument):
 
         self._special_names = self._setup_special_names()
 
-        self.length_values = list(map(int, [self.length_min, self.length_max]))
-        self.loop_count_values = list(map(
-            int,
-            [self.loop_count_min, self.loop_count_max]))
+        self.length_values = [self.length_min, self.length_max]
+        self.loop_count_values = [self.loop_count_min, self.loop_count_max]
 
         self.ch = {}
         for i in range(1, self.number_of_channels+1):
@@ -978,13 +978,15 @@ class SequenceEntry(Instrument):
         voltage_amplitude_max = Instrument.measurement(
             "SEQuence:ELEM<ent>:AMPlitude<ch>? MAXimum",
             """This property queries the maximum amplitude voltage level that
-            can be set."""
+            can be set.""",
+            get_process=lambda v: float(v)
         )
 
         voltage_amplitude_min = Instrument.measurement(
             "SEQuence:ELEM<ent>:AMPlitude<ch>? MINimum",
             """This property queries the minimum amplitude voltage level that
-            can be set."""
+            can be set.""",
+            get_process=lambda v: float(v)
         )
 
         voltage_offset = Instrument.control(
@@ -998,13 +1000,15 @@ class SequenceEntry(Instrument):
         voltage_offset_max = Instrument.measurement(
             "SEQuence:ELEM<ent>:OFFset<ch>? MAXimum",
             """This property queries the maximum voltage offset that can be
-            set."""
+            set.""",
+            get_process=lambda v: float(v)
         )
 
         voltage_offset_min = Instrument.measurement(
             "SEQuence:ELEM<ent>:OFFset<ch>? MINimum",
             """This property queries the minimum voltage offset that can be
-            set."""
+            set.""",
+            get_process=lambda v: float(v)
         )
 
         voltage_high = Instrument.control(
@@ -1019,13 +1023,15 @@ class SequenceEntry(Instrument):
         voltage_high_max = Instrument.measurement(
             "SEQuence:ELEM<ent>:VOLTage:HIGH<ch>? MAXimum",
             """This property queries the maximum high voltage level of the
-            waveform that can be set to the output waveform."""
+            waveform that can be set to the output waveform.""",
+            get_process=lambda v: float(v)
         )
 
         voltage_high_min = Instrument.measurement(
             "SEQuence:ELEM<ent>:VOLTage:HIGH<ch>? MINimum",
             """This property queries the minimum high voltage level of the
-            waveform that can be set to the output waveform."""
+            waveform that can be set to the output waveform.""",
+            get_process=lambda v: float(v)
         )
 
         voltage_low = Instrument.control(
@@ -1040,13 +1046,15 @@ class SequenceEntry(Instrument):
         voltage_low_max = Instrument.measurement(
             "SEQuence:ELEM<ent>:VOLTage:LOW<ch>? MAXimum",
             """This property queries the maximum low voltage level of the
-            waveform that can be set to the output waveform."""
+            waveform that can be set to the output waveform.""",
+            get_process=lambda v: float(v)
         )
 
         voltage_low_min = Instrument.measurement(
             "SEQuence:ELEM<ent>:VOLTage:LOW<ch>? MINimum",
             """This property queries the minimum low voltage level of the
-            waveform that can be set to the output waveform."""
+            waveform that can be set to the output waveform.""",
+            get_process=lambda v: float(v)
         )
 
         waveform = Instrument.control(
@@ -1083,18 +1091,14 @@ class SequenceEntry(Instrument):
             self.instrument.write(command)
 
         def calculate_voltage_range(self):
-            self.voltage_amplitude_values = list(map(
-                float,
-                [self.voltage_amplitude_max, self.voltage_amplitude_min]))
+            self.voltage_amplitude_values = [self.voltage_amplitude_max,
+                                             self.voltage_amplitude_min]
 
-            self.voltage_offset_values = list(map(
-                float,
-                [self.voltage_offset_max, self.voltage_offset_min]))
+            self.voltage_offset_values = [self.voltage_offset_max,
+                                          self.voltage_offset_min]
 
-            self.voltage_high_values = list(map(
-                float,
-                [self.voltage_high_max, self.voltage_high_min]))
+            self.voltage_high_values = [self.voltage_high_max,
+                                        self.voltage_high_min]
 
-            self.voltage_low_values = list(map(
-                float,
-                [self.voltage_low_max, self.voltage_low_min]))
+            self.voltage_low_values = [self.voltage_low_max,
+                                       self.voltage_low_min]
