@@ -721,9 +721,9 @@ class AWG401x_AWG(AWG401x_base):
         self.write("TRIGger:SEQuence:IMMediate")
 
     def save_file(self,
-                  file_name: str,
+                  file_name,
                   data,
-                  path: str = None,
+                  path=None,
                   override_existing=False):
         """Write a string in a file in the instrument"""
 
@@ -747,7 +747,7 @@ class AWG401x_AWG(AWG401x_base):
         # executed because if it is more than 1024 bytes it doesn't work
         self.wait_last()
 
-    def remove_file(self, file_name: str, path: str = None):
+    def remove_file(self, file_name, path=None):
         """Remove a specified file"""
 
         if path is not None:
@@ -760,7 +760,7 @@ class AWG401x_AWG(AWG401x_base):
 
         self.write('MMEMORY:DELETE "' + file_name + '"')
 
-    def list_files(self, path: str = None):
+    def list_files(self, path=None):
         """Return a List of tuples with all file found in a directory. If the
         path is not specified the current directory will be used"""
 
