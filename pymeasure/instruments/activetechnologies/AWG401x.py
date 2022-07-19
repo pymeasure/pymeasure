@@ -712,7 +712,6 @@ class AWG401x_AWG(AWG401x_base):
             self.setting_ch[i] = ChannelAWG(self, i)
 
         self.entries = self.DummyEntriesElements(self, self.num_ch)
-        # self.sequencer = Sequencer(self, self.num_ch)
         self.burst_count_values = list(map(
             int,
             [self.burst_count_min, self.burst_count_max]))
