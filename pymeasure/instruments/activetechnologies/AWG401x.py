@@ -29,15 +29,11 @@ documentation available on https://www.activetechnologies.it"""
 
 from collections import abc, namedtuple
 
-import numpy as np
-
 import pprint
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
-
-from pyvisa.util import from_ieee_block, to_ieee_block
 
 
 class ChannelBase(Instrument):
@@ -744,10 +740,10 @@ class AWG401x_AWG(AWG401x_base):
             else:
                 raise ValueError("File already exist and override is disabled")
 
-        self.write('MMEM:DATA "' + file_name + '", 0, ' +
-                   to_ieee_block(
-                       data.encode("ASCII"),
-                       datatype="s").decode("ASCII"))
+        self.adapter.write_binary_values(
+            'MMEM:DATA "' + file_name + '", 0, ',
+            data.encode("ASCII"),
+            datatype='s')
 
         # HACK: Send an unuseful command to ensure the last command was
         # executed because if it is more than 1024 bytes it doesn't work
@@ -871,14 +867,13 @@ class AWG401x_AWG(AWG401x_base):
 
         def _get_waveform(self, waveform_name):
             """Get the waveform point of a specified waveform"""
-            bin_value = self.instrument.binary_values(
-                'WLISt:WAVeform:DATA? "' + waveform_name + '"',
-                dtype=np.byte)
 
-            bin_wave = from_ieee_block(bin_value.tobytes(), datatype="s")
-            return list(np.frombuffer(
-                np.array(bin_wave, dtype=np.byte),
-                dtype='int16'))
+            bin_value = self.instrument.adapter.connection.query_binary_values(
+                'WLISt:WAVeform:DATA? "' + waveform_name + '"',
+                header_fmt='ieee',
+                datatype='h')
+
+            return bin_value
 
     class DummyEntriesElements(abc.Sequence):
         """Dummy List Class to list every sequencer entry. The content is
