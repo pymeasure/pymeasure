@@ -356,7 +356,7 @@ class AgilentE4407B(Instrument):
     )
 
     options = Instrument.measurement(
-        "SYS:OPT?"
+        "SYS:OPT?",
         """A string property that returns the options of the instrument.
         """,
     )
