@@ -168,7 +168,7 @@ class HP3478A(HPLegacyInstrument):
         Syntax_error = 4
         Data_ready = 1
 
-    @staticmethod
+    # @staticmethod
     def decode_mode(self, function):
         """Method to decode current mode
 
@@ -180,7 +180,7 @@ class HP3478A(HPLegacyInstrument):
         cur_mode = self.INV_MODES["F" + str(function)]
         return cur_mode
 
-    @staticmethod
+    # @staticmethod
     def decode_range(self, range_undecoded, function):
         """Method to decode current range
 
@@ -200,7 +200,7 @@ class HP3478A(HPLegacyInstrument):
         cur_range = 3 * math.pow(10, range_undecoded - correction_factor)
         return cur_range
 
-    @staticmethod
+    # @staticmethod
     def decode_trigger(self, status_bytes):
         """Method to decode trigger mode
 
@@ -403,7 +403,7 @@ class HP3478A(HPLegacyInstrument):
         Rext  extended resistance method (requires additional 10 M resistor)
         ====  ==============================================================
         """
-        current_mode = self.decode_mode(self, self.status.function)
+        current_mode = self.decode_mode(self.status.function)
         return current_mode
 
     @mode.setter
@@ -430,7 +430,7 @@ class HP3478A(HPLegacyInstrument):
         ====  =======================================
 
         """
-        current_range = self.decode_range(self, self.status.range, self.status.function)
+        current_range = self.decode_range(self.status.range, self.status.function)
         return current_range
 
     @range.setter
@@ -471,7 +471,7 @@ class HP3478A(HPLegacyInstrument):
         =========  ==========================
 
         """
-        mask = self.decode_status(self, self.fetch_status(), "SRQ")
+        mask = self.decode_status(self.fetch_status(), "SRQ")
         return mask
 
     @SRQ_mask.setter
@@ -495,7 +495,7 @@ class HP3478A(HPLegacyInstrument):
         ========  ===========================================
 
         """
-        return self.decode_trigger(self, self.fetch_status())
+        return self.decode_trigger(self.fetch_status())
 
     @trigger.setter
     def trigger(self, value):

@@ -261,7 +261,7 @@ class HP6632A(Instrument):
         return current_status
 
     @staticmethod
-    def decode_status(self, status_bytes, field=None):
+    def decode_status(status_bytes, field=None):
         """Method to handle the decoding of the status bytes into something meaningfull
 
         :param status_bytes: list of bytes to be decoded

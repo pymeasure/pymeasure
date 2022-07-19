@@ -48,8 +48,6 @@ class HPLegacyInstrument(Instrument):
             **kwargs,
         )
 
-        self.name = name
-        self.adapter = adapter
         self.status_bytes_count = status_bytes
         self.status_bits = status_bitfield
         self.status_bytes = self.bytefield_factory(status_bytes)
@@ -77,7 +75,7 @@ class HPLegacyInstrument(Instrument):
         Returns an object representing the current status of the unit.
 
         """
-        current_status = self.decode_status(self, self.fetch_status())
+        current_status = self.decode_status(self.fetch_status())
         return current_status
 
     def fetch_status(self):
@@ -89,7 +87,6 @@ class HPLegacyInstrument(Instrument):
         current_status = self.adapter.read_bytes(self.status_bytes_count)
         return current_status
 
-    @staticmethod
     def decode_status(self, status_bytes, field=None):
         """Method to handle the decoding of the status bytes into something meaningfull
 
@@ -120,8 +117,8 @@ class HPLegacyInstrument(Instrument):
     # decoder functions
     # decimal to BCD & BCD to decimal conversion copied from
     # https://pymodbus.readthedocs.io/en/latest/source/example/bcd_payload.html
-    @classmethod
-    def _convert_to_bcd(cls, decimal):
+    @staticmethod
+    def _convert_to_bcd(decimal):
         """Converts a decimal value to a bcd value
 
         :param value: The decimal value to to pack into bcd
@@ -135,8 +132,8 @@ class HPLegacyInstrument(Instrument):
             place += 4
         return bcd
 
-    @classmethod
-    def _convert_from_bcd(cls, bcd):
+    @staticmethod
+    def _convert_from_bcd(bcd):
         """Converts a bcd value to a decimal value
 
         :param value: The value to unpack from bcd
@@ -151,7 +148,7 @@ class HPLegacyInstrument(Instrument):
             place *= 10
         return decimal
 
-    # facotry components
+    # factory components
     def bytefield_factory(self, n_bytes, type_of_entry=c_uint8):
         """
         create structure with n entries for the byte part of the structured unions

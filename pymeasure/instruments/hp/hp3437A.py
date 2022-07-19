@@ -148,7 +148,7 @@ class HP3437A(HPLegacyInstrument):
     """
 
     def __init__(self, resourceName, **kwargs):
-        super(HP3437A, self).__init__(
+        super().__init__(
             resourceName,
             "Hewlett-Packard HP3437A",
             status_bytes=STATUS_BYTES,
@@ -207,7 +207,6 @@ class HP3437A(HPLegacyInstrument):
             cur_range = 1.0
         return cur_range
 
-    @staticmethod
     def _decode_trigger(self, status_bytes):
         """Method to decode trigger mode
 
@@ -309,7 +308,7 @@ class HP3437A(HPLegacyInstrument):
         valid range: 100ns - 0.999999s
 
         """
-        return self.decode_status(self, self.fetch_status(), "Delay")
+        return self.decode_status(self.fetch_status(), "Delay")
 
     @delay.setter
     def delay(self, value):
@@ -325,7 +324,7 @@ class HP3437A(HPLegacyInstrument):
         valid range: 0 - 9999
 
         """
-        return self.decode_status(self, self.fetch_status(), "Number")
+        return self.decode_status(self.fetch_status(), "Number")
 
     @number_readings.setter
     def number_readings(self, value):
@@ -345,7 +344,7 @@ class HP3437A(HPLegacyInstrument):
             Overrange will be in indicated as 0.99,9.99 or 99.9
 
         """
-        return self._decode_range(self, self.fetch_status())
+        return self._decode_range(self.fetch_status())
 
     @range.setter
     def range(self, value):
@@ -369,7 +368,7 @@ class HP3437A(HPLegacyInstrument):
         =========  ==========================
 
         """
-        return self.decode_status(self, self.fetch_status(), "SRQ")
+        return self.decode_status( self.fetch_status(), "SRQ")
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
@@ -391,7 +390,7 @@ class HP3437A(HPLegacyInstrument):
         ===========  ===========================================
 
         """
-        return self._decode_trigger(self, self.fetch_status())
+        return self._decode_trigger(self.fetch_status())
 
     @trigger.setter
     def trigger(self, value):
