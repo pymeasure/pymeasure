@@ -49,7 +49,7 @@ class AgilentE4407B(Instrument):
     # frequency Setting commands
     start_frequency = Instrument.control(
         ":SENS:FREQ:STAR?",
-        ":SENS:FREQ:STAR %g Hz",
+        ":SENS:FREQ:STAR %g",
         """ A floating point property that represents the start frequency
         in Hz. This property can be set.
         """,
@@ -59,7 +59,7 @@ class AgilentE4407B(Instrument):
     )
     stop_frequency = Instrument.control(
         ":SENS:FREQ:STOP?",
-        ":SENS:FREQ:STOP %g Hz",
+        ":SENS:FREQ:STOP %g",
         """ A floating point property that represents the stop frequency
         in Hz. This property can be set.
         """,
@@ -70,14 +70,14 @@ class AgilentE4407B(Instrument):
 
     frequency_step = Instrument.control(
         ":SENS:FREQ:CENT:STEP:INCR?",
-        ":SENS:FREQ:CENT:STEP:INCR %g Hz",
+        ":SENS:FREQ:CENT:STEP:INCR %g",
         """ A floating point property that represents the frequency step
         in Hz. This property can be set.
         """,
     )
     center_frequency = Instrument.control(
         ":SENS:FREQ:CENT?",
-        ":SENS:FREQ:CENT %g Hz",
+        ":SENS:FREQ:CENT %g",
         """ A floating point property that represents the center frequency
         in Hz. This property can be set.
         """,
@@ -88,7 +88,7 @@ class AgilentE4407B(Instrument):
 
     span = Instrument.control(
         ":SENS:FREQ:SPAN?",
-        ":SENS:FREQ:SPAN %g Hz",
+        ":SENS:FREQ:SPAN %g",
         """ A floating point property that represents the span
         in Hz. This property can be set.
         """,
@@ -170,28 +170,28 @@ class AgilentE4407B(Instrument):
     # Sensor commands
     resolution_bandwidth = Instrument.control(
         ":SENS:BAND:RES?",
-        ":SENS:BAND:RES %g Hz",
+        ":SENS:BAND:RES %g",
         """ A floating point property that represents the resolution bandwidth
         in Hz. This property can be set.
         """,
     )
     video_bandwidth = Instrument.control(
         ":SENS:BAND:VID?",
-        ":SENS:BAND:VID %g Hz",
+        ":SENS:BAND:VID %g",
         """ A floating point property that represents the video bandwidth
         in Hz. This property can be set.
         """,
     )
     resolution_bandwidth_auto = Instrument.control(
         ":SENS:BAND:RES:AUTO?",
-        ":SENS:BAND:RES:AUTO %d",
+        ":SENS:BAND:RES:AUTO %g",
         """ A boolean property that represents the resolution bandwidth
         auto mode. This property can be set.
         """,
     )
     video_bandwidth_auto = Instrument.control(
         ":SENS:BAND:VID:AUTO?",
-        ":SENS:BAND:VID:AUTO %d",
+        ":SENS:BAND:VID:AUTO %g",
         """ A boolean property that represents the video bandwidth
         auto mode. This property can be set.
         """,
@@ -212,7 +212,7 @@ class AgilentE4407B(Instrument):
     )
     detector_auto = Instrument.control(
         ":SENS:DET:AUTO?",
-        ":SENS:DET:AUTO %d",
+        ":SENS:DET:AUTO %g",
         """ A boolean property that represents the detector auto mode.
         This property can be set.
         """,
@@ -256,7 +256,7 @@ class AgilentE4407B(Instrument):
     )
     qp_detector_gain = Instrument.control(
         ":SENS:POW:QPG?",
-        ":SENS:POW:QPG %d",
+        ":SENS:POW:QPG %g",
         """ Turn on or off the linear x10 gain stage in the quasi-peak and emi average detector only valid with the emi detector enabled.
         This property can be set.
         """,
@@ -274,7 +274,7 @@ class AgilentE4407B(Instrument):
     )
     input_attenuation_auto = Instrument.control(
         ":SENS:POW:ATT:AUTO?",
-        ":SENS:POW:ATT:AUTO %d",
+        ":SENS:POW:ATT:AUTO %g",
         """ A boolean property that represents the input attenuation
         auto mode. This property can be set.
         """,
