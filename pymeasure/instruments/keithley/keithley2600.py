@@ -23,8 +23,10 @@
 
 import logging
 import time
+from typing import List, Literal
 
 import numpy as np
+import pydantic
 
 from pymeasure.instruments.instrument import BaseChannel, Instrument
 from pymeasure.instruments.validators import (
@@ -50,6 +52,9 @@ class Keithley2600(Instrument):
             adapter, "Keithley 2600 SourceMeter", includeSCPI=False, **kwargs
         )
 
+        # Sweep command times out at the default timeout duration
+        self.adapter.connection.timeout = 25000
+
     def _flush_errors(self):
         """Returns a list of errors where each element includes the error code
         and message.
@@ -65,10 +70,11 @@ class Keithley2600(Instrument):
             if len(err) > 1:
                 err = (int(float(err[0])), err[1])
                 code = err[0]
-                message = err[1].replace('"', "")
-                error_msg = f"ERROR {str(code)},{str(message)} - len {str(len(err))}"
-                log.error(error_msg)
-                errors.append(error_msg)
+                if not code == 0:
+                    message = err[1].replace('"', "")
+                    error_msg = f"{str(code)},{str(message)}"
+                    log.error(error_msg)
+                    errors.append(error_msg)
             else:
                 break
 
@@ -126,9 +132,50 @@ class Keithley2600(Instrument):
     def get_id(self, check_errors=True):
         """Requests and returns the identification of the instrument."""
         return self.ask(
-            "print([[Keithley Instruments, Model]]..localnode.model..[[,]]..localnode.serialno.. [[, ]]..localnode.revision))",
+            "*IDN?",
             check_errors,
         ).strip()
+
+    @staticmethod
+    @pydantic.validate_arguments
+    def calculate_step_size(
+        sweep_start: float,
+        sweep_end: float,
+        number_of_sweep_points: pydantic.conint(ge=2),
+    ) -> float:
+        """Calculates the step size for a sweep given the relavant parameters.
+
+        Args:
+            sweep_start: Starting sweep value.
+            sweep_end: Ending sweep value.
+            number_of_sweep_points: Number of sweep steps being taken.
+
+        Returns:
+            Returns the sweep step as a float type.
+        """
+        return (sweep_end - sweep_start) / (number_of_sweep_points - 1)
+
+    @staticmethod
+    @pydantic.validate_arguments
+    def get_sweep_list(
+        sweep_start: float,
+        sweep_end: float,
+        number_of_sweep_points: pydantic.conint(ge=2),
+    ) -> List[float]:
+        """Get the list of sweep steps to be taken.
+
+        Args:
+            sweep_start: Starting sweep value.
+            sweep_end: Ending sweep value.
+            number_of_sweep_points: Number of sweep steps being taken.
+
+        Returns:
+            List of sweep steps (as float types)
+        """
+        step = Keithley2600.calculate_step_size(
+            sweep_start.sweep_end, number_of_sweep_points
+        )
+        return list(range(sweep_start, sweep_end + step, step))
 
 
 class Channel(BaseChannel):
@@ -148,6 +195,32 @@ class Channel(BaseChannel):
         passing on any key-word arguments.
         """
         return self.instrument.values(f"print(smu{self.channel}.{cmd})")
+
+    def buffer_ascii_values(self, buffer_number, cmd=None, **kwargs) -> np.array:
+        """Reads a set of ascii values from one of the channel's buffers through the adapter,
+        passing on any key-word arguments.
+
+        Args:
+            buffer_number: The buffer number to read from.
+            cmd: The command to append to the buffer print statement (e.g. could be ``readings`` to
+                access readings, or ``sourcevalues`` to access sourcing measurements). Defaults to
+                None.
+
+        Returns:
+            The data read from the buffer as a numpy array.
+        """
+        if cmd:
+            return self.instrument.ascii_values(
+                f"printbuffer(1, smu{self.channel}.nvbuffer{buffer_number}.n, smu{self.channel}.nvbuffer{buffer_number}.{cmd})",
+                container=np.array,
+                **kwargs,
+            )
+        else:
+            return self.instrument.ascii_values(
+                f"printbuffer(1, smu{self.channel}.nvbuffer{buffer_number}.n, smu{self.channel}.nvbuffer{buffer_number})",
+                container=np.array,
+                **kwargs,
+            )
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
         return self.instrument.binary_values(
@@ -172,7 +245,7 @@ class Channel(BaseChannel):
     source_mode = Instrument.control(
         "source.func",
         "source.func=%d",
-        """Property controlling the channel soource function (Voltage or Current)
+        """Property controlling the channel source function (Voltage or Current)
         """,
         validator=strict_discrete_set,
         values={"voltage": 1, "current": 0},
@@ -185,6 +258,24 @@ class Channel(BaseChannel):
         """ Property controlling the nplc value """,
         validator=truncated_range,
         values=[0.001, 25],
+        map_values=True,
+    )
+
+    buffer_1_source_value_collection = Instrument.control(
+        "nvbuffer1.collectsourcevalues",
+        "nvbuffer1.collectsourcevalues=%d",
+        """ Enables or disables the storage of source values """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    buffer_1_time_stamp_collection = Instrument.control(
+        "nvbuffer1.collecttimestamps",
+        "nvbuffer1.collecttimestamps=%d",
+        """ Enables or disables the storage of timestamps """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -372,6 +463,62 @@ class Channel(BaseChannel):
         for current in currents:
             self.source_current = current
             time.sleep(pause)
+
+    @pydantic.validate_arguments
+    def clear_buffer(self, buffer_number: Literal[1, 2]):
+        """Clears the specified buffer.
+
+        Args:
+            buffer_number: The buffer number to clear.
+        """
+        self.write(f"nvbuffer{buffer_number}.clear()")
+
+    @pydantic.validate_arguments
+    def sweep_voltage_measure_current(
+        self,
+        current_limit: float,
+        current_measurement_range: float,
+        sweep_start_v: float,
+        sweep_end_v: float,
+        settling_time: pydantic.confloat(ge=0),
+        number_of_sweep_points: pydantic.conint(ge=2),
+    ) -> np.ndarray:
+        """Performs a inear voltage sweep with current measured at every step (point).
+
+        The steps followed can be seen below:
+
+            1. Sets the SMU to output ``sweep_start_v`` volts, allows the source to settle for ``settling_time`` seconds, and
+                then makes a current measurement.
+            2. Sets the SMU to output the next voltage step, allows the source to settle for ``settling_time`` seconds,
+                and then makes a voltage measurement.
+            3. Repeats the above sequence until the current is measured on the ``sweep_end_v`` volts step.
+
+        The step size can be computed using the calculate_step_size static method included in the
+        Keithley2600 class.
+
+        Args:
+            current_limit: The maximum current that should be sourced in amperes.
+            current_measurement_range: The measurement range to use when measuring the current.
+            sweep_start_v: Starting sweep voltage (in volts).
+            sweep_end_v: Ending sweep voltage (in volts).
+            settling_time: The settling time used before making a measurement (in seconds).
+            number_of_sweep_points: The number of points to sweep for.
+
+        Returns:
+            Returns a 2D numpy array, with the first dimension being the measured voltage values,
+                and the second dimension being the measured current values.
+        """
+        self.clear_buffer(1)
+        self.buffer_1_source_value_collection = True
+
+        self.compliance_current = current_limit
+        self.current_range = current_measurement_range
+        self.instrument.write(
+            f"SweepVLinMeasureI(smu{self.channel}, {sweep_start_v}, {sweep_end_v}, {settling_time}, {number_of_sweep_points})"
+        )
+        voltage_values = self.buffer_ascii_values(1, "sourcevalues")
+        measurement_values = self.buffer_ascii_values(1, "readings", delay=4)
+        return np.array([voltage_values, measurement_values])
 
     def shutdown(self):
         """Ensures that the current or voltage is turned to zero

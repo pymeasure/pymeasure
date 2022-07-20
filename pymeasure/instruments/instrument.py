@@ -172,7 +172,15 @@ class Instrument:
         return VISAAdapter(temp_adapter, **kwargs)
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
+    def __init__(
+        self,
+        adapter,
+        name,
+        includeSCPI=True,
+        write_termination="\n",
+        read_termination="\n",
+        **kwargs,
+    ):
         try:
             if isinstance(adapter, (int, str)):
                 adapter = self.connect(adapter, **kwargs)
@@ -184,6 +192,8 @@ class Instrument:
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
+        self.adapter.connection.write_termination = write_termination
+        self.adapter.connection.read_termination = read_termination
         self._lock = threading.Lock()
         self._flush_errors()
 
@@ -323,7 +333,7 @@ class Instrument:
             sleep(0.1)
 
     # Wrapper functions for the Adapter object
-    def ask(self, command, check_for_errors=True):
+    def ask(self, command, check_for_errors=True, **kwargs):
         """Writes the command to the instrument through the adapter
         and returns the read response.
 
@@ -334,14 +344,14 @@ class Instrument:
             if check_for_errors:
                 self._wait_until_ready()
 
-            response = self.adapter.ask(command)
+            response = self.adapter.ask(command, **kwargs)
 
             if check_for_errors:
                 self.check_errors()
         return response
 
-    def ask_no_lock(self, command):
-        return self.adapter.ask(command)
+    def ask_no_lock(self, command, **kwargs):
+        return self.adapter.ask(command, **kwargs)
 
     @wait_and_check_errors
     def write(self, command):
@@ -368,6 +378,10 @@ class Instrument:
     @wait_and_check_errors
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         return self.adapter.binary_values(command, header_bytes, dtype)
+
+    @wait_and_check_errors
+    def ascii_values(self, command, **kwargs):
+        return self.adapter.ask_values(command)
 
     def check_errors(self):
 

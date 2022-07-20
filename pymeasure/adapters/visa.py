@@ -24,8 +24,8 @@
 
 import logging
 
-import pyvisa
 import numpy as np
+import pyvisa
 from pkg_resources import parse_version
 
 from .adapter import Adapter
@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 # noinspection PyPep8Naming,PyUnresolvedReferences
 class VISAAdapter(Adapter):
-    """ Adapter class for the VISA library, using PyVISA to communicate with instruments.
+    """Adapter class for the VISA library, using PyVISA to communicate with instruments.
 
     The workhorse of our library, used by most instruments.
 
@@ -72,7 +72,7 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
+    def __init__(self, resource_name, visa_library="", preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
@@ -84,7 +84,9 @@ class VISAAdapter(Adapter):
 
         # Clean up kwargs considering the interface type matching resource_name
         if_type = self.manager.resource_info(self.resource_name).interface_type
-        for key in list(kwargs.keys()):  # iterate over a copy of the keys as we modify kwargs
+        for key in list(
+            kwargs.keys()
+        ):  # iterate over a copy of the keys as we modify kwargs
             # Remove all interface-specific kwargs:
             if key in pyvisa.constants.InterfaceType.__members__:
                 if getattr(pyvisa.constants.InterfaceType, key) is if_type:
@@ -95,28 +97,25 @@ class VISAAdapter(Adapter):
                         kwargs.setdefault(k, v)
                 del kwargs[key]
 
-        self.connection = self.manager.open_resource(
-            resource_name,
-            **kwargs
-        )
+        self.connection = self.manager.open_resource(resource_name, **kwargs)
 
     @staticmethod
     def has_supported_version():
-        """ Returns True if the PyVISA version is greater than 1.8 """
-        if hasattr(pyvisa, '__version__'):
-            return parse_version(pyvisa.__version__) >= parse_version('1.8')
+        """Returns True if the PyVISA version is greater than 1.8"""
+        if hasattr(pyvisa, "__version__"):
+            return parse_version(pyvisa.__version__) >= parse_version("1.8")
         else:
             return False
 
     def write(self, command):
-        """ Writes a command to the instrument
+        """Writes a command to the instrument
 
         :param command: SCPI command string to be sent to the instrument
         """
         self.connection.write(command)
 
     def read(self):
-        """ Reads until the buffer is empty and returns the resulting
+        """Reads until the buffer is empty and returns the resulting
         ASCII response
 
         :returns: String ASCII response of the instrument.
@@ -124,7 +123,7 @@ class VISAAdapter(Adapter):
         return self.connection.read()
 
     def read_bytes(self, size):
-        """ Reads specified number of bytes from the buffer and returns
+        """Reads specified number of bytes from the buffer and returns
         the resulting ASCII response
 
         :param size: Number of bytes to read from the buffer
@@ -132,17 +131,17 @@ class VISAAdapter(Adapter):
         """
         return self.connection.read_bytes(size)
 
-    def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting
+    def ask(self, command, **kwargs):
+        """Writes the command to the instrument and returns the resulting
         ASCII response
 
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        return self.connection.query(command)
+        return self.connection.query(command, **kwargs)
 
     def ask_values(self, command, **kwargs):
-        """ Writes a command to the instrument and returns a list of formatted
+        """Writes a command to the instrument and returns a list of formatted
         values from the result. This leverages the `query_ascii_values` method
         in PyVISA.
 
@@ -153,7 +152,7 @@ class VISAAdapter(Adapter):
         return self.connection.query_ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data
+        """Returns a numpy array from a query for binary data
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
@@ -167,7 +166,7 @@ class VISAAdapter(Adapter):
         return np.fromstring(data, dtype=dtype)
 
     def write_binary_values(self, command, values, **kwargs):
-        """ Write binary data to the instrument, e.g. waveform for signal generators
+        """Write binary data to the instrument, e.g. waveform for signal generators
 
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
@@ -178,7 +177,7 @@ class VISAAdapter(Adapter):
         return self.connection.write_binary_values(command, values, **kwargs)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
-        """ Blocks until a SRQ, and leaves the bit high
+        """Blocks until a SRQ, and leaves the bit high
 
         :param timeout: Timeout duration in seconds
         :param delay: Time delay between checking SRQ in seconds
@@ -186,7 +185,7 @@ class VISAAdapter(Adapter):
         self.connection.wait_for_srq(timeout * 1000)
 
     def flush_read_buffer(self):
-        """ Flush and discard the input buffer
+        """Flush and discard the input buffer
 
         As detailed by pyvisa, discard the read buffer contents and if data was present
         in the read buffer and no END-indicator was present, read from the device until

@@ -22,8 +22,9 @@
 #
 
 import logging
-import socket
 from typing import List
+
+import pyvisa
 
 from pymeasure.instruments.instrument import BaseChannel, Instrument
 from pymeasure.instruments.keithley.keithley2600 import Keithley2600
@@ -62,8 +63,7 @@ class Keithley2602B(Keithley2600):
         initialized, the results are logged.
 
         Args:
-            hostname (str): Hostname of the system (initial expected value is a concatenation of
-                product number and serial number. Note that the hostname can be overwritten.
+            hostname (str): Hostname of the system. Note that the hostname can be overwritten.
             port (int): Port used to communicate with the system
         """
         self.hostname = hostname
@@ -76,9 +76,9 @@ class Keithley2602B(Keithley2600):
         try:
             super().__init__(adapter, **kwargs)
 
-        except ValueError or socket.error:
+        except ValueError or pyvisa.VisaIOError:
             log.exception(f"Could not connect to {self.hostname}")
-            super().communication_success = False
+            self.communication_success = False
 
         # Override valid voltage ranges (as requested)
         # to avoid potential damage to diodes
