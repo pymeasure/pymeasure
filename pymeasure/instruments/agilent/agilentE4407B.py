@@ -22,8 +22,7 @@
 # THE SOFTWARE.
 #
 
-from distutils.file_util import copy_file
-from gettext import Catalog
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_range,
