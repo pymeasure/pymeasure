@@ -13,13 +13,13 @@ import random
 import tempfile
 from time import sleep
 
+from pymeasure.log import console_log
+from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+from pymeasure.experiment import Results, Worker
+
 import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
-
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results, Worker, unique_filename
 
 
 class TestProcedure(Procedure):
@@ -43,7 +43,7 @@ class TestProcedure(Procedure):
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
-            self.emit('progress', 100.*i/self.iterations)
+            self.emit('progress', 100. * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     worker.start()
 
     log.info("Joining with the worker in at most 20 min")
-    worker.join(60*20)
+    worker.join(60 * 20)
     log.info("Worker has joined")
 
     log.info("Stopping the logging")

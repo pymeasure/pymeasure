@@ -1,7 +1,7 @@
 name: PyMeasure CI
-on: 
+on:
   push:
-    branches: 
+    branches:
       - master
       - develop
   pull_request:
@@ -25,7 +25,7 @@ jobs:
       - name: Install pymeasure requirements
         uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: "3.8"
+          python-version: "3.9"
           environment-file: requirements/pymeasure.yml
           activate-environment: pymeasure
           auto-update-conda: true
@@ -34,26 +34,27 @@ jobs:
         run: |
           conda info
           conda list
+      - name: Set up flake8 annotations
+        uses: rbialon/flake8-annotations@v1
       - name: Lint with flake8
-        continue-on-error: true
         run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          # Be sure to check for Python syntax errors or undefined names
+          flake8 . --count --extend-select=E9,F63,F7,F82 --show-source --statistics
+      - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
+        if: always()  # run even if the previous step failed
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
-          make html
+          make html SPHINXOPTS="-W --keep-going"
       - name: Run doctests
+        if: always()  # run even if the previous step failed
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
-          make doctest
+          make doctest SPHINXOPTS="-W --keep-going"
   test:
     name: Python ${{ matrix.python-version }}, ${{ matrix.os }}
-    needs: docs_lint  # no need to continue if the docs/lint job fails
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -62,8 +63,8 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
-    steps:    
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+    steps:
       - uses: actions/checkout@v2
       - name: Cache conda
         uses: actions/cache@v2
@@ -78,7 +79,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           environment-file: requirements/pymeasure.yml
           activate-environment: pymeasure
-          auto-update-conda: true 
+          auto-update-conda: true
           use-only-tar-bz2: true  # for caching to work properly
       - name: Conda info & list
         run: |
@@ -86,7 +87,11 @@ jobs:
           conda list
       - name: Run pytest with xvfb
         if: runner.os == 'Linux'
-        run: xvfb-run -a python setup.py test
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          xvfb-run -a python setup.py test
       - name: Run pytest
         if: runner.os != 'Linux'
-        run: python setup.py test
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          python setup.py test

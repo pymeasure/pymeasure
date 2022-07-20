@@ -47,7 +47,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     #
     # This file is part of the PyMeasure package.
     #
-    # Copyright (c) 2013-2021 PyMeasure Developers
+    # Copyright (c) 2013-2022 PyMeasure Developers
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
     # of this software and associated documentation files (the "Software"), to deal
@@ -75,7 +75,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
 
     # Behind the scene, replace Instrument with FakeInstrument to enable
     # doctesting all this
-    from pymeasure.instruments.instrument import FakeInstrument as Instrument
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument
 
 This is a minimal instrument definition:
 
@@ -97,6 +97,107 @@ Make sure to include the PyMeasure license to each file, and add yourself as an 
 In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue command instead of calling the adapter directly.
 
 In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences and are highly encouraged.
+
+.. _default_connection_settings:
+
+Defining default connection settings
+====================================
+
+When implementing instruments, it's sometimes necessary to define default connection settings.
+This might be because an instrument connection requires *specific non-default settings*, or because your instrument actually supports *multiple interfaces*.
+
+The :py:class:`~pymeasure.adapters.VISAAdapter` class offers a flexible way of dealing with connection settings fully within the initializer of your instrument.
+
+Single interface
+****************
+
+The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``resourceName`` is a string or integer.
+
+.. code-block:: python
+
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            **kwargs
+        )
+
+If you want to set defaults that should be prominently visible to the user and may be overridden, place them in the signature.
+This is suitable when the instrument has one type of interface, or any defaults are valid for all interface types, see the documentation in :py:class:`~pymeasure.adapters.VISAAdapter` for details.
+
+.. code-block:: python
+
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            baud_rate=baud_rate,
+            **kwargs
+        )
+
+If you want to set defaults, but they don't need to be prominently exposed for replacement, use this pattern, which sets the value only when there is no entry in ``kwargs``, yet.
+
+.. code-block:: python
+
+    def __init__(self, resourceName, **kwargs):
+        kwargs.setdefault('timeout', 1500)
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            **kwargs
+        )
+
+Multiple interfaces
+*******************
+
+Now, if you have instruments with multiple interfaces (e.g. serial, TCPI/IP, USB), things get interesting.
+You might have settings common to all interfaces (like ``timeout``), but also settings that are only valid for one interface type, but not others.
+
+The trick is to add keyword arguments that name the interface type, like ``asrl`` or ``gpib``, below (see `here <https://pyvisa.readthedocs.io/en/latest/api/constants.html#pyvisa.constants.InterfaceType>`__ for the full list).
+These then contain a *dictionary* with the settings specific to the respective interface:
+
+.. code-block:: python
+
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        kwargs.setdefault('timeout', 1500)
+        super().__init__(
+            resourceName,
+            "Extreme 5000",
+            gpib=dict(enable_repeat_addressing=False,
+                      read_termination='\r'),
+            asrl={'baud_rate': baud_rate,
+                  'read_termination': '\r\n'},
+            **kwargs
+        )
+
+When the instrument instance is created, the interface-specific settings for the actual interface being used get merged with ``**kwargs`` before passing them on to PyVISA, the rest is discarded. 
+This way, we always pass on a valid set of arguments.
+In addition, any entries in ``**kwargs**`` take precedence, so if they need to, it is *still* possible for users to override any defaults you set in the instrument definition.
+
+For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, pymeasure has your back!
+
+Non-VISA Adapters
+*****************
+
+The approaches described above make use of the :py:class:`~pymeasure.adapters.VISAAdapter` and are recommended for use.
+
+If, however, you are unable to use the :py:class:`~pymeasure.adapters.VISAAdapter` in your instrument, you can create your own :py:class:`~pymeasure.adapters.Adapter` instance internally:
+
+.. code-block:: python
+
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        kwargs.setdefault('timeout', 0.5)
+        kwargs.setdefault('xonxoff', True)
+        adapter = SerialAdapter(resourceName, 
+                                baudrate=baud_rate,  # different arg name!
+                                **kwargs)
+        super().__init__(
+            adapter,
+            "Extreme 5000",
+        )
+
+Follow the user interface patterns presented above as closely as feasible (the code example shows how) so there is the least surprise for users used to other instruments.
+Please document well what kind of arguments may be passed into your instrument.
 
 Writing properties
 ==================
@@ -183,7 +284,7 @@ The next section details additional features of :func:`Instrument.control <pymea
 Advanced properties
 ===================
 
-Many GPIB/SCIP commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
+Many GPIB/SCPI commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
 
 In the examples below we assume you have imported the validators.
 
@@ -487,3 +588,108 @@ In cases where the general `preprocess_reply` function should not run it can be 
     )
 
 Using a combination of the decribed abilities also complex communication schemes can be achieved.
+
+Dynamic properties
+===================
+
+As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
+One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
+This feature allows accomodating some interesting use cases with a very compact syntax.
+
+Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
+
+Afterwards, creating specifically-named attributes (either in class definitions or on instances) allows modifying the parameters used at the time of property definition.
+You need to define an attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value.
+Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
+
+.. note::
+   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read. 
+
+The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+
+Let us now consider a couple of common use cases for this functionality:
+
+Dynamic validity range
+**********************
+Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
+The code below shows how this can be accomplished with dynamic properties.
+
+.. testcode::
+  
+    Extreme5000.voltage = Instrument.control(
+        ":VOLT?", ":VOLT %g",
+        """ A floating point property that controls the voltage
+        in Volts, from -1 to 1 V. This property can be set. """,
+        validator=strict_range,
+        values=[-1, 1],
+        dynamic = True,
+    )
+    def set_bipolar_mode(self, enabled = True):
+        """Safely switch between bipolar/unipolar mode."""
+
+        # some code to switch off the output first
+        # ...
+
+        if enabled:
+            self.mode = "BIPOLAR"
+            # set valid range of "voltage" property
+            self.voltage_values = [-1, 1]
+        else:
+            self.mode = "UNIPOLAR"
+            # note the "propertyname_parametername" form of the attribute
+            self.voltage_values = [0, 1]
+
+
+Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
+In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
+
+Family of instruments with similar features
+*******************************************
+
+A common case is to have a family of similar instruments with some parameter range different for each family member.
+In this case you would update the specific class parameter range without rewriting the entire property:
+
+.. testcode::
+
+    class FictionalInstrumentFamily(Instrument):
+        frequency = Instrument.setting(
+            "FREQ %g",
+            """ Command docstring""",
+            validator=strict_range,
+            values=[0, 1e9],
+            # ... other possible parameters follow
+        )
+        #
+        # ... complete class implementation here
+        #
+
+    class FictionalInstrument_1GHz(FictionalInstrumentFamily):
+        pass
+
+    class FictionalInstrument_3GHz(FictionalInstrumentFamily):
+        frequency_values = [0, 3e9]
+
+    class FictionalInstrument_9GHz(FictionalInstrumentFamily):
+        frequency_values = [0, 9e9]
+
+Notice how easily you can derive the different family members from a common class, and the fact that the attribute is now defined at class level and not at instance level.
+
+Compatibility of instruments with similar features
+**************************************************
+
+Another use case involves maintaining compatibility between instruments with commands having different syntax.
+
+.. code-block:: python
+
+    class MultimeterA(Instrument):
+        voltage = Instrument.measurement(get_command="VOLT?",...)
+
+        # ...full class definition code here
+
+    class MultimeterB(MultimeterA):
+        # Same as brand A multimeter, but the command to read voltage 
+        # is slightly different
+        voltage_get_command = "VOLTAGE?"
+
+In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a different command to read the voltage, but the rest of the behaviour is identical.
+:code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.

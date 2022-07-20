@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ class SerialAdapter(Adapter):
         return b"\n".join(self.connection.readlines()).decode()
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data 
+        """ Returns a numpy array from a query for binary data
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
@@ -75,10 +75,11 @@ class SerialAdapter(Adapter):
         """
         self.connection.write(command.encode())
         binary = self.connection.read().decode()
-        header, data = binary[:header_bytes], binary[header_bytes:]
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt = "ieee"):
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
         :param values: data to be written to the device.
@@ -110,7 +111,7 @@ class SerialAdapter(Adapter):
         """
 
         block = self._format_binary_values(values, **kwargs)
-        return self.connection.write(command.encode() + block) 
+        return self.connection.write(command.encode() + block)
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port

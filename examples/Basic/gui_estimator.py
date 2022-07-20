@@ -12,26 +12,25 @@ python gui.py
 import sys
 import random
 import tempfile
-from time import sleep
-import pyqtgraph as pg
+from time import sleep,time_ns
 
 from datetime import datetime, timedelta
+
+from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter, unique_filename
+from pymeasure.experiment import Routine
+from pymeasure.experiment import Results
+from pymeasure.display.Qt import QtGui
+from pymeasure.display.windows import ManagedWindow
 
 import logging
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
-from pymeasure.log import console_log
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
-from pymeasure.display.Qt import QtGui
-from pymeasure.display.windows import ManagedWindow, EstimatorWidget
-
 
 class TestProcedure(Procedure):
 
     iterations = IntegerParameter('Loop Iterations', default=100)
-    delay = FloatParameter('Delay Time', units='s', default=0.2)
+    delay = FloatParameter('Delay Time', units='s', default=0.02)
     seed = Parameter('Random Seed', default='12345')
 
     DATA_COLUMNS = ['Iteration', 'Random Number']
@@ -42,18 +41,24 @@ class TestProcedure(Procedure):
 
     def execute(self):
         log.info("Starting to generate numbers")
+        iss = []
+        tands = []
         for i in range(self.iterations):
-            data = {
-                'Iteration': i,
-                'Random Number': random.random()
-            }
-            log.debug("Produced numbers: %s" % data)
-            self.emit('results', data)
-            self.emit('progress', 100*i/self.iterations)
+            iss=i
+            tands=random.random()
+            log.debug("Produced numbers: %s" % tands)
+
+            self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
                 break
+
+            data = {
+                'Iteration': iss,
+                'Random Number': tands
+            }
+            self.emit('results', data)
 
     def get_estimates(self, sequence_length=None, sequence=None):
         """ Function that returns estimates for the EstimatorWidget. If this function
@@ -105,24 +110,25 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindow):
 
     def __init__(self):
-        super(MainWindow, self).__init__(
+        super().__init__(
             procedure_class=TestProcedure,
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
             y_axis='Random Number',
             sequencer=True,
-            sequence_file="gui_sequencer_example_sequence.txt"
+            sequence_file="gui_sequencer_example_sequence.txt",
+            analyzer=True,
+            port=None
         )
         self.setWindowTitle('GUI Example')
 
     def queue(self, procedure=None):
-        filename = tempfile.mktemp()
+        filename = unique_filename(r'G:\Shared drives\Kepler - Main (Internal)\Neal\testlog')
 
         if procedure is None:
             procedure = self.make_procedure()
-
-        results = Results(procedure, filename)
+        results = Results(procedure, filename, routine=Routine(), output_format='JSON')
         experiment = self.new_experiment(results)
 
         self.manager.queue(experiment)

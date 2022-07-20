@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # PyMeasure documentation build configuration file, created by
 # sphinx-quickstart on Mon Apr  6 13:06:00 2015.
@@ -55,8 +54,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'PyMeasure'
-copyright = u'2013-2021, PyMeasure Developers'
+project = 'PyMeasure'
+copyright = '2013-2022, PyMeasure Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -208,8 +207,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'PyMeasure.tex', u'PyMeasure Documentation',
-   u'PyMeasure Developers', 'manual'),
+  ('index', 'PyMeasure.tex', 'PyMeasure Documentation',
+   'PyMeasure Developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -238,8 +237,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pymeasure', u'PyMeasure Documentation',
-     [u'PyMeasure Developers'], 1)
+    ('index', 'pymeasure', 'PyMeasure Documentation',
+     ['PyMeasure Developers'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -252,8 +251,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'PyMeasure', u'PyMeasure Documentation',
-   u'PyMeasure Developers', 'PyMeasure', 'One line description of project.',
+  ('index', 'PyMeasure', 'PyMeasure Documentation',
+   'PyMeasure Developers', 'PyMeasure', 'One line description of project.',
    'Miscellaneous'),
 ]
 

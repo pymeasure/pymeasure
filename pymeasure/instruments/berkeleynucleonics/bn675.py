@@ -401,11 +401,11 @@ class BN675_AWG(Instrument):
                 to_transferstr = to_transferstr + '\n' + str(val)
         l = len(to_transferstr)
         to_transferstr = '#' + str(len(str(l))) + str(l) + to_transferstr
-        default_path = self.default_dir + filename
+        default_path = self.default_dir + filename +".txt"
         self.write(f'MMEM:DOWN:FNAM "{default_path}"')
-        sleep(.5)
+        sleep(.05)
         self.write('MMEM:DOWN:DATA ' + to_transferstr)
-        sleep(.1)
+        sleep(.05)
 
     def transfer_and_load(self, array, wfname):
         """
@@ -417,8 +417,10 @@ class BN675_AWG(Instrument):
         wlist = self.waveform_list
         if wfname in wlist:
             self.delete_waveform(wfname)
-        self.transfer_array(array, wfname+".txt")
-        self.load_waveform_from_file(wfname, self.default_dir+wfname+".txt")
+            self.delete_waveform_file(wfname)
+
+        self.transfer_array(array, wfname)
+        self.load_waveform_from_file(wfname, self.default_dir+wfname)
 
 
     def load_waveform_from_file(self, name, pathtofile):
@@ -427,7 +429,7 @@ class BN675_AWG(Instrument):
         """
         Loads a waveform at pathtofile to the waveform list with name. The default behavior assumes analog data
         """
-        self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile))
+        self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile+".txt"))
 
 
     def delete_waveform(self, name):
@@ -436,3 +438,9 @@ class BN675_AWG(Instrument):
         """
         self.write("wlist:waveform:delete \"%s\"" % name)
 
+    def delete_waveform_file(self, filename):
+        """
+        Deletes the wf file in the default location with default append to name argument
+        """
+        default_path = self.default_dir + filename + '.txt'
+        self.write(f'MMEM:DEL {default_path}')

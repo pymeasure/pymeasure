@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ def test_integer_units():
 def test_integer_value():
     p = IntegerParameter('Test', units='tests')
     with pytest.raises(ValueError):
-        v = p.value  # not set
+        _ = p.value  # not set
     with pytest.raises(ValueError):
         p.value = 'a'  # not an integer
     p.value = 0.5  # a float
@@ -76,31 +76,31 @@ def test_integer_bounds():
 def test_boolean_value():
     p = BooleanParameter('Test')
     with pytest.raises(ValueError):
-        v = p.value  # not set
+        _ = p.value  # not set
     with pytest.raises(ValueError):
         p.value = 'a'  # a string
     with pytest.raises(ValueError):
         p.value = 10  # a number other than 0 or 1
     p.value = "True"
-    assert p.value == True
+    assert p.value is True
     p.value = "False"
-    assert p.value == False
+    assert p.value is False
     p.value = "true"
-    assert p.value == True
+    assert p.value is True
     p.value = "false"
-    assert p.value == False
+    assert p.value is False
     p.value = 1  # a number
-    assert p.value == True
+    assert p.value is True
     p.value = 0  # zero
-    assert p.value == False
+    assert p.value is False
     p.value = True
-    assert p.value == True
+    assert p.value is True
 
 
 def test_float_value():
     p = FloatParameter('Test', units='tests')
     with pytest.raises(ValueError):
-        v = p.value  # not set
+        _ = p.value  # not set
     with pytest.raises(ValueError):
         p.value = 'a'  # not a float
     p.value = False  # boolean
@@ -129,7 +129,7 @@ def test_float_bounds():
 def test_list_string():
     # make sure string representation of choices is unique
     with pytest.raises(ValueError):
-        p = ListParameter('Test', choices=[1, '1'])
+        _ = ListParameter('Test', choices=[1, '1'])
 
 
 def test_list_value():

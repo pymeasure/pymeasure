@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,19 +23,17 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+import time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
-import numpy as np
-import time
-from io import BytesIO
-import re
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Keithley6221(Instrument, KeithleyBuffer):
@@ -274,7 +272,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         self.waveform_function = "arbitrary%d" % location
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley6221, self).__init__(
+        super().__init__(
             adapter, "Keithley 6221 SourceMeter", **kwargs
         )
 
@@ -294,7 +292,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
-        self.write(":SYST:BEEP %g, %g" % (frequency, duration))
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.

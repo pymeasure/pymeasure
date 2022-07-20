@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,15 +27,17 @@ import logging
 import os
 import re
 import sys
-from copy import deepcopy
+from importlib import import_module
 from importlib.machinery import SourceFileLoader
 from datetime import datetime
 from string import Formatter
 
 import pandas as pd
 
+import json
+from time import sleep
+
 from .procedure import Procedure, UnknownProcedure
-from .parameters import Parameter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,7 +45,7 @@ log.addHandler(logging.NullHandler())
 
 def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
     """Replace placeholders in string with values from procedure parameters.
-    
+
     Replaces the placeholders in the provided string with the values of the
     associated parameters, as provided by the procedure. This uses the standard
     python string.format syntax. Apart from the parameter in the procedure (which
@@ -105,14 +107,14 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
         os.makedirs(directory)
     if index:
         i = 1
-        basename = "%s%s" % (prefix, now.strftime(datetimeformat))
+        basename = f"{prefix}{now.strftime(datetimeformat)}"
         basepath = os.path.join(directory, basename)
         filename = "%s_%d%s.%s" % (basepath, i, suffix, ext)
         while os.path.exists(filename):
             i += 1
             filename = "%s_%d%s.%s" % (basepath, i, suffix, ext)
     else:
-        basename = "%s%s%s.%s" % (prefix, now.strftime(datetimeformat), suffix, ext)
+        basename = f"{prefix}{now.strftime(datetimeformat)}{suffix}.{ext}"
         filename = os.path.join(directory, basename)
     return filename
 
@@ -139,7 +141,7 @@ class CSVFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-        return self.delimiter.join('{}'.format(record[x]) for x in self.columns)
+        return self.delimiter.join(f'{record[x]}' for x in self.columns)
 
     def format_header(self):
         return self.delimiter.join(self.columns)
@@ -181,14 +183,36 @@ class CSVFormatter_Pandas(logging.Formatter):
         return self.delimiter.join(self.columns)
 
 
-class Results(object):
+class JSONFormatter(logging.Formatter):
+    """ Formatter of data results """
+
+    def __init__(self, parameters=None):
+        """
+        """
+        # the default encoder doesn't understand FloatParameter, etc.
+        # we could write our own encoder, but this one is easy enough.
+        base_types = {}
+        for key, item in parameters.items():
+            base_types[key] = item.value
+        self.key = json.dumps(base_types)
+        super().__init__()
+
+
+    def format(self, record):
+        """Formats a record as json.
+
+        :param record: record to format.
+        :type record: dict
+        :return: a string
+        """
+
+        return json.dumps({self.key: record}, indent=1)
+
+
+
+class Results:
     """ The Results class provides a convenient interface to reading and
     writing data in connection with a :class:`.Procedure` object.
-
-    :cvar COMMENT: The character used to identify a comment (default: #)
-    :cvar DELIMITER: The character used to delimit the data (default: ,)
-    :cvar LINE_BREAK: The character used for line breaks (default \\n)
-    :cvar CHUNK_SIZE: The length of the data chuck that is read
 
     :param procedure: Procedure object
     :param data_filename: The data filename where the data is or should be
@@ -202,20 +226,24 @@ class Results(object):
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
 
-    def __init__(self, procedure, data_filename, output_format='CSV'):
+    def __init__(self, procedure, data_filename, routine=None, output_format='CSV'):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
+        self.routine = routine
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
-        self._header_count = -1
+        self.output_format = output_format
 
-        if output_format == 'CSV_PANDAS':
+        if self.output_format == 'CSV_PANDAS':
             self.formatter = CSVFormatter_Pandas(
                 columns=self.procedure.DATA_COLUMNS,
                 delimiter=self.DELIMITER,
                 line_break=self.LINE_BREAK
             )
+
+        elif self.output_format == 'JSON':
+            self.formatter = JSONFormatter(parameters=self.parameters)
 
         else:  # default to CSV
             self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
@@ -235,8 +263,13 @@ class Results(object):
         else:
             for filename in self.data_filenames:
                 with open(filename, 'w') as f:
-                    f.write(self.header())
-                    f.write(self.labels())
+                    if self.output_format == 'JSON':
+
+                        # Need empty file for JSON, we dump everything all at once
+                        self._header_count = 0
+                    else:
+                        f.write(self.header())
+                        f.write(self.labels())
             self._data = None
 
     def __getstate__(self):
@@ -282,10 +315,11 @@ class Results(object):
         h.append("Procedure: <%s>" % procedure)
         h.append("Parameters:")
         for name, parameter in self.parameters.items():
-            h.append("\t%s: %s" % (parameter.name, str(parameter).encode("unicode_escape").decode("utf-8")))
+            h.append("\t{}: {}".format(parameter.name, str(
+                parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
-        h = [Results.COMMENT + l for l in h]  # Comment each line
+        h = [Results.COMMENT + line for line in h]  # Comment each line
         return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
 
     def labels(self):
@@ -317,42 +351,43 @@ class Results(object):
             procedure = procedure_class()
         else:
             procedure = None
-
-        header = header.split(Results.LINE_BREAK)
-        procedure_module = None
-        parameters = {}
-        for line in header:
-            if line.startswith(Results.COMMENT):
-                line = line[1:]  # Uncomment
-            else:
-                raise ValueError("Parsing a header which contains "
-                                 "uncommented sections")
-            if line.startswith("Procedure"):
-                regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
-                search = re.search(regex, line)
-                procedure_module = search.group("module")
-                procedure_class = search.group("class")
-            elif line.startswith("\t"):
-                separator = ": "
-                partitioned_line = line[1:].partition(separator)
-                if partitioned_line[1] != separator:
-                    raise Exception("Error partitioning header line %s." % line)
+        if isinstance(header, str):
+            header = header.split(Results.LINE_BREAK)
+            procedure_module = None
+            parameters = {}
+            for line in header:
+                if line.startswith(Results.COMMENT):
+                    line = line[1:]  # Uncomment
                 else:
-                    parameters[partitioned_line[0]] = partitioned_line[2]
+                    raise ValueError("Parsing a header which contains "
+                                     "uncommented sections")
+                if line.startswith("Procedure"):
+                    regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
+                    search = re.search(regex, line)
+                    procedure_module = search.group("module")
+                    procedure_class = search.group("class")
+                elif line.startswith("\t"):
+                    separator = ": "
+                    partitioned_line = line[1:].partition(separator)
+                    if partitioned_line[1] != separator:
+                        raise Exception("Error partitioning header line %s." % line)
+                    else:
+                        parameters[partitioned_line[0]] = partitioned_line[2]
+
+        elif isinstance(header, dict):
+            # we loaded from json
+            parameters = header
 
         if procedure is None:
             if procedure_class is None:
                 raise ValueError("Header does not contain the Procedure class")
             try:
-                from importlib import import_module
                 procedure_module = import_module(procedure_module)
                 procedure_class = getattr(procedure_module, procedure_class)
                 procedure = procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
                 log.warning("Unknown Procedure being used")
-            except Exception as e:
-                raise e
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
@@ -360,7 +395,7 @@ class Results(object):
                 value = parameters[parameter.name]
                 setattr(procedure, name, value)
             else:
-                raise Exception("Missing '%s' parameter when loading '%s' class" % (
+                raise Exception("Missing '{}' parameter when loading '{}' class".format(
                     parameter.name, procedure_class))
 
         procedure.refresh_parameters()  # Enforce update of meta data
@@ -373,16 +408,25 @@ class Results(object):
         """
         header = ""
         header_read = False
+        is_json = False
         header_count = 0
-        with open(data_filename, 'r') as f:
+        with open(data_filename) as f:
             while not header_read:
                 line = f.readline()
-                if line.startswith(Results.COMMENT):
+                if line.startswith('{\n}'):
+                    #TODO untested
+                    header = json.loads(list(json.load(f).keys())[0])
+                    is_json = True
+                    header_read = True
+                elif line.startswith(Results.COMMENT):
                     header += line.strip() + Results.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True
-        procedure = Results.parse_header(header[:-1], procedure_class)
+        if is_json:
+            procedure = Results.parse_header(header, procedure_class)
+        else:
+            procedure = Results.parse_header(header[:-1], procedure_class)
         results = Results(procedure, data_filename)
         results._header_count = header_count
         return results
@@ -397,45 +441,86 @@ class Results(object):
             # Data has not been read
             try:
                 self.reload()
-            except Exception:
-                # Empty dataframe
+            except Exception as e:
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+                # Empty dataframe
+
         else:  # Concatenate additional data, if any, to already loaded data
-            skiprows = len(self._data) + self._header_count
-            chunks = pd.read_csv(
-                self.data_filename,
-                comment=Results.COMMENT,
-                header=0,
-                names=self._data.columns,
-                chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
-            )
-            try:
-                tmp_frame = pd.concat(chunks, ignore_index=True)
-                # only append new data if there is any
-                # if no new data, tmp_frame dtype is object, which override's
-                # self._data's original dtype - this can cause problems plotting
-                # (e.g. if trying to plot int data on a log axis)
-                if len(tmp_frame) > 0:
-                    self._data = pd.concat([self._data, tmp_frame],
-                                           ignore_index=True)
-            except Exception:
-                pass  # All data is up to date
+            if self.output_format == 'JSON':
+                self.reload()
+            else:
+                skiprows = len(self._data) + self._header_count
+                chunks = pd.read_csv(
+                    self.data_filename,
+                    comment=Results.COMMENT,
+                    header=0,
+                    names=self._data.columns,
+                    chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
+                )
+                try:
+                    tmp_frame = pd.concat(chunks, ignore_index=True)
+                    # only append new data if there is any
+                    # if no new data, tmp_frame dtype is object, which override's
+                    # self._data's original dtype - this can cause problems plotting
+                    # (e.g. if trying to plot int data on a log axis)
+                    if len(tmp_frame) > 0:
+                        self._data = pd.concat([self._data, tmp_frame],
+                                               ignore_index=True)
+                except Exception:
+                    pass  # All data is up to date
         return self._data
 
     def reload(self):
         """ Preforms a full reloading of the file data, neglecting
         any changes in the comments
         """
-        chunks = pd.read_csv(
-            self.data_filename,
-            comment=Results.COMMENT,
-            chunksize=Results.CHUNK_SIZE,
-            iterator=True
-        )
-        try:
-            self._data = pd.concat(chunks, ignore_index=True)
-        except Exception:
-            self._data = chunks.read()
+        if self.output_format == 'JSON':
+            self.old_data = self._data
+            exit_condition = 5
+            success = False
+            i = 0
+            while not success and i < exit_condition:
+
+                try:
+                    with open(self.data_filename,'r') as f:
+                        if len(f.readlines()) != 0:
+                            f.seek(0)
+                            chunk = json.load(f)
+                        else:
+                            chunk = None
+                except json.decoder.JSONDecodeError:
+                    sleep(.1)
+                    print('Json data reload error. Probably thread conflict')
+                    chunk = None
+
+                i = i + 1
+
+                if chunk is not None:
+                    keys = list(chunk.keys())
+                    now = chunk[keys[0]]
+                    if len(keys) == 1:
+                        success = True
+
+            if chunk is not None:
+                keys = list(chunk.keys())
+                now = chunk[keys[0]]
+                if len(keys) != 1:
+                    raise ValueError(f'Trying to load a non-JSON file as a JSON file'
+                                     f'got {keys} in the chunk')
+                self._data = pd.DataFrame(now)
+            else:
+                self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+        else:
+            chunks = pd.read_csv(
+                self.data_filename,
+                comment=Results.COMMENT,
+                chunksize=Results.CHUNK_SIZE,
+                iterator=True
+            )
+            try:
+                self._data = pd.concat(chunks, ignore_index=True)
+            except Exception:
+                self._data = chunks.read()
 
     def __repr__(self):
         return "<{}(filename='{}',procedure={},shape={})>".format(
@@ -443,3 +528,8 @@ class Results(object):
             self.procedure.__class__.__name__,
             self.data.shape
         )
+
+
+
+
+

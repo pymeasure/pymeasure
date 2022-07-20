@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 
 from ..errors import RangeError, RangeException
 from .instrument import Instrument
-from .mock import Mock
 from .resources import list_resources
 from .validators import discreteTruncate
 
@@ -32,13 +31,16 @@ from . import advantest
 from . import agilent
 from . import ametek
 from . import ami
+from . import anaheimautomation
 from . import anapico
+from . import andeenhagerling
 from . import anritsu
 from . import attocube
 from . import danfysik
 from . import deltaelektronika
 from . import fluke
 from . import fwbell
+from . import heidenhain
 from . import hp
 from . import keithley
 from . import keysight
@@ -54,4 +56,5 @@ from . import signalrecovery
 from . import srs
 from . import tektronix
 from . import thorlabs
+from . import toptica
 from . import yokogawa

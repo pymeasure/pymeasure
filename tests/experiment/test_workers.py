@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,7 @@ tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
 # Load the procedure, without it being in a module
 data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
 RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
-#from data.procedure_for_testing import RandomProcedure
+# from data.procedure_for_testing import RandomProcedure
 
 
 def test_procedure():
@@ -50,6 +50,7 @@ def test_procedure():
     assert procedure.iterations == 100
     assert procedure.delay == 0.001
     assert hasattr(procedure, 'execute')
+
 
 def test_worker_stop():
     procedure = RandomProcedure()
@@ -61,6 +62,7 @@ def test_worker_stop():
     assert worker.should_stop()
     worker.join()
 
+
 def test_worker_finish():
     procedure = RandomProcedure()
     procedure.iterations = 100
@@ -69,12 +71,13 @@ def test_worker_finish():
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
-    worker.join(timeout=5)
+    worker.join(timeout=20.0)
 
     assert not worker.is_alive()
 
     new_results = Results.load(file, procedure_class=RandomProcedure)
     assert new_results.data.shape == (100, 2)
+
 
 def test_worker_closes_file_after_finishing():
     procedure = RandomProcedure()
@@ -84,7 +87,7 @@ def test_worker_closes_file_after_finishing():
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
-    worker.join(timeout=5)
+    worker.join(timeout=20.0)
 
     # Test if the file has been properly closed by removing the file
     os.remove(file)
@@ -104,7 +107,7 @@ def test_zmq_does_not_crash_worker(caplog):
     # if cloudpickle is installed
     worker = Worker(results, port=5888, log_level=logging.DEBUG)
     worker.start()
-    worker.join(timeout=4.0)  # give it enough time to finish the procedure
+    worker.join(timeout=20.0)  # give it enough time to finish the procedure
     assert procedure.status == procedure.FINISHED
     del worker  # make sure to clean up, reduce the possibility of test
     # dependencies via left-over sockets
@@ -128,15 +131,15 @@ def test_zmq_topic_filtering_works(caplog):
     results = Results(procedure, file)
     received = []
     worker = Worker(results, port=5888, log_level=logging.DEBUG)
-    listener = Listener(port=5888, topic='results', timeout=0.1)
-    sleep(0.5)  # leave time for subscriber and publisher to establish a connection
+    listener = Listener(port=5888, topic='results', timeout=4.0)
+    sleep(4.0)  # leave time for subscriber and publisher to establish a connection
     worker.start()
     while True:
         if not listener.message_waiting():
             break
         topic, record = listener.receive()
         received.append((topic, record))
-    worker.join(timeout=4.0)  # give it enough time to finish the procedure
+    worker.join(timeout=20.0)  # give it enough time to finish the procedure
     assert procedure.status == procedure.FINISHED
     assert len(received) == 3
     assert all([item[0] == 'results' for item in received])

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, discreteTruncate, RangeException
+from pymeasure.instruments import Instrument
 
 
 class AnritsuMG3692C(Instrument):
@@ -40,7 +40,7 @@ class AnritsuMG3692C(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(AnritsuMG3692C, self).__init__(
+        super().__init__(
             resourceName,
             "Anritsu MG3692C Signal Generator",
             **kwargs

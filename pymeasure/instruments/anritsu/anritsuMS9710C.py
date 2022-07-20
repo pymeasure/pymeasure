@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,6 +67,11 @@ def _parse_trace_peak(vals):
 class AnritsuMS9710C(Instrument):
     """Anritsu MS9710C Optical Spectrum Analyzer."""
 
+    def __init__(self, adapter, name="Anritsu MS9710C Optical Spectrum Analyzer", **kwargs):
+        """Constructor."""
+        self.analysis_mode = None
+        super().__init__(adapter, name=name, **kwargs)
+
     #############
     #  Mappings #
     #############
@@ -102,13 +107,17 @@ class AnritsuMS9710C(Instrument):
     ####################################
     # Spectrum Parameters - Wavelength #
     ####################################
-    wavelength_center = Instrument.control('CNT?', 'CNT %g', "Center Wavelength of Spectrum Scan in nm.")
+    wavelength_center = Instrument.control(
+        'CNT?', 'CNT %g', "Center Wavelength of Spectrum Scan in nm.")
 
-    wavelength_span = Instrument.control('SPN?', 'SPN %g', "Wavelength Span of Spectrum Scan in nm.")
+    wavelength_span = Instrument.control(
+        'SPN?', 'SPN %g', "Wavelength Span of Spectrum Scan in nm.")
 
-    wavelength_start = Instrument.control('STA?', 'STA %g', "Wavelength Start of Spectrum Scan in nm.")
+    wavelength_start = Instrument.control(
+        'STA?', 'STA %g', "Wavelength Start of Spectrum Scan in nm.")
 
-    wavelength_stop = Instrument.control('STO?', 'STO %g', "Wavelength Stop of Spectrum Scan in nm.")
+    wavelength_stop = Instrument.control(
+        'STO?', 'STO %g', "Wavelength Stop of Spectrum Scan in nm.")
 
     wavelength_marker_value = Instrument.control(
         'MKV?', 'MKV %s',
@@ -269,11 +278,6 @@ class AnritsuMS9710C(Instrument):
         get_process=_parse_trace_peak
     )
 
-    def __init__(self, adapter, **kwargs):
-        """Constructor."""
-        self.analysis_mode = None
-        super(AnritsuMS9710C, self).__init__(adapter, "Anritsu MS9710C Optical Spectrum Analyzer", **kwargs)
-
     @property
     def wavelengths(self):
         """Return a numpy array of the current wavelengths of scans."""
@@ -285,8 +289,8 @@ class AnritsuMS9710C(Instrument):
 
     def read_memory(self, slot="A"):
         """Read the scan saved in a memory slot."""
-        cond_attr = "data_memory_{}_condition".format(slot.lower())
-        data_attr = "data_memory_{}_values".format(slot.lower())
+        cond_attr = f"data_memory_{slot.lower()}_condition"
+        data_attr = f"data_memory_{slot.lower()}_values"
 
         scan = getattr(self, cond_attr)
         wavelengths = np.linspace(scan[0], scan[1], int(scan[2]))
@@ -300,7 +304,7 @@ class AnritsuMS9710C(Instrument):
         res = self.adapter.ask("*OPC?")
         n_attempts = n
         while(res == ''):
-            log.debug("Empty OPC Repsonse. {} remaining".format(n_attempts))
+            log.debug(f"Empty OPC Response. {n_attempts} remaining")
             if n_attempts == 0:
                 break
             n_attempts -= 1
@@ -317,13 +321,13 @@ class AnritsuMS9710C(Instrument):
         log.debug("Waiting for spectrum sweep")
 
         while(self.esr2 != 3 and n > 0):
-            log.debug("Wait for sweep [{}]".format(n))
+            log.debug(f"Wait for sweep [{n}]")
             # log.debug("ESR2: {}".format(esr2))
             sleep(delay)
             n -= 1
 
         if n <= 0:
-            log.warning("Sweep Timeout Occurred ({} s)".format(int(delay * n)))
+            log.warning(f"Sweep Timeout Occurred ({int(delay * n)} s)")
 
     def single_sweep(self, **kwargs):
         """Perform a single sweep and wait for completion."""

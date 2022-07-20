@@ -32,7 +32,7 @@ try:
     clr.AddReference('mcl_SolidStateSwitch_NET45')
     from mcl_SolidStateSwitch_NET45 import USB_Digital_Switch
 except:
-    pass
+    raise ImportError("import failed, can't find mcl DLL?")
 
 
 from .adapter import Adapter
@@ -84,5 +84,8 @@ class MinicircuitsUSBSwitch(Adapter):
 
     def __del__(self):
         """Close connection upon garbage collection of the device"""
-        self.connection.Disconnect()
+        try:
+            self.connection.Disconnect()
+        except TypeError:
+            print('Ctrl + C can mess with the Disconnect function, switch ungracely disconnected')
             

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,8 +39,9 @@ class BrowserItem(QtGui.QTreeWidgetItem):
     def __init__(self, results, color, parent=None):
         super().__init__(parent)
 
+        self.color = color
         pixelmap = QtGui.QPixmap(24, 24)
-        pixelmap.fill(color)
+        pixelmap.fill(self.color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         self.setCheckState(0, QtCore.Qt.Checked)
@@ -74,7 +75,8 @@ class BrowserItem(QtGui.QTreeWidgetItem):
             """)
 
     def setProgress(self, progress):
-        self.progressbar.setValue(progress)
+        self.progressbar.setValue(int(progress))
+
 
 class Browser(QtGui.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
@@ -127,6 +129,53 @@ class Browser(QtGui.QTreeWidget):
         for i, column in enumerate(self.display_parameters):
             if column in experiment_parameter_names:
                 item.setText(i + 4, str(experiment_parameters[column]))
+
+        self.addTopLevelItem(item)
+        self.setItemWidget(item, 2, item.progressbar)
+        return item
+
+
+class AnalysisBrowserItem(BrowserItem):
+    """ Represent a row in the :class:`~pymeasure.display.browser.AnalysisBrowser` tree widget """
+
+    def __init__(self, results, color, parent=None):
+        super().__init__(results, color, parent)
+
+        self.setStatus(results.routine.status)
+
+
+
+class AnalysisBrowser(QtGui.QTreeWidget):
+    """Graphical list view of :class:`Analysis<pymeasure.display.manager.Analysis>`
+    objects allowing the user to view the status of queued Analyses.
+    """
+
+    def __init__(self, procedure_class, display_parameters,
+                 measured_quantities, sort_by_filename=False, parent=None):
+        super().__init__(parent)
+        self.procedure_class = procedure_class
+
+        header_labels = ["Graph", "Filename", "Progress", "Status"]
+
+        self.setColumnCount(len(header_labels))
+        self.setHeaderLabels(header_labels)
+        self.setSortingEnabled(True)
+        if sort_by_filename:
+            self.sortItems(1, QtCore.Qt.AscendingOrder)
+
+        for i, width in enumerate([80, 140]):
+            self.header().resizeSection(i, width)
+
+    def add(self, experiment):
+        """Add a :class:`Analysis<pymeasure.display.manager.Analysis>` object
+        to the Browser. This function checks to make sure that the Experiment
+        measures the appropriate quantities to warrant its inclusion, and then
+        adds an AnalysisBrowserItem to the AnalysisBrowser
+        """
+
+        # Set the relevant fields within the BrowserItem if
+        # that Parameter is implemented
+        item = experiment.browser_item
 
         self.addTopLevelItem(item)
         self.setItemWidget(item, 2, item.progressbar)

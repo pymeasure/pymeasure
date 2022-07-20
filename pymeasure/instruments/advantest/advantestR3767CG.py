@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,41 +23,41 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_range
 
 
 class AdvantestR3767CG(Instrument):
     """ Represents the Advantest R3767CG VNA. Implements controls to change the analysis
-    	range and to retreve the data for the trace. 
+        range and to retreve the data for the trace.
     """
 
     id = Instrument.measurement(
-    	"*IDN?", """ Reads the instrument identification """
+        "*IDN?", """ Reads the instrument identification """
     )
 
     center_frequency = Instrument.control(
-    	":FREQ:CENT?", ":FREQ:CENT %d",
+        ":FREQ:CENT?", ":FREQ:CENT %d",
         """Center Frequency in Hz""",
         validator=strict_range,
         values=[300000, 8000000000]
     )
 
     span_frequency = Instrument.control(
-    	":FREQ:SPAN?", ":FREQ:SPAN %d",
+        ":FREQ:SPAN?", ":FREQ:SPAN %d",
         """Span Frequency in Hz""",
         validator=strict_range,
         values=[1, 8000000000]
     )
 
     start_frequency = Instrument.control(
-        ":FREQ:STAR?", ":FREQ:STAR %d", 
+        ":FREQ:STAR?", ":FREQ:STAR %d",
         """ Starting frequency in Hz """,
         validator=strict_range,
         values=[1, 8000000000]
     )
 
-    stop_frequency  = Instrument.control(
-        ":FREQ:STOP?",":FREQ:STOP %d", 
+    stop_frequency = Instrument.control(
+        ":FREQ:STOP?", ":FREQ:STOP %d",
         """ Stoping frequency in Hz """,
         validator=strict_range,
         values=[1, 8000000000]
@@ -68,11 +68,11 @@ class AdvantestR3767CG(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(AdvantestR3767CG, self).__init__(
+        super().__init__(
             resourceName,
             "Advantest R3767CG",
             **kwargs
         )
 
         # Tell unit to operate in IEEE488.2-1987 command mode.
-        self.write("OLDC OFF") 
+        self.write("OLDC OFF")

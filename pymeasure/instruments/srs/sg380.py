@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +51,7 @@ class SG380(Instrument):
     )
 
     def __init__(self, resourceName, **kwargs):
-        super(SG380, self).__init__(
+        super().__init__(
             resourceName,
             "Stanford Research Systems SG380 RF Signal Generator",
             **kwargs
@@ -76,7 +76,7 @@ class SG380(Instrument):
     def frequency(self, frequency):
         """Defines RF frequency"""
         if self.has_doubler:
-            truncated_range(frequency, (SG380.MIN_RF, 2*SG380.MAX_RF))
+            truncated_range(frequency, (SG380.MIN_RF, 2 * SG380.MAX_RF))
         else:
             truncated_range(frequency, (SG380.MIN_RF, SG380.MAX_RF))
         self.write("FREQ%.6f" % frequency)

@@ -32,7 +32,7 @@ try:
     clr.AddReference('mcl_RUDAT_NET45')
     from mcl_RUDAT_NET45 import USB_RUDAT
 except:
-    pass
+    raise ImportError('Failed to add DLL ref. File in wrong location?')
 
 
 from .adapter import Adapter

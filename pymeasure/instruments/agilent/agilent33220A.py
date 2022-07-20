@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +22,15 @@
 # THE SOFTWARE.
 #
 
-import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
 from time import time
 from pyvisa.errors import VisaIOError
+
+import logging
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 # Capitalize string arguments to allow for better conformity with other WFG's
@@ -70,7 +70,7 @@ class Agilent33220A(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent33220A, self).__init__(
+        super().__init__(
             adapter,
             "Agilent 33220A Arbitrary Waveform generator",
             **kwargs
@@ -84,7 +84,7 @@ class Agilent33220A(Instrument):
             strict_discrete_set, string_validator
         ),
         values=[["SINUSOID", "SIN", "SQUARE", "SQU", "RAMP",
-                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"],],
+                "PULSE", "PULS", "NOISE", "NOIS", "DC", "USER"], ],
     )
 
     frequency = Instrument.control(
@@ -111,7 +111,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["VPP", "VRMS", "DBM"],],
+        values=[["VPP", "VRMS", "DBM"], ],
     )
 
     offset = Instrument.control(
@@ -177,7 +177,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["WIDT", "WIDTH", "DCYC", "DCYCLE"],],
+        values=[["WIDT", "WIDTH", "DCYC", "DCYCLE"], ],
     )
 
     pulse_width = Instrument.control(
@@ -202,7 +202,7 @@ class Agilent33220A(Instrument):
         """ A floating point property that controls the the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between 0.1 and 0.9 of the threshold. Valid values are between
-        5 ns to 100 ns. The transition time has to be smaller than 
+        5 ns to 100 ns. The transition time has to be smaller than
         0.625 * the pulse width. Can be set. """,
         validator=strict_range,
         values=[5e-9, 100e-9],
@@ -240,7 +240,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["TRIG", "TRIGGERED", "GAT", "GATED"],],
+        values=[["TRIG", "TRIGGERED", "GAT", "GATED"], ],
     )
 
     burst_ncycles = Instrument.control(
@@ -296,7 +296,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],],
+        values=[["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"], ],
     )
 
     trigger_state = Instrument.control(
@@ -316,7 +316,7 @@ class Agilent33220A(Instrument):
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
-        values=[["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],],
+        values=[["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"], ],
     )
 
     beeper_state = Instrument.control(

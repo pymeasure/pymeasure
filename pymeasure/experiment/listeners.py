@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,10 @@
 
 import logging
 from logging import StreamHandler, FileHandler
+
+from os import stat
+import json
+import pandas as pd
 
 from ..log import QueueListener
 from ..thread import StoppableThread
@@ -66,7 +70,7 @@ class Listener(StoppableThread):
         self.port = port
         self.topic = topic
         self.context = zmq.Context()
-        log.debug("%s has ZMQ Context: %r" % (self.__class__.__name__, self.context))
+        log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
         self.subscriber.connect('tcp://localhost:%d' % port)
@@ -89,7 +93,7 @@ class Listener(StoppableThread):
         return self.poller.poll(self.timeout * 1000)  # poll timeout is in ms
 
     def __repr__(self):
-        return "<%s(port=%s,topic=%s,should_stop=%s)>" % (
+        return "<{}(port={},topic={},should_stop={})>".format(
             self.__class__.__name__, self.port, self.topic, self.should_stop())
 
 
@@ -103,12 +107,18 @@ class Recorder(QueueListener):
         """ Constructs a Recorder to record the Procedure data into
         the file path, by waiting for data on the subscription port
         """
+        self.results = results
         handlers = []
-        for filename in results.data_filenames:
-            fh = FileHandler(filename=filename, **kwargs)
-            fh.setFormatter(results.formatter)
-            fh.setLevel(logging.NOTSET)
-            handlers.append(fh)
+
+        if self.results.output_format == 'JSON':
+            self.handle = self._json_handle
+        else:
+
+            for filename in results.data_filenames:
+                fh = FileHandler(filename=filename, **kwargs)
+                fh.setFormatter(results.formatter)
+                fh.setLevel(logging.NOTSET)
+                handlers.append(fh)
 
         super().__init__(queue, *handlers)
 
@@ -117,3 +127,42 @@ class Recorder(QueueListener):
             handler.close()
 
         super().stop()
+
+    def _json_handle(self, record):
+        """Method to override the normal logging FileHandler when the record is json.
+        The json formatter returns a string for compatibility with filehandling, so the first
+        step is to re-extract the dict. Then we check various conditions. The end result is a file with a
+        single (possibly updated) dictionary of dictionaries"""
+        record = json.loads(self.results.formatter.format(record))
+        key = list(record.keys())[0]
+        item = record[key]
+
+        for file in self.results.data_filenames:
+            if stat(file).st_size == 0:
+                with open(file, 'w') as f:
+                    extant = {key: {}}
+                    for column, value in item.items():
+                        if not isinstance(value, (list,tuple)):
+                            extant[key][column] = [value, ]
+                        else:
+                            extant[key] = item
+                    json.dump(extant, f)
+
+            else:
+                with open(file, 'r') as f:
+                    extant = json.load(f)
+
+                if key in extant.keys():
+                    data = extant[key]
+                    for column, array in data.items():
+                        array.append(item[column])
+                else:
+                    extant[key] = item
+
+                with open(file, 'w') as f:
+                    json.dump(extant, f)
+
+
+
+
+

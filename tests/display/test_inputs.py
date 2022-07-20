@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,9 @@
 import pytest
 from unittest import mock
 
-from pymeasure.display.Qt import QtGui, QtCore
 from pymeasure.display.inputs import ScientificInput, BooleanInput, ListInput
 from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter
+
 
 @pytest.mark.parametrize("default_value", [True, False])
 class TestBooleanInput:
@@ -62,14 +62,13 @@ class TestBooleanInput:
         bool_input.setValue(not default_value)
         assert bool_input.value() == (not default_value)
 
-
     def test_leftclick_should_update_parameter(self, qtbot, default_value):
         # set up BooleanInput
         bool_param = BooleanParameter('potato', default=default_value)
 
         with mock.patch('test_inputs.BooleanParameter.value',
-                new_callable=mock.PropertyMock,
-                return_value=default_value) as p:
+                        new_callable=mock.PropertyMock,
+                        return_value=default_value) as p:
             bool_input = BooleanInput(bool_param)
 
             # Clear any call to property 'value' during initialization
@@ -79,26 +78,26 @@ class TestBooleanInput:
             bool_input.show()
 
             # TODO: fix: fails to toggle on Windows
-            #qtbot.mouseClick(bool_input, QtCore.Qt.LeftButton)
+            # qtbot.mouseClick(bool_input, QtCore.Qt.LeftButton)
             bool_input.setValue(not default_value)
 
             assert bool_input.value() == (not default_value)
-            bool_input.parameter # lazy update
+            bool_input.parameter  # lazy update
             p.assert_called_once_with(not default_value)
 
 
 class TestListInput:
     @pytest.mark.parametrize("choices,default_value", [
-        (["abc", "def", "ghi"], "abc"), # strings
-        ([123, 456, 789], 123), # numbers
-        (["abc", "def", "ghi"], "def") # default not first value
+        (["abc", "def", "ghi"], "abc"),  # strings
+        ([123, 456, 789], 123),  # numbers
+        (["abc", "def", "ghi"], "def")  # default not first value
     ])
     @pytest.mark.parametrize("value_remains_default", [True, False])
     def test_init_from_param(self, qtbot, choices, default_value, value_remains_default):
         list_param = ListParameter('potato',
-                choices=choices,
-                default=default_value,
-                units='m')
+                                   choices=choices,
+                                   default=default_value,
+                                   units='m')
 
         if (value_remains_default):
             # Enable check that the value is initialized to default_value
@@ -112,7 +111,7 @@ class TestListInput:
         list_input = ListInput(list_param)
         qtbot.addWidget(list_input)
 
-        assert list_input.isEditable() == False
+        assert list_input.isEditable() is False
         assert list_input.value() == check_value
 
     def test_setValue_should_update_value(self, qtbot):
@@ -134,13 +133,12 @@ class TestListInput:
         qtbot.addWidget(list_input)
 
         with mock.patch('test_inputs.ListParameter.value',
-                new_callable=mock.PropertyMock,
-                return_value=123) as p:
+                        new_callable=mock.PropertyMock,
+                        return_value=123) as p:
             for choice in choices:
                 list_input.setValue(choice)
-                list_input.parameter # lazy update
+                list_input.parameter  # lazy update
             p.assert_has_calls((mock.call(123), mock.call('abc'), mock.call(0)))
-
 
     def test_unit_should_append_to_strings(self, qtbot):
         list_param = ListParameter('potato', choices=[123, 456], default=123, units='m')
@@ -149,7 +147,6 @@ class TestListInput:
 
         assert list_input.currentText() == '123 m'
 
-
     def test_set_invalid_value_should_raise(self, qtbot):
         list_param = ListParameter('potato', choices=[123, 456], default=123, units='m')
         list_input = ListInput(list_param)
@@ -157,21 +154,22 @@ class TestListInput:
         with pytest.raises(ValueError):
             list_input.setValue(789)
 
+
 class TestScientificInput:
     @pytest.mark.parametrize("min_,max_,default_value", [
         [0, 20, 12],
-        [0, 1000, 200], # regression #118: default above default max 99.99
-        [-1000, 1000, -10], # regression #118: default below default min 0
+        [0, 1000, 200],  # regression #118: default above default max 99.99
+        [-1000, 1000, -10],  # regression #118: default below default min 0
         [0.004, 5.5, 3.3],  # minimum #225: 0 < minimum < 0.005
         [0, 0.01, 0.002]  # default #233: default <0.01 changes to 0
     ])
     @pytest.mark.parametrize("value_remains_default", [True, False])
     def test_init_from_param(self, qtbot, min_, max_, default_value, value_remains_default):
         float_param = FloatParameter('potato',
-                minimum=min_,
-                maximum=max_,
-                default=default_value,
-                units='m')
+                                     minimum=min_,
+                                     maximum=max_,
+                                     default=default_value,
+                                     units='m')
 
         if (value_remains_default):
             # Enable check that the value is initialized to default_value
@@ -192,7 +190,7 @@ class TestScientificInput:
 
     def test_setValue_within_range_should_set(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-10, maximum=10, default=0)
+                                     minimum=-10, maximum=10, default=0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
@@ -202,7 +200,7 @@ class TestScientificInput:
 
     def test_setValue_within_range_should_set_regression_118(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-1000, maximum=1000, default=0)
+                                     minimum=-1000, maximum=1000, default=0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
@@ -216,7 +214,7 @@ class TestScientificInput:
 
     def test_setValue_out_of_range_should_constrain(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-1000, maximum=1000, default=0)
+                                     minimum=-1000, maximum=1000, default=0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
@@ -229,14 +227,14 @@ class TestScientificInput:
 
     def test_setValue_should_update_param(self, qtbot):
         float_param = FloatParameter('potato',
-            minimum=-1000, maximum=1000, default=10.0)
+                                     minimum=-1000, maximum=1000, default=10.0)
         sci_input = ScientificInput(float_param)
         qtbot.addWidget(sci_input)
 
         with mock.patch('test_inputs.FloatParameter.value',
-                new_callable=mock.PropertyMock,
-                return_value=10.0) as p:
+                        new_callable=mock.PropertyMock,
+                        return_value=10.0) as p:
             # test
             sci_input.setValue(5.0)
-            sci_input.parameter # lazy update
+            sci_input.parameter  # lazy update
             p.assert_called_once_with(5.0)

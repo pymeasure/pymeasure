@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,16 @@
 #
 
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
 import numpy as np
 import time
-from io import BytesIO
-import re
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def clist_validator(value, values):
@@ -50,11 +48,11 @@ def clist_validator(value, values):
     if isinstance(value, str):
         clist = [value.strip(" @(),")]
     elif isinstance(value, (int, float)):
-        clist = ["{:d}".format(value)]
+        clist = [f"{value:d}"]
     elif isinstance(value, (list, tuple, np.ndarray, range)):
-        clist = ["{:d}".format(x) for x in value]
+        clist = [f"{x:d}" for x in value]
     else:
-        raise ValueError("Type of value ({}) not valid".format(type(value)))
+        raise ValueError(f"Type of value ({type(value)}) not valid")
 
     # Pad numbers to length (if required)
     clist = [c.rjust(2, "0") for c in clist]
@@ -64,7 +62,7 @@ def clist_validator(value, values):
     for c in clist:
         if int(c) not in values:
             raise ValueError(
-                "Channel number {:g} not valid.".format(value)
+                f"Channel number {value:g} not valid."
             )
 
     # Convert list of strings to clist format
@@ -142,7 +140,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
         self.write(":ROUTe:OPEN:ALL")
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley2700, self).__init__(
+        super().__init__(
             adapter, "Keithley 2700 MultiMeter/Switch System", **kwargs
         )
 
@@ -169,7 +167,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
                 channels = range(1, 51)
             else:
                 log.warning(
-                    "Card type %s at slot %s is not yet implemented." % (card, slot)
+                    f"Card type {card} at slot {slot} is not yet implemented."
                 )
                 continue
 
@@ -265,7 +263,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
-        self.write(":SYST:BEEP %g, %g" % (frequency, duration))
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.
