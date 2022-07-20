@@ -114,7 +114,7 @@ class Routine:
         return result
 
     def __repr__(self):
-        return "<{}(status={},parameters_are_set={})>".format(
+        return "<{}(status={})>".format(
             self.__class__.__name__, self.STATUS_STRINGS[self.status],
         )
 
