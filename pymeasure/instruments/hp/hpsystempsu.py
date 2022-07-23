@@ -325,7 +325,7 @@ class HP6632A(Instrument):
     @output_enabled.getter
     def output_enabled(self):
         """
-        A bool property which controls if the outputis enabled
+        A bool property which controls if the output is enabled
         """
         output_status = bool(self.status.CV or self.status.CCpos or
                              self.status.CCneg or self.status.Unregulated)
