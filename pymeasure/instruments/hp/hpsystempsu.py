@@ -315,7 +315,7 @@ class HP6632A(Instrument):
     output_enabled = Instrument.setting(
         "OUT %d",
         """
-        A bool property which controls if the OCP (OverCurrent Protection) is enabled
+        A bool property which controls if the outputis enabled
         """,
         validator=strict_discrete_set,
         values={False: 0, True: 1},
@@ -324,7 +324,11 @@ class HP6632A(Instrument):
 
     @output_enabled.getter
     def output_enabled(self):
-        output_status = bool(self.status.CV or self.status.CCpos or self.status.CCneg or self.status.Unregulated)
+        """
+        A bool property which controls if the outputis enabled
+        """
+        output_status = bool(self.status.CV or self.status.CCpos or
+                             self.status.CCneg or self.status.Unregulated)
         return output_status
 
     def reset_OVP_OCP(self):
