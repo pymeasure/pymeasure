@@ -368,7 +368,7 @@ class HP3437A(HPLegacyInstrument):
         =========  ==========================
 
         """
-        return self.decode_status( self.fetch_status(), "SRQ")
+        return self.decode_status(self.fetch_status(), "SRQ")
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):

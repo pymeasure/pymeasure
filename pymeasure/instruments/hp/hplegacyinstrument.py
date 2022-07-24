@@ -35,11 +35,88 @@ c_uint16 = ctypes.c_uint16
 c_uint32 = ctypes.c_uint32
 
 
+class StatusBitsBase(ctypes.BigEndianStructure):
+    """
+    A bitfield structure containing the assignments for the status decoding
+    """
+    _pack_ = 1
+    _get_process_ = {}
+    _set_process_ = {}
+
+    # decoder functions
+    # decimal to BCD & BCD to decimal conversion copied from
+    # https://pymodbus.readthedocs.io/en/latest/source/example/bcd_payload.html
+    @staticmethod
+    def _convert_from_bcd(bcd):
+        """Converts a bcd value to a decimal value
+
+        :param value: The value to unpack from bcd
+        :returns: The number in decimal form
+        """
+        place, decimal = 1, 0
+        while bcd > 0:
+            nibble = bcd & 0xF
+            decimal += nibble * place
+            bcd >>= 4
+            place *= 10
+        return decimal
+
+    @staticmethod
+    def _convert_to_bcd(decimal):
+        """Converts a decimal value to a bcd value
+
+        :param value: The decimal value to to pack into bcd
+        :returns: The number in bcd form
+        """
+        place, bcd = 0, 0
+        while decimal > 0:
+            nibble = decimal % 10
+            bcd += nibble << place
+            decimal /= 10
+            place += 4
+        return bcd
+
+    def __str__(self):
+        """
+        Returns a pretty formatted string showing the status of the instrument
+
+        """
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
+
+        return ret_str
+
+    def __getattribute__(self, name):
+        val = super().__getattribute__(name)
+        if name == "fields":
+            return val
+        if name in self.fields():
+            process = super().__getattribute__('_get_process_')
+            if name in process:
+                val = process[name](val)
+
+        return val
+    # probably not needed
+    # def __setattr__(self, name, value):
+    #     # val = super().__getattribute__(name)
+    #     if name in self.fields():
+    #         process = super().__getattribute__('_set_process_')
+    #         if name in process:
+    #             value = process[name](value)
+
+    #     super().__setattr__(name, value)
+
+    def fields(self):
+        return [desc[0] for desc in super().__getattribute__('_fields_')]
+
+
 class HPLegacyInstrument(Instrument):
     """
     Class for legacy HP instruments from the era before SPCI, based on `pymeasure.Instrument`
 
     """
+    status_desc = StatusBitsBase  # To be overriden by subclasses
 
     def __init__(self, adapter, name, status_bytes, status_bitfield, **kwargs):
         super().__init__(
@@ -48,8 +125,8 @@ class HPLegacyInstrument(Instrument):
             **kwargs,
         )
 
-        self.status_bytes_count = status_bytes
-        self.status_bits = status_bitfield
+        self.status_bytes_count = ctypes.sizeof(self.status_desc)
+        self.status_bits = self.status_desc
         self.status_bytes = self.bytefield_factory(status_bytes)
         self.status_union = self.union_factory(self.status_bytes, self.status_bits)
 
@@ -75,17 +152,20 @@ class HPLegacyInstrument(Instrument):
         Returns an object representing the current status of the unit.
 
         """
-        current_status = self.decode_status(self.fetch_status())
-        return current_status
-
-    def fetch_status(self):
-        """Method to read the status bytes from the instrument
-        :return current_status: a byte array representing the instrument status
-        :rtype current_status: bytes
-        """
+        # current_status = self.decode_status(self.fetch_status())
+        # return current_status
         self.write("B")
-        current_status = self.adapter.read_bytes(self.status_bytes_count)
-        return current_status
+        reply = self.adapter.read_bytes(self.status_bytes_count)
+        return self.status_desc.from_buffer(reply)
+
+    # def fetch_status(self):
+    #     """Method to read the status bytes from the instrument
+    #     :return current_status: a byte array representing the instrument status
+    #     :rtype current_status: bytes
+    #     """
+    #     self.write("B")
+    #     current_status = self.adapter.read_bytes(self.status_bytes_count)
+    #     return current_status
 
     def decode_status(self, status_bytes, field=None):
         """Method to handle the decoding of the status bytes into something meaningfull
@@ -113,40 +193,6 @@ class HPLegacyInstrument(Instrument):
             )  # delay resolution is 100ns
             return delay_value
         return getattr(ret_val.b, field)
-
-    # decoder functions
-    # decimal to BCD & BCD to decimal conversion copied from
-    # https://pymodbus.readthedocs.io/en/latest/source/example/bcd_payload.html
-    @staticmethod
-    def _convert_to_bcd(decimal):
-        """Converts a decimal value to a bcd value
-
-        :param value: The decimal value to to pack into bcd
-        :returns: The number in bcd form
-        """
-        place, bcd = 0, 0
-        while decimal > 0:
-            nibble = decimal % 10
-            bcd += nibble << place
-            decimal /= 10
-            place += 4
-        return bcd
-
-    @staticmethod
-    def _convert_from_bcd(bcd):
-        """Converts a bcd value to a decimal value
-
-        :param value: The value to unpack from bcd
-        :returns: The number in decimal form
-        """
-        bcd = int.from_bytes(bcd, "big")
-        place, decimal = 1, 0
-        while bcd > 0:
-            nibble = bcd & 0xF
-            decimal += nibble * place
-            bcd >>= 4
-            place *= 10
-        return decimal
 
     # factory components
     def bytefield_factory(self, n_bytes, type_of_entry=c_uint8):

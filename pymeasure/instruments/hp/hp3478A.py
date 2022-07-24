@@ -26,7 +26,7 @@ import ctypes
 import logging
 import math
 from enum import IntFlag
-from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -40,7 +40,7 @@ c_uint8 = ctypes.c_uint8
 STATUS_BYTES = 5
 
 
-class Status_bits(ctypes.LittleEndianStructure):
+class Status(StatusBitsBase):
     """
     Support-Class with the bit assignments for the 5 status byte of the HP3478A
     """
@@ -85,16 +85,27 @@ class Status_bits(ctypes.LittleEndianStructure):
         ("DAC_value", c_uint8, 8),
     ]
 
-    def __str__(self):
-        """
-        Returns a pretty formatted string showing the status of the instrument
+    def _decode_trigger(self):
+        i_trig = self.int_trig
+        e_trig = self.ext_trig
+        if i_trig == 0:
+            if e_trig == 0:
+                trigger_mode = "hold"
+            else:
+                trigger_mode = "external"
+        else:
+            trigger_mode = "internal"
+        return trigger_mode
 
-        """
-        ret_str = ""
-        for field in self._fields_:
-            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
+    _get_process_ = {
+         "SRQ": None,  # TBD
+         "Trigger": _decode_trigger,
+         "Delay": StatusBitsBase._convert_from_bcd
+         }
 
-        return ret_str
+    # _set_process_ = {
+    #     # TBD
+    #     }
 
 
 class HP3478A(HPLegacyInstrument):
@@ -102,6 +113,7 @@ class HP3478A(HPLegacyInstrument):
     and provides a high-level interface for interacting
     with the instrument.
     """
+    status_desc = Status
 
     def __init__(self, resourceName, **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
@@ -110,7 +122,7 @@ class HP3478A(HPLegacyInstrument):
             resourceName,
             "Hewlett-Packard HP3478A",
             status_bytes=STATUS_BYTES,
-            status_bitfield=Status_bits,
+            status_bitfield=self.status_desc,
             **kwargs,
         )
 
@@ -200,26 +212,26 @@ class HP3478A(HPLegacyInstrument):
         cur_range = 3 * math.pow(10, range_undecoded - correction_factor)
         return cur_range
 
-    # @staticmethod
-    def decode_trigger(self, status_bytes):
-        """Method to decode trigger mode
+    # # @staticmethod
+    # def decode_trigger(self, status_bytes):
+    #     """Method to decode trigger mode
 
-        :param status_bytes: list of bytes to be decoded
-        :return trigger_mode: string with the current trigger mode
-        :rtype trigger_mode: str
+    #     :param status_bytes: list of bytes to be decoded
+    #     :return trigger_mode: string with the current trigger mode
+    #     :rtype trigger_mode: str
 
-        """
-        cur_stat = self.status_union(self.status_bytes(*status_bytes))
-        i_trig = cur_stat.b.int_trig
-        e_trig = cur_stat.b.ext_trig
-        if i_trig == 0:
-            if e_trig == 0:
-                trigger_mode = "hold"
-            else:
-                trigger_mode = "external"
-        else:
-            trigger_mode = "internal"
-        return trigger_mode
+    #     """
+    #     cur_stat = self.status_union(self.status_bytes(*status_bytes))
+    #     i_trig = cur_stat.b.int_trig
+    #     e_trig = cur_stat.b.ext_trig
+    #     if i_trig == 0:
+    #         if e_trig == 0:
+    #             trigger_mode = "hold"
+    #         else:
+    #             trigger_mode = "external"
+    #     else:
+    #         trigger_mode = "internal"
+    #     return trigger_mode
 
     # commands/properties for instrument control
     @property
@@ -495,7 +507,7 @@ class HP3478A(HPLegacyInstrument):
         ========  ===========================================
 
         """
-        return self.decode_trigger(self.fetch_status())
+        return self.Status.Trigger
 
     @trigger.setter
     def trigger(self, value):
