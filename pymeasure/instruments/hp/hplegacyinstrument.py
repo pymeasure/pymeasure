@@ -23,7 +23,6 @@
 #
 import ctypes
 import logging
-import struct
 from pymeasure.instruments import Instrument
 
 
@@ -118,7 +117,7 @@ class HPLegacyInstrument(Instrument):
     """
     status_desc = StatusBitsBase  # To be overriden by subclasses
 
-    def __init__(self, adapter, name, status_bytes, status_bitfield, **kwargs):
+    def __init__(self, adapter, name, status_bitfield, **kwargs):
         super().__init__(
             adapter, name,
             includeSCPI=False,
@@ -127,8 +126,6 @@ class HPLegacyInstrument(Instrument):
 
         self.status_bytes_count = ctypes.sizeof(self.status_desc)
         self.status_bits = self.status_desc
-        self.status_bytes = self.bytefield_factory(status_bytes)
-        self.status_union = self.union_factory(self.status_bytes, self.status_bits)
 
         log.info(f"Initializing {self.name}")
 
@@ -152,90 +149,11 @@ class HPLegacyInstrument(Instrument):
         Returns an object representing the current status of the unit.
 
         """
-        # current_status = self.decode_status(self.fetch_status())
-        # return current_status
         self.write("B")
-        reply = self.adapter.read_bytes(self.status_bytes_count)
-        return self.status_desc.from_buffer(reply)
-
-    # def fetch_status(self):
-    #     """Method to read the status bytes from the instrument
-    #     :return current_status: a byte array representing the instrument status
-    #     :rtype current_status: bytes
-    #     """
-    #     self.write("B")
-    #     current_status = self.adapter.read_bytes(self.status_bytes_count)
-    #     return current_status
-
-    def decode_status(self, status_bytes, field=None):
-        """Method to handle the decoding of the status bytes into something meaningfull
-
-        :param status_bytes: list of bytes to be decoded
-        :param field: name of field to be returned
-        :return ret_val: int status value
-
-        """
-        ret_val = self.status_union(self.status_bytes(*status_bytes))
-        if field is None:
-            return ret_val.b
-        if field == "SRQ":
-            if self.name == 'Hewlett-Packard HP3478A':
-                return ret_val.B.byte2
-            else:
-                return self.SRQ(getattr(ret_val.b, field))
-        if field == "Number":
-            bcd_nr = struct.pack(">I", getattr(ret_val.b, field))
-            return self._convert_from_bcd(bcd_nr)
-        if field == "Delay":
-            bcd_delay = struct.pack(">I", getattr(ret_val.b, field))
-            delay_value = (
-                self._convert_from_bcd(bcd_delay) / 1.0e7
-            )  # delay resolution is 100ns
-            return delay_value
-        return getattr(ret_val.b, field)
-
-    # factory components
-    def bytefield_factory(self, n_bytes, type_of_entry=c_uint8):
-        """
-        create structure with n entries for the byte part of the structured unions
-
-        :param n_bytes:
-        :param type_of_entry: type to be used, defaults to ctypes.c_uint8
-        :return byte_struct: bytefield struct
-        :rtype ctypes.Structure:
-        """
-        listing = []
-        for i in range(0, n_bytes):
-            listing.append(("byte" + str(i), type_of_entry))
-
-        class ByteStruct(ctypes.Structure):
-            """
-            Struct type element for the data in the bitfield expressed as bytes
-            """
-            _fields_ = listing
-
-            def __str__(self):
-                """
-                Returns a pretty formatted string showing the status of the instrument
-
-                """
-                ret_str = ""
-                for field in self._fields_:
-                    ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
-                return ret_str
-
-        return ByteStruct
-
-    def union_factory(self, byte_struct, bit_struct):
-        """
-        Returns a union based on two structures (Bytefield & Bitfield)
-        """
-        class Combined(ctypes.Union):
-            """Union type element for the decoding of the bit-fields
-            """
-            _fields_ = [("B", byte_struct), ("b", bit_struct)]
-
-        return Combined
+        reply = bytearray(self.adapter.read_bytes(self.status_bytes_count))
+        # TODO DEBUG remove efore commit
+        # print(reply.hex())
+        return self.status_bits.from_buffer(reply)
 
     def GPIB_trigger(self):
         """
