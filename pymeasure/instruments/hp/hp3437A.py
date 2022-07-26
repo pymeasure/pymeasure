@@ -27,7 +27,7 @@ import logging
 import math
 from enum import IntFlag
 import numpy as np
-from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -37,10 +37,8 @@ c_uint8 = ctypes.c_uint8
 c_uint16 = ctypes.c_uint16
 c_uint32 = ctypes.c_uint32
 
-STATUS_BYTES = 7
 
-
-class Status_bits(ctypes.BigEndianStructure):
+class Status(StatusBitsBase):
     """
     A bitfield structure containing the assignments for the status decoding
     """
@@ -75,16 +73,15 @@ class Status_bits(ctypes.BigEndianStructure):
         # ("Delay_LSD", c_uint8, 4),
         ]
 
-    def __str__(self):
-        """
-        Returns a pretty formatted string showing the status of the instrument
+    _get_process_ = {
+        "SRQ": None,  # TBD
+        "Number": StatusBitsBase._convert_from_bcd,
+        "Delay": StatusBitsBase._convert_from_bcd
+        }
 
-        """
-        ret_str = ""
-        for field in self._fields_:
-            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
-
-        return ret_str
+    _set_process_ = {
+        # TBD
+        }
 
 
 PACKED_BYTES = 2
@@ -146,18 +143,18 @@ class HP3437A(HPLegacyInstrument):
     and provides a high-level interface for interacting
     with the instrument.
     """
+    status_desc = Status
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
             "Hewlett-Packard HP3437A",
-            status_bytes=STATUS_BYTES,
-            status_bitfield=Status_bits,
+            status_bitfield=self.status_desc,
             **kwargs,
         )
-        self.packed_bits = Packed_bits
-        self.packed_bytes = self.bytefield_factory(PACKED_BYTES)
-        self.packed_data = self.union_factory(self.packed_bytes, self.packed_bits)
+        # self.packed_bits = Packed_bits
+        # self.packed_bytes = self.bytefield_factory(PACKED_BYTES)
+        # self.packed_data = self.union_factory(self.packed_bytes, self.packed_bits)
         log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
@@ -181,8 +178,8 @@ class HP3437A(HPLegacyInstrument):
         IGNORE_TRIGGER = 2
         INVALID_PROGRAM = 1
 
-    @staticmethod
-    def _decode_range(self, status_bytes):
+    # @staticmethod
+    def _decode_range(self):
         """Method to decode current range
 
         :param range_undecoded: int to be decoded
@@ -190,8 +187,7 @@ class HP3437A(HPLegacyInstrument):
         :rtype cur_range: float
 
         """
-        cur_stat = self.status_union(self.status_bytes(*status_bytes))
-        range_undecoded = cur_stat.b.range
+        range_undecoded = self.status.range
         # range decoding
         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
         if range_undecoded == 0:
@@ -207,7 +203,7 @@ class HP3437A(HPLegacyInstrument):
             cur_range = 1.0
         return cur_range
 
-    def _decode_trigger(self, status_bytes):
+    def _decode_trigger(self):
         """Method to decode trigger mode
 
         :param status_bytes: list of bytes to be decoded
@@ -215,8 +211,7 @@ class HP3437A(HPLegacyInstrument):
         :rtype trigger_mode: str
 
         """
-        cur_stat = self.status_union(self.status_bytes(*status_bytes))
-        trig = cur_stat.b.trigger
+        trig = self.status.trigger
         if trig == 0:
             log.error("HP3437A invalid trigger detected!")
             trigger_mode = "INVALID"
@@ -228,7 +223,7 @@ class HP3437A(HPLegacyInstrument):
             trigger_mode = "hold/manual"
         return trigger_mode
 
-    @staticmethod
+    # @staticmethod
     def _unpack_data(self, data):
         """
         Method to unpack the data from the returned bytes in packed mode
@@ -308,7 +303,7 @@ class HP3437A(HPLegacyInstrument):
         valid range: 100ns - 0.999999s
 
         """
-        return self.decode_status(self.fetch_status(), "Delay")
+        return self.status.Delay * 1e-7
 
     @delay.setter
     def delay(self, value):
@@ -324,7 +319,7 @@ class HP3437A(HPLegacyInstrument):
         valid range: 0 - 9999
 
         """
-        return self.decode_status(self.fetch_status(), "Number")
+        return self.status.Number
 
     @number_readings.setter
     def number_readings(self, value):
@@ -344,7 +339,7 @@ class HP3437A(HPLegacyInstrument):
             Overrange will be in indicated as 0.99,9.99 or 99.9
 
         """
-        return self._decode_range(self.fetch_status())
+        return self._decode_range()
 
     @range.setter
     def range(self, value):
@@ -368,7 +363,7 @@ class HP3437A(HPLegacyInstrument):
         =========  ==========================
 
         """
-        return self.decode_status(self.fetch_status(), "SRQ")
+        return self.status.SRQ
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
@@ -390,7 +385,7 @@ class HP3437A(HPLegacyInstrument):
         ===========  ===========================================
 
         """
-        return self._decode_trigger(self.fetch_status())
+        return self._decode_trigger()
 
     @trigger.setter
     def trigger(self, value):

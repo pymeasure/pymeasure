@@ -45,7 +45,6 @@ class Status(StatusBitsBase):
     Support-Class with the bit assignments for the 5 status byte of the HP3478A
     """
 
-    # _pack_ = 0
     _fields_ = [
         # Byte 1: Function, Range and Number of Digits
         ("function", c_uint8, 3),  # bit 5..7
