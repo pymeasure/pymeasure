@@ -146,7 +146,8 @@ class CSVFormatter(logging.Formatter):
                 match = None
 
             if match:
-                if 'units' in (m:=match.groupdict()):
+                m = match.groupdict()
+                if 'units' in m:
                     units[column] = pint.Unit(m['units'])
         return units
 
