@@ -100,7 +100,7 @@ class IntegerParameter(Parameter):
     :param maximum: The maximum allowed value (default: 1e9)
     :param default: The default integer value
     :param ui_class: A Qt class to use for the UI of this parameter
-    :param step: integer step size to use in UI spinbox for this parameter. If None, spinbox will have step disabled
+    :param step: int step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
@@ -199,7 +199,7 @@ class FloatParameter(Parameter):
     :param decimals: The number of decimals considered (default: 15)
     :param default: The default floating point value
     :param ui_class: A Qt class to use for the UI of this parameter
-    :param step: step size to use in UI spinbox for this parameter. If None, spinbox will have step disabled
+    :param step: step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,

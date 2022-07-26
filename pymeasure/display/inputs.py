@@ -258,4 +258,3 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
             return QtGui.QAbstractSpinBox.StepUpEnabled | QtGui.QAbstractSpinBox.StepDownEnabled
         else:
             return QtGui.QAbstractSpinBox.StepNone
-
