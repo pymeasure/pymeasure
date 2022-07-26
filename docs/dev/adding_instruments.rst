@@ -709,12 +709,13 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 Writing tests
 =============
 
-Tests are an important method for writing good code. We distinguish two groups of tests for instruments: Tests which verify the working of the code against expectation (device manual) only, and tests with a device connected.
+Tests are very useful for writing good code. We distinguish two groups of tests for instruments: the first group does not rely on a connected instrument. These tests verify the working of the code against expectation (for example according to a device manual) only. The second group tests the code with a device connected.
+
 
 Code tests
 **********
 
-In order to verify the expected working of the device code, it is good to test every part of the written code. The method `expected_protocol` with the `ProtocolAdapter` enables to simulate communication to a device.
+In order to verify the expected working of the device code, it is good to test every part of the written code. The method `expected_protocol` with the `ProtocolAdapter` simulates the communication to a device and verifies that the instrument driver behaves according to the expectation.
 
 .. code-block:: python
 
@@ -745,12 +746,15 @@ Here is the definition of expected_protocol:
 
 The first parameter, Extreme5000, is the class to be tested.
 Setting the voltage is expected to send a message (":VOLT 0.345"), but not to respond any (None). Getting the voltage (":VOLT?"), however, responds with a string. Therefore we expect two pairs of send/receive, the list of those pairs is the second argument.
-Finally an instance of the class is returned as `inst` with those messages prepared.
+Finally an instance of the class is returned as `inst`, which expects those send messages and returns the corresponding answers messages.
 If the communication of the driver does not correspond to the expected messages, an Exception is raised.
 
 The expected messages are **without** the termination characters, as they depend on the connection type and are handled by the adapter (e.g. VISA).
 
+
 Device tests
 ************
 
-# TODO
+It is useful as well, to test the code against an actual device. The necessary device setup (for example: connect a probe to the test output) should be written in the header of the test file. There should be the connection configuration (for example serial port), too.
+
+This file should be called `testing_extreme5000.py`. By beginning with `testing`, pytest requires to call it manually, which is desired, as it can only pass, if the device is connected.
