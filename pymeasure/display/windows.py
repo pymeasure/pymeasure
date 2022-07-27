@@ -410,6 +410,15 @@ class ManagedWindowBase(QtGui.QMainWindow):
             action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
             menu.addAction(action_remove)
 
+            # Delete
+            action_delete = QtGui.QAction(menu)
+            action_delete.setText("Delete Data File")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment:  # Experiment running
+                    action_delete.setEnabled(False)
+            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
+            menu.addAction(action_delete)
+
             # Use parameters
             action_use = QtGui.QAction(menu)
             action_use.setText("Use These Parameters")
@@ -425,6 +434,15 @@ class ManagedWindowBase(QtGui.QMainWindow):
                                            QtGui.QMessageBox.No, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             self.manager.remove(experiment)
+
+    def delete_experiment_data(self, experiment):
+        reply = QtGui.QMessageBox.question(self, 'Delete Data',
+                                           "Are you sure you want to delete this data file?",
+                                           QtGui.QMessageBox.Yes |
+                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
+        if reply == QtGui.QMessageBox.Yes:
+            self.manager.remove(experiment)
+            os.unlink(experiment.data_filename)
 
     def show_experiments(self):
         root = self.browser.invisibleRootItem()
