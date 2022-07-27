@@ -26,7 +26,7 @@ import ctypes
 import logging
 
 from enum import IntFlag, Enum
-from pymeasure.instruments import Instrument
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -35,61 +35,29 @@ log.addHandler(logging.NullHandler())
 c_uint8 = ctypes.c_uint8
 
 
-# classes for the decoding of the 12-bit status word
-class Status_bytes(ctypes.Structure):
-    """
-    Support-Class for the 5 status byte of the HP6632A
-    """
-    _fields_ = [
-        ("byte1", c_uint8),
-        ("byte2", c_uint8)
-    ]
-
-
-class Status_bits(ctypes.LittleEndianStructure):
+class Status(StatusBitsBase):
     """
     Support-Class with the bit assignments for the 2 status byte(12bits used) of the HP6632A
     """
 
     _fields_ = [
         # Byte 1: Function, Range and Number of Digits
-        ("CV", c_uint8, 1),  # bit 0
-        ("CCpos", c_uint8, 1),  # bit 1
-        ("Unregulated", c_uint8, 1),  # bit 2
-        ("Overvoltage", c_uint8, 1),  # bit 3
-        ("Overtempeature", c_uint8, 1),  # bit 4
-        ("not_assigned", c_uint8, 1),  # bit 5
-        ("Overcurrent", c_uint8, 1),  # bit 6
         ("Error_pending", c_uint8, 1),  # bit 7
-
+        ("Overcurrent", c_uint8, 1),  # bit 6
+        ("not_assigned", c_uint8, 1),  # bit 5
+        ("Overtempeature", c_uint8, 1),  # bit 4
+        ("Overvoltage", c_uint8, 1),  # bit 3
+        ("Unregulated", c_uint8, 1),  # bit 2
+        ("CCpos", c_uint8, 1),  # bit 1
+        ("CV", c_uint8, 1),  # bit 0
 
         # Byte 2: Status Bits
-        ("Inhibit_active", c_uint8, 1),  # bit 8
-        ("CCneg", c_uint8, 1),  # bit 9
-        ("FAST", c_uint8, 1),  # bit 10
+        ("not_assigned", c_uint8, 4),  # bits 16..12
         ("NORM", c_uint8, 1),  # bit 11
-        ("not_assigned", c_uint8, 4),
+        ("FAST", c_uint8, 1),  # bit 10
+        ("CCneg", c_uint8, 1),  # bit 9
+        ("Inhibit_active", c_uint8, 1),  # bit 8
 
-    ]
-
-    def __str__(self):
-        """
-        Returns a pretty formatted string showing the status of the instrument
-
-        """
-        ret_str = ""
-        for field in self._fields_:
-            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
-
-        return ret_str
-
-
-class Status(ctypes.Union):
-    """Union type element for the decoding of the status bit-fields
-    """
-    _fields_ = [
-        ("B", Status_bytes),
-        ("b", Status_bits)
     ]
 
 
@@ -99,11 +67,12 @@ limits = {
     "HP6634A": {"Volt_lim": 102.38, "OVP_lim": 110.0, "Cur_lim": 1.0238}}
 
 
-class HP6632A(Instrument):
+class HP6632A(HPLegacyInstrument):
     """ Represents the Hewlett Packard 6632A system power supply
     and provides a high-level interface for interacting
     with the instrument.
     """
+    status_desc = Status
 
     def __init__(self, resourceName, **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
@@ -111,6 +80,7 @@ class HP6632A(Instrument):
         super().__init__(
             resourceName,
             "Hewlett-Packard HP6632A",
+            status_bitfield=self.status_desc,
             **kwargs,
         )
 
@@ -218,7 +188,7 @@ class HP6632A(Instrument):
         """
         self.write("CLR")
 
-    delay = Instrument.setting(
+    delay = HPLegacyInstrument.setting(
         "DELAY %g",
         """
         A float propery that changes the reprogamming delay
@@ -233,7 +203,7 @@ class HP6632A(Instrument):
         values=[0, 32.768],
     )
 
-    display_active = Instrument.setting(
+    display_active = HPLegacyInstrument.setting(
         "DIS %d",
         """
         A boot property which controls if the display is enabled
@@ -249,32 +219,12 @@ class HP6632A(Instrument):
         Returns an object representing the current status of the unit.
 
         """
-        current_status = self.decode_status(self, self.fetch_status())
-        return current_status
+        # overloading the already exisiting propery because of the different command
+        reply = bytearray(int(self.adapter.connection.query("STS?")).to_bytes(
+            self.status_bytes_count, "little"))
+        return self.status_bits.from_buffer(reply)
 
-    def fetch_status(self):
-        """Method to read the status bytes from the instrument
-        :return current_status: a byte array representing the instrument status
-        :rtype current_status: bytes
-        """
-        current_status = int(self.ask("STS?")).to_bytes(2, "little")
-        return current_status
-
-    @staticmethod
-    def decode_status(status_bytes, field=None):
-        """Method to handle the decoding of the status bytes into something meaningfull
-
-        :param status_bytes: list of bytes to be decoded
-        :param field: name of field to be returned
-        :return ret_val: int status value
-
-        """
-        ret_val = Status(Status_bytes(*status_bytes))
-        if field is None:
-            return ret_val.b
-        return getattr(ret_val.b, field)
-
-    id = Instrument.measurement(
+    id = HPLegacyInstrument.measurement(
         "ID?",
         """
         Reads the ID of the instrument and returns this value for now
@@ -282,7 +232,7 @@ class HP6632A(Instrument):
         """,
     )
 
-    current = Instrument.control(
+    current = HPLegacyInstrument.control(
         "IOUT?", "ISET %g",
         """
         A floating point property that controls the output current of the device.
@@ -292,7 +242,7 @@ class HP6632A(Instrument):
         values=[0, limits["HP6632A"]["Cur_lim"]],
     )
 
-    over_voltage_limit = Instrument.setting(
+    over_voltage_limit = HPLegacyInstrument.setting(
         "OVSET %g",
         """
         A floationg point property that sets the OVP threshold.
@@ -302,7 +252,7 @@ class HP6632A(Instrument):
         values=[0, limits["HP6632A"]["OVP_lim"]],
     )
 
-    OCP_enabled = Instrument.setting(
+    OCP_enabled = HPLegacyInstrument.setting(
         "OCP %d",
         """
         A bool property which controls if the OCP (OverCurrent Protection) is enabled
@@ -312,7 +262,7 @@ class HP6632A(Instrument):
         map_values=True
     )
 
-    output_enabled = Instrument.setting(
+    output_enabled = HPLegacyInstrument.setting(
         "OUT %d",
         """
         A bool property which controls if the outputis enabled
@@ -338,7 +288,7 @@ class HP6632A(Instrument):
         """
         self.write("RST")
 
-    rom_Version = Instrument.measurement(
+    rom_Version = HPLegacyInstrument.measurement(
         "ROM?",
         """
         Reads the ROM id (software version) of the instrument and returns this value for now
@@ -346,7 +296,7 @@ class HP6632A(Instrument):
         """,
     )
 
-    SRQ_enabled = Instrument.setting(
+    SRQ_enabled = HPLegacyInstrument.setting(
         "SRQ %d",
         """
         A bool property which controls if the SRQ (ServiceReQuest) is enabled
@@ -356,7 +306,7 @@ class HP6632A(Instrument):
         map_values=True
     )
 
-    voltage = Instrument.control(
+    voltage = HPLegacyInstrument.control(
         "VOUT?", "VSET %g",
         """
         A floating point proptery that controls the output voltage of the device.
