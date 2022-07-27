@@ -8,6 +8,7 @@ Currently this implementation is used for the following instruments which do not
 
 * HP3478A Digital Multimeter
 
+* HP6632/33/34A System power supply
 
 .. autoclass:: pymeasure.instruments.hp.HPLegacyInstrument
     :members:
