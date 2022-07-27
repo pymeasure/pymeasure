@@ -96,15 +96,56 @@ class StatusBitsBase(ctypes.BigEndianStructure):
                 val = process[name](val)
 
         return val
-    # probably not needed
-    # def __setattr__(self, name, value):
-    #     # val = super().__getattribute__(name)
-    #     if name in self.fields():
-    #         process = super().__getattribute__('_set_process_')
-    #         if name in process:
-    #             value = process[name](value)
 
-    #     super().__setattr__(name, value)
+    def fields(self):
+        return [desc[0] for desc in super().__getattribute__('_fields_')]
+
+
+class PackedBitsBase(ctypes.BigEndianStructure):
+    """
+    A bitfield structure containing the assignments for the status decoding
+    """
+    _pack_ = 1
+    _get_process_ = {}
+    _set_process_ = {}
+
+    def __float__(self):
+        """
+        Return a float value from the packed data of the HP3437A
+
+        """
+        # range decoding
+        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
+        # 1 indicates 0.1V range
+        if self.range == 1:
+            cur_range = 0.1
+        # 2 indicates 10V range
+        if self.range == 2:
+            cur_range = 10.0
+        # 3 indicates 1V range
+        if self.range == 3:
+            cur_range = 1.0
+
+        signbit = 1
+        if self.sign_bit == 0:
+            signbit = -1
+
+        return (
+            cur_range * signbit * (
+                self.MSD + float(self.SSD) / 10 + float(self.TSD) / 100 + float(self.LSD) / 1000
+            )
+        )
+
+    def __getattribute__(self, name):
+        val = super().__getattribute__(name)
+        if name == "fields":
+            return val
+        if name in self.fields():
+            process = super().__getattribute__('_get_process_')
+            if name in process:
+                val = process[name](val)
+
+        return val
 
     def fields(self):
         return [desc[0] for desc in super().__getattribute__('_fields_')]
@@ -151,8 +192,6 @@ class HPLegacyInstrument(Instrument):
         """
         self.write("B")
         reply = bytearray(self.adapter.read_bytes(self.status_bytes_count))
-        # TODO DEBUG remove efore commit
-        # print(reply.hex())
         return self.status_bits.from_buffer(reply)
 
     def GPIB_trigger(self):

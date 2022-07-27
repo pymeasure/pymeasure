@@ -27,7 +27,9 @@ import logging
 import math
 from enum import IntFlag
 import numpy as np
-from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument
+from pymeasure.instruments.hp.hplegacyinstrument import StatusBitsBase, PackedBitsBase
+
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -47,8 +49,8 @@ class Status(StatusBitsBase):
         # Byte 0: Function, Range and Number of Digits
         ("Format", c_uint8, 1),  # Bit 7
         ("SRQ", c_uint8, 3),  # bit 4..6
-        ("trigger", c_uint8, 2),  # bit 2..3
-        ("range", c_uint8, 2),  # bit 0..1
+        ("Trigger", c_uint8, 2),  # bit 2..3
+        ("Range", c_uint8, 2),  # bit 0..1
         # Byte 1 & 2:
         ("Number", c_uint16, 16),
         # Byte 1:
@@ -73,21 +75,70 @@ class Status(StatusBitsBase):
         # ("Delay_LSD", c_uint8, 4),
         ]
 
+    @staticmethod
+    def _decode_range(r):
+        """Method to decode current range
+
+        :param range_undecoded: int to be decoded
+        :return cur_range: float value repesenting the active measurment range
+        :rtype cur_range: float
+
+        """
+        # range decoding
+        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
+        if r == 0:
+            cur_range = math.nan
+        # 1 indicates 0.1V range
+        if r == 1:
+            cur_range = 0.1
+        # 2 indicates 10V range
+        if r == 2:
+            cur_range = 10.0
+        # 3 indicates 1V range
+        if r == 3:
+            cur_range = 1.0
+        return cur_range
+
+    @staticmethod
+    def _decode_trigger(t):
+        """Method to decode trigger mode
+
+        :param status_bytes: list of bytes to be decoded
+        :return trigger_mode: string with the current trigger mode
+        :rtype trigger_mode: str
+
+        """
+        if t == 0:
+            log.error("HP3437A invalid trigger detected!")
+            trigger_mode = "INVALID"
+        if t == 1:
+            trigger_mode = "Internal"
+        if t == 2:
+            trigger_mode = "external"
+        if t == 3:
+            trigger_mode = "hold/manual"
+        return trigger_mode
+
+    def __str__(self):
+        """
+        Returns a pretty formatted string showing the status of the instrument
+
+        """
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {getattr(self, field[0])}\n"
+
+        return ret_str
+
     _get_process_ = {
-        "SRQ": None,  # TBD
         "Number": StatusBitsBase._convert_from_bcd,
-        "Delay": StatusBitsBase._convert_from_bcd
+        "Delay": StatusBitsBase._convert_from_bcd,
+        "Range": _decode_range,
+        "Trigger": _decode_trigger,
         }
 
-    _set_process_ = {
-        # TBD
-        }
 
-
-PACKED_BYTES = 2
-
-
-class Packed_bits(ctypes.BigEndianStructure):
+class PackedBits(PackedBitsBase):
     """
     A bitfield structure containing the assignments for the data transfer in packed/binary mode
     """
@@ -100,43 +151,6 @@ class Packed_bits(ctypes.BigEndianStructure):
         ("TSD", c_uint8, 4),
         ("LSD", c_uint8, 4), ]
 
-    def __str__(self):
-        """
-        Returns a pretty formatted string showing the status of the instrument
-
-        """
-        ret_str = ""
-        for field in self._fields_:
-            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
-        return ret_str
-
-    def __float__(self):
-        """
-        Return a float value from the packed data of the HP3437A
-
-        """
-        # range decoding
-        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-        # 1 indicates 0.1V range
-        if self.range == 1:
-            cur_range = 0.1
-        # 2 indicates 10V range
-        if self.range == 2:
-            cur_range = 10.0
-        # 3 indicates 1V range
-        if self.range == 3:
-            cur_range = 1.0
-
-        signbit = 1
-        if self.sign_bit == 0:
-            signbit = -1
-
-        return (
-            cur_range * signbit * (
-                self.MSD + float(self.SSD) / 10 + float(self.TSD) / 100 + float(self.LSD) / 1000
-            )
-        )
-
 
 class HP3437A(HPLegacyInstrument):
     """Represents the Hewlett Packard 3737A system voltmeter
@@ -144,6 +158,7 @@ class HP3437A(HPLegacyInstrument):
     with the instrument.
     """
     status_desc = Status
+    pb_desc = PackedBits
 
     def __init__(self, resourceName, **kwargs):
         super().__init__(
@@ -152,9 +167,6 @@ class HP3437A(HPLegacyInstrument):
             status_bitfield=self.status_desc,
             **kwargs,
         )
-        # self.packed_bits = Packed_bits
-        # self.packed_bytes = self.bytefield_factory(PACKED_BYTES)
-        # self.packed_data = self.union_factory(self.packed_bytes, self.packed_bits)
         log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
@@ -178,52 +190,6 @@ class HP3437A(HPLegacyInstrument):
         IGNORE_TRIGGER = 2
         INVALID_PROGRAM = 1
 
-    # @staticmethod
-    def _decode_range(self):
-        """Method to decode current range
-
-        :param range_undecoded: int to be decoded
-        :return cur_range: float value repesenting the active measurment range
-        :rtype cur_range: float
-
-        """
-        range_undecoded = self.status.range
-        # range decoding
-        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-        if range_undecoded == 0:
-            cur_range = math.nan
-        # 1 indicates 0.1V range
-        if range_undecoded == 1:
-            cur_range = 0.1
-        # 2 indicates 10V range
-        if range_undecoded == 2:
-            cur_range = 10.0
-        # 3 indicates 1V range
-        if range_undecoded == 3:
-            cur_range = 1.0
-        return cur_range
-
-    def _decode_trigger(self):
-        """Method to decode trigger mode
-
-        :param status_bytes: list of bytes to be decoded
-        :return trigger_mode: string with the current trigger mode
-        :rtype trigger_mode: str
-
-        """
-        trig = self.status.trigger
-        if trig == 0:
-            log.error("HP3437A invalid trigger detected!")
-            trigger_mode = "INVALID"
-        if trig == 1:
-            trigger_mode = "Internal"
-        if trig == 2:
-            trigger_mode = "external"
-        if trig == 3:
-            trigger_mode = "hold/manual"
-        return trigger_mode
-
-    # @staticmethod
     def _unpack_data(self, data):
         """
         Method to unpack the data from the returned bytes in packed mode
@@ -232,8 +198,8 @@ class HP3437A(HPLegacyInstrument):
         :return ret_data: float value
 
         """
-        ret_data = self.packed_data(self.packed_bytes(*data))
-        return float(ret_data.b)
+        ret_data = PackedBits.from_buffer(bytearray(data))
+        return float(ret_data)
 
     # commands overwriting the base implementaiton
     def read_data(self):
@@ -249,7 +215,6 @@ class HP3437A(HPLegacyInstrument):
         current_timeout = self.adapter.connection.timeout
         time_needed = self.number_readings * self.delay
         new_timeout = time_needed * 3 * 1000  # safety factor 3
-        # TODO Review required! (2021/12/29)
         if new_timeout > current_timeout:
             if new_timeout >= 1e6:
                 # Disables timeout if measurement would take more then 1000 sec
@@ -265,7 +230,7 @@ class HP3437A(HPLegacyInstrument):
             for i in range(0, read_data_length):
                 _from = i * 2
                 _to = _from + 2
-                processed_data.append(self._unpack_data(self, read_data[_from:_to]))
+                processed_data.append(self._unpack_data(read_data[_from:_to]))
             self.adapter.connection.timeout = current_timeout
             return np.array(processed_data)
         self.adapter.connection.timeout = current_timeout
@@ -339,7 +304,7 @@ class HP3437A(HPLegacyInstrument):
             Overrange will be in indicated as 0.99,9.99 or 99.9
 
         """
-        return self._decode_range()
+        return self.status.Range
 
     @range.setter
     def range(self, value):
@@ -385,7 +350,7 @@ class HP3437A(HPLegacyInstrument):
         ===========  ===========================================
 
         """
-        return self._decode_trigger()
+        return self.status.Trigger
 
     @trigger.setter
     def trigger(self, value):
