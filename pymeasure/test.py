@@ -28,7 +28,7 @@ from pymeasure.adapters.protocol import ProtocolAdapter
 
 
 @contextmanager
-def expected_protocol(instrument_cls, comm_pairs):
+def expected_protocol(instrument_cls, comm_pairs, **kwargs):
     """Context manager that checks sent/received instrument commands without a
     device connected.
 
@@ -43,15 +43,17 @@ def expected_protocol(instrument_cls, comm_pairs):
     Parameters
     ----------
     instrument_cls : `~pymeasure.Instrument`
-        `~pymeasure.Instrument` subclass to instantiate
+        `~pymeasure.Instrument` subclass to instantiate.
     comm_pairs : list[2-tuples[str]]
         List of command-response pairs, i.e. 2-tuples like `('VOLT?', '3.14')`.
         'None' indicates that a pair member (command or response) does not
         exist, e.g. `(None, 'RESP1')`. Commands and responses are without
         termination characters.
+    kwargs : dict, optional
+        Keyword arguments for the instantiation of the instrument.
     """
     protocol = ProtocolAdapter(comm_pairs)
-    instr = instrument_cls(protocol, name="Virtual instrument")
+    instr = instrument_cls(protocol, name="Virtual instrument", **kwargs)
     yield instr
     assert protocol._index == len(comm_pairs), (
         "Unprocessed protocol definitions remain: "

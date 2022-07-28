@@ -30,6 +30,10 @@ from pymeasure.instruments import Instrument
 
 
 class BasicTestInstrument(Instrument):
+    def __init__(self, adapter, name, **kwargs):
+        super().__init__(adapter, name)
+        self.kwargs = kwargs
+
     simple = Instrument.control(
         "VOLT?", "VOLT %s V",
         """Simple property replying with plain floats""",
@@ -50,6 +54,14 @@ def test_simple_protocol():
                             ]) as instr:
         assert instr.simple == 3.14
         instr.simple = 4.5
+
+
+def test_kwargs():
+    """Test whether the kwargs are handed over correctly."""
+    with expected_protocol(BasicTestInstrument,
+                           [],
+                           test=5, xyz="abc") as instr:
+        assert instr.kwargs == {'test': 5, 'xyz': "abc"}
 
 
 def test_error_checks():
