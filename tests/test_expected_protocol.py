@@ -30,8 +30,8 @@ from pymeasure.instruments import Instrument
 
 
 class BasicTestInstrument(Instrument):
-    def __init__(self, adapter, name, **kwargs):
-        super().__init__(adapter, name)
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, "Basic Test Instrument")
         self.kwargs = kwargs
 
     simple = Instrument.control(
