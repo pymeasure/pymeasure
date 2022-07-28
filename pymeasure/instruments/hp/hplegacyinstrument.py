@@ -40,7 +40,6 @@ class StatusBitsBase(ctypes.BigEndianStructure):
     """
     _pack_ = 1
     _get_process_ = {}
-    _set_process_ = {}
 
     # decoder functions
     # decimal to BCD & BCD to decimal conversion copied from
@@ -107,7 +106,6 @@ class PackedBitsBase(ctypes.BigEndianStructure):
     """
     _pack_ = 1
     _get_process_ = {}
-    _set_process_ = {}
 
     def __float__(self):
         """
@@ -116,15 +114,12 @@ class PackedBitsBase(ctypes.BigEndianStructure):
         """
         # range decoding
         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-        # 1 indicates 0.1V range
-        if self.range == 1:
-            cur_range = 0.1
-        # 2 indicates 10V range
-        if self.range == 2:
-            cur_range = 10.0
-        # 3 indicates 1V range
-        if self.range == 3:
-            cur_range = 1.0
+        decode_map = {
+           1: 0.1,
+           2: 10.0,
+           3: 1.0,
+        }
+        cur_range = decode_map[self.range]
 
         signbit = 1
         if self.sign_bit == 0:
@@ -132,23 +127,9 @@ class PackedBitsBase(ctypes.BigEndianStructure):
 
         return (
             cur_range * signbit * (
-                self.MSD + float(self.SSD) / 10 + float(self.TSD) / 100 + float(self.LSD) / 1000
+                self.MSD + self.SSD / 10 + self.TSD / 100 + self.LSD / 1000
             )
         )
-
-    def __getattribute__(self, name):
-        val = super().__getattribute__(name)
-        if name == "fields":
-            return val
-        if name in self.fields():
-            process = super().__getattribute__('_get_process_')
-            if name in process:
-                val = process[name](val)
-
-        return val
-
-    def fields(self):
-        return [desc[0] for desc in super().__getattribute__('_fields_')]
 
 
 class HPLegacyInstrument(Instrument):
@@ -174,8 +155,7 @@ class HPLegacyInstrument(Instrument):
         if command == "B":
             self.adapter.connection.write("B", termination="")
         else:
-            # super().write(command)
-            self.adapter.connection.write(command)
+            super().write(command)
 
     def values(self, command, **kwargs):
         if command == "B":

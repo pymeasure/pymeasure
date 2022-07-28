@@ -86,18 +86,13 @@ class Status(StatusBitsBase):
         """
         # range decoding
         # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-        if r == 0:
-            cur_range = math.nan
-        # 1 indicates 0.1V range
-        if r == 1:
-            cur_range = 0.1
-        # 2 indicates 10V range
-        if r == 2:
-            cur_range = 10.0
-        # 3 indicates 1V range
-        if r == 3:
-            cur_range = 1.0
-        return cur_range
+        decode_map = {
+           0: math.nan,
+           1: 0.1,
+           2: 10.0,
+           3: 1.0,
+        }
+        return decode_map[r]
 
     @staticmethod
     def _decode_trigger(t):
@@ -108,27 +103,13 @@ class Status(StatusBitsBase):
         :rtype trigger_mode: str
 
         """
-        if t == 0:
-            log.error("HP3437A invalid trigger detected!")
-            trigger_mode = "INVALID"
-        if t == 1:
-            trigger_mode = "Internal"
-        if t == 2:
-            trigger_mode = "external"
-        if t == 3:
-            trigger_mode = "hold/manual"
-        return trigger_mode
-
-    def __str__(self):
-        """
-        Returns a pretty formatted string showing the status of the instrument
-
-        """
-        ret_str = ""
-        for field in self._fields_:
-            ret_str = ret_str + f"{field[0]}: {getattr(self, field[0])}\n"
-
-        return ret_str
+        decode_map = {
+           0: "INVALID",
+           1: "internal",
+           2: "external",
+           3: "hold/manual"
+        }
+        return decode_map[t]
 
     _get_process_ = {
         "Number": StatusBitsBase._convert_from_bcd,
@@ -136,6 +117,16 @@ class Status(StatusBitsBase):
         "Range": _decode_range,
         "Trigger": _decode_trigger,
         }
+
+    def __str__(self):
+        """
+        Returns a pretty formatted string showing the status of the instrument
+        """
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {getattr(self, field[0])}\n"
+
+        return ret_str
 
 
 class PackedBits(PackedBitsBase):
