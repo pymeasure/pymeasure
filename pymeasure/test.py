@@ -53,7 +53,7 @@ def expected_protocol(instrument_cls, comm_pairs, **kwargs):
         Keyword arguments for the instantiation of the instrument.
     """
     protocol = ProtocolAdapter(comm_pairs)
-    instr = instrument_cls(protocol, name="Virtual instrument", **kwargs)
+    instr = instrument_cls(protocol, **kwargs)
     yield instr
     assert protocol._index == len(comm_pairs), (
         "Unprocessed protocol definitions remain: "
