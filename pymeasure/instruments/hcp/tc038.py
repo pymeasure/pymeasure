@@ -73,7 +73,7 @@ class TC038(Instrument):
     """
 
     def __init__(self, resourceName, address=1, timeout=1000,
-                 includeSCPI=False):
+                 includeSCPI=False, **kwargs):
         """
         Initialize the communication.
 
@@ -88,7 +88,7 @@ class TC038(Instrument):
         """
         super().__init__(resourceName, "TC038", timeout=timeout,
                          write_termination="\r", read_termination="\r",
-                         parity=Parity.even,)
+                         parity=Parity.even, **kwargs)
         self.address = address
 
         self.set_monitored_quantity()  # start to monitor the temperature
