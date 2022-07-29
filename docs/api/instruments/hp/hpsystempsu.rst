@@ -13,10 +13,10 @@ Model  Voltage   Current    Power
 =====  ========  =========  =====
 
 *Note:*
-    * The multi-channel system power supplies HP 6621A, 6622A, 6623A, 6624A, 6625A, 6626A, 6627A &6628A 
+    * The multi-channel system power supplies HP 6621A, 6622A, 6623A, 6624A, 6625A, 6626A, 6627A & 6628A 
       share some of the command syntax and could probably be incorporated in this implementation
     
-    * The B-version of these models (6632B, 6633B & 6634B) are SPCI-complient and 
+    * The B-version of these models (6632B, 6633B & 6634B) are SPCI-compliant and 
       could be implemented in a similiar manner
     
     

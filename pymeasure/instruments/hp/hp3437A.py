@@ -27,8 +27,7 @@ import logging
 import math
 from enum import IntFlag
 import numpy as np
-from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument
-from pymeasure.instruments.hp.hplegacyinstrument import StatusBitsBase, PackedBitsBase
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -129,7 +128,7 @@ class Status(StatusBitsBase):
         return ret_str
 
 
-class PackedBits(PackedBitsBase):
+class PackedBits(ctypes.BigEndianStructure):
     """
     A bitfield structure containing the assignments for the data transfer in packed/binary mode
     """
@@ -141,6 +140,30 @@ class PackedBits(PackedBitsBase):
         ("SSD", c_uint8, 4),
         ("TSD", c_uint8, 4),
         ("LSD", c_uint8, 4), ]
+
+    def __float__(self):
+        """
+        Return a float value from the packed data of the HP3437A
+
+        """
+        # range decoding
+        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
+        decode_map = {
+           1: 0.1,
+           2: 10.0,
+           3: 1.0,
+        }
+        cur_range = decode_map[self.range]
+
+        signbit = 1
+        if self.sign_bit == 0:
+            signbit = -1
+
+        return (
+            cur_range * signbit * (
+                self.MSD + self.SSD / 10 + self.TSD / 100 + self.LSD / 1000
+            )
+        )
 
 
 class HP3437A(HPLegacyInstrument):

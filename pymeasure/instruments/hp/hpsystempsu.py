@@ -25,7 +25,7 @@
 import ctypes
 import logging
 
-from enum import IntFlag, Enum
+from enum import Enum
 from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -141,17 +141,6 @@ class HP6632A(HPLegacyInstrument):
         CC_REF_LOW = 23
         DAC_FAIL = 24
         EEPROM_CHKSUM = 51
-
-    class SRQ (IntFlag):
-        """
-        IniFlag class for the SRQ mask assignment
-
-        """
-        RQS = 64
-        ERR = 32
-        RDY = 16
-        PON = 2
-        FAU = 1
 
     def check_errors(self):
         """

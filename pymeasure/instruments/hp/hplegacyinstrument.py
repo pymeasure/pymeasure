@@ -100,38 +100,6 @@ class StatusBitsBase(ctypes.BigEndianStructure):
         return [desc[0] for desc in super().__getattribute__('_fields_')]
 
 
-class PackedBitsBase(ctypes.BigEndianStructure):
-    """
-    A bitfield structure containing the assignments for the status decoding
-    """
-    _pack_ = 1
-    _get_process_ = {}
-
-    def __float__(self):
-        """
-        Return a float value from the packed data of the HP3437A
-
-        """
-        # range decoding
-        # (cf table 3-2, page 3-5 of the manual, HPAK document 9018-05946)
-        decode_map = {
-           1: 0.1,
-           2: 10.0,
-           3: 1.0,
-        }
-        cur_range = decode_map[self.range]
-
-        signbit = 1
-        if self.sign_bit == 0:
-            signbit = -1
-
-        return (
-            cur_range * signbit * (
-                self.MSD + self.SSD / 10 + self.TSD / 100 + self.LSD / 1000
-            )
-        )
-
-
 class HPLegacyInstrument(Instrument):
     """
     Class for legacy HP instruments from the era before SPCI, based on `pymeasure.Instrument`
