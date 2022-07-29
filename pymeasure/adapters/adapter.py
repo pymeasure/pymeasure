@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 import numpy as np
 from copy import copy
 
@@ -41,18 +43,36 @@ class Adapter:
     def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
         self.connection = None
+        self.log = logging.Logger("Adapter")
+        self.log.addHandler(logging.NullHandler())
 
     def __del__(self):
         """Close connection upon garbage collection of the device"""
         if self.connection is not None:
             self.connection.close()
 
+    # Directly called methods
     def write(self, command):
-        """ Writes a command to the instrument
+        """
+        Writes a command to the instrument.
 
         :param command: SCPI command string to be sent to the instrument
         """
-        raise NameError("Adapter (sub)class has not implemented writing")
+        self.log.debug(f"WRITE:{command.encode()}")
+        self._write(command)
+
+    def _write(self, command):
+        """Writing to the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented writing")
+
+    def write_bytes(self, content):
+        """Write the bytes `content`. If a command is full, fill the read."""
+        self.log.debug(f"WRITE:{content}")
+        self._write_bytes(content)
+
+    def _write_bytes(self, content):
+        """Write bytes to the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented writing")
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
@@ -61,6 +81,7 @@ class Adapter:
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
+        raise DeprecationWarning("Ask is now in the instrument")
         self.write(command)
         return self.read()
 
@@ -70,7 +91,23 @@ class Adapter:
 
         :returns: String ASCII response of the instrument.
         """
-        raise NameError("Adapter (sub)class has not implemented reading")
+        read = self._read()
+        self.log.debug(f"READ:{read.encode()}")
+        return read
+
+    def _read(self):
+        """Read from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading")
+
+    def read_bytes(self, count):
+        """Read `count` number of bytes."""
+        read = self._read_bytes(count)
+        self.log.debug(f"READ:{read}")
+        return read
+
+    def _read_bytes(self, count):
+        """Read from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading")
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
         """ Writes a command to the instrument and returns a list of formatted
@@ -85,6 +122,7 @@ class Adapter:
             preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
+        raise DeprecationWarning("Moved to instrument")
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
@@ -134,7 +172,7 @@ class FakeAdapter(Adapter):
 
     _buffer = ""
 
-    def read(self):
+    def _read(self):
         """ Returns the last commands given after the
         last read call.
         """
@@ -143,7 +181,7 @@ class FakeAdapter(Adapter):
         self._buffer = ""
         return result
 
-    def write(self, command):
+    def _write(self, command):
         """ Writes the command to a buffer, so that it can
         be read back.
         """
@@ -151,3 +189,39 @@ class FakeAdapter(Adapter):
 
     def __repr__(self):
         return "<FakeAdapter>"
+
+
+"""
+TODO Adapter rework
+-------------------
+- see also protocol.py
+- adjust tests
+- prologix adapter: remove rw_delay
+- move read/write binary_values to adapter or instrument?
+
+For individual instruments
+--------------------------
+- move rw_delay from prologix adapter to the instruments
+- no ask/values from adapter
+
+Special Adapters
+----------------
+- attocube
+- danfysik: should be removable, verify, that it works as expected.
+- lakeshore: could be moved to pyvisa, I guess
+- Oxford Adapter: move it to its own superclass between Instrument and the
+    specific instrument itself.
+- Toptica: move to instrument itself.
+
+Instruments with changes in read/write/ask/values
+------------------------
+fwbell.fwbell5080
+danfysik.danfysik8500
+hcp.TC038
+attocube.anc300
+anaheim.dpseries
+keithley.keithley2306
+hp.hp8116a
+lakeshore.lakeshore421
+parker.parkerGV6   move to pyvisa
+"""

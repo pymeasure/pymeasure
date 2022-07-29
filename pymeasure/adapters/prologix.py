@@ -70,6 +70,8 @@ class PrologixAdapter(SerialAdapter):
                          preprocess_reply=preprocess_reply, **kwargs)
         self.address = address
         self.rw_delay = rw_delay
+        if rw_delay is not None:
+            raise DeprecationWarning("Delay should be implemented in the instrument.")
         if not isinstance(port, serial.Serial):
             self.set_defaults()
 
@@ -86,13 +88,13 @@ class PrologixAdapter(SerialAdapter):
 
         :param command: SCPI command string to be sent to instrument
         """
-
+        raise DeprecationWarning("Ask is in the instrument.")
         self.write(command)
         if self.rw_delay is not None:
             time.sleep(self.rw_delay)
         return self.read()
 
-    def write(self, command):
+    def _write(self, command):
         """ Writes the command to the GPIB address stored in the
         :attr:`.address`
 
@@ -148,7 +150,7 @@ class PrologixAdapter(SerialAdapter):
         super().write_binary_values(command, values, **kwargs)
         self.connection.write(b'\n')
 
-    def read(self):
+    def _read(self):
         """ Reads the response of the instrument until timeout
 
         :returns: String ASCII response of the instrument
@@ -165,6 +167,7 @@ class PrologixAdapter(SerialAdapter):
         :param rw_delay: Set a custom Read/Write delay for the instrument
         :returns: PrologixAdapter for specific GPIB address
         """
+        # TODO remove rw_delay
         rw_delay = rw_delay or self.rw_delay
         return PrologixAdapter(self.connection, address, rw_delay=rw_delay)
 

@@ -50,14 +50,14 @@ class SerialAdapter(Adapter):
         else:
             self.connection = serial.Serial(port, **kwargs)
 
-    def write(self, command):
+    def _write(self, command):
         """ Writes a command to the instrument
 
         :param command: SCPI command string to be sent to the instrument
         """
         self.connection.write(command.encode())  # encode added for Python 3
 
-    def read(self):
+    def _read(self):
         """ Reads until the buffer is empty and returns the resulting
         ASCII response
 

@@ -23,6 +23,8 @@
 #
 
 import logging
+import time
+
 import numpy as np
 from pymeasure.adapters.visa import VISAAdapter
 
@@ -145,7 +147,9 @@ class Instrument:
     __reserved_prefix = "___"
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, query_delay=0,
+                 preprocess_reply=None, **kwargs):
+        """Initialize the instrument."""
         if isinstance(adapter, (int, str)):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -156,6 +160,8 @@ class Instrument:
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
+        self.query_delay = query_delay
+        self.preprocess_reply = preprocess_reply
 
         self.isShutdown = False
         self._special_names = self._setup_special_names()
@@ -244,14 +250,6 @@ class Instrument:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     # Wrapper functions for the Adapter object
-    def ask(self, command):
-        """ Writes the command to the instrument through the adapter
-        and returns the read response.
-
-        :param command: command string to be sent to the instrument
-        """
-        return self.adapter.ask(command)
-
     def write(self, command):
         """ Writes the command to the instrument through the adapter.
 
@@ -259,21 +257,78 @@ class Instrument:
         """
         self.adapter.write(command)
 
+    def write_bytes(self, content):
+        """Write raw bytes to the instrument."""
+        self.adapter.write_bytes(content)
+
     def read(self):
         """ Reads from the instrument through the adapter and returns the
         response.
         """
         return self.adapter.read()
 
-    def values(self, command, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
-        passing on any key-word arguments.
+    def read_bytes(self, count):
+        """Read `count` number of bytes."""
+        return self.adapter.read_bytes(count)
+
+    # Communication functions
+    def ask(self, command, delay=None):
+        """ Writes the command to the instrument through the adapter
+        and returns the read response.
+
+        :param command: command string to be sent to the instrument
         """
-        return self.adapter.values(command, **kwargs)
+        self.write(command)
+        time.sleep(delay or self.query_delay)
+        return self.read()
+
+    def values(self, command, separator=',', cast=float, preprocess_reply=None):
+        """ Writes a command to the instrument and returns a list of formatted
+        values from the result.
+
+        :param command: SCPI command to be sent to the instrument
+        :param separator: A separator character to split the string into a list
+        :param cast: A type to cast the result
+        :param preprocess_reply: optional callable used to preprocess values
+            received from the instrument. The callable returns the processed
+            string. If not specified, the Adapter default is used if available,
+            otherwise no preprocessing is done.
+        :returns: A list of the desired type, or strings where the casting fails
+        """
+        results = str(self.ask(command)).strip()
+        if callable(preprocess_reply):
+            results = preprocess_reply(results)
+        elif callable(self.preprocess_reply):
+            results = self.preprocess_reply(results)
+        results = results.split(separator)
+        for i, result in enumerate(results):
+            try:
+                if cast == bool:
+                    # Need to cast to float first since results are usually
+                    # strings and bool of a non-empty string is always True
+                    results[i] = bool(float(result))
+                else:
+                    results[i] = cast(result)
+            except Exception:
+                pass  # Keep as string
+        return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        return self.adapter.binary_values(command, header_bytes, dtype)
+        """ Returns a numpy array from a query for binary data.
 
+        :param command: SCPI command to be sent to the instrument
+        :param header_bytes: Integer number of bytes to ignore in header
+        :param dtype: The NumPy data type to format the values with
+        :returns: NumPy array of values
+        """
+        # TODO verify implementation
+        self.write(command)
+        binary = self.read()
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:]
+        return np.fromstring(data, dtype=dtype)
+
+    # Property creators
     @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
         get_command,

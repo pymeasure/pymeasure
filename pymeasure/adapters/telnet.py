@@ -44,6 +44,7 @@ class TelnetAdapter(Adapter):
 
     def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
                  **kwargs):
+        raise DeprecationWarning("Use the pyvisa adapter instead.")
         super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
         safe_keywords = ['timeout']
@@ -54,14 +55,14 @@ class TelnetAdapter(Adapter):
                     f"allowed are: {str(safe_keywords)}")
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
-    def write(self, command):
+    def _write(self, command):
         """ Writes a command to the instrument
 
         :param command: command string to be sent to the instrument
         """
         self.connection.write(command.encode())
 
-    def read(self):
+    def _read(self):
         """ Read something even with blocking the I/O. After something is
         received check again to obtain a full reply.
 
@@ -77,6 +78,7 @@ class TelnetAdapter(Adapter):
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
+        raise DeprecationWarning()
         self.write(command)
         time.sleep(self.query_delay)
         return self.read()

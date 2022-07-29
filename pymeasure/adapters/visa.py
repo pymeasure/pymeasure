@@ -108,14 +108,14 @@ class VISAAdapter(Adapter):
         else:
             return False
 
-    def write(self, command):
+    def _write(self, command):
         """ Writes a command to the instrument
 
         :param command: SCPI command string to be sent to the instrument
         """
         self.connection.write(command)
 
-    def read(self):
+    def _read(self):
         """ Reads until the buffer is empty and returns the resulting
         ASCII response
 
@@ -123,11 +123,11 @@ class VISAAdapter(Adapter):
         """
         return self.connection.read()
 
-    def write_bytes(self, data):
+    def _write_bytes(self, data):
         """Write `data` as bytes object to the instrument."""
         self.connection.write_raw(data)
 
-    def read_bytes(self, size):
+    def _read_bytes(self, size):
         """ Reads specified number of bytes from the buffer and returns
         the resulting ASCII response
 
@@ -143,6 +143,7 @@ class VISAAdapter(Adapter):
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
+        raise DeprecationWarning("Implement ask in the instrument.")
         return self.connection.query(command)
 
     def ask_values(self, command, **kwargs):

@@ -48,6 +48,7 @@ class VXI11Adapter(Adapter):
     def __init__(self, host, preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         # Filter valid arguments that can be passed to vxi instrument
+        raise DeprecationWarning("Use pyvisa instead")
         valid_args = ["name", "client_id", "term_char"]
         self.conn_kwargs = {}
         for key in kwargs:
@@ -56,7 +57,7 @@ class VXI11Adapter(Adapter):
 
         self.connection = vxi11.Instrument(host, **self.conn_kwargs)
 
-    def write(self, command):
+    def _write(self, command):
         """ Wrapper function for the write command using the
         vxi11 interface.
 
@@ -65,7 +66,7 @@ class VXI11Adapter(Adapter):
         """
         self.connection.write(command)
 
-    def read(self):
+    def _read(self):
         """ Wrapper function for the read command using the
         vx11 interface.
 
@@ -85,6 +86,10 @@ class VXI11Adapter(Adapter):
         return self.connection.ask(command)
 
     def write_raw(self, command):
+        # legacy method
+        self.write_bytes(command)
+
+    def _write_bytes(self, command):
         """ Wrapper function for the write_raw command using the
         vxi11 interface.
 
@@ -94,6 +99,10 @@ class VXI11Adapter(Adapter):
         self.connection.write_raw(command)
 
     def read_raw(self):
+        # legacy method
+        return self.read_bytes()
+
+    def _read_bytes(self):
         """ Wrapper function for the read_raw command using the
         vx11 interface.
 

@@ -69,14 +69,14 @@ class ProtocolAdapter(Adapter):
         self.comm_pairs = comm_pairs
         self._index = 0
 
-    def write(self, command):
+    def _write(self, command):
         """Compare the command with the expected one and fill the read."""
         self.write_bytes(to_bytes(command))
         assert self._write_buffer == b"", (
             f"Written bytes '{self._write_buffer}' do not match expected "
             f"'{self.comm_pairs[self._index][0]}'.")
 
-    def write_bytes(self, content):
+    def _write_bytes(self, content):
         """Write the bytes `content`. If a command is full, fill the read."""
         self._write_buffer += content
         try:
@@ -98,11 +98,11 @@ class ProtocolAdapter(Adapter):
         # It's not clear how relevant this is in real-world use, but it's analogous
         # to the possibility to fetch a (binary) message over several reads.
 
-    def read(self):
+    def _read(self):
         """Return an already present or freshly fetched read buffer as a string."""
         return (self.read_bytes(-1) + self.read_bytes(1)).decode("utf-8")
 
-    def read_bytes(self, count):
+    def _read_bytes(self, count):
         """Read `count` number of bytes."""
         if self._read_buffer:
             read = self._read_buffer[:count]
