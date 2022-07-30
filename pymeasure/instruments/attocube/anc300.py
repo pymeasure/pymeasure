@@ -151,14 +151,8 @@ class Axis:
         cmdparts.insert(1, self.axis)
         return ' '.join(cmdparts)
 
-    def ask(self, command, **kwargs):
-        return self.controller.ask(self._add_axis_id(command), **kwargs)
-
     def write(self, command, **kwargs):
         return self.controller.write(self._add_axis_id(command), **kwargs)
-
-    def values(self, command, **kwargs):
-        return self.controller.values(self._add_axis_id(command), **kwargs)
 
     def stop(self):
         """ Stop any motion of the axis """

@@ -69,7 +69,7 @@ class TopticaAdapter(VISAAdapter):
         else:
             return reply
 
-    def read(self):
+    def _read(self):
         """ Reads a reply of the instrument which consists of at least two
         lines. The initial ones are the reply to the command while the last one
         should be '[OK]' which acknowledges that the device is ready to receive
@@ -101,7 +101,7 @@ class TopticaAdapter(VISAAdapter):
                 f"'{self.lastcommand}' with message '{reply}'")
         return '\n'.join(msg)
 
-    def write(self, command, check_ack=True):
+    def _write(self, command, check_ack=True):
         """ Writes a command to the instrument. Also reads back a LF+CR which
         is always sent back.
 
@@ -122,14 +122,3 @@ class TopticaAdapter(VISAAdapter):
                 raise ValueError(
                     f"TopticaAdapter.write: Error after command '{command}'"
                     f"with message '{reply}'")
-
-    def ask(self, command):
-        """ Writes a command to the instrument and returns the resulting ASCII
-        response
-
-        :param command: command string to be sent to the instrument
-        :returns: String ASCII response of the instrument
-        """
-        self.write(command, check_ack=False)
-        time.sleep(self.connection.query_delay)
-        return self.read()

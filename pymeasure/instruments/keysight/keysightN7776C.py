@@ -230,6 +230,7 @@ class KeysightN7776C(Instrument):
         """
         Function returning the wavelength data logged in the internal memory of the laser
         """
+        # Using pyvisa's method bypassing the normal read.
         return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',
                         datatype=u'd'))
 

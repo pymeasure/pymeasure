@@ -41,10 +41,10 @@ class LakeShoreUSBAdapter(SerialAdapter):
             baudrate=57600,
             timeout=0.5,
             parity='O',
-            bytesize=7
+            bytesize=7,
         )
 
-    def write(self, command):
+    def _write(self, command):
         """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
         method to automatically append a Unix-style linebreak at the end
         of the command.

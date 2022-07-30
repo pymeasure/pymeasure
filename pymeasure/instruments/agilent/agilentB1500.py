@@ -881,7 +881,7 @@ class AgilentB1500(Instrument):
         :return: Measurement data
         :rtype: tuple
         """
-        data = self.adapter.read_bytes(self._data_format.size * nchannels)
+        data = self.read_bytes(self._data_format.size * nchannels)
         data = data.decode("ASCII")
         data = data.rstrip('\r,')
         # ',' if more data in buffer, '\r' if last data point

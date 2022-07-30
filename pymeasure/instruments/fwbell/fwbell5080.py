@@ -114,20 +114,20 @@ class FWBell5080(Instrument):
         """
         return super().read()[:-2]
 
-    def ask(self, command):
-        """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
-        method to remove the last 2 characters from the output.
-        """
-        # TODO this cannot work, because command is missing
-        return super().ask()[:-2]
+    # def ask(self, command):
+    #     """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
+    #     method to remove the last 2 characters from the output.
+    #     """
+    #     # TODO this cannot work, because command is missing
+    #     return super().ask()[:-2]
 
-    def values(self, command):
-        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
-        method to remove the lastv2 characters from the output.
-        """
-        # TODO this cannot work, because command is missing and removing
-        # the end of values does not make sense.
-        return super().values()[:-2]
+    # def values(self, command):
+    #     """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
+    #     method to remove the lastv2 characters from the output.
+    #     """
+    #     # TODO this cannot work, because command is missing and removing
+    #     # the end of values does not make sense.
+    #     return super().values()[:-2]
 
     def reset(self):
         """ Resets the instrument. """

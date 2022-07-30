@@ -437,10 +437,6 @@ class Channel():
         self.instrument = instrument
         self.number = number
 
-    def values(self, command, **kwargs):
-        return self.instrument.values(command.replace("<ch>", str(self.number)),
-                                      **kwargs)
-
     def write(self, command):
         self.instrument.write(command.replace("<ch>", str(self.number)))
 

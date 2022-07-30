@@ -429,18 +429,6 @@ class LakeShore421(Instrument):
 
         self.last_write_time = time()
 
-    def ask(self, command):
-        self.delay_write()
-        return super().ask(command)
-
     def write(self, command):
         self.delay_write()
         super().write(command)
-
-    def values(self, command, **kwargs):
-        self.delay_write()
-        return super().values(command, **kwargs)
-
-    def binary_values(self, command, *args, **kwargs):
-        self.delay_write()
-        return super().binary_values(command, *args, **kwargs)
