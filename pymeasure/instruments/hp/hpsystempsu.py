@@ -168,7 +168,7 @@ class HP6632A(HPLegacyInstrument):
         current_errors = int(self.ask("TEST?"))
         if current_errors != 0:
             log.error("HP6632 Error detected: %s", self.ERRORS(current_errors))
-        return self.ERRORS(current_errors)
+        return self.ST_ERRORS(current_errors)
 
     def clear(self):
         """
@@ -227,6 +227,7 @@ class HP6632A(HPLegacyInstrument):
         A floating point property that controls the output current of the device.
 
         """,
+        dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6632A"]["Cur_lim"]],
     )
@@ -237,6 +238,7 @@ class HP6632A(HPLegacyInstrument):
         A floationg point property that sets the OVP threshold.
 
         """,
+        dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6632A"]["OVP_lim"]],
     )
@@ -277,7 +279,7 @@ class HP6632A(HPLegacyInstrument):
         """
         self.write("RST")
 
-    rom_Version = HPLegacyInstrument.measurement(
+    rom_version = HPLegacyInstrument.measurement(
         "ROM?",
         """
         Reads the ROM id (software version) of the instrument and returns this value for now
@@ -301,6 +303,7 @@ class HP6632A(HPLegacyInstrument):
         A floating point proptery that controls the output voltage of the device.
 
         """,
+        dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6632A"]["Volt_lim"]],
     )
