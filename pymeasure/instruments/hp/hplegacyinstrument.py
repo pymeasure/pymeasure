@@ -70,7 +70,7 @@ class StatusBitsBase(ctypes.BigEndianStructure):
         while decimal > 0:
             nibble = decimal % 10
             bcd += nibble << place
-            decimal /= 10
+            decimal //= 10
             place += 4
         return bcd
 
