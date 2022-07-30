@@ -23,6 +23,7 @@
 #
 
 import logging
+from warnings import warn
 
 import numpy as np
 from copy import copy
@@ -36,7 +37,8 @@ class Adapter:
     This class should only be inherited from.
 
     :param preprocess_reply: optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
+        received from the instrument. The callable returns the processed
+        string. This argument is deprecated.
     :param kwargs: all other keyword arguments are ignored.
     """
 
@@ -45,35 +47,77 @@ class Adapter:
         self.connection = None
         self.log = logging.Logger("Adapter")
         self.log.addHandler(logging.NullHandler())
+        if preprocess_reply is not None:
+            warn(
+                "Do not use `Adapter.values`, but `Instrument.values` instead. "
+                "Preprocess_reply is a values parameter.",
+                FutureWarning)
 
     def __del__(self):
         """Close connection upon garbage collection of the device"""
-        if self.connection is not None:
-            self.connection.close()
+        self.close()
 
-    # Directly called methods
+    def close(self):
+        """Close the connection."""
+        try:
+            self.connection.close()
+        except AttributeError:
+            pass
+
+    # Directly called methods. DO NOT OVERRIDE IN SUBCLASS!
     def write(self, command):
         """
-        Writes a command to the instrument.
+        Write a string command to the instrument.
+
+        The write_termination string is appended, if defined.
 
         :param command: SCPI command string to be sent to the instrument
         """
-        self.log.debug(f"WRITE:{command.encode()}")
+        self.log.debug(("WRITE:", command))
         self._write(command)
 
-    def _write(self, command):
-        """Writing to the instrument. Implement in subclass."""
-        raise NotImplementedError("Adapter class has not implemented writing")
-
     def write_bytes(self, content):
-        """Write the bytes `content`. If a command is full, fill the read."""
-        self.log.debug(f"WRITE:{content}")
+        """Write the bytes `content` to the instrument."""
+        self.log.debug(("WRITE:", content))
         self._write_bytes(content)
+
+    def read(self):
+        """
+        Read until the buffer is empty and return the resulting string.
+
+        The read_termination string is removed from the response.
+
+        :returns: String ASCII response of the instrument.
+        """
+        read = self._read()
+        self.log.debug(("READ:", read))
+        return read
+
+    def read_bytes(self, count):
+        """Read `count` number of bytes from the instrument."""
+        read = self._read_bytes(count)
+        self.log.debug(("READ:", read))
+        return read
+
+    # Methods to implement in the subclass.
+
+    def _write(self, command):
+        """Write to the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented writing")
 
     def _write_bytes(self, content):
         """Write bytes to the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented writing")
 
+    def _read(self):
+        """Read from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading")
+
+    def _read_bytes(self, count):
+        """Read from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading")
+
+    # Deprecated methods.
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
         ASCII response
@@ -81,33 +125,10 @@ class Adapter:
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        raise DeprecationWarning("Ask is now in the instrument")
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
         self.write(command)
         return self.read()
-
-    def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
-
-        :returns: String ASCII response of the instrument.
-        """
-        read = self._read()
-        self.log.debug(f"READ:{read.encode()}")
-        return read
-
-    def _read(self):
-        """Read from the instrument. Implement in subclass."""
-        raise NotImplementedError("Adapter class has not implemented reading")
-
-    def read_bytes(self, count):
-        """Read `count` number of bytes."""
-        read = self._read_bytes(count)
-        self.log.debug(f"READ:{read}")
-        return read
-
-    def _read_bytes(self, count):
-        """Read from the instrument. Implement in subclass."""
-        raise NotImplementedError("Adapter class has not implemented reading")
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
         """ Writes a command to the instrument and returns a list of formatted
@@ -122,7 +143,8 @@ class Adapter:
             preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        raise DeprecationWarning("Moved to instrument")
+        warn("Do not call `Adapter.values`, but `Instrument.values` instead.",
+             FutureWarning)
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
@@ -189,39 +211,3 @@ class FakeAdapter(Adapter):
 
     def __repr__(self):
         return "<FakeAdapter>"
-
-
-"""
-TODO Adapter rework
--------------------
-- see also protocol.py
-- adjust tests
-- prologix adapter: remove rw_delay
-- move read/write binary_values to adapter or instrument?
-
-For individual instruments
---------------------------
-- move rw_delay from prologix adapter to the instruments
-- no ask/values from adapter
-
-Special Adapters
-----------------
-- attocube
-- danfysik: should be removable, verify, that it works as expected.
-- lakeshore: could be moved to pyvisa, I guess
-- Oxford Adapter: move it to its own superclass between Instrument and the
-    specific instrument itself.
-- Toptica: move to instrument itself.
-
-Instruments with changes in read/write/ask/values
-------------------------
-fwbell.fwbell5080
-danfysik.danfysik8500
-hcp.TC038
-attocube.anc300
-anaheim.dpseries
-keithley.keithley2306
-hp.hp8116a
-lakeshore.lakeshore421
-parker.parkerGV6   move to pyvisa
-"""
