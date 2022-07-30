@@ -25,42 +25,46 @@
 from pymeasure.test import expected_protocol
 
 
-from pymeasure.instruments.anaheimautomation import DPSeriesMotorController
+from pymeasure.instruments.anritsu import AnritsuMG3692C
 
 
 def test_init():
     with expected_protocol(
-            DPSeriesMotorController, []) as instr:
+            AnritsuMG3692C, []) as instr:
         pass
 
 
-def test_basespeed():
+def test_power():
     with expected_protocol(
-            DPSeriesMotorController,
-            [(b"@0VB", b"123")],
-            ) as instr:
-        assert instr.basespeed == 123
+            AnritsuMG3692C, [(b":POWER?;", "123.45")]) as instr:
+        assert instr.power == 123.45
 
 
-def test_basespeed_setter():
+def test_power_setter():
     with expected_protocol(
-            DPSeriesMotorController,
-            [(b"@0B123", None)],
-            ) as instr:
-        instr.basespeed = 123
+            AnritsuMG3692C, [(b":POWER 123.45 dBm;", None)]) as instr:
+        instr.power = 123.45
 
 
-def test_step_position():
+def test_frequency():
     with expected_protocol(
-            DPSeriesMotorController,
-            [(b"@0VZ", b"13")],
-            ) as instr:
-        assert instr.step_position == 13
+            AnritsuMG3692C, [(b":FREQUENCY?;", "123.45")]) as instr:
+        assert instr.frequency == 123.45
 
 
-def test_step_position_setter():
+def test_frequency_setter():
     with expected_protocol(
-            DPSeriesMotorController,
-            [(b"@0P13", None), (b"@0G", None)],
-            ) as instr:
-        instr.step_position = 13
+            AnritsuMG3692C, [(b":FREQUENCY 1.234500e+02 Hz;", None)]) as instr:
+        instr.frequency = 123.45
+
+
+def test_output():
+    with expected_protocol(
+            AnritsuMG3692C, [(b":OUTPUT?", "1")]) as instr:
+        assert instr.output is True
+
+
+def test_output_setter():
+    with expected_protocol(
+            AnritsuMG3692C, [(b":OUTPUT ON;", None)]) as instr:
+        instr.output = True
