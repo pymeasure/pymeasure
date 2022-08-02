@@ -54,9 +54,9 @@ class AnalysisBrowserWidget(QtGui.QWidget):
         self.abort_button.clicked.connect(self.abort_analysis)
         self.continue_button.clicked.connect(self.continue_analysis)
 
-        self._parent.manager.finished.connect(self.queue_analysis)
-        self._parent.manager.abort_returned.connect(self.aborted_queue_analysis)
-        self._parent.manager.progress_updated.connect(self.updated_queue_analysis)
+        self._parent.browser_widget.manager.finished.connect(self.queue_analysis)
+        self._parent.browser_widget.manager.abort_returned.connect(self.aborted_queue_analysis)
+        self._parent.browser_widget.manager.progress_updated.connect(self.updated_queue_analysis)
 
         self.analysis_browser.itemChanged.connect(self.analysis_browser_item_changed)
 

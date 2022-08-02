@@ -213,8 +213,9 @@ class Manager(QtCore.QObject):
     def clear_unfinished(self):
         """ Remove all Experiments
         """
-        for experiment in self.experiments[:]:
-            if experiment.procedure.status != Procedure.FINISHED:
+        for experiment in self.experiments[::-1]:
+            status = experiment.procedure.status
+            if status != Procedure.FINISHED and experiment != self._running_experiment:
                 pathtofile = experiment.results.data_filenames
                 self.remove(experiment)
                 if len(pathtofile) != 1:
