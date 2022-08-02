@@ -711,11 +711,13 @@ Writing tests
 
 Tests are very useful for writing good code. We distinguish two groups of tests for instruments: the first group does not rely on a connected instrument. These tests verify the working of the code against expectation (for example according to a device manual) only. The second group tests the code with a device connected.
 
+Implement device tests by adding files in the :code:`tests/instruments/...` directory tree, mirroring the structure of the instrument implementations.
+There are other instrument tests already available that can serve as inspiration.
 
 Code tests
 **********
 
-In order to verify the expected working of the device code, it is good to test every part of the written code. The method `expected_protocol` with the `ProtocolAdapter` simulates the communication to a device and verifies that the instrument driver behaves according to the expectation.
+In order to verify the expected working of the device code, it is good to test every part of the written code. The :func:`~pymeasure.test.expected_protocol` context manager (using a :class:`~pymeasure.adapters.ProtocolAdapter` internally) simulates the communication with a device and verifies that the sent/received messages triggered by the code inside the :code:`with` statement match the expectation.
 
 .. code-block:: python
 
@@ -730,31 +732,46 @@ In order to verify the expected working of the device code, it is good to test e
         with expected_protocol(
             Extreme5000,
             [(":VOLT 0.345", None),
-             (":VOLT?",
-              "0.3000")],
+             (":VOLT?", "0.3000")],
         ) as inst:
             inst.voltage = 0.345
             assert inst.voltage == 0.3
 
 In the above example, the imports import the pytest package, the expected_protocol and the instrument class to be tested.
 
-Here is the definition of expected_protocol:
-
-.. automodule:: pymeasure.test
-
-    :members: expected_protocol
-
 The first parameter, Extreme5000, is the class to be tested.
-Setting the voltage is expected to send a message (":VOLT 0.345"), but not to respond any (None). Getting the voltage (":VOLT?"), however, responds with a string. Therefore we expect two pairs of send/receive, the list of those pairs is the second argument.
-Finally an instance of the class is returned as `inst`, which expects those send messages and returns the corresponding answers messages.
+
+When setting the voltage, the driver sends a message (:code:`":VOLT 0.345"`), but does not expect a response (:code:`None`). Getting the voltage sends a query (:code:`":VOLT?"`) and expects a string response (:code:`"0.3000"`).
+Therefore, we expect two pairs of send/receive exchange.
+The list of those pairs is the second argument, the expected message protocol.
+
+The context manager returns an instance of the class (:code:`inst`), which is then used to trigger the behaviour corresponding to the message protocol (e.g. by using its properties).
+
 If the communication of the driver does not correspond to the expected messages, an Exception is raised.
 
-The expected messages are **without** the termination characters, as they depend on the connection type and are handled by the adapter (e.g. VISA).
-
+.. note::
+    The expected messages are **without** the termination characters, as they depend on the connection type and are handled by the normal adapter (e.g. :class:`VISAAdapter`).
 
 Device tests
 ************
 
-It is useful as well, to test the code against an actual device. The necessary device setup (for example: connect a probe to the test output) should be written in the header of the test file. There should be the connection configuration (for example serial port), too.
+It can be useful as well to test the code against an actual device. The necessary device setup instructions (for example: connect a probe to the test output) should be written in the header of the test file or test methods. There should be the connection configuration (for example serial port), too.
 
-This file should be called `testing_extreme5000.py`. By beginning with `testing`, pytest requires to call it manually, which is desired, as it can only pass, if the device is connected.
+Mark tests that require instrument hardware to be `skipped <https://docs.pytest.org/en/stable/how-to/skipping.html>`_ by default.
+If the whole test module requires hardware, add this at module level/after the import statements:
+
+.. code-block:: python
+
+    pytest.skip('Only works with connected hardware', allow_module_level=True)
+
+
+If only some test functions in a module need hardware, decorate those with
+
+.. code-block:: python
+
+    @pytest.mark.skip(reason='Only works with connected hardware')
+    def test_something():
+        ...
+
+If you want to run these tests with a connected device, select those tests and ignore the skip marker.
+For example, if your tests are in a file called :code:`test_extreme5000.py`, invoke pytest with :code:`pytest -k extreme5000 --no-skip`.

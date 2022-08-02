@@ -66,18 +66,21 @@ Telnet adapter
     :inherited-members:
     :show-inheritance:
 
-================
-Protocol adapter
-================
+=============
+Test adapters
+=============
+
+These pieces are useful when writing tests.
+
+.. automodule:: pymeasure.test
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 .. autoclass:: pymeasure.adapters.ProtocolAdapter
     :members:
     :undoc-members:
     :show-inheritance:
-
-============
-Fake adapter
-============
 
 .. autoclass:: pymeasure.adapters.FakeAdapter
     :members:

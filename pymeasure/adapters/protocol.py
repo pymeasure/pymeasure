@@ -48,7 +48,7 @@ def to_bytes(command):
 class ProtocolAdapter(Adapter):
     """ Adapter class for testing the command exchange protocol without instrument hardware.
 
-    This adapter is primarily meant for use within `pymeasure.test.expected_protocol()`.
+    This adapter is primarily meant for use within :func:`pymeasure.test.expected_protocol()`.
 
     :param list comm_pairs: List of "reference" message pair tuples. The first element is
         what is sent to the instrument, the second one is the returned message.
