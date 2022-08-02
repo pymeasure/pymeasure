@@ -21,29 +21,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
 
-from .adapter import Adapter, FakeAdapter
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.tektronix.afg3152c import AFG3152C
 
-from .protocol import ProtocolAdapter
 
-from pymeasure.adapters.telnet import TelnetAdapter
+def test_shape():
+    # Demonstrate message prefix identifying the channel
+    # Note how the implementation of the shape property does not show that
+    # prefix (it is added in the Channel class)
+    with expected_protocol(
+        AFG3152C,
+        [("source1:function:shape?", "LOR"),
+         ("source2:function:shape HAV", None),
+         ],
+    ) as inst:
+        assert inst.ch1.shape == 'lorentz'
+        inst.ch2.shape = 'haversine'
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
-try:
-    from pymeasure.adapters.visa import VISAAdapter
-except ImportError:
-    log.warning("PyVISA library could not be loaded")
-
-try:
-    from pymeasure.adapters.serial import SerialAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
-except ImportError:
-    log.warning("PySerial library could not be loaded")
-
-try:
-    from pymeasure.adapters.vxi11 import VXI11Adapter
-except ImportError:
-    log.warning("VXI-11 library could not be loaded")
+def test_beep():
+    # A message common to all channels does not have a prefix
+    with expected_protocol(
+        AFG3152C,
+        [("system:beep", None)],
+    ) as inst:
+        inst.beep()
