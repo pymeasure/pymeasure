@@ -709,13 +709,21 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 Writing tests
 =============
 
-Tests are very useful for writing good code. We distinguish two groups of tests for instruments: the first group does not rely on a connected instrument. These tests verify the working of the code against expectation (for example according to a device manual) only. The second group tests the code with a device connected.
+Tests are very useful for writing good code.
+We have a number of tests checking the correctness of the pymeasure implementation.
+Those tests (located in the :code:`tests` directory) are run automatically on our CI server, but you can also run them locally using :code:`pytest`.
+
+When adding instruments, your primary concern will be tests for the *instrument driver* you implement.
+We distinguish two groups of tests for instruments: the first group does not rely on a connected instrument.
+These tests verify that the implemented instrument driver exchanges the correct messages with a device (for example according to a device manual).
+We call those "protocol tests".
+The second group tests the code with a device connected.
 
 Implement device tests by adding files in the :code:`tests/instruments/...` directory tree, mirroring the structure of the instrument implementations.
 There are other instrument tests already available that can serve as inspiration.
 
-Code tests
-**********
+Protocol tests
+**************
 
 In order to verify the expected working of the device code, it is good to test every part of the written code. The :func:`~pymeasure.test.expected_protocol` context manager (using a :class:`~pymeasure.adapters.ProtocolAdapter` internally) simulates the communication with a device and verifies that the sent/received messages triggered by the code inside the :code:`with` statement match the expectation.
 
@@ -751,6 +759,12 @@ If the communication of the driver does not correspond to the expected messages,
 
 .. note::
     The expected messages are **without** the termination characters, as they depend on the connection type and are handled by the normal adapter (e.g. :class:`VISAAdapter`).
+
+Some protocol tests in the test suite can serve as examples:
+
+* Testing a simple instrument: :code:`tests/instruments/keithley/test_keithley2000.py`
+* Testing a multi-channel instrument: :code:`tests/instruments/tektronix/test_afg3152.py`
+* Testing instruments using frame-based communication: :code:`tests/instruments/hcp/tc038.py`
 
 Device tests
 ************
