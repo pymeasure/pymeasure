@@ -117,11 +117,3 @@ class ProtocolAdapter(Adapter):
             self._read_buffer = to_bytes(p_read)[count:]
             self._index += 1
             return to_bytes(p_read)[:count]
-
-    # TODO: Harmonise ask being write+read (i.e., remove from VISAAdapter),
-    #   use protocol tests to confirm it works correctly
-    # TODO: Remove all now-unnecessary ask() implementations -
-    #   read and write implementations should have all (test this)
-    # TODO: Implement over-the-wire message-traffic logging here, first
-    # TODO: Check timing impact of non-firing logging messages
-    # TODO: Roll out message-traffic logging to all Adapters, try to DRY
