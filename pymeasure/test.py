@@ -57,6 +57,6 @@ def expected_protocol(instrument_cls, comm_pairs, **kwargs):
         "Unprocessed protocol definitions remain: "
         f"{comm_pairs[protocol._index:]}.")
     assert protocol._write_buffer == b"", (
-        f"Non-empty write buffer: '{protocol._write_buffer}'.")
+        f"Non-empty write buffer remains: '{protocol._write_buffer}'.")
     assert protocol._read_buffer == b"", (
-        f"Non-empty read buffer: '{protocol._read_buffer}'.")
+        f"Non-empty read buffer remains: '{protocol._read_buffer}'.")

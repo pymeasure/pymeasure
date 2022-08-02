@@ -95,7 +95,7 @@ def test_not_all_communication_used():
 
 
 def test_non_empty_write_buffer():
-    with raises(AssertionError, match="Non-empty write buffer"):
+    with raises(AssertionError, match="Non-empty write buffer remains"):
         with expected_protocol(
             BasicTestInstrument,
             [('VOLT?', 3.14)]
@@ -105,7 +105,7 @@ def test_non_empty_write_buffer():
 
 
 def test_non_empty_read_buffer():
-    with raises(AssertionError, match="Non-empty read buffer"):
+    with raises(AssertionError, match="Non-empty read buffer remains"):
         with expected_protocol(
             BasicTestInstrument,
             [('VOLT?', 3.14)]
