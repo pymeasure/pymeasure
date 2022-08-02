@@ -431,6 +431,8 @@ class BN675_AWG(Instrument):
         """
         self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile+".txt"))
 
+    def change_directory(self, directory):
+        self.write('MMEM:CDIR \"%s\"' % directory)
 
     def delete_waveform(self, name):
         """
@@ -443,4 +445,4 @@ class BN675_AWG(Instrument):
         Deletes the wf file in the default location with default append to name argument
         """
         default_path = self.default_dir + filename + '.txt'
-        self.write(f'MMEM:DEL {default_path}')
+        self.write(f'MMEM:DEL \"{default_path}\"')
