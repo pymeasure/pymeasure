@@ -84,10 +84,11 @@ class ProtocolAdapter(Adapter):
         except IndexError:
             raise ValueError(f"No communication pair left to write {content}.")
         if self._write_buffer == to_bytes(p_write):
-            # TODO improve error message.
             assert self._read_buffer == b"", (
                 f"Unread response '{self._read_buffer}' present when writing. "
-                "Read the response; maybe a property's 'check_set_errors' is not accounted for?")
+                "Maybe a property's 'check_set_errors' is not accounted for, "
+                "a read() call is missing in a method, or the defined protocol is incorrect?"
+            )
             # Clear the write buffer
             self._write_buffer = b""
             self._read_buffer = to_bytes(p_read)
