@@ -380,7 +380,8 @@ class BN675_AWG(Instrument):
          shift the timeout to be more conservative"""
         old_timeout = self.adapter.connection.timeout
         self.adapter.connection.timeout = timeout
-        self.write('AWGC:RUN')
+        if self.run_state == 0:
+            self.write('AWGC:RUN')
         self.adapter.connection.timeout = old_timeout
 
 
