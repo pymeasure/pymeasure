@@ -48,30 +48,36 @@ class BasicTestInstrument(Instrument):
 
 def test_simple_protocol():
     """Test a property without parsing or channel prefixes."""
-    with expected_protocol(BasicTestInstrument,
-                           [('VOLT?', 3.14),
-                            ('VOLT 4.5 V', None),
-                            ]) as instr:
+    with expected_protocol(
+        BasicTestInstrument,
+        [('VOLT?', 3.14),
+         ('VOLT 4.5 V', None)]
+    ) as instr:
         assert instr.simple == 3.14
         instr.simple = 4.5
 
 
 def test_kwargs():
     """Test whether the kwargs are handed over correctly."""
-    with expected_protocol(BasicTestInstrument,
-                           [],
-                           test=5, xyz="abc") as instr:
+    with expected_protocol(
+        BasicTestInstrument,
+        [],
+        test=5,
+        xyz="abc"
+    ) as instr:
         assert instr.kwargs == {'test': 5, 'xyz': "abc"}
 
 
 def test_error_checks():
     """Test protocol for getting and setting with error checks."""
-    with expected_protocol(BasicTestInstrument,
-                           [('VOLT?', 3.14),
-                            ('SYST:ERR?', '0, 0'),
-                            ('VOLT 4.5 V', None),
-                            ('SYST:ERR?', '0, 0'),
-                            ]) as instr:
+    with expected_protocol(
+        BasicTestInstrument,
+        [('VOLT?', 3.14),
+         ('SYST:ERR?', '0, 0'),
+         ('VOLT 4.5 V', None),
+         ('SYST:ERR?', '0, 0'),
+         ]
+    ) as instr:
         assert instr.with_error_checks == 3.14
         instr.with_error_checks = 4.5
 
@@ -79,27 +85,31 @@ def test_error_checks():
 def test_not_all_communication_used():
     """Test whether unused communication raises an error."""
     with raises(AssertionError, match="Unprocessed protocol definitions remain"):
-        with expected_protocol(BasicTestInstrument,
-                               [('VOLT?', 3.14),
-                                ('VOLT 4.5 V', None),
-                                ]) as instr:
+        with expected_protocol(
+            BasicTestInstrument,
+            [('VOLT?', 3.14),
+             ('VOLT 4.5 V', None),
+             ]
+        ) as instr:
             assert instr.simple == 3.14
 
 
 def test_non_empty_write_buffer():
     with raises(AssertionError, match="Non-empty write buffer"):
-        with expected_protocol(BasicTestInstrument,
-                               [('VOLT?', 3.14),
-                                ]) as instr:
+        with expected_protocol(
+            BasicTestInstrument,
+            [('VOLT?', 3.14)]
+        ) as instr:
             instr.adapter.write_bytes(b"VOLT")
             instr.adapter._index = 1
 
 
 def test_non_empty_read_buffer():
     with raises(AssertionError, match="Non-empty read buffer"):
-        with expected_protocol(BasicTestInstrument,
-                               [('VOLT?', 3.14),
-                                ]) as instr:
+        with expected_protocol(
+            BasicTestInstrument,
+            [('VOLT?', 3.14)]
+        ) as instr:
             instr.write("VOLT?")
 
 
@@ -109,8 +119,10 @@ def test_preprocess_reply_on_values():
         def values(self, command, **kwargs):
             return super().values(command, preprocess_reply=lambda v: v + "2345", **kwargs)
 
-    with expected_protocol(InstrumentWithPreprocessValues,
-                           [("VOLT?", "3.1")]) as instr:
+    with expected_protocol(
+        InstrumentWithPreprocessValues,
+        [("VOLT?", "3.1")]
+    ) as instr:
         assert instr.simple == 3.12345
 
 
@@ -122,6 +134,8 @@ def test_preprocess_reply_on_init():
         def __init__(self, adapter, **kwargs):
             super().__init__(adapter, preprocess_reply=lambda v: v + "2345", **kwargs)
 
-    with expected_protocol(InstrumentWithPreprocess,
-                           [("VOLT?", "3.1")]) as instr:
+    with expected_protocol(
+        InstrumentWithPreprocess,
+        [("VOLT?", "3.1")]
+    ) as instr:
         assert instr.simple == 3.12345

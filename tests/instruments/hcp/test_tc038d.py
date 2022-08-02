@@ -37,7 +37,8 @@ def test_write_multiple_CRC_error():
 
 def test_write_multiple_wrong_type():
     with expected_protocol(
-        TC038D, []
+        TC038D,
+        []
     ) as inst:
         with pytest.raises(TypeError):
             inst.writeMultiple(0x010A, 5.5)
@@ -68,9 +69,9 @@ def test_read_CRC_error():
 def test_read_address_error():
     """Test whether the error code (byte 2) of 2 raises the right error."""
     with expected_protocol(
-            TC038D,
-            [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
-              b"\x01\x83\x02\01\02")],
+        TC038D,
+        [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
+          b"\x01\x83\x02\01\02")],
     ) as inst:
         with pytest.raises(ValueError, match="The read start address"):
             inst.temperature
