@@ -216,6 +216,16 @@ class Channel:
     # Measurement Methods #
     #######################
 
+    def beep(self, frequency, duration):
+        """ Sounds a system beep.
+
+        :param frequency: A frequency in Hz in [453, 621,987,2400]. Any other number
+        gets set to closest value in that range
+        :param duration: A time in seconds between 0 and 100 seconds
+        """
+        self.write("beeper.enable = 1")
+        self.write(f"beeper.beep({duration:g},{frequency:g})")
+
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.
         :param nplc: Number of power line cycles (NPLC) from 0.001 to 25
