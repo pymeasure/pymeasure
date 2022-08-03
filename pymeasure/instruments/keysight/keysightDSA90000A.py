@@ -209,7 +209,7 @@ class KeysightDSA90000A(Instrument):
         self.system_headers = False
 
     system_headers = Instrument.control(
-        ":SYSTem:HEADer?", ":SYSTem:HEADer? %d",
+        ":SYSTem:HEADer?", ":SYSTem:HEADer %d",
         """ A boolean parameter controlling whether or not the oscope returns headers with queries""",
         validator=strict_discrete_set,
         values=BOOLS,
