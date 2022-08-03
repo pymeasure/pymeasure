@@ -39,8 +39,8 @@ class HP8116A(_HP8116A):
 
 def test_init():
     with expected_protocol(
-            HP8116A, [(b"CST", b"x" * 87 + b' ,\r\n')]) as instr:
-        pass
+            HP8116A, [(b"CST", b"x" * 87 + b' ,\r\n')]):
+        pass  # Verify the expected communication.
 
 
 @pytest.mark.xfail
@@ -56,5 +56,3 @@ def test_duty_cycle_setter():
             HP8116A, [(b"CST", b"x" * 87 + b' ,\r\n'),
                       (b"DTY 34.5 %", None)]) as instr:
         instr.duty_cycle = 34.5
-
-

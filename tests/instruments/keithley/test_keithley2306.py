@@ -31,8 +31,8 @@ def test_init():
     with expected_protocol(
             Keithley2306,
             [],
-            ) as instr:
-        pass
+            ):
+        pass  # Verify the expected communication.
 
 
 def test_nplc():

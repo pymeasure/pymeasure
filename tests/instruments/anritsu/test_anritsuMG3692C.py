@@ -30,8 +30,8 @@ from pymeasure.instruments.anritsu import AnritsuMG3692C
 
 def test_init():
     with expected_protocol(
-            AnritsuMG3692C, []) as instr:
-        pass
+            AnritsuMG3692C, []):
+        pass  # Verify the expected communication.
 
 
 def test_power():

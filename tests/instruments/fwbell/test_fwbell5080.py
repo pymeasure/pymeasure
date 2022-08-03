@@ -32,8 +32,8 @@ from pymeasure.instruments.fwbell import FWBell5080
 
 def test_init():
     with expected_protocol(
-            FWBell5080, []) as instr:
-        pass
+            FWBell5080, []):
+        pass  # Verify the expected communication.
 
 
 def test_units():

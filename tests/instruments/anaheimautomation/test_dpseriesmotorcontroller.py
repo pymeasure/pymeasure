@@ -30,8 +30,8 @@ from pymeasure.instruments.anaheimautomation import DPSeriesMotorController
 
 def test_init():
     with expected_protocol(
-            DPSeriesMotorController, []) as instr:
-        pass
+            DPSeriesMotorController, []):
+        pass  # Verify the expected communication.
 
 
 def test_basespeed():

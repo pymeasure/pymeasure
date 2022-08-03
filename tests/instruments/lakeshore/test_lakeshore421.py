@@ -30,8 +30,8 @@ from pymeasure.instruments.lakeshore import LakeShore421
 
 def test_init():
     with expected_protocol(
-            LakeShore421, []) as instr:
-        pass
+            LakeShore421, []):
+        pass  # Verify the expected communication.
 
 
 def test_unit():

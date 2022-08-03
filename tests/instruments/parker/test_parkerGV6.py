@@ -46,5 +46,5 @@ def test_init():
                         (b"AA1.0", None),
                         (b"A1.0", None),
                         (b"V3.0", None),
-                        ]) as instr:
-        pass
+                        ]):
+        pass  # Verify the expected communication.

@@ -25,16 +25,18 @@
 import pytest
 
 from pymeasure.instruments.attocube import ANC300Controller
+from pymeasure.instruments.attocube.adapters import Mock_TelnetAdapter, AttocubeConsoleAdapter
 
-#######################
+#############################################################################
 # In order to run the tests, you have to change the superclass of the adapter
 # from TelnetAdapter to Mock_TelnetAdapter
-#######################
+#############################################################################
+if not issubclass(AttocubeConsoleAdapter, Mock_TelnetAdapter):
+    pytest.skip("Not the right test adapter present.", allow_module_level=True)
 
 
 @pytest.fixture
-def instr(monkeypatch):
-    # monkeypatch.setattr("pymeasure.adapters.TelnetAdapter", Mock_TelnetAdapter)
+def instr():
     instr = ANC300Controller("123", ["a", "b", "c"], "passwd")
     yield instr
     protocol = instr.adapter
@@ -45,10 +47,6 @@ def instr(monkeypatch):
         f"Non-empty write buffer: '{protocol._write_buffer}'.")
     assert protocol._read_buffer == b"", (
         f"Non-empty read buffer: '{protocol._read_buffer}'.")
-
-
-def test_init(instr):
-    pass
 
 
 def test_stepu(instr):
