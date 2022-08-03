@@ -22,32 +22,11 @@
 # THE SOFTWARE.
 #
 
-
-from inspect import isclass
-
 import pytest
+from unittest.mock import MagicMock
 
-from pymeasure.adapters import FakeAdapter
 from pymeasure import instruments
-
-
-class Adapter(FakeAdapter):
-    class Connection:
-        def clear(self):
-            pass
-
-        def close(self):
-            pass
-
-        def read_stb(self):
-            return 5
-
-    def __init__(self):
-        super().__init__()
-        self.connection = self.Connection()
-
-    def read_bytes(self, count=0):
-        return b""
+from pymeasure.instruments import Instrument
 
 
 # Collect all instruments
@@ -57,32 +36,33 @@ for manufacturer in dir(instruments):
         continue
     manu = getattr(instruments, manufacturer)
     for dev in dir(manu):
-        if dev.startswith("__") or dev[0].islower():
+        if dev.startswith("__"):
             continue
         d = getattr(manu, dev)
-        if isclass(d):
-            devices.append(getattr(manu, dev))
+        try:
+            b = issubclass(d, Instrument)
+        except TypeError:
+            # d is no class
+            continue
+        else:
+            if b:
+                devices.append(d)
 
-# List of adapters and other classes to be skipped
-adapters = ["Decimal", "VISAAdapter", "DynamicProperty", "TopticaAdapter",
-            "OxfordInstrumentsAdapter", "LakeShoreUSBAdapter",
-            "DanfysikAdapter", "AttocubeConsoleAdapter"]
-# Instruments using their own adapter, thus raising an error with the FakeAdapter
+# Instruments unable to accept an Adapter instance.
 proper_adapters = ["IBeamSmart", "ParkerGV6", "LakeShore425", "FWBell5080",
                    "Danfysik8500", "ANC300Controller"]
-# Instruments with communication in their __init__ which consequently fails
+# Instruments with communication in their __init__ which consequently fails.
 init = ["ThorlabsPM100USB", "Keithley2700", "TC038", "Agilent34450A",
-        "AWG401x_AWG", "AWG401x_AFG", "VARX"]
+        "AWG401x_AWG", "AWG401x_AFG", "VARX", "HP8116A"]
+# Instruments which require more input arguments
+init.extend(["Instrument", "ATSBase"])
 
 
 @pytest.mark.parametrize("cls", devices)
 def test_args(cls):
-    if cls.__name__ in adapters:
-        pytest.skip(f"{cls.__name__} is an adapter.")
-    elif cls.__name__ in proper_adapters:
-        pytest.skip(f"Instrument {cls.__name__} defines its own adapter.")
+    "Test that every instrument has adapter as their input argument"
+    if cls.__name__ in proper_adapters:
+        pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
     elif cls.__name__ in init:
-        pytest.skip(f"Instrument {cls.__name__} requires communication in init.")
-    adapter = Adapter()
-    instr = cls(adapter=adapter, **{'name': "test successful"})
-    assert instr.name == "test successful"
+        pytest.skip(f"{cls.__name__} requires communication in init.")
+    cls(adapter=MagicMock())
