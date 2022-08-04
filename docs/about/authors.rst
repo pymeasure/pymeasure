@@ -55,3 +55,4 @@ The following developers have contributed to the PyMeasure package:
 | JC Arbelbide
 | Benedikt Moneke
 | Fabio Garzetti
+| Brandon Altieri
