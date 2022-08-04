@@ -70,19 +70,19 @@ class SerialAdapter(Adapter):
     def _read(self):
         """Read the buffer and return the result as a string without the
         read_termination characters, if defined."""
-        read = self._read_bytes().decode()
-        if self.read_termination and read.endswith(self.read_termination):
-            return read[:-len(self.read_termination)]
-        else:
-            return read
+        return self._read_bytes(-1).decode().removesuffix(self.read_termination)
 
-    def _read_bytes(self):
+    def _read_bytes(self, count):
         """ Reads until the buffer is empty and returns the resulting
         bytes response
 
+        :param count: Number of bytes to read. -1 indicates all available.
         :returns: bytes response of the instrument.
         """
-        return b"\n".join(self.connection.readlines())
+        if count == -1:
+            return b"\n".join(self.connection.readlines())
+        else:
+            return self.connection.read(count)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
