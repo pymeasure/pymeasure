@@ -147,9 +147,9 @@ class Instrument:
     __reserved_prefix = "___"
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, query_delay=0,
-                 preprocess_reply=None, **kwargs):
-        """Initialize the instrument."""
+    def __init__(self, adapter, name, includeSCPI=True,
+                 preprocess_reply=None,
+                 **kwargs):
         if isinstance(adapter, (int, str)):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -160,7 +160,6 @@ class Instrument:
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
-        self.query_delay = query_delay
         self.preprocess_reply = preprocess_reply
 
         self.isShutdown = False
@@ -279,7 +278,7 @@ class Instrument:
         :param command: command string to be sent to the instrument
         """
         self.write(command)
-        time.sleep(delay or self.query_delay)
+        time.sleep(delay)
         return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
