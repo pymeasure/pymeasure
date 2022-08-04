@@ -43,7 +43,7 @@ def process_sequence(sequence):
     :type sequence: list of float
     :return: Sequence data in the form "Voltage1,Current1,Time1,Voltage2,
         Current2,Time2,...,Voltage128,Current128,Time128"
-    :rtpye: str
+    :rtype: str
     """
     if not len(sequence) % 3 == 0:
         raise ValueError("Sequence must contain multiple of 3 values.")
