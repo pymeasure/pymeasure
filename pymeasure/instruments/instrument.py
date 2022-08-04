@@ -271,11 +271,12 @@ class Instrument:
         return self.adapter.read_bytes(count)
 
     # Communication functions
-    def ask(self, command, delay=None):
+    def ask(self, command, delay=0):
         """ Writes the command to the instrument through the adapter
         and returns the read response.
 
-        :param command: command string to be sent to the instrument
+        :param command: Command string to be sent to the instrument
+        :param delay: Delay between writing and reading in seconds.
         """
         self.write(command)
         time.sleep(delay)
@@ -320,7 +321,7 @@ class Instrument:
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        # TODO verify implementation
+        # TODO verify implementation, keep it in Instrument?
         self.write(command)
         binary = self.read()
         # header = binary[:header_bytes]
