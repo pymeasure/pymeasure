@@ -23,7 +23,6 @@
 #
 
 import logging
-from typing import List
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
@@ -33,13 +32,18 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def process_sequence(sequence: List[float]) -> str:
+def process_sequence(sequence):
     """
     Check and prepare sequence data.
 
-    The form of the sequence data is "Voltage1,Current1,Time1,Voltage2,
-    Current2,Time2,...,Voltage128,Current128,Time128" with voltages in V,
-    currents in A, and times in s. Dwell times are between 0.06 and 10 s.
+    :param sequence: Sequence data, in the form [voltage1, current1, time1,
+        voltage2, current2, time2, ..., voltage128, current128, time128] with
+        voltages in V, currents in A, and times in s. Dwell times are between
+        0.06 and 10 s.
+    :type sequence: list of float
+    :return: Sequence data in the form "Voltage1,Current1,Time1,Voltage2,
+        Current2,Time2,...,Voltage128,Current128,Time128"
+    :rtpye: str
     """
     if not len(sequence) % 3 == 0:
         raise ValueError("Sequence must contain multiple of 3 values.")
@@ -194,9 +198,15 @@ class HMP4040(Instrument):
     # The following commands are for making it easier to change the selected
     # channels and activate/deactivate them.
 
-    def set_channel_state(self, channel: int, state: bool):
+    def set_channel_state(self, channel, state):
         """
-        Set the state of the channel to active (True) or inactive (False).
+        Set the state of the channel to active or inactive.
+
+        :param channel: Channel number to set the state of.
+        :type channel: int
+        :param state: State of the channel, i.e. True for active, False for
+            inactive.
+        :type state: bool
         """
         # Save current selected channel before switching.
         selected_channel = self.selected_channel
