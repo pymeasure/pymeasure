@@ -81,7 +81,7 @@ def test_channel_state(hmp4040):
 
 def test_sequence(hmp4040):
     """Test sequence execution."""
-    # NOTE: There are actually no assertations in this test. But it is possible
+    # NOTE: There are actually no assertions in this test. But it is possible
     # to check the sequence execution by looking at display of the instrument.
     hmp4040.selected_channel == 1
     hmp4040.voltage = 0.0
