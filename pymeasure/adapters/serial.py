@@ -40,30 +40,49 @@ class SerialAdapter(Adapter):
     :param port: Serial port
     :param preprocess_reply: optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
+    :param write_termination: String added to messages before writing them.
+    :param read_termination: String looked for at end of read message and removed.
     :param kwargs: Any valid key-word argument for serial.Serial
     """
 
-    def __init__(self, port, preprocess_reply=None, **kwargs):
+    def __init__(self, port, preprocess_reply=None,
+                 write_termination="", read_termination="",
+                 **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         if isinstance(port, serial.SerialBase):
             self.connection = port
         else:
             self.connection = serial.Serial(port, **kwargs)
+        self.write_termination = write_termination
+        self.read_termination = read_termination
 
     def _write(self, command):
-        """ Writes a command to the instrument
+        """ Writes a command to the instrument appending the write_termination.
 
         :param command: SCPI command string to be sent to the instrument
         """
-        self.connection.write(command.encode())  # encode added for Python 3
+        self.connection.write((command + self.write_termination).encode())
+
+    def _write_bytes(self, content):
+        """Write the bytes of `content` to the device."""
+        self.connection.write(content)
 
     def _read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII response
+        """Read the buffer and return the result as a string without the
+        read_termination characters, if defined."""
+        read = self._read_bytes().decode()
+        if self.read_termination and read.endswith(self.read_termination):
+            return read[:-len(self.read_termination)]
+        else:
+            return read
 
-        :returns: String ASCII response of the instrument.
+    def _read_bytes(self):
+        """ Reads until the buffer is empty and returns the resulting
+        bytes response
+
+        :returns: bytes response of the instrument.
         """
-        return b"\n".join(self.connection.readlines()).decode()
+        return b"\n".join(self.connection.readlines())
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
