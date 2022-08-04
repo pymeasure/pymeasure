@@ -22,6 +22,24 @@
 # THE SOFTWARE.
 #
 
-from .sfm import SFM
-from .fsl import FSL
-from .hmp import HMP4040
+import pytest
+from pymeasure.instruments.rohdeschwarz.hmp import process_sequence
+
+
+def test_process_sequence():
+    "Test `process_sequence` function."
+
+    # Sequence must contain multiple of 3 values.
+    with pytest.raises(ValueError):
+        process_sequence([1.0, 1.0, 1.0, 2.0, 2.0])
+
+    # Dwell times must be between 0.06 and 10 s.
+    with pytest.raises(ValueError):
+        process_sequence([1.0, 1.0, 1.0, 2.0, 2.0, 0.05])
+
+    with pytest.raises(ValueError):
+        process_sequence([1.0, 1.0, 1.0, 2.0, 2.0, 10.1])
+
+    # Test with a valid sequence.
+    sequence = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    assert process_sequence(sequence) == "1.0,2.0,3.0,4.0,5.0,6.0"
