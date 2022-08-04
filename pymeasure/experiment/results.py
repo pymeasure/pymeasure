@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
+from decimal import Decimal
 import logging
-
 import os
 import re
 import sys
@@ -33,13 +33,12 @@ from datetime import datetime
 from string import Formatter
 
 import pandas as pd
-import pint
 
 from .procedure import Procedure, UnknownProcedure
+from pymeasure.units import ureg
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-u = pint.get_application_registry()
 
 
 def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
@@ -140,15 +139,9 @@ class CSVFormatter(logging.Formatter):
         units_pattern = r"\((?P<units>[\w/\(\)\*\t]+)\)"
         units = {}
         for column in columns:
-            try:
-                match = re.search(units_pattern, column)
-            except TypeError:
-                match = None
-
+            match = re.search(units_pattern, column)
             if match:
-                m = match.groupdict()
-                if 'units' in m:
-                    units[column] = pint.Unit(m['units'])
+                units[column] = ureg.Quantity(match.groupdict()['units']).units
         return units
 
     def format(self, record):
@@ -161,23 +154,44 @@ class CSVFormatter(logging.Formatter):
         line = []
         for x in self.columns:
             value = record.get(x, float("nan"))
-            units = self.units.get(x, u.dimensionless)
-            if isinstance(value, str):
-                try:
-                    value = pint.Quantity(value)
-                except pint.UndefinedUnitError:
-                    pass  # Keep it as a string
-            if isinstance(value, pint.Quantity):
-                try:
-                    line.append(f"{value.m_as(units)}")
-                except pint.DimensionalityError:
+            units = self.units.get(x, None)
+            if units is not None:
+                if isinstance(value, str):
+                    try:
+                        value = pint.Quantity(value)
+                    except pint.UndefinedUnitError:
+                        log.warning(
+                            f"Value {value} for column {x} cannot be parsed to"
+                            f" unit {units}.")
+                if isinstance(value, pint.Quantity):
+                    try:
+                        line.append(f"{value.m_as(units)}")
+                    except pint.DimensionalityError:
+                        line.append("nan")
+                        log.warning(
+                            f"Value {value} for column {x} does not have the "
+                            f"right unit {units}.")
+                elif isinstance(value, bool):
                     line.append("nan")
-            elif units == u.dimensionless:
-                # Dimensionless quantities can be given as numbers.
-                line.append(f"{value}")
+                    log.warning(
+                        f"Boolean for column {x} does not have unit {units}.")
+                elif isinstance(value, (float, int, Decimal)):
+                    line.append(f"{value}")
+                else:
+                    line.append("nan")
+                    log.warning(
+                        f"Value {value} for column {x} does not have the right"
+                        f" type for unit {units}.")
             else:
-                # No dimension given, but one required: Store it as is.
-                line.append(f"{value}")
+                if isinstance(value, pint.Quantity):
+                    if value.units == ureg.dimensionless:
+                        line.append(f"{value.magnitude}")
+                    else:
+                        self.units[x] = value.to_base_units().units
+                        line.append(f"{value.m_as(self.units[x])}")
+                        log.info(f"Column {x} units was set to {self.units[x]}")
+                else:
+                    line.append(f"{value}")
         return self.delimiter.join(line)
 
     def format_header(self):
