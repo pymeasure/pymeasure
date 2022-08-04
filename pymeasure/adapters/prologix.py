@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 import time
+from warnings import warn
 
 import serial
 
@@ -66,12 +67,14 @@ class PrologixAdapter(SerialAdapter):
 
     def __init__(self, port, address=None, rw_delay=None, serial_timeout=0.5,
                  preprocess_reply=None, **kwargs):
+        kwargs.setdefault('write_termination', "\n")
         super().__init__(port, timeout=serial_timeout,
                          preprocess_reply=preprocess_reply, **kwargs)
         self.address = address
         self.rw_delay = rw_delay
         if rw_delay is not None:
-            raise DeprecationWarning("Delay should be implemented in the instrument.")
+            warn("Use instrument.ask with a delay argument instead.",
+                 FutureWarning)
         if not isinstance(port, serial.Serial):
             self.set_defaults()
 
@@ -88,7 +91,8 @@ class PrologixAdapter(SerialAdapter):
 
         :param command: SCPI command string to be sent to instrument
         """
-        raise DeprecationWarning("Ask is in the instrument.")
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
         self.write(command)
         if self.rw_delay is not None:
             time.sleep(self.rw_delay)
@@ -101,10 +105,10 @@ class PrologixAdapter(SerialAdapter):
         :param command: SCPI command string to be sent to the instrument
         """
         if self.address is not None:
-            address_command = "++addr %d\n" % self.address
-            self.connection.write(address_command.encode())
-        command += "\n"
-        self.connection.write(command.encode())
+            address_command = "++addr %d" % self.address
+            super()._write(address_command)
+            self.log.debug(("WRITE:", address_command))  # To log all communication.
+        super()._write(command)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
@@ -156,7 +160,8 @@ class PrologixAdapter(SerialAdapter):
         :returns: String ASCII response of the instrument
         """
         self.write("++read eoi")
-        return b"\n".join(self.connection.readlines()).decode()
+        self.log.debug(("WRITE:", "++read eoi"))
+        return super()._read()
 
     def gpib(self, address, rw_delay=None):
         """ Returns and PrologixAdapter object that references the GPIB
@@ -167,17 +172,23 @@ class PrologixAdapter(SerialAdapter):
         :param rw_delay: Set a custom Read/Write delay for the instrument
         :returns: PrologixAdapter for specific GPIB address
         """
-        # TODO remove rw_delay
         rw_delay = rw_delay or self.rw_delay
         return PrologixAdapter(self.connection, address, rw_delay=rw_delay)
 
-    def wait_for_srq(self, timeout=25, delay=0.1):
+    def _check_for_srq(self, rw_delay):
+        # it was int(self.ask("++srq"))
+        self.write("++srq")
+        time.sleep(rw_delay or self.rw_delay)
+        return int(self.read())
+
+    def wait_for_srq(self, timeout=25, delay=0.1, rw_delay=0):
         """ Blocks until a SRQ, and leaves the bit high
 
-        :param timeout: Timeout duration in seconds
-        :param delay: Time delay between checking SRQ in seconds
+        :param timeout: Timeout duration in seconds.
+        :param delay: Time delay between checking SRQ in seconds.
+        :param rw_delay: Time delay between writing and reading in seconds.
         """
-        while int(self.ask("++srq")) != 1:  # TODO: Include timeout!
+        while self._check_for_srq(rw_delay) != 1:  # TODO: Include timeout!
             time.sleep(delay)
 
     def __repr__(self):

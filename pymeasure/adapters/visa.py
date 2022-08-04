@@ -23,6 +23,7 @@
 #
 
 import logging
+import warnings
 
 import pyvisa
 import numpy as np
@@ -143,7 +144,8 @@ class VISAAdapter(Adapter):
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        raise DeprecationWarning("Implement ask in the instrument.")
+        warnings.warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+                      FutureWarning)
         return self.connection.query(command)
 
     def ask_values(self, command, **kwargs):
@@ -155,6 +157,9 @@ class VISAAdapter(Adapter):
         :param kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
+        warnings.warn("Do not call `Adapter.ask_values`, but `Instrument.values` instead.",
+                      FutureWarning)
+
         return self.connection.query_ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
@@ -179,7 +184,6 @@ class VISAAdapter(Adapter):
         :param kwargs: Key-word arguments to pass onto `write_binary_values`
         :returns: number of bytes written
         """
-
         return self.connection.write_binary_values(command, values, **kwargs)
 
     def wait_for_srq(self, timeout=25, delay=0.1):

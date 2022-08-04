@@ -24,6 +24,7 @@
 
 import telnetlib
 import time
+from warnings import warn
 
 from .adapter import Adapter
 
@@ -44,9 +45,10 @@ class TelnetAdapter(Adapter):
 
     def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
                  **kwargs):
-        raise DeprecationWarning("Use the pyvisa adapter instead.")
         super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
+        if query_delay:
+            warn("Use Instrument.ask with delay instead of Adapter.ask.")
         safe_keywords = ['timeout']
         for kw in kwargs:
             if kw not in safe_keywords:
@@ -78,7 +80,8 @@ class TelnetAdapter(Adapter):
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        raise DeprecationWarning()
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
         self.write(command)
         time.sleep(self.query_delay)
         return self.read()

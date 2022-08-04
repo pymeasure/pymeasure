@@ -71,7 +71,7 @@ class ProtocolAdapter(Adapter):
 
     def _write(self, command):
         """Compare the command with the expected one and fill the read."""
-        self.write_bytes(to_bytes(command))
+        self._write_bytes(to_bytes(command))
         assert self._write_buffer == b"", (
             f"Written bytes '{self._write_buffer}' do not match expected "
             f"'{self.comm_pairs[self._index][0]}'.")
@@ -100,7 +100,7 @@ class ProtocolAdapter(Adapter):
 
     def _read(self):
         """Return an already present or freshly fetched read buffer as a string."""
-        return (self.read_bytes(-1) + self.read_bytes(1)).decode("utf-8")
+        return (self._read_bytes(-1) + self._read_bytes(1)).decode("utf-8")
 
     def _read_bytes(self, count):
         """Read `count` number of bytes."""
