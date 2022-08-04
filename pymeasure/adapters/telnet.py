@@ -49,6 +49,8 @@ class TelnetAdapter(Adapter):
         self.query_delay = query_delay
         if query_delay:
             warn("Use Instrument.ask with delay instead of Adapter.ask.")
+        self.write_termination = kwargs.pop('write_termination', "")
+        self.read_termination = kwargs.pop('read_termination', "")
         safe_keywords = ['timeout']
         for kw in kwargs:
             if kw not in safe_keywords:
@@ -62,7 +64,7 @@ class TelnetAdapter(Adapter):
 
         :param command: command string to be sent to the instrument
         """
-        self.connection.write(command.encode())
+        self.connection.write((command + self.write_termination).encode())
 
     def _read(self):
         """ Read something even with blocking the I/O. After something is
@@ -70,8 +72,9 @@ class TelnetAdapter(Adapter):
 
         :returns: String ASCII response of the instrument.
         """
-        return self.connection.read_some().decode() + \
+        read = self.connection.read_some().decode() + \
             self.connection.read_very_eager().decode()
+        return read.removesuffix(self.read_termination)
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
