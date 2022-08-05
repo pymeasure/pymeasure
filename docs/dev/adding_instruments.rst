@@ -514,7 +514,7 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
 
 .. testcode::
 
-	from pymeasure.units import ureg
+    from pymeasure.units import ureg
 
     Extreme5000.current = Instrument.control(
         ":CURR?", ":CURR %g",
@@ -523,6 +523,7 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
         values=[0, 10],
         set_process=lambda v: v.m_as(ureg.mA),  # send the value as mA to the device
         get_process=lambda v: ureg.Quantity(v, ureg.mA),  # convert to quantity
+    )
 
 .. doctest::
 
@@ -530,6 +531,10 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
     >>> extreme.current = 3.1 * ureg.A
     >>> extreme.current.m_as(ureg.A)
     3.1
+
+.. note::
+
+    This is, how quantities can be used in pymeasure instruments right now. `Issue 666 <https://github.com/pymeasure/pymeasure/issues/666>`_ develops a more convenient implementation of quantities in the property factories.
 
 `get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit which has to be removed. This could be achieved by the following code:
 

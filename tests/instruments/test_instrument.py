@@ -271,25 +271,6 @@ def test_measurement_dict_str_map(dynamic):
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
-def test_measurement_dict_str_map(dynamic):
-    class Fake(FakeInstrument):
-        x = Instrument.measurement(
-            "", "",
-            values={'X': 1, 'Y': 2, 'Z': 3},
-            map_values=True,
-            dynamic=dynamic,
-        )
-
-    fake = Fake()
-    fake.write('1')
-    assert fake.x == 'X'
-    fake.write('2')
-    assert fake.x == 'Y'
-    fake.write('3')
-    assert fake.x == 'Z'
-
-
-@pytest.mark.parametrize("dynamic", [False, True])
 def test_setting_process(dynamic):
     class Fake(FakeInstrument):
         x = Instrument.setting(
