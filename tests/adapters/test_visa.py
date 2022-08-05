@@ -53,6 +53,18 @@ def test_correct_visa_kwarg():
     assert instr.adapter.connection.query_delay == approx(0.5)
 
 
+def test_correct_visa_asrl_kwarg():
+    """Confirm that the asrl kwargs gets passed through to the VISA connection."""
+    a = VISAAdapter(SIM_RESOURCE, visa_library='@sim',
+                    asrl={'read_termination': "\rx\n"})
+    assert a.connection.read_termination == "\rx\n"
+
+
+def test_open_gpib():
+    a = VISAAdapter(5, visa_library='@sim')
+    assert a.resource_name == "GPIB0::5::INSTR"
+
+
 def test_write_read(adapter):
     adapter.write(":VOLT:IMM:AMPL?")
     assert float(adapter.read()) == 1
