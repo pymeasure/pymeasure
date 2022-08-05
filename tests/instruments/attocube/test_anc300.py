@@ -24,38 +24,36 @@
 
 import pytest
 
+from pymeasure.test import expected_protocol
+
 from pymeasure.instruments.attocube import ANC300Controller
-from pymeasure.instruments.attocube.adapters import Mock_TelnetAdapter, AttocubeConsoleAdapter
-
-#############################################################################
-# In order to run the tests, you have to change the superclass of the adapter
-# from TelnetAdapter to Mock_TelnetAdapter
-#############################################################################
-if not issubclass(AttocubeConsoleAdapter, Mock_TelnetAdapter):
-    pytest.skip("Not the right test adapter present.", allow_module_level=True)
 
 
-@pytest.fixture
-def instr():
-    instr = ANC300Controller("123", ["a", "b", "c"], "passwd")
-    yield instr
-    protocol = instr.adapter
-    assert protocol._index == len(protocol.comm_pairs), (
-        "Unprocessed protocol definitions remain: "
-        f"{protocol.comm_pairs[protocol._index:]}.")
-    assert protocol._write_buffer == b"", (
-        f"Non-empty write buffer: '{protocol._write_buffer}'.")
-    assert protocol._read_buffer == b"", (
-        f"Non-empty read buffer: '{protocol._read_buffer}'.")
-
-
-def test_stepu(instr):
+@pytest.mark.skip("Adapter rework not yet done.")
+def test_stepu():
     """Test a setting."""
-    instr.adapter.comm_pairs.extend([(b"stepu 1 15\r\n", b"OK")])
-    instr.a.stepu = 15
+    with expected_protocol(
+            ANC300Controller,
+            [(None, b"xy"),
+             (b"passwd\r\n", b'xy\r\nAuthorization success\r\nOK'),
+             (b"echo off\r\n", b"x\r\nOK"),
+             (b"stepu 1 15\r\n", b"OK")],
+            axisnames=["a", "b", "c"],
+            passwd="passwd"
+            ) as instr:
+        instr.a.stepu = 15
 
 
-def test_voltage(instr):
+@pytest.mark.skip("Adapter rework not yet done.")
+def test_voltage():
     """Test a measurement."""
-    instr.adapter.comm_pairs.extend([(b"geto 1\r\n", b"5\r\nOK")])
-    assert instr.a.output_voltage == 5
+    with expected_protocol(
+            ANC300Controller,
+            [(None, b"xy"),
+             (b"passwd\r\n", b'xy\r\nAuthorization success\r\nOK'),
+             (b"echo off\r\n", b"x\r\nOK"),
+             (b"geto 1\r\n", b"5\r\nOK")],
+            axisnames=["a", "b", "c"],
+            passwd="passwd"
+            ) as instr:
+        assert instr.a.output_voltage == 5

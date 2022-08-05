@@ -26,14 +26,10 @@ import pytest
 
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.hp import HP8116A as _HP8116A
+from pymeasure.instruments.hp import HP8116A
 from pymeasure.instruments.hp.hp8116a import Status
 
-
-class HP8116A(_HP8116A):
-    @property
-    def status(self):
-        return Status(5)
+HP8116A.status = property(fget=lambda self: Status(5))
 
 
 def test_init():

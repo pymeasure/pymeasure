@@ -25,31 +25,7 @@
 import re
 import time
 
-from pymeasure.adapters import ProtocolAdapter, TelnetAdapter
-
-
-class Mock_TelnetAdapter(ProtocolAdapter):
-    def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
-                 **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply, **kwargs)
-        self.query_delay = query_delay
-        self.connection = self.Connection(self)
-        self.comm_pairs = [(None, b"xy"),
-                           (b"passwd\r\n", b'xy\r\nAuthorization success\r\nOK'),
-                           (b"echo off\r\n", b"x\r\nOK")]
-
-    def _read(self):
-        return super().read()
-
-    class Connection:
-        def __init__(self, parent):
-            self.parent = parent
-
-        def read_until(self, *args):
-            return self.parent._read().encode()
-
-        def close(self):
-            pass
+from pymeasure.adapters import TelnetAdapter
 
 
 class AttocubeConsoleAdapter(TelnetAdapter):
