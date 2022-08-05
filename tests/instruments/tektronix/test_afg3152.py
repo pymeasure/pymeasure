@@ -22,42 +22,28 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .resources import list_resources
-from .validators import discreteTruncate
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.tektronix.afg3152c import AFG3152C
 
-from . import activetechnologies
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anaheimautomation
-from . import anapico
-from . import andeenhagerling
-from . import anritsu
-from . import attocube
-from . import danfysik
-from . import deltaelektronika
-from . import fluke
-from . import fwbell
-from . import hcp
-from . import heidenhain
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import rohdeschwarz
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import temptronic
-from . import thermotron
-from . import thorlabs
-from . import toptica
-from . import yokogawa
+
+def test_shape():
+    # Demonstrate message prefix identifying the channel
+    # Note how the implementation of the shape property does not show that
+    # prefix (it is added in the Channel class)
+    with expected_protocol(
+        AFG3152C,
+        [("source1:function:shape?", "LOR"),
+         ("source2:function:shape HAV", None),
+         ],
+    ) as inst:
+        assert inst.ch1.shape == 'lorentz'
+        inst.ch2.shape = 'haversine'
+
+
+def test_beep():
+    # A message common to all channels does not have a prefix
+    with expected_protocol(
+        AFG3152C,
+        [("system:beep", None)],
+    ) as inst:
+        inst.beep()

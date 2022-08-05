@@ -22,42 +22,24 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .instrument import Instrument
-from .resources import list_resources
-from .validators import discreteTruncate
+import pytest
+from pymeasure.instruments.rohdeschwarz.hmp import process_sequence
 
-from . import activetechnologies
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anaheimautomation
-from . import anapico
-from . import andeenhagerling
-from . import anritsu
-from . import attocube
-from . import danfysik
-from . import deltaelektronika
-from . import fluke
-from . import fwbell
-from . import hcp
-from . import heidenhain
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import rohdeschwarz
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import temptronic
-from . import thermotron
-from . import thorlabs
-from . import toptica
-from . import yokogawa
+
+def test_process_sequence():
+    "Test `process_sequence` function."
+
+    # Sequence must contain multiple of 3 values.
+    with pytest.raises(ValueError):
+        process_sequence([1.0, 1.0, 1.0, 2.0, 2.0])
+
+    # Dwell times must be between 0.06 and 10 s.
+    with pytest.raises(ValueError):
+        process_sequence([1.0, 1.0, 1.0, 2.0, 2.0, 0.05])
+
+    with pytest.raises(ValueError):
+        process_sequence([1.0, 1.0, 1.0, 2.0, 2.0, 10.1])
+
+    # Test with a valid sequence.
+    sequence = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    assert process_sequence(sequence) == "1.0,2.0,3.0,4.0,5.0,6.0"
