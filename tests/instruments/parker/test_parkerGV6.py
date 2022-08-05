@@ -39,12 +39,13 @@ class ParkerGV6(_ParkerGV6):
 
 def test_init():
     with expected_protocol(
-            ParkerGV6, [(b"ECHO0", None),
-                        (b"LH0", None),
-                        (b"MA1", None),
-                        (b"MC0", None),
-                        (b"AA1.0", None),
-                        (b"A1.0", None),
-                        (b"V3.0", None),
-                        ]):
+            ParkerGV6,
+            [(b"ECHO0", None),
+             (b"LH0", None),
+             (b"MA1", None),
+             (b"MC0", None),
+             (b"AA1.0", None),
+             (b"A1.0", None),
+             (b"V3.0", None),
+             ]):
         pass  # Verify the expected communication.

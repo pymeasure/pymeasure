@@ -24,47 +24,60 @@
 
 from pymeasure.test import expected_protocol
 
-
 from pymeasure.instruments.anritsu import AnritsuMG3692C
 
 
 def test_init():
     with expected_protocol(
-            AnritsuMG3692C, []):
+            AnritsuMG3692C,
+            [],
+            ):
         pass  # Verify the expected communication.
 
 
 def test_power():
     with expected_protocol(
-            AnritsuMG3692C, [(b":POWER?;", "123.45")]) as instr:
+            AnritsuMG3692C,
+            [(b":POWER?;", "123.45")],
+            ) as instr:
         assert instr.power == 123.45
 
 
 def test_power_setter():
     with expected_protocol(
-            AnritsuMG3692C, [(b":POWER 123.45 dBm;", None)]) as instr:
+            AnritsuMG3692C,
+            [(b":POWER 123.45 dBm;", None)],
+            ) as instr:
         instr.power = 123.45
 
 
 def test_frequency():
     with expected_protocol(
-            AnritsuMG3692C, [(b":FREQUENCY?;", "123.45")]) as instr:
+            AnritsuMG3692C,
+            [(b":FREQUENCY?;", "123.45")],
+            ) as instr:
         assert instr.frequency == 123.45
 
 
 def test_frequency_setter():
     with expected_protocol(
-            AnritsuMG3692C, [(b":FREQUENCY 1.234500e+02 Hz;", None)]) as instr:
+            AnritsuMG3692C,
+            [(b":FREQUENCY 1.234500e+02 Hz;", None)],
+            ) as instr:
         instr.frequency = 123.45
 
 
 def test_output():
     with expected_protocol(
-            AnritsuMG3692C, [(b":OUTPUT?", "1")]) as instr:
+            AnritsuMG3692C,
+            [(b":OUTPUT?", "1")],
+            ) as instr:
         assert instr.output is True
 
 
 def test_output_setter():
     with expected_protocol(
-            AnritsuMG3692C, [(b":OUTPUT ON;", None)]) as instr:
+            AnritsuMG3692C,
+            [(b":OUTPUT ON;", None)],
+            ) as instr:
         instr.output = True
