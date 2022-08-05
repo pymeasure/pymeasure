@@ -33,6 +33,7 @@ from datetime import datetime
 from string import Formatter
 
 import pandas as pd
+import pint
 
 from .procedure import Procedure, UnknownProcedure
 from pymeasure.units import ureg
@@ -158,7 +159,7 @@ class CSVFormatter(logging.Formatter):
             if units is not None:
                 if isinstance(value, str):
                     try:
-                        value = pint.Quantity(value)
+                        value = ureg.Quantity(value)
                     except pint.UndefinedUnitError:
                         log.warning(
                             f"Value {value} for column {x} cannot be parsed to"

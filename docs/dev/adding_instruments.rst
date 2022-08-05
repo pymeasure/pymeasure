@@ -510,6 +510,27 @@ Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.In
     >>> extreme.current
     3.1
 
+Another use-case of `set-process`, `get-process` is conversion from/to a :code:`pint.Quantity`. Modifying above example to set or return a quantity, we get:
+
+.. testcode::
+
+	from pymeasure.units import ureg
+
+    Extreme5000.current = Instrument.control(
+        ":CURR?", ":CURR %g",
+        """ A floating point quantity property representing the measurement current 
+        """,
+        values=[0, 10],
+        set_process=lambda v: v.m_as(ureg.mA),  # send the value as mA to the device
+        get_process=lambda v: ureg.Quantity(v, ureg.mA),  # convert to quantity
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.current = 3.1 * ureg.A
+    >>> extreme.current.m_as(ureg.A)
+    3.1
+
 `get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit which has to be removed. This could be achieved by the following code:
 
 .. testcode::
@@ -598,7 +619,7 @@ In cases where the general `preprocess_reply` function should not run it can be 
         preprocess_reply=lambda v: v,
     )
 
-Using a combination of the decribed abilities also complex communication schemes can be achieved.
+Using a combination of the described abilities also complex communication schemes can be achieved.
 
 Dynamic properties
 ===================
