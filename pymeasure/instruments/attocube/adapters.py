@@ -24,6 +24,7 @@
 
 import re
 import time
+from warnings import warn
 
 from pymeasure.adapters import TelnetAdapter
 
@@ -48,14 +49,14 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         time.sleep(self.query_delay)
         super().read()  # clear messages sent upon opening the connection
         # send password and check authorization
-        self.write(passwd, check_ack=False)
+        self.write(passwd)
         time.sleep(self.query_delay)
         ret = super().read()
         authmsg = ret.split(self.read_termination)[1]
         if authmsg != 'Authorization success':
             raise Exception(f"Attocube authorization failed '{authmsg}'")
         # switch console echo off
-        self.write('echo off')
+        self._write('echo off')
         _ = self.read()
 
     def extract_value(self, reply):
@@ -103,7 +104,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         self.check_acknowledgement(ack, ret)
         return ret
 
-    def _write(self, command, check_ack=True):
+    def _write(self, command):
         """ Writes a command to the instrument
 
         :param command: command string to be sent to the instrument
@@ -113,10 +114,6 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         """
         self.lastcommand = command
         super()._write(command + self.write_termination)
-        if check_ack:
-            reply = self.connection.read_until(self.read_termination.encode())
-            msg = reply.decode().strip(self.read_termination)
-            self.check_acknowledgement(msg)
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
@@ -125,7 +122,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        raise DeprecationWarning()
-        self.write(command, check_ack=False)
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
+        self.write(command)
         time.sleep(self.query_delay)
         return self.read()
