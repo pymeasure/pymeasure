@@ -25,6 +25,8 @@
 
 import pytest
 
+from pymeasure.units import ureg
+from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
@@ -211,6 +213,42 @@ def test_control_preprocess_reply_adapter(dynamic):
     # called inside Adapter.values()
     fake.x = 5
     assert fake.x == 5
+
+
+@pytest.mark.parametrize("cast, expected", ((float, 5.5),
+                                            (ureg.Quantity, ureg.Quantity(5.5)),
+                                            (str, "5.5"),
+                                            (lambda v: int(float(v)), 5)
+                                            ))
+def test_measurement_cast(cast, expected):
+    class Fake(Instrument):
+        x = Instrument.measurement(
+            "x", "doc", cast=cast)
+    with expected_protocol(Fake, [("x", "5.5")], name="test") as instr:
+        assert instr.x == expected
+
+
+def test_measurement_cast_int():
+    class Fake(Instrument):
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, "test", **kwargs)
+        x = Instrument.measurement(
+            "x", "doc", cast=int)
+    with expected_protocol(Fake, [("x", "5")]) as instr:
+        y = instr.x
+        assert y == 5
+        assert type(y) is int
+
+
+def test_measurement_unitful_property():
+    class Fake(Instrument):
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, "test", **kwargs)
+        x = Instrument.measurement(
+            "x", "doc", get_process=lambda v: ureg.Quantity(v, ureg.m))
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:
+        y = instr.x
+        assert y.m_as(ureg.m) == 5.5
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
