@@ -70,7 +70,13 @@ class SerialAdapter(Adapter):
     def _read(self):
         """Read the buffer and return the result as a string without the
         read_termination characters, if defined."""
-        return self._read_bytes(-1).decode().removesuffix(self.read_termination)
+        # for python>=3.9 this shorter form is possible:
+        # self._read_bytes(-1).decode().removesuffix(self.read_termination)
+        read = self._read_bytes(-1).decode()
+        if self.read_termination:
+            return read.split(self.read_termination)[0]
+        else:
+            return read
 
     def _read_bytes(self, count):
         """ Reads until the buffer is empty and returns the resulting

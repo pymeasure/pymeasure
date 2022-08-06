@@ -23,7 +23,7 @@
 #
 
 import logging
-import warnings
+from warnings import warn
 
 import pyvisa
 import numpy as np
@@ -144,8 +144,8 @@ class VISAAdapter(Adapter):
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        warnings.warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
-                      FutureWarning)
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
         return self.connection.query(command)
 
     def ask_values(self, command, **kwargs):
@@ -157,8 +157,8 @@ class VISAAdapter(Adapter):
         :param kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
-        warnings.warn("Do not call `Adapter.ask_values`, but `Instrument.values` instead.",
-                      FutureWarning)
+        warn("Do not call `Adapter.ask_values`, but `Instrument.values` instead.",
+             FutureWarning)
 
         return self.connection.query_ascii_values(command, **kwargs)
 

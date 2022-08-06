@@ -171,8 +171,8 @@ class Adapter:
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        raise NameError("Adapter (sub)class has not implemented the "
-                        "binary_values method")
+        raise NotImplementedError("Adapter (sub)class has not implemented the "
+                                  "binary_values method")
 
 
 class FakeAdapter(Adapter):
@@ -203,11 +203,26 @@ class FakeAdapter(Adapter):
         self._buffer = ""
         return result
 
+    def _read_bytes(self, count):
+        """ Returns the last commands given after the
+        last read call.
+        """
+        result = copy(self._buffer)
+        # Reset the buffer
+        self._buffer = ""
+        return result[:count].encode()
+
     def _write(self, command):
         """ Writes the command to a buffer, so that it can
         be read back.
         """
         self._buffer += command
+
+    def _write_bytes(self, command):
+        """ Writes the command to a buffer, so that it can
+        be read back.
+        """
+        self._buffer += command.decode()
 
     def __repr__(self):
         return "<FakeAdapter>"

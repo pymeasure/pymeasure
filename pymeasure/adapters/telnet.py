@@ -74,7 +74,11 @@ class TelnetAdapter(Adapter):
         """
         read = self.connection.read_some().decode() + \
             self.connection.read_very_eager().decode()
-        return read.removesuffix(self.read_termination)
+        # python>=3.9 instead: return read.removesuffix(self.read_termination)
+        if self.read_termination:
+            return read.split(self.read_termination)[0]
+        else:
+            return read
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII

@@ -31,10 +31,17 @@ from pymeasure.adapters import Adapter, FakeAdapter
 
 @pytest.fixture()
 def adapter():
-    return Adapter(preprocess_reply=lambda v: v)
+    return Adapter()
 
 
-def test_init(adapter):
+@pytest.fixture()
+def fake():
+    return FakeAdapter()
+
+
+def test_init():
+    with pytest.warns(FutureWarning):
+        adapter = Adapter(preprocess_reply=lambda v: v)
     assert adapter.preprocess_reply is not None
     assert adapter.connection is None
 
@@ -45,10 +52,39 @@ def test_del(adapter):
     assert adapter.connection.method_calls == [mock.call.close()]
 
 
-@pytest.mark.parametrize("method, args", (['write', ['5']], ['read', []], ['binary_values', ['8']]))
+def test_write(fake):
+    fake.write("abc")
+    assert fake._buffer == "abc"
+
+
+def test_write_bytes(fake):
+    fake.write_bytes(b"abc")
+    assert fake._buffer == "abc"
+
+
+def test_read(fake):
+    fake._buffer = "abc"
+    assert fake.read() == "abc"
+
+
+def test_read_bytes(fake):
+    fake._buffer = "abc"
+    assert fake.read_bytes(5) == b"abc"
+
+
+@pytest.mark.parametrize("method, args", (['_write', ['5']], ['_read', []],
+                                          ['_write_bytes', ['8']],
+                                          ['_read_bytes', ['5']],
+                                          ['binary_values', ['5']]))
 def test_not_implemented_methods(adapter, method, args):
-    with pytest.raises(NameError):
+    with pytest.raises(NotImplementedError):
         getattr(adapter, method)(*args)
+
+
+def test_ask_warning():
+    a = FakeAdapter()
+    with pytest.warns(FutureWarning):
+        assert a.ask("abc") == "abc"
 
 
 @pytest.mark.parametrize("value, kwargs, result",
@@ -62,15 +98,17 @@ def test_not_implemented_methods(adapter, method, args):
                           ))
 def test_adapter_values(value, kwargs, result):
     a = FakeAdapter()
-    assert a.values(value, **kwargs) == result
+    with pytest.warns(FutureWarning):
+        assert a.values(value, **kwargs) == result
 
 
 def test_adapter_preprocess_reply():
-    a = FakeAdapter(preprocess_reply=lambda v: v[1:])
-    assert str(a) == "<FakeAdapter>"
-    assert a.values("R42.1") == [42.1]
-    assert a.values("A4,3,2") == [4, 3, 2]
-    assert a.values("TV 1", preprocess_reply=lambda v: v.split()[0]) == ['TV']
-    assert a.values("15", preprocess_reply=lambda v: v) == [15]
-    a = FakeAdapter()
-    assert a.values("V 3.4", preprocess_reply=lambda v: v.split()[1]) == [3.4]
+    with pytest.warns(FutureWarning):
+        a = FakeAdapter(preprocess_reply=lambda v: v[1:])
+        assert str(a) == "<FakeAdapter>"
+        assert a.values("R42.1") == [42.1]
+        assert a.values("A4,3,2") == [4, 3, 2]
+        assert a.values("TV 1", preprocess_reply=lambda v: v.split()[0]) == ['TV']
+        assert a.values("15", preprocess_reply=lambda v: v) == [15]
+        a = FakeAdapter()
+        assert a.values("V 3.4", preprocess_reply=lambda v: v.split()[1]) == [3.4]

@@ -313,12 +313,13 @@ class Instrument:
                 pass  # Keep as string
         return results
 
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
+    def binary_values(self, command, header_bytes=0, dtype=np.float32, **kwargs):
         """ Returns a numpy array from a query for binary data.
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
         :param dtype: The NumPy data type to format the values with
+        :param kwargs: Further arguments for the NumPy fromstring method.
         :returns: NumPy array of values
         """
         # TODO verify implementation, keep it in Instrument?
@@ -326,7 +327,7 @@ class Instrument:
         binary = self.read()
         # header = binary[:header_bytes]
         data = binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
+        return np.fromstring(data, dtype=dtype, **kwargs)
 
     # Property creators
     @staticmethod
