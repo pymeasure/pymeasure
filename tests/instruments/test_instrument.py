@@ -32,9 +32,53 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.instrument import DynamicProperty
 from pymeasure.adapters import FakeAdapter
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
+
+
+class GenericInstrument(FakeInstrument):
+    #  Use truncated_range as this easily lets us test for the range boundaries
+    fake_ctrl = Instrument.control(
+        "", "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_setting = Instrument.setting(
+        "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_measurement = Instrument.measurement(
+        "", "docs",
+        values={'X': 1, 'Y': 2, 'Z': 3},
+        map_values=True,
+        dynamic=True,
+    )
+
+
+class ExtendedInstrument(GenericInstrument):
+    # Keep values unchanged, just derive another instrument, e.g. to add more properties
+    pass
+
+
+class StrictExtendedInstrument(ExtendedInstrument):
+    # Use strict instead of truncated range validator
+    fake_ctrl_validator = strict_range
+    fake_setting_validator = strict_range
+
+
+@pytest.fixture()
+def generic():
+    return GenericInstrument()
+
+
+class NewRangeInstrument(GenericInstrument):
+    # Choose different properties' values, like you would for another device model
+    fake_ctrl_values = (10, 20)
+    fake_setting_values = (10, 20)
+    fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
 
 
 def test_fake_instrument():
@@ -135,7 +179,6 @@ def test_control_check_errors_get(generic):
     generic.check_errors = checking
     generic.fake_ctrl
     assert generic.error is True
-    del generic.error
 
 
 def test_control_check_errors_set(generic):
@@ -146,7 +189,6 @@ def test_control_check_errors_set(generic):
     generic.check_errors = checking
     generic.fake_ctrl = 7
     assert generic.error is True
-    del generic.error
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -460,51 +502,6 @@ def test_with_statement():
 
     # Check whether the shutdown function is called upon
     assert fake.isShutdown is True
-
-
-class GenericInstrument(FakeInstrument):
-    #  Use truncated_range as this easily lets us test for the range boundaries
-    fake_ctrl = Instrument.control(
-        "", "%d", "docs",
-        validator=truncated_range,
-        values=(1, 10),
-        dynamic=True,
-    )
-    fake_setting = Instrument.setting(
-        "%d", "docs",
-        validator=truncated_range,
-        values=(1, 10),
-        dynamic=True,
-    )
-    fake_measurement = Instrument.measurement(
-        "", "docs",
-        values={'X': 1, 'Y': 2, 'Z': 3},
-        map_values=True,
-        dynamic=True,
-    )
-
-
-@pytest.fixture(scope="module")
-def generic():
-    return GenericInstrument()
-
-
-class ExtendedInstrument(GenericInstrument):
-    # Keep values unchanged, just derive another instrument, e.g. to add more properties
-    pass
-
-
-class StrictExtendedInstrument(ExtendedInstrument):
-    # Use strict instead of truncated range validator
-    fake_ctrl_validator = strict_range
-    fake_setting_validator = strict_range
-
-
-class NewRangeInstrument(GenericInstrument):
-    # Choose different properties' values, like you would for another device model
-    fake_ctrl_values = (10, 20)
-    fake_setting_values = (10, 20)
-    fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
 
 
 def test_dynamic_property_fget_unset():

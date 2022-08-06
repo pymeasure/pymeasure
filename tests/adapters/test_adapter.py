@@ -67,7 +67,7 @@ def test_adapter_values(value, kwargs, result):
 
 def test_adapter_preprocess_reply():
     a = FakeAdapter(preprocess_reply=lambda v: v[1:])
-    str(a)
+    assert str(a) == "<FakeAdapter>"
     assert a.values("R42.1") == [42.1]
     assert a.values("A4,3,2") == [4, 3, 2]
     assert a.values("TV 1", preprocess_reply=lambda v: v.split()[0]) == ['TV']
