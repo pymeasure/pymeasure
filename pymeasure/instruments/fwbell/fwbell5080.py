@@ -24,7 +24,7 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_discrete_set, strict_discrete_set
-from pymeasure.adapters import SerialAdapter
+from pymeasure.adapters import Adapter, SerialAdapter
 from numpy import array, float64
 
 
@@ -63,6 +63,7 @@ class FWBell5080(Instrument):
         'amp-meter': 'DC:AM', 'amp-meter ac': 'AC:AM'
     }
     units = Instrument.control(
+        # TODO a newer version expects ':UNIT:FLUX:%s', is this right?
         ":UNIT:FLUX?", ":UNIT:FLUX%s",
         """ A string property that controls the field units, which can take the
         values: 'gauss', 'gauss ac', 'tesla', 'tesla ac', 'amp-meter', and
@@ -75,8 +76,10 @@ class FWBell5080(Instrument):
     )
 
     def __init__(self, port):
+        if not isinstance(port, Adapter):
+            port = SerialAdapter(port, 2400, timeout=0.5)
         super().__init__(
-            SerialAdapter(port, 2400, timeout=0.5),
+            port,
             "F.W. Bell 5080 Handheld Gaussmeter"
         )
 
@@ -114,12 +117,15 @@ class FWBell5080(Instrument):
         """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
         method to remove the last 2 characters from the output.
         """
+        # TODO this cannot work, because command is missing
         return super().ask()[:-2]
 
     def values(self, command):
         """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
         method to remove the lastv2 characters from the output.
         """
+        # TODO this cannot work, because command is missing and removing
+        # the end of values does not make sense.
         return super().values()[:-2]
 
     def reset(self):

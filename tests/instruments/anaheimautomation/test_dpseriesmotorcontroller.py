@@ -22,26 +22,45 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import serial
-
-from pymeasure.adapters import SerialAdapter
+from pymeasure.test import expected_protocol
 
 
-@pytest.fixture
-def adapter():
-    return SerialAdapter(serial.serial_for_url("loop://", timeout=0.2))
+from pymeasure.instruments.anaheimautomation import DPSeriesMotorController
 
 
-@pytest.mark.parametrize("msg", ["OUTP\n", "POWER 22 dBm\n"])
-def test_adapter_write(adapter, msg):
-    adapter.write(msg)
-    assert adapter.read() == msg
+def test_init():
+    with expected_protocol(
+            DPSeriesMotorController, []):
+        pass  # Verify the expected communication.
 
 
-@pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),
-                                                 (range(100), b'OUTP#3100' + bytes(range(100)))])
-def test_adapter_write_binary_values(adapter, test_input, expected):
-    adapter.write_binary_values("OUTP", test_input, datatype='B')
-    # Add 10 bytes more, just to check that no extra bytes are present
-    assert(adapter.connection.read(len(expected) + 10) == expected)
+def test_basespeed():
+    with expected_protocol(
+            DPSeriesMotorController,
+            [(b"@0VB", b"123")],
+            ) as instr:
+        assert instr.basespeed == 123
+
+
+def test_basespeed_setter():
+    with expected_protocol(
+            DPSeriesMotorController,
+            [(b"@0B123", None)],
+            ) as instr:
+        instr.basespeed = 123
+
+
+def test_step_position():
+    with expected_protocol(
+            DPSeriesMotorController,
+            [(b"@0VZ", b"13")],
+            ) as instr:
+        assert instr.step_position == 13
+
+
+def test_step_position_setter():
+    with expected_protocol(
+            DPSeriesMotorController,
+            [(b"@0P13", None), (b"@0G", None)],
+            ) as instr:
+        instr.step_position = 13

@@ -22,36 +22,62 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.hp import HP8116A
-from pymeasure.instruments.hp.hp8116a import Status
-
-HP8116A.status = property(fget=lambda self: Status(5))
+from pymeasure.instruments.anritsu import AnritsuMG3692C
 
 
 def test_init():
     with expected_protocol(
-            HP8116A,
-            [(b"CST", b"x" * 87 + b' ,\r\n')],
+            AnritsuMG3692C,
+            [],
             ):
         pass  # Verify the expected communication.
 
 
-@pytest.mark.xfail
-def test_duty_cycle():
+def test_power():
     with expected_protocol(
-            HP8116A,
-            [(b"CST", b"x" * 87 + b' ,\r\n'), (b"IDTY", b"00000035")],
+            AnritsuMG3692C,
+            [(b":POWER?;", "123.45")],
             ) as instr:
-        assert instr.duty_cycle == 35
+        assert instr.power == 123.45
 
 
-def test_duty_cycle_setter():
+def test_power_setter():
     with expected_protocol(
-            HP8116A,
-            [(b"CST", b"x" * 87 + b' ,\r\n'), (b"DTY 34.5 %", None)],
+            AnritsuMG3692C,
+            [(b":POWER 123.45 dBm;", None)],
             ) as instr:
-        instr.duty_cycle = 34.5
+        instr.power = 123.45
+
+
+def test_frequency():
+    with expected_protocol(
+            AnritsuMG3692C,
+            [(b":FREQUENCY?;", "123.45")],
+            ) as instr:
+        assert instr.frequency == 123.45
+
+
+def test_frequency_setter():
+    with expected_protocol(
+            AnritsuMG3692C,
+            [(b":FREQUENCY 1.234500e+02 Hz;", None)],
+            ) as instr:
+        instr.frequency = 123.45
+
+
+def test_output():
+    with expected_protocol(
+            AnritsuMG3692C,
+            [(b":OUTPUT?", "1")],
+            ) as instr:
+        assert instr.output is True
+
+
+def test_output_setter():
+    with expected_protocol(
+            AnritsuMG3692C,
+            [(b":OUTPUT ON;", None)],
+            ) as instr:
+        instr.output = True

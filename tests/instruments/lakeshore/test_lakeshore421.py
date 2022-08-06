@@ -22,26 +22,38 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import serial
+from pymeasure.test import expected_protocol
 
-from pymeasure.adapters import SerialAdapter
-
-
-@pytest.fixture
-def adapter():
-    return SerialAdapter(serial.serial_for_url("loop://", timeout=0.2))
+from pymeasure.instruments.lakeshore import LakeShore421
 
 
-@pytest.mark.parametrize("msg", ["OUTP\n", "POWER 22 dBm\n"])
-def test_adapter_write(adapter, msg):
-    adapter.write(msg)
-    assert adapter.read() == msg
+def test_init():
+    with expected_protocol(
+            LakeShore421,
+            [],
+            ):
+        pass  # Verify the expected communication.
 
 
-@pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),
-                                                 (range(100), b'OUTP#3100' + bytes(range(100)))])
-def test_adapter_write_binary_values(adapter, test_input, expected):
-    adapter.write_binary_values("OUTP", test_input, datatype='B')
-    # Add 10 bytes more, just to check that no extra bytes are present
-    assert(adapter.connection.read(len(expected) + 10) == expected)
+def test_unit():
+    with expected_protocol(
+            LakeShore421,
+            [(b"UNIT?", b"G")],
+            ) as instr:
+        assert instr.unit == "G"
+
+
+def test_unit_setter():
+    with expected_protocol(
+            LakeShore421,
+            [(b"UNIT G", None)],
+            ) as instr:
+        instr.unit = "G"
+
+
+def test_max_hold_reset():
+    with expected_protocol(
+            LakeShore421,
+            [(b"MAXC", None)],
+            ) as instr:
+        instr.max_hold_reset()

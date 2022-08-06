@@ -796,6 +796,7 @@ Device tests
 ************
 
 It can be useful as well to test the code against an actual device. The necessary device setup instructions (for example: connect a probe to the test output) should be written in the header of the test file or test methods. There should be the connection configuration (for example serial port), too.
+In order to distinguish the test module from protocol tests, the filename should be :code:`test_instrumentName_with_device.py`, if the device is called :code:`instrumentName`.
 
 Mark tests that require instrument hardware to be `skipped <https://docs.pytest.org/en/stable/how-to/skipping.html>`_ by default.
 If the whole test module requires hardware, add this at module level/after the import statements:

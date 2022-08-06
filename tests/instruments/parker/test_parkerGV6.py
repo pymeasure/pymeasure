@@ -22,26 +22,30 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import serial
-
-from pymeasure.adapters import SerialAdapter
+from pymeasure.test import expected_protocol
 
 
-@pytest.fixture
-def adapter():
-    return SerialAdapter(serial.serial_for_url("loop://", timeout=0.2))
+from pymeasure.instruments.parker import ParkerGV6 as _ParkerGV6
 
 
-@pytest.mark.parametrize("msg", ["OUTP\n", "POWER 22 dBm\n"])
-def test_adapter_write(adapter, msg):
-    adapter.write(msg)
-    assert adapter.read() == msg
+class ParkerGV6(_ParkerGV6):
+    def __init__(self, adapter):
+        super(_ParkerGV6, self).__init__(adapter, name="GV6")
+        self.set_defaults()
+
+    def write(self, command):
+        super(_ParkerGV6, self).write(command)
 
 
-@pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),
-                                                 (range(100), b'OUTP#3100' + bytes(range(100)))])
-def test_adapter_write_binary_values(adapter, test_input, expected):
-    adapter.write_binary_values("OUTP", test_input, datatype='B')
-    # Add 10 bytes more, just to check that no extra bytes are present
-    assert(adapter.connection.read(len(expected) + 10) == expected)
+def test_init():
+    with expected_protocol(
+            ParkerGV6,
+            [(b"ECHO0", None),
+             (b"LH0", None),
+             (b"MA1", None),
+             (b"MC0", None),
+             (b"AA1.0", None),
+             (b"A1.0", None),
+             (b"V3.0", None),
+             ]):
+        pass  # Verify the expected communication.
