@@ -35,7 +35,31 @@ log.addHandler(logging.NullHandler())
 
 c_uint8 = ctypes.c_uint8
 
-# classes for the decoding of the 5-byte status word
+
+class SRQ(ctypes.BigEndianStructure):
+    """Support class for the SRQ handling
+    """
+    _fields_ = [
+        ("power_on", c_uint8, 1),
+        ("not_assigned_1", c_uint8, 1),
+        ("calibration", c_uint8, 1),
+        ("front_panel_button", c_uint8, 1),
+        ("internal_error", c_uint8, 1),
+        ("syntax_error", c_uint8, 1),
+        ("not_assigned_2", c_uint8, 1),
+        ("data_ready", c_uint8, 1),
+    ]
+
+    def __str__(self):
+        """
+        Returns a pretty formatted string showing the status of the instrument
+
+        """
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
+
+        return ret_str
 
 
 class Status(StatusBitsBase):
@@ -66,7 +90,7 @@ class Status(StatusBitsBase):
         # ("SRQ_syntax_error", c_uint8, 1),
         # ("res2", c_uint8, 1),
         # ("SRQ_data_rdy", c_uint8, 1),
-        ("SRQ", c_uint8, 8),
+        ("SRQ", SRQ),
         # Byte 4: Error Information
         # ("res5", c_uint8, 1),
         # ("res4", c_uint8, 1),
@@ -95,6 +119,7 @@ class HP3478A(HPLegacyInstrument):
         super().__init__(
             resourceName,
             "Hewlett-Packard HP3478A",
+            status_bitfield=self.status_desc,
             **kwargs,
         )
 
@@ -141,16 +166,6 @@ class HP3478A(HPLegacyInstrument):
         RAM = 2  # RAM selftest failed
         CALIBRATION = 1  # Calibration checksum error or cal range issue
         NO_ERR = 0  # Should be obvious
-
-    class SRQ(IntFlag):
-        """Enum element for SRQ mask bit decoding
-        """
-        Power_on = 128
-        Calibration = 32
-        Front_panel_button = 16
-        Internal_error = 8
-        Syntax_error = 4
-        Data_ready = 1
 
     # commands/properties for instrument control
     @property
@@ -409,8 +424,8 @@ class HP3478A(HPLegacyInstrument):
         =========  ==========================
 
         """
-        mask = self.status.SRQ
-        return self.SRQ(mask)
+
+        return self.status.SRQ
 
     @SRQ_mask.setter
     def SRQ_mask(self, value):
