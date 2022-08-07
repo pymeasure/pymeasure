@@ -174,9 +174,9 @@ class HP3437A(HPLegacyInstrument):
     status_desc = Status
     pb_desc = PackedBits
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Hewlett-Packard HP3437A",
             **kwargs,
         )
