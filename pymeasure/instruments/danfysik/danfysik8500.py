@@ -67,8 +67,6 @@ class Danfysik8500(Instrument):
             **kwargs
         )
         # TODO verify serial connection.
-        # TODO WARNING, changing from pyserial to pyvisa changes the timeout
-        # from s to ms!
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode
 
