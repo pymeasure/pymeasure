@@ -252,30 +252,6 @@ class HP8116A(Instrument):
         bytes = self.read_bytes(num_bytes)[1:]
         return bytes.decode('ascii').strip(' ,\r\n')
 
-    # TODO remove
-    # def values(self, command, separator=',', cast=float, preprocess_reply=None, **kwargs):
-    #     # I had to copy the values method from the adapter class since we need to call
-    #     # our own ask() method instead of the adapter's default one.
-    #     results = str(self.ask(command))
-    #     if callable(preprocess_reply):
-    #         results = preprocess_reply(results)
-    #     elif callable(self.adapter.preprocess_reply):
-    #         results = self.adapter.preprocess_reply(results)
-    #     results = results.split(separator)
-    #     for i, result in enumerate(results):
-    #         try:
-    #             if cast == bool:
-    #                 # Need to cast to float first since results are usually
-    #                 # strings and bool of a non-empty string is always True
-    #                 results[i] = bool(float(result))
-    #             else:
-    #                 results[i] = cast(result)
-    #         except Exception:
-    #             pass  # Keep as string
-    #     return results
-
-    # Instrument controls #
-
     operating_mode = Instrument.control(
         'CST', '%s',
         """ A string property that controls the operating mode of the instrument.
