@@ -50,3 +50,4 @@ JC Arbelbide
 Florian Jünger
 Benedikt Moneke
 Fabio Garzetti
+Asaf Yagoda
