@@ -98,7 +98,7 @@ class PrologixAdapter(SerialAdapter):
             time.sleep(self.rw_delay)
         return self.read()
 
-    def _write(self, command):
+    def _write(self, command, **kwargs):
         """ Writes the command to the GPIB address stored in the
         :attr:`.address`
 
@@ -154,7 +154,7 @@ class PrologixAdapter(SerialAdapter):
         super().write_binary_values(command, values, **kwargs)
         self.connection.write(b'\n')
 
-    def _read(self):
+    def _read(self, **kwargs):
         """ Reads the response of the instrument until timeout
 
         :returns: String ASCII response of the instrument

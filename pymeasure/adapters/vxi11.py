@@ -49,7 +49,6 @@ class VXI11Adapter(Adapter):
     def __init__(self, host, preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         # Filter valid arguments that can be passed to vxi instrument
-        warn("Use pyvisa instead.", FutureWarning)
         valid_args = ["name", "client_id", "term_char"]
         self.conn_kwargs = {}
         for key in kwargs:
@@ -89,29 +88,30 @@ class VXI11Adapter(Adapter):
         return self.connection.ask(command)
 
     def write_raw(self, command):
-        # legacy method
+        warn("Use `write_bytes` instead.", FutureWarning)
         self.write_bytes(command)
 
-    def _write_bytes(self, command):
+    def _write_bytes(self, command, **kwargs):
         """ Wrapper function for the write_raw command using the
         vxi11 interface.
 
         :param command: binary string with the command that will be
                         transmitted to the instrument
         """
-        self.connection.write_raw(command)
+        # Note: vxi11.write_raw adds the term_char!
+        self.connection.write_raw(command, **kwargs)
 
     def read_raw(self):
-        # legacy method
-        return self.read_bytes()
+        warn("Use `read_bytes` instead.", FutureWarning)
+        return self.read_bytes(-1)
 
-    def _read_bytes(self):
+    def _read_bytes(self, count, **kwargs):
         """ Wrapper function for the read_raw command using the
         vx11 interface.
 
         :returns binary string containing the response from the device.
         """
-        return self.connection.read_raw()
+        return self.connection.read_raw(count, **kwargs)
 
     def ask_raw(self, command):
         """ Wrapper function for the ask_raw command using the

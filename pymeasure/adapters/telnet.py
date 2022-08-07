@@ -59,21 +59,21 @@ class TelnetAdapter(Adapter):
                     f"allowed are: {str(safe_keywords)}")
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
-    def _write(self, command):
+    def _write(self, command, **kwargs):
         """ Writes a command to the instrument
 
         :param command: command string to be sent to the instrument
         """
-        self.connection.write((command + self.write_termination).encode())
+        self.connection.write((command + self.write_termination).encode(), **kwargs)
 
-    def _read(self):
+    def _read(self, **kwargs):
         """ Read something even with blocking the I/O. After something is
         received check again to obtain a full reply.
 
         :returns: String ASCII response of the instrument.
         """
-        read = self.connection.read_some().decode() + \
-            self.connection.read_very_eager().decode()
+        read = self.connection.read_some(**kwargs).decode() + \
+            self.connection.read_very_eager(**kwargs).decode()
         # python>=3.9 instead: return read.removesuffix(self.read_termination)
         if self.read_termination:
             return read.split(self.read_termination)[0]

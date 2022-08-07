@@ -65,55 +65,68 @@ class Adapter:
             pass
 
     # Directly called methods. DO NOT OVERRIDE IN SUBCLASS!
-    def write(self, command):
+    def write(self, command, **kwargs):
         """
         Write a string command to the instrument.
 
         The write_termination string is appended, if defined.
 
-        :param command: SCPI command string to be sent to the instrument
+        :param command: Command string to be sent to the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
         """
         self.log.debug(("WRITE:", command))
-        self._write(command)
+        self._write(command, **kwargs)
 
-    def write_bytes(self, content):
-        """Write the bytes `content` to the instrument."""
+    def write_bytes(self, content, **kwargs):
+        """
+        Write the bytes `content` to the instrument.
+
+        :param content: The bytes to write to the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
+        """
         self.log.debug(("WRITE:", content))
-        self._write_bytes(content)
+        self._write_bytes(content, **kwargs)
 
-    def read(self):
+    def read(self, **kwargs):
         """
         Read until the buffer is empty and return the resulting string.
 
         The read_termination string is removed from the response.
 
+        :param kwargs: Keyword arguments for the connection itself.
+
         :returns: String ASCII response of the instrument.
         """
-        read = self._read()
+        read = self._read(**kwargs)
         self.log.debug(("READ:", read))
         return read
 
-    def read_bytes(self, count):
-        """Read `count` number of bytes from the instrument."""
-        read = self._read_bytes(count)
+    def read_bytes(self, count=-1, **kwargs):
+        """
+        Read a certain number of bytes from the instrument.
+
+        :param count: Number of bytes to read. For some adapters '-1' means all.
+        :param kwargs: Keyword arguments for the connection itself.
+        """
+        read = self._read_bytes(count, **kwargs)
         self.log.debug(("READ:", read))
         return read
 
     # Methods to implement in the subclass.
 
-    def _write(self, command):
+    def _write(self, command, **kwargs):
         """Write to the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented writing")
 
-    def _write_bytes(self, content):
+    def _write_bytes(self, content, **kwargs):
         """Write bytes to the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented writing")
 
-    def _read(self):
+    def _read(self, **kwargs):
         """Read from the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented reading")
 
-    def _read_bytes(self, count):
+    def _read_bytes(self, count, **kwargs):
         """Read from the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented reading")
 

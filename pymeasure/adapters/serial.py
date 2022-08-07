@@ -56,29 +56,29 @@ class SerialAdapter(Adapter):
         self.write_termination = write_termination
         self.read_termination = read_termination
 
-    def _write(self, command):
+    def _write(self, command, **kwargs):
         """ Writes a command to the instrument appending the write_termination.
 
         :param command: SCPI command string to be sent to the instrument
         """
-        self.connection.write((command + self.write_termination).encode())
+        self.connection.write((command + self.write_termination).encode(), **kwargs)
 
-    def _write_bytes(self, content):
+    def _write_bytes(self, content, **kwargs):
         """Write the bytes of `content` to the device."""
-        self.connection.write(content)
+        self.connection.write(content, **kwargs)
 
-    def _read(self):
+    def _read(self, **kwargs):
         """Read the buffer and return the result as a string without the
         read_termination characters, if defined."""
         # for python>=3.9 this shorter form is possible:
         # self._read_bytes(-1).decode().removesuffix(self.read_termination)
-        read = self._read_bytes(-1).decode()
+        read = self._read_bytes(-1, **kwargs).decode()
         if self.read_termination:
             return read.split(self.read_termination)[0]
         else:
             return read
 
-    def _read_bytes(self, count):
+    def _read_bytes(self, count, **kwargs):
         """ Reads until the buffer is empty and returns the resulting
         bytes response
 
@@ -86,9 +86,9 @@ class SerialAdapter(Adapter):
         :returns: bytes response of the instrument.
         """
         if count == -1:
-            return b"\n".join(self.connection.readlines())
+            return b"\n".join(self.connection.readlines(**kwargs))
         else:
-            return self.connection.read(count)
+            return self.connection.read(count, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
