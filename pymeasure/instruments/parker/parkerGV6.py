@@ -41,7 +41,7 @@ class ParkerGV6(Instrument):
             SerialAdapter(port, 9600, timeout=0.5),
             "Parker GV6 Motor Controller"
         )
-        self.setDefaults()
+        self.set_defaults()
 
     def write(self, command):
         """ Overwrites the Insturment.write command to provide the correct
@@ -198,6 +198,11 @@ class ParkerGV6(Instrument):
         self.write("LSPOS%d" % int(positive))
         self.write("LSNEG%d" % int(negative))
 
+    @property
+    def echo(self):
+        pass
+
+    @echo.setter
     def echo(self, enable=False):
         """ Enables (True) or disables (False) the echoing
         of all commands that are sent to the instrument

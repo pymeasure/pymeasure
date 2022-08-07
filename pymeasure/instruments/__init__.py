@@ -27,6 +27,7 @@ from .instrument import Instrument
 from .resources import list_resources
 from .validators import discreteTruncate
 
+from . import activetechnologies
 from . import advantest
 from . import agilent
 from . import ametek

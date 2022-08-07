@@ -27,19 +27,31 @@ import serial
 
 from pymeasure.adapters import PrologixAdapter
 
-prefix = "\n".join(["++auto 0", "++eoi 1", "++eos 2"]) + "\n"
+prefix = "\n".join(["++auto 0", "++eoi 1", "++eos 2", ""])
 
 
-def make_adapter(**kwargs):
-    return PrologixAdapter(serial.serial_for_url("loop://", **kwargs))
+@pytest.fixture()
+def adapter():
+    return PrologixAdapter(serial.serial_for_url("loop://", timeout=0.2))
 
 
 @pytest.mark.parametrize("test_input,expected", [("OUTP", prefix + "OUTP\n"),
                                                  ("POWER 22 dBm", prefix + "POWER 22 dBm\n")])
-def test_adapter_write(test_input, expected):
-    adapter = make_adapter(timeout=0.2)
+def test_adapter_write(test_input, expected, adapter):
     adapter.write(test_input)
-    assert(adapter.connection.read(len(expected) + 10) == expected.encode())
+    assert adapter.connection.read(len(expected) + 10) == expected.encode()
+
+
+def test_read(adapter):
+    adapter.write("xyz")
+    assert adapter.read() == "++auto 0\n\n++eoi 1\n\n++eos 2\n\nxyz\n\n++read eoi\n"
+
+
+def test_read_twice(adapter):
+    adapter.write("xyz")
+    assert adapter.read() == "++auto 0\n\n++eoi 1\n\n++eos 2\n\nxyz\n\n++read eoi\n"
+    adapter.write("abc")
+    assert adapter.read() == "abc\n\n++read eoi\n"
 
 
 @pytest.mark.parametrize(
@@ -49,8 +61,7 @@ def test_adapter_write(test_input, expected):
          b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc' + b"\n")
     ]
 )
-def test_adapter_write_binary_values(test_input, expected):
-    adapter = make_adapter(timeout=0.2)
+def test_adapter_write_binary_values(test_input, expected, adapter):
     adapter.write_binary_values("OUTP", test_input, datatype='B')
     # Add 10 bytes more, just to check that no extra bytes are present
-    assert(adapter.connection.read(len(expected) + 10) == expected)
+    assert adapter.connection.read(len(expected) + 10) == expected

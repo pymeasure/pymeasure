@@ -23,11 +23,62 @@
 #
 
 
+from unittest import mock
+
 import pytest
 
+from pymeasure.units import ureg
+from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.instrument import DynamicProperty
+from pymeasure.adapters import FakeAdapter
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
+
+
+class GenericInstrument(FakeInstrument):
+    #  Use truncated_range as this easily lets us test for the range boundaries
+    fake_ctrl = Instrument.control(
+        "", "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_setting = Instrument.setting(
+        "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_measurement = Instrument.measurement(
+        "", "docs",
+        values={'X': 1, 'Y': 2, 'Z': 3},
+        map_values=True,
+        dynamic=True,
+    )
+
+
+class ExtendedInstrument(GenericInstrument):
+    # Keep values unchanged, just derive another instrument, e.g. to add more properties
+    pass
+
+
+class StrictExtendedInstrument(ExtendedInstrument):
+    # Use strict instead of truncated range validator
+    fake_ctrl_validator = strict_range
+    fake_setting_validator = strict_range
+
+
+@pytest.fixture()
+def generic():
+    return GenericInstrument()
+
+
+class NewRangeInstrument(GenericInstrument):
+    # Choose different properties' values, like you would for another device model
+    fake_ctrl_values = (10, 20)
+    fake_setting_values = (10, 20)
+    fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
 
 
 def test_fake_instrument():
@@ -38,6 +89,74 @@ def test_fake_instrument():
     assert fake.values("5") == [5]
 
 
+@pytest.mark.parametrize("adapter", (("COM1", 87, "USB")))
+def test_init_visa(adapter):
+    Instrument(adapter, "def", visa_library="@sim")
+    pass  # Test that no error is raised
+
+
+@pytest.mark.xfail()  # I do not know, when this error is raised
+def test_init_visa_fail():
+    with pytest.raises(Exception, match="Invalid adapter"):
+        Instrument("abc", "def", visa_library="@xyz")
+
+
+def test_instrument_in_context():
+    with Instrument("abc", "def", visa_library="@sim") as instr:
+        pass
+    assert instr.isShutdown is True
+
+
+class TestInstrumentCommunication:
+    @pytest.fixture()
+    def instr(self):
+        a = mock.MagicMock(return_value="5")
+        return Instrument(a, "abc")
+
+    def test_write(self, instr):
+        instr.write("abc")
+        assert instr.adapter.method_calls == [mock.call.write('abc')]
+
+    def test_read(self, instr):
+        instr.read()
+        assert instr.adapter.method_calls == [mock.call.read()]
+
+    def test_ask(self, instr):
+        instr.ask("abc")
+        assert instr.adapter.method_calls == [mock.call.ask('abc')]
+
+    def test_values(self, instr):
+        instr.values("abc")
+        assert instr.adapter.method_calls == [mock.call.values('abc')]
+
+    def test_binary_values(self, instr):
+        instr.binary_values("abc", dtype=int)
+        assert instr.adapter.method_calls == [mock.call.binary_values('abc', 0, int)]
+
+
+def test_id():
+    with expected_protocol(
+            Instrument,
+            [("*IDN?", "xyz")],
+            name="test") as instr:
+        assert "xyz" == instr.id
+
+
+def test_id_failed():
+    with pytest.raises(NotImplementedError):
+        Instrument(FakeAdapter(), "abc", includeSCPI=False).id
+
+
+def test_instrument_check_errors():
+    with expected_protocol(
+            Instrument,
+            [("SYST:ERR?", "17,funny stuff"),
+             ("SYST:ERR?", "0")],
+            name="test") as instr:
+        assert instr.check_errors() == [[17, "funny stuff"]]
+
+
+# Testing Instrument.control
 @pytest.mark.parametrize("dynamic", [False, True])
 def test_control_doc(dynamic):
     doc = """ X property """
@@ -50,6 +169,26 @@ def test_control_doc(dynamic):
 
     expected_doc = doc + "(dynamic)" if dynamic else doc
     assert Fake.x.__doc__ == expected_doc
+
+
+def test_control_check_errors_get(generic):
+    generic.fake_ctrl_check_get_errors = True
+
+    def checking():
+        generic.error = True
+    generic.check_errors = checking
+    generic.fake_ctrl
+    assert generic.error is True
+
+
+def test_control_check_errors_set(generic):
+    generic.fake_ctrl_check_set_errors = True
+
+    def checking():
+        generic.error = True
+    generic.check_errors = checking
+    generic.fake_ctrl = 7
+    assert generic.error is True
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -129,6 +268,30 @@ def test_control_dict_str_map(dynamic):
     assert fake.x == 'Y'
     fake.x = 'Z'
     assert fake.read() == '3'
+
+
+def test_value_not_in_map(generic):
+    generic.adapter._buffer = "123"
+    with pytest.raises(KeyError, match="not found in mapped values"):
+        generic.fake_measurement
+
+
+def test_control_invalid_values_get():
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "%d", "",
+            values=b"abasdfe", map_values=True)
+    with pytest.raises(ValueError, match="Values of type"):
+        Fake().x
+
+
+def test_control_invalid_values_set():
+    class Fake(FakeInstrument):
+        x = Instrument.control(
+            "", "%d", "",
+            values=b"abasdfe", map_values=True)
+    with pytest.raises(ValueError, match="Values of type"):
+        Fake().x = 7
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -213,6 +376,42 @@ def test_control_preprocess_reply_adapter(dynamic):
     assert fake.x == 5
 
 
+@pytest.mark.parametrize("cast, expected", ((float, 5.5),
+                                            (ureg.Quantity, ureg.Quantity(5.5)),
+                                            (str, "5.5"),
+                                            (lambda v: int(float(v)), 5)
+                                            ))
+def test_measurement_cast(cast, expected):
+    class Fake(Instrument):
+        x = Instrument.measurement(
+            "x", "doc", cast=cast)
+    with expected_protocol(Fake, [("x", "5.5")], name="test") as instr:
+        assert instr.x == expected
+
+
+def test_measurement_cast_int():
+    class Fake(Instrument):
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, "test", **kwargs)
+        x = Instrument.measurement(
+            "x", "doc", cast=int)
+    with expected_protocol(Fake, [("x", "5")]) as instr:
+        y = instr.x
+        assert y == 5
+        assert type(y) is int
+
+
+def test_measurement_unitful_property():
+    class Fake(Instrument):
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, "test", **kwargs)
+        x = Instrument.measurement(
+            "x", "doc", get_process=lambda v: ureg.Quantity(v, ureg.m))
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:
+        y = instr.x
+        assert y.m_as(ureg.m) == 5.5
+
+
 @pytest.mark.parametrize("dynamic", [False, True])
 def test_measurement_dict_str_map(dynamic):
     class Fake(FakeInstrument):
@@ -230,6 +429,16 @@ def test_measurement_dict_str_map(dynamic):
     assert fake.x == 'Y'
     fake.write('3')
     assert fake.x == 'Z'
+
+
+def test_measurement_set(generic):
+    with pytest.raises(LookupError, match="Instrument property can not be set."):
+        generic.fake_measurement = 7
+
+
+def test_setting_get(generic):
+    with pytest.raises(LookupError, match="Instrument property can not be read."):
+        generic.fake_setting
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -295,44 +504,16 @@ def test_with_statement():
     assert fake.isShutdown is True
 
 
-class GenericInstrument(FakeInstrument):
-    #  Use truncated_range as this easily lets us test for the range boundaries
-    fake_ctrl = Instrument.control(
-        "", "%d", "docs",
-        validator=truncated_range,
-        values=(1, 10),
-        dynamic=True,
-    )
-    fake_setting = Instrument.setting(
-        "%d", "docs",
-        validator=truncated_range,
-        values=(1, 10),
-        dynamic=True,
-    )
-    fake_measurement = Instrument.measurement(
-        "", "docs",
-        values={'X': 1, 'Y': 2, 'Z': 3},
-        map_values=True,
-        dynamic=True,
-    )
+def test_dynamic_property_fget_unset():
+    d = DynamicProperty()
+    with pytest.raises(AttributeError, match="Unreadable attribute"):
+        d.__get__(5)
 
 
-class ExtendedInstrument(GenericInstrument):
-    # Keep values unchanged, just derive another instrument, e.g. to add more properties
-    pass
-
-
-class StrictExtendedInstrument(ExtendedInstrument):
-    # Use strict instead of truncated range validator
-    fake_ctrl_validator = strict_range
-    fake_setting_validator = strict_range
-
-
-class NewRangeInstrument(GenericInstrument):
-    # Choose different properties' values, like you would for another device model
-    fake_ctrl_values = (10, 20)
-    fake_setting_values = (10, 20)
-    fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
+def test_dynamic_property_fset_unset():
+    d = DynamicProperty()
+    with pytest.raises(AttributeError, match="set attribute"):
+        d.__set__(5, 7)
 
 
 def test_dynamic_property_unchanged_by_inheritance():
