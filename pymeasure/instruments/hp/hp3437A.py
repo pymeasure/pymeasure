@@ -178,7 +178,6 @@ class HP3437A(HPLegacyInstrument):
         super().__init__(
             resourceName,
             "Hewlett-Packard HP3437A",
-            status_bitfield=self.status_desc,
             **kwargs,
         )
         log.info("Initialized HP3437A")

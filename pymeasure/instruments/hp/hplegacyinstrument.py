@@ -107,7 +107,7 @@ class HPLegacyInstrument(Instrument):
     """
     status_desc = StatusBitsBase  # To be overriden by subclasses
 
-    def __init__(self, adapter, name, status_bitfield, **kwargs):
+    def __init__(self, adapter, name, **kwargs):
         super().__init__(
             adapter, name,
             includeSCPI=False,

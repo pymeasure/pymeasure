@@ -80,7 +80,6 @@ class HP6632A(HPLegacyInstrument):
         super().__init__(
             resourceName,
             "Hewlett-Packard HP6632A",
-            status_bitfield=self.status_desc,
             **kwargs,
         )
 
