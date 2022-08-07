@@ -70,9 +70,9 @@ class SerialAdapter(Adapter):
     def _read(self, **kwargs):
         """Read the buffer and return the result as a string without the
         read_termination characters, if defined."""
-        # for python>=3.9 this shorter form is possible:
-        # self._read_bytes(-1).decode().removesuffix(self.read_termination)
         read = self._read_bytes(-1, **kwargs).decode()
+        # Python>3.8 this shorter form is possible:
+        # self._read_bytes(-1).decode().removesuffix(self.read_termination)
         if self.read_termination:
             return read.split(self.read_termination)[0]
         else:
@@ -82,11 +82,16 @@ class SerialAdapter(Adapter):
         """ Reads until the buffer is empty and returns the resulting
         bytes response
 
-        :param count: Number of bytes to read. -1 indicates all available.
+        :param count: Number of bytes to read. -1 indicates up to (including)
+        the read_termination or timeout.
         :returns: bytes response of the instrument.
         """
         if count == -1:
-            return b"\n".join(self.connection.readlines(**kwargs))
+            if self.read_termination:
+                return self.connection.read_until(self.read_termination, **kwargs)
+            else:
+                # legacy method: reading until timeout.
+                return b"\n".join(self.connection.readlines(**kwargs))
         else:
             return self.connection.read(count, **kwargs)
 

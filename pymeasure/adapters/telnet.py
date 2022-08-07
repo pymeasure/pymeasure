@@ -74,7 +74,7 @@ class TelnetAdapter(Adapter):
         """
         read = self.connection.read_some(**kwargs).decode() + \
             self.connection.read_very_eager(**kwargs).decode()
-        # python>=3.9 instead: return read.removesuffix(self.read_termination)
+        # Python>3.8 return read.removesuffix(self.read_termination)
         if self.read_termination:
             return read.split(self.read_termination)[0]
         else:
