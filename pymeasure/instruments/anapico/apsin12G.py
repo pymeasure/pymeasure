@@ -62,9 +62,9 @@ class APSIN12G(Instrument):
         values=['ON', 'OFF']
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Anapico APSIN12G Signal Generator",
             **kwargs
         )

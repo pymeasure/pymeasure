@@ -342,9 +342,9 @@ class SR830(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )

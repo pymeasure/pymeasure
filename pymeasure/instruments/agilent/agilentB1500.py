@@ -49,9 +49,9 @@ class AgilentB1500(Instrument):
     measurements.
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Agilent B1500 Semiconductor Parameter Analyzer",
             **kwargs
         )

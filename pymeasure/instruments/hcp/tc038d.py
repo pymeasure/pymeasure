@@ -57,10 +57,10 @@ class TC038D(Instrument):
     functions = {'read': 0x03, 'writeMultiple': 0x10,
                  'writeSingle': 0x06, 'echo': 0x08}
 
-    def __init__(self, resourceName, name="TC038D", address=1, timeout=1000,
+    def __init__(self, adapter, name="TC038D", address=1, timeout=1000,
                  **kwargs):
         """Initialize the device."""
-        super().__init__(resourceName, name, timeout=timeout, **kwargs)
+        super().__init__(adapter, name, timeout=timeout, **kwargs)
         self.address = address
 
     def readRegister(self, address, count=1):

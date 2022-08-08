@@ -75,12 +75,13 @@ class FWBell5080(Instrument):
         get_process=lambda v: v.replace(' ', ':')  # Make output consistent with input
     )
 
-    def __init__(self, port):
-        if not isinstance(port, Adapter):
-            port = SerialAdapter(port, 2400, timeout=0.5)
+    def __init__(self, adapter, **kwargs):
+        if not isinstance(adapter, Adapter):
+            adapter = SerialAdapter(adapter, 2400, timeout=0.5, **kwargs)
         super().__init__(
-            port,
-            "F.W. Bell 5080 Handheld Gaussmeter"
+            adapter,
+            "F.W. Bell 5080 Handheld Gaussmeter",
+            **kwargs
         )
 
     @property
