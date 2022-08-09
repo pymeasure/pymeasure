@@ -149,11 +149,11 @@ class HP3478A(Instrument):
     with the instrument.
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
-            resourceName,
+            adapter,
             "Hewlett-Packard HP3478A",
             includeSCPI=False,
             **kwargs

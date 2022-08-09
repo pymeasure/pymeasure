@@ -559,9 +559,9 @@ class SR860(Instrument):
         values=range(0, 16)
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Stanford Research Systems SR860 Lock-in amplifier",
             **kwargs
         )

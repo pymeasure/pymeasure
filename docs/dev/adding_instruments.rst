@@ -96,9 +96,9 @@ This is a minimal instrument definition:
         """ Represents the imaginary Extreme 5000 instrument.
         """
 
-        def __init__(self, resourceName, **kwargs):
+        def __init__(self, adapter, **kwargs):
             super().__init__(
-                resourceName,
+                adapter,
                 "Extreme 5000",
                 **kwargs
             )
@@ -122,13 +122,13 @@ The :py:class:`~pymeasure.adapters.VISAAdapter` class offers a flexible way of d
 Single interface
 ****************
 
-The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``resourceName`` is a string or integer.
+The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``adapter`` is a string or integer.
 
 .. code-block:: python
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             **kwargs
         )
@@ -138,9 +138,9 @@ This is suitable when the instrument has one type of interface, or any defaults 
 
 .. code-block:: python
 
-    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, baud_rate=2400, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             baud_rate=baud_rate,
             **kwargs
@@ -150,10 +150,10 @@ If you want to set defaults, but they don't need to be prominently exposed for r
 
 .. code-block:: python
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             **kwargs
         )
@@ -169,10 +169,10 @@ These then contain a *dictionary* with the settings specific to the respective i
 
 .. code-block:: python
 
-    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             gpib=dict(enable_repeat_addressing=False,
                       read_termination='\r'),
@@ -196,10 +196,10 @@ If, however, you are unable to use the :py:class:`~pymeasure.adapters.VISAAdapte
 
 .. code-block:: python
 
-    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 0.5)
         kwargs.setdefault('xonxoff', True)
-        adapter = SerialAdapter(resourceName, 
+        adapter = SerialAdapter(adapter, 
                                 baudrate=baud_rate,  # different arg name!
                                 **kwargs)
         super().__init__(
@@ -602,9 +602,9 @@ The real purpose of `preprocess_reply` is, however, for instruments where many/a
             """
         )
 
-        def __init__(self, resourceName, **kwargs):
+        def __init__(self, adapter, **kwargs):
             super().__init__(
-                resourceName,
+                adapter,
                 "Extreme 5000",
                 preprocess_reply=extract_value,
                 **kwargs,
