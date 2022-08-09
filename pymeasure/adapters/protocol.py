@@ -103,7 +103,10 @@ class ProtocolAdapter(Adapter):
         return self._read_bytes(-1).decode("utf-8")
 
     def _read_bytes(self, count, **kwargs):
-        """Read `count` number of bytes."""
+        """Read `count` number of bytes from the buffer.
+
+        :param int count: Number of bytes to read. If -1, return the buffer.
+        """
         if self._read_buffer:
             if count == -1:
                 read = self._read_buffer

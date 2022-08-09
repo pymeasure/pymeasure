@@ -23,6 +23,7 @@
 #
 
 import logging
+from warnings import warn
 
 import serial
 import numpy as np
@@ -38,7 +39,7 @@ class SerialAdapter(Adapter):
     serial communication to instrument
 
     :param port: Serial port
-    :param preprocess_reply: optional callable used to preprocess strings
+    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
     :param write_termination: String added to messages before writing them.
     :param read_termination: String looked for at end of read message and removed.
@@ -57,19 +58,29 @@ class SerialAdapter(Adapter):
         self.read_termination = read_termination
 
     def _write(self, command, **kwargs):
-        """ Writes a command to the instrument appending the write_termination.
+        """Write a string command to the instrument appending `write_termination`.
 
-        :param command: SCPI command string to be sent to the instrument
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
         """
-        self.connection.write((command + self.write_termination).encode(), **kwargs)
+        command += self.write_termination
+        self._write_bytes(command.encode(), **kwargs)
 
     def _write_bytes(self, content, **kwargs):
-        """Write the bytes of `content` to the device."""
+        """Write the bytes `content` to the instrument.
+
+        :param bytes content: The bytes to write to the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
+        """
         self.connection.write(content, **kwargs)
 
     def _read(self, **kwargs):
-        """Read the buffer and return the result as a string without the
-        read_termination characters, if defined."""
+        """Read up to (excluding) `read_termination` or the whole read buffer.
+
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (excluding read_termination).
+        """
         read = self._read_bytes(-1, **kwargs).decode()
         # Python>3.8 this shorter form is possible:
         # self._read_bytes(-1).decode().removesuffix(self.read_termination)
@@ -79,18 +90,17 @@ class SerialAdapter(Adapter):
             return read
 
     def _read_bytes(self, count, **kwargs):
-        """ Reads until the buffer is empty and returns the resulting
-        bytes response
+        """Read a certain number of bytes from the instrument.
 
-        :param count: Number of bytes to read. -1 indicates up to (including)
-        the read_termination or timeout.
-        :returns: bytes response of the instrument.
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
         """
         if count == -1:
             if self.read_termination:
                 return self.connection.read_until(self.read_termination, **kwargs)
             else:
-                # legacy method: reading until timeout.
                 return b"\n".join(self.connection.readlines(**kwargs))
         else:
             return self.connection.read(count, **kwargs)
@@ -98,11 +108,16 @@ class SerialAdapter(Adapter):
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
 
+        .. deprecated:: 0.10
+            Call `Instrument.binary_values` instead.
+
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
+        warn("Deprecated, call `Instrument.binary_values` instead.",
+             FutureWarning)
         self.connection.write(command.encode())
         binary = self.connection.read().decode()
         # header = binary[:header_bytes]
@@ -112,6 +127,9 @@ class SerialAdapter(Adapter):
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
+        .. deprecated:: 0.10
+            Implement the code in the instrument itself.
+
         :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
         :param is_big_endian: boolean indicating endianess.
@@ -119,7 +137,8 @@ class SerialAdapter(Adapter):
         :return: binary string.
         :rtype: bytes
         """
-
+        warn("Deprecated, implement it in the instrument itself.",
+             FutureWarning)
         if header_fmt == "ieee":
             block = to_ieee_block(values, datatype, is_big_endian)
         elif header_fmt == "hp":
@@ -134,12 +153,16 @@ class SerialAdapter(Adapter):
     def write_binary_values(self, command, values, **kwargs):
         """ Write binary data to the instrument, e.g. waveform for signal generators
 
+        .. deprecated:: 0.10
+            Implement the code in the instrument itself.
+
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
         :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
         :returns: number of bytes written
         """
-
+        warn("Deprecated, implement it in the instrument itself.",
+             FutureWarning)
         block = self._format_binary_values(values, **kwargs)
         return self.connection.write(command.encode() + block)
 

@@ -24,6 +24,7 @@
 
 import logging
 from warnings import warn
+from time import sleep
 
 import numpy as np
 from copy import copy
@@ -36,22 +37,26 @@ class Adapter:
 
     This class should only be inherited from.
 
-    :param preprocess_reply: optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed
-        string. This argument is deprecated.
+    :param preprocess_reply: optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated :: 0.10
+            Implement it in the instrument's `read` method instead.
+
+    :param float query_delay: Time in s to wait after writing and before reading.
     :param kwargs: all other keyword arguments are ignored.
     """
 
-    def __init__(self, preprocess_reply=None, **kwargs):
+    def __init__(self, preprocess_reply=None, query_delay=0, **kwargs):
         self.preprocess_reply = preprocess_reply
+        self.query_delay = query_delay
         self.connection = None
         self.log = logging.Logger("Adapter")
         self.log.addHandler(logging.NullHandler())
         if preprocess_reply is not None:
-            warn(
-                "Do not use `Adapter.values`, but `Instrument.values` instead. "
-                "Preprocess_reply is a values parameter.",
-                FutureWarning)
+            warn("Deprecated in Adapter, implement it in the instrument instead.",
+                 FutureWarning)
 
     def __del__(self):
         """Close connection upon garbage collection of the device"""
@@ -66,47 +71,58 @@ class Adapter:
 
     # Directly called methods. DO NOT OVERRIDE IN SUBCLASS!
     def write(self, command, **kwargs):
-        """
-        Write a string command to the instrument.
+        """Write a string command to the instrument appending `write_termination`.
 
-        The write_termination string is appended, if defined.
+        Do not override in a subclass!
 
-        :param command: Command string to be sent to the instrument.
+        :param str command: Command string to be sent to the instrument
+            (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
         self.log.debug(("WRITE:", command))
         self._write(command, **kwargs)
 
     def write_bytes(self, content, **kwargs):
-        """
-        Write the bytes `content` to the instrument.
+        """Write the bytes `content` to the instrument.
 
-        :param content: The bytes to write to the instrument.
+        Do not override in a subclass!
+
+        :param bytes content: The bytes to write to the instrument.
         :param kwargs: Keyword arguments for the connection itself.
         """
         self.log.debug(("WRITE:", content))
         self._write_bytes(content, **kwargs)
 
-    def read(self, **kwargs):
-        """
-        Read until the buffer is empty and return the resulting string.
+    def wait_till_read(self, query_delay=0):
+        """Wait after writing and before reading.
 
-        The read_termination string is removed from the response.
+        :param float delay: Time in s to wait additionally to `Adapter.delay`.
+        """
+        query_delay += self.query_delay
+        if query_delay:
+            sleep(query_delay)
+
+    def read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer.
+
+        Do not override in a subclass!
 
         :param kwargs: Keyword arguments for the connection itself.
-
-        :returns: String ASCII response of the instrument.
+        :returns str: ASCII response of the instrument (excluding read_termination).
         """
         read = self._read(**kwargs)
         self.log.debug(("READ:", read))
         return read
 
     def read_bytes(self, count=-1, **kwargs):
-        """
-        Read a certain number of bytes from the instrument.
+        """Read a certain number of bytes from the instrument.
 
-        :param count: Number of bytes to read. For some adapters '-1' means all.
+        Do not override in a subclass!
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
         :param kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
         """
         read = self._read_bytes(count, **kwargs)
         self.log.debug(("READ:", read))
@@ -115,37 +131,43 @@ class Adapter:
     # Methods to implement in the subclass.
 
     def _write(self, command, **kwargs):
-        """Write to the instrument. Implement in subclass."""
-        raise NotImplementedError("Adapter class has not implemented writing")
+        """Write string to the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented writing.")
 
     def _write_bytes(self, content, **kwargs):
         """Write bytes to the instrument. Implement in subclass."""
-        raise NotImplementedError("Adapter class has not implemented writing")
+        raise NotImplementedError("Adapter class has not implemented writing bytes.")
 
     def _read(self, **kwargs):
-        """Read from the instrument. Implement in subclass."""
-        raise NotImplementedError("Adapter class has not implemented reading")
+        """Read string from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading.")
 
     def _read_bytes(self, count, **kwargs):
-        """Read from the instrument. Implement in subclass."""
-        raise NotImplementedError("Adapter class has not implemented reading")
+        """Read bytes from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading bytes.")
 
     # Deprecated methods.
     def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting
-        ASCII response
+        """ Write the command to the instrument and returns the resulting
+        ASCII response.
+
+        .. deprecated:: 0.10
+           Call `Instrument.ask` instead.
 
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+        warn("Deprecated, call `Instrument.ask` instead.",
              FutureWarning)
         self.write(command)
         return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
-        """ Writes a command to the instrument and returns a list of formatted
-        values from the result
+        """ Write a command to the instrument and returns a list of formatted
+        values from the result.
+
+        .. deprecated:: 0.10
+            Call `Instrument.values` instead.
 
         :param command: SCPI command to be sent to the instrument
         :param separator: A separator character to split the string into a list
@@ -156,7 +178,7 @@ class Adapter:
             preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        warn("Do not call `Adapter.values`, but `Instrument.values` instead.",
+        warn("Deprecated, call `Instrument.values` instead.",
              FutureWarning)
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
@@ -177,13 +199,17 @@ class Adapter:
         return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data
+        """ Return a numpy array from a query for binary data
+
+        .. deprecated:: 0.10
+            Call `Instrument.binary_values` instead.
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
+        warn("Deprecated, use `Instrument.binary_values` instead.")
         raise NotImplementedError("Adapter (sub)class has not implemented the "
                                   "binary_values method")
 
@@ -208,7 +234,7 @@ class FakeAdapter(Adapter):
     _buffer = ""
 
     def _read(self):
-        """ Returns the last commands given after the
+        """ Return the last commands given after the
         last read call.
         """
         result = copy(self._buffer)
@@ -217,7 +243,7 @@ class FakeAdapter(Adapter):
         return result
 
     def _read_bytes(self, count):
-        """ Returns the last commands given after the
+        """ Return the last commands given after the
         last read call.
         """
         result = copy(self._buffer)
@@ -226,13 +252,13 @@ class FakeAdapter(Adapter):
         return result[:count].encode()
 
     def _write(self, command):
-        """ Writes the command to a buffer, so that it can
+        """ Write the command to a buffer, so that it can
         be read back.
         """
         self._buffer += command
 
     def _write_bytes(self, command):
-        """ Writes the command to a buffer, so that it can
+        """ Write the command to a buffer, so that it can
         be read back.
         """
         self._buffer += command.decode()

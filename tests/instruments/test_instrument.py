@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-
+import time
 from unittest import mock
 
 import pytest
@@ -186,9 +186,12 @@ def test_values(value, kwargs, result):
     assert instr.values(value, **kwargs) == result
 
 
-def test_global_preprocess():
-    instr = Instrument(FakeAdapter(), "test", preprocess_reply=lambda v: v.split()[1])
-    assert instr.values("nothing 123.4 again and again") == [123.4]
+def test_adapter_wait():
+    instr = Instrument(FakeAdapter(), "test")
+    start = time.perf_counter()
+    instr.ask("anything", delay=0.05)
+    stop = time.perf_counter()
+    assert start + 0.05 < stop and stop < start + 0.1
 
 
 # Testing Instrument.control
@@ -387,29 +390,6 @@ def test_control_preprocess_reply_property(dynamic):
     assert fake.x == 5
     fake.x = 5
     assert type(fake.x) == int
-
-
-@pytest.mark.parametrize("dynamic", [False, True])
-def test_control_preprocess_reply_global(dynamic):
-    # test setting preprocess_reply at Instrument-level
-    class Fake(FakeInstrument):
-        def __init__(self):
-            super().__init__()
-            self.preprocess_reply = lambda v: v.replace('JUNK', '')
-
-        x = Instrument.control(
-            "", "JUNK%d", "",
-            dynamic=dynamic,
-            cast=int
-        )
-
-    fake = Fake()
-    fake.x = 5
-    assert fake.read() == 'JUNK5'
-    # notice that read returns the full reply since preprocess_reply is only
-    # called inside Instrument.values()
-    fake.x = 5
-    assert fake.x == 5
 
 
 @pytest.mark.parametrize("cast, expected", ((float, 5.5),

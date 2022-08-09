@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import time
 from unittest import mock
 
 import pytest
@@ -60,6 +61,32 @@ def test_write(fake):
 def test_write_bytes(fake):
     fake.write_bytes(b"abc")
     assert fake._buffer == "abc"
+
+
+def test_wait_global(fake):
+    "With a global delay."
+    start = time.perf_counter()
+    fake.query_delay = 0.05
+    fake.wait_till_read()
+    stop = time.perf_counter()
+    assert start + 0.05 < stop and stop < start + 0.07
+
+
+def test_wait_parameter(fake):
+    "With a parameter delay."
+    start = time.perf_counter()
+    fake.wait_till_read(0.05)
+    stop = time.perf_counter()
+    assert start + 0.05 < stop and stop < start + 0.07
+
+
+def test_wait_sum(fake):
+    "With the sum of global and parameter delay."
+    start = time.perf_counter()
+    fake.query_delay = 0.05
+    fake.wait_till_read(0.05)
+    stop = time.perf_counter()
+    assert start + 0.1 < stop and stop < start + 0.12
 
 
 def test_read(fake):

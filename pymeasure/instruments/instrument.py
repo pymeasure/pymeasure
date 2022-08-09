@@ -148,7 +148,6 @@ class Instrument:
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True,
-                 preprocess_reply=None,
                  **kwargs):
         if isinstance(adapter, (int, str)):
             try:
@@ -160,7 +159,6 @@ class Instrument:
         self.name = name
         self.SCPI = includeSCPI
         self.adapter = adapter
-        self.preprocess_reply = preprocess_reply
 
         self.isShutdown = False
         self._special_names = self._setup_special_names()
@@ -279,7 +277,7 @@ class Instrument:
         :param delay: Delay between writing and reading in seconds.
         """
         self.write(command)
-        time.sleep(delay)
+        self.adapter.wait_till_read(delay)
         return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
@@ -291,15 +289,12 @@ class Instrument:
         :param cast: A type to cast the result
         :param preprocess_reply: optional callable used to preprocess values
             received from the instrument. The callable returns the processed
-            string. If not specified, the Adapter default is used if available,
-            otherwise no preprocessing is done.
+            string.
         :returns: A list of the desired type, or strings where the casting fails
         """
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
-        elif callable(self.preprocess_reply):
-            results = self.preprocess_reply(results)
         results = results.split(separator)
         for i, result in enumerate(results):
             try:

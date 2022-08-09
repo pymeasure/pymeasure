@@ -37,7 +37,7 @@ class TelnetAdapter(Adapter):
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
         method
-    :param preprocess_reply: optional callable used to preprocess strings
+    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
         this is only 'timeout'
@@ -60,9 +60,11 @@ class TelnetAdapter(Adapter):
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
     def _write(self, command, **kwargs):
-        """ Writes a command to the instrument
+        """Write a string command to the instrument appending `write_termination`.
 
-        :param command: command string to be sent to the instrument
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write((command + self.write_termination).encode(), **kwargs)
 
@@ -70,7 +72,8 @@ class TelnetAdapter(Adapter):
         """ Read something even with blocking the I/O. After something is
         received check again to obtain a full reply.
 
-        :returns: String ASCII response of the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (excluding read_termination).
         """
         read = self.connection.read_some(**kwargs).decode() + \
             self.connection.read_very_eager(**kwargs).decode()
@@ -83,6 +86,9 @@ class TelnetAdapter(Adapter):
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
         response
+
+        .. deprecated:: 0.10
+           Call `Instrument.ask` instead.
 
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
