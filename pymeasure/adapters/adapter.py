@@ -45,14 +45,18 @@ class Adapter:
             Implement it in the instrument's `read` method instead.
 
     :param float query_delay: Time in s to wait after writing and before reading.
+    :param log: Parent logger of the 'Adapter' logger.
     :param kwargs: all other keyword arguments are ignored.
     """
 
-    def __init__(self, preprocess_reply=None, query_delay=0, **kwargs):
+    def __init__(self, preprocess_reply=None, query_delay=0, log=None, **kwargs):
         self.preprocess_reply = preprocess_reply
         self.query_delay = query_delay
         self.connection = None
-        self.log = logging.Logger("Adapter")
+        if log is None:
+            self.log = logging.getLogger("Adapter")
+        else:
+            self.log = log.getChild("Adapter")
         self.log.addHandler(logging.NullHandler())
         if preprocess_reply is not None:
             warn("Deprecated in Adapter, implement it in the instrument instead.",
@@ -64,10 +68,8 @@ class Adapter:
 
     def close(self):
         """Close the connection."""
-        try:
+        if self.connection is not None:
             self.connection.close()
-        except AttributeError:
-            pass
 
     # Directly called methods. DO NOT OVERRIDE IN SUBCLASS!
     def write(self, command, **kwargs):
@@ -79,7 +81,7 @@ class Adapter:
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
-        self.log.debug(("WRITE:", command))
+        self.log.debug("WRITE:%s", command)
         self._write(command, **kwargs)
 
     def write_bytes(self, content, **kwargs):
@@ -90,7 +92,7 @@ class Adapter:
         :param bytes content: The bytes to write to the instrument.
         :param kwargs: Keyword arguments for the connection itself.
         """
-        self.log.debug(("WRITE:", content))
+        self.log.debug("WRITE:%s", content)
         self._write_bytes(content, **kwargs)
 
     def wait_till_read(self, query_delay=0):
@@ -111,7 +113,7 @@ class Adapter:
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
         read = self._read(**kwargs)
-        self.log.debug(("READ:", read))
+        self.log.debug("READ:%s", read)
         return read
 
     def read_bytes(self, count=-1, **kwargs):
@@ -125,7 +127,7 @@ class Adapter:
         :returns bytes: Bytes response of the instrument (including termination).
         """
         read = self._read_bytes(count, **kwargs)
-        self.log.debug(("READ:", read))
+        self.log.debug("READ:%s", read)
         return read
 
     # Methods to implement in the subclass.
@@ -209,7 +211,7 @@ class Adapter:
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        warn("Deprecated, use `Instrument.binary_values` instead.")
+        warn("Deprecated, use `Instrument.binary_values` instead.", FutureWarning)
         raise NotImplementedError("Adapter (sub)class has not implemented the "
                                   "binary_values method")
 

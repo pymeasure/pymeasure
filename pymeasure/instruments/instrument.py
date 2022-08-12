@@ -23,7 +23,6 @@
 #
 
 import logging
-import time
 
 import numpy as np
 from pymeasure.adapters.visa import VISAAdapter

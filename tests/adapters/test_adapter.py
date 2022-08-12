@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import logging
 import time
 from unittest import mock
 
@@ -41,10 +42,21 @@ def fake():
 
 
 def test_init():
+    adapter = Adapter(query_delay=123)
+    assert adapter.connection is None
+    assert adapter.query_delay == 123
+    assert adapter.log == logging.getLogger("Adapter")
+
+
+def test_init_log():
+    adapter = Adapter(log=logging.getLogger("parent"))
+    assert adapter.log == logging.getLogger("parent.Adapter")
+
+
+def test_deprecated_preprocess_reply():
     with pytest.warns(FutureWarning):
         adapter = Adapter(preprocess_reply=lambda v: v)
     assert adapter.preprocess_reply is not None
-    assert adapter.connection is None
 
 
 def test_del(adapter):
@@ -108,7 +120,7 @@ def test_not_implemented_methods(adapter, method, args):
         getattr(adapter, method)(*args)
 
 
-def test_ask_warning():
+def test_ask_deprecation_warning():
     a = FakeAdapter()
     with pytest.warns(FutureWarning):
         assert a.ask("abc") == "abc"
@@ -139,3 +151,10 @@ def test_adapter_preprocess_reply():
         assert a.values("15", preprocess_reply=lambda v: v) == [15]
         a = FakeAdapter()
         assert a.values("V 3.4", preprocess_reply=lambda v: v.split()[1]) == [3.4]
+
+
+def test_binary_values_deprecation_warning():
+    a = FakeAdapter()
+    with pytest.warns(FutureWarning):
+        with pytest.raises(NotImplementedError):
+            a.binary_values("abc")
