@@ -81,6 +81,7 @@ from pymeasure.instruments.validators import truncated_range
 #    OVERHEAT = 1                        # bit 0  – overheat
 #    OK = 0                              # ok state
 
+
 class ECO560(ATSBase):
     """Represent the TemptronicECO560 instruments.
     """
@@ -104,8 +105,8 @@ class ECO560(ATSBase):
     def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 3000)
         super().__init__(
-            adapter, 
-            name="Temptronic ECO-560 Thermostream", 
+            adapter,
+            name="Temptronic ECO-560 Thermostream",
             tcpip={'write_termination': '\n',
                    'read_termination': '\n'},
             **kwargs

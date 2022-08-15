@@ -790,29 +790,35 @@ class ATSBase(Instrument):
     def cycling_stopped(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        return (self.temperature_condition_status_code & (0b1 << 5)) == TemperatureStatusCode.CYCLING_STOPPED
+        status = (self.temperature_condition_status_code & (0b1 << 5))
+        return status == TemperatureStatusCode.CYCLING_STOPPED
 
     def end_of_all_cycles(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        return (self.temperature_condition_status_code & (0b1 << 4)) == TemperatureStatusCode.END_OF_ALL_CYCLES
+        status = (self.temperature_condition_status_code & (0b1 << 4))
+        return status == TemperatureStatusCode.END_OF_ALL_CYCLES
 
     def end_of_one_cycle(self):
         """:returns: ``True`` if TS is at end of one cycle.
         """
-        return (self.temperature_condition_status_code & (0b1 << 3)) == TemperatureStatusCode.END_OF_ONE_CYCLE
+        status = (self.temperature_condition_status_code & (0b1 << 3))
+        return status == TemperatureStatusCode.END_OF_ONE_CYCLE
 
     def end_of_test(self):
         """:returns: ``True`` if TS is at end of test.
         """
-        return (self.temperature_condition_status_code & (0b1 << 2)) == TemperatureStatusCode.END_OF_TEST
+        status = (self.temperature_condition_status_code & (0b1 << 2))
+        return status == TemperatureStatusCode.END_OF_TEST
 
     def not_at_temperature(self):
         """:returns: ``True`` if not at temperature.
         """
-        return (self.temperature_condition_status_code & (0b1 << 1)) == TemperatureStatusCode.NOT_AT_TEMPERATURE
+        status = (self.temperature_condition_status_code & (0b1 << 1))
+        return status == TemperatureStatusCode.NOT_AT_TEMPERATURE
 
     def at_temperature(self):
         """:returns: ``True`` if at temperature.
         """
-        return (self.temperature_condition_status_code & 0b1) == TemperatureStatusCode.AT_TEMPERATURE
+        status = (self.temperature_condition_status_code & (0b1 << 0))
+        return status == TemperatureStatusCode.AT_TEMPERATURE
