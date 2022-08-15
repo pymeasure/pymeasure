@@ -99,7 +99,7 @@ class ECO560(ATSBase):
     )
 
     copy_active_setup_file = None
-    ## Not Implemented in ECO-560
+    # Not Implemented in ECO-560
 
     def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 3000)
