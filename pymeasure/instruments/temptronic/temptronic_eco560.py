@@ -34,8 +34,8 @@ September, 2018
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
 from pymeasure.instruments.instrument import Instrument
 from pymeasure.instruments.validators import truncated_range
-#from enum import IntFlag
 
+#
 #class ErrorCode(IntFlag):
 #    """Error code enums based on ``IntFlag``.
 #
@@ -80,6 +80,7 @@ from pymeasure.instruments.validators import truncated_range
 #    AIR_OPEN_LOOP = 2                   # bit 1  – air open loop
 #    OVERHEAT = 1                        # bit 0  – overheat
 #    OK = 0                              # ok state
+#
 
 
 class ECO560(ATSBase):
