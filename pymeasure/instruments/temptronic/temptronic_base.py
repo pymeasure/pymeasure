@@ -326,7 +326,7 @@ class ATSBase(Instrument):
         """,
         validator=truncated_range,
         values=[0, 255],
-        get_process=lambda v: TemperatureStatusCode(v),
+        get_process=lambda v: TemperatureStatusCode(int(v)),
     )
 
     set_point_number = Instrument.control(
@@ -448,7 +448,7 @@ class ATSBase(Instrument):
         """,
         validator=truncated_range,
         values=[0, int(2**16-1)],
-        get_process=lambda v: ErrorCode(v),
+        get_process=lambda v: ErrorCode(int(v)),
     )
 
     nozzle_air_flow_rate = Instrument.measurement(
@@ -790,29 +790,29 @@ class ATSBase(Instrument):
     def cycling_stopped(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.CYCLING_STOPPED
+        return (self.temperature_condition_status_code & (0b1 << 5)) == TemperatureStatusCode.CYCLING_STOPPED
 
     def end_of_all_cycles(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.END_OF_ALL_CYCLES
+        return (self.temperature_condition_status_code & (0b1 << 4)) == TemperatureStatusCode.END_OF_ALL_CYCLES
 
     def end_of_one_cycle(self):
         """:returns: ``True`` if TS is at end of one cycle.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.END_OF_ONE_CYCLE
+        return (self.temperature_condition_status_code & (0b1 << 3)) == TemperatureStatusCode.END_OF_ONE_CYCLE
 
     def end_of_test(self):
         """:returns: ``True`` if TS is at end of test.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.END_OF_TEST
+        return (self.temperature_condition_status_code & (0b1 << 2)) == TemperatureStatusCode.END_OF_TEST
 
     def not_at_temperature(self):
         """:returns: ``True`` if not at temperature.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.NOT_AT_TEMPERATURE
+        return (self.temperature_condition_status_code & (0b1 << 1)) == TemperatureStatusCode.NOT_AT_TEMPERATURE
 
     def at_temperature(self):
         """:returns: ``True`` if at temperature.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.AT_TEMPERATURE
+        return (self.temperature_condition_status_code & 0b1) == TemperatureStatusCode.AT_TEMPERATURE
