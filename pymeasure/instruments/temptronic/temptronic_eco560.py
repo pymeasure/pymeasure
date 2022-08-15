@@ -36,50 +36,22 @@ from pymeasure.instruments.instrument import Instrument
 from pymeasure.instruments.validators import truncated_range
 
 #
-#class ErrorCode(IntFlag):
-#    """Error code enums based on ``IntFlag``.
-#
-#    Used in conjunction with :attr:`~.error_code`.
-#
-#        ======  ======
-#        Value   Enum
-#        ======  ======
-#        16384   NO_DUT_SENSOR_SELECTED
-#        8192    IMPROPER_SOFTWARE_VERSION
-#        4096    BVRAM_FAULT
-#        2048    NVRAM_FAULT
-#        1024    PURGE_HEAT_FAILURE
-#        512     FLOW_SENSOR_HARDWARE_ERROR
-#        256     DUT_OPEN_LOOP
-#        128     INTERNAL_ERROR
-#        64      OPEN_PURGE_TEMPERATURE_SENSOR
-#        32      NO_PURGE_FLOW
-#        16      LOW_INPUT_AIR_PRESSURE
-#        8       LOW_FLOW
-#        4       SETPOINT_OUT_OF_RANGE
-#        2       AIR_OPEN_LOOP
-#        1       OVERHEAT
-#        0       OK
-#        ======  ======
-#
-#    """
-#                                        # bit 15 – reserved
-#    NO_DUT_SENSOR_SELECTED = 16384      # bit 14 – no DUT sensor selected
-#    IMPROPER_SOFTWARE_VERSION = 8192    # bit 13 – reserved
-#    BVRAM_FAULT = 4096                  # bit 12 – BVRAM fault
-#    NVRAM_FAULT = 2048                  # bit 11 – NVRAM fault
-#    PURGE_HEAT_FAILURE = 1024           # bit 10 – purge heat failure
-#    FLOW_SENSOR_HARDWARE_ERROR = 512    # bit 9  – flow sensor hardware error
-#    DUT_OPEN_LOOP = 256                 # bit 8  – dut open loop
-#    INTERNAL_ERROR = 128                # bit 7  – internal error
-#    OPEN_PURGE_TEMPERATURE_SENSOR = 64  # bit 6  – open purge temperature sensor
-#    NO_PURGE_FLOW = 32                  # bit 5  – no purge flow
-#    LOW_INPUT_AIR_PRESSURE = 16         # bit 4  – low input air pressure
-#    LOW_FLOW = 8                        # bit 3  – low flow
-#    SETPOINT_OUT_OF_RANGE = 4           # bit 2  – setpoint out of range
-#    AIR_OPEN_LOOP = 2                   # bit 1  – air open loop
-#    OVERHEAT = 1                        # bit 0  – overheat
-#    OK = 0                              # ok state
+# NO_DUT_SENSOR_SELECTED = 16384      # bit 14 – no DUT sensor selected
+# IMPROPER_SOFTWARE_VERSION = 8192    # bit 13 – reserved
+# BVRAM_FAULT = 4096                  # bit 12 – BVRAM fault
+# NVRAM_FAULT = 2048                  # bit 11 – NVRAM fault
+# PURGE_HEAT_FAILURE = 1024           # bit 10 – purge heat failure
+# FLOW_SENSOR_HARDWARE_ERROR = 512    # bit 9  – flow sensor hardware error
+# DUT_OPEN_LOOP = 256                 # bit 8  – dut open loop
+# INTERNAL_ERROR = 128                # bit 7  – internal error
+# OPEN_PURGE_TEMPERATURE_SENSOR = 64  # bit 6  – open purge temperature sensor
+# NO_PURGE_FLOW = 32                  # bit 5  – no purge flow
+# LOW_INPUT_AIR_PRESSURE = 16         # bit 4  – low input air pressure
+# LOW_FLOW = 8                        # bit 3  – low flow
+# SETPOINT_OUT_OF_RANGE = 4           # bit 2  – setpoint out of range
+# AIR_OPEN_LOOP = 2                   # bit 1  – air open loop
+# OVERHEAT = 1                        # bit 0  – overheat
+# OK = 0                              # ok state
 #
 
 
