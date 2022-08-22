@@ -790,35 +790,29 @@ class ATSBase(Instrument):
     def cycling_stopped(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        status = (self.temperature_condition_status_code & (0b1 << 5))
-        return status == TemperatureStatusCode.CYCLING_STOPPED
+        return TemperatureStatusCode.CYCLING_STOPPED in self.temperature_condition_status_code
 
     def end_of_all_cycles(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        status = (self.temperature_condition_status_code & (0b1 << 4))
-        return status == TemperatureStatusCode.END_OF_ALL_CYCLES
+        return TemperatureStatusCode.END_OF_ALL_CYCLES in self.temperature_condition_status_code
 
     def end_of_one_cycle(self):
         """:returns: ``True`` if TS is at end of one cycle.
         """
-        status = (self.temperature_condition_status_code & (0b1 << 3))
-        return status == TemperatureStatusCode.END_OF_ONE_CYCLE
+        return TemperatureStatusCode.END_OF_ONE_CYCLE in self.temperature_condition_status_code
 
     def end_of_test(self):
         """:returns: ``True`` if TS is at end of test.
         """
-        status = (self.temperature_condition_status_code & (0b1 << 2))
-        return status == TemperatureStatusCode.END_OF_TEST
+        return TemperatureStatusCode.END_OF_TEST in self.temperature_condition_status_code
 
     def not_at_temperature(self):
         """:returns: ``True`` if not at temperature.
         """
-        status = (self.temperature_condition_status_code & (0b1 << 1))
-        return status == TemperatureStatusCode.NOT_AT_TEMPERATURE
+        return TemperatureStatusCode.NOT_AT_TEMPERATURE in self.temperature_condition_status_code
 
     def at_temperature(self):
         """:returns: ``True`` if at temperature.
         """
-        status = (self.temperature_condition_status_code & (0b1 << 0))
-        return status == TemperatureStatusCode.AT_TEMPERATURE
+        return TemperatureStatusCode.AT_TEMPERATURE in self.temperature_condition_status_code
