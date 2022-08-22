@@ -552,7 +552,8 @@ class ATSBase(Instrument):
         values={'manual': 5,
                 'program': 6,
                 },
-        map_values=True
+        map_values=True,
+        dynamic=True
     )
 
     def __init__(self, adapter, **kwargs):
