@@ -32,8 +32,6 @@ September, 2018
 """
 
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
-from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import truncated_range
 
 #
 # NO_DUT_SENSOR_SELECTED = 16384      # bit 14 – no DUT sensor selected
@@ -59,18 +57,7 @@ class ECO560(ATSBase):
     """Represent the TemptronicECO560 instruments.
     """
 
-    temperature_limit_air_low = Instrument.control(
-        "LLIM?", "LLIM %g",
-        """Control lower air temperature limit.
-
-        :type: float
-
-        Valid range between -150 to 25 (°C). Setpoints below current value cause
-        “out of range” error in TS.
-        """,
-        validator=truncated_range,
-        values=[-150, 25]
-    )
+    temperature_limit_air_low_values = [-150, 25]
 
     copy_active_setup_file = None
     # Not Implemented in ECO-560

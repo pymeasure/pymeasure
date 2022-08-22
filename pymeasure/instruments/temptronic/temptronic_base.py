@@ -233,7 +233,8 @@ class ATSBase(Instrument):
         “out of range” error in TS.
         """,
         validator=truncated_range,
-        values=[-99, 25]
+        values=[-99, 25],
+        dynamic=True
     )
 
     temperature_limit_air_high = Instrument.control(
