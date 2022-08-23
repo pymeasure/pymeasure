@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-from datetime import datetime
 from enum import Enum, IntFlag
 from queue import Queue
 
@@ -76,9 +75,9 @@ class MSRFlag(IntFlag):
 class PM6669(Instrument):
     """Represents the Philips PM 6669 instrument."""
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Philips PM 6669",
             includeSCPI=False,
             **kwargs
@@ -137,6 +136,7 @@ class PM6669(Instrument):
         """ Resets the instruments to default settings
         """
         self.write("DCL")
+
 
 PM6669.id = Instrument.measurement(
     "ID?", """ Reads the instrument identification """
