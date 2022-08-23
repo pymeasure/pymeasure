@@ -129,8 +129,6 @@ class PM6669(Instrument):
             reply = reply.strip('\x00')
             for line in reply.splitlines():
                 if line[:3] in self.KEYWORDS:
-                    self.backlog.put([datetime.now(), line])
-                elif line != '':
                     result = line
         return result
 
