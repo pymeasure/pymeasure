@@ -107,7 +107,7 @@ class HPLegacyInstrument(Instrument):
     """
     status_desc = StatusBitsBase  # To be overriden by subclasses
 
-    def __init__(self, adapter, name, **kwargs):
+    def __init__(self, adapter, name="HP legacy instrument", **kwargs):
         super().__init__(
             adapter, name,
             includeSCPI=False,
