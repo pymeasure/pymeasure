@@ -85,7 +85,7 @@ class ECO560(ATSBase):
 
     temperature_limit_air_low_values = [-150, 25]
 
-    error_code_get_process = lambda v: ECO560ErrorCode(int(v))
+    error_code_get_process = lambda v: ECO560ErrorCode(int(v))  # noqa: E731
 
     copy_active_setup_file = None
     # Not Implemented in ECO-560
