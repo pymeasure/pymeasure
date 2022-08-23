@@ -133,6 +133,10 @@ class PM6669(Instrument):
                     result = line
         return result
 
+    def reset_to_defaults(self):
+        """ Resets the instruments to default settings
+        """
+        self.write("DCL")
 
 PM6669.id = Instrument.measurement(
     "ID?", """ Reads the instrument identification """
@@ -194,8 +198,4 @@ PM6669.SRQMask = Instrument.control(
 
 PM6669.meac = Instrument.measurement(
     "MEAC?", """ Reads the measurement settings from the device """
-)
-
-PM6669.defaults = Instrument.measurement(
-    "DCL", """ Reset to instrument defaults """
 )
