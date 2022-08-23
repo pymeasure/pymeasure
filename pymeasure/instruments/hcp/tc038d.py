@@ -57,9 +57,10 @@ class TC038D(Instrument):
     functions = {'read': 0x03, 'writeMultiple': 0x10,
                  'writeSingle': 0x06, 'echo': 0x08}
 
-    def __init__(self, resourceName, address=1, timeout=1000):
+    def __init__(self, adapter, name="TC038D", address=1, timeout=1000,
+                 **kwargs):
         """Initialize the device."""
-        super().__init__(resourceName, "TC038D", timeout=timeout)
+        super().__init__(adapter, name, timeout=timeout, **kwargs)
         self.address = address
 
     def readRegister(self, address, count=1):
@@ -71,22 +72,22 @@ class TC038D(Instrument):
         data += [address >> 8, address & 0xFF]  # 2B address
         data += [count >> 8, count & 0xFF]  # 2B number of elements
         data += CRC16(data)
-        self.adapter.connection.write_raw(bytes(data))
+        self.adapter.write_bytes(bytes(data))
         # Slave address, function, length
-        got = self.adapter.connection.read_bytes(3)
+        got = self.adapter.read_bytes(3)
         if got[1] == self.functions['read']:
             length = got[2]
             # data length, 2 Byte CRC
-            read = self.adapter.connection.read_bytes(length + 2)
+            read = self.adapter.read_bytes(length + 2)
             if read[-2:] != bytes(CRC16(got + read[:-2])):
                 raise ConnectionError("Response CRC does not match.")
             return read[:-2]
         else:  # an error occurred
-            end = self.adapter.connection.read_bytes(2)  # empty the buffer
+            end = self.adapter.read_bytes(2)  # empty the buffer
             if got[2] == 0x02:
-                raise ValueError("The read start address is incorrect.")
+                raise ValueError(f"The read start address {address} is invalid.")
             if got[2] == 0x03:
-                raise ValueError("The number of elements exceeds the allowed range")
+                raise ValueError(f"The number of elements {count} exceeds the allowed range.")
             raise ConnectionError(f"Unknown read error. Received: {got} {end}")
 
     def writeMultiple(self, address, values):
@@ -107,19 +108,19 @@ class TC038D(Instrument):
                 for i in range(self.byteMode - 1, -1, -1):
                     data.append(element >> i * 8 & 0xFF)
         else:
-            raise ValueError(("Values has to be an integer or an iterable of "
-                              f"integers. values: {values}"))
+            raise TypeError(("Values has to be an integer or an iterable of "
+                             f"integers. values: {values}"))
         data += CRC16(data)
-        self.adapter.connection.write_raw(bytes(data))
-        got = self.adapter.connection.read_bytes(2)
+        self.adapter.write_bytes(bytes(data))
+        got = self.adapter.read_bytes(2)
         # slave address, function
         if got[1] == self.functions['writeMultiple']:
             # start address, number elements, CRC; each 2 Bytes long
-            got += self.adapter.connection.read_bytes(2 + 2 + 2)
+            got += self.adapter.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
         else:
-            end = self.adapter.connection.read_bytes(3)  # error code and CRC
+            end = self.adapter.read_bytes(3)  # error code and CRC
             errors = {0x02: "Wrong start address",
                       0x03: "Variable data error",
                       0x04: "Operation error"}

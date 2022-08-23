@@ -57,11 +57,12 @@ class Danfysik8500(Instrument):
         "PRINT", """ Reads the idenfitication information. """
     )
 
-    def __init__(self, port):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            DanfysikAdapter(port),
+            DanfysikAdapter(adapter),
             "Danfysik 8500 Current Supply",
-            includeSCPI=False
+            includeSCPI=False,
+            **kwargs
         )
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode

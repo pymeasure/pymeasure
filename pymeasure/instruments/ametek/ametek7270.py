@@ -175,9 +175,9 @@ class Ametek7270(Instrument):
                                 """ Reads the instrument identification """
                                 )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Ametek DSP 7270",
             **kwargs
         )

@@ -123,6 +123,10 @@ class VISAAdapter(Adapter):
         """
         return self.connection.read()
 
+    def write_bytes(self, data):
+        """Write `data` as bytes object to the instrument."""
+        self.connection.write_raw(data)
+
     def read_bytes(self, size):
         """ Reads specified number of bytes from the buffer and returns
         the resulting ASCII response
