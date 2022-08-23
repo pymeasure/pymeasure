@@ -80,6 +80,7 @@ class PM6669(Instrument):
         super().__init__(
             resourceName,
             "Philips PM 6669",
+            includeSCPI=False,
             **kwargs
         )
         self.write("EOI ON")
