@@ -43,8 +43,9 @@ class RS_SMIQ0xB(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ):
     # 3.5.14.5 SOURce:DM (Digital Modulation) Subsystem ([:SOURce]:DM)
     ####################################################################
     CUSTOM_MODULATION_DATA = {
-        'Pattern0011' : None, # Not supported
         'Pattern0101' : "PATT;PATT ALT",
+        'Pattern0000' : "PATT;PATT ZERO",
+        'Pattern1111' : "PATT;PATT ONE",
         'PatternPN9' :  "PRBS;PRBS 9",
         'DATA' : "DLIST",
     }

@@ -46,7 +46,9 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
         'DATA' :        "PRAM",
         'PatternPN9' :  "PN9",
         'Pattern0011' : "FIX4;DATA:FIX4 #B0011",
-        'Pattern01' :   "FIX4;DATA:FIX4 #B0101",
+        'Pattern0101' : "FIX4;DATA:FIX4 #B0101",
+        'Pattern1111' : "FIX4;DATA:FIX4 #B1111",
+        'Pattern0000' : "FIX4;DATA:FIX4 #B0000",
         'Pattern' :     "FIX4",
     }
     custom_modulation_enable = Instrument.control(
