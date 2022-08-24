@@ -187,7 +187,8 @@ Another example for user data loading
     """ Define basic filters """
 
     MODULATION_DATA = {
-        'Pattern0011' : None,
+        'Pattern0000' : None,
+        'Pattern1111' : None,
         'Pattern0101' : None,
         'PatternPN9' : None,
         'DATA' : None,
