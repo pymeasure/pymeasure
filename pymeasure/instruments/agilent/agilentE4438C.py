@@ -22,10 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.rf_signal_generator import RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ
+from pymeasure.instruments.rf_signal_generator import (RFSignalGenerator,
+                                                       RFSignalGeneratorDM,
+                                                       RFSignalGeneratorIQ)
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range, joined_validators
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 import time
+
 
 class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ):
     """ Class representing Agilent E4438C RF signal generator """
@@ -35,31 +38,31 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
     frequency_values = (100e3, 6e9)
 
     # Allow mapping of values for ALC command
-    alc_values = {"ON" : 1,
-                  "OFF" : 0}
+    alc_values = {"ON": 1,
+                  "OFF": 0}
     alc_map_values = True
-    
+
     ####################################################################
     # Custom Subsystem-Option 001/601or 002/602 ([:SOURce]:RADio:CUSTom)
     ####################################################################
     CUSTOM_MODULATION_DATA = {
-        'DATA' :        "PRAM",
-        'PatternPN9' :  "PN9",
-        'Pattern0011' : "FIX4;DATA:FIX4 #B0011",
-        'Pattern0101' : "FIX4;DATA:FIX4 #B0101",
-        'Pattern1111' : "FIX4;DATA:FIX4 #B1111",
-        'Pattern0000' : "FIX4;DATA:FIX4 #B0000",
-        'Pattern' :     "FIX4",
+        'DATA':        "PRAM",
+        'PatternPN9':  "PN9",
+        'Pattern0011': "FIX4;DATA:FIX4 #B0011",
+        'Pattern0101': "FIX4;DATA:FIX4 #B0101",
+        'Pattern1111': "FIX4;DATA:FIX4 #B1111",
+        'Pattern0000': "FIX4;DATA:FIX4 #B0000",
+        'Pattern':     "FIX4",
     }
     custom_modulation_enable = Instrument.control(
-        ":RADIO:CUSTOM?", ":RADIO:CUSTOM %d", 
-        """ A boolean property that enables or disables the Custom modulation. 
+        ":RADIO:CUSTOM?", ":RADIO:CUSTOM %d",
+        """ A boolean property that enables or disables the Custom modulation.
         This property can be set. """,
         cast=int
     )
 
     custom_modulation = Instrument.control(
-        ":RADio:CUSTom:MODulation?", ":RADio:CUSTom:MODulation %s", 
+        ":RADio:CUSTom:MODulation?", ":RADio:CUSTom:MODulation %s",
         """ A string property that allow to set and read the modulation type for the Custom personality
         This property can be set. """,
         validator=strict_discrete_set,
@@ -67,7 +70,7 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
     )
 
     custom_modulation_filter = Instrument.control(
-        ":RADio:CUSTom:FILTER?", ":RADio:CUSTom:FILTER %s", 
+        ":RADio:CUSTom:FILTER?", ":RADio:CUSTom:FILTER %s",
         """ A string property that allow to set and read the pre-modulation filter type
         This property can be set. """,
         validator=strict_discrete_set,
@@ -75,22 +78,24 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
     )
 
     custom_modulation_bbt = Instrument.control(
-        ":RADio:CUSTom:BBT?", ":RADio:CUSTom:BBT %f", 
-        """ A  property that allow to set and read the bandwidth-multiplied-by-bit-time (BbT) filter parameter
+        ":RADio:CUSTom:BBT?", ":RADio:CUSTom:BBT %f",
+        """ A  property that allow to set and read the bandwidth-multiplied-by-bit-time
+        (BbT) filter parameter.
         This property can be set. """,
         validator=strict_range,
-        values=[0.1,1.0]
+        values=[0.1, 1.0]
     )
 
     custom_modulation_symbol_rate = Instrument.control(
-        ":RADio:CUSTom:SRATe?", ":RADio:CUSTom:SRATe %e", 
+        ":RADio:CUSTom:SRATe?", ":RADio:CUSTom:SRATe %e",
         """ A integer property that allow to set and read the transmission symbol rate
         This property can be set. """,
     )
 
     custom_modulation_ask_depth = Instrument.control(
         ":RADio:CUSTom:MODULATION:ASK:DEPTH?", ":RADio:CUSTom:MODULATION:ASK:DEPTH %e",
-        """ An integer property that allow to set and read the depth for the amplitude shift keying (ASK) modulation.
+        """ An integer property that allow to set and read the depth for the amplitude
+        shift keying (ASK) modulation.
         Depth is set as a percentage of the full power on level.
         This property can be set. """,
         validator=strict_range,
@@ -98,14 +103,15 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
     )
 
     custom_modulation_fsk_deviation = Instrument.control(
-        ":RADio:CUSTom:MODulation:FSK?", ":RADio:CUSTom:MODulation:FSK %e", 
+        ":RADio:CUSTom:MODulation:FSK?", ":RADio:CUSTom:MODulation:FSK %e",
         """ An integer property that allow to set and read the FSK frequency deviation value.
         Unit is Hz.
         This property can be set. """,
     )
     custom_modulation_data = Instrument.control(
-        ":RADio:CUSTom:DATA?", ":RADio:CUSTom:DATA %s", 
-        """ A string property that allow to set and read the data pattern source for unframed transmission
+        ":RADio:CUSTom:DATA?", ":RADio:CUSTom:DATA %s",
+        """ A string property that allow to set and read the data pattern source
+        for unframed transmission.
         This property can be set. """,
         validator=strict_discrete_set,
         values=CUSTOM_MODULATION_DATA,
@@ -152,7 +158,8 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
         return data
 
     def data_iq_load(self, iqdata, sampling_rate, name, markers=None):
-        self.adapter.write_binary_values(f'MEM:DATA "WFM1:{name}",', self._get_iqdata(iqdata), is_big_endian=True, datatype='h')
+        self.adapter.write_binary_values(f'MEM:DATA "WFM1:{name}",', self._get_iqdata(iqdata),
+                                         is_big_endian=True, datatype='h')
         if markers is not None:
             assert (len(iqdata) == len(markers))
             self.adapter.write_binary_values(f'MEM:DATA "MKR1:{name}",',
@@ -167,11 +174,12 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
         # :RAD:ARB:SEQ "SEQ:Test_Data","WFM1:ramp_test_wfm",25,ALL,"WFM1:sine_test_wfm",100,ALL
 
         # Process list and identify sequences repetitions
-        parameters = ",".join(f'"WFM1:{name:s}",{rep:d},ALL' for (name, rep) in self._process_iq_sequence(iqdata_seq))
+        parameters = ",".join(f'"WFM1:{name:s}",{rep:d},ALL' for (name, rep) in
+                              self._process_iq_sequence(iqdata_seq))
         self.write(f':SOURce:RADio:ARB:SEQ "SEQ:{name:s}",' + parameters)
         # After previous command, we always get a missing parameters error
         error = self.values("SYST:ERR?")
-        assert(error[0]==-109)
+        assert(error[0] == -109)
         self.write(f":SOURce:RADio:ARB:SCLock:RATE {sampling_rate:d}")
         # Select sequence
         self.write(f':SOURce:RADio:ARB:WAVeform "SEQ:{name:s}"')
@@ -180,26 +188,30 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
         """ Load data into signal generator for transmission.
 
         The parameters are:
-        :param bitsequences: list of items. Each item is a string of '1' or '0' in transmission order
-        :param spacing: list of integer, gap to be inserted between each bitsequence  expressed in number of bit
+        :param bitsequences: list of items. Each item is a string of '1' or '0'
+                             in transmission order
+        :param spacing: list of integer, gap to be inserted between each bitsequence
+                        expressed in number of bit
         """
         data = []
         for bitseq, spacing in zip(bitsequences, spacings):
             # Add data bits
-            data += [(0x14+int(bit,2)) for bit in bitseq]
+            data += [(0x14 + int(bit, 2)) for bit in bitseq]
             # Add bits with RF off
             data += [0x10]*spacing
-        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"PacketsToTransmit\",", data, timeout=20000, datatype='B')
+        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"PacketsToTransmit\",",
+                                         data, timeout=20000, datatype='B')
         self.complete
         self.write("RADIO:CUSTOM:DATA:PRAM \"PacketsToTransmit\"")
         self.data_ramping_workaround = True
-        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"RampingWorkaround\",", [0x94], timeout=20000, datatype='B')
+        self.adapter.write_binary_values("MEM:DATA:PRAM:FILE:BLOCK \"RampingWorkaround\",",
+                                         [0x94], timeout=20000, datatype='B')
 
     def data_trigger_setup(self, mode='SINGLE'):
         """ Configure the trigger system for bitsequence transmission
         """
         self.write("RADio:CUSTom:TRIG:SOURCE BUS")
-        self.write("RADio:CUSTom:TRIG:TYPE %s"%mode)
+        self.write(f"RADio:CUSTom:TRIG:TYPE {mode}")
 
     def data_trigger(self):
         """ Trigger a bitsequence transmission
@@ -233,7 +245,7 @@ class AgilentE4438C(RFSignalGenerator, RFSignalGeneratorDM, RFSignalGeneratorIQ)
         if (self.bit_per_symbol > 8):
             raise Exception("Multi level FSK is dupported up to 256 levels, i.e 8bit per symbol")
 
-        cmd_params = "{}".format(1<<self.bit_per_symbol)
+        cmd_params = "{}".format(1 << self.bit_per_symbol)
         for val in sorted(constellation.keys()):
             cmd_params += ",{:.3f}".format(fsk_dev/constellation[val])
         self.write(":MEM:DATA:FSK \"USER_FSK\",{},OFF".format(cmd_params))

@@ -23,6 +23,8 @@
 #
 
 from pymeasure.instruments.agilent import agilentE4438C
+
+
 class AgilentN5172B(agilentE4438C.AgilentE4438C):
     """ Class representing Agilent N5172B RF signal generator """
 
@@ -31,10 +33,9 @@ class AgilentN5172B(agilentE4438C.AgilentE4438C):
     frequency_values = (9e3, 6e9)
 
     name = "Agilent N5172B Signal Generator"
+
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
             **kwargs
         )
-
-
