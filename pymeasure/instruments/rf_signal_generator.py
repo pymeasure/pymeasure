@@ -343,14 +343,15 @@ Another example for user data loading
         Markers are very important to enable function like amplitude calibration and/or provide
         sychronization signals.
 
-        The parameters are:
         :param iqdata: list I/Q complex samples with magnitude normalized to 1
         :param sampling_rate: IQ data sampling rate in samples per seconds.
-        :param name: string defining the name associated with the data. This can be useful to compose
-        sequences.
-        :param markers: list of markers items, each marker item is etiher a list of integers (marker
-        identifier) or integer (representing a bitmask of markers) that are used to mark specific points on a waveform. The length of this list,
-        if different from None, must be equal to length of iqdata list.
+        :param name: string defining the name associated with the data.
+                     This can be useful to compose sequences.
+        :param markers: list of markers items, each marker item is etiher a list of integers
+                        (marker dentifier) or integer (representing a bitmask of markers)
+                        that are used to mark specific points on a waveform. The length of this
+                        list, if different from None, must be equal to length of iqdata list.
+
         """
 
         # Subclasses should implement this

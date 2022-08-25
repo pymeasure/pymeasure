@@ -24,7 +24,7 @@
 
 from .rohdeschwarz_sgt100a import RS_SGT100A
 from .rohdeschwarz_sma100a import RS_SMA100A
-from .rohdeschwarz_smiq06b import RS_SMIQ06B
+from .rohdeschwarz_smiq06b import RS_SMIQ06B, RS_SMIQ03B, RS_SMIQ0xB
 from .rohdeschwarz_sml01 import RS_SML01
 from .rohdeschwarz_fscx import RS_FSC3, RS_FSC6
 from .rohdeschwarz_fsw13 import RS_FSW13
