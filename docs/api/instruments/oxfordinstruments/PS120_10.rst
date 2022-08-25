@@ -1,0 +1,16 @@
+##################################################################
+Oxford Instruments Power Supply 120-10 for superconducting magnets
+##################################################################
+
+.. autoclass:: pymeasure.instruments.oxfordinstruments.PS120_10
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.oxfordinstruments.ips120_10.MagnetError
+    :members:
+    :show-inheritance:
+    :noindex:
+
+.. autoclass:: pymeasure.instruments.oxfordinstruments.ips120_10.SwitchHeaterError
+    :members:
+    :show-inheritance:
+    :noindex:

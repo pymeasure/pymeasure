@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,39 @@
 # THE SOFTWARE.
 #
 
+import re
+import time
+import numpy as np
+from enum import IntFlag
 from pymeasure.instruments import Instrument, discreteTruncate
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
-import numpy as np
-import time
-import re
+
+class LIAStatus(IntFlag):
+    """ IntFlag type that is returned by the lia_status property.
+    """
+    NO_ERROR = 0
+    INPUT_OVERLOAD = 1
+    FILTER_OVERLOAD = 2
+    OUTPUT_OVERLOAD = 4
+    REF_UNLOCK = 8
+    FREQ_RANGE_CHANGE = 16
+    TC_CHANGE = 32
+    TRIGGER = 64
+    UNUSED = 128
+
+
+class ERRStatus(IntFlag):
+    """ IntFlag type that is returned by the err_status property.
+    """
+    NO_ERROR = 0
+    BACKUP_ERR = 2
+    RAM_ERR = 4
+    ROM_ERR = 16
+    GPIB_ERR = 32
+    DSP_ERR = 64
+    MATH_ERR = 128
 
 
 class SR830(Instrument):
@@ -57,6 +83,11 @@ class SR830(Instrument):
     INPUT_COUPLINGS = ['AC', 'DC']
     INPUT_NOTCH_CONFIGS = ['None', 'Line', '2 x Line', 'Both']
     REFERENCE_SOURCES = ['External', 'Internal']
+    SNAP_ENUMERATION = {"x": 1, "y": 2, "r": 3, "theta": 4,
+                        "aux in 1": 5, "aux in 2": 6, "aux in 3": 7, "aux in 4": 8,
+                        "frequency": 9, "ch1": 10, "ch2": 11}
+    REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
+    INPUT_FILTER = ['Off', 'On']
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -80,21 +111,59 @@ class SR830(Instrument):
         values=[-360, 729.99]
     )
     x = Instrument.measurement("OUTP?1",
-        """ Reads the X value in Volts. """
-    )
+                               """ Reads the X value in Volts. """
+                               )
     y = Instrument.measurement("OUTP?2",
-        """ Reads the Y value in Volts. """
+                               """ Reads the Y value in Volts. """
+                               )
+
+    lia_status = Instrument.measurement(
+        "LIAS?",
+        """ Reads the value of the lockin amplifier (LIA) status byte. Returns a binary string with
+            positions within the string corresponding to different status flags:
+            bit 0: Input/Amplifier overload
+            bit 1: Time constant filter overload
+            bit 2: Output overload
+            bit 3: Reference unlock
+            bit 4: Detection frequency range switched
+            bit 5: Time constant changed indirectly
+            bit 6: Data storage triggered
+            bit 7: unused
+            """,
+        get_process=lambda s: LIAStatus(int(s)),
     )
+
+    err_status = Instrument.measurement(
+        "ERRS?",
+        """Reads the value of the lockin error (ERR) status byte. Returns an IntFlag type with
+           positions within the string corresponding to different error flags:
+           bit 0: unused
+           bit 1: backup error
+           bit 2: RAM error
+           bit 3: unused
+           bit 4: ROM error
+           bit 5: GPIB error
+           bit 6: DSP error
+           bit 7: Math error
+           """,
+        get_process=lambda s: ERRStatus(int(s)),
+    )
+
+    @property
+    def xy(self):
+        """ Reads the X and Y values in Volts. """
+        return self.snap()
+
     magnitude = Instrument.measurement("OUTP?3",
-        """ Reads the magnitude in Volts. """
-    )
+                                       """ Reads the magnitude in Volts. """
+                                       )
     theta = Instrument.measurement("OUTP?4",
-        """ Reads the theta value in degrees. """
-    )
+                                   """ Reads the theta value in degrees. """
+                                   )
     channel1 = Instrument.control(
         "DDEF?1;", "DDEF1,%d,0",
         """ A string property that represents the type of Channel 1,
-        taking the values X, R, X Noise, Aux In 1, or Aux In 2. 
+        taking the values X, R, X Noise, Aux In 1, or Aux In 2.
         This property can be set.""",
         validator=strict_discrete_set,
         values=['X', 'R', 'X Noise', 'Aux In 1', 'Aux In 2'],
@@ -137,6 +206,14 @@ class SR830(Instrument):
         values=FILTER_SLOPES,
         map_values=True
     )
+    filter_synchronous = Instrument.control(
+        "SYNC?", "SYNC %d",
+        """A boolean property that controls the synchronous filter.
+        This property can be set. Allowed values are: True or False """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
     harmonic = Instrument.control(
         "HARM?", "HARM%d",
         """ An integer property that controls the harmonic that is measured.
@@ -170,7 +247,7 @@ class SR830(Instrument):
     )
     input_notch_config = Instrument.control(
         "ILIN?", "ILIN %d",
-        """ An string property that controls the input line notch filter 
+        """ An string property that controls the input line notch filter
         status. Allowed values are: {}""".format(INPUT_NOTCH_CONFIGS),
         validator=strict_discrete_set,
         values=INPUT_NOTCH_CONFIGS,
@@ -182,6 +259,14 @@ class SR830(Instrument):
         values are: {}""".format(REFERENCE_SOURCES),
         validator=strict_discrete_set,
         values=REFERENCE_SOURCES,
+        map_values=True
+    )
+    reference_source_trigger = Instrument.control(
+        "RSLP?", "RSLP %d",
+        """ A string property that controls the reference source triggering. Allowed
+             values are: {}""".format(REFERENCE_SOURCE_TRIGGER),
+        validator=strict_discrete_set,
+        values=REFERENCE_SOURCE_TRIGGER,
         map_values=True
     )
 
@@ -257,9 +342,9 @@ class SR830(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-    def __init__(self, resourceName, **kwargs):
-        super(SR830, self).__init__(
-            resourceName,
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
@@ -307,7 +392,7 @@ class SR830(Instrument):
         """
         offset, expand = self.get_scaling(channel)
         sensitivity = self.sensitivity
-        return lambda x: (x/(10.*expand) + offset) * sensitivity
+        return lambda x: (x / (10. * expand) + offset) * sensitivity
 
     @property
     def sample_frequency(self):
@@ -353,12 +438,16 @@ class SR830(Instrument):
         """ While the magnitude is out of range, increase
         the sensitivity by one setting
         """
+        self.write('LIAE 2,1')
         while self.is_out_of_range():
-            self.write("SENS%d" % (int(self.ask("SENS?"))+1))
-            time.sleep(5.0*self.time_constant)
+            self.write("SENS%d" % (int(self.ask("SENS?")) + 1))
+            time.sleep(5.0 * self.time_constant)
             self.write("*CLS")
         # Set the range as low as possible
-        self.sensitivity(1.15*abs(self.R))
+        newsensitivity = 1.15 * abs(self.magnitude)
+        if self.input_config in ('I (1 MOhm)', 'I (100 MOhm)'):
+            newsensitivity = newsensitivity * 1e6
+        self.sensitivity = newsensitivity
 
     @property
     def buffer_count(self):
@@ -384,8 +473,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pauseBuffer()
-        ch1[index:count+1] = self.buffer_data(1, index, count)
-        ch2[index:count+1] = self.buffer_data(2, index, count)
+        ch1[index:count + 1] = self.buffer_data(1, index, count)
+        ch2[index:count + 1] = self.buffer_data(2, index, count)
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):
@@ -436,10 +525,36 @@ class SR830(Instrument):
         if end is None:
             end = self.buffer_count
         return self.binary_values("TRCB?%d,%d,%d" % (
-                        channel, start, end-start))
+            channel, start, end - start))
 
     def reset_buffer(self):
         self.write("REST")
 
     def trigger(self):
         self.write("TRIG")
+
+    def snap(self, val1="X", val2="Y", *vals):
+        """ Method that records and retrieves 2 to 6 parameters at a single
+        instant. The parameters can be one of: X, Y, R, Theta, Aux In 1,
+        Aux In 2, Aux In 3, Aux In 4, Frequency, CH1, CH2.
+        Default is "X" and "Y".
+
+        :param val1: first parameter to retrieve
+        :param val2: second parameter to retrieve
+        :param vals: other parameters to retrieve (optional)
+        """
+        if len(vals) > 4:
+            raise ValueError("No more that 6 values (in total) can be captured"
+                             "simultaneously.")
+
+        # check if additional parameters are given as a list
+        if len(vals) == 1 and isinstance(vals[0], (list, tuple)):
+            vals = vals[0]
+
+        # make a list of all vals
+        vals = [val1, val2] + list(vals)
+
+        vals_idx = [str(self.SNAP_ENUMERATION[val.lower()]) for val in vals]
+
+        command = "SNAP? " + ",".join(vals_idx)
+        return self.values(command)

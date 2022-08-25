@@ -9,10 +9,10 @@ Setting up Python
 
 The easiest way to install the necessary Python environment for PyMeasure is through the `Anaconda distribution`_, which includes 720 scientific packages. The advantage of using this approach over just relying on the :code:`pip` installer is that it Anaconda correctly installs the required Qt libraries. 
 
-Download and install the appropriate Python 3.5 version of `Anaconda`_ for your operating system. 
+Download and install the appropriate Python version of `Anaconda`_ for your operating system.
 
-.. _Anaconda distribution: https://www.continuum.io/why-anaconda
-.. _Anaconda: https://www.continuum.io/downloads
+.. _Anaconda distribution: https://www.anaconda.com/
+.. _Anaconda: https://www.anaconda.com/products/individual
 
 Installing PyMeasure
 ====================

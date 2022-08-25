@@ -1,0 +1,38 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "sphinx-docstring",
+            "pattern": [
+                {
+                    "regexp": "^(?<path>.+?):(?<message>.*? (?<severity>WARNING|ERROR): .+)$",
+                    "file": 1,
+                    "severity": 3,
+                    "message": 2
+                }
+            ]
+        },
+        {
+            "owner": "sphinx-doctest",
+            "pattern": [
+                {
+                    "regexp": "^File \\\"(?<path>.+?)\\\", line (?<line>\\d+|\\?), (?<msg>.*$)",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                }
+            ]
+        },
+        {
+            "owner": "sphinx-extension",
+            "pattern": [
+                {
+                    "regexp": "^(?<severity>WARNING|ERROR): (?<code>\\S+): (?<message>.+)(?<dummy_file_entry>)$",
+                    "severity": 1,
+                    "code": 2,
+                    "message": 3,
+                    "file": 4
+                }
+            ]
+        }
+    ]
+}

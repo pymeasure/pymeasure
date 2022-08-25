@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 
-class Parameter(object):
+class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 
@@ -32,13 +32,37 @@ class Parameter(object):
     :param name: The parameter name
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
+    :param group_by: Defines the Parameter(s) that controls the visibility
+        of the associated input; can be a string containting the Parameter
+        name, a list of strings with multiple Parameter names, or a dict
+        containing {"Parameter name": condition} pairs.
+    :param group_condition: The condition for the group_by Parameter
+        that controls the visibility of this parameter, provided as a value
+        or a (lambda)function. If the group_by argument is provided as a
+        list of strings, this argument can be either a single condition or
+        a list of conditions. If the group_by argument is provided as a dict
+        this argument is ignored.
     """
 
-    def __init__(self, name, default=None, ui_class=None):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
         self.name = name
         self._value = default
         self.default = default
         self.ui_class = ui_class
+
+        self.group_by = {}
+        if isinstance(group_by, dict):
+            self.group_by = group_by
+        elif isinstance(group_by, str):
+            self.group_by = {group_by: group_condition}
+        elif isinstance(group_by, (list, tuple)) and all(isinstance(e, str) for e in group_by):
+            if isinstance(group_condition, (list, tuple)):
+                self.group_by = {g: c for g, c in zip(group_by, group_condition)}
+            else:
+                self.group_by = {g: group_condition for g in group_by}
+        elif group_by is not None:
+            raise TypeError("The provided group_by argument is not valid, should be either a "
+                            "string, a list of strings, or a dict with {string: condition} pairs.")
 
     @property
     def value(self):
@@ -60,7 +84,7 @@ class Parameter(object):
         return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,default=%s)>" % (
+        return "<{}(name={},value={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.default)
 
 
@@ -76,13 +100,15 @@ class IntegerParameter(Parameter):
     :param maximum: The maximum allowed value (default: 1e9)
     :param default: The default integer value
     :param ui_class: A Qt class to use for the UI of this parameter
+    :param step: int step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
-    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
+    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
+        self.step = int(step) if step else None
 
     @property
     def value(self):
@@ -93,6 +119,12 @@ class IntegerParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        if isinstance(value, str):
+            value, _, units = value.strip().partition(" ")
+            if units != "" and units != self.units:
+                raise ValueError("Units included in string (%s) do not match"
+                                 "the units of the IntegerParameter (%s)" % (units, self.units))
+
         try:
             value = int(value)
         except ValueError:
@@ -114,7 +146,7 @@ class IntegerParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -138,9 +170,18 @@ class BooleanParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        try:
+        if isinstance(value, str):
+            if value.lower() == "true":
+                self._value = True
+            elif value.lower() == "false":
+                self._value = False
+            else:
+                raise ValueError("BooleanParameter given string value of '%s'" % value)
+        elif isinstance(value, (int, float)) and value in [0, 1]:
             self._value = bool(value)
-        except ValueError:
+        elif isinstance(value, bool):
+            self._value = value
+        else:
             raise ValueError("BooleanParameter given non-boolean value of "
                              "type '%s'" % type(value))
 
@@ -155,15 +196,20 @@ class FloatParameter(Parameter):
     :param units: The units of measure for the parameter
     :param minimum: The minimum allowed value (default: -1e9)
     :param maximum: The maximum allowed value (default: 1e9)
+    :param decimals: The number of decimals considered (default: 15)
     :param default: The default floating point value
     :param ui_class: A Qt class to use for the UI of this parameter
+    :param step: step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
-    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
+    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
+                 decimals=15, step=None, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = minimum
         self.maximum = maximum
+        self.decimals = decimals
+        self.step = step
 
     @property
     def value(self):
@@ -174,6 +220,12 @@ class FloatParameter(Parameter):
 
     @value.setter
     def value(self, value):
+        if isinstance(value, str):
+            value, _, units = value.strip().partition(" ")
+            if units != "" and units != self.units:
+                raise ValueError("Units included in string (%s) do not match"
+                                 "the units of the FloatParameter (%s)" % (units, self.units))
+
         try:
             value = float(value)
         except ValueError:
@@ -195,7 +247,7 @@ class FloatParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -226,8 +278,12 @@ class VectorParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        # Strip initial and final brackets
         if isinstance(value, str):
+            # strip units if included
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+            # Strip initial and final brackets
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
@@ -259,12 +315,13 @@ class VectorParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,length=%s)>" % (
+        return "<{}(name={},value={},units={},length={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
 class ListParameter(Parameter):
     """ :class:`.Parameter` sub-class that stores the value as a list.
+    String representation of choices must be unique.
 
     :param name: The parameter name
     :param choices: An explicit list of choices, which is disregarded if None
@@ -275,7 +332,15 @@ class ListParameter(Parameter):
 
     def __init__(self, name, choices=None, units=None, **kwargs):
         super().__init__(name, **kwargs)
-        self._choices = tuple(choices) if choices is not None else None
+        if choices is not None:
+            keys = [str(c) for c in choices]
+            # check that string representation is unique
+            if not len(keys) == len(set(keys)):
+                raise ValueError(
+                    "String representation of choices is not unique!")
+            self._choices = {k: c for k, c in zip(keys, choices)}
+        else:
+            self._choices = None
         self.units = units
 
     @property
@@ -287,8 +352,17 @@ class ListParameter(Parameter):
 
     @value.setter
     def value(self, value):
-        if self._choices is not None and value in self._choices:
-            self._value = value
+        if self._choices is None:
+            raise ValueError("ListParameter cannot be set since "
+                             "allowed choices are set to None.")
+
+        # strip units if included
+        if isinstance(value, str):
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+        if str(value) in self._choices.keys():
+            self._value = self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
@@ -296,7 +370,7 @@ class ListParameter(Parameter):
     @property
     def choices(self):
         """ Returns an immutable iterable of choices, or None if not set. """
-        return self._choices
+        return tuple(self._choices.values())
 
 
 class PhysicalParameter(VectorParameter):
@@ -328,8 +402,12 @@ class PhysicalParameter(VectorParameter):
 
     @value.setter
     def value(self, value):
-        # Strip initial and final brackets
         if isinstance(value, str):
+            # strip units if included
+            if self.units is not None and value.endswith(" " + self.units):
+                value = value[:-len(self.units)].strip()
+
+            # Strip initial and final brackets
             if (value[0] != '[') or (value[-1] != ']'):
                 raise ValueError("VectorParameter must be passed a vector"
                                  " denoted by square brackets if initializing"
@@ -379,7 +457,7 @@ class PhysicalParameter(VectorParameter):
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%g +/- %g" % (self._value[0], self._value[1])
+        result = f"{self._value[0]:g} +/- {self._value[1]:g}"
         if self.units:
             result += " %s" % self.units
         if self._utype.value is not None:
@@ -387,11 +465,11 @@ class PhysicalParameter(VectorParameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,uncertaintyType=%s)>" % (
+        return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
 
-class Measurable(object):
+class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.
     The value property is called when the procedure retrieves a datapoint

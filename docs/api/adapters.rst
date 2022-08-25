@@ -15,14 +15,14 @@ Adapter base class
     :undoc-members:
 
 ============
-Fake adapter
+VISA adapter
 ============
 
-.. autoclass:: pymeasure.adapters.FakeAdapter
+.. autoclass:: pymeasure.adapters.VISAAdapter
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:
 
 ==============
 Serial adapter
@@ -32,7 +32,8 @@ Serial adapter
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:
+    :private-members: _format_binary_values
 
 ================
 Prologix adapter
@@ -42,17 +43,8 @@ Prologix adapter
     :members:
     :undoc-members:
     :inherited-members:
-    :show-inheritance: 
-
-============
-VISA adapter
-============
-
-.. autoclass:: pymeasure.adapters.VISAAdapter
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance: 
+    :show-inheritance:
+    :private-members: _format_binary_values
 
 ==============
 VXI-11 adapter
@@ -63,3 +55,35 @@ VXI-11 adapter
     :undoc-members:
     :inherited-members:
     :show-inheritance: 
+
+==============
+Telnet adapter
+==============
+
+.. autoclass:: pymeasure.adapters.TelnetAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
+
+=============
+Test adapters
+=============
+
+These pieces are useful when writing tests.
+
+.. automodule:: pymeasure.test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.adapters.ProtocolAdapter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.adapters.FakeAdapter
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:

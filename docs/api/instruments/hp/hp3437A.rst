@@ -1,0 +1,7 @@
+######################################
+HP 3437A System-Voltmeter
+######################################
+
+.. autoclass:: pymeasure.instruments.hp.HP3437A
+    :members:
+    :show-inheritance:

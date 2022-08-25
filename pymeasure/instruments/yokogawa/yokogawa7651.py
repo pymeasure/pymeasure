@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,19 +21,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
 import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from time import sleep
+import re
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     truncated_discrete_set, strict_discrete_set,
     truncated_range
 )
-from time import sleep
-import numpy as np
-import re
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class Yokogawa7651(Instrument):
@@ -87,7 +88,7 @@ class Yokogawa7651(Instrument):
         in Volts, which can take values: 10 mV, 100 mV, 1 V, 10 V, and 30 V.
         Voltages are truncted to an appropriate value if needed. """,
         validator=truncated_discrete_set,
-        values={10e-3:2, 100e-3:3, 1:4, 10:5, 30:6},
+        values={10e-3: 2, 100e-3: 3, 1: 4, 10: 5, 30: 6},
         map_values=True,
         get_process=lambda v: int(Yokogawa7651._find(v, 'R'))
     )
@@ -97,7 +98,7 @@ class Yokogawa7651(Instrument):
         in Amps, which can take values: 1 mA, 10 mA, and 100 mA.
         Currents are truncted to an appropriate value if needed. """,
         validator=truncated_discrete_set,
-        values={1e-3:4, 10e-3:5, 100e-3:6},
+        values={1e-3: 4, 10e-3: 5, 100e-3: 6},
         map_values=True,
         get_process=lambda v: int(Yokogawa7651._find(v, 'R'))
     )
@@ -108,7 +109,7 @@ class Yokogawa7651(Instrument):
         :meth:`~.Yokogawa7651.apply_current` and :meth:`~.Yokogawa7651.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
-        values={'current':5, 'voltage':1},
+        values={'current': 5, 'voltage': 1},
         map_values=True,
         get_process=lambda v: int(Yokogawa7651._find(v, 'F'))
     )
@@ -126,16 +127,16 @@ class Yokogawa7651(Instrument):
         in Amps, which can take values from 5 to 120 mA. """,
         validator=truncated_range,
         values=[5e-3, 120e-3],
-        get_process=lambda v: float(Yokogawa7651._find(v, 'LA'))*1e-3, # converts A to mA
-        set_process=lambda v: v*1e3, # converts mA to A
+        get_process=lambda v: float(Yokogawa7651._find(v, 'LA')) * 1e-3,  # converts A to mA
+        set_process=lambda v: v * 1e3,  # converts mA to A
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Yokogawa7651, self).__init__(
+        super().__init__(
             adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
         )
 
-        self.write("H0;E") # Set no header in output data
+        self.write("H0;E")  # Set no header in output data
 
     @property
     def id(self):
@@ -160,21 +161,21 @@ class Yokogawa7651(Instrument):
         configuration of the instrument. """
         self.write("O0;E")
 
-    def apply_current(self, max_current=1e-3, complinance_voltage=1):
+    def apply_current(self, max_current=1e-3, compliance_voltage=1):
         """ Configures the instrument to apply a source current, which can
         take optional parameters that defer to the :attr:`~.Yokogawa7651.source_current_range`
         and :attr:`~.Yokogawa7651.compliance_voltage` properties. """
         self.source_mode = 'current'
         self.source_current_range = max_current
-        self.complinance_voltage = complinance_voltage
+        self.compliance_voltage = compliance_voltage
 
-    def apply_voltage(self, max_voltage=1, complinance_current=10e-3):
+    def apply_voltage(self, max_voltage=1, compliance_current=10e-3):
         """ Configures the instrument to apply a source voltage, which can
         take optional parameters that defer to the :attr:`~.Yokogawa7651.source_voltage_range`
         and :attr:`~.Yokogawa7651.compliance_current` properties. """
         self.source_mode = 'voltage'
         self.source_voltage_range = max_voltage
-        self.complinance_current = compliance_current
+        self.compliance_current = compliance_current
 
     def ramp_to_current(self, current, steps=25, duration=0.5):
         """ Ramps the current to a value in Amps by traversing a linear spacing
@@ -185,7 +186,7 @@ class Yokogawa7651(Instrument):
         """
         start_current = self.source_current
         stop_current = current
-        pause = duration/steps
+        pause = duration / steps
         if (start_current != stop_current):
             currents = np.linspace(start_current, stop_current, steps)
             for current in currents:
@@ -201,7 +202,7 @@ class Yokogawa7651(Instrument):
         """
         start_voltage = self.source_voltage
         stop_voltage = voltage
-        pause = duration/steps
+        pause = duration / steps
         if (start_voltage != stop_voltage):
             voltages = np.linspace(start_voltage, stop_voltage, steps)
             for voltage in voltages:
@@ -217,4 +218,4 @@ class Yokogawa7651(Instrument):
         self.ramp_to_current(0.0, steps=25)
         self.source_current = 0.0
         self.disable_source()
-        super(Yokogawa7651, self).shutdown()
+        super().shutdown()
