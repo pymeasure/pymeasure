@@ -546,8 +546,7 @@ class ATSBase(Instrument):
         "WHAT?",
         """Returns an integer indicating what the system is doing at the time the query is processed.
 
-        5: on Operator screen (manual mode)
-        6: on Cycle screen (program mode)
+        :type: string
         """,
         values={'manual': 5,
                 'program': 6,
