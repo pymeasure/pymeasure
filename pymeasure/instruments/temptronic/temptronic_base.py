@@ -547,6 +547,7 @@ class ATSBase(Instrument):
         """Returns an string indicating what the system is doing at the time the query is processed.
 
         :type: string
+        
         """,
         values={'manual': 5,
                 'program': 6,
