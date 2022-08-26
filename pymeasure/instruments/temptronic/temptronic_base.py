@@ -544,7 +544,7 @@ class ATSBase(Instrument):
 
     mode = Instrument.measurement(
         "WHAT?",
-        """Returns an integer indicating what the system is doing at the time the query is processed.
+        """Returns an string indicating what the system is doing at the time the query is processed.
 
         :type: string
         """,
