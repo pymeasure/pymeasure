@@ -15,7 +15,7 @@ import tempfile
 from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
+from pymeasure.experiment import CSVResults
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
 
@@ -71,7 +71,7 @@ class MainWindow(ManagedWindow):
         filename = tempfile.mktemp()
 
         procedure = self.make_procedure()
-        results = Results(procedure, filename)
+        results = CSVResults(procedure, filename)
         experiment = self.new_experiment(results)
 
         self.manager.queue(experiment)

@@ -118,7 +118,7 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
     return filename
 
 
-class CSVFormatter(logging.Formatter):
+class CSVFormatter(logging.Formatter): #change to logging.Filehandler as suggested?
     """ Formatter of data results """
 
     def __init__(self, columns, delimiter=','):
@@ -198,8 +198,10 @@ class CSVFormatter(logging.Formatter):
     def format_header(self):
         return self.delimiter.join(self.columns)
 
-
 class Results:
+    pass
+
+class CSVResults(Results):
     """ The Results class provides a convenient interface to reading and
     writing data in connection with a :class:`.Procedure` object.
 
@@ -294,14 +296,14 @@ class Results:
                 parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
-        h = [Results.COMMENT + line for line in h]  # Comment each line
-        return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
+        h = [CSVResults.COMMENT + line for line in h]  # Comment each line
+        return CSVResults.LINE_BREAK.join(h) + CSVResults.LINE_BREAK
 
     def labels(self):
         """ Returns the columns labels as a string to be written
         to the file
         """
-        return self.formatter.format_header() + Results.LINE_BREAK
+        return self.formatter.format_header() + CSVResults.LINE_BREAK
 
     def format(self, data):
         """ Returns a formatted string containing the data to be written
@@ -312,7 +314,7 @@ class Results:
     def parse(self, line):
         """ Returns a dictionary containing the data from the line """
         data = {}
-        items = line.split(Results.DELIMITER)
+        items = line.split(CSVResults.DELIMITER)
         for i, key in enumerate(self.procedure.DATA_COLUMNS):
             data[key] = items[i]
         return data
@@ -327,11 +329,11 @@ class Results:
         else:
             procedure = None
 
-        header = header.split(Results.LINE_BREAK)
+        header = header.split(CSVResults.LINE_BREAK)
         procedure_module = None
         parameters = {}
         for line in header:
-            if line.startswith(Results.COMMENT):
+            if line.startswith(CSVResults.COMMENT):
                 line = line[1:]  # Uncomment
             else:
                 raise ValueError("Parsing a header which contains "
@@ -383,13 +385,13 @@ class Results:
         with open(data_filename) as f:
             while not header_read:
                 line = f.readline()
-                if line.startswith(Results.COMMENT):
-                    header += line.strip() + Results.LINE_BREAK
+                if line.startswith(CSVResults.COMMENT):
+                    header += line.strip() + CSVResults.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True
-        procedure = Results.parse_header(header[:-1], procedure_class)
-        results = Results(procedure, data_filename)
+        procedure = CSVResults.parse_header(header[:-1], procedure_class)
+        results = CSVResults(procedure, data_filename)
         results._header_count = header_count
         return results
 
@@ -398,7 +400,7 @@ class Results:
         # Need to update header count for correct referencing
         if self._header_count == -1:
             self._header_count = len(
-                self.header()[-1].split(Results.LINE_BREAK))
+                self.header()[-1].split(CSVResults.LINE_BREAK))
         if self._data is None or len(self._data) == 0:
             # Data has not been read
             try:
@@ -410,10 +412,10 @@ class Results:
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(
                 self.data_filename,
-                comment=Results.COMMENT,
+                comment=CSVResults.COMMENT,
                 header=0,
                 names=self._data.columns,
-                chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
+                chunksize=CSVResults.CHUNK_SIZE, skiprows=skiprows, iterator=True
             )
             try:
                 tmp_frame = pd.concat(chunks, ignore_index=True)
@@ -434,8 +436,8 @@ class Results:
         """
         chunks = pd.read_csv(
             self.data_filename,
-            comment=Results.COMMENT,
-            chunksize=Results.CHUNK_SIZE,
+            comment=CSVResults.COMMENT,
+            chunksize=CSVResults.CHUNK_SIZE,
             iterator=True
         )
         try:
