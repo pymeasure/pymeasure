@@ -199,55 +199,10 @@ class CSVFormatter(logging.Formatter): #change to logging.Filehandler as suggest
         return self.delimiter.join(self.columns)
 
 class Results:
-    pass
-
-class CSVResults(Results):
-    """ The Results class provides a convenient interface to reading and
-    writing data in connection with a :class:`.Procedure` object.
-
-    :cvar COMMENT: The character used to identify a comment (default: #)
-    :cvar DELIMITER: The character used to delimit the data (default: ,)
-    :cvar LINE_BREAK: The character used for line breaks (default \\n)
-    :cvar CHUNK_SIZE: The length of the data chuck that is read
-
-    :param procedure: Procedure object
-    :param data_filename: The data filename where the data is or should be
-                          stored
-    """
-
     COMMENT = '#'
     DELIMITER = ','
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
-
-    def __init__(self, procedure, data_filename):
-        if not isinstance(procedure, Procedure):
-            raise ValueError("Results require a Procedure object")
-        self.procedure = procedure
-        self.procedure_class = procedure.__class__
-        self.parameters = procedure.parameter_objects()
-        self._header_count = -1
-
-        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
-
-        if isinstance(data_filename, (list, tuple)):
-            data_filenames, data_filename = data_filename, data_filename[0]
-        else:
-            data_filenames = [data_filename]
-
-        self.data_filename = data_filename
-        self.data_filenames = data_filenames
-
-        if os.path.exists(data_filename):  # Assume header is already written
-            self.reload()
-            self.procedure.status = Procedure.FINISHED
-            # TODO: Correctly store and retrieve status
-        else:
-            for filename in self.data_filenames:
-                with open(filename, 'w') as f:
-                    f.write(self.header())
-                    f.write(self.labels())
-            self._data = None
 
     def __getstate__(self):
         # Get all information needed to reconstruct procedure
@@ -282,7 +237,7 @@ class CSVResults(Results):
         del self._module
         del self._file
 
-    def header(self):
+    def text_header(self):
         """ Returns a text header to accompany a datafile so that the procedure
         can be reconstructed
         """
@@ -296,31 +251,11 @@ class CSVResults(Results):
                 parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
-        h = [CSVResults.COMMENT + line for line in h]  # Comment each line
-        return CSVResults.LINE_BREAK.join(h) + CSVResults.LINE_BREAK
-
-    def labels(self):
-        """ Returns the columns labels as a string to be written
-        to the file
-        """
-        return self.formatter.format_header() + CSVResults.LINE_BREAK
-
-    def format(self, data):
-        """ Returns a formatted string containing the data to be written
-        to a file
-        """
-        return self.formatter.format(data)
-
-    def parse(self, line):
-        """ Returns a dictionary containing the data from the line """
-        data = {}
-        items = line.split(CSVResults.DELIMITER)
-        for i, key in enumerate(self.procedure.DATA_COLUMNS):
-            data[key] = items[i]
-        return data
+        h = [Results.COMMENT + line for line in h]  # Comment each line
+        return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
 
     @staticmethod
-    def parse_header(header, procedure_class=None):
+    def parse_text_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
@@ -329,11 +264,11 @@ class CSVResults(Results):
         else:
             procedure = None
 
-        header = header.split(CSVResults.LINE_BREAK)
+        header = header.split(Results.LINE_BREAK)
         procedure_module = None
         parameters = {}
         for line in header:
-            if line.startswith(CSVResults.COMMENT):
+            if line.startswith(Results.COMMENT):
                 line = line[1:]  # Uncomment
             else:
                 raise ValueError("Parsing a header which contains "
@@ -374,6 +309,72 @@ class CSVResults(Results):
         procedure.refresh_parameters()  # Enforce update of meta data
         return procedure
 
+class CSVResults(Results):
+    """ The Results class provides a convenient interface to reading and
+    writing data in connection with a :class:`.Procedure` object.
+
+    :cvar COMMENT: The character used to identify a comment (default: #)
+    :cvar DELIMITER: The character used to delimit the data (default: ,)
+    :cvar LINE_BREAK: The character used for line breaks (default \\n)
+    :cvar CHUNK_SIZE: The length of the data chuck that is read
+
+    :param procedure: Procedure object
+    :param data_filename: The data filename where the data is or should be
+                          stored
+    """
+
+
+    def __init__(self, procedure, data_filename):
+        if not isinstance(procedure, Procedure):
+            raise ValueError("Results require a Procedure object")
+        self.procedure = procedure
+        self.procedure_class = procedure.__class__
+        self.parameters = procedure.parameter_objects()
+        self._header_count = -1
+
+        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
+
+        if isinstance(data_filename, (list, tuple)):
+            data_filenames, data_filename = data_filename, data_filename[0]
+        else:
+            data_filenames = [data_filename]
+
+        self.data_filename = data_filename
+        self.data_filenames = data_filenames
+
+        if os.path.exists(data_filename):  # Assume header is already written
+            self.reload()
+            self.procedure.status = Procedure.FINISHED
+            # TODO: Correctly store and retrieve status
+        else:
+            for filename in self.data_filenames:
+                with open(filename, 'w') as f:
+                    f.write(self.header())
+                    f.write(self.labels())
+            self._data = None
+
+    def labels(self):
+        """ Returns the columns labels as a string to be written
+        to the file
+        """
+        return self.formatter.format_header() + Results.LINE_BREAK
+
+    def format(self, data):
+        """ Returns a formatted string containing the data to be written
+        to a file
+        """
+        return self.formatter.format(data)
+
+    def parse(self, line):
+        """ Returns a dictionary containing the data from the line """
+        data = {}
+        items = line.split(Results.DELIMITER)
+        for i, key in enumerate(self.procedure.DATA_COLUMNS):
+            data[key] = items[i]
+        return data
+
+
+
     @staticmethod
     def load(data_filename, procedure_class=None):
         """ Returns a Results object with the associated Procedure object and
@@ -385,13 +386,13 @@ class CSVResults(Results):
         with open(data_filename) as f:
             while not header_read:
                 line = f.readline()
-                if line.startswith(CSVResults.COMMENT):
-                    header += line.strip() + CSVResults.LINE_BREAK
+                if line.startswith(Results.COMMENT):
+                    header += line.strip() + Results.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True
-        procedure = CSVResults.parse_header(header[:-1], procedure_class)
-        results = CSVResults(procedure, data_filename)
+        procedure = Results.parse_header(header[:-1], procedure_class)
+        results = Results(procedure, data_filename)
         results._header_count = header_count
         return results
 
@@ -400,7 +401,7 @@ class CSVResults(Results):
         # Need to update header count for correct referencing
         if self._header_count == -1:
             self._header_count = len(
-                self.header()[-1].split(CSVResults.LINE_BREAK))
+                self.header()[-1].split(Results.LINE_BREAK))
         if self._data is None or len(self._data) == 0:
             # Data has not been read
             try:
@@ -412,10 +413,10 @@ class CSVResults(Results):
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(
                 self.data_filename,
-                comment=CSVResults.COMMENT,
+                comment=Results.COMMENT,
                 header=0,
                 names=self._data.columns,
-                chunksize=CSVResults.CHUNK_SIZE, skiprows=skiprows, iterator=True
+                chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
             )
             try:
                 tmp_frame = pd.concat(chunks, ignore_index=True)
@@ -436,8 +437,8 @@ class CSVResults(Results):
         """
         chunks = pd.read_csv(
             self.data_filename,
-            comment=CSVResults.COMMENT,
-            chunksize=CSVResults.CHUNK_SIZE,
+            comment=Results.COMMENT,
+            chunksize=Results.CHUNK_SIZE,
             iterator=True
         )
         try:
