@@ -172,6 +172,44 @@ class Channel(object):
         self.instrument.write(self._elemprefix + f"WAITE {event}")
 
     @property
+    def pattern(self):
+        return self.instrument.ask(self._elemprefix + f"PATTERN?")
+
+    @pattern.setter
+    def pattern(self, code):
+        """
+        Sets the pattern code this element in the sequence is listening for. Limited to [0,255]
+        """
+        self.instrument.write(self._elemprefix + f"PATTERN {code}")
+
+    @property
+    def patternjumptomode(self):
+        return self.instrument.ask(self._elemprefix + f"PATTERNJUMPTOMode?")
+
+    @patternjumptomode.setter
+    def patternjumptomode(self, code):
+        """
+        Sets what happens when a pattern code is received. Options are:
+        FIRST: jump to the begin of the sequence
+        PREVIOUS: jump to the previous element of the sequence [last elem if at first]
+        NEXT: Jump to the next element of the sequence [first element if last]
+        ITEM: Jump to item define patternjumptoentry
+        """
+        self.instrument.write(self._elemprefix + f"PATTERNJUMPTOMode {code}")
+
+    @property
+    def patternjumptoentry(self):
+        return self.instrument.ask(self._elemprefix + f"PATTERNJUMPTOEntry?")
+
+    @patternjumptoentry.setter
+    def patternjumptoentry(self, code):
+        """
+        Sets the elem in the sequence to jump to when the jump is intiated,
+        if patternjumpmode is ITEM.
+        """
+        self.instrument.write(self._elemprefix + f"PATTERNJUMPTOEntry {code}")
+
+    @property
     def amplitude(self):
         return self.instrument.ask(self._elemprefix + f"AMP{self.number}?")
 
@@ -242,6 +280,26 @@ class BN675_AWG(Instrument):
     run_state = Instrument.measurement(
         "AWGC:RSTAT?", """Queries the run state: 0 is stopped
         1 is waiting for trigger, 2 is running"""
+    )
+
+    jump_mode = Instrument.control(
+        "AWGControl:JUMPM?", "AWGControl:JUMPM %s",
+        """ A string parameter controlling the AWG jump mode when a jump code is received.
+         Only relevant if run_mode is ADVA. Can be:
+        AFTER: Jump after repetitions of current elements are done
+        IMM: Jump as soon as possible
+        """,
+        validator=strict_discrete_set,
+        values=['AFTER', 'IMM'],
+    )
+
+    send_strobe = Instrument.setting(
+        "AWGControl:DJStrobe %d",
+        """ An integer setting that initiates a corresponding jump. Valid numbers are between 0 and 255
+         Only relevant if run_mode is ADVA:
+        """,
+        validator=strict_range,
+        values=[0,255],
     )
 
     sampling_frequency = Instrument.control(
