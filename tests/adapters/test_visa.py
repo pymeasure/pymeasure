@@ -47,6 +47,23 @@ def test_visa_version():
     assert VISAAdapter.has_supported_version()
 
 
+def test_visa_version_old(monkeypatch):
+    monkeypatch.delattr("pyvisa.__version__")
+    assert VISAAdapter.has_supported_version() is False
+
+
+def test_fail_on_old_visa_version(monkeypatch):
+    monkeypatch.delattr("pyvisa.__version__")
+    with pytest.raises(NotImplementedError):
+        VISAAdapter(SIM_RESOURCE, visa_library='@sim')
+
+
+def test_nested_adapter(adapter):
+    a = VISAAdapter(adapter)
+    assert a.resource_name == SIM_RESOURCE
+    assert a.connection == adapter.connection
+
+
 def test_correct_visa_kwarg():
     """Confirm that the query_delay kwargs gets passed through to the VISA connection."""
     instr = Instrument(adapter=SIM_RESOURCE, name='delayed', query_delay=0.5, visa_library='@sim')
@@ -85,18 +102,21 @@ def test_write_read_bytes(adapter):
     assert adapter.read_bytes(22) == b"SCPI,MOCK,VERSION_1.0\n"
 
 
+def test_write_read_all_bytes(adapter):
+    adapter.write("*IDN?")
+    assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
+
+
 def test_visa_adapter(adapter):
     assert repr(adapter) == f"<VISAAdapter(resource='{SIM_RESOURCE}')>"
 
-    assert adapter.ask("*IDN?") == "SCPI,MOCK,VERSION_1.0"
+    with pytest.warns(FutureWarning):
+        assert adapter.ask("*IDN?") == "SCPI,MOCK,VERSION_1.0"
 
     adapter.write("*IDN?")
     assert adapter.read() == "SCPI,MOCK,VERSION_1.0"
 
 
 def test_visa_adapter_ask_values(adapter):
-    assert adapter.ask_values(":VOLT:IMM:AMPL?", separator=",") == [1.0]
-
-
-def test_visa_adapter_write_binary_values(adapter):
-    adapter.write_binary_values("OUTP", [1], datatype='B')
+    with pytest.warns(FutureWarning):
+        assert adapter.ask_values(":VOLT:IMM:AMPL?", separator=",") == [1.0]

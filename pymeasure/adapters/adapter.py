@@ -28,6 +28,7 @@ from time import sleep
 
 import numpy as np
 from copy import copy
+from pyvisa.util import to_ieee_block, to_hp_block, to_binary_block
 
 
 class Adapter:
@@ -201,7 +202,7 @@ class Adapter:
         return results
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Return a numpy array from a query for binary data
+        """ Returns a numpy array from a query for binary data
 
         .. deprecated:: 0.10
             Call `Instrument.binary_values` instead.
@@ -211,9 +212,61 @@ class Adapter:
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        warn("Deprecated, use `Instrument.binary_values` instead.", FutureWarning)
-        raise NotImplementedError("Adapter (sub)class has not implemented the "
-                                  "binary_values method")
+        warn("Deprecated, call `Instrument.binary_values` instead.",
+             FutureWarning)
+        self.write(command)
+        binary = self.read()
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:]
+        return np.fromstring(data, dtype=dtype)
+
+    # Binary format methods
+    def read_binary_values(self, header_bytes=0, termination_bytes=None,
+                           dtype=np.float32, **kwargs):
+        """ Returns a numpy array from a query for binary data
+
+        :param int header_bytes: Number of bytes to ignore in header.
+        :param int termination_bytes: Number of bytes to strip at end of message or None.
+        :param dtype: The NumPy data type to format the values with.
+        :param kwargs: Further arguments for the NumPy fromstring method.
+        :returns: NumPy array of values
+        """
+        binary = self.read_bytes(-1)
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:termination_bytes]
+        return np.fromstring(data, dtype=dtype)
+
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
+        """Format values in binary format, used internally in :meth:`.write_binary_values`.
+
+        :param values: data to be written to the device.
+        :param datatype: the format string for a single element. See struct module.
+        :param is_big_endian: boolean indicating endianess.
+        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
+        :return: binary string.
+        :rtype: bytes
+        """
+        if header_fmt == "ieee":
+            block = to_ieee_block(values, datatype, is_big_endian)
+        elif header_fmt == "hp":
+            block = to_hp_block(values, datatype, is_big_endian)
+        elif header_fmt == "empty":
+            block = to_binary_block(values, b"", datatype, is_big_endian)
+        else:
+            raise ValueError("Unsupported header_fmt: %s" % header_fmt)
+        return block
+
+    def write_binary_values(self, command, values, termination="", **kwargs):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: command string to be sent to the instrument
+        :param values: iterable representing the binary values
+        :param termination: String added afterwards to terminate the message.
+        :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
+        :returns: number of bytes written
+        """
+        block = self._format_binary_values(values, **kwargs)
+        return self.write_bytes(command.encode() + block + termination.encode())
 
 
 class FakeAdapter(Adapter):

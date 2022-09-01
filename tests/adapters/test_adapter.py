@@ -81,7 +81,7 @@ def test_wait_global(fake):
     fake.query_delay = 0.05
     fake.wait_till_read()
     stop = time.perf_counter()
-    assert start + 0.05 < stop and stop < start + 0.07
+    assert start + 0.05 < stop and stop < start + 0.10
 
 
 def test_wait_parameter(fake):
@@ -89,7 +89,7 @@ def test_wait_parameter(fake):
     start = time.perf_counter()
     fake.wait_till_read(0.05)
     stop = time.perf_counter()
-    assert start + 0.05 < stop and stop < start + 0.07
+    assert start + 0.05 < stop and stop < start + 0.10
 
 
 def test_wait_sum(fake):
@@ -98,7 +98,7 @@ def test_wait_sum(fake):
     fake.query_delay = 0.05
     fake.wait_till_read(0.05)
     stop = time.perf_counter()
-    assert start + 0.1 < stop and stop < start + 0.12
+    assert start + 0.1 < stop and stop < start + 0.15
 
 
 def test_read(fake):
@@ -156,5 +156,4 @@ def test_adapter_preprocess_reply():
 def test_binary_values_deprecation_warning():
     a = FakeAdapter()
     with pytest.warns(FutureWarning):
-        with pytest.raises(NotImplementedError):
-            a.binary_values("abc")
+        a.binary_values("abcdefgh")

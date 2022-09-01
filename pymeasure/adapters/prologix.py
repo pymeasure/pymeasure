@@ -26,25 +26,30 @@ from warnings import warn
 
 import serial
 
-from .serial import SerialAdapter
+from pymeasure.adapters import VISAAdapter
 
 
-class PrologixAdapter(SerialAdapter):
+class PrologixAdapter(VISAAdapter):
     """ Encapsulates the additional commands necessary
     to communicate over a Prologix GPIB-USB Adapter,
-    using the SerialAdapter.
+    using the :class:`VISAAdapter`.
 
     Each PrologixAdapter is constructed based on a serial port or
     connection and the GPIB address to be communicated to.
     Serial connection sharing is achieved by using the :meth:`.gpib`
     method to spawn new PrologixAdapters for different GPIB addresses.
 
-    :param port: The Serial port name or a serial.Serial object
+    :param port: The Serial port name or a connection object
     :param address: Integer GPIB address of the desired instrument
     :param rw_delay: (deprecated) An optional delay to set between a write and read call for
         slow to respond instruments. Use "query_delay" instead.
-    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
+    :param preprocess_reply: optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated :: 0.10
+            Implement it in the instrument's `read` method instead.
+
     :param kwargs: Key-word arguments if constructing a new serial object
 
     :ivar address: Integer GPIB address of the desired instrument
@@ -65,20 +70,23 @@ class PrologixAdapter(SerialAdapter):
 
     """
 
-    def __init__(self, port, address=None, rw_delay=0, serial_timeout=0.5,
+    def __init__(self, port, address=None, rw_delay=0, serial_timeout=None,
                  preprocess_reply=None, **kwargs):
-        kwargs.setdefault('write_termination', "\n")
         # for legacy rw_delay: prefer new style over old one.
-        query_delay = kwargs.pop('query_delay', rw_delay)
-        if query_delay is None:
-            query_delay = 0
-        super().__init__(port, timeout=serial_timeout,
-                         preprocess_reply=preprocess_reply,
-                         query_delay=query_delay,
-                         **kwargs)
-        self.address = address
         if rw_delay:
             warn("Use 'query_delay' instead.", FutureWarning)
+            kwargs['query_delay'] = rw_delay
+        if serial_timeout:
+            warn("Use 'timeout' in ms instead", FutureWarning)
+            kwargs['timeout'] = serial_timeout
+        super().__init__(port,
+                         asrl={
+                             'timeout': 500,
+                             'write_termination': "\n",
+                         },
+                         preprocess_reply=preprocess_reply,
+                         **kwargs)
+        self.address = address
         if not isinstance(port, serial.Serial):
             self.set_defaults()
 
@@ -104,7 +112,7 @@ class PrologixAdapter(SerialAdapter):
         self.wait_till_read()
         return self.read()
 
-    def _write(self, command, **kwargs):
+    def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
         If the GPIB address in :attr:`.address` is defined, it is sent first.
@@ -114,10 +122,8 @@ class PrologixAdapter(SerialAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         """
         if self.address is not None:
-            address_command = "++addr %d" % self.address
-            super()._write(address_command)
-            self.log.debug(("WRITE:", address_command))  # To log all communication.
-        super()._write(command)
+            super().write("++addr %d" % self.address, **kwargs)
+        super().write(command, **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
@@ -156,21 +162,16 @@ class PrologixAdapter(SerialAdapter):
         values are encoded in a binary format according to
         IEEE 488.2 Definite Length Arbitrary Block Response Data block.
 
-        .. deprecated:: 0.10
-            Implement the code in the instrument itself.
-
         :param command: SCPI command to be sent to the instrument
         :param values: iterable representing the binary values
         :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
         :returns: number of bytes written
         """
-        warn("Deprecated, implement it in the instrument itself.",
-             FutureWarning)
         if self.address is not None:
             address_command = "++addr %d\n" % self.address
             self.write(address_command)
         super().write_binary_values(command, values, **kwargs)
-        self.connection.write(b'\n')
+        self.connection.write_bytes(b'\n')
 
     def _read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
@@ -182,7 +183,7 @@ class PrologixAdapter(SerialAdapter):
         return super()._read()
 
     def gpib(self, address, query_delay=0, **kwargs):
-        """ Returns and PrologixAdapter object that references the GPIB
+        """ Returns an PrologixAdapter object that references the GPIB
         address specified, while sharing the Serial connection with other
         calls of this function
 
@@ -212,9 +213,10 @@ class PrologixAdapter(SerialAdapter):
                 raise TimeoutError("Waiting for SRQ timed out.")
             time.sleep(delay)
 
-    def __repr__(self):
-        if self.address is not None:
-            return "<PrologixAdapter(port='%s',address=%d)>" % (
-                self.connection.port, self.address)
-        else:
-            return "<PrologixAdapter(port='%s')>" % self.connection.port
+    # TODO adjust for VISA
+    # def __repr__(self):
+    #     if self.address is not None:
+    #         return "<PrologixAdapter(port='%s',address=%d)>" % (
+    #             self.connection.port, self.address)
+    #     else:
+    #         return "<PrologixAdapter(port='%s')>" % self.connection.port

@@ -272,8 +272,9 @@ class Instrument:
         """ Writes the command to the instrument through the adapter
         and returns the read response.
 
-        :param command: Command string to be sent to the instrument
+        :param command: Command string to be sent to the instrument.
         :param delay: Delay between writing and reading in seconds.
+        :returns: String returned by the device without read_termination.
         """
         self.write(command)
         self.adapter.wait_till_read(delay)
@@ -307,21 +308,17 @@ class Instrument:
                 pass  # Keep as string
         return results
 
-    def binary_values(self, command, header_bytes=0, dtype=np.float32, **kwargs):
+    def binary_values(self, command, delay=0, **kwargs):
         """ Returns a numpy array from a query for binary data.
 
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :param kwargs: Further arguments for the NumPy fromstring method.
+        :param command: Command to be sent to the instrument.
+        :param delay: Delay between writing and reading in seconds.
+        :param kwargs: Arguments for :meth:`Adapter.read_binary_values`.
         :returns: NumPy array of values
         """
-        # TODO verify implementation, keep it in Instrument?
         self.write(command)
-        binary = self.read()
-        # header = binary[:header_bytes]
-        data = binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype, **kwargs)
+        self.adapter.wait_till_read()
+        return self.adapter.read_binary_values(**kwargs)
 
     # Property creators
     @staticmethod

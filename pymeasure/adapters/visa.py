@@ -29,7 +29,7 @@ import pyvisa
 import numpy as np
 from pkg_resources import parse_version
 
-from .adapter import Adapter
+from pymeasure.adapters import Adapter, ProtocolAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -78,7 +78,16 @@ class VISAAdapter(Adapter):
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
-        if isinstance(resource_name, int):
+        if isinstance(resource_name, ProtocolAdapter):
+            self.connection = resource_name
+            self.connection.write_raw = self.connection.write_bytes
+            return
+        elif isinstance(resource_name, VISAAdapter):
+            # Allow to reuse the connection.
+            self.resource_name = getattr(resource_name, "resource_name", None)
+            self.connection = resource_name.connection
+            return
+        elif isinstance(resource_name, int):
             resource_name = "GPIB0::%d::INSTR" % resource_name
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
@@ -194,21 +203,6 @@ class VISAAdapter(Adapter):
         # header = binary[:header_bytes]
         data = binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
-
-    def write_binary_values(self, command, values, **kwargs):
-        """ Write binary data to the instrument, e.g. waveform for signal generators
-
-        .. deprecated:: 0.10
-            Implement the code in the instrument itself.
-
-        :param command: SCPI command to be sent to the instrument
-        :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto `write_binary_values`
-        :returns: number of bytes written
-        """
-        warn("Deprecated, implement it in the instrument itself.",
-             FutureWarning)
-        return self.connection.write_binary_values(command, values, **kwargs)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Block until a SRQ, and leave the bit high

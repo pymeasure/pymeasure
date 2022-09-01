@@ -26,8 +26,6 @@ import logging
 from warnings import warn
 
 import serial
-import numpy as np
-from pyvisa.util import to_ieee_block, to_hp_block, to_binary_block
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)
@@ -104,67 +102,6 @@ class SerialAdapter(Adapter):
                 return b"\n".join(self.connection.readlines(**kwargs))
         else:
             return self.connection.read(count, **kwargs)
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data
-
-        .. deprecated:: 0.10
-            Call `Instrument.binary_values` instead.
-
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
-        """
-        warn("Deprecated, call `Instrument.binary_values` instead.",
-             FutureWarning)
-        self.connection.write(command.encode())
-        binary = self.connection.read().decode()
-        # header = binary[:header_bytes]
-        data = binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
-
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
-        """Format values in binary format, used internally in :meth:`.write_binary_values`.
-
-        .. deprecated:: 0.10
-            Implement the code in the instrument itself.
-
-        :param values: data to be written to the device.
-        :param datatype: the format string for a single element. See struct module.
-        :param is_big_endian: boolean indicating endianess.
-        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
-        :return: binary string.
-        :rtype: bytes
-        """
-        warn("Deprecated, implement it in the instrument itself.",
-             FutureWarning)
-        if header_fmt == "ieee":
-            block = to_ieee_block(values, datatype, is_big_endian)
-        elif header_fmt == "hp":
-            block = to_hp_block(values, datatype, is_big_endian)
-        elif header_fmt == "empty":
-            block = to_binary_block(values, b"", datatype, is_big_endian)
-        else:
-            raise ValueError("Unsupported header_fmt: %s" % header_fmt)
-
-        return block
-
-    def write_binary_values(self, command, values, **kwargs):
-        """ Write binary data to the instrument, e.g. waveform for signal generators
-
-        .. deprecated:: 0.10
-            Implement the code in the instrument itself.
-
-        :param command: SCPI command to be sent to the instrument
-        :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
-        :returns: number of bytes written
-        """
-        warn("Deprecated, implement it in the instrument itself.",
-             FutureWarning)
-        block = self._format_binary_values(values, **kwargs)
-        return self.connection.write(command.encode() + block)
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port
