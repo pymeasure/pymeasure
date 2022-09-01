@@ -24,8 +24,6 @@
 import time
 from warnings import warn
 
-import serial
-
 from pymeasure.adapters import VISAAdapter
 
 
@@ -70,7 +68,7 @@ class PrologixAdapter(VISAAdapter):
 
     """
 
-    def __init__(self, port, address=None, rw_delay=0, serial_timeout=None,
+    def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
                  preprocess_reply=None, **kwargs):
         # for legacy rw_delay: prefer new style over old one.
         if rw_delay:
@@ -79,7 +77,7 @@ class PrologixAdapter(VISAAdapter):
         if serial_timeout:
             warn("Use 'timeout' in ms instead", FutureWarning)
             kwargs['timeout'] = serial_timeout
-        super().__init__(port,
+        super().__init__(resource_name,
                          asrl={
                              'timeout': 500,
                              'write_termination': "\n",
@@ -87,7 +85,7 @@ class PrologixAdapter(VISAAdapter):
                          preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
-        if not isinstance(port, serial.Serial):
+        if not isinstance(resource_name, PrologixAdapter):
             self.set_defaults()
 
     def set_defaults(self):
@@ -121,7 +119,7 @@ class PrologixAdapter(VISAAdapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
-        if self.address is not None:
+        if self.address is not None and not command.startswith("++"):
             super().write("++addr %d" % self.address, **kwargs)
         super().write(command, **kwargs)
 
@@ -138,8 +136,6 @@ class PrologixAdapter(VISAAdapter):
         :return: binary string.
         :rtype: bytes
         """
-        # TODO store that information somewhere in the adapter
-
         block = super()._format_binary_values(values, datatype, is_big_endian, header_fmt)
         # Prologix needs certian characters to be escaped.
         # Special care must be taken when sending binary data to instruments. If any of the
@@ -170,8 +166,7 @@ class PrologixAdapter(VISAAdapter):
         if self.address is not None:
             address_command = "++addr %d\n" % self.address
             self.write(address_command)
-        super().write_binary_values(command, values, **kwargs)
-        self.connection.write_bytes(b'\n')
+        super().write_binary_values(command, values, "\n", **kwargs)
 
     def _read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
@@ -192,7 +187,7 @@ class PrologixAdapter(VISAAdapter):
         :returns: PrologixAdapter for specific GPIB address
         """
         query_delay = query_delay or kwargs.pop('rw_delay', 0) or self.query_delay
-        return PrologixAdapter(self.connection, address, query_delay=query_delay)
+        return PrologixAdapter(self, address, query_delay=query_delay)
 
     def _check_for_srq(self):
         # it was int(self.ask("++srq"))
@@ -213,10 +208,9 @@ class PrologixAdapter(VISAAdapter):
                 raise TimeoutError("Waiting for SRQ timed out.")
             time.sleep(delay)
 
-    # TODO adjust for VISA
-    # def __repr__(self):
-    #     if self.address is not None:
-    #         return "<PrologixAdapter(port='%s',address=%d)>" % (
-    #             self.connection.port, self.address)
-    #     else:
-    #         return "<PrologixAdapter(port='%s')>" % self.connection.port
+    def __repr__(self):
+        if self.address is not None:
+            return "<PrologixAdapter(resource_name='%s',address=%d)>" % (
+                self.connection.resource_name, self.address)
+        else:
+            return "<PrologixAdapter(resource_name='%s')>" % self.connection.resource_name
