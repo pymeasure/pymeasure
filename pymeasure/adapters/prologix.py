@@ -177,17 +177,16 @@ class PrologixAdapter(VISAAdapter):
         self.write("++read eoi")
         return super()._read()
 
-    def gpib(self, address, query_delay=0, **kwargs):
+    def gpib(self, address, **kwargs):
         """ Returns an PrologixAdapter object that references the GPIB
         address specified, while sharing the Serial connection with other
         calls of this function
 
         :param address: Integer GPIB address of the desired instrument
-        :param query_delay: Set a custom Read/Write delay for the instrument
+        :param kwargs: Arguments for the initialization
         :returns: PrologixAdapter for specific GPIB address
         """
-        query_delay = query_delay or kwargs.pop('rw_delay', 0) or self.query_delay
-        return PrologixAdapter(self, address, query_delay=query_delay)
+        return PrologixAdapter(self, address, **kwargs)
 
     def _check_for_srq(self):
         # it was int(self.ask("++srq"))
@@ -210,7 +209,7 @@ class PrologixAdapter(VISAAdapter):
 
     def __repr__(self):
         if self.address is not None:
-            return "<PrologixAdapter(resource_name='%s',address=%d)>" % (
-                self.connection.resource_name, self.address)
+            return (f"<PrologixAdapter(resource_name='{self.connection.resource_name}', "
+                    f"address={self.address:d})>")
         else:
-            return "<PrologixAdapter(resource_name='%s')>" % self.connection.resource_name
+            return f"<PrologixAdapter(resource_name='{self.connection.resource_name}')>"

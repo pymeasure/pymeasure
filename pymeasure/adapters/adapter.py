@@ -237,7 +237,7 @@ class Adapter:
         return np.fromstring(data, dtype=dtype)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
-        """Format values in binary format, used internally in :meth:`.write_binary_values`.
+        """Format values in binary format, used internally in :meth:`Adapter.write_binary_values`.
 
         :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
@@ -262,7 +262,7 @@ class Adapter:
         :param command: command string to be sent to the instrument
         :param values: iterable representing the binary values
         :param termination: String added afterwards to terminate the message.
-        :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
+        :param kwargs: Key-word arguments to pass onto :meth:`Adapter._format_binary_values`
         :returns: number of bytes written
         """
         block = self._format_binary_values(values, **kwargs)

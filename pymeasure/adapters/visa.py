@@ -48,6 +48,8 @@ class VISAAdapter(Adapter):
         string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
     :param preprocess_reply: (deprecated) optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
+    :param float query_delay: Time in s to wait after writing and before reading.
+    :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
 
     :Kwargs:
@@ -59,7 +61,7 @@ class VISAAdapter(Adapter):
         different instrument interfaces, but also enable the instrument user to *override any
         setting* if their situation demands it.
 
-        A kwarg that names a pyVISA interface type (most commonly ``asrl``, ``gpib``, ``tcpip`` or
+        A kwarg that names a pyVISA interface type (most commonly ``asrl``, ``gpib``, ``tcpip``, or
         ``usb``) is a dictionary with keyword arguments defining defaults specific to that
         interface. Example: ``asrl={'baud_rate': 4200}``.
 
@@ -73,19 +75,22 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply)
+    def __init__(self, resource_name, visa_library='', preprocess_reply=None,
+                 query_delay=0, log=None, **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply, log=log, query_delay=query_delay)
         if not VISAAdapter.has_supported_version():
             raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
 
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name
             self.connection.write_raw = self.connection.write_bytes
+            self.read_bytes = self.connection.read_bytes
             return
         elif isinstance(resource_name, VISAAdapter):
             # Allow to reuse the connection.
             self.resource_name = getattr(resource_name, "resource_name", None)
             self.connection = resource_name.connection
+            self.query_delay = resource_name.query_delay
             return
         elif isinstance(resource_name, int):
             resource_name = "GPIB0::%d::INSTR" % resource_name

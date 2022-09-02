@@ -23,7 +23,6 @@
 #
 
 import logging
-from warnings import warn
 
 import serial
 from .adapter import Adapter

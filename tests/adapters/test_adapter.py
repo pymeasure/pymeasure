@@ -28,7 +28,7 @@ from unittest import mock
 
 import pytest
 
-from pymeasure.adapters import Adapter, FakeAdapter
+from pymeasure.adapters import Adapter, FakeAdapter, ProtocolAdapter
 
 
 @pytest.fixture()
@@ -139,6 +139,16 @@ def test_adapter_values(value, kwargs, result):
     a = FakeAdapter()
     with pytest.warns(FutureWarning):
         assert a.values(value, **kwargs) == result
+
+
+def test_read_binary_values():
+    a = ProtocolAdapter([(None, "abcdefgh")])
+    assert list(a.read_binary_values()) == pytest.approx([1.6777999e+22, 4.371022e+24])
+
+
+def test_write_binary_values():
+    a = ProtocolAdapter([(b'CMD#212\x00\x00\x80?\x00\x00\x00@\x00\x00@@\n', None)])
+    a.write_binary_values("CMD", [1, 2, 3], termination="\n")
 
 
 def test_adapter_preprocess_reply():

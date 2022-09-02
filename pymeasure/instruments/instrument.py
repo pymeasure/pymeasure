@@ -24,7 +24,6 @@
 
 import logging
 
-import numpy as np
 from pymeasure.adapters.visa import VISAAdapter
 
 log = logging.getLogger(__name__)

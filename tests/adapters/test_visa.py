@@ -24,10 +24,9 @@
 import importlib.util
 
 import pytest
-from pytest import approx
 
 from pymeasure.adapters import VISAAdapter
-from pymeasure.instruments import Instrument
+from pymeasure.test import expected_protocol
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
 SIM_RESOURCE = 'ASRL2::INSTR'
@@ -59,15 +58,20 @@ def test_fail_on_old_visa_version(monkeypatch):
 
 
 def test_nested_adapter(adapter):
+    adapter.query_delay = 10
     a = VISAAdapter(adapter)
     assert a.resource_name == SIM_RESOURCE
     assert a.connection == adapter.connection
+    assert a.query_delay == 10
 
 
-def test_correct_visa_kwarg():
-    """Confirm that the query_delay kwargs gets passed through to the VISA connection."""
-    instr = Instrument(adapter=SIM_RESOURCE, name='delayed', query_delay=0.5, visa_library='@sim')
-    assert instr.adapter.connection.query_delay == approx(0.5)
+def test_ProtocolAdapter():
+    with expected_protocol(
+            VISAAdapter,
+            [(b"some bytes written", b"Response")]
+    ) as adapter:
+        adapter.write_bytes(b"some bytes written")
+        assert adapter.read_bytes(-1) == b"Response"
 
 
 def test_correct_visa_asrl_kwarg():
