@@ -23,7 +23,6 @@
 #
 
 import logging
-import time
 from unittest import mock
 
 import pytest
@@ -42,9 +41,8 @@ def fake():
 
 
 def test_init():
-    adapter = Adapter(query_delay=123)
+    adapter = Adapter()
     assert adapter.connection is None
-    assert adapter.query_delay == 123
     assert adapter.log == logging.getLogger("Adapter")
 
 
@@ -75,32 +73,6 @@ def test_write_bytes(fake):
     assert fake._buffer == "abc"
 
 
-def test_wait_global(fake):
-    "With a global delay."
-    start = time.perf_counter()
-    fake.query_delay = 0.05
-    fake.wait_till_read()
-    stop = time.perf_counter()
-    assert start + 0.05 < stop and stop < start + 0.10
-
-
-def test_wait_parameter(fake):
-    "With a parameter delay."
-    start = time.perf_counter()
-    fake.wait_till_read(0.05)
-    stop = time.perf_counter()
-    assert start + 0.05 < stop and stop < start + 0.10
-
-
-def test_wait_sum(fake):
-    "With the sum of global and parameter delay."
-    start = time.perf_counter()
-    fake.query_delay = 0.05
-    fake.wait_till_read(0.05)
-    stop = time.perf_counter()
-    assert start + 0.1 < stop and stop < start + 0.15
-
-
 def test_read(fake):
     fake._buffer = "abc"
     assert fake.read() == "abc"
@@ -111,10 +83,11 @@ def test_read_bytes(fake):
     assert fake.read_bytes(5) == b"abc"
 
 
-@pytest.mark.parametrize("method, args", (['_write', ['5']], ['_read', []],
+@pytest.mark.parametrize("method, args", (['_write', ['5']],
+                                          ['_read', []],
                                           ['_write_bytes', ['8']],
                                           ['_read_bytes', ['5']],
-                                          ['binary_values', ['5']]))
+                                          ))
 def test_not_implemented_methods(adapter, method, args):
     with pytest.raises(NotImplementedError):
         getattr(adapter, method)(*args)

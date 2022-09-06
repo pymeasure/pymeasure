@@ -245,38 +245,47 @@ class Instrument:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     # Wrapper functions for the Adapter object
-    def write(self, command):
-        """ Writes the command to the instrument through the adapter.
+    def write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
 
         :param command: command string to be sent to the instrument
+        :param kwargs: Keyword arguments for the adapter.
         """
-        self.adapter.write(command)
+        self.adapter.write(command, **kwargs)
 
-    def write_bytes(self, content):
-        """Write raw bytes to the instrument."""
-        self.adapter.write_bytes(content)
+    def write_bytes(self, content, **kwargs):
+        """Write the bytes `content` to the instrument."""
+        self.adapter.write_bytes(content, **kwargs)
 
-    def read(self):
-        """ Reads from the instrument through the adapter and returns the
-        response.
+    def read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer."""
+        return self.adapter.read(**kwargs)
+
+    def read_bytes(self, count, **kwargs):
+        """Read a certain number of bytes from the instrument.
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
+        :param kwargs: Keyword arguments for the adapter.
+        :returns bytes: Bytes response of the instrument (including termination).
         """
-        return self.adapter.read()
-
-    def read_bytes(self, count):
-        """Read `count` number of bytes."""
-        return self.adapter.read_bytes(count)
+        return self.adapter.read_bytes(count, **kwargs)
 
     # Communication functions
-    def ask(self, command, delay=0):
+    def wait_till_read(self, query_delay=0):
+        """Wait a moment before reading. Implement in subclass!"""
+        pass
+
+    def ask(self, command, query_delay=0):
         """ Writes the command to the instrument through the adapter
         and returns the read response.
 
         :param command: Command string to be sent to the instrument.
-        :param delay: Delay between writing and reading in seconds.
+        :param query_delay: Delay between writing and reading in seconds.
         :returns: String returned by the device without read_termination.
         """
         self.write(command)
-        self.adapter.wait_till_read(delay)
+        self.wait_till_read(query_delay)
         return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
@@ -307,16 +316,16 @@ class Instrument:
                 pass  # Keep as string
         return results
 
-    def binary_values(self, command, delay=0, **kwargs):
+    def binary_values(self, command, query_delay=0, **kwargs):
         """ Returns a numpy array from a query for binary data.
 
         :param command: Command to be sent to the instrument.
-        :param delay: Delay between writing and reading in seconds.
+        :param query_delay: Delay between writing and reading in seconds.
         :param kwargs: Arguments for :meth:`Adapter.read_binary_values`.
         :returns: NumPy array of values
         """
         self.write(command)
-        self.adapter.wait_till_read()
+        self.wait_till_read(query_delay)
         return self.adapter.read_binary_values(**kwargs)
 
     # Property creators

@@ -126,9 +126,6 @@ class PrologixAdapter(VISAAdapter):
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
-        .. deprecated:: 0.10
-            Implement the code in the instrument itself.
-
         :param values: data to be writen to the device.
         :param datatype: the format string for a single element. See struct module.
         :param is_big_endian: boolean indicating endianess.
@@ -191,7 +188,6 @@ class PrologixAdapter(VISAAdapter):
     def _check_for_srq(self):
         # it was int(self.ask("++srq"))
         self.write("++srq")
-        self.wait_till_read()
         return int(self.read())
 
     def wait_for_srq(self, timeout=25, delay=0.1):

@@ -24,7 +24,6 @@
 
 import logging
 from warnings import warn
-from time import sleep
 
 import numpy as np
 from copy import copy
@@ -45,14 +44,12 @@ class Adapter:
         .. deprecated :: 0.10
             Implement it in the instrument's `read` method instead.
 
-    :param float query_delay: Time in s to wait after writing and before reading.
     :param log: Parent logger of the 'Adapter' logger.
     :param kwargs: all other keyword arguments are ignored.
     """
 
-    def __init__(self, preprocess_reply=None, query_delay=0, log=None, **kwargs):
+    def __init__(self, preprocess_reply=None, log=None, **kwargs):
         self.preprocess_reply = preprocess_reply
-        self.query_delay = query_delay
         self.connection = None
         if log is None:
             self.log = logging.getLogger("Adapter")
@@ -95,15 +92,6 @@ class Adapter:
         """
         self.log.debug("WRITE:%s", content)
         self._write_bytes(content, **kwargs)
-
-    def wait_till_read(self, query_delay=0):
-        """Wait after writing and before reading.
-
-        :param float delay: Time in s to wait additionally to `Adapter.delay`.
-        """
-        query_delay += self.query_delay
-        if query_delay:
-            sleep(query_delay)
 
     def read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.

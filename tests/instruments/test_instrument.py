@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-import time
 from unittest import mock
 
 import pytest
@@ -31,7 +30,7 @@ from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.instrument import DynamicProperty
-from pymeasure.adapters import FakeAdapter
+from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
@@ -130,6 +129,30 @@ class TestInstrumentCommunication:
         assert instr.adapter.method_calls == [mock.call.read_bytes(5)]
 
 
+class TestWaiting:
+    @pytest.fixture()
+    def instr(self):
+        class Faked(Instrument):
+            def wait_till_read(self, query_delay=0):
+                self.waited = query_delay
+        return Faked(ProtocolAdapter(), name="faked")
+
+    def test_ask(self, instr):
+        instr.adapter.comm_pairs = [("abc", "resp")]
+        instr.ask("abc")
+        assert instr.waited == 0
+
+    def test_ask_time(self, instr):
+        instr.adapter.comm_pairs = [("abc", "resp")]
+        instr.ask("abc", query_delay=10)
+        assert instr.waited == 10
+
+    def test_binary_values(self, instr):
+        instr.adapter.comm_pairs = [("abc", "abcdefgh")]
+        instr.binary_values("abc")
+        assert instr.waited == 0
+
+
 @pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),
                                                   ("complete", "*OPC?", "1"),
                                                   ("status", "*STB?", "189"),
@@ -184,14 +207,6 @@ def test_SCPI_false_raises_errors(method):
 def test_values(value, kwargs, result):
     instr = Instrument(FakeAdapter(), "test")
     assert instr.values(value, **kwargs) == result
-
-
-def test_adapter_wait():
-    instr = Instrument(FakeAdapter(), "test")
-    start = time.perf_counter()
-    instr.ask("anything", delay=0.05)
-    stop = time.perf_counter()
-    assert start + 0.05 < stop and stop < start + 0.1
 
 
 # Testing Instrument.control
