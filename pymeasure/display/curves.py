@@ -172,7 +172,7 @@ class Crosshairs(QtCore.QObject):
         """ Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
-        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
+        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.PenStyle.DashLine)
         """
         super().__init__()
 

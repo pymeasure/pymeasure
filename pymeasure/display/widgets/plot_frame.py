@@ -58,8 +58,8 @@ class PlotFrame(QtWidgets.QFrame):
     def _setup_ui(self):
         self.setAutoFillBackground(False)
         self.setStyleSheet("background: #fff")
-        self.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
         self.setMidLineWidth(1)
 
         vbox = QtWidgets.QVBoxLayout(self)
@@ -70,7 +70,9 @@ class PlotFrame(QtWidgets.QFrame):
         self.coordinates.setStyleSheet("background: #fff")
         self.coordinates.setText("")
         self.coordinates.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+            QtCore.Qt.AlignmentFlag.AlignRight |
+            QtCore.Qt.AlignmentFlag.AlignTrailing |
+            QtCore.Qt.AlignmentFlag.AlignVCenter)
 
         vbox.addWidget(self.plot_widget)
         vbox.addWidget(self.coordinates)
@@ -79,7 +81,8 @@ class PlotFrame(QtWidgets.QFrame):
         self.plot = self.plot_widget.getPlotItem()
 
         self.crosshairs = Crosshairs(self.plot,
-                                     pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
+                                     pen=pg.mkPen(color='#AAAAAA',
+                                                  style=QtCore.Qt.PenStyle.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
         self.timer = QtCore.QTimer()

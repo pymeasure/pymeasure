@@ -41,11 +41,13 @@ class DirectoryLineEdit(QtWidgets.QLineEdit):
         super().__init__(parent=parent)
 
         completer = QtWidgets.QCompleter(self)
-        completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+        completer.setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
 
         model = QtWidgets.QDirModel(completer)
-        model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives |
-                        QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+        model.setFilter(QtCore.QDir.Filter.Dirs |
+                        QtCore.QDir.Filter.Drives |
+                        QtCore.QDir.Filter.NoDotAndDotDot |
+                        QtCore.QDir.Filter.AllDirs)
         completer.setModel(model)
 
         self.setCompleter(completer)
@@ -55,7 +57,7 @@ class DirectoryLineEdit(QtWidgets.QLineEdit):
             getattr(QtWidgets.QStyle, 'SP_DialogOpenButton')))
         browse_action.triggered.connect(self.browse_triggered)
 
-        self.addAction(browse_action, QtWidgets.QLineEdit.TrailingPosition)
+        self.addAction(browse_action, QtWidgets.QLineEdit.ActionPosition.TrailingPosition)
 
     def _get_starting_directory(self):
         current_text = self.text()
