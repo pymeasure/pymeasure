@@ -31,6 +31,11 @@ log.addHandler(logging.NullHandler())
 
 QtCore.QSignal = QtCore.Signal
 
+# Should be removed when PySide2 provides QtWidgets.QApplication.exec() or when support for PySide2
+# is dropped
+if not hasattr(QtWidgets.QApplication, 'exec'):
+    QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_
+
 
 def fromUi(*args, **kwargs):
     """ Returns a Qt object constructed using loadUiType
