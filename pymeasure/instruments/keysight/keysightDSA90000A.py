@@ -419,11 +419,11 @@ class KeysightDSA90000A(Instrument):
         ":DIGitize %s",
         """ Acquire waveforms according to the settings of the :ACQuire commands and specified source,
          as a string parameter that can take the following values: "channel1", "channel2", "channel3", "channel4"
-          "function", "math", "fft", "abus", or "ext". """,
+          "function", "math", "fft", "abus", or "ext", "current". """,
         validator=strict_discrete_set,
         values={"channel1": "CHAN1", "channel2": "CHAN2","channel3": "CHAN3",
                 "channel4": "CHAN4", "function": "FUNC", "math": "MATH",
-                "fft": "FFT", "abus": "ABUS", "ext": "EXT"},
+                "fft": "FFT", "abus": "ABUS", "ext": "EXT", "current": ''},
         map_values=True
     )
 
@@ -431,7 +431,7 @@ class KeysightDSA90000A(Instrument):
         """ Acquire waveforms according to the settings of the :ACQuire commands. Ensure a delay
         between the digitize operation and further commands, as timeout may be reached before
         digitize has completed.
-        :param source: "channel1", "channel2", "function", "math", "fft", "abus", or "ext"."""
+        :param source: "channel1", "channel2", "function", "math", "fft", "abus", "ext", or "current."""
         self._digitize = source
 
     waveform_points_mode = Instrument.measurement(

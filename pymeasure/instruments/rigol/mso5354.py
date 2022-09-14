@@ -228,14 +228,6 @@ class RigolMSO5354(Instrument):
          'AUTO', or the integer corresponding to '1k', '10k', '100k', '1M', '25M', '50M', '100M', '200M'""",
     )
 
-    acquisition_mode = Instrument.control(
-        ":ACQuire:MODE?", ":ACQuire:MODE %s",
-        """ A string parameter that sets the acquisition mode. Can be "realtime" or "segmented".""",
-        validator=strict_discrete_set,
-        values={"realtime": "RTIM", "segmented": "SEGM"},
-        map_values=True
-    )
-
     acquisition_type = Instrument.control(
         ":ACQuire:TYPE?", ":ACQuire:TYPE %s",
         """ A string parameter that sets the type of data acquisition. Can be "normal", "average", or "peak".""",
@@ -287,7 +279,7 @@ class RigolMSO5354(Instrument):
         pressing the single button or running the self.single() method.
          """,
         validator=strict_discrete_set,
-        values={"auto": "AUTO", "normal": "NORMal", "single": "SINGle"},
+        values={"auto": "AUTO", "normal": "NORM", "single": "SING"},
         map_values=True
     )
 
