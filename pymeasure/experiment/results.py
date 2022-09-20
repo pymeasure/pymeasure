@@ -264,7 +264,7 @@ class Results:
             for filename in self.data_filenames:
                 with open(filename, 'w') as f:
                     if self.output_format == 'JSON':
-
+                        json.dump({self.formatter.key:{c:[] for c in self.procedure.DATA_COLUMNS}},f)
                         # Need empty file for JSON, we dump everything all at once
                         self._header_count = 0
                     else:

@@ -30,7 +30,7 @@ log.addHandler(logging.NullHandler())
 import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from time import sleep
+from time import sleep, time
 
 class Channel():
     """ Implementation of a Keysight DSA 90000A Oscilloscope channel. Note, that is
@@ -406,13 +406,35 @@ class KeysightDSA90000A(Instrument):
 
     @property
     def pder(self):
-        return self.ask(':PDER?')
+        return int(self.ask(':PDER?'))
 
-    def wait_for_op(self, tdelta=.1, n_it=1000 ):
+    def wait_for_acquisition(self, tdelta=.1, n_it=1000 ):
         breaker = 0
         while self.pder == 0 and breaker < n_it:
             sleep(tdelta)
             breaker = breaker + 1
+
+    def wait_for_op(self, timeout=10, should_stop=lambda : False):
+        self.write("*OPC?")
+
+        t0 = time()
+        while True:
+            try:
+                ready = bool(self.read())
+            except VisaIOError:
+                ready = False
+
+            if ready:
+                return
+
+            if timeout != 0 and time() - t0 > timeout:
+                raise TimeoutError(
+                    "Timeout expired while waiting for the Agilent 33220A" +
+                    " to finish the triggering."
+                )
+
+            if should_stop():
+                return
 
 
     _digitize = Instrument.setting(
