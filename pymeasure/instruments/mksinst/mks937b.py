@@ -64,7 +64,7 @@ class MKS937B(Instrument):
     initialization. Since ';FF' is not supported by pyvisa as terminator this
     class overloads the device communication methods.
 
-    :param adapter: pyvisa resource name of the instrument or 
+    :param adapter: pyvisa resource name of the instrument or adapter instance
     :param address: device address included in every message to the instrument
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
