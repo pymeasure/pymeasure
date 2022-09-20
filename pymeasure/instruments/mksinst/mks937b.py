@@ -99,9 +99,9 @@ class MKS937B(Instrument):
             return rvalue.group('msg')
         return reply
 
-    def _command_process(self, cmd):
+    def _prepend_process(self, cmd):
         """
-        create command string by adding device address
+        create command string by including the device address
         """
         return f"@{self.address:03d}{cmd}"
 
@@ -127,7 +127,7 @@ class MKS937B(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        super().write(self._command_process(command))
+        super().write(self._prepend_process(command))
 
     def values(self, command, **kwargs):
         """
@@ -138,7 +138,7 @@ class MKS937B(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        ret = super().values(self._command_process(command), **kwargs)
+        ret = super().values(self._prepend_process(command), **kwargs)
         self._check_extra_termination()
         return ret
 
