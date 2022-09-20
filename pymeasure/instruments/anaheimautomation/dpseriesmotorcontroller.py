@@ -182,7 +182,7 @@ class DPSeriesMotorController(Instrument):
             logging.error("DP-Series motor controller error detected: %s" % current_errors)
         return current_errors
 
-    def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
+    def __init__(self, adapter, address=0, encoder_enabled=False, **kwargs):
         """
         Initialize communication with the motor controller with the address given by `address`.
 
@@ -200,7 +200,7 @@ class DPSeriesMotorController(Instrument):
         kwargs.setdefault('timeout', 2000)
 
         super().__init__(
-            resourceName,
+            adapter,
             "Anaheim Automation Stepper Motor Controller",
             includeSCPI=False,
             asrl={'baud_rate': 38400},

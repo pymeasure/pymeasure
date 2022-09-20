@@ -102,27 +102,6 @@ class StringInput(Input, QtGui.QLineEdit):
         return super().text()
 
 
-class FloatInput(Input, QtGui.QDoubleSpinBox):
-    """
-    Spin input box for floating-point values, connected to a
-    :class:`FloatParameter`.
-
-    .. seealso::
-        Class :class:`~.ScientificInput`
-            For inputs in scientific notation.
-    """
-
-    def __init__(self, parameter, parent=None, **kwargs):
-        super().__init__(parameter=parameter, parent=parent, **kwargs)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-
-    def set_parameter(self, parameter):
-        # Override from :class:`Input`
-        self.setMinimum(parameter.minimum)
-        self.setMaximum(parameter.maximum)
-        super().set_parameter(parameter)  # default gets set here, after min/max
-
-
 class IntegerInput(Input, QtGui.QSpinBox):
     """
     Spin input box for integer values, connected to a :class:`IntegerParameter`.
@@ -130,13 +109,24 @@ class IntegerInput(Input, QtGui.QSpinBox):
 
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        if parameter.step:
+            self.setButtonSymbols(QtGui.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.setSingleStep(parameter.step)
+            self.setEnabled(True)
+        else:
+            self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
         super().set_parameter(parameter)  # default gets set here, after min/max
+
+    def stepEnabled(self):
+        if self.parameter.step:
+            return QtGui.QAbstractSpinBox.StepUpEnabled | QtGui.QAbstractSpinBox.StepDownEnabled
+        else:
+            return QtGui.QAbstractSpinBox.StepNone
 
 
 class BooleanInput(Input, QtGui.QCheckBox):
@@ -216,7 +206,12 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
 
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        if parameter.step:
+            self.setButtonSymbols(QtGui.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.setSingleStep(parameter.step)
+            self.setEnabled(True)
+        else:
+            self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -259,4 +254,7 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
         return string
 
     def stepEnabled(self):
-        return QtGui.QAbstractSpinBox.StepNone
+        if self.parameter.step:
+            return QtGui.QAbstractSpinBox.StepUpEnabled | QtGui.QAbstractSpinBox.StepDownEnabled
+        else:
+            return QtGui.QAbstractSpinBox.StepNone

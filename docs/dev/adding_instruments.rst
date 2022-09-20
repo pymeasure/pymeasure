@@ -22,6 +22,17 @@ Updating the init file
 
 The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported. For a new manufacturer, the manufacturer should also be added to :code:`pymeasure/pymeasure/instruments/__init__.py`.
 
+Add test files
+**************
+
+Test files (pytest) for each instrument are highly encouraged, as they help verify the code and implement changes. Testing new code parts with a test (Test Driven Development) is a good way for fast and good programming, as you catch errors early on.
+
+.. code-block:: none
+
+    pymeasure/tests/instruments/extreme/
+        |--> test_extreme5000.py
+
+
 Adding documentation
 ********************
 
@@ -85,9 +96,9 @@ This is a minimal instrument definition:
         """ Represents the imaginary Extreme 5000 instrument.
         """
 
-        def __init__(self, resourceName, **kwargs):
+        def __init__(self, adapter, **kwargs):
             super().__init__(
-                resourceName,
+                adapter,
                 "Extreme 5000",
                 **kwargs
             )
@@ -111,13 +122,13 @@ The :py:class:`~pymeasure.adapters.VISAAdapter` class offers a flexible way of d
 Single interface
 ****************
 
-The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``resourceName`` is a string or integer.
+The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``adapter`` is a string or integer.
 
 .. code-block:: python
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             **kwargs
         )
@@ -127,9 +138,9 @@ This is suitable when the instrument has one type of interface, or any defaults 
 
 .. code-block:: python
 
-    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, baud_rate=2400, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             baud_rate=baud_rate,
             **kwargs
@@ -139,10 +150,10 @@ If you want to set defaults, but they don't need to be prominently exposed for r
 
 .. code-block:: python
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             **kwargs
         )
@@ -158,10 +169,10 @@ These then contain a *dictionary* with the settings specific to the respective i
 
 .. code-block:: python
 
-    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
-            resourceName,
+            adapter,
             "Extreme 5000",
             gpib=dict(enable_repeat_addressing=False,
                       read_termination='\r'),
@@ -185,10 +196,10 @@ If, however, you are unable to use the :py:class:`~pymeasure.adapters.VISAAdapte
 
 .. code-block:: python
 
-    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 0.5)
         kwargs.setdefault('xonxoff', True)
-        adapter = SerialAdapter(resourceName, 
+        adapter = SerialAdapter(adapter, 
                                 baudrate=baud_rate,  # different arg name!
                                 **kwargs)
         super().__init__(
@@ -499,6 +510,32 @@ Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.In
     >>> extreme.current
     3.1
 
+Another use-case of `set-process`, `get-process` is conversion from/to a :code:`pint.Quantity`. Modifying above example to set or return a quantity, we get:
+
+.. testcode::
+
+    from pymeasure.units import ureg
+
+    Extreme5000.current = Instrument.control(
+        ":CURR?", ":CURR %g",
+        """ A floating point quantity property representing the measurement current 
+        """,
+        values=[0, 10],
+        set_process=lambda v: v.m_as(ureg.mA),  # send the value as mA to the device
+        get_process=lambda v: ureg.Quantity(v, ureg.mA),  # convert to quantity
+    )
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.current = 3.1 * ureg.A
+    >>> extreme.current.m_as(ureg.A)
+    3.1
+
+.. note::
+
+    This is, how quantities can be used in pymeasure instruments right now. `Issue 666 <https://github.com/pymeasure/pymeasure/issues/666>`_ develops a more convenient implementation of quantities in the property factories.
+
 `get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit which has to be removed. This could be achieved by the following code:
 
 .. testcode::
@@ -565,9 +602,9 @@ The real purpose of `preprocess_reply` is, however, for instruments where many/a
             """
         )
 
-        def __init__(self, resourceName, **kwargs):
+        def __init__(self, adapter, **kwargs):
             super().__init__(
-                resourceName,
+                adapter,
                 "Extreme 5000",
                 preprocess_reply=extract_value,
                 **kwargs,
@@ -587,7 +624,7 @@ In cases where the general `preprocess_reply` function should not run it can be 
         preprocess_reply=lambda v: v,
     )
 
-Using a combination of the decribed abilities also complex communication schemes can be achieved.
+Using a combination of the described abilities also complex communication schemes can be achieved.
 
 Dynamic properties
 ===================
@@ -693,3 +730,89 @@ Another use case involves maintaining compatibility between instruments with com
 
 In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a different command to read the voltage, but the rest of the behaviour is identical.
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
+
+
+Writing tests
+=============
+
+Tests are very useful for writing good code.
+We have a number of tests checking the correctness of the pymeasure implementation.
+Those tests (located in the :code:`tests` directory) are run automatically on our CI server, but you can also run them locally using :code:`pytest`.
+
+When adding instruments, your primary concern will be tests for the *instrument driver* you implement.
+We distinguish two groups of tests for instruments: the first group does not rely on a connected instrument.
+These tests verify that the implemented instrument driver exchanges the correct messages with a device (for example according to a device manual).
+We call those "protocol tests".
+The second group tests the code with a device connected.
+
+Implement device tests by adding files in the :code:`tests/instruments/...` directory tree, mirroring the structure of the instrument implementations.
+There are other instrument tests already available that can serve as inspiration.
+
+Protocol tests
+**************
+
+In order to verify the expected working of the device code, it is good to test every part of the written code. The :func:`~pymeasure.test.expected_protocol` context manager (using a :class:`~pymeasure.adapters.ProtocolAdapter` internally) simulates the communication with a device and verifies that the sent/received messages triggered by the code inside the :code:`with` statement match the expectation.
+
+.. code-block:: python
+
+    import pytest
+
+    from pymeasure.test import expected_protocol
+
+    from pymeasure.instruments.extreme5000 import Extreme5000
+
+    def test_voltage():
+        """Verify the communication of the voltage getter."""
+        with expected_protocol(
+            Extreme5000,
+            [(":VOLT 0.345", None),
+             (":VOLT?", "0.3000")],
+        ) as inst:
+            inst.voltage = 0.345
+            assert inst.voltage == 0.3
+
+In the above example, the imports import the pytest package, the expected_protocol and the instrument class to be tested.
+
+The first parameter, Extreme5000, is the class to be tested.
+
+When setting the voltage, the driver sends a message (:code:`":VOLT 0.345"`), but does not expect a response (:code:`None`). Getting the voltage sends a query (:code:`":VOLT?"`) and expects a string response (:code:`"0.3000"`).
+Therefore, we expect two pairs of send/receive exchange.
+The list of those pairs is the second argument, the expected message protocol.
+
+The context manager returns an instance of the class (:code:`inst`), which is then used to trigger the behaviour corresponding to the message protocol (e.g. by using its properties).
+
+If the communication of the driver does not correspond to the expected messages, an Exception is raised.
+
+.. note::
+    The expected messages are **without** the termination characters, as they depend on the connection type and are handled by the normal adapter (e.g. :class:`VISAAdapter`).
+
+Some protocol tests in the test suite can serve as examples:
+
+* Testing a simple instrument: :code:`tests/instruments/keithley/test_keithley2000.py`
+* Testing a multi-channel instrument: :code:`tests/instruments/tektronix/test_afg3152.py`
+* Testing instruments using frame-based communication: :code:`tests/instruments/hcp/tc038.py`
+
+Device tests
+************
+
+It can be useful as well to test the code against an actual device. The necessary device setup instructions (for example: connect a probe to the test output) should be written in the header of the test file or test methods. There should be the connection configuration (for example serial port), too.
+In order to distinguish the test module from protocol tests, the filename should be :code:`test_instrumentName_with_device.py`, if the device is called :code:`instrumentName`.
+
+Mark tests that require instrument hardware to be `skipped <https://docs.pytest.org/en/stable/how-to/skipping.html>`_ by default.
+If the whole test module requires hardware, add this at module level/after the import statements:
+
+.. code-block:: python
+
+    pytest.skip('Only works with connected hardware', allow_module_level=True)
+
+
+If only some test functions in a module need hardware, decorate those with
+
+.. code-block:: python
+
+    @pytest.mark.skip(reason='Only works with connected hardware')
+    def test_something():
+        ...
+
+If you want to run these tests with a connected device, select those tests and ignore the skip marker.
+For example, if your tests are in a file called :code:`test_extreme5000.py`, invoke pytest with :code:`pytest -k extreme5000 --no-skip`.

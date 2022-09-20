@@ -74,10 +74,11 @@ class LakeShore425(Instrument):
         map_values=True
     )
 
-    def __init__(self, port):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            LakeShoreUSBAdapter(port),
+            LakeShoreUSBAdapter(adapter),
             "LakeShore 425 Gaussmeter",
+            **kwargs
         )
 
     def auto_range(self):

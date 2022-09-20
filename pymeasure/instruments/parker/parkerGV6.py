@@ -36,12 +36,13 @@ class ParkerGV6(Instrument):
 
     degrees_per_count = 0.00045  # 90 deg per 200,000 count
 
-    def __init__(self, port):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            SerialAdapter(port, 9600, timeout=0.5),
-            "Parker GV6 Motor Controller"
+            SerialAdapter(adapter, 9600, timeout=0.5),
+            "Parker GV6 Motor Controller",
+            **kwargs
         )
-        self.setDefaults()
+        self.set_defaults()
 
     def write(self, command):
         """ Overwrites the Insturment.write command to provide the correct
@@ -198,6 +199,11 @@ class ParkerGV6(Instrument):
         self.write("LSPOS%d" % int(positive))
         self.write("LSNEG%d" % int(negative))
 
+    @property
+    def echo(self):
+        pass
+
+    @echo.setter
     def echo(self, enable=False):
         """ Enables (True) or disables (False) the echoing
         of all commands that are sent to the instrument

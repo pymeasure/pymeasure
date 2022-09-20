@@ -33,25 +33,13 @@ September, 2019
 
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
 from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import truncated_range
 
 
 class ATS525(ATSBase):
     """Represent the TemptronicATS525 instruments.
     """
 
-    temperature_limit_air_low = Instrument.control(
-        "LLIM?", "LLIM %g",
-        """Control lower air temperature limit.
-
-        :type: float
-
-        Valid range between -60 to 25 (°C). Setpoints below current value cause
-        “out of range” error in TS.
-        """,
-        validator=truncated_range,
-        values=[-60, 25]
-    )
+    temperature_limit_air_low_values = [-60, 25]
 
     system_current = Instrument.measurement(
         "AMPS?",
