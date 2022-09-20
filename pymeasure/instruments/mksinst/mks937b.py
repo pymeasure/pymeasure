@@ -247,50 +247,56 @@ class MKS937B(Instrument):
         check_set_errors=True,
     )
 
-    power_status1 = Instrument.control(
+    power1_enabled = Instrument.control(
         "CP1?", "CP1!%s",
         """Power status of channel 1""",
         validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        map_values=True,
+        values={True: "ON", False: "OFF"},
         check_set_errors=True,
     )
 
-    power_status2 = Instrument.control(
+    power2_enabled = Instrument.control(
         "CP2?", "CP2!%s",
         """Power status of channel 2""",
         validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        map_values=True,
+        values={True: "ON", False: "OFF"},
         check_set_errors=True,
     )
 
-    power_status3 = Instrument.control(
+    power3_enabled = Instrument.control(
         "CP3?", "CP3!%s",
         """Power status of channel 3""",
         validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        map_values=True,
+        values={True: "ON", False: "OFF"},
         check_set_errors=True,
     )
 
-    power_status4 = Instrument.control(
+    power4_enabled = Instrument.control(
         "CP4?", "CP4!%s",
         """Power status of channel 4""",
         validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        map_values=True,
+        values={True: "ON", False: "OFF"},
         check_set_errors=True,
     )
 
-    power_status5 = Instrument.control(
+    power5_enabled = Instrument.control(
         "CP5?", "CP5!%s",
         """Power status of channel 5""",
         validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        map_values=True,
+        values={True: "ON", False: "OFF"},
         check_set_errors=True,
     )
 
-    power_status6 = Instrument.control(
+    power6_enabled = Instrument.control(
         "CP6?", "CP6!%s",
         """Power status of channel 6""",
         validator=strict_discrete_set,
-        values=["ON", "OFF"],
+        map_values=True,
+        values={True: "ON", False: "OFF"},
         check_set_errors=True,
     )
