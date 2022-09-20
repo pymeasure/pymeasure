@@ -85,8 +85,7 @@ class MKS937B(Instrument):
         )
         self.address = address
         # compiled regular expression for finding numerical values in reply strings
-        self._re_fullresponse = re.compile(fr"@{self.address:03d}(.*)")
-        self._re_response_value = re.compile(fr"@{self.address:03d}ACK(.*)")
+        self._re_response = re.compile(fr"@{self.address:03d}(?P<ack>ACK)?(?P<msg>.*)")
 
     def _extract_reply(self, reply):
         """ preprocess_reply function which tries to extract <Response> from
@@ -95,13 +94,9 @@ class MKS937B(Instrument):
         :param reply: reply string
         :returns: string with only the response, or the original string
         """
-        rvalue = self._re_response_value.search(reply)
+        rvalue = self._re_response.search(reply)
         if rvalue:
-            return rvalue.groups()[0]
-        else:
-            full_reply = self._re_fullresponse.search(reply)
-            if full_reply:
-                return full_reply.groups()[0]
+            return rvalue.group('msg')
         return reply
 
     def _command_process(self, cmd):
@@ -152,9 +147,9 @@ class MKS937B(Instrument):
         check reply string for acknowledgement string
         """
         ret = self.read()
-        reply = self._re_fullresponse.search(ret)
+        reply = self._re_response.search(ret)
         if reply:
-            if reply.groups()[0].startswith('ACK'):
+            if reply.group('ack') == 'ACK':
                 return
         # no valid acknowledgement message found
         raise ValueError(f"invalid reply '{ret}' found in check_errors")
