@@ -54,21 +54,31 @@ _ion_gauge_status = {"Wait": "W",
 
 class MKS937B(Instrument):
     """ MKS 937B vacuum gauge controller
+    
+    Connection to the device is made through an RS232/RS485 serial connection.
+    The communication protocol of this device is as follows:
 
-    :param resource_name: pyvisa resource name of the instrument
+    Query: @<aaa><Command>?;FF with the response @<aaa>ACK<Response>;FF
+    Set command: @<aaa><Command>!<parameter>;FF
+                 with the response @<aaa>ACK<Response>;FF
+    Above <aaa> is an address from 001 to 254 which can be specified upon
+    initialization. Since ';FF' is not supported by pyvisa as terminator this
+    class overloads the device communication methods.
+
+    :param adapter: pyvisa resource name of the instrument or 
     :param address: device address included in every message to the instrument
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
     """
 
-    def __init__(self, resource_name, address=253, **kwargs):
+    def __init__(self, adapter, address=253, **kwargs):
         kwargs.setdefault("preprocess_reply", self._extract_reply)
         kwargs.setdefault("write_termination", ";FF")
         kwargs.setdefault("read_termination", ";")  # in reality its ";FF"
         # which is, however, invalid for pyvisa. Therefore extra bytes have to
         # be read in the read() method.
         super().__init__(
-            resource_name,
+            adapter,
             "MKS 937B vacuum gauge controller",
             includeSCPI=False,
             **kwargs
