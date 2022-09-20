@@ -359,42 +359,30 @@ class Instrument:
             vals = self.values(command_process(get_command), **kwargs)
             if check_get_errors:
                 self.check_errors()
-            if len(vals) == 1:
-                value = get_process(vals[0])
-                if not map_values:
-                    return value
-                elif isinstance(values, (list, tuple, range)):
-                    return values[int(value)]
-                elif isinstance(values, dict):
-                    for k, v in values.items():
-                        if v == value:
-                            return k
-                    raise KeyError(f"Value {value} not found in mapped values")
-                else:
-                    raise ValueError(
-                        'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values))
-                    )
-            else:
-                vals = get_process(vals)
-                if not map_values:
-                    return vals
-                elif isinstance(values, (list, tuple, range)):
-                    return [values[int(val)] for val in vals]
-                elif isinstance(values, dict):
-                    ret = []
-                    for i, val in enumerate(vals):
+            vals = [get_process(v) for v in vals]
+            if map_values:
+                ret = []
+                for value in vals:
+                    if isinstance(values, (list, tuple, range)):
+                        ret.append(values[int(value)])
+                    elif isinstance(values, dict):
                         for k, v in values.items():
-                            if v == val:
+                            if v == value:
                                 ret.append(k)
-                        if len(ret) != i + 1:
-                            raise KeyError(f"Value {val} not found in mapped values")
-                    return ret
-                else:
-                    raise ValueError(
-                        'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values))
-                    )
+                                break
+                        else:  # for-loop ran completely
+                            raise KeyError(f"Value {value} not found in mapped values")
+                    else:
+                        raise ValueError(
+                            'Values of type `{}` are not allowed '
+                            'for Instrument.control'.format(type(values))
+                        )
+            else:
+                ret = vals
+            if len(ret) == 1:
+                return ret[0]
+            else:
+                return ret
 
         def fset(self,
                  value,
