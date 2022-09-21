@@ -71,8 +71,7 @@ class Danfysik8500(Instrument):
         self.write("UNLOCK")  # Unlock from remote or local mode
 
     def read(self):
-        """ Overwrites the :func:`SerialAdapter.read <pymeasure.adapters.Adapter.read>`
-        method to automatically raise exceptions if errors are reported by the instrument.
+        """ Read the device and raise exceptions if errors are reported by the instrument.
 
         :returns: String ASCII response of the instrument
         :raises: An :code:`Exception` if the Danfysik raises an error

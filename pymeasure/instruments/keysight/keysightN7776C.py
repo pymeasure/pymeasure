@@ -238,4 +238,4 @@ class KeysightN7776C(Instrument):
         """
         Fully closes the connection to the instrument through the adapter connection.
         """
-        self.adapter.connection.close()
+        self.adapter.close()

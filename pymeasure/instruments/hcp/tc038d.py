@@ -72,18 +72,18 @@ class TC038D(Instrument):
         data += [address >> 8, address & 0xFF]  # 2B address
         data += [count >> 8, count & 0xFF]  # 2B number of elements
         data += CRC16(data)
-        self.adapter.write_bytes(bytes(data))
+        self.write_bytes(bytes(data))
         # Slave address, function, length
-        got = self.adapter.read_bytes(3)
+        got = self.read_bytes(3)
         if got[1] == self.functions['read']:
             length = got[2]
             # data length, 2 Byte CRC
-            read = self.adapter.read_bytes(length + 2)
+            read = self.read_bytes(length + 2)
             if read[-2:] != bytes(CRC16(got + read[:-2])):
                 raise ConnectionError("Response CRC does not match.")
             return read[:-2]
         else:  # an error occurred
-            end = self.adapter.read_bytes(2)  # empty the buffer
+            end = self.read_bytes(2)  # empty the buffer
             if got[2] == 0x02:
                 raise ValueError(f"The read start address {address} is invalid.")
             if got[2] == 0x03:
@@ -111,16 +111,16 @@ class TC038D(Instrument):
             raise TypeError(("Values has to be an integer or an iterable of "
                              f"integers. values: {values}"))
         data += CRC16(data)
-        self.adapter.write_bytes(bytes(data))
-        got = self.adapter.read_bytes(2)
+        self.write_bytes(bytes(data))
+        got = self.read_bytes(2)
         # slave address, function
         if got[1] == self.functions['writeMultiple']:
             # start address, number elements, CRC; each 2 Bytes long
-            got += self.adapter.read_bytes(2 + 2 + 2)
+            got += self.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
         else:
-            end = self.adapter.read_bytes(3)  # error code and CRC
+            end = self.read_bytes(3)  # error code and CRC
             errors = {0x02: "Wrong start address",
                       0x03: "Variable data error",
                       0x04: "Operation error"}

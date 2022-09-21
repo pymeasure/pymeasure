@@ -197,6 +197,7 @@ class HP8116A(Instrument):
 
         return value
 
+    @staticmethod
     def _generate_1_2_5_sequence(min, max):
         """ Generate a list of a 1-2-5 sequence between min and max. """
         exp_min = int(np.log10(min))
@@ -209,6 +210,7 @@ class HP8116A(Instrument):
 
         return list(sequence)
 
+    @staticmethod
     def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
         return Instrument.control(
             'CST', identifier + '%d', docs,
@@ -348,7 +350,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[10, 90.0001],
-        get_process=lambda x: int(x[6:8])
+        cast=int,
+        # get_process=lambda x: int(x[6:8])
     )
 
     pulse_width = Instrument.control(
