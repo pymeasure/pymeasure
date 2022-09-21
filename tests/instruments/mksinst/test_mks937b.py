@@ -26,6 +26,7 @@ import pytest
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.mksinst.mks937b import MKS937B
 
+
 def test_pressure():
     """Verify the communication of the voltage getter."""
     with expected_protocol(
@@ -34,7 +35,8 @@ def test_pressure():
          (None, b"FF")],
     ) as inst:
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
-        assert inst.pressure1 == 1.1e-9
+        assert inst.pressure1 == pytest.approx(1.1e-9)
+
 
 def test_sensor_type():
     """Verify the communication of the voltage getter."""
@@ -46,6 +48,7 @@ def test_sensor_type():
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.sensor_typeB == ['Convection Pirani', 'no connection']
 
+
 def test_ion_gauge_status():
     """Verify the communication of the voltage getter."""
     with expected_protocol(
@@ -55,6 +58,7 @@ def test_ion_gauge_status():
     ) as inst:
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.ion_gauge_status1 == "Good"
+
 
 def test_unit():
     """Verify the communication of the voltage getter."""
@@ -66,6 +70,7 @@ def test_unit():
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.unit == "Torr"
 
+
 def test_power_enabled():
     """Verify the communication of the voltage getter."""
     with expected_protocol(
@@ -74,4 +79,4 @@ def test_power_enabled():
          (None, b"FF")],
     ) as inst:
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
-        assert inst.power1_enabled == True
+        assert inst.power1_enabled is True
