@@ -25,16 +25,7 @@
 from pymeasure.test import expected_protocol
 
 
-from pymeasure.instruments.parker import ParkerGV6 as _ParkerGV6
-
-
-class ParkerGV6(_ParkerGV6):
-    def __init__(self, adapter):
-        super(_ParkerGV6, self).__init__(adapter, name="GV6")
-        self.set_defaults()
-
-    def write(self, command):
-        super(_ParkerGV6, self).write(command)
+from pymeasure.instruments.parker import ParkerGV6
 
 
 def test_init():
