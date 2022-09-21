@@ -81,7 +81,7 @@ class TopticaAdapter(VISAAdapter):
 
         :returns: string containing the ASCII response of the instrument.
         """
-        reply = super().read()  # read back the LF+CR which is always sent back
+        reply = super()._read()  # read back the LF+CR which is always sent back
         if reply != "":
             raise ValueError(
                 "TopticaAdapter.read(1): Error after command "
@@ -89,7 +89,7 @@ class TopticaAdapter(VISAAdapter):
         msg = []
         try:
             while True:
-                line = super().read()
+                line = super()._read()
                 if line == '[OK]':
                     break
                 msg.append(line)
@@ -110,7 +110,7 @@ class TopticaAdapter(VISAAdapter):
           device is expected. This is the case for set commands.
         """
         self.lastcommand = command
-        super().write(command)
+        super()._write(command)
         # The following lines are used in order to avoid the need of a
         # complicated Instrument where every property would need to use
         # check_set/get_errors and many Adapter functions would need to be
