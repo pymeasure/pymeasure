@@ -126,7 +126,7 @@ class MKS937B(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        super().write(self._prepend_process(command))
+        super().write(self._prepend_address(command))
 
     def values(self, command, **kwargs):
         """
@@ -137,7 +137,7 @@ class MKS937B(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        ret = super().values(self._prepend_process(command), **kwargs)
+        ret = super().values(self._prepend_address(command), **kwargs)
         self._check_extra_termination()
         return ret
 
