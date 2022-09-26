@@ -295,7 +295,11 @@ def test_control_invalid_values_set():
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
-def test_control_array_map(dynamic):
+def test_control_map_multiple_values(dynamic):
+    """
+    Test value mapping for cases were multiple values need to be mapped from
+    a single instrument query
+    """
     class Fake(FakeInstrument):
         x = Instrument.measurement(
             "", "",
