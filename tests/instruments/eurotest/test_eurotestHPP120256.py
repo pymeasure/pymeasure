@@ -35,15 +35,15 @@ def test_voltage():
         assert inst.voltage == (3.000, 2.458)
 
 
-def test_current():
+def test_current_limit():
     """Verify the communication of the current setter/getter."""
     with expected_protocol(
             EurotestHPP120256,
             [("I,1.200mA", None),
              ("STATUS,I", "I, RANGE=5000mA, VALUE=1739mA")],
     ) as inst:
-        inst.current = 1.200
-        assert inst.current == (5000.0, 1739.0)
+        inst.current_limit = 1.200
+        assert inst.current_limit == (5000.0, 1739.0)
 
 
 def test_voltage_ramp():
