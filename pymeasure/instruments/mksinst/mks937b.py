@@ -98,7 +98,7 @@ class MKS937B(Instrument):
             return rvalue.group('msg')
         return reply
 
-    def _prepend_process(self, cmd):
+    def _prepend_address(self, cmd):
         """
         create command string by including the device address
         """
