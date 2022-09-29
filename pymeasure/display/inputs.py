@@ -124,7 +124,8 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
 
     def stepEnabled(self):
         if self.parameter.step:
-            return QtWidgets.QAbstractSpinBox.StepUpEnabled | QtWidgets.QAbstractSpinBox.StepDownEnabled
+            return QtWidgets.QAbstractSpinBox.StepUpEnabled | \
+                QtWidgets.QAbstractSpinBox.StepDownEnabled
         else:
             return QtWidgets.QAbstractSpinBox.StepNone
 
@@ -255,6 +256,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
 
     def stepEnabled(self):
         if self.parameter.step:
-            return QtWidgets.QAbstractSpinBox.StepUpEnabled | QtWidgets.QAbstractSpinBox.StepDownEnabled
+            return QtWidgets.QAbstractSpinBox.StepUpEnabled | \
+                QtWidgets.QAbstractSpinBox.StepDownEnabled
         else:
             return QtWidgets.QAbstractSpinBox.StepNone
