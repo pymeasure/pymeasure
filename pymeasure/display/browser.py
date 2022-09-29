@@ -26,7 +26,8 @@ import logging
 
 from os.path import basename
 
-from .Qt import QtCore, QtGui, QtWidgets
+from .Qt import QtCore, QtWidgets
+from pyqtgraph.Qt import QtGui
 from ..experiment import Procedure
 
 log = logging.getLogger(__name__)

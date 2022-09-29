@@ -34,7 +34,8 @@ import pyqtgraph as pg
 from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment
-from .Qt import QtCore, QtGui, QtWidgets
+from .Qt import QtCore, QtWidgets
+from pyqtgraph.Qt import QtGui
 from .widgets import (
     PlotWidget,
     BrowserWidget,
@@ -428,19 +429,19 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             menu.exec_(self.browser.viewport().mapToGlobal(position))
 
     def remove_experiment(self, experiment):
-        reply = QtGui.QMessageBox.question(self, 'Remove Graph',
-                                           "Are you sure you want to remove the graph?",
-                                           QtGui.QMessageBox.Yes |
-                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
+                                               "Are you sure you want to remove the graph?",
+                                               QtWidgets.QMessageBox.Yes |
+                                               QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
             self.manager.remove(experiment)
 
     def delete_experiment_data(self, experiment):
-        reply = QtGui.QMessageBox.question(self, 'Delete Data',
-                                           "Are you sure you want to delete this data file?",
-                                           QtGui.QMessageBox.Yes |
-                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
+                                               "Are you sure you want to delete this data file?",
+                                               QtWidgets.QMessageBox.Yes |
+                                               QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
             self.manager.remove(experiment)
             os.unlink(experiment.data_filename)
 
@@ -465,7 +466,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
                 if filename in self.manager.experiments:
-                    QtGui.QMessageBox.warning(
+                    QtWidgets.QMessageBox.warning(
                         self, "Load Error",
                         "The file %s cannot be opened twice." % os.path.basename(filename)
                     )
