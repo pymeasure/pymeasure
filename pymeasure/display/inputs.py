@@ -26,7 +26,8 @@ import logging
 
 import re
 
-from .Qt import QtGui, QtWidgets
+from .Qt import QtWidgets
+from pyqtgraph.Qt import QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
