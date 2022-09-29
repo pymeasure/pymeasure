@@ -63,8 +63,7 @@ class MainWindow(ManagedWindow):
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
-            y_axis='Random Number',
-            directory_input=True
+            y_axis='Random Number'
         )
         self.setWindowTitle('GUI Example')
 
