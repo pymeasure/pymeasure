@@ -34,8 +34,7 @@ import pyqtgraph as pg
 from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment
-from .Qt import QtCore, QtWidgets
-from pyqtgraph.Qt import QtGui
+from .Qt import QtCore, QtWidgets, QtGui
 from .widgets import (
     PlotWidget,
     BrowserWidget,
