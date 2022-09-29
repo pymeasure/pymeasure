@@ -45,7 +45,7 @@ class TestProcedure(Procedure):
         responses = ["POW"]
         responses.extend(f"{random.random()}" for i in range(100))
         communication = b"\n".join(item.encode() for item in responses)
-        self.powermeter = PM100USB.open_test(BytesIO(communication))
+        self.powermeter = ThorlabsPM100USB.open_test(BytesIO(communication))
         self.powermeter.cache_units = True
         # In order to connect to an actual device at COM Port 5, use instead:
         # self.powermeter = ThorlabsPM100USB.open_serial("COM5")
