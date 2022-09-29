@@ -24,7 +24,7 @@
 
 import logging
 
-from pyqtgraph.Qt import QtGui, QtCore, QtWidgets, loadUiType
+from pyqtgraph.Qt import QtGui, QtCore, QtWidgets, loadUiType  # noqa: F401
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
