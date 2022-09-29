@@ -91,14 +91,14 @@ class StringInput(Input, QtWidgets.QLineEdit):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
 
     def setValue(self, value):
-        # QtGui.QLineEdit has a setText() method instead of setValue()
+        # QtWidgets.QLineEdit has a setText() method instead of setValue()
         return super().setText(value)
 
     def setSuffix(self, value):
         pass
 
     def value(self):
-        # QtGui.QLineEdit has a text() method instead of value()
+        # QtWidgets.QLineEdit has a text() method instead of value()
         return super().text()
 
 
@@ -110,11 +110,11 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         if parameter.step:
-            self.setButtonSymbols(QtGui.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
             self.setSingleStep(parameter.step)
             self.setEnabled(True)
         else:
-            self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -124,9 +124,9 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
 
     def stepEnabled(self):
         if self.parameter.step:
-            return QtGui.QAbstractSpinBox.StepUpEnabled | QtGui.QAbstractSpinBox.StepDownEnabled
+            return QtWidgets.QAbstractSpinBox.StepUpEnabled | QtWidgets.QAbstractSpinBox.StepDownEnabled
         else:
-            return QtGui.QAbstractSpinBox.StepNone
+            return QtWidgets.QAbstractSpinBox.StepNone
 
 
 class BooleanInput(Input, QtWidgets.QCheckBox):
@@ -207,11 +207,11 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         if parameter.step:
-            self.setButtonSymbols(QtGui.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
             self.setSingleStep(parameter.step)
             self.setEnabled(True)
         else:
-            self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -255,6 +255,6 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
 
     def stepEnabled(self):
         if self.parameter.step:
-            return QtGui.QAbstractSpinBox.StepUpEnabled | QtGui.QAbstractSpinBox.StepDownEnabled
+            return QtWidgets.QAbstractSpinBox.StepUpEnabled | QtWidgets.QAbstractSpinBox.StepDownEnabled
         else:
-            return QtGui.QAbstractSpinBox.StepNone
+            return QtWidgets.QAbstractSpinBox.StepNone

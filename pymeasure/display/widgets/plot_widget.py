@@ -27,7 +27,7 @@ import logging
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
-from ..Qt import QtCore, QtGui, QtWidgets
+from ..Qt import QtCore, QtWidgets
 from .tab_widget import TabWidget
 from .plot_frame import PlotFrame
 
@@ -57,15 +57,15 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.plot_frame.change_y_axis(y_axis)
 
     def _setup_ui(self):
-        self.columns_x_label = QtGui.QLabel(self)
+        self.columns_x_label = QtWidgets.QLabel(self)
         self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_x_label.setText('X Axis:')
-        self.columns_y_label = QtGui.QLabel(self)
+        self.columns_y_label = QtWidgets.QLabel(self)
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_y_label.setText('Y Axis:')
 
-        self.columns_x = QtGui.QComboBox(self)
-        self.columns_y = QtGui.QComboBox(self)
+        self.columns_x = QtWidgets.QComboBox(self)
+        self.columns_y = QtWidgets.QComboBox(self)
         for column in self.columns:
             self.columns_x.addItem(column)
             self.columns_y.addItem(column)
@@ -84,10 +84,10 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         self.columns_y.setCurrentIndex(1)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_x_label)

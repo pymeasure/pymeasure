@@ -28,7 +28,7 @@ import os
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
-from ..Qt import QtCore, QtGui, QtWidgets
+from ..Qt import QtCore, QtWidgets
 from ...experiment.results import Results
 from .plot_widget import PlotWidget
 
@@ -49,21 +49,21 @@ class ResultsDialog(QtWidgets.QFileDialog):
         super().__init__(parent)
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
-        self.setOption(QtGui.QFileDialog.DontUseNativeDialog, True)
+        self.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         self._setup_ui()
 
     def _setup_ui(self):
-        preview_tab = QtGui.QTabWidget()
-        vbox = QtGui.QVBoxLayout()
-        param_vbox = QtGui.QVBoxLayout()
-        vbox_widget = QtGui.QWidget()
-        param_vbox_widget = QtGui.QWidget()
+        preview_tab = QtWidgets.QTabWidget()
+        vbox = QtWidgets.QVBoxLayout()
+        param_vbox = QtWidgets.QVBoxLayout()
+        vbox_widget = QtWidgets.QWidget()
+        param_vbox_widget = QtWidgets.QWidget()
 
         self.plot_widget = PlotWidget("Results", self.columns,
                                       self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
-        self.preview_param = QtGui.QTreeWidget()
-        param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
+        self.preview_param = QtWidgets.QTreeWidget()
+        param_header = QtWidgets.QTreeWidgetItem(["Name", "Value"])
         self.preview_param.setHeaderItem(param_header)
         self.preview_param.setColumnWidth(0, 150)
         self.preview_param.setAlternatingRowColors(True)
@@ -79,7 +79,7 @@ class ResultsDialog(QtWidgets.QFileDialog):
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
 
-        self.setFileMode(QtGui.QFileDialog.ExistingFiles)
+        self.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
         self.currentChanged.connect(self.update_plot)
 
     def update_plot(self, filename):
@@ -108,6 +108,6 @@ class ResultsDialog(QtWidgets.QFileDialog):
 
             self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():
-                new_item = QtGui.QTreeWidgetItem([param.name, str(param)])
+                new_item = QtWidgets.QTreeWidgetItem([param.name, str(param)])
                 self.preview_param.addTopLevelItem(new_item)
             self.preview_param.sortItems(0, QtCore.Qt.AscendingOrder)

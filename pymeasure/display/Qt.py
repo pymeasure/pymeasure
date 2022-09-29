@@ -45,6 +45,6 @@ def fromUi(*args, **kwargs):
     form.retranslateUi(widget)
     for name in dir(form):
         element = getattr(form, name)
-        if isinstance(element, QtGui.QWidget):
+        if isinstance(element, QtWidgets.QWidget):
             setattr(widget, name, element)
     return widget

@@ -48,7 +48,7 @@ class BrowserItem(QtWidgets.QTreeWidgetItem):
 
         self.setStatus(results.procedure.status)
 
-        self.progressbar = QtGui.QProgressBar()
+        self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setRange(0, 100)
         self.progressbar.setValue(0)
 
