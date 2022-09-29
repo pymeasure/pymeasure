@@ -24,7 +24,7 @@
 
 import logging
 
-from pyqtgraph.Qt import QtGui, QtCore, loadUiType
+from pyqtgraph.Qt import QtGui, QtCore, QtWidgets, loadUiType
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

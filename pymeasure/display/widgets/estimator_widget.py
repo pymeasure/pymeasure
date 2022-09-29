@@ -28,7 +28,7 @@ from inspect import signature
 from datetime import datetime, timedelta
 
 from ..thread import StoppableQThread
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 from .sequencer_widget import SequenceEvaluationException
 
 log = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class EstimatorThread(StoppableQThread):
             self.new_estimates.emit(estimates)
 
 
-class EstimatorWidget(QtGui.QWidget):
+class EstimatorWidget(QtWidgets.QWidget):
     """
     Widget that allows to display up-front estimates of the measurement
     procedure.

@@ -34,7 +34,7 @@ import pyqtgraph as pg
 from .browser import BrowserItem
 from .curves import ResultsCurve
 from .manager import Manager, Experiment
-from .Qt import QtCore, QtGui
+from .Qt import QtCore, QtGui, QtWidgets
 from .widgets import (
     PlotWidget,
     BrowserWidget,
@@ -52,7 +52,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class PlotterWindow(QtGui.QMainWindow):
+class PlotterWindow(QtWidgets.QMainWindow):
     """
     A window for plotting experiment results. Should not be
     instantiated directly, but only via the
@@ -129,7 +129,7 @@ class PlotterWindow(QtGui.QMainWindow):
             QtCore.QCoreApplication.instance().quit()
 
 
-class ManagedWindowBase(QtGui.QMainWindow):
+class ManagedWindowBase(QtWidgets.QMainWindow):
     """
     Base class for GUI experiment management .
 

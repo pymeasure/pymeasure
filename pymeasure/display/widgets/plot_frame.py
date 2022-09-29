@@ -28,14 +28,14 @@ import re
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve, Crosshairs
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class PlotFrame(QtGui.QFrame):
+class PlotFrame(QtWidgets.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
     the plot based on the refresh_time, and allows the axes
     to be changed on the fly, which updates the plotted data

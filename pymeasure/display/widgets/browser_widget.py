@@ -25,13 +25,13 @@
 import logging
 
 from ..browser import Browser
-from ..Qt import QtGui
+from ..Qt import QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BrowserWidget(QtGui.QWidget):
+class BrowserWidget(QtWidgets.QWidget):
     """
     Widget wrapper for :class:`Browser<pymeasure.display.browser.Browser>` class
     """

@@ -26,14 +26,14 @@ import logging
 
 from os.path import basename
 
-from .Qt import QtCore, QtGui
+from .Qt import QtCore, QtGui, QtWidgets
 from ..experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BrowserItem(QtGui.QTreeWidgetItem):
+class BrowserItem(QtWidgets.QTreeWidgetItem):
     """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
 
     def __init__(self, results, color, parent=None):
@@ -77,7 +77,7 @@ class BrowserItem(QtGui.QTreeWidgetItem):
         self.progressbar.setValue(int(progress))
 
 
-class Browser(QtGui.QTreeWidget):
+class Browser(QtWidgets.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
     objects allowing the user to view the status of queued Experiments as well as
     loading and displaying data from previous runs.

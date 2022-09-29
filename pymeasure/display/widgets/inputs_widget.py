@@ -27,14 +27,14 @@ import logging
 from functools import partial
 
 from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 from ...experiment import parameters
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class InputsWidget(QtGui.QWidget):
+class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
     """

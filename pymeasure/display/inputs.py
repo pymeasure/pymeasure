@@ -26,7 +26,7 @@ import logging
 
 import re
 
-from .Qt import QtGui
+from .Qt import QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -80,7 +80,7 @@ class Input:
         return self._parameter
 
 
-class StringInput(Input, QtGui.QLineEdit):
+class StringInput(Input, QtWidgets.QLineEdit):
     """
     String input box connected to a :class:`Parameter`. Parameter subclasses
     that are string-based may also use this input, but non-string parameters
@@ -102,7 +102,7 @@ class StringInput(Input, QtGui.QLineEdit):
         return super().text()
 
 
-class IntegerInput(Input, QtGui.QSpinBox):
+class IntegerInput(Input, QtWidgets.QSpinBox):
     """
     Spin input box for integer values, connected to a :class:`IntegerParameter`.
     """
@@ -129,7 +129,7 @@ class IntegerInput(Input, QtGui.QSpinBox):
             return QtGui.QAbstractSpinBox.StepNone
 
 
-class BooleanInput(Input, QtGui.QCheckBox):
+class BooleanInput(Input, QtWidgets.QCheckBox):
     """
     Checkbox for boolean values, connected to a :class:`BooleanParameter`.
     """
@@ -152,7 +152,7 @@ class BooleanInput(Input, QtGui.QCheckBox):
         return super().isChecked()
 
 
-class ListInput(Input, QtGui.QComboBox):
+class ListInput(Input, QtWidgets.QComboBox):
     """
     Dropdown for list values, connected to a :class:`ListParameter`.
     """
@@ -193,7 +193,7 @@ class ListInput(Input, QtGui.QComboBox):
         return self._parameter.choices[self.currentIndex()]
 
 
-class ScientificInput(Input, QtGui.QDoubleSpinBox):
+class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
     """
     Spinner input box for floating-point values, connected to a
     :class:`FloatParameter`. This box will display and accept values in

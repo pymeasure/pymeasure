@@ -31,7 +31,7 @@ from collections import ChainMap
 from itertools import product
 from inspect import signature
 
-from ..Qt import QtGui
+from ..Qt import QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -78,7 +78,7 @@ class SequenceEvaluationException(Exception):
     pass
 
 
-class SequencerWidget(QtGui.QWidget):
+class SequencerWidget(QtWidgets.QWidget):
     """
     Widget that allows to generate a sequence of measurements with varying
     parameters. Moreover, one can write a simple text file to easily load a

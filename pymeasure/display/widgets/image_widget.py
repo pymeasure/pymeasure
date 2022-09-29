@@ -26,7 +26,7 @@ import logging
 
 import pyqtgraph as pg
 from ..curves import ResultsImage
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtGui, QtWidgets
 from .tab_widget import TabWidget
 from .image_frame import ImageFrame
 
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class ImageWidget(TabWidget, QtGui.QWidget):
+class ImageWidget(TabWidget, QtWidgets.QWidget):
     """ Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>`
     to allow different columns of the data to be dynamically chosen
     """
