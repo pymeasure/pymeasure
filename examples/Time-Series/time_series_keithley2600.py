@@ -15,7 +15,7 @@ from time import sleep, time
 list_resources() # -> this will list your connections e.g. ('ASRL/dev/ttyUSB1::INSTR',)
 
 # %% For interactive use connect to the instrument
-smu = Keithley2600("ASRL/dev/ttyUSB1::INSTR")
+smu = Keithley2600("ASRL/dev/ttyUSB0::INSTR")
 print(smu.id)
 
 # %% Define measureement parameter
@@ -60,6 +60,8 @@ with Keithley2600("ASRL/dev/ttyUSB1::INSTR") as smu:
     smu.write("beeper.enable = beeper.ON")
     smu.write("beeper.beep(.5,292.00)")
 
+    # so we actually could read the line-frequency from the device:
+    linefreq = float(smu.ask("print(localnode.linefreq)"))
 
 # %% Save the data columns in a pandas DataFrame and inspect 
 data = pd.DataFrame({
@@ -75,7 +77,19 @@ print("The timing is not accurate since there is a delaye from the for-loop. If 
 # %% Advanced example with buffer
 # At the time of writing the low level function to use the buffer of the device is not available via attributes
 # So we use the write() and read() methods to access them like the beeper above
-with Keithley2600("ASRL/dev/ttyUSB1::INSTR") as smu:
+
+# It turns out, that the USB-serial RS-232 connection is too slow to transfer data from the buffer back to the pc for longer or faster measurements
+# Therefore we increase the baud rate. The factory-selected baud rate is 9600. Possible values = [300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200].
+
+visa_address = list_resources()[0] # automatically receive device address
+
+
+
+smu = Keithley2600(visa_address) # connect to the instrument with the standard baud_rate
+smu.write("serial.baud = {}".format(115200)) # Set the baud rate at the instrument to the fastest possible
+
+# Connect again and tell also python to use the new baud_rate
+with Keithley2600(visa_address, baud_rate=115200) as smu:
 
     # First define input parameters
     smu.reset()
@@ -112,6 +126,9 @@ with Keithley2600("ASRL/dev/ttyUSB1::INSTR") as smu:
     # Beep once the measurement is done -> this is not implemented so we send lua strings to the smu -> for a list of commands see https://www.tek.com/keithley-source-measure-units/smu-2600b-series-sourcemeter-manual-8
     smu.write("beeper.enable = beeper.ON")
     smu.write("beeper.beep(.5,292.00)")
+
+    smu.write("serial.baud = {}".format(9600)) # Set the baud rate back to the standard
+
 
 # %% Save the data columns in a pandas DataFrame and inspect 
 data = pd.DataFrame({
