@@ -21,8 +21,8 @@ from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
 
 # Import the InstrumentKit package
-from instruments.thorlabs.pm100usb import PM100USB
-import instruments.units as u
+from pymeasure.instruments.thorlabs import ThorlabsPM100USB
+import pymeasure.units as u
 
 # For simulating communication
 from io import BytesIO
