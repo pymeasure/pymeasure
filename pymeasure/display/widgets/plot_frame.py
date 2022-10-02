@@ -28,14 +28,14 @@ import re
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve, Crosshairs
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class PlotFrame(QtGui.QFrame):
+class PlotFrame(QtWidgets.QFrame):
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
     the plot based on the refresh_time, and allows the axes
     to be changed on the fly, which updates the plotted data
@@ -58,14 +58,14 @@ class PlotFrame(QtGui.QFrame):
     def _setup_ui(self):
         self.setAutoFillBackground(False)
         self.setStyleSheet("background: #fff")
-        self.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.setMidLineWidth(1)
 
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
 
         self.plot_widget = pg.PlotWidget(self, background='#ffffff')
-        self.coordinates = QtGui.QLabel(self)
+        self.coordinates = QtWidgets.QLabel(self)
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
         self.coordinates.setStyleSheet("background: #fff")
         self.coordinates.setText("")
