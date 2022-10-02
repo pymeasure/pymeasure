@@ -24,7 +24,7 @@
 
 import logging
 
-from ..Qt import QtCore, QtWidgets
+from ..Qt import QtCore, QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,7 +43,7 @@ class DirectoryLineEdit(QtWidgets.QLineEdit):
         completer = QtWidgets.QCompleter(self)
         completer.setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
 
-        model = QtWidgets.QDirModel(completer)
+        model = QtGui.QFileSystemModel(completer)
         model.setFilter(QtCore.QDir.Filter.Dirs |
                         QtCore.QDir.Filter.Drives |
                         QtCore.QDir.Filter.NoDotAndDotDot |
@@ -52,9 +52,9 @@ class DirectoryLineEdit(QtWidgets.QLineEdit):
 
         self.setCompleter(completer)
 
-        browse_action = QtWidgets.QAction(self)
+        browse_action = QtGui.QAction(self)
         browse_action.setIcon(self.style().standardIcon(
-            getattr(QtWidgets.QStyle, 'SP_DialogOpenButton')))
+            getattr(QtWidgets.QStyle.StandardPixmap, 'SP_DialogOpenButton')))
         browse_action.triggered.connect(self.browse_triggered)
 
         self.addAction(browse_action, QtWidgets.QLineEdit.ActionPosition.TrailingPosition)
