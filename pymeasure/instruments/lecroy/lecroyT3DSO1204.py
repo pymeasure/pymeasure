@@ -85,8 +85,10 @@ class Channel:
 
     skew_factor = Instrument.control(
         "SKEW?", "SKEW %eS",
-        """ Channel-tochannel skew factor for the specified channel. Each analog channel can be adjusted + or -100 ns 
-        for a total of 200 ns difference between channels. You can use the oscilloscope's skew control to remove 
+        """ Channel-tochannel skew factor for the specified channel. Each analog channel can be 
+        adjusted + or -100 ns 
+        for a total of 200 ns difference between channels. You can use the oscilloscope's skew 
+        control to remove 
         cable-delay errors between channels.
         """,
         validator=strict_range,
@@ -98,8 +100,8 @@ class Channel:
         """ A string parameter that specifies the probe attenuation. The probe attenuation
         may be from 0.1 to 10000.""",
         validator=strict_discrete_set,
-        values={"0.1", "0.2", "0.5", "1", "2", "5", "10", "20", "50", "100", "200", "500", "1000", "2000", "5000",
-                "10000"}
+        values={"0.1", "0.2", "0.5", "1", "2", "5", "10", "20", "50", "100", "200", "500", "1000",
+                "2000", "5000", "10000"}
     )
 
     scale = Instrument.control(
@@ -109,8 +111,8 @@ class Channel:
 
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
-        """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger level will reflect the 
-        measurement units you select. ("A" for Amperes, "V" for Volts).""",
+        """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger 
+        level will reflect the measurement units you select. ("A" for Amperes, "V" for Volts).""",
         validator=strict_discrete_set,
         values={"A", "V"}
     )
@@ -118,8 +120,9 @@ class Channel:
     trigger_coupling = Instrument.control(
         "TRCP?", "TRCP %s",
         """ A string parameter that specifies the input coupling for the selected trigger sources.
-        • ac    — AC coupling block DC component in the trigger path, removing dc offset voltage from the trigger 
-                  waveform. Use AC coupling to get a stable edge trigger when your waveform has a large dc offset.
+        • ac    — AC coupling block DC component in the trigger path, removing dc offset voltage 
+                  from the trigger waveform. Use AC coupling to get a stable edge trigger when 
+                  your waveform has a large dc offset.
         • dc    — DC coupling allows dc and ac signals into the trigger path.
         • lowpass  — HFREJ coupling places a lowpass filter in the trigger path.
         • highpass — LFREJ coupling places a highpass filter in the trigger path.
@@ -132,8 +135,9 @@ class Channel:
     trigger_level = Instrument.control(
         "TRLV?", "TRLV %eV",
         """ A float parameter that sets the trigger level voltage for the active trigger source. 
-            When there are two trigger levels to set, this command is used to set the higher trigger 
-            level voltage for the specified source. TRLV2 is used to set the lower trigger level voltage.
+            When there are two trigger levels to set, this command is used to set the higher 
+            trigger level voltage for the specified source. TRLV2 is used to set the lower 
+            trigger level voltage.
             The trigger level is -4.5*DIV to 4.5*DIV.
             An out-of-range value will be adjusted to the closest legal value.
         """
@@ -182,9 +186,9 @@ class Channel:
             self.instrument.write("BWL C%d,ON" % self.number)
         self.instrument.write("C%d:%s" % (self.number, command))
 
-    def setup(self, bwlimit=None, coupling=None, display=None, invert=None, offset=None, skew_factor=None,
-              probe_attenuation=None, scale=None, unit=None, trigger_coupling=None, trigger_level=None,
-              trigger_level2=None, trigger_slope=None):
+    def setup(self, bwlimit=None, coupling=None, display=None, invert=None, offset=None,
+              skew_factor=None, probe_attenuation=None, scale=None, unit=None,
+              trigger_coupling=None, trigger_level=None, trigger_level2=None, trigger_slope=None):
         """ Setup channel. Unspecified settings are not modified. Modifying values such as
         probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
         make multiple consecutive calls to setup() if needed.
@@ -194,14 +198,15 @@ class Channel:
         :param display: A boolean, which enables channel display.
         :param invert: A boolean, which enables input signal inversion.
         :param offset: Numerical value represented at center of screen, must be inside
-            the legal range.
+                       the legal range.
         :param skew_factor: Channel-tochannel skew factor from -100ns to 100ns.
         :param probe_attenuation: Probe attenuation values from 0.1 to 1000.
         :param scale: Units per division.
         :param unit: Unit of the specified trace: "A" for Amperes, "V" for Volts
         :param trigger_coupling: input coupling for the selected trigger sources
         :param trigger_level: trigger level voltage for the active trigger source
-        :param trigger_level2: trigger lower level voltage for the active trigger source (only SLEW/RUNT trigger)
+        :param trigger_level2: trigger lower level voltage for the active trigger source (only
+                               SLEW/RUNT trigger)
         :param trigger_slope: trigger slope of the specified trigger source
         """
 
@@ -271,10 +276,12 @@ class Channel:
         # Convert values to specific type
         to_str = ["coupling", "unit", "trigger_coupling", "trigger_slope"]
         to_bool = ["bandwidth_limit", "display", "inverted"]
-        to_float = ["attenuation", "offset", "skew_factor", "volts_div", "trigger_level", "trigger_level2"]
+        to_float = ["attenuation", "offset", "skew_factor", "volts_div", "trigger_level",
+                    "trigger_level2"]
         to_int = ["channel"]
-        ch_setup = self.instrument.sanitize_dictionary(ch_setup_raw, to_bool=to_bool, to_float=to_float,
-                                                       to_int=to_int, to_str=to_str)
+        ch_setup = self.instrument.sanitize_dictionary(ch_setup_raw, to_bool=to_bool,
+                                                       to_float=to_float, to_int=to_int,
+                                                       to_str=to_str)
         return ch_setup
 
 
@@ -308,7 +315,8 @@ class LeCroyT3DSO1204(Instrument):
     _match_float = re.compile(r'-? *[0-9]+\.?[0-9]*(?:[Ee] *-? *[0-9]+)?')
     _match_int = re.compile(r'^[-+]?[0-9]+')
 
-    def sanitize_dictionary(self, raw_dictionary, to_bool=None, to_float=None, to_int=None, to_str=None):
+    def sanitize_dictionary(self, raw_dictionary, to_bool=None, to_float=None, to_int=None,
+                            to_str=None):
         sane_dictionary = {}
         for key, val in raw_dictionary.items():
             if val is None:
@@ -318,10 +326,12 @@ class LeCroyT3DSO1204(Instrument):
             elif to_bool is not None and key in to_bool:
                 sane_dictionary[key] = (val in [True, "ON"])
             elif to_float is not None and key in to_float:
-                x = val if isinstance(val, (float, int)) else re.findall(self._match_float, str(val))[0]
+                x = (val if isinstance(val, (float, int)) else
+                     re.findall(self._match_float, str(val))[0])
                 sane_dictionary[key] = float(x)
             elif to_int is not None and key in to_int:
-                x = val if isinstance(val, (float, int)) else re.findall(self._match_int, str(val))[0]
+                x = (val if isinstance(val, (float, int)) else
+                     re.findall(self._match_int, str(val))[0])
                 sane_dictionary[key] = int(x)
             else:
                 sane_dictionary[key] = val
@@ -363,32 +373,33 @@ class LeCroyT3DSO1204(Instrument):
 
     timebase_scale = Instrument.control(
         "TDIV?", "TDIV %eS",
-        """ A float parameter that sets the horizontal scale (units per division) in seconds (S), milliseconds (MS), 
-        microseconds (US) or nanoseconds (NS) for the main window.""",
+        """ A float parameter that sets the horizontal scale (units per division) in seconds (S), 
+        milliseconds (MS), microseconds (US) or nanoseconds (NS) for the main window.""",
         validator=strict_range,
         values=[1e-9, 100]
     )
 
     timebase_hor_magnify = Instrument.control(
         "HMAG?", "HMAG %eS",
-        """ A string parameter that sets the zoomed (delayed) window horizontal scale (seconds/div). The main sweep 
-        scale determines the range for this command. """,
+        """ A string parameter that sets the zoomed (delayed) window horizontal scale (
+        seconds/div). The main sweep scale determines the range for this command. """,
         validator=strict_range,
         values=[1e-9, 20e-3]
     )
 
     timebase_hor_position = Instrument.control(
         "HPOS?", "HPOS %eS",
-        """ A string parameter that sets the horizontal position in the zoomed (delayed) view of the main sweep. The 
-        main sweep range and the main sweep horizontal position determine the range for this command. The value for 
-        this command must keep the zoomed view window within the main sweep range.""",
+        """ A string parameter that sets the horizontal position in the zoomed (delayed) view of 
+        the main sweep. The main sweep range and the main sweep horizontal position determine 
+        the range for this command. The value for this command must keep the zoomed view window 
+        within the main sweep range.""",
     )
 
     @property
     def timebase(self):
         """ Read timebase setup as a dict containing the following keys:
             - "seconds_div": horizontal scale in seconds/div (float)
-            - "delay": interval in seconds between the trigger event and the reference position (float)
+            - "delay": interval in seconds between the trigger and the reference position (float)
             - "hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
             - "hor_position": horizontal position in the zoomed window in seconds (float)"""
         tb_setup = {
@@ -427,7 +438,8 @@ class LeCroyT3DSO1204(Instrument):
         """ A string parameter that sets the type of data acquisition. Can be "normal", "peak",
          "average", "highres".""",
         validator=strict_discrete_set,
-        values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE", "highres": "HIGH_RES"},
+        values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE",
+                "highres": "HIGH_RES"},
         map_values=True
     )
 
@@ -441,7 +453,8 @@ class LeCroyT3DSO1204(Instrument):
     acquisition_status = Instrument.measurement(
         "SAST?", """A string parameter that defines the acquisition status of the scope.""",
         validator=strict_discrete_set,
-        values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto", "armed": "Arm"},
+        values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto",
+                "armed": "Arm"},
         map_values=True
     )
 
@@ -492,8 +505,9 @@ class LeCroyT3DSO1204(Instrument):
 
     waveform_first_point = Instrument.control(
         "WFSU?", "WFSU FP,%d",
-        """ An integer parameter that specifies the address of the first data point to be sent. For waveforms 
-        acquired in sequence mode, this refers to the relative address in the given segment.
+        """ An integer parameter that specifies the address of the first data point to be sent. 
+        For waveforms acquired in sequence mode, this refers to the relative address in the 
+        given segment.
         For example:
         FP = 0 corresponds to the first data point.
         FP = 1 corresponds to the second data point.""",
@@ -503,7 +517,8 @@ class LeCroyT3DSO1204(Instrument):
 
     @property
     def waveform_preamble(self):
-        """ Get preamble information for the selected waveform source as a dict with the following keys:
+        """ Get preamble information for the selected waveform source as a dict with the
+        following keys:
             - "type": normal, peak detect, average, high resolution (str)
             - "points": nb of data points transferred (int)
             - "sparsing": Sparse point. It defines the interval between data points. (int)
@@ -526,7 +541,8 @@ class LeCroyT3DSO1204(Instrument):
             vals_dict["ydiv"] = self.ch(self.waveform_source).scale
             vals_dict["yoffset"] = self.ch(self.waveform_source).offset
         else:
-            raise NotImplementedError(f"Acquiring from source {self.waveform_source} is not implemented")
+            raise NotImplementedError(
+                f"Acquiring from source {self.waveform_source} is not implemented")
         # Correct types
         to_int = ["points", "sparsing", "first_point", "average"]
         to_float = ["xdiv", "xoffset", "ydiv", "yoffset", "sampling_rate"]
@@ -535,13 +551,15 @@ class LeCroyT3DSO1204(Instrument):
 
     def digitize(self, source: str):
         """ Acquire waveforms according to the settings of the acquire commands
-        :param source: a string parameter that can take the following values: "C1", "C2", "C3", "C4".
+        :param source: a string parameter that can take the following values: "C1", "C2", "C3",
+        "C4".
         :return: bytearray with raw data
         """
         strict_discrete_set(source, ["C1", "C2", "C3", "C4"])
         values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
         if len(values) < 18:
-            raise ValueError(f"Waveform data is too short: len({len(values)}) < header(16) + footer(2)")
+            raise ValueError(
+                f"Waveform data is too short: len({len(values)}) < header(16) + footer(2)")
         header = bytes(values[0:16]).decode("ascii")
         footer = bytes(values[-2:]).decode("ascii")
         values = values[16:-2]
@@ -551,7 +569,8 @@ class LeCroyT3DSO1204(Instrument):
             raise ValueError(f"Waveform data in invalid : footer is {footer}")
         npoints = int(header[-9:])
         if len(values) != npoints:
-            raise ValueError(f"Waveform data in invalid : received {len(values)} points instead of {npoints}")
+            raise ValueError(
+                f"Waveform data in invalid : received {len(values)} points instead of {npoints}")
         return values
 
     #################
@@ -580,7 +599,8 @@ class LeCroyT3DSO1204(Instrument):
         :param sparsing: it defines the interval between data points.
         :param first_point: it specifies the address of the first data point to be sent.
 
-        :return data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict format.
+        :return data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict
+        format.
         """
         self.waveform_source = source
         if points is not None:
@@ -600,29 +620,38 @@ class LeCroyT3DSO1204(Instrument):
 
     trigger_50 = Instrument.setting(
         "SET50",
-        """ The SET50 command automatically sets the trigger levels to center of the trigger source waveform. """
+        """ The SET50 command automatically sets the trigger levels to center of the trigger 
+        source waveform. """
     )
 
     trigger_mode = Instrument.control(
         "TRMD?", "TRMD %s",
         """ A string parameter that selects the trigger sweep mode.
         <mode>:= {AUTO,NORM,SINGLE,STOP}
-        • AUTO — When AUTO sweep mode is selected, the oscilloscope begins to search for the trigger signal that 
-        meets the conditions.
-        If the trigger signal is satisfied, the running state on the top left corner of the user interface shows 
-        Trig'd, and the interface shows stable waveform.
-        Otherwise, the running state always shows Auto, and the interface shows unstable waveform.
-        • NORM — When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger state and begins to 
-        search for trigger signals that meet the conditions.
-        If the trigger signal is satisfied, the running state shows Trig'd, and the interface shows stable waveform.
-        Otherwise, the running state shows Ready, and the interface displays the last triggered waveform (previous 
-        trigger) or does not display the waveform (no previous trigger).
-        • SINGLE — When SINGLE sweep mode is selected, the backlight of SINGLE key lights up, the oscilloscope enters
-        the waiting trigger state and begins to search for the trigger signal that meets the conditions.
-        If the trigger signal is satisfied, the running state shows Trig'd, and the interface shows stable waveform. 
-        Then, the oscilloscope stops scanning, the RUN/STOP key is red light, and the running status shows Stop.
-        Otherwise, the running state shows Ready, and the interface does not display the waveform.
-        • STOP — STOP is a part of the option of this command, but not a trigger mode of the oscilloscope.
+        • AUTO — When AUTO sweep mode is selected, the oscilloscope begins to search for the 
+                 trigger signal that meets the conditions.
+                 If the trigger signal is satisfied, the running state on the top left corner of 
+                 the user interface shows Trig'd, and the interface shows stable waveform.
+                 Otherwise, the running state always shows Auto, and the interface shows unstable 
+                 waveform.
+        • NORM — When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger 
+                 state and begins to search for trigger signals that meet the conditions.
+                 If the trigger signal is satisfied, the running state shows Trig'd, 
+                 and the interface shows stable waveform.
+                 Otherwise, the running state shows Ready, and the interface displays the last 
+                 triggered waveform (previous trigger) or does not display the waveform (no 
+                 previous trigger).
+        • SINGLE — When SINGLE sweep mode is selected, the backlight of SINGLE key lights up, 
+                   the oscilloscope enters the waiting trigger state and begins to search for the 
+                   trigger signal that meets the conditions.
+                   If the trigger signal is satisfied, the running state shows Trig'd, 
+                   and the interface shows stable waveform. 
+                   Then, the oscilloscope stops scanning, the RUN/STOP key is red light, 
+                   and the running status shows Stop.
+                   Otherwise, the running state shows Ready, and the interface does not display 
+                   the waveform.
+        • STOP — STOP is a part of the option of this command, but not a trigger mode of the 
+                 oscilloscope.
         """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
@@ -660,10 +689,12 @@ class LeCroyT3DSO1204(Instrument):
         if len(value) < 3 or len(value) > 5:
             raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
         if value[0] not in values.keys():
-            raise ValueError('Value of {} is not in the discrete set {}'.format(value[0], values.keys()))
+            raise ValueError(
+                'Value of {} is not in the discrete set {}'.format(value[0], values.keys()))
         num_expected_pars = num_pars_finder(value)
         if len(value) != num_expected_pars:
-            raise ValueError('Number of parameters {} is not the expected {}'.format(len(value), num_expected_pars))
+            raise ValueError('Unexpected number of parameters: {} != {}'.format(len(value),
+                                                                                num_expected_pars))
         for i, element in enumerate(value[1:], start=1):
             if i < 3:
                 strict_discrete_set(element, values=values[value[0]][i - 1])
@@ -709,10 +740,12 @@ class LeCroyT3DSO1204(Instrument):
 
     _trigger_select = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
-        """ A string parameter that selects the condition that will trigger the acquisition of waveforms.
-        Depending on the trigger type, additional parameters must be specified. These additional parameters are 
-        grouped in pairs. The first in the pair names the variable to be modified, while the second gives the new 
-        value to be assigned. Pairs may be given in any order and restricted to those variables to be changed.
+        """ A string parameter that selects the condition that will trigger the acquisition of 
+        waveforms.
+        Depending on the trigger type, additional parameters must be specified. These additional 
+        parameters are grouped in pairs. The first in the pair names the variable to be modified, 
+        while the second gives the new value to be assigned. Pairs may be given in any order and 
+        restricted to those variables to be changed.
         <trig_type>:={EDGE,SLEW,GLIT,INTV,RUNT,DROP}
         <source>:={C1,C2,C3,C4,LINE}
         <hold_type>:={TI,OFF} for EDGE trigger.
@@ -725,7 +758,8 @@ class LeCroyT3DSO1204(Instrument):
         Note:
         • LINE can only be selected when the trigger type is Edge.
         • If there is no unit(S/mS/uS/nS) added, it defaults to be S.
-        • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger, and [2nS, 4.2S] for others.
+        • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger, 
+        and [2nS, 4.2S] for others.
         """,
         get_process=_trigger_select_get_process,
         validator=_trigger_select_validator,
@@ -742,8 +776,8 @@ class LeCroyT3DSO1204(Instrument):
     @trigger_select.setter
     def trigger_select(self, value):
         """ Refer to the self._trigger_select documentation.
-            The trigger_select command is switched automatically between the short, normal and extended version
-            depending on the number of expected parameters.
+            The trigger_select command is switched automatically between the short, normal and
+            extended version depending on the number of expected parameters.
         """
         num_expected_pars = self._trigger_select_num_pars(value)
         if num_expected_pars == 3:
@@ -754,8 +788,9 @@ class LeCroyT3DSO1204(Instrument):
             self._trigger_select_set_command = self._trigger_select_extended_command
         self._trigger_select = value
 
-    def trigger_setup(self, mode=None, source=None, trigger_type=None, hold_type=None, hold_value1=None,
-                      hold_value2=None, coupling=None, level=None, level2=None, slope=None):
+    def trigger_setup(self, mode=None, source=None, trigger_type=None, hold_type=None,
+                      hold_value1=None, hold_value2=None, coupling=None, level=None, level2=None,
+                      slope=None):
         """
         Set up trigger. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
@@ -763,13 +798,15 @@ class LeCroyT3DSO1204(Instrument):
 
         :param mode: trigger sweep mode [auto, normal, single, stop]
         :param source: trigger source [C1,C2,C3,C4]
-        :param trigger_type: condition that will trigger the acquisition of waveforms [EDGE,SLEW,GLIT,INTV,RUNT,DROP]
+        :param trigger_type: condition that will trigger the acquisition of waveforms [EDGE,SLEW,
+        GLIT,INTV,RUNT,DROP]
         :param hold_type: hold type (refer to page 172 of programing guide)
         :param hold_value1: hold value1 (refer to page 172 of programing guide)
         :param hold_value2: hold value2 (refer to page 172 of programing guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
-        :param level2: trigger lower level voltage for the active trigger source (only SLEW/RUNT trigger)
+        :param level2: trigger lower level voltage for the active trigger source (only SLEW/RUNT
+        trigger)
         :param slope: trigger slope of the specified trigger source
         """
         if mode is not None:
@@ -800,14 +837,16 @@ class LeCroyT3DSO1204(Instrument):
     def trigger(self):
         """ Read trigger setup as a dict containing the following keys:
             - "mode": trigger sweep mode [auto, normal, single, stop]
-            - "trigger_type": condition that will trigger the acquisition of waveforms [EDGE,SLEW,GLIT,INTV,RUNT,DROP]
+            - "trigger_type": condition that will trigger the acquisition of waveforms [EDGE,
+            SLEW,GLIT,INTV,RUNT,DROP]
             - "source": trigger source [C1,C2,C3,C4]
             - "hold_type": hold type (refer to page 172 of programing guide)
             - "hold_value1": hold value1 (refer to page 172 of programing guide)
             - "hold_value2": hold value2 (refer to page 172 of programing guide)
             - "coupling": input coupling for the selected trigger sources
             - "level": trigger level voltage for the active trigger source
-            - "level2": trigger lower level voltage for the active trigger source (only SLEW/RUNT trigger)
+            - "level2": trigger lower level voltage for the active trigger source (only SLEW/RUNT
+            trigger)
             - "slope": trigger slope of the specified trigger source
         """
         trigger_select = self.trigger_select
