@@ -518,11 +518,10 @@ class LeCroyT3DSO1204(Instrument):
     def waveform_preamble(self):
         """ Get preamble information for the selected waveform source as a dict with the
         following keys:
-            - "type": normal, peak detect, average, high resolution (str)
-            - "points": nb of data points transferred (int)
-            - "sparsing": Sparse point. It defines the interval between data points. (int)
-            - "first_point"  address of the first data point to be sent (int)
-            """
+        - "type": normal, peak detect, average, high resolution (str)
+        - "points": nb of data points transferred (int)
+        - "sparsing": Sparse point. It defines the interval between data points. (int)
+        - "first_point"  address of the first data point to be sent (int)"""
         vals = self.values("WFSU?")
         vals_dict = {
             "sparsing": vals[vals.index("SP") + 1],
@@ -590,17 +589,14 @@ class LeCroyT3DSO1204(Instrument):
         """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of
         data values (no temporal axis) and a dict of the waveform preamble, which can be used to
         build the corresponding time values for all data points.
-
         :param source: measurement source, can be "C1", "C2", "C3", "C4".
-        :param points: integer number of points to acquire. Note that oscilloscope may return fewer
-            points than specified, this is not an issue of this library. If 0 all available points
-            will be returned
+        :param points: integer number of points to acquire. Note that oscilloscope may return
+        fewer points than specified, this is not an issue of this library. If 0 all available
+        points will be returned
         :param sparsing: it defines the interval between data points.
         :param first_point: it specifies the address of the first data point to be sent.
-
         :return data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict
-        format.
-        """
+        format."""
         self.waveform_source = source
         if points is not None:
             self.waveform_points = points
@@ -627,31 +623,29 @@ class LeCroyT3DSO1204(Instrument):
         "TRMD?", "TRMD %s",
         """ A string parameter that selects the trigger sweep mode.
         <mode>:= {AUTO,NORM,SINGLE,STOP}
-        • AUTO — When AUTO sweep mode is selected, the oscilloscope begins to search for the
-                 trigger signal that meets the conditions.
-                 If the trigger signal is satisfied, the running state on the top left corner of
-                 the user interface shows Trig'd, and the interface shows stable waveform.
-                 Otherwise, the running state always shows Auto, and the interface shows unstable
-                 waveform.
-        • NORM — When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
-                 state and begins to search for trigger signals that meet the conditions.
-                 If the trigger signal is satisfied, the running state shows Trig'd,
-                 and the interface shows stable waveform.
-                 Otherwise, the running state shows Ready, and the interface displays the last
-                 triggered waveform (previous trigger) or does not display the waveform (no
-                 previous trigger).
-        • SINGLE — When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
-                   the oscilloscope enters the waiting trigger state and begins to search for the
-                   trigger signal that meets the conditions.
-                   If the trigger signal is satisfied, the running state shows Trig'd,
-                   and the interface shows stable waveform.
-                   Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
-                   and the running status shows Stop.
-                   Otherwise, the running state shows Ready, and the interface does not display
-                   the waveform.
-        • STOP — STOP is a part of the option of this command, but not a trigger mode of the
-                 oscilloscope.
-        """,
+        • AUTO : When AUTO sweep mode is selected, the oscilloscope begins to search for the
+        trigger signal that meets the conditions.
+        If the trigger signal is satisfied, the running state on the top left corner of
+        the user interface shows Trig'd, and the interface shows stable waveform.
+        Otherwise, the running state always shows Auto, and the interface shows unstable
+        waveform.
+        • NORM : When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
+        state and begins to search for trigger signals that meet the conditions.
+        If the trigger signal is satisfied, the running state shows Trig'd, and the interface
+        shows stable waveform.
+        Otherwise, the running state shows Ready, and the interface displays the last
+        triggered waveform (previous trigger) or does not display the waveform (no
+        previous trigger).
+        • SINGLE : When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
+        the oscilloscope enters the waiting trigger state and begins to search for the
+        trigger signal that meets the conditions.
+        If the trigger signal is satisfied, the running state shows Trig'd, and the interface
+        shows stable waveform.
+        Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
+        and the running status shows Stop.
+        Otherwise, the running state shows Ready, and the interface does not display the waveform.
+        • STOP : STOP is a part of the option of this command, but not a trigger mode of the
+        oscilloscope.""",
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
         map_values=True
@@ -790,15 +784,13 @@ class LeCroyT3DSO1204(Instrument):
     def trigger_setup(self, mode=None, source=None, trigger_type=None, hold_type=None,
                       hold_value1=None, hold_value2=None, coupling=None, level=None, level2=None,
                       slope=None):
-        """
-        Set up trigger. Unspecified parameters are not modified. Modifying a single parameter
+        """ Set up trigger. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to trigger_setup and channel_setup if needed.
-
         :param mode: trigger sweep mode [auto, normal, single, stop]
         :param source: trigger source [C1,C2,C3,C4]
-        :param trigger_type: condition that will trigger the acquisition of waveforms [EDGE,SLEW,
-        GLIT,INTV,RUNT,DROP]
+        :param trigger_type: condition that will trigger the acquisition of waveforms
+        [EDGE,SLEW,GLIT,INTV,RUNT,DROP]
         :param hold_type: hold type (refer to page 172 of programing guide)
         :param hold_value1: hold value1 (refer to page 172 of programing guide)
         :param hold_value2: hold value2 (refer to page 172 of programing guide)
@@ -806,8 +798,7 @@ class LeCroyT3DSO1204(Instrument):
         :param level: trigger level voltage for the active trigger source
         :param level2: trigger lower level voltage for the active trigger source (only SLEW/RUNT
         trigger)
-        :param slope: trigger slope of the specified trigger source
-        """
+        :param slope: trigger slope of the specified trigger source"""
         if mode is not None:
             self.trigger_mode = mode
         if all(i is not None for i in [source, trigger_type, hold_type]):
