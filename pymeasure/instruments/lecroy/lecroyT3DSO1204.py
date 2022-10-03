@@ -37,6 +37,84 @@ _MATCH_FLOAT = re.compile(r'-? *[0-9]+\.?[0-9]*(?:[Ee] *-? *[0-9]+)?')
 _MATCH_INT = re.compile(r'^[-+]?[0-9]+')
 
 
+def _trigger_select_num_pars(value):
+    """
+    find the expected number of parameter for the trigger_select property
+    :param value: input parameters as a tuple
+    """
+    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    num_expected_pars = 0
+    if 3 <= len(value) <= 5:
+        if value[0] == "EDGE":
+            num_expected_pars = 3 if value[2] == "OFF" else 4
+        elif value[0] in ["SLEW", "INTV"]:
+            num_expected_pars = 4 if value[2] in ["IS", "IL"] else 5
+        elif value[0] in ["GLIT", "RUNT"]:
+            num_expected_pars = 4 if value[2] in ["PS", "PL"] else 5
+        elif value[0] == "DROP":
+            num_expected_pars = 4
+    else:
+        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+    return num_expected_pars
+
+
+def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num_pars):
+    """
+    Validate the input of the trigger_select property
+    :param value: input parameters as a tuple
+    :param values: allowed space for each parameter
+    :param num_pars_finder: function to find the number of expected parameters
+    """
+    if not isinstance(value, tuple):
+        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+    if len(value) < 3 or len(value) > 5:
+        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    if value[0] not in values.keys():
+        raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
+    num_expected_pars = num_pars_finder(value)
+    if len(value) != num_expected_pars:
+        raise ValueError('Number of parameters {} != {}'.format(len(value), num_expected_pars))
+    for i, element in enumerate(value[1:], start=1):
+        if i < 3:
+            strict_discrete_set(element, values=values[value[0]][i - 1])
+        else:
+            strict_range(element, values=values[value[0]][i - 1])
+    return value
+
+
+def _trigger_select_set_process(value):
+    """
+    Process the input of the trigger_select property. All string are transformed to uppercase.
+    :param value: output parameters as a tuple
+    """
+    new_value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    return new_value
+
+
+def _trigger_select_get_process(value):
+    """
+    Process the output of the trigger_select property.
+    The format of the input list is
+        <trig_type>, SR, <source>, HT, <hold_type>[, HV, <hold_value1>S][, HV2, <hold_value2>S]
+    The format of the output list is
+        <trig_type>, <source>, <hold_type>[, <hold_value1>][, <hold_value2>]
+    :param value: output parameters as a list
+    """
+    output = []
+    if len(value) > 0:
+        output.append(value[0].lower())
+    if "SR" in value:
+        output.append(value[value.index("SR") + 1].lower())
+    if "HT" in value:
+        output.append(value[value.index("HT") + 1].lower())
+    if "HV" in value:
+        output.append(float(value[value.index("HV") + 1][:-1]))
+    if "HV2" in value:
+        output.append(float(value[value.index("HV2") + 1][:-1]))
+    return output
+
+
 # noinspection DuplicatedCode
 class Channel:
     """ Implementation of a LeCroy T3DSO1204 Oscilloscope channel.
@@ -629,84 +707,6 @@ class LeCroyT3DSO1204(Instrument):
         map_values=True
     )
 
-    @staticmethod
-    def _trigger_select_num_pars(value):
-        """
-        find the expected number of parameter for the trigger_select property
-        :param value: input parameters as a tuple
-        """
-        value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
-        num_expected_pars = 0
-        if 3 <= len(value) <= 5:
-            if value[0] == "EDGE":
-                num_expected_pars = 3 if value[2] == "OFF" else 4
-            elif value[0] in ["SLEW", "INTV"]:
-                num_expected_pars = 4 if value[2] in ["IS", "IL"] else 5
-            elif value[0] in ["GLIT", "RUNT"]:
-                num_expected_pars = 4 if value[2] in ["PS", "PL"] else 5
-            elif value[0] == "DROP":
-                num_expected_pars = 4
-        else:
-            raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
-        return num_expected_pars
-
-    @staticmethod
-    def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num_pars):
-        """
-        Validate the input of the trigger_select property
-        :param value: input parameters as a tuple
-        :param values: allowed space for each parameter
-        :param num_pars_finder: function to find the number of expected parameters
-        """
-        if not isinstance(value, tuple):
-            raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
-        if len(value) < 3 or len(value) > 5:
-            raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
-        value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
-        if value[0] not in values.keys():
-            raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
-        num_expected_pars = num_pars_finder(value)
-        if len(value) != num_expected_pars:
-            raise ValueError('Number of parameters {} != {}'.format(len(value), num_expected_pars))
-        for i, element in enumerate(value[1:], start=1):
-            if i < 3:
-                strict_discrete_set(element, values=values[value[0]][i - 1])
-            else:
-                strict_range(element, values=values[value[0]][i - 1])
-        return value
-
-    @staticmethod
-    def _trigger_select_set_process(value):
-        """
-        Process the input of the trigger_select property. All string are transformed to uppercase.
-        :param value: output parameters as a tuple
-        """
-        new_value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
-        return new_value
-
-    @staticmethod
-    def _trigger_select_get_process(value):
-        """
-        Process the output of the trigger_select property.
-        The format of the input list is
-            <trig_type>, SR, <source>, HT, <hold_type>[, HV, <hold_value1>S][, HV2, <hold_value2>S]
-        The format of the output list is
-            <trig_type>, <source>, <hold_type>[, <hold_value1>][, <hold_value2>]
-        :param value: output parameters as a list
-        """
-        output = []
-        if len(value) > 0:
-            output.append(value[0].lower())
-        if "SR" in value:
-            output.append(value[value.index("SR") + 1].lower())
-        if "HT" in value:
-            output.append(value[value.index("HT") + 1].lower())
-        if "HV" in value:
-            output.append(float(value[value.index("HV") + 1][:-1]))
-        if "HV2" in value:
-            output.append(float(value[value.index("HV2") + 1][:-1]))
-        return output
-
     _trigger_select_values = {
         "EDGE": [["C1", "C2", "C3", "C4", "LINE"], ["TI", "OFF"], [80e-9, 1.5]],
         "DROP": [["C1", "C2", "C3", "C4"], ["TI"], [2e-9, 4.2]],
@@ -743,9 +743,9 @@ class LeCroyT3DSO1204(Instrument):
         • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger,
         and [2nS, 4.2S] for others.
         """,
-        set_process=_trigger_select_set_process.__get__(object),
-        get_process=_trigger_select_get_process.__get__(object),
-        validator=_trigger_select_validator.__get__(object),
+        set_process=_trigger_select_set_process,
+        get_process=_trigger_select_get_process,
+        validator=_trigger_select_validator,
         values=_trigger_select_values,
         dynamic=True
     )
