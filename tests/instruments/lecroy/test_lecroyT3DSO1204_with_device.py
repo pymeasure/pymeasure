@@ -30,7 +30,7 @@ from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 
-# pytest.skip('Only work with connected hardware', allow_module_level=True)
+pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestLeCroyT3DSO1204:
