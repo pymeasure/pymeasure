@@ -182,7 +182,8 @@ class Channel:
             self.instrument.write("BWL C%d,OFF" % self.number)
         elif command == "BWL ON":
             self.instrument.write("BWL C%d,ON" % self.number)
-        self.instrument.write("C%d:%s" % (self.number, command))
+        else:
+            self.instrument.write("C%d:%s" % (self.number, command))
 
     def setup(self, bwlimit=None, coupling=None, display=None, invert=None, offset=None,
               skew_factor=None, probe_attenuation=None, scale=None, unit=None,
@@ -457,7 +458,7 @@ class LeCroyT3DSO1204(Instrument):
     )
 
     acquisition_sampling_rate = Instrument.measurement(
-        "SARA?", """A The SAST? sample rate of the scope."""
+        "SARA?", """A integer parameter that returns the sample rate of the scope."""
     )
 
     def run(self):
