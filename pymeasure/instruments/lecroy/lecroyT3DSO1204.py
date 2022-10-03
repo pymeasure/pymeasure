@@ -85,11 +85,9 @@ class Channel:
 
     skew_factor = Instrument.control(
         "SKEW?", "SKEW %eS",
-        """ Channel-tochannel skew factor for the specified channel. Each analog channel can be 
-        adjusted + or -100 ns 
-        for a total of 200 ns difference between channels. You can use the oscilloscope's skew 
-        control to remove 
-        cable-delay errors between channels.
+        """ Channel-tochannel skew factor for the specified channel. Each analog channel can be
+        adjusted + or -100 ns for a total of 200 ns difference between channels. You can use
+        the oscilloscope's skew control to remove cable-delay errors between channels.
         """,
         validator=strict_range,
         values=[-100, 100]
@@ -111,7 +109,7 @@ class Channel:
 
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
-        """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger 
+        """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger
         level will reflect the measurement units you select. ("A" for Amperes, "V" for Volts).""",
         validator=strict_discrete_set,
         values={"A", "V"}
@@ -120,8 +118,8 @@ class Channel:
     trigger_coupling = Instrument.control(
         "TRCP?", "TRCP %s",
         """ A string parameter that specifies the input coupling for the selected trigger sources.
-        • ac    — AC coupling block DC component in the trigger path, removing dc offset voltage 
-                  from the trigger waveform. Use AC coupling to get a stable edge trigger when 
+        • ac    — AC coupling block DC component in the trigger path, removing dc offset voltage
+                  from the trigger waveform. Use AC coupling to get a stable edge trigger when
                   your waveform has a large dc offset.
         • dc    — DC coupling allows dc and ac signals into the trigger path.
         • lowpass  — HFREJ coupling places a lowpass filter in the trigger path.
@@ -134,9 +132,9 @@ class Channel:
 
     trigger_level = Instrument.control(
         "TRLV?", "TRLV %eV",
-        """ A float parameter that sets the trigger level voltage for the active trigger source. 
-            When there are two trigger levels to set, this command is used to set the higher 
-            trigger level voltage for the specified source. TRLV2 is used to set the lower 
+        """ A float parameter that sets the trigger level voltage for the active trigger source.
+            When there are two trigger levels to set, this command is used to set the higher
+            trigger level voltage for the specified source. TRLV2 is used to set the lower
             trigger level voltage.
             The trigger level is -4.5*DIV to 4.5*DIV.
             An out-of-range value will be adjusted to the closest legal value.
@@ -373,7 +371,7 @@ class LeCroyT3DSO1204(Instrument):
 
     timebase_scale = Instrument.control(
         "TDIV?", "TDIV %eS",
-        """ A float parameter that sets the horizontal scale (units per division) in seconds (S), 
+        """ A float parameter that sets the horizontal scale (units per division) in seconds (S),
         milliseconds (MS), microseconds (US) or nanoseconds (NS) for the main window.""",
         validator=strict_range,
         values=[1e-9, 100]
@@ -389,9 +387,9 @@ class LeCroyT3DSO1204(Instrument):
 
     timebase_hor_position = Instrument.control(
         "HPOS?", "HPOS %eS",
-        """ A string parameter that sets the horizontal position in the zoomed (delayed) view of 
-        the main sweep. The main sweep range and the main sweep horizontal position determine 
-        the range for this command. The value for this command must keep the zoomed view window 
+        """ A string parameter that sets the horizontal position in the zoomed (delayed) view of
+        the main sweep. The main sweep range and the main sweep horizontal position determine
+        the range for this command. The value for this command must keep the zoomed view window
         within the main sweep range.""",
     )
 
@@ -505,8 +503,8 @@ class LeCroyT3DSO1204(Instrument):
 
     waveform_first_point = Instrument.control(
         "WFSU?", "WFSU FP,%d",
-        """ An integer parameter that specifies the address of the first data point to be sent. 
-        For waveforms acquired in sequence mode, this refers to the relative address in the 
+        """ An integer parameter that specifies the address of the first data point to be sent.
+        For waveforms acquired in sequence mode, this refers to the relative address in the
         given segment.
         For example:
         FP = 0 corresponds to the first data point.
@@ -620,7 +618,7 @@ class LeCroyT3DSO1204(Instrument):
 
     trigger_50 = Instrument.setting(
         "SET50",
-        """ The SET50 command automatically sets the trigger levels to center of the trigger 
+        """ The SET50 command automatically sets the trigger levels to center of the trigger
         source waveform. """
     )
 
@@ -628,29 +626,29 @@ class LeCroyT3DSO1204(Instrument):
         "TRMD?", "TRMD %s",
         """ A string parameter that selects the trigger sweep mode.
         <mode>:= {AUTO,NORM,SINGLE,STOP}
-        • AUTO — When AUTO sweep mode is selected, the oscilloscope begins to search for the 
+        • AUTO — When AUTO sweep mode is selected, the oscilloscope begins to search for the
                  trigger signal that meets the conditions.
-                 If the trigger signal is satisfied, the running state on the top left corner of 
+                 If the trigger signal is satisfied, the running state on the top left corner of
                  the user interface shows Trig'd, and the interface shows stable waveform.
-                 Otherwise, the running state always shows Auto, and the interface shows unstable 
+                 Otherwise, the running state always shows Auto, and the interface shows unstable
                  waveform.
-        • NORM — When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger 
+        • NORM — When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
                  state and begins to search for trigger signals that meet the conditions.
-                 If the trigger signal is satisfied, the running state shows Trig'd, 
+                 If the trigger signal is satisfied, the running state shows Trig'd,
                  and the interface shows stable waveform.
-                 Otherwise, the running state shows Ready, and the interface displays the last 
-                 triggered waveform (previous trigger) or does not display the waveform (no 
+                 Otherwise, the running state shows Ready, and the interface displays the last
+                 triggered waveform (previous trigger) or does not display the waveform (no
                  previous trigger).
-        • SINGLE — When SINGLE sweep mode is selected, the backlight of SINGLE key lights up, 
-                   the oscilloscope enters the waiting trigger state and begins to search for the 
+        • SINGLE — When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
+                   the oscilloscope enters the waiting trigger state and begins to search for the
                    trigger signal that meets the conditions.
-                   If the trigger signal is satisfied, the running state shows Trig'd, 
-                   and the interface shows stable waveform. 
-                   Then, the oscilloscope stops scanning, the RUN/STOP key is red light, 
+                   If the trigger signal is satisfied, the running state shows Trig'd,
+                   and the interface shows stable waveform.
+                   Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
                    and the running status shows Stop.
-                   Otherwise, the running state shows Ready, and the interface does not display 
+                   Otherwise, the running state shows Ready, and the interface does not display
                    the waveform.
-        • STOP — STOP is a part of the option of this command, but not a trigger mode of the 
+        • STOP — STOP is a part of the option of this command, but not a trigger mode of the
                  oscilloscope.
         """,
         validator=strict_discrete_set,
@@ -740,11 +738,11 @@ class LeCroyT3DSO1204(Instrument):
 
     _trigger_select = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
-        """ A string parameter that selects the condition that will trigger the acquisition of 
+        """ A string parameter that selects the condition that will trigger the acquisition of
         waveforms.
-        Depending on the trigger type, additional parameters must be specified. These additional 
-        parameters are grouped in pairs. The first in the pair names the variable to be modified, 
-        while the second gives the new value to be assigned. Pairs may be given in any order and 
+        Depending on the trigger type, additional parameters must be specified. These additional
+        parameters are grouped in pairs. The first in the pair names the variable to be modified,
+        while the second gives the new value to be assigned. Pairs may be given in any order and
         restricted to those variables to be changed.
         <trig_type>:={EDGE,SLEW,GLIT,INTV,RUNT,DROP}
         <source>:={C1,C2,C3,C4,LINE}
@@ -754,11 +752,11 @@ class LeCroyT3DSO1204(Instrument):
         <hold_type>:={IS,IL,I2,I1} for SLEW/INTV trigger.
         <hold_value1>:= a time value with unit.
         <hold_value2>:= a time value with unit.
-        
+
         Note:
         • LINE can only be selected when the trigger type is Edge.
         • If there is no unit(S/mS/uS/nS) added, it defaults to be S.
-        • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger, 
+        • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger,
         and [2nS, 4.2S] for others.
         """,
         get_process=_trigger_select_get_process,
