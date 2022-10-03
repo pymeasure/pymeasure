@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 
 import logging
+import re
 import sys
 
 import numpy as np
@@ -31,6 +32,9 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+_MATCH_FLOAT = re.compile(r'-? *[0-9]+\.?[0-9]*(?:[Ee] *-? *[0-9]+)?')
+_MATCH_INT = re.compile(r'^[-+]?[0-9]+')
 
 
 # noinspection DuplicatedCode
@@ -89,7 +93,8 @@ class Channel:
         the oscilloscope's skew control to remove cable-delay errors between channels.
         """,
         validator=strict_range,
-        values=[-100, 100]
+        values=[-100, 100],
+        get_process=lambda val: float(re.findall(_MATCH_FLOAT, str(val))[0])
     )
 
     probe_attenuation = Instrument.control(
@@ -629,6 +634,7 @@ class LeCroyT3DSO1204(Instrument):
         find the expected number of parameter for the trigger_select property
         :param value: input parameters as a tuple
         """
+        value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
         num_expected_pars = 0
         if 3 <= len(value) <= 5:
             if value[0] == "EDGE":
@@ -651,21 +657,31 @@ class LeCroyT3DSO1204(Instrument):
         :param values: allowed space for each parameter
         :param num_pars_finder: function to find the number of expected parameters
         """
+        if not isinstance(value, tuple):
+            raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
         if len(value) < 3 or len(value) > 5:
             raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+        value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
         if value[0] not in values.keys():
-            raise ValueError(
-                'Value of {} is not in the discrete set {}'.format(value[0], values.keys()))
+            raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
         num_expected_pars = num_pars_finder(value)
         if len(value) != num_expected_pars:
-            raise ValueError('Unexpected number of parameters: {} != {}'.format(len(value),
-                                                                                num_expected_pars))
+            raise ValueError('Number of parameters {} != {}'.format(len(value), num_expected_pars))
         for i, element in enumerate(value[1:], start=1):
             if i < 3:
                 strict_discrete_set(element, values=values[value[0]][i - 1])
             else:
                 strict_range(element, values=values[value[0]][i - 1])
         return value
+
+    @staticmethod
+    def _trigger_select_set_process(value):
+        """
+        Process the input of the trigger_select property. All string are transformed to uppercase.
+        :param value: output parameters as a tuple
+        """
+        new_value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+        return new_value
 
     @staticmethod
     def _trigger_select_get_process(value):
@@ -711,12 +727,12 @@ class LeCroyT3DSO1204(Instrument):
         parameters are grouped in pairs. The first in the pair names the variable to be modified,
         while the second gives the new value to be assigned. Pairs may be given in any order and
         restricted to those variables to be changed.
-        <trig_type>:={EDGE,SLEW,GLIT,INTV,RUNT,DROP}
-        <source>:={C1,C2,C3,C4,LINE}
-        <hold_type>:={TI,OFF} for EDGE trigger.
-        <hold_type>:={TI} for DROP trigger.
-        <hold_type>:={PS,PL,P2,P1}for GLIT/RUNT trigger.
-        <hold_type>:={IS,IL,I2,I1} for SLEW/INTV trigger.
+        <trig_type>:={edge,slew,glit,intv,runt,drop}
+        <source>:={c1,c2,c3,c4,line}
+        <hold_type>:={ti,off} for edge trigger.
+        <hold_type>:={ti} for drop trigger.
+        <hold_type>:={ps,pl,p2,p1} for glit/runt trigger.
+        <hold_type>:={is,il,i2,i1} for slew/intv trigger.
         <hold_value1>:= a time value with unit.
         <hold_value2>:= a time value with unit.
 
@@ -726,6 +742,7 @@ class LeCroyT3DSO1204(Instrument):
         • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger,
         and [2nS, 4.2S] for others.
         """,
+        set_process=_trigger_select_set_process,
         get_process=_trigger_select_get_process,
         validator=_trigger_select_validator,
         values=_trigger_select_values,
@@ -760,15 +777,15 @@ class LeCroyT3DSO1204(Instrument):
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to trigger_setup and channel_setup if needed.
         :param mode: trigger sweep mode [auto, normal, single, stop]
-        :param source: trigger source [C1,C2,C3,C4]
+        :param source: trigger source [c1,c2,c3,c4]
         :param trigger_type: condition that will trigger the acquisition of waveforms
-        [EDGE,SLEW,GLIT,INTV,RUNT,DROP]
+        [edge,slew,glit,intv,runt,drop]
         :param hold_type: hold type (refer to page 172 of programing guide)
         :param hold_value1: hold value1 (refer to page 172 of programing guide)
         :param hold_value2: hold value2 (refer to page 172 of programing guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
-        :param level2: trigger lower level voltage for the active trigger source (only SLEW/RUNT
+        :param level2: trigger lower level voltage for the active trigger source (only slew/runt
         trigger)
         :param slope: trigger slope of the specified trigger source"""
         if mode is not None:
@@ -799,15 +816,15 @@ class LeCroyT3DSO1204(Instrument):
     def trigger(self):
         """ Read trigger setup as a dict containing the following keys:
             - "mode": trigger sweep mode [auto, normal, single, stop]
-            - "trigger_type": condition that will trigger the acquisition of waveforms [EDGE,
-            SLEW,GLIT,INTV,RUNT,DROP]
-            - "source": trigger source [C1,C2,C3,C4]
+            - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
+            slew,glit,intv,runt,drop]
+            - "source": trigger source [c1,c2,c3,c4]
             - "hold_type": hold type (refer to page 172 of programing guide)
             - "hold_value1": hold value1 (refer to page 172 of programing guide)
             - "hold_value2": hold value2 (refer to page 172 of programing guide)
             - "coupling": input coupling for the selected trigger sources
             - "level": trigger level voltage for the active trigger source
-            - "level2": trigger lower level voltage for the active trigger source (only SLEW/RUNT
+            - "level2": trigger lower level voltage for the active trigger source (only slew/runt
             trigger)
             - "slope": trigger slope of the specified trigger source
         """

@@ -30,7 +30,7 @@ from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+# pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestLeCroyT3DSO1204:
@@ -169,7 +169,7 @@ class TestLeCroyT3DSO1204:
     def test_ch_probe_attenuation(self, make_scope, ch_number):
         scope = make_scope
         sleep(1)
-        scope.ch(ch_number).probe_attenuation = "10"
+        scope.ch(ch_number).probe_attenuation = 10
         sleep(1)
         assert scope.ch(ch_number).probe_attenuation == 10
 
@@ -202,7 +202,7 @@ class TestLeCroyT3DSO1204:
         with pytest.raises(ValueError):
             scope.ch1.trigger_slope = "abcd"
         sleep(1)
-        scope.trigger_select = ("EDGE", "C1", "OFF")
+        scope.trigger_select = ("edge", "C1", "OFF")
         for case in self.TRIGGER_SLOPES:
             sleep(1)
             scope.ch1.trigger_slope = case
@@ -346,7 +346,7 @@ class TestLeCroyT3DSO1204:
 
     # Setup methods
     @pytest.mark.parametrize("ch_number", CHANNELS)
-    def test_channel_setup(self, make_scope, ch_number, caplog):
+    def test_channel_setup(self, make_scope, ch_number):
         # Only autoscale on the first channel
         scope = make_scope
         if ch_number == self.CHANNELS[0]:
@@ -373,7 +373,7 @@ class TestLeCroyT3DSO1204:
             invert=False,
             offset=0.,
             skew_factor=0.,
-            probe_attenuation="1",
+            probe_attenuation=1.,
             scale=0.05,
             unit="V",
             trigger_coupling="dc",
@@ -442,24 +442,26 @@ class TestLeCroyT3DSO1204:
     def test_trigger_select(self, make_scope):
         scope = make_scope
         with pytest.raises(ValueError):
-            scope.trigger_select = "EDGE"
+            scope.trigger_select = "edge"
         with pytest.raises(ValueError):
-            scope.trigger_select = ("EDGE", "C2")
+            scope.trigger_select = ("edge", "c2")
         with pytest.raises(ValueError):
-            scope.trigger_select = ("EDGE", "C2", "TI")
+            scope.trigger_select = ("edge", "c2", "time")
         with pytest.raises(ValueError):
-            scope.trigger_select = ("ABCD", "C1", "TI", 0)
+            scope.trigger_select = ("ABCD", "c1", "time", 0)
         with pytest.raises(ValueError):
-            scope.trigger_select = ("EDGE", "C1", "TI", 1000)
+            scope.trigger_select = ("edge", "c1", "time", 1000)
         with pytest.raises(ValueError):
-            scope.trigger_select = ("EDGE", "C1", "TI", 0, 1)
+            scope.trigger_select = ("edge", "c1", "time", 0, 1)
+        sleep(1)
+        scope.trigger_select = ("edge", "c1", "off")
         sleep(1)
         scope.trigger_select = ("EDGE", "C1", "OFF")
         sleep(1)
-        assert scope.trigger_select == ["EDGE", "C1", "OFF"]
-        scope.trigger_select = ("GLIT", "C1", "P2", 1e-3, 2e-3)
+        assert scope.trigger_select == ["edge", "c1", "off"]
+        scope.trigger_select = ("glit", "c1", "p2", 1e-3, 2e-3)
         sleep(1)
-        assert scope.trigger_select == ["GLIT", "C1", "P2", 1e-3, 2e-3]
+        assert scope.trigger_select == ["glit", "c1", "p2", 1e-3, 2e-3]
 
     def test_trigger_setup(self, make_reseted_scope):
         scope = make_reseted_scope
