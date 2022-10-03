@@ -433,7 +433,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                                                "Are you sure you want to remove the graph?",
                                                QtWidgets.QMessageBox.StandardButton.Yes |
                                                QtWidgets.QMessageBox.StandardButton.No,
-                                           QtWidgets.QMessageBox.StandardButton.No)
+                                               QtWidgets.QMessageBox.StandardButton.No)
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.manager.remove(experiment)
 
@@ -442,7 +442,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                                                "Are you sure you want to delete this data file?",
                                                QtWidgets.QMessageBox.StandardButton.Yes |
                                                QtWidgets.QMessageBox.StandardButton.No,
-                                           QtWidgets.QMessageBox.StandardButton.No)
+                                               QtWidgets.QMessageBox.StandardButton.No)
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.manager.remove(experiment)
             os.unlink(experiment.data_filename)
