@@ -743,9 +743,9 @@ class LeCroyT3DSO1204(Instrument):
         • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger,
         and [2nS, 4.2S] for others.
         """,
-        set_process=_trigger_select_set_process,
-        get_process=_trigger_select_get_process,
-        validator=_trigger_select_validator,
+        set_process=_trigger_select_set_process.__get__(object),
+        get_process=_trigger_select_get_process.__get__(object),
+        validator=_trigger_select_validator.__get__(object),
         values=_trigger_select_values,
         dynamic=True
     )
