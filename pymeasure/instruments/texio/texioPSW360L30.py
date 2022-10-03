@@ -9,7 +9,7 @@ log.addHandler(logging.NullHandler())
 
 
 class TexioPSW360L30(Instrument):
-    """ Represents the TEXIO PSW-360L30 Power Supply (minimal implementation)
+    r""" Represents the TEXIO PSW-360L30 Power Supply (minimal implementation)
     and provides a high-level interface for interacting with the instrument.
 
     For a connection through tcpip, the device only accepts
