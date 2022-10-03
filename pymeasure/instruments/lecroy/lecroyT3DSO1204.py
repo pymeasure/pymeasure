@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 
 import logging
-import re
 import sys
 
 import numpy as np
@@ -95,11 +94,11 @@ class Channel:
 
     probe_attenuation = Instrument.control(
         "ATTN?", "ATTN %s",
-        """ A string parameter that specifies the probe attenuation. The probe attenuation
+        """ A float parameter that specifies the probe attenuation. The probe attenuation
         may be from 0.1 to 10000.""",
         validator=strict_discrete_set,
-        values={"0.1", "0.2", "0.5", "1", "2", "5", "10", "20", "50", "100", "200", "500", "1000",
-                "2000", "5000", "10000"}
+        values={0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000},
+        set_process=lambda v: str(v) if v >= 1 else "{:.1f}".format(v)
     )
 
     scale = Instrument.control(
@@ -255,7 +254,7 @@ class Channel:
             - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
         """
 
-        ch_setup_raw = {
+        ch_setup = {
             "channel": self.number,
             "attenuation": self.probe_attenuation,
             "bandwidth_limit": self.bwlimit,
@@ -271,16 +270,6 @@ class Channel:
             "trigger_level2": self.trigger_level2,
             "trigger_slope": self.trigger_slope
         }
-
-        # Convert values to specific type
-        to_str = ["coupling", "unit", "trigger_coupling", "trigger_slope"]
-        to_bool = ["bandwidth_limit", "display", "inverted"]
-        to_float = ["attenuation", "offset", "skew_factor", "volts_div", "trigger_level",
-                    "trigger_level2"]
-        to_int = ["channel"]
-        ch_setup = self.instrument.sanitize_dictionary(ch_setup_raw, to_bool=to_bool,
-                                                       to_float=to_float, to_int=to_int,
-                                                       to_str=to_str)
         return ch_setup
 
 
@@ -303,7 +292,8 @@ class LeCroyT3DSO1204(Instrument):
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
-        self.adapter.connection.timeout = 7000
+        if hasattr(self.adapter, "connection") and self.adapter.connection is not None:
+            self.adapter.connection.timeout = 7000
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
         self.ch3 = Channel(self, 3)
@@ -311,47 +301,29 @@ class LeCroyT3DSO1204(Instrument):
         self.waveform_source = "C1"
         self.default_setup()
 
-    _match_float = re.compile(r'-? *[0-9]+\.?[0-9]*(?:[Ee] *-? *[0-9]+)?')
-    _match_int = re.compile(r'^[-+]?[0-9]+')
-
-    def sanitize_dictionary(self, raw_dictionary, to_bool=None, to_float=None, to_int=None,
-                            to_str=None):
-        sane_dictionary = {}
-        for key, val in raw_dictionary.items():
-            if val is None:
-                sane_dictionary[key] = val
-            elif to_str is not None and key in to_str:
-                sane_dictionary[key] = str(val)
-            elif to_bool is not None and key in to_bool:
-                sane_dictionary[key] = (val in [True, "ON"])
-            elif to_float is not None and key in to_float:
-                x = (val if isinstance(val, (float, int)) else
-                     re.findall(self._match_float, str(val))[0])
-                sane_dictionary[key] = float(x)
-            elif to_int is not None and key in to_int:
-                x = (val if isinstance(val, (float, int)) else
-                     re.findall(self._match_int, str(val))[0])
-                sane_dictionary[key] = int(x)
-            else:
-                sane_dictionary[key] = val
-        return sane_dictionary
-
     ################
     # System Setup #
     ################
 
     def default_setup(self):
-        """ Setup the oscilloscope for remote operation. """
+        """ Setup the oscilloscope for remote operation. The COMM_HEADER command controls the
+        way the oscilloscope formats response to queries. This command does not affect the
+        interpretation of messages sent to the oscilloscope. Headers can be sent in their long or
+        short form regardless of the CHDR setting.
+        By setting the COMM_HEADER to OFF, the instrument is going to reply with minimal
+        information, and this makes the response message much easier to parse."""
         self.write("CHDR OFF")
 
     def ch(self, channel_number):
-        if channel_number == 1 or channel_number == "C1":
+        if isinstance(channel_number, str):
+            channel_number = channel_number.lower().replace(" ", "")
+        if channel_number in [1, "c1", "channel1", "chan1"]:
             return self.ch1
-        elif channel_number == 2 or channel_number == "C2":
+        elif channel_number in [2, "c2", "channel2", "chan2"]:
             return self.ch2
-        elif channel_number == 3 or channel_number == "C3":
+        elif channel_number in [3, "c3", "channel3", "chan3"]:
             return self.ch3
-        elif channel_number == 4 or channel_number == "C4":
+        elif channel_number in [4, "c4", "channel4", "chan4"]:
             return self.ch4
         else:
             raise ValueError("Invalid channel number. Must be 1, 2, 3, 4.")
@@ -365,7 +337,7 @@ class LeCroyT3DSO1204(Instrument):
     ##################
 
     timebase_offset = Instrument.control(
-        "TRIG_DELAY?", "TRDL %eS",
+        "TRDL?", "TRDL %eS",
         """ A float parameter that sets the time interval in seconds between the trigger
         event and the reference position (at center of screen by default)."""
     )
@@ -541,11 +513,7 @@ class LeCroyT3DSO1204(Instrument):
         else:
             raise NotImplementedError(
                 f"Acquiring from source {self.waveform_source} is not implemented")
-        # Correct types
-        to_int = ["points", "sparsing", "first_point", "average"]
-        to_float = ["xdiv", "xoffset", "ydiv", "yoffset", "sampling_rate"]
-        to_str = ["type", "status", "source"]
-        return self.sanitize_dictionary(vals_dict, to_float=to_float, to_int=to_int, to_str=to_str)
+        return vals_dict
 
     def digitize(self, source: str):
         """ Acquire waveforms according to the settings of the acquire commands
@@ -579,10 +547,14 @@ class LeCroyT3DSO1204(Instrument):
         """ Get a BMP image of oscilloscope screen in bytearray of specified file format.
         """
         # Using binary_values query because default interface does not support binary transfer
-        chunk_size = self.adapter.connection.chunk_size
-        self.adapter.connection.chunk_size = 20 * 1024 * 1024
+        chunk_size = None
+        if hasattr(self.adapter, "connection") and self.adapter.connection is not None:
+            chunk_size = self.adapter.connection.chunk_size
+            self.adapter.connection.chunk_size = 20 * 1024 * 1024
         img = self.binary_values("SCDP", dtype=np.uint8)
-        self.adapter.connection.chunk_size = chunk_size
+        if (chunk_size is not None and hasattr(self.adapter, "connection") and
+                self.adapter.connection is not None):
+            self.adapter.connection.chunk_size = chunk_size
         return bytearray(img)
 
     def download_data(self, source, points=None, sparsing=None, first_point=None):
@@ -707,11 +679,11 @@ class LeCroyT3DSO1204(Instrument):
         """
         output = []
         if len(value) > 0:
-            output.append(value[0])
+            output.append(value[0].lower())
         if "SR" in value:
-            output.append(value[value.index("SR") + 1])
+            output.append(value[value.index("SR") + 1].lower())
         if "HT" in value:
-            output.append(value[value.index("HT") + 1])
+            output.append(value[value.index("HT") + 1].lower())
         if "HV" in value:
             output.append(float(value[value.index("HV") + 1][:-1]))
         if "HV2" in value:
@@ -853,6 +825,4 @@ class LeCroyT3DSO1204(Instrument):
             "level2": ch.trigger_level2,
             "slope": ch.trigger_slope
         }
-        to_str = ["mode", "trigger_type", "source", "hold_type", "coupling", "slope"]
-        to_float = ["hold_value1", "hold_value2", "level", "level2"]
-        return self.sanitize_dictionary(tb_setup, to_str=to_str, to_float=to_float)
+        return tb_setup
