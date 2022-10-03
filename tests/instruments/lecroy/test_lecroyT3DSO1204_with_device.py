@@ -53,7 +53,7 @@ class TestLeCroyT3DSO1204:
     #########################
 
     BOOLEANS = [False, True]
-    CHANNEL_COUPLINGS = ["AC 1M", "DC 1M", "GND"]
+    CHANNEL_COUPLINGS = ["ac 1M", "dc 1M", "ground"]
     ACQUISITION_TYPES = ["normal", "average", "peak", "highres"]
     TRIGGER_LEVELS = [0.125, 0.150, 0.175]
     TRIGGER_SLOPES = ["negative", "positive", "window"]
@@ -105,7 +105,7 @@ class TestLeCroyT3DSO1204:
         expected = {"channel": 1,
                     "attenuation": 1.,
                     "bandwidth_limit": False,
-                    "coupling": "DC 1M",
+                    "coupling": "dc 1M",
                     "offset": 0.,
                     "skew_factor": 0.,
                     "display": True,
@@ -202,7 +202,7 @@ class TestLeCroyT3DSO1204:
         with pytest.raises(ValueError):
             scope.ch1.trigger_slope = "abcd"
         sleep(1)
-        scope.trigger_select = ("edge", "C1", "OFF")
+        scope.trigger_select = ("edge", "c1", "off")
         for case in self.TRIGGER_SLOPES:
             sleep(1)
             scope.ch1.trigger_slope = case
@@ -263,7 +263,7 @@ class TestLeCroyT3DSO1204:
             scope.acquisition_type = case
             sleep(1)
             scope.acquisition_average = 16
-            assert scope.acquisition_type == ["AVERAGE", 16]
+            assert scope.acquisition_type == ["average", 16]
         else:
             sleep(1)
             scope.acquisition_type = case
@@ -368,7 +368,7 @@ class TestLeCroyT3DSO1204:
         sleep(1)
         scope.ch(ch_number).setup(
             bwlimit=False,
-            coupling="DC 1M",
+            coupling="dc 1M",
             display=True,
             invert=False,
             offset=0.,
@@ -384,7 +384,7 @@ class TestLeCroyT3DSO1204:
         expected = {"channel": ch_number,
                     "attenuation": 1.,
                     "bandwidth_limit": False,
-                    "coupling": "DC 1M",
+                    "coupling": "dc 1M",
                     "offset": 0.,
                     "skew_factor": 0.,
                     "display": True,

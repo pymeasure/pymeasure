@@ -64,12 +64,12 @@ def test_coupling():
              (b"C1:CPL GND", None)
              ],
     ) as instr:
-        assert instr.ch1.coupling == "DC 1M"
-        instr.ch1.coupling = "DC 1M"
-        assert instr.ch1.coupling == "AC 1M"
-        instr.ch1.coupling = "AC 1M"
-        assert instr.ch1.coupling == "GND"
-        instr.ch1.coupling = "GND"
+        assert instr.ch1.coupling == "dc 1M"
+        instr.ch1.coupling = "dc 1M"
+        assert instr.ch1.coupling == "ac 1M"
+        instr.ch1.coupling = "ac 1M"
+        assert instr.ch1.coupling == "ground"
+        instr.ch1.coupling = "ground"
 
 
 def test_offset():
@@ -122,7 +122,7 @@ def test_channel_setup():
         assert instr.ch1.current_configuration == {"channel": 1,
                                                    "attenuation": 1.,
                                                    "bandwidth_limit": False,
-                                                   "coupling": "DC 1M",
+                                                   "coupling": "dc 1M",
                                                    "offset": -0.150,
                                                    "skew_factor": 0.,
                                                    "display": True,

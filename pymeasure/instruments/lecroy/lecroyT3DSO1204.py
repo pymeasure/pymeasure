@@ -55,9 +55,9 @@ class Channel:
 
     coupling = Instrument.control(
         "CPL?", "CPL %s",
-        """ A string parameter that determines the coupling ("AC 1M", "DC 1M", "GND").""",
+        """ A string parameter that determines the coupling ("ac 1M", "dc 1M", "ground").""",
         validator=strict_discrete_set,
-        values={"AC 1M": "A1M", "DC 1M": "D1M", "GND": "GND"},
+        values={"ac 1M": "A1M", "dc 1M": "D1M", "ground": "GND"},
         map_values=True
     )
 
@@ -197,7 +197,7 @@ class Channel:
         make multiple consecutive calls to setup() if needed.
 
         :param bwlimit: A boolean, which enables 20 MHz internal low-pass filter.
-        :param coupling: "AC 1M", "DC 1M", "GND".
+        :param coupling: "AC 1M", "DC 1M", "ground".
         :param display: A boolean, which enables channel display.
         :param invert: A boolean, which enables input signal inversion.
         :param offset: Numerical value represented at center of screen, must be inside
@@ -246,7 +246,7 @@ class Channel:
             - "channel": channel number (int)
             - "attenuation": probe attenuation (float)
             - "bandwidth_limit": bandwidth limiting enabled (bool)
-            - "coupling": "AC 1M", "DC 1M", "GND" coupling (str)
+            - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
             - "offset": vertical offset (float)
             - "skew_factor": channel-tochannel skew factor (float)
             - "display": currently displayed (bool)
@@ -384,7 +384,7 @@ class LeCroyT3DSO1204(Instrument):
             "hor_magnify": self.timebase_hor_magnify,
             "hor_position": self.timebase_hor_position
         }
-        return {k: float(v) for k, v in tb_setup.items()}
+        return tb_setup
 
     def timebase_setup(self, offset=None, scale=None, hor_magnify=None, hor_position=None):
         """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
@@ -416,7 +416,8 @@ class LeCroyT3DSO1204(Instrument):
         validator=strict_discrete_set,
         values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE",
                 "highres": "HIGH_RES"},
-        map_values=True
+        map_values=True,
+        get_process=lambda v: [v[0].lower(), int(v[1])] if len(v) == 2 and v[0] == "AVERAGE" else v
     )
 
     acquisition_average = Instrument.control(
@@ -799,6 +800,7 @@ class LeCroyT3DSO1204(Instrument):
             self.trigger_select = tuple(args)
         elif any(i is not None for i in [source, trigger_type, hold_type]):
             raise ValueError("Need to specify all of source, trigger_type and hold_type arguments")
+        source = source.upper()
         if source is not None:
             if source not in ["C1", "C2", "C3", "C4"]:
                 raise ValueError(f"Trigger source {source} not recognized")
