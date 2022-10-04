@@ -1,5 +1,5 @@
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.keithley.keithley2260B import Keithley2260B
 
 import time
 import logging
@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class TexioPSW360L30(Instrument):
+class TexioPSW360L30(Keithley2260B):
     r""" Represents the TEXIO PSW-360L30 Power Supply (minimal implementation)
     and provides a high-level interface for interacting with the instrument.
 
@@ -35,79 +35,12 @@ class TexioPSW360L30(Instrument):
     """
 
     def __init__(self, adapter, read_termination="\n", **kwargs):
-        super().__init__(
-            adapter,
-            "TEXIO PSW-360L30 Power Supply",
-            read_termination=read_termination,
-            **kwargs
-        )
-
-    enabled = Instrument.control(
-        "OUTP?",
-        "OUTP %d",
-        """A boolean property that controls whether the source is enabled, takes
-        values True or False.""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-    current_limit = Instrument.control(
-        ":SOUR:CURR?",
-        ":SOUR:CURR %g",
-        """A floating point property that controls the source current
-        in amps. This is not checked against the allowed range. Depending on
-        whether the instrument is in constant current or constant voltage mode,
-        this might differ from the actual current achieved.""",
-    )
-
-    voltage_setpoint = Instrument.control(
-        ":SOUR:VOLT?",
-        ":SOUR:VOLT %g",
-        """A floating point property that controls the source voltage
-        in volts. This is not checked against the allowed range. Depending on
-        whether the instrument is in constant current or constant voltage mode,
-        this might differ from the actual voltage achieved.""",
-    )
-
-    power = Instrument.measurement(
-        ":MEAS:POW?",
-        """Reads the power (in Watt) the dc power supply is putting out.
-        """,
-    )
-
-    voltage = Instrument.measurement(
-        ":MEAS:VOLT?",
-        """Reads the voltage (in Volt) the dc power supply is putting out.
-        """,
-    )
-
-    current = Instrument.measurement(
-        ":MEAS:CURR?",
-        """Reads the current (in Ampere) the dc power supply is putting out.
-        """,
-    )
-
-    applied = Instrument.control(
-        ":APPly?",
-        ":APPly %g,%g",
-        """Simultaneous control of voltage (volts) and current (amps).
-        Values need to be supplied as tuple of (voltage, current). Depending on
-        whether the instrument is in constant current or constant voltage mode,
-        the values achieved by the instrument will differ from the ones set.
-        """,
-    )
-
-    @property
-    def error(self):
-        """ Returns a tuple of an error code and message from a
-        single error. """
-        err = self.values(":system:error?")
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', "")
-        return code, message
+        Instrument.__init__(self,
+                            adapter=adapter,
+                            name="TEXIO PSW-360L30 Power Supply",
+                            read_termination=read_termination,
+                            **kwargs
+                            )
 
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
@@ -119,8 +52,3 @@ class TexioPSW360L30(Instrument):
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for TEXIO PSW-360L30 error retrieval.")
-
-    def shutdown(self):
-        """ Disable output, call parent function"""
-        self.enabled = False
-        super().shutdown()

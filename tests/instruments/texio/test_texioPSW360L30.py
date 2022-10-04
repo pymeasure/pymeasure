@@ -30,10 +30,10 @@ from pymeasure.instruments.texio.texioPSW360L30 import TexioPSW360L30
 def test_output_enabled():
     with expected_protocol(
             TexioPSW360L30,
-            [(b"OUTP?", b"1"),
-             (b"OUTP 1", None),
-             (b"OUTP?", b"0"),
-             (b"OUTP 0", None),
+            [(b"OUTPut?", b"1"),
+             (b"OUTPut 1", None),
+             (b"OUTPut?", b"0"),
+             (b"OUTPut 0", None),
              ],
     ) as inst:
         assert inst.enabled is True
