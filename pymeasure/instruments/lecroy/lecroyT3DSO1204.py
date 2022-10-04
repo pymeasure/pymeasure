@@ -402,7 +402,9 @@ class LeCroyT3DSO1204(Instrument):
     ################
 
     def default_setup(self):
-        """ Setup the oscilloscope for remote operation. The COMM_HEADER command controls the
+        """ Setup the oscilloscope for remote operation.
+        
+        The COMM_HEADER command controls the
         way the oscilloscope formats response to queries. This command does not affect the
         interpretation of messages sent to the oscilloscope. Headers can be sent in their long or
         short form regardless of the CHDR setting.
