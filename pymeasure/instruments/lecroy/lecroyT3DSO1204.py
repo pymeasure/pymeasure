@@ -34,7 +34,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 _MATCH_FLOAT = re.compile(r'-? *[0-9]+\.?[0-9]*(?:[Ee] *-? *[0-9]+)?')
-_MATCH_INT = re.compile(r'^[-+]?[0-9]+')
 
 
 def _trigger_select_num_pars(value):
@@ -403,7 +402,7 @@ class LeCroyT3DSO1204(Instrument):
 
     def default_setup(self):
         """ Setup the oscilloscope for remote operation.
-        
+
         The COMM_HEADER command controls the
         way the oscilloscope formats response to queries. This command does not affect the
         interpretation of messages sent to the oscilloscope. Headers can be sent in their long or
