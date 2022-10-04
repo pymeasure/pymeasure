@@ -775,7 +775,7 @@ class LeCroyT3DSO1204(Instrument):
             The trigger_select command is switched automatically between the short, normal and
             extended version depending on the number of expected parameters.
         """
-        num_expected_pars = self._trigger_select_num_pars(value)
+        num_expected_pars = _trigger_select_num_pars(value)
         if num_expected_pars == 3:
             self._trigger_select_set_command = self._trigger_select_short_command
         elif num_expected_pars == 4:
