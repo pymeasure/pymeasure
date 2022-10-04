@@ -34,11 +34,11 @@ class TexioPSW360L30(Keithley2260B):
         print(source.applied)
     """
 
-    def __init__(self, adapter, read_termination="\n", **kwargs):
+    def __init__(self, adapter, **kwargs):
         Instrument.__init__(self,
                             adapter=adapter,
                             name="TEXIO PSW-360L30 Power Supply",
-                            read_termination=read_termination,
+                            read_termination="\n",
                             **kwargs
                             )
 
