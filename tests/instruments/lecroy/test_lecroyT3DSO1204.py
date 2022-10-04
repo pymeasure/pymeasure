@@ -100,6 +100,18 @@ def test_attenuation():
         instr.ch1.probe_attenuation = 0.1
 
 
+def test_skew_factor():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b"C1:SKEW?", b"1.00E-07S"),
+             (b"C1:SKEW 1.000000e-07S", None),
+             ]
+    ) as instr:
+        assert instr.ch1.skew_factor == 1e-7
+        instr.ch1.skew_factor = 1e-7
+
+
 def test_channel_setup():
     with expected_protocol(
             LeCroyT3DSO1204,
