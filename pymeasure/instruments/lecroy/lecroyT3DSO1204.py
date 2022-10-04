@@ -362,6 +362,17 @@ class LeCroyT3DSO1204(Instrument):
     Refer to the LeCroy T3DSO1204 Oscilloscope Programmer's Guide for further details about
     using the lower-level methods to interact directly with the scope.
 
+    Attributes:
+        SLEEP_SECONDS: recommended sleep time between commands.
+        Because the oscilloscope takes a non neglibile time to perform some operations, it might
+        be needed for the user to wait (sleep) between commands.
+        This attribute is never used inside the LeCroyT3DSO1204 class itself, but it gives the
+        user an idea of the recommended sleep time. It can be tweeked to reflect the actual use
+        case.
+        It is set to 0.5 seconds just to be on the safe side. Its optimal value heavily depends on
+        the actual commands and on the connection type, so it is impossible to give a unique
+        value to fit all cases.
+
     .. code-block:: python
 
         scope = LeCroyT3DSO1204(resource)
@@ -371,7 +382,9 @@ class LeCroyT3DSO1204(Instrument):
         scope.shutdown()
     """
 
-    BOOLS = {True: "ON", False: "OFF"}
+    _BOOLS = {True: "ON", False: "OFF"}
+
+    SLEEP_SECONDS = 0.5
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)

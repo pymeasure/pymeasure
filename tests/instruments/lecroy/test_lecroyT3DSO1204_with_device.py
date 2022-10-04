@@ -30,7 +30,7 @@ from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+# pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestLeCroyT3DSO1204:
@@ -116,94 +116,94 @@ class TestLeCroyT3DSO1204:
                     "trigger_level2": 0.150,
                     "trigger_slope": "positive"
                     }
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         actual = autoscaled_scope.ch(1).current_configuration
         assert actual == expected
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_ch_bwlimit(self, scope, ch_number, case):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).bwlimit = case
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).bwlimit == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     @pytest.mark.parametrize("case", CHANNEL_COUPLINGS)
     def test_ch_coupling(self, scope, ch_number, case):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).coupling = case
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).coupling == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_ch_display(self, scope, ch_number, case):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).display = case
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).display == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     @pytest.mark.parametrize("case", BOOLEANS)
     def test_ch_invert(self, scope, ch_number, case):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).invert = case
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).invert == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     def test_ch_offset(self, scope, ch_number):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).offset = 1
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).offset == 1
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     def test_ch_probe_attenuation(self, scope, ch_number):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).probe_attenuation = 10
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).probe_attenuation == 10
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     def test_ch_scale(self, scope, ch_number):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).scale = 1
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).scale == 1
 
     def test_ch_trigger_level(self, autoscaled_scope):
         for case in self.TRIGGER_LEVELS:
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             autoscaled_scope.ch1.trigger_level = case
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             assert autoscaled_scope.ch1.trigger_level == case
 
     def test_ch_trigger_level2(self, autoscaled_scope):
         for case in self.TRIGGER_LEVELS:
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             autoscaled_scope.ch1.trigger_level2 = case
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             assert autoscaled_scope.ch1.trigger_level2 == case
 
     def test_ch_trigger_slope(self, autoscaled_scope):
         with pytest.raises(ValueError):
             autoscaled_scope.ch1.trigger_slope = "abcd"
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         autoscaled_scope.trigger_select = ("edge", "c1", "off")
         for case in self.TRIGGER_SLOPES:
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             autoscaled_scope.ch1.trigger_slope = case
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             assert autoscaled_scope.ch1.trigger_slope == case
 
     # Timebase
     def test_timebase(self, autoscaled_scope):
         autoscaled_scope.timebase_hor_magnify = 5e-6
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         autoscaled_scope.timebase_hor_position = 0
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         expected = {
             "seconds_div": 5e-4,
             "delay": 0.,
@@ -215,76 +215,76 @@ class TestLeCroyT3DSO1204:
             assert pytest.approx(val, 0.1) == expected[key]
 
     def test_timebase_scale(self, reseted_scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         reseted_scope.timebase_scale = 1e-3
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert reseted_scope.timebase_scale == 1e-3
 
     def test_timebase_offset(self, scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.timebase_offset = 1e-3
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.timebase_offset == 1e-3
 
     def test_timebase_hor_magnify(self, scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.timebase_hor_magnify = 1e-4
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.timebase_hor_magnify == 1e-4
 
     def test_timebase_hor_position(self, scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.timebase_hor_position = 5e-4
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert pytest.approx(scope.timebase_hor_position, 0.1) == 5e-4
 
     # Acquisition
     @pytest.mark.parametrize("case", ACQUISITION_TYPES)
     def test_acquisition_type(self, reseted_scope, case):
         if case == "average":
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             reseted_scope.acquisition_type = case
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             reseted_scope.acquisition_average = 16
             assert reseted_scope.acquisition_type == ["average", 16]
         else:
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             reseted_scope.acquisition_type = case
-            sleep(1)
+            sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
             assert reseted_scope.acquisition_type == case
 
     @pytest.mark.parametrize("case", ACQUISITION_AVERAGE)
     def test_acquisition_average(self, scope, case):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.acquisition_average = case
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.acquisition_average == case
 
     def test_acquisition_status(self, autoscaled_scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert autoscaled_scope.acquisition_status == "triggered"
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         autoscaled_scope.stop()
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert autoscaled_scope.acquisition_status == "stopped"
 
     def test_acquisition_sampling_rate(self, reseted_scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert reseted_scope.acquisition_sampling_rate == 1e9
 
     @pytest.mark.parametrize("case", WAVEFORM_POINTS)
     def test_waveform_points(self, scope, case):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.waveform_points = case
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         vals = scope.waveform_points
         # noinspection PyUnresolvedReferences
         assert vals[vals.index("NP") + 1] == case
 
     def test_waveform_preamble(self, autoscaled_scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         autoscaled_scope.ch1.offset = 0
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         autoscaled_scope.waveform_points = 0
         autoscaled_scope.waveform_first_point = 0
         autoscaled_scope.waveform_sparsing = 1
@@ -307,15 +307,15 @@ class TestLeCroyT3DSO1204:
         assert preamble == expected_preamble
 
     def test_waveform_data(self, scope):
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.waveform_first_point = 0
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.waveform_points = 1000
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.waveform_sparsing = 1
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.single()
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         value = scope.digitize("C1")
         assert isinstance(value, np.ndarray)
         assert len(value) == 1000
@@ -334,15 +334,15 @@ class TestLeCroyT3DSO1204:
 
         # Not testing the actual values assignment since different combinations of
         # parameters can play off each other.
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         expected = scope.ch(ch_number).current_configuration
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).setup()
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.ch(ch_number).current_configuration == expected
         with pytest.raises(ValueError):
             scope.ch(5)
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.ch(ch_number).setup(
             bwlimit=False,
             coupling="dc 1M",
@@ -373,7 +373,7 @@ class TestLeCroyT3DSO1204:
                     "trigger_level2": 0.150,
                     "trigger_slope": "positive"
                     }
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         actual = scope.ch(ch_number).current_configuration
         assert actual == expected
 
@@ -402,9 +402,9 @@ class TestLeCroyT3DSO1204:
             scope.autoscale()
             sleep(7)
         scope.ch(case1).display = True
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.single()
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         data, preamble = scope.download_data(source=case1, points=case2, sparsing=1, first_point=1)
         assert type(data) is np.ndarray
         assert len(data) == case2
@@ -425,14 +425,14 @@ class TestLeCroyT3DSO1204:
             scope.trigger_select = ("edge", "c1", "time", 1000)
         with pytest.raises(ValueError):
             scope.trigger_select = ("edge", "c1", "time", 0, 1)
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.trigger_select = ("edge", "c1", "off")
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.trigger_select = ("EDGE", "C1", "OFF")
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.trigger_select == ["edge", "c1", "off"]
         scope.trigger_select = ("glit", "c1", "p2", 1e-3, 2e-3)
-        sleep(1)
+        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         assert scope.trigger_select == ["glit", "c1", "p2", 1e-3, 2e-3]
 
     def test_trigger_setup(self, reseted_scope):
