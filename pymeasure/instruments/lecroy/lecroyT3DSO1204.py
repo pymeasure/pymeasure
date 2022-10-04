@@ -170,7 +170,7 @@ class Channel:
         the oscilloscope's skew control to remove cable-delay errors between channels.
         """,
         validator=strict_range,
-        values=[-100, 100],
+        values=[-1e-7, 1e-7],
         get_process=lambda val: float(re.findall(_MATCH_FLOAT, str(val))[0])
     )
 
