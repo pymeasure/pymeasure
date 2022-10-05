@@ -44,6 +44,7 @@ class DirectoryLineEdit(QtWidgets.QLineEdit):
         completer.setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
 
         model = QtGui.QFileSystemModel(completer)
+        model.setRootPath(model.myComputer())
         model.setFilter(QtCore.QDir.Filter.Dirs |
                         QtCore.QDir.Filter.Drives |
                         QtCore.QDir.Filter.NoDotAndDotDot |
