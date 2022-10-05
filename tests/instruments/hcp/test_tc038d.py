@@ -30,17 +30,19 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.hcp import TC038D
 
 
-def test_write_multiple():
+# Testing the 'write multiple values' method of the device.
+def test_write_multiple_values():
     # Communication from manual.
     with expected_protocol(
         TC038D,
         [(b"\x01\x10\x01\x0A\x00\x04\x08\x00\x00\x03\xE8\xFF\xFF\xFC\x18\x8D\xE9",
           b"\x01\x10\x01\x0A\x00\x04\xE0\x34")]
     ) as inst:
-        inst.writeMultiple(0x010A, [1000, -1000])
+        inst.write("W,0x010A,1000,-1000")
+        inst.read()
 
 
-def test_write_multiple_CRC_error():
+def test_write_values_CRC_error():
     """Test whether an invalid response CRC code raises an Exception."""
     with expected_protocol(
         TC038D,
@@ -49,15 +51,6 @@ def test_write_multiple_CRC_error():
     ) as inst:
         with pytest.raises(ConnectionError):
             inst.setpoint = 32.1
-
-
-def test_write_multiple_wrong_type():
-    with expected_protocol(
-        TC038D,
-        []
-    ) as inst:
-        with pytest.raises(TypeError):
-            inst.writeMultiple(0x010A, 5.5)
 
 
 def test_write_multiple_handle_wrong_start_address():
@@ -71,6 +64,7 @@ def test_write_multiple_handle_wrong_start_address():
             inst.setpoint = 32.1
 
 
+# Test the 'read register' method of the device
 def test_read_CRC_error():
     """Test whether an invalid response CRC code raises an Exception."""
     with expected_protocol(
@@ -89,7 +83,7 @@ def test_read_address_error():
         [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
           b"\x01\x83\x02\01\02")],
     ) as inst:
-        with pytest.raises(ValueError, match="The read start address"):
+        with pytest.raises(ValueError, match="start address"):
             inst.temperature
 
 
@@ -100,7 +94,7 @@ def test_read_elements_error():
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
               b"\x01\x83\x03\01\02")],
     ) as inst:
-        with pytest.raises(ValueError, match="The number of elements"):
+        with pytest.raises(ValueError, match="Variable data"):
             inst.temperature
 
 
@@ -115,6 +109,7 @@ def test_read_any_error():
             inst.temperature
 
 
+# Test properties
 def test_setpoint():
     with expected_protocol(
         TC038D,

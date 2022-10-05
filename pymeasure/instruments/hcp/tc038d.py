@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-import collections.abc
-
 from pymeasure.instruments import Instrument
 
 
@@ -55,7 +53,9 @@ class TC038D(Instrument):
     byteMode = 4
 
     functions = {'read': 0x03, 'writeMultiple': 0x10,
-                 'writeSingle': 0x06, 'echo': 0x08}
+                 'writeSingle': 0x06, 'echo': 0x08,
+                 'R': 0x03, 'W': 0x10,
+                 }
 
     def __init__(self, adapter, name="TC038D", address=1, timeout=1000,
                  **kwargs):
@@ -63,81 +63,73 @@ class TC038D(Instrument):
         super().__init__(adapter, name, timeout=timeout, **kwargs)
         self.address = address
 
-    def readRegister(self, address, count=1):
-        """Read count variables from start address on."""
-        # Count has to be double the number of elements in 4-byte-mode.
-        count *= self.byteMode // 2
-        data = [self.address]
-        data.append(self.functions['read'])  # function code
-        data += [address >> 8, address & 0xFF]  # 2B address
-        data += [count >> 8, count & 0xFF]  # 2B number of elements
-        data += CRC16(data)
-        self.write_bytes(bytes(data))
-        # Slave address, function, length
-        got = self.read_bytes(3)
-        if got[1] == self.functions['read']:
-            length = got[2]
-            # data length, 2 Byte CRC
-            read = self.read_bytes(length + 2)
-            if read[-2:] != bytes(CRC16(got + read[:-2])):
-                raise ConnectionError("Response CRC does not match.")
-            return read[:-2]
-        else:  # an error occurred
-            end = self.read_bytes(2)  # empty the buffer
-            if got[2] == 0x02:
-                raise ValueError(f"The read start address {address} is invalid.")
-            if got[2] == 0x03:
-                raise ValueError(f"The number of elements {count} exceeds the allowed range.")
-            raise ConnectionError(f"Unknown read error. Received: {got} {end}")
+    def write(self, command):
+        """Write a command to the device.
 
-    def writeMultiple(self, address, values):
-        """Write multiple variables."""
-        data = [self.address]
-        data.append(self.functions['writeMultiple'])  # function code
-        data += [address >> 8, address & 0xFF]  # 2B address
-        if isinstance(values, int):
-            data += [0x0, self.byteMode // 2]  # 2B number of elements
-            data.append(self.byteMode)  # 1B number of write data
-            for i in range(self.byteMode - 1, -1, -1):
-                data.append(values >> i * 8 & 0xFF)
-        elif isinstance(values, collections.abc.Sequence):
+        :param str command: comma separated string of:
+            - the function read (R) or write (W),
+            - the hexadecimal address to write to (e.g. 0x106),
+            - the values (comma separated) to write
+            - or the number of elements to read (defaults to 1).
+        """
+        function, address, *values = command.split(",")
+        data = [self.address]  # 1B device address
+        data.append(self.functions[function])  # 1B function code
+        address = int(address, 16)  # register address
+        data += [address >> 8, address & 0xFF]  # 2B register address
+        if data[1] == self.functions['writeMultiple']:
             elements = len(values) * self.byteMode // 2
             data += [elements >> 8, elements & 0xFF]  # 2B number of elements
-            data.append(len(values) * self.byteMode)  # 1B number of write data
+            data.append(elements * 2)  # 1B number of bytes to write
             for element in values:
-                for i in range(self.byteMode - 1, -1, -1):
-                    data.append(element >> i * 8 & 0xFF)
-        else:
-            raise TypeError(("Values has to be an integer or an iterable of "
-                             f"integers. values: {values}"))
+                data.extend(int(element).to_bytes(self.byteMode, byteorder="big", signed=True))
+        elif data[1] == self.functions['read']:
+            count = int(values[0]) * self.byteMode // 2 if values else self.byteMode // 2
+            data += [count >> 8, count & 0xFF]  # 2B number of elements to read
         data += CRC16(data)
         self.write_bytes(bytes(data))
+
+    def read(self):
+        """Read response and interpret the number"""
+        # Slave address, function
         got = self.read_bytes(2)
-        # slave address, function
-        if got[1] == self.functions['writeMultiple']:
+        if got[1] == self.functions['read']:
+            # length of data to follow
+            length = self.read_bytes(1)
+            # data length, 2 Byte CRC
+            read = self.read_bytes(length[0] + 2)
+            if read[-2:] != bytes(CRC16(got + length + read[:-2])):
+                raise ConnectionError("Response CRC does not match.")
+            return int.from_bytes(read[:-2], byteorder="big", signed=True)
+        elif got[1] == self.functions['writeMultiple']:
             # start address, number elements, CRC; each 2 Bytes long
             got += self.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
-        else:
+        else:  # an error occurred
             end = self.read_bytes(3)  # error code and CRC
-            errors = {0x02: "Wrong start address",
-                      0x03: "Variable data error",
-                      0x04: "Operation error"}
-            raise ValueError(errors[end[0]])
+            errors = {0x02: "Wrong start address.",
+                      0x03: "Variable data error.",
+                      0x04: "Operation error."}
+            if end[0] in errors.keys():
+                raise ValueError(errors[end[0]])
+            else:
+                raise ConnectionError(f"Unknown read error. Received: {got} {end}")
 
-    @property
-    def setpoint(self):
-        """Get the current setpoint in °C."""
-        return int.from_bytes(self.readRegister(0x106), byteorder='big') / 10
+    def check_errors(self):
+        """Read the response after setting a value."""
+        self.read()
 
-    @setpoint.setter
-    def setpoint(self, value):
-        """Set the setpoint in °C."""
-        value = int(round(value * 10, 0))
-        self.writeMultiple(0x106, value)
+    setpoint = Instrument.control(
+        "R,0x106", "W,0x106,%i",
+        """The setpoint of the oven in °C.""",
+        check_set_errors=True,
+        get_process=lambda v: v / 10,
+        set_process=lambda v: int(round(v * 10)),
+    )
 
-    @property
-    def temperature(self):
-        """Get the current temperature in °C."""
-        return int.from_bytes(self.readRegister(0x0), byteorder='big') / 10
+    temperature = Instrument.measurement(
+        "R,0x0",
+        """The current oven temperature in °C.""",
+        get_process=lambda v: v / 10,
+    )
