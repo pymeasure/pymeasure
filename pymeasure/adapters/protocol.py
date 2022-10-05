@@ -120,7 +120,10 @@ class ProtocolAdapter(Adapter):
                 p_write, p_read = self.comm_pairs[self._index]
             except IndexError:
                 raise ValueError("No communication pair left for reading.")
-            assert p_write is None, "Unexpected read without prior write."
+            assert p_write is None, (
+                f"Written {self._write_buffer} do not match expected {p_write} prior to read."
+                if self._write_buffer
+                else "Unexpected read without prior write.")
             self._index += 1
             if count == -1:
                 # _read_buffer is already empty, no action required.
