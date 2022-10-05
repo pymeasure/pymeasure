@@ -1,3 +1,7 @@
+Upcoming version
+================
+- The adapter and instrument mechanics have been overhauled. Nothing should have changed for the user.
+
 Version 0.10.0 (2022-04-09)
 ===========================
 Main items of this new release:
