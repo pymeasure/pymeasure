@@ -50,7 +50,8 @@ class EurotestHPP120256(Instrument):
                           send_end=True)
 
     adapter.connection.timeout = 5000
-    response_encoding = "iso-8859-2"  # In my case, instrument uses this encoding on response, so take it into account
+    # In my case, instrument uses this encoding on response, so take it into account
+    response_encoding = "iso-8859-2"  
     query_delay = 0.4  # Delay in s to sleep between the write and read occuring in a query
     command_delay = 0.2
     hpp120256 = EurotestHPP120256(adapter, response_encoding, query_delay, includeSCPI=False)
@@ -175,7 +176,7 @@ class EurotestHPP120256(Instrument):
     @property
     def id(self):
         """ Returns the identification of the instrument """
-        logging.info(f"Requesting instrument identification...")
+        logging.info("Requesting instrument identification...")
 
         response = self.ask("ID")
         return response.encode(self.response_encoding).decode('utf-8', 'ignore')
@@ -183,7 +184,7 @@ class EurotestHPP120256(Instrument):
     def status(self):
         """ Returns the unit Status which is a 16bits response where
         every bit indicates teh state of one subsystem of the HV Source."""
-        logging.info(f"Requesting instrument status...")
+        logging.info("Requesting instrument status...")
 
         response = self.ask("STATUS,DI")
         return response.encode(self.response_encoding).decode('utf-8', 'ignore')
@@ -197,21 +198,21 @@ class EurotestHPP120256(Instrument):
             LAM,TRIP ERROR Software current trip occurred
             LAM,INPUT ERROR Wrong command received
             LAM,OK Status OK"""
-        logging.info(f"Requesting instrument LAM status...")
+        logging.info("Requesting instrument LAM status...")
 
         response = self.ask("STATUS,LAM")
         return response.encode(self.response_encoding).decode('utf-8', 'ignore')
 
     def enable_output(self):
         """ Enables the output of the HV source. """
-        logging.info(f"Enabling the output...")
+        logging.info("Enabling the output...")
 
         self.write("HV,ON")
         time.sleep(self.COMMAND_DELAY)
 
     def disable_output(self):
         """ Disables the output of the HV source. """
-        logging.info(f"Disabling the output...")
+        logging.info("Disabling the output...")
 
         self.write("HV,OFF")
         time.sleep(self.COMMAND_DELAY)
@@ -220,7 +221,7 @@ class EurotestHPP120256(Instrument):
         """ Enables the kill function of the HV source.
          When Kill is enabled yellow led is flashing and the output
          will be shut OFF permanently without ramp if Iout > IOUTmax."""
-        logging.info(f"Configuring instrument kill as enable...")
+        logging.info("Configuring instrument kill as enable...")
 
         self.write("KILL,ENable")
         time.sleep(self.COMMAND_DELAY)
@@ -229,7 +230,7 @@ class EurotestHPP120256(Instrument):
         """ Disables the kill function of the HV source.
          When Kill is disabled yellow led is not flashing and the output
          will NOT be shut OFF permanently if Iout > IOUTmax."""
-        logging.info(f"Configuring instrument kill as disable...")
+        logging.info("Configuring instrument kill as disable...")
 
         self.write("KILL,DISable")
         time.sleep(self.COMMAND_DELAY)
@@ -237,15 +238,16 @@ class EurotestHPP120256(Instrument):
     def emergency_off(self):
         """ The output of the HV source will be switched OFF permanently and the values
         of the voltage a current settings set to zero"""
-        logging.info(f"Sending emergency off command to the instrument.")
+        logging.info("Sending emergency off command to the instrument.")
 
         self.write("EMCY OFF")
         time.sleep(self.COMMAND_DELAY)
 
     def shutdown(self, ramp):
         """
-        Ramps the HV source to zero with a determinated ramp and, without waiting, disables the output
-        :param ramp: indicates the ramp we want
+        Ramps the HV source to zero with a determinated ramp and without waiting 
+        to the output reaches zero volts dissables it.
+        :param ramp: indicates the ramp
         """
         logging.info(f"Executing the shutdown function with ramp: {ramp} V/s.")
 
@@ -259,7 +261,7 @@ class EurotestHPP120256(Instrument):
         Ramps the HV source to zero with a determinated ramp
         :param ramp: indicates the ramp we want
         """
-        logging.info(f"Executing the ramp_to_zero function with ramp: {ramp} V/s.")
+        logging.info("Executing the ramp_to_zero function with ramp: {ramp} V/s.")
 
         self.voltage_ramp = ramp
         time.sleep(self.COMMAND_DELAY)
@@ -270,14 +272,15 @@ class EurotestHPP120256(Instrument):
 
     def wait_for_voltage_output_set(self, check_period, timeout):
         """
-        Waits until HV voltage output reaches the voltage ouput setting. Checks the voltage output every check_period
-        seconds and raises an exception if the voltage output doesn't reach the voltage setting until the timeout time.
+        Waits until HV voltage output reaches the voltage ouput setting. 
+        Checks the voltage output every check_period seconds and raises an exception 
+        if the voltage output doesn't reach the voltage setting until the timeout time.
         :param check_period: voltage output will be measured every check_period (seconds) time
         :param timeout: time (seconds) give to the voltage output to reach the voltage setting
         :return: None
         :raises: Exception if the voltage output can't reach the voltage setting before the timeout (seconds)
         """
-        logging.info(f"Executing the wait_for_voltage_output_set function.")
+        logging.info("Executing the wait_for_voltage_output_set function.")
 
         ref_time = time.time()
         future_time = ref_time + timeout
@@ -291,7 +294,8 @@ class EurotestHPP120256(Instrument):
 
         while not voltage_output_set:
             actual_time = time.time()
-            logging.info(f"\tWaiting for voltage output set. Reading output voltage every {check_period} seconds.\n"
+            logging.info(f"\tWaiting for voltage output set. "
+                         f"Reading output voltage every {check_period} seconds.\n"
                          f"\tTimeout: {timeout} seconds. Elapsed time: "
                          f"{round(actual_time - ref_time, ndigits=1)} seconds.")
 
@@ -300,19 +304,23 @@ class EurotestHPP120256(Instrument):
             voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
                                  (voltage_output < (voltage_output_setting + error))
             logging.debug("voltage_output_valid_range: "
-                          "[" + str(voltage_output_setting - error) + ", " + str(voltage_output_setting + error) + "]")
+                          "[" + str(voltage_output_setting - error) + 
+                          ", " + str(voltage_output_setting + error) + "]")
             logging.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
                 raise Exception("Timeout for wait_for_voltage_output_set function")
 
-        # if you are here is because the voltage_setting has been reaches at the output of the HV Voltage source
+        # if you are here is because the voltage_setting 
+        # has been reaches at the output of the HV Voltage source
 
     # Constructor
     def __init__(self, adapter, response_encoding="iso-8859-2", query_delay=0.1, **kwargs):
-        self.response_encoding = response_encoding  # This instrument use this encoding, so we have to take into account
-        self.query_delay = query_delay  # Delay in s to sleep between the write and read occuring in a query
-        adapter.connection.encoding = self.response_encoding  # comment it if you want to run the test
-        adapter.connection.query_delay = self.query_delay  # comment it if you want to run the test
+        # This instrument use this encoding, so we have to take into account
+        self.response_encoding = response_encoding  
+        # Delay in s to sleep between the write and read occuring in a query
+        self.query_delay = query_delay  
+        # adapter.connection.encoding = self.response_encoding  # comment it if you want to run the test
+        # adapter.connection.query_delay = self.query_delay  # comment it if you want to run the test
         super().__init__(
             adapter,
             "Euro Test High Voltage DC Source model HPP-120-256",
