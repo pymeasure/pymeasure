@@ -91,5 +91,5 @@ class KeysightP5003A(SpectrumAnalyzer):
         super().reset()
         """Reset disables Spectrum Analysis"""
         self.write("CALCulate1:MEASure1:DELete")
-        self.write("CALCulate:MEASure:DEFine 'a1:Spectrum Analyzer'")
+        self.write("CALCulate:MEASure:DEFine 'A:Spectrum Analyzer'")
         self.write("DISP:MEAS:FEED 1")
