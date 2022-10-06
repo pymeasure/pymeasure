@@ -57,3 +57,4 @@ The following developers have contributed to the PyMeasure package:
 | Asaf Yagoda
 | Fabio Garzetti
 | Daniel Schmeer
+| David Sanchez Sanchez
