@@ -465,32 +465,34 @@ class LeCroyT3DSO1204(Instrument):
     @property
     def timebase(self):
         """ Read timebase setup as a dict containing the following keys:
-            - "seconds_div": horizontal scale in seconds/div (float)
-            - "delay": interval in seconds between the trigger and the reference position (float)
-            - "hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
-            - "hor_position": horizontal position in the zoomed window in seconds (float)"""
+            - "timebase_scale": horizontal scale in seconds/div (float)
+            - "timebase_offset": interval in seconds between the trigger and the reference
+            position (float)
+            - "timebase_hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
+            - "timebase_hor_position": horizontal position in the zoomed window in seconds
+             (float)"""
         tb_setup = {
-            "seconds_div": self.timebase_scale,
-            "delay": self.timebase_offset,
-            "hor_magnify": self.timebase_hor_magnify,
-            "hor_position": self.timebase_hor_position
+            "timebase_scale": self.timebase_scale,
+            "timebase_offset": self.timebase_offset,
+            "timebase_hor_magnify": self.timebase_hor_magnify,
+            "timebase_hor_position": self.timebase_hor_position
         }
         return tb_setup
 
-    def timebase_setup(self, offset=None, scale=None, hor_magnify=None, hor_position=None):
+    def timebase_setup(self, scale=None, offset=None, hor_magnify=None, hor_position=None):
         """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to timebase_setup if needed.
 
-        :param offset: horizontal scale per division in seconds/div.
         :param scale: interval in seconds between the trigger event and the reference position.
+        :param offset: horizontal scale per division in seconds/div.
         :param hor_magnify: horizontal scale in the zoomed window in seconds/div.
         :param hor_position: horizontal position in the zoomed window in seconds."""
 
-        if offset is not None:
-            self.timebase_offset = offset
         if scale is not None:
             self.timebase_scale = scale
+        if offset is not None:
+            self.timebase_offset = offset
         if hor_magnify is not None:
             self.timebase_hor_magnify = hor_magnify
         if hor_position is not None:
@@ -615,10 +617,10 @@ class LeCroyT3DSO1204(Instrument):
     def digitize(self, source: str):
         """ Acquire waveforms according to the settings of the acquire commands
         :param source: a string parameter that can take the following values: "C1", "C2", "C3",
-        "C4".
+        "C4", "MATH".
         :return: bytearray with raw data
         """
-        strict_discrete_set(source, ["C1", "C2", "C3", "C4"])
+        strict_discrete_set(source, ["C1", "C2", "C3", "C4", "MATH"])
         values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
         if len(values) < 18:
             raise ValueError(
@@ -692,20 +694,20 @@ class LeCroyT3DSO1204(Instrument):
         "TRMD?", "TRMD %s",
         """ A string parameter that selects the trigger sweep mode.
         <mode>:= {AUTO,NORM,SINGLE,STOP}
-        • AUTO : When AUTO sweep mode is selected, the oscilloscope begins to search for the
+        • auto : When AUTO sweep mode is selected, the oscilloscope begins to search for the
         trigger signal that meets the conditions.
         If the trigger signal is satisfied, the running state on the top left corner of
         the user interface shows Trig'd, and the interface shows stable waveform.
         Otherwise, the running state always shows Auto, and the interface shows unstable
         waveform.
-        • NORM : When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
+        • normal : When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
         state and begins to search for trigger signals that meet the conditions.
         If the trigger signal is satisfied, the running state shows Trig'd, and the interface
         shows stable waveform.
         Otherwise, the running state shows Ready, and the interface displays the last
         triggered waveform (previous trigger) or does not display the waveform (no
         previous trigger).
-        • SINGLE : When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
+        • single : When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
         the oscilloscope enters the waiting trigger state and begins to search for the
         trigger signal that meets the conditions.
         If the trigger signal is satisfied, the running state shows Trig'd, and the interface
@@ -713,7 +715,7 @@ class LeCroyT3DSO1204(Instrument):
         Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
         and the running status shows Stop.
         Otherwise, the running state shows Ready, and the interface does not display the waveform.
-        • STOP : STOP is a part of the option of this command, but not a trigger mode of the
+        • stopped : STOP is a part of the option of this command, but not a trigger mode of the
         oscilloscope.""",
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
@@ -741,14 +743,16 @@ class LeCroyT3DSO1204(Instrument):
         parameters are grouped in pairs. The first in the pair names the variable to be modified,
         while the second gives the new value to be assigned. Pairs may be given in any order and
         restricted to those variables to be changed.
-        <trig_type>:={edge,slew,glit,intv,runt,drop}
-        <source>:={c1,c2,c3,c4,line}
-        <hold_type>:={ti,off} for edge trigger.
-        <hold_type>:={ti} for drop trigger.
-        <hold_type>:={ps,pl,p2,p1} for glit/runt trigger.
-        <hold_type>:={is,il,i2,i1} for slew/intv trigger.
-        <hold_value1>:= a time value with unit.
-        <hold_value2>:= a time value with unit.
+        There are five parameters that can be specified. Parameters 1. 2. 3. are always mandatory.
+        Parameters 4. 5. are required only for certain combinations of the previous parameters. 
+        1.  <trig_type>:={edge,slew,glit,intv,runt,drop}
+        2.  <source>:={c1,c2,c3,c4,line}
+        3.  - <hold_type>:={ti,off} for edge trigger.
+            - <hold_type>:={ti} for drop trigger.
+            - <hold_type>:={ps,pl,p2,p1} for glit/runt trigger.
+            - <hold_type>:={is,il,i2,i1} for slew/intv trigger.
+        4.  <hold_value1>:= a time value with unit.
+        5.  <hold_value2>:= a time value with unit.
 
         Note:
         • LINE can only be selected when the trigger type is Edge.

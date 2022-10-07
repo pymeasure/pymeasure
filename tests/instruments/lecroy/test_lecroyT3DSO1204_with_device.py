@@ -205,10 +205,10 @@ class TestLeCroyT3DSO1204:
         autoscaled_scope.timebase_hor_position = 0
         sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         expected = {
-            "seconds_div": 5e-4,
-            "delay": 0.,
-            "hor_magnify": 5e-6,
-            "hor_position": 0.
+            "timebase_scale": 5e-4,
+            "timebase_offset": 0.,
+            "timebase_hor_magnify": 5e-6,
+            "timebase_hor_position": 0.
         }
         actual = autoscaled_scope.timebase
         for key, val in actual.items():
