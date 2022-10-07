@@ -64,7 +64,7 @@ def test_measure_voltage():
     ) as inst:
         assert inst.measure_voltage == (3000.0, 2.458)
 
-        
+
 def test_measure_current():
     """Verify the communication of the measure_current getter."""
     with expected_protocol(
