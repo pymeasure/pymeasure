@@ -267,7 +267,8 @@ class EurotestHPP120256(Instrument):
         :param check_period: voltage output will be measured every check_period (seconds) time
         :param timeout: time (seconds) give to the voltage output to reach the voltage setting
         :return: None
-        :raises: Exception if the voltage output can't reach the voltage setting before the timeout (seconds)
+        :raises: Exception if the voltage output can't reach the voltage setting 
+        before the timeout completes (seconds)
         """
         log.info("Executing the wait_for_voltage_output_set function.")
 
@@ -308,8 +309,10 @@ class EurotestHPP120256(Instrument):
         self.response_encoding = response_encoding  
         # Delay in s to sleep between the write and read occuring in a query
         self.query_delay = query_delay  
-        # adapter.connection.encoding = self.response_encoding  # comment it if you want to run the test
-        # adapter.connection.query_delay = self.query_delay  # comment it if you want to run the test
+        # comment next line if you want to pass the test
+        # adapter.connection.encoding = self.response_encoding  
+        # comment next line if you want to pass the test
+        # adapter.connection.query_delay = self.query_delay  
         super().__init__(
             adapter,
             "Euro Test High Voltage DC Source model HPP-120-256",
