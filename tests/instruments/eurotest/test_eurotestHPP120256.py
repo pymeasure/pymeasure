@@ -56,6 +56,7 @@ def test_voltage_ramp():
         inst.voltage_ramp = 3000
         assert inst.voltage_ramp == (5000.0, 1000.0)
 
+        
 def test_measure_voltage():
     """Verify the communication of the measure_voltage getter."""
     with expected_protocol(
@@ -64,6 +65,7 @@ def test_measure_voltage():
     ) as inst:
         assert inst.measure_voltage == (3000.0, 2.458)
 
+        
 def test_measure_current():
     """Verify the communication of the measure_current getter."""
     with expected_protocol(
