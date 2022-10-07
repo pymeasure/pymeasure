@@ -39,6 +39,7 @@ from . import anritsu
 from . import attocube
 from . import danfysik
 from . import deltaelektronika
+from . import eurotest
 from . import fluke
 from . import fwbell
 from . import hcp
