@@ -54,7 +54,7 @@ def test_voltage_ramp():
              ("STATUS,RAMP", "RAMP, RANGE=3000V/s, VALUE=1000V/s")],
     ) as inst:
         inst.voltage_ramp = 3000
-        assert inst.voltage_ramp == (5000.0, 1000.0)
+        assert inst.voltage_ramp == (3000.0, 1000.0)
 
         
 def test_measure_voltage():
