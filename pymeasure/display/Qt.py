@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Should be removed when PySide2 provides QtWidgets.QApplication.exec() or when support for PySide2
-# is dropped
+# is dropped (https://doc.qt.io/qtforpython/porting_from2.html#class-function-deprecations)
 if not hasattr(QtWidgets.QApplication, 'exec'):
     QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_
 if not hasattr(QtWidgets.QMenu, 'exec'):
