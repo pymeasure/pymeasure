@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.eurotest.eurotestHPP120256 import EurotestHPP120256
@@ -56,7 +55,7 @@ def test_voltage_ramp():
         inst.voltage_ramp = 3000
         assert inst.voltage_ramp == (3000.0, 1000.0)
 
-        
+
 def test_measure_voltage():
     """Verify the communication of the measure_voltage getter."""
     with expected_protocol(
