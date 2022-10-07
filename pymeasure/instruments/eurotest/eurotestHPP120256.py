@@ -29,13 +29,8 @@ import time
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class EurotestHPP120256(Instrument):
@@ -198,7 +193,7 @@ class EurotestHPP120256(Instrument):
     @property
     def id(self):
         """ Returns the identification of the instrument """
-        logging.info("Requesting instrument identification...")
+        log.info("Requesting instrument identification...")
 
         response = self.ask("ID")
         return response.encode(self.response_encoding).decode('utf-8', 'ignore')
@@ -206,11 +201,11 @@ class EurotestHPP120256(Instrument):
     def status(self):
         """ Returns the unit Status which is a 16bits response where
         every bit indicates teh state of one subsystem of the HV Source."""
-        logging.info(f"Requesting instrument status...")
+        log.info(f"Requesting instrument status...")
         
         response = self.ask("STATUS,DI")
         response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
-        logging.debug(f"Instrument status = {response}")
+        log.debug(f"Instrument status = {response}")
         return response
 
     def lam_status(self):
@@ -222,17 +217,17 @@ class EurotestHPP120256(Instrument):
             LAM,TRIP ERROR Software current trip occurred
             LAM,INPUT ERROR Wrong command received
             LAM,OK Status OK"""
-        logging.info(f"Requesting instrument STATUS LAM...")
+        log.info(f"Requesting instrument STATUS LAM...")
         
         response = self.ask("STATUS,LAM")
         response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
-        logging.debug(f"Instrument STATUS LAM = {response}")
+        log.debug(f"Instrument STATUS LAM = {response}")
         return response
 
     def emergency_off(self):
         """ The output of the HV source will be switched OFF permanently and the values
         of the voltage a current settings set to zero"""
-        logging.info("Sending emergency off command to the instrument.")
+        log.info("Sending emergency off command to the instrument.")
 
         self.write("EMCY OFF")
         time.sleep(self.COMMAND_DELAY)
@@ -243,7 +238,7 @@ class EurotestHPP120256(Instrument):
         to the output reaches zero volts dissables it.
         :param ramp: indicates the ramp
         """
-        logging.info(f"Executing the shutdown function with ramp: {ramp} V/s.")
+        log.info(f"Executing the shutdown function with ramp: {ramp} V/s.")
 
         self.ramp_to_zero(ramp)
         self.enable_output = "OFF"
@@ -255,7 +250,7 @@ class EurotestHPP120256(Instrument):
         Ramps the HV source to zero with a determinated ramp
         :param ramp: indicates the ramp we want
         """
-        logging.info("Executing the ramp_to_zero function with ramp: {ramp} V/s.")
+        log.info("Executing the ramp_to_zero function with ramp: {ramp} V/s.")
 
         self.voltage_ramp = ramp
         time.sleep(self.COMMAND_DELAY)
@@ -274,7 +269,7 @@ class EurotestHPP120256(Instrument):
         :return: None
         :raises: Exception if the voltage output can't reach the voltage setting before the timeout (seconds)
         """
-        logging.info("Executing the wait_for_voltage_output_set function.")
+        log.info("Executing the wait_for_voltage_output_set function.")
 
         ref_time = time.time()
         future_time = ref_time + timeout
@@ -288,7 +283,7 @@ class EurotestHPP120256(Instrument):
 
         while not voltage_output_set:
             actual_time = time.time()
-            logging.info(f"\tWaiting for voltage output set. "
+            log.info(f"\tWaiting for voltage output set. "
                          f"Reading output voltage every {check_period} seconds.\n"
                          f"\tTimeout: {timeout} seconds. Elapsed time: "
                          f"{round(actual_time - ref_time, ndigits=1)} seconds.")
@@ -297,10 +292,10 @@ class EurotestHPP120256(Instrument):
             voltage_output = self.measure_voltage[1]
             voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
                                  (voltage_output < (voltage_output_setting + error))
-            logging.debug("voltage_output_valid_range: "
+            log.debug("voltage_output_valid_range: "
                           "[" + str(voltage_output_setting - error) + 
                           ", " + str(voltage_output_setting + error) + "]")
-            logging.debug("voltage_output: " + str(voltage_output))
+            log.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
                 raise Exception("Timeout for wait_for_voltage_output_set function")
 
