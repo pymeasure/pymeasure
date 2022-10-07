@@ -69,16 +69,16 @@ class EurotestHPP120256(Instrument):
     time.sleep(command_delay)
     hpp120256.current_limit = 2.0  # mA
     time.sleep(command_delay)
-    hpp120256.enable_kill()        # Enable over-current protection
-
-    hpp120256.enable_output()
+    inst.enable_kill = "ON"  # Enable over-current protection
+    time.sleep(command_delay)
+    inst.enable_output = "ON"
     time.sleep(1.0)  # Give time to output on
 
     hpp120256.wait_for_voltage_output_set(1.0, 40.0)
 
     # Here voltage HV output should be at 0.0 kV
 
-    print(f"Setting the output voltage to {round(v,ndigits=2)} kV...")
+    print("Setting the output voltage to 1.0kV...")
     hpp120256.voltage = 1.0  # kV
 
     # Now HV output should be rising to reach the 1.0kV at 50.0 V/s
@@ -173,6 +173,28 @@ class EurotestHPP120256(Instrument):
         )
     )
 
+    enable_kill = Instrument.setting(
+        "KILL,%s",
+        """ Enables or disables the kill function of the HV source.
+         When Kill is enabled yellow led is flashing and the output
+         will be shut OFF permanently without ramp if Iout > IOUTmax.""",
+        validator=strict_discrete_set,
+        values={'ON': 'ENable', 'OFF': 'DISable', 'ENable': 'ENable', 'DISable': 'DISable',
+                'EN': 'ENable', 'DIS': 'DISable'},
+        map_values=True
+    )
+    
+    enable_output = Instrument.setting(
+        "HV,%s",
+        """ Enables or disables the voltage output function of the HV source.
+         When output voltage is enabled green led is ON and the 
+         voltage_setting will be present on the output""",
+        validator=strict_discrete_set,
+        values={'ON': 'ON', 'OFF': 'OFF', 'ENable': 'ON', 'DISable': 'OFF',
+                'EN': 'ON', 'DIS': 'OFF'},
+        map_values=True
+    )
+    
     @property
     def id(self):
         """ Returns the identification of the instrument """
@@ -203,38 +225,6 @@ class EurotestHPP120256(Instrument):
         response = self.ask("STATUS,LAM")
         return response.encode(self.response_encoding).decode('utf-8', 'ignore')
 
-    def enable_output(self):
-        """ Enables the output of the HV source. """
-        logging.info("Enabling the output...")
-
-        self.write("HV,ON")
-        time.sleep(self.COMMAND_DELAY)
-
-    def disable_output(self):
-        """ Disables the output of the HV source. """
-        logging.info("Disabling the output...")
-
-        self.write("HV,OFF")
-        time.sleep(self.COMMAND_DELAY)
-
-    def enable_kill(self):
-        """ Enables the kill function of the HV source.
-         When Kill is enabled yellow led is flashing and the output
-         will be shut OFF permanently without ramp if Iout > IOUTmax."""
-        logging.info("Configuring instrument kill as enable...")
-
-        self.write("KILL,ENable")
-        time.sleep(self.COMMAND_DELAY)
-
-    def disable_kill(self):
-        """ Disables the kill function of the HV source.
-         When Kill is disabled yellow led is not flashing and the output
-         will NOT be shut OFF permanently if Iout > IOUTmax."""
-        logging.info("Configuring instrument kill as disable...")
-
-        self.write("KILL,DISable")
-        time.sleep(self.COMMAND_DELAY)
-
     def emergency_off(self):
         """ The output of the HV source will be switched OFF permanently and the values
         of the voltage a current settings set to zero"""
@@ -252,8 +242,8 @@ class EurotestHPP120256(Instrument):
         logging.info(f"Executing the shutdown function with ramp: {ramp} V/s.")
 
         self.ramp_to_zero(ramp)
-        self.disable_output()
-        self.disable_kill()
+        self.enable_output = "OFF"
+        self.enable_kill = "OFF"
         super().shutdown()
 
     def ramp_to_zero(self, ramp):
