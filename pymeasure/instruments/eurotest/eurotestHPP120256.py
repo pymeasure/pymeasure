@@ -214,11 +214,11 @@ class EurotestHPP120256(Instrument):
         """ Returns the LAM status which is the status of the untit from the point
         of view of the process. Fo example, as a response of asking STATUS,LAM, the HV
         voltage could response one of the messages from the next list:
-            LAM,ERROR External Inhibit occurred during Kill enable
-            LAM,INHIBIT External Inhibit occurred
-            LAM,TRIP ERROR Software current trip occurred
-            LAM,INPUT ERROR Wrong command received
-            LAM,OK Status OK"""
+        LAM,ERROR External Inhibit occurred during Kill enable
+        LAM,INHIBIT External Inhibit occurred
+        LAM,TRIP ERROR Software current trip occurred
+        LAM,INPUT ERROR Wrong command received
+        LAM,OK Status OK"""
         log.info(f"Requesting instrument STATUS LAM...")
         
         response = self.ask("STATUS,LAM")
