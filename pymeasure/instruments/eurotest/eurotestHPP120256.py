@@ -206,10 +206,12 @@ class EurotestHPP120256(Instrument):
     def status(self):
         """ Returns the unit Status which is a 16bits response where
         every bit indicates teh state of one subsystem of the HV Source."""
-        logging.info("Requesting instrument status...")
-
+        logging.info(f"Requesting instrument status...")
+        
         response = self.ask("STATUS,DI")
-        return response.encode(self.response_encoding).decode('utf-8', 'ignore')
+        response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
+        logging.debug(f"Instrument status = {response}")
+        return response
 
     def lam_status(self):
         """ Returns the LAM status which is the status of the untit from the point
@@ -220,10 +222,12 @@ class EurotestHPP120256(Instrument):
             LAM,TRIP ERROR Software current trip occurred
             LAM,INPUT ERROR Wrong command received
             LAM,OK Status OK"""
-        logging.info("Requesting instrument LAM status...")
-
+        logging.info(f"Requesting instrument STATUS LAM...")
+        
         response = self.ask("STATUS,LAM")
-        return response.encode(self.response_encoding).decode('utf-8', 'ignore')
+        response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
+        logging.debug(f"Instrument STATUS LAM = {response}")
+        return response
 
     def emergency_off(self):
         """ The output of the HV source will be switched OFF permanently and the values
