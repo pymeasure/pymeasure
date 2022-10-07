@@ -133,6 +133,7 @@ class AnalysisBrowserWidget(QtGui.QWidget):
         color = experiment.browser_item.color
         if results.routine is not None:
             analysis = self.new_analysis(results, color)
+            analysis.experiment = experiment
             self.analysis_manager.queue(analysis)
             self.abort_button.setEnabled(True)
 
@@ -149,6 +150,9 @@ class AnalysisBrowserWidget(QtGui.QWidget):
                 self.queue_analysis(experiment)
 
     def finished(self, analysis):
+        experiment = analysis.experiment
+        for wdg, curve in zip(self._parent.widget_list,experiment.curve_list):
+            wdg.load(curve)
         self.analysis_manager.remove(analysis)
         self.abort_button.setText("Abort Analysis")
         self.abort_button.clicked.disconnect()

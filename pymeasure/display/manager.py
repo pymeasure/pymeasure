@@ -331,6 +331,7 @@ class Analysis(QtCore.QObject):
         print(f'The procedure status in results, passed to analysis is {self.procedure.status}')
         self.analysis = self.results.routine
         self.browser_item = analysis_browser_item
+        self.experiment = None
 
 
 class AnalysisQueue(QtCore.QObject):
