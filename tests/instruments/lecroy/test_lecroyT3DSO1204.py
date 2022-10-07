@@ -77,7 +77,7 @@ def test_offset():
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
              (b"C1:OFST?", b"1.00E+00"),
-             (b"C1:OFST 1.000000e+00V", None)
+             (b"C1:OFST 1.00E+00V", None)
              ]
     ) as instr:
         assert instr.ch1.offset == 1.
@@ -105,7 +105,7 @@ def test_skew_factor():
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
              (b"C1:SKEW?", b"1.00E-07S"),
-             (b"C1:SKEW 1.000000e-07S", None),
+             (b"C1:SKEW 1.00E-07S", None),
              ]
     ) as instr:
         assert instr.ch1.skew_factor == 1e-7

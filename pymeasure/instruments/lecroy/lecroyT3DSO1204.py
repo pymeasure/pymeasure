@@ -155,7 +155,7 @@ class Channel:
     )
 
     offset = Instrument.control(
-        "OFST?", "OFST %eV",
+        "OFST?", "OFST %.2EV",
         """ A float parameter to set value that is represented at center of screen in
         Volts. The range of legal values varies depending on range and scale. If the specified
         value is outside of the legal range, the offset value is automatically set to the nearest
@@ -164,7 +164,7 @@ class Channel:
     )
 
     skew_factor = Instrument.control(
-        "SKEW?", "SKEW %eS",
+        "SKEW?", "SKEW %.2ES",
         """ Channel-tochannel skew factor for the specified channel. Each analog channel can be
         adjusted + or -100 ns for a total of 200 ns difference between channels. You can use
         the oscilloscope's skew control to remove cable-delay errors between channels.
@@ -175,16 +175,15 @@ class Channel:
     )
 
     probe_attenuation = Instrument.control(
-        "ATTN?", "ATTN %s",
+        "ATTN?", "ATTN %g",
         """ A float parameter that specifies the probe attenuation. The probe attenuation
         may be from 0.1 to 10000.""",
         validator=strict_discrete_set,
-        values={0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000},
-        set_process=lambda v: str(v) if v >= 1 else "{:.1f}".format(v)
+        values={0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000}
     )
 
     scale = Instrument.control(
-        "VDIV?", "VDIV %e",
+        "VDIV?", "VDIV %.2EV",
         """ A float parameter that specifies the vertical scale, or units per division, in Volts."""
     )
 
@@ -212,7 +211,7 @@ class Channel:
     )
 
     trigger_level = Instrument.control(
-        "TRLV?", "TRLV %eV",
+        "TRLV?", "TRLV %.2EV",
         """ A float parameter that sets the trigger level voltage for the active trigger source.
             When there are two trigger levels to set, this command is used to set the higher
             trigger level voltage for the specified source. TRLV2 is used to set the lower
@@ -224,7 +223,7 @@ class Channel:
     )
 
     trigger_level2 = Instrument.control(
-        "TRLV2?", "TRLV2 %eV",
+        "TRLV2?", "TRLV2 %.2EV",
         """ A float parameter that sets the lower trigger level voltage for the specified source.
         Higher and lower trigger levels are used with runt/slope triggers.
         The trigger level is -4.5*DIV to 4.5*DIV.
@@ -434,13 +433,13 @@ class LeCroyT3DSO1204(Instrument):
     ##################
 
     timebase_offset = Instrument.control(
-        "TRDL?", "TRDL %eS",
+        "TRDL?", "TRDL %.2ES",
         """ A float parameter that sets the time interval in seconds between the trigger
         event and the reference position (at center of screen by default)."""
     )
 
     timebase_scale = Instrument.control(
-        "TDIV?", "TDIV %eS",
+        "TDIV?", "TDIV %.2ES",
         """ A float parameter that sets the horizontal scale (units per division) in seconds (S),
         milliseconds (MS), microseconds (US) or nanoseconds (NS) for the main window.""",
         validator=strict_range,
@@ -448,7 +447,7 @@ class LeCroyT3DSO1204(Instrument):
     )
 
     timebase_hor_magnify = Instrument.control(
-        "HMAG?", "HMAG %eS",
+        "HMAG?", "HMAG %.2ES",
         """ A string parameter that sets the zoomed (delayed) window horizontal scale (
         seconds/div). The main sweep scale determines the range for this command. """,
         validator=strict_range,
@@ -456,7 +455,7 @@ class LeCroyT3DSO1204(Instrument):
     )
 
     timebase_hor_position = Instrument.control(
-        "HPOS?", "HPOS %eS",
+        "HPOS?", "HPOS %.2ES",
         """ A string parameter that sets the horizontal position in the zoomed (delayed) view of
         the main sweep. The main sweep range and the main sweep horizontal position determine
         the range for this command. The value for this command must keep the zoomed view window
@@ -731,8 +730,8 @@ class LeCroyT3DSO1204(Instrument):
     }
 
     _trigger_select_short_command = "TRSE %s,SR,%s,HT,%s"
-    _trigger_select_normal_command = "TRSE %s,SR,%s,HT,%s,HV,%e"
-    _trigger_select_extended_command = "TRSE %s,SR,%s,HT,%s,HV,%e,HV2,%e"
+    _trigger_select_normal_command = "TRSE %s,SR,%s,HT,%s,HV,%.2E"
+    _trigger_select_extended_command = "TRSE %s,SR,%s,HT,%s,HV,%.2E,HV2,%.2E"
 
     _trigger_select = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
