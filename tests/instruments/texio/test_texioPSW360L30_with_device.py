@@ -27,7 +27,7 @@ import pytest
 from pymeasure.instruments.texio.texioPSW360L30 import TexioPSW360L30
 
 
-# pytest.skip('Only work with connected hardware', allow_module_level=True)
+pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestTexioPSW360L30:
