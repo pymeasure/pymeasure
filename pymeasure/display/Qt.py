@@ -29,8 +29,6 @@ from pyqtgraph.Qt import QtGui, QtCore, QtWidgets, loadUiType  # noqa: F401
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-QtCore.QSignal = QtCore.Signal
-
 # Should be removed when PySide2 provides QtWidgets.QApplication.exec() or when support for PySide2
 # is dropped
 if not hasattr(QtWidgets.QApplication, 'exec'):

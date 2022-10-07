@@ -42,10 +42,10 @@ class PlotFrame(QtWidgets.QFrame):
     """
 
     LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
-    updated = QtCore.QSignal()
+    updated = QtCore.Signal()
     ResultsClass = ResultsCurve
-    x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(str)
+    x_axis_changed = QtCore.Signal(str)
+    y_axis_changed = QtCore.Signal(str)
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)

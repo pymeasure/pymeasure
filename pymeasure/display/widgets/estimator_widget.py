@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class EstimatorThread(StoppableQThread):
-    new_estimates = QtCore.QSignal(list)
+    new_estimates = QtCore.Signal(list)
 
     def __init__(self, get_estimates_callable):
         StoppableQThread.__init__(self)
