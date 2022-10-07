@@ -35,6 +35,10 @@ QtCore.QSignal = QtCore.Signal
 # is dropped
 if not hasattr(QtWidgets.QApplication, 'exec'):
     QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_
+if not hasattr(QtWidgets.QMenu, 'exec'):
+    def exec(self, *args, **kwargs):
+        self.exec_(*args, **kwargs)
+    QtWidgets.QMenu.exec = exec
 
 
 def fromUi(*args, **kwargs):

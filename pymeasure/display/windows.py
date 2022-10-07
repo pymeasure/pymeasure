@@ -389,21 +389,21 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             menu = QtWidgets.QMenu(self)
 
             # Open
-            action_open = QtWidgets.QAction(menu)
+            action_open = QtGui.QAction(menu)
             action_open.setText("Open Data Externally")
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
 
             # Change Color
-            action_change_color = QtWidgets.QAction(menu)
+            action_change_color = QtGui.QAction(menu)
             action_change_color.setText("Change Color")
             action_change_color.triggered.connect(
                 lambda: self.change_color(experiment))
             menu.addAction(action_change_color)
 
             # Remove
-            action_remove = QtWidgets.QAction(menu)
+            action_remove = QtGui.QAction(menu)
             action_remove.setText("Remove Graph")
             if self.manager.is_running():
                 if self.manager.running_experiment() == experiment:  # Experiment running
@@ -412,7 +412,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             menu.addAction(action_remove)
 
             # Delete
-            action_delete = QtWidgets.QAction(menu)
+            action_delete = QtGui.QAction(menu)
             action_delete.setText("Delete Data File")
             if self.manager.is_running():
                 if self.manager.running_experiment() == experiment:  # Experiment running
@@ -421,12 +421,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             menu.addAction(action_delete)
 
             # Use parameters
-            action_use = QtWidgets.QAction(menu)
+            action_use = QtGui.QAction(menu)
             action_use.setText("Use These Parameters")
             action_use.triggered.connect(
                 lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
-            menu.exec_(self.browser.viewport().mapToGlobal(position))
+            menu.exec(self.browser.viewport().mapToGlobal(position))
 
     def remove_experiment(self, experiment):
         reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
@@ -464,7 +464,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
-        if dialog.exec_():
+        if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
                 if filename in self.manager.experiments:
@@ -480,7 +480,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     for curve in experiment.curve_list:
                         if curve:
                             curve.update_data()
-                    experiment.browser_item.progressbar.setValue(100.)
+                    experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
