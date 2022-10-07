@@ -28,6 +28,8 @@ import time
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_discrete_set
+
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -285,17 +287,17 @@ class EurotestHPP120256(Instrument):
         while not voltage_output_set:
             actual_time = time.time()
             log.info(f"\tWaiting for voltage output set. "
-                         f"Reading output voltage every {check_period} seconds.\n"
-                         f"\tTimeout: {timeout} seconds. Elapsed time: "
-                         f"{round(actual_time - ref_time, ndigits=1)} seconds.")
+                     f"Reading output voltage every {check_period} seconds.\n"
+                     f"\tTimeout: {timeout} seconds. Elapsed time: "
+                     f"{round(actual_time - ref_time, ndigits=1)} seconds.")
 
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
             voltage_output = self.measure_voltage[1]
             voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
                                  (voltage_output < (voltage_output_setting + error))
             log.debug("voltage_output_valid_range: "
-                          "[" + str(voltage_output_setting - error) + 
-                          ", " + str(voltage_output_setting + error) + "]")
+                      "[" + str(voltage_output_setting - error) + 
+                      ", " + str(voltage_output_setting + error) + "]")
             log.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
                 raise Exception("Timeout for wait_for_voltage_output_set function")
