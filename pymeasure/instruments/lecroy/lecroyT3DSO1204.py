@@ -470,7 +470,7 @@ class LeCroyT3DSO1204(Instrument):
             position (float)
             - "timebase_hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
             - "timebase_hor_position": horizontal position in the zoomed window in seconds
-             (float)"""
+            (float)"""
         tb_setup = {
             "timebase_scale": self.timebase_scale,
             "timebase_offset": self.timebase_offset,
