@@ -48,7 +48,7 @@ class EurotestHPP120256(Instrument):
 
     adapter.connection.timeout = 5000
     # In my case, instrument uses this encoding on response, so take it into account
-    response_encoding = "iso-8859-2"  
+    response_encoding = "iso-8859-2"
     query_delay = 0.4  # Delay in s to sleep between the write and read occuring in a query
     command_delay = 0.2
     hpp120256 = EurotestHPP120256(adapter, response_encoding, query_delay, includeSCPI=False)
@@ -183,8 +183,8 @@ class EurotestHPP120256(Instrument):
     
     enable_output = Instrument.setting(
         "HV,%s",
-        """ Enables or disables the voltage output function of the HV source.
-         When output voltage is enabled green led is ON and the 
+        """Enables or disables the voltage output function of the HV source.
+         When output voltage is enabled green led is ON and the
          voltage_setting will be present on the output""",
         validator=strict_discrete_set,
         values={'ON': 'ON', 'OFF': 'OFF', 'ENable': 'ON', 'DISable': 'OFF',
@@ -203,7 +203,7 @@ class EurotestHPP120256(Instrument):
     def status(self):
         """ Returns the unit Status which is a 16bits response where
         every bit indicates teh state of one subsystem of the HV Source."""
-        log.info(f"Requesting instrument status...")
+        log.info("Requesting instrument status...")
         
         response = self.ask("STATUS,DI")
         response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
@@ -219,7 +219,7 @@ class EurotestHPP120256(Instrument):
         LAM,TRIP ERROR Software current trip occurred
         LAM,INPUT ERROR Wrong command received
         LAM,OK Status OK"""
-        log.info(f"Requesting instrument STATUS LAM...")
+        log.info("Requesting instrument STATUS LAM...")
         
         response = self.ask("STATUS,LAM")
         response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
@@ -236,7 +236,7 @@ class EurotestHPP120256(Instrument):
 
     def shutdown(self, ramp):
         """
-        Ramps the HV source to zero with a determinated ramp and without waiting 
+        Ramps the HV source to zero with a determinated ramp and without waiting
         to the output reaches zero volts dissables it.
         :param ramp: indicates the ramp
         """
@@ -263,13 +263,13 @@ class EurotestHPP120256(Instrument):
 
     def wait_for_voltage_output_set(self, check_period, timeout):
         """
-        Waits until HV voltage output reaches the voltage ouput setting. 
-        Checks the voltage output every check_period seconds and raises an exception 
+        Waits until HV voltage output reaches the voltage ouput setting.
+        Checks the voltage output every check_period seconds and raises an exception
         if the voltage output doesn't reach the voltage setting until the timeout time.
         :param check_period: voltage output will be measured every check_period (seconds) time
         :param timeout: time (seconds) give to the voltage output to reach the voltage setting
         :return: None
-        :raises: Exception if the voltage output can't reach the voltage setting 
+        :raises: Exception if the voltage output can't reach the voltage setting
         before the timeout completes (seconds)
         """
         log.info("Executing the wait_for_voltage_output_set function.")
@@ -296,25 +296,25 @@ class EurotestHPP120256(Instrument):
             voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
                                  (voltage_output < (voltage_output_setting + error))
             log.debug("voltage_output_valid_range: "
-                      "[" + str(voltage_output_setting - error) + 
+                      "[" + str(voltage_output_setting - error) +
                       ", " + str(voltage_output_setting + error) + "]")
             log.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
                 raise Exception("Timeout for wait_for_voltage_output_set function")
 
-        # if you are here is because the voltage_setting 
+        # if you are here is because the voltage_setting
         # has been reaches at the output of the HV Voltage source
 
     # Constructor
     def __init__(self, adapter, response_encoding="iso-8859-2", query_delay=0.1, **kwargs):
         # This instrument use this encoding, so we have to take into account
-        self.response_encoding = response_encoding  
+        self.response_encoding = response_encoding
         # Delay in s to sleep between the write and read occuring in a query
-        self.query_delay = query_delay  
+        self.query_delay = query_delay
         # comment next line if you want to pass the test
-        # adapter.connection.encoding = self.response_encoding  
+        # adapter.connection.encoding = self.response_encoding
         # comment next line if you want to pass the test
-        # adapter.connection.query_delay = self.query_delay  
+        # adapter.connection.query_delay = self.query_delay
         super().__init__(
             adapter,
             "Euro Test High Voltage DC Source model HPP-120-256",
