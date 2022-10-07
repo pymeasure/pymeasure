@@ -180,7 +180,7 @@ class EurotestHPP120256(Instrument):
                 'EN': 'ENable', 'DIS': 'DISable'},
         map_values=True
     )
-    
+
     enable_output = Instrument.setting(
         "HV,%s",
         """Enables or disables the voltage output function of the HV source.
@@ -191,7 +191,7 @@ class EurotestHPP120256(Instrument):
                 'EN': 'ON', 'DIS': 'OFF'},
         map_values=True
     )
-    
+
     @property
     def id(self):
         """ Returns the identification of the instrument """
@@ -204,7 +204,7 @@ class EurotestHPP120256(Instrument):
         """ Returns the unit Status which is a 16bits response where
         every bit indicates teh state of one subsystem of the HV Source."""
         log.info("Requesting instrument status...")
-        
+
         response = self.ask("STATUS,DI")
         response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
         log.debug(f"Instrument status = {response}")
@@ -220,7 +220,7 @@ class EurotestHPP120256(Instrument):
         LAM,INPUT ERROR Wrong command received
         LAM,OK Status OK"""
         log.info("Requesting instrument STATUS LAM...")
-        
+
         response = self.ask("STATUS,LAM")
         response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
         log.debug(f"Instrument STATUS LAM = {response}")
