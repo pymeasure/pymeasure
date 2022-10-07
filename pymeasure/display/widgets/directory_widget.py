@@ -24,13 +24,13 @@
 
 import logging
 
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class DirectoryLineEdit(QtGui.QLineEdit):
+class DirectoryLineEdit(QtWidgets.QLineEdit):
     """
     Widget that allows to choose a directory path.
     A completer is implemented for quick completion.
@@ -40,22 +40,22 @@ class DirectoryLineEdit(QtGui.QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
-        completer = QtGui.QCompleter(self)
-        completer.setCompletionMode(QtGui.QCompleter.PopupCompletion)
+        completer = QtWidgets.QCompleter(self)
+        completer.setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
 
-        model = QtGui.QDirModel(completer)
+        model = QtWidgets.QDirModel(completer)
         model.setFilter(QtCore.QDir.Dirs | QtCore.QDir.Drives |
                         QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
         completer.setModel(model)
 
         self.setCompleter(completer)
 
-        browse_action = QtGui.QAction(self)
+        browse_action = QtWidgets.QAction(self)
         browse_action.setIcon(self.style().standardIcon(
-            getattr(QtGui.QStyle, 'SP_DialogOpenButton')))
+            getattr(QtWidgets.QStyle, 'SP_DialogOpenButton')))
         browse_action.triggered.connect(self.browse_triggered)
 
-        self.addAction(browse_action, QtGui.QLineEdit.TrailingPosition)
+        self.addAction(browse_action, QtWidgets.QLineEdit.TrailingPosition)
 
     def _get_starting_directory(self):
         current_text = self.text()
@@ -66,7 +66,7 @@ class DirectoryLineEdit(QtGui.QLineEdit):
             return '/'
 
     def browse_triggered(self):
-        path = QtGui.QFileDialog.getExistingDirectory(
+        path = QtWidgets.QFileDialog.getExistingDirectory(
             self, 'Directory', self._get_starting_directory())
         if path != '':
             self.setText(path)

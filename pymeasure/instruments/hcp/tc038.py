@@ -72,23 +72,23 @@ class TC038(Instrument):
     The oven always responds with an "OK" to all valid requests or commands.
     """
 
-    def __init__(self, resourceName, address=1, timeout=1000,
-                 includeSCPI=False):
+    def __init__(self, adapter, address=1, timeout=1000,
+                 includeSCPI=False, **kwargs):
         """
         Initialize the communication.
 
         Parameters
         ----------
-        resourceName : str
+        adapter : str
             name COM-Port.
         address : int
             address of the device. Should be between 1 and 99.
         timeout : int
             Timeout in ms.
         """
-        super().__init__(resourceName, "TC038", timeout=timeout,
+        super().__init__(adapter, "TC038", timeout=timeout,
                          write_termination="\r", read_termination="\r",
-                         parity=Parity.even,)
+                         parity=Parity.even, **kwargs)
         self.address = address
 
         self.set_monitored_quantity()  # start to monitor the temperature

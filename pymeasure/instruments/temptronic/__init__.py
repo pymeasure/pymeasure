@@ -25,3 +25,4 @@
 from .temptronic_base import ATSBase
 from .temptronic_ats525 import ATS525
 from .temptronic_ats545 import ATS545
+from .temptronic_eco560 import ECO560

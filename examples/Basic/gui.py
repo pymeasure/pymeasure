@@ -16,7 +16,7 @@ from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
-from pymeasure.display.Qt import QtGui
+from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 
 import logging
@@ -78,7 +78,7 @@ class MainWindow(ManagedWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

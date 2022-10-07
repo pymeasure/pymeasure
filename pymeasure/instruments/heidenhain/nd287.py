@@ -56,7 +56,7 @@ class ND287(Instrument):
         dynamic=True
     )
 
-    def __init__(self, resourceName, units="mm", **kwargs):
+    def __init__(self, adapter, units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
 
         :param: units: Specify the units that the gauge is working in.
@@ -65,7 +65,7 @@ class ND287(Instrument):
         self._units = units
 
         super().__init__(
-            resourceName,
+            adapter,
             "Heidenhain ND287",
             includeSCPI=False,
             write_termination="\r",

@@ -94,9 +94,9 @@ class SM7045D(Instrument):
         output of the power supply is disabled/enabled. """,
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Delta Elektronika SM 70-45 D",
             **kwargs
         )
