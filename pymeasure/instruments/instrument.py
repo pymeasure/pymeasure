@@ -277,18 +277,18 @@ class Instrument:
     @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
         get_command,
-            set_command,
-            docs,
-            validator=lambda v, vs: v,
-            values=(),
-            map_values=False,
-            get_process=lambda v: v,
-            set_process=lambda v: v,
-            command_process=lambda c: c,
-            check_set_errors=False,
-            check_get_errors=False,
-            dynamic=False,
-            **kwargs
+        set_command,
+        docs,
+        validator=lambda v, vs: v,
+        values=(),
+        map_values=False,
+        get_process=lambda v: v,
+        set_process=lambda v: v,
+        command_process=lambda c: c,
+        check_set_errors=False,
+        check_get_errors=False,
+        dynamic=False,
+        **kwargs
     ):
         """Returns a property for the class based on the supplied
         commands. This property may be set and read from the
