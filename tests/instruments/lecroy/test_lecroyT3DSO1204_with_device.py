@@ -316,7 +316,7 @@ class TestLeCroyT3DSO1204:
         sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.single()
         sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
-        value = scope.digitize("C1")
+        value = scope._digitize("C1")
         assert isinstance(value, np.ndarray)
         assert len(value) == 1000
         assert all(isinstance(n, np.uint8) for n in value)

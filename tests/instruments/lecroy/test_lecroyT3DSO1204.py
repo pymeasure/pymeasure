@@ -205,5 +205,41 @@ def test_trigger():
         }
 
 
+def test_math_define():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b"DEF EQN,C2*C4", None),
+             (b"DEF?", b"C2*C4"),
+             ]
+    ) as instr:
+        instr.math_define = ("channel2", "*", "channel4")
+        assert instr.math_define == "C2*C4"
+
+
+def test_math_vdiv():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b"MTVD 1.00E+00V", None),
+             (b"MTVD?", b"1.00E+00"),
+             ]
+    ) as instr:
+        instr.math_vdiv = 1.0
+        assert instr.math_vdiv == 1.0
+
+
+def test_math_vpos():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b"MTVP 120", None),
+             (b"MTVP?", b"120"),
+             ]
+    ) as instr:
+        instr.math_vpos = 120
+        assert instr.math_vpos == 120
+
+
 if __name__ == '__main__':
     pytest.main()

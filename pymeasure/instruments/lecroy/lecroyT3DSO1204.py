@@ -36,6 +36,24 @@ log.addHandler(logging.NullHandler())
 _MATCH_FLOAT = re.compile(r'-? *[0-9]+\.?[0-9]*(?:[Ee] *-? *[0-9]+)?')
 
 
+def _sanitize_source(source):
+    """ Parse source string
+
+    :param source can be "cX", "ch X", "chan X", "channel X", "math" or "line", where X is
+    a single digit integer. The parser is case and white space insensitive.
+    :return: can be "C1", "C2", "C3", "C4", "MATH" or "LINE. """
+
+    match = re.match(r"\s*(C\s*\d|CH\s*\d|CHAN\s*\d|CHANNEL\s*\d|MATH|LINE)", source,
+                     re.IGNORECASE)
+    if match:
+        source = match.group(1).replace(" ", "").upper()
+        if source != "MATH":
+            source = "C" + source[-1]
+    else:
+        raise ValueError(f"source {source} not recognized")
+    return source
+
+
 def _trigger_select_num_pars(value):
     """
     find the expected number of parameter for the trigger_select property
@@ -69,6 +87,9 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
     if len(value) < 3 or len(value) > 5:
         raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
     value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
+    value = list(value)
+    value[1] = _sanitize_source(value[1])
+    value = tuple(value)
     if value[0] not in values.keys():
         raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
     num_expected_pars = num_pars_finder(value)
@@ -80,15 +101,6 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
         else:
             strict_range(element, values=values[value[0]][i - 1])
     return value
-
-
-def _trigger_select_set_process(value):
-    """
-    Process the input of the trigger_select property. All string are transformed to uppercase.
-    :param value: output parameters as a tuple
-    """
-    new_value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
-    return new_value
 
 
 def _trigger_select_get_process(value):
@@ -111,6 +123,22 @@ def _trigger_select_get_process(value):
         output.append(float(value[value.index("HV") + 1][:-1]))
     if "HV2" in value:
         output.append(float(value[value.index("HV2") + 1][:-1]))
+    return output
+
+
+def _math_define_validator(value, values):
+    """
+    Validate the input of the math_define property
+    :param value: input parameters as a 3-element tuple
+    :param values: allowed space for each parameter
+    """
+    if not isinstance(value, tuple):
+        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+    if len(value) != 3:
+        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+    output = (_sanitize_source(value[0]), value[1], _sanitize_source(value[2]))
+    for i in range(3):
+        strict_discrete_set(output[i], values=values[i])
     return output
 
 
@@ -184,13 +212,13 @@ class Channel:
 
     scale = Instrument.control(
         "VDIV?", "VDIV %.2EV",
-        """ A float parameter that specifies the vertical scale, or units per division, in Volts."""
+        """ A float parameter that specifies the vertical scale (units per division) in Volts."""
     )
 
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
         """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger
-        level will reflect the measurement units you select. ("A" for Amperes, "V" for Volts).""",
+        level will reflect th e measurement units you select. ("A" for Amperes, "V" for Volts).""",
         validator=strict_discrete_set,
         values={"A", "V"}
     )
@@ -410,19 +438,26 @@ class LeCroyT3DSO1204(Instrument):
         information, and this makes the response message much easier to parse."""
         self.write("CHDR OFF")
 
-    def ch(self, channel_number):
-        if isinstance(channel_number, str):
-            channel_number = channel_number.lower().replace(" ", "")
-        if channel_number in [1, "c1", "channel1", "chan1"]:
+    def ch(self, source):
+        """ Get channel object from its index or its name. Or if source is "math", just return the
+        scope object.
+
+        :param source: can be 1, 2, 3, 4 or C1, C2, C3, C4, MATH
+        :return: handle to the selected source. """
+        if isinstance(source, str):
+            source = _sanitize_source(source)
+        if source in [1, "C1"]:
             return self.ch1
-        elif channel_number in [2, "c2", "channel2", "chan2"]:
+        elif source in [2, "C2"]:
             return self.ch2
-        elif channel_number in [3, "c3", "channel3", "chan3"]:
+        elif source in [3, "C3"]:
             return self.ch3
-        elif channel_number in [4, "c4", "channel4", "chan4"]:
+        elif source in [4, "C4"]:
             return self.ch4
+        elif source == "MATH":
+            return self
         else:
-            raise ValueError("Invalid channel number. Must be 1, 2, 3, 4.")
+            raise ValueError("Invalid channel number. Must be 1, 2, 3, 4 or C1, C2, C3, C4.")
 
     def autoscale(self):
         """ Autoscale displayed channels. """
@@ -441,7 +476,7 @@ class LeCroyT3DSO1204(Instrument):
     timebase_scale = Instrument.control(
         "TDIV?", "TDIV %.2ES",
         """ A float parameter that sets the horizontal scale (units per division) in seconds (S),
-        milliseconds (MS), microseconds (US) or nanoseconds (NS) for the main window.""",
+        for the main window.""",
         validator=strict_range,
         values=[1e-9, 100]
     )
@@ -591,8 +626,19 @@ class LeCroyT3DSO1204(Instrument):
         following keys:
         - "type": normal, peak detect, average, high resolution (str)
         - "points": nb of data points transferred (int)
-        - "sparsing": Sparse point. It defines the interval between data points. (int)
-        - "first_point"  address of the first data point to be sent (int)"""
+        - "sparsing": sparse point. It defines the interval between data points. (int)
+        - "first_point": address of the first data point to be sent (int)
+        - "source": source of the data : "C1", "C2", "C3", "C4", "MATH".
+        - "type":  type of data acquisition. Can be "normal", "peak", "average", "highres"
+        - "average": average times of average acquisition
+        - "sampling_rate":
+        - "status": acquisition status of the scope. Can be "stopped", "triggered", "ready",
+        "auto", "armed"
+        - "xdiv": horizontal scale (units per division) in seconds
+        - "xoffset": time interval in seconds between the trigger event and the reference position
+        - "ydiv": vertical scale (units per division) in Volts
+        - "yoffset": value that is represented at center of screen in Volts
+        """
         vals = self.values("WFSU?")
         vals_dict = {
             "sparsing": vals[vals.index("SP") + 1],
@@ -604,23 +650,22 @@ class LeCroyT3DSO1204(Instrument):
             "sampling_rate": self.acquisition_sampling_rate,
             "status": self.acquisition_status,
             "xdiv": self.timebase_scale,
-            "xoffset": self.timebase_offset,
+            "xoffset": self.timebase_offset
         }
-        if self.waveform_source in ["C1", "C2", "C3", "C4"]:
+        strict_discrete_set(self.waveform_source, ["C1", "C2", "C3", "C4", "MATH"])
+        if self.waveform_source == "MATH":
+            vals_dict["ydiv"] = self.math_vdiv
+            vals_dict["yoffset"] = self.math_vpos
+        else:
             vals_dict["ydiv"] = self.ch(self.waveform_source).scale
             vals_dict["yoffset"] = self.ch(self.waveform_source).offset
-        else:
-            raise NotImplementedError(
-                f"Acquiring from source {self.waveform_source} is not implemented")
         return vals_dict
 
-    def digitize(self, source: str):
+    def _digitize(self, source: str):
         """ Acquire waveforms according to the settings of the acquire commands
         :param source: a string parameter that can take the following values: "C1", "C2", "C3",
         "C4", "MATH".
-        :return: bytearray with raw data
-        """
-        strict_discrete_set(source, ["C1", "C2", "C3", "C4", "MATH"])
+        :return: bytearray with raw data. """
         values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
         if len(values) < 18:
             raise ValueError(
@@ -660,14 +705,15 @@ class LeCroyT3DSO1204(Instrument):
         """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of
         data values (no temporal axis) and a dict of the waveform preamble, which can be used to
         build the corresponding time values for all data points.
-        :param source: measurement source, can be "C1", "C2", "C3", "C4".
+        :param source: measurement source, can be "C1", "C2", "C3", "C4", "MATH.
         :param points: integer number of points to acquire. Note that oscilloscope may return
         fewer points than specified, this is not an issue of this library. If 0 all available
         points will be returned
         :param sparsing: it defines the interval between data points.
         :param first_point: it specifies the address of the first data point to be sent.
-        :return data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict
-        format."""
+        :return: data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict
+        format. """
+        source = _sanitize_source(source)
         self.waveform_source = source
         if points is not None:
             self.waveform_points = points
@@ -677,7 +723,7 @@ class LeCroyT3DSO1204(Instrument):
             self.waveform_first_point = first_point
 
         preamble = self.waveform_preamble
-        data_bytes = self.digitize(source)
+        data_bytes = self._digitize(source)
         return np.array(data_bytes), preamble
 
     ###############
@@ -744,23 +790,22 @@ class LeCroyT3DSO1204(Instrument):
         while the second gives the new value to be assigned. Pairs may be given in any order and
         restricted to those variables to be changed.
         There are five parameters that can be specified. Parameters 1. 2. 3. are always mandatory.
-        Parameters 4. 5. are required only for certain combinations of the previous parameters. 
-        1.  <trig_type>:={edge,slew,glit,intv,runt,drop}
-        2.  <source>:={c1,c2,c3,c4,line}
-        3.  - <hold_type>:={ti,off} for edge trigger.
+        Parameters 4. 5. are required only for certain combinations of the previous parameters.
+        1.  <trig_type>:={edge, slew, glit, intv, runt, drop}
+        2.  <source>:={c1, c2, c3, c4, line}
+        3.  - <hold_type>:={ti, off} for edge trigger.
             - <hold_type>:={ti} for drop trigger.
-            - <hold_type>:={ps,pl,p2,p1} for glit/runt trigger.
-            - <hold_type>:={is,il,i2,i1} for slew/intv trigger.
+            - <hold_type>:={ps, pl, p2, p1} for glit/runt trigger.
+            - <hold_type>:={is, il, i2, i1} for slew/intv trigger.
         4.  <hold_value1>:= a time value with unit.
         5.  <hold_value2>:= a time value with unit.
 
         Note:
-        • LINE can only be selected when the trigger type is Edge.
+        • "line" can only be selected when the trigger type is "edge".
         • If there is no unit(S/mS/uS/nS) added, it defaults to be S.
-        • The range of hold_values varies from trigger types. [80nS, 1.5S] for Edge trigger,
+        • The range of hold_values varies from trigger types. [80nS, 1.5S] for "edge" trigger,
         and [2nS, 4.2S] for others.
         """,
-        set_process=_trigger_select_set_process,
         get_process=_trigger_select_get_process,
         validator=_trigger_select_validator,
         values=_trigger_select_values,
@@ -795,7 +840,7 @@ class LeCroyT3DSO1204(Instrument):
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to trigger_setup and channel_setup if needed.
         :param mode: trigger sweep mode [auto, normal, single, stop]
-        :param source: trigger source [c1,c2,c3,c4]
+        :param source: trigger source [c1, c2, c3, c4, line]
         :param trigger_type: condition that will trigger the acquisition of waveforms
         [edge,slew,glit,intv,runt,drop]
         :param hold_type: hold type (refer to page 172 of programing guide)
@@ -817,10 +862,9 @@ class LeCroyT3DSO1204(Instrument):
             self.trigger_select = tuple(args)
         elif any(i is not None for i in [source, trigger_type, hold_type]):
             raise ValueError("Need to specify all of source, trigger_type and hold_type arguments")
-        source = source.upper()
         if source is not None:
-            if source not in ["C1", "C2", "C3", "C4"]:
-                raise ValueError(f"Trigger source {source} not recognized")
+            source = _sanitize_source(source)
+            strict_discrete_set(source, ["C1", "C2", "C3", "C4", "LINE"])
             ch = self.ch(source)
             if coupling is not None:
                 ch.trigger_coupling = coupling
@@ -862,3 +906,40 @@ class LeCroyT3DSO1204(Instrument):
             "slope": ch.trigger_slope
         }
         return tb_setup
+
+    ###############
+    #    Math     #
+    ###############
+
+    math_define = Instrument.control(
+        "DEF?", "DEF EQN,%s%s%s",
+        """ A string parameter that sets the desired waveform math operation between two channels.
+        Three parameters must be passed as a tuple:
+        1. source1 : source channel on the left
+        2. operation : operator must be "*", "/", "+", "-"
+        3. source2 : source channel on the right """,
+        validator=_math_define_validator,
+        values=[["C1", "C2", "C3", "C4"], ["*", "/", "+", "-"], ["C1", "C2", "C3", "C4"]]
+    )
+
+    math_vdiv = Instrument.control(
+        "MTVD?", "MTVD %.2EV",
+        """ A float parameter that sets the vertical scale of the selected math operation. This
+        command is only valid in add, subtract, multiply and divide operation.
+        Note:
+        Legal values for the scale depend on the selected operation.""",
+        validator=strict_discrete_set,
+        values=[5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
+    )
+
+    math_vpos = Instrument.control(
+        "MTVP?", "MTVP %d",
+        """ A integer parameter that sets the vertical position of the math waveform with
+        specified source.
+        Note:
+        The point represents the screen pixels and is related to the screen center. For example,
+        if the point is 50. The math waveform will be displayed 1 grid above the vertical center
+        of the screen. Namely one grid is 50. """,
+        validator=strict_range,
+        values=[-255, 255]
+    )
