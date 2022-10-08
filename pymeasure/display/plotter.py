@@ -56,7 +56,7 @@ class Plotter(StoppableThread):
         self.setup_plot(window.plot)
         app.aboutToQuit.connect(window.quit)
         window.show()
-        app.exec_()
+        app.exec()
 
     def setup_plot(self, plot):
         """

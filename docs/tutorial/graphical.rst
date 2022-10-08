@@ -172,7 +172,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
         app = QtWidgets.QApplication(sys.argv)
         window = MainWindow()
         window.show()
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
 
 

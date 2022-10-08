@@ -99,4 +99,4 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = TestImageGUI()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
