@@ -373,7 +373,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if column == 0:
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
-            if state == 0:
+            if state == QtCore.Qt.CheckState.Unchecked:
                 for wdg, curve in zip(self.widget_list, experiment.curve_list):
                     wdg.remove(curve)
             else:
