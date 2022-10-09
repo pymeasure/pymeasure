@@ -242,7 +242,7 @@ class HP3437A(HPLegacyInstrument):
         else:
             processed_data = []
             for i in range(0, len(read_data), 2):
-                processed_data.append(self._unpack_data(read_data[i:i+2]))
+                processed_data.append(self._unpack_data(read_data[i : i + 2]))  # noqa: E203
             return_value = np.array(processed_data)
         self.adapter.connection.timeout = current_timeout
         return return_value

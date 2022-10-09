@@ -274,7 +274,8 @@ class DPSeriesMotorController(Instrument):
         raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
 
     def reset_position(self):
-        """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
+        """
+        Reset position as counted by the motor controller and an externally connected encoder to 0.
         """
         # reset encoder recorded position #
         self.write("ET")

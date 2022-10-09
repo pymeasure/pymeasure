@@ -104,7 +104,7 @@ class Channel():
 
     scale = Instrument.control(
         "SCALe?", "SCALe %f",
-        """ A float parameter that specifies the vertical scale, or units per division, in Volts."""
+        """A float parameter that specifies the vertical scale, or units per division, in Volts."""
     )
 
     def __init__(self, instrument, number):
