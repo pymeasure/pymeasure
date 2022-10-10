@@ -120,8 +120,8 @@ class EurotestHPP120256(Instrument):
 
     current_limit = Instrument.control(
         "STATUS,I", "I,%.3fmA",
-        """ A floating point property that represents the output current limit in mAmps setting of the
-        HV Source. This property can be set. When this property acts as get
+        """ A floating point property that represents the output current limit in mAmps setting
+        of the HV Source. This property can be set. When this property acts as get
         will return a string like this: I, RANGE=5000mA, VALUE=1739mA, then current_limit will
         return a tuple (5000.0, 1739.0) hence the convenience of the get_process.""",
         validator=strict_range,
@@ -236,9 +236,11 @@ class EurotestHPP120256(Instrument):
 
     def shutdown(self, ramp):
         """
-        Ramps the HV source to zero with a determinated ramp and without waiting
-        to the output reaches zero volts dissables it.
-        :param ramp: indicates the ramp
+        Change the output voltage setting (V) to zero and
+        the ramp speed - changing rate (V/s) of the output voltage.
+        After calling shutdown, if the HV voltage output > 0
+        it should drop to zero at a certain rate given by the ramp parameter.
+        :param ramp: indicates the changing rate (V/s) of the voltage output
         """
         log.info(f"Executing the shutdown function with ramp: {ramp} V/s.")
 
