@@ -243,8 +243,6 @@ class EurotestHPP120256(Instrument):
         log.info(f"Executing the shutdown function with ramp: {ramp} V/s.")
 
         self.ramp_to_zero(ramp)
-        self.enable_output = "OFF"
-        self.enable_kill = "OFF"
         super().shutdown()
 
     def ramp_to_zero(self, ramp):
