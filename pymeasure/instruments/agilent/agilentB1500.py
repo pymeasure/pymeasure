@@ -1810,7 +1810,7 @@ class QueryLearn():
     def _get_smu(key, smu_references):
         # command without channel
         command = re.findall(r'(?P<command>[A-Z]+)', key)[0]
-        channel = key[len(command):]
+        channel = key[len(command) :]  # noqa: E203
         return smu_references[int(channel)]
 
     # SMU Modes

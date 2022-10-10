@@ -53,11 +53,6 @@ class ATS545(ATSBase):
 
     temperature_limit_air_low_values = [-80, 25]
 
-    mode_doc = """Returns an integer indicating what the system is doing at the time the query is processed.
-                  10 = on Operator screen (manual mode)
-                  0 = on Cycle screen (program mode)
-                  63 = initial state after power-up
-               """
     mode_values = {'manual': 10,    # 5 in ATSbase
                    'program': 0,    # 6 in ATSbase
                    'initial': 63},  # after power up, reading is 63

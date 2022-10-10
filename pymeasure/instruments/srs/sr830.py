@@ -473,8 +473,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pauseBuffer()
-        ch1[index:count + 1] = self.buffer_data(1, index, count)
-        ch2[index:count + 1] = self.buffer_data(2, index, count)
+        ch1[index : count + 1] = self.buffer_data(1, index, count)  # noqa: E203
+        ch2[index : count + 1] = self.buffer_data(2, index, count)  # noqa: E203
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):
