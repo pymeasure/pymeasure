@@ -1,6 +1,6 @@
 Upcoming version
 ================
-- The adapter and instrument mechanics have been overhauled. Nothing should have changed for the user.
+- The adapter and instrument mechanics have been overhauled. Nothing should have changed for the user. However, the implementation of instruments changed (see 'Advanced communication protocls' in the 'Adding instruments' documentation). Now, the Adapter just implements the hardware connection, everything software protocol related is part of the instrument. Most notably: All protocol quirks are placed in the Instrument's write/read methods (ask calls them; global preprocess_reply is deprecated in favor of overriding write/read), query_delay is implemented by overriding wait_until_read.
 
 Version 0.10.0 (2022-04-09)
 ===========================

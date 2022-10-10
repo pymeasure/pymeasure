@@ -105,7 +105,7 @@ This is a minimal instrument definition:
 
 Make sure to include the PyMeasure license to each file, and add yourself as an author to the :code:`AUTHORS.txt` file.
 
-In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can subclass these methods in your instrument, for further information see advanced_communication_protocols_.
+In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
 
 In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences and are highly encouraged.
 
@@ -185,7 +185,7 @@ When the instrument instance is created, the interface-specific settings for the
 This way, we always pass on a valid set of arguments.
 In addition, any entries in ``**kwargs**`` take precedence, so if they need to, it is *still* possible for users to override any defaults you set in the instrument definition.
 
-For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, pymeasure has your back!
+For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether advanced_communication_protocols_ fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
 
 
 Writing properties
@@ -657,41 +657,50 @@ Instrument's inner workings
 
 In order to adjust an instrument for more complicated protocols, it is key to understand the different parts.
 
-The :class:`~pymeasure.adapters.Adapter` exposes :meth:`~pymeasure.adapters.Adapter.write` and :meth:`~pymeasure.adapters.Adapter.read` for strings, :meth:`~pymeasure.adapters.Adapter.write_bytes` and :meth:`~pymeasure.adapters.Adapter.read_bytes` for bytes messages, and :meth:`~pymeasure.adapters.Adapter.write_binary_values` and :meth:`~pymeasure.adapters.Adapter.read_binary_values` for binary data like waveforms. Unless you deal with binary data, you do not have to call the Adapter's methods. You should use instead the methods of :class:`~pymeasure.instruments.Instrument` with the same name. They call the Adapter for you and keep the code tidy.
+The :class:`~pymeasure.adapters.Adapter` exposes :meth:`~pymeasure.adapters.Adapter.write` and :meth:`~pymeasure.adapters.Adapter.read` for strings, :meth:`~pymeasure.adapters.Adapter.write_bytes` and :meth:`~pymeasure.adapters.Adapter.read_bytes` for bytes messages, and :meth:`~pymeasure.adapters.Adapter.write_binary_values` and :meth:`~pymeasure.adapters.Adapter.read_binary_values` for binary data like waveforms. You may call the last two methods in order to deal with binary data. For the other methods, you should use instead the methods of :class:`~pymeasure.instruments.Instrument` with the same name. They call the Adapter for you and keep the code tidy.
 
 Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.Instrument.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.Instrument.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
 
-The getter of :meth:`Instrument.control <pymeasure.instruments.Instrument.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_till_read`, and reads the device response via :meth:`read`.
+The getter of :meth:`Instrument.control <pymeasure.instruments.Instrument.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_until_read`, and reads the device response via :meth:`read`.
 
 Similarly, :meth:`Instrument.binary_values <pymeasure.instruments.Instrument.binary_values>` sends a command via :meth:`write`, waits with :meth:`wait_till_read`, but reads the response via :meth:`Adapter.read_binary_values <pymeasure.adapters.Adapter.read_binary_values>`.
 
 
-Adding a device address
-***********************
+Adding a device address and adding delay
+****************************************
 
 Let's look at a simple example for a device, which requires its address as the first three characters and returns the same style. This is straightforward, as :meth:`write` just prepends the device address to the command, and :meth:`read` has to strip it again doing some error checking. Similarly, a checksum could be added.
+Additionally, the device needs some time after it received a command, before it responds.
 
-.. code-block:: python
+.. testcode::
 
-    class Extreme5002(Instrument):
-        """The great Extreme5002 instrument.
+    class ExtremeCommunication(Instrument):
+        """The great ExtremeCommunication instrument.
         :param address: The device address for the communication.
+        :param query_delay: Wait time after writing and before reading in seconds.
         """
-        def __init__(self, adapter, address=0):
-            super().__init__(adapter, "Extreme5002")
+        def __init__(self, adapter, address=0, query_delay=0.1):
+            super().__init__(adapter, "ExtremeCommunication")
             self.address = f"{address:03}"
-
+            self.query_delay = query_delay
+    
         def write(self, command):
             """Add the device address in front of every command and send it to the device."""
             super().write(self.address + command)
-
+    
+        def wait_until_read(self, query_delay=0):
+            """Wait always some time after writing a command.
+            :param query_delay: override the global query_delay.
+            """
+            super().wait_until_read(query_delay or self.query_delay)
+    
         def read(self):
             """Read from the device and assert, that the response starts with the device address."""
             got = super().read()
             if got.startswith(self.address):
                 return got[3:]
             else:
-                raise ConnectionError(f"Message {got} for wrong address read.")
+                raise ConnectionError(f"Expected message address '{self.address}', but read '{got[3:]}' for wrong address '{got[:3]}'.")
     
         voltage = Instrument.measurement(
             ":VOLT:?", "The measured voltage in Volts.")
@@ -704,12 +713,12 @@ Bytes communication
 
 Some devices do not expect ASCII strings but raw bytes. In those cases, you can call the :meth:`write_bytes` and :meth:`read_bytes` in your :meth:`write` and :meth:`read` methods. The following example shows an instrument, which has registers to be written and read via bytes sent.
 
-.. code-block:: python
+.. testcode::
 
-    class Extreme5003(Instrument):
-    """The Extreme5003 instrument with bytes communication."""
+    class ExtremeBytes(Instrument):
+        """The ExtremeBytes instrument with bytes communication."""
         def __init__(self, adapter):
-            super().__init__(adapter, "Extreme5003")
+            super().__init__(adapter, "ExtremeBytes")
     
         def write(self, command):
             """Write to the device according to the comma separated command.
@@ -718,17 +727,17 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             """
             function, address, data = command.split(",")
             b = [0x03] if function == "R" else [0x10]
-            b.append(int(address, 16))  # register address
-            b.extend(int(data).to_bytes(length=8, byteOrder="big", signed=True)
-            self.write_bytes(b)
+            b.extend(int(address, 16).to_bytes(2, byteorder="big"))
+            b.extend(int(data).to_bytes(length=8, byteorder="big", signed=True))
+            self.write_bytes(bytes(b))
     
         def read(self):
             """Read the response and return the data as an integer, if applicable."""
-            response = read_bytes(2)  # return type and payload
+            response = self.read_bytes(2)  # return type and payload
             if response[0] == 0x00:
                 raise ConnectionError(f"Device error of type {response[1]} occurred.")
             if response[0] == 0x03:
-                # read that much bytes and return them as an integer
+                # read that many bytes and return them as an integer
                 data = self.read_bytes(response[1])
                 return int.from_bytes(data, byteorder="big", signed=True)
             if response[0] == 0x10 and response[1] != 0x00:

@@ -23,6 +23,7 @@
 #
 
 import logging
+import time
 
 from pymeasure.adapters.visa import VISAAdapter
 
@@ -272,9 +273,13 @@ class Instrument:
         return self.adapter.read_bytes(count, **kwargs)
 
     # Communication functions
-    def wait_till_read(self, query_delay=0):
-        """Wait a moment before reading. Implement in subclass!"""
-        pass
+    def wait_until_read(self, query_delay=0):
+        """Wait some time until reading.
+
+        :param query_delay: Delay between writing and reading in seconds.
+        """
+        if query_delay:
+            time.sleep(query_delay)
 
     def ask(self, command, query_delay=0):
         """ Writes the command to the instrument through the adapter
@@ -285,7 +290,7 @@ class Instrument:
         :returns: String returned by the device without read_termination.
         """
         self.write(command)
-        self.wait_till_read(query_delay)
+        self.wait_until_read(query_delay)
         return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
@@ -325,7 +330,7 @@ class Instrument:
         :returns: NumPy array of values
         """
         self.write(command)
-        self.wait_till_read(query_delay)
+        self.wait_until_read(query_delay)
         return self.adapter.read_binary_values(**kwargs)
 
     # Property creators
