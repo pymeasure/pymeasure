@@ -54,8 +54,7 @@ class TestPhilipsPM6669:
 
     @pytest.fixture
     def make_resetted_instr(self):
-        self.instr.defaults
-        self.instr.read()
+        self.instr.reset_to_defaults()
         return self.instr
 
     @pytest.mark.parametrize('case, expected', FUNCTION_STRINGS)
