@@ -145,13 +145,31 @@ class EurotestHPP120256(Instrument):
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
+    measure_voltage_range = Instrument.measurement(
+        "STATUS,MU",
+        """ Measures the actual output voltage range of the HV Source in kVolts.
+        This property is a get so, the instrument will return a string like this:
+        U, RANGE=3.000kV, VALUE=2.458kV, then measure_voltage will
+        return 3000.0, hence the convenience of the get_process.""",
+        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0])
+    )
+
     measure_current = Instrument.measurement(
         "STATUS,MI",
         """ Measures the actual output current of the power supply in mAmps.
         This property is a get so, the instrument will return a string like this:
-        I, RANGE=5000mA, VALUE=1739mA, then measure_current will
+        I, RANGE=5000mA, VALUE=1739mA, then measure_current_range will
         return a 1739.0, hence the convenience of the get_process.""",
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
+    )
+
+    measure_current_range = Instrument.measurement(
+        "STATUS,MI",
+        """ Measures the actual output current range of the power supply in mAmps.
+        This property is a get so, the instrument will return a string like this:
+        I, RANGE=5000mA, VALUE=1739mA, then measure_current_range will
+        return a 5000.0, hence the convenience of the get_process.""",
+        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0])
     )
 
     enable_kill = Instrument.setting(
