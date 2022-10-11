@@ -199,7 +199,7 @@ class Channel:
         """,
         validator=strict_range,
         values=[-1e-7, 1e-7],
-        get_process=lambda val: float(re.findall(_MATCH_FLOAT, str(val))[0])
+        preprocess_reply=lambda v: v.rstrip('S')
     )
 
     probe_attenuation = Instrument.control(

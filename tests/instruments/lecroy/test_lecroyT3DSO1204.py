@@ -120,7 +120,7 @@ def test_channel_setup():
              (b"C1:BWL?", b"OFF"),
              (b"C1:CPL?", b"D1M"),
              (b"C1:OFST?", b"-1.50E-01"),
-             (b"C1:SKEW?", b"0.00E+00"),
+             (b"C1:SKEW?", b"0.00E+00S"),
              (b"C1:TRA?", b"ON"),
              (b"C1:UNIT?", b"V"),
              (b"C1:VDIV?", b"5.00E-02"),
