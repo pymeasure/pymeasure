@@ -30,7 +30,6 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
 from pymeasure.instruments.validators import strict_discrete_set
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -202,7 +201,7 @@ class EurotestHPP120256(Instrument):
 
     def status(self):
         """ Returns the unit Status which is a 16bits response where
-        every bit indicates teh state of one subsystem of the HV Source."""
+        every bit indicates the state of one subsystem of the HV Source."""
         log.info("Requesting instrument status...")
 
         response = self.ask("STATUS,DI")
@@ -249,8 +248,11 @@ class EurotestHPP120256(Instrument):
 
     def ramp_to_zero(self, ramp):
         """
-        Ramps the HV source to zero with a determinated ramp
-        :param ramp: indicates the ramp we want
+        Sets the voltage output setting to zero and the ramp setting
+        to a determinated value done by the ramp parameter.
+        In summary, the method conducts (ramps) the voltage output to zero
+        at a determinated voltage changing rate (ramp in V/s).
+        :param ramp: Is the changing rate (ramp in V/s) for the ramp setting
         """
         log.info("Executing the ramp_to_zero function with ramp: {ramp} V/s.")
 
@@ -307,14 +309,13 @@ class EurotestHPP120256(Instrument):
 
     # Constructor
     def __init__(self, adapter, response_encoding="iso-8859-2", query_delay=0.1, **kwargs):
-        # This instrument use this encoding, so we have to take into account
+
+        # This instrument uses iso-8859-2 encoding, so we have to take it into account
+        # Also query_delay has to be taken into account for slow response instruments
         self.response_encoding = response_encoding
-        # Delay in s to sleep between the write and read occuring in a query
         self.query_delay = query_delay
-        # comment next line if you want to pass the test
-        # adapter.connection.encoding = self.response_encoding
-        # comment next line if you want to pass the test
-        # adapter.connection.query_delay = self.query_delay
+        adapter.connection.encoding = response_encoding
+        adapter.connection.query_delay = query_delay
         super().__init__(
             adapter,
             "Euro Test High Voltage DC Source model HPP-120-256",
