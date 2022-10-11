@@ -106,67 +106,52 @@ class EurotestHPP120256(Instrument):
         "STATUS,U", "U,%.3fkV",
         """ A floating point property that represents the output voltage
         setting (in kV) of the HV Source in kVolts. This property can be set.
-        When this property acts as get will return a string like this:
+        When this property acts as get, the instrument will return a string like this:
         U, RANGE=3.000kV, VALUE=2.458kV, then voltage will return a tuple
-        (3000.0, 2.458) hence the convenience of the get_process.""",
+        2.458 hence, the convenience of the get_process.""",
         validator=strict_range,
         values=VOLTAGE_RANGE,
-        get_process=lambda v: (
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0]),
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
-        )
+        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
     current_limit = Instrument.control(
         "STATUS,I", "I,%.3fmA",
         """ A floating point property that represents the output current limit in mAmps setting
-        of the HV Source. This property can be set. When this property acts as get
+        of the HV Source. This property can be set. When this property acts as get, the instrument
         will return a string like this: I, RANGE=5000mA, VALUE=1739mA, then current_limit will
-        return a tuple (5000.0, 1739.0) hence the convenience of the get_process.""",
+        return 1739.0, hence the convenience of the get_process.""",
         validator=strict_range,
         values=CURRENT_RANGE,
-        get_process=lambda v: (
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0]),
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
-        )
+        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
     voltage_ramp = Instrument.control(
         "STATUS,RAMP", "RAMP,%dV/s",
         """ A integer property that represents the ramp speed of the output voltage of the
-        HV Source V/s. This property can be set.  When this property acts as get
+        HV Source V/s. This property can be set.  When this property acts as get, the instrument
         will return a string like this: RAMP, RANGE=3000V/s, VALUE=1000V/s, then voltage_ramp will
-        return a tuple (3000.0, 1000.0) hence the convenience of the get_process.""",
+        return 1000.0, hence the convenience of the get_process.""",
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
-        get_process=lambda v: (
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0]),
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
-        )
+        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
     measure_voltage = Instrument.measurement(
         "STATUS,MU",
         """ Measures the actual output voltage of the HV Source in kVolts.
-        This property is a get so will return a string like this:
+        This property is a get so, the instrument will return a string like this:
         U, RANGE=3.000kV, VALUE=2.458kV, then measure_voltage will
-        return a tuple (3000.0, 2458.0) hence the convenience of the get_process.""",
-        get_process=lambda v: (
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0]),
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
-        )
+        return 2458.0, hence the convenience of the get_process.""",
+        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
     measure_current = Instrument.measurement(
         "STATUS,MI",
         """ Measures the actual output current of the power supply in mAmps.
-        This property is a get so will return a string like this:
+        This property is a get so, the instrument will return a string like this:
         I, RANGE=5000mA, VALUE=1739mA, then measure_current will
-        return a tuple (5000.0, 1739.0) hence the convenience of the get_process.""",
-        get_process=lambda v: (
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0]),
-            float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
-        )
+        return a 1739.0, hence the convenience of the get_process.""",
+        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
     enable_kill = Instrument.setting(
@@ -263,7 +248,7 @@ class EurotestHPP120256(Instrument):
         self.voltage = 0
         time.sleep(self.COMMAND_DELAY)
 
-    def wait_for_voltage_output_set(self, check_period, timeout):
+    def wait_for_voltage_output_set(self, check_period=1.0, timeout=60.0):
         """
         Waits until HV voltage output reaches the voltage ouput setting.
         Checks the voltage output every check_period seconds and raises an exception
@@ -279,10 +264,10 @@ class EurotestHPP120256(Instrument):
         ref_time = time.time()
         future_time = ref_time + timeout
 
-        voltage_output_setting = self.voltage[1]
+        voltage_output_setting = self.voltage
         time.sleep(self.COMMAND_DELAY)
         error = 0.02  # error of +-ten volts (0.01kV) to enter into the voltage stable window
-        voltage_output = self.measure_voltage[1]
+        voltage_output = self.measure_voltage
         voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
                              (voltage_output < (voltage_output_setting + error))
 
@@ -294,7 +279,7 @@ class EurotestHPP120256(Instrument):
                      f"{round(actual_time - ref_time, ndigits=1)} seconds.")
 
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
-            voltage_output = self.measure_voltage[1]
+            voltage_output = self.measure_voltage
             voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
                                  (voltage_output < (voltage_output_setting + error))
             log.debug("voltage_output_valid_range: "
