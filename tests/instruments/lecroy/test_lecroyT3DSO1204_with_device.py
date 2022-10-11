@@ -31,6 +31,7 @@ from pyvisa.errors import VisaIOError
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 
 pytest.skip('Only work with connected hardware', allow_module_level=True)
+NEED_HUMAN = False
 
 
 class TestLeCroyT3DSO1204:
@@ -208,14 +209,14 @@ class TestLeCroyT3DSO1204:
 
     # Acquisition
     @pytest.mark.parametrize("case", ACQUISITION_TYPES)
-    def test_acquisition_type(self, scope, case):
+    def test_acquisition_type(self, reseted_scope, case):
         if case == "average":
-            scope.acquisition_type = case
-            scope.acquisition_average = 16
-            assert scope.acquisition_type == ["average", 16]
+            reseted_scope.acquisition_type = case
+            reseted_scope.acquisition_average = 16
+            assert reseted_scope.acquisition_type == ["average", 16]
         else:
-            scope.acquisition_type = case
-            assert scope.acquisition_type == case
+            reseted_scope.acquisition_type = case
+            assert reseted_scope.acquisition_type == case
 
     @pytest.mark.parametrize("case", ACQUISITION_AVERAGE)
     def test_acquisition_average(self, scope, case):
@@ -356,16 +357,75 @@ class TestLeCroyT3DSO1204:
         assert type(preamble) is dict
 
     def test_download_data_extended(self, scope):
-        scope.ch1.display = True
-        scope.single()
-        data, time, preamble = scope.download_data(source="c1", num_points=7e6)
-        # print(data)
-        # print(time)
-        assert type(data) is np.ndarray
-        assert len(data) == 7e6
-        assert type(time) is np.ndarray
-        assert len(time) == 7e6
-        assert type(preamble) is dict
+        if NEED_HUMAN:
+            from matplotlib import pyplot as plt
+            scope.ch1.display = True
+            scope.single()
+            data, time, preamble = scope.download_data(source="c1", num_points=7e6)
+            assert type(data) is np.ndarray
+            assert len(data) == 7e6
+            assert type(time) is np.ndarray
+            assert len(time) == 7e6
+            assert type(preamble) is dict
+            print(preamble)
+            plt.scatter(x=time, y=data)
+            plt.show()
+
+    def test_download_data_sparsing(self, scope):
+        if NEED_HUMAN:
+            from matplotlib import pyplot as plt
+            scope.ch1.display = True
+            scope.single()
+            data, time, preamble = scope.download_data(source="c1", num_points=7e5, sparsing=10)
+            assert type(data) is np.ndarray
+            assert len(data) == 7e5
+            assert type(time) is np.ndarray
+            assert len(time) == 7e5
+            assert type(preamble) is dict
+            assert preamble["type"] == "normal"
+            assert preamble["sparsing"] == 10
+            assert preamble["points"] == 7e5
+            print(preamble)
+            plt.scatter(x=time, y=data)
+            plt.show()
+
+    def test_download_data_averaging_16(self, scope):
+        if NEED_HUMAN:
+            from matplotlib import pyplot as plt
+            scope.ch1.display = True
+            scope.single()
+            data, time, preamble = scope.download_data(source="c1", num_points=1.75e5,
+                                                       sparsing=10, averaging=16)
+            assert type(data) is np.ndarray
+            assert len(data) == 1.75e5
+            assert type(time) is np.ndarray
+            assert len(time) == 1.75e5
+            assert type(preamble) is dict
+            assert preamble["type"] == ["average", 16]
+            assert preamble["average"] == 16
+            assert preamble["points"] == 1.75e5
+            print(preamble)
+            plt.scatter(x=time, y=data)
+            plt.show()
+
+    def test_download_data_averaging_256(self, scope):
+        if NEED_HUMAN:
+            from matplotlib import pyplot as plt
+            scope.ch1.display = True
+            scope.single()
+            data, time, preamble = scope.download_data(source="c1", num_points=1.75e5,
+                                                       sparsing=10, averaging=256)
+            assert type(data) is np.ndarray
+            assert len(data) == 1.75e5
+            assert type(time) is np.ndarray
+            assert len(time) == 1.75e5
+            assert type(preamble) is dict
+            assert preamble["type"] == ["average", 256]
+            assert preamble["average"] == 256
+            assert preamble["points"] == 1.75e5
+            print(preamble)
+            plt.scatter(x=time, y=data)
+            plt.show()
 
     # Trigger
     def test_trigger_select(self, scope):

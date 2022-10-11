@@ -429,15 +429,14 @@ class LeCroyT3DSO1204(Instrument):
     using the lower-level methods to interact directly with the scope.
 
     Attributes:
-        SLEEP_SECONDS: recommended sleep time between commands.
+        SLEEP_SECONDS: sleep time between commands. If a command is received less than
+        SLEEP_SECONDS after the previous one, the code blocks until at least SLEEP_SECONDS have
+        passed.
         Because the oscilloscope takes a non neglibile time to perform some operations, it might
-        be needed for the user to wait (sleep) between commands.
-        This attribute is never used inside the LeCroyT3DSO1204 class itself, but it gives the
-        user an idea of the recommended sleep time. It can be tweeked to reflect the actual use
-        case.
-        It is set to 0.5 seconds just to be on the safe side. Its optimal value heavily depends on
-        the actual commands and on the connection type, so it is impossible to give a unique
-        value to fit all cases.
+        be needed for the user to tweak the sleep time between commands.
+        The SLEEP_SECONDS is set to 0.5 seconds as default just to be on the safe side. Its
+        optimal value heavily depends on the actual commands and on the connection type,
+        so it is impossible to give a unique value to fit all cases.
 
     .. code-block:: python
 
@@ -746,7 +745,7 @@ class LeCroyT3DSO1204(Instrument):
         - "yoffset": value that is represented at center of screen in Volts
         """
         vals = self.values("WFSU?")
-        vals_dict = {
+        preamble = {
             "sparsing": vals[vals.index("SP") + 1],
             "points": vals[vals.index("NP") + 1],
             "first_point": vals[vals.index("FP") + 1],
@@ -758,27 +757,24 @@ class LeCroyT3DSO1204(Instrument):
             "xdiv": self.timebase_scale,
             "xoffset": self.timebase_offset
         }
-        if vals_dict["type"] == "average":
-            vals_dict["average"] = self.acquisition_average
-        else:
-            vals_dict["average"] = None
+        preamble["average"] = self.acquisition_average if preamble["type"][0] == "average" else None
         strict_discrete_set(self.waveform_source, ["C1", "C2", "C3", "C4", "MATH"])
         if self.waveform_source == "MATH":
-            vals_dict["ydiv"] = self.math_vdiv
-            vals_dict["yoffset"] = self.math_vpos
+            preamble["ydiv"] = self.math_vdiv
+            preamble["yoffset"] = self.math_vpos
         else:
-            vals_dict["ydiv"] = self.ch(self.waveform_source).scale
-            vals_dict["yoffset"] = self.ch(self.waveform_source).offset
-        return vals_dict
+            preamble["ydiv"] = self.ch(self.waveform_source).scale
+            preamble["yoffset"] = self.ch(self.waveform_source).offset
+        return preamble
 
     def _digitize(self, source, requested_bytes=None):
         """ Acquire waveforms according to the settings of the acquire commands.
-        If the requested data is much bigger than the default chunk size, it is recommended to
-        split it in smaller chunks.
-        :param source: a string parameter that can take the following values: "C1", "C2", "C3",
-        "C4", "MATH".
+        Note.
+        If the requested number of bytes is not specified, the default chunk size is used,
+        but in such a case it cannot be quaranteed that the message is received in its entirety.
+        :param source: source of data: "C1", "C2", "C3", "C4", "MATH".
         :param: requested_bytes: number of bytes expected from the scope (including the header
-        and footer). If it is None the data might be cut to the adapter chunck size
+        and footer).
         :return: bytearray with raw data. """
         if requested_bytes is None:
             values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
@@ -803,21 +799,18 @@ class LeCroyT3DSO1204(Instrument):
             img = self.binary_values("SCDP", dtype=np.uint8)
         return bytearray(img)
 
-    def download_data(self, source, num_points=None, sparsing=None):
-        """ Get raw data from specified source of oscilloscope. Returned objects are
-        two np.ndarray of data values and time values and a dict of the waveform preamble,
-        which contains metadata about the waveform and can be used to cross-check the measured
-        points.
+    def download_data(self, source, num_points=0, sparsing=1, averaging=1):
+        """ Get data points from the specified source of the oscilloscope. Ther eturned objects are
+        two np.ndarray of data and time points and a dict with the waveform preamble, that contains
+        metadata about the waveform.
         Note.
-        It is highly recommended to specify the amount of requested points so that the software
-        can split the data into reasonable chunks and download it more reliably.
-        Otherwise the software will try to download all points at once and the transmission might
-        fail with higher probability.
-        :param source: measurement source, can be "C1", "C2", "C3", "C4", "MATH.
-        :param num_points: integer number of points to acquire. Note that oscilloscope may return
-        fewer points than specified, this is not an issue of this library. If 0 all available
-        points will be returned
-        :param sparsing: it defines the interval between data points.
+        :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH.
+        :param num_points: number of points to acquire. If 0 or None all available points will be
+        returned.
+        :param sparsing: interval between data points. For example if sparsing = 4, only one
+        point every 4 points is read.
+        :param averaging: average over data points. For example if averaging = 4, only the 4-point
+        average value is returned.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
         property for dict format. """
 
@@ -844,28 +837,28 @@ class LeCroyT3DSO1204(Instrument):
             if message_footer != "\n\n":
                 raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
 
-        # Calculate the sample size. If the source is MATH, it is not clear from the manual how
-        # to get the number of sampled points
-        if self.waveform_source == "MATH":
-            sample_points = None
+        # First of all set the correct acquisition type
+        if averaging > 1:
+            self.acquisition_type = "average"
+            self.acquisition_average = averaging
         else:
-            sample_points = getattr(self, f"acquisition_sample_size_{self.waveform_source.lower()}")
+            self.acquisition_type = "normal"
 
         # Check that we are trying to read a reasonable amount of points
-        if num_points is not None and sample_points is not None and num_points > sample_points:
-            ValueError(f"Number of requested points ({num_points}) greater than "
-                       f"number of sampled points ({sample_points})")
+        if self.waveform_source == "MATH":
+            sample_points = self.memory_size
+        else:
+            sample_points = getattr(self, f"acquisition_sample_size_{self.waveform_source.lower()}")
+        if num_points > 0 and 0 < sample_points < num_points:
+            raise ValueError(f"Number of requested points ({num_points}) is greater than "
+                             f"number of sampled points ({sample_points})")
 
         # Setup waveform acquisition parameters
         source = _sanitize_source(source)
         self.waveform_source = source
+        self.waveform_sparsing = sparsing
+        self.waveform_points = num_points
         self.waveform_first_point = 0
-        self.waveform_points = 0
-        self.waveform_sparsing = 0
-        if num_points is not None:
-            self.waveform_points = num_points
-        if sparsing is not None:
-            self.waveform_sparsing = sparsing
 
         # Read waveform preamble (waveform metadata)
         preamble = self.waveform_preamble
@@ -877,20 +870,20 @@ class LeCroyT3DSO1204(Instrument):
 
         # If the number of points is big enough, split the data in small chunks and read it one
         # chunk at a time. For less than 100K points we do not bother splitting them.
-        chunk_bytes = 1e5 if expected_points < 1e5 else 1e6
+        chunk_bytes = 5e5
         chunk_points = chunk_bytes - self._header_size - self._footer_size
         iterations = _ceildiv(expected_points, chunk_points)
         i = 0
         data = []
         while True:
-            first_point = i * chunk_points
-            remaining_points = expected_points - first_point
+            read_points = i * chunk_points
+            remaining_points = expected_points - read_points
             if remaining_points > chunk_points:
                 requested_points = chunk_points
             else:
                 requested_points = remaining_points
             requested_bytes = requested_points + self._header_size + self._footer_size
-            self.waveform_first_point = first_point
+            self.waveform_first_point = read_points * sparsing
             self.waveform_points = requested_points
             values = self._digitize(source=source, requested_bytes=requested_bytes)
             _header_sanity_checks(values)
@@ -902,6 +895,7 @@ class LeCroyT3DSO1204(Instrument):
                 break
         data = np.concatenate(data)
 
+        # Process data
         def _scale_data(x):
             value = bitstring.Bits(uint=int(x), length=8).unpack('int')[0] * preamble["ydiv"] / 25.
             value = value * preamble["ydiv"] / 25.
@@ -911,7 +905,7 @@ class LeCroyT3DSO1204(Instrument):
 
         def _scale_time(t):
             return float(Decimal(-preamble["xdiv"] * self._grid_number / 2.) +
-                         Decimal(float(t)) / Decimal(preamble["sampling_rate"]))
+                         Decimal(float(t * sparsing)) / Decimal(preamble["sampling_rate"]))
 
         data_points = np.vectorize(_scale_data)(data)
         time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
