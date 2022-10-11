@@ -438,7 +438,7 @@ class LeCroyT3DSO1204(Instrument):
         short form regardless of the CHDR setting.
         By setting the COMM_HEADER to OFF, the instrument is going to reply with minimal
         information, and this makes the response message much easier to parse."""
-        self.write("CHDR OFF")
+        self._comm_header = "OFF"
 
     def ch(self, source):
         """ Get channel object from its index or its name. Or if source is "math", just return the
@@ -477,6 +477,13 @@ class LeCroyT3DSO1204(Instrument):
         if seconds_since_last_command < self.SLEEP_SECONDS:
             time.sleep(self.SLEEP_SECONDS - seconds_since_last_command)
         super(LeCroyT3DSO1204, self).write(command)
+
+    _comm_header = Instrument.control(
+        "CHDR?", "CHDR %s",
+        """ Controls the way the oscilloscope formats response to queries.""",
+        validator=strict_discrete_set,
+        values=["OFF", "SHORT", "LONG"],
+    )
 
     ##################
     # Timebase Setup #
