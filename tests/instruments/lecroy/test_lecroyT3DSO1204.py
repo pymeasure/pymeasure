@@ -219,6 +219,7 @@ def test_download_too_much_data():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
+             (b'ACQW SAMPLING', None),
              (b'SANU? C1', b'7.00E+06'),
              ]
     ) as instr:
@@ -232,11 +233,11 @@ def test_download_data_until_digitize():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
+             (b'ACQW SAMPLING', None),
              (b'SANU? C1', b'7.00E+06'),
              (b"WFSU SP,1", None),
-             (b"WFSU NP,0", None),
-             (b"WFSU FP,0", None),
              (b"WFSU NP,1000", None),
+             (b"WFSU FP,0", None),
              (b"WFSU?", b"SP,1,NP,1000,FP,0"),
              (b"ACQW?", b"SAMPLING"),
              (b"SARA?", b"1.00E+09"),
