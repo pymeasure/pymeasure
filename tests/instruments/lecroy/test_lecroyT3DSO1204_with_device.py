@@ -208,14 +208,14 @@ class TestLeCroyT3DSO1204:
 
     # Acquisition
     @pytest.mark.parametrize("case", ACQUISITION_TYPES)
-    def test_acquisition_type(self, reseted_scope, case):
+    def test_acquisition_type(self, scope, case):
         if case == "average":
-            reseted_scope.acquisition_type = case
-            reseted_scope.acquisition_average = 16
-            assert reseted_scope.acquisition_type == ["average", 16]
+            scope.acquisition_type = case
+            scope.acquisition_average = 16
+            assert scope.acquisition_type == ["average", 16]
         else:
-            reseted_scope.acquisition_type = case
-            assert reseted_scope.acquisition_type == case
+            scope.acquisition_type = case
+            assert scope.acquisition_type == case
 
     @pytest.mark.parametrize("case", ACQUISITION_AVERAGE)
     def test_acquisition_average(self, scope, case):
@@ -244,13 +244,13 @@ class TestLeCroyT3DSO1204:
         autoscaled_scope.waveform_sparsing = 1
         autoscaled_scope.waveform_source = "C1"
         expected_preamble = {
-            "sparsing": 1,
-            "points": 0,
-            "first_point": 0,
+            "sparsing": 1.,
+            "points": 0.,
+            "first_point": 0.,
             "source": autoscaled_scope.waveform_source,
             "type": "normal",
-            "average": 16,
-            "sampling_rate": 250e6,
+            "average": None,
+            "sampling_rate": 1e9,
             "grid_number": 14,
             "status": "triggered",
             "xdiv": 5e-4,

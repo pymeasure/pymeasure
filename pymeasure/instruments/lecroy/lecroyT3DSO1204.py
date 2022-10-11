@@ -752,13 +752,16 @@ class LeCroyT3DSO1204(Instrument):
             "first_point": vals[vals.index("FP") + 1],
             "source": self.waveform_source,
             "type": self.acquisition_type,
-            "average": self.acquisition_average,
             "sampling_rate": self.acquisition_sampling_rate,
             "grid_number": self._grid_number,
             "status": self.acquisition_status,
             "xdiv": self.timebase_scale,
             "xoffset": self.timebase_offset
         }
+        if vals_dict["type"] == "average":
+            vals_dict["average"] = self.acquisition_average
+        else:
+            vals_dict["average"] = None
         strict_discrete_set(self.waveform_source, ["C1", "C2", "C3", "C4", "MATH"])
         if self.waveform_source == "MATH":
             vals_dict["ydiv"] = self.math_vdiv
