@@ -24,7 +24,10 @@
 import logging
 import re
 import sys
+import time
+from decimal import Decimal
 
+import bitstring
 import numpy as np
 
 from pymeasure.instruments import Instrument
@@ -33,7 +36,10 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-_MATCH_FLOAT = re.compile(r'-? *[0-9]+\.?[0-9]*(?:[Ee] *-? *[0-9]+)?')
+
+def _ceildiv(a, b):
+    """ Divide two numbers and return the ceiling integer part """
+    return -(a // -b)
 
 
 def _sanitize_source(source):
@@ -140,6 +146,40 @@ def _math_define_validator(value, values):
     for i in range(3):
         strict_discrete_set(output[i], values=values[i])
     return output
+
+
+class _ChunkResizer:
+    """The only purpose of this class is to resize the chunk size of the instrument adapter.
+    This is necessary when reading a big chunk of data from the oscilloscope like image dumps and
+    waveforms.
+    Note.
+    Only if the new chunk size is bigger than the current chunk size, it is resized. """
+
+    def __init__(self, adapter, chunk_size):
+        """ Just initialize the object attributes.
+        :param: adapter of the instrument. This is usually accessed through the
+        Instrument::adapter attribute.
+        :chunk_size: new chunk size (int).
+        """
+        self.adapter = adapter
+        self.old_chunk_size = None
+        self.new_chunk_size = int(chunk_size)
+
+    def __enter__(self):
+        """ Only resize the chunk size if the adapter support this feature"""
+        if (hasattr(self.adapter, "connection")
+                and self.adapter.connection is not None
+                and hasattr(self.adapter.connection, "chunk_size")):
+            self.old_chunk_size = self.adapter.connection.chunk_size
+            if self.new_chunk_size > self.old_chunk_size:
+                self.adapter.connection.chunk_size = self.new_chunk_size
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if (self.old_chunk_size is not None
+                and hasattr(self.adapter, "connection")
+                and self.adapter.connection is not None
+                and hasattr(self.adapter.connection, "chunk_size")):
+            self.adapter.connection.chunk_size = self.old_chunk_size
 
 
 # noinspection DuplicatedCode
@@ -418,6 +458,8 @@ class LeCroyT3DSO1204(Instrument):
             self.adapter.connection.timeout = 7000
         self._grid_number = 14  # Number of grids in the horizontal direction
         self._last_command_timestamp = 0  # Timestamp of the last command
+        self._header_size = 16  # bytes
+        self._footer_size = 2  # bytes
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
         self.ch3 = Channel(self, 3)
@@ -726,26 +768,24 @@ class LeCroyT3DSO1204(Instrument):
             vals_dict["yoffset"] = self.ch(self.waveform_source).offset
         return vals_dict
 
-    def _digitize(self, source: str):
-        """ Acquire waveforms according to the settings of the acquire commands
+    def _digitize(self, source, requested_bytes=None):
+        """ Acquire waveforms according to the settings of the acquire commands.
+        If the requested data is much bigger than the default chunk size, it is recommended to
+        split it in smaller chunks.
         :param source: a string parameter that can take the following values: "C1", "C2", "C3",
         "C4", "MATH".
+        :param: requested_bytes: number of bytes expected from the scope (including the header
+        and footer). If it is None the data might be cut to the adapter chunck size
         :return: bytearray with raw data. """
-        values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
-        if len(values) < 18:
-            raise ValueError(
-                f"Waveform data is too short: len({len(values)}) < header(16) + footer(2)")
-        header = bytes(values[0:16]).decode("ascii")
-        footer = bytes(values[-2:]).decode("ascii")
-        values = values[16:-2]
-        if header[0:7] != "DAT2,#9":
-            raise ValueError(f"Waveform data in invalid : header is {header}")
-        if footer != "\n\n":
-            raise ValueError(f"Waveform data in invalid : footer is {footer}")
-        npoints = int(header[-9:])
-        if len(values) != npoints:
-            raise ValueError(
-                f"Waveform data in invalid : received {len(values)} points instead of {npoints}")
+        if requested_bytes is None:
+            values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
+        else:
+            with _ChunkResizer(self.adapter, requested_bytes):
+                values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
+            read_bytes = len(values)
+            if requested_bytes is not None and read_bytes != requested_bytes:
+                raise ValueError(f"read bytes ({len(values)}) != "
+                                 f"requested bytes ({requested_bytes})")
         return values
 
     #################
@@ -756,40 +796,123 @@ class LeCroyT3DSO1204(Instrument):
         """ Get a BMP image of oscilloscope screen in bytearray of specified file format.
         """
         # Using binary_values query because default interface does not support binary transfer
-        chunk_size = None
-        if hasattr(self.adapter, "connection") and self.adapter.connection is not None:
-            chunk_size = self.adapter.connection.chunk_size
-            self.adapter.connection.chunk_size = 20 * 1024 * 1024
-        img = self.binary_values("SCDP", dtype=np.uint8)
-        if (chunk_size is not None and hasattr(self.adapter, "connection") and
-                self.adapter.connection is not None):
-            self.adapter.connection.chunk_size = chunk_size
+        with _ChunkResizer(self.adapter, 20 * 1024 * 1024):
+            img = self.binary_values("SCDP", dtype=np.uint8)
         return bytearray(img)
 
-    def download_data(self, source, points=None, sparsing=None, first_point=None):
-        """ Get data from specified source of oscilloscope. Returned objects are a np.ndarray of
-        data values (no temporal axis) and a dict of the waveform preamble, which can be used to
-        build the corresponding time values for all data points.
+    def download_data(self, source, num_points=None, sparsing=None):
+        """ Get raw data from specified source of oscilloscope. Returned objects are
+        two np.ndarray of data values and time values and a dict of the waveform preamble,
+        which contains metadata about the waveform and can be used to cross-check the measured
+        points.
+        Note.
+        It is highly recommended to specify the amount of requested points so that the software
+        can split the data into reasonable chunks and download it more reliably.
+        Otherwise the software will try to download all points at once and the transmission might
+        fail with higher probability.
         :param source: measurement source, can be "C1", "C2", "C3", "C4", "MATH.
-        :param points: integer number of points to acquire. Note that oscilloscope may return
+        :param num_points: integer number of points to acquire. Note that oscilloscope may return
         fewer points than specified, this is not an issue of this library. If 0 all available
         points will be returned
         :param sparsing: it defines the interval between data points.
-        :param first_point: it specifies the address of the first data point to be sent.
-        :return: data_ndarray, waveform_preamble_dict: see waveform_preamble property for dict
-        format. """
+        :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
+        property for dict format. """
+
+        def _header_sanity_checks(message):
+            # The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
+            # points and it is zero padded.
+            message_header = bytes(message[0:self._header_size]).decode("ascii")
+            # Sanity check on header and footer
+            if message_header[0:7] != "DAT2,#9":
+                raise ValueError(f"Waveform data in invalid : header is {message_header}")
+            return int(message_header[-9:])
+
+        def _npoints_sanity_checks(message):
+            message_header = bytes(message[0:self._header_size]).decode("ascii")
+            transmitted_points = int(message_header[-9:])
+            received_points = len(message) - self._header_size - self._footer_size
+            if transmitted_points != received_points:
+                raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
+                                 f"number of received points ({received_points})")
+
+        def _footer_sanity_checks(message):
+            # The footer is always a double line-carriage \n\n
+            message_footer = bytes(message[-self._footer_size:]).decode("ascii")
+            if message_footer != "\n\n":
+                raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
+
+        # Calculate the sample size. If the source is MATH, it is not clear from the manual how
+        # to get the number of sampled points
+        if self.waveform_source == "MATH":
+            sample_points = None
+        else:
+            sample_points = getattr(self, f"acquisition_sample_size_{self.waveform_source.lower()}")
+
+        # Check that we are trying to read a reasonable amount of points
+        if num_points is not None and sample_points is not None and num_points > sample_points:
+            ValueError(f"Number of requested points ({num_points}) greater than "
+                       f"number of sampled points ({sample_points})")
+
+        # Setup waveform acquisition parameters
         source = _sanitize_source(source)
         self.waveform_source = source
-        if points is not None:
-            self.waveform_points = points
+        self.waveform_first_point = 0
+        self.waveform_points = 0
+        self.waveform_sparsing = 0
+        if num_points is not None:
+            self.waveform_points = num_points
         if sparsing is not None:
             self.waveform_sparsing = sparsing
-        if first_point is not None:
-            self.waveform_first_point = first_point
 
+        # Read waveform preamble (waveform metadata)
         preamble = self.waveform_preamble
-        data_bytes = self._digitize(source)
-        return np.array(data_bytes), preamble
+
+        # Check how many points are to be expected
+        self.write(f"{source}:WF? DAT2")
+        values = self._digitize(source=source)
+        expected_points = _header_sanity_checks(values)
+
+        # If the number of points is big enough, split the data in small chunks and read it one
+        # chunk at a time. For less than 100K points we do not bother splitting them.
+        chunk_bytes = 1e5 if expected_points < 1e5 else 1e6
+        chunk_points = chunk_bytes - self._header_size - self._footer_size
+        iterations = _ceildiv(expected_points, chunk_points)
+        i = 0
+        data = []
+        while True:
+            first_point = i * chunk_points
+            remaining_points = expected_points - first_point
+            if remaining_points > chunk_points:
+                requested_points = chunk_points
+            else:
+                requested_points = remaining_points
+            requested_bytes = requested_points + self._header_size + self._footer_size
+            self.waveform_first_point = first_point
+            self.waveform_points = requested_points
+            values = self._digitize(source=source, requested_bytes=requested_bytes)
+            _header_sanity_checks(values)
+            _footer_sanity_checks(values)
+            _npoints_sanity_checks(values)
+            data.append(values[16:-2])
+            i += 1
+            if i >= iterations:
+                break
+        data = np.concatenate(data)
+
+        def _scale_data(x):
+            value = bitstring.Bits(uint=int(x), length=8).unpack('int')[0] * preamble["ydiv"] / 25.
+            value = value * preamble["ydiv"] / 25.
+            if preamble["source"] != "MATH":
+                value -= preamble["yoffset"]
+            return value
+
+        def _scale_time(t):
+            return float(Decimal(-preamble["xdiv"] * self._grid_number / 2.) +
+                         Decimal(float(t)) / Decimal(preamble["sampling_rate"]))
+
+        data_points = np.vectorize(_scale_data)(data)
+        time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
+        return data_points, time_points, preamble
 
     ###############
     #   Trigger   #

@@ -45,7 +45,7 @@ class TestLeCroyT3DSO1204:
 
     ##################################################
     # LeCroyT3DSO1204 device address goes here:
-    RESOURCE = "TCPIP::192.168.10.175::INSTR"
+    RESOURCE = "TCPIP::192.168.10.61::INSTR"
     ##################################################
 
     #########################
@@ -307,19 +307,14 @@ class TestLeCroyT3DSO1204:
         preamble = autoscaled_scope.waveform_preamble
         assert preamble == expected_preamble
 
-    def test_waveform_data(self, scope):
-        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
+    def test_waveform_raw_data(self, scope):
         scope.waveform_first_point = 0
-        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.waveform_points = 1000
-        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.waveform_sparsing = 1
-        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.single()
-        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
-        value = scope._digitize("C1")
+        value = scope._digitize("C1", 1018)
         assert isinstance(value, np.ndarray)
-        assert len(value) == 1000
+        assert len(value) == 1018
         assert all(isinstance(n, np.uint8) for n in value)
 
     # Setup methods
@@ -389,7 +384,7 @@ class TestLeCroyT3DSO1204:
         assert type(img) is bytearray
         assert pytest.approx(len(img), 0.1) == 768067
 
-    def test_download_data_missingArgument(self, reseted_scope):
+    def test_download_data_missing_argument(self, reseted_scope):
         with pytest.raises(TypeError):
             # noinspection PyArgumentList
             reseted_scope.download_data()
@@ -403,14 +398,25 @@ class TestLeCroyT3DSO1204:
             scope.autoscale()
             sleep(7)
         scope.ch(case1).display = True
-        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
         scope.single()
-        sleep(LeCroyT3DSO1204.SLEEP_SECONDS)
-        data, preamble = scope.download_data(source=case1, points=case2, sparsing=1, first_point=1)
+        data, time, preamble = scope.download_data(source=case1, num_points=case2, sparsing=0)
         assert type(data) is np.ndarray
         assert len(data) == case2
+        assert type(time) is np.ndarray
+        assert len(time) == case2
         assert type(preamble) is dict
-        sleep(2)
+
+    def test_download_data_extended(self, scope):
+        scope.ch1.display = True
+        scope.single()
+        data, time, preamble = scope.download_data(source="c1", num_points=7e6)
+        # print(data)
+        # print(time)
+        assert type(data) is np.ndarray
+        assert len(data) == 7e6
+        assert type(time) is np.ndarray
+        assert len(time) == 7e6
+        assert type(preamble) is dict
 
     # Trigger
     def test_trigger_select(self, scope):
