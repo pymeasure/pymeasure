@@ -417,6 +417,7 @@ class LeCroyT3DSO1204(Instrument):
         if hasattr(self.adapter, "connection") and self.adapter.connection is not None:
             self.adapter.connection.timeout = 7000
         self._grid_number = 14  # Number of grids in the horizontal direction
+        self._last_command_timestamp = 0  # Timestamp of the last command
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
         self.ch3 = Channel(self, 3)
@@ -463,6 +464,19 @@ class LeCroyT3DSO1204(Instrument):
     def autoscale(self):
         """ Autoscale displayed channels. """
         self.write("ASET")
+
+    def write(self, command):
+        """ Writes the command to the instrument through the adapter.
+        Note.
+        If the last command was received less than SLEEP_SECONDS before, this method blocks for
+        the remaining time so that commands are never sent with rate more than 1/SLEEP_SECONDS Hz.
+
+        :param command: command string to be sent to the instrument
+        """
+        seconds_since_last_command = time.monotonic() - self._last_command_timestamp
+        if seconds_since_last_command < self.SLEEP_SECONDS:
+            time.sleep(self.SLEEP_SECONDS - seconds_since_last_command)
+        super(LeCroyT3DSO1204, self).write(command)
 
     ##################
     # Timebase Setup #
