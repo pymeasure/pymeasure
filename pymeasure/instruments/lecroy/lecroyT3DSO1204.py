@@ -416,6 +416,7 @@ class LeCroyT3DSO1204(Instrument):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
         if hasattr(self.adapter, "connection") and self.adapter.connection is not None:
             self.adapter.connection.timeout = 7000
+        self._grid_number = 14  # Number of grids in the horizontal direction
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
         self.ch3 = Channel(self, 3)
@@ -631,7 +632,7 @@ class LeCroyT3DSO1204(Instrument):
         "WFSU?", "WFSU SP,%d",
         """ An integer parameter that defines the interval between data points. For example:
             SP = 0 sends all data points.
-            SP = 4 sends every 4 data points.""",
+            SP = 4 sends 1 point every 4 data points.""",
         validator=strict_range,
         values=[0, sys.maxsize]
     )
@@ -672,7 +673,8 @@ class LeCroyT3DSO1204(Instrument):
         - "source": source of the data : "C1", "C2", "C3", "C4", "MATH".
         - "type":  type of data acquisition. Can be "normal", "peak", "average", "highres"
         - "average": average times of average acquisition
-        - "sampling_rate":
+        - "sampling_rate": sampling rate (it is a read-only property)
+        - "grid_number": number of horizontal grids (it is a read-only property)
         - "status": acquisition status of the scope. Can be "stopped", "triggered", "ready",
         "auto", "armed"
         - "xdiv": horizontal scale (units per division) in seconds
@@ -689,6 +691,7 @@ class LeCroyT3DSO1204(Instrument):
             "type": self.acquisition_type,
             "average": self.acquisition_average,
             "sampling_rate": self.acquisition_sampling_rate,
+            "grid_number": self._grid_number,
             "status": self.acquisition_status,
             "xdiv": self.timebase_scale,
             "xoffset": self.timebase_offset

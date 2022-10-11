@@ -297,6 +297,7 @@ class TestLeCroyT3DSO1204:
             "type": "normal",
             "average": 16,
             "sampling_rate": 250e6,
+            "grid_number": 14,
             "status": "triggered",
             "xdiv": 5e-4,
             "xoffset": -0.,

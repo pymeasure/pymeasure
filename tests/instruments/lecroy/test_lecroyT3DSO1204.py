@@ -207,6 +207,7 @@ def test_waveform_preamble():
             "type": "normal",
             "average": 16,
             "sampling_rate": 1e9,
+            "grid_number": 14,
             "status": "triggered",
             "xdiv": 5e-4,
             "xoffset": 0,
