@@ -567,6 +567,34 @@ class LeCroyT3DSO1204(Instrument):
         "SARA?", """A integer parameter that returns the sample rate of the scope."""
     )
 
+    acquisition_sample_size_c1 = Instrument.measurement(
+        "SANU? C1", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 1.
+        Note.
+        Channel 2 and channel 1 share the same ADC, so the sample is the same too. """
+    )
+
+    acquisition_sample_size_c2 = Instrument.measurement(
+        "SANU? C1", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 2. 
+        Note.
+        Channel 2 and channel 1 share the same ADC, so the sample is the same too. """
+    )
+
+    acquisition_sample_size_c3 = Instrument.measurement(
+        "SANU? C3", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 3.
+        Note.
+        Channel 3 and channel 4 share the same ADC, so the sample is the same too. """
+    )
+
+    acquisition_sample_size_c4 = Instrument.measurement(
+        "SANU? C3", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 4.
+        Note.
+        Channel 3 and channel 4 share the same ADC, so the sample is the same too. """
+    )
+
     def run(self):
         """ Starts repetitive acquisitions.
 

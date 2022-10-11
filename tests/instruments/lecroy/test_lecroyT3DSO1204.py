@@ -148,6 +148,23 @@ def test_channel_setup():
                                                    }
 
 
+
+def test_sample_size():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b"SANU? C1", b"3.50E+06"),
+             (b"SANU? C1", b"3.50E+06"),
+             (b"SANU? C3", b"3.50E+06"),
+             (b"SANU? C3", b"3.50E+06"),
+             ]
+    ) as instr:
+        assert instr.acquisition_sample_size_c1 == 3.5e6
+        assert instr.acquisition_sample_size_c2 == 3.5e6
+        assert instr.acquisition_sample_size_c3 == 3.5e6
+        assert instr.acquisition_sample_size_c4 == 3.5e6
+
+
 def test_waveform_preamble():
     with expected_protocol(
             LeCroyT3DSO1204,
