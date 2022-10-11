@@ -640,7 +640,7 @@ class LeCroyT3DSO1204(Instrument):
 
     acquisition_sample_size_c2 = Instrument.measurement(
         "SANU? C1", """A integer parameter that returns the number of data points that the hardware
-        will acquire from the input signal of channel 2. 
+        will acquire from the input signal of channel 2.
         Note.
         Channel 2 and channel 1 share the same ADC, so the sample is the same too. """
     )
