@@ -148,6 +148,25 @@ def test_channel_setup():
                                                    }
 
 
+def test_memory_size():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b"MSIZ?", b"14M"),
+             (b"MSIZ 14M", None),
+             (b"MSIZ?", b"1.4M"),
+             (b"MSIZ 1.4M", None),
+             (b"MSIZ?", b"7K"),
+             (b"MSIZ 7K", None)
+             ]
+    ) as instr:
+        assert instr.memory_size == 14e6
+        instr.memory_size = 14e6
+        assert instr.memory_size == 14e5
+        instr.memory_size = 14e5
+        assert instr.memory_size == 7e3
+        instr.memory_size = 7e3
+
 
 def test_sample_size():
     with expected_protocol(

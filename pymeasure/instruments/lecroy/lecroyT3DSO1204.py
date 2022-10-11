@@ -648,6 +648,19 @@ class LeCroyT3DSO1204(Instrument):
         values=[0, sys.maxsize]
     )
 
+    memory_size = Instrument.control(
+        "MSIZ?", "MSIZ %s",
+        """ A float parameter that selects the maximum depth of memory.
+        <size>:={7K,70K,700K,7M} for non-interleaved mode. Non-interleaved means a single channel is
+        active per A/D converter. Most oscilloscopes feature two channels per A/D converter.
+        <size>:={14K,140K,1.4M,14M} for interleave mode. Interleave mode means multiple active
+        channels per A/D converter. """,
+        validator=strict_discrete_set,
+        values={7e3: "7K", 7e4: "70K", 7e5: "700K", 7e6: "7M",
+                14e3: "14K", 14e4: "140K", 14e5: "1.4M", 14e6: "14M"},
+        map_values=True
+    )
+
     @property
     def waveform_preamble(self):
         """ Get preamble information for the selected waveform source as a dict with the
