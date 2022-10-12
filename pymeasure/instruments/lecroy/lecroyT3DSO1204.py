@@ -48,7 +48,7 @@ def _sanitize_source(source):
                      re.IGNORECASE)
     if match:
         source = match.group(1).replace(" ", "").upper()
-        if source != "MATH":
+        if source not in ["MATH", "LINE"]:
             source = "C" + source[-1]
     else:
         raise ValueError(f"source {source} not recognized")
