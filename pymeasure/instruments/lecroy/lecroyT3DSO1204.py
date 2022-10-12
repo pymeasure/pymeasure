@@ -492,7 +492,7 @@ class LeCroyT3DSO1204(Instrument):
         elif source == "MATH":
             return self
         else:
-            raise ValueError("Invalid channel number. Must be 1, 2, 3, 4 or C1, C2, C3, C4.")
+            raise ValueError("Invalid source: must be 1, 2, 3, 4 or C1, C2, C3, C4, MATH.")
 
     def autoscale(self):
         """ Autoscale displayed channels. """
@@ -622,6 +622,28 @@ class LeCroyT3DSO1204(Instrument):
     acquisition_sampling_rate = Instrument.measurement(
         "SARA?", """A integer parameter that returns the sample rate of the scope."""
     )
+
+    def acquisition_sample_size(self, source):
+        """ Get acquisition sample size for a certain channel. Used mainly for waveform acquisition.
+        If the source is MATH, the SANU? MATH query does not seem to work so I return the memory
+        size instead.
+
+        :param source: channel number of channel name.
+        :return: acquisition sample size of that channel. """
+        if isinstance(source, str):
+            source = _sanitize_source(source)
+        if source in [1, "C1"]:
+            return self.acquisition_sample_size_c1
+        elif source in [2, "C2"]:
+            return self.acquisition_sample_size_c2
+        elif source in [3, "C3"]:
+            return self.acquisition_sample_size_c3
+        elif source in [4, "C4"]:
+            return self.acquisition_sample_size_c4
+        elif source == "MATH":
+            return self.memory_size
+        else:
+            raise ValueError("Invalid source: must be 1, 2, 3, 4 or C1, C2, C3, C4, MATH.")
 
     acquisition_sample_size_c1 = Instrument.measurement(
         "SANU? C1", """A integer parameter that returns the number of data points that the hardware
