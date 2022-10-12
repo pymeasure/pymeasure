@@ -192,16 +192,21 @@ def test_waveform_preamble():
              (b"ACQW?", b"SAMPLING"),
              (b"SARA?", b"1.00E+09"),
              (b"SAST?", b"Trig'd"),
+             (b"MSIZ?", b"7M"),
              (b"TDIV?", b"5.00E-04"),
              (b"TRDL?", b"-0.00E+00"),
+             (b"SANU? C1", b"1.75E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
              (b"C1:OFST?", b"-1.50E-01"),
              ]
     ) as instr:
         assert instr.waveform_preamble == {
             "sparsing": 1,
-            "points": 0,
+            "requested_points": 0,
+            "transmitted_points": None,
+            "sampled_points": 1.75e6,
             "first_point": 0,
+            "memory_size": 7e6,
             "source": "C1",
             "type": "normal",
             "average": None,
@@ -224,7 +229,7 @@ def test_download_too_much_data():
              ]
     ) as instr:
         with pytest.raises(ValueError):
-            instr.download_data(source="c1", num_points=1e10)
+            instr.download_data(source="c1", requested_points=1e10)
 
 
 @pytest.mark.skip("Waiting for PR 660 to be merged so that the binary_values method is mocked")
@@ -252,7 +257,7 @@ def test_download_data_until_digitize():
              ]
     ) as instr:
         with pytest.raises(NameError):
-            y, x, preamble = instr.download_data(source="c1", num_points=1)
+            y, x, preamble = instr.download_data(source="c1", requested_points=1)
             assert instr.waveform_preamble == {
                 "sparsing": 1,
                 "points": 1,

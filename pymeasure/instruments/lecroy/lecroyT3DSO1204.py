@@ -744,7 +744,10 @@ class LeCroyT3DSO1204(Instrument):
         """ Get preamble information for the selected waveform source as a dict with the
         following keys:
         - "type": normal, peak detect, average, high resolution (str)
-        - "points": nb of data points transferred (int)
+        - "requested_points": number of data points requested by the user (int)
+        - "sampled_points": number of data points sampled by the oscilloscope (int)
+        - "transmitted_points": number of data points actually transmitted (optional) (int)
+        - "memory_size": size of the oscilloscope internal memory in bytes (int)
         - "sparsing": sparse point. It defines the interval between data points. (int)
         - "first_point": address of the first data point to be sent (int)
         - "source": source of the data : "C1", "C2", "C3", "C4", "MATH".
@@ -762,18 +765,21 @@ class LeCroyT3DSO1204(Instrument):
         vals = self.values("WFSU?")
         preamble = {
             "sparsing": vals[vals.index("SP") + 1],
-            "points": vals[vals.index("NP") + 1],
+            "requested_points": vals[vals.index("NP") + 1],
             "first_point": vals[vals.index("FP") + 1],
+            "transmitted_points": None,
             "source": self.waveform_source,
             "type": self.acquisition_type,
             "sampling_rate": self.acquisition_sampling_rate,
             "grid_number": self._grid_number,
             "status": self.acquisition_status,
+            "memory_size": self.memory_size,
             "xdiv": self.timebase_scale,
             "xoffset": self.timebase_offset
         }
         preamble["average"] = self.acquisition_average if preamble["type"][0] == "average" else None
         strict_discrete_set(self.waveform_source, ["C1", "C2", "C3", "C4", "MATH"])
+        preamble["sampled_points"] = self.acquisition_sample_size(self.waveform_source)
         if self.waveform_source == "MATH":
             preamble["ydiv"] = self.math_vdiv
             preamble["yoffset"] = self.math_vpos
@@ -797,7 +803,7 @@ class LeCroyT3DSO1204(Instrument):
             with _ChunkResizer(self.adapter, requested_bytes):
                 values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
             read_bytes = len(values)
-            if requested_bytes is not None and read_bytes != requested_bytes:
+            if read_bytes != requested_bytes:
                 raise ValueError(f"read bytes ({len(values)}) != "
                                  f"requested bytes ({requested_bytes})")
         return values
@@ -814,14 +820,14 @@ class LeCroyT3DSO1204(Instrument):
             img = self.binary_values("SCDP", dtype=np.uint8)
         return bytearray(img)
 
-    def download_data(self, source, num_points=0, sparsing=1, averaging=1):
+    def download_data(self, source, requested_points=0, sparsing=1, averaging=1):
         """ Get data points from the specified source of the oscilloscope. Ther returned objects are
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
         Note.
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH.
-        :param num_points: number of points to acquire. If 0 or None all available points will be
-        returned.
+        :param requested_points: number of points to acquire. If 0 or None all available points
+        will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
         point every 4 points is read.
         :param averaging: average over data points. For example if averaging = 4, only the 4-point
@@ -860,19 +866,16 @@ class LeCroyT3DSO1204(Instrument):
             self.acquisition_type = "normal"
 
         # Check that we are trying to read a reasonable amount of points
-        if self.waveform_source == "MATH":
-            sample_points = self.memory_size
-        else:
-            sample_points = getattr(self, f"acquisition_sample_size_{self.waveform_source.lower()}")
-        if num_points > 0 and 0 < sample_points < num_points:
-            raise ValueError(f"Number of requested points ({num_points}) is greater than "
+        sample_points = self.acquisition_sample_size(self.waveform_source)
+        if requested_points > 0 and 0 < sample_points < requested_points:
+            raise ValueError(f"Number of requested points ({requested_points}) is greater than "
                              f"number of sampled points ({sample_points})")
 
         # Setup waveform acquisition parameters
         source = _sanitize_source(source)
         self.waveform_source = source
         self.waveform_sparsing = sparsing
-        self.waveform_points = num_points
+        self.waveform_points = requested_points
         self.waveform_first_point = 0
 
         # Read waveform preamble (waveform metadata)
@@ -911,6 +914,7 @@ class LeCroyT3DSO1204(Instrument):
             if i >= iterations:
                 break
         data = np.concatenate(data)
+        preamble["transmitted_points"] = len(data)
 
         # Process data
         def _scale_data(x):

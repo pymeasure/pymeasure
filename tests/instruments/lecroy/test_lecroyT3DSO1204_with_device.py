@@ -238,6 +238,7 @@ class TestLeCroyT3DSO1204:
         assert vals[vals.index("NP") + 1] == case
 
     def test_waveform_preamble(self, autoscaled_scope):
+        autoscaled_scope.acquisition_type = "normal"
         autoscaled_scope.ch1.offset = 0
         autoscaled_scope.waveform_points = 0
         autoscaled_scope.waveform_first_point = 0
@@ -245,7 +246,10 @@ class TestLeCroyT3DSO1204:
         autoscaled_scope.waveform_source = "C1"
         expected_preamble = {
             "sparsing": 1.,
-            "points": 0.,
+            "requested_points": 0.,
+            'memory_size': 14e6,
+            'sampled_points': 7e6,
+            'transmitted_points': None,
             "first_point": 0.,
             "source": autoscaled_scope.waveform_source,
             "type": "normal",
@@ -348,7 +352,7 @@ class TestLeCroyT3DSO1204:
             sleep(7)
         scope.ch(case1).display = True
         scope.single()
-        data, time, preamble = scope.download_data(source=case1, num_points=case2, sparsing=0)
+        data, time, preamble = scope.download_data(source=case1, requested_points=case2, sparsing=0)
         assert type(data) is np.ndarray
         assert len(data) == case2
         assert type(time) is np.ndarray
@@ -360,7 +364,7 @@ class TestLeCroyT3DSO1204:
         from matplotlib import pyplot as plt
         scope.ch1.display = True
         scope.single()
-        data, time, preamble = scope.download_data(source="c1", num_points=7e6)
+        data, time, preamble = scope.download_data(source="c1", requested_points=7e6)
         assert type(data) is np.ndarray
         assert len(data) == 7e6
         assert type(time) is np.ndarray
@@ -375,15 +379,15 @@ class TestLeCroyT3DSO1204:
         from matplotlib import pyplot as plt
         scope.ch1.display = True
         scope.single()
-        data, time, preamble = scope.download_data(source="c1", num_points=7e5, sparsing=10)
+        data, time, preamble = scope.download_data(source="c1", requested_points=7e5, sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 7e5
         assert type(time) is np.ndarray
         assert len(time) == 7e5
         assert type(preamble) is dict
         assert preamble["type"] == "normal"
-        assert preamble["sparsing"] == 10
-        assert preamble["points"] == 7e5
+        assert preamble["sparsing"] == 100
+        assert preamble["transmitted_points"] == 7e5
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
@@ -393,7 +397,7 @@ class TestLeCroyT3DSO1204:
         from matplotlib import pyplot as plt
         scope.ch1.display = True
         scope.single()
-        data, time, preamble = scope.download_data(source="c1", num_points=1.75e5,
+        data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
                                                    sparsing=10, averaging=16)
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5
@@ -402,7 +406,7 @@ class TestLeCroyT3DSO1204:
         assert type(preamble) is dict
         assert preamble["type"] == ["average", 16]
         assert preamble["average"] == 16
-        assert preamble["points"] == 1.75e5
+        assert preamble["transmitted_points"] == 1.75e5
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
@@ -412,7 +416,7 @@ class TestLeCroyT3DSO1204:
         from matplotlib import pyplot as plt
         scope.ch1.display = True
         scope.single()
-        data, time, preamble = scope.download_data(source="c1", num_points=1.75e5,
+        data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
                                                    sparsing=10, averaging=256)
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5
@@ -421,7 +425,7 @@ class TestLeCroyT3DSO1204:
         assert type(preamble) is dict
         assert preamble["type"] == ["average", 256]
         assert preamble["average"] == 256
-        assert preamble["points"] == 1.75e5
+        assert preamble["transmitted_points"] == 1.75e5
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
