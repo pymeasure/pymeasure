@@ -678,7 +678,8 @@ Additionally, the device needs some time after it received a command, before it 
     :hide:
 
     # Behind the scene, load the real Instrument
-    from pymeasure.instruments as Instrument
+    from pymeasure.instruments import Instrument
+    from pymeasure.test import expected_protocol
 
 .. testcode::
 
@@ -713,11 +714,11 @@ Additionally, the device needs some time after it received a command, before it 
         voltage = Instrument.measurement(
             ":VOLT:?", "The measured voltage in Volts.")
 
-.. doctest::
-   :hide:
+.. testcode:: :hide:
 
-    >>> with expected_protocol(ExtremeCommunication, [("012:VOLT:?", "01215.5")], address=12) as inst:
-    >>>     assert inst.voltage == 15.58
+    with expected_protocol(ExtremeCommunication, [("012:VOLT:?", "01215.5")], address=12
+        ) as inst:
+        assert inst.voltage == 15.5
 
 If the device is initialized with :code:`address=12`, a request for the voltage would send :code:`"012:VOLT:?"` to the device and expect a response beginning with :code:`"012"`.
 
@@ -762,13 +763,10 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             """The output voltage in mV.""",
         )
 
-.. testcode::
-   :hide:
+.. testcode:: :hide:
 
-    with expected_protocol(ExtremeBytes,
-                           [(b"\x03\x01\x06\x00\x00\x00\x00\x00\x00\x00\x01", b"\x03\x01\x0f")],
-                           ) as inst:
-        assert inst.voltage == 158
+    with expected_protocol(ExtremeBytes, [(b"\x03\x01\x06\x00\x00\x00\x00\x00\x00\x00\x01", b"\x03\x01\x0f")]) as inst:
+        assert inst.voltage == 15
 
 
 Writing tests

@@ -123,14 +123,6 @@ class VISAAdapter(Adapter):
             **kwargs
         )
 
-    @staticmethod
-    def has_supported_version():
-        """ Return True if the PyVISA version is greater than 1.8 """
-        if hasattr(pyvisa, '__version__'):
-            return parse_version(pyvisa.__version__) >= parse_version('1.8')
-        else:
-            return False
-
     def _write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
