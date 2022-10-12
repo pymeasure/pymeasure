@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 
 import logging
-import math
 import re
 import sys
 import time
@@ -869,7 +868,7 @@ class LeCroyT3DSO1204(Instrument):
         # chunk at a time. For less than 500K points we do not bother splitting them.
         chunk_bytes = 5e5
         chunk_points = chunk_bytes - self._header_size - self._footer_size
-        iterations = math.ceil(expected_points // chunk_points)
+        iterations = -(expected_points // -chunk_points)
         i = 0
         data = []
         while True:
