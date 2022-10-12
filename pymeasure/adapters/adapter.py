@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import threading
 import numpy as np
 from copy import copy
 
@@ -38,9 +39,13 @@ class Adapter:
     :param kwargs: all other keyword arguments are ignored.
     """
 
+    connection_lock_initialized = False
+
     def __init__(self, preprocess_reply=None, **kwargs):
         self.preprocess_reply = preprocess_reply
         self.connection = None
+        self.connection_lock = threading.Lock()
+        self.connection_lock_initialized = True
 
     def __del__(self):
         """Close connection upon garbage collection of the device"""
@@ -113,6 +118,29 @@ class Adapter:
         """
         raise NameError("Adapter (sub)class has not implemented the "
                         "binary_values method")
+
+    def __getattribute__(self, name):
+        """ Override to acquire the 'connection_lock' lock through the duration of attribute access.
+        """
+        if name not in ("connection_lock", "connection_lock_initialized") \
+                and self.connection_lock_initialized:
+            with self.connection_lock:
+                ret = super().__getattribute__(name)
+        else:
+            ret = super().__getattribute__(name)
+
+        return ret
+
+    def __setattr__(self, name, value):
+        """ Override to acquire the 'connection_lock' lock through the duration of attribute setting.
+        """
+        if name != "connection_lock" and self.connection_lock_initialized:
+            with self.connection_lock:
+                super().__setattr__(name, value)
+        elif name == "connection_lock" and self.connection_lock_initialized:
+            raise ValueError("Adapter connection_lock cannot be modified!")
+        else:
+            super().__setattr__(name, value)
 
 
 class FakeAdapter(Adapter):
