@@ -7,7 +7,7 @@ New adapter and instrument mechanics
 - Adapter logs written and read messages.
 - Particular adapters (VISAAdapter etc.) implement the actual communication.
 - Instrument.control getter calls Instrument.values.
-- Instrument.values calls Instrument.ask, which calls Instrument.write, wait_until_read, and read.
+- Instrument.values calls Instrument.ask, which calls Instrument.write, wait_for, and read.
 - All protocol quirks of an instrument should be implemented overriding Instrument.write and read.
 - Instrument.wait_until_read implements waiting between writing and reading.
 - reading/writing binary values is in the Adapter class itself.
@@ -18,7 +18,7 @@ Deprecated features
 -------------------
 - Adapter methods ask, values, binary_values, use same named Instrument methods instead.
 - Adapter parameter preprocess_reply, override Instrument.read instead.
-- Adapter.query_delay in favor of Instrument.wait_until_read().
+- Adapter.query_delay in favor of Instrument.wait_for().
 
 Internal:
 - Removed VISAAdapter.has_supported_version() as it is not needed anymore.

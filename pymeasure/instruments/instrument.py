@@ -282,8 +282,8 @@ class Instrument:
         self.adapter.write_binary_values(command, values, *args, **kwargs)
 
     # Communication functions
-    def wait_until_read(self, query_delay=0):
-        """Wait some time until reading.
+    def wait_for(self, query_delay=0):
+        """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds.
         """
@@ -299,7 +299,7 @@ class Instrument:
         :returns: String returned by the device without read_termination.
         """
         self.write(command)
-        self.wait_until_read(query_delay)
+        self.wait_for(query_delay)
         return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
@@ -339,7 +339,7 @@ class Instrument:
         :returns: NumPy array of values
         """
         self.write(command)
-        self.wait_until_read(query_delay)
+        self.wait_for(query_delay)
         return self.adapter.read_binary_values(**kwargs)
 
     # Property creators

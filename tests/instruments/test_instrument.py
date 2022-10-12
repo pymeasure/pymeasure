@@ -138,27 +138,27 @@ class TestWaiting:
     @pytest.fixture()
     def instr(self):
         class Faked(Instrument):
-            def wait_until_read(self, query_delay=0):
+            def wait_for(self, query_delay=0):
                 self.waited = query_delay
         return Faked(ProtocolAdapter(), name="faked")
 
     def test_waiting(self):
         instr = Instrument(ProtocolAdapter(), "faked")
         stop = time.perf_counter() + 100
-        instr.wait_until_read(0.1)
+        instr.wait_for(0.1)
         assert time.perf_counter() < stop
 
-    def test_ask(self, instr):
+    def test_ask_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
         instr.ask("abc")
         assert instr.waited == 0
 
-    def test_ask_time(self, instr):
+    def test_ask_calls_wait_with_delay(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
         instr.ask("abc", query_delay=10)
         assert instr.waited == 10
 
-    def test_binary_values(self, instr):
+    def test_binary_values_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "abcdefgh")]
         instr.binary_values("abc")
         assert instr.waited == 0

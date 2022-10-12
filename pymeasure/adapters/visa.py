@@ -27,7 +27,6 @@ from warnings import warn
 
 import pyvisa
 import numpy as np
-from pkg_resources import parse_version
 
 from .adapter import Adapter
 from .protocol import ProtocolAdapter

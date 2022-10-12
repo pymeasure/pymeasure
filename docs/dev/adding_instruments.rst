@@ -663,7 +663,7 @@ You do not need to call all these methods directly, instead, you should use the 
 
 Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.Instrument.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.Instrument.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
 
-The getter of :meth:`Instrument.control <pymeasure.instruments.Instrument.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_until_read`, and reads the device response via :meth:`read`.
+The getter of :meth:`Instrument.control <pymeasure.instruments.Instrument.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_for`, and reads the device response via :meth:`read`.
 
 Similarly, :meth:`Instrument.binary_values <pymeasure.instruments.Instrument.binary_values>` sends a command via :meth:`write`, waits with :meth:`wait_till_read`, but reads the response via :meth:`Adapter.read_binary_values <pymeasure.adapters.Adapter.read_binary_values>`.
 
@@ -672,7 +672,7 @@ Adding a device address and adding delay
 ****************************************
 
 Let's look at a simple example for a device, which requires its address as the first three characters and returns the same style. This is straightforward, as :meth:`write` just prepends the device address to the command, and :meth:`read` has to strip it again doing some error checking. Similarly, a checksum could be added.
-Additionally, the device needs some time after it received a command, before it responds.
+Additionally, the device needs some time after it received a command, before it responds, therefore :meth:`wait_for` waits always a certain time span.
 
 .. testcode::
     :hide:
@@ -697,11 +697,11 @@ Additionally, the device needs some time after it received a command, before it 
             """Add the device address in front of every command and send it to the device."""
             super().write(self.address + command)
     
-        def wait_until_read(self, query_delay=0):
+        def wait_for(self, query_delay=0):
             """Wait always some time after writing a command.
             :param query_delay: override the global query_delay.
             """
-            super().wait_until_read(query_delay or self.query_delay)
+            super().wait_for(query_delay or self.query_delay)
     
         def read(self):
             """Read from the device and assert, that the response starts with the device address."""
