@@ -657,7 +657,9 @@ Instrument's inner workings
 
 In order to adjust an instrument for more complicated protocols, it is key to understand the different parts.
 
-The :class:`~pymeasure.adapters.Adapter` exposes :meth:`~pymeasure.adapters.Adapter.write` and :meth:`~pymeasure.adapters.Adapter.read` for strings, :meth:`~pymeasure.adapters.Adapter.write_bytes` and :meth:`~pymeasure.adapters.Adapter.read_bytes` for bytes messages, and :meth:`~pymeasure.adapters.Adapter.write_binary_values` and :meth:`~pymeasure.adapters.Adapter.read_binary_values` for binary data like waveforms. You may call the last two methods in order to deal with binary data. For the other methods, you should use instead the methods of :class:`~pymeasure.instruments.Instrument` with the same name. They call the Adapter for you and keep the code tidy.
+The :class:`~pymeasure.adapters.Adapter` exposes :meth:`~pymeasure.adapters.Adapter.write` and :meth:`~pymeasure.adapters.Adapter.read` for strings, :meth:`~pymeasure.adapters.Adapter.write_bytes` and :meth:`~pymeasure.adapters.Adapter.read_bytes` for bytes messages. These are the most basic methods, which log all the traffic going through them. For the actual communication, they call private methods of the Adapter in use, e.g. :meth:`VISAAdapter._read <pymeasure.adapters.VISAAdapter._read>`.
+For binary data, like waveforms, the adapter provides also :meth:`~pymeasure.adapters.Adapter.write_binary_values` and :meth:`~pymeasure.adapters.Adapter.read_binary_values`, which use the aforementioned methods.
+You do not need to call all these methods directly, instead, you should use the methods of :class:`~pymeasure.instruments.Instrument` with the same name. They call the Adapter for you and keep the code tidy.
 
 Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.Instrument.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.Instrument.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
 
@@ -671,6 +673,12 @@ Adding a device address and adding delay
 
 Let's look at a simple example for a device, which requires its address as the first three characters and returns the same style. This is straightforward, as :meth:`write` just prepends the device address to the command, and :meth:`read` has to strip it again doing some error checking. Similarly, a checksum could be added.
 Additionally, the device needs some time after it received a command, before it responds.
+
+.. testcode::
+    :hide:
+
+    # Behind the scene, load the real Instrument
+    from pymeasure.instruments as Instrument
 
 .. testcode::
 
@@ -704,6 +712,12 @@ Additionally, the device needs some time after it received a command, before it 
     
         voltage = Instrument.measurement(
             ":VOLT:?", "The measured voltage in Volts.")
+
+.. doctest::
+   :hide:
+
+    >>> with expected_protocol(ExtremeCommunication, [("012:VOLT:?", "01215.5")], address=12) as inst:
+    >>>     assert inst.voltage == 15.58
 
 If the device is initialized with :code:`address=12`, a request for the voltage would send :code:`"012:VOLT:?"` to the device and expect a response beginning with :code:`"012"`.
 
@@ -747,6 +761,14 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             "R,0x106,1", "W,0x106,%i",
             """The output voltage in mV.""",
         )
+
+.. testcode::
+   :hide:
+
+    with expected_protocol(ExtremeBytes,
+                           [(b"\x03\x01\x06\x00\x00\x00\x00\x00\x00\x00\x01", b"\x03\x01\x0f")],
+                           ) as inst:
+        assert inst.voltage == 158
 
 
 Writing tests

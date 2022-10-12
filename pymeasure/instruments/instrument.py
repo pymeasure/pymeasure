@@ -272,6 +272,15 @@ class Instrument:
         """
         return self.adapter.read_bytes(count, **kwargs)
 
+    def write_binary_values(self, command, values, *args, **kwargs):
+        """Write binary values to the device.
+
+        :param command: Command to send.
+        :param values: The values to transmit.
+        :param \\*args, \\**kwargs: Further arguments to hand to the Adapter.
+        """
+        self.adapter.write_binary_values(command, values, *args, **kwargs)
+
     # Communication functions
     def wait_until_read(self, query_delay=0):
         """Wait some time until reading.

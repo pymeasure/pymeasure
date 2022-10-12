@@ -1,6 +1,25 @@
 Upcoming version
 ================
-- The adapter and instrument mechanics have been overhauled. Nothing should have changed for the user. However, the implementation of instruments changed (see 'Advanced communication protocls' in the 'Adding instruments' documentation). Now, the Adapter just implements the hardware connection, everything software protocol related is part of the instrument. Most notably: All protocol quirks are placed in the Instrument's write/read methods (ask calls them; global preprocess_reply is deprecated in favor of overriding write/read), query_delay is implemented by overriding wait_until_read.
+New adapter and instrument mechanics
+------------------------------------
+- Nothing should have changed for the user.
+- Documentation in 'Advanced communication protocls' in the 'Adding instruments'.
+- Adapter logs written and read messages.
+- Particular adapters (VISAAdapter etc.) implement the actual communication.
+- Instrument.control getter calls Instrument.values.
+- Instrument.values calls Instrument.calls, which calls Instrument.write, wait_until_read, and read.
+- All protocol quirks of an instrument should be implemented overriding Instrument.write and read.
+- Instrument.wait_until_read implements waiting between writing and reading.
+- reading/writing binary values is in the Adapter class itself.
+- PrologixAdapter is based on VISAAdapter.
+- SerialAdapter improved to be more similar to VISAAdapter.
+
+Deprecated features
+-------------------
+- Adapter parameter preprocess_reply, override Instrument.read instead.
+- Adapter.query_delay in favor of Instrument.wait_until_read().
+- Adapter methods ask, values, binary_values, use same named Instrument methods instead.
+
 
 Version 0.10.0 (2022-04-09)
 ===========================

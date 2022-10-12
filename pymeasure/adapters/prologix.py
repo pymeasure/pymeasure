@@ -39,13 +39,17 @@ class PrologixAdapter(VISAAdapter):
 
     :param port: The Serial port name or a connection object
     :param address: Integer GPIB address of the desired instrument
-    :param rw_delay: (deprecated) An optional delay to set between a write and read call for
-        slow to respond instruments. Use "query_delay" instead.
+    :param rw_delay: An optional delay to set between a write and read call for
+        slow to respond instruments.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `wait_until_read` method instead.
+
     :param preprocess_reply: optional callable used to preprocess
         strings received from the instrument. The callable returns the
         processed string.
 
-        .. deprecated :: 0.10
+        .. deprecated:: 0.11
             Implement it in the instrument's `read` method instead.
 
     :param kwargs: Key-word arguments if constructing a new serial object
@@ -72,7 +76,7 @@ class PrologixAdapter(VISAAdapter):
                  preprocess_reply=None, **kwargs):
         # for legacy rw_delay: prefer new style over old one.
         if rw_delay:
-            warn("Use 'query_delay' instead.", FutureWarning)
+            warn("Implement in Instrument's 'wait_until_read' instead.", FutureWarning)
             kwargs['query_delay'] = rw_delay
         if serial_timeout:
             warn("Use 'timeout' in ms instead", FutureWarning)
@@ -97,9 +101,9 @@ class PrologixAdapter(VISAAdapter):
         self.write("++eos 2")  # Append line-feed to commands
 
     def ask(self, command):
-        """ Ask the Prologix controller, include a forced delay for some instruments.
+        """ Ask the Prologix controller.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
            Call `Instrument.ask` instead.
 
         :param command: SCPI command string to be sent to instrument
@@ -107,7 +111,6 @@ class PrologixAdapter(VISAAdapter):
         warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
              FutureWarning)
         self.write(command)
-        self.wait_till_read()
         return self.read()
 
     def write(self, command, **kwargs):
@@ -119,6 +122,7 @@ class PrologixAdapter(VISAAdapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
+        # Overrides write instead of _write in order to ensure proper logging
         if self.address is not None and not command.startswith("++"):
             super().write("++addr %d" % self.address, **kwargs)
         super().write(command, **kwargs)
@@ -175,7 +179,7 @@ class PrologixAdapter(VISAAdapter):
         return super()._read()
 
     def gpib(self, address, **kwargs):
-        """ Returns an PrologixAdapter object that references the GPIB
+        """ Return a PrologixAdapter object that references the GPIB
         address specified, while sharing the Serial connection with other
         calls of this function
 

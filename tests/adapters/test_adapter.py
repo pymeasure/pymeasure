@@ -40,8 +40,7 @@ def fake():
     return FakeAdapter()
 
 
-def test_init():
-    adapter = Adapter()
+def test_init(adapter):
     assert adapter.connection is None
     assert adapter.log == logging.getLogger("Adapter")
 
@@ -115,11 +114,12 @@ def test_adapter_values(value, kwargs, result):
 
 
 def test_read_binary_values():
-    a = ProtocolAdapter([(None, "abcdefgh")])
-    assert list(a.read_binary_values()) == pytest.approx([1.6777999e+22, 4.371022e+24])
+    a = ProtocolAdapter([(None, "1 2")])
+    assert list(a.read_binary_values(dtype=int, sep=" ")) == pytest.approx([1, 2])
 
 
 def test_write_binary_values():
+    """Test write_binary_values in the ieee header format."""
     a = ProtocolAdapter([(b'CMD#212\x00\x00\x80?\x00\x00\x00@\x00\x00@@\n', None)])
     a.write_binary_values("CMD", [1, 2, 3], termination="\n")
 

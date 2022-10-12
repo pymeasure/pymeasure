@@ -29,7 +29,8 @@ import pyvisa
 import numpy as np
 from pkg_resources import parse_version
 
-from pymeasure.adapters import Adapter, ProtocolAdapter
+from .adapter import Adapter
+from .protocol import ProtocolAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -46,9 +47,17 @@ class VISAAdapter(Adapter):
         or GPIB address integer that identifies the target of the connection
     :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
         string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
-    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
+    :param preprocess_reply: An optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
+
     :param float query_delay: Time in s to wait after writing and before reading.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `wait_until_read` method instead.
+
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
 
@@ -78,9 +87,8 @@ class VISAAdapter(Adapter):
     def __init__(self, resource_name, visa_library='', preprocess_reply=None,
                  query_delay=0, log=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply, log=log, query_delay=query_delay)
-        if not VISAAdapter.has_supported_version():
-            raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
-
+        if query_delay:
+            warn("Implement in Instrument's 'wait_until_read' instead.", FutureWarning)
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name
             self.connection.write_raw = self.connection.write_bytes
@@ -165,7 +173,7 @@ class VISAAdapter(Adapter):
         """ Writes the command to the instrument and returns the resulting
         ASCII response
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
            Call `Instrument.ask` instead.
 
         :param command: SCPI command string to be sent to the instrument
@@ -179,7 +187,7 @@ class VISAAdapter(Adapter):
         values from the result. This leverages the `query_ascii_values` method
         in PyVISA.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
             Call `Instrument.values` instead.
 
         :param command: SCPI command to be sent to the instrument
@@ -193,7 +201,7 @@ class VISAAdapter(Adapter):
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
             Call `Instrument.binary_values` instead.
 
         :param command: SCPI command to be sent to the instrument

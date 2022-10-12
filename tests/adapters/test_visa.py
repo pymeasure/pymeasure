@@ -42,21 +42,6 @@ def adapter():
                        read_termination="\n")
 
 
-def test_visa_version():
-    assert VISAAdapter.has_supported_version()
-
-
-def test_visa_version_old(monkeypatch):
-    monkeypatch.delattr("pyvisa.__version__")
-    assert VISAAdapter.has_supported_version() is False
-
-
-def test_fail_on_old_visa_version(monkeypatch):
-    monkeypatch.delattr("pyvisa.__version__")
-    with pytest.raises(NotImplementedError):
-        VISAAdapter(SIM_RESOURCE, visa_library='@sim')
-
-
 def test_nested_adapter(adapter):
     adapter.query_delay = 10
     a = VISAAdapter(adapter)

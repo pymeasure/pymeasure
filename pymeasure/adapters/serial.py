@@ -36,10 +36,14 @@ class SerialAdapter(Adapter):
     serial communication to instrument
 
     :param port: Serial port
-    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
+    :param preprocess_reply: An optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
-    :param write_termination: String added to messages before writing them.
-    :param read_termination: String looked for at end of read message and removed.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
+
+    :param write_termination: String appended to messages before writing them.
+    :param read_termination: String expected at end of read message and removed.
     :param kwargs: Any valid key-word argument for serial.Serial
     """
 
@@ -76,7 +80,7 @@ class SerialAdapter(Adapter):
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
         :param kwargs: Keyword arguments for the connection itself.
-        :returns str: ASCII response of the instrument (excluding read_termination).
+        :returns str: ASCII response of the instrument (read_termination is removed first).
         """
         read = self._read_bytes(-1, **kwargs).decode()
         # Python>3.8 this shorter form is possible:
@@ -90,7 +94,7 @@ class SerialAdapter(Adapter):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read the whole read buffer.
+            read the whole read buffer or until encountering the read_termination.
         :param kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """

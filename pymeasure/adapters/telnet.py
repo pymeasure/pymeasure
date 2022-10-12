@@ -37,8 +37,13 @@ class TelnetAdapter(Adapter):
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
         method
-    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
+
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
         this is only 'timeout'
     """
@@ -48,7 +53,8 @@ class TelnetAdapter(Adapter):
         super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
         if query_delay:
-            warn("Use Instrument.ask with delay instead of Adapter.ask.")
+            warn("Use Instrument.ask with query_delay argument instead of Adapter.ask.",
+                 FutureWarning)
         self.write_termination = kwargs.pop('write_termination', "")
         self.read_termination = kwargs.pop('read_termination', "")
         safe_keywords = ['timeout']
@@ -87,7 +93,7 @@ class TelnetAdapter(Adapter):
         """ Writes a command to the instrument and returns the resulting ASCII
         response
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
            Call `Instrument.ask` instead.
 
         :param command: command string to be sent to the instrument

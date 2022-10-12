@@ -129,6 +129,10 @@ class TestInstrumentCommunication:
         instr.read_bytes(5)
         assert instr.adapter.method_calls == [mock.call.read_bytes(5)]
 
+    def test_write_binary_values(self, instr):
+        instr.write_binary_values("abc", [5, 6, 7])
+        assert instr.adapter.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
+
 
 class TestWaiting:
     @pytest.fixture()

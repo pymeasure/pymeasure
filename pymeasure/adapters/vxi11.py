@@ -41,7 +41,7 @@ class VXI11Adapter(Adapter):
         wraps around the read, write and ask functionality
         of the vxi11 library.
 
-    .. deprecated:: 0.10
+    .. deprecated:: 0.11
         Use VISAAdapter instead.
 
     :param host: string containing the visa connection information.
@@ -52,7 +52,7 @@ class VXI11Adapter(Adapter):
     def __init__(self, host, preprocess_reply=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply,
                          query_delay=kwargs.pop('query_delay', 0))
-        warn("Deprecated, use VISAAdapter instead.")
+        warn("Deprecated, use VISAAdapter instead.", FutureWarning)
         # Filter valid arguments that can be passed to vxi instrument
         valid_args = ["name", "client_id", "term_char"]
         self.conn_kwargs = {}
@@ -83,7 +83,7 @@ class VXI11Adapter(Adapter):
         """ Wrapper function for the ask command using the
         vx11 interface.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
            Call `Instrument.ask` instead.
 
         :param command: string with the command that will be transmitted
@@ -98,7 +98,7 @@ class VXI11Adapter(Adapter):
     def write_raw(self, command):
         """Write bytes to the device.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
             Use `write_bytes` instead.
         """
         warn("Use `write_bytes` instead.", FutureWarning)
@@ -119,7 +119,7 @@ class VXI11Adapter(Adapter):
     def read_raw(self):
         """Read bytes from the device.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
             Use `read_bytes` instead.
         """
         warn("Use `read_bytes` instead.", FutureWarning)
@@ -139,7 +139,7 @@ class VXI11Adapter(Adapter):
         """ Wrapper function for the ask_raw command using the
         vx11 interface.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
             Use `Instrument.write_bytes` and `Instrument.read_bytes` instead.
 
         :param command: binary string with the command that will be

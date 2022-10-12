@@ -37,11 +37,11 @@ class Adapter:
 
     This class should only be inherited from.
 
-    :param preprocess_reply: optional callable used to preprocess
+    :param preprocess_reply: An optional callable used to preprocess
         strings received from the instrument. The callable returns the
         processed string.
 
-        .. deprecated :: 0.10
+        .. deprecated:: 0.11
             Implement it in the instrument's `read` method instead.
 
     :param log: Parent logger of the 'Adapter' logger.
@@ -69,7 +69,9 @@ class Adapter:
         if self.connection is not None:
             self.connection.close()
 
-    # Directly called methods. DO NOT OVERRIDE IN SUBCLASS!
+    # Directly called methods, which ensure proper logging of the communication
+    # without the termination characters added by the particular adapters.
+    # DO NOT OVERRIDE IN SUBCLASS!
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
@@ -119,8 +121,7 @@ class Adapter:
         self.log.debug("READ:%s", read)
         return read
 
-    # Methods to implement in the subclass.
-
+    # Methods to implement in the subclasses.
     def _write(self, command, **kwargs):
         """Write string to the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented writing.")
@@ -142,7 +143,7 @@ class Adapter:
         """ Write the command to the instrument and returns the resulting
         ASCII response.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
            Call `Instrument.ask` instead.
 
         :param command: SCPI command string to be sent to the instrument
@@ -157,7 +158,7 @@ class Adapter:
         """ Write a command to the instrument and returns a list of formatted
         values from the result.
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
             Call `Instrument.values` instead.
 
         :param command: SCPI command to be sent to the instrument
@@ -192,7 +193,7 @@ class Adapter:
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
 
-        .. deprecated:: 0.10
+        .. deprecated:: 0.11
             Call `Instrument.binary_values` instead.
 
         :param command: SCPI command to be sent to the instrument
@@ -222,7 +223,7 @@ class Adapter:
         binary = self.read_bytes(-1)
         # header = binary[:header_bytes]
         data = binary[header_bytes:termination_bytes]
-        return np.fromstring(data, dtype=dtype)
+        return np.fromstring(data, dtype=dtype, **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`Adapter.write_binary_values`.
