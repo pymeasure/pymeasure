@@ -800,7 +800,7 @@ class LeCroyT3DSO1204(Instrument):
         return bytearray(img)
 
     def download_data(self, source, num_points=0, sparsing=1, averaging=1):
-        """ Get data points from the specified source of the oscilloscope. Ther eturned objects are
+        """ Get data points from the specified source of the oscilloscope. Ther returned objects are
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
         Note.
@@ -869,7 +869,7 @@ class LeCroyT3DSO1204(Instrument):
         expected_points = _header_sanity_checks(values)
 
         # If the number of points is big enough, split the data in small chunks and read it one
-        # chunk at a time. For less than 100K points we do not bother splitting them.
+        # chunk at a time. For less than 500K points we do not bother splitting them.
         chunk_bytes = 5e5
         chunk_points = chunk_bytes - self._header_size - self._footer_size
         iterations = _ceildiv(expected_points, chunk_points)

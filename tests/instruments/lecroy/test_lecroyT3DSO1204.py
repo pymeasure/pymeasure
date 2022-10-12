@@ -227,18 +227,17 @@ def test_download_too_much_data():
             instr.download_data(source="c1", num_points=1e10)
 
 
+@pytest.mark.skip("Waiting for PR 660 to be merged so that the binary_values method is mocked")
 def test_download_data_until_digitize():
-    """I cannot test beyond the _digitize method because the mock adapter provided by pymeasure
-    does not implement the binary_values method. """
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
              (b'ACQW SAMPLING', None),
              (b'SANU? C1', b'7.00E+06'),
              (b"WFSU SP,1", None),
-             (b"WFSU NP,1000", None),
+             (b"WFSU NP,1", None),
              (b"WFSU FP,0", None),
-             (b"WFSU?", b"SP,1,NP,1000,FP,0"),
+             (b"WFSU?", b"SP,1,NP,1,FP,0"),
              (b"ACQW?", b"SAMPLING"),
              (b"SARA?", b"1.00E+09"),
              (b"SAST?", b"Stop"),
@@ -246,11 +245,33 @@ def test_download_data_until_digitize():
              (b"TRDL?", b"-0.00E+00"),
              (b"C1:VDIV?", b"5.00E-02"),
              (b"C1:OFST?", b"-1.50E-01"),
-             (b"C1:WF? DAT2", None)
+             (b"C1:WF? DAT2", b"DAT2,#90000001" + (0x01).to_bytes(2, byteorder='big') + b"\n\n"),
+             (b"WFSU FP,0", None),
+             (b"WFSU NP,1", None),
+             (b"C1:WF? DAT2", b"DAT2,#90000001" + (0x01).to_bytes(2, byteorder='big') + b"\n\n")
              ]
     ) as instr:
         with pytest.raises(NameError):
-            instr.download_data(source="c1", num_points=1000)
+            y, x, preamble = instr.download_data(source="c1", num_points=1)
+            assert instr.waveform_preamble == {
+                "sparsing": 1,
+                "points": 1,
+                "first_point": 0,
+                "source": "C1",
+                "type": "normal",
+                "average": None,
+                "sampling_rate": 1e9,
+                "grid_number": 14,
+                "status": "stopped",
+                "xdiv": 5e-4,
+                "xoffset": 0,
+                "ydiv": 0.05,
+                "yoffset": -0.150
+            }
+            assert len(x) == 1
+            assert len(y) == 1
+            assert x[0] == -5e-4 * 14 / 2.
+            assert y[0] == 1 * 0.05 / 25. + 0.150
 
 
 def test_trigger():
