@@ -882,6 +882,8 @@ class LeCroyT3DSO1204(Instrument):
         self.write(f"{source}:WF? DAT2")
         values = self._digitize(source=source)
         expected_points = _header_sanity_checks(values)
+        if requested_points <= 0:
+            expected_points /= sparsing
 
         # If the number of points is big enough, split the data in small chunks and read it one
         # chunk at a time. For less than 500K points we do not bother splitting them.
