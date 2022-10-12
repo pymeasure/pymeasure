@@ -165,15 +165,12 @@ class _ChunkResizer:
         if (hasattr(self.adapter, "connection")
                 and self.adapter.connection is not None
                 and hasattr(self.adapter.connection, "chunk_size")):
-            self.old_chunk_size = self.adapter.connection.chunk_size
-            if self.new_chunk_size > self.old_chunk_size:
+            if self.new_chunk_size > self.adapter.connection.chunk_size:
+                self.old_chunk_size = self.adapter.connection.chunk_size
                 self.adapter.connection.chunk_size = self.new_chunk_size
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if (self.old_chunk_size is not None
-                and hasattr(self.adapter, "connection")
-                and self.adapter.connection is not None
-                and hasattr(self.adapter.connection, "chunk_size")):
+        if self.old_chunk_size is not None:
             self.adapter.connection.chunk_size = self.old_chunk_size
 
 
