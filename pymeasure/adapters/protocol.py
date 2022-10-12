@@ -69,14 +69,14 @@ class ProtocolAdapter(Adapter):
         self.comm_pairs = comm_pairs
         self._index = 0
 
-    def write(self, command):
+    def _write(self, command, **kwargs):
         """Compare the command with the expected one and fill the read."""
-        self.write_bytes(to_bytes(command))
+        self._write_bytes(to_bytes(command))
         assert self._write_buffer == b"", (
             f"Written bytes '{self._write_buffer}' do not match expected "
             f"'{self.comm_pairs[self._index][0]}'.")
 
-    def write_bytes(self, content):
+    def _write_bytes(self, content, **kwargs):
         """Write the bytes `content`. If a command is full, fill the read."""
         self._write_buffer += content
         try:
@@ -98,22 +98,36 @@ class ProtocolAdapter(Adapter):
         # It's not clear how relevant this is in real-world use, but it's analogous
         # to the possibility to fetch a (binary) message over several reads.
 
-    def read(self):
+    def _read(self, **kwargs):
         """Return an already present or freshly fetched read buffer as a string."""
-        return (self.read_bytes(-1) + self.read_bytes(1)).decode("utf-8")
+        return self._read_bytes(-1).decode("utf-8")
 
-    def read_bytes(self, count):
-        """Read `count` number of bytes."""
+    def _read_bytes(self, count, **kwargs):
+        """Read `count` number of bytes from the buffer.
+
+        :param int count: Number of bytes to read. If -1, return the buffer.
+        """
         if self._read_buffer:
-            read = self._read_buffer[:count]
-            self._read_buffer = self._read_buffer[count:]
+            if count == -1:
+                read = self._read_buffer
+                self._read_buffer = b""
+            else:
+                read = self._read_buffer[:count]
+                self._read_buffer = self._read_buffer[count:]
             return read
         else:
             try:
                 p_write, p_read = self.comm_pairs[self._index]
             except IndexError:
                 raise ValueError("No communication pair left for reading.")
-            assert p_write is None, "Unexpected read without prior write."
-            self._read_buffer = to_bytes(p_read)[count:]
+            assert p_write is None, (
+                f"Written {self._write_buffer} do not match expected {p_write} prior to read."
+                if self._write_buffer
+                else "Unexpected read without prior write.")
             self._index += 1
-            return to_bytes(p_read)[:count]
+            if count == -1:
+                # _read_buffer is already empty, no action required.
+                return to_bytes(p_read)
+            else:
+                self._read_buffer = to_bytes(p_read)[count:]
+                return to_bytes(p_read)[:count]
