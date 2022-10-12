@@ -240,14 +240,7 @@ class ANC300Controller(Instrument):
 
     def check_errors(self):
         """Read after setting a value."""
-        reply = self.read().split("\r\n")[0]
-        msg = reply.decode().strip(self.read_termination)
-        if reply != 'OK':
-            if msg == "":  # clear buffer
-                msg = reply
-                super().read()
-            raise ValueError("AttocubeConsoleAdapter: Error after command "
-                             f"{self.lastcommand} with message {msg}")
+        self.read()
 
     def ground_all(self):
         """ Grounds all axis of the controller. """

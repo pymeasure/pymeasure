@@ -35,6 +35,7 @@ from pymeasure.instruments.attocube import anc300
 
 class Mock_Adapter(AttocubeConsoleAdapter):
     """Mocking the real adapter using the ProtocolAdapter as connection."""
+
     def __init__(self, host, port, passwd, **kwargs):
         self.read_termination = '\r\n'
         self.write_termination = self.read_termination
@@ -57,36 +58,24 @@ class Mock_Adapter(AttocubeConsoleAdapter):
     def close(self):
         pass
 
-    def check_acknowledgement(self, reply, msg=""):
-        """ checks the last reply of the instrument to be 'OK', otherwise a
-        ValueError is raised.
-
-        :param reply: last reply string of the instrument
-        :param msg: optional message for the eventual error
-        """
-        if reply != 'OK':
-            if msg == "":  # clear buffer
-                msg = reply
-                self.connection.read()
-            raise ValueError("AttocubeConsoleAdapter: Error after command "
-                             f"{self.lastcommand} with message {msg}")
-
     def _read(self):
-        """ Reads a reply of the instrument which consists of two or more
+        """ Reads a reply of the instrument which consists of one or more
         lines. The first ones are the reply to the command while the last one
-        is 'OK' or 'ERROR' to indicate any problem. In case the reply is not OK
+        is 'OK' or 'ERROR' to indicate any problem. In case the status is not OK
         a ValueError is raised.
 
         :returns: String ASCII response of the instrument.
         """
-        raw = self.connection.read().strip(self.read_termination)
         # one would want to use self.read_termination as 'sep' below, but this
         # is not possible because of a firmware bug resulting in inconsistent
         # line endings
-        ret, ack = raw.rsplit(sep='\n', maxsplit=1)
-        ret = ret.strip('\r')  # strip possible CR char
-        self.check_acknowledgement(ack, ret)
-        return ret
+        raw = self.connection._read().strip(self.read_termination).rsplit(sep='\n', maxsplit=1)
+        if raw[-1] != 'OK':
+            if raw[0] == "" or len(raw) == 1:  # clear buffer
+                super()._read()  # without error checking
+            raise ValueError("AttocubeConsoleAdapter: Error after command "
+                             f"{self.lastcommand} with message {raw[0]}")
+        return raw[0].strip('\r')  # strip possible CR char
 
     def _write(self, command):
         """ Writes a command to the instrument
@@ -105,7 +94,6 @@ def modding(monkeypatch):
     monkeypatch.setattr(anc300, "AttocubeConsoleAdapter", Mock_Adapter)
 
 
-@pytest.mark.xfail
 def test_stepu():
     """Test a setting."""
     with expected_protocol(
