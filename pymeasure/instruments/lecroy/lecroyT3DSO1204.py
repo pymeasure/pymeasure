@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 
 import logging
+import math
 import re
 import sys
 import time
@@ -35,11 +36,6 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-def _ceildiv(a, b):
-    """ Divide two numbers and return the ceiling integer part """
-    return -(a // -b)
 
 
 def _sanitize_source(source):
@@ -456,7 +452,7 @@ class LeCroyT3DSO1204(Instrument):
         if hasattr(self.adapter, "connection") and self.adapter.connection is not None:
             self.adapter.connection.timeout = 7000
         self._grid_number = 14  # Number of grids in the horizontal direction
-        self._last_command_timestamp = 0  # Timestamp of the last command
+        self._seconds_since_last_write = 0  # Timestamp of the last command
         self._header_size = 16  # bytes
         self._footer_size = 2  # bytes
         self.ch1 = Channel(self, 1)
@@ -514,10 +510,11 @@ class LeCroyT3DSO1204(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        seconds_since_last_command = time.monotonic() - self._last_command_timestamp
-        if seconds_since_last_command < self.SLEEP_SECONDS:
-            time.sleep(self.SLEEP_SECONDS - seconds_since_last_command)
-        super(LeCroyT3DSO1204, self).write(command)
+        seconds_since_last_write = time.monotonic() - self._seconds_since_last_write
+        if seconds_since_last_write < self.SLEEP_SECONDS:
+            time.sleep(self.SLEEP_SECONDS - seconds_since_last_write)
+            self._seconds_since_last_write = seconds_since_last_write
+        super().write(command)
 
     _comm_header = Instrument.control(
         "CHDR?", "CHDR %s",
@@ -872,7 +869,7 @@ class LeCroyT3DSO1204(Instrument):
         # chunk at a time. For less than 500K points we do not bother splitting them.
         chunk_bytes = 5e5
         chunk_points = chunk_bytes - self._header_size - self._footer_size
-        iterations = _ceildiv(expected_points, chunk_points)
+        iterations = math.ceil(expected_points // chunk_points)
         i = 0
         data = []
         while True:
