@@ -288,10 +288,10 @@ class EurotestHPP120256(Instrument):
 
         while not voltage_output_set:
             actual_time = time.time()
-            log.info(f"\tWaiting for voltage output set. "
-                     f"Reading output voltage every {check_period} seconds.\n"
-                     f"\tTimeout: {timeout} seconds. Elapsed time: "
-                     f"{round(actual_time - ref_time, ndigits=1)} seconds.")
+            log.debug(f"\tWaiting for voltage output set. "
+                      f"Reading output voltage every {check_period} seconds.\n"
+                      f"\tTimeout: {timeout} seconds. Elapsed time: "
+                      f"{round(actual_time - ref_time, ndigits=1)} seconds.")
 
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
             voltage_output = self.measure_voltage
