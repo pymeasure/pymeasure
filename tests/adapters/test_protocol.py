@@ -175,8 +175,9 @@ def test_read_write_sequence():
     a.write("c1")
     assert a.read() == "a1"
     a.write("c2")
-    assert a.read() == "a3"
-    assert a.ask("c4") == "a4"
+    assert a.read_bytes(-1) == b"a3"
+    a.write_bytes(b"c4")
+    assert a.read_bytes(2) == b"a4"
 
 
 def test_write_and_read_with_and_without_bytes():

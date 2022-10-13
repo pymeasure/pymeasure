@@ -92,7 +92,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         raise OxfordVISAError(f"Retried {self.max_attempts} times without getting a valid "
                               "response, maybe there is something worse at hand.")
 
-    def write(self, command):
+    def _write(self, command):
         """Write command to instrument and check whether the reply indicates that the given command
         was not understood.
         The devices from Oxford Instruments reply with '?xxx' to a command 'xxx' if this command is
@@ -103,7 +103,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         :raises: :class:`~.OxfordVISAError` if the instrument does not recognise the supplied
             command or if the response of the instrument is not understood
         """
-        super().write(command)
+        super()._write(command)
 
         if not command[0] == "$":
             response = self.read()

@@ -22,33 +22,42 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters import SerialAdapter
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.lakeshore import LakeShore425
 
 
-class LakeShoreUSBAdapter(SerialAdapter):
-    """ Provides a :class:`SerialAdapter` with the specific baudrate,
-    timeout, parity, and byte size for LakeShore USB communication.
+def test_init():
+    with expected_protocol(
+            LakeShore425, []):
+        pass  # Verify the expected communication.
 
-    Initiates the adapter to open serial communcation over
-    the supplied port.
 
-    :param port: A string representing the serial port
-    """
+def test_unit():
+    # from manual
+    with expected_protocol(
+            LakeShore425, [(b"UNIT?", b"1")]) as instr:
+        assert instr.unit == "G"
 
-    def __init__(self, port):
-        super().__init__(
-            port,
-            baudrate=57600,
-            timeout=0.5,
-            parity='O',
-            bytesize=7
-        )
 
-    def write(self, command):
-        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
-        method to automatically append a Unix-style linebreak at the end
-        of the command.
+def test_unit_setter():
+    # from manual
+    with expected_protocol(
+            LakeShore425, [(b"UNIT 2", None)]) as instr:
+        instr.unit = "T"
 
-        :param command: SCPI command string to be sent to the instrument
-        """
-        super().write(command + "\n")
+
+def test_field():
+    # from manual
+    with expected_protocol(
+            LakeShore425,
+            [(b"RDGFIELD?", b"+123.456E-01")]
+            ) as instr:
+        assert instr.field == 123.456e-1
+
+
+def test_zero_probe():
+    # from manual
+    with expected_protocol(
+            LakeShore425, [(b"ZPROBE", None)]) as instr:
+        instr.zero_probe()
