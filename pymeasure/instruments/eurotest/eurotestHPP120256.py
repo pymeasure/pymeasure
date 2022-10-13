@@ -95,10 +95,8 @@ class EurotestHPP120256(Instrument):
     voltage = Instrument.control(
         "STATUS,U", "U,%.3fkV",
         """ A floating point property that represents the output voltage
-        setting (in kV) of the HV Source in kVolts. This property can be set.
-        When this property acts as get, the instrument will return a string like this:
-        U, RANGE=3.000kV, VALUE=2.458kV, then voltage will return a tuple
-        2.458 hence, the convenience of the get_process.""",
+        setting (in kV) of the HV Source in kVolts. This property can be set.""",
+        # getter device response: "U, RANGE=3.000kV, VALUE=2.458kV"
         validator=strict_range,
         values=VOLTAGE_RANGE,
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
