@@ -21,7 +21,7 @@
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.eurotest.eurotestHPP120256 import EurotestHPP120256
-import pytest
+
 
 def test_voltage():
     """Verify the communication of the voltage setter/getter."""
