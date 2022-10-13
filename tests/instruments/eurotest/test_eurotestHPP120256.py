@@ -21,7 +21,7 @@
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.eurotest.eurotestHPP120256 import EurotestHPP120256
-
+import pytest
 
 def test_voltage():
     """Verify the communication of the voltage setter/getter."""
@@ -31,7 +31,7 @@ def test_voltage():
              ("STATUS,U", "U, RANGE=3.000kV, VALUE=2.458kV")],
     ) as inst:
         inst.voltage = 1.200
-        assert inst.voltage == (3.000, 2.458)
+        assert inst.voltage == 2.458
 
 
 def test_current_limit():
@@ -42,7 +42,7 @@ def test_current_limit():
              ("STATUS,I", "I, RANGE=5000mA, VALUE=1739mA")],
     ) as inst:
         inst.current_limit = 1.200
-        assert inst.current_limit == (5000.0, 1739.0)
+        assert inst.current_limit == 1739.0
 
 
 def test_voltage_ramp():
@@ -53,7 +53,7 @@ def test_voltage_ramp():
              ("STATUS,RAMP", "RAMP, RANGE=3000V/s, VALUE=1000V/s")],
     ) as inst:
         inst.voltage_ramp = 3000
-        assert inst.voltage_ramp == (3000.0, 1000.0)
+        assert inst.voltage_ramp == 1000.0
 
 
 def test_measure_voltage():
@@ -62,7 +62,7 @@ def test_measure_voltage():
             EurotestHPP120256,
             [("STATUS,MU", "UM, RANGE=3000V, VALUE=2.458kV")],
     ) as inst:
-        assert inst.measure_voltage == (3000.0, 2.458)
+        assert inst.measure_voltage == 2.458
 
 
 def test_measure_current():
@@ -71,4 +71,4 @@ def test_measure_current():
             EurotestHPP120256,
             [("STATUS,MI", "IM, RANGE=5000mA, VALUE=1739mA")],
     ) as inst:
-        assert inst.measure_current == (5000.0, 1739.0)
+        assert inst.measure_current == 1739.0

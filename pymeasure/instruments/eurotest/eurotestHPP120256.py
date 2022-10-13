@@ -40,17 +40,7 @@ class EurotestHPP120256(Instrument):
 
     .. code-block:: python
 
-    adapter = VISAAdapter("GPIB0::20::INSTR",
-                          write_termination="\n",
-                          read_termination="",
-                          send_end=True)
-
-    adapter.connection.timeout = 5000
-    # In my case, instrument uses this encoding on response, so take it into account
-    response_encoding = "iso-8859-2"
-    query_delay = 0.4  # Delay in s to sleep between the write and read occuring in a query
-    command_delay = 0.2
-    hpp120256 = EurotestHPP120256(adapter, response_encoding, query_delay, includeSCPI=False)
+    hpp120256 = EurotestHPP120256("GPIB0::20::INSTR")
 
     response = hpp120256.id
     print(response)
@@ -194,6 +184,13 @@ class EurotestHPP120256(Instrument):
         map_values=True
     )
 
+    def ask(self, command):
+        """ Overrides Instrument ask method for including query_delay time on parent call.
+        :param command: Command string to be sent to the instrument.
+        :returns: String returned by the device without read_termination.
+        """
+        return super().ask(command, self.query_delay)
+
     @property
     def id(self):
         """ Returns the identification of the instrument """
@@ -311,16 +308,27 @@ class EurotestHPP120256(Instrument):
         # has been reaches at the output of the HV Voltage source
 
     # Constructor
-    def __init__(self, adapter, response_encoding="iso-8859-2", query_delay=0.1, **kwargs):
+    def __init__(self,
+                 adapter,
+                 response_encoding="iso-8859-2",
+                 query_delay=0.2,
+                 timeout=5000,
+                 write_termination="\n",
+                 read_termination="",
+                 send_end=True,
+                 includeSCPI=False,
+                 **kwargs):
 
-        # This instrument uses iso-8859-2 encoding, so we have to take it into account
-        # Also query_delay has to be taken into account for slow response instruments
-        self.response_encoding = response_encoding
-        self.query_delay = query_delay
-        adapter.connection.encoding = response_encoding
-        adapter.connection.query_delay = query_delay
         super().__init__(
             adapter,
             "Euro Test High Voltage DC Source model HPP-120-256",
+            write_termination=write_termination,
+            read_termination=read_termination,
+            send_end=send_end,
+            includeSCPI=includeSCPI,
             **kwargs
         )
+
+        self.response_encoding = response_encoding
+        self.query_delay = query_delay
+        self.timeout = timeout
