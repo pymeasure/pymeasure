@@ -370,8 +370,8 @@ class Keithley2700(Instrument, KeithleyBuffer):
         # Most of these are quite similar (and copied from) to keithley2000, 
         # as they both use SCPI and are very similar instruments.
 
-    MODES = {
-        'current': 'CURR:DC', 'current ac': 'CURR:AC',
+	MODES = {
+		'current': 'CURR:DC', 'current ac': 'CURR:AC',
         'voltage': 'VOLT:DC', 'voltage ac': 'VOLT:AC',
         'resistance': 'RES', 'resistance 4W': 'FRES',
         'period': 'PER', 'frequency': 'FREQ',
@@ -555,11 +555,11 @@ class Keithley2700(Instrument, KeithleyBuffer):
         values=[3, 30, 300]
     )
     voltage_dcv_input_divider = Instrument.control(
-        ":SENS:VOLT:DC:IDIV?", ":SENS:VOLT:DC:IDIV %d",
-        """ A 10MOhm voltage divider that can be connected across the voltage inputs
-        for the 100mV, 1V, and 10V ranges. Reduces the input resistance to 10MOhm. Useful
-        for stabilizing 0V reading when input is open, and for some high-voltage probes. """,
-        values={'On': 1, 'Off': 0},
+    	":SENS:VOLT:DC:IDIV?", ":SENS:VOLT:DC:IDIV %d",
+    	""" A 10MOhm voltage divider that can be connected across the voltage inputs
+    	for the 100mV, 1V, and 10V ranges. Reduces the input resistance to 10MOhm. Useful
+    	for stabilizing 0V reading when input is open, and for some high-voltage probes. """,
+    	values={'On': 1, 'Off': 0},
         map_values=True
     )
 
@@ -633,15 +633,15 @@ class Keithley2700(Instrument, KeithleyBuffer):
         cast=int
     )
     resistance_4w_offset_compensation = Instrument.control(
-        ":SENS:FRES:OCOM?", ":SENS:FRES:OCOM %d",
-        """ Enable or disable offset compensation for 4 wire resistance measurements.
-        If on, each measurement will involve two measurement steps, one at standard current
-        level, the other with a much lower current. This reduces the effects of
-        thermoelectric voltages. See manual for further explanation""",
-    values={'On': 1, 'Off': 0},
+    	":SENS:FRES:OCOM?", ":SENS:FRES:OCOM %d",
+    	""" Enable or disable offset compensation for 4 wire resistance measurements.
+    	If on, each measurement will involve two measurement steps, one at standard current
+    	level, the other with a much lower current. This reduces the effects of
+    	thermoelectric voltages. See manual for further explanation""",
+	values={'On': 1, 'Off': 0},
         map_values=True
     )
-
+    
     ##################
     # Frequency (Hz) #
     ##################
@@ -776,10 +776,10 @@ class Keithley2700(Instrument, KeithleyBuffer):
         values=[0, 999999.999]
     )
 
-    ##########
-    # Buffer #
-    ##########
-
+	##########
+	# Buffer #
+	##########
+	
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
         """ An integer property that controls the number of buffer points. This
@@ -811,7 +811,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
     )
 
 ####
-
+	
     def measure_voltage(self, max_voltage=1, ac=False):
         """ Configures the instrument to measure voltage,
         based on a maximum voltage to set the range, and
@@ -934,3 +934,4 @@ class Keithley2700(Instrument, KeithleyBuffer):
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
         self.write(":SENS:%s:AVER:STAT 0" % self._mode_command(mode))
+
