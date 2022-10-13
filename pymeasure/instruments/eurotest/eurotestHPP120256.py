@@ -89,7 +89,7 @@ class EurotestHPP120256(Instrument):
     COMMAND_DELAY = 0.2  # s
 
     # ####################################
-    # # ET-Command set. Non SCPI commands.
+    # # EuroTest-Command set. Non SCPI commands.
     # ####################################
 
     voltage = Instrument.control(
