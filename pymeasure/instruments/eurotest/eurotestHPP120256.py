@@ -202,6 +202,7 @@ class EurotestHPP120256(Instrument):
     def status(self):
         """ Returns the unit Status which is a 16bits response where
         every bit indicates the state of one subsystem of the HV Source."""
+        # TODO: Decode the status string bit to get a more info about yhe state of the instrument
         log.info("Requesting instrument status...")
 
         response = self.ask("STATUS,DI")
