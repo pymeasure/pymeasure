@@ -270,7 +270,7 @@ class TestLeCroyT3DSO1204:
         scope.waveform_points = 1000
         scope.waveform_sparsing = 1
         scope.single()
-        value = scope._digitize("C1", 1018)
+        value = scope._acquire_data("C1", 1018)
         assert isinstance(value, np.ndarray)
         assert len(value) == 1018
         assert all(isinstance(n, np.uint8) for n in value)
@@ -399,7 +399,7 @@ class TestLeCroyT3DSO1204:
         assert len(time) == 7e5
         assert type(preamble) is dict
         assert preamble["type"] == "normal"
-        assert preamble["sparsing"] == 100
+        assert preamble["sparsing"] == 10
         assert preamble["transmitted_points"] == 7e5
         print(preamble)
         plt.scatter(x=time, y=data)

@@ -780,76 +780,63 @@ class LeCroyT3DSO1204(Instrument):
             preamble["yoffset"] = self.ch(self.waveform_source).offset
         return preamble
 
-    def _digitize(self, source, requested_bytes=None):
+    def _digitize(self, src, num_bytes=None):
         """ Acquire waveforms according to the settings of the acquire commands.
         Note.
         If the requested number of bytes is not specified, the default chunk size is used,
         but in such a case it cannot be quaranteed that the message is received in its entirety.
-        :param source: source of data: "C1", "C2", "C3", "C4", "MATH".
-        :param: requested_bytes: number of bytes expected from the scope (including the header
-        and footer).
+        :param src: source of data: "C1", "C2", "C3", "C4", "MATH".
+        :param: num_bytes: number of bytes expected from the scope (including the header and
+        footer).
         :return: bytearray with raw data. """
-        if requested_bytes is None:
-            values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
+        if num_bytes is None:
+            binary_values = self.binary_values(f"{src}:WF? DAT2", dtype=np.uint8)
         else:
-            with _ChunkResizer(self.adapter, requested_bytes):
-                values = self.binary_values(f"{source}:WF? DAT2", dtype=np.uint8)
-            read_bytes = len(values)
-            if read_bytes != requested_bytes:
-                raise ValueError(f"read bytes ({len(values)}) != "
-                                 f"requested bytes ({requested_bytes})")
-        return values
+            with _ChunkResizer(self.adapter, num_bytes):
+                binary_values = self.binary_values(f"{src}:WF? DAT2", dtype=np.uint8)
+            read_bytes = len(binary_values)
+            if read_bytes != num_bytes:
+                raise ValueError(f"read bytes ({len(binary_values)}) != "
+                                 f"requested bytes ({num_bytes})")
+        return binary_values
 
-    #################
-    # Download data #
-    #################
+    def _header_sanity_checks(self, message):
+        """ Check that the header follows the predefined format.
+        The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
+        points and it is zero padded.
+        :param message: raw bytes received from the scope
+        :return: number of transmitted points as reported by the header """
+        message_header = bytes(message[0:self._header_size]).decode("ascii")
+        # Sanity check on header and footer
+        if message_header[0:7] != "DAT2,#9":
+            raise ValueError(f"Waveform data in invalid : header is {message_header}")
+        return int(message_header[-9:])
 
-    def download_image(self):
-        """ Get a BMP image of oscilloscope screen in bytearray of specified file format.
+    def _npoints_sanity_checks(self, message):
+        """ Check that the number of transmitted points is consistent with the message length.
+        :param message: raw bytes received from the scope """
+        message_header = bytes(message[0:self._header_size]).decode("ascii")
+        transmitted_points = int(message_header[-9:])
+        received_points = len(message) - self._header_size - self._footer_size
+        if transmitted_points != received_points:
+            raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
+                             f"number of received points ({received_points})")
+
+    def _footer_sanity_checks(self, message):
+        """ Check that the footer is present. The footer is a double line-carriage \n\n """
+        message_footer = bytes(message[-self._footer_size:]).decode("ascii")
+        if message_footer != "\n\n":
+            raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
+
+    def _acquire_data(self, source, requested_points=0, sparsing=1, averaging=1):
+        """ Acquire raw data points from the scope. The header, footer and number of points are
+        sanity-checked but they are not process otherwise. For a description of the input
+        arguments refer to the download_data method.
+        If the number of expected points is big enough, the transmission is splitted in smaller
+        chunks of 500k points and read one chunk at a time. I do not know the reason why,
+        but if the chunk size is big enough the transmission does not complete successfully.
+        :return: raw data points as numpy array
         """
-        # Using binary_values query because default interface does not support binary transfer
-        with _ChunkResizer(self.adapter, 20 * 1024 * 1024):
-            img = self.binary_values("SCDP", dtype=np.uint8)
-        return bytearray(img)
-
-    def download_data(self, source, requested_points=0, sparsing=1, averaging=1):
-        """ Get data points from the specified source of the oscilloscope. The returned objects are
-        two np.ndarray of data and time points and a dict with the waveform preamble, that contains
-        metadata about the waveform.
-        Note.
-        :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH.
-        :param requested_points: number of points to acquire. If 0, all available points
-        will be returned.
-        :param sparsing: interval between data points. For example if sparsing = 4, only one
-        point every 4 points is read.
-        :param averaging: average over data points. For example if averaging = 4, only the 4-point
-        average value is returned.
-        :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
-        property for dict format. """
-
-        def _header_sanity_checks(message):
-            # The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
-            # points and it is zero padded.
-            message_header = bytes(message[0:self._header_size]).decode("ascii")
-            # Sanity check on header and footer
-            if message_header[0:7] != "DAT2,#9":
-                raise ValueError(f"Waveform data in invalid : header is {message_header}")
-            return int(message_header[-9:])
-
-        def _npoints_sanity_checks(message):
-            message_header = bytes(message[0:self._header_size]).decode("ascii")
-            transmitted_points = int(message_header[-9:])
-            received_points = len(message) - self._header_size - self._footer_size
-            if transmitted_points != received_points:
-                raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
-                                 f"number of received points ({received_points})")
-
-        def _footer_sanity_checks(message):
-            # The footer is always a double line-carriage \n\n
-            message_footer = bytes(message[-self._footer_size:]).decode("ascii")
-            if message_footer != "\n\n":
-                raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
-
         # First of all set the correct acquisition type
         if averaging > 1:
             self.acquisition_type = "average"
@@ -870,12 +857,9 @@ class LeCroyT3DSO1204(Instrument):
         self.waveform_points = requested_points
         self.waveform_first_point = 0
 
-        # Read waveform preamble (waveform metadata)
-        preamble = self.waveform_preamble
-
         # Check how many points are to be expected
-        values = self._digitize(source=source)
-        expected_points = _header_sanity_checks(values)
+        values = self._digitize(src=source)
+        expected_points = self._header_sanity_checks(values)
         if requested_points <= 0:
             expected_points /= sparsing
 
@@ -896,18 +880,30 @@ class LeCroyT3DSO1204(Instrument):
             requested_bytes = requested_points + self._header_size + self._footer_size
             self.waveform_first_point = read_points * sparsing
             self.waveform_points = requested_points
-            values = self._digitize(source=source, requested_bytes=requested_bytes)
-            _header_sanity_checks(values)
-            _footer_sanity_checks(values)
-            _npoints_sanity_checks(values)
+            values = self._digitize(src=source, num_bytes=requested_bytes)
+            self._header_sanity_checks(values)
+            self._footer_sanity_checks(values)
+            self._npoints_sanity_checks(values)
             data.append(values[16:-2])
             i += 1
             if i >= iterations:
                 break
         data = np.concatenate(data)
-        preamble["transmitted_points"] = len(data)
+        return data
 
-        # Process data
+    #################
+    # Download data #
+    #################
+
+    def download_image(self):
+        """ Get a BMP image of oscilloscope screen in bytearray of specified file format.
+        """
+        # Using binary_values query because default interface does not support binary transfer
+        with _ChunkResizer(self.adapter, 20 * 1024 * 1024):
+            img = self.binary_values("SCDP", dtype=np.uint8)
+        return bytearray(img)
+
+    def _process_data(self, xdata, preamble):
         def _scale_data(x):
             value = int.from_bytes([x], byteorder="big", signed=True) * preamble["ydiv"] / 25.
             if preamble["source"] != "MATH":
@@ -916,11 +912,32 @@ class LeCroyT3DSO1204(Instrument):
 
         def _scale_time(t):
             return float(Decimal(-preamble["xdiv"] * self._grid_number / 2.) +
-                         Decimal(float(t * sparsing)) / Decimal(preamble["sampling_rate"]))
+                         Decimal(float(t * preamble["sparsing"])) /
+                         Decimal(preamble["sampling_rate"]))
 
-        data_points = np.vectorize(_scale_data)(data)
+        data_points = np.vectorize(_scale_data)(xdata)
         time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
         return data_points, time_points, preamble
+
+    def download_data(self, source, requested_points=0, sparsing=1, averaging=1):
+        """ Get data points from the specified source of the oscilloscope. The returned objects are
+        two np.ndarray of data and time points and a dict with the waveform preamble, that contains
+        metadata about the waveform.
+        Note.
+        :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH.
+        :param requested_points: number of points to acquire. If 0, all available points
+        will be returned.
+        :param sparsing: interval between data points. For example if sparsing = 4, only one
+        point every 4 points is read.
+        :param averaging: average over data points. For example if averaging = 4, only the 4-point
+        average value is returned.
+        :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
+        property for dict format. """
+
+        xdata = self._acquire_data(source, requested_points, sparsing, averaging)
+        preamble = self.waveform_preamble
+        preamble["transmitted_points"] = len(xdata)
+        return self._process_data(xdata, preamble)
 
     ###############
     #   Trigger   #
