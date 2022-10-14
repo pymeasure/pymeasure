@@ -277,7 +277,6 @@ class Channel:
             The trigger level is -4.5*DIV to 4.5*DIV.
             An out-of-range value will be adjusted to the closest legal value.
         """
-        # TODO dynamic range
     )
 
     trigger_level2 = Instrument.control(
@@ -287,7 +286,6 @@ class Channel:
         The trigger level is -4.5*DIV to 4.5*DIV.
         An out-of-range value will be adjusted to the closest legal value.
         """
-        # TODO dynamic range
     )
 
     trigger_slope = Instrument.control(
