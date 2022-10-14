@@ -12,7 +12,6 @@ dependencies:
   - pyvisa=1.11.3
   - pyzmq=22.3.0
   - qt=5.12.9
-  - bitstring=3.1.9
 # Development dependencies below
   - pytest-qt=3.3.0
   - pytest-runner=5.2

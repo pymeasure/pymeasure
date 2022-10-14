@@ -27,7 +27,6 @@ import sys
 import time
 from decimal import Decimal
 
-import bitstring
 import numpy as np
 
 from pymeasure.instruments import Instrument
@@ -918,8 +917,7 @@ class LeCroyT3DSO1204(Instrument):
 
         # Process data
         def _scale_data(x):
-            value = bitstring.Bits(uint=int(x), length=8).unpack('int')[0] * preamble["ydiv"] / 25.
-            value = value * preamble["ydiv"] / 25.
+            value = int.from_bytes([x], byteorder="big", signed=True) * preamble["ydiv"] / 25.
             if preamble["source"] != "MATH":
                 value -= preamble["yoffset"]
             return value
