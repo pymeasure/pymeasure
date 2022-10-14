@@ -95,10 +95,8 @@ class EurotestHPP120256(Instrument):
     voltage = Instrument.control(
         "STATUS,U", "U,%.3fkV",
         """ A floating point property that represents the output voltage
-        setting (in kV) of the HV Source in kVolts. This property can be set.
-        When this property acts as get, the instrument will return a string like this:
-        U, RANGE=3.000kV, VALUE=2.458kV, then voltage will return a tuple
-        2.458 hence, the convenience of the get_process.""",
+        setting (in kV) of the HV Source. This property can be set.""",
+        # getter device response: "U, RANGE=3.000kV, VALUE=2.458kV"
         validator=strict_range,
         values=VOLTAGE_RANGE,
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
@@ -106,10 +104,11 @@ class EurotestHPP120256(Instrument):
 
     current_limit = Instrument.control(
         "STATUS,I", "I,%.3fmA",
-        """ A floating point property that represents the output current limit in mAmps setting
-        of the HV Source. This property can be set. When this property acts as get, the instrument
-        will return a string like this: I, RANGE=5000mA, VALUE=1739mA, then current_limit will
-        return 1739.0, hence the convenience of the get_process.""",
+        """ A floating point property that represents the output current limit setting (in mAmps)
+        of the HV Source. This property can be set.""",
+        # When this property acts as get, the instrument will return a string like this:
+        # "I, RANGE=5000mA, VALUE=1739mA", then current_limit willreturn 1739.0,
+        # hence the convenience of the get_process.
         validator=strict_range,
         values=CURRENT_RANGE,
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
@@ -117,10 +116,11 @@ class EurotestHPP120256(Instrument):
 
     voltage_ramp = Instrument.control(
         "STATUS,RAMP", "RAMP,%dV/s",
-        """ A integer property that represents the ramp speed of the output voltage of the
-        HV Source V/s. This property can be set.  When this property acts as get, the instrument
-        will return a string like this: RAMP, RANGE=3000V/s, VALUE=1000V/s, then voltage_ramp will
-        return 1000.0, hence the convenience of the get_process.""",
+        """ A integer property that represents the ramp speed (V/s) of the output voltage of the
+        HV Source. This property can be set.""",
+        # When this property acts as get, the instrument will return a string like this:
+        # "RAMP, RANGE=3000V/s, VALUE=1000V/s", then voltage_ramp will return 1000.0,
+        # hence the convenience of the get_process.
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
@@ -128,37 +128,37 @@ class EurotestHPP120256(Instrument):
 
     measure_voltage = Instrument.measurement(
         "STATUS,MU",
-        """ Measures the actual output voltage of the HV Source in kVolts.
-        This property is a get so, the instrument will return a string like this:
-        U, RANGE=3.000kV, VALUE=2.458kV, then measure_voltage will
-        return 2458.0, hence the convenience of the get_process.""",
+        """ Measures the actual output voltage of the HV Source (kV).""",
+        # This property is a get so, the instrument will return a string like this:
+        # "U, RANGE=3.000kV, VALUE=2.458kV", then measure_voltage will return 2458.0,
+        # hence the convenience of the get_process.
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
     voltage_range = Instrument.measurement(
         "STATUS,MU",
-        """ Measures the actual output voltage range of the HV Source in kVolts.
-        This property is a get so, the instrument will return a string like this:
-        U, RANGE=3.000kV, VALUE=2.458kV, then voltage_range will
-        return 3000.0, hence the convenience of the get_process.""",
+        """ Measures the actual output voltage range of the HV Source (kV).""",
+        # This property is a get so, the instrument will return a string like this:
+        # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
+        # hence the convenience of the get_process.
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0])
     )
 
     measure_current = Instrument.measurement(
         "STATUS,MI",
-        """ Measures the actual output current of the power supply in mAmps.
-        This property is a get so, the instrument will return a string like this:
-        I, RANGE=5000mA, VALUE=1739mA, then measure_current_range will
-        return a 1739.0, hence the convenience of the get_process.""",
+        """ Measures the actual output current of the power supply (mAmps).""",
+        # This property is a get so, the instrument will return a string like this:
+        # "I, RANGE=5000mA, VALUE=1739mA", then measure_current_range will return a 1739.0,
+        # hence the convenience of the get_process."""
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
     )
 
     current_range = Instrument.measurement(
         "STATUS,MI",
-        """ Measures the actual output current range of the power supply in mAmps.
-        This property is a get so, the instrument will return a string like this:
-        I, RANGE=5000mA, VALUE=1739mA, then current_range will
-        return a 5000.0, hence the convenience of the get_process.""",
+        """ Measures the actual output current range of the power supply (mAmps).""",
+        # This property is a get so, the instrument will return a string like this:
+        # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
+        # hence the convenience of the get_process.
         get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0])
     )
 
