@@ -55,9 +55,12 @@ class MultiPlotWidget(PlotWidget):
             for i in range(self.num_plots):
                 self.plot_frame[i].change_x_axis(x_axis)
         if y_axis is not None:
-            for i in range(self.num_plots):
-                self.columns_y[i].setCurrentIndex(self.columns_y[i].findText(y_axis))
-                self.plot_frame[i].change_y_axis(y_axis)
+            y_axis_label = y_axis
+            for idx, i in enumerate(range(self.num_plots)):
+                if type(y_axis) == list:
+                    y_axis_label = y_axis[idx]
+                self.columns_y[i].setCurrentIndex(self.columns_y[i].findText(y_axis_label))
+                self.plot_frame[i].change_y_axis(y_axis_label)
 
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
