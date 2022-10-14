@@ -199,6 +199,26 @@ class EurotestHPP120256(Instrument):
         response = self.ask("ID")
         return response.encode(self.response_encoding).decode('utf-8', 'ignore')
 
+    # status = Instrument.measurement(
+    #     "STATUS,DI",
+    #     """ Returns the unit Status which is a 16bits response where
+    #     every bit indicates the state of one subsystem of the HV Source.""",
+    #     get_process=lambda v: v.encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+    # )
+
+    # lam_status = Instrument.measurement(
+    #     "STATUS,LAM",
+    #     """ Returns the LAM status which is the status of the untit from the point
+    #     of view of the process. Fo example, as a response of asking STATUS,LAM, the HV
+    #     voltage could response one of the messages from the next list:
+    #     LAM,ERROR External Inhibit occurred during Kill enable
+    #     LAM,INHIBIT External Inhibit occurred
+    #     LAM,TRIP ERROR Software current trip occurred
+    #     LAM,INPUT ERROR Wrong command received
+    #     LAM,OK Status OK""",
+    #     get_process=lambda v: v.encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+    # )
+
     def status(self):
         """ Returns the unit Status which is a 16bits response where
         every bit indicates the state of one subsystem of the HV Source."""
