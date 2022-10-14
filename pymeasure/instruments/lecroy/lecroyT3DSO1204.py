@@ -845,6 +845,9 @@ class LeCroyT3DSO1204(Instrument):
         else:
             self.acquisition_type = "normal"
 
+        # Set the acquisition source
+        self.waveform_source = source
+
         # Check that we are trying to read a reasonable amount of points
         sample_points = self.acquisition_sample_size(self.waveform_source)
         if requested_points > 0 and 0 < sample_points < requested_points:
@@ -853,10 +856,10 @@ class LeCroyT3DSO1204(Instrument):
 
         # Setup waveform acquisition parameters
         source = _sanitize_source(source)
-        self.waveform_source = source
         self.waveform_sparsing = sparsing
         self.waveform_points = requested_points
         self.waveform_first_point = 0
+
 
         # Check how many points are to be expected
         values = self._digitize(src=source)
