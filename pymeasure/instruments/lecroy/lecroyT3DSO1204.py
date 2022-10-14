@@ -741,6 +741,7 @@ class LeCroyT3DSO1204(Instrument):
         - "sparsing": sparse point. It defines the interval between data points. (int)
         - "first_point": address of the first data point to be sent (int)
         - "source": source of the data : "C1", "C2", "C3", "C4", "MATH".
+        - "unit": Physical units of the Y-axis
         - "type":  type of data acquisition. Can be "normal", "peak", "average", "highres"
         - "average": average times of average acquisition
         - "sampling_rate": sampling rate (it is a read-only property)
@@ -773,9 +774,11 @@ class LeCroyT3DSO1204(Instrument):
         if self.waveform_source == "MATH":
             preamble["ydiv"] = self.math_vdiv
             preamble["yoffset"] = self.math_vpos
+            preamble["unit"] = None
         else:
             preamble["ydiv"] = self.ch(self.waveform_source).scale
             preamble["yoffset"] = self.ch(self.waveform_source).offset
+            preamble["unit"] = self.ch(self.waveform_source).unit
         return preamble
 
     def _digitize(self, src, num_bytes=None):

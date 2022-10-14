@@ -260,7 +260,8 @@ class TestLeCroyT3DSO1204:
             "xdiv": 5e-4,
             "xoffset": -0.,
             "ydiv": 0.05,
-            "yoffset": 0.
+            "yoffset": 0.,
+            "unit": "V"
         }
         preamble = autoscaled_scope.waveform_preamble
         assert preamble == expected_preamble

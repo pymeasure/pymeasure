@@ -198,6 +198,7 @@ def test_waveform_preamble():
              (b"SANU? C1", b"1.75E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
              (b"C1:OFST?", b"-1.50E-01"),
+             (b"C1:UNIT?", b"V"),
              ]
     ) as instr:
         assert instr.waveform_preamble == {
@@ -216,7 +217,8 @@ def test_waveform_preamble():
             "xdiv": 5e-4,
             "xoffset": 0,
             "ydiv": 0.05,
-            "yoffset": -0.150
+            "yoffset": -0.150,
+            "unit": "V"
         }
 
 
@@ -254,7 +256,8 @@ def test_download_one_point():
              (b"TRDL?", b"-0.00E+00"),
              (b"SANU? C1", b"7.00E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
-             (b"C1:OFST?", b"-1.50E-01")
+             (b"C1:OFST?", b"-1.50E-01"),
+             (b"C1:UNIT?", b"V")
              ]
     ) as instr:
         y, x, preamble = instr.download_data(source="c1", requested_points=1)
@@ -274,7 +277,8 @@ def test_download_one_point():
             "xdiv": 5e-4,
             "xoffset": 0,
             "ydiv": 0.05,
-            "yoffset": -0.150
+            "yoffset": -0.150,
+            "unit": "V"
         }
         assert len(x) == 1
         assert len(y) == 1
@@ -304,7 +308,8 @@ def test_download_two_points():
              (b"TRDL?", b"-0.00E+00"),
              (b"SANU? C1", b"7.00E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
-             (b"C1:OFST?", b"-1.50E-01")
+             (b"C1:OFST?", b"-1.50E-01"),
+             (b"C1:UNIT?", b"V")
              ]
     ) as instr:
         y, x, preamble = instr.download_data(source="c1", requested_points=2)
@@ -324,7 +329,8 @@ def test_download_two_points():
             "xdiv": 5e-4,
             "xoffset": 0,
             "ydiv": 0.05,
-            "yoffset": -0.150
+            "yoffset": -0.150,
+            "unit": "V"
         }
         assert len(x) == 2
         assert len(y) == 2
