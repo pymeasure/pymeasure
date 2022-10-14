@@ -41,9 +41,10 @@ class PlotterWindow(QtWidgets.QMainWindow):
     A window for plotting experiment results. Should not be
     instantiated directly, but only via the
     :class:`~pymeasure.display.plotter.Plotter` class.
+
     .. seealso::
         Tutorial :ref:`tutorial-plotterwindow`
-            A tutorial and example code for using the Plotter and PlotterWindow.
+        A tutorial and example code for using the Plotter and PlotterWindow.
     .. attribute plot::
         The `pyqtgraph.PlotItem`_ object for this window. Can be
         accessed to further customise the plot view programmatically, e.g.,
