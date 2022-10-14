@@ -818,7 +818,7 @@ class LeCroyT3DSO1204(Instrument):
         metadata about the waveform.
         Note.
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH.
-        :param requested_points: number of points to acquire. If 0 or None, all available points
+        :param requested_points: number of points to acquire. If 0, all available points
         will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
         point every 4 points is read.
