@@ -22,37 +22,6 @@
 # THE SOFTWARE.
 #
 
-import logging
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-
-class TabWidget:
-    """ Utility class to define default implementation for some basic methods.
-
-        When defining a widget to be used in subclasses of
-        :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`,
-        users should inherit from this class and provide an
-        implementation of these methods
-    """
-
-    def __init__(self, name, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = name
-
-    def new_curve(self, *args, **kwargs):
-        """ Create a new curve """
-        return None
-
-    def load(self, curve):
-        """ Add curve to widget """
-        pass
-
-    def remove(self, curve):
-        """ Remove curve from widget """
-        pass
-
-    def set_color(self, curve, color):
-        """ Set color for widget """
-        pass
+from .plotter_window import PlotterWindow
+from .managed_window import ManagedWindowBase, ManagedWindow
+from .managed_image_window import ManagedImageWindow
