@@ -241,6 +241,10 @@ def test_download_one_point():
              (b"WFSU SP,1", None),
              (b"WFSU NP,1", None),
              (b"WFSU FP,0", None),
+             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
+             (b"WFSU FP,0", None),
+             (b"WFSU NP,1", None),
+             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
              (b"WFSU?", b"SP,1,NP,1,FP,0"),
              (b"ACQW?", b"SAMPLING"),
              (b"SARA?", b"1.00E+09"),
@@ -250,11 +254,7 @@ def test_download_one_point():
              (b"TRDL?", b"-0.00E+00"),
              (b"SANU? C1", b"7.00E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
-             (b"C1:OFST?", b"-1.50E-01"),
-             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
-             (b"WFSU FP,0", None),
-             (b"WFSU NP,1", None),
-             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n")
+             (b"C1:OFST?", b"-1.50E-01")
              ]
     ) as instr:
         y, x, preamble = instr.download_data(source="c1", requested_points=1)
@@ -291,6 +291,10 @@ def test_download_two_points():
              (b"WFSU SP,1", None),
              (b"WFSU NP,2", None),
              (b"WFSU FP,0", None),
+             (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n"),
+             (b"WFSU FP,0", None),
+             (b"WFSU NP,2", None),
+             (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n"),
              (b"WFSU?", b"SP,1,NP,2,FP,0"),
              (b"ACQW?", b"SAMPLING"),
              (b"SARA?", b"1.00E+09"),
@@ -300,11 +304,7 @@ def test_download_two_points():
              (b"TRDL?", b"-0.00E+00"),
              (b"SANU? C1", b"7.00E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
-             (b"C1:OFST?", b"-1.50E-01"),
-             (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n"),
-             (b"WFSU FP,0", None),
-             (b"WFSU NP,2", None),
-             (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n")
+             (b"C1:OFST?", b"-1.50E-01")
              ]
     ) as instr:
         y, x, preamble = instr.download_data(source="c1", requested_points=2)
