@@ -813,12 +813,12 @@ class LeCroyT3DSO1204(Instrument):
         return bytearray(img)
 
     def download_data(self, source, requested_points=0, sparsing=1, averaging=1):
-        """ Get data points from the specified source of the oscilloscope. Ther returned objects are
+        """ Get data points from the specified source of the oscilloscope. The returned objects are
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
         Note.
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH.
-        :param requested_points: number of points to acquire. If 0 or None all available points
+        :param requested_points: number of points to acquire. If 0 or None, all available points
         will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
         point every 4 points is read.
