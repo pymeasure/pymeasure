@@ -232,12 +232,12 @@ def test_download_too_much_data():
             instr.download_data(source="c1", requested_points=1e10)
 
 
-def test_download_data_until_digitize():
+def test_download_one_point():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b'ACQW SAMPLING', None),
-             (b'SANU? C1', b'7.00E+06'),
+             (b"ACQW SAMPLING", None),
+             (b"SANU? C1", b"7.00E+06"),
              (b"WFSU SP,1", None),
              (b"WFSU NP,1", None),
              (b"WFSU FP,0", None),
@@ -245,37 +245,93 @@ def test_download_data_until_digitize():
              (b"ACQW?", b"SAMPLING"),
              (b"SARA?", b"1.00E+09"),
              (b"SAST?", b"Stop"),
+             (b"MSIZ?", b"7M"),
              (b"TDIV?", b"5.00E-04"),
              (b"TRDL?", b"-0.00E+00"),
+             (b"SANU? C1", b"7.00E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
              (b"C1:OFST?", b"-1.50E-01"),
-             (b"C1:WF? DAT2", b"DAT2,#90000001" + (0x01).to_bytes(2, byteorder='big') + b"\n\n"),
+             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
              (b"WFSU FP,0", None),
              (b"WFSU NP,1", None),
-             (b"C1:WF? DAT2", b"DAT2,#90000001" + (0x01).to_bytes(2, byteorder='big') + b"\n\n")
+             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n")
              ]
     ) as instr:
-        with pytest.raises(NameError):
-            y, x, preamble = instr.download_data(source="c1", requested_points=1)
-            assert instr.waveform_preamble == {
-                "sparsing": 1,
-                "points": 1,
-                "first_point": 0,
-                "source": "C1",
-                "type": "normal",
-                "average": None,
-                "sampling_rate": 1e9,
-                "grid_number": 14,
-                "status": "stopped",
-                "xdiv": 5e-4,
-                "xoffset": 0,
-                "ydiv": 0.05,
-                "yoffset": -0.150
-            }
-            assert len(x) == 1
-            assert len(y) == 1
-            assert x[0] == -5e-4 * 14 / 2.
-            assert y[0] == 1 * 0.05 / 25. + 0.150
+        y, x, preamble = instr.download_data(source="c1", requested_points=1)
+        assert preamble == {
+            "sparsing": 1,
+            "requested_points": 1.,
+            "memory_size": 7e6,
+            "sampled_points": 7e6,
+            "transmitted_points": 1,
+            "first_point": 0,
+            "source": "C1",
+            "type": "normal",
+            "average": None,
+            "sampling_rate": 1e9,
+            "grid_number": 14,
+            "status": "stopped",
+            "xdiv": 5e-4,
+            "xoffset": 0,
+            "ydiv": 0.05,
+            "yoffset": -0.150
+        }
+        assert len(x) == 1
+        assert len(y) == 1
+        assert x[0] == -5e-4 * 14 / 2.
+        assert y[0] == 1 * 0.05 / 25. + 0.150
+
+
+def test_download_two_points():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b"ACQW SAMPLING", None),
+             (b"SANU? C1", b"7.00E+06"),
+             (b"WFSU SP,1", None),
+             (b"WFSU NP,2", None),
+             (b"WFSU FP,0", None),
+             (b"WFSU?", b"SP,1,NP,2,FP,0"),
+             (b"ACQW?", b"SAMPLING"),
+             (b"SARA?", b"1.00E+09"),
+             (b"SAST?", b"Stop"),
+             (b"MSIZ?", b"7M"),
+             (b"TDIV?", b"5.00E-04"),
+             (b"TRDL?", b"-0.00E+00"),
+             (b"SANU? C1", b"7.00E+06"),
+             (b"C1:VDIV?", b"5.00E-02"),
+             (b"C1:OFST?", b"-1.50E-01"),
+             (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n"),
+             (b"WFSU FP,0", None),
+             (b"WFSU NP,2", None),
+             (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n")
+             ]
+    ) as instr:
+        y, x, preamble = instr.download_data(source="c1", requested_points=2)
+        assert preamble == {
+            "sparsing": 1,
+            "requested_points": 2,
+            "memory_size": 7e6,
+            "sampled_points": 7e6,
+            "transmitted_points": 2,
+            "first_point": 0,
+            "source": "C1",
+            "type": "normal",
+            "average": None,
+            "sampling_rate": 1e9,
+            "grid_number": 14,
+            "status": "stopped",
+            "xdiv": 5e-4,
+            "xoffset": 0,
+            "ydiv": 0.05,
+            "yoffset": -0.150
+        }
+        assert len(x) == 2
+        assert len(y) == 2
+        assert x[0] == -5e-4 * 14 / 2.
+        assert y[0] == 1 * 0.05 / 25. + 0.150
+        assert x[1] == x[0] + 1 / 1e9
+        assert y[1] == y[0]
 
 
 def test_trigger():

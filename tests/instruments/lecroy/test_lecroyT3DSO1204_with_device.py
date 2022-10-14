@@ -359,6 +359,19 @@ class TestLeCroyT3DSO1204:
         assert len(time) == case2
         assert type(preamble) is dict
 
+    def test_download_single_point(self, scope):
+        scope.acquisition_type = "normal"
+        scope.ch1.display = True
+        scope.single()
+        data, time, preamble = scope.download_data(source="c1", requested_points=1)
+        assert type(data) is np.ndarray
+        assert len(data) == 1
+        assert type(time) is np.ndarray
+        assert len(time) == 1
+        assert type(preamble) is dict
+        assert preamble["type"] == "normal"
+        assert preamble["transmitted_points"] == 1
+
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_extended(self, scope):
         from matplotlib import pyplot as plt
