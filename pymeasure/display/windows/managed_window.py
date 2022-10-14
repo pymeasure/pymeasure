@@ -79,7 +79,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     Examples of ready to use classes inherited from ManagedWindowBase are:
 
     - :class:`~pymeasure.display.windows.managed_window.ManagedWindow`
-    - :class:`~pymeasure.display.windows.image_window.ManagedImageWindow`
+    - :class:`~pymeasure.display.windows.managed_image_window.ManagedImageWindow`
 
     .. seealso::
 
