@@ -40,7 +40,7 @@ class EurotestHPP120256(Instrument):
 
     .. code-block:: python
 
-    hpp120256 = EurotestHPP120256("GPIB0::20::INSTR")
+    hpp120256 = EurotestHPP120256("GPIB0::20::INSTR",includeSCPI=False)
 
     response = hpp120256.id
     print(response)
@@ -87,6 +87,8 @@ class EurotestHPP120256(Instrument):
     CURRENT_RANGE = [0.0, 25.0]  # mAmps
     VOLTAGE_RAMP_RANGE = [10, 3000]  # V/s
     COMMAND_DELAY = 0.2  # s
+
+    response_encoding = "iso-8859-2"
 
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
@@ -331,25 +333,20 @@ class EurotestHPP120256(Instrument):
     # Constructor
     def __init__(self,
                  adapter,
-                 response_encoding="iso-8859-2",
-                 query_delay=0.2,
-                 timeout=5000,
-                 write_termination="\n",
-                 read_termination="",
-                 send_end=True,
                  includeSCPI=False,
+                 query_delay=0.3,
+                 timeout=5000,
                  **kwargs):
 
         super().__init__(
             adapter,
             "Euro Test High Voltage DC Source model HPP-120-256",
-            write_termination=write_termination,
-            read_termination=read_termination,
-            send_end=send_end,
+            write_termination="\n",
+            read_termination="",
+            send_end=True,
             includeSCPI=includeSCPI,
             **kwargs
         )
 
-        self.response_encoding = response_encoding
         self.query_delay = query_delay
         self.timeout = timeout
