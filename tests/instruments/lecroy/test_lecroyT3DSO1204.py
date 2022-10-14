@@ -232,7 +232,6 @@ def test_download_too_much_data():
             instr.download_data(source="c1", requested_points=1e10)
 
 
-@pytest.mark.skip("Waiting for PR 660 to be merged so that the binary_values method is mocked")
 def test_download_data_until_digitize():
     with expected_protocol(
             LeCroyT3DSO1204,
