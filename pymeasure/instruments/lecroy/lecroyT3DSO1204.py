@@ -161,8 +161,7 @@ class _ChunkResizer:
 
     def __enter__(self):
         """ Only resize the chunk size if the adapter support this feature"""
-        if (hasattr(self.adapter, "connection")
-                and self.adapter.connection is not None
+        if (self.adapter.connection is not None
                 and hasattr(self.adapter.connection, "chunk_size")):
             if self.new_chunk_size > self.adapter.connection.chunk_size:
                 self.old_chunk_size = self.adapter.connection.chunk_size
