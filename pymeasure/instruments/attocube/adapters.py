@@ -24,6 +24,7 @@
 
 import re
 import time
+from warnings import warn
 
 from pymeasure.adapters import TelnetAdapter
 
@@ -48,14 +49,15 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         time.sleep(self.query_delay)
         super().read()  # clear messages sent upon opening the connection
         # send password and check authorization
-        self.write(passwd, check_ack=False)
+        self.write(passwd)
         time.sleep(self.query_delay)
         ret = super().read()
         authmsg = ret.split(self.read_termination)[1]
         if authmsg != 'Authorization success':
             raise Exception(f"Attocube authorization failed '{authmsg}'")
         # switch console echo off
-        _ = self.ask('echo off')
+        self.write('echo off')
+        _ = self.read()
 
     def extract_value(self, reply):
         """ preprocess_reply function for the Attocube console. This function
@@ -71,38 +73,26 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         else:
             return reply
 
-    def check_acknowledgement(self, reply, msg=""):
-        """ checks the last reply of the instrument to be 'OK', otherwise a
-        ValueError is raised.
-
-        :param reply: last reply string of the instrument
-        :param msg: optional message for the eventual error
-        """
-        if reply != 'OK':
-            if msg == "":  # clear buffer
-                msg = reply
-                super().read()
-            raise ValueError("AttocubeConsoleAdapter: Error after command "
-                             f"{self.lastcommand} with message {msg}")
-
-    def read(self):
-        """ Reads a reply of the instrument which consists of two or more
+    def _read(self):
+        """ Reads a reply of the instrument which consists of one or more
         lines. The first ones are the reply to the command while the last one
-        is 'OK' or 'ERROR' to indicate any problem. In case the reply is not OK
+        is 'OK' or 'ERROR' to indicate any problem. In case the status is not OK
         a ValueError is raised.
 
         :returns: String ASCII response of the instrument.
         """
-        raw = super().read().strip(self.read_termination)
         # one would want to use self.read_termination as 'sep' below, but this
         # is not possible because of a firmware bug resulting in inconsistent
         # line endings
-        ret, ack = raw.rsplit(sep='\n', maxsplit=1)
-        ret = ret.strip('\r')  # strip possible CR char
-        self.check_acknowledgement(ack, ret)
-        return ret
+        raw = super()._read().strip(self.read_termination).rsplit(sep='\n', maxsplit=1)
+        if raw[-1] != 'OK':
+            if raw[0] == "" or len(raw) == 1:  # clear buffer
+                super()._read()  # without error checking
+            raise ValueError("AttocubeConsoleAdapter: Error after command "
+                             f"{self.lastcommand} with message {raw[0]}")
+        return raw[0].strip('\r')  # strip possible CR char
 
-    def write(self, command, check_ack=True):
+    def _write(self, command):
         """ Writes a command to the instrument
 
         :param command: command string to be sent to the instrument
@@ -111,11 +101,7 @@ class AttocubeConsoleAdapter(TelnetAdapter):
             and False otherwise.
         """
         self.lastcommand = command
-        super().write(command + self.write_termination)
-        if check_ack:
-            reply = self.connection.read_until(self.read_termination.encode())
-            msg = reply.decode().strip(self.read_termination)
-            self.check_acknowledgement(msg)
+        super()._write(command + self.write_termination)
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
@@ -124,6 +110,8 @@ class AttocubeConsoleAdapter(TelnetAdapter):
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        self.write(command, check_ack=False)
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
+        self.write(command)
         time.sleep(self.query_delay)
         return self.read()

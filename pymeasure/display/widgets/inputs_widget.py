@@ -27,14 +27,14 @@ import logging
 from functools import partial
 
 from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from ...experiment import parameters
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class InputsWidget(QtGui.QWidget):
+class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
     """
@@ -77,14 +77,14 @@ class InputsWidget(QtGui.QWidget):
             setattr(self, name, element)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
 
         self.labels = {}
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
-                label = QtGui.QLabel(self)
+                label = QtWidgets.QLabel(self)
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
                 self.labels[name] = label

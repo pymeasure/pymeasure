@@ -42,9 +42,9 @@ class HP34401A(Instrument):
     resistance_4w = Instrument.measurement(
         "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "HP 34401A",
             asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs

@@ -32,7 +32,7 @@ import pyqtgraph as pg
 
 from ..browser import BrowserItem
 from ..manager import Manager, Experiment
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets, QtGui
 from ..widgets import (
     PlotWidget,
     BrowserWidget,
@@ -49,7 +49,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class ManagedWindowBase(QtGui.QMainWindow):
+class ManagedWindowBase(QtWidgets.QMainWindow):
     """
     Base class for GUI experiment management .
 
@@ -153,14 +153,14 @@ class ManagedWindowBase(QtGui.QMainWindow):
 
     def _setup_ui(self):
         if self.directory_input:
-            self.directory_label = QtGui.QLabel(self)
+            self.directory_label = QtWidgets.QLabel(self)
             self.directory_label.setText('Directory')
             self.directory_line = DirectoryLineEdit(parent=self)
 
-        self.queue_button = QtGui.QPushButton('Queue', self)
+        self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
 
-        self.abort_button = QtGui.QPushButton('Abort', self)
+        self.abort_button = QtWidgets.QPushButton('Abort', self)
         self.abort_button.setEnabled(False)
         self.abort_button.clicked.connect(self.abort)
 
@@ -176,7 +176,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         self.browser_widget.open_button.clicked.connect(self.open_experiment)
         self.browser = self.browser_widget.browser
 
-        self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.browser.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
         self.browser.itemChanged.connect(self.browser_item_changed)
 
@@ -210,12 +210,12 @@ class ManagedWindowBase(QtGui.QMainWindow):
             )
 
     def _layout(self):
-        self.main = QtGui.QWidget(self)
+        self.main = QtWidgets.QWidget(self)
 
-        inputs_dock = QtGui.QWidget(self)
-        inputs_vbox = QtGui.QVBoxLayout(self.main)
+        inputs_dock = QtWidgets.QWidget(self)
+        inputs_vbox = QtWidgets.QVBoxLayout(self.main)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.queue_button)
@@ -223,17 +223,18 @@ class ManagedWindowBase(QtGui.QMainWindow):
         hbox.addStretch()
 
         if self.directory_input:
-            vbox = QtGui.QVBoxLayout()
+            vbox = QtWidgets.QVBoxLayout()
             vbox.addWidget(self.directory_label)
             vbox.addWidget(self.directory_line)
             vbox.addLayout(hbox)
 
         if self.inputs_in_scrollarea:
-            inputs_scroll = QtGui.QScrollArea()
+            inputs_scroll = QtWidgets.QScrollArea()
             inputs_scroll.setWidgetResizable(True)
-            inputs_scroll.setFrameStyle(QtGui.QScrollArea.NoFrame)
+            inputs_scroll.setFrameStyle(QtWidgets.QScrollArea.Shape.NoFrame)
 
-            self.inputs.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
+            self.inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
+                                      QtWidgets.QSizePolicy.Policy.Fixed)
             inputs_scroll.setWidget(self.inputs)
             inputs_vbox.addWidget(inputs_scroll, 1)
 
@@ -248,32 +249,32 @@ class ManagedWindowBase(QtGui.QMainWindow):
         inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
 
-        dock = QtGui.QDockWidget('Input Parameters')
+        dock = QtWidgets.QDockWidget('Input Parameters')
         dock.setWidget(inputs_dock)
-        dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
+        dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, dock)
 
         if self.use_sequencer:
-            sequencer_dock = QtGui.QDockWidget('Sequencer')
+            sequencer_dock = QtWidgets.QDockWidget('Sequencer')
             sequencer_dock.setWidget(self.sequencer)
-            sequencer_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, sequencer_dock)
+            sequencer_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, sequencer_dock)
 
         if self.use_estimator:
-            estimator_dock = QtGui.QDockWidget('Estimator')
+            estimator_dock = QtWidgets.QDockWidget('Estimator')
             estimator_dock.setWidget(self.estimator)
-            estimator_dock.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
-            self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, estimator_dock)
+            estimator_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
 
-        self.tabs = QtGui.QTabWidget(self.main)
+        self.tabs = QtWidgets.QTabWidget(self.main)
         for wdg in self.widget_list:
             self.tabs.addTab(wdg, wdg.name)
 
-        splitter = QtGui.QSplitter(QtCore.Qt.Vertical)
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
         splitter.addWidget(self.tabs)
         splitter.addWidget(self.browser_widget)
 
-        vbox = QtGui.QVBoxLayout(self.main)
+        vbox = QtWidgets.QVBoxLayout(self.main)
         vbox.setSpacing(0)
         vbox.addWidget(splitter)
 
@@ -292,7 +293,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         if column == 0:
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
-            if state == 0:
+            if state == QtCore.Qt.CheckState.Unchecked:
                 for wdg, curve in zip(self.widget_list, experiment.curve_list):
                     wdg.remove(curve)
             else:
@@ -305,7 +306,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         if item is not None:
             experiment = self.manager.experiments.with_browser_item(item)
 
-            menu = QtGui.QMenu(self)
+            menu = QtWidgets.QMenu(self)
 
             # Open
             action_open = QtGui.QAction(menu)
@@ -330,44 +331,64 @@ class ManagedWindowBase(QtGui.QMainWindow):
             action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
             menu.addAction(action_remove)
 
+            # Delete
+            action_delete = QtGui.QAction(menu)
+            action_delete.setText("Delete Data File")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment:  # Experiment running
+                    action_delete.setEnabled(False)
+            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
+            menu.addAction(action_delete)
+
             # Use parameters
             action_use = QtGui.QAction(menu)
             action_use.setText("Use These Parameters")
             action_use.triggered.connect(
                 lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
-            menu.exec_(self.browser.viewport().mapToGlobal(position))
+            menu.exec(self.browser.viewport().mapToGlobal(position))
 
     def remove_experiment(self, experiment):
-        reply = QtGui.QMessageBox.question(self, 'Remove Graph',
-                                           "Are you sure you want to remove the graph?",
-                                           QtGui.QMessageBox.Yes |
-                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
+                                               "Are you sure you want to remove the graph?",
+                                               QtWidgets.QMessageBox.StandardButton.Yes |
+                                               QtWidgets.QMessageBox.StandardButton.No,
+                                               QtWidgets.QMessageBox.StandardButton.No)
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.manager.remove(experiment)
+
+    def delete_experiment_data(self, experiment):
+        reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
+                                               "Are you sure you want to delete this data file?",
+                                               QtWidgets.QMessageBox.StandardButton.Yes |
+                                               QtWidgets.QMessageBox.StandardButton.No,
+                                               QtWidgets.QMessageBox.StandardButton.No)
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            self.manager.remove(experiment)
+            os.unlink(experiment.data_filename)
 
     def show_experiments(self):
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
-            item.setCheckState(0, QtCore.Qt.Checked)
+            item.setCheckState(0, QtCore.Qt.CheckState.Checked)
 
     def hide_experiments(self):
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
-            item.setCheckState(0, QtCore.Qt.Unchecked)
+            item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
 
     def clear_experiments(self):
         self.manager.clear()
 
     def open_experiment(self):
         dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
-        if dialog.exec_():
+        if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
                 if filename in self.manager.experiments:
-                    QtGui.QMessageBox.warning(
+                    QtWidgets.QMessageBox.warning(
                         self, "Load Error",
                         "The file %s cannot be opened twice." % os.path.basename(filename)
                     )
@@ -379,12 +400,12 @@ class ManagedWindowBase(QtGui.QMainWindow):
                     for curve in experiment.curve_list:
                         if curve:
                             curve.update_data()
-                    experiment.browser_item.progressbar.setValue(100.)
+                    experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
     def change_color(self, experiment):
-        color = QtGui.QColorDialog.getColor(
+        color = QtWidgets.QColorDialog.getColor(
             parent=self)
         if color.isValid():
             pixelmap = QtGui.QPixmap(24, 24)

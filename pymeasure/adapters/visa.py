@@ -23,12 +23,13 @@
 #
 
 import logging
+from warnings import warn
 
 import pyvisa
 import numpy as np
-from pkg_resources import parse_version
 
 from .adapter import Adapter
+from .protocol import ProtocolAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -45,8 +46,18 @@ class VISAAdapter(Adapter):
         or GPIB address integer that identifies the target of the connection
     :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
         string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
-    :param preprocess_reply: optional callable used to preprocess strings
+    :param preprocess_reply: An optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
+
+    :param float query_delay: Time in s to wait after writing and before reading.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `wait_until_read` method instead.
+
+    :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
 
     :Kwargs:
@@ -58,7 +69,7 @@ class VISAAdapter(Adapter):
         different instrument interfaces, but also enable the instrument user to *override any
         setting* if their situation demands it.
 
-        A kwarg that names a pyVISA interface type (most commonly ``asrl``, ``gpib``, ``tcpip`` or
+        A kwarg that names a pyVISA interface type (most commonly ``asrl``, ``gpib``, ``tcpip``, or
         ``usb``) is a dictionary with keyword arguments defining defaults specific to that
         interface. Example: ``asrl={'baud_rate': 4200}``.
 
@@ -72,12 +83,23 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    def __init__(self, resource_name, visa_library='', preprocess_reply=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply)
-        if not VISAAdapter.has_supported_version():
-            raise NotImplementedError("Please upgrade PyVISA to version 1.8 or later.")
-
-        if isinstance(resource_name, int):
+    def __init__(self, resource_name, visa_library='', preprocess_reply=None,
+                 query_delay=0, log=None, **kwargs):
+        super().__init__(preprocess_reply=preprocess_reply, log=log, query_delay=query_delay)
+        if query_delay:
+            warn("Implement in Instrument's 'wait_until_read' instead.", FutureWarning)
+        if isinstance(resource_name, ProtocolAdapter):
+            self.connection = resource_name
+            self.connection.write_raw = self.connection.write_bytes
+            self.read_bytes = self.connection.read_bytes
+            return
+        elif isinstance(resource_name, VISAAdapter):
+            # Allow to reuse the connection.
+            self.resource_name = getattr(resource_name, "resource_name", None)
+            self.connection = resource_name.connection
+            self.query_delay = resource_name.query_delay
+            return
+        elif isinstance(resource_name, int):
             resource_name = "GPIB0::%d::INSTR" % resource_name
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
@@ -100,45 +122,55 @@ class VISAAdapter(Adapter):
             **kwargs
         )
 
-    @staticmethod
-    def has_supported_version():
-        """ Returns True if the PyVISA version is greater than 1.8 """
-        if hasattr(pyvisa, '__version__'):
-            return parse_version(pyvisa.__version__) >= parse_version('1.8')
+    def _write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
+
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
+        """
+        self.connection.write(command, **kwargs)
+
+    def _write_bytes(self, content, **kwargs):
+        """Write the bytes `content` to the instrument.
+
+        :param bytes content: The bytes to write to the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
+        """
+        self.connection.write_raw(content, **kwargs)
+
+    def _read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer.
+
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (excluding read_termination).
+        """
+        return self.connection.read(**kwargs)
+
+    def _read_bytes(self, count, **kwargs):
+        """Read a certain number of bytes from the instrument.
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
+        """
+        if count == -1:
+            return self.connection.read_raw(**kwargs)
         else:
-            return False
-
-    def write(self, command):
-        """ Writes a command to the instrument
-
-        :param command: SCPI command string to be sent to the instrument
-        """
-        self.connection.write(command)
-
-    def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII response
-
-        :returns: String ASCII response of the instrument.
-        """
-        return self.connection.read()
-
-    def read_bytes(self, size):
-        """ Reads specified number of bytes from the buffer and returns
-        the resulting ASCII response
-
-        :param size: Number of bytes to read from the buffer
-        :returns: String ASCII response of the instrument.
-        """
-        return self.connection.read_bytes(size)
+            return self.connection.read_bytes(count, **kwargs)
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
         ASCII response
 
+        .. deprecated:: 0.11
+           Call `Instrument.ask` instead.
+
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
+        warn("Deprecated call `Instrument.ask` instead.", FutureWarning)
         return self.connection.query(command)
 
     def ask_values(self, command, **kwargs):
@@ -146,39 +178,38 @@ class VISAAdapter(Adapter):
         values from the result. This leverages the `query_ascii_values` method
         in PyVISA.
 
+        .. deprecated:: 0.11
+            Call `Instrument.values` instead.
+
         :param command: SCPI command to be sent to the instrument
         :param kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
+        warn("Deprecated, call `Instrument.values` instead.", FutureWarning)
+
         return self.connection.query_ascii_values(command, **kwargs)
 
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
+
+        .. deprecated:: 0.11
+            Call `Instrument.binary_values` instead.
 
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
+        warn("Deprecated, call `Instrument.binary_values` instead.",
+             FutureWarning)
         self.connection.write(command)
         binary = self.connection.read_raw()
         # header = binary[:header_bytes]
         data = binary[header_bytes:]
         return np.fromstring(data, dtype=dtype)
 
-    def write_binary_values(self, command, values, **kwargs):
-        """ Write binary data to the instrument, e.g. waveform for signal generators
-
-        :param command: SCPI command to be sent to the instrument
-        :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto `write_binary_values`
-        :returns: number of bytes written
-        """
-
-        return self.connection.write_binary_values(command, values, **kwargs)
-
     def wait_for_srq(self, timeout=25, delay=0.1):
-        """ Blocks until a SRQ, and leaves the bit high
+        """ Block until a SRQ, and leave the bit high
 
         :param timeout: Timeout duration in seconds
         :param delay: Time delay between checking SRQ in seconds

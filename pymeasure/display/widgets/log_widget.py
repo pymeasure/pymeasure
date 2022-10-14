@@ -25,14 +25,14 @@
 import logging
 
 from ..log import LogHandler
-from ..Qt import QtGui
+from ..Qt import QtWidgets
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LogWidget(TabWidget, QtGui.QWidget):
+class LogWidget(TabWidget, QtWidgets.QWidget):
     """ Widget to display logging information in GUI
 
     It is recommended to include this widget in all subclasses of
@@ -45,7 +45,7 @@ class LogWidget(TabWidget, QtGui.QWidget):
         self._layout()
 
     def _setup_ui(self):
-        self.view = QtGui.QPlainTextEdit()
+        self.view = QtWidgets.QPlainTextEdit()
         self.view.setReadOnly(True)
         self.handler = LogHandler()
         self.handler.setFormatter(logging.Formatter(
@@ -55,7 +55,7 @@ class LogWidget(TabWidget, QtGui.QWidget):
         self.handler.connect(self.view.appendPlainText)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
         vbox.addWidget(self.view)

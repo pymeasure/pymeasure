@@ -27,7 +27,7 @@ import logging
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from ..widgets import (
     PlotWidget,
 )
@@ -36,25 +36,19 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class PlotterWindow(QtGui.QMainWindow):
+class PlotterWindow(QtWidgets.QMainWindow):
     """
     A window for plotting experiment results. Should not be
     instantiated directly, but only via the
     :class:`~pymeasure.display.plotter.Plotter` class.
-
     .. seealso::
-
         Tutorial :ref:`tutorial-plotterwindow`
             A tutorial and example code for using the Plotter and PlotterWindow.
-
     .. attribute plot::
-
         The `pyqtgraph.PlotItem`_ object for this window. Can be
         accessed to further customise the plot view programmatically, e.g.,
         display log-log or semi-log axes by default, change axis range, etc.
-
     .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
     """
 
     def __init__(self, plotter, refresh_time=0.1, linewidth=1, parent=None):
@@ -64,19 +58,19 @@ class PlotterWindow(QtGui.QMainWindow):
         columns = plotter.results.procedure.DATA_COLUMNS
 
         self.setWindowTitle('Results Plotter')
-        self.main = QtGui.QWidget(self)
+        self.main = QtWidgets.QWidget(self)
 
-        vbox = QtGui.QVBoxLayout(self.main)
+        vbox = QtWidgets.QVBoxLayout(self.main)
         vbox.setSpacing(0)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(6)
         hbox.setContentsMargins(-1, 6, -1, -1)
 
-        file_label = QtGui.QLabel(self.main)
+        file_label = QtWidgets.QLabel(self.main)
         file_label.setText('Data Filename:')
 
-        self.file = QtGui.QLineEdit(self.main)
+        self.file = QtWidgets.QLineEdit(self.main)
         self.file.setText(plotter.results.data_filename)
 
         hbox.addWidget(file_label)

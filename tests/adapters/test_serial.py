@@ -28,21 +28,45 @@ import serial
 from pymeasure.adapters import SerialAdapter
 
 
-def make_adapter(**kwargs):
-    return SerialAdapter(serial.serial_for_url("loop://", **kwargs))
+@pytest.fixture
+def adapter():
+    return SerialAdapter(serial.serial_for_url("loop://", timeout=0.2))
+
+
+@pytest.mark.parametrize("term", (("", "\n", "123\r")))
+def test_write_termination(adapter, term):
+    adapter.write_termination = term
+    adapter.write("abc")
+    assert adapter.read() == "abc" + term
+
+
+@pytest.mark.parametrize("term", (("", "\n", "\r\n", "4.1123")))
+def test_read_termination(adapter, term):
+    adapter.read_termination = term
+    adapter.write("abc" + term)
+    assert adapter.read() == "abc"
 
 
 @pytest.mark.parametrize("msg", ["OUTP\n", "POWER 22 dBm\n"])
-def test_adapter_write(msg):
-    adapter = make_adapter(timeout=0.2)
+def test_adapter_write_read(adapter, msg):
     adapter.write(msg)
-    assert(adapter.read() == msg)
+    assert adapter.read() == msg
+
+
+@pytest.mark.parametrize("msg", [b"OUTP\n", b"POWER 22 dBm\n"])
+def test_write_bytes(adapter, msg):
+    adapter.write_bytes(msg)
+    assert adapter.read() == msg.decode()
+
+
+def test_read_bytes(adapter):
+    adapter.write_bytes(b"basd\x02fasdf\n")
+    assert adapter.read_bytes(11) == b"basd\x02fasdf\n"
 
 
 @pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),
                                                  (range(100), b'OUTP#3100' + bytes(range(100)))])
-def test_adapter_write_binary_values(test_input, expected):
-    adapter = make_adapter(timeout=0.2)
+def test_adapter_write_binary_values(adapter, test_input, expected):
     adapter.write_binary_values("OUTP", test_input, datatype='B')
     # Add 10 bytes more, just to check that no extra bytes are present
     assert(adapter.connection.read(len(expected) + 10) == expected)

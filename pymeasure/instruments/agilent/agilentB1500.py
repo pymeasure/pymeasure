@@ -49,9 +49,9 @@ class AgilentB1500(Instrument):
     measurements.
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Agilent B1500 Semiconductor Parameter Analyzer",
             **kwargs
         )
@@ -881,7 +881,7 @@ class AgilentB1500(Instrument):
         :return: Measurement data
         :rtype: tuple
         """
-        data = self.adapter.read_bytes(self._data_format.size * nchannels)
+        data = self.read_bytes(self._data_format.size * nchannels)
         data = data.decode("ASCII")
         data = data.rstrip('\r,')
         # ',' if more data in buffer, '\r' if last data point
@@ -1810,7 +1810,7 @@ class QueryLearn():
     def _get_smu(key, smu_references):
         # command without channel
         command = re.findall(r'(?P<command>[A-Z]+)', key)[0]
-        channel = key[len(command):]
+        channel = key[len(command) :]  # noqa: E203
         return smu_references[int(channel)]
 
     # SMU Modes
