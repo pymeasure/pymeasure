@@ -36,7 +36,8 @@ log.addHandler(logging.NullHandler())
 
 class EurotestHPP120256(Instrument):
     """ Represents the Euro Test High Voltage DC Source model HPP-120-256
-    and provides a high-level for interacting with the instrument.
+    and provides a high-level for interacting with the instrument using the
+    Euro Test command set (Not SCPI command set).
 
     .. code-block:: python
 
@@ -87,6 +88,7 @@ class EurotestHPP120256(Instrument):
     COMMAND_DELAY = 0.2  # s
 
     response_encoding = "iso-8859-2"
+    f_numbers_regex_pattern = r'([+-]?[\d\.]+)'
 
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
@@ -99,7 +101,8 @@ class EurotestHPP120256(Instrument):
         # getter device response: "U, RANGE=3.000kV, VALUE=2.458kV"
         validator=strict_range,
         values=VOLTAGE_RANGE,
-        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
+        get_process=lambda v:
+        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
     )
 
     current_limit = Instrument.control(
@@ -111,7 +114,8 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=CURRENT_RANGE,
-        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
+        get_process=lambda v:
+        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
     )
 
     voltage_ramp = Instrument.control(
@@ -123,7 +127,8 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
-        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
+        get_process=lambda v:
+        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
     )
 
     measure_voltage = Instrument.measurement(
@@ -132,7 +137,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then measure_voltage will return 2458.0,
         # hence the convenience of the get_process.
-        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
+        get_process=lambda v:
+        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
     )
 
     voltage_range = Instrument.measurement(
@@ -141,7 +147,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
-        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0])
+        get_process=lambda v:
+        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[1])[0])
     )
 
     measure_current = Instrument.measurement(
@@ -150,7 +157,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA", then measure_current_range will return a 1739.0,
         # hence the convenience of the get_process."""
-        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[2])[0])
+        get_process=lambda v:
+        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
     )
 
     current_range = Instrument.measurement(
@@ -159,7 +167,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
-        get_process=lambda v: float(re.findall(r'[-+]?([0-9]*\.[0-9]+|[0-9]+)', v[1])[0])
+        get_process=lambda v:
+        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[1])[0])
     )
 
     enable_kill = Instrument.setting(
