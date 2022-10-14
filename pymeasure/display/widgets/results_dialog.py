@@ -45,12 +45,16 @@ class ResultsDialog(QtWidgets.QFileDialog):
     :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>` class
     """
 
-    def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
+    def __init__(self, columns, x_axis=None, y_axis=None, parent=None, setup=True):
         super().__init__(parent)
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
-        self._setup_ui()
+        self.plot_widget = PlotWidget("Results", self.columns,
+                                      self.x_axis, self.y_axis, parent=self)
+        self.plot = self.plot_widget.plot
+        if setup:
+            self._setup_ui()
 
     def _setup_ui(self):
         preview_tab = QtWidgets.QTabWidget()
@@ -59,9 +63,6 @@ class ResultsDialog(QtWidgets.QFileDialog):
         vbox_widget = QtWidgets.QWidget()
         param_vbox_widget = QtWidgets.QWidget()
 
-        self.plot_widget = PlotWidget("Results", self.columns,
-                                      self.x_axis, self.y_axis, parent=self)
-        self.plot = self.plot_widget.plot
         self.preview_param = QtWidgets.QTreeWidget()
         param_header = QtWidgets.QTreeWidgetItem(["Name", "Value"])
         self.preview_param.setHeaderItem(param_header)
