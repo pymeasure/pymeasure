@@ -42,6 +42,17 @@ def test_write_multiple_values():
         inst.read()
 
 
+def test_write_multiple_values_decimal_address():
+    # Communication from manual.
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x10\x01\x0A\x00\x04\x08\x00\x00\x03\xE8\xFF\xFF\xFC\x18\x8D\xE9",
+          b"\x01\x10\x01\x0A\x00\x04\xE0\x34")]
+    ) as inst:
+        inst.write("W,266,1000,-1000")
+        inst.read()
+
+
 def test_write_values_CRC_error():
     """Test whether an invalid response CRC code raises an Exception."""
     with expected_protocol(
@@ -137,3 +148,12 @@ def test_temperature():
          b"\x01\x03\x04\x00\x00\x03\xE8\xFA\x8D")],
     ) as inst:
         assert inst.temperature == 100
+
+
+def test_ping():
+    # Communication from manual.
+    with expected_protocol(
+        TC038D,
+        [(b"\x01\x08\x00\x00\x12\x34\xed\x7c", b"\x01\x08\x00\x00\x12\x34\xed\x7c")],
+    ) as inst:
+        inst.ping(4660)
