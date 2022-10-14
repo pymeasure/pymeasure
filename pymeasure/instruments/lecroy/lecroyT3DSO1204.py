@@ -479,18 +479,12 @@ class LeCroyT3DSO1204(Instrument):
         :return: handle to the selected source. """
         if isinstance(source, str):
             source = _sanitize_source(source)
-        if source in [1, "C1"]:
-            return self.ch1
-        elif source in [2, "C2"]:
-            return self.ch2
-        elif source in [3, "C3"]:
-            return self.ch3
-        elif source in [4, "C4"]:
-            return self.ch4
-        elif source == "MATH":
+        if source == "MATH":
             return self
+        elif source == "LINE":
+            raise ValueError("LINE is not a valid channel")
         else:
-            raise ValueError("Invalid source: must be 1, 2, 3, 4 or C1, C2, C3, C4, MATH.")
+            return getattr(self, f"ch{source if isinstance(source, int) else source[-1]}")
 
     def autoscale(self):
         """ Autoscale displayed channels. """
