@@ -44,10 +44,8 @@ class EurotestHPP120256(Instrument):
 
     response = hpp120256.id
     print(response)
-    status_lam = hpp120256.lam_status()
-    print(status_lam)
-    status = hpp120256.status()
-    print(status)
+    print(hpp120256.lam_status)
+    print(hpp120256.status)
 
     hpp120256.ramp_to_zero(100.0)
 
@@ -186,67 +184,35 @@ class EurotestHPP120256(Instrument):
         map_values=True
     )
 
-    def ask(self, command):
-        """ Overrides Instrument ask method for including query_delay time on parent call.
-        :param command: Command string to be sent to the instrument.
-        :returns: String returned by the device without read_termination.
-        """
-        return super().ask(command, self.query_delay)
+    id = Instrument.measurement(
+        "ID",
+        """ Returns the identification of the instrument """,
+        get_process=lambda v:
+        v[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+    )
 
-    @property
-    def id(self):
-        """ Returns the identification of the instrument """
-        log.info("Requesting instrument identification...")
-
-        response = self.ask("ID")
-        return response.encode(self.response_encoding).decode('utf-8', 'ignore')
-
-    # status = Instrument.measurement(
-    #     "STATUS,DI",
-    #     """ Returns the unit Status which is a 16bits response where
-    #     every bit indicates the state of one subsystem of the HV Source.""",
-    #     get_process=lambda v: v.encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
-    # )
-
-    # lam_status = Instrument.measurement(
-    #     "STATUS,LAM",
-    #     """ Returns the LAM status which is the status of the untit from the point
-    #     of view of the process. Fo example, as a response of asking STATUS,LAM, the HV
-    #     voltage could response one of the messages from the next list:
-    #     LAM,ERROR External Inhibit occurred during Kill enable
-    #     LAM,INHIBIT External Inhibit occurred
-    #     LAM,TRIP ERROR Software current trip occurred
-    #     LAM,INPUT ERROR Wrong command received
-    #     LAM,OK Status OK""",
-    #     get_process=lambda v: v.encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
-    # )
-
-    def status(self):
+    status = Instrument.measurement(
+        "STATUS,DI",
         """ Returns the unit Status which is a 16bits response where
-        every bit indicates the state of one subsystem of the HV Source."""
+        every bit indicates the state of one subsystem of the HV Source.""",
         # TODO: Decode the status string bit to get a more info about yhe state of the instrument
-        log.info("Requesting instrument status...")
+        get_process=lambda v:
+        v[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+    )
 
-        response = self.ask("STATUS,DI")
-        response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
-        log.debug(f"Instrument status = {response}")
-        return response
-
-    def lam_status(self):
-        """ Returns the LAM status which is the status of the untit from the point
+    lam_status = Instrument.measurement(
+        "STATUS,LAM",
+        """ Returns the LAM status which is the status of the unit from the point
         of view of the process. Fo example, as a response of asking STATUS,LAM, the HV
         voltage could response one of the messages from the next list:
         LAM,ERROR External Inhibit occurred during Kill enable
         LAM,INHIBIT External Inhibit occurred
         LAM,TRIP ERROR Software current trip occurred
         LAM,INPUT ERROR Wrong command received
-        LAM,OK Status OK"""
-        log.info("Requesting instrument STATUS LAM...")
-
-        response = self.ask("STATUS,LAM")
-        response = response.encode(self.response_encoding).decode('utf-8', 'ignore')
-        log.debug(f"Instrument STATUS LAM = {response}")
-        return response
+        LAM,OK Status OK""",
+        get_process=lambda v:
+        v[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+    )
 
     def emergency_off(self):
         """ The output of the HV source will be switched OFF permanently and the values
@@ -329,6 +295,13 @@ class EurotestHPP120256(Instrument):
 
         # if you are here is because the voltage_setting
         # has been reaches at the output of the HV Voltage source
+
+    def ask(self, command):
+        """ Overrides Instrument ask method for including query_delay time on parent call.
+        :param command: Command string to be sent to the instrument.
+        :returns: String returned by the device without read_termination.
+        """
+        return super().ask(command, self.query_delay)
 
     # Constructor
     def __init__(self,
