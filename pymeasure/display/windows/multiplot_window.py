@@ -86,7 +86,7 @@ class MultiPlotWindow(ManagedWindowBase):
                         if curves:
                             for curve in curves:
                                 curve.update_data()
-                    experiment.browser_item.progressbar.setValue(100.)
+                    experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
