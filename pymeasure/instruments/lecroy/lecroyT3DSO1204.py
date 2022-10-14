@@ -874,7 +874,6 @@ class LeCroyT3DSO1204(Instrument):
         preamble = self.waveform_preamble
 
         # Check how many points are to be expected
-        self.write(f"{source}:WF? DAT2")
         values = self._digitize(source=source)
         expected_points = _header_sanity_checks(values)
         if requested_points <= 0:
