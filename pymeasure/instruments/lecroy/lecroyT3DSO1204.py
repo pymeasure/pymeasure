@@ -904,6 +904,15 @@ class LeCroyT3DSO1204(Instrument):
         return bytearray(img)
 
     def _process_data(self, xdata, preamble):
+        """ Apply scale and offset to the data points acquired from the scope.
+        - Y axis : the scale is ydiv / 25 and the offset -yoffset. the
+        offset is not applied for the MATH source.
+        - X axis : the scale is sparsing / sampling_rate and the offset is -xdiv * 7. The
+        7 = 14 / 2 factor comes from the fact that there are 14 vertical grid lines and the data
+        starts from the left half of the screen.
+
+        :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble) """
+
         def _scale_data(x):
             value = int.from_bytes([x], byteorder="big", signed=True) * preamble["ydiv"] / 25.
             if preamble["source"] != "MATH":
