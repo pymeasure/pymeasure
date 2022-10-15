@@ -41,20 +41,21 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     """
 
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, linewidth=1, parent=None):
+                 check_status=True, linewidth=1, parent=None, setup=True):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
         self.linewidth = linewidth
-        self._setup_ui()
-        self._layout()
-        if x_axis is not None:
-            self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
-            self.plot_frame.change_x_axis(x_axis)
-        if y_axis is not None:
-            self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
-            self.plot_frame.change_y_axis(y_axis)
+        if setup:
+            self._setup_ui()
+            self._layout()
+            if x_axis is not None:
+                self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
+                self.plot_frame.change_x_axis(x_axis)
+            if y_axis is not None:
+                self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
+                self.plot_frame.change_y_axis(y_axis)
 
     def _setup_ui(self):
         self.columns_x_label = QtWidgets.QLabel(self)

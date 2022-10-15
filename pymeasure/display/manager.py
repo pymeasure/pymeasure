@@ -30,6 +30,7 @@ from .Qt import QtCore
 from .listeners import Monitor
 from ..experiment import Procedure
 from ..experiment.workers import Worker
+from .curves import ResultsCurve
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -260,7 +261,13 @@ class Manager(QtCore.QObject):
         experiment.browser_item.setProgress(100.)
         for curve in experiment.curve_list:
             if curve:
-                curve.update_data()
+                # For single plots, update_data() on ResultsCurve
+                if type(curve) == ResultsCurve:
+                    curve.update_data()
+                # For multiple plots, update_data() on list of ResultsCurve
+                elif type(curve) == list:
+                    for c in curve:
+                        c.update_data()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()
