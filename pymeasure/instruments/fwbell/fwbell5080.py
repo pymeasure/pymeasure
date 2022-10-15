@@ -55,8 +55,7 @@ class FWBell5080(Instrument):
         ":MEASure:FLUX?",
         """ Reads a floating point value of the field in the appropriate units.
         """,
-        get_process=lambda v: float(v[:-2])  # Remove semicolon and units
-
+        get_process=lambda v: float(v.replace('T','').replace('G','').replace('Am',''))  # Remove units
     )
     UNITS = {
         'gauss': 'DC:GAUSS', 'gauss ac': 'AC:GAUSS',
@@ -71,7 +70,7 @@ class FWBell5080(Instrument):
         """,
         validator=strict_discrete_set,
         values=UNITS,
-        map_values=True,
+        map_values=True
     )
 
     range = Instrument.control(
@@ -95,8 +94,6 @@ class FWBell5080(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        # Replace spaces with colon and remove semicolons from instrument response
-        kwargs.setdefault('preprocess_reply', lambda x: x.replace(' ', ':').replace(';', ''))
         super().__init__(
             adapter,
             "F.W. Bell 5080 Handheld Gaussmeter",
@@ -105,6 +102,11 @@ class FWBell5080(Instrument):
                   'timeout': 500},
             **kwargs
         )
+    def read(self):
+        """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
+        method to remove the last 2 characters from the output.
+        """
+        return super().read().replace(' ', ':').replace(';', '') # replace space with colon, remove semicolon
 
     def reset(self):
         """ Resets the instrument. """
