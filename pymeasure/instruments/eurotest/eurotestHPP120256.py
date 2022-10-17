@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 class EurotestHPP120256(Instrument):
     """ Represents the Euro Test High Voltage DC Source model HPP-120-256
-    and provides a high-level for interacting with the instrument using the
+    and provides a high-level interface for interacting with the instrument using the
     Euro Test command set (Not SCPI command set).
 
     .. code-block:: python
