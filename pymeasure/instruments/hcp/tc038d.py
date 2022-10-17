@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from enum import Enum
+
 from pymeasure.instruments import Instrument
 
 
@@ -38,6 +40,13 @@ def CRC16(data):
     return [CRC & 0xFF, CRC >> 8]
 
 
+class Functions(Enum):
+    R = 0x03
+    WRITESINGLE = 0x06
+    ECHO = 0x08  # register address has to be 0
+    W = 0x10  # writing multiple variables
+
+
 class TC038D(Instrument):
     """
     Communication with the HCP TC038D oven.
@@ -51,12 +60,6 @@ class TC038D(Instrument):
     """
 
     byteMode = 4
-
-    functions = {'R': 0x03,
-                 'writeSingle': 0x06,
-                 'echo': 0x08,  # register address has to be 0
-                 'W': 0x10,  # writing multiple variables
-                 }
 
     def __init__(self, adapter, name="TC038D", address=1, timeout=1000,
                  **kwargs):
@@ -75,19 +78,19 @@ class TC038D(Instrument):
         """
         function, address, *values = command.split(",")
         data = [self.address]  # 1B device address
-        data.append(self.functions[function])  # 1B function code
+        data.append(Functions[function].value)  # 1B function code
         address = int(address, 16) if "x" in address else int(address)
         data.extend(address.to_bytes(2, "big"))  # 2B register address
         if function.upper() == "W":
             elements = len(values) * self.byteMode // 2
-            data += [elements >> 8, elements & 0xFF]  # 2B number of elements
+            data.extend(elements.to_bytes(2, "big"))  # 2B number of elements
             data.append(elements * 2)  # 1B number of bytes to write
             for element in values:
                 data.extend(int(element).to_bytes(self.byteMode, "big", signed=True))
         elif function.upper() == "R":
             count = int(values[0]) * self.byteMode // 2 if values else self.byteMode // 2
             data.extend(count.to_bytes(2, "big"))  # 2B number of elements to read
-        elif function == "echo":
+        elif function == "ECHO":
             data[-2:] = [0, 0]
             if values:
                 data.extend(int(values[0]).to_bytes(2, "big"))  # 2B test data
@@ -98,7 +101,7 @@ class TC038D(Instrument):
         """Read response and interpret the number"""
         # Slave address, function
         got = self.read_bytes(2)
-        if got[1] == self.functions['R']:
+        if got[1] == Functions.R.value:
             # length of data to follow
             length = self.read_bytes(1)
             # data length, 2 Byte CRC
@@ -106,12 +109,12 @@ class TC038D(Instrument):
             if read[-2:] != bytes(CRC16(got + length + read[:-2])):
                 raise ConnectionError("Response CRC does not match.")
             return int.from_bytes(read[:-2], byteorder="big", signed=True)
-        elif got[1] == self.functions['W']:
+        elif got[1] == Functions.W.value:
             # start address, number elements, CRC; each 2 Bytes long
             got += self.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
-        elif got[1] == self.functions['echo']:
+        elif got[1] == Functions.ECHO.value:
             # start address 0, data, CRC; each 2B
             got += self.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
@@ -133,8 +136,8 @@ class TC038D(Instrument):
         self.read()
 
     def ping(self, test_data=0):
-        """Test the connection sending an integer up to 65535."""
-        assert self.ask(f"echo,0,{test_data}") == test_data
+        """Test the connection sending an integer up to 65535, checks the response."""
+        assert self.ask(f"ECHO,0,{test_data}") == test_data
 
     setpoint = Instrument.control(
         "R,0x106", "W,0x106,%i",
