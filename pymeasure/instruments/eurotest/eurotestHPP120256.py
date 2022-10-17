@@ -107,7 +107,7 @@ class EurotestHPP120256(Instrument):
 
     current_limit = Instrument.control(
         "STATUS,I", "I,%.3fmA",
-        """ A floating point property that represents the output current limit setting (in mAmps)
+        """ A floating point property that represents the output current limit setting (in mA)
         of the HV Source. This property can be set.""",
         # When this property acts as get, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA", then current_limit willreturn 1739.0,
