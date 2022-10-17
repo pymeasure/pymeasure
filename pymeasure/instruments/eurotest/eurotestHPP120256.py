@@ -110,7 +110,7 @@ class EurotestHPP120256(Instrument):
         """ A floating point property that represents the output current limit setting (in mA)
         of the HV Source. This property can be set.""",
         # When this property acts as get, the instrument will return a string like this:
-        # "I, RANGE=5000mA, VALUE=1739mA", then current_limit willreturn 1739.0,
+        # "I, RANGE=5000mA, VALUE=1739mA", then current_limit will return 1739.0,
         # hence the convenience of the get_process.
         validator=strict_range,
         values=CURRENT_RANGE,
