@@ -267,7 +267,7 @@ class EurotestHPP120256(Instrument):
     def ramp_to_zero(self, ramp):
         """
         Sets the voltage output setting to zero and the ramp setting
-        to a determinated value done by the ramp parameter.
+        to a value determined by the ramp parameter.
         In summary, the method conducts (ramps) the voltage output to zero
         at a determinated voltage changing rate (ramp in V/s).
         :param ramp: Is the changing rate (ramp in V/s) for the ramp setting
