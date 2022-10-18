@@ -199,9 +199,9 @@ Writing properties
 ==================
 
 In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set. 
-PyMeasure comes with two convenience functions for making properties for classes. 
-The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that issues a GPIB/SCPI requests when the value is used. 
-For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added above the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
+PyMeasure comes with three convenience functions for making properties for classes.
+The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that can only read values from an instrument.
+For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
 
@@ -227,6 +227,8 @@ When we use this property we will get the identification information.
     >>> extreme.id           # Reads "*IDN?"
     'Extreme 5000 identification from instrument'
 
+Note that the :code:`id` property is already defined for SCPI instruments, so you do not need to implement it for your instruments.
+
 The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
 
 .. testcode::
@@ -251,7 +253,9 @@ We can use this property to set the voltage to 100 mV, which will execute the co
     >>> extreme.voltage              # Reads ":VOLT?"
     0.1
 
-Using :func:`Instrument.control <pymeasure.instruments.Instrument.control>` and :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` functions, you can create a number of properties for basic measurements and controls. 
+Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function can only set, but not read values.
+
+Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
 
 The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at once, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
 
@@ -448,6 +452,34 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     'Y'
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be significantly extended by using validators and maps.
+
+Boolean properties
+******************
+
+The idea of using maps can be leveraged to implement properties where the user-facing values are booleans, so you can interact in a pythonic way using :code:`True` and :code:`False`:
+
+.. testcode::
+
+    Extreme5000.output_enabled = Instrument.control(
+        "OUTP?", "OUTP %d",
+        """A boolean property that turns the output on (True) or off (False).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc.
+    )
+
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.output_enabled = True
+    >>> extreme.read()
+    '1'
+    >>> extreme.output_enabled = False
+    >>> extreme.output_enabled
+    False
+
+Good names for boolean properties are chosen such that they could also be a yes/no question: "Is the output enabled?" -> :code:`output_enabled`, :code:`display_active`, etc.
 
 Processing of set values
 ************************
