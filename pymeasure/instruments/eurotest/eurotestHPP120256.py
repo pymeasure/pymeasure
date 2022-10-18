@@ -183,7 +183,7 @@ class EurotestHPP120256(Instrument):
 
     current_range = Instrument.measurement(
         "STATUS,MI",
-        """ Measures the actual output current range of the power supply (mAmps).""",
+        """ Measures the actual output current range of the power supply (mA).""",
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
