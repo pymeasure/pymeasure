@@ -90,6 +90,26 @@ class EurotestHPP120256(Instrument):
     response_encoding = "iso-8859-2"
     f_numbers_regex_pattern = r'([+-]?([\d]*\.)?[\d]+)'
 
+    def __init__(self,
+                 adapter,
+                 includeSCPI=False,
+                 query_delay=0.3,
+                 timeout=5000,
+                 **kwargs):
+
+        super().__init__(
+            adapter,
+            "Euro Test High Voltage DC Source model HPP-120-256",
+            write_termination="\n",
+            read_termination="",
+            send_end=True,
+            includeSCPI=includeSCPI,
+            **kwargs
+        )
+
+        self.query_delay = query_delay
+        self.timeout = timeout
+
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
     # ####################################
@@ -311,24 +331,3 @@ class EurotestHPP120256(Instrument):
         :returns: String returned by the device without read_termination.
         """
         return super().ask(command, self.query_delay)
-
-    # Constructor
-    def __init__(self,
-                 adapter,
-                 includeSCPI=False,
-                 query_delay=0.3,
-                 timeout=5000,
-                 **kwargs):
-
-        super().__init__(
-            adapter,
-            "Euro Test High Voltage DC Source model HPP-120-256",
-            write_termination="\n",
-            read_termination="",
-            send_end=True,
-            includeSCPI=includeSCPI,
-            **kwargs
-        )
-
-        self.query_delay = query_delay
-        self.timeout = timeout
