@@ -105,6 +105,13 @@ This is a minimal instrument definition:
 
 Make sure to include the PyMeasure license to each file, and add yourself as an author to the :code:`AUTHORS.txt` file.
 
+There is a certain order of elements in an instrument class that is useful to adhere to:
+
+* First, the initializer (the :code:`__init__()` method), this makes it faster to find when browsing the source code.
+* Then class attributes/variables, if you need them.
+* Then properties (pymeasure-specific or generic Python variants). This will be the bulk of the implementation.
+* Finally, any methods.
+
 In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
 
 In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences and are highly encouraged.
