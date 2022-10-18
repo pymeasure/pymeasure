@@ -11,9 +11,21 @@ First import the instrument of interest. ::
 
     from pymeasure.instruments.keithley import Keithley2400
 
-Then construct an object by passing the GPIB address. For this example we connect to the instrument over GPIB (using VISA) with an address of 4. See the :ref:`adapters <adapters>` section below for more details. ::
+Then construct an object by passing the GPIB address. For this example we connect to the instrument over GPIB (using VISA) with an address of 4::
 
     sourcemeter = Keithley2400("GPIB::4")
+
+
+.. note::
+
+    Passing an appropriate resource string is the default method when creating pymeasure instruments.
+    See the :ref:`adapters <adapters>` section below for more details.
+
+    If you are not sure about the correct resource string identifying your instrument, you can run the following code mentioned in the `PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/>`__ to print all available resources::
+
+        import pyvisa
+        rm = pyvisa.ResourceManager()
+        rm.list_resources()
 
 For instruments with standard SCPI commands, an :code:`id` property will return the results of a :code:`*IDN?` SCPI command, identifying the instrument. ::
 
@@ -46,7 +58,13 @@ When the :code:`with`-block is exited, the :code:`shutdown` method of the instru
 Using adapters
 ==============
 
-PyMeasure supports a number of adapters, which are responsible for communicating with the underlying hardware. In the example above, we passed the string "GPIB::4" when constructing the instrument. By default this constructs a VISAAdapter class to connect to the instrument using VISA. Instead of passing a string, we could equally pass an adapter object. ::
+PyMeasure supports a number of adapters, which are responsible for communicating with the underlying hardware.
+In the example above, we passed the string "GPIB::4" when constructing the instrument.
+By default this constructs a VISAAdapter (our most popular, default adapter) to connect to the instrument using VISA.
+Passing a string (or integer in case of GPIB) is by far the most typical way to create pymeasure instruments.
+
+Sometimes, you might need to go beyond the usual setup, which is also possible.
+Instead of passing a string, we could equally pass an adapter object. ::
 
     from pymeasure.adapters import VISAAdapter
 
