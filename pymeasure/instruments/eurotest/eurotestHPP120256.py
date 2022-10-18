@@ -283,7 +283,8 @@ class EurotestHPP120256(Instrument):
 
     def wait_for_voltage_output_set(self, check_period=1.0, timeout=60.0):
         """
-        Waits until HV voltage output reaches the voltage ouput setting.
+        Wait until HV voltage output reaches the voltage setpoint.
+
         Checks the voltage output every check_period seconds and raises an exception
         if the voltage output doesn't reach the voltage setting until the timeout time.
         :param check_period: voltage output will be measured every check_period (seconds) time
