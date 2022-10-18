@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from enum import Enum
+from enum import IntEnum
 
 from pymeasure.instruments import Instrument
 
@@ -40,7 +40,7 @@ def CRC16(data):
     return [CRC & 0xFF, CRC >> 8]
 
 
-class Functions(Enum):
+class Functions(IntEnum):
     R = 0x03
     WRITESINGLE = 0x06
     ECHO = 0x08  # register address has to be 0
@@ -79,7 +79,7 @@ class TC038D(Instrument):
         function, address, *values = command.split(",")
         function = Functions[function]
         data = [self.address]  # 1B device address
-        data.append(function.value)  # 1B function code
+        data.append(function)  # 1B function code
         address = int(address, 16) if "x" in address else int(address)
         data.extend(address.to_bytes(2, "big"))  # 2B register address
         if function == Functions.W:
@@ -102,7 +102,7 @@ class TC038D(Instrument):
         """Read response and interpret the number"""
         # Slave address, function
         got = self.read_bytes(2)
-        if got[1] == Functions.R.value:
+        if got[1] == Functions.R:
             # length of data to follow
             length = self.read_bytes(1)
             # data length, 2 Byte CRC
@@ -110,12 +110,12 @@ class TC038D(Instrument):
             if read[-2:] != bytes(CRC16(got + length + read[:-2])):
                 raise ConnectionError("Response CRC does not match.")
             return int.from_bytes(read[:-2], byteorder="big", signed=True)
-        elif got[1] == Functions.W.value:
+        elif got[1] == Functions.W:
             # start address, number elements, CRC; each 2 Bytes long
             got += self.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
-        elif got[1] == Functions.ECHO.value:
+        elif got[1] == Functions.ECHO:
             # start address 0, data, CRC; each 2B
             got += self.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
