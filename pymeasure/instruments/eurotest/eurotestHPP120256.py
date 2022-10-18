@@ -143,7 +143,7 @@ class EurotestHPP120256(Instrument):
 
     voltage_range = Instrument.measurement(
         "STATUS,MU",
-        """ Measures the actual output voltage range of the HV Source (kV).""",
+        """ Returns the actual output voltage range of the HV Source (kV).""",
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
