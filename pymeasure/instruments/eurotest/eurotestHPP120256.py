@@ -88,7 +88,7 @@ class EurotestHPP120256(Instrument):
     COMMAND_DELAY = 0.2  # s
 
     response_encoding = "iso-8859-2"
-    f_numbers_regex_pattern = r'([+-]?[\d\.]+)'
+    f_numbers_regex_pattern = r'([+-]?([\d]*\.)?[\d]+)'
 
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
