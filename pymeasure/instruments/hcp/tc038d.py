@@ -77,20 +77,21 @@ class TC038D(Instrument):
             - or the number of elements to read (defaults to 1).
         """
         function, address, *values = command.split(",")
+        function = Functions[function]
         data = [self.address]  # 1B device address
-        data.append(Functions[function].value)  # 1B function code
+        data.append(function.value)  # 1B function code
         address = int(address, 16) if "x" in address else int(address)
         data.extend(address.to_bytes(2, "big"))  # 2B register address
-        if function.upper() == "W":
+        if function == Functions.W:
             elements = len(values) * self.byteMode // 2
             data.extend(elements.to_bytes(2, "big"))  # 2B number of elements
             data.append(elements * 2)  # 1B number of bytes to write
             for element in values:
                 data.extend(int(element).to_bytes(self.byteMode, "big", signed=True))
-        elif function.upper() == "R":
+        elif function == Functions.R:
             count = int(values[0]) * self.byteMode // 2 if values else self.byteMode // 2
             data.extend(count.to_bytes(2, "big"))  # 2B number of elements to read
-        elif function == "ECHO":
+        elif function == Functions.ECHO:
             data[-2:] = [0, 0]
             if values:
                 data.extend(int(values[0]).to_bytes(2, "big"))  # 2B test data
