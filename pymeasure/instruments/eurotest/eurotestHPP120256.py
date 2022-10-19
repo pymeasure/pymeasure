@@ -303,8 +303,7 @@ class EurotestHPP120256(Instrument):
         time.sleep(self.COMMAND_DELAY)
         error = 0.02  # error of +-ten volts (0.01kV) to enter into the voltage stable window
         voltage_output = self.measure_voltage
-        voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
-                             (voltage_output < (voltage_output_setting + error))
+        voltage_output_set = math.isclose(voltage_output, voltage_output_setting, reltol=0.0, atol=error)
 
         while not voltage_output_set:
             actual_time = time.time()
