@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
+import math
 
 import re
 import time
@@ -60,7 +61,9 @@ class EurotestHPP120256(Instrument):
     inst.enable_output = "ON"
     time.sleep(1.0)  # Give time to output on
 
-    hpp120256.wait_for_output_voltage_reached(1.0, 40.0)
+    abs_output_voltage_error = 0.02 # kV
+
+    hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 40.0)
 
     # Here voltage HV output should be at 0.0 kV
 
@@ -69,13 +72,13 @@ class EurotestHPP120256(Instrument):
 
     # Now HV output should be rising to reach the 1.0kV at 50.0 V/s
 
-    hpp120256.wait_for_output_voltage_reached(1.0, 40.0)
+    hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 40.0)
 
     # Here voltage HV output should be at 1.0 kV
 
     hpp120256.shutdown(100.0)
 
-    hpp120256.wait_for_output_voltage_reached(1.0, 60.0)
+    hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 60.0)
 
     # Here voltage HV output should be at 0.0 kV
 
@@ -282,17 +285,20 @@ class EurotestHPP120256(Instrument):
         self.voltage = 0
         time.sleep(self.COMMAND_DELAY)
 
-    def wait_for_output_voltage_reached(self, check_period=1.0, timeout=60.0):
+    def wait_for_output_voltage_reached(self, abs_output_voltage_error,
+                                        check_period=1.0, timeout=60.0):
         """
         Wait until HV voltage output reaches the voltage setpoint.
 
         Checks the voltage output every check_period seconds and raises an exception
         if the voltage output doesn't reach the voltage setting until the timeout time.
-        :param check_period: voltage output will be measured every check_period (seconds) time
-        :param timeout: time (seconds) give to the voltage output to reach the voltage setting
+        :param abs_output_voltage_error: absolute error of +-ten volts (0.01kV) for being considered
+        an output voltage reached.
+        :param check_period: voltage output will be measured every check_period (seconds) time.
+        :param timeout: time (seconds) give to the voltage output to reach the voltage setting.
         :return: None
         :raises: Exception if the voltage output can't reach the voltage setting
-        before the timeout completes (seconds)
+        before the timeout completes (seconds).
         """
         log.info("Executing the wait_for_output_voltage_reached function.")
 
@@ -301,9 +307,9 @@ class EurotestHPP120256(Instrument):
 
         voltage_output_setting = self.voltage
         time.sleep(self.COMMAND_DELAY)
-        error = 0.02  # error of +-ten volts (0.01kV) to enter into the voltage stable window
         voltage_output = self.measure_voltage
-        voltage_output_set = math.isclose(voltage_output, voltage_output_setting, reltol=0.0, atol=error)
+        voltage_output_set = math.isclose(voltage_output, voltage_output_setting, reltol=0.0,
+                                          atol=abs_output_voltage_error)
 
         while not voltage_output_set:
             actual_time = time.time()
@@ -314,11 +320,11 @@ class EurotestHPP120256(Instrument):
 
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
             voltage_output = self.measure_voltage
-            voltage_output_set = (voltage_output > (voltage_output_setting - error)) and \
-                                 (voltage_output < (voltage_output_setting + error))
+            voltage_output_set = math.isclose(voltage_output, voltage_output_setting, reltol=0.0,
+                                              atol=abs_output_voltage_error)
             log.debug("voltage_output_valid_range: "
-                      "[" + str(voltage_output_setting - error) +
-                      ", " + str(voltage_output_setting + error) + "]")
+                      "[" + str(voltage_output_setting - abs_output_voltage_error) +
+                      ", " + str(voltage_output_setting + abs_output_voltage_error) + "]")
             log.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
                 raise Exception("Timeout for wait_for_output_voltage_reached function")
