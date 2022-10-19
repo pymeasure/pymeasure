@@ -51,7 +51,7 @@ def test_csv_formatter_format_header():
     """Tests CSVFormatter.format_header() method."""
     columns = ['t', 'x', 'y', 'z', 'V']
     formatter = CSVFormatter(columns=columns)
-    assert formatter.format_header() == 't,x,y,z,V'
+    assert formatter.format_column_header() == 't,x,y,z,V'
 
 
 class Test_csv_formatter_format:

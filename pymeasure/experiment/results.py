@@ -31,6 +31,7 @@ from importlib import import_module
 from importlib.machinery import SourceFileLoader
 from datetime import datetime
 from string import Formatter
+import json
 
 import pandas as pd
 import pint
@@ -195,14 +196,29 @@ class CSVFormatter(logging.Formatter): #change to logging.Filehandler as suggest
                     line.append(f"{value}")
         return self.delimiter.join(line)
 
-    def format_header(self):
+    def format_column_header(self):
         return self.delimiter.join(self.columns)
 
 class Results:
+    """
+    The Results base class provides a convenient interface to reading and
+    writing data in connection with a :class:`.Procedure` object.
+
+    :cvar COMMENT: The character used to identify a comment (default: #)
+    :cvar DELIMITER: The character used to delimit the data (default: ,)
+    :cvar LINE_BREAK: The character used for line breaks (default \\n)
+    :cvar CHUNK_SIZE: The length of the data chuck that is read
+    """
     COMMENT = '#'
     DELIMITER = ','
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
+
+    def __init__(self, procedure):
+
+        self.procedure = procedure
+        self.procedure_class = procedure.__class__
+        self.parameters = procedure.parameter_objects()
 
     def __getstate__(self):
         # Get all information needed to reconstruct procedure
@@ -237,7 +253,147 @@ class Results:
         del self._module
         del self._file
 
-    def text_header(self):
+    def create_resources(self):
+        raise NotImplementedError("Must be patched by subclass to create a resource to write to")
+
+    def create_header(self):
+        raise NotImplementedError("Must be patched by subclass to create a header object for writing to file")
+
+    @staticmethod
+    def get_params_from_header(header, procedure_class=None):
+        raise NotImplementedError("Must be patched by subclass to get params from a header")
+
+    @staticmethod
+    def get_proc_from_params(parameters, procedure_module, procedure_class):
+
+        if procedure_class is not None:
+            procedure = procedure_class()
+        else:
+            procedure = None
+
+        if procedure is None:
+            if procedure_class is None:
+                raise ValueError("Header does not contain the Procedure class")
+            try:
+                procedure_module = import_module(procedure_module)
+                procedure_class = getattr(procedure_module, procedure_class)
+                procedure = procedure_class()
+            except ImportError:
+                procedure = UnknownProcedure(parameters)
+                log.warning("Unknown Procedure being used")
+
+        for name, parameter in procedure.parameter_objects().items():
+            if parameter.name in parameters:
+                value = parameters[parameter.name]
+                setattr(procedure, name, value)
+            else:
+                raise Exception("Missing '{}' parameter when loading '{}' class".format(
+                    parameter.name, procedure_class))
+
+        procedure.refresh_parameters()  # Enforce update of meta data
+        return procedure
+
+    @staticmethod
+    def parse_header(header, procedure_class=None):
+        parameters, procedure_module, procedure_class = Results.get_params_from_header(header, procedure_class)
+        procedure = Results.get_proc_from_params(parameters, procedure_module, procedure_class)
+        return procedure
+
+
+
+
+class JSONResults(Results):
+    """The JSONResults class provides an interface to read an write data
+    in JSON format in connection with a :class: `.Procedure` object."""
+
+    def create_header(self):
+        """Returns a JSON string to accompany datafile so that the procedure can be
+        reconstructed.
+        """
+        param_dict = {}
+        for name, parameter in self.parameter.items():
+            param_dict[name] = parameter.value
+        return json.dumps(param_dict)
+
+    @staticmethod
+    def get_params_from_header(header, procedure_class=None):
+        procedure_module = None
+        parameters = json.loads(header)
+
+        return parameters, procedure_module, procedure_class
+
+
+
+class CSVResults(Results):
+    """ The Results class provides a convenient interface to reading and
+    writing data in connection with a :class:`.Procedure` object.
+
+    :param procedure: Procedure object
+    :param data_filename: The data filename where the data is or should be
+                          stored
+    """
+
+    def __init__(self, procedure, data_filename):
+        if not isinstance(procedure, Procedure):
+            raise ValueError("Results require a Procedure object")
+
+        self._header_count = -1
+
+        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
+
+        super().__init__(procedure)
+
+        if isinstance(data_filename, (list, tuple)):
+            data_filenames, data_filename = data_filename, data_filename[0]
+        else:
+            data_filenames = [data_filename]
+
+        self.data_filename = data_filename
+        self.data_filenames = data_filenames
+
+        if self.resource_exists():  # Assume header is already written
+            self.reload()
+            self.procedure.status = Procedure.FINISHED
+            # TODO: Correctly store and retrieve status
+        else:
+            self.create_resources()
+
+    def resource_exists(self):
+        if os.path.exists(self.data_filename):
+            return True
+        else:
+            return False
+
+
+    def create_resources(self):
+        for filename in self.data_filenames:
+            with open(filename, 'w') as f:
+                f.write(self.create_header())
+                f.write(self.labels())
+        self._data = None
+
+
+    def labels(self):
+        """ Returns the columns labels as a string to be written
+        to the file
+        """
+        return self.formatter.format_column_header() + Results.LINE_BREAK
+
+    def format(self, data):
+        """ Returns a formatted string containing the data to be written
+        to a file
+        """
+        return self.formatter.format(data)
+
+    def parse(self, line):
+        """ Returns a dictionary containing the data from the line """
+        data = {}
+        items = line.split(Results.DELIMITER)
+        for i, key in enumerate(self.procedure.DATA_COLUMNS):
+            data[key] = items[i]
+        return data
+
+    def create_header(self):
         """ Returns a text header to accompany a datafile so that the procedure
         can be reconstructed
         """
@@ -255,7 +411,7 @@ class Results:
         return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
 
     @staticmethod
-    def parse_text_header(header, procedure_class=None):
+    def get_params_from_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
         header text.
         """
@@ -285,95 +441,7 @@ class Results:
                     raise Exception("Error partitioning header line %s." % line)
                 else:
                     parameters[partitioned_line[0]] = partitioned_line[2]
-
-        if procedure is None:
-            if procedure_class is None:
-                raise ValueError("Header does not contain the Procedure class")
-            try:
-                procedure_module = import_module(procedure_module)
-                procedure_class = getattr(procedure_module, procedure_class)
-                procedure = procedure_class()
-            except ImportError:
-                procedure = UnknownProcedure(parameters)
-                log.warning("Unknown Procedure being used")
-
-        # Fill the procedure with the parameters found
-        for name, parameter in procedure.parameter_objects().items():
-            if parameter.name in parameters:
-                value = parameters[parameter.name]
-                setattr(procedure, name, value)
-            else:
-                raise Exception("Missing '{}' parameter when loading '{}' class".format(
-                    parameter.name, procedure_class))
-
-        procedure.refresh_parameters()  # Enforce update of meta data
-        return procedure
-
-class CSVResults(Results):
-    """ The Results class provides a convenient interface to reading and
-    writing data in connection with a :class:`.Procedure` object.
-
-    :cvar COMMENT: The character used to identify a comment (default: #)
-    :cvar DELIMITER: The character used to delimit the data (default: ,)
-    :cvar LINE_BREAK: The character used for line breaks (default \\n)
-    :cvar CHUNK_SIZE: The length of the data chuck that is read
-
-    :param procedure: Procedure object
-    :param data_filename: The data filename where the data is or should be
-                          stored
-    """
-
-
-    def __init__(self, procedure, data_filename):
-        if not isinstance(procedure, Procedure):
-            raise ValueError("Results require a Procedure object")
-        self.procedure = procedure
-        self.procedure_class = procedure.__class__
-        self.parameters = procedure.parameter_objects()
-        self._header_count = -1
-
-        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
-
-        if isinstance(data_filename, (list, tuple)):
-            data_filenames, data_filename = data_filename, data_filename[0]
-        else:
-            data_filenames = [data_filename]
-
-        self.data_filename = data_filename
-        self.data_filenames = data_filenames
-
-        if os.path.exists(data_filename):  # Assume header is already written
-            self.reload()
-            self.procedure.status = Procedure.FINISHED
-            # TODO: Correctly store and retrieve status
-        else:
-            for filename in self.data_filenames:
-                with open(filename, 'w') as f:
-                    f.write(self.header())
-                    f.write(self.labels())
-            self._data = None
-
-    def labels(self):
-        """ Returns the columns labels as a string to be written
-        to the file
-        """
-        return self.formatter.format_header() + Results.LINE_BREAK
-
-    def format(self, data):
-        """ Returns a formatted string containing the data to be written
-        to a file
-        """
-        return self.formatter.format(data)
-
-    def parse(self, line):
-        """ Returns a dictionary containing the data from the line """
-        data = {}
-        items = line.split(Results.DELIMITER)
-        for i, key in enumerate(self.procedure.DATA_COLUMNS):
-            data[key] = items[i]
-        return data
-
-
+        return parameters, procedure_module, procedure_class
 
     @staticmethod
     def load(data_filename, procedure_class=None):
@@ -401,7 +469,7 @@ class CSVResults(Results):
         # Need to update header count for correct referencing
         if self._header_count == -1:
             self._header_count = len(
-                self.header()[-1].split(Results.LINE_BREAK))
+                self.create_header()[-1].split(Results.LINE_BREAK))
         if self._data is None or len(self._data) == 0:
             # Data has not been read
             try:
@@ -432,7 +500,7 @@ class CSVResults(Results):
         return self._data
 
     def reload(self):
-        """ Preforms a full reloading of the file data, neglecting
+        """ Performs a full reloading of the file data, neglecting
         any changes in the comments
         """
         chunks = pd.read_csv(
