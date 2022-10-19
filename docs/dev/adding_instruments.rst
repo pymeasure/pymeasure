@@ -112,9 +112,26 @@ There is a certain order of elements in an instrument class that is useful to ad
 * Then properties (pymeasure-specific or generic Python variants). This will be the bulk of the implementation.
 * Finally, any methods.
 
-In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
+Your instrument's user interface
+================================
 
-In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences and are highly encouraged.
+Your instrument will have a certain set of properties and methods that are available to a user and discoverable via the documentation or their editor's autocomplete function.
+
+In principle you are free to choose how you do this (with the exception of standard SCPI properties like :code:`id`).
+However, there are a couple of practices that have turned out to be useful to follow:
+
+* Naming things is important. Try to choose clear, expressive, unambiguous names for your instrument's elements.
+* If there are already similar instruments in the same "family" (like a power supply) in pymeasure, try to follow their lead where applicable. It's better if, e.g., all power supplies have a :code:`current_limit` instead of an assortment of :code:`current_max`, :code:`Ilim`, :code:`max_curr`, etc.
+* If there is already an instrument with a similar command set, check if you can inherit from that one and just tweak a couple of things. This massively reduces code duplication and maintenance effort. The section :ref:`family_of_instruments_with_similar_features` shows how to achieve that.
+* The bulk of your instrument's interface will probably be made up of properties for quantities to set and/or read out. Our custom properties (see :ref:`writing_properties` ff. below) offer some convenience features and are therefore preferable, but plain Python properties are also fine.
+* "Actions", commands or verbs should typically be methods, not properties: :code:`recall()`, :code:`trigger_scan()`, :code:`prepare_resistance_measurement()`, etc.
+* This separation between properties and methods also naturally helps with observing the `"command-query separation" principle <https://en.wikipedia.org/wiki/Command%E2%80%93query_separation>`__.
+* If your instrument has multiple identical channels, see XXX. TODO: write section on channel implementations
+
+
+In principle you are free to write any methods that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
+
+In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences, which are highly encouraged.
 
 .. _default_connection_settings:
 
@@ -194,6 +211,7 @@ In addition, any entries in ``**kwargs**`` take precedence, so if they need to, 
 
 For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether advanced_communication_protocols_ fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
 
+.. _writing_properties:
 
 Writing properties
 ==================
@@ -630,6 +648,8 @@ The code below shows how this can be accomplished with dynamic properties.
 
 Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
 In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
+
+.. _family_of_instruments_with_similar_features:
 
 Family of instruments with similar features
 *******************************************
