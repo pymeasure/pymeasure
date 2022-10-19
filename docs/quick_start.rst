@@ -42,12 +42,12 @@ PyMeasure can also be installed with :code:`pip`.
  
 Depending on your operating system, using this method may require additional work to install the required dependencies, which include the Qt libaries.
 
-Installing PyVISA
------------------
+Installing VISA
+---------------
 Typically, communication with your instrument will happen using PyVISA, which is installed automatically.
-However, you will need a `VISA backend <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__ installed to handle device communication.
-You may already know what this means and have an appropriate backend (e.g. from NI, Keysight, R&S,...) available.
-If not, you can get off the ground easily by installing the pure-Python :code:`pyvisa-py` backend package (using the same installation you used above).
+However, this needs a VISA implementation installed to handle device communication.
+If you do not already know what this means, install the pure-Python :code:`pyvisa-py` package (using the same installation you used above).
+If you want to know more, consult `the PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__. 
 
 Checking the version
 --------------------
