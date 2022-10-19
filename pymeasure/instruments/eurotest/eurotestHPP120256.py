@@ -329,8 +329,7 @@ class EurotestHPP120256(Instrument):
             if actual_time > future_time:
                 raise Exception("Timeout for wait_for_output_voltage_reached function")
 
-        # if you are here is because the voltage_setting
-        # has been reaches at the output of the HV Voltage source
+        return
 
     def ask(self, command):
         """ Overrides Instrument ask method for including query_delay time on parent call.
