@@ -64,7 +64,7 @@ By default this constructs a VISAAdapter (our most popular, default adapter) to 
 Passing a string (or integer in case of GPIB) is by far the most typical way to create pymeasure instruments.
 
 Sometimes, you might need to go beyond the usual setup, which is also possible.
-Instead of passing a string, we could equally pass an adapter object. ::
+Instead of passing a string, you could equally pass an adapter object. ::
 
     from pymeasure.adapters import VISAAdapter
 
