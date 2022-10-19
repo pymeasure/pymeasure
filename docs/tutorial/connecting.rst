@@ -21,11 +21,10 @@ Then construct an object by passing the GPIB address. For this example we connec
     Passing an appropriate resource string is the default method when creating pymeasure instruments.
     See the :ref:`adapters <adapters>` section below for more details.
 
-    If you are not sure about the correct resource string identifying your instrument, you can run the following code mentioned in the `PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/>`__ to print all available resources::
+    If you are not sure about the correct resource string identifying your instrument, you can run the :func:`pymeasure.instruments.list_resources` function to list all available resources::
 
-        import pyvisa
-        rm = pyvisa.ResourceManager()
-        rm.list_resources()
+        from pymeasure.instruments import list_resources
+        list_resources()
 
 For instruments with standard SCPI commands, an :code:`id` property will return the results of a :code:`*IDN?` SCPI command, identifying the instrument. ::
 
