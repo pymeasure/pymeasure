@@ -52,7 +52,7 @@ If not, you can get off the ground easily by installing the pure-Python :code:`p
 Checking the version
 --------------------
 
-Now that you have Python and PyMeasure installed, open up a REPL or Jupyter notebook to test which version you have installed.
+Now that you have Python and PyMeasure installed, open your python environment (e.g. a REPL or Jupyter notebook) to test which version you have installed.
 Execute the following Python code.
 
 .. code-block:: python
