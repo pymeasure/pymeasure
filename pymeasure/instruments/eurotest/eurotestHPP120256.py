@@ -35,6 +35,7 @@ log.addHandler(logging.NullHandler())
 
 
 class EurotestHPP120256(Instrument):
+
     """ Represents the Euro Test High Voltage DC Source model HPP-120-256
     and provides a high-level interface for interacting with the instrument using the
     Euro Test command set (Not SCPI command set).
@@ -59,7 +60,7 @@ class EurotestHPP120256(Instrument):
     inst.enable_output = "ON"
     time.sleep(1.0)  # Give time to output on
 
-    hpp120256.wait_for_voltage_output_set(1.0, 40.0)
+    hpp120256.wait_for_output_voltage_reached(1.0, 40.0)
 
     # Here voltage HV output should be at 0.0 kV
 
@@ -68,13 +69,13 @@ class EurotestHPP120256(Instrument):
 
     # Now HV output should be rising to reach the 1.0kV at 50.0 V/s
 
-    hpp120256.wait_for_voltage_output_set(1.0, 40.0)
+    hpp120256.wait_for_output_voltage_reached(1.0, 40.0)
 
     # Here voltage HV output should be at 1.0 kV
 
     hpp120256.shutdown(100.0)
 
-    hpp120256.wait_for_voltage_output_set(1.0, 60.0)
+    hpp120256.wait_for_output_voltage_reached(1.0, 60.0)
 
     # Here voltage HV output should be at 0.0 kV
 
@@ -281,7 +282,7 @@ class EurotestHPP120256(Instrument):
         self.voltage = 0
         time.sleep(self.COMMAND_DELAY)
 
-    def wait_for_voltage_output_set(self, check_period=1.0, timeout=60.0):
+    def wait_for_output_voltage_reached(self, check_period=1.0, timeout=60.0):
         """
         Wait until HV voltage output reaches the voltage setpoint.
 
@@ -293,7 +294,7 @@ class EurotestHPP120256(Instrument):
         :raises: Exception if the voltage output can't reach the voltage setting
         before the timeout completes (seconds)
         """
-        log.info("Executing the wait_for_voltage_output_set function.")
+        log.info("Executing the wait_for_output_voltage_reached function.")
 
         ref_time = time.time()
         future_time = ref_time + timeout
@@ -321,7 +322,7 @@ class EurotestHPP120256(Instrument):
                       ", " + str(voltage_output_setting + error) + "]")
             log.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
-                raise Exception("Timeout for wait_for_voltage_output_set function")
+                raise Exception("Timeout for wait_for_output_voltage_reached function")
 
         # if you are here is because the voltage_setting
         # has been reaches at the output of the HV Voltage source
