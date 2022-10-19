@@ -55,7 +55,9 @@ class FWBell5080(Instrument):
         ":MEASure:FLUX?",
         """ Reads a floating point value of the field in the appropriate units.
         """,
-        get_process=lambda v: float(v.replace('T','').replace('G','').replace('Am',''))  # Remove units
+        # Remove units
+        get_process=lambda v: float(v.replace('T', '').replace('G', '').replace('Am', ''))
+
     )
     UNITS = {
         'gauss': 'DC:GAUSS', 'gauss ac': 'AC:GAUSS',
@@ -82,11 +84,11 @@ class FWBell5080(Instrument):
         | Value  | gauss  |  tesla  | amp-meter |
         +--------+--------+---------+-----------+
         | 0      | 300 G  |  30  mT | 23.88 kAm |
-        +--------+------------------+-----------+
+        +--------+--------+---------+-----------+
         | 1      | 3 kG   |  300 mT | 238.8 kAm |
         +--------+--------+---------+-----------+
         | 2      | 30 kG  |  3 T    | 2388  kAm |
-        +--------+--------+---------+-----------+        
+        +--------+--------+---------+-----------+
         """,
         validator=strict_discrete_set,
         values=[0, 1, 2],
@@ -102,11 +104,12 @@ class FWBell5080(Instrument):
                   'timeout': 500},
             **kwargs
         )
+
     def read(self):
         """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
-        method to remove the last 2 characters from the output.
+        method to remove semicolons and replace spaces with colons.
         """
-        return super().read().replace(' ', ':').replace(';', '') # replace space with colon, remove semicolon
+        return super().read().replace(' ', ':').replace(';', '')
 
     def reset(self):
         """ Resets the instrument. """
@@ -124,6 +127,7 @@ class FWBell5080(Instrument):
             return array(data, dtype=float64)
 
     def auto_range(self):
-        """ Enables the auto range functionality. Instrument needs time before next command """
+        """ Enables the auto range functionality. """
         self.write(":SENS:FLUX:RANG:AUTO")
+        # Instrument needs a delay before next command
         sleep(2)
