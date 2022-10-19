@@ -110,7 +110,7 @@ class FWBell5080(Instrument):
 
     def reset(self):
         """ Resets the instrument. """
-        self.write("*OPC")
+        self.write("*CLS")
 
     def fields(self, samples=1):
         """ Returns a numpy array of field samples for a given sample number.
