@@ -48,9 +48,6 @@ class FWBell5080(Instrument):
 
     """
 
-    id = Instrument.measurement(
-        "*IDN?", """ Reads the identification information. """
-    )
     field = Instrument.measurement(
         ":MEASure:FLUX?",
         """ Reads a floating point value of the field in the appropriate units.
@@ -92,16 +89,16 @@ class FWBell5080(Instrument):
         """,
         validator=strict_discrete_set,
         values=[0, 1, 2],
-        get_process=lambda v: int(v)
+        cast=int
     )
 
     def __init__(self, adapter, **kwargs):
+        kwargs.setdefault('timeout', 500)
+        kwargs.setdefault('baudrate', 2400)
         super().__init__(
             adapter,
             "F.W. Bell 5080 Handheld Gaussmeter",
             includeSCPI=True,
-            asrl={'baud_rate': 2400,
-                  'timeout': 500},
             **kwargs
         )
 
