@@ -189,6 +189,11 @@ class ManagedWindowBase(QtGui.QMainWindow):
     :param directory_input: specify, if present, where the experiment's result will be saved.
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
+    :param marker_choice: optional string specifying what marker to use for points on the plot.
+        Default is None (i.e. just  a line). See here for choices:
+        https://pyqtgraph.readthedocs.io/en/latest/api_reference/graphicsItems/scatterplotitem.html#pyqtgraph.ScatterPlotItem.setSymbol
+    :param port: port to establish zmq server on (default is 5888). If None, no server is established.
+        Note, establishing the server adds 2-3 seconds per experiment. Set to None if not using for speed.
     """
 
 
@@ -207,6 +212,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
                  inputs_in_scrollarea=False,
                  directory_input=False,
                  hide_groups=True,
+                 marker_choice=None,
                  port=5888,
                  ):
 
@@ -228,6 +234,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
         log.setLevel(log_level)
         self.log.setLevel(log_level)
         self.widget_list = widget_list
+        self.marker_choice = marker_choice
         self.port = port
 
         # Check if the get_estimates function is reimplemented
@@ -383,16 +390,16 @@ class ManagedWindowBase(QtGui.QMainWindow):
                             " without a InputsWidget type")
         return self.inputs.get_procedure()
 
-    def new_curve(self, wdg, results, color=None, **kwargs):
+    def new_curve(self, wdg, results, color=None, marker=None, **kwargs):
         if color is None:
             color = pg.intColor(self.browser_widget.browser.topLevelItemCount() % 8)
-        return wdg.new_curve(results, color=color, **kwargs)
+        return wdg.new_curve(results, color=color, marker=marker, **kwargs)
 
     def new_experiment(self, results, curve=None):
         if curve is None:
             curve_list = []
             for wdg in self.widget_list:
-                curve_list.append(self.new_curve(wdg, results))
+                curve_list.append(self.new_curve(wdg, results, marker=self.marker_choice))
         else:
             curve_list = curve[:]
 

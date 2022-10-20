@@ -102,7 +102,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results, color=pg.intColor(0), marker=None, **kwargs):
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
@@ -112,8 +112,13 @@ class PlotWidget(TabWidget, QtGui.QWidget):
                              y=self.plot_frame.y_axis,
                              **kwargs
                              )
-        curve.setSymbol(None)
-        curve.setSymbolBrush(None)
+        if marker is not None:
+            curve.setSymbol(marker)
+            curve.setSymbolBrush(pg.mkBrush(color=color))
+            curve.setSymbolPen(kwargs['pen'])
+        else:
+            curve.setSymbol(None)
+            curve.setSymbolBrush(None)
         return curve
 
     def update_x_column(self, index):
@@ -136,4 +141,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
         curve.pen.setColor(color)
-        curve.updateItems(styleUpdate=True)
+        if curve.opts['symbol'] is not None:
+            curve.setSymbolBrush(pg.mkBrush(color=color))
+            curve.setSymbolPen(curve.pen.color())
+        curve.updateItems()
