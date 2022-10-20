@@ -48,6 +48,16 @@ class FWBell5080(Instrument):
 
     """
 
+    def __init__(self, adapter, **kwargs):
+        kwargs.setdefault('timeout', 500)
+        kwargs.setdefault('baudrate', 2400)
+        super().__init__(
+            adapter,
+            "F.W. Bell 5080 Handheld Gaussmeter",
+            includeSCPI=True,
+            **kwargs
+        )
+
     field = Instrument.measurement(
         ":MEASure:FLUX?",
         """ Reads a floating point value of the field in the appropriate units.
@@ -92,20 +102,14 @@ class FWBell5080(Instrument):
         cast=int
     )
 
-    def __init__(self, adapter, **kwargs):
-        kwargs.setdefault('timeout', 500)
-        kwargs.setdefault('baudrate', 2400)
-        super().__init__(
-            adapter,
-            "F.W. Bell 5080 Handheld Gaussmeter",
-            includeSCPI=True,
-            **kwargs
-        )
-
     def read(self):
         """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
         method to remove semicolons and replace spaces with colons.
         """
+        # To set the unit mode to DC Tesla you need to write(':UNIT:FLUX:DC:TESLA')
+        # However the response from ask(':UNIT:FLUX?') is "DC TESLA", with no colon.
+        # We replace space with colon to preserve the mapping in UNITS.
+        # Semicolons may be appended to end of response from FW Bell 5080, and are removed
         return super().read().replace(' ', ':').replace(';', '')
 
     def reset(self):
