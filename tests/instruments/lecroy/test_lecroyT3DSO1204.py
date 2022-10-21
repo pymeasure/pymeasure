@@ -370,12 +370,12 @@ def test_math_define():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b"DEF EQN,C2*C4", None),
-             (b"DEF?", b"C2*C4"),
+             (b"DEF EQN,'C2*C4'", None),
+             (b"DEF?", b"EQN,'C2*C4'"),
              ]
     ) as instr:
         instr.math_define = ("channel2", "*", "channel4")
-        assert instr.math_define == "C2*C4"
+        assert instr.math_define == ["EQN", "'C2*C4'"]
 
 
 def test_math_vdiv():

@@ -1165,7 +1165,7 @@ class LeCroyT3DSO1204(Instrument):
     ###############
 
     math_define = Instrument.control(
-        "DEF?", "DEF EQN,%s%s%s",
+        "DEF?", "DEF EQN,'%s%s%s'",
         """ A string parameter that sets the desired waveform math operation between two channels.
         Three parameters must be passed as a tuple:
         1. source1 : source channel on the left
