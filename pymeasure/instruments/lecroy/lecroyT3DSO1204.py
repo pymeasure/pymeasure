@@ -303,8 +303,8 @@ class Channel:
     def trigger_level2(self, value):
         """Refer to the _trigger_level2 docstring"""
         # noinspection PyAttributeOutsideInit
-        self._trigger_level2_set_process = lambda v: float(v[:-1]) * self.probe_attenuation if \
-            isinstance(v, str) else v * self.probe_attenuation
+        self._trigger_level2_set_process = lambda v: float(v[:-1]) / self.probe_attenuation if \
+            isinstance(v, str) else v / self.probe_attenuation
         self._trigger_level2 = value
 
     _trigger_level2 = Instrument.control(
