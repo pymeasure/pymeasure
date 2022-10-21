@@ -71,7 +71,6 @@ class MKS937B(Instrument):
     """
 
     def __init__(self, adapter, address=253, **kwargs):
-        kwargs.setdefault("preprocess_reply", self._extract_reply)
         kwargs.setdefault("write_termination", ";FF")
         kwargs.setdefault("read_termination", ";")  # in reality its ";FF"
         # which is, however, invalid for pyvisa. Therefore extra bytes have to
@@ -108,7 +107,7 @@ class MKS937B(Instrument):
         """
         Check the read termination to correspond to the protocol
         """
-        t = self.adapter.read_bytes(2)  # read extra termination chars 'FF'
+        t = super().read_bytes(2)  # read extra termination chars 'FF'
         if t != b'FF':
             raise ValueError(f"unexpected termination string received {t}")
 
@@ -118,7 +117,7 @@ class MKS937B(Instrument):
         """
         ret = super().read()
         self._check_extra_termination()
-        return ret
+        return self._extract_reply(ret)
 
     def write(self, command):
         """
@@ -128,24 +127,11 @@ class MKS937B(Instrument):
         """
         super().write(self._prepend_address(command))
 
-    def values(self, command, **kwargs):
-        """
-        Reads a set of values from the instrument through the adapter.
-        The device address is added to the command and the correct reply
-        termination characters are checked.
-        key-word arguments are passed to the adapter method.
-
-        :param command: command string to be sent to the instrument
-        """
-        ret = super().values(self._prepend_address(command), **kwargs)
-        self._check_extra_termination()
-        return ret
-
     def check_errors(self):
         """
         check reply string for acknowledgement string
         """
-        ret = self.read()
+        ret = self.adapter.read()  # use adapter read to get raw reply
         reply = self._re_response.search(ret)
         if reply:
             if reply.group('ack') == 'ACK':
