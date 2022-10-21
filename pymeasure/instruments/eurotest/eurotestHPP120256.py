@@ -93,6 +93,7 @@ class EurotestHPP120256(Instrument):
 
     response_encoding = "iso-8859-2"
     f_numbers_regex_pattern = r'([+-]?([\d]*\.)?[\d]+)'
+    regex = re.compile(f_numbers_regex_pattern)
 
     def __init__(self,
                  adapter,
@@ -126,7 +127,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RANGE,
         get_process=lambda v:
-        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
+        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
     )
 
     current_limit = Instrument.control(
@@ -139,7 +140,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=CURRENT_RANGE,
         get_process=lambda v:
-        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
+        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
     )
 
     voltage_ramp = Instrument.control(
@@ -152,7 +153,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
         get_process=lambda v:
-        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
+        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
     )
 
     measure_voltage = Instrument.measurement(
@@ -162,7 +163,7 @@ class EurotestHPP120256(Instrument):
         # "U, RANGE=3.000kV, VALUE=2.458kV", then measure_voltage will return 2458.0,
         # hence the convenience of the get_process.
         get_process=lambda v:
-        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
+        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
     )
 
     voltage_range = Instrument.measurement(
@@ -172,7 +173,7 @@ class EurotestHPP120256(Instrument):
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
         get_process=lambda v:
-        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[1])[0])
+        float(EurotestHPP120256.regex.search(v[1]).groups()[0])
     )
 
     measure_current = Instrument.measurement(
@@ -182,7 +183,7 @@ class EurotestHPP120256(Instrument):
         # "I, RANGE=5000mA, VALUE=1739mA", then measure_current_range will return a 1739.0,
         # hence the convenience of the get_process."""
         get_process=lambda v:
-        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[2])[0])
+        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
     )
 
     current_range = Instrument.measurement(
@@ -192,7 +193,7 @@ class EurotestHPP120256(Instrument):
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
         get_process=lambda v:
-        float(re.findall(EurotestHPP120256.f_numbers_regex_pattern, v[1])[0])
+        float(EurotestHPP120256.regex.search(v[1]).groups()[0])
     )
 
     enable_kill = Instrument.setting(
@@ -308,8 +309,8 @@ class EurotestHPP120256(Instrument):
         voltage_output_setting = self.voltage
         time.sleep(self.COMMAND_DELAY)
         voltage_output = self.measure_voltage
-        voltage_output_set = math.isclose(voltage_output, voltage_output_setting, reltol=0.0,
-                                          atol=abs_output_voltage_error)
+        voltage_output_set = math.isclose(voltage_output, voltage_output_setting, rel_tol=0.0,
+                                          abs_tol=abs_output_voltage_error)
 
         while not voltage_output_set:
             actual_time = time.time()
@@ -320,8 +321,8 @@ class EurotestHPP120256(Instrument):
 
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
             voltage_output = self.measure_voltage
-            voltage_output_set = math.isclose(voltage_output, voltage_output_setting, reltol=0.0,
-                                              atol=abs_output_voltage_error)
+            voltage_output_set = math.isclose(voltage_output, voltage_output_setting, rel_tol=0.0,
+                                              abs_tol=abs_output_voltage_error)
             log.debug("voltage_output_valid_range: "
                       "[" + str(voltage_output_setting - abs_output_voltage_error) +
                       ", " + str(voltage_output_setting + abs_output_voltage_error) + "]")
