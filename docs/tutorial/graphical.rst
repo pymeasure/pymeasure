@@ -113,7 +113,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
     import random
     from time import sleep
     from pymeasure.log import console_log
-    from pymeasure.display.Qt import QtGui
+    from pymeasure.display.Qt import QtWidgets
     from pymeasure.display.windows import ManagedWindow
     from pymeasure.experiment import Procedure, Results
     from pymeasure.experiment import IntegerParameter, FloatParameter, Parameter
@@ -169,10 +169,10 @@ Below we adapt our previous example to use a ManagedWindow. ::
 
 
     if __name__ == "__main__":
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         window = MainWindow()
         window.show()
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
 
 

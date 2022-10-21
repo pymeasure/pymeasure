@@ -28,24 +28,23 @@ import tempfile
 from unittest import mock
 
 import pandas as pd
+import pytest
 import numpy as np
 
+from pymeasure.units import ureg
 from pymeasure.experiment.results import Results, CSVFormatter
 from pymeasure.experiment.procedure import Procedure, Parameter
 from pymeasure.experiment import BooleanParameter
-
-# Load the procedure, without it being in a module
-# data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
-# RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
 from data.procedure_for_testing import RandomProcedure
 
 
 def test_procedure():
     """ Ensure that the loaded test procedure is properly functioning
     """
-    p = RandomProcedure()
-    assert p.iterations == 100
-    assert hasattr(p, 'execute')
+    procedure = RandomProcedure()
+    assert procedure.iterations == 100
+    assert procedure.delay == 0.001
+    assert hasattr(procedure, 'execute')
 
 
 def test_csv_formatter_format_header():
@@ -55,20 +54,63 @@ def test_csv_formatter_format_header():
     assert formatter.format_header() == 't,x,y,z,V'
 
 
-def test_csv_formatter_format():
-    """Tests CSVFormatter.format() method."""
-    columns = ['t', 'x', 'y', 'z', 'V']
-    formatter = CSVFormatter(columns=columns)
-    data = {'t': 1, 'y': 2, 'z': 3.0, 'x': -1, 'V': 'abc'}
-    assert formatter.format(data) == '1,-1,2,3.0,abc'
+class Test_csv_formatter_format:
+    def test_csv_formatter_format(self):
+        """Tests CSVFormatter.format() method."""
+        columns = ['t', 'x', 'y', 'z', 'V']
+        formatter = CSVFormatter(columns=columns)
+        data = {'t': 1, 'y': 2, 'z': 3.0, 'x': -1, 'V': 'abc'}
+        assert formatter.format(data) == '1,-1,2,3.0,abc'
+
+    @pytest.mark.parametrize("head, value, result",
+                             (('index', 10, "10"),
+                              ('length (m)', "50 cm", "0.5"),
+                              ('voltage (V)', ureg.Quantity(-7, ureg.kV), "-7000.0"),
+                              ('speed (m/s)', 15 * ureg.cm / ureg.s, "0.15"),
+                              ('magnetic (T)', 7, "7"),
+                              ('string', "abcdef", "abcdef"),
+                              ('count', 9 * ureg.dimensionless, "9"),
+                              ('boolean', True, "True")
+                              ))
+    def test_unitful(self, head, value, result):
+        """Test, whether units are appended correctly"""
+        formatter = CSVFormatter(columns=[head])
+        assert formatter.format({head: value}) == result
+
+    def test_newly_unitful(self):
+        formatter = CSVFormatter(columns=["count"])
+        assert formatter.format({'count': 5 * ureg.km}) == "5000.0"
+        assert formatter.units['count'] == ureg.m
+
+    def test_no_newly_unitful(self):
+        formatter = CSVFormatter(columns=["count"])
+        assert formatter.format({'count': 5 * ureg.dimensionless}) == "5"
+        assert formatter.units.get('count') is None
+
+    def test_unitful_erroneous(self):
+        """Test, whether wrong units are rejected"""
+        columns = ['index', 'length (m)', 'voltage (V)']
+        formatter = CSVFormatter(columns=columns)
+        formatter.units['index'] = ureg.km
+        data = {'index': "10 stupid", 'length (m)': "50 cV", 'voltage (V)': True}
+        assert formatter.format(data) == "nan,nan,nan"
 
 
-def test_procedure_wrapper():
+@pytest.mark.parametrize("header, units", (
+    ("x (m)", ureg.m),
+    ("x (m/s)", ureg.m/ureg.s),
+    ("x (V/(m*s))", ureg.V / ureg.m / ureg.s),
+    ))
+def test_csv_formatter_parse_columns(header, units):
+    assert CSVFormatter._parse_columns([header])[header] == ureg.Quantity(1, units)
+
+
+def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
     procedure.iterations = 101
-    file = tempfile.mktemp()
-    results = Results(procedure, file)
+    resultfile = tempfile.mktemp()
+    results = Results(procedure, resultfile)
 
     new_results = pickle.loads(pickle.dumps(results))
     assert hasattr(new_results, 'procedure')

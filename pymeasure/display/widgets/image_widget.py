@@ -26,7 +26,7 @@ import logging
 
 import pyqtgraph as pg
 from ..curves import ResultsImage
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from .tab_widget import TabWidget
 from .image_frame import ImageFrame
 
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class ImageWidget(TabWidget, QtGui.QWidget):
+class ImageWidget(TabWidget, QtWidgets.QWidget):
     """ Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>`
     to allow different columns of the data to be dynamically chosen
     """
@@ -54,11 +54,11 @@ class ImageWidget(TabWidget, QtGui.QWidget):
             self.image_frame.change_z_axis(z_axis)
 
     def _setup_ui(self):
-        self.columns_z_label = QtGui.QLabel(self)
+        self.columns_z_label = QtWidgets.QLabel(self)
         self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_z_label.setText('Z Axis:')
 
-        self.columns_z = QtGui.QComboBox(self)
+        self.columns_z = QtWidgets.QComboBox(self)
         for column in self.columns:
             self.columns_z.addItem(column)
         self.columns_z.activated.connect(self.update_z_column)
@@ -75,10 +75,10 @@ class ImageWidget(TabWidget, QtGui.QWidget):
         self.columns_z.setCurrentIndex(2)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_z_label)

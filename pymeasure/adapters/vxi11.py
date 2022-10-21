@@ -23,6 +23,7 @@
 #
 
 import logging
+from warnings import warn
 
 from .adapter import Adapter
 
@@ -40,13 +41,18 @@ class VXI11Adapter(Adapter):
         wraps around the read, write and ask functionality
         of the vxi11 library.
 
+    .. deprecated:: 0.11
+        Use VISAAdapter instead.
+
     :param host: string containing the visa connection information.
-    :param preprocess_reply: optional callable used to preprocess strings
+    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
     """
 
     def __init__(self, host, preprocess_reply=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply)
+        super().__init__(preprocess_reply=preprocess_reply,
+                         query_delay=kwargs.pop('query_delay', 0))
+        warn("Deprecated, use VISAAdapter instead.", FutureWarning)
         # Filter valid arguments that can be passed to vxi instrument
         valid_args = ["name", "client_id", "term_char"]
         self.conn_kwargs = {}
@@ -56,20 +62,20 @@ class VXI11Adapter(Adapter):
 
         self.connection = vxi11.Instrument(host, **self.conn_kwargs)
 
-    def write(self, command):
-        """ Wrapper function for the write command using the
-        vxi11 interface.
+    def _write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
 
-        :param command: string with command the that will be transmitted
-                         to the instrument.
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write(command)
 
-    def read(self):
-        """ Wrapper function for the read command using the
-        vx11 interface.
+    def _read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer.
 
-        :return string containing a response from the device.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (excluding read_termination).
         """
         return self.connection.read()
 
@@ -77,39 +83,72 @@ class VXI11Adapter(Adapter):
         """ Wrapper function for the ask command using the
         vx11 interface.
 
+        .. deprecated:: 0.11
+           Call `Instrument.ask` instead.
+
         :param command: string with the command that will be transmitted
                         to the instrument.
 
         :returns string containing a response from the device.
         """
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
         return self.connection.ask(command)
 
     def write_raw(self, command):
-        """ Wrapper function for the write_raw command using the
-        vxi11 interface.
+        """Write bytes to the device.
 
-        :param command: binary string with the command that will be
-                        transmitted to the instrument
+        .. deprecated:: 0.11
+            Use `write_bytes` instead.
         """
-        self.connection.write_raw(command)
+        warn("Use `write_bytes` instead.", FutureWarning)
+        self.write_bytes(command)
+
+    def _write_bytes(self, command, **kwargs):
+        """Write the bytes `content` to the instrument.
+
+        :param bytes content: The bytes to write to the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
+
+        .. note::
+            vx11 adds the term_char even for writing_bytes.
+        """
+        # Note: vxi11.write_raw adds the term_char!
+        self.connection.write_raw(command, **kwargs)
 
     def read_raw(self):
-        """ Wrapper function for the read_raw command using the
-        vx11 interface.
+        """Read bytes from the device.
 
-        :returns binary string containing the response from the device.
+        .. deprecated:: 0.11
+            Use `read_bytes` instead.
         """
-        return self.connection.read_raw()
+        warn("Use `read_bytes` instead.", FutureWarning)
+        return self.read_bytes(-1)
+
+    def _read_bytes(self, count, **kwargs):
+        """Read a certain number of bytes from the instrument.
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
+        """
+        return self.connection.read_raw(count, **kwargs)
 
     def ask_raw(self, command):
         """ Wrapper function for the ask_raw command using the
         vx11 interface.
 
+        .. deprecated:: 0.11
+            Use `Instrument.write_bytes` and `Instrument.read_bytes` instead.
+
         :param command: binary string with the command that will be
                         transmitted to the instrument
 
         :returns binary string containing the response from the device.
         """
+        warn("Use `Instrument.write_bytes` and `Instrument.read_bytes` instead.",
+             FutureWarning)
         return self.connection.ask_raw(command)
 
     def __repr__(self):

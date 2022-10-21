@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+# write_to = "pymeasure/_version.py"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"

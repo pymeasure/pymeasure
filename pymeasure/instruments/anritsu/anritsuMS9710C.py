@@ -301,7 +301,7 @@ class AnritsuMS9710C(Instrument):
     def wait(self, n=3, delay=1):
         """Query OPC Command and waits for appropriate response."""
         log.info("Wait for OPC")
-        res = self.adapter.ask("*OPC?")
+        res = self.ask("*OPC?")
         n_attempts = n
         while(res == ''):
             log.debug(f"Empty OPC Response. {n_attempts} remaining")
@@ -309,7 +309,7 @@ class AnritsuMS9710C(Instrument):
                 break
             n_attempts -= 1
             sleep(delay)
-            res = self.adapter.read().strip()
+            res = self.read().strip()
 
         log.debug(res)
 
