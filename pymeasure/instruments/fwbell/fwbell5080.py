@@ -85,7 +85,8 @@ class FWBell5080(Instrument):
     range = Instrument.control(
         ":SENS:FLUX:RANG?", ":SENS:FLUX:RANG %d",
         """ An integer property that controls the maximum field range in the active units.
-        Value is dependent on the currently selected units (gauss, tesla, amp-meter)
+        The range unit is dependent on the current units mode (gauss, tesla, amp-meter). Value
+        sets an equivalent range across units that increases in magnitude (1, 10, 100).
 
         +--------+--------+---------+-----------+
         | Value  | gauss  |  tesla  | amp-meter |
