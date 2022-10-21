@@ -256,7 +256,7 @@ class TestLeCroyT3DSO1204:
             "average": None,
             "sampling_rate": 1e9,
             "grid_number": 14,
-            "status": "triggered",
+            "status": "armed",
             "xdiv": 5e-4,
             "xoffset": -0.,
             "ydiv": 0.05,
@@ -292,7 +292,7 @@ class TestLeCroyT3DSO1204:
         expected = scope.ch(ch_number).current_configuration
         scope.ch(ch_number).setup()
         assert scope.ch(ch_number).current_configuration == expected
-        with pytest.raises(ValueError):
+        with pytest.raises(AttributeError):
             scope.ch(5)
         scope.ch(ch_number).setup(
             bwlimit=False,
