@@ -70,8 +70,8 @@ class ResultsDialog(QtWidgets.QFileDialog):
         self.preview_param.setColumnWidth(0, 150)
         self.preview_param.setAlternatingRowColors(True)
 
-        self.preview_metadata = QtGui.QTreeWidget()
-        param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
+        self.preview_metadata = QtWidgets.QTreeWidget()
+        param_header = QtWidgets.QTreeWidgetItem(["Name", "Value"])
         self.preview_metadata.setHeaderItem(param_header)
         self.preview_metadata.setColumnWidth(0, 150)
         self.preview_metadata.setAlternatingRowColors(True)
