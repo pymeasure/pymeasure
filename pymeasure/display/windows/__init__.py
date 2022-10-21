@@ -22,33 +22,6 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters import SerialAdapter
-
-
-class LakeShoreUSBAdapter(SerialAdapter):
-    """ Provides a :class:`SerialAdapter` with the specific baudrate,
-    timeout, parity, and byte size for LakeShore USB communication.
-
-    Initiates the adapter to open serial communcation over
-    the supplied port.
-
-    :param port: A string representing the serial port
-    """
-
-    def __init__(self, port):
-        super().__init__(
-            port,
-            baudrate=57600,
-            timeout=0.5,
-            parity='O',
-            bytesize=7
-        )
-
-    def write(self, command):
-        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
-        method to automatically append a Unix-style linebreak at the end
-        of the command.
-
-        :param command: SCPI command string to be sent to the instrument
-        """
-        super().write(command + "\n")
+from .plotter_window import PlotterWindow
+from .managed_window import ManagedWindowBase, ManagedWindow
+from .managed_image_window import ManagedImageWindow

@@ -207,8 +207,8 @@ class HP6632A(HPLegacyInstrument):
         Returns an object representing the current status of the unit.
 
         """
-        # overloading the already exisiting propery because of the different command
-        reply = bytearray(int(self.adapter.connection.query("STS?")).to_bytes(
+        # overloading the already exisiting property because of the different command
+        reply = bytearray(int(self.ask("STS?")).to_bytes(
             self.status_bytes_count, "little"))
         return self.status_bits.from_buffer(reply)
 
