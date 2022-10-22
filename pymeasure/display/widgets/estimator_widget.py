@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class EstimatorThread(StoppableQThread):
-    new_estimates = QtCore.QSignal(list)
+    new_estimates = QtCore.Signal(list)
 
     def __init__(self, get_estimates_callable):
         StoppableQThread.__init__(self)
@@ -137,7 +137,7 @@ class EstimatorWidget(QtWidgets.QWidget):
 
             qle = QtWidgets.QLineEdit(self)
             qle.setEnabled(False)
-            qle.setAlignment(QtCore.Qt.AlignRight)
+            qle.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
             self.line_edits.append((qlb, qle))
 

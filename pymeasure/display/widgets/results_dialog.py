@@ -42,14 +42,14 @@ class ResultsDialog(QtWidgets.QFileDialog):
     It shows a preview of curves from the results file when selected in the dialog box.
 
     This widget used by the `open_experiment` method in
-    :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>` class
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>` class
     """
 
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
         super().__init__(parent)
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
-        self.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
+        self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
         self._setup_ui()
 
     def _setup_ui(self):
@@ -79,7 +79,7 @@ class ResultsDialog(QtWidgets.QFileDialog):
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
 
-        self.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
+        self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
         self.currentChanged.connect(self.update_plot)
 
     def update_plot(self, filename):
@@ -110,4 +110,4 @@ class ResultsDialog(QtWidgets.QFileDialog):
             for key, param in results.procedure.parameter_objects().items():
                 new_item = QtWidgets.QTreeWidgetItem([param.name, str(param)])
                 self.preview_param.addTopLevelItem(new_item)
-            self.preview_param.sortItems(0, QtCore.Qt.AscendingOrder)
+            self.preview_param.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)

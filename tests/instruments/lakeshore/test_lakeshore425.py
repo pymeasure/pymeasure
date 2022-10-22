@@ -22,33 +22,42 @@
 # THE SOFTWARE.
 #
 
-import logging
+from pymeasure.test import expected_protocol
 
-from logging import Handler
-
-from .Qt import QtCore
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from pymeasure.instruments.lakeshore import LakeShore425
 
 
-class LogHandler(Handler):
-    # Class Emitter is added to keep compatibility with PySide2
-    # 1. Signal needs to be class attribute of a QObject subclass
-    # 2. logging Handler emit method clashes with QObject emit method
-    # 3. As a consequence, the LogHandler cannot inherit both from
-    # Handler and QObject
-    # 4. A new utility class Emitter subclass of QObject is
-    # introduced to handle record Signal and workaround the problem
-    class Emitter(QtCore.QObject):
-        record = QtCore.Signal(object)
+def test_init():
+    with expected_protocol(
+            LakeShore425, []):
+        pass  # Verify the expected communication.
 
-    def __init__(self):
-        super().__init__()
-        self.emitter = self.Emitter()
 
-    def connect(self, *args, **kwargs):
-        return self.emitter.record.connect(*args, **kwargs)
+def test_unit():
+    # from manual
+    with expected_protocol(
+            LakeShore425, [(b"UNIT?", b"1")]) as instr:
+        assert instr.unit == "G"
 
-    def emit(self, record):
-        self.emitter.record.emit(self.format(record))
+
+def test_unit_setter():
+    # from manual
+    with expected_protocol(
+            LakeShore425, [(b"UNIT 2", None)]) as instr:
+        instr.unit = "T"
+
+
+def test_field():
+    # from manual
+    with expected_protocol(
+            LakeShore425,
+            [(b"RDGFIELD?", b"+123.456E-01")]
+            ) as instr:
+        assert instr.field == 123.456e-1
+
+
+def test_zero_probe():
+    # from manual
+    with expected_protocol(
+            LakeShore425, [(b"ZPROBE", None)]) as instr:
+        instr.zero_probe()

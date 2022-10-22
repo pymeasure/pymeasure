@@ -24,7 +24,6 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_discrete_set, strict_discrete_set
-from pymeasure.adapters import Adapter, SerialAdapter
 from numpy import array, float64
 
 
@@ -76,11 +75,11 @@ class FWBell5080(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        if not isinstance(adapter, Adapter):
-            adapter = SerialAdapter(adapter, 2400, timeout=0.5, **kwargs)
         super().__init__(
             adapter,
             "F.W. Bell 5080 Handheld Gaussmeter",
+            asrl={'baud_rate': 2400,
+                  'timeout': 500},
             **kwargs
         )
 
@@ -113,21 +112,6 @@ class FWBell5080(Instrument):
         method to remove the last 2 characters from the output.
         """
         return super().read()[:-2]
-
-    def ask(self, command):
-        """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
-        method to remove the last 2 characters from the output.
-        """
-        # TODO this cannot work, because command is missing
-        return super().ask()[:-2]
-
-    def values(self, command):
-        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
-        method to remove the lastv2 characters from the output.
-        """
-        # TODO this cannot work, because command is missing and removing
-        # the end of values does not make sense.
-        return super().values()[:-2]
 
     def reset(self):
         """ Resets the instrument. """

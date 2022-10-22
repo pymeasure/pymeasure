@@ -43,8 +43,8 @@ class BrowserItem(QtWidgets.QTreeWidgetItem):
         pixelmap = QtGui.QPixmap(24, 24)
         pixelmap.fill(color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-        self.setCheckState(0, QtCore.Qt.Checked)
+        self.setFlags(self.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+        self.setCheckState(0, QtCore.Qt.CheckState.Checked)
         self.setText(1, basename(results.data_filename))
 
         self.setStatus(results.procedure.status)
@@ -103,7 +103,7 @@ class Browser(QtWidgets.QTreeWidget):
         self.setHeaderLabels(header_labels)
         self.setSortingEnabled(True)
         if sort_by_filename:
-            self.sortItems(1, QtCore.Qt.AscendingOrder)
+            self.sortItems(1, QtCore.Qt.SortOrder.AscendingOrder)
 
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)
