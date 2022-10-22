@@ -623,10 +623,15 @@ class Instrument(Base):
 
 
 class Channel(Base):
-    """The base class for channel implementations.
+    """The base class for channel definitions.
+
+    This class supports dynamic properties like :class:`Instrument`,
+    but requires an instrument as a parent for communication.
+    The default implementation of :meth:`write` uses string format to
+    exchange '{ch}' for the channel name.
 
     :param instrument: The instrument to which the channel belongs.
-    :param name: Name of the channel, as it is added to the communication.
+    :param name: Name of the channel, as it is used for the communication.
     """
 
     def __init__(self, instrument, name):
@@ -682,6 +687,3 @@ class Channel(Base):
         :param query_delay: Delay between writing and reading in seconds.
         """
         self.instrument.wait_for(query_delay)
-
-
-
