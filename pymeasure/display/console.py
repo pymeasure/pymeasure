@@ -211,7 +211,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         self._worker.update_status(Procedure.ABORTED)
         self._worker.stop()
 
-    def exec_(self):
+    def exec(self):
         # Parse command line arguments
         args = vars(self.parser.parse_args(self.args[1:]))
         procedure = self.procedure_class()
@@ -273,4 +273,4 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         self._monitor.start()
         self._worker.start()
-        super().exec_()
+        super().exec()

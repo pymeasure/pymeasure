@@ -33,6 +33,8 @@ log.addHandler(logging.NullHandler())
 # is dropped (https://doc.qt.io/qtforpython/porting_from2.html#class-function-deprecations)
 if not hasattr(QtWidgets.QApplication, 'exec'):
     QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_
+if not hasattr(QtCore.QCoreApplication, 'exec'):
+    QtCore.QCoreApplication.exec = QtCore.QCoreApplication.exec_
 if not hasattr(QtWidgets.QMenu, 'exec'):
     def exec(self, *args, **kwargs):
         self.exec_(*args, **kwargs)
