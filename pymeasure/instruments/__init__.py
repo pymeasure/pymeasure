@@ -23,7 +23,7 @@
 #
 
 from ..errors import RangeError, RangeException
-from .instrument import Instrument
+from .instrument import Instrument, Channel
 from .resources import list_resources
 from .validators import discreteTruncate
 

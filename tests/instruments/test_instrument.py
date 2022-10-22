@@ -29,7 +29,7 @@ import pytest
 
 from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.instrument import DynamicProperty
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.fakes import FakeInstrument
@@ -79,6 +79,34 @@ class NewRangeInstrument(GenericInstrument):
     fake_ctrl_values = (10, 20)
     fake_setting_values = (10, 20)
     fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
+
+
+class GenericChannel(Channel):
+    #  Use truncated_range as this easily lets us test for the range boundaries
+    fake_ctrl = Instrument.control(
+        "C{ch}:control?", "C{ch}:control %d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_setting = Instrument.setting(
+        "C{ch}:setting %d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_measurement = Instrument.measurement(
+        "C{ch}:measurement?", "docs",
+        values={'X': 1, 'Y': 2, 'Z': 3},
+        map_values=True,
+        dynamic=True,
+    )
+
+
+class ChannelInstrument(Instrument):
+    def __init__(self, adapter, name="ChannelInstrument", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+        self.chA = GenericChannel(self, "A")
 
 
 def test_fake_instrument():
@@ -631,3 +659,68 @@ def test_dynamic_property_reading_special_attributes_forbidden():
     generic = GenericInstrument()
     with pytest.raises(AttributeError):
         generic.fake_ctrl_validator
+
+
+# Test Channel implementation
+class TestChannelCommunication:
+    @pytest.fixture()
+    def ch(self):
+        a = mock.MagicMock(return_value="5")
+        return Channel(a, "A")
+
+    def test_write(self, ch):
+        ch.write("abc")
+        assert ch.instrument.method_calls == [mock.call.write('abc')]
+
+    def test_read(self, ch):
+        ch.read()
+        assert ch.instrument.method_calls == [mock.call.read()]
+
+    def test_write_bytes(self, ch):
+        ch.write_bytes(b"abc")
+        assert ch.instrument.method_calls == [mock.call.write_bytes(b"abc")]
+
+    def test_read_bytes(self, ch):
+        ch.read_bytes(5)
+        assert ch.instrument.method_calls == [mock.call.read_bytes(5)]
+
+    def test_write_binary_values(self, ch):
+        ch.write_binary_values("abc", [5, 6, 7])
+        assert ch.instrument.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
+
+
+def test_channel_write():
+    with expected_protocol(ChannelInstrument, [("ChA:volt?", None)]) as inst:
+        inst.chA.write("Ch{ch}:volt?")
+
+
+def test_channel_control():
+    with expected_protocol(
+            ChannelInstrument,
+            [("CA:control 7", None), ("CA:control?", "1.45")]
+    ) as inst:
+        inst.chA.fake_ctrl = 7
+        assert inst.chA.fake_ctrl == 1.45
+
+
+def test_channel_setting():
+    with expected_protocol(
+            ChannelInstrument,
+            [("CA:setting 3", None)]
+    ) as inst:
+        inst.chA.fake_setting = 3
+
+
+def test_channel_measurement():
+    with expected_protocol(
+            ChannelInstrument,
+            [("CA:measurement?", "2")]
+    ) as inst:
+        assert inst.chA.fake_measurement == "Y"
+
+
+def test_dynamic_property():
+    with expected_protocol(ChannelInstrument, [("CA:control 100", None)]) as inst:
+        inst.chA.fake_ctrl_values = (1, 200)
+        # original values is (1, 10), therefore 100 should not be allowed.
+        inst.chA.fake_ctrl = 100
