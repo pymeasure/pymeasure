@@ -31,7 +31,7 @@ from collections import ChainMap
 from itertools import product
 from inspect import signature
 
-from ..Qt import QtGui
+from ..Qt import QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -78,7 +78,7 @@ class SequenceEvaluationException(Exception):
     pass
 
 
-class SequencerWidget(QtGui.QWidget):
+class SequencerWidget(QtWidgets.QWidget):
     """
     Widget that allows to generate a sequence of measurements with varying
     parameters. Moreover, one can write a simple text file to easily load a
@@ -141,42 +141,42 @@ class SequencerWidget(QtGui.QWidget):
         self.names_inv = {name: key for key, name in self.names.items()}
 
     def _setup_ui(self):
-        self.tree = QtGui.QTreeWidget(self)
+        self.tree = QtWidgets.QTreeWidget(self)
         self.tree.setHeaderLabels(["Level", "Parameter", "Sequence"])
         width = self.tree.viewport().size().width()
         self.tree.setColumnWidth(0, int(0.7 * width))
         self.tree.setColumnWidth(1, int(0.9 * width))
         self.tree.setColumnWidth(2, int(0.9 * width))
 
-        self.add_root_item_btn = QtGui.QPushButton("Add root item")
+        self.add_root_item_btn = QtWidgets.QPushButton("Add root item")
         self.add_root_item_btn.clicked.connect(
             partial(self._add_tree_item, level=0)
         )
 
-        self.add_tree_item_btn = QtGui.QPushButton("Add item")
+        self.add_tree_item_btn = QtWidgets.QPushButton("Add item")
         self.add_tree_item_btn.clicked.connect(self._add_tree_item)
 
-        self.remove_tree_item_btn = QtGui.QPushButton("Remove item")
+        self.remove_tree_item_btn = QtWidgets.QPushButton("Remove item")
         self.remove_tree_item_btn.clicked.connect(self._remove_selected_tree_item)
 
-        self.load_seq_button = QtGui.QPushButton("Load sequence")
+        self.load_seq_button = QtWidgets.QPushButton("Load sequence")
         self.load_seq_button.clicked.connect(self.load_sequence)
         self.load_seq_button.setToolTip("Load a sequence from a file.")
 
-        self.queue_button = QtGui.QPushButton("Queue sequence")
+        self.queue_button = QtWidgets.QPushButton("Queue sequence")
         self.queue_button.clicked.connect(self.queue_sequence)
 
     def _layout(self):
-        btn_box = QtGui.QHBoxLayout()
+        btn_box = QtWidgets.QHBoxLayout()
         btn_box.addWidget(self.add_root_item_btn)
         btn_box.addWidget(self.add_tree_item_btn)
         btn_box.addWidget(self.remove_tree_item_btn)
 
-        btn_box_2 = QtGui.QHBoxLayout()
+        btn_box_2 = QtWidgets.QHBoxLayout()
         btn_box_2.addWidget(self.load_seq_button)
         btn_box_2.addWidget(self.queue_button)
 
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
         vbox.addWidget(self.tree)
         vbox.addLayout(btn_box)
@@ -209,12 +209,12 @@ class SequencerWidget(QtGui.QWidget):
                 parent = parent.parent()
                 p_depth = self._depth_of_child(parent)
 
-        comboBox = QtGui.QComboBox()
-        lineEdit = QtGui.QLineEdit()
+        comboBox = QtWidgets.QComboBox()
+        lineEdit = QtWidgets.QLineEdit()
 
         comboBox.addItems(list(sorted(self.names_inv.keys())))
 
-        item = QtGui.QTreeWidgetItem(parent, [""])
+        item = QtWidgets.QTreeWidgetItem(parent, [""])
         depth = self._depth_of_child(item)
         item.setText(0, f"{depth:d}")
 
@@ -280,7 +280,7 @@ class SequencerWidget(QtGui.QWidget):
             )
 
             for entry in sequence:
-                QtGui.QApplication.processEvents()
+                QtWidgets.QApplication.processEvents()
                 parameters = dict(ChainMap(*entry[::-1]))
 
                 procedure = self._parent.make_procedure()
@@ -298,7 +298,7 @@ class SequencerWidget(QtGui.QWidget):
         """
 
         if fileName is None:
-            fileName, _ = QtGui.QFileDialog.getOpenFileName(self, 'OpenFile')
+            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'OpenFile')
 
         if len(fileName) == 0:
             return
@@ -335,7 +335,7 @@ class SequencerWidget(QtGui.QWidget):
         Generate a list of parameters from the sequence tree.
         """
 
-        iterator = QtGui.QTreeWidgetItemIterator(self.tree)
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tree)
         sequences = []
         current_sequence = [[] for i in range(self.MAXDEPTH)]
         temp_sequence = [[] for i in range(self.MAXDEPTH)]

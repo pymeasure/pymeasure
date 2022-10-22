@@ -51,9 +51,9 @@ class KeysightN7776C(Instrument):
         laser.output_enabled = 0
 
     """
-    def __init__(self, address, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super(KeysightN7776C, self).__init__(
-            address, "N7776C Tunable Laser Source", **kwargs)
+            adapter, "N7776C Tunable Laser Source", **kwargs)
 
     locked = Instrument.control(':LOCK?', ':LOCK %g,'+str(LOCK_PW),
                                 """ Boolean property controlling the lock state (True/False) of

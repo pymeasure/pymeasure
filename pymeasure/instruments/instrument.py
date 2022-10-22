@@ -146,12 +146,12 @@ class Instrument:
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True, **kwargs):
-        try:
-            if isinstance(adapter, (int, str)):
+        if isinstance(adapter, (int, str)):
+            try:
                 adapter = VISAAdapter(adapter, **kwargs)
-        except ImportError:
-            raise Exception("Invalid Adapter provided for Instrument since "
-                            "PyVISA is not present")
+            except ImportError:
+                raise Exception("Invalid Adapter provided for Instrument since"
+                                " PyVISA is not present")
 
         self.name = name
         self.SCPI = includeSCPI
