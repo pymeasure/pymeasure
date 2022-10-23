@@ -81,12 +81,65 @@ class HP8657B(Instrument):
     #     """,
     # )
 
+    # List of modulation sources (Not yet included are DC FM)
+    modulations = {"External": "S1",
+                   "Int_400Hz": "S2",
+                   "Int_1000Hz": "S3",
+                   "OFF": "S4"}
+
+    def AM(self, source,  depth=0):
+        """
+        This function sets the AM modulation feature, supported values for the source are:
+
+       ==========  =======
+       Value       Meaning
+       ==========  =======
+       OFF         no modulation active
+       Int_400Hz   internal 400 Hz modulation source
+       Int_1000Hz  internal 1000 Hz modulation source
+       External    External source
+       ==========  =======
+
+        depth is the moduledation depth in percent
+
+        *Note:*
+            - AM & FM can be active at the same time
+            - only one internal source can be active at the time
+        """
+        strict_range(depth, [0, 100])
+
+        if source in self.modulations:
+            self.write(f"AM {self.modulations[source]} {depth} PC")
+
+    def FM(self, source,  deviation=0):
+        """
+        This function sets the FM modulation feature, supported values for the source are:
+
+        ==========  =======
+        Value       Meaning
+        ==========  =======
+        OFF         no modulation active
+        Int_400Hz   internal 400 Hz modulation source
+        Int_1000Hz  internal 1000 Hz modulation source
+        External    External source
+        ==========  =======
+
+        deviation is the peak deviation value in kHz.
+
+        *Note:*
+            - AM & FM can be active at the same time
+            - only one internal source can be active at the time
+        """
+        strict_range(deviation, [0, 400])
+        if source in self.modulations:
+            self.write(f"FM {self.modulations[source]} {deviation} KZ")
+
     amplitude = Instrument.setting(
         "AP%gDM",
         """
         A floating point property that sets the output amplitude in dBm.
 
-        *Note:* At the moment only amplitudes in dBm are accepted
+        *Note:* For the moment only amplitudes in dBm are accepted.
 
         """,
         validator=strict_range,
@@ -96,7 +149,7 @@ class HP8657B(Instrument):
     amplitude_offset = Instrument.setting(
         "AO%gDB",
         """
-        A floating point property that sets the output amplitude in dBm.
+        A floating point property that sets the output offset in dB.
 
         """,
         validator=strict_range,
@@ -104,18 +157,19 @@ class HP8657B(Instrument):
     )
 
     frequency = Instrument.setting(
-        "FR%gHZ",
+        "FR %9.0f HZ",
         """
-        A bool property which controls if the OCP (OverCurrent Protection) is enabled
+        A float propery that controls the output frequency of the instrument
+        For the 8567B the valid range is 100 kHz to 2060 MHz
         """,
         validator=strict_range,
-        values=[100E5, 2.060E9],
+        values=[1.0E5, 2.060E9],
     )
 
     output_enabled = Instrument.setting(
         "R%d",
         """
-        A bool property which controls if the outputis enabled
+        A bool property which controls if the output is enabled
         """,
         validator=strict_discrete_set,
         values={False: 2, True: 3},
