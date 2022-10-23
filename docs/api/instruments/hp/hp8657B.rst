@@ -1,0 +1,15 @@
+################################
+HP Signal generator HP8657B
+################################
+
+
+*Note:*
+    * This instrument does not support reading back from the instrument, as it is a listen-only 
+      GPIB device
+    
+    * Other instrument of this family could be implemented using the dymaic ranges feature
+    
+    
+.. autoclass:: pymeasure.instruments.hp.HP8657B
+    :members:
+    :show-inheritance:

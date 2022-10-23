@@ -31,16 +31,15 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-limits = {
-    "HP6632A": {"Volt_lim": 20.475, "OVP_lim": 22.0, "Cur_lim": 5.118},
-    "HP6633A": {"Volt_lim": 51.118, "OVP_lim": 55.0, "Cur_lim": 2.0475},
-    "HP6634A": {"Volt_lim": 102.38, "OVP_lim": 110.0, "Cur_lim": 1.0238}}
-
 
 class HP8657B(Instrument):
     """ Represents the Hewlett Packard 8657B signal generator
     and provides a high-level interface for interacting
     with the instrument.
+
+    *Note:* this instrument is a listen only instrument, so no readings can be get from the
+    instrument
+
     """
 
     def __init__(self, adapter, **kwargs):
@@ -51,20 +50,20 @@ class HP8657B(Instrument):
             "Hewlett-Packard HP8657B",
             **kwargs,
         )
+    # TODO: Fixit
+    # def check_errors(self):
+    #     """
+    #     Method to read the error status register
 
-    def check_errors(self):
-        """
-        Method to read the error status register
-
-        :return error_status: one byte with the error status register content
-        :rtype error_status: int
-        """
-        # Read the error status reigster only one time for this method, as
-        # the manual states that reading the error status register also clears it.
-        current_errors = int(self.ask("ERR?"))
-        if current_errors != 0:
-            log.error("HP6632 Error detected: %s", self.ERRORS(current_errors))
-        return self.ERRORS(current_errors)
+    #     :return error_status: one byte with the error status register content
+    #     :rtype error_status: int
+    #     """
+    #     # Read the error status reigster only one time for this method, as
+    #     # the manual states that reading the error status register also clears it.
+    #     current_errors = int(self.ask("ERR?"))
+    #     if current_errors != 0:
+    #         log.error("HP6632 Error detected: %s", self.ERRORS(current_errors))
+    #     return self.ERRORS(current_errors)
 
     def clear(self):
         """
@@ -73,23 +72,23 @@ class HP8657B(Instrument):
         """
         self.adapter.connection.clear()
 
-    id = Instrument.measurement(
-        "ID?",
-        """
-        Reads the ID of the instrument and returns this value for now
+    # TODO: FIXIT
+    # id = Instrument.measurement(
+    #     "ID?",
+    #     """
+    #     Reads the ID of the instrument and returns this value for now
 
-        """,
-    )
+    #     """,
+    # )
 
     amplitude = Instrument.setting(
         "AP%gDM",
         """
         A floating point property that sets the output amplitude in dBm.
 
-        _Note:_ At the moment only amplitudes in dBm are accepted
+        *Note:* At the moment only amplitudes in dBm are accepted
 
         """,
-        dynamic=True,
         validator=strict_range,
         values=[-143.5, 17.0],
     )
@@ -99,10 +98,7 @@ class HP8657B(Instrument):
         """
         A floating point property that sets the output amplitude in dBm.
 
-        _Note:_ At the moment only amplitudes in dBm are accepted
-
         """,
-        dynamic=True,
         validator=strict_range,
         values=[-100, 100.0],
     )
