@@ -328,7 +328,7 @@ class EurotestHPP120256(Instrument):
                       ", " + str(voltage_output_setting + abs_output_voltage_error) + "]")
             log.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
-                raise Exception("Timeout for wait_for_output_voltage_reached function")
+                raise TimeoutError("Timeout for wait_for_output_voltage_reached function")
 
         return
 
