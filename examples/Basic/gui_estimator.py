@@ -12,14 +12,12 @@ python gui.py
 import sys
 import random
 import tempfile
-from time import sleep,time_ns
-
+from time import sleep
 from datetime import datetime, timedelta
-
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter, unique_filename
 from pymeasure.experiment import Routine
 from pymeasure.experiment import Results
-from pymeasure.display.Qt import QtGui
+from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 
 import logging
@@ -44,10 +42,12 @@ class TestProcedure(Procedure):
         iss = []
         tands = []
         for i in range(self.iterations):
-            iss=i
-            tands=random.random()
-            log.debug("Produced numbers: %s" % tands)
-
+            data = {
+                'Iteration': i,
+                'Random Number': random.random()
+            }
+            log.debug("Produced numbers: %s" % data)
+            self.emit('results', data)
             self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
@@ -135,7 +135,7 @@ class MainWindow(ManagedWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

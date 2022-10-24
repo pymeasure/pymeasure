@@ -34,6 +34,7 @@ Mathieu Plante
 Michele Sardo
 Steven Siegl
 Benjamin Klebel-Knobloch
+Markus Röleke
 Demetra Adrahtas
 Dan McDonald
 Hud Wahab
@@ -45,3 +46,12 @@ Bastian Leykauf
 Matthew Delaney
 Marco von Rosenberg
 Jack Van Sambeek
+<<<<<<< HEAD
+=======
+JC Arbelbide
+Florian Jünger
+Benedikt Moneke
+Asaf Yagoda
+Fabio Garzetti
+Daniel Schmeer
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

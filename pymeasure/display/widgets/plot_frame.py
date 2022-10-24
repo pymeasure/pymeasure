@@ -28,24 +28,39 @@ import re
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve, Crosshairs
+<<<<<<< HEAD
 from ..Qt import QtCore, QtGui
+=======
+from ..Qt import QtCore, QtWidgets
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+<<<<<<< HEAD
 class PlotFrame(QtGui.QFrame):
+=======
+class PlotFrame(QtWidgets.QFrame):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
     the plot based on the refresh_time, and allows the axes
     to be changed on the fly, which updates the plotted data
     """
 
     LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
+<<<<<<< HEAD
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
     y_axis_changed = QtCore.QSignal(str)
+=======
+    updated = QtCore.Signal()
+    ResultsClass = ResultsCurve
+    x_axis_changed = QtCore.Signal(str)
+    y_axis_changed = QtCore.Signal(str)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)
@@ -58,6 +73,7 @@ class PlotFrame(QtGui.QFrame):
     def _setup_ui(self):
         self.setAutoFillBackground(False)
         self.setStyleSheet("background: #fff")
+<<<<<<< HEAD
         self.setFrameShape(QtGui.QFrame.StyledPanel)
         self.setFrameShadow(QtGui.QFrame.Sunken)
         self.setMidLineWidth(1)
@@ -66,11 +82,27 @@ class PlotFrame(QtGui.QFrame):
 
         self.plot_widget = pg.PlotWidget(self, background='#ffffff')
         self.coordinates = QtGui.QLabel(self)
+=======
+        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        self.setMidLineWidth(1)
+
+        vbox = QtWidgets.QVBoxLayout(self)
+
+        self.plot_widget = pg.PlotWidget(self, background='#ffffff')
+        self.coordinates = QtWidgets.QLabel(self)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
         self.coordinates.setStyleSheet("background: #fff")
         self.coordinates.setText("")
         self.coordinates.setAlignment(
+<<<<<<< HEAD
             QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+=======
+            QtCore.Qt.AlignmentFlag.AlignRight |
+            QtCore.Qt.AlignmentFlag.AlignTrailing |
+            QtCore.Qt.AlignmentFlag.AlignVCenter)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
         vbox.addWidget(self.plot_widget)
         vbox.addWidget(self.coordinates)
@@ -79,7 +111,12 @@ class PlotFrame(QtGui.QFrame):
         self.plot = self.plot_widget.getPlotItem()
 
         self.crosshairs = Crosshairs(self.plot,
+<<<<<<< HEAD
                                      pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
+=======
+                                     pen=pg.mkPen(color='#AAAAAA',
+                                                  style=QtCore.Qt.PenStyle.DashLine))
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
         self.timer = QtCore.QTimer()

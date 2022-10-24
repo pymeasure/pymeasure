@@ -28,7 +28,7 @@ from inspect import signature
 from datetime import datetime, timedelta
 
 from ..thread import StoppableQThread
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from .sequencer_widget import SequenceEvaluationException
 
 log = logging.getLogger(__name__)
@@ -36,7 +36,11 @@ log.addHandler(logging.NullHandler())
 
 
 class EstimatorThread(StoppableQThread):
+<<<<<<< HEAD
     new_estimates = QtCore.QSignal(list)
+=======
+    new_estimates = QtCore.Signal(list)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     def __init__(self, get_estimates_callable):
         StoppableQThread.__init__(self)
@@ -56,7 +60,11 @@ class EstimatorThread(StoppableQThread):
             self.new_estimates.emit(estimates)
 
 
+<<<<<<< HEAD
 class EstimatorWidget(QtGui.QWidget):
+=======
+class EstimatorWidget(QtWidgets.QWidget):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """
     Widget that allows to display up-front estimates of the measurement
     procedure.
@@ -133,20 +141,33 @@ class EstimatorWidget(QtGui.QWidget):
     def _setup_ui(self):
         self.line_edits = list()
         for idx in range(self.number_of_estimates):
+<<<<<<< HEAD
             qlb = QtGui.QLabel(self)
 
             qle = QtGui.QLineEdit(self)
             qle.setEnabled(False)
             qle.setAlignment(QtCore.Qt.AlignRight)
+=======
+            qlb = QtWidgets.QLabel(self)
+
+            qle = QtWidgets.QLineEdit(self)
+            qle.setEnabled(False)
+            qle.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
             self.line_edits.append((qlb, qle))
 
         # Add a checkbox for continuous updating
+<<<<<<< HEAD
         self.update_box = QtGui.QCheckBox(self)
+=======
+        self.update_box = QtWidgets.QCheckBox(self)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         self.update_box.setTristate(True)
         self.update_box.stateChanged.connect(self._set_continuous_updating)
 
         # Add a button for instant updating
+<<<<<<< HEAD
         self.update_button = QtGui.QPushButton("Update", self)
         self.update_button.clicked.connect(self.update_estimates)
 
@@ -156,6 +177,17 @@ class EstimatorWidget(QtGui.QWidget):
             f_layout.addRow(*row)
 
         update_hbox = QtGui.QHBoxLayout()
+=======
+        self.update_button = QtWidgets.QPushButton("Update", self)
+        self.update_button.clicked.connect(self.update_estimates)
+
+    def _layout(self):
+        f_layout = QtWidgets.QFormLayout(self)
+        for row in self.line_edits:
+            f_layout.addRow(*row)
+
+        update_hbox = QtWidgets.QHBoxLayout()
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         update_hbox.addWidget(self.update_box)
         update_hbox.addWidget(self.update_button)
         f_layout.addRow("Update continuously", update_hbox)

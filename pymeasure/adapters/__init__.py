@@ -25,6 +25,8 @@ import logging
 
 from .adapter import Adapter, FakeAdapter
 
+from .protocol import ProtocolAdapter
+
 from pymeasure.adapters.telnet import TelnetAdapter
 
 log = logging.getLogger(__name__)

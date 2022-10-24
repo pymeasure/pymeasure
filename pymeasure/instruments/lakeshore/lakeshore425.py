@@ -24,7 +24,6 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
-from .adapters import LakeShoreUSBAdapter
 
 from time import sleep
 import numpy as np
@@ -74,10 +73,24 @@ class LakeShore425(Instrument):
         map_values=True
     )
 
+<<<<<<< HEAD
     def __init__(self, port):
         super().__init__(
             LakeShoreUSBAdapter(port),
+=======
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "LakeShore 425 Gaussmeter",
+            asrl={'write_termination': "\n",
+                  'read_termination': "\n",  # from manual
+                  'baud_rate': 57600,
+                  'timeout': 500,
+                  'parity': 1,  # odd
+                  'data_bits': 7
+                  },
+            **kwargs
         )
 
     def auto_range(self):

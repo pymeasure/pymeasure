@@ -52,3 +52,11 @@ The following developers have contributed to the PyMeasure package:
 | Matthew Delaney
 | Marco von Rosenberg
 | Jack Van Sambeek
+<<<<<<< HEAD
+=======
+| JC Arbelbide
+| Benedikt Moneke
+| Asaf Yagoda
+| Fabio Garzetti
+| Daniel Schmeer
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

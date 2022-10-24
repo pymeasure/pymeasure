@@ -56,7 +56,11 @@ class ND287(Instrument):
         dynamic=True
     )
 
+<<<<<<< HEAD
     def __init__(self, resourceName, units="mm", **kwargs):
+=======
+    def __init__(self, adapter, units="mm", **kwargs):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         """ Initialize the nd287 with a carriage return write termination.
 
         :param: units: Specify the units that the gauge is working in.
@@ -65,7 +69,11 @@ class ND287(Instrument):
         self._units = units
 
         super().__init__(
+<<<<<<< HEAD
             resourceName,
+=======
+            adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Heidenhain ND287",
             includeSCPI=False,
             write_termination="\r",
@@ -76,8 +84,13 @@ class ND287(Instrument):
     def id(self):
         """ String identification property for the device.
         """
+<<<<<<< HEAD
         self.adapter.connection.write("\x1BA0000")
         id_str = self.adapter.connection.read_bytes(37).decode("utf-8")
+=======
+        self.write("\x1BA0000")
+        id_str = self.read_bytes(37).decode("utf-8")
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         return id_str
 
     @property
@@ -101,9 +114,15 @@ class ND287(Instrument):
 
         :return: String with the error message as its contents.
         """
+<<<<<<< HEAD
         self.adapter.connection.write("\x1BA0301")
         try:
             err_str = self.adapter.connection.read_bytes(36).decode("utf-8")
+=======
+        self.write("\x1BA0301")
+        try:
+            err_str = self.read_bytes(36).decode("utf-8")
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         except VisaIOError:
             err_str = None
 

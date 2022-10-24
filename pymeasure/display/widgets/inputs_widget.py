@@ -27,14 +27,22 @@ import logging
 from functools import partial
 
 from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
+<<<<<<< HEAD
 from ..Qt import QtCore, QtGui
+=======
+from ..Qt import QtCore, QtWidgets
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from ...experiment import parameters
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+<<<<<<< HEAD
 class InputsWidget(QtGui.QWidget):
+=======
+class InputsWidget(QtWidgets.QWidget):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """
     Widget wrapper for various :doc:`inputs`
     """
@@ -77,14 +85,22 @@ class InputsWidget(QtGui.QWidget):
             setattr(self, name, element)
 
     def _layout(self):
+<<<<<<< HEAD
         vbox = QtGui.QVBoxLayout(self)
+=======
+        vbox = QtWidgets.QVBoxLayout(self)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         vbox.setSpacing(6)
 
         self.labels = {}
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
+<<<<<<< HEAD
                 label = QtGui.QLabel(self)
+=======
+                label = QtWidgets.QLabel(self)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
                 self.labels[name] = label

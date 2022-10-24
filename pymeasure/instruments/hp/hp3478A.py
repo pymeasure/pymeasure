@@ -26,7 +26,11 @@ import ctypes
 import logging
 import math
 from enum import IntFlag
+<<<<<<< HEAD
 from pymeasure.instruments import Instrument
+=======
+from pymeasure.instruments.hp.hplegacyinstrument import HPLegacyInstrument, StatusBitsBase
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -35,6 +39,7 @@ log.addHandler(logging.NullHandler())
 
 c_uint8 = ctypes.c_uint8
 
+<<<<<<< HEAD
 # classes for the decoding of the 5-byte status word
 
 
@@ -54,9 +59,14 @@ class Status_bytes(ctypes.Structure):
 class Status_bits(ctypes.LittleEndianStructure):
     """
     Support-Class with the bit assignments for the 5 status byte of the HP3478A
-    """
+=======
 
+class SRQ(ctypes.BigEndianStructure):
+    """Support class for the SRQ handling
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
+    """
     _fields_ = [
+<<<<<<< HEAD
         # Byte 1: Function, Range and Number of Digits
         ("digits",     c_uint8, 2),  # bit 0..1
         ("range",      c_uint8, 3),  # bit 2..4
@@ -94,13 +104,24 @@ class Status_bits(ctypes.LittleEndianStructure):
 
         # Byte 5: DAC Value
         ("DAC_value",       c_uint8, 8),
+=======
+        ("power_on", c_uint8, 1),
+        ("not_assigned_1", c_uint8, 1),
+        ("calibration", c_uint8, 1),
+        ("front_panel_button", c_uint8, 1),
+        ("internal_error", c_uint8, 1),
+        ("syntax_error", c_uint8, 1),
+        ("not_assigned_2", c_uint8, 1),
+        ("data_ready", c_uint8, 1),
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     ]
 
     def __str__(self):
         """
-        Returns a pretty formatted (human readable) string showing the status of the instrument
+        Returns a pretty formatted string showing the status of the instrument
 
         """
+<<<<<<< HEAD
         cur_mode = HP3478A.INV_MODES["F" + str(self.function)]
         cur_range = list(HP3478A.RANGES[cur_mode].keys())[self.range - 1]
         if cur_range >= 1E6:
@@ -136,19 +157,72 @@ class Status_bits(ctypes.LittleEndianStructure):
 
 class Status(ctypes.Union):
     """Union type element for the decoding of the status bit-fields
+=======
+        ret_str = ""
+        for field in self._fields_:
+            ret_str = ret_str + f"{field[0]}: {hex(getattr(self, field[0]))}\n"
+
+        return ret_str
+
+
+class Status(StatusBitsBase):
     """
+    Support-Class with the bit assignments for the 5 status byte of the HP3478A
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
+    """
+
     _fields_ = [
-        ("B", Status_bytes),
-        ("b", Status_bits)
+        # Byte 1: Function, Range and Number of Digits
+        ("function", c_uint8, 3),  # bit 5..7
+        ("range", c_uint8, 3),  # bit 2..4
+        ("digits", c_uint8, 2),  # bit 0..1
+        # Byte 2: Status Bits
+        ("res1", c_uint8, 1),
+        ("ext_trig", c_uint8, 1),
+        ("cal_enable", c_uint8, 1),
+        ("front_rear", c_uint8, 1),
+        ("fifty_hz", c_uint8, 1),
+        ("auto_zero", c_uint8, 1),
+        ("auto_range", c_uint8, 1),
+        ("int_trig", c_uint8, 1),
+        # Byte 3: Serial Poll Mask (SRQ)
+        # ("SRQ_PON", c_uint8, 1),
+        # ("res3", c_uint8, 1),
+        # ("SRQ_cal_error", c_uint8, 1),
+        # ("SRQ_front_panel", c_uint8, 1),
+        # ("SRQ_internal_error", c_uint8, 1),
+        # ("SRQ_syntax_error", c_uint8, 1),
+        # ("res2", c_uint8, 1),
+        # ("SRQ_data_rdy", c_uint8, 1),
+        ("SRQ", SRQ),
+        # Byte 4: Error Information
+        # ("res5", c_uint8, 1),
+        # ("res4", c_uint8, 1),
+        # ("ERR_AD_Link", c_uint8, 1),
+        # ("ERR_AD", c_uint8, 1),
+        # ("ERR_slope", c_uint8, 1),
+        # ("ERR_ROM", c_uint8, 1),
+        # ("ERR_RAM", c_uint8, 1),
+        # ("ERR_cal", c_uint8, 1),
+        ("Error_Status", c_uint8, 8),
+        # Byte 5: DAC Value
+        ("DAC_value", c_uint8, 8),
     ]
 
 
+<<<<<<< HEAD
 class HP3478A(Instrument):
     """ Represents the Hewlett Packard 3748A 5 1/2 digit multimeter
+=======
+class HP3478A(HPLegacyInstrument):
+    """ Represents the Hewlett Packard 3478A 5 1/2 digit multimeter
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     and provides a high-level interface for interacting
     with the instrument.
     """
+    status_desc = Status
 
+<<<<<<< HEAD
     def __init__(self, resourceName, **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('send_end', True)
@@ -157,6 +231,15 @@ class HP3478A(Instrument):
             "Hewlett-Packard HP3478A",
             includeSCPI=False,
             **kwargs
+=======
+    def __init__(self, adapter, **kwargs):
+        kwargs.setdefault('read_termination', '\r\n')
+        kwargs.setdefault('send_end', True)
+        super().__init__(
+            adapter,
+            "Hewlett-Packard HP3478A",
+            **kwargs,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         )
 
     # Definitions for different specifics of this instrument
@@ -202,6 +285,7 @@ class HP3478A(Instrument):
         RAM = 2  # RAM selftest failed
         CALIBRATION = 1  # Calibration checksum error or cal range issue
         NO_ERR = 0  # Should be obvious
+<<<<<<< HEAD
 
     class SRQ(IntFlag):
         """Enum element for SRQ mask bit decoding
@@ -292,6 +376,8 @@ class HP3478A(Instrument):
         else:
             trigger_mode = "internal"
         return trigger_mode
+=======
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     # commands/properties for instrument control
     @property
@@ -338,8 +424,13 @@ class HP3478A(Instrument):
     @auto_zero_enabled.setter
     def auto_zero_enabled(self, value):
         az_set = int(value)
+<<<<<<< HEAD
         AZ_str = "Z" + str(int(strict_discrete_set(az_set, [0, 1])))
         self.write(AZ_str)
+=======
+        az_str = "Z" + str(int(strict_discrete_set(az_set, [0, 1])))
+        self.write(az_str)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     @property
     def calibration_enabled(self):
@@ -371,7 +462,7 @@ class HP3478A(Instrument):
             log.error("HP3478A error detected: %s", self.ERRORS(current_errors))
         return self.ERRORS(current_errors)
 
-    error_status = Instrument.measurement(
+    error_status = HPLegacyInstrument.measurement(
         "E",
         """Checks the error status register
 
@@ -385,7 +476,7 @@ class HP3478A(Instrument):
         """
         self.write("D1")
 
-    display_text = Instrument.setting(
+    display_text = HPLegacyInstrument.setting(
         "D2%s",
         """Displays up to 12 upper-case ASCII characters on the display.
 
@@ -393,7 +484,7 @@ class HP3478A(Instrument):
         set_process=(lambda x: str.upper(x[0:12])),
     )
 
-    display_text_no_symbol = Instrument.setting(
+    display_text_no_symbol = HPLegacyInstrument.setting(
         "D3%s",
         """Displays up to 12 upper-case ASCII characters on the display and
         disables all symbols on the display.
@@ -402,7 +493,7 @@ class HP3478A(Instrument):
         set_process=(lambda x: str.upper(x[0:12])),
     )
 
-    measure_ACI = Instrument.measurement(
+    measure_ACI = HPLegacyInstrument.measurement(
         MODES["ACI"],
         """
         Returns the measured value for AC current as a float in A.
@@ -410,7 +501,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_ACV = Instrument.measurement(
+    measure_ACV = HPLegacyInstrument.measurement(
         MODES["ACV"],
         """
         Returns the measured value for AC Voltage as a float in V.
@@ -418,7 +509,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_DCI = Instrument.measurement(
+    measure_DCI = HPLegacyInstrument.measurement(
         MODES["DCI"],
         """
         Returns the measured value for DC current as a float in A.
@@ -426,7 +517,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_DCV = Instrument.measurement(
+    measure_DCV = HPLegacyInstrument.measurement(
         MODES["DCV"],
         """
         Returns the measured value for DC Voltage as a float in V.
@@ -434,7 +525,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_R2W = Instrument.measurement(
+    measure_R2W = HPLegacyInstrument.measurement(
         MODES["R2W"],
         """
         Returns the measured value for 2-wire resistance as a float in Ohm.
@@ -442,7 +533,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_R4W = Instrument.measurement(
+    measure_R4W = HPLegacyInstrument.measurement(
         MODES["R4W"],
         """
         Returns the measured value for 4-wire resistance as a float in Ohm.
@@ -450,7 +541,7 @@ class HP3478A(Instrument):
         """,
     )
 
-    measure_Rext = Instrument.measurement(
+    measure_Rext = HPLegacyInstrument.measurement(
         MODES["Rext"],
         """
         Returns the measured value for extended resistance mode (>30M, 2-wire)
@@ -475,7 +566,7 @@ class HP3478A(Instrument):
         Rext  extended resistance method (requires additional 10 M resistor)
         ====  ==============================================================
         """
-        current_mode = self.decode_mode(self.status.function)
+        current_mode = self.INV_MODES["F" + str(self.status.function)]
         return current_mode
 
     @mode.setter
@@ -502,7 +593,14 @@ class HP3478A(Instrument):
         ====  =======================================
 
         """
-        current_range = self.decode_range(self.status.range, self.status.function)
+        cur_mode = self.INV_MODES["F" + str(self.status.function)]
+        if cur_mode == "DCV":
+            correction_factor = 3
+        elif cur_mode in ["ACV", "ACI", "DCI"]:
+            correction_factor = 2
+        else:
+            correction_factor = 0
+        current_range = 3 * math.pow(10, self.status.range - correction_factor)
         return current_range
 
     @range.setter
@@ -527,15 +625,6 @@ class HP3478A(Instrument):
         self.write(resolution_string)
 
     @property
-    def status(self):
-        """
-        Returns an object representing the current status of the unit.
-
-        """
-        current_status = self.decode_status(self.get_status())
-        return current_status
-
-    @property
     def SRQ_mask(self):
         """Return current SRQ mask, this property can be set,
 
@@ -552,6 +641,7 @@ class HP3478A(Instrument):
         =========  ==========================
 
         """
+<<<<<<< HEAD
         mask = self.decode_status(self.get_status(), "SRQ")
         return mask
 
@@ -559,6 +649,14 @@ class HP3478A(Instrument):
     def SRQ_mask(self, value):
         mask_str = "M" + format(strict_range(value, [0, 63]), "2o")
         self.write(mask_str)
+=======
+
+        return self.status.SRQ
+
+    @SRQ_mask.setter
+    def SRQ_mask(self, value):
+        self.write(f"M{strict_range(value, [0, 63]):02o}")
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     @property
     def trigger(self):
@@ -577,13 +675,23 @@ class HP3478A(Instrument):
         ========  ===========================================
 
         """
-        trigger = self.decode_trigger(self.get_status())
-        return trigger
+        status = self.status
+        i_trig = status.int_trig
+        e_trig = status.ext_trig
+        if i_trig == 0:
+            if e_trig == 0:
+                trigger_mode = "hold"
+            else:
+                trigger_mode = "external"
+        else:
+            trigger_mode = "internal"
+        return trigger_mode
 
     @trigger.setter
     def trigger(self, value):
         trig_set = self.TRIGGERS[strict_discrete_set(value, self.TRIGGERS)]
         self.write(trig_set)
+<<<<<<< HEAD
 
     # Functions using low-level access via instrument.adapter.connection methods
 
@@ -609,3 +717,5 @@ class HP3478A(Instrument):
         self.adapter.connection.clear()
         self.adapter.connection.close()
         super().shutdown()
+=======
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

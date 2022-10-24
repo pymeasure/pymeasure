@@ -58,11 +58,15 @@ class Fluke7341(Instrument):
                                 get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}"
                                 )
 
+<<<<<<< HEAD
     def __init__(self, resource_name, **kwargs):
+=======
+    def __init__(self, adapter, **kwargs):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         kwargs.setdefault('timeout', 2000)
         kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
-            resource_name,
+            adapter,
             "Fluke 7341",
             preprocess_reply=lambda x: x.split()[1],
             includeSCPI=False,

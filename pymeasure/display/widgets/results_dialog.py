@@ -28,7 +28,11 @@ import os
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
+<<<<<<< HEAD
 from ..Qt import QtCore, QtGui
+=======
+from ..Qt import QtCore, QtWidgets
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from ...experiment.results import Results
 from .plot_widget import PlotWidget
 
@@ -36,19 +40,28 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+<<<<<<< HEAD
 class ResultsDialog(QtGui.QFileDialog):
+=======
+class ResultsDialog(QtWidgets.QFileDialog):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """
     Widget that displays a dialog box for loading a past experiment run.
     It shows a preview of curves from the results file when selected in the dialog box.
 
     This widget used by the `open_experiment` method in
+<<<<<<< HEAD
     :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>` class
+=======
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>` class
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """
 
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
         super().__init__(parent)
         self.columns = columns
         self.x_axis, self.y_axis = x_axis, y_axis
+<<<<<<< HEAD
         self.setOption(QtGui.QFileDialog.DontUseNativeDialog, True)
         self._setup_ui()
 
@@ -58,12 +71,28 @@ class ResultsDialog(QtGui.QFileDialog):
         param_vbox = QtGui.QVBoxLayout()
         vbox_widget = QtGui.QWidget()
         param_vbox_widget = QtGui.QWidget()
+=======
+        self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        preview_tab = QtWidgets.QTabWidget()
+        vbox = QtWidgets.QVBoxLayout()
+        param_vbox = QtWidgets.QVBoxLayout()
+        vbox_widget = QtWidgets.QWidget()
+        param_vbox_widget = QtWidgets.QWidget()
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
         self.plot_widget = PlotWidget("Results", self.columns,
                                       self.x_axis, self.y_axis, parent=self)
         self.plot = self.plot_widget.plot
+<<<<<<< HEAD
         self.preview_param = QtGui.QTreeWidget()
         param_header = QtGui.QTreeWidgetItem(["Name", "Value"])
+=======
+        self.preview_param = QtWidgets.QTreeWidget()
+        param_header = QtWidgets.QTreeWidgetItem(["Name", "Value"])
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         self.preview_param.setHeaderItem(param_header)
         self.preview_param.setColumnWidth(0, 150)
         self.preview_param.setAlternatingRowColors(True)
@@ -79,7 +108,11 @@ class ResultsDialog(QtGui.QFileDialog):
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
 
+<<<<<<< HEAD
         self.setFileMode(QtGui.QFileDialog.ExistingFiles)
+=======
+        self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         self.currentChanged.connect(self.update_plot)
 
     def update_plot(self, filename):
@@ -108,6 +141,12 @@ class ResultsDialog(QtGui.QFileDialog):
 
             self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():
+<<<<<<< HEAD
                 new_item = QtGui.QTreeWidgetItem([param.name, str(param)])
                 self.preview_param.addTopLevelItem(new_item)
             self.preview_param.sortItems(0, QtCore.Qt.AscendingOrder)
+=======
+                new_item = QtWidgets.QTreeWidgetItem([param.name, str(param)])
+                self.preview_param.addTopLevelItem(new_item)
+            self.preview_param.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

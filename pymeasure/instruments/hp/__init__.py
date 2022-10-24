@@ -25,4 +25,13 @@
 from .hp33120A import HP33120A
 from .hp34401A import HP34401A
 from .hp3478A import HP3478A
+<<<<<<< HEAD
 from .hp8116a import HP8116A
+=======
+from .hp3437A import HP3437A
+from .hp8116a import HP8116A
+from .hpsystempsu import HP6632A
+from .hpsystempsu import HP6633A
+from .hpsystempsu import HP6634A
+from .hplegacyinstrument import HPLegacyInstrument
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

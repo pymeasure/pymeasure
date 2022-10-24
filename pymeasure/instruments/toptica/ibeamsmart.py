@@ -34,11 +34,19 @@ class IBeamSmart(Instrument):
     :param baud_rate: communication speed, defaults to 115200
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
+<<<<<<< HEAD
     def __init__(self, port, baud_rate=115200, **kwargs):
         if not isinstance(port, str):
             raise TypeError("'port' must be a pyvisa resource name string")
         super().__init__(
             TopticaAdapter(port, baud_rate, **kwargs),
+=======
+    def __init__(self, adapter, baud_rate=115200, **kwargs):
+        if not isinstance(adapter, str):
+            raise TypeError("'adapter' must be a pyvisa resource name string")
+        super().__init__(
+            TopticaAdapter(adapter, baud_rate, **kwargs),
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "toptica IBeam Smart laser diode",
             includeSCPI=False,
         )

@@ -18,7 +18,11 @@ import numpy as np
 
 from pymeasure.instruments.keithley import Keithley2000
 from pymeasure.instruments.yokogawa import Yokogawa7651
+<<<<<<< HEAD
 from pymeasure.display.Qt import QtGui
+=======
+from pymeasure.display.Qt import QtWidgets
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from pymeasure.display.windows import ManagedWindow
 from pymeasure.experiment import (
     Procedure, FloatParameter, unique_filename, Results
@@ -119,7 +123,11 @@ class MainWindow(ManagedWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
+<<<<<<< HEAD
     sys.exit(app.exec_())
+=======
+    sys.exit(app.exec())
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

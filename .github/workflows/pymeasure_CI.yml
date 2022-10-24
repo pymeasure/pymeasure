@@ -14,7 +14,9 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Cache conda
         uses: actions/cache@v2
         env:
@@ -65,7 +67,13 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.7", "3.8", "3.9", "3.10"]
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@v2
+=======
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
       - name: Cache conda
         uses: actions/cache@v2
         env:
@@ -81,6 +89,11 @@ jobs:
           activate-environment: pymeasure
           auto-update-conda: true
           use-only-tar-bz2: true  # for caching to work properly
+      - name: Install Pymeasure
+        # If the pytest problem matcher stops working because of bad paths, do an editable install
+        run: pip install .[tests]
+      - name: Pymeasure version
+        run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: Conda info & list
         run: |
           conda info
@@ -89,9 +102,17 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "::add-matcher::.github/pytest.json"
+<<<<<<< HEAD
           xvfb-run -a python setup.py test
+=======
+          xvfb-run -a pytest
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
       - name: Run pytest
         if: runner.os != 'Linux'
         run: |
           echo "::add-matcher::.github/pytest.json"
+<<<<<<< HEAD
           python setup.py test
+=======
+          pytest
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

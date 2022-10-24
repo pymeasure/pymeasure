@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+<<<<<<< HEAD
 import pytest
 import math
 import time
@@ -264,3 +265,36 @@ class TestHP8116A:
         time.sleep(0.5)
         instr.autovernier_enabled = False
         assert instr.amplitude > 120e-3
+=======
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.hp import HP8116A
+from pymeasure.instruments.hp.hp8116a import Status
+
+HP8116A.status = property(fget=lambda self: Status(5))
+
+
+def test_init():
+    with expected_protocol(
+            HP8116A,
+            [(b"CST", b"x" * 87 + b' ,\r\n')],
+    ):
+        pass  # Verify the expected communication.
+
+
+def test_duty_cycle():
+    with expected_protocol(
+            HP8116A,
+            [(b"CST", b"x" * 87 + b' ,\r\n'), (b"IDTY", b"00000035")],
+    ) as instr:
+        assert instr.duty_cycle == 35
+
+
+def test_duty_cycle_setter():
+    with expected_protocol(
+            HP8116A,
+            [(b"CST", b"x" * 87 + b' ,\r\n'), (b"DTY 34.5 %", None)],
+    ) as instr:
+        instr.duty_cycle = 34.5
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

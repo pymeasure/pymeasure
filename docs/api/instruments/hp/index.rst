@@ -11,6 +11,12 @@ This section contains specific documentation on the Hewlett Packard instruments 
 
    hp33120A
    hp34401A
+   hp3437A
    hp3478A
    hp8116A
+<<<<<<< HEAD
 
+=======
+   hplegacyinstrument
+   hpsystempsu
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

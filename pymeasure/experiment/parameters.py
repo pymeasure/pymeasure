@@ -23,6 +23,10 @@
 #
 from numpy import bool_
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
@@ -100,13 +104,15 @@ class IntegerParameter(Parameter):
     :param maximum: The maximum allowed value (default: 1e9)
     :param default: The default integer value
     :param ui_class: A Qt class to use for the UI of this parameter
+    :param step: int step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
-    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
+    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
+        self.step = int(step) if step else None
 
     @property
     def value(self):
@@ -199,15 +205,17 @@ class FloatParameter(Parameter):
     :param decimals: The number of decimals considered (default: 15)
     :param default: The default floating point value
     :param ui_class: A Qt class to use for the UI of this parameter
+    :param step: step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
-                 decimals=15, **kwargs):
+                 decimals=15, step=None, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = minimum
         self.maximum = maximum
         self.decimals = decimals
+        self.step = step
 
     @property
     def value(self):

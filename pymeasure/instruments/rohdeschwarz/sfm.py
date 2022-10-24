@@ -202,9 +202,15 @@ class SFM(Instrument):
 
     """
 
+<<<<<<< HEAD
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
+=======
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Rohde&Schwarz SFM",
             includeSCPI=True,
             **kwargs

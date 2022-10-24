@@ -22,7 +22,10 @@
 # THE SOFTWARE.
 #
 
+<<<<<<< HEAD
 from .adapters import LakeShoreUSBAdapter
+=======
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from .lakeshore331 import LakeShore331
 from .lakeshore421 import LakeShore421
 from .lakeshore425 import LakeShore425

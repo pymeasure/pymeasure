@@ -182,7 +182,11 @@ class DPSeriesMotorController(Instrument):
             logging.error("DP-Series motor controller error detected: %s" % current_errors)
         return current_errors
 
+<<<<<<< HEAD
     def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
+=======
+    def __init__(self, adapter, address=0, encoder_enabled=False, **kwargs):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         """
         Initialize communication with the motor controller with the address given by `address`.
 
@@ -200,7 +204,11 @@ class DPSeriesMotorController(Instrument):
         kwargs.setdefault('timeout', 2000)
 
         super().__init__(
+<<<<<<< HEAD
             resourceName,
+=======
+            adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Anaheim Automation Stepper Motor Controller",
             includeSCPI=False,
             asrl={'baud_rate': 38400},
@@ -274,7 +282,12 @@ class DPSeriesMotorController(Instrument):
         raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
 
     def reset_position(self):
+<<<<<<< HEAD
         """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
+=======
+        """
+        Reset position as counted by the motor controller and an externally connected encoder to 0.
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         """
         # reset encoder recorded position #
         self.write("ET")
@@ -328,6 +341,7 @@ class DPSeriesMotorController(Instrument):
             cmd_str = "@%i%s" % (self._address, command)
         super().write(cmd_str)
 
+<<<<<<< HEAD
     def values(self, command, **kwargs):
         """ Override the instrument base values method to add the motor controller's address to the
         command string.
@@ -356,6 +370,8 @@ class DPSeriesMotorController(Instrument):
 
         return val
 
+=======
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     def wait_for_completion(self, interval=0.5):
         """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)
 

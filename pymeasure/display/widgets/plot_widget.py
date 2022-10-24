@@ -27,7 +27,11 @@ import logging
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
+<<<<<<< HEAD
 from ..Qt import QtCore, QtGui
+=======
+from ..Qt import QtCore, QtWidgets
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from .tab_widget import TabWidget
 from .plot_frame import PlotFrame
 
@@ -35,7 +39,11 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+<<<<<<< HEAD
 class PlotWidget(TabWidget, QtGui.QWidget):
+=======
+class PlotWidget(TabWidget, QtWidgets.QWidget):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to allow different columns of the data to be dynamically chosen
     """
@@ -57,6 +65,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             self.plot_frame.change_y_axis(y_axis)
 
     def _setup_ui(self):
+<<<<<<< HEAD
         self.columns_x_label = QtGui.QLabel(self)
         self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_x_label.setText('X Axis:')
@@ -66,6 +75,17 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
         self.columns_x = QtGui.QComboBox(self)
         self.columns_y = QtGui.QComboBox(self)
+=======
+        self.columns_x_label = QtWidgets.QLabel(self)
+        self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        self.columns_x_label.setText('X Axis:')
+        self.columns_y_label = QtWidgets.QLabel(self)
+        self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        self.columns_y_label.setText('Y Axis:')
+
+        self.columns_x = QtWidgets.QComboBox(self)
+        self.columns_y = QtWidgets.QComboBox(self)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         for column in self.columns:
             self.columns_x.addItem(column)
             self.columns_y.addItem(column)
@@ -84,10 +104,17 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.columns_y.setCurrentIndex(1)
 
     def _layout(self):
+<<<<<<< HEAD
         vbox = QtGui.QVBoxLayout(self)
         vbox.setSpacing(0)
 
         hbox = QtGui.QHBoxLayout()
+=======
+        vbox = QtWidgets.QVBoxLayout(self)
+        vbox.setSpacing(0)
+
+        hbox = QtWidgets.QHBoxLayout()
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_x_label)
@@ -102,7 +129,11 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
+<<<<<<< HEAD
     def new_curve(self, results, color=pg.intColor(0), marker=None, **kwargs):
+=======
+    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
@@ -112,6 +143,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
                              y=self.plot_frame.y_axis,
                              **kwargs
                              )
+<<<<<<< HEAD
         if marker is not None:
             curve.setSymbol(marker)
             curve.setSymbolBrush(pg.mkBrush(color=color))
@@ -119,6 +151,10 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         else:
             curve.setSymbol(None)
             curve.setSymbolBrush(None)
+=======
+        curve.setSymbol(None)
+        curve.setSymbolBrush(None)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         return curve
 
     def update_x_column(self, index):
@@ -141,7 +177,11 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
         curve.pen.setColor(color)
+<<<<<<< HEAD
         if curve.opts['symbol'] is not None:
             curve.setSymbolBrush(pg.mkBrush(color=color))
             curve.setSymbolPen(curve.pen.color())
         curve.updateItems()
+=======
+        curve.updateItems(styleUpdate=True)
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

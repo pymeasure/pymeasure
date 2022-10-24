@@ -27,6 +27,7 @@ from .instrument import Instrument
 from .resources import list_resources
 from .validators import discreteTruncate
 
+from . import activetechnologies
 from . import advantest
 from . import agilent
 from . import ametek
@@ -40,6 +41,10 @@ from . import danfysik
 from . import deltaelektronika
 from . import fluke
 from . import fwbell
+<<<<<<< HEAD
+=======
+from . import hcp
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from . import heidenhain
 from . import hp
 from . import keithley
@@ -55,6 +60,8 @@ from . import rohdeschwarz
 from . import signalrecovery
 from . import srs
 from . import tektronix
+from . import temptronic
+from . import thermotron
 from . import thorlabs
 from . import toptica
 from . import yokogawa

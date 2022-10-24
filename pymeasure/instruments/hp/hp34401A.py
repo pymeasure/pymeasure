@@ -38,6 +38,7 @@ class HP34401A(Instrument):
     current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
 
     resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
+<<<<<<< HEAD
 
     resistance_4w = Instrument.measurement(
         "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
@@ -45,6 +46,15 @@ class HP34401A(Instrument):
     def __init__(self, resourceName, **kwargs):
         super().__init__(
             resourceName,
+=======
+
+    resistance_4w = Instrument.measurement(
+        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "HP 34401A",
             asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs

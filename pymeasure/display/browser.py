@@ -26,14 +26,15 @@ import logging
 
 from os.path import basename
 
-from .Qt import QtCore, QtGui
+from .Qt import QtCore, QtGui, QtWidgets
+
 from ..experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BrowserItem(QtGui.QTreeWidgetItem):
+class BrowserItem(QtWidgets.QTreeWidgetItem):
     """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
 
     def __init__(self, results, color, parent=None):
@@ -43,13 +44,13 @@ class BrowserItem(QtGui.QTreeWidgetItem):
         pixelmap = QtGui.QPixmap(24, 24)
         pixelmap.fill(self.color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-        self.setCheckState(0, QtCore.Qt.Checked)
+        self.setFlags(self.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+        self.setCheckState(0, QtCore.Qt.CheckState.Checked)
         self.setText(1, basename(results.data_filename))
 
         self.setStatus(results.procedure.status)
 
-        self.progressbar = QtGui.QProgressBar()
+        self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setRange(0, 100)
         self.progressbar.setValue(0)
 
@@ -78,7 +79,7 @@ class BrowserItem(QtGui.QTreeWidgetItem):
         self.progressbar.setValue(int(progress))
 
 
-class Browser(QtGui.QTreeWidget):
+class Browser(QtWidgets.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
     objects allowing the user to view the status of queued Experiments as well as
     loading and displaying data from previous runs.
@@ -103,7 +104,7 @@ class Browser(QtGui.QTreeWidget):
         self.setHeaderLabels(header_labels)
         self.setSortingEnabled(True)
         if sort_by_filename:
-            self.sortItems(1, QtCore.Qt.AscendingOrder)
+            self.sortItems(1, QtCore.Qt.SortOrder.AscendingOrder)
 
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)
