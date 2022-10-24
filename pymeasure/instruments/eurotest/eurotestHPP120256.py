@@ -176,11 +176,11 @@ class EurotestHPP120256(Instrument):
         float(EurotestHPP120256.regex.search(v[1]).groups()[0])
     )
 
-    measure_current = Instrument.measurement(
+    current = Instrument.measurement(
         "STATUS,MI",
         """ Measures the actual output current of the power supply (mA).""",
         # This property is a get so, the instrument will return a string like this:
-        # "I, RANGE=5000mA, VALUE=1739mA", then measure_current_range will return a 1739.0,
+        # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
         get_process=lambda v:
         float(EurotestHPP120256.regex.search(v[2]).groups()[0])
@@ -250,7 +250,7 @@ class EurotestHPP120256(Instrument):
 
     def emergency_off(self):
         """ The output of the HV source will be switched OFF permanently and the values
-        of the voltage a current settings set to zero"""
+        of the voltage and current settings set to zero"""
         log.info("Sending emergency off command to the instrument.")
 
         self.write("EMCY OFF")
