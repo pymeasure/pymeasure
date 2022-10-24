@@ -947,7 +947,7 @@ class LeCroyT3DSO1204(Instrument):
         def _scale_data(x):
             if preamble["source"] == "MATH":
                 value = int.from_bytes([x], byteorder='big', signed=False) * preamble["ydiv"] / 25.
-                value -= 50 + preamble["ydiv"] * preamble["yoffset"] / 50.
+                value -= preamble["ydiv"] * (preamble["yoffset"] + 255) / 50.
             else:
                 value = int.from_bytes([x], byteorder='big', signed=True) * preamble["ydiv"] / 25.
                 value -= preamble["yoffset"]

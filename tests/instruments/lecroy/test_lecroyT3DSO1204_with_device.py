@@ -444,7 +444,7 @@ class TestLeCroyT3DSO1204:
         plt.scatter(x=time, y=data)
         plt.show()
 
-    # @pytest.mark.skip(reason="A human is needed to check the output waveform")
+    @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_math(self, scope):
         from matplotlib import pyplot as plt
         scope.single()
