@@ -84,7 +84,8 @@ class SequencerWidget(QtWidgets.QWidget):
     parameters. Moreover, one can write a simple text file to easily load a
     sequence.
 
-    Currently requires a queue function of the ManagedWindow to have a
+    Currently requires a queue function of the
+    :class:`ManagedWindow<pymeasure.display.windows.managed_window.ManagedWindow>` to have a
     "procedure" argument.
     """
 

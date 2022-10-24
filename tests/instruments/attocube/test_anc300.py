@@ -53,7 +53,8 @@ class Mock_Adapter(AttocubeConsoleAdapter):
         if authmsg != 'Authorization success':
             raise Exception(f"Attocube authorization failed '{authmsg}'")
         # switch console echo off
-        _ = self.ask('echo off')  # TODO
+        self.write('echo off')
+        _ = self.read()
 
     def close(self):
         pass

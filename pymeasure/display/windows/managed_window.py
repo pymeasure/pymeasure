@@ -28,105 +28,25 @@ import os
 import platform
 import subprocess
 
-
 import pyqtgraph as pg
 
-from .browser import BrowserItem
-from .curves import ResultsCurve
-from .manager import Manager, Experiment
-from .Qt import QtCore, QtWidgets, QtGui
-from .widgets import (
+from ..browser import BrowserItem
+from ..manager import Manager, Experiment
+from ..Qt import QtCore, QtWidgets, QtGui
+from ..widgets import (
     PlotWidget,
     BrowserWidget,
     InputsWidget,
     LogWidget,
     ResultsDialog,
     SequencerWidget,
-    ImageWidget,
     DirectoryLineEdit,
     EstimatorWidget,
 )
-from ..experiment import Results, Procedure
+from ...experiment import Results, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-class PlotterWindow(QtWidgets.QMainWindow):
-    """
-    A window for plotting experiment results. Should not be
-    instantiated directly, but only via the
-    :class:`~pymeasure.display.plotter.Plotter` class.
-
-    .. seealso::
-
-        Tutorial :ref:`tutorial-plotterwindow`
-            A tutorial and example code for using the Plotter and PlotterWindow.
-
-    .. attribute plot::
-
-        The `pyqtgraph.PlotItem`_ object for this window. Can be
-        accessed to further customise the plot view programmatically, e.g.,
-        display log-log or semi-log axes by default, change axis range, etc.
-
-    .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
-    """
-
-    def __init__(self, plotter, refresh_time=0.1, linewidth=1, parent=None):
-        super().__init__(parent)
-        self.plotter = plotter
-        self.refresh_time = refresh_time
-        columns = plotter.results.procedure.DATA_COLUMNS
-
-        self.setWindowTitle('Results Plotter')
-        self.main = QtWidgets.QWidget(self)
-
-        vbox = QtWidgets.QVBoxLayout(self.main)
-        vbox.setSpacing(0)
-
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.setSpacing(6)
-        hbox.setContentsMargins(-1, 6, -1, -1)
-
-        file_label = QtWidgets.QLabel(self.main)
-        file_label.setText('Data Filename:')
-
-        self.file = QtWidgets.QLineEdit(self.main)
-        self.file.setText(plotter.results.data_filename)
-
-        hbox.addWidget(file_label)
-        hbox.addWidget(self.file)
-        vbox.addLayout(hbox)
-
-        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time,
-                                      check_status=False, linewidth=linewidth)
-        self.plot = self.plot_widget.plot
-
-        vbox.addWidget(self.plot_widget)
-
-        self.main.setLayout(vbox)
-        self.setCentralWidget(self.main)
-        self.main.show()
-        self.resize(800, 600)
-
-        self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
-                                  pen=pg.mkPen(color=pg.intColor(0), width=linewidth),
-                                  antialias=False)
-        self.plot.addItem(self.curve)
-
-        self.plot_widget.updated.connect(self.check_stop)
-
-    def quit(self, evt=None):
-        log.info("Quitting the Plotter")
-        self.close()
-        self.plotter.stop()
-
-    def check_stop(self):
-        """ Checks if the Plotter should stop and exits the Qt main loop if so
-        """
-        if self.plotter.should_stop():
-            QtCore.QCoreApplication.instance().quit()
 
 
 class ManagedWindowBase(QtWidgets.QMainWindow):
@@ -140,7 +60,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     The ManagedWindowBase uses a Manager to control Workers in a Queue,
     and provides a simple interface.
-    The :meth:`~pymeasure.display.windows.ManagedWindowBase.queue` method must be
+    The :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method must be
     overridden by the child class.
 
     The ManagedWindowBase allow user to define a set of widget that display information about the
@@ -149,17 +69,17 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     This class is not intended to be used directy, but it should be subclassed to provide some
     appropriate widget list. Example of classes usable as element of widget list are:
 
-    - :class:`~pymeasure.display.widgets.LogWidget`
-    - :class:`~pymeasure.display.widgets.PlotWidget`
-    - :class:`~pymeasure.display.widgets.ImageWidget`
+    - :class:`~pymeasure.display.widgets.log_widget.LogWidget`
+    - :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
+    - :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
 
     Of course, users can define its own widget making sure that inherits from
-    :class:`~pymeasure.display.widgets.TabWidget`.
+    :class:`~pymeasure.display.widgets.tab_widget.TabWidget`.
 
     Examples of ready to use classes inherited from ManagedWindowBase are:
 
-    - :class:`~pymeasure.display.windows.ManagedWindow`
-    - :class:`~pymeasure.display.windows.ManagedImageWindow`
+    - :class:`~pymeasure.display.windows.managed_window.ManagedWindow`
+    - :class:`~pymeasure.display.windows.managed_image_window.ManagedImageWindow`
 
     .. seealso::
 
@@ -572,8 +492,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         :class:`~pymeasure.experiment.procedure.Procedure` to be run.
 
         The optional `procedure` argument is not required for a basic implementation,
-        but is required when the :class:`~pymeasure.display.widgets.SequencerWidget`
-        is used.
+        but is required when the
+        :class:`~pymeasure.display.widgets.sequencer_widget.SequencerWidget` is used.
 
         For example:
 
@@ -651,7 +571,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
 class ManagedWindow(ManagedWindowBase):
     """
-    Display experiment output with an :class:`~pymeasure.display.widget.PlotWidget` class.
+    Display experiment output with an
+    :class:`~pymeasure.display.widgets.plot_widget.PlotWidget` class.
 
     .. seealso::
 
@@ -664,7 +585,7 @@ class ManagedWindow(ManagedWindowBase):
     :param y_axis: the initial data-column for the y-axis of the plot
     :param linewidth: linewidth for the displayed curves, default is 1
     :param \\**kwargs: optional keyword arguments that will be passed to
-        :class:`~pymeasure.display.windows.ManagedWindowBase`
+        :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
 
     """
 
@@ -688,31 +609,3 @@ class ManagedWindow(ManagedWindowBase):
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)
         log.info("ManagedWindow connected to logging")
-
-
-class ManagedImageWindow(ManagedWindow):
-    """
-    Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
-
-    :param procedure_class: procedure class describing the experiment (see
-        :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param x_axis: the data-column for the x-axis of the plot, cannot be changed afterwards for
-        the image-plot
-    :param y_axis: the data-column for the y-axis of the plot, cannot be changed afterwards for
-        the image-plot
-    :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
-    :param \\**kwargs: optional keyword arguments that will be passed to
-        :class:`~pymeasure.display.windows.ManagedWindow`
-
-    """
-
-    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
-        self.z_axis = z_axis
-        self.image_widget = ImageWidget(
-            "Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
-
-        if "widget_list" not in kwargs:
-            kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget, )
-
-        super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
