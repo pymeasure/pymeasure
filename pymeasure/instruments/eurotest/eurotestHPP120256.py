@@ -256,30 +256,30 @@ class EurotestHPP120256(Instrument):
         self.write("EMCY OFF")
         time.sleep(self.COMMAND_DELAY)
 
-    def shutdown(self, ramp):
+    def shutdown(self, voltage_rate):
         """
         Change the output voltage setting (V) to zero and
-        the ramp speed - changing rate (V/s) of the output voltage.
+        the ramp speed - voltage_rate (V/s) of the output voltage.
         After calling shutdown, if the HV voltage output > 0
-        it should drop to zero at a certain rate given by the ramp parameter.
-        :param ramp: indicates the changing rate (V/s) of the voltage output
+        it should drop to zero at a certain rate given by the voltage_rate parameter.
+        :param voltage_rate: indicates the changing rate (V/s) of the voltage output
         """
-        log.info(f"Executing the shutdown function with ramp: {ramp} V/s.")
+        log.info(f"Executing the shutdown function with voltage_rate: {voltage_rate} V/s.")
 
-        self.ramp_to_zero(ramp)
+        self.ramp_to_zero(voltage_rate)
         super().shutdown()
 
-    def ramp_to_zero(self, ramp):
+    def ramp_to_zero(self, voltage_rate):
         """
         Sets the voltage output setting to zero and the ramp setting
-        to a value determined by the ramp parameter.
+        to a value determined by the voltage_rate parameter.
         In summary, the method conducts (ramps) the voltage output to zero
         at a determinated voltage changing rate (ramp in V/s).
-        :param ramp: Is the changing rate (ramp in V/s) for the ramp setting
+        :param voltage_rate: Is the changing rate (ramp in V/s) for the ramp setting
         """
-        log.info("Executing the ramp_to_zero function with ramp: {ramp} V/s.")
+        log.info(f"Executing the ramp_to_zero function with ramp: {voltage_rate} V/s.")
 
-        self.voltage_ramp = ramp
+        self.voltage_ramp = voltage_rate
         time.sleep(self.COMMAND_DELAY)
         self.voltage = 0
         time.sleep(self.COMMAND_DELAY)
