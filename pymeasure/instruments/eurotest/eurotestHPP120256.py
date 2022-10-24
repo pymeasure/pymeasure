@@ -68,7 +68,7 @@ class EurotestHPP120256(Instrument):
     # Here voltage HV output should be at 0.0 kV
 
     print("Setting the output voltage to 1.0kV...")
-    hpp120256.voltage = 1.0  # kV
+    hpp120256.voltage_setpoint = 1.0  # kV
 
     # Now HV output should be rising to reach the 1.0kV at 50.0 V/s
 
@@ -119,7 +119,7 @@ class EurotestHPP120256(Instrument):
     # # EuroTest-Command set. Non SCPI commands.
     # ####################################
 
-    voltage = Instrument.control(
+    voltage_setpoint = Instrument.control(
         "STATUS,U", "U,%.3fkV",
         """ A floating point property that represents the output voltage
         setting (in kV) of the HV Source. This property can be set.""",
@@ -281,9 +281,9 @@ class EurotestHPP120256(Instrument):
 
         self.voltage_ramp = voltage_rate
         time.sleep(self.COMMAND_DELAY)
-        self.voltage = 0
+        self.voltage_setpoint = 0
         time.sleep(self.COMMAND_DELAY)
-        self.voltage = 0
+        self.voltage_setpoint = 0
         time.sleep(self.COMMAND_DELAY)
 
     def wait_for_output_voltage_reached(self, abs_output_voltage_error,
@@ -306,10 +306,10 @@ class EurotestHPP120256(Instrument):
         ref_time = time.time()
         future_time = ref_time + timeout
 
-        voltage_output_setting = self.voltage
+        voltage_setpoint = self.voltage_setpoint
         time.sleep(self.COMMAND_DELAY)
         voltage_output = self.measure_voltage
-        voltage_output_set = math.isclose(voltage_output, voltage_output_setting, rel_tol=0.0,
+        voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
                                           abs_tol=abs_output_voltage_error)
 
         while not voltage_output_set:
@@ -321,11 +321,11 @@ class EurotestHPP120256(Instrument):
 
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
             voltage_output = self.measure_voltage
-            voltage_output_set = math.isclose(voltage_output, voltage_output_setting, rel_tol=0.0,
+            voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
                                               abs_tol=abs_output_voltage_error)
             log.debug("voltage_output_valid_range: "
-                      "[" + str(voltage_output_setting - abs_output_voltage_error) +
-                      ", " + str(voltage_output_setting + abs_output_voltage_error) + "]")
+                      "[" + str(voltage_setpoint - abs_output_voltage_error) +
+                      ", " + str(voltage_setpoint + abs_output_voltage_error) + "]")
             log.debug("voltage_output: " + str(voltage_output))
             if actual_time > future_time:
                 raise TimeoutError("Timeout for wait_for_output_voltage_reached function")
