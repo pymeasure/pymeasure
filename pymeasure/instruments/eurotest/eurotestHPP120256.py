@@ -43,7 +43,7 @@ class EurotestHPP120256(Instrument):
 
     .. code-block:: python
 
-    hpp120256 = EurotestHPP120256("GPIB0::20::INSTR",includeSCPI=False)
+    hpp120256 = EurotestHPP120256("GPIB0::20::INSTR")
 
     response = hpp120256.id
     print(response)
