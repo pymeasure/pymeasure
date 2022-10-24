@@ -945,8 +945,11 @@ class LeCroyT3DSO1204(Instrument):
         :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble) """
 
         def _scale_data(x):
-            value = int.from_bytes([x], byteorder="big", signed=True) * preamble["ydiv"] / 25.
-            if preamble["source"] != "MATH":
+            if preamble["source"] == "MATH":
+                value = int.from_bytes([x], byteorder='big', signed=False) * preamble["ydiv"] / 25.
+                value -= 50 + preamble["ydiv"] * preamble["yoffset"] / 50.
+            else:
+                value = int.from_bytes([x], byteorder='big', signed=True) * preamble["ydiv"] / 25.
                 value -= preamble["yoffset"]
             return value
 

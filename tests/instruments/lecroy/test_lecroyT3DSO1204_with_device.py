@@ -101,6 +101,8 @@ class TestLeCroyT3DSO1204:
     # Channel
     def test_ch_current_configuration(self, autoscaled_scope):
         autoscaled_scope.ch1.offset = 0
+        autoscaled_scope.ch1.trigger_level = 0
+        autoscaled_scope.ch1.trigger_level2 = 0
         expected = {"channel": 1,
                     "attenuation": 1.,
                     "bandwidth_limit": False,
@@ -112,8 +114,8 @@ class TestLeCroyT3DSO1204:
                     "volts_div": 0.05,
                     "inverted": False,
                     "trigger_coupling": "dc",
-                    "trigger_level": 0.150,
-                    "trigger_level2": 0.150,
+                    "trigger_level": 0.,
+                    "trigger_level2": 0.,
                     "trigger_slope": "positive"
                     }
         actual = autoscaled_scope.ch(1).current_configuration
@@ -374,15 +376,13 @@ class TestLeCroyT3DSO1204:
         assert preamble["transmitted_points"] == 1
 
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
-    def test_download_data_extended(self, scope):
+    def test_download_data_all_points(self, scope):
         from matplotlib import pyplot as plt
         scope.ch1.display = True
         scope.single()
-        data, time, preamble = scope.download_data(source="c1", requested_points=7e6)
+        data, time, preamble = scope.download_data(source="c1", requested_points=0)
         assert type(data) is np.ndarray
-        assert len(data) == 7e6
         assert type(time) is np.ndarray
-        assert len(time) == 7e6
         assert type(preamble) is dict
         print(preamble)
         plt.scatter(x=time, y=data)
@@ -440,6 +440,21 @@ class TestLeCroyT3DSO1204:
         assert preamble["type"] == ["average", 256]
         assert preamble["average"] == 256
         assert preamble["transmitted_points"] == 1.75e5
+        print(preamble)
+        plt.scatter(x=time, y=data)
+        plt.show()
+
+    # @pytest.mark.skip(reason="A human is needed to check the output waveform")
+    def test_download_math(self, scope):
+        from matplotlib import pyplot as plt
+        scope.single()
+        data, time, preamble = scope.download_data(source="math", requested_points=0,
+                                                   sparsing=10)
+        assert type(data) is np.ndarray
+        assert type(time) is np.ndarray
+        assert type(preamble) is dict
+        assert preamble["type"] == "normal"
+        assert preamble["sparsing"] == 10
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
