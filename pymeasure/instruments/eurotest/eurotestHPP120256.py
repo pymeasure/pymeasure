@@ -156,11 +156,11 @@ class EurotestHPP120256(Instrument):
         float(EurotestHPP120256.regex.search(v[2]).groups()[0])
     )
 
-    measure_voltage = Instrument.measurement(
+    voltage = Instrument.measurement(
         "STATUS,MU",
         """ Measures the actual output voltage of the HV Source (kV).""",
         # This property is a get so, the instrument will return a string like this:
-        # "U, RANGE=3.000kV, VALUE=2.458kV", then measure_voltage will return 2458.0,
+        # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
         # hence the convenience of the get_process.
         get_process=lambda v:
         float(EurotestHPP120256.regex.search(v[2]).groups()[0])
@@ -308,7 +308,7 @@ class EurotestHPP120256(Instrument):
 
         voltage_setpoint = self.voltage_setpoint
         time.sleep(self.COMMAND_DELAY)
-        voltage_output = self.measure_voltage
+        voltage_output = self.voltage
         voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
                                           abs_tol=abs_output_voltage_error)
 
@@ -320,7 +320,7 @@ class EurotestHPP120256(Instrument):
                       f"{round(actual_time - ref_time, ndigits=1)} seconds.")
 
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
-            voltage_output = self.measure_voltage
+            voltage_output = self.voltage
             voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
                                               abs_tol=abs_output_voltage_error)
             log.debug("voltage_output_valid_range: "
