@@ -56,9 +56,9 @@ class EurotestHPP120256(Instrument):
     time.sleep(command_delay)
     hpp120256.current_limit = 2.0  # mA
     time.sleep(command_delay)
-    inst.enable_kill = "ON"  # Enable over-current protection
+    inst.enable_kill = True  # Enable over-current protection
     time.sleep(command_delay)
-    inst.enable_output = "ON"
+    inst.enable_output = True
     time.sleep(1.0)  # Give time to output on
 
     abs_output_voltage_error = 0.02 # kV
@@ -81,6 +81,8 @@ class EurotestHPP120256(Instrument):
     hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 60.0)
 
     # Here voltage HV output should be at 0.0 kV
+
+    inst.enable_output = False
 
     # Now the HV voltage source is in safe state
 
@@ -198,7 +200,7 @@ class EurotestHPP120256(Instrument):
 
     enable_kill = Instrument.setting(
         "KILL,%s",
-        """ Enables or disables the kill function of the HV source.
+        """ Enables or disables (True/False) the kill function of the HV source.
          When Kill is enabled yellow led is flashing and the output
          will be shut OFF permanently without ramp if Iout > IOUTmax.""",
         validator=strict_discrete_set,
@@ -208,7 +210,7 @@ class EurotestHPP120256(Instrument):
 
     enable_output = Instrument.setting(
         "HV,%s",
-        """Enables or disables the voltage output function of the HV source.
+        """Enables or disables (True/False) the voltage output function of the HV source.
          When output voltage is enabled green led is ON and the
          voltage_setting will be present on the output""",
         validator=strict_discrete_set,
