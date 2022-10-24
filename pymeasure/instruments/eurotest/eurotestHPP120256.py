@@ -110,11 +110,11 @@ class EurotestHPP120256(Instrument):
             read_termination="",
             send_end=True,
             includeSCPI=False,
+            timeout=timeout
             **kwargs
         )
 
         self.query_delay = query_delay
-        self.timeout = timeout
 
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
