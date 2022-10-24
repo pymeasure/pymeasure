@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+
 import time
 from unittest import mock
 
@@ -692,6 +693,12 @@ class TestChannelCommunication:
 def test_channel_write():
     with expected_protocol(ChannelInstrument, [("ChA:volt?", None)]) as inst:
         inst.chA.write("Ch{ch}:volt?")
+
+
+def test_channel_write_without_ch():
+    """Verify, that it is possible to send a command without '{ch}'."""
+    with expected_protocol(ChannelInstrument, [("Test", None)]) as inst:
+        inst.chA.write("Test")
 
 
 def test_channel_control():

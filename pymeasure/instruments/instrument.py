@@ -94,7 +94,11 @@ class DynamicProperty(property):
 
 
 class Base:
-    """Base class for instruments and channels."""
+    """Base class for instruments and channels.
+
+    This class contains everything for pymeasure's property creator :meth:`control`
+    and its derivatives :meth:`measurement` and :meth:`setting`.
+    """
 
     # Variable holding the list of DynamicProperty parameters that are configurable
     # by users
@@ -627,7 +631,7 @@ class Channel(Base):
 
     This class supports dynamic properties like :class:`Instrument`,
     but requires an instrument as a parent for communication.
-    The default implementation of :meth:`write` uses string format to
+    The default implementation of :meth:`write` uses :code:`str.format` to
     exchange '{ch}' for the channel name.
 
     :param instrument: The instrument to which the channel belongs.
