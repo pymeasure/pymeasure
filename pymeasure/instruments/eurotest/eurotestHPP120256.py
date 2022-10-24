@@ -202,8 +202,7 @@ class EurotestHPP120256(Instrument):
          When Kill is enabled yellow led is flashing and the output
          will be shut OFF permanently without ramp if Iout > IOUTmax.""",
         validator=strict_discrete_set,
-        values={'ON': 'ENable', 'OFF': 'DISable', 'ENable': 'ENable', 'DISable': 'DISable',
-                'EN': 'ENable', 'DIS': 'DISable'},
+        values={True: 'ENable', False: 'DISable'},
         map_values=True
     )
 
@@ -213,8 +212,7 @@ class EurotestHPP120256(Instrument):
          When output voltage is enabled green led is ON and the
          voltage_setting will be present on the output""",
         validator=strict_discrete_set,
-        values={'ON': 'ON', 'OFF': 'OFF', 'ENable': 'ON', 'DISable': 'OFF',
-                'EN': 'ON', 'DIS': 'OFF'},
+        values={True: 'ON', False: 'OFF'},
         map_values=True
     )
 
