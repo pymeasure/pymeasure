@@ -36,7 +36,6 @@ log.addHandler(logging.NullHandler())
 
 
 class EurotestHPP120256(Instrument):
-
     """ Represents the Euro Test High Voltage DC Source model HPP-120-256
     and provides a high-level interface for interacting with the instrument using the
     Euro Test command set (Not SCPI command set).
@@ -53,11 +52,9 @@ class EurotestHPP120256(Instrument):
     hpp120256.ramp_to_zero(100.0)
 
     hpp120256.voltage_ramp = 50.0  # V/s
-    time.sleep(command_delay)
     hpp120256.current_limit = 2.0  # mA
-    time.sleep(command_delay)
     inst.enable_kill = True  # Enable over-current protection
-    time.sleep(command_delay)
+    time.sleep(1.0)  # Give time to enable kill
     inst.enable_output = True
     time.sleep(1.0)  # Give time to output on
 
@@ -99,7 +96,8 @@ class EurotestHPP120256(Instrument):
 
     def __init__(self,
                  adapter,
-                 query_delay=0.3,
+                 query_delay=0.1,
+                 write_delay=0.4,
                  timeout=5000,
                  **kwargs):
 
@@ -115,6 +113,7 @@ class EurotestHPP120256(Instrument):
         )
 
         self.query_delay = query_delay
+        self.write_delay = write_delay
 
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
@@ -253,7 +252,6 @@ class EurotestHPP120256(Instrument):
         log.info("Sending emergency off command to the instrument.")
 
         self.write("EMCY OFF")
-        time.sleep(self.COMMAND_DELAY)
 
     def shutdown(self, voltage_rate):
         """
@@ -279,11 +277,7 @@ class EurotestHPP120256(Instrument):
         log.info(f"Executing the ramp_to_zero function with ramp: {voltage_rate} V/s.")
 
         self.voltage_ramp = voltage_rate
-        time.sleep(self.COMMAND_DELAY)
         self.voltage_setpoint = 0
-        time.sleep(self.COMMAND_DELAY)
-        self.voltage_setpoint = 0
-        time.sleep(self.COMMAND_DELAY)
 
     def wait_for_output_voltage_reached(self, abs_output_voltage_error,
                                         check_period=1.0, timeout=60.0):
@@ -306,7 +300,6 @@ class EurotestHPP120256(Instrument):
         future_time = ref_time + timeout
 
         voltage_setpoint = self.voltage_setpoint
-        time.sleep(self.COMMAND_DELAY)
         voltage_output = self.voltage
         voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
                                           abs_tol=abs_output_voltage_error)
@@ -332,6 +325,15 @@ class EurotestHPP120256(Instrument):
                 raise TimeoutError("Timeout for wait_for_output_voltage_reached function")
 
         return
+
+    # Wrapper functions for the Adapter object
+    def write(self, command, **kwargs):
+        """Overrides Instrument write method for including write_delay time after the parent call.
+
+        :param command: command string to be sent to the instrument
+        """
+        super().write(command, **kwargs)
+        time.sleep(self.write_delay)
 
     def ask(self, command):
         """ Overrides Instrument ask method for including query_delay time on parent call.
