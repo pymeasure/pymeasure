@@ -99,7 +99,6 @@ class EurotestHPP120256(Instrument):
 
     def __init__(self,
                  adapter,
-                 includeSCPI=False,
                  query_delay=0.3,
                  timeout=5000,
                  **kwargs):
@@ -110,7 +109,7 @@ class EurotestHPP120256(Instrument):
             write_termination="\n",
             read_termination="",
             send_end=True,
-            includeSCPI=includeSCPI,
+            includeSCPI=False,
             **kwargs
         )
 
