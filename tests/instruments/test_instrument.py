@@ -695,6 +695,12 @@ def test_channel_write():
         inst.chA.write("Ch{ch}:volt?")
 
 
+def test_channel_write_name_twice():
+    """Verify, that any (i.e. more than one) occurrence of '{ch}' is changed."""
+    with expected_protocol(ChannelInstrument, [("ChA:volt:ChA?", None)]) as inst:
+        inst.chA.write("Ch{ch}:volt:Ch{ch}?")
+
+
 def test_channel_write_without_ch():
     """Verify, that it is possible to send a command without '{ch}'."""
     with expected_protocol(ChannelInstrument, [("Test", None)]) as inst:

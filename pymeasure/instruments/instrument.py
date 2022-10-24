@@ -124,7 +124,7 @@ class Base:
         self._special_names = self._setup_special_names()
 
     def _setup_special_names(self):
-        """ Return list of class/instance special names
+        """ Return list of class/instance special names.
 
         Compute the list of special names based on the list of
         class attributes that are a DynamicProperty. Check also for class variables
@@ -146,7 +146,7 @@ class Base:
         return special_names
 
     def __setattr__(self, name, value):
-        """ Add reserved_prefix in front of special variables """
+        """ Add reserved_prefix in front of special variables."""
         if hasattr(self, '_special_names'):
             if name in self._special_names:
                 name = self.__reserved_prefix + name
@@ -154,7 +154,7 @@ class Base:
 
     def __getattribute__(self, name):
         """ Prevent read access to variables with special names used to
-        support dynamic property behaviour """
+        support dynamic property behaviour."""
         if name in ('_special_names', '__dict__'):
             return super().__getattribute__(name)
         if hasattr(self, '_special_names'):
@@ -167,13 +167,14 @@ class Base:
     def wait_for(self, query_delay=0):
         """Wait for some time. Used by 'ask' to wait before reading.
 
+        Implement in subclass!
+
         :param query_delay: Delay between writing and reading in seconds.
         """
         raise NotImplementedError("Implement in subclass!")
 
     def ask(self, command, query_delay=0):
-        """ Writes the command to the instrument through the adapter
-        and returns the read response.
+        """Write a command to the instrument and return the read response.
 
         :param command: Command string to be sent to the instrument.
         :param query_delay: Delay between writing and reading in seconds.
@@ -184,7 +185,7 @@ class Base:
         return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
-        """ Writes a command to the instrument and returns a list of formatted
+        """Write a command to the instrument and return a list of formatted
         values from the result.
 
         :param command: SCPI command to be sent to the instrument
@@ -212,12 +213,12 @@ class Base:
         return results
 
     def binary_values(self, command, query_delay=0, **kwargs):
-        """ Returns a numpy array from a query for binary data.
+        """ Write a command to the instrument and return a numpy array of the binary data.
 
         :param command: Command to be sent to the instrument.
         :param query_delay: Delay between writing and reading in seconds.
-        :param kwargs: Arguments for :meth:`Adapter.read_binary_values`.
-        :returns: NumPy array of values
+        :param kwargs: Arguments for :meth:`~pymeasure.Adapter.read_binary_values`.
+        :returns: NumPy array of values.
         """
         self.write(command)
         self.wait_for(query_delay)
@@ -240,7 +241,7 @@ class Base:
         dynamic=False,
         **kwargs
     ):
-        """Returns a property for the class based on the supplied
+        """Return a property for the class based on the supplied
         commands. This property may be set and read from the
         instrument. See also :meth:`measurement` and :meth:`setting`.
 
@@ -377,7 +378,7 @@ class Base:
     def measurement(get_command, docs, values=(), map_values=None,
                     get_process=lambda v: v, command_process=lambda c: c,
                     check_get_errors=False, dynamic=False, **kwargs):
-        """ Returns a property for the class based on the supplied
+        """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
 
@@ -413,7 +414,7 @@ class Base:
                 set_process=lambda v: v,
                 check_set_errors=False, dynamic=False,
                 **kwargs):
-        """Returns a property for the class based on the supplied
+        """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
 
@@ -632,9 +633,10 @@ class Channel(Base):
     This class supports dynamic properties like :class:`Instrument`,
     but requires an instrument as a parent for communication.
     The default implementation of :meth:`write` uses :code:`str.format` to
-    exchange '{ch}' for the channel name.
+    exchange :code:`'{ch}'` for the channel name.
 
-    :param instrument: The instrument to which the channel belongs.
+    :param instrument: The instrument (an instance of :class:`~pymeasure.instruments.Instrument`)
+        to which the channel belongs.
     :param name: Name of the channel, as it is used for the communication.
     """
 
@@ -645,7 +647,9 @@ class Channel(Base):
 
     # Calls to the instrument
     def write(self, command, **kwargs):
-        """Write a string command to the instrument appending `write_termination`.
+        """Write a string command to the instrument.
+
+        The channel name is inserted into the command and `write_termination` appended.
 
         :param command: command string to be sent to the instrument.
             '{ch}' is replaced by the channel name.
@@ -672,7 +676,7 @@ class Channel(Base):
         return self.instrument.read_bytes(count, **kwargs)
 
     def write_binary_values(self, command, values, *args, **kwargs):
-        """Write binary values to the device.
+        """Write binary values to the instrument.
 
         :param command: Command to send.
         :param values: The values to transmit.
@@ -681,7 +685,7 @@ class Channel(Base):
         self.instrument.write_binary_values(command.format(ch=self.name), values, *args, **kwargs)
 
     def read_binary_values(self, **kwargs):
-        """Read binary values from the device."""
+        """Read binary values from the instrument."""
         return self.instrument.read_binary_values(**kwargs)
 
     # Communication functions

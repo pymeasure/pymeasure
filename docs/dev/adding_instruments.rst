@@ -812,6 +812,50 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
 
 
+.. _channels
+
+Instruments with channels
+=========================
+
+Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name. For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :code:`instrument` instead of an :code:`adapter` as parameter. All the channel communication is routed through the instrument's methods (`write`, `read`, etc.). However, :meth:`Channel.write <pymeasure.instruments.Channel.write>` uses `str.format` to replace any occurence of :code:`"{ch}"` with the channel's name in the command.
+
+.. testcode:: :hide:
+
+    # Behind the scene, load the real Instrument
+    from pymeasure.instruments import Instrument
+    from pymeasure.instruments import Channel
+    from pymeasure.test import expected_protocol
+
+.. testcode::
+
+    class VoltageChannel(Channel):
+        """A channel of the voltage source."""
+
+        voltage = Channel.control(
+			"SOURce{ch}:VOLT?", "SOURce{ch}:VOLT %f",
+			"""The output voltage of this channel, can be set and read.""",
+		)
+
+
+    class ExtremeChannel(Instrument):
+		"""An instrument with a channel."""
+
+		def __init__(self, adapter):
+			super().__init__(self, adapter, "ExtremeChannel")
+			self.chA = VoltageChannel(self, "A")
+
+.. testcode:: :hide:
+
+    with expected_protocol(ExtremeChannel,
+        [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")]
+    ) as inst:
+        inst.chA.voltage = 1.23
+        assert inst.chA.voltage == 1.23
+
+If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name.
+
+
+
 .. _advanced_communication_protocols:
 
 Advanced communication protocols
@@ -841,13 +885,6 @@ Adding a device address and adding delay
 
 Let's look at a simple example for a device, which requires its address as the first three characters and returns the same style. This is straightforward, as :meth:`write` just prepends the device address to the command, and :meth:`read` has to strip it again doing some error checking. Similarly, a checksum could be added.
 Additionally, the device needs some time after it received a command, before it responds, therefore :meth:`wait_for` waits always a certain time span.
-
-.. testcode::
-    :hide:
-
-    # Behind the scene, load the real Instrument
-    from pymeasure.instruments import Instrument
-    from pymeasure.test import expected_protocol
 
 .. testcode::
 
