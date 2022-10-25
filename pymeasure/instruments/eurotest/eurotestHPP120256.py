@@ -112,8 +112,8 @@ class EurotestHPP120256(Instrument):
             **kwargs
         )
 
-        self.query_delay = query_delay
         self.write_delay = write_delay
+        self.query_delay = query_delay
 
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
@@ -332,8 +332,8 @@ class EurotestHPP120256(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        super().write(command, **kwargs)
         time.sleep(self.write_delay)
+        super().write(command, **kwargs)
 
     def ask(self, command):
         """ Overrides Instrument ask method for including query_delay time on parent call.
