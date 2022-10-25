@@ -62,6 +62,16 @@ class SPDBase(Instrument):
     """ The base class for Siglent SPDxxxxX instruments.
     """
 
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
+            usb=dict(write_termination='\n',
+                     read_termination='\n'),
+            tcpip=dict(write_termination='\n',
+                       read_termination='\n'),
+            **kwargs
+        )
+
     error = Instrument.measurement(
         "SYST:ERR?",
         """Read the error code and information of the instrument.
@@ -140,16 +150,6 @@ class SPDBase(Instrument):
         map_values=True
     )
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(
-            adapter,
-            usb=dict(write_termination='\n',
-                     read_termination='\n'),
-            tcpip=dict(write_termination='\n',
-                       read_termination='\n'),
-            **kwargs
-        )
-
     def save_config(self, index):
         """Save the current config to memory.
 
@@ -158,8 +158,6 @@ class SPDBase(Instrument):
         :returns: self
         """
         self.save_settings = index
-
-        return self
 
     def recall_config(self, index):
         """Recall a config from memory.
@@ -170,11 +168,14 @@ class SPDBase(Instrument):
         """
         self.recall_settings = index
 
-        return self
-
 
 class SPDChannel(object):
-    channel = 1
+    """ The channel class for Siglent SPDxxxxX instruments.
+    """
+
+    def __init__(self, instrument, channel: int = 1):
+        self.instrument = instrument
+        self.channel = channel
 
     voltage = Instrument.measurement(
         f"MEAS:VOLT? CH{channel}",
