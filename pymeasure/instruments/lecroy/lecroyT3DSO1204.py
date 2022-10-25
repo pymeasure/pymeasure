@@ -914,9 +914,9 @@ class LeCroyT3DSO1204(Instrument):
             self.waveform_first_point = first_point
             # read chunk of points
             values = self._digitize(src=self.waveform_source, num_bytes=requested_bytes)
-            self._header_sanity_checks(values)
-            self._footer_sanity_checks(values)
-            self._npoints_sanity_checks(values)
+            # self._header_sanity_checks(values)
+            # self._footer_sanity_checks(values)
+            # self._npoints_sanity_checks(values)
             # append the points without the header and footer
             data.append(values[16:-2])
             i += 1

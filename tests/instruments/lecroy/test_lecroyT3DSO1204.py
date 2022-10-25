@@ -222,30 +222,18 @@ def test_waveform_preamble():
         }
 
 
-def test_download_too_much_data():
-    with expected_protocol(
-            LeCroyT3DSO1204,
-            [("CHDR OFF", None),
-             (b'ACQW SAMPLING', None),
-             (b'SANU? C1', b'7.00E+06'),
-             ]
-    ) as instr:
-        with pytest.raises(ValueError):
-            instr.download_data(source="c1", requested_points=1e10)
-
-
 def test_download_one_point():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
+             (b"ACQW?", b"HIGH_RES"),
              (b"ACQW SAMPLING", None),
-             (b"SANU? C1", b"7.00E+06"),
              (b"WFSU SP,1", None),
              (b"WFSU NP,1", None),
              (b"WFSU FP,0", None),
-             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
-             (b"WFSU FP,0", None),
+             (b"SANU? C1", b"7.00E+06"),
              (b"WFSU NP,1", None),
+             (b"WFSU FP,0", None),
              (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
              (b"WFSU?", b"SP,1,NP,1,FP,0"),
              (b"ACQW?", b"SAMPLING"),
@@ -290,14 +278,14 @@ def test_download_two_points():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
+             (b"ACQW?", b"HIGH_RES"),
              (b"ACQW SAMPLING", None),
-             (b"SANU? C1", b"7.00E+06"),
              (b"WFSU SP,1", None),
              (b"WFSU NP,2", None),
              (b"WFSU FP,0", None),
-             (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n"),
-             (b"WFSU FP,0", None),
+             (b"SANU? C1", b"7.00E+06"),
              (b"WFSU NP,2", None),
+             (b"WFSU FP,0", None),
              (b"C1:WF? DAT2", b"DAT2,#9000000002" + b"\x01\x01" + b"\n\n"),
              (b"WFSU?", b"SP,1,NP,2,FP,0"),
              (b"ACQW?", b"SAMPLING"),
