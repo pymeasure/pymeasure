@@ -24,14 +24,19 @@
 from pymeasure.instruments.siglenttechnologies.siglent_spdbase import SPDBase, SPDChannel
 
 
-class SPD1168X(SPDBase):
-    """Represent the Siglent SPD1168X Power Supply.
+class SPD1305X(SPDBase):
+    """Represent the Siglent SPD1305X Power Supply.
     """
 
+    set_voltage_values = [0, 30]
+
+    set_current_values = [0, 5]
+
     def __init__(self, adapter, **kwargs):
+
         super().__init__(
             adapter,
-            name="Siglent Technologies SPD1168X Power Supply",
+            name="Siglent Technologies SPD1305X Power Supply",
             **kwargs
         )
 
@@ -43,16 +48,3 @@ class SPD1168X(SPDBase):
         and disables the output. """
         self.ch[1].set_voltage(0.0)
         self.ch[1].disable()
-
-
-if __name__ == "__main__":
-    psu = SPD1168X("TCPIP0::10.20.2.245::5025::SOCKET")
-    print(psu.id)
-    print(psu.selected_channel)
-    psu.ch[1].set_current = 1
-    psu.ch[1].disable()
-
-    print(psu.ch[1].set_voltage)
-    print(psu.ch[1].set_current)
-    print(psu.ch[1].voltage)
-    print(psu.error)

@@ -277,6 +277,7 @@ class SPDChannel(object):
 
         :returns: self
         """
+        self.instrument.selected_channel = self.channel
         self.output = True
         return self
 
@@ -285,5 +286,6 @@ class SPDChannel(object):
 
         :returns: self
         """
+        self.instrument.selected_channel = self.channel
         self.output = False
         return self
