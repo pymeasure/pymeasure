@@ -178,7 +178,7 @@ class SPDChannel(object):
         self.channel = channel
 
     voltage = Instrument.measurement(
-        f"MEAS:VOLT? CH{channel}",
+        "MEAS:VOLT? CH{channel}",
         """Measure the channel output voltage.
 
         :type: float
@@ -186,7 +186,7 @@ class SPDChannel(object):
     )
 
     current = Instrument.measurement(
-        f"MEAS:CURR? CH{channel}",
+        "MEAS:CURR? CH{channel}",
         """Measure the channel output voltage.
 
         :type: float
@@ -194,7 +194,7 @@ class SPDChannel(object):
     )
 
     power = Instrument.measurement(
-        f"MEAS:POWE? CH{channel}",
+        "MEAS:POWE? CH{channel}",
         """Measure the channel output voltage.
 
         :type: float
@@ -202,7 +202,7 @@ class SPDChannel(object):
     )
 
     set_current = Instrument.control(
-        "CURR?", "CURR %g",
+        "CH{channel}:CURR?", "CH{channel}:CURR %g",
         """Control the output current configuration of the channel.
 
         :type: float
@@ -214,7 +214,7 @@ class SPDChannel(object):
     )
 
     set_voltage = Instrument.control(
-        "VOLT?", "VOLT %g",
+        "CH{channel}:VOLT?", "CH{channel}:VOLT %g",
         """Control the output voltage configuration of the channel.
 
         :type: float
@@ -226,7 +226,7 @@ class SPDChannel(object):
     )
 
     output = Instrument.setting(
-        f"OUTP CH{channel},%s",
+        "OUTP CH{channel},%s",
         """Configure the power supply output.
 
         :type: bool
@@ -240,7 +240,7 @@ class SPDChannel(object):
     )
 
     enable_timer = Instrument.setting(
-        f"TIME CH{channel},%s",
+        "TIME CH{channel},%s",
         """Enable the channel timer.
 
         :type: bool
@@ -250,25 +250,17 @@ class SPDChannel(object):
         map_values=True
     )
 
-    def __init__(self, instrument, channel: int = 1):
-        self.instrument = instrument
-        self.channel = channel
-
     def ask(self, cmd):
-        if (cmd[0:3] == "VOLT") | (cmd[0:3] == "CURR"):
-            cmd = f'CH{self.channel}:{cmd}'
-        return self.instrument.ask(f'{cmd}')
+        return self.instrument.ask(cmd.format(channel=self.channel))
 
     def write(self, cmd):
-        if (cmd[0:3] == "VOLT") | (cmd[0:3] == "CURR"):
-            cmd = f'CH{self.channel}:{cmd}'
-        self.instrument.write(f'{cmd}')
+        self.instrument.write(cmd.format(channel=self.channel))
 
     def values(self, cmd, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values(f'{cmd}')
+        return self.instrument.values(cmd.format(channel=self.channel))
 
     def check_errors(self):
         return self.instrument.check_errors()
