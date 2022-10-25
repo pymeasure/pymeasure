@@ -868,57 +868,58 @@ class LeCroyT3DSO1204(Instrument):
         :return: raw data points as numpy array
         """
         # First of all set the correct acquisition type
-        if averaging > 1:
+        acquisition_type = self.acquisition_type
+        if averaging > 1 and acquisition_type != ["average", averaging]:
             self.acquisition_type = "average"
             self.acquisition_average = averaging
-        else:
+            # Give the scope enough time to do the averaging
+            time.sleep(4 * self.SLEEP_SECONDS)
+        elif acquisition_type != "normal":
             self.acquisition_type = "normal"
 
         # Set the acquisition source
         self.waveform_source = _sanitize_source(source)
-
-        # Check that we are trying to read a reasonable amount of points
-        sample_points = self.acquisition_sample_size(self.waveform_source)
-        if requested_points > 0 and 0 < sample_points < requested_points:
-            raise ValueError(f"Number of requested points ({requested_points}) is greater than "
-                             f"number of sampled points ({sample_points})")
 
         # Setup waveform acquisition parameters
         self.waveform_sparsing = sparsing
         self.waveform_points = requested_points
         self.waveform_first_point = 0
 
-        # Check how many points are to be expected
-        values = self._digitize(src=self.waveform_source)
-        expected_points = self._header_sanity_checks(values)
-        if requested_points <= 0:
-            expected_points /= sparsing
+        # Calculate how many points are to be expected
+        sample_points = self.acquisition_sample_size(self.waveform_source)
+        if requested_points > 0:
+            expected_points = min(requested_points, int(sample_points / sparsing))
+        else:
+            expected_points = int(sample_points / sparsing)
 
         # If the number of points is big enough, split the data in small chunks and read it one
-        # chunk at a time. For less than 500K points we do not bother splitting them.
-        chunk_bytes = 5e5
+        # chunk at a time. For less than a certain amount of points we do not bother splitting them.
+        chunk_bytes = 20000
         chunk_points = chunk_bytes - self._header_size - self._footer_size
         iterations = -(expected_points // -chunk_points)
         i = 0
         data = []
-        while True:
+        while i < iterations:
+            # number of points already read
             read_points = i * chunk_points
+            # number of points still to read
             remaining_points = expected_points - read_points
-            if remaining_points > chunk_points:
-                requested_points = chunk_points
-            else:
-                requested_points = remaining_points
-            requested_bytes = requested_points + self._header_size + self._footer_size
-            self.waveform_first_point = read_points * sparsing
+            # number of points requested in a single chunk
+            requested_points = chunk_points if remaining_points > chunk_points else remaining_points
             self.waveform_points = requested_points
+            # number of bytes requested in a single chunk
+            requested_bytes = requested_points + self._header_size + self._footer_size
+            # read the next chunk starting from this points
+            first_point = read_points * sparsing
+            self.waveform_first_point = first_point
+            # read chunk of points
             values = self._digitize(src=self.waveform_source, num_bytes=requested_bytes)
             self._header_sanity_checks(values)
             self._footer_sanity_checks(values)
             self._npoints_sanity_checks(values)
+            # append the points without the header and footer
             data.append(values[16:-2])
             i += 1
-            if i >= iterations:
-                break
         data = np.concatenate(data)
         return data
 
@@ -980,6 +981,8 @@ class LeCroyT3DSO1204(Instrument):
         xdata = self._acquire_data(source, requested_points, sparsing, averaging)
         preamble = self.waveform_preamble
         preamble["transmitted_points"] = len(xdata)
+        preamble["requested_points"] = requested_points
+        preamble["first_point"] = 0
         return self._process_data(xdata, preamble)
 
     ###############

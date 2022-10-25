@@ -395,13 +395,13 @@ class TestLeCroyT3DSO1204:
         scope.single()
         data, time, preamble = scope.download_data(source="c1", requested_points=7e5, sparsing=10)
         assert type(data) is np.ndarray
-        assert len(data) == 7e5
+        assert len(data) == 7e5 or len(data) == 7e4
         assert type(time) is np.ndarray
-        assert len(time) == 7e5
+        assert len(time) == 7e5 or len(time) == 7e4
         assert type(preamble) is dict
         assert preamble["type"] == "normal"
         assert preamble["sparsing"] == 10
-        assert preamble["transmitted_points"] == 7e5
+        assert preamble["transmitted_points"] == 7e5 or preamble["transmitted_points"] == 7e4
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
@@ -414,13 +414,13 @@ class TestLeCroyT3DSO1204:
         data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
                                                    sparsing=10, averaging=16)
         assert type(data) is np.ndarray
-        assert len(data) == 1.75e5
+        assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
-        assert len(time) == 1.75e5
+        assert len(time) == 1.75e5 or len(time) == 7e4
         assert type(preamble) is dict
         assert preamble["type"] == ["average", 16]
         assert preamble["average"] == 16
-        assert preamble["transmitted_points"] == 1.75e5
+        assert preamble["transmitted_points"] == 1.75e5 or preamble["transmitted_points"] == 7e4
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
@@ -433,13 +433,13 @@ class TestLeCroyT3DSO1204:
         data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
                                                    sparsing=10, averaging=256)
         assert type(data) is np.ndarray
-        assert len(data) == 1.75e5
+        assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
-        assert len(time) == 1.75e5
+        assert len(time) == 1.75e5 or len(time) == 7e4
         assert type(preamble) is dict
         assert preamble["type"] == ["average", 256]
         assert preamble["average"] == 256
-        assert preamble["transmitted_points"] == 1.75e5
+        assert preamble["transmitted_points"] == 1.75e5 or preamble["transmitted_points"] == 7e4
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
