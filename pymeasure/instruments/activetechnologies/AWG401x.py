@@ -39,8 +39,8 @@ from pymeasure.instruments.validators import strict_discrete_set,\
 class ChannelBase(Channel):
     """Implementation of a base Active Technologies AWG-4000 channel."""
 
-    def __init__(self, instrument, channel_number):
-        super().__init__(instrument, channel_number)
+    def __init__(self, instrument, id):
+        super().__init__(instrument, id)
 
         self.delay_values = [self.delay_min, self.delay_max]
 
@@ -89,8 +89,8 @@ class ChannelBase(Channel):
 class ChannelAFG(ChannelBase):
     """Implementation of a Active Technologies AWG-4000 channel in AFG mode."""
 
-    def __init__(self, instrument, channel_number):
-        super().__init__(instrument, channel_number)
+    def __init__(self, instrument, id):
+        super().__init__(instrument, id)
 
         self.calculate_voltage_range()
         self.frequency_values = [self.frequency_min, self.frequency_max]
@@ -854,7 +854,7 @@ class SequenceEntry(Channel):
     """Implementation of sequencer entry."""
 
     def __init__(self, parent, number_of_channels, sequence_number):
-        super().__init__(parent, name=sequence_number)
+        super().__init__(parent, sequence_number)
         self.number_of_channels = number_of_channels
 
         self.length_values = [self.length_min, self.length_max]
@@ -865,7 +865,7 @@ class SequenceEntry(Channel):
             self.ch[i] = self.AnalogChannel(self.parent, i, sequence_number)
 
     def write(self, command):
-        self.parent.write(command.format(ent=self.name))
+        self.parent.write(command.format(ent=self.id))
 
     length = Instrument.control(
         "SEQuence:ELEM{ent}:LENGth?",
@@ -915,15 +915,15 @@ class SequenceEntry(Channel):
     class AnalogChannel(Channel):
         """Implementation of an analog channel for a single sequencer entry."""
 
-        def __init__(self, parent, channel_number, sequence_number):
-            super().__init__(parent, channel_number)
+        def __init__(self, parent, id, sequence_number):
+            super().__init__(parent, id)
             self.seq_num = sequence_number
 
             self.waveform_values = list(self.parent.waveforms.keys())
             self.calculate_voltage_range()
 
         def write(self, command):
-            self.parent.write(command.format(ent=self.seq_num, ch=self.name))
+            self.parent.write(command.format(ent=self.seq_num, ch=self.id))
 
         voltage_amplitude = Instrument.control(
             "SEQuence:ELEM{ent}:AMPlitude{ch}?",

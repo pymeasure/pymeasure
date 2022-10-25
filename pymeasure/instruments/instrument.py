@@ -93,7 +93,7 @@ class DynamicProperty(property):
         self.name = name
 
 
-class ChannelBase:
+class CommonBase:
     """Base class for instruments and channels.
 
     This class contains everything for pymeasure's property creator :meth:`control`
@@ -122,6 +122,7 @@ class ChannelBase:
 
     def __init__(self):
         self._special_names = self._setup_special_names()
+        self.channels = []
 
     def _setup_special_names(self):
         """ Return list of class/instance special names.
@@ -162,6 +163,25 @@ class ChannelBase:
                 raise AttributeError(
                     f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
+
+    # Channel management
+    def add_channel(self, cls, id, **kwargs):
+        """Add a channel to this instance and return its index in channel list.
+
+        The newly created channel may be accessed either by the index in the
+        channels list or by the created attribute. For `instrument`, the fifth
+        channel with id "F" has two access options:
+        :code:`instrument.channels[4] == instrument.ch_F`
+
+        :param cls: Class of the channel.
+        :param id: Channel id how it is used in communication, e.g. "A".
+        :param \\**kwargs: Keyword arguments for the channel creator.
+        :returns: Index of this instance's channels.
+        """
+        channel = cls(self, id, **kwargs)
+        self.channels.append(channel)
+        setattr(self, f"ch_{channel.id}", channel)
+        return self.channels.index(channel)
 
     # Communication functions
     def wait_for(self, query_delay=0):
@@ -445,7 +465,7 @@ class ChannelBase:
                                   **kwargs)
 
 
-class Instrument(ChannelBase):
+class Instrument(CommonBase):
     """ The base class for all Instrument definitions.
 
     It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
@@ -627,7 +647,7 @@ class Instrument(ChannelBase):
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
 
-class Channel(ChannelBase):
+class Channel(CommonBase):
     """The base class for channel definitions.
 
     This class supports dynamic properties like :class:`Instrument`,
@@ -640,22 +660,24 @@ class Channel(ChannelBase):
     :param name: Name of the channel, as it is used for the communication.
     """
 
-    def __init__(self, parent, name):
+    def __init__(self, parent, id):
         super().__init__()
         self.parent = parent
-        self.name = name
+        self.id = id
 
     # Calls to the instrument
     def write(self, command, **kwargs):
         """Write a string command to the instrument.
 
-        The channel name is inserted into the command and `write_termination` appended.
+        The channel id is inserted into the command and `write_termination` appended.
+
+        Subclass this method, in order to always prepend the channel id.
 
         :param command: command string to be sent to the instrument.
-            '{ch}' is replaced by the channel name.
+            '{ch}' is replaced by the channel id.
         :param kwargs: Keyword arguments for the adapter.
         """
-        self.parent.write(command.format(ch=self.name), **kwargs)
+        self.parent.write(command.format(ch=self.id), **kwargs)
 
     def write_bytes(self, content, **kwargs):
         """Write the bytes `content` to the instrument."""
@@ -682,7 +704,7 @@ class Channel(ChannelBase):
         :param values: The values to transmit.
         :param \\*args, \\**kwargs: Further arguments to hand to the Adapter.
         """
-        self.parent.write_binary_values(command.format(ch=self.name), values, *args, **kwargs)
+        self.parent.write_binary_values(command.format(ch=self.id), values, *args, **kwargs)
 
     def read_binary_values(self, **kwargs):
         """Read binary values from the instrument."""

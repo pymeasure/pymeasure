@@ -107,7 +107,8 @@ class GenericChannel(Channel):
 class ChannelInstrument(Instrument):
     def __init__(self, adapter, name="ChannelInstrument", **kwargs):
         super().__init__(adapter, name, **kwargs)
-        self.chA = GenericChannel(self, "A")
+        self.add_channel(GenericChannel, "A")
+        self.add_channel(GenericChannel, "B")
 
 
 def test_fake_instrument():
@@ -692,19 +693,19 @@ class TestChannelCommunication:
 
 def test_channel_write():
     with expected_protocol(ChannelInstrument, [("ChA:volt?", None)]) as inst:
-        inst.chA.write("Ch{ch}:volt?")
+        inst.ch_A.write("Ch{ch}:volt?")
 
 
 def test_channel_write_name_twice():
     """Verify, that any (i.e. more than one) occurrence of '{ch}' is changed."""
     with expected_protocol(ChannelInstrument, [("ChA:volt:ChA?", None)]) as inst:
-        inst.chA.write("Ch{ch}:volt:Ch{ch}?")
+        inst.ch_A.write("Ch{ch}:volt:Ch{ch}?")
 
 
 def test_channel_write_without_ch():
     """Verify, that it is possible to send a command without '{ch}'."""
     with expected_protocol(ChannelInstrument, [("Test", None)]) as inst:
-        inst.chA.write("Test")
+        inst.ch_A.write("Test")
 
 
 def test_channel_control():
@@ -712,8 +713,8 @@ def test_channel_control():
             ChannelInstrument,
             [("CA:control 7", None), ("CA:control?", "1.45")]
     ) as inst:
-        inst.chA.fake_ctrl = 7
-        assert inst.chA.fake_ctrl == 1.45
+        inst.ch_A.fake_ctrl = 7
+        assert inst.ch_A.fake_ctrl == 1.45
 
 
 def test_channel_setting():
@@ -721,7 +722,7 @@ def test_channel_setting():
             ChannelInstrument,
             [("CA:setting 3", None)]
     ) as inst:
-        inst.chA.fake_setting = 3
+        inst.ch_A.fake_setting = 3
 
 
 def test_channel_measurement():
@@ -729,11 +730,23 @@ def test_channel_measurement():
             ChannelInstrument,
             [("CA:measurement?", "2")]
     ) as inst:
-        assert inst.chA.fake_measurement == "Y"
+        assert inst.ch_A.fake_measurement == "Y"
 
 
-def test_dynamic_property():
+def test_channel_dynamic_property():
     with expected_protocol(ChannelInstrument, [("CA:control 100", None)]) as inst:
-        inst.chA.fake_ctrl_values = (1, 200)
+        inst.ch_A.fake_ctrl_values = (1, 200)
         # original values is (1, 10), therefore 100 should not be allowed.
-        inst.chA.fake_ctrl = 100
+        inst.ch_A.fake_ctrl = 100
+
+
+class TestChannelAccess:
+    @pytest.fixture(scope="class")
+    def inst(self):
+        return ChannelInstrument(ProtocolAdapter())
+
+    def test_attribute_access(self, inst):
+        assert inst.ch_B == inst.channels[1]
+
+    def test_len(self, inst):
+        assert len(inst.channels) == 2
