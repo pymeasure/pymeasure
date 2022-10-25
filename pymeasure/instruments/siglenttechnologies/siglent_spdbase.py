@@ -143,7 +143,6 @@ class SPDBase(Instrument):
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
-            name="Siglent Technologies SPDxxxxX Power Supply",
             usb=dict(write_termination='\n',
                      read_termination='\n'),
             tcpip=dict(write_termination='\n',
@@ -240,7 +239,7 @@ class SPDChannel(object):
     )
 
     enable_timer = Instrument.setting(
-        f"TIME CH{channel}",
+        f"TIME CH{channel},%s",
         """Enable the channel timer.
 
         :type: bool
