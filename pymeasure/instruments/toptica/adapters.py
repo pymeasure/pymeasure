@@ -69,11 +69,7 @@ class TopticaAdapter(VISAAdapter):
         else:
             return reply
 
-<<<<<<< HEAD
-    def read(self):
-=======
     def _read(self):
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         """ Reads a reply of the instrument which consists of at least two
         lines. The initial ones are the reply to the command while the last one
         should be '[OK]' which acknowledges that the device is ready to receive
@@ -85,11 +81,7 @@ class TopticaAdapter(VISAAdapter):
 
         :returns: string containing the ASCII response of the instrument.
         """
-<<<<<<< HEAD
-        reply = super().read()  # read back the LF+CR which is always sent back
-=======
         reply = super()._read()  # read back the LF+CR which is always sent back
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         if reply != "":
             raise ValueError(
                 "TopticaAdapter.read(1): Error after command "
@@ -97,11 +89,7 @@ class TopticaAdapter(VISAAdapter):
         msg = []
         try:
             while True:
-<<<<<<< HEAD
-                line = super().read()
-=======
                 line = super()._read()
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
                 if line == '[OK]':
                     break
                 msg.append(line)
@@ -113,11 +101,7 @@ class TopticaAdapter(VISAAdapter):
                 f"'{self.lastcommand}' with message '{reply}'")
         return '\n'.join(msg)
 
-<<<<<<< HEAD
-    def write(self, command, check_ack=True):
-=======
     def _write(self, command, check_ack=True):
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         """ Writes a command to the instrument. Also reads back a LF+CR which
         is always sent back.
 
@@ -126,11 +110,7 @@ class TopticaAdapter(VISAAdapter):
           device is expected. This is the case for set commands.
         """
         self.lastcommand = command
-<<<<<<< HEAD
-        super().write(command)
-=======
         super()._write(command)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         # The following lines are used in order to avoid the need of a
         # complicated Instrument where every property would need to use
         # check_set/get_errors and many Adapter functions would need to be
@@ -142,17 +122,4 @@ class TopticaAdapter(VISAAdapter):
                 raise ValueError(
                     f"TopticaAdapter.write: Error after command '{command}'"
                     f"with message '{reply}'")
-<<<<<<< HEAD
 
-    def ask(self, command):
-        """ Writes a command to the instrument and returns the resulting ASCII
-        response
-
-        :param command: command string to be sent to the instrument
-        :returns: String ASCII response of the instrument
-        """
-        self.write(command, check_ack=False)
-        time.sleep(self.connection.query_delay)
-        return self.read()
-=======
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

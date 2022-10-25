@@ -39,10 +39,7 @@ import json
 from time import sleep
 
 from .procedure import Procedure, UnknownProcedure
-<<<<<<< HEAD
-=======
 from pymeasure.units import ureg
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -158,45 +155,7 @@ class CSVFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-<<<<<<< HEAD
-        return self.delimiter.join(f'{record[x]}' for x in self.columns)
 
-    def format_header(self):
-        return self.delimiter.join(self.columns)
-
-
-class CSVFormatter_Pandas(logging.Formatter):
-    """ Formatter of data results """
-
-    def __init__(self, columns, delimiter=',', line_break='\n'):
-        """Creates a csv formatter for a given list of columns (=header).
-
-        :param columns: list of column names.
-        :type columns: list
-        :param delimiter: delimiter between columns.
-        :type delimiter: str
-        """
-        super().__init__()
-        self.columns = columns
-        self.delimiter = delimiter
-        self.line_break = line_break
-
-    def format(self, record):
-        """Formats a record as csv.
-
-        :param record: record to format.
-        :type record: pandas.DataFrame
-        :return: a string
-        """
-        return record.to_csv(
-            sep=self.delimiter,
-            header=False,
-            index=False,
-            # explicit line_terminator required, otherwise Windows
-            # uses \r\n which results in double blank lines
-            line_terminator=self.line_break
-        )
-=======
         line = []
         for x in self.columns:
             value = record.get(x, float("nan"))
@@ -239,13 +198,47 @@ class CSVFormatter_Pandas(logging.Formatter):
                 else:
                     line.append(f"{value}")
         return self.delimiter.join(line)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     def format_header(self):
         return self.delimiter.join(self.columns)
 
 
-<<<<<<< HEAD
+class CSVFormatter_Pandas(logging.Formatter):
+    """ Formatter of data results """
+
+    def __init__(self, columns, delimiter=',', line_break='\n'):
+        """Creates a csv formatter for a given list of columns (=header).
+
+        :param columns: list of column names.
+        :type columns: list
+        :param delimiter: delimiter between columns.
+        :type delimiter: str
+        """
+        super().__init__()
+        self.columns = columns
+        self.delimiter = delimiter
+        self.line_break = line_break
+
+    def format(self, record):
+        """Formats a record as csv.
+
+        :param record: record to format.
+        :type record: pandas.DataFrame
+        :return: a string
+        """
+        return record.to_csv(
+            sep=self.delimiter,
+            header=False,
+            index=False,
+            # explicit line_terminator required, otherwise Windows
+            # uses \r\n which results in double blank lines
+            line_terminator=self.line_break
+        )
+
+    def format_header(self):
+        return self.delimiter.join(self.columns)
+
+
 class JSONFormatter(logging.Formatter):
     """ Formatter of data results """
 
@@ -273,8 +266,6 @@ class JSONFormatter(logging.Formatter):
 
 
 
-=======
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 class Results:
     """ The Results class provides a convenient interface to reading and
     writing data in connection with a :class:`.Procedure` object.

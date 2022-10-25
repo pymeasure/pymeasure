@@ -74,12 +74,6 @@ class FWBell5080(Instrument):
         get_process=lambda v: v.replace(' ', ':')  # Make output consistent with input
     )
 
-<<<<<<< HEAD
-    def __init__(self, port):
-        super().__init__(
-            SerialAdapter(port, 2400, timeout=0.5),
-            "F.W. Bell 5080 Handheld Gaussmeter"
-=======
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
@@ -87,7 +81,6 @@ class FWBell5080(Instrument):
             asrl={'baud_rate': 2400,
                   'timeout': 500},
             **kwargs
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         )
 
     @property
@@ -119,21 +112,6 @@ class FWBell5080(Instrument):
         method to remove the last 2 characters from the output.
         """
         return super().read()[:-2]
-<<<<<<< HEAD
-
-    def ask(self, command):
-        """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
-        method to remove the last 2 characters from the output.
-        """
-        return super().ask()[:-2]
-
-    def values(self, command):
-        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
-        method to remove the lastv2 characters from the output.
-        """
-        return super().values()[:-2]
-=======
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     def reset(self):
         """ Resets the instrument. """

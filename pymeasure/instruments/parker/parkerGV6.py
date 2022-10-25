@@ -35,12 +35,6 @@ class ParkerGV6(Instrument):
 
     degrees_per_count = 0.00045  # 90 deg per 200,000 count
 
-<<<<<<< HEAD
-    def __init__(self, port):
-        super().__init__(
-            SerialAdapter(port, 9600, timeout=0.5),
-            "Parker GV6 Motor Controller"
-=======
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
@@ -50,7 +44,6 @@ class ParkerGV6(Instrument):
                   },
             write_termination="\r",
             **kwargs
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         )
         self.set_defaults()
 

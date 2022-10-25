@@ -27,25 +27,9 @@ import logging
 import numpy as np
 import pyqtgraph as pg
 from .Qt import QtCore
-<<<<<<< HEAD
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-try:
-    from matplotlib.cm import viridis
-except ImportError:
-    log.warning("Matplotlib not found. Images will be greyscale")
-
-
-def _greyscale_colormap(x):
-    """Simple greyscale colormap. Assumes x is already normalized."""
-    return np.array([x, x, x, 1])
-=======
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
 
 class ResultsCurve(pg.PlotDataItem):

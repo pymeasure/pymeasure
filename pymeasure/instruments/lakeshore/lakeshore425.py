@@ -73,15 +73,9 @@ class LakeShore425(Instrument):
         map_values=True
     )
 
-<<<<<<< HEAD
-    def __init__(self, port):
-        super().__init__(
-            LakeShoreUSBAdapter(port),
-=======
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "LakeShore 425 Gaussmeter",
             asrl={'write_termination': "\n",
                   'read_termination': "\n",  # from manual

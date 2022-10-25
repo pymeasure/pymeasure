@@ -56,20 +56,12 @@ class HP8116A(Instrument):
     The resolution for all floating point instrument parameters is 3 digits.
     """
 
-<<<<<<< HEAD
-    def __init__(self, resourceName, **kwargs):
-=======
     def __init__(self, adapter, **kwargs):
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
-<<<<<<< HEAD
-            resourceName,
-=======
             adapter,
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             'Hewlett-Packard 8116A',
             includeSCPI=False,
             **kwargs
@@ -217,6 +209,7 @@ class HP8116A(Instrument):
 
         return list(sequence)
 
+    @staticmethod
     def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
         return Instrument.control(
             'CST', identifier + '%d', docs,
@@ -231,26 +224,12 @@ class HP8116A(Instrument):
 
     def write(self, command):
         """ Write a command to the instrument and wait until the 8116A has interpreted it. """
-<<<<<<< HEAD
-        self.adapter.write(command)
-=======
         super().write(command)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
         # We need to read the status byte and wait until the buffer_not_empty bit
         # is cleared because some older units lock up if we don't.
         self._wait_for_commands_processed()
 
-<<<<<<< HEAD
-    def read(self):
-        """ Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
-        Therefore reads with automatic end-of-transmission detection will timeout.
-        Instead, :code:`adapter.read_bytes()` has to be used.
-        """
-        raise NotImplementedError('Not supported, use adapter.read_bytes() instead')
-
-=======
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     def ask(self, command, num_bytes=None):
         """ Write a command to the instrument, read the response, and return the response as ASCII text.
 
@@ -271,38 +250,9 @@ class HP8116A(Instrument):
 
         # The first character is always a space or a leftover character from the previous command,
         # when the number of bytes read was too large or too small.
-<<<<<<< HEAD
-        bytes = self.adapter.read_bytes(num_bytes)[1:]
-        return bytes.decode('ascii').strip(' ,\r\n')
-
-    def values(self, command, separator=',', cast=float, preprocess_reply=None, **kwargs):
-        # I had to copy the values method from the adapter class since we need to call
-        # our own ask() method instead of the adapter's default one.
-        results = str(self.ask(command))
-        if callable(preprocess_reply):
-            results = preprocess_reply(results)
-        elif callable(self.adapter.preprocess_reply):
-            results = self.adapter.preprocess_reply(results)
-        results = results.split(separator)
-        for i, result in enumerate(results):
-            try:
-                if cast == bool:
-                    # Need to cast to float first since results are usually
-                    # strings and bool of a non-empty string is always True
-                    results[i] = bool(float(result))
-                else:
-                    results[i] = cast(result)
-            except Exception:
-                pass  # Keep as string
-        return results
-
-    # Instrument controls #
-
-=======
         bytes = self.read_bytes(num_bytes)[1:]
         return bytes.decode('ascii').strip(' ,\r\n')
 
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     operating_mode = Instrument.control(
         'CST', '%s',
         """ A string property that controls the operating mode of the instrument.
@@ -399,12 +349,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[10, 90.0001],
-<<<<<<< HEAD
-        get_process=lambda x: int(x[6:8])
-=======
         cast=int,
         # get_process=lambda x: int(x[6:8])
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     )
 
     pulse_width = Instrument.control(

@@ -32,15 +32,9 @@ class ThorlabsPro8000(Instrument):
     LDC_POLARITIES = ['AG', 'CG']
     STATUS = ['ON', 'OFF']
 
-<<<<<<< HEAD
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-=======
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Thorlabs Pro 8000",
             **kwargs
         )

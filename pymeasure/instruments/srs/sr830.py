@@ -342,15 +342,9 @@ class SR830(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-<<<<<<< HEAD
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-=======
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
@@ -479,13 +473,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pauseBuffer()
-<<<<<<< HEAD
-        ch1[index:count + 1] = self.buffer_data(1, index, count)
-        ch2[index:count + 1] = self.buffer_data(2, index, count)
-=======
         ch1[index : count + 1] = self.buffer_data(1, index, count)  # noqa: E203
         ch2[index : count + 1] = self.buffer_data(2, index, count)  # noqa: E203
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):

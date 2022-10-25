@@ -32,19 +32,11 @@ class TabWidget:
     """ Utility class to define default implementation for some basic methods.
 
         When defining a widget to be used in subclasses of
-<<<<<<< HEAD
-        :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`,
-=======
         :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`,
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         users should inherit from this class and provide an
         implementation of these methods
     """
 
-<<<<<<< HEAD
-=======
-<<<<<<<< HEAD:pymeasure/display/widgets/tab_widget.py
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
@@ -64,9 +56,6 @@ class TabWidget:
     def set_color(self, curve, color):
         """ Set color for widget """
         pass
-<<<<<<< HEAD
-=======
-========
     def __init__(self, port):
         super().__init__(
             port,
@@ -84,5 +73,3 @@ class TabWidget:
         :param command: SCPI command string to be sent to the instrument
         """
         super().write(command + "\n")
->>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/instruments/lakeshore/adapters.py
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

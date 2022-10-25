@@ -72,44 +72,28 @@ class Axis:
         "getv", "setv %.3f",
         """ Amplitude of the stepping voltage in volts from 0 to 150 V. This
         property can be set. """,
-<<<<<<< HEAD
-        validator=strict_range, values=[0, 150])
-=======
         validator=strict_range, values=[0, 150], check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     frequency = Instrument.control(
         "getf", "setf %.3f",
         """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
         This property can be set. """,
         validator=strict_range, values=[1, 10000],
-<<<<<<< HEAD
-        cast=int)
-=======
         cast=int, check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     mode = Instrument.control(
         "getm", "setm %s",
         """ Axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
         'stp+', 'stp-'. Available modes depend on the actual axis model""",
         validator=strict_discrete_set,
-<<<<<<< HEAD
-        values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'])
-=======
         values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
         check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     offset_voltage = Instrument.control(
         "geta", "seta %.3f",
         """ Offset voltage in Volts from 0 to 150 V.
         This property can be set. """,
-<<<<<<< HEAD
-        validator=strict_range, values=[0, 150])
-=======
         validator=strict_range, values=[0, 150], check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     pattern_up = Instrument.control(
         "getpu", "setpu %s",
@@ -120,11 +104,7 @@ class Axis:
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
         set_process=lambda a: " ".join("%d" % v for v in a),
-<<<<<<< HEAD
-        separator='\r\n', cast=int)
-=======
         separator='\r\n', cast=int, check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     pattern_down = Instrument.control(
         "getpd", "setpd %s",
@@ -135,11 +115,7 @@ class Axis:
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
         set_process=lambda a: " ".join("%d" % v for v in a),
-<<<<<<< HEAD
-        separator='\r\n', cast=int)
-=======
         separator='\r\n', cast=int, check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     output_voltage = Instrument.measurement(
         "geto",
@@ -153,21 +129,13 @@ class Axis:
         "stepu %d",
         """ Step upwards for N steps. Mode must be 'stp' and N must be
         positive.""",
-<<<<<<< HEAD
-        validator=strict_range, values=[0, inf])
-=======
         validator=strict_range, values=[0, inf], check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     stepd = Instrument.setting(
         "stepd %d",
         """ Step downwards for N steps. Mode must be 'stp' and N must be
         positive.""",
-<<<<<<< HEAD
-        validator=strict_range, values=[0, inf])
-=======
         validator=strict_range, values=[0, inf], check_set_errors=True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     def __init__(self, controller, axis):
         self.axis = str(axis)
@@ -269,13 +237,10 @@ class ANC300Controller(Instrument):
         self._axisnames = axisnames
         for i, axis in enumerate(axisnames):
             setattr(self, axis, Axis(self, i + 1))
-<<<<<<< HEAD
-=======
 
     def check_errors(self):
         """Read after setting a value."""
         self.read()
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     def ground_all(self):
         """ Grounds all axis of the controller. """

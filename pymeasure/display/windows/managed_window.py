@@ -50,88 +50,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-<<<<<<< HEAD:pymeasure/display/windows.py
-class PlotterWindow(QtGui.QMainWindow):
-    """
-    A window for plotting experiment results. Should not be
-    instantiated directly, but only via the
-    :class:`~pymeasure.display.plotter.Plotter` class.
-
-    .. seealso::
-
-        Tutorial :ref:`tutorial-plotterwindow`
-            A tutorial and example code for using the Plotter and PlotterWindow.
-
-    .. attribute plot::
-
-        The `pyqtgraph.PlotItem`_ object for this window. Can be
-        accessed to further customise the plot view programmatically, e.g.,
-        display log-log or semi-log axes by default, change axis range, etc.
-
-    .. pyqtgraph.PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
-
-    """
-
-    def __init__(self, plotter, refresh_time=0.1, linewidth=1, parent=None):
-        super().__init__(parent)
-        self.plotter = plotter
-        self.refresh_time = refresh_time
-        columns = plotter.results.procedure.DATA_COLUMNS
-
-        self.setWindowTitle('Results Plotter')
-        self.main = QtGui.QWidget(self)
-
-        vbox = QtGui.QVBoxLayout(self.main)
-        vbox.setSpacing(0)
-
-        hbox = QtGui.QHBoxLayout()
-        hbox.setSpacing(6)
-        hbox.setContentsMargins(-1, 6, -1, -1)
-
-        file_label = QtGui.QLabel(self.main)
-        file_label.setText('Data Filename:')
-
-        self.file = QtGui.QLineEdit(self.main)
-        self.file.setText(plotter.results.data_filename)
-
-        hbox.addWidget(file_label)
-        hbox.addWidget(self.file)
-        vbox.addLayout(hbox)
-
-        self.plot_widget = PlotWidget("Plotter", columns, refresh_time=self.refresh_time,
-                                      check_status=False, linewidth=linewidth)
-        self.plot = self.plot_widget.plot
-
-        vbox.addWidget(self.plot_widget)
-
-        self.main.setLayout(vbox)
-        self.setCentralWidget(self.main)
-        self.main.show()
-        self.resize(800, 600)
-
-        self.curve = ResultsCurve(plotter.results, columns[0], columns[1],
-                                  pen=pg.mkPen(color=pg.intColor(0), width=linewidth),
-                                  antialias=False)
-        self.plot.addItem(self.curve)
-
-        self.plot_widget.updated.connect(self.check_stop)
-
-    def quit(self, evt=None):
-        log.info("Quitting the Plotter")
-        self.close()
-        self.plotter.stop()
-
-    def check_stop(self):
-        """ Checks if the Plotter should stop and exits the Qt main loop if so
-        """
-        if self.plotter.should_stop():
-            QtCore.QCoreApplication.instance().quit()
-
-
-class ManagedWindowBase(QtGui.QMainWindow):
-=======
 class ManagedWindowBase(QtWidgets.QMainWindow):
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py
     """
     Base class for GUI experiment management .
 
@@ -156,11 +75,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     - :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
 
     Of course, users can define its own widget making sure that inherits from
-<<<<<<< HEAD:pymeasure/display/windows.py
-    :class:`~pymeasure.display.widgets.TabWidget`.
-=======
     :class:`~pymeasure.display.widgets.tab_widget.TabWidget`.
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py
 
     Examples of ready to use classes inherited from ManagedWindowBase are:
 
@@ -195,14 +110,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     :param directory_input: specify, if present, where the experiment's result will be saved.
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
-<<<<<<< HEAD:pymeasure/display/windows.py
     :param marker_choice: optional string specifying what marker to use for points on the plot.
         Default is None (i.e. just  a line). See here for choices:
         https://pyqtgraph.readthedocs.io/en/latest/api_reference/graphicsItems/scatterplotitem.html#pyqtgraph.ScatterPlotItem.setSymbol
     :param port: port to establish zmq server on (default is 5888). If None, no server is established.
         Note, establishing the server adds 2-3 seconds per experiment. Set to None if not using for speed.
-=======
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py
     """
 
 
@@ -271,17 +183,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             parent=self
         )
 
-<<<<<<< HEAD:pymeasure/display/windows.py
         self.abort_button.clicked.connect(self.browser_widget.abort)
-
-
-
         self.manager = self.browser_widget.manager
-=======
-        self.browser.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
-        self.browser.customContextMenuRequested.connect(self.browser_item_menu)
-        self.browser.itemChanged.connect(self.browser_item_changed)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py
 
         self.inputs = InputsWidget(
             self.procedure_class,
@@ -400,152 +303,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         self.close()
 
-<<<<<<< HEAD:pymeasure/display/windows.py
-=======
-    def browser_item_changed(self, item, column):
-        if column == 0:
-            state = item.checkState(0)
-            experiment = self.manager.experiments.with_browser_item(item)
-            if state == QtCore.Qt.CheckState.Unchecked:
-                for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                    wdg.remove(curve)
-            else:
-                for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                    wdg.load(curve)
-
-    def browser_item_menu(self, position):
-        item = self.browser.itemAt(position)
-
-        if item is not None:
-            experiment = self.manager.experiments.with_browser_item(item)
-
-            menu = QtWidgets.QMenu(self)
-
-            # Open
-            action_open = QtGui.QAction(menu)
-            action_open.setText("Open Data Externally")
-            action_open.triggered.connect(
-                lambda: self.open_file_externally(experiment.results.data_filename))
-            menu.addAction(action_open)
-
-            # Change Color
-            action_change_color = QtGui.QAction(menu)
-            action_change_color.setText("Change Color")
-            action_change_color.triggered.connect(
-                lambda: self.change_color(experiment))
-            menu.addAction(action_change_color)
-
-            # Remove
-            action_remove = QtGui.QAction(menu)
-            action_remove.setText("Remove Graph")
-            if self.manager.is_running():
-                if self.manager.running_experiment() == experiment:  # Experiment running
-                    action_remove.setEnabled(False)
-            action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
-            menu.addAction(action_remove)
-
-            # Delete
-            action_delete = QtGui.QAction(menu)
-            action_delete.setText("Delete Data File")
-            if self.manager.is_running():
-                if self.manager.running_experiment() == experiment:  # Experiment running
-                    action_delete.setEnabled(False)
-            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
-            menu.addAction(action_delete)
-
-            # Use parameters
-            action_use = QtGui.QAction(menu)
-            action_use.setText("Use These Parameters")
-            action_use.triggered.connect(
-                lambda: self.set_parameters(experiment.procedure.parameter_objects()))
-            menu.addAction(action_use)
-            menu.exec(self.browser.viewport().mapToGlobal(position))
-
-    def remove_experiment(self, experiment):
-        reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
-                                               "Are you sure you want to remove the graph?",
-                                               QtWidgets.QMessageBox.StandardButton.Yes |
-                                               QtWidgets.QMessageBox.StandardButton.No,
-                                               QtWidgets.QMessageBox.StandardButton.No)
-        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-            self.manager.remove(experiment)
-
-    def delete_experiment_data(self, experiment):
-        reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
-                                               "Are you sure you want to delete this data file?",
-                                               QtWidgets.QMessageBox.StandardButton.Yes |
-                                               QtWidgets.QMessageBox.StandardButton.No,
-                                               QtWidgets.QMessageBox.StandardButton.No)
-        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-            self.manager.remove(experiment)
-            os.unlink(experiment.data_filename)
-
-    def show_experiments(self):
-        root = self.browser.invisibleRootItem()
-        for i in range(root.childCount()):
-            item = root.child(i)
-            item.setCheckState(0, QtCore.Qt.CheckState.Checked)
-
-    def hide_experiments(self):
-        root = self.browser.invisibleRootItem()
-        for i in range(root.childCount()):
-            item = root.child(i)
-            item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
-
-    def clear_experiments(self):
-        self.manager.clear()
-
-    def open_experiment(self):
-        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
-        if dialog.exec():
-            filenames = dialog.selectedFiles()
-            for filename in map(str, filenames):
-                if filename in self.manager.experiments:
-                    QtWidgets.QMessageBox.warning(
-                        self, "Load Error",
-                        "The file %s cannot be opened twice." % os.path.basename(filename)
-                    )
-                elif filename == '':
-                    return
-                else:
-                    results = Results.load(filename)
-                    experiment = self.new_experiment(results)
-                    for curve in experiment.curve_list:
-                        if curve:
-                            curve.update_data()
-                    experiment.browser_item.progressbar.setValue(100)
-                    self.manager.load(experiment)
-                    log.info('Opened data file %s' % filename)
-
-    def change_color(self, experiment):
-        color = QtWidgets.QColorDialog.getColor(
-            parent=self)
-        if color.isValid():
-            pixelmap = QtGui.QPixmap(24, 24)
-            pixelmap.fill(color)
-            experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
-            for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                wdg.set_color(curve, color=color)
-
-    def open_file_externally(self, filename):
-        """ Method to open the datafile using an external editor or viewer. Uses the default
-        application to open a datafile of this filetype, but can be overridden by the child
-        class in order to open the file in another application of choice.
-        """
-        system = platform.system()
-        if (system == 'Windows'):
-            # The empty argument after the start is needed to be able to cope
-            # correctly with filenames with spaces
-            _ = subprocess.Popen(['start', '', filename], shell=True)
-        elif (system == 'Linux'):
-            _ = subprocess.Popen(['xdg-open', filename])
-        elif (system == 'Darwin'):
-            _ = subprocess.Popen(['open', filename])
-        else:
-            raise Exception("{cls} method open_file_externally does not support {system} OS".format(
-                cls=type(self).__name__, system=system))
-
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not make a Procedure"
@@ -626,47 +383,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         raise NotImplementedError(
             "Abstract method ManagedWindow.queue not implemented")
 
-<<<<<<< HEAD:pymeasure/display/windows.py
-=======
-    def abort(self):
-        self.abort_button.setEnabled(False)
-        self.abort_button.setText("Resume")
-        self.abort_button.clicked.disconnect()
-        self.abort_button.clicked.connect(self.resume)
-        try:
-            self.manager.abort()
-        except:  # noqa
-            log.error('Failed to abort experiment', exc_info=True)
-            self.abort_button.setText("Abort")
-            self.abort_button.clicked.disconnect()
-            self.abort_button.clicked.connect(self.abort)
-
-    def resume(self):
-        self.abort_button.setText("Abort")
-        self.abort_button.clicked.disconnect()
-        self.abort_button.clicked.connect(self.abort)
-        if self.manager.experiments.has_next():
-            self.manager.resume()
-        else:
-            self.abort_button.setEnabled(False)
-
-    def queued(self, experiment):
-        self.abort_button.setEnabled(True)
-        self.browser_widget.show_button.setEnabled(True)
-        self.browser_widget.hide_button.setEnabled(True)
-        self.browser_widget.clear_button.setEnabled(True)
-
-    def running(self, experiment):
-        self.browser_widget.clear_button.setEnabled(False)
-
-    def abort_returned(self, experiment):
-        if self.manager.experiments.has_next():
-            self.abort_button.setText("Resume")
-            self.abort_button.setEnabled(True)
-        else:
-            self.browser_widget.clear_button.setEnabled(True)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py
-
 
     @property
     def directory(self):
@@ -698,11 +414,7 @@ class ManagedWindow(ManagedWindowBase):
     :param y_axis: the initial data-column for the y-axis of the plot
     :param linewidth: linewidth for the displayed curves, default is 1
     :param \\**kwargs: optional keyword arguments that will be passed to
-<<<<<<< HEAD:pymeasure/display/windows.py
-        :class:`~pymeasure.display.windows.ManagedWindowBase`
-=======
-        :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py
+    :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
 
     """
 
@@ -725,34 +437,4 @@ class ManagedWindow(ManagedWindowBase):
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)
         log.info("ManagedWindow connected to logging")
-<<<<<<< HEAD:pymeasure/display/windows.py
 
-
-class ManagedImageWindow(ManagedWindow):
-    """
-    Display experiment output with an :class:`~pymeasure.display.widget.ImageWidget` class.
-
-    :param procedure_class: procedure class describing the experiment (see
-        :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param x_axis: the data-column for the x-axis of the plot, cannot be changed afterwards for
-        the image-plot
-    :param y_axis: the data-column for the y-axis of the plot, cannot be changed afterwards for
-        the image-plot
-    :param z_axis: the initial data-column for the z-axis of the plot, can be changed afterwards
-    :param \\**kwargs: optional keyword arguments that will be passed to
-        :class:`~pymeasure.display.windows.ManagedWindow`
-
-    """
-
-    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
-        self.z_axis = z_axis
-        self.image_widget = ImageWidget(
-            "Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
-
-        if "widget_list" not in kwargs:
-            kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.image_widget,)
-
-        super().__init__(procedure_class, x_axis=x_axis, y_axis=y_axis, **kwargs)
-=======
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59:pymeasure/display/windows/managed_window.py

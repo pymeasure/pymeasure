@@ -23,10 +23,6 @@
 #
 from numpy import bool_
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.

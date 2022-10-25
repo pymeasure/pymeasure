@@ -26,11 +26,7 @@ import logging
 
 import pyqtgraph as pg
 from ..curves import ResultsImage
-<<<<<<< HEAD
-from ..Qt import QtCore, QtGui
-=======
 from ..Qt import QtCore, QtWidgets
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from .tab_widget import TabWidget
 from .image_frame import ImageFrame
 
@@ -38,11 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-<<<<<<< HEAD
-class ImageWidget(TabWidget, QtGui.QWidget):
-=======
 class ImageWidget(TabWidget, QtWidgets.QWidget):
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """ Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>`
     to allow different columns of the data to be dynamically chosen
     """
@@ -62,19 +54,11 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
             self.image_frame.change_z_axis(z_axis)
 
     def _setup_ui(self):
-<<<<<<< HEAD
-        self.columns_z_label = QtGui.QLabel(self)
-        self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_z_label.setText('Z Axis:')
-
-        self.columns_z = QtGui.QComboBox(self)
-=======
         self.columns_z_label = QtWidgets.QLabel(self)
         self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_z_label.setText('Z Axis:')
 
         self.columns_z = QtWidgets.QComboBox(self)
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         for column in self.columns:
             self.columns_z.addItem(column)
         self.columns_z.activated.connect(self.update_z_column)
@@ -91,17 +75,10 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
         self.columns_z.setCurrentIndex(2)
 
     def _layout(self):
-<<<<<<< HEAD
-        vbox = QtGui.QVBoxLayout(self)
-        vbox.setSpacing(0)
-
-        hbox = QtGui.QHBoxLayout()
-=======
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
         hbox = QtWidgets.QHBoxLayout()
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_z_label)

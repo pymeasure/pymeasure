@@ -41,10 +41,7 @@ from . import danfysik
 from . import deltaelektronika
 from . import fluke
 from . import fwbell
-<<<<<<< HEAD
-=======
 from . import hcp
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from . import heidenhain
 from . import hp
 from . import keithley

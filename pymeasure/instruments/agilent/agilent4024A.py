@@ -423,7 +423,7 @@ class Agilent4024A(Instrument):
 
         @source.setter
         def source(self, value):
-            if value in TDS620B.Measurement.SOURCE_VALUES:
+            if value in self.SOURCE_VALUES:
                 self.parent.write("%sSOU %s" % (self.preamble, value))
             else:
                 raise ValueError("Invalid source ('%s') provided to %s" % (
@@ -435,7 +435,7 @@ class Agilent4024A(Instrument):
 
         @type.setter
         def type(self, value):
-            if value in TDS620B.Measurement.TYPE_VALUES:
+            if value in self.TYPE_VALUES:
                 self.parent.write("%sTYP %s" % (self.preamble, value))
             else:
                 raise ValueError("Invalid type ('%s') provided to %s" % (
@@ -454,9 +454,9 @@ class Agilent4024A(Instrument):
                                  self.parent, value))
 
     def __init__(self, resourceName, **kwargs):
-        super(TDS620B, self).__init__(
+        super().__init__(
             resourceName,
-            "Tektronix TDS 620B Oscilliscope",
+            "Agilent 4024A Oscilliscope",
             **kwargs
         )
-        self.measurement = TDS620B.Measurement(self)
+        self.measurement = Agilent4024A.Measurement(self)

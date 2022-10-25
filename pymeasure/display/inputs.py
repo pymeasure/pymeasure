@@ -26,11 +26,7 @@ import logging
 
 import re
 
-<<<<<<< HEAD
-from .Qt import QtGui
-=======
 from .Qt import QtGui, QtWidgets
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -106,32 +102,7 @@ class StringInput(Input, QtWidgets.QLineEdit):
         return super().text()
 
 
-<<<<<<< HEAD
-class FloatInput(Input, QtGui.QDoubleSpinBox):
-    """
-    Spin input box for floating-point values, connected to a
-    :class:`FloatParameter`.
-
-    .. seealso::
-        Class :class:`~.ScientificInput`
-            For inputs in scientific notation.
-    """
-
-    def __init__(self, parameter, parent=None, **kwargs):
-        super().__init__(parameter=parameter, parent=parent, **kwargs)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-
-    def set_parameter(self, parameter):
-        # Override from :class:`Input`
-        self.setMinimum(parameter.minimum)
-        self.setMaximum(parameter.maximum)
-        super().set_parameter(parameter)  # default gets set here, after min/max
-
-
-class IntegerInput(Input, QtGui.QSpinBox):
-=======
 class IntegerInput(Input, QtWidgets.QSpinBox):
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     """
     Spin input box for integer values, connected to a :class:`IntegerParameter`.
     """
@@ -150,8 +121,6 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
         super().set_parameter(parameter)  # default gets set here, after min/max
-<<<<<<< HEAD
-=======
 
     def stepEnabled(self):
         if self.parameter.step:
@@ -159,7 +128,6 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
                 QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepDownEnabled
         else:
             return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
 
 class BooleanInput(Input, QtWidgets.QCheckBox):

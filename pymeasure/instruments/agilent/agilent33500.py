@@ -411,17 +411,9 @@ class Agilent33500(Instrument):
                             -1.0 to +1.0. Minimum of 8 a maximum of 65536 points. Transfer is ASCII
         """
         if data_format == 'DAC':
-<<<<<<< HEAD
             data = np.array(data_points, dtype=int)
             endianness = self.is_big_endian
             self.adapter.write_binary_values(f"DATA:ARB:DAC {arb_name}, ", data, is_big_endian=endianness, datatype='h')
-=======
-            separator = ', '
-            data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
-            data_string = separator.join(data_points_str)  # Join strings with separator
-            print(f"DATA:ARB:DAC {arb_name}, {data_string}")
-            self.write(f"DATA:ARB:DAC {arb_name}, {data_string}")
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             return
         elif data_format == 'float':
             separator = ', '
@@ -430,9 +422,14 @@ class Agilent33500(Instrument):
             print(f"DATA:ARB {arb_name}, {data_string}")
             self.write(f"DATA:ARB {arb_name}, {data_string}")
             return
-<<<<<<< HEAD
+
+        elif data_format == 'binary':
+            raise NotImplementedError(
+                'The binary format has not yet been implemented. Use "DAC" or "float" instead.')
+
         else:
-            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float"')
+            raise ValueError(
+                'Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
 
     def send_sequence(self, sequence_string):
         strlen = len(sequence_string)
@@ -440,14 +437,6 @@ class Agilent33500(Instrument):
         command = f"DATA:SEQ #{numlen}{strlen}{sequence_string}"
         self.write(command)
 
-=======
-        elif data_format == 'binary':
-            raise NotImplementedError(
-                'The binary format has not yet been implemented. Use "DAC" or "float" instead.')
-        else:
-            raise ValueError(
-                'Undefined format keyword was used. Valid entries are "DAC", "float" and "binary"')
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
     display = Instrument.setting(
         "DISP:TEXT '%s'",

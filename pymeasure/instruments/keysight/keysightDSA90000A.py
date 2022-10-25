@@ -30,6 +30,7 @@ log.addHandler(logging.NullHandler())
 import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pyvisa.errors import VisaIOError
 from time import sleep, time
 
 class Channel():
