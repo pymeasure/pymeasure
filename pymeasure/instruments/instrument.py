@@ -640,9 +640,9 @@ class Channel(Base):
     :param name: Name of the channel, as it is used for the communication.
     """
 
-    def __init__(self, instrument, name):
+    def __init__(self, parent, name):
         super().__init__()
-        self.instrument = instrument
+        self.parent = parent
         self.name = name
 
     # Calls to the instrument
@@ -655,15 +655,15 @@ class Channel(Base):
             '{ch}' is replaced by the channel name.
         :param kwargs: Keyword arguments for the adapter.
         """
-        self.instrument.write(command.format(ch=self.name), **kwargs)
+        self.parent.write(command.format(ch=self.name), **kwargs)
 
     def write_bytes(self, content, **kwargs):
         """Write the bytes `content` to the instrument."""
-        self.instrument.write_bytes(content, **kwargs)
+        self.parent.write_bytes(content, **kwargs)
 
     def read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer."""
-        return self.instrument.read(**kwargs)
+        return self.parent.read(**kwargs)
 
     def read_bytes(self, count, **kwargs):
         """Read a certain number of bytes from the instrument.
@@ -673,7 +673,7 @@ class Channel(Base):
         :param kwargs: Keyword arguments for the adapter.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        return self.instrument.read_bytes(count, **kwargs)
+        return self.parent.read_bytes(count, **kwargs)
 
     def write_binary_values(self, command, values, *args, **kwargs):
         """Write binary values to the instrument.
@@ -682,11 +682,11 @@ class Channel(Base):
         :param values: The values to transmit.
         :param \\*args, \\**kwargs: Further arguments to hand to the Adapter.
         """
-        self.instrument.write_binary_values(command.format(ch=self.name), values, *args, **kwargs)
+        self.parent.write_binary_values(command.format(ch=self.name), values, *args, **kwargs)
 
     def read_binary_values(self, **kwargs):
         """Read binary values from the instrument."""
-        return self.instrument.read_binary_values(**kwargs)
+        return self.parent.read_binary_values(**kwargs)
 
     # Communication functions
     def wait_for(self, query_delay=0):
@@ -694,4 +694,4 @@ class Channel(Base):
 
         :param query_delay: Delay between writing and reading in seconds.
         """
-        self.instrument.wait_for(query_delay)
+        self.parent.wait_for(query_delay)

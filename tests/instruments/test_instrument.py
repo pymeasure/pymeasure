@@ -671,23 +671,23 @@ class TestChannelCommunication:
 
     def test_write(self, ch):
         ch.write("abc")
-        assert ch.instrument.method_calls == [mock.call.write('abc')]
+        assert ch.parent.method_calls == [mock.call.write('abc')]
 
     def test_read(self, ch):
         ch.read()
-        assert ch.instrument.method_calls == [mock.call.read()]
+        assert ch.parent.method_calls == [mock.call.read()]
 
     def test_write_bytes(self, ch):
         ch.write_bytes(b"abc")
-        assert ch.instrument.method_calls == [mock.call.write_bytes(b"abc")]
+        assert ch.parent.method_calls == [mock.call.write_bytes(b"abc")]
 
     def test_read_bytes(self, ch):
         ch.read_bytes(5)
-        assert ch.instrument.method_calls == [mock.call.read_bytes(5)]
+        assert ch.parent.method_calls == [mock.call.read_bytes(5)]
 
     def test_write_binary_values(self, ch):
         ch.write_binary_values("abc", [5, 6, 7])
-        assert ch.instrument.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
+        assert ch.parent.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
 
 
 def test_channel_write():

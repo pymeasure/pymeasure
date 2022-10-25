@@ -739,8 +739,8 @@ class AWG401x_AWG(AWG401x_base):
         """This class inherit from MutableMapping in order to create a custom
         dict to lazy load, modify, delete and create instrument waveform."""
 
-        def __init__(self, instrument):
-            self.instrument = instrument
+        def __init__(self, parent):
+            self.parent = parent
             self.reset()
 
         def __getitem__(self, key):
@@ -761,32 +761,32 @@ class AWG401x_AWG(AWG401x_base):
             class VoltageOutOfRangeError(Exception):
                 pass
 
-            if max(value) > self.instrument.entries[1].ch[1].voltage_high_max:
+            if max(value) > self.parent.entries[1].ch[1].voltage_high_max:
                 raise VoltageOutOfRangeError(
                     f"{max(value)}V is higher than maximum possible voltage, "
                     f"which is "
                     f"{self.instrument.entries[1].ch[1].voltage_high_max}V")
-            if min(value) < self.instrument.entries[1].ch[1].voltage_low_min:
+            if min(value) < self.parent.entries[1].ch[1].voltage_low_min:
                 raise VoltageOutOfRangeError(
                     f"{min(value)}V is lower than minimum possible voltage, "
                     f"which is "
                     f"{self.instrument.entries[1].ch[1].voltage_low_min}V")
 
-            self.instrument.save_file(f"{key}.txt",
-                                      "\n".join(map(str, value)),
-                                      override_existing=True)
+            self.parent.save_file(f"{key}.txt",
+                                  "\n".join(map(str, value)),
+                                  override_existing=True)
 
             try:
                 del self[key]
             except KeyError:
                 pass
 
-            self.instrument.write(f'WLISt:WAVeform:IMPort "{key}",'
-                                  f'"{key}.txt",ANAlog')
+            self.parent.write(f'WLISt:WAVeform:IMPort "{key}",'
+                              f'"{key}.txt",ANAlog')
 
-            self.instrument.wait_last()
+            self.parent.wait_last()
 
-            self.instrument.remove_file(f"{key}.txt")
+            self.parent.remove_file(f"{key}.txt")
 
             self._data[key] = None
             return
@@ -795,7 +795,7 @@ class AWG401x_AWG(AWG401x_base):
             """When removing an element this method removes also the
             corresponding waveform in the instrument"""
             del self._data[key]
-            self.instrument.write(f'WLISt:WAVeform:DELete "{key}"')
+            self.parent.write(f'WLISt:WAVeform:DELete "{key}"')
             return
 
         def __iter__(self):
@@ -815,13 +815,13 @@ class AWG401x_AWG(AWG401x_base):
 
         def reset(self):
             """Reset the class reloading the waveforms from instrument"""
-            waveforms_name = self.instrument.values("WLISt:LIST?")
+            waveforms_name = self.parent.values("WLISt:LIST?")
             self._data = {v: None for v in waveforms_name}
 
         def _get_waveform(self, waveform_name):
             """Get the waveform point of a specified waveform"""
 
-            bin_value = self.instrument.adapter.connection.query_binary_values(
+            bin_value = self.parent.adapter.connection.query_binary_values(
                 'WLISt:WAVeform:DATA? "' + waveform_name + '"',
                 header_fmt='ieee',
                 datatype='h')
@@ -832,29 +832,29 @@ class AWG401x_AWG(AWG401x_base):
         """Dummy List Class to list every sequencer entry. The content is
         loaded in real-time."""
 
-        def __init__(self, instrument, number_of_channel):
-            self.instrument = instrument
+        def __init__(self, parent, number_of_channel):
+            self.parent = parent
             self.num_ch = number_of_channel
 
         def resize(self, new_size):
-            self.instrument.write(f"SEQuence:LENGth {new_size}")
+            self.parent.write(f"SEQuence:LENGth {new_size}")
 
         def __getitem__(self, key):
             if key <= 0:
                 raise IndexError("Entry numeration start from 1")
-            if key > int(self.instrument.values("SEQuence:LENGth?")[0]):
+            if key > int(self.parent.values("SEQuence:LENGth?")[0]):
                 raise IndexError("Index out of range")
-            return (self.instrument, self.num_ch, key)
+            return (self.parent, self.num_ch, key)
 
         def __len__(self):
-            return int(self.instrument.values("SEQuence:LENGth?")[0])
+            return int(self.parent.values("SEQuence:LENGth?")[0])
 
 
 class SequenceEntry(Channel):
     """Implementation of sequencer entry."""
 
-    def __init__(self, instrument, number_of_channels, sequence_number):
-        super().__init__(instrument, name=sequence_number)
+    def __init__(self, parent, number_of_channels, sequence_number):
+        super().__init__(parent, name=sequence_number)
         self.number_of_channels = number_of_channels
 
         self.length_values = [self.length_min, self.length_max]
@@ -862,10 +862,10 @@ class SequenceEntry(Channel):
 
         self.ch = {}
         for i in range(1, self.number_of_channels + 1):
-            self.ch[i] = self.AnalogChannel(self.instrument, i, sequence_number)
+            self.ch[i] = self.AnalogChannel(self.parent, i, sequence_number)
 
     def write(self, command):
-        self.instrument.write(command.format(ent=self.name))
+        self.parent.write(command.format(ent=self.name))
 
     length = Instrument.control(
         "SEQuence:ELEM{ent}:LENGth?",
@@ -915,15 +915,15 @@ class SequenceEntry(Channel):
     class AnalogChannel(Channel):
         """Implementation of an analog channel for a single sequencer entry."""
 
-        def __init__(self, instrument, channel_number, sequence_number):
-            super().__init__(instrument, channel_number)
+        def __init__(self, parent, channel_number, sequence_number):
+            super().__init__(parent, channel_number)
             self.seq_num = sequence_number
 
-            self.waveform_values = list(self.instrument.waveforms.keys())
+            self.waveform_values = list(self.parent.waveforms.keys())
             self.calculate_voltage_range()
 
         def write(self, command):
-            self.instrument.write(command.format(ent=self.seq_num, ch=self.name))
+            self.parent.write(command.format(ent=self.seq_num, ch=self.name))
 
         voltage_amplitude = Instrument.control(
             "SEQuence:ELEM{ent}:AMPlitude{ch}?",
