@@ -6,7 +6,7 @@ Siglent Technologies Base Class
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.siglenttechnologies.siglent_spdbase.ControlledSPDChannel
+.. autoclass:: pymeasure.instruments.siglenttechnologies.siglent_spdbase.SPDChannel
     :members:
     :show-inheritance:
 
