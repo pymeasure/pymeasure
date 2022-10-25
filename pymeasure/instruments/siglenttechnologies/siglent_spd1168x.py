@@ -31,7 +31,7 @@ class SPD1168X(SPDBase):
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
-            name="Siglent SPD1168X Power Supply",
+            name="Siglent Technologies SPD1168X Power Supply",
             **kwargs
         )
         self.CH1 = SPDChannel(self, 1)

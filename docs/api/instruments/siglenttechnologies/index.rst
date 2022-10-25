@@ -1,4 +1,5 @@
 .. module:: pymeasure.instruments.siglenttechnologies
+
 ####################
 Siglent Technologies
 ####################

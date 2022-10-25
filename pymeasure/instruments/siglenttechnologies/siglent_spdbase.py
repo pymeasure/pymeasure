@@ -123,6 +123,7 @@ class SPDBase(Instrument):
         """Control the selected channel of the instrument.
 
         :type: :class:`.SPDChannel`
+
         """,
         validator=strict_discrete_set,
         values={1: "CH1"},
@@ -142,6 +143,7 @@ class SPDBase(Instrument):
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
+            name="Siglent Technologies SPDxxxxX Power Supply",
             usb=dict(write_termination='\n',
                      read_termination='\n'),
             tcpip=dict(write_termination='\n',
@@ -204,6 +206,7 @@ class SPDChannel(object):
         """Control the output current configuration of the channel.
 
         :type: float
+
         """,
         validator=truncated_range,
         values=[0, 8],
@@ -215,6 +218,7 @@ class SPDChannel(object):
         """Control the output voltage configuration of the channel.
 
         :type: float
+
         """,
         validator=truncated_range,
         values=[0, 16],
@@ -226,7 +230,9 @@ class SPDChannel(object):
         """Configure the power supply output.
 
         :type: bool
-        ``True`` disables local interface, ``False`` enables it.
+            ``True``: disable local interface
+            ``False``: enables local interface
+
         """,
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
@@ -257,6 +263,15 @@ class SPDChannel(object):
         if (cmd[0:3] == "VOLT") | (cmd[0:3] == "CURR"):
             cmd = f'CH{self.channel}:{cmd}'
         self.instrument.write(f'{cmd}')
+
+    def values(self, cmd, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values(f'{cmd}')
+
+    def check_errors(self):
+        return self.instrument.check_errors()
 
     def enable(self):
         """Enable the channel output
