@@ -39,8 +39,8 @@ class SPD1168X(SPDBase):
         self.ch[1] = SPDChannel(self, 1)
 
     def shutdown(self):
-        """ Ensures that the voltage is turned to zero
-        and disables the output. """
+        """ Ensure that the voltage is turned to zero
+        and disable the output. """
         self.ch[1].set_voltage(0.0)
         self.ch[1].disable()
 
