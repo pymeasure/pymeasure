@@ -28,10 +28,6 @@ class SPD1305X(SPDBase):
     """Represent the Siglent SPD1305X Power Supply.
     """
 
-    set_voltage_values = [0, 30]
-
-    set_current_values = [0, 5]
-
     def __init__(self, adapter, **kwargs):
 
         super().__init__(
@@ -42,6 +38,9 @@ class SPD1305X(SPDBase):
 
         self.ch = {}
         self.ch[1] = SPDChannel(self, 1)
+
+        self.ch[1].set_voltage_values = [0, 30]
+        self.ch[1].set_current_values = [0, 5]
 
     def shutdown(self):
         """ Ensures that the voltage is turned to zero
