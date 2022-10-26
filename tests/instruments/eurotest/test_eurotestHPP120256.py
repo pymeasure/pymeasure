@@ -30,8 +30,8 @@ def test_voltage():
             [("U,1.200kV", None),
              ("STATUS,U", "U, RANGE=3.000kV, VALUE=2.458kV")],
     ) as inst:
-        inst.voltage = 1.200
-        assert inst.voltage == 2.458
+        inst.voltage_setpoint = 1.200
+        assert inst.voltage_setpoint == 2.458
 
 
 def test_current_limit():
@@ -62,7 +62,7 @@ def test_measure_voltage():
             EurotestHPP120256,
             [("STATUS,MU", "UM, RANGE=3000V, VALUE=2.458kV")],
     ) as inst:
-        assert inst.measure_voltage == 2.458
+        assert inst.voltage == 2.458
 
 
 def test_measure_current():
@@ -71,4 +71,4 @@ def test_measure_current():
             EurotestHPP120256,
             [("STATUS,MI", "IM, RANGE=5000mA, VALUE=1739mA")],
     ) as inst:
-        assert inst.measure_current == 1739.0
+        assert inst.current == 1739.0
