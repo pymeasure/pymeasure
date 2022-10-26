@@ -94,8 +94,6 @@ class SPDBase(Instrument):
 
         :type: :class:`.SystemStatusCode`
         """,
-        validator=truncated_range,
-        values=[0, 1024],
         get_process=lambda v: SystemStatusCode(int(v, base=16)),
     )
 
@@ -114,8 +112,6 @@ class SPDBase(Instrument):
 
         :type: int
         """,
-        validator=strict_discrete_set,
-        values=[1, 2, 3, 4, 5]
     )
 
     recall_settings = Instrument.measurement(
@@ -124,8 +120,6 @@ class SPDBase(Instrument):
 
         :type: int
         """,
-        validator=strict_discrete_set,
-        values=[1, 2, 3, 4, 5]
     )
 
     selected_channel = Instrument.control(
