@@ -371,7 +371,7 @@ class EurotestHPP120256(Instrument):
         Status response from the instrument has to be interpreted as follows:
 
         response DI, b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0,
-                      0                   1
+        bit = 0,1
         IpErr  b15    no input error      input error
         Ramp   b14    no ramp             ramp
         CutOut b13    -                   emergency off
@@ -391,7 +391,6 @@ class EurotestHPP120256(Instrument):
 
         For example, a status_string = "0100000000000111" will be translated to
         EurotestHPP120256_status.RAMP|LOCAL|KILL_ENABLE|OUTPUT_ON
-
         """
 
         INPUT_ERROR = 32768
