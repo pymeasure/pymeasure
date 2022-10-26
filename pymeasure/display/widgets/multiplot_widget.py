@@ -41,7 +41,7 @@ log.addHandler(logging.NullHandler())
 
 class MultiPlotWidget(PlotWidget):
     """ Extends the PlotFrame to allow different columns
-    of the data to be dynamically choosen
+    of the data to be dynamically choosen across multple plots
     """
 
     def __init__(self, name, columns, x_axis=None, y_axis=None, num_plots=1, *args, **kwargs):
