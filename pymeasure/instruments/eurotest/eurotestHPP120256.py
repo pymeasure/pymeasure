@@ -368,30 +368,30 @@ class EurotestHPP120256(Instrument):
         """
         Auxiliary class create for translating the instrument 16bits_status_string into
         an Enum_IntFlag that will help to the user to understand such status.
-        Status response from the instrument has to be interpreted as follows:
-
-        response DI, b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0,
-        bit = 0,1
-        IpErr  b15    no input error      input error
-        Ramp   b14    no ramp             ramp
-        CutOut b13    -                   emergency off
-        TpErr  b12    no trip error       trip error
-        F3     b11                reserved
-        F2     b10                reserved
-        menu1  b9     submenu off         submenu on
-        menu0  b8     menu off            menu on
-        err    b7     no error            error
-        Creg   b6     no current control  current control
-        Vreg   b5     no voltage control  voltage control
-        pol    b4     negative            positive
-        inh    b3     no ext. inhibit     external inhibit
-        local  b2     remote              local
-        kilena b1     kill disable        kill enable
-        on     b0     off                 high voltage is ON
-
-        For example, a status_string = "0100000000000111" will be translated to
-        EurotestHPP120256_status.RAMP|LOCAL|KILL_ENABLE|OUTPUT_ON
         """
+        # Status response from the instrument has to be interpreted as follows:
+        #
+        # response DI, b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0,
+        # bit = 0,1
+        # IpErr  b15    no input error      input error
+        # Ramp   b14    no ramp             ramp
+        # CutOut b13    -                   emergency off
+        # TpErr  b12    no trip error       trip error
+        # F3     b11                reserved
+        # F2     b10                reserved
+        # menu1  b9     submenu off         submenu on
+        # menu0  b8     menu off            menu on
+        # err    b7     no error            error
+        # Creg   b6     no current control  current control
+        # Vreg   b5     no voltage control  voltage control
+        # pol    b4     negative            positive
+        # inh    b3     no ext. inhibit     external inhibit
+        # local  b2     remote              local
+        # kilena b1     kill disable        kill enable
+        # on     b0     off                 high voltage is ON
+        #
+        # For example, a status_string = "0100000000000111" will be translated to
+        # EurotestHPP120256_status.RAMP|LOCAL|KILL_ENABLE|OUTPUT_ON
 
         INPUT_ERROR = 32768
         RAMP = 16384
