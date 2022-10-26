@@ -24,6 +24,7 @@
 import logging
 from pymeasure.instruments.instrument import Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
+                                              strict_range,
                                               truncated_range
                                               )
 from enum import IntFlag
@@ -76,7 +77,7 @@ class SPDBase(Instrument):
         "SYST:ERR?",
         """Read the error code and information of the instrument.
 
-        :type: str
+        :type: string
         """
     )
 
@@ -84,7 +85,7 @@ class SPDBase(Instrument):
         "SYST:VERS?",
         """Read the software version of the instrument.
 
-        :type: str
+        :type: string
         """
     )
 
@@ -99,45 +100,58 @@ class SPDBase(Instrument):
 
     local_lockout = Instrument.setting(
         "%s",
-        """``True`` disables local interface, ``False`` enables it.
+        """Set the local interface lockout.
+
+        :type: bool
+            ``True``: disables the local interface
+            ``False``: enables it.
+
         """,
         validator=strict_discrete_set,
         values={True: "*LOCK", False: "*UNLOCK"},
         map_values=True
     )
 
-    save_settings = Instrument.measurement(
+    save_settings = Instrument.setting(
         "*SAV %d",
         """Save the current configuration in non-volatile memory.
 
         :type: int
         """,
+        validator=strict_range,
+        values=[1, 5]
     )
 
-    recall_settings = Instrument.measurement(
+    recall_settings = Instrument.setting(
         "*RCL %d",
         """Recall the saved configuration from non-volatile memory.
 
         :type: int
         """,
+        validator=strict_range,
+        values=[1, 5]
     )
 
     selected_channel = Instrument.control(
         "INST?", "INST %s",
         """Control the selected channel of the instrument.
 
-        :type: :class:`.SPDChannel`
-
+        :type: int
         """,
         validator=strict_discrete_set,
-        values={1: "CH1"},
+        values={1: "CH1"},  # This dynamic property should be updated for multi-channel instruments
         map_values=True,
         dynamic=True
     )
 
     set_4W_mode = Instrument.setting(
         "MODE:SET %s",
-        """Control the 4-Wire Sense Mode of the instrument.
+        """Configure 4-wire mode.
+
+        :type: bool
+            ``True``: enables 4-wire mode
+            ``False``: disables it.
+
         """,
         validator=strict_discrete_set,
         values={False: "2W", True: "4W"},
@@ -149,7 +163,6 @@ class SPDBase(Instrument):
 
         :param index:
             string: index of the location to save the configuration
-        :returns: self
         """
         self.save_settings = index
 
@@ -158,7 +171,6 @@ class SPDBase(Instrument):
 
         :param index:
             string: index of the location from which to recall the configuration
-        :returns: self
         """
         self.recall_settings = index
 
@@ -200,7 +212,6 @@ class SPDChannel(object):
         """Control the output current configuration of the channel.
 
         :type: float
-
         """,
         validator=truncated_range,
         values=[0, 8],
@@ -212,7 +223,6 @@ class SPDChannel(object):
         """Control the output voltage configuration of the channel.
 
         :type: float
-
         """,
         validator=truncated_range,
         values=[0, 16],
@@ -224,8 +234,8 @@ class SPDChannel(object):
         """Configure the power supply output.
 
         :type: bool
-            ``True``: disable local interface
-            ``False``: enables local interface
+            ``True``: enables the output
+            ``False``: disables the output
 
         """,
         validator=strict_discrete_set,
@@ -238,6 +248,9 @@ class SPDChannel(object):
         """Enable the channel timer.
 
         :type: bool
+            ``True``: enables the timer
+            ``False``: disables it
+
         """,
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
@@ -254,7 +267,7 @@ class SPDChannel(object):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values(cmd.format(channel=self.channel))
+        return self.instrument.values(cmd.format(channel=self.channel), **kwargs)
 
     def check_errors(self):
         return self.instrument.check_errors()
