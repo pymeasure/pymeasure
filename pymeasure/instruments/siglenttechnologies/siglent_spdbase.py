@@ -137,6 +137,7 @@ class SPDBase(Instrument):
         """Control the selected channel of the instrument.
 
         :type: int
+
         """,
         validator=strict_discrete_set,
         values={1: "CH1"},  # This dynamic property should be updated for multi-channel instruments
@@ -212,6 +213,7 @@ class SPDChannel(object):
         """Control the output current configuration of the channel.
 
         :type: float
+
         """,
         validator=truncated_range,
         values=[0, 8],
@@ -223,6 +225,7 @@ class SPDChannel(object):
         """Control the output voltage configuration of the channel.
 
         :type: float
+
         """,
         validator=truncated_range,
         values=[0, 16],
