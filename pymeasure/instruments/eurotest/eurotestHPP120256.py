@@ -31,6 +31,8 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
 from pymeasure.instruments.validators import strict_discrete_set
 
+from enum import IntFlag
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -126,8 +128,8 @@ class EurotestHPP120256(Instrument):
         # getter device response: "U, RANGE=3.000kV, VALUE=2.458kV"
         validator=strict_range,
         values=VOLTAGE_RANGE,
-        get_process=lambda v:
-        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
+        get_process=lambda r:
+        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
     )
 
     current_limit = Instrument.control(
@@ -139,8 +141,8 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=CURRENT_RANGE,
-        get_process=lambda v:
-        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
+        get_process=lambda r:
+        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
     )
 
     voltage_ramp = Instrument.control(
@@ -152,8 +154,8 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
-        get_process=lambda v:
-        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
+        get_process=lambda r:
+        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
     )
 
     voltage = Instrument.measurement(
@@ -162,8 +164,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
         # hence the convenience of the get_process.
-        get_process=lambda v:
-        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
+        get_process=lambda r:
+        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
     )
 
     voltage_range = Instrument.measurement(
@@ -172,8 +174,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
-        get_process=lambda v:
-        float(EurotestHPP120256.regex.search(v[1]).groups()[0])
+        get_process=lambda r:
+        float(EurotestHPP120256.regex.search(r[1]).groups()[0])
     )
 
     current = Instrument.measurement(
@@ -182,8 +184,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
-        get_process=lambda v:
-        float(EurotestHPP120256.regex.search(v[2]).groups()[0])
+        get_process=lambda r:
+        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
     )
 
     current_range = Instrument.measurement(
@@ -192,8 +194,8 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
-        get_process=lambda v:
-        float(EurotestHPP120256.regex.search(v[1]).groups()[0])
+        get_process=lambda r:
+        float(EurotestHPP120256.regex.search(r[1]).groups()[0])
     )
 
     enable_kill = Instrument.setting(
@@ -219,17 +221,37 @@ class EurotestHPP120256(Instrument):
     id = Instrument.measurement(
         "ID",
         """ Returns the identification of the instrument """,
-        get_process=lambda v:
-        v[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+        get_process=lambda r:
+        r[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
     status = Instrument.measurement(
         "STATUS,DI",
         """ Returns the unit Status which is a 16bits response where
-        every bit indicates the state of one subsystem of the HV Source.""",
-        # TODO: Decode the status string bit to get a more info about yhe state of the instrument
-        get_process=lambda v:
-        v[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+        every bit indicates the state of one subsystem of the HV Source """,
+        # response DI, b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0,
+        #               0                   1
+        # IpErr  b15    no input error      input error
+        # Ramp   b14    no ramp             ramp
+        # CutOut b13    -                   emergency off
+        # TpErr  b12    no trip error       trip error
+        # F3     b11                reserved
+        # F2     b10                reserved
+        # menu1  b9     submenu off         submenu on
+        # menu0  b8     menu off            menu on
+        # err    b7     no error            error
+        # Creg   b6     no current control  current control
+        # Vreg   b5     no voltage control  voltage control
+        # pol    b4     negative            positive
+        # inh    b3     no ext. inhibit     external inhibit
+        # local  b2     remote              local
+        # kilena b1     kill disable        kill enable
+        # on     b0     off                 high voltage is ON
+        get_process=lambda r:
+        EurotestHPP120256.EurotestHPP120256Status(
+            int(r[1][:-1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore'), 2)
+        )
+
     )
 
     lam_status = Instrument.measurement(
@@ -242,8 +264,8 @@ class EurotestHPP120256(Instrument):
         LAM,TRIP ERROR Software current trip occurred
         LAM,INPUT ERROR Wrong command received
         LAM,OK Status OK""",
-        get_process=lambda v:
-        v[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+        get_process=lambda r:
+        r[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
     def emergency_off(self):
@@ -341,3 +363,50 @@ class EurotestHPP120256(Instrument):
         :returns: String returned by the device without read_termination.
         """
         return super().ask(command, self.query_delay)
+
+    class EurotestHPP120256Status(IntFlag):
+        """
+        Auxiliary class create for translating the instrument 16bits_status_string into
+        an Enum_IntFlag that will help to the user to understand such status.
+        Status response from the instrument has to be interpreted as follows:
+
+        response DI, b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0,
+                      0                   1
+        IpErr  b15    no input error      input error
+        Ramp   b14    no ramp             ramp
+        CutOut b13    -                   emergency off
+        TpErr  b12    no trip error       trip error
+        F3     b11                reserved
+        F2     b10                reserved
+        menu1  b9     submenu off         submenu on
+        menu0  b8     menu off            menu on
+        err    b7     no error            error
+        Creg   b6     no current control  current control
+        Vreg   b5     no voltage control  voltage control
+        pol    b4     negative            positive
+        inh    b3     no ext. inhibit     external inhibit
+        local  b2     remote              local
+        kilena b1     kill disable        kill enable
+        on     b0     off                 high voltage is ON
+
+        For example, a status_string = "0100000000000111" will be translated to
+        EurotestHPP120256_status.RAMP|LOCAL|KILL_ENABLE|OUTPUT_ON
+
+        """
+
+        INPUT_ERROR = 32768
+        RAMP = 16384
+        EMERGENCY_OFF = 8192
+        TRIP_ERROR = 4096
+        F3 = 2048
+        F2 = 1024
+        SUBMENU_ON = 512
+        MENU_ON = 256
+        ERROR = 128
+        CURRENT_CONTROL = 64
+        VOLTAGE_CONTROL = 32
+        POLARIZATION_POSITIVE = 16
+        EXTERNAL_INHIBIT = 8
+        LOCAL = 4
+        KILL_ENABLE = 2
+        OUTPUT_ON = 1
