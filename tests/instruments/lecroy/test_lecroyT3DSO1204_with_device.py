@@ -26,6 +26,7 @@ from time import sleep
 
 import numpy as np
 import pytest
+from unittest.mock import ANY
 from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
@@ -258,7 +259,7 @@ class TestLeCroyT3DSO1204:
             "average": None,
             "sampling_rate": 1e9,
             "grid_number": 14,
-            "status": "armed",
+            "status": ANY,
             "xdiv": 5e-4,
             "xoffset": -0.,
             "ydiv": 0.05,
@@ -267,16 +268,6 @@ class TestLeCroyT3DSO1204:
         }
         preamble = autoscaled_scope.waveform_preamble
         assert preamble == expected_preamble
-
-    def test_waveform_raw_data(self, scope):
-        scope.waveform_first_point = 0
-        scope.waveform_points = 1000
-        scope.waveform_sparsing = 1
-        scope.single()
-        value = scope._acquire_data("C1", 1018)
-        assert isinstance(value, np.ndarray)
-        assert len(value) == 1018
-        assert all(isinstance(n, np.uint8) for n in value)
 
     # Setup methods
     @pytest.mark.parametrize("ch_number", CHANNELS)
@@ -372,14 +363,23 @@ class TestLeCroyT3DSO1204:
         assert type(time) is np.ndarray
         assert len(time) == 1
         assert type(preamble) is dict
-        assert preamble["type"] == "normal"
-        assert preamble["transmitted_points"] == 1
+        assert preamble == {
+            "sparsing": 1,
+            "requested_points": 1.,
+            "transmitted_points": 1.,
+            "first_point": 0,
+            "source": "C1",
+            "ydiv": ANY,
+            "yoffset": ANY,
+            "unit": "V"
+        }
 
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_all_points(self, scope):
         from matplotlib import pyplot as plt
         scope.ch1.display = True
         scope.single()
+        sleep(1)
         data, time, preamble = scope.download_data(source="c1", requested_points=0)
         assert type(data) is np.ndarray
         assert type(time) is np.ndarray
@@ -393,6 +393,7 @@ class TestLeCroyT3DSO1204:
         from matplotlib import pyplot as plt
         scope.ch1.display = True
         scope.single()
+        sleep(1)
         data, time, preamble = scope.download_data(source="c1", requested_points=7e5, sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 7e5 or len(data) == 7e4
@@ -410,9 +411,13 @@ class TestLeCroyT3DSO1204:
     def test_download_data_averaging_16(self, scope):
         from matplotlib import pyplot as plt
         scope.ch1.display = True
+        scope.run()
+        scope.acquisition_type = "average"
+        scope.acquisition_average = 16
         scope.single()
+        sleep(1)
         data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
-                                                   sparsing=10, averaging=16)
+                                                   sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -429,9 +434,13 @@ class TestLeCroyT3DSO1204:
     def test_download_data_averaging_256(self, scope):
         from matplotlib import pyplot as plt
         scope.ch1.display = True
+        scope.run()
+        scope.acquisition_type = "average"
+        scope.acquisition_average = 256
         scope.single()
+        sleep(1)
         data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
-                                                   sparsing=10, averaging=256)
+                                                   sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -448,6 +457,7 @@ class TestLeCroyT3DSO1204:
     def test_download_math(self, scope):
         from matplotlib import pyplot as plt
         scope.single()
+        sleep(1)
         data, time, preamble = scope.download_data(source="math", requested_points=0,
                                                    sparsing=10)
         assert type(data) is np.ndarray

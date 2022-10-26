@@ -157,7 +157,7 @@ class _ChunkResizer:
         """
         self.adapter = adapter
         self.old_chunk_size = None
-        self.new_chunk_size = int(chunk_size)
+        self.new_chunk_size = int(chunk_size) if chunk_size else 0
 
     def __enter__(self):
         """ Only resize the chunk size if the adapter support this feature"""
@@ -466,7 +466,7 @@ class LeCroyT3DSO1204(Instrument):
 
     _BOOLS = {True: "ON", False: "OFF"}
 
-    SLEEP_SECONDS = 0.5
+    SLEEP_SECONDS = 0.01
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
@@ -627,7 +627,7 @@ class LeCroyT3DSO1204(Instrument):
         "AVGA?", "AVGA %d",
         """ A integer parameter that selects the average times of average acquisition.""",
         validator=strict_discrete_set,
-        values=[4, 16, 32, 64, 128, 256]
+        values=[4, 16, 32, 64, 128, 256, 512, 1024]
     )
 
     acquisition_status = Instrument.measurement(
@@ -660,7 +660,10 @@ class LeCroyT3DSO1204(Instrument):
         elif source in [4, "C4"]:
             return self.acquisition_sample_size_c4
         elif source == "MATH":
-            return self.memory_size
+            math_define = self.math_define[1]
+            match = re.match(r"'(\w+)[+\-/*](\w+)'", math_define)
+            return min(self.acquisition_sample_size(match.group(1)),
+                       self.acquisition_sample_size(match.group(2)))
         else:
             raise ValueError("Invalid source: must be 1, 2, 3, 4 or C1, C2, C3, C4, MATH.")
 
@@ -800,6 +803,15 @@ class LeCroyT3DSO1204(Instrument):
         preamble["average"] = self.acquisition_average if preamble["type"][0] == "average" else None
         strict_discrete_set(self.waveform_source, ["C1", "C2", "C3", "C4", "MATH"])
         preamble["sampled_points"] = self.acquisition_sample_size(self.waveform_source)
+        return self._fill_yaxis_preamble(preamble)
+
+    def _fill_yaxis_preamble(self, preamble=None):
+        """ Fill the part of the waveform preamble concerning the Y-axis.
+        :param preamble: waveform preamble to be filled
+        :return: filled preamble
+        """
+        if preamble is None:
+            preamble = {}
         if self.waveform_source == "MATH":
             preamble["ydiv"] = self.math_vdiv
             preamble["yoffset"] = self.math_vpos
@@ -819,15 +831,10 @@ class LeCroyT3DSO1204(Instrument):
         :param: num_bytes: number of bytes expected from the scope (including the header and
         footer).
         :return: bytearray with raw data. """
-        if num_bytes is None:
+        with _ChunkResizer(self.adapter, num_bytes):
             binary_values = self.binary_values(f"{src}:WF? DAT2", dtype=np.uint8)
-        else:
-            with _ChunkResizer(self.adapter, num_bytes):
-                binary_values = self.binary_values(f"{src}:WF? DAT2", dtype=np.uint8)
-            read_bytes = len(binary_values)
-            if read_bytes != num_bytes:
-                raise ValueError(f"read bytes ({len(binary_values)}) != "
-                                 f"requested bytes ({num_bytes})")
+        if num_bytes is not None and len(binary_values) != num_bytes:
+            raise BufferError(f"read bytes ({len(binary_values)}) != requested bytes ({num_bytes})")
         return binary_values
 
     def _header_sanity_checks(self, message):
@@ -858,28 +865,27 @@ class LeCroyT3DSO1204(Instrument):
         if message_footer != "\n\n":
             raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
 
-    def _acquire_data(self, source, requested_points=0, sparsing=1, averaging=1):
+    def _acquire_one_point(self):
+        """ Acquire a single raw data point from the scope. The header, footer and number of
+        points are sanity-checked but they are not processed otherwise.
+        :return: list containing a single byte"""
+        self.write("WFSU SP,1,NP,1,FP,0")
+        values = self._digitize(src=self.waveform_source)
+        self._header_sanity_checks(values)
+        self._footer_sanity_checks(values)
+        self._npoints_sanity_checks(values)
+        preamble = {"source": self.waveform_source}
+        return values[self._header_size:-self._footer_size], self._fill_yaxis_preamble(preamble)
+
+    def _acquire_data(self, requested_points=0, sparsing=1):
         """ Acquire raw data points from the scope. The header, footer and number of points are
-        sanity-checked but they are not process otherwise. For a description of the input
+        sanity-checked but they are not processed otherwise. For a description of the input
         arguments refer to the download_data method.
         If the number of expected points is big enough, the transmission is splitted in smaller
-        chunks of 500k points and read one chunk at a time. I do not know the reason why,
+        chunks of 20k points and read one chunk at a time. I do not know the reason why,
         but if the chunk size is big enough the transmission does not complete successfully.
-        :return: raw data points as numpy array
+        :return: raw data points as numpy array and waveform preamble
         """
-        # First of all set the correct acquisition type
-        acquisition_type = self.acquisition_type
-        if averaging > 1 and acquisition_type != ["average", averaging]:
-            self.acquisition_type = "average"
-            self.acquisition_average = averaging
-            # Give the scope enough time to do the averaging
-            time.sleep(4 * self.SLEEP_SECONDS)
-        elif acquisition_type != "normal":
-            self.acquisition_type = "normal"
-
-        # Set the acquisition source
-        self.waveform_source = _sanitize_source(source)
-
         # Setup waveform acquisition parameters
         self.waveform_sparsing = sparsing
         self.waveform_points = requested_points
@@ -914,14 +920,16 @@ class LeCroyT3DSO1204(Instrument):
             self.waveform_first_point = first_point
             # read chunk of points
             values = self._digitize(src=self.waveform_source, num_bytes=requested_bytes)
+            # perform many sanity checks on the received data
             self._header_sanity_checks(values)
             self._footer_sanity_checks(values)
             self._npoints_sanity_checks(values)
             # append the points without the header and footer
-            data.append(values[16:-2])
+            data.append(values[self._header_size:-self._footer_size])
             i += 1
         data = np.concatenate(data)
-        return data
+        preamble = self.waveform_preamble
+        return data, preamble
 
     #################
     # Download data #
@@ -960,10 +968,13 @@ class LeCroyT3DSO1204(Instrument):
                          Decimal(preamble["sampling_rate"]))
 
         data_points = np.vectorize(_scale_data)(xdata)
-        time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
+        if len(data_points) > 1:
+            time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
+        else:
+            time_points = np.array([0])
         return data_points, time_points, preamble
 
-    def download_data(self, source, requested_points=0, sparsing=1, averaging=1):
+    def download_data(self, source, requested_points=0, sparsing=1):
         """ Get data points from the specified source of the oscilloscope. The returned objects are
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
@@ -973,15 +984,20 @@ class LeCroyT3DSO1204(Instrument):
         will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
         point every 4 points is read.
-        :param averaging: average over data points. For example if averaging = 4, only the 4-point
-        average value is returned.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
         property for dict format. """
-
-        xdata = self._acquire_data(source, requested_points, sparsing, averaging)
-        preamble = self.waveform_preamble
+        if not sparsing:
+            sparsing = 1
+        if requested_points is None:
+            requested_points = 0
+        self.waveform_source = _sanitize_source(source)
+        if requested_points == 1:
+            xdata, preamble = self._acquire_one_point()
+        else:
+            xdata, preamble = self._acquire_data(requested_points, sparsing)
         preamble["transmitted_points"] = len(xdata)
         preamble["requested_points"] = requested_points
+        preamble["sparsing"] = sparsing
         preamble["first_point"] = 0
         return self._process_data(xdata, preamble)
 
