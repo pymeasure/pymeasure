@@ -93,7 +93,7 @@ class DynamicProperty(property):
         self.name = name
 
 
-class Base:
+class ChannelBase:
     """Base class for instruments and channels.
 
     This class contains everything for pymeasure's property creator :meth:`control`
@@ -445,7 +445,7 @@ class Base:
                                   **kwargs)
 
 
-class Instrument(Base):
+class Instrument(ChannelBase):
     """ The base class for all Instrument definitions.
 
     It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
@@ -627,7 +627,7 @@ class Instrument(Base):
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
 
-class Channel(Base):
+class Channel(ChannelBase):
     """The base class for channel definitions.
 
     This class supports dynamic properties like :class:`Instrument`,
