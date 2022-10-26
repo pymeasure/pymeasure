@@ -246,7 +246,6 @@ def test_download_one_point():
         }
         assert len(x) == 1
         assert len(y) == 1
-        assert x[0] == -5e-4 * 14 / 2.
         assert y[0] == 1 * 0.05 / 25. + 0.150
 
 
