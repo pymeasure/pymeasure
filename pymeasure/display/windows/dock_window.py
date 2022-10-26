@@ -27,7 +27,7 @@ import logging
 from pyqtgraph.dockarea import Dock, DockArea
 
 from .managed_window import ManagedWindowBase
-from ..Qt import QtCore, QtGui, QtWidgets
+from ..Qt import QtCore, QtWidgets
 from ..widgets import (
     PlotWidget,
     LogWidget
@@ -39,7 +39,18 @@ log.addHandler(logging.NullHandler())
 
 class DockWindow(ManagedWindowBase):
     """
-    Display experiment output with an :class:`~pymeasure.display.widget.PlotWidget` class.
+    Display experiment output with an :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
+    class.
+
+    :param procedure_class: procedure class describing the experiment (see
+        :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param x_axis: the data column(s) for the x-axis of the plot. This may be string or a list
+        of strings from the data columns of the procedure.
+    :param y_axis: the data column(s) for the y-axis of the plot. This may be string or a list
+        of strings from the data columns of the procedure.
+    :param num_plots: the number of plots you want displayed in the DockWindow tab
+    :param \\**kwargs: optional keyword arguments that will be passed to
+        :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
     """
 
     def __init__(self, procedure_class, x_axis=None, y_axis=None, num_plots=1, *args, **kwargs):
@@ -64,10 +75,12 @@ class DockWindow(ManagedWindowBase):
 
         measure_quantities = []
         if type(self.x_axis) == list:
+            # Expand x_axis if it is a list
             measure_quantities += [*self.x_axis]
         else:
             measure_quantities.append(self.x_axis)
         if type(self.y_axis) == list:
+            # Expand y_axis if it is a list
             measure_quantities += [*self.y_axis]
         else:
             measure_quantities.append(self.y_axis)
@@ -149,9 +162,9 @@ class DockWindow(ManagedWindowBase):
             # If x_axis or y_axis are a list, then we want to set the label to the passed list.
             # However, if list is smaller than num_plots, repeat last item in the list.
             if type(self.x_axis) == list:
-                x_axis_label = self.x_axis[min(idx, len(self.x_axis)-1)]
+                x_axis_label = self.x_axis[min(idx, len(self.x_axis) - 1)]
             if type(self.y_axis) == list:
-                y_axis_label = self.y_axis[min(idx, len(self.y_axis)-1)]
+                y_axis_label = self.y_axis[min(idx, len(self.y_axis) - 1)]
             self.widget_list.append(
                 PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_axis_label,
                            y_axis_label))

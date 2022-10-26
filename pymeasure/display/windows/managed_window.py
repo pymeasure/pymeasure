@@ -109,6 +109,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     :param directory_input: specify, if present, where the experiment's result will be saved.
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
+    :param setup: a boolean that determines if the self._setup() and self._layout() are run. (True,
+        default)
     """
 
     def __init__(self,
