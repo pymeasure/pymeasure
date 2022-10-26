@@ -62,12 +62,21 @@ class DockWindow(ManagedWindowBase):
         self._setup_ui()
         self._layout()
 
-        self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
+        measure_quantities = []
+        if type(self.x_axis) == list:
+            measure_quantities += [*self.x_axis]
+        else:
+            measure_quantities.append(self.x_axis)
+        if type(self.y_axis) == list:
+            measure_quantities += [*self.y_axis]
+        else:
+            measure_quantities.append(self.y_axis)
+
+        self.browser_widget.browser.measured_quantities = measure_quantities
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)
         log.info("DockWindow connected to logging")
-
 
     def _layout(self):
         self.main = QtWidgets.QWidget(self)
@@ -93,7 +102,8 @@ class DockWindow(ManagedWindowBase):
             inputs_scroll.setWidgetResizable(True)
             inputs_scroll.setFrameStyle(QtWidgets.QScrollArea.Shape.NoFrame)
 
-            self.inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
+            self.inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
+                                      QtWidgets.QSizePolicy.Policy.Fixed)
             inputs_scroll.setWidget(self.inputs)
             inputs_vbox.addWidget(inputs_scroll, 1)
 
@@ -134,11 +144,16 @@ class DockWindow(ManagedWindowBase):
         self.tabs.addTab(self.dock_area, self.dock_area.name)
 
         for idx, i in enumerate(range(self.num_plots)):
+            x_axis_label = self.x_axis
             y_axis_label = self.y_axis
+            # If x_axis or y_axis are a list, then we want to set the label to the passed list.
+            # However, if list is smaller than num_plots, repeat last item in the list.
+            if type(self.x_axis) == list:
+                x_axis_label = self.x_axis[min(idx, len(self.x_axis)-1)]
             if type(self.y_axis) == list:
-                y_axis_label = self.y_axis[idx]
+                y_axis_label = self.y_axis[min(idx, len(self.y_axis)-1)]
             self.widget_list.append(
-                PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, self.x_axis,
+                PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_axis_label,
                            y_axis_label))
             dock = Dock("Dock " + str(i + 1), closable=False, size=(200, 50))
             self.dock_area.addDock(dock)
