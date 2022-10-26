@@ -129,7 +129,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RANGE,
         get_process=lambda r:
-        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
+        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
     current_limit = Instrument.control(
@@ -142,7 +142,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=CURRENT_RANGE,
         get_process=lambda r:
-        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
+        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
     voltage_ramp = Instrument.control(
@@ -155,7 +155,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
         get_process=lambda r:
-        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
+        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
     voltage = Instrument.measurement(
@@ -165,7 +165,7 @@ class EurotestHPP120256(Instrument):
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
         # hence the convenience of the get_process.
         get_process=lambda r:
-        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
+        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
     voltage_range = Instrument.measurement(
@@ -185,7 +185,7 @@ class EurotestHPP120256(Instrument):
         # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
         get_process=lambda r:
-        float(EurotestHPP120256.regex.search(r[2]).groups()[0])
+        float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
 
     current_range = Instrument.measurement(
@@ -195,7 +195,7 @@ class EurotestHPP120256(Instrument):
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
         get_process=lambda r:
-        float(EurotestHPP120256.regex.search(r[1]).groups()[0])
+        float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
     )
 
     enable_kill = Instrument.setting(
@@ -222,7 +222,7 @@ class EurotestHPP120256(Instrument):
         "ID",
         """ Returns the identification of the instrument """,
         get_process=lambda r:
-        r[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+        r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
     status = Instrument.measurement(
@@ -249,7 +249,8 @@ class EurotestHPP120256(Instrument):
         # on     b0     off                 high voltage is ON
         get_process=lambda r:
         EurotestHPP120256.EurotestHPP120256Status(
-            int(r[1][:-1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore'), 2)
+            int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
+                decode('utf-8', 'ignore'), 2)
         )
 
     )
@@ -265,7 +266,7 @@ class EurotestHPP120256(Instrument):
         LAM,INPUT ERROR Wrong command received
         LAM,OK Status OK""",
         get_process=lambda r:
-        r[1].encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
+        r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
     def emergency_off(self):
