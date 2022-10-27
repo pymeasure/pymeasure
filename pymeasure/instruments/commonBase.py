@@ -93,8 +93,8 @@ class DynamicProperty(property):
 class CommonBase:
     """Base class for instruments and channels.
 
-    This class contains everything for pymeasure's property creator :meth:`control`
-    and its derivatives :meth:`measurement` and :meth:`setting`.
+    This class contains everything needed for pymeasure's property creator
+    :meth:`control` and its derivatives :meth:`measurement` and :meth:`setting`.
     """
 
     # Variable holding the list of DynamicProperty parameters that are configurable

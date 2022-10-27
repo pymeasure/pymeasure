@@ -34,13 +34,13 @@ class Channel(CommonBase):
     """The base class for channel definitions.
 
     This class supports dynamic properties like :class:`Instrument`,
-    but requires an instrument as a parent for communication.
+    but requires an :class:`Instrument` instance as a parent for communication.
     The default implementation of :meth:`write` uses :code:`str.format` to
     exchange :code:`'{ch}'` for the channel name.
 
-    :param instrument: The instrument (an instance of :class:`~pymeasure.instruments.Instrument`)
+    :param parent: The instrument (an instance of :class:`~pymeasure.instruments.Instrument`)
         to which the channel belongs.
-    :param name: Name of the channel, as it is used for the communication.
+    :param id: Identifier of the channel, as it is used for the communication.
     """
 
     def __init__(self, parent, id):
@@ -54,7 +54,8 @@ class Channel(CommonBase):
 
         The channel id is inserted into the command and `write_termination` appended.
 
-        Subclass this method, in order to always prepend the channel id.
+        Subclass this method if you want to do something else,
+        like always prepending the channel id.
 
         :param command: command string to be sent to the instrument.
             '{ch}' is replaced by the channel id.
