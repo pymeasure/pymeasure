@@ -22,7 +22,14 @@ class TexioPSW360L30(Keithley2260B):
 
     The read termination for this interface is Line-Feed \n.
 
-    This driver was based off the Keithley2260B one.
+    This driver inherits from the Keithley2260B one. All instructions
+    implemented in the Keithley 2260B driver are also available for the
+    TEXIO PSW-360L30 power supply.
+
+    The only addition is the "output" property that is just an alias for
+    the "enabled" property of the Keithley 2260B. Calling the output switch
+    "enabled" is confusing because it is not clear if the whole device is
+    enabled/disable or only the output.
 
     .. code-block:: python
 
