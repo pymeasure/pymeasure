@@ -33,15 +33,6 @@ from pymeasure.instruments.validators import strict_discrete_set
 
 from enum import IntFlag
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("debug.log"),
-        logging.StreamHandler()
-    ]
-)
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -356,6 +347,8 @@ class EurotestHPP120256(Instrument):
 
             if actual_time > future_time:
                 raise TimeoutError("Timeout for wait_for_output_voltage_reached function")
+
+        log.info("Waiting done.")
 
         return
 
