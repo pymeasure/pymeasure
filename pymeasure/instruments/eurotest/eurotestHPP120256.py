@@ -33,6 +33,15 @@ from pymeasure.instruments.validators import strict_discrete_set
 
 from enum import IntFlag
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("debug.log"),
+        logging.StreamHandler()
+    ]
+)
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -302,14 +311,16 @@ class EurotestHPP120256(Instrument):
         self.voltage_ramp = voltage_rate
         self.voltage_setpoint = 0
 
-    def wait_for_output_voltage_reached(self, abs_output_voltage_error,
+    def wait_for_output_voltage_reached(self, voltage_setpoint, abs_output_voltage_error=0.03,
                                         check_period=1.0, timeout=60.0):
         """
         Wait until HV voltage output reaches the voltage setpoint.
 
         Checks the voltage output every check_period seconds and raises an exception
         if the voltage output doesn't reach the voltage setting until the timeout time.
-        :param abs_output_voltage_error: absolute error of +-ten volts (0.01kV) for being considered
+        :param voltage_setpoint: the voltage in kVolts setted in the HV power supply which
+        should be present at the output after some time (depends on the ramp setting).
+        :param abs_output_voltage_error: absolute error in kVolts for being considered
         an output voltage reached.
         :param check_period: voltage output will be measured every check_period (seconds) time.
         :param timeout: time (seconds) give to the voltage output to reach the voltage setting.
@@ -322,7 +333,6 @@ class EurotestHPP120256(Instrument):
         ref_time = time.time()
         future_time = ref_time + timeout
 
-        voltage_setpoint = self.voltage_setpoint
         voltage_output = self.voltage
         voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
                                           abs_tol=abs_output_voltage_error)
