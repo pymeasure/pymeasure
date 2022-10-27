@@ -52,3 +52,13 @@ class TexioPSW360L30(Keithley2260B):
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for TEXIO PSW-360L30 error retrieval.")
+
+    @property
+    def output(self):
+        """Same as "enabled" property"""
+        return self.enabled
+
+    @output.setter
+    def output(self, value):
+        """Same as "enabled" property"""
+        self.enabled = value
