@@ -1,0 +1,102 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2022 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+import logging
+
+from .commonBase import CommonBase
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class Channel(CommonBase):
+    """The base class for channel definitions.
+
+    This class supports dynamic properties like :class:`Instrument`,
+    but requires an instrument as a parent for communication.
+    The default implementation of :meth:`write` uses :code:`str.format` to
+    exchange :code:`'{ch}'` for the channel name.
+
+    :param instrument: The instrument (an instance of :class:`~pymeasure.instruments.Instrument`)
+        to which the channel belongs.
+    :param name: Name of the channel, as it is used for the communication.
+    """
+
+    def __init__(self, parent, id):
+        super().__init__()
+        self.parent = parent
+        self.id = id
+
+    # Calls to the instrument
+    def write(self, command, **kwargs):
+        """Write a string command to the instrument.
+
+        The channel id is inserted into the command and `write_termination` appended.
+
+        Subclass this method, in order to always prepend the channel id.
+
+        :param command: command string to be sent to the instrument.
+            '{ch}' is replaced by the channel id.
+        :param kwargs: Keyword arguments for the adapter.
+        """
+        self.parent.write(command.format(ch=self.id), **kwargs)
+
+    def write_bytes(self, content, **kwargs):
+        """Write the bytes `content` to the instrument."""
+        self.parent.write_bytes(content, **kwargs)
+
+    def read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer."""
+        return self.parent.read(**kwargs)
+
+    def read_bytes(self, count, **kwargs):
+        """Read a certain number of bytes from the instrument.
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
+        :param kwargs: Keyword arguments for the adapter.
+        :returns bytes: Bytes response of the instrument (including termination).
+        """
+        return self.parent.read_bytes(count, **kwargs)
+
+    def write_binary_values(self, command, values, *args, **kwargs):
+        """Write binary values to the instrument.
+
+        :param command: Command to send.
+        :param values: The values to transmit.
+        :param \\*args, \\**kwargs: Further arguments to hand to the Adapter.
+        """
+        self.parent.write_binary_values(command.format(ch=self.id), values, *args, **kwargs)
+
+    def read_binary_values(self, **kwargs):
+        """Read binary values from the instrument."""
+        return self.parent.read_binary_values(**kwargs)
+
+    # Communication functions
+    def wait_for(self, query_delay=0):
+        """Wait for some time. Used by 'ask' to wait before reading.
+
+        :param query_delay: Delay between writing and reading in seconds.
+        """
+        self.parent.wait_for(query_delay)

@@ -2,7 +2,7 @@
 Instrument classes
 ##################
 
-.. autoclass:: pymeasure.instruments.instrument.CommonBase
+.. autoclass:: pymeasure.instruments.commonBase.CommonBase
     :members:
 
 .. autoclass:: pymeasure.instruments.Instrument
