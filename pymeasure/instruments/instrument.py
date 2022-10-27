@@ -122,7 +122,6 @@ class CommonBase:
 
     def __init__(self):
         self._special_names = self._setup_special_names()
-        self.channels = []
 
     def _setup_special_names(self):
         """ Return list of class/instance special names.
@@ -165,23 +164,30 @@ class CommonBase:
         return super().__getattribute__(name)
 
     # Channel management
-    def add_channel(self, cls, id, **kwargs):
-        """Add a channel to this instance and return its index in channel list.
+    def add_child(self, cls, id, group="channels", prefix="ch", **kwargs):
+        """Add a child to this instance and return its index in the children list.
 
-        The newly created channel may be accessed either by the index in the
-        channels list or by the created attribute. For `instrument`, the fifth
-        channel with id "F" has two access options:
+        The newly created child may be accessed either by the index in the
+        children list or by the created attribute.
+        The fifth channel of `instrument` with id "F" has two access options:
         :code:`instrument.channels[4] == instrument.ch_F`
 
         :param cls: Class of the channel.
-        :param id: Channel id how it is used in communication, e.g. "A".
+        :param id: Child id how it is used in communication, e.g. `"A"`.
+        :param group: Name of the group of children, used for the list.
+        :param prefix: Group prefix for the attributes, e.g. `"ch"`
+            creates attribute `self.ch_A`. An underscore separates prefix from id.
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Index of this instance's channels.
         """
-        channel = cls(self, id, **kwargs)
-        self.channels.append(channel)
-        setattr(self, f"ch_{channel.id}", channel)
-        return self.channels.index(channel)
+        child = cls(self, id, **kwargs)
+        group_list = getattr(self, group, [])
+        if not group_list:
+            # Add a grouplist to the parent
+            setattr(self, group, group_list)
+        group_list.append(child)
+        setattr(self, f"{prefix}_{child.id}", child)
+        return self.channels.index(child)
 
     # Communication functions
     def wait_for(self, query_delay=0):

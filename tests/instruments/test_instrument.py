@@ -107,8 +107,8 @@ class GenericChannel(Channel):
 class ChannelInstrument(Instrument):
     def __init__(self, adapter, name="ChannelInstrument", **kwargs):
         super().__init__(adapter, name, **kwargs)
-        self.add_channel(GenericChannel, "A")
-        self.add_channel(GenericChannel, "B")
+        self.add_child(GenericChannel, "A")
+        self.add_child(GenericChannel, "B")
 
 
 def test_fake_instrument():

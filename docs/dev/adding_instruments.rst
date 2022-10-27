@@ -812,7 +812,7 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
 
 
-.. _channels
+.. _channels:
 
 Instruments with channels
 =========================
@@ -837,20 +837,20 @@ Some instruments, like oscilloscopes and voltage sources, have channels whose co
 		)
 
 
-    class ExtremeChannel(Instrument):
+    class InstrumentWithChannels(Instrument):
 		"""An instrument with a channel."""
 
 		def __init__(self, adapter):
-			super().__init__(self, adapter, "ExtremeChannel")
-			self.chA = VoltageChannel(self, "A")
+			super().__init__(self, adapter, "Instrument with Channels")
+			self.add_child(VoltageChannel, "A")
 
 .. testcode:: :hide:
 
-    with expected_protocol(ExtremeChannel,
+    with expected_protocol(InstrumentWithChannels,
         [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")]
     ) as inst:
-        inst.chA.voltage = 1.23
-        assert inst.chA.voltage == 1.23
+        inst.ch_A.voltage = 1.23
+        assert inst.ch_A.voltage == 1.23
 
 If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name.
 
