@@ -33,6 +33,7 @@ from pymeasure.instruments.validators import strict_discrete_set
 
 from enum import IntFlag
 
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -346,6 +347,7 @@ class EurotestHPP120256(Instrument):
             log.debug(f"Elapsed time: {round(actual_time - ref_time, ndigits=1)} seconds.")
 
             if actual_time > future_time:
+                self.shutdown(200.0)  # in case the voltage were applied at the output
                 raise TimeoutError("Timeout for wait_for_output_voltage_reached function")
 
         log.info("Waiting done.")
