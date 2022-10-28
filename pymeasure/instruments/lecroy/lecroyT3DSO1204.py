@@ -268,20 +268,7 @@ class Channel:
         map_values=True
     )
 
-    @property
-    def trigger_level(self):
-        """Refer to the _trigger_level docstring"""
-        return self._trigger_level
-
-    @trigger_level.setter
-    def trigger_level(self, value):
-        """Refer to the _trigger_level docstring"""
-        # noinspection PyAttributeOutsideInit
-        self._trigger_level_set_process = lambda v: float(v[:-1]) * self.probe_attenuation if \
-            isinstance(v, str) else v * self.probe_attenuation
-        self._trigger_level = value
-
-    _trigger_level = Instrument.control(
+    trigger_level = Instrument.control(
         "TRLV?", "TRLV %.2EV",
         """ A float parameter that sets the trigger level voltage for the active trigger source.
             When there are two trigger levels to set, this command is used to set the higher
@@ -290,24 +277,10 @@ class Channel:
             When setting the trigger level it must be divided by the probe attenuation. This is
             not documented in the datasheet and it is probably a bug of the scope firmware.
             An out-of-range value will be adjusted to the closest legal value.
-        """,
-        dynamic=True
+        """
     )
 
-    @property
-    def trigger_level2(self):
-        """Refer to the _trigger_level2 docstring"""
-        return self._trigger_level2
-
-    @trigger_level2.setter
-    def trigger_level2(self, value):
-        """Refer to the _trigger_level2 docstring"""
-        # noinspection PyAttributeOutsideInit
-        self._trigger_level2_set_process = lambda v: float(v[:-1]) / self.probe_attenuation if \
-            isinstance(v, str) else v / self.probe_attenuation
-        self._trigger_level2 = value
-
-    _trigger_level2 = Instrument.control(
+    trigger_level2 = Instrument.control(
         "TRLV2?", "TRLV2 %.2EV",
         """ A float parameter that sets the lower trigger level voltage for the specified source.
         Higher and lower trigger levels are used with runt/slope triggers.
