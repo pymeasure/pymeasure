@@ -36,22 +36,42 @@ log.addHandler(logging.NullHandler())
 
 
 class DockResultsDialog(ResultsDialog):
-    """ DockPlotResultsDialog that will select the first element of x_axis or y_axis if it is a list
-    and pass it to parent class ResultsDialog
+    """
+    DockPlotResultsDialog that will select the first element of x_axis or y_axis if it is a list
+    and pass it to parent class
+    :class:`~pymeasure.display.widgets.results_widget.ResultsDialog`
+
+    :param columns: Data columns of the experiment procedure
+    :param x_axis: the data column(s) for the x-axis of the plot. First element is passed if
+        x_axis is a list.
+    :param y_axis: the data column(s) for the y-axis of the plot. T First element is passed if
+        y_axis is a list.
+    :param parent: Passed on to QtWidgets.QFileDialog. Default is None
     """
 
     def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
         x_axis_label = x_axis
         y_axis_label = y_axis
         if isinstance(x_axis, list):
-            x_axis_label = x_axis_label[0]
+            x_axis_label = x_axis[0]
         if isinstance(y_axis, list):
             y_axis_label = y_axis[0]
         super().__init__(columns, x_axis_label, y_axis_label, parent)
 
 
 class DockWidget(TabWidget, QtWidgets.QWidget):
-    """ Widget that contains a DockArea with a number of Docks as passed by num_plots
+    """
+    Widget that contains a DockArea with a number of Docks as determined by num_plots.
+
+    :param name: Name for the TabWidget
+    :param procedure_class: procedure class describing the experiment (see
+        :class:`~pymeasure.experiment.procedure.Procedure`)
+    :param x_axis: the data column(s) for the x-axis of the plot. This may be string or a list
+        of strings from the data columns of the procedure.
+    :param y_axis: the data column(s) for the y-axis of the plot. This may be string or a list
+        of strings from the data columns of the procedure.
+    :param num_plots: the number of plots you want displayed in the DockWindow tab
+    :param parent: Passed on to QtWidgets.QWidget. Default is None
     """
 
     def __init__(self, name, procedure_class, x_axis=None, y_axis=None, num_plots=1, parent=None):
