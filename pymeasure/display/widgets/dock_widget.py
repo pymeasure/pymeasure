@@ -86,17 +86,6 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
                 PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_axis_label,
                            y_axis_label))
             dock.addWidget(self.plot_frames[idx])
-            dock.nStyle = """
-                          Dock > QWidget {
-                              border: 1px solid #ff6600;
-                              border-radius: 5px;
-                          }"""
-            dock.dragStyle = """
-                          Dock > QWidget {
-                              border: 14px solid #ff6600;
-                              border-radius: 15px;
-                          }"""
-            dock.updateStyle()
             self.docks.append(dock)
 
     def _layout(self):
