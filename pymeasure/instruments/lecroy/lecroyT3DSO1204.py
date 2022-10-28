@@ -710,7 +710,6 @@ class LeCroyT3DSO1204(Instrument):
     def single(self):
         """ Causes the instrument to acquire a single trigger of data.
         This is the same as pressing the Single key on the front panel. """
-        self.trigger_mode = "single"
         self.write("ARM")
 
     ##################
