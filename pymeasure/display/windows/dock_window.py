@@ -24,14 +24,17 @@
 
 import logging
 
-from pyqtgraph.dockarea import Dock, DockArea
+import os
 
+import pyqtgraph as pg
+
+from ..widgets.dock_widget import DockWidget, DockResultsDialog
+from ..widgets.log_widget import LogWidget
 from .managed_window import ManagedWindowBase
-from ..Qt import QtCore, QtWidgets
-from ..widgets import (
-    PlotWidget,
-    LogWidget
-)
+from ..browser import BrowserItem
+from ..Qt import QtWidgets
+from ..manager import Experiment
+from ...experiment import Results
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -39,8 +42,8 @@ log.addHandler(logging.NullHandler())
 
 class DockWindow(ManagedWindowBase):
     """
-    Display experiment output with an :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
-    class.
+    Display experiment output with multiple docking windows with
+    :class:`~pymeasure.display.widgets.dock_widget.DockWidget` class.
 
     :param procedure_class: procedure class describing the experiment (see
         :class:`~pymeasure.experiment.procedure.Procedure`)
@@ -60,27 +63,27 @@ class DockWindow(ManagedWindowBase):
         self.num_plots = num_plots
 
         self.log_widget = LogWidget("Experiment Log")
-        self.widget_list = []
+        self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis, self.y_axis,
+                                      num_plots=num_plots)
+        self.widget_list = [self.dock_widget, self.log_widget]
 
         super().__init__(
             procedure_class=procedure_class,
-            setup=False,
             widget_list=self.widget_list,
             *args,
             **kwargs
         )
 
-        self._setup_ui()
-        self._layout()
-
         measure_quantities = []
+
+        # Expand x_axis if it is a list
         if type(self.x_axis) == list:
-            # Expand x_axis if it is a list
             measure_quantities += [*self.x_axis]
         else:
             measure_quantities.append(self.x_axis)
+
+        # Expand y_axis if it is a list
         if type(self.y_axis) == list:
-            # Expand y_axis if it is a list
             measure_quantities += [*self.y_axis]
         else:
             measure_quantities.append(self.y_axis)
@@ -91,110 +94,42 @@ class DockWindow(ManagedWindowBase):
         log.setLevel(self.log_level)
         log.info("DockWindow connected to logging")
 
-    def _layout(self):
-        self.main = QtWidgets.QWidget(self)
+    def open_experiment(self):
+        dialog = DockResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        if dialog.exec():
+            filenames = dialog.selectedFiles()
+            for filename in map(str, filenames):
+                if filename in self.manager.experiments:
+                    QtWidgets.QMessageBox.warning(
+                        self, "Load Error",
+                        "The file %s cannot be opened twice." % os.path.basename(filename)
+                    )
+                elif filename == '':
+                    return
+                else:
+                    results = Results.load(filename)
+                    experiment = self.new_experiment(results)
+                    for curves in experiment.curve_list:
+                        if curves:
+                            for curve in curves:
+                                curve.update_data()
+                    experiment.browser_item.setProgress(100)
+                    self.manager.load(experiment)
+                    log.info('Opened data file %s' % filename)
 
-        inputs_dock = QtWidgets.QWidget(self)
-        inputs_vbox = QtWidgets.QVBoxLayout(self.main)
-
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.setSpacing(10)
-        hbox.setContentsMargins(-1, 6, -1, 6)
-        hbox.addWidget(self.queue_button)
-        hbox.addWidget(self.abort_button)
-        hbox.addStretch()
-
-        if self.directory_input:
-            vbox = QtWidgets.QVBoxLayout()
-            vbox.addWidget(self.directory_label)
-            vbox.addWidget(self.directory_line)
-            vbox.addLayout(hbox)
-
-        if self.inputs_in_scrollarea:
-            inputs_scroll = QtWidgets.QScrollArea()
-            inputs_scroll.setWidgetResizable(True)
-            inputs_scroll.setFrameStyle(QtWidgets.QScrollArea.Shape.NoFrame)
-
-            self.inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
-                                      QtWidgets.QSizePolicy.Policy.Fixed)
-            inputs_scroll.setWidget(self.inputs)
-            inputs_vbox.addWidget(inputs_scroll, 1)
-
+    def new_experiment(self, results, curve=None):
+        if curve is None:
+            curve_list = []
+            for wdg in self.widget_list:
+                curve_list.append(self.new_curve(wdg, results))
         else:
-            inputs_vbox.addWidget(self.inputs)
+            curve_list = curve[:]
 
-        if self.directory_input:
-            inputs_vbox.addLayout(vbox)
-        else:
-            inputs_vbox.addLayout(hbox)
+        curve_color = pg.intColor(0)
+        for wdg, curve in zip(self.widget_list, curve_list):
+            if isinstance(wdg, DockWidget):
+                curve_color = curve[0].opts['pen'].color()
+                break
 
-        inputs_vbox.addStretch(0)
-        inputs_dock.setLayout(inputs_vbox)
-
-        dock = QtWidgets.QDockWidget('Input Parameters')
-        dock.setWidget(inputs_dock)
-        dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, dock)
-
-        if self.use_sequencer:
-            sequencer_dock = QtWidgets.QDockWidget('Sequencer')
-            sequencer_dock.setWidget(self.sequencer)
-            sequencer_dock.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
-            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, sequencer_dock)
-
-        if self.use_estimator:
-            estimator_dock = QtWidgets.QDockWidget('Estimator')
-            estimator_dock.setWidget(self.estimator)
-            estimator_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetArea.NoDockWidgetFeatures)
-            self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
-
-        self.tabs = QtWidgets.QTabWidget(self.main)
-
-        self.dock_area = DockArea()
-        self.dock_area.name = 'Dock Tab'
-        self.docks = []
-
-        self.tabs.addTab(self.dock_area, self.dock_area.name)
-
-        for idx, i in enumerate(range(self.num_plots)):
-            x_axis_label = self.x_axis
-            y_axis_label = self.y_axis
-            # If x_axis or y_axis are a list, then we want to set the label to the passed list.
-            # However, if list is smaller than num_plots, repeat last item in the list.
-            if type(self.x_axis) == list:
-                x_axis_label = self.x_axis[min(idx, len(self.x_axis) - 1)]
-            if type(self.y_axis) == list:
-                y_axis_label = self.y_axis[min(idx, len(self.y_axis) - 1)]
-            self.widget_list.append(
-                PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_axis_label,
-                           y_axis_label))
-            dock = Dock("Dock " + str(i + 1), closable=False, size=(200, 50))
-            self.dock_area.addDock(dock)
-            dock.addWidget(self.widget_list[i])
-            dock.nStyle = """
-                          Dock > QWidget {
-                              border: 1px solid #ff6600;
-                              border-radius: 5px;
-                          }"""
-            dock.dragStyle = """
-                          Dock > QWidget {
-                              border: 14px solid #ff6600;
-                              border-radius: 15px;
-                          }"""
-            dock.updateStyle()
-            self.docks.append(dock)
-
-        self.tabs.addTab(self.log_widget, self.log_widget.name)
-
-        splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Vertical)
-        splitter.addWidget(self.tabs)
-        splitter.addWidget(self.browser_widget)
-
-        vbox = QtWidgets.QVBoxLayout(self.main)
-        vbox.setSpacing(0)
-        vbox.addWidget(splitter)
-
-        self.main.setLayout(vbox)
-        self.setCentralWidget(self.main)
-        self.main.show()
-        self.resize(1000, 800)
+        browser_item = BrowserItem(results, curve_color)
+        return Experiment(results, curve_list, browser_item)

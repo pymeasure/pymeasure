@@ -258,11 +258,11 @@ class Manager(QtCore.QObject):
         log.debug("Manager's running experiment has finished")
         experiment = self._running_experiment
         self._clean_up()
-        experiment.browser_item.setProgress(100.)
+        experiment.browser_item.setProgress(100)
         for curve in experiment.curve_list:
             if curve:
                 # For single plots, update_data() on ResultsCurve
-                if type(curve) == ResultsCurve:
+                if isinstance(curve, ResultsCurve):
                     curve.update_data()
                 # For multiple plots, update_data() on list of ResultsCurve
                 elif type(curve) == list:

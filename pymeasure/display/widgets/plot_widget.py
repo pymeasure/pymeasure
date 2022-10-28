@@ -41,27 +41,20 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     """
 
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, linewidth=1, parent=None, setup=True):
+                 check_status=True, linewidth=1, parent=None):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
         self.linewidth = linewidth
-        if setup:
-            self._setup_ui()
-            self._layout()
-            if x_axis is not None:
-                x_axis_label = x_axis
-                if type(x_axis) == list:
-                    x_axis_label = x_axis_label[0]
-                self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis_label))
-                self.plot_frame.change_x_axis(x_axis_label)
-            if y_axis is not None:
-                y_axis_label = y_axis
-                if type(y_axis) == list:
-                    y_axis_label = y_axis[0]
-                self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis_label))
-                self.plot_frame.change_y_axis(y_axis_label)
+        self._setup_ui()
+        self._layout()
+        if x_axis is not None:
+            self.columns_x.setCurrentIndex(self.columns_x.findText(x_axis))
+            self.plot_frame.change_x_axis(x_axis)
+        if y_axis is not None:
+            self.columns_y.setCurrentIndex(self.columns_y.findText(y_axis))
+            self.plot_frame.change_y_axis(y_axis)
 
     def _setup_ui(self):
         self.columns_x_label = QtWidgets.QLabel(self)

@@ -109,8 +109,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     :param directory_input: specify, if present, where the experiment's result will be saved.
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
-    :param setup: a boolean that determines if the self._setup() and self._layout() are run. (True,
-        default)
     """
 
     def __init__(self,
@@ -127,7 +125,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                  inputs_in_scrollarea=False,
                  directory_input=False,
                  hide_groups=True,
-                 setup=True
                  ):
 
         super().__init__(parent)
@@ -150,9 +147,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         # Check if the get_estimates function is reimplemented
         self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
-        if setup:
-            self._setup_ui()
-            self._layout()
+
+        self._setup_ui()
+        self._layout()
 
     def _setup_ui(self):
         if self.directory_input:
