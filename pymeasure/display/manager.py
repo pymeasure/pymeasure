@@ -265,7 +265,7 @@ class Manager(QtCore.QObject):
                 if isinstance(curve, ResultsCurve):
                     curve.update_data()
                 # For multiple plots, update_data() on list of ResultsCurve
-                elif type(curve) == list:
+                elif isinstance(curve, list):
                     for c in curve:
                         c.update_data()
         self.finished.emit(experiment)
