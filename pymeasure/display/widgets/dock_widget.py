@@ -23,40 +23,15 @@
 #
 import logging
 
+from pyqtgraph.dockarea import Dock, DockArea
 import pyqtgraph as pg
 
 from .plot_widget import PlotWidget
-from .results_dialog import ResultsDialog
-from pyqtgraph.dockarea import Dock, DockArea
 from ..Qt import QtWidgets
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-class DockResultsDialog(ResultsDialog):
-    """
-    DockPlotResultsDialog that will select the first element of x_axis or y_axis if it is a list
-    and pass it to parent class
-    :class:`~pymeasure.display.widgets.results_widget.ResultsDialog`
-
-    :param columns: Data columns of the experiment procedure
-    :param x_axis: the data column(s) for the x-axis of the plot. First element is passed if
-        x_axis is a list.
-    :param y_axis: the data column(s) for the y-axis of the plot. T First element is passed if
-        y_axis is a list.
-    :param parent: Passed on to QtWidgets.QFileDialog. Default is None
-    """
-
-    def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
-        x_axis_label = x_axis
-        y_axis_label = y_axis
-        if isinstance(x_axis, list):
-            x_axis_label = x_axis[0]
-        if isinstance(y_axis, list):
-            y_axis_label = y_axis[0]
-        super().__init__(columns, x_axis_label, y_axis_label, parent)
 
 
 class DockWidget(TabWidget, QtWidgets.QWidget):

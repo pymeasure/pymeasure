@@ -28,7 +28,8 @@ import os
 
 import pyqtgraph as pg
 
-from ..widgets.dock_widget import DockWidget, DockResultsDialog
+from ..widgets.dock_widget import DockWidget
+from ..widgets.results_dialog import ResultsDialog
 from ..widgets.log_widget import LogWidget
 from .managed_window import ManagedWindowBase
 from ..browser import BrowserItem
@@ -75,7 +76,6 @@ class DockWindow(ManagedWindowBase):
         )
 
         measure_quantities = []
-
         # Expand x_axis if it is a list
         if type(self.x_axis) == list:
             measure_quantities += [*self.x_axis]
@@ -95,7 +95,14 @@ class DockWindow(ManagedWindowBase):
         log.info("DockWindow connected to logging")
 
     def open_experiment(self):
-        dialog = DockResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        x_axis_label = self.x_axis
+        y_axis_label = self.y_axis
+        if isinstance(self.x_axis, list):
+            x_axis_label = self.x_axis[0]
+        if isinstance(self.y_axis, list):
+            y_axis_label = self.y_axis[0]
+
+        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, x_axis_label, y_axis_label)
         if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
