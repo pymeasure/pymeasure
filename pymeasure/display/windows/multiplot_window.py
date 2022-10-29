@@ -29,8 +29,9 @@ import os
 import pyqtgraph as pg
 
 from .managed_window import ManagedWindowBase
-from ..widgets.multiplot_widget import MultiPlotWidget, MultiPlotResultsDialog
+from ..widgets.multiplot_widget import MultiPlotWidget
 from ..widgets.log_widget import LogWidget
+from ..widgets.results_dialog import ResultsDialog
 from ..browser import BrowserItem
 from ..Qt import QtWidgets
 from ..manager import Experiment
@@ -91,9 +92,15 @@ class MultiPlotWindow(ManagedWindowBase):
         log.info("MultiPlotWindow connected to logging")
 
     def open_experiment(self):
-        dialog = MultiPlotResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis,
-                                        num_plots=self.num_plots)
-        if dialog.exec_():
+        x_axis_label = self.x_axis
+        y_axis_label = self.y_axis
+        if isinstance(self.x_axis, list):
+            x_axis_label = self.x_axis[0]
+        if isinstance(self.y_axis, list):
+            y_axis_label = self.y_axis[0]
+
+        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, x_axis_label, y_axis_label)
+        if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
                 if filename in self.manager.experiments:
@@ -110,7 +117,7 @@ class MultiPlotWindow(ManagedWindowBase):
                         if curves:
                             for curve in curves:
                                 curve.update_data()
-                    experiment.browser_item.progressbar.setValue(100)
+                    experiment.browser_item.setProgress(100)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
