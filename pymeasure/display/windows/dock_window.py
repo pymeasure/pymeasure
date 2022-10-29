@@ -77,13 +77,13 @@ class DockWindow(ManagedWindowBase):
 
         measure_quantities = []
         # Expand x_axis if it is a list
-        if type(self.x_axis) == list:
+        if isinstance(self.x_axis, list):
             measure_quantities += [*self.x_axis]
         else:
             measure_quantities.append(self.x_axis)
 
         # Expand y_axis if it is a list
-        if type(self.y_axis) == list:
+        if isinstance(self.y_axis, list):
             measure_quantities += [*self.y_axis]
         else:
             measure_quantities.append(self.y_axis)
