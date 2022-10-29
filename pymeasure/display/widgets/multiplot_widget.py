@@ -168,4 +168,4 @@ class MultiPlotWidget(TabWidget, QtWidgets.QWidget):
 
     def set_color(self, curve, color):
         for i in range(self.num_plots):
-            curve[i].setPen(pg.mkPen(color=color, width=2))
+            curve[i].setPen(pg.mkPen(color=color, width=self.linewidth))

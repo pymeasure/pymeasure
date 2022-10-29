@@ -80,10 +80,9 @@ class MultiPlotWindow(ManagedWindowBase):
 
         super().__init__(procedure_class, **kwargs)
 
-        # Setup measured_quantities once we know x_axis and y_axis
         measure_quantities = [self.x_axis, self.y_axis]
-        if type(self.y_axis) == list:
-            # Expand y_axis if it is a list
+        # Expand y_axis if it is a list
+        if isinstance(self.y_axis, list):
             measure_quantities = [self.x_axis, *self.y_axis]
         self.browser_widget.browser.measured_quantities = measure_quantities
 
