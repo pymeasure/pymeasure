@@ -222,15 +222,12 @@ class CSVFormatter_Pandas(Results_Formatter):
         :return: str
         """
         if isinstance(record, pd.DataFrame):
-            pass
+            record = record.reindex(columns=self.columns)
         elif isinstance(record, dict):
-            # ensure correct order of columns
-            record = (record[c] for c in self.columns)
-            record = pd.DataFrame(record)
+            record = pd.DataFrame([record], columns=self.columns)
         else:
-            log.error('Formatting of data failed. ' +
-                      'Pandas dataframe or dict required.')
-            return ''
+            raise TypeError('Formatting of data failed. '
+                            'Pandas dataframe or dict required.')
         return record.to_csv(
             sep=self.delimiter,
             header=False,
