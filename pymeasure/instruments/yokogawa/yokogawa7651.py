@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -132,7 +132,7 @@ class Yokogawa7651(Instrument):
     )
 
     def __init__(self, adapter, **kwargs):
-        super(Yokogawa7651, self).__init__(
+        super().__init__(
             adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
         )
 
@@ -218,4 +218,4 @@ class Yokogawa7651(Instrument):
         self.ramp_to_current(0.0, steps=25)
         self.source_current = 0.0
         self.disable_source()
-        super(Yokogawa7651, self).shutdown()
+        super().shutdown()

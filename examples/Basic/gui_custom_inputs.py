@@ -17,7 +17,7 @@ from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
-from pymeasure.display.Qt import QtGui, fromUi
+from pymeasure.display.Qt import QtWidgets, fromUi
 from pymeasure.display.windows import ManagedWindow
 
 import logging
@@ -59,7 +59,7 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindow):
 
     def __init__(self):
-        super(MainWindow, self).__init__(
+        super().__init__(
             procedure_class=TestProcedure,
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
@@ -68,7 +68,7 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
     def _setup_ui(self):
-        super(MainWindow, self)._setup_ui()
+        super()._setup_ui()
         self.inputs.hide()
         self.inputs = fromUi('gui_custom_inputs.ui')
 
@@ -88,7 +88,7 @@ class MainWindow(ManagedWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

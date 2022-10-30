@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 import logging
 from time import sleep
 from enum import IntFlag
-from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
 
@@ -183,7 +182,7 @@ class DPSeriesMotorController(Instrument):
             logging.error("DP-Series motor controller error detected: %s" % current_errors)
         return current_errors
 
-    def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
+    def __init__(self, adapter, address=0, encoder_enabled=False, **kwargs):
         """
         Initialize communication with the motor controller with the address given by `address`.
 
@@ -196,19 +195,17 @@ class DPSeriesMotorController(Instrument):
         """
         self._address = address
         self._encoder_enabled = encoder_enabled
+        kwargs.setdefault('write_termination', '\r')
+        kwargs.setdefault('read_termination', '\r')
+        kwargs.setdefault('timeout', 2000)
 
         super().__init__(
-            resourceName,
+            adapter,
             "Anaheim Automation Stepper Motor Controller",
             includeSCPI=False,
-            write_termination="\r",
-            read_termination="\r",
-            timeout=2000,
+            asrl={'baud_rate': 38400},
             **kwargs
         )
-
-        if isinstance(self.adapter, VISAAdapter):
-            self.adapter.connection.baud_rate = 38400
 
     @property
     def encoder_enabled(self):
@@ -277,7 +274,8 @@ class DPSeriesMotorController(Instrument):
         raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
 
     def reset_position(self):
-        """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
+        """
+        Reset position as counted by the motor controller and an externally connected encoder to 0.
         """
         # reset encoder recorded position #
         self.write("ET")
@@ -328,36 +326,8 @@ class DPSeriesMotorController(Instrument):
         elif "%" in command or "~" in command:
             cmd_str = "@%s" % command
         else:
-            cmd_str = "@%i%s" % (self.address, command)
+            cmd_str = "@%i%s" % (self._address, command)
         super().write(cmd_str)
-
-    def values(self, command, **kwargs):
-        """ Override the instrument base values method to add the motor controller's address to the
-        command string.
-
-        :param command: command string to be sent to the motor controller.
-        """
-        # check if an address related command was sent. #
-        if "%" in command or "~" in command:
-            vals = super().values("@%s" % command, **kwargs)
-        else:
-            vals = super().values("@%i%s" % (self.address, command))
-
-        return vals
-
-    def ask(self, command):
-        """ Override the instrument base ask method to add the motor controller's address to the
-        command string.
-
-        :param command: command string to be sent to the instrument
-        """
-        # check if an address related command was sent. #
-        if "%" in command or "~" in command:
-            val = super().ask("@%s" % command)
-        else:
-            val = super().ask("@%i%s" % (self.address, command))
-
-        return val
 
     def wait_for_completion(self, interval=0.5):
         """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)

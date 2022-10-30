@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 #
 
 import logging
-import sys
 
 import numpy as np
 import pyqtgraph as pg
@@ -32,34 +31,19 @@ from .Qt import QtCore
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-try:
-    from matplotlib.cm import viridis
-except ImportError:
-    log.warning("Matplotlib not found. Images will be greyscale")
-
-
-def _greyscale_colormap(x):
-    """Simple greyscale colormap. Assumes x is already normalized."""
-    return np.array([x, x, x, 1])
-
 
 class ResultsCurve(pg.PlotDataItem):
-    """ Creates a curve loaded dynamically from a file through the Results
-    object and supports error bars. The data can be forced to fully reload
-    on each update, useful for cases when the data is changing across the full
-    file instead of just appending.
+    """ Creates a curve loaded dynamically from a file through the Results object. The data can
+    be forced to fully reload on each update, useful for cases when the data is changing across
+    the full file instead of just appending.
     """
 
-    def __init__(self, results, x, y, xerr=None, yerr=None,
-                 force_reload=False, **kwargs):
+    def __init__(self, results, x, y, force_reload=False, **kwargs):
         super().__init__(**kwargs)
         self.results = results
         self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
         self.force_reload = force_reload
-        if xerr or yerr:
-            self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
-            self.xerr, self.yerr = xerr, yerr
 
     def update_data(self):
         """Updates the data by polling the results"""
@@ -69,18 +53,6 @@ class ResultsCurve(pg.PlotDataItem):
 
         # Set x-y data
         self.setData(data[self.x], data[self.y])
-
-        # Set error bars if enabled at construction
-        if hasattr(self, '_errorBars'):
-            self._errorBars.setOpts(
-                x=data[self.x],
-                y=data[self.y],
-                top=data[self.yerr],
-                bottom=data[self.yerr],
-                left=data[self.xerr],
-                right=data[self.yerr],
-                beam=max(data[self.xerr], data[self.yerr])
-            )
 
 
 # TODO: Add method for changing x and y
@@ -104,10 +76,7 @@ class ResultsImage(pg.ImageItem):
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
         self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
-        if 'matplotlib.cm' in sys.modules:
-            self.colormap = viridis
-        else:
-            self.colormap = _greyscale_colormap
+        self.cm = pg.colormap.get('viridis')
 
         super().__init__(image=self.img_data)
 
@@ -155,31 +124,29 @@ class ResultsImage(pg.ImageItem):
         else:
             return int(x)
 
+    def colormap(self, x):
+        """ Return mapped color as 0.0-1.0 floats RGBA """
+        return self.cm.map(x, mode='float')
+
     # TODO: colormap selection
 
 
 class BufferCurve(pg.PlotDataItem):
-    """ Creates a curve based on a predefined buffer size and allows
-    data to be added dynamically, in additon to supporting error bars
+    """ Creates a curve based on a predefined buffer size and allows data to be added dynamically.
     """
 
-    data_updated = QtCore.QSignal()
+    data_updated = QtCore.Signal()
 
-    def __init__(self, errors=False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if errors:
-            self._errorBars = pg.ErrorBarItem(pen=kwargs.get('pen', None))
         self._buffer = None
 
     def prepare(self, size, dtype=np.float32):
         """ Prepares the buffer based on its size, data type """
-        if hasattr(self, '_errorBars'):
-            self._buffer = np.empty((size, 4), dtype=dtype)
-        else:
-            self._buffer = np.empty((size, 2), dtype=dtype)
+        self._buffer = np.empty((size, 2), dtype=dtype)
         self._ptr = 0
 
-    def append(self, x, y, xError=None, yError=None):
+    def append(self, x, y):
         """ Appends data to the curve with optional errors """
         if self._buffer is None:
             raise Exception("BufferCurve buffer must be prepared")
@@ -190,19 +157,6 @@ class BufferCurve(pg.PlotDataItem):
         self._buffer[self._ptr, :2] = [x, y]
         self.setData(self._buffer[:self._ptr, :2])
 
-        # Set error bars if enabled at construction
-        if hasattr(self, '_errorBars'):
-            self._buffer[self._ptr, 2:] = [xError, yError]
-            self._errorBars.setOpts(
-                x=self._buffer[:self._ptr, 0],
-                y=self._buffer[:self._ptr, 1],
-                top=self._buffer[:self._ptr, 3],
-                bottom=self._buffer[:self._ptr, 3],
-                left=self._buffer[:self._ptr, 2],
-                right=self._buffer[:self._ptr, 2],
-                beam=np.max(self._buffer[:self._ptr, 2:])
-            )
-
         self._ptr += 1
         self.data_updated.emit()
 
@@ -212,13 +166,13 @@ class Crosshairs(QtCore.QObject):
     x and y graph coordinates
     """
 
-    coordinates = QtCore.QSignal(float, float)
+    coordinates = QtCore.Signal(float, float)
 
     def __init__(self, plot, pen=None):
         """ Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
-        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
+        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.PenStyle.DashLine)
         """
         super().__init__()
 

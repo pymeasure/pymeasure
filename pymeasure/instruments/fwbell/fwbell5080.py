@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_discrete_set, strict_discrete_set
-from pymeasure.adapters import SerialAdapter
 from numpy import array, float64
 
 
@@ -63,6 +62,7 @@ class FWBell5080(Instrument):
         'amp-meter': 'DC:AM', 'amp-meter ac': 'AC:AM'
     }
     units = Instrument.control(
+        # TODO a newer version expects ':UNIT:FLUX:%s', is this right?
         ":UNIT:FLUX?", ":UNIT:FLUX%s",
         """ A string property that controls the field units, which can take the
         values: 'gauss', 'gauss ac', 'tesla', 'tesla ac', 'amp-meter', and
@@ -74,10 +74,13 @@ class FWBell5080(Instrument):
         get_process=lambda v: v.replace(' ', ':')  # Make output consistent with input
     )
 
-    def __init__(self, port):
-        super(FWBell5080, self).__init__(
-            SerialAdapter(port, 2400, timeout=0.5),
-            "F.W. Bell 5080 Handheld Gaussmeter"
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
+            "F.W. Bell 5080 Handheld Gaussmeter",
+            asrl={'baud_rate': 2400,
+                  'timeout': 500},
+            **kwargs
         )
 
     @property
@@ -108,19 +111,7 @@ class FWBell5080(Instrument):
         """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
         method to remove the last 2 characters from the output.
         """
-        return super(FWBell5080, self).read()[:-2]
-
-    def ask(self, command):
-        """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
-        method to remove the last 2 characters from the output.
-        """
-        return super(FWBell5080, self).ask()[:-2]
-
-    def values(self, command):
-        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
-        method to remove the lastv2 characters from the output.
-        """
-        return super(FWBell5080, self).values()[:-2]
+        return super().read()[:-2]
 
     def reset(self):
         """ Resets the instrument. """

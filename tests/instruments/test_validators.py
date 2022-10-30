@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -95,10 +95,11 @@ def test_modular_range_bidirectional():
 
 def test_joined_validators():
     tst_validator = joined_validators(strict_discrete_set, strict_range)
-    assert tst_validator(5, [["ON", "OFF"], range(10)]) == 5
-    assert tst_validator(5.1, [["ON", "OFF"], range(10)]) == 5.1
-    assert tst_validator("ON", [["ON", "OFF"], range(10)]) == "ON"
+    values = [["ON", "OFF"], range(10)]
+    assert tst_validator(5, values) == 5
+    assert tst_validator(5.1, values) == 5.1
+    assert tst_validator("ON", values) == "ON"
     with pytest.raises(ValueError):
-        tst_validator("OUT", [["ON", "OFF"], range(10)])
+        tst_validator("OUT", values)
     with pytest.raises(ValueError):
-        tst_validator(20, [["ON", "OFF"], range(10)])
+        tst_validator(20, values)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -224,6 +224,18 @@ class Keithley6221(Instrument, KeithleyBuffer):
         values={True: 1, False: 0},
         map_values=True,
     )
+    waveform_phasemarker_phase = Instrument.control(
+        ":SOUR:WAVE:PMAR?", ":SOUR:WAVE:PMAR %g",
+        """ A numerical property that controls the phase of the phase marker.""",
+        validator=truncated_range,
+        values=[-180, 180],
+    )
+    waveform_phasemarker_line = Instrument.control(
+        ":SOUR:WAVE:PMAR:OLIN?", ":SOUR:WAVE:PMAR:OLIN %d",
+        """ A numerical property that controls the line of the phase marker.""",
+        validator=truncated_range,
+        values=[1, 6],
+    )
 
     def waveform_arm(self):
         """ Arm the current waveform function. """
@@ -272,7 +284,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         self.waveform_function = "arbitrary%d" % location
 
     def __init__(self, adapter, **kwargs):
-        super(Keithley6221, self).__init__(
+        super().__init__(
             adapter, "Keithley 6221 SourceMeter", **kwargs
         )
 
@@ -292,7 +304,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
-        self.write(":SYST:BEEP %g, %g" % (frequency, duration))
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
     def triad(self, base_frequency, duration):
         """ Sounds a musical triad using the system beep.

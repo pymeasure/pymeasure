@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 
-class Parameter(object):
+class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 
@@ -84,7 +84,7 @@ class Parameter(object):
         return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,default=%s)>" % (
+        return "<{}(name={},value={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.default)
 
 
@@ -100,13 +100,15 @@ class IntegerParameter(Parameter):
     :param maximum: The maximum allowed value (default: 1e9)
     :param default: The default integer value
     :param ui_class: A Qt class to use for the UI of this parameter
+    :param step: int step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
-    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, **kwargs):
+    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
+        self.step = int(step) if step else None
 
     @property
     def value(self):
@@ -144,7 +146,7 @@ class IntegerParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -197,15 +199,17 @@ class FloatParameter(Parameter):
     :param decimals: The number of decimals considered (default: 15)
     :param default: The default floating point value
     :param ui_class: A Qt class to use for the UI of this parameter
+    :param step: step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
-                 decimals=15, **kwargs):
+                 decimals=15, step=None, **kwargs):
         super().__init__(name, **kwargs)
         self.units = units
         self.minimum = minimum
         self.maximum = maximum
         self.decimals = decimals
+        self.step = step
 
     @property
     def value(self):
@@ -243,7 +247,7 @@ class FloatParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,default=%s)>" % (
+        return "<{}(name={},value={},units={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
@@ -311,7 +315,7 @@ class VectorParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,length=%s)>" % (
+        return "<{}(name={},value={},units={},length={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
@@ -453,7 +457,7 @@ class PhysicalParameter(VectorParameter):
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%g +/- %g" % (self._value[0], self._value[1])
+        result = f"{self._value[0]:g} +/- {self._value[1]:g}"
         if self.units:
             result += " %s" % self.units
         if self._utype.value is not None:
@@ -461,11 +465,11 @@ class PhysicalParameter(VectorParameter):
         return result
 
     def __repr__(self):
-        return "<%s(name=%s,value=%s,units=%s,uncertaintyType=%s)>" % (
+        return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
 
-class Measurable(object):
+class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.
     The value property is called when the procedure retrieves a datapoint

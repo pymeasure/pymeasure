@@ -51,6 +51,7 @@ Let's extend our SimpleProcedure with a RandomProcedure, which generates random 
                 }
                 self.emit('results', data)
                 log.debug("Emitting results: %s" % data)
+                self.emit('progress', 100 * i / self.iterations)
                 sleep(self.delay)
                 if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -112,7 +113,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
     import random
     from time import sleep
     from pymeasure.log import console_log
-    from pymeasure.display.Qt import QtGui
+    from pymeasure.display.Qt import QtWidgets
     from pymeasure.display.windows import ManagedWindow
     from pymeasure.experiment import Procedure, Results
     from pymeasure.experiment import IntegerParameter, FloatParameter, Parameter
@@ -138,6 +139,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
                 }
                 self.emit('results', data)
                 log.debug("Emitting results: %s" % data)
+                self.emit('progress', 100 * i / self.iterations)
                 sleep(self.delay)
                 if self.should_stop():
                     log.warning("Caught the stop flag in the procedure")
@@ -147,7 +149,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=RandomProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],
@@ -167,10 +169,10 @@ Below we adapt our previous example to use a ManagedWindow. ::
 
 
     if __name__ == "__main__":
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         window = MainWindow()
         window.show()
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
 
 
@@ -252,7 +254,7 @@ In order to implement the sequencer into the previous example, only the :class:`
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=TestProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],
@@ -302,33 +304,35 @@ An example of such a sequence file is given below, resulting in the sequence sho
 
 .. literalinclude:: gui_sequencer_example_sequence.txt
 
-This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super(MainWindow, self).__init__` call, as was done in the example.
+This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super().__init__` call, as was done in the example.
 
 Using the directory input
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.ManagedWindow` init. The value of the directory can be retrieved using the property :code:`directory`.
+It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.ManagedWindow` init. The value of the directory can be retrieved and set using the property :code:`directory`.
+A default directory can be defined by setting the :code:`directory` property in the MainWindow init.
 
 Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
 
 .. code-block:: python
-   :emphasize-lines: 10,15,16
+   :emphasize-lines: 10,13,16,17
 
     class MainWindow(ManagedWindow):
 
         def __init__(self):
-            super(MainWindow, self).__init__(
+            super().__init__(
                 procedure_class=TestProcedure,
                 inputs=['iterations', 'delay', 'seed'],
                 displays=['iterations', 'delay', 'seed'],
                 x_axis='Iteration',
                 y_axis='Random Number',
-                directory_input=True,                                # Added line
+                directory_input=True,                                # Added line, enables directory widget
             )
             self.setWindowTitle('GUI Example')
+            self.directory = r'C:/Path/to/default/directory'         # Added line, sets default directory for GUI load
 
         def queue(self):
-            directory = self.directory
+            directory = self.directory                               # Added line
             filename = unique_filename(directory)                    # Modified line
 
             results = Results(procedure, filename)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -81,7 +81,7 @@ class Agilent34450A(Instrument):
                     self.mode = 'ac voltage'
                 self.write(":configure:freq")
         else:
-            raise ValueError('Value {} is not a supported mode for this device.'.format(value))
+            raise ValueError(f'Value {value} is not a supported mode for this device.')
 
     ###############
     # Current (A) #
@@ -368,11 +368,10 @@ class Agilent34450A(Instrument):
                                         )
 
     def __init__(self, adapter, **kwargs):
-        super(Agilent34450A, self).__init__(
-            adapter, "HP/Agilent/Keysight 34450A Multimeter", **kwargs
+        super().__init__(
+            adapter, "HP/Agilent/Keysight 34450A Multimeter", timeout=10000, **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
-        self.adapter.connection.timeout = 10000
         self.check_errors()
 
     def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
