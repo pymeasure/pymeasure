@@ -140,10 +140,6 @@ class Results_Formatter(logging.Formatter):
         self.delimiter = delimiter
         self.line_break = line_break
 
-
-class CSVFormatter(Results_Formatter):
-    """ Formatter of data results, single-line CSV """
-
     @staticmethod
     def _parse_columns(columns):
         """Parse the columns to get units in parenthesis."""
@@ -154,6 +150,10 @@ class CSVFormatter(Results_Formatter):
             if match:
                 units[column] = ureg.Quantity(match.groupdict()['units']).units
         return units
+
+
+class CSVFormatter(Results_Formatter):
+    """ Formatter of data results, single-line CSV """
 
     def format(self, record):
         """Formats a record as csv.
