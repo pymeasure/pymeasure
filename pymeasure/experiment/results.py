@@ -234,7 +234,7 @@ class CSVFormatter_Pandas(Results_Formatter):
             index=False,
             # explicit line_terminator required, otherwise Windows
             # uses \r\n which results in double blank lines
-            line_terminator=self.line_break
+            lineterminator=self.line_break
         ).strip()
 
     def format_header(self):
@@ -243,7 +243,7 @@ class CSVFormatter_Pandas(Results_Formatter):
             sep=self.delimiter,
             header=True,
             index=False,
-            line_terminator=self.line_break
+            lineterminator=self.line_break
         ).strip()
 
 
