@@ -655,7 +655,7 @@ In this example, the property name was :code:`voltage` and the parameter to adju
 .. _instruments_with_similar_features:
 
 Instruments with similar features
-*********************************
+=================================
 
 When instruments have a similar set of features, it makes sense to use inheritance to obtain most of the functionality from a parent instrument class, instead of copy-pasting code.
 Sometimes one only needs to add additional properties and methods.
@@ -664,7 +664,7 @@ Often, however, only some details need to be changed.
 This can be dealt with efficiently using dynamic properties.
 
 Instrument family with different parameter values
--------------------------------------------------
+*************************************************
 
 A common case is to have a family of similar instruments with some parameter range different for each family member.
 In this case you would update the specific class parameter range without rewriting the entire property:
@@ -695,7 +695,7 @@ In this case you would update the specific class parameter range without rewriti
 Notice how easily you can derive the different family members from a common class, and the fact that the attribute is now defined at class level and not at instance level.
 
 Instruments with similar command syntax
----------------------------------------
+***************************************
 
 Another use case involves maintaining compatibility between instruments with commands having different syntax, like in the following example.
 
