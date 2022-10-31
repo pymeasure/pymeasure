@@ -569,6 +569,23 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         # notice how we don't need to cast to float anymore
     )
 
+Tweaking command strings
+************************
+If you need to tweak
+
+* the :code:`set_command` string immediately before the value to set is inserted via string formatting (:code:`%g` etc.), or
+* the :code:`get_command` string before sending it to the device,
+
+use the :code:`command_process` parameter of :meth:`~pymeasure.instruments.Instrument.control`.
+
+Note that there is only parameter for both setting and getting, so the utility of this is probably limited.
+Note also that for adding e.g. channel identifiers, there are other, more preferable methods.
+
+Checking the instrument for errors
+**********************************
+If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.Instrument.control`, respectively.
+If those are enabled, the method :meth:`~pymeasure.instruments.Instrument.check_errors` will be called after device communication has concluded.
+
 Using multiple values
 *********************
 Seldomly, you might need to send/receive multiple values in one command.
