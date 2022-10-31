@@ -208,6 +208,51 @@ Now that you have learned about the ManagedWindow, you have all of the basics to
       import pyqtgraph as pg
       pg.setConfigOption("useOpenGL", True)
 
+Emitting and formatting results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the examples above, emitting the results of a measurement (i.e. writing the results to a file and plotting them in the plotter) is achieved by the following lines ::
+
+      data = {
+          'Iteration': i,
+          'Random Number': random.random()
+      }
+      self.emit('results', data)
+
+Here, the data is formatted as a dictionary, where each of the keys corresponds to one of the items in the (earlier defined) `DATA_COLUMNS` attribute.
+The data is then passed through a formatter, which takes care of formatting it to the proper outputformat.
+
+Presently, there are two available formatters, the :class:`~pymeasure.experiment.results.CSVFormatter` and the :class:`~pymeasure.experiment.results.CSVFormatter_Pandas`, each with their own advantages.
+You can select which formatter is used by passing a string to the `output_format` optional keyword argument upon creating an instance of the :class:`~pymeasure.experiment.results.Results` class (often in the `queue` method of the `ManagedWindow` subclass): use `"CSV"` for :class:`~pymeasure.experiment.results.CSVFormatter` or `"CSV_PANDAS"` for :class:`~pymeasure.experiment.results.CSVFormatter_Pandas`.
+
+The :class:`~pymeasure.experiment.results.CSVFormatter` accepts data that contains units.
+Numerical data that is emitted, can be in the form of a standard `int` or `float`, or can be in the form of a `pint <https://pint.readthedocs.io>`_ quantity.
+In that case, the value will be converted to the unit that is indicated in the column-name (provided that unit of the emitted data can be converted to the unit of the column-name, which can be useful when an instrument passes unit-full data.
+For this, the user needs to import the unit registry (`from pymeasure.units import ureg`), and make the passed data unit-full, e.g. ::
+
+      # In the import
+      DATA_COLUMNS = ["Iteration", "Length (m)"]
+
+      # When emitting data
+      data = {
+          'Iteration': i,
+          'Length (m)': random.random() * ureg.km,
+          # will be converted to m, other units (such as feet) will also work.
+      }
+      self.emit('results', data)
+
+The :class:`~pymeasure.experiment.results.CSVFormatter_Pandas` accepts not only dicts (as exemplified before), but also `pandas DataFrames <https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html>`_.
+This allows for emitting larger amounts of data at once, especially useful if an instrument returns multiple datapoints (or even a full measurement) at once, e.g. ::
+
+      # In the import section
+      import pandas as pd
+
+      # When emitting data
+      data = pd.DataFrame({"Iteration": [0, 1, 2, 3], "Length (m)": [10.4, 20.8, 31.2, 41.6]})
+      self.emit('results', data)
+
+Do note that passing pint quantities or pandas DataFrames is mutually exclusive.
+
 Customising the plot options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
