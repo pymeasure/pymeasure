@@ -48,6 +48,7 @@ Instruments by manufacturer:
    pendulum/index
    razorbill/index
    rohdeschwarz/index
+   siglent/index
    signalrecovery/index
    srs/index
    tektronix/index
