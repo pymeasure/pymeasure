@@ -121,7 +121,7 @@ However, there are a couple of practices that have turned out to be useful to fo
 
 * Naming things is important. Try to choose clear, expressive, unambiguous names for your instrument's elements.
 * If there are already similar instruments in the same "family" (like a power supply) in pymeasure, try to follow their lead where applicable. It's better if, e.g., all power supplies have a :code:`current_limit` instead of an assortment of :code:`current_max`, :code:`Ilim`, :code:`max_curr`, etc.
-* If there is already an instrument with a similar command set, check if you can inherit from that one and just tweak a couple of things. This massively reduces code duplication and maintenance effort. The section :ref:`family_of_instruments_with_similar_features` shows how to achieve that.
+* If there is already an instrument with a similar command set, check if you can inherit from that one and just tweak a couple of things. This massively reduces code duplication and maintenance effort. The section :ref:`instruments_with_similar_features` shows how to achieve that.
 * The bulk of your instrument's interface will probably be made up of properties for quantities to set and/or read out. Our custom properties (see :ref:`writing_properties` ff. below) offer some convenience features and are therefore preferable, but plain Python properties are also fine.
 * "Actions", commands or verbs should typically be methods, not properties: :code:`recall()`, :code:`trigger_scan()`, :code:`prepare_resistance_measurement()`, etc.
 * This separation between properties and methods also naturally helps with observing the `"command-query separation" principle <https://en.wikipedia.org/wiki/Command%E2%80%93query_separation>`__.
@@ -668,10 +668,19 @@ Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
 A side effect of this is that the property's docstring should be less specific, to avoid it containing dynamically changed information (like the admissible value range).
 In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
 
-.. _family_of_instruments_with_similar_features:
+.. _instruments_with_similar_features:
 
-Family of instruments with similar features
-*******************************************
+Instruments with similar features
+*********************************
+
+When instruments have a similar set of features, it makes sense to use inheritance to obtain most of the functionality from a parent instrument class, instead of copy-pasting code.
+Sometimes one only needs to add additional properties and methods.
+Often, some of the already present properties/methods need to be completely replaced by defining them again in the derived class.
+Often, however, only some details need to be changed.
+This can be dealt with efficiently using dynamic properties.
+
+Instrument family with different parameter values
+-------------------------------------------------
 
 A common case is to have a family of similar instruments with some parameter range different for each family member.
 In this case you would update the specific class parameter range without rewriting the entire property:
@@ -701,10 +710,10 @@ In this case you would update the specific class parameter range without rewriti
 
 Notice how easily you can derive the different family members from a common class, and the fact that the attribute is now defined at class level and not at instance level.
 
-Compatibility of instruments with similar features
-**************************************************
+Instruments with similar command syntax
+---------------------------------------
 
-Another use case involves maintaining compatibility between instruments with commands having different syntax.
+Another use case involves maintaining compatibility between instruments with commands having different syntax, like in the following example.
 
 .. code-block:: python
 
