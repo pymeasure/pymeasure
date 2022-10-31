@@ -284,7 +284,7 @@ It is advisable to follow the `PEP257 <https://peps.python.org/pep-0257/>`_ docs
 * Use triple-quoted strings (:code:`"""`) to delimit docstrings.
 * One short summary line in imperative voice, with a period at the end.
 * Optionally, after a blank line, include more detailed information.
-* For functions and methods, you can add documentation on their parameters using the `Sphinx docstring format <https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html#the-sphinx-docstring-format>`__.
+* For functions and methods, you can add documentation on their parameters using the `reStructuredText docstring format <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#info-field-lists>`__.
 
 Specific to our properties, start them with "Control", "Measure" or "Set" to indicate the kind of property (this information is not visible after import).
 In addition, it is useful to add type and information about :ref:`validators` (if applicable) at the end of the summary line, see the docstrings shown in examples throughout this page.
