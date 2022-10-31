@@ -93,8 +93,7 @@ This is a minimal instrument definition:
 .. testcode::
     
     class Extreme5000(Instrument):
-        """ Represents the imaginary Extreme 5000 instrument.
-        """
+        """Control the imaginary Extreme 5000 instrument."""
 
         def __init__(self, adapter, **kwargs):
             super().__init__(
@@ -226,7 +225,8 @@ For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write th
 .. testcode::
 
      Extreme5000.id = Instrument.measurement(
-        "*IDN?", """ Reads the instrument identification """
+        "*IDN?",
+        """Read the instrument identification.""",
      )
 
 .. testcode::
@@ -253,9 +253,7 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functi
 
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts. This property can be set.
-        """
+        """Control the voltage in Volts (float)."""
     )
 
 You will notice that we use the `Python string format`_ :code:`%g` to pass through the floating point.
@@ -281,8 +279,9 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functi
 
     Extreme5000.combination = Instrument.control(
         ":VOLTFREQ?", ":VOLTFREQ %g,%g",
-        """ A floating point property that simultaneously controls the voltage
-        in Volts and the frequency in Hertz. This property can be set by a tuple.
+        """Simultaneously control the voltage in Volts and the frequency in Hertz (both float).
+
+        This property is set by a tuple.
         """
     )
 
@@ -324,8 +323,7 @@ For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, w
   
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts, from -1 to 1 V. This property can be set. """,
+        """Control the voltage in Volts (float strictly from -1 to 1).""",
         validator=strict_range,
         values=[-1, 1]
     )
@@ -346,9 +344,10 @@ This is useful if you want to alert the programmer that they are using an invali
 
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts, from -1 to 1 V. Invalid voltages are truncated.
-        This property can be set. """,
+        """Control the voltage in Volts (float from -1 to 1).
+
+        Invalid voltages are truncated.
+        """,
         validator=truncated_range,
         values=[-1, 1]
     )
@@ -358,7 +357,7 @@ Now our voltage will not raise an error, and will truncate the value to the rang
 .. doctest::
 
     >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.voltage = 100        # Executes ":VOLT 1"  
+    >>> extreme.voltage = 100  # Executes ":VOLT 1"
     >>> extreme.voltage
     1.0
 
@@ -373,9 +372,7 @@ For example, if our "Extreme 5000" has a :code:`:RANG <float>` command that sets
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %g",
-        """ A floating point property that controls the voltage
-        range in Volts. This property can be set.
-        """,
+        """Control the voltage range in Volts (float in 10e-3, 100e-3, 1).""",
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1]
     )
@@ -401,9 +398,8 @@ If your set of values is a list, then the command will use the index of the list
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """ A floating point property that controls the voltage
-        range in Volts, which takes values of 10 mV, 100 mV and 1 V.
-        This property can be set. """,
+        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """,
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1],
         map_values=True
@@ -427,9 +423,8 @@ Dictionaries provide a more flexible method for mapping between real-values and 
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """ A floating point property that controls the voltage
-        range in Volts, which takes values of 10 mV, 100 mV and 1 V.
-        This property can be set. """,
+        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """,
         validator=truncated_discrete_set,
         values={10e-3:1, 100e-3:2, 1:3},
         map_values=True
@@ -451,9 +446,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
   
     Extreme5000.channel = Instrument.control(
         ":CHAN?", ":CHAN %d",
-        """ A string property that controls the measurement channel,
-        which can take the values X, Y, or Z.
-        """,
+        """Control the measurement channel (string strictly in 'X', 'Y', 'Z').""",
         validator=strict_discrete_set,
         values={'X':1, 'Y':2, 'Z':3},
         map_values=True
@@ -480,8 +473,7 @@ The idea of using maps can be leveraged to implement properties where the user-f
 
     Extreme5000.output_enabled = Instrument.control(
         "OUTP?", "OUTP %d",
-        """A boolean property that turns the output on (True) or off (False).""",
-        validator=strict_discrete_set,
+        """Control the instrument output is enabled (boolean).""",
         map_values=True,
         values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc.
     )
@@ -496,6 +488,11 @@ The idea of using maps can be leveraged to implement properties where the user-f
     >>> extreme.output_enabled = False
     >>> extreme.output_enabled
     False
+    >>> # Invalid input raises an exception
+    >>> extreme.output_enabled = 34
+    Traceback (most recent call last):
+    ...
+    KeyError: 34
 
 Good names for boolean properties are chosen such that they could also be a yes/no question: "Is the output enabled?" -> :code:`output_enabled`, :code:`display_active`, etc.
 
@@ -509,8 +506,7 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :
 
     Extreme5000.current = Instrument.setting(
         ":CURR %g",
-        """ A floating point property that takes the measurement current in A
-        """,
+        """Set the measurement current in A (float strictly from 0 to 10).""",
         validator=strict_range,
         values=[0, 10],
         set_process=lambda v: 1e3*v,  # convert current to mA
@@ -530,8 +526,7 @@ Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.In
 
     Extreme5000.current = Instrument.control(
         ":CURR?", ":CURR %g",
-        """ A floating point property representing the measurement current in A
-        """,
+        """Control the measurement current in A (float strictly from 0 to 10).""",
         validator=strict_range,
         values=[0, 10],
         set_process=lambda v: 1e3*v,  # convert to mA
@@ -553,9 +548,7 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
 
     Extreme5000.current = Instrument.control(
         ":CURR?", ":CURR %g",
-        """ A floating point quantity property representing the measurement current 
-        """,
-        values=[0, 10],
+        """Control the measurement current (float).""",
         set_process=lambda v: v.m_as(ureg.mA),  # send the value as mA to the device
         get_process=lambda v: ureg.Quantity(v, ureg.mA),  # convert to quantity
     )
@@ -571,14 +564,13 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
 
     This is, how quantities can be used in pymeasure instruments right now. `Issue 666 <https://github.com/pymeasure/pymeasure/issues/666>`_ develops a more convenient implementation of quantities in the property factories.
 
-`get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit which has to be removed. This could be achieved by the following code:
+`get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit (e.g. :code:`1.23 nF`), which has to be removed. This could be achieved by the following code:
 
 .. testcode::
 
     Extreme5000.capacity = Instrument.measurement(
         ":CAP?",
-        """ A measurement returning a capacity in nF in the format '<cap> nF'
-        """,
+        """Measure the capacity in nF (float).""",
         get_process=lambda v: float(v.replace('nF', ''))
     )
 
@@ -588,8 +580,7 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
 
     Extreme5000.capacity = Instrument.measurement(
         ":CAP?",
-        """ A measurement returning a capacity in nF in the format '<cap> nF'
-        """,
+        """Measure the capacity in nF (float).""",
         preprocess_reply=lambda v: v.replace('nF', '')
         # notice how we don't need to cast to float anymore
     )
@@ -624,8 +615,7 @@ The code below shows how this can be accomplished with dynamic properties.
   
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts, from -1 to 1 V. This property can be set. """,
+        """Control the voltage in Volts (float).""",
         validator=strict_range,
         values=[-1, 1],
         dynamic = True,
@@ -647,6 +637,7 @@ The code below shows how this can be accomplished with dynamic properties.
 
 
 Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
+A side effect of this is that the property's docstring should be less specific, to avoid it containing dynamically changed information (like the admissible value range).
 In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
 
 .. _family_of_instruments_with_similar_features:
@@ -662,7 +653,7 @@ In this case you would update the specific class parameter range without rewriti
     class FictionalInstrumentFamily(Instrument):
         frequency = Instrument.setting(
             "FREQ %g",
-            """ Command docstring""",
+            """Set the frequency (float).""",
             validator=strict_range,
             values=[0, 1e9],
             # ... other possible parameters follow
@@ -743,7 +734,8 @@ Additionally, the device needs some time after it received a command, before it 
 .. testcode::
 
     class ExtremeCommunication(Instrument):
-        """The great ExtremeCommunication instrument.
+        """Control the ExtremeCommunication instrument.
+
         :param address: The device address for the communication.
         :param query_delay: Wait time after writing and before reading in seconds.
         """
@@ -753,17 +745,21 @@ Additionally, the device needs some time after it received a command, before it 
             self.query_delay = query_delay
     
         def write(self, command):
-            """Add the device address in front of every command and send it to the device."""
+            """Add the device address in front of every command before sending it."""
             super().write(self.address + command)
     
         def wait_for(self, query_delay=0):
-            """Wait always some time after writing a command.
+            """Wait for some time.
+
             :param query_delay: override the global query_delay.
             """
             super().wait_for(query_delay or self.query_delay)
     
         def read(self):
-            """Read from the device and assert, that the response starts with the device address."""
+            """Read from the device and check the response.
+
+            Assert that the response starts with the device address.
+            """
             got = super().read()
             if got.startswith(self.address):
                 return got[3:]
@@ -771,7 +767,7 @@ Additionally, the device needs some time after it received a command, before it 
                 raise ConnectionError(f"Expected message address '{self.address}', but read '{got[3:]}' for wrong address '{got[:3]}'.")
     
         voltage = Instrument.measurement(
-            ":VOLT:?", "The measured voltage in Volts.")
+            ":VOLT:?", """Measure the voltage in Volts.""")
 
 .. testcode:: :hide:
 
@@ -790,7 +786,7 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
 .. testcode::
 
     class ExtremeBytes(Instrument):
-        """The ExtremeBytes instrument with bytes communication."""
+        """Control the ExtremeBytes instrument with byte-based communication."""
         def __init__(self, adapter):
             super().__init__(adapter, "ExtremeBytes")
     
@@ -819,7 +815,7 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
     
         voltage = Instrument.control(
             "R,0x106,1", "W,0x106,%i",
-            """The output voltage in mV.""",
+            """Control the output voltage in mV.""",
         )
 
 .. testcode:: :hide:
