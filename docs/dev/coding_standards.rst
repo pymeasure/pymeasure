@@ -30,10 +30,9 @@ Type documentation should be placed in the docstring where not clear from the va
 Documentation
 =============
 
-PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_. All functions, classes, and methods should be documented in the code using a `docstring`_.
+PyMeasure documents code using reStructuredText and the `Sphinx documentation generator`_. All functions, classes, and methods should be documented in the code using a docstring, see section :ref:`docstrings`.
 
 .. _Sphinx documentation generator: http://www.sphinx-doc.org/en/stable/
-.. _docstring: https://www.sphinx-doc.org/en/master/usage/extensions/example_numpy.html?highlight=numpy+example
 
 
 Usage of getter and setter functions
