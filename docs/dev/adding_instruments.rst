@@ -216,7 +216,8 @@ Writing properties
 ==================
 
 In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set. 
-PyMeasure comes with three convenience functions for making properties for classes.
+PyMeasure comes with three convenience functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+
 The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that can only read values from an instrument.
 For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
@@ -235,7 +236,7 @@ For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write th
     # We are not mocking this in FakeInstrument, let's override silently
     Extreme5000.id = 'Extreme 5000 identification from instrument'
     
-You will notice that a documentation string is required, and should be descriptive and specific.
+You will notice that a documentation string is required,  :ref:`docstrings` below for details.
 
 When we use this property we will get the identification information.
 
@@ -256,24 +257,45 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functi
         """Control the voltage in Volts (float)."""
     )
 
-You will notice that we use the `Python string format`_ :code:`%g` to pass through the floating point.
+You will notice that we use the `Python string format`_ :code:`%g` to format passed-through values as floating point.
 
 .. _Python string format: https://docs.python.org/3/library/string.html#format-specification-mini-language
 
-We can use this property to set the voltage to 100 mV, which will execute the command and then request the current voltage.
+We can use this property to set the voltage to 100 mV, which will sends the appropriate command and then requests the current voltage.
 
 .. doctest::
 
     >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.voltage = 0.1        # Executes ":VOLT 0.1"
-    >>> extreme.voltage              # Reads ":VOLT?"
+    >>> extreme.voltage = 0.1        # Sends ":VOLT 0.1"
+    >>> extreme.voltage              # Sends ":VOLT?" to query for the current value
     0.1
 
 Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function can only set, but not read values.
 
 Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
 
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at once, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+.. _docstrings:
+
+Docstrings
+**********
+Descriptive and specific docstrings for your properties and methods are important for your users to quickly glean important information about a property.
+It is advisable to follow the `PEP257 <https://peps.python.org/pep-0257/>`_ docstring guidelines.
+
+* Use triple-quoted strings (:code:`"""`) to delimit docstrings.
+* One short summary line in imperative voice, with a period at the end.
+* Optionally, after a blank line, include more detailed information.
+* For functions and methods, you can add documentation on their parameters using the `Sphinx docstring format <https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html#the-sphinx-docstring-format>`__.
+
+Specific to our properties, start them with "Control", "Measure" or "Set" to indicate the kind of property (this information is not visible after import).
+In addition, it is useful to add type and information about :ref:`validators` (if applicable) at the end of the summary line, see the docstrings shown in examples throughout this page.
+
+The docstring is for information that is relevant for *using* a property/method.
+Therefore, do *not* add information about internal/hidden details, like the format of commands exchanged with the device.
+
+Using multiple values
+*********************
+Seldomly, you might need to send/receive multiple values in one command.
+The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
 
 .. testcode::
 
@@ -294,6 +316,8 @@ In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and rea
     >>> extreme.combination                     # Reads ":VOLTFREQ?"
     [0.2, 931.0]
 
+This interface is not too convenient, but luckily not often needed.
+
 The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
 .. _advanced-properties:
@@ -301,6 +325,10 @@ The next section details additional features of :func:`Instrument.control <pymea
 Advanced properties
 ===================
 
+.. _validators:
+
+Restricting values with validators
+**********************************
 Many GPIB/SCPI commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
 
 In the examples below we assume you have imported the validators.
@@ -313,7 +341,7 @@ In the examples below we assume you have imported the validators.
 In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function also provide means to achieve this.
 
 In a restricted range
-*********************
+---------------------
 
 If you have a property with a restricted range, you can use the :func:`strict_range <pymeasure.instruments.validators.strict_range>` and :func:`truncated_range <pymeasure.instruments.validators.strict_range>` functions.
 
@@ -362,7 +390,7 @@ Now our voltage will not raise an error, and will truncate the value to the rang
     1.0
 
 In a discrete set
-*****************
+-----------------
 
 Often a control property should only take a few discrete values. You can use the :func:`strict_discrete_set <pymeasure.instruments.validators.strict_discrete_set>` and :func:`truncated_discrete_set <pymeasure.instruments.validators.truncated_discrete_set>` functions to handle these situations. The strict version raises an error if the value is not in the set, as in the range examples above.
 
@@ -387,8 +415,8 @@ Now we can set the voltage range, which will automatically truncate to an approp
     0.1
 
 
-Using maps
-**********
+Mapping values
+**************
 
 Now that you are familiar with the validators, you can additionally use maps to satisfy instruments which require non-physical values. The :code:`map_values` argument of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` enables this feature.
 

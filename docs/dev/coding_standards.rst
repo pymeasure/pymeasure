@@ -39,4 +39,5 @@ PyMeasure documents code using reStructuredText and the `Sphinx documentation ge
 Usage of getter and setter functions
 ====================================
 
-Getter and setter functions are discouraged, since properties provide a more fluid experience. Given the extensive tools avalible for defining properties, detailed in the :ref:`Advanced properties <advanced-properties>` section, these types of properties are prefered.
+Getter and setter functions are discouraged, since properties provide a more fluid experience.
+Given the extensive tools available for defining properties, detailed in the sections starting with :ref:`writing_properties`, these types of properties are prefered.
