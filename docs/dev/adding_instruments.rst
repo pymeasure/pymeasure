@@ -1,3 +1,5 @@
+.. _adding-instruments:
+
 ##################
 Adding instruments
 ##################
@@ -236,7 +238,7 @@ For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write th
     # We are not mocking this in FakeInstrument, let's override silently
     Extreme5000.id = 'Extreme 5000 identification from instrument'
     
-You will notice that a documentation string is required,  :ref:`docstrings` below for details.
+You will notice that a documentation string is required, see :ref:`docstrings` for details.
 
 When we use this property we will get the identification information.
 
@@ -273,24 +275,6 @@ We can use this property to set the voltage to 100 mV, which will sends the appr
 Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function can only set, but not read values.
 
 Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
-
-.. _docstrings:
-
-Docstrings
-**********
-Descriptive and specific docstrings for your properties and methods are important for your users to quickly glean important information about a property.
-It is advisable to follow the `PEP257 <https://peps.python.org/pep-0257/>`_ docstring guidelines.
-
-* Use triple-quoted strings (:code:`"""`) to delimit docstrings.
-* One short summary line in imperative voice, with a period at the end.
-* Optionally, after a blank line, include more detailed information.
-* For functions and methods, you can add documentation on their parameters using the `reStructuredText docstring format <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#info-field-lists>`__.
-
-Specific to our properties, start them with "Control", "Measure" or "Set" to indicate the kind of property (this information is not visible after import).
-In addition, it is useful to add type and information about :ref:`validators` (if applicable) at the end of the summary line, see the docstrings shown in examples throughout this page.
-
-The docstring is for information that is relevant for *using* a property/method.
-Therefore, do *not* add information about internal/hidden details, like the format of commands exchanged with the device.
 
 Using multiple values
 *********************
