@@ -217,8 +217,11 @@ For many instruments, the simple way presented first is enough, but in case you 
 Writing properties
 ==================
 
-In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set. 
-PyMeasure comes with three convenience functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set.
+
+The property factories
+**********************
+PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
 
 The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that can only read values from an instrument.
 For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
@@ -276,38 +279,7 @@ Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting
 
 Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
 
-Using multiple values
-*********************
-Seldomly, you might need to send/receive multiple values in one command.
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
-
-.. testcode::
-
-    Extreme5000.combination = Instrument.control(
-        ":VOLTFREQ?", ":VOLTFREQ %g,%g",
-        """Simultaneously control the voltage in Volts and the frequency in Hertz (both float).
-
-        This property is set by a tuple.
-        """
-    )
-
-In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards. 
-
-.. doctest::
-
-    >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.combination = (0.2, 931)        # Executes ":VOLTFREQ 0.2,931"
-    >>> extreme.combination                     # Reads ":VOLTFREQ?"
-    [0.2, 931.0]
-
-This interface is not too convenient, but luckily not often needed.
-
-The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
-
-.. _advanced-properties:
-
-Advanced properties
-===================
+The next sections detail additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
 .. _validators:
 
@@ -597,9 +569,34 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         # notice how we don't need to cast to float anymore
     )
 
+Using multiple values
+*********************
+Seldomly, you might need to send/receive multiple values in one command.
+The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+
+.. testcode::
+
+    Extreme5000.combination = Instrument.control(
+        ":VOLTFREQ?", ":VOLTFREQ %g,%g",
+        """Simultaneously control the voltage in Volts and the frequency in Hertz (both float).
+
+        This property is set by a tuple.
+        """
+    )
+
+In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards. 
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.combination = (0.2, 931)        # Executes ":VOLTFREQ 0.2,931"
+    >>> extreme.combination                     # Reads ":VOLTFREQ?"
+    [0.2, 931.0]
+
+This interface is not too convenient, but luckily not often needed.
 
 Dynamic properties
-===================
+******************
 
 As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
 One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
@@ -616,10 +613,8 @@ Pay attention *not* to inadvertently define other class attribute or instance at
 
 The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
 
-Let us now consider a couple of common use cases for this functionality:
-
 Dynamic validity range
-**********************
+----------------------
 Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
 The code below shows how this can be accomplished with dynamic properties.
 
@@ -658,6 +653,10 @@ Instruments with similar features
 =================================
 
 When instruments have a similar set of features, it makes sense to use inheritance to obtain most of the functionality from a parent instrument class, instead of copy-pasting code.
+
+.. note::
+    Don't forget to update the instrument's :code:`name` attribute accordingly, by either supplying an appropriate argument (if available) during the :code:`super().__init__()` call, or by setting it anew below that call.
+
 Sometimes one only needs to add additional properties and methods.
 Often, some of the already present properties/methods need to be completely replaced by defining them again in the derived class.
 Often, however, only some details need to be changed.
