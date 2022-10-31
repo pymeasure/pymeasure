@@ -832,7 +832,7 @@ Some instruments, like oscilloscopes and voltage sources, have channels whose co
         """A channel of the voltage source."""
 
         voltage = Channel.control(
-			"SOURce{ch}:VOLT?", "SOURce{ch}:VOLT %f",
+			"SOURce{ch}:VOLT?", "SOURce{ch}:VOLT %g",
 			"""The output voltage of this channel, can be set and read.""",
 		)
 
@@ -841,7 +841,7 @@ Some instruments, like oscilloscopes and voltage sources, have channels whose co
 		"""An instrument with a channel."""
 
 		def __init__(self, adapter):
-			super().__init__(self, adapter, "Instrument with Channels")
+			super().__init__(adapter, "Instrument with Channels")
 			self.add_child(VoltageChannel, "A")
 
 .. testcode:: :hide:
