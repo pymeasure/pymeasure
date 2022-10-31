@@ -8,6 +8,20 @@ You can make a significant contribution to PyMeasure by adding a new instrument 
 
 Before getting started, become familiar with the :doc:`contributing work-flow <contribute>` for PyMeasure, which steps through the process of adding a new feature (like an instrument) to the development version of the source code. This section will describe how to lay out your instrument code.
 
+.. testsetup::
+
+    # Behind the scene, replace Instrument with FakeInstrument to enable
+    # doctesting simple usage cases (default doctest group)
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument
+
+.. testsetup:: with-protocol-tests
+
+    # If we want to run protocol tests on doctest code, we need to use a
+    # separate doctest "group" and a different set of imports.
+    # See https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html
+    from pymeasure.instruments import Instrument, Channel
+    from pymeasure.test import expected_protocol
+
 File structure
 ==============
 
@@ -82,13 +96,6 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     #
 
     # from pymeasure.instruments import Instrument
-    
-.. testcode::
-    :hide:
-
-    # Behind the scene, replace Instrument with FakeInstrument to enable
-    # doctesting all this
-    from pymeasure.instruments.fakes import FakeInstrument as Instrument
 
 This is a minimal instrument definition:
 
@@ -819,14 +826,7 @@ Instruments with channels
 
 Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name. For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :code:`instrument` instead of an :code:`adapter` as parameter. All the channel communication is routed through the instrument's methods (`write`, `read`, etc.). However, :meth:`Channel.write <pymeasure.instruments.Channel.write>` uses `str.format` to replace any occurence of :code:`"{ch}"` with the channel's name in the command.
 
-.. testcode:: :hide:
-
-    # Behind the scene, load the real Instrument
-    from pymeasure.instruments import Instrument
-    from pymeasure.instruments import Channel
-    from pymeasure.test import expected_protocol
-
-.. testcode::
+.. testcode:: with-protocol-tests
 
     class VoltageChannel(Channel):
         """A channel of the voltage source."""
@@ -844,7 +844,8 @@ Some instruments, like oscilloscopes and voltage sources, have channels whose co
 			super().__init__(adapter, "Instrument with Channels")
 			self.add_child(VoltageChannel, "A")
 
-.. testcode:: :hide:
+.. testcode:: with-protocol-tests
+    :hide:
 
     with expected_protocol(InstrumentWithChannels,
         [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")]
@@ -886,7 +887,7 @@ Adding a device address and adding delay
 Let's look at a simple example for a device, which requires its address as the first three characters and returns the same style. This is straightforward, as :meth:`write` just prepends the device address to the command, and :meth:`read` has to strip it again doing some error checking. Similarly, a checksum could be added.
 Additionally, the device needs some time after it received a command, before it responds, therefore :meth:`wait_for` waits always a certain time span.
 
-.. testcode::
+.. testcode:: with-protocol-tests
 
     class ExtremeCommunication(Instrument):
         """Control the ExtremeCommunication instrument.
@@ -924,7 +925,8 @@ Additionally, the device needs some time after it received a command, before it 
         voltage = Instrument.measurement(
             ":VOLT:?", """Measure the voltage in Volts.""")
 
-.. testcode:: :hide:
+.. testcode:: with-protocol-tests
+    :hide:
 
     with expected_protocol(ExtremeCommunication, [("012:VOLT:?", "01215.5")], address=12
         ) as inst:
@@ -938,7 +940,7 @@ Bytes communication
 
 Some devices do not expect ASCII strings but raw bytes. In those cases, you can call the :meth:`write_bytes` and :meth:`read_bytes` in your :meth:`write` and :meth:`read` methods. The following example shows an instrument, which has registers to be written and read via bytes sent.
 
-.. testcode::
+.. testcode:: with-protocol-tests
 
     class ExtremeBytes(Instrument):
         """Control the ExtremeBytes instrument with byte-based communication."""
@@ -973,7 +975,8 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             """Control the output voltage in mV.""",
         )
 
-.. testcode:: :hide:
+.. testcode:: with-protocol-tests
+    :hide:
 
     with expected_protocol(ExtremeBytes, [(b"\x03\x01\x06\x00\x00\x00\x00\x00\x00\x00\x01", b"\x03\x01\x0f")]) as inst:
         assert inst.voltage == 15
