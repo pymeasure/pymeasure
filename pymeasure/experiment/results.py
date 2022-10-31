@@ -209,7 +209,7 @@ class CSVFormatter(Results_Formatter):
         return self.delimiter.join(self.columns)
 
 
-class CSVFormatter_Pandas(Results_Formatter):
+class CSVFormatterPandas(Results_Formatter):
     """ Formatter of data results, pandas dataframe or single-line CSV """
 
     def format(self, record):
@@ -280,7 +280,7 @@ class Results:
         # set formatter
         formatter_class = {
             'CSV': CSVFormatter,
-            'CSV_PANDAS': CSVFormatter_Pandas,
+            'CSV_PANDAS': CSVFormatterPandas,
         }[output_format]
         self.formatter = formatter_class(
             columns=self.procedure.DATA_COLUMNS,
