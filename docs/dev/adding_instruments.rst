@@ -230,28 +230,27 @@ For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write th
 
 .. testcode::
 
-     Extreme5000.id = Instrument.measurement(
-        "*IDN?",
-        """Read the instrument identification.""",
+     Extreme5000.cell_temp = Instrument.measurement(
+        ":TEMP?",
+        """Measure the temperature of the reaction cell.""",
      )
 
 .. testcode::
     :hide:
     
-    # We are not mocking this in FakeInstrument, let's override silently
-    Extreme5000.id = 'Extreme 5000 identification from instrument'
+    # We have to fake this silently because the FakeInstrument cannot do
+    # a measurement property, it only mirrors values that you sent first.
+    Extreme5000.cell_temp = 127.2
     
 You will notice that a documentation string is required, see :ref:`docstrings` for details.
 
-When we use this property we will get the identification information.
+When we use this property we will get the temperature of the reaction cell.
 
 .. doctest::
 
     >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.id           # Reads "*IDN?"
-    'Extreme 5000 identification from instrument'
-
-Note that the :code:`id` property is already defined for SCPI instruments, so you do not need to implement it for your instruments.
+    >>> extreme.cell_temp  # Sends ":TEMP?" to the device
+    127.2
 
 The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
 
