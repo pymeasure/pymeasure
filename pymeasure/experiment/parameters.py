@@ -522,7 +522,7 @@ class Metadata(object):
 
     :param name: The parameter name
     :param fget: The parameter fget function; can be provided as a callable,
-        or as be a string, in which case it is assumed to be the name of a
+        or as a string, in which case it is assumed to be the name of a
         method or attribute of the `Procedure` class in which the Metadata is
         defined. Passing a string also allows for nested attributes by separating
         them with a period (e.g. to access an attribute or method of an
