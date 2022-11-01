@@ -1,3 +1,5 @@
+.. _connecting-to-an-instrument:
+
 ###########################
 Connecting to an instrument
 ###########################
@@ -76,14 +78,6 @@ To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper 
 
     adapter = PrologixAdapter('/dev/ttyUSB0')
     sourcemeter = Keithley2400(adapter.gpib(4))
-
-For instruments using serial communication that have particular settings that need to be matched, a custom :class:`Adapter <pymeasure.adapters.Adapter>` sub-class can be made. For example, the LakeShore 425 Gaussmeter connects via USB, but uses particular serial communication settings. Therefore, a :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>` class enables these requirements in the background. ::
-
-    from pymeasure.instruments.lakeshore import LakeShore425
-
-    gaussmeter = LakeShore425('/dev/lakeshore425')
-
-Behind the scenes the :code:`/dev/lakeshore425` port is passed to the :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>`.
 
 Some equipment may require the vxi-11 protocol for communication. An example would be a Agilent E5810B ethernet to GPIB bridge.
 To use this type equipment the python-vxi11 library has to be installed which is part of the extras package requirements. ::
