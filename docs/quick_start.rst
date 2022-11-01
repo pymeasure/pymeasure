@@ -40,7 +40,7 @@ PyMeasure can also be installed with :code:`pip`.
 
     pip install pymeasure
  
-Depending on your operating system, using this method may require additional work to install the required dependencies, which include the Qt libaries.
+Depending on your operating system, using this method may require additional work to install the required dependencies, which include the Qt libraries.
 
 Installing VISA
 ---------------
