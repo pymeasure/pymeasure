@@ -129,10 +129,25 @@ However, there are a couple of practices that have turned out to be useful to fo
 * This separation between properties and methods also naturally helps with observing the `"command-query separation" principle <https://en.wikipedia.org/wiki/Command%E2%80%93query_separation>`__.
 * If your instrument has multiple identical channels, see XXX. TODO: write section on channel implementations
 
-
 In principle you are free to write any methods that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
 
-In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences, which are highly encouraged.
+In practice, we have developed a number of best practices for making instruments easy to write and maintain. The following sections detail these, which are highly encouraged to follow.
+
+Common instrument types
+***********************
+There are a number of categories that many instruments fit into.
+In the future, pymeasure should gain an abstraction layer based on that, see `this issue <https://github.com/pymeasure/pymeasure/issues/416>`__.
+Until that is ready, here are a couple of guidelines towards a more uniform API.
+Note that not all already available instruments follow these, but expect this to be harmonized in the future.
+
+Frequent properties
+-------------------
+If your instrument has an **output** that can be switched on and off, use a :ref:`boolean property <boolean-properties>` called :code:`output_enabled`.
+
+Power supplies
+--------------
+PSUs typically can measure the *actual* current and voltage, as well as have settings for the voltage level and the current limit.
+To keep naming clear and avoid confusion, implement the properties :code:`current`, :code:`voltage`, :code:`voltage_setpoint` and :code:`current_limit`, respectively.
 
 .. _default_connection_settings:
 
@@ -446,6 +461,8 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     'Y'
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be significantly extended by using validators and maps.
+
+.. _boolean-properties:
 
 Boolean properties
 ******************
