@@ -64,7 +64,6 @@ class Procedure:
     }
 
     _parameters = {}
-    _metadata = {}
 
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
@@ -187,8 +186,7 @@ class Procedure:
         them in a meta dictionary so that the actual values can be set and used
         in their stead
         """
-        if not self._metadata:
-            self._metadata = {}
+        self._metadata = {}
 
         for item, metadata in inspect.getmembers(self.__class__):
             if isinstance(metadata, Metadata):
