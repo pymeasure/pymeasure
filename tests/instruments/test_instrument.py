@@ -31,7 +31,7 @@ import pytest
 from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.commonBase import DynamicProperty
+from pymeasure.instruments.common_base import DynamicProperty
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range

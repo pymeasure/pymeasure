@@ -24,7 +24,7 @@
 
 import logging
 
-from .commonBase import CommonBase
+from .common_base import CommonBase
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

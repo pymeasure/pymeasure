@@ -25,7 +25,7 @@
 import logging
 import time
 
-from .commonBase import CommonBase
+from .common_base import CommonBase
 from ..adapters import VISAAdapter
 
 log = logging.getLogger(__name__)
