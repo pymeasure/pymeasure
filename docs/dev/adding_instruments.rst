@@ -280,7 +280,7 @@ You will notice that we use the `Python string format`_ :code:`%g` to format pas
 
 .. _Python string format: https://docs.python.org/3/library/string.html#format-specification-mini-language
 
-We can use this property to set the voltage to 100 mV, which will sends the appropriate command and then requests the current voltage.
+We can use this property to set the voltage to 100 mV, which will send the appropriate command and then requests the current voltage.
 
 .. doctest::
 
