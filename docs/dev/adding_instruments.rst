@@ -826,23 +826,24 @@ Instruments with channels
 
 Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name. For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :code:`instrument` instead of an :code:`adapter` as parameter. All the channel communication is routed through the instrument's methods (`write`, `read`, etc.). However, :meth:`Channel.write <pymeasure.instruments.Channel.write>` uses `str.format` to replace any occurence of :code:`"{ch}"` with the channel's name in the command.
 
+In order to add a channel to an instrument or to another channel (nesting channels is possible), always use the parent's :meth:`~pymeasure.instruments.common_base.CommonBase.add_child` method. This method adds the channel as the instrument's attribute with the name :code:`ch_{id}`, e.g. :code:`ch_A`, appends the channel to the :code:`instrument.channels` list and returns the index of that channel in the list.
+
 .. testcode:: with-protocol-tests
 
     class VoltageChannel(Channel):
         """A channel of the voltage source."""
 
         voltage = Channel.control(
-			"SOURce{ch}:VOLT?", "SOURce{ch}:VOLT %g",
-			"""The output voltage of this channel, can be set and read.""",
-		)
-
+            "SOURce{ch}:VOLT?", "SOURce{ch}:VOLT %g",
+            """Control the output voltage of this channel.""",
+        )
 
     class InstrumentWithChannels(Instrument):
-		"""An instrument with a channel."""
+        """An instrument with a channel."""
 
-		def __init__(self, adapter):
-			super().__init__(adapter, "Instrument with Channels")
-			self.add_child(VoltageChannel, "A")
+        def __init__(self, adapter):
+            super().__init__(adapter, "Instrument with Channels")
+            self.add_child(VoltageChannel, "A")
 
 .. testcode:: with-protocol-tests
     :hide:
@@ -853,7 +854,77 @@ Some instruments, like oscilloscopes and voltage sources, have channels whose co
         inst.ch_A.voltage = 1.23
         assert inst.ch_A.voltage == 1.23
 
-If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name.
+If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name. The same channel could be called with :code:`inst.channels[0].voltage = 1.23` as well.
+
+
+Channels with fix prefix
+************************
+
+If all channel communication is prefixed by a specific command, e.g. :code:`"SOURceA:"` for channel A, you can subclass the channels :meth:`write` method.
+
+.. testcode:: with-protocol-tests
+
+    class VoltageChannelPrefix(Channel):
+        """A channel of a voltage source, every command has the same prefix."""
+
+        def write(self, command, **kwargs):
+            super().write(f"SOURce{self.id}:{command}", **kwargs)
+
+        voltage = Channel.control(
+            "VOLT?", "VOLT %g",
+            """Control the output voltage of this channel.""",
+        )
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    class InstrumentWithChannelsPrefix(Instrument):
+        """An instrument with a channel."""
+
+        def __init__(self, adapter):
+            super().__init__(adapter, "Instrument with Channels")
+            self.add_child(VoltageChannelPrefix, "A")
+
+    with expected_protocol(InstrumentWithChannelsPrefix,
+        [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")]
+    ) as inst:
+        inst.ch_A.voltage = 1.23
+        assert inst.ch_A.voltage == 1.23
+
+This channel class implements the same communication as the previous example, but implements the channel prefix in the :meth:`write` method and not in the individual property (created by :meth:`control`).
+
+
+Collections of different channel types
+**************************************
+
+Some devices have different types of channels. In this case, you can specify a different `collection` and `prefix` parameter.
+
+.. testcode:: with-protocol-tests
+
+    class MultiChannelTypeInstrument(Instrument):
+        """An instrument with two different channel types."""
+
+        def __init__(self, adapter):
+            super().__init__(self, adapter, "MultiChannelTypeInstrument")
+            for name in ("A", "B", "C"):
+                self.add_child(VoltageChannel, name, collection="analog", prefix="an")
+            for name in range(3):
+                self.add_child(VoltageChannelPrefix, name, collection="digital", prefix="di")
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(MultiChannelTypeInstrument,
+        [("SOURceB:VOLT 1.23", None), ("SOURce2:VOLT?", "1.23")]
+    ) as inst:
+        inst.an_B.voltage = 1.23
+        assert inst.di_2.voltage == 1.23
+
+
+This instrument has two collections of channels. One of type :class:`VoltageChannel` with the names :code:`an_A, an_B, an_C` in the list :code:`analog`, and one collection of type :class:`VoltageChannelPrefix` with the names :code:`di_0, di_1, di_2` in the list :code:`digital`. You can call the first channel of the second group either with :code:`inst.di_0.voltage` or with :code:`inst.digital[0].voltage`.
+
+If you have a single channel category, do not change the default parameters of :meth:`add_child`!
+
 
 
 

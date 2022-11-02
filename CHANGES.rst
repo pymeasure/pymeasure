@@ -13,6 +13,7 @@ New adapter and instrument mechanics
 - reading/writing binary values is in the Adapter class itself.
 - PrologixAdapter is based on VISAAdapter.
 - SerialAdapter improved to be more similar to VISAAdapter: read/write use strings, read/write_bytes bytes. Support for termination characters added.
+- Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 
 Deprecated features
 -------------------
