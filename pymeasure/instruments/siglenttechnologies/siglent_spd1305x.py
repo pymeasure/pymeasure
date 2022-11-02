@@ -35,15 +35,17 @@ class SPD1305X(SPDBase):
             name="Siglent Technologies SPD1305X Power Supply",
             **kwargs
         )
+        voltage_limits = [0, 30]
+        current_limits = [0, 5]
 
         self.ch = {}
         self.ch[1] = SPDChannel(self, 1)
 
-        self.ch[1].set_voltage_values = [0, 30]
-        self.ch[1].set_current_values = [0, 5]
+        self.ch[1].voltage_setpoint_values = voltage_limits
+        self.ch[1].current_limit_values = current_limits
 
     def shutdown(self):
         """ Ensures that the voltage is turned to zero
         and disables the output. """
-        self.ch[1].set_voltage(0.0)
-        self.ch[1].disable()
+        self.ch[1].voltage_setpoint = 0
+        self.ch[1].enable_output(False)

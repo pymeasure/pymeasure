@@ -59,18 +59,18 @@ def test_set_current():
         [("CH1:CURR 0.5", None),
          ("CH1:CURR?", "0.5")]
     ) as inst:
-        inst.ch[1].set_current = 0.5
-        assert inst.ch[1].set_current == 0.5
+        inst.ch[1].current_limit = 0.5
+        assert inst.ch[1].current_limit == 0.5
 
 
 def test_set_current_trunc():
     with expected_protocol(
         SPD1168X,
         [("CH1:CURR 8", None),
-         ("CH1:CURR?", "0.5")]
+         ("CH1:CURR?", "8")]
     ) as inst:
-        inst.ch[1].set_current = 10  # too large, gets truncated
-        assert inst.ch[1].set_current == 0.5
+        inst.ch[1].current_limit = 10  # too large, gets truncated
+        assert inst.ch[1].current_limit == 8
 
 
 def test_enable_output():
@@ -81,5 +81,5 @@ def test_enable_output():
          ("INST CH1", None),
          ("OUTP CH1,OFF", None)]
     ) as inst:
-        inst.ch[1].enable()
-        inst.ch[1].disable()
+        inst.ch[1].enable_output()
+        inst.ch[1].enable_output(False)

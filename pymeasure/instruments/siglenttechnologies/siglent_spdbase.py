@@ -173,7 +173,7 @@ class SPDChannel(object):
 
     current = Instrument.measurement(
         "MEAS:CURR? CH{channel}",
-        """Measure the channel output voltage.
+        """Measure the channel output current.
 
         :type: float
         """
@@ -181,62 +181,32 @@ class SPDChannel(object):
 
     power = Instrument.measurement(
         "MEAS:POWE? CH{channel}",
-        """Measure the channel output voltage.
+        """Measure the channel output power.
 
         :type: float
         """
     )
 
-    set_current = Instrument.control(
+    current_limit = Instrument.control(
         "CH{channel}:CURR?", "CH{channel}:CURR %g",
         """Control the output current configuration of the channel.
 
-        :type: float
-
+        :type : float
         """,
         validator=truncated_range,
         values=[0, 8],
         dynamic=True
     )
 
-    set_voltage = Instrument.control(
+    voltage_setpoint = Instrument.control(
         "CH{channel}:VOLT?", "CH{channel}:VOLT %g",
         """Control the output voltage configuration of the channel.
 
-        :type: float
-
+        :type : float
         """,
         validator=truncated_range,
         values=[0, 16],
         dynamic=True
-    )
-
-    output = Instrument.setting(
-        "OUTP CH{channel},%s",
-        """Configure the power supply output.
-
-        :type: bool
-            ``True``: enables the output
-            ``False``: disables the output
-
-        """,
-        validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True
-    )
-
-    enable_timer = Instrument.setting(
-        "TIME CH{channel},%s",
-        """Enable the channel timer.
-
-        :type: bool
-            ``True``: enables the timer
-            ``False``: disables it
-
-        """,
-        validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True
     )
 
     def ask(self, cmd):
@@ -254,14 +224,16 @@ class SPDChannel(object):
     def check_errors(self):
         return self.instrument.check_errors()
 
-    def enable(self):
-        """Enable the channel output
+    def enable_output(self, enable: bool = True):
+        """Enable the channel output.
 
-        :returns: self
+        :type: bool
+            ``True``: enables the output
+            ``False``: disables it
         """
         self.instrument.selected_channel = self.channel
-        self.output = True
-        return self
+        self.write(f'OUTP CH{self.channel},{("OFF","ON")[enable]}')
+
 
     def disable(self):
         """Disable the channel output

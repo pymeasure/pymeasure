@@ -41,18 +41,5 @@ class SPD1168X(SPDBase):
     def shutdown(self):
         """ Ensure that the voltage is turned to zero
         and disable the output. """
-        self.ch[1].set_voltage(0.0)
-        self.ch[1].disable()
-
-
-if __name__ == "__main__":
-    psu = SPD1168X("TCPIP0::10.20.2.245::5025::SOCKET")
-    print(psu.id)
-    print(psu.selected_channel)
-    psu.ch[1].set_current = 1
-    psu.ch[1].disable()
-
-    print(psu.ch[1].set_voltage)
-    print(psu.ch[1].set_current)
-    print(psu.ch[1].voltage)
-    print(psu.error)
+        self.ch[1].voltage_setpoint = 0
+        self.ch[1].enable_output(False)
