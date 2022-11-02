@@ -25,12 +25,32 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.siglenttechnologies.siglent_spd1168x import SPD1168X
 
 
-def test_set_4W_mode():
+def test_enable_4W_mode():
     with expected_protocol(
         SPD1168X,
         [("MODE:SET 4W", None)]
     ) as inst:
-        inst.set_4W_mode = True
+        inst.enable_4W_mode = True
+
+
+def test_save_config():
+    with expected_protocol(
+        SPD1168X,
+        [("*SAV 1", None),
+         ("*SAV 5", None)]
+    ) as inst:
+        inst.save_config(1)
+        inst.save_config(5)
+
+
+def test_recall_config():
+    with expected_protocol(
+        SPD1168X,
+        [("*RCL 1", None),
+         ("*RCL 5", None)]
+    ) as inst:
+        inst.recall_config(1)
+        inst.recall_config(5)
 
 
 def test_set_current():

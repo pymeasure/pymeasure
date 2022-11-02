@@ -98,46 +98,24 @@ class SPDBase(Instrument):
         get_process=lambda v: SystemStatusCode(int(v, base=16)),
     )
 
-    local_lockout = Instrument.setting(
+    disable_local_interface = Instrument.setting(
         "%s",
-        """Set the local interface lockout.
+        """Configure the availability of the local interface.
 
         :type: bool
             ``True``: disables the local interface
             ``False``: enables it.
-
         """,
         validator=strict_discrete_set,
         values={True: "*LOCK", False: "*UNLOCK"},
         map_values=True
     )
 
-    save_settings = Instrument.setting(
-        "*SAV %d",
-        """Save the current configuration in non-volatile memory.
-
-        :type: int
-        """,
-        validator=strict_range,
-        values=[1, 5]
-    )
-
-    recall_settings = Instrument.setting(
-        "*RCL %d",
-        """Recall the saved configuration from non-volatile memory.
-
-        :type: int
-        """,
-        validator=strict_range,
-        values=[1, 5]
-    )
-
     selected_channel = Instrument.control(
         "INST?", "INST %s",
         """Control the selected channel of the instrument.
 
-        :type: int
-
+        :type : int
         """,
         validator=strict_discrete_set,
         values={1: "CH1"},  # This dynamic property should be updated for multi-channel instruments
@@ -145,14 +123,13 @@ class SPDBase(Instrument):
         dynamic=True
     )
 
-    set_4W_mode = Instrument.setting(
+    enable_4W_mode = Instrument.setting(
         "MODE:SET %s",
         """Configure 4-wire mode.
 
         :type: bool
             ``True``: enables 4-wire mode
             ``False``: disables it.
-
         """,
         validator=strict_discrete_set,
         values={False: "2W", True: "4W"},
@@ -163,17 +140,19 @@ class SPDBase(Instrument):
         """Save the current config to memory.
 
         :param index:
-            string: index of the location to save the configuration
+            int: index of the location to save the configuration
         """
-        self.save_settings = index
+        index = strict_discrete_range(index, [1, 5], 1)
+        self.write(f"*SAV {index:d}")
 
     def recall_config(self, index):
         """Recall a config from memory.
 
         :param index:
-            string: index of the location from which to recall the configuration
+            int: index of the location from which to recall the configuration
         """
-        self.recall_settings = index
+        index = strict_discrete_range(index, [1, 5], 1)
+        self.write(f"*RCL {index:d}")
 
 
 class SPDChannel(object):
