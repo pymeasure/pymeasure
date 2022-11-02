@@ -123,19 +123,6 @@ class SPDBase(Instrument):
         dynamic=True
     )
 
-    enable_4W_mode = Instrument.setting(
-        "MODE:SET %s",
-        """Configure 4-wire mode.
-
-        :type: bool
-            ``True``: enables 4-wire mode
-            ``False``: disables it.
-        """,
-        validator=strict_discrete_set,
-        values={False: "2W", True: "4W"},
-        map_values=True
-    )
-
     def save_config(self, index):
         """Save the current config to memory.
 
