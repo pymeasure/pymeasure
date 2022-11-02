@@ -75,7 +75,7 @@ class EurotestHPP120256(Instrument):
 
     # Here voltage HV output should be at 1.0 kV
 
-    hpp120256.shutdown(100.0)
+    hpp120256.shutdown()
 
     hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 60.0)
 
@@ -275,7 +275,7 @@ class EurotestHPP120256(Instrument):
 
         self.write("EMCY OFF")
 
-    def shutdown(self, voltage_rate):
+    def shutdown(self, voltage_rate=200.0):
         """
         Change the output voltage setting (V) to zero and
         the ramp speed - voltage_rate (V/s) of the output voltage.
@@ -288,7 +288,7 @@ class EurotestHPP120256(Instrument):
         self.ramp_to_zero(voltage_rate)
         super().shutdown()
 
-    def ramp_to_zero(self, voltage_rate):
+    def ramp_to_zero(self, voltage_rate=200.0):
         """
         Sets the voltage output setting to zero and the ramp setting
         to a value determined by the voltage_rate parameter.
@@ -345,7 +345,7 @@ class EurotestHPP120256(Instrument):
             log.debug(f"Elapsed time: {round(actual_time - ref_time, ndigits=1)} seconds.")
 
             if actual_time > future_time:
-                self.shutdown(200.0)  # in case the voltage were applied at the output
+                self.shutdown()  # in case the voltage were applied at the output
                 raise TimeoutError("Timeout for wait_for_output_voltage_reached function")
 
         log.info("Waiting done.")
