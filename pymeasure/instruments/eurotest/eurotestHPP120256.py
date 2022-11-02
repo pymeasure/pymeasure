@@ -47,8 +47,7 @@ class EurotestHPP120256(Instrument):
 
     hpp120256 = EurotestHPP120256("GPIB0::20::INSTR")
 
-    response = hpp120256.id
-    print(response)
+    print(pp120256.id)
     print(hpp120256.lam_status)
     print(hpp120256.status)
 
