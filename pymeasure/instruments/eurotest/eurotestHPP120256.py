@@ -55,9 +55,9 @@ class EurotestHPP120256(Instrument):
 
     hpp120256.voltage_ramp = 50.0  # V/s
     hpp120256.current_limit = 2.0  # mA
-    inst.enable_kill = True  # Enable over-current protection
+    inst.kill_enabled = True  # Enable over-current protection
     time.sleep(1.0)  # Give time to enable kill
-    inst.enable_output = True
+    inst.output_enabled = True
     time.sleep(1.0)  # Give time to output on
 
     abs_output_voltage_error = 0.02 # kV
@@ -81,7 +81,7 @@ class EurotestHPP120256(Instrument):
 
     # Here voltage HV output should be at 0.0 kV
 
-    inst.enable_output = False
+    inst.output_enabled = False
 
     # Now the HV voltage source is in safe state
 
@@ -197,24 +197,34 @@ class EurotestHPP120256(Instrument):
         float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
     )
 
-    enable_kill = Instrument.setting(
-        "KILL,%s",
-        """ Enables or disables (True/False) the kill function of the HV source.
+    kill_enabled = Instrument.control(
+        "STATUS,DI", "KILL,%s",
+        """ A boolean property that represents the kill enable setting of the HV source.
          When Kill is enabled yellow led is flashing and the output
-         will be shut OFF permanently without ramp if Iout > IOUTmax.""",
+         will be shut OFF permanently without ramp if Iout > IOUTmax. This property can be set.""",
         validator=strict_discrete_set,
         values={True: 'ENable', False: 'DISable'},
-        map_values=True
+        map_values=True,
+        get_process=lambda r:
+        EurotestHPP120256.EurotestHPP120256Status(
+            int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
+                decode('utf-8', 'ignore'), 2)
+        ) & EurotestHPP120256.EurotestHPP120256Status.KILL_ENABLE
     )
 
-    enable_output = Instrument.setting(
-        "HV,%s",
-        """Enables or disables (True/False) the voltage output function of the HV source.
-         When output voltage is enabled green led is ON and the
-         voltage_setting will be present on the output""",
+    output_enabled = Instrument.control(
+        "STATUS,DI", "HV,%s",
+        """A boolean property that represents the output enable setting of the HV source.
+        When output voltage is enabled green led is ON and the
+        voltage_setting will be present on the output. This property can be set.""",
         validator=strict_discrete_set,
         values={True: 'ON', False: 'OFF'},
-        map_values=True
+        map_values=True,
+        get_process=lambda r:
+        EurotestHPP120256.EurotestHPP120256Status(
+            int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
+                decode('utf-8', 'ignore'), 2)
+        ) & EurotestHPP120256.EurotestHPP120256Status.OUTPUT_ON
     )
 
     id = Instrument.measurement(
