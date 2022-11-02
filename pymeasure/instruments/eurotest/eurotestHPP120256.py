@@ -93,8 +93,7 @@ class EurotestHPP120256(Instrument):
     COMMAND_DELAY = 0.2  # s
 
     response_encoding = "iso-8859-2"
-    f_numbers_regex_pattern = r'([+-]?([\d]*\.)?[\d]+)'
-    regex = re.compile(f_numbers_regex_pattern)
+    regex = re.compile(r'([+-]?([\d]*\.)?[\d]+)')
 
     def __init__(self,
                  adapter,
