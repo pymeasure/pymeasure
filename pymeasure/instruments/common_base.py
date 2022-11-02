@@ -161,7 +161,7 @@ class CommonBase:
         return super().__getattribute__(name)
 
     # Channel management
-    def add_child(self, cls, id, group="channels", prefix="ch", **kwargs):
+    def add_child(self, cls, id, collection="channels", prefix="ch", **kwargs):
         """Add a child to this instance and return its index in the children list.
 
         The newly created child may be accessed either by the index in the
@@ -169,22 +169,28 @@ class CommonBase:
         The fifth channel of `instrument` with id "F" has two access options:
         :code:`instrument.channels[4] == instrument.ch_F`
 
+        .. note::
+
+            Do not change the default `collection` or `prefix` parameter, unless
+            you have to distinguish several collections of different children,
+            e.g. different channel types (analog and digital).
+
         :param cls: Class of the channel.
         :param id: Child id how it is used in communication, e.g. `"A"`.
-        :param group: Name of the group of children, used for the list.
-        :param prefix: Group prefix for the attributes, e.g. `"ch"`
+        :param collection: Name of the collection of children, used for the list.
+        :param prefix: Collection prefix for the attributes, e.g. `"ch"`
             creates attribute `self.ch_A`. An underscore separates prefix from id.
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Index of this instance's channels.
         """
         child = cls(self, id, **kwargs)
-        group_list = getattr(self, group, [])
-        if not group_list:
+        collection_list = getattr(self, collection, [])
+        if not collection_list:
             # Add a grouplist to the parent
-            setattr(self, group, group_list)
-        group_list.append(child)
+            setattr(self, collection, collection_list)
+        collection_list.append(child)
         setattr(self, f"{prefix}_{child.id}", child)
-        return self.channels.index(child)
+        return collection_list.index(child)
 
     # Communication functions
     def wait_for(self, query_delay=0):

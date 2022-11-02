@@ -102,6 +102,11 @@ class GenericChannel(Channel):
         map_values=True,
         dynamic=True,
     )
+    special_control = Instrument.control(
+        "SOUR{ch}:special?", "OUTP{ch}:special %s",
+        """A special control with different channel specifiers for get and set.""",
+        cast=str,
+    )
 
 
 class ChannelInstrument(Instrument):
@@ -740,6 +745,16 @@ def test_channel_dynamic_property():
         inst.ch_A.fake_ctrl = 100
 
 
+def test_channel_special_control():
+    """Test different Prefixes for getter and setter."""
+    with expected_protocol(ChannelInstrument,
+                           [("SOURA:special?", "super"),
+                            ("OUTPB:special test", None)],
+                           ) as inst:
+        assert inst.ch_A.special_control == "super"
+        inst.ch_B.special_control = "test"
+
+
 class TestChannelAccess:
     @pytest.fixture(scope="class")
     def inst(self):
@@ -750,3 +765,40 @@ class TestChannelAccess:
 
     def test_len(self, inst):
         assert len(inst.channels) == 2
+
+
+class TestMultiFunctionality:
+    """Test the usage of children for different functionalities."""
+    class SomeFunctionality(Channel):
+        """This Functionality needs a prepended `id`."""
+
+        def write(self, command, **kwargs):
+            super().write(f"{self.id}:{command}")
+
+        voltage = Channel.control("Volt?", "Volt %f", "Set voltage in Volts.")
+
+    class InstrumentWithFunctionality(ChannelInstrument):
+        """Instrument with some functionality."""
+
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, **kwargs)
+            self.add_child(TestMultiFunctionality.SomeFunctionality, "X", "functions", "f")
+
+    def test_functionality_list(self):
+        inst = TestMultiFunctionality.InstrumentWithFunctionality(ProtocolAdapter())
+        assert isinstance(inst.functions[0], TestMultiFunctionality.SomeFunctionality)
+        assert inst.functions[0] == inst.f_X
+
+    def test_functions_voltage_getter(self):
+        with expected_protocol(
+                TestMultiFunctionality.InstrumentWithFunctionality,
+                [("X:Volt?", "123.456")]
+        ) as inst:
+            assert inst.f_X.voltage == 123.456
+
+    def test_functions_voltage_setter(self):
+        with expected_protocol(
+                TestMultiFunctionality.InstrumentWithFunctionality,
+                [("X:Volt 123.456000", None)]
+        ) as inst:
+            inst.f_X.voltage = 123.456
