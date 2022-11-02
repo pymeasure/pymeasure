@@ -83,3 +83,21 @@ def test_enable_output():
     ) as inst:
         inst.ch[1].enable_output()
         inst.ch[1].enable_output(False)
+
+
+def test_enable_timer():
+    with expected_protocol(
+        SPD1168X,
+        [("TIME CH1,ON", None),
+         ("TIME CH1,OFF", None)]
+    ) as inst:
+        inst.ch[1].enable_timer()
+        inst.ch[1].enable_timer(False)
+
+
+def test_configure_timer():
+    with expected_protocol(
+        SPD1168X,
+        [("TIME:SET CH1,1,5.001,8.000,30", None)]
+    ) as inst:
+        inst.ch[1].configure_timer(1, 5.001, 8.55, 30)

@@ -23,8 +23,8 @@
 #
 import logging
 from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range,
+from pymeasure.instruments.validators import (strict_discrete_range,
+                                              strict_discrete_set,
                                               truncated_range
                                               )
 from enum import IntFlag
@@ -159,9 +159,15 @@ class SPDChannel(object):
     """ The channel class for Siglent SPDxxxxX instruments.
     """
 
-    def __init__(self, instrument, channel: int = 1):
+    def __init__(self, instrument,
+                 channel: int = 1,
+                 voltage_range: list = [0, 16],
+                 current_range: list = [0, 8]):
         self.instrument = instrument
         self.channel = channel
+
+        self.voltage_range = voltage_range
+        self.current_range = current_range
 
     voltage = Instrument.measurement(
         "MEAS:VOLT? CH{channel}",
@@ -234,12 +240,29 @@ class SPDChannel(object):
         self.instrument.selected_channel = self.channel
         self.write(f'OUTP CH{self.channel},{("OFF","ON")[enable]}')
 
+    def enable_timer(self, enable: bool = True):
+        """Enable the channel timer.
 
-    def disable(self):
-        """Disable the channel output
-
-        :returns: self
+        :type: bool
+            ``True``: enables the timer
+            ``False``: disables it
         """
-        self.instrument.selected_channel = self.channel
-        self.output = False
-        return self
+        self.write(f'TIME CH{self.channel},{("OFF","ON")[enable]}')
+
+    def configure_timer(self, step, voltage, current, duration):
+        """Configure the timer step.
+
+        :param step:
+            int: index of the step to save the configuration
+        :param voltage:
+            float: voltage setpoint of the step
+        :param current:
+            float: current limit of the step
+        :param duration:
+            int: duration of the step in seconds
+        """
+        step = strict_discrete_range(step, [1, 5], 1)
+        voltage = truncated_range(voltage, self.voltage_range)
+        current = truncated_range(current, self.current_range)
+        duration = truncated_range(duration, [0, 10000])
+        self.write(f'TIME:SET CH{self.channel},{step:d},{voltage:1.3f},{current:1.3f},{duration:d}')
