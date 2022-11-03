@@ -782,7 +782,8 @@ class TestMultiFunctionality:
 
         def __init__(self, adapter, **kwargs):
             super().__init__(adapter, **kwargs)
-            self.add_child(TestMultiFunctionality.SomeFunctionality, "X", "functions", "f")
+            self.add_child(TestMultiFunctionality.SomeFunctionality, "X",
+                           collection="functions", prefix="f")
 
     def test_functionality_list(self):
         inst = TestMultiFunctionality.InstrumentWithFunctionality(ProtocolAdapter())

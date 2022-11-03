@@ -905,7 +905,7 @@ Some devices have different types of channels. In this case, you can specify a d
         """An instrument with two different channel types."""
 
         def __init__(self, adapter):
-            super().__init__(self, adapter, "MultiChannelTypeInstrument")
+            super().__init__(adapter, "MultiChannelTypeInstrument")
             for name in ("A", "B", "C"):
                 self.add_child(VoltageChannel, name, collection="analog", prefix="an")
             for name in range(3):
