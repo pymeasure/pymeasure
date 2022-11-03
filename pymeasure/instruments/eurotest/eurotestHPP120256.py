@@ -368,8 +368,10 @@ class EurotestHPP120256(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        time.sleep(self.write_delay)
+        actual_write_delay = time.time() - self.last_write_timestamp
+        time.sleep(max(0, self.write_delay - actual_write_delay))
         super().write(command, **kwargs)
+        self.last_write_timestamp = time.time()
 
     def ask(self, command):
         """ Overrides Instrument ask method for including query_delay time on parent call.
