@@ -115,6 +115,7 @@ class EurotestHPP120256(Instrument):
 
         self.write_delay = write_delay
         self.query_delay = query_delay
+        self.last_write_timestamp = 0.0
 
     # ####################################
     # # EuroTest-Command set. Non SCPI commands.
