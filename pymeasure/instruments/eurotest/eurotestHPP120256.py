@@ -342,9 +342,11 @@ class EurotestHPP120256(Instrument):
             actual_time = time.time()
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
             voltage_output = self.voltage
-            if math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0, abs_tol=abs_output_voltage_error):
-                # check if voltage_output is set. If so then no more wait
+            # check if voltage_output is set. If so then no more wait
+            if math.isclose(voltage_output, voltage_setpoint,
+                            rel_tol=0.0, abs_tol=abs_output_voltage_error):
                 break
+
             log.debug("voltage_output_valid_range: "
                       "[" + str(voltage_setpoint - abs_output_voltage_error) +
                       ", " + str(voltage_setpoint + abs_output_voltage_error) + "]")
