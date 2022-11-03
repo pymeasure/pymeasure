@@ -662,7 +662,7 @@ class SMC100(Instrument):
     def reset(self):
         """Reset the controller."""
         self.write("RS")
-        sleep(1)
+        sleep(5)
         # Sequence necessary to avoid error on next command
         try:
             self.check_errors()
