@@ -103,8 +103,9 @@ class HP8657B(Instrument):
         depth is the moduledation depth in percent
 
         *Note:*
-            - AM & FM can be active at the same time
-            - only one internal source can be active at the time
+            * AM & FM can be active at the same time
+            * only one internal source can be active at the time
+
         """
         strict_range(depth, [0, 100])
 
@@ -127,51 +128,51 @@ class HP8657B(Instrument):
         deviation is the peak deviation value in kHz.
 
         *Note:*
-            - AM & FM can be active at the same time
-            - only one internal source can be active at the time
+            * AM & FM can be active at the same time
+            * only one internal source can be active at the time
+
         """
         strict_range(deviation, [0, 400])
         if source in self.modulations:
             self.write(f"FM {self.modulations[source]} {deviation} KZ")
 
-    amplitude = Instrument.setting(
+    frequency = Instrument.setting(
+        "FR %9.0f HZ",
+        """
+        controls the output frequency of the instrument in Hz.
+        For the 8567B the valid range is 100 kHz to 2060 MHz.
+
+        """,
+        validator=strict_range,
+        values=[1.0E5, 2.060E9],
+        )
+
+    level = Instrument.setting(
         "AP%gDM",
         """
-        A floating point property that sets the output amplitude in dBm.
-
-        *Note:* For the moment only amplitudes in dBm are accepted.
+        sets the output level in dBm.
 
         """,
         validator=strict_range,
         values=[-143.5, 17.0],
-    )
+        )
 
-    amplitude_offset = Instrument.setting(
+    level_offset = Instrument.setting(
         "AO%gDB",
         """
-        A floating point property that sets the output offset in dB.
+        sets the output offset in dB.
 
         """,
         validator=strict_range,
         values=[-100, 100.0],
-    )
-
-    frequency = Instrument.setting(
-        "FR %9.0f HZ",
-        """
-        A float propery that controls the output frequency of the instrument
-        For the 8567B the valid range is 100 kHz to 2060 MHz
-        """,
-        validator=strict_range,
-        values=[1.0E5, 2.060E9],
-    )
+        )
 
     output_enabled = Instrument.setting(
         "R%d",
         """
-        A bool property which controls if the output is enabled
+        controls if the output is enabled
         """,
         validator=strict_discrete_set,
         values={False: 2, True: 3},
         map_values=True
-    )
+       )
