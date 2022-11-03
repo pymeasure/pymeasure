@@ -334,21 +334,17 @@ class EurotestHPP120256(Instrument):
         ref_time = time.time()
         future_time = ref_time + timeout
 
-        voltage_output = self.voltage
-        voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
-                                          abs_tol=abs_output_voltage_error)
-
         log.debug(f"\tWaiting for voltage output set. "
                   f"Reading output voltage every {check_period} seconds.\n"
                   f"\tTimeout: {timeout} seconds.")
 
-        while not voltage_output_set:
+        while True:
             actual_time = time.time()
-
             time.sleep(check_period)  # wait for voltage output reaches the voltage output setting
             voltage_output = self.voltage
-            voltage_output_set = math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0,
-                                              abs_tol=abs_output_voltage_error)
+            if math.isclose(voltage_output, voltage_setpoint, rel_tol=0.0, abs_tol=abs_output_voltage_error):
+                # check if voltage_output is set. If so then no more wait
+                break
             log.debug("voltage_output_valid_range: "
                       "[" + str(voltage_setpoint - abs_output_voltage_error) +
                       ", " + str(voltage_setpoint + abs_output_voltage_error) + "]")
@@ -359,7 +355,7 @@ class EurotestHPP120256(Instrument):
                 self.shutdown()  # in case the voltage were applied at the output
                 raise TimeoutError("Timeout for wait_for_output_voltage_reached function")
 
-        log.info("Waiting done.")
+        log.info("Waiting for voltage output set done.")
 
         return
 
