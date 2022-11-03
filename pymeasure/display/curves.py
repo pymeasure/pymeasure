@@ -135,7 +135,7 @@ class BufferCurve(pg.PlotDataItem):
     """ Creates a curve based on a predefined buffer size and allows data to be added dynamically.
     """
 
-    data_updated = QtCore.QSignal()
+    data_updated = QtCore.Signal()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -166,13 +166,13 @@ class Crosshairs(QtCore.QObject):
     x and y graph coordinates
     """
 
-    coordinates = QtCore.QSignal(float, float)
+    coordinates = QtCore.Signal(float, float)
 
     def __init__(self, plot, pen=None):
         """ Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
-        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
+        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.PenStyle.DashLine)
         """
         super().__init__()
 

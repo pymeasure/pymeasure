@@ -34,6 +34,7 @@ Mathieu Plante
 Michele Sardo
 Steven Siegl
 Benjamin Klebel-Knobloch
+Markus Röleke
 Demetra Adrahtas
 Dan McDonald
 Hud Wahab
@@ -47,3 +48,9 @@ Marco von Rosenberg
 Jack Van Sambeek
 Pierre-Louis Lamure
 JC Arbelbide
+Florian Jünger
+Benedikt Moneke
+Asaf Yagoda
+Fabio Garzetti
+Daniel Schmeer
+Mike Manno

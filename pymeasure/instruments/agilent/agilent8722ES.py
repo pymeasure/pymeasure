@@ -73,9 +73,9 @@ class Agilent8722ES(Instrument):
         cast=bool
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Agilent 8722ES Vector Network Analyzer",
             **kwargs
         )
