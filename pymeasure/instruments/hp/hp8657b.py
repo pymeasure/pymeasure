@@ -37,12 +37,11 @@ class HP8657B(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
-        kwargs.setdefault('read_termination', '\r\n')
-        kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
             "Hewlett-Packard HP8657B",
             includeSCPI=False,
+            send_emd=True,
             **kwargs,
         )
 
@@ -54,7 +53,6 @@ class HP8657B(Instrument):
 
         """
         log.warning("HP8657B Does not support error status readout")
-        return 0
 
     def clear(self):
         """
