@@ -47,6 +47,9 @@ class HP8657B(Instrument):
         )
 
     class Modulation(IntEnum):
+        """
+        IntEnum for the different modulation sources
+        """
         EXTERNAL = 1
         INT_400HZ = 2
         INT_1000HZ = 3
@@ -56,7 +59,6 @@ class HP8657B(Instrument):
     def check_errors(self):
         """
         Method to read the error status register
-
         as the 8657B does not support any readout of values, this will return 0 and log a warning
 
         """
@@ -74,7 +76,7 @@ class HP8657B(Instrument):
     am_depth = Instrument.setting(
         "AM %2.1f PC",
         """
-        sets the modulation depth for AM,
+        Set the modulation depth for AM,
         usable range 0-99.9%
         """,
         validator=strict_range,
@@ -84,7 +86,7 @@ class HP8657B(Instrument):
     am_source = Instrument.setting(
         "AM S%i",
         """
-        sets the source for the AM function
+        Set the source for the AM function
 
         ==========  =======
         Value       Meaning
@@ -108,7 +110,7 @@ class HP8657B(Instrument):
     fm_deviation = Instrument.setting(
         "FM %3.1fKZ",
         """
-        sets the peak deviation in kHz for the FM function,
+        Set the peak deviation in kHz for the FM function,
         useable range 0.1 - 400 kHz
 
         *NOTE*:
@@ -123,7 +125,7 @@ class HP8657B(Instrument):
     fm_source = Instrument.setting(
         "FM S%i",
         """
-        sets the source for the FM function
+        Set the source for the FM function
 
         ==========  =======
         Value       Meaning
@@ -149,7 +151,8 @@ class HP8657B(Instrument):
     frequency = Instrument.setting(
         "FR %9.1f HZ",
         """
-        controls the output frequency of the instrument in Hz.
+        Set the output frequency of the instrument in Hz.
+        
         For the 8567B the valid range is 100 kHz to 2060 MHz.
         """,
         validator=strict_range,
@@ -159,7 +162,7 @@ class HP8657B(Instrument):
     level = Instrument.setting(
         "AP %g DM",
         """
-        sets the output level in dBm.
+        Set the output level in dBm.
 
         For the 8657B the range is -143.5 to +17 dBm
 
@@ -171,7 +174,7 @@ class HP8657B(Instrument):
     level_offset = Instrument.setting(
         "AO %g DB",
         """
-        sets the output offset in dB, usable range -199 to +199 dB
+        Sets the output offset in dB, usable range -199 to +199 dB
 
         """,
         validator=strict_range,
@@ -181,7 +184,7 @@ class HP8657B(Instrument):
     output_enabled = Instrument.setting(
         "R%d",
         """
-        controls if the output is enabled
+        Controls the output
         """,
         validator=strict_discrete_set,
         values={False: 2, True: 3},
