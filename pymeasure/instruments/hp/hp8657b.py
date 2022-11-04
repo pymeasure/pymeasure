@@ -23,6 +23,7 @@
 #
 
 import logging
+from enum import IntEnum
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -41,9 +42,16 @@ class HP8657B(Instrument):
             adapter,
             "Hewlett-Packard HP8657B",
             includeSCPI=False,
-            send_emd=True,
+            send_end=True,
             **kwargs,
         )
+
+    class Modulation(IntEnum):
+        EXTERNAL = 1
+        INT_400HZ = 2
+        INT_1000HZ = 3
+        OFF = 4
+        DC_FM = 5
 
     def check_errors(self):
         """
@@ -63,13 +71,6 @@ class HP8657B(Instrument):
 
     id = "HP 8657B Signal generator"  #: Manual ID entry, as the instrument does not talk with us
 
-    # List of modulation sources
-    modulation_source = {"External": 1,
-                         "Int_400Hz": 2,
-                         "Int_1000Hz": 3,
-                         "OFF": 4,
-                         "DC_FM": 5}
-
     am_depth = Instrument.setting(
         "AM %2.1f PC",
         """
@@ -81,7 +82,7 @@ class HP8657B(Instrument):
         )
 
     am_source = Instrument.setting(
-        "AM S%d",
+        "AM S%i",
         """
         sets the source for the AM function
 
@@ -101,8 +102,7 @@ class HP8657B(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=modulation_source,
-        map_values=True,
+        values=Modulation,
         )
 
     fm_deviation = Instrument.setting(
@@ -121,7 +121,7 @@ class HP8657B(Instrument):
         )
 
     fm_source = Instrument.setting(
-        "FM S%d",
+        "FM S%i",
         """
         sets the source for the FM function
 
@@ -143,12 +143,21 @@ class HP8657B(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=modulation_source,
-        map_values=True,
+        values=Modulation,
+        )
+
+    frequency = Instrument.setting(
+        "FR %9.1f HZ",
+        """
+        controls the output frequency of the instrument in Hz.
+        For the 8567B the valid range is 100 kHz to 2060 MHz.
+        """,
+        validator=strict_range,
+        values=[1.0E5, 2.060E9],
         )
 
     level = Instrument.setting(
-        "AP%gDM",
+        "AP %g DM",
         """
         sets the output level in dBm.
 
@@ -160,7 +169,7 @@ class HP8657B(Instrument):
         )
 
     level_offset = Instrument.setting(
-        "AO%gDB",
+        "AO %g DB",
         """
         sets the output offset in dB, usable range -199 to +199 dB
 
