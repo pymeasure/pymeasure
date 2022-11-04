@@ -129,7 +129,7 @@ However, there are a couple of practices that have turned out to be useful to fo
 * This separation between properties and methods also naturally helps with observing the `"command-query separation" principle <https://en.wikipedia.org/wiki/Command%E2%80%93query_separation>`__.
 * If your instrument has multiple identical channels, see XXX. TODO: write section on channel implementations
 
-In principle you are free to write any methods that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
+In principle, you are free to write any methods that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
 
 In practice, we have developed a number of best practices for making instruments easy to write and maintain. The following sections detail these, which are highly encouraged to follow.
 
@@ -236,10 +236,10 @@ In PyMeasure, `Python properties`_ are the preferred method for dealing with var
 
 The property factories
 **********************
-PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
 
 The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that can only read values from an instrument.
-For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
+For example, if our "Extreme 5000" has the :code:`*IDN?` command, we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
 
@@ -280,18 +280,18 @@ You will notice that we use the `Python string format`_ :code:`%g` to format pas
 
 .. _Python string format: https://docs.python.org/3/library/string.html#format-specification-mini-language
 
-We can use this property to set the voltage to 100 mV, which will send the appropriate command and then requests the current voltage.
+We can use this property to set the voltage to 100 mV, which will send the appropriate command, and then to request the current voltage:
 
 .. doctest::
 
     >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.voltage = 0.1        # Sends ":VOLT 0.1"
+    >>> extreme.voltage = 0.1        # Sends ":VOLT 0.1" to set the voltage to 100 mV
     >>> extreme.voltage              # Sends ":VOLT?" to query for the current value
     0.1
 
 Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function can only set, but not read values.
 
-Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
+Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
 
 The next sections detail additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
@@ -475,7 +475,7 @@ The idea of using maps can be leveraged to implement properties where the user-f
         "OUTP?", "OUTP %d",
         """Control the instrument output is enabled (boolean).""",
         map_values=True,
-        values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc.
+        values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc. depending on the device
     )
 
 
@@ -690,8 +690,8 @@ When instruments have a similar set of features, it makes sense to use inheritan
 .. note::
     Don't forget to update the instrument's :code:`name` attribute accordingly, by either supplying an appropriate argument (if available) during the :code:`super().__init__()` call, or by setting it anew below that call.
 
-Sometimes one only needs to add additional properties and methods.
-Often, some of the already present properties/methods need to be completely replaced by defining them again in the derived class.
+In some cases, one only needs to add additional properties and methods.
+In other cases, some of the already present properties/methods need to be completely replaced by defining them again in the derived class.
 Often, however, only some details need to be changed.
 This can be dealt with efficiently using dynamic properties.
 
