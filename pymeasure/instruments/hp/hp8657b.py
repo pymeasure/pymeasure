@@ -152,7 +152,7 @@ class HP8657B(Instrument):
         "FR %9.1f HZ",
         """
         Set the output frequency of the instrument in Hz.
-        
+
         For the 8567B the valid range is 100 kHz to 2060 MHz.
         """,
         validator=strict_range,
