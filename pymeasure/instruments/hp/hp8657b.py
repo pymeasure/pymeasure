@@ -23,8 +23,6 @@
 #
 
 import logging
-
-from enum import Enum
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -36,10 +34,6 @@ class HP8657B(Instrument):
     """ Represents the Hewlett Packard 8657B signal generator
     and provides a high-level interface for interacting
     with the instrument.
-
-    *Note:* this instrument is a listen only instrument, so no readings can be get from the
-    instrument
-
     """
 
     def __init__(self, adapter, **kwargs):
@@ -48,73 +42,50 @@ class HP8657B(Instrument):
         super().__init__(
             adapter,
             "Hewlett-Packard HP8657B",
+            includeSCPI=False,
             **kwargs,
         )
-    # TODO: Fixit
-    # def check_errors(self):
-    #     """
-    #     Method to read the error status register
 
-    #     :return error_status: one byte with the error status register content
-    #     :rtype error_status: int
-    #     """
-    #     # Read the error status reigster only one time for this method, as
-    #     # the manual states that reading the error status register also clears it.
-    #     current_errors = int(self.ask("ERR?"))
-    #     if current_errors != 0:
-    #         log.error("HP6632 Error detected: %s", self.ERRORS(current_errors))
-    #     return self.ERRORS(current_errors)
+    def check_errors(self):
+        """
+        Method to read the error status register
+
+        as the 8657B does not support any readout of values, this will return 0 and log a warning
+
+        """
+        log.warning("HP8657B Does not support error status readout")
+        return 0
 
     def clear(self):
         """
-        Resets the instrument to power-on default settings
+        Reset the instrument to power-on default settings
 
         """
         self.adapter.connection.clear()
 
-    # TODO: FIXIT
-    # id = Instrument.measurement(
-    #     "ID?",
-    #     """
-    #     Reads the ID of the instrument and returns this value for now
+    id = "HP 8657B Signal generator"  #: Manual ID entry, as the instrument does not talk with us
 
-    #     """,
-    # )
+    # List of modulation sources
+    modulation_source = {"External": 1,
+                         "Int_400Hz": 2,
+                         "Int_1000Hz": 3,
+                         "OFF": 4,
+                         "DC_FM": 5}
 
-    # List of modulation sources (Not yet included are DC FM)
-    modulations = {"External": "S1",
-                   "Int_400Hz": "S2",
-                   "Int_1000Hz": "S3",
-                   "OFF": "S4"}
-
-    def AM(self, source,  depth=0):
+    am_depth = Instrument.setting(
+        "AM %2.1f PC",
         """
-        This function sets the AM modulation feature, supported values for the source are:
+        sets the modulation depth for AM,
+        usable range 0-99.9%
+        """,
+        validator=strict_range,
+        values=[0, 99.9],
+        )
 
-       ==========  =======
-       Value       Meaning
-       ==========  =======
-       OFF         no modulation active
-       Int_400Hz   internal 400 Hz modulation source
-       Int_1000Hz  internal 1000 Hz modulation source
-       External    External source
-       ==========  =======
-
-        depth is the moduledation depth in percent
-
-        *Note:*
-            * AM & FM can be active at the same time
-            * only one internal source can be active at the time
-
+    am_source = Instrument.setting(
+        "AM S%d",
         """
-        strict_range(depth, [0, 100])
-
-        if source in self.modulations:
-            self.write(f"AM {self.modulations[source]} {depth} PC")
-
-    def FM(self, source,  deviation=0):
-        """
-        This function sets the FM modulation feature, supported values for the source are:
+        sets the source for the AM function
 
         ==========  =======
         Value       Meaning
@@ -122,35 +93,68 @@ class HP8657B(Instrument):
         OFF         no modulation active
         Int_400Hz   internal 400 Hz modulation source
         Int_1000Hz  internal 1000 Hz modulation source
-        External    External source
+        External    External source, AC coupling
         ==========  =======
-
-        deviation is the peak deviation value in kHz.
 
         *Note:*
             * AM & FM can be active at the same time
             * only one internal source can be active at the time
+            * use "OFF" to deactivate AM
 
-        """
-        strict_range(deviation, [0, 400])
-        if source in self.modulations:
-            self.write(f"FM {self.modulations[source]} {deviation} KZ")
+        """,
+        validator=strict_discrete_set,
+        values=modulation_source,
+        map_values=True,
+        )
 
-    frequency = Instrument.setting(
-        "FR %9.0f HZ",
+    fm_deviation = Instrument.setting(
+        "FM %3.1fKZ",
         """
-        controls the output frequency of the instrument in Hz.
-        For the 8567B the valid range is 100 kHz to 2060 MHz.
+        sets the peak deviation in kHz for the FM function,
+        useable range 0.1 - 400 kHz
+
+        *NOTE*:
+            the maximum usable deviation is depending on the output frequency, refer to the
+            instrument documentation for further detail.
 
         """,
         validator=strict_range,
-        values=[1.0E5, 2.060E9],
+        values=[0.1, 400],
+        )
+
+    fm_source = Instrument.setting(
+        "FM S%d",
+        """
+        sets the source for the FM function
+
+        ==========  =======
+        Value       Meaning
+        ==========  =======
+        OFF         no modulation active
+        Int_400Hz   internal 400 Hz modulation source
+        Int_1000Hz  internal 1000 Hz modulation source
+        External    External source, AC coupling
+        DC_FM       External source, DC coupling (FM only)
+        ==========  =======
+
+        *Note:*
+            * AM & FM can be active at the same time
+            * only one internal source can be active at the time
+            * use "OFF" to deactivate AM
+            * refer to the documentation rearding details on use of DC FM mode
+
+        """,
+        validator=strict_discrete_set,
+        values=modulation_source,
+        map_values=True,
         )
 
     level = Instrument.setting(
         "AP%gDM",
         """
         sets the output level in dBm.
+
+        For the 8657B the range is -143.5 to +17 dBm
 
         """,
         validator=strict_range,
@@ -160,11 +164,11 @@ class HP8657B(Instrument):
     level_offset = Instrument.setting(
         "AO%gDB",
         """
-        sets the output offset in dB.
+        sets the output offset in dB, usable range -199 to +199 dB
 
         """,
         validator=strict_range,
-        values=[-100, 100.0],
+        values=[-199.0, 199.0],
         )
 
     output_enabled = Instrument.setting(
@@ -176,3 +180,11 @@ class HP8657B(Instrument):
         values={False: 2, True: 3},
         map_values=True
        )
+
+    def reset(self):
+        self.adapter.connection.clear()
+
+    def shutdown(self):
+        self.output_enabled = False
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
