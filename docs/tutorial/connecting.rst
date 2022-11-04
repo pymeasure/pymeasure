@@ -13,7 +13,7 @@ First import the instrument of interest. ::
 
     from pymeasure.instruments.keithley import Keithley2400
 
-Then construct an object by passing the GPIB address. For this example we connect to the instrument over GPIB (using VISA) with an address of 4::
+Then construct an object by passing the VISA address. For this example we connect to the instrument over GPIB (using VISA) with an address of 4::
 
     sourcemeter = Keithley2400("GPIB::4")
 
