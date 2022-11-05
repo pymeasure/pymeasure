@@ -475,6 +475,7 @@ The idea of using maps can be leveraged to implement properties where the user-f
     Extreme5000.output_enabled = Instrument.control(
         "OUTP?", "OUTP %d",
         """Control the instrument output is enabled (boolean).""",
+        validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc. depending on the device
     )
@@ -493,7 +494,7 @@ The idea of using maps can be leveraged to implement properties where the user-f
     >>> extreme.output_enabled = 34
     Traceback (most recent call last):
     ...
-    KeyError: 34
+    ValueError: Value of 34 is not in the discrete set {True: 1, False: 0}
 
 Good names for boolean properties are chosen such that they could also be a yes/no question: "Is the output enabled?" -> :code:`output_enabled`, :code:`display_active`, etc.
 
