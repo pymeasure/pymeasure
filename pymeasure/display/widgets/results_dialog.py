@@ -56,8 +56,10 @@ class ResultsDialog(QtWidgets.QFileDialog):
         preview_tab = QtWidgets.QTabWidget()
         vbox = QtWidgets.QVBoxLayout()
         param_vbox = QtWidgets.QVBoxLayout()
+        metadata_vbox = QtWidgets.QVBoxLayout()
         vbox_widget = QtWidgets.QWidget()
         param_vbox_widget = QtWidgets.QWidget()
+        metadata_vbox_widget = QtWidgets.QWidget()
 
         self.plot_widget = PlotWidget("Results", self.columns,
                                       self.x_axis, self.y_axis, parent=self)
@@ -68,12 +70,21 @@ class ResultsDialog(QtWidgets.QFileDialog):
         self.preview_param.setColumnWidth(0, 150)
         self.preview_param.setAlternatingRowColors(True)
 
+        self.preview_metadata = QtWidgets.QTreeWidget()
+        param_header = QtWidgets.QTreeWidgetItem(["Name", "Value"])
+        self.preview_metadata.setHeaderItem(param_header)
+        self.preview_metadata.setColumnWidth(0, 150)
+        self.preview_metadata.setAlternatingRowColors(True)
+
         vbox.addWidget(self.plot_widget)
         param_vbox.addWidget(self.preview_param)
+        metadata_vbox.addWidget(self.preview_metadata)
         vbox_widget.setLayout(vbox)
         param_vbox_widget.setLayout(param_vbox)
+        metadata_vbox_widget.setLayout(metadata_vbox)
         preview_tab.addTab(vbox_widget, "Plot Preview")
         preview_tab.addTab(param_vbox_widget, "Run Parameters")
+        preview_tab.addTab(metadata_vbox_widget, "Metadata")
         self.layout().addWidget(preview_tab, 0, 5, 4, 1)
         self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
@@ -111,3 +122,9 @@ class ResultsDialog(QtWidgets.QFileDialog):
                 new_item = QtWidgets.QTreeWidgetItem([param.name, str(param)])
                 self.preview_param.addTopLevelItem(new_item)
             self.preview_param.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)
+
+            self.preview_metadata.clear()
+            for key, metadata in results.procedure.metadata_objects().items():
+                new_item = QtWidgets.QTreeWidgetItem([metadata.name, str(metadata)])
+                self.preview_metadata.addTopLevelItem(new_item)
+            self.preview_metadata.sortItems(0, QtCore.Qt.SortOrder.AscendingOrder)
