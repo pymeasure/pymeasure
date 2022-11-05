@@ -293,7 +293,8 @@ Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting
 
 Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
 
-The next sections detail additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
+The next sections detail additional features of the property factories.
+These allow you to write properties that cover specific ranges, or that have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
 .. _validators:
 
@@ -594,7 +595,7 @@ If you need to tweak
 
 use the :code:`command_process` parameter of :meth:`~pymeasure.instruments.Instrument.control`.
 
-Note that there is only parameter for both setting and getting, so the utility of this is probably limited.
+Note that there is only one parameter for both setting and getting, so the utility of this is probably limited.
 Note also that for adding e.g. channel identifiers, there are other, more preferable methods.
 
 Checking the instrument for errors
