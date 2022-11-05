@@ -71,7 +71,7 @@ class HP8657B(Instrument):
         """
         self.adapter.connection.clear()
 
-    id = "HP 8657B Signal generator"  #: Manual ID entry, as the instrument does not talk with us
+    id = "HP,8657B,N/A,N/A"  #: Manual ID entry
 
     am_depth = Instrument.setting(
         "AM %2.1f PC",
