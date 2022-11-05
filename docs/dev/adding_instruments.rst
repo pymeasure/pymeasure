@@ -149,6 +149,60 @@ Power supplies
 PSUs typically can measure the *actual* current and voltage, as well as have settings for the voltage level and the current limit.
 To keep naming clear and avoid confusion, implement the properties :code:`current`, :code:`voltage`, :code:`voltage_setpoint` and :code:`current_limit`, respectively.
 
+Managing status codes or other indicator values
+***********************************************
+Often, an instrument features one or more collections of specific values that signal some status, an instrument mode or a number of possible configuration values.
+Typically, these are collected in mappings of some sort, as you want to provide a clear and understandable value to the user, while abstracting away the raw data, think :code:`ACQUISITION_MODE` instead of :code:`0x04`.
+The mappings normally are kept at module level (i.e. not defined within the instrument class), so that they are available when using the property factories.
+This is a small drawback of using Python class attributes.
+
+The easiest way to handle these mappings is a plain :code:`dict`.
+However, there is often a better way, the Python :code:`enum.Enum`.
+To cite the `Python documentation <https://docs.python.org/3.11/howto/enum.html>`__,
+
+    An Enum is a set of symbolic names bound to unique values. They are similar to global variables, but they offer a more useful :code:`repr()`, grouping, type-safety, and a few other features.
+
+As our signal values are often integers, the most appropriate enum types are :code:`IntEnum` and :code:`IntFlag`.
+
+:code:`IntEnum` is the same as :code:`Enum`, but its members are also integers and can be used anywhere that an integer can be used (so their use for composing commands is transparent), but logic/code they appear in is much more legible.
+
+.. doctest::
+
+    >>> from enum import IntEnum
+    >>> class InstrMode(IntEnum):
+    ...     WAITING = 0x00
+    ...     HEATING = 0x01
+    ...     COOLING = 0x05
+    ...
+    >>> received_from_device = 0x01
+    >>> current_mode = InstrMode(received_from_device)
+    >>> if current_mode == InstrMode.WAITING:
+    ...     print('Idle')
+    ... else:
+    ...     print(current_mode)
+    ...     print(f'Mode value: {current_mode}')
+    ...
+    InstrMode.HEATING
+    Mode value: 1
+
+:code:`IntFlag` has the added benefit that it supports bitwise operators and combinations, and as such is a good fit for status bitmasks or error codes that can represent multiple values:
+
+.. doctest::
+
+    >>> from enum import IntFlag
+    >>> class ErrorCode(IntFlag):
+    ...     TEMP_OUT_OF_RANGE = 8
+    ...     TEMPSENSOR_FAILURE = 4
+    ...     COOLER_FAILURE = 2
+    ...     HEATER_FAILURE = 1
+    ...     OK = 0
+    ...
+    >>> received_from_device = 7
+    >>> print(ErrorCode(received_from_device))
+    ErrorCode.TEMPSENSOR_FAILURE|COOLER_FAILURE|HEATER_FAILURE
+
+:code:`IntFlags` are used by many instruments for the purpose just demonstrated.
+
 .. _default_connection_settings:
 
 Defining default connection settings
