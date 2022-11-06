@@ -88,7 +88,7 @@ class DockWindow(ManagedWindowBase):
         else:
             measure_quantities.append(self.y_axis)
 
-        self.browser_widget.browser.measured_quantities = measure_quantities
+        self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)
