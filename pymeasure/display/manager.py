@@ -263,13 +263,7 @@ class Manager(QtCore.QObject):
         experiment.browser_item.setProgress(100)
         for curve in experiment.curve_list:
             if curve:
-                # For single plots, update_data() on ResultsCurve
-                if isinstance(curve, ResultsCurve):
-                    curve.update_data()
-                # For multiple plots, update_data() on list of ResultsCurve
-                elif type(curve) == list:
-                    for c in curve:
-                        c.update_data()
+                curve.update_data()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()
