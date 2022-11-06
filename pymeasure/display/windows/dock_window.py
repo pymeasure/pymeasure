@@ -57,14 +57,12 @@ class DockWindow(ManagedWindowBase):
         self.log_widget = LogWidget("Experiment Log")
         self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis, self.y_axis,
                                       num_plots=num_plots)
-        self.widget_list = [self.dock_widget, self.log_widget]
 
-        super().__init__(
-            procedure_class=procedure_class,
-            widget_list=self.widget_list,
-            *args,
-            **kwargs
-        )
+        if "widget_list" not in kwargs:
+            kwargs["widget_list"] = ()
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.dock_widget, self.log_widget)
+
+        super().__init__(procedure_class, **kwargs)
 
         measure_quantities = []
         # Expand x_axis if it is a list
