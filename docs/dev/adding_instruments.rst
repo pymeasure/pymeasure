@@ -203,6 +203,14 @@ As our signal values are often integers, the most appropriate enum types are :co
 
 :code:`IntFlags` are used by many instruments for the purpose just demonstrated.
 
+The status property could look like this:
+.. testcode::
+
+    status = Instrument.measurement(
+        "STB?", 
+        """Measure the status of the device as enum.""",
+        get_process=lambda v: ErrorCode(v), 
+   )
 .. _default_connection_settings:
 
 Defining default connection settings
