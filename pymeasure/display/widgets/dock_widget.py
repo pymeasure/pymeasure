@@ -100,9 +100,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             kwargs['antialias'] = False
         curves = []
         for i in range(self.num_plots):
-            curve = self.plot_frames[i].new_curve(results, color=pg.intColor(0), **kwargs)
-            curve.plot_frame_idx = i
-            curves.append(curve)
+            curves.append(self.plot_frames[i].new_curve(results, color=pg.intColor(0), **kwargs))
         return curves
 
     def update_x_column(self, index):
