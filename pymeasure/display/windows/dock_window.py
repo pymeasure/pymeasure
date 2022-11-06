@@ -24,18 +24,9 @@
 
 import logging
 
-import os
-
-import pyqtgraph as pg
-
 from ..widgets.dock_widget import DockWidget
-from ..widgets.results_dialog import ResultsDialog
 from ..widgets.log_widget import LogWidget
 from .managed_window import ManagedWindowBase
-from ..browser import BrowserItem
-from ..Qt import QtWidgets
-from ..manager import Experiment
-from ...experiment import Results
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
