@@ -445,7 +445,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     def new_curve(self, wdg, results, color=None, **kwargs):
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
-        return wdg.new_curve(results, color=color, wdg=wdg, **kwargs)
+        return wdg.new_curve(results, color=color, **kwargs)
 
     def new_experiment(self, results, curve=None):
         if curve is None:
