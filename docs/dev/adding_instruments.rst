@@ -211,6 +211,7 @@ The status property could look like this:
         """Measure the status of the device as enum.""",
         get_process=lambda v: ErrorCode(v), 
    )
+
 .. _default_connection_settings:
 
 Defining default connection settings
