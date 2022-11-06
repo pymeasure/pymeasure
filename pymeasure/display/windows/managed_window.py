@@ -459,10 +459,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         else:
             curve_list = curve[:]
 
-        for curve in curve_list:
-            if curve:
-                print(curve.wdg)
-
         curve_color = pg.intColor(0)
         for curve in curve_list:
             if isinstance(curve, ResultsCurve):
