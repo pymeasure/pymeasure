@@ -30,7 +30,6 @@ from .Qt import QtCore
 from .listeners import Monitor
 from ..experiment import Procedure
 from ..experiment.workers import Worker
-from .curves import ResultsCurve
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
