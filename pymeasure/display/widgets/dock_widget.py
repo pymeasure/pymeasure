@@ -100,7 +100,9 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             kwargs['antialias'] = False
         curves = []
         for i in range(self.num_plots):
-            curves.append(self.plot_frames[i].new_curve(results, color=pg.intColor(0), **kwargs))
+            curve = self.plot_frames[i].new_curve(results, color=pg.intColor(0), **kwargs)
+            curve.plot_frame_idx = i
+            curves.append(curve)
         return curves
 
     def update_x_column(self, index):
@@ -111,18 +113,15 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         axis = self.columns_y[plot_idx].itemText(index)
         self.plot_frames[plot_idx].change_y_axis(axis)
 
-    def load(self, curves):
-        for cdx, c in enumerate(curves):
-            self.plot_frames[cdx].load(c)
+    def load(self, curve):
+        self.plot_frames[curve.plot_frame_idx].load(curve)
 
     def remove(self, curve):
-        for i in range(self.num_plots):
-            self.plot_frames[i].plot.removeItem(curve[i])
+        self.plot_frames[curve.plot_frame_idx].removeItem(curve)
 
     def clear(self):
         for i in range(self.num_plots):
             self.plot_frames[i].plot.clear()
 
     def set_color(self, curve, color):
-        for i in range(self.num_plots):
-            curve[i].setPen(pg.mkPen(color=color, width=self.linewidth))
+        curve.setPen(pg.mkPen(color=color, width=self.linewidth))
