@@ -173,8 +173,9 @@ class Manager(QtCore.QObject):
     def load(self, experiment):
         """ Load a previously executed Experiment
         """
-        for wdg, curve in zip(self.widget_list, experiment.curve_list):
-            wdg.load(curve)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.load(curve)
 
         self.browser.add(experiment)
         self.experiments.append(experiment)
@@ -193,8 +194,9 @@ class Manager(QtCore.QObject):
         self.experiments.remove(experiment)
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
-        for wdg, curve in zip(self.widget_list, experiment.curve_list):
-            wdg.remove(curve)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.remove(curve)
 
     def clear(self):
         """ Remove all Experiments

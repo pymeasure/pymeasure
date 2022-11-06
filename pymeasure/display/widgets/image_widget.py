@@ -96,7 +96,8 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
         image = ResultsImage(results,
                              x=self.image_frame.x_axis,
                              y=self.image_frame.y_axis,
-                             z=self.image_frame.z_axis
+                             z=self.image_frame.z_axis,
+                             **kwargs
                              )
         return image
 

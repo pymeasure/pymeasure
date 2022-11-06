@@ -44,6 +44,7 @@ from ..widgets import (
     EstimatorWidget,
 )
 from ...experiment import Results, Procedure
+from ..curves import ResultsCurve
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -294,11 +295,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
             if state == QtCore.Qt.CheckState.Unchecked:
-                for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                    wdg.remove(curve)
+                for curve in experiment.curve_list:
+                    if curve:
+                        curve.wdg.remove(curve)
             else:
-                for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                    wdg.load(curve)
+                for curve in experiment.curve_list:
+                    if curve:
+                        curve.wdg.load(curve)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -411,8 +414,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
-            for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                wdg.set_color(curve, color=color)
+            for curve in experiment.curve_list:
+                if curve:
+                    curve.wdg.set_color(curve, color=color)
 
     def open_file_externally(self, filename):
         """ Method to open the datafile using an external editor or viewer. Uses the default
@@ -441,19 +445,27 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     def new_curve(self, wdg, results, color=None, **kwargs):
         if color is None:
             color = pg.intColor(self.browser.topLevelItemCount() % 8)
-        return wdg.new_curve(results, color=color, **kwargs)
+        return wdg.new_curve(results, color=color, wdg=wdg, **kwargs)
 
     def new_experiment(self, results, curve=None):
         if curve is None:
             curve_list = []
             for wdg in self.widget_list:
-                curve_list.append(self.new_curve(wdg, results))
+                new_curve = self.new_curve(wdg, results)
+                if isinstance(new_curve, (tuple, list)):
+                    curve_list.extend(self.new_curve(wdg, results))
+                else:
+                    curve_list.append(self.new_curve(wdg, results))
         else:
             curve_list = curve[:]
 
+        for curve in curve_list:
+            if curve:
+                print(curve.wdg)
+
         curve_color = pg.intColor(0)
-        for wdg, curve in zip(self.widget_list, curve_list):
-            if isinstance(wdg, PlotWidget):
+        for curve in curve_list:
+            if isinstance(curve, ResultsCurve):
                 curve_color = curve.opts['pen'].color()
                 break
 
