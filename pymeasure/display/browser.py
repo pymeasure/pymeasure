@@ -93,7 +93,7 @@ class Browser(QtWidgets.QTreeWidget):
         super().__init__(parent)
         self.display_parameters = display_parameters
         self.procedure_class = procedure_class
-        self.measured_quantities = measured_quantities
+        self.measured_quantities = set(measured_quantities)
 
         header_labels = ["Graph", "Filename", "Progress", "Status"]
         for parameter in self.display_parameters:

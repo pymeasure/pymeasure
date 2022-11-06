@@ -111,18 +111,6 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         axis = self.columns_y[plot_idx].itemText(index)
         self.plot_frames[plot_idx].change_y_axis(axis)
 
-    def load(self, curves):
-        for cdx, c in enumerate(curves):
-            self.plot_frames[cdx].load(c)
-
-    def remove(self, curve):
-        for i in range(self.num_plots):
-            self.plot_frames[i].plot.removeItem(curve[i])
-
     def clear(self):
         for i in range(self.num_plots):
             self.plot_frames[i].plot.clear()
-
-    def set_color(self, curve, color):
-        for i in range(self.num_plots):
-            curve[i].setPen(pg.mkPen(color=color, width=self.linewidth))

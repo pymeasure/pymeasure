@@ -173,8 +173,9 @@ class Manager(QtCore.QObject):
     def load(self, experiment):
         """ Load a previously executed Experiment
         """
-        for wdg, curve in zip(self.widget_list, experiment.curve_list):
-            wdg.load(curve)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.load(curve)
 
         self.browser.add(experiment)
         self.experiments.append(experiment)
@@ -193,8 +194,9 @@ class Manager(QtCore.QObject):
         self.experiments.remove(experiment)
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
-        for wdg, curve in zip(self.widget_list, experiment.curve_list):
-            wdg.remove(curve)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.remove(curve)
 
     def clear(self):
         """ Remove all Experiments
@@ -261,13 +263,7 @@ class Manager(QtCore.QObject):
         experiment.browser_item.setProgress(100)
         for curve in experiment.curve_list:
             if curve:
-                # For single plots, update_data() on ResultsCurve
-                if isinstance(curve, ResultsCurve):
-                    curve.update_data()
-                # For multiple plots, update_data() on list of ResultsCurve
-                elif type(curve) == list:
-                    for c in curve:
-                        c.update_data()
+                curve.update_data()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()
