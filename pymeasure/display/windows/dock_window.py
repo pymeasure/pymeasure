@@ -48,7 +48,7 @@ class DockWindow(ManagedWindowBase):
         :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, num_plots=1, *args, **kwargs):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None, num_plots=1, **kwargs):
 
         self.x_axis = x_axis
         self.y_axis = y_axis
