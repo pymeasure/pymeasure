@@ -43,7 +43,6 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         :class:`~pymeasure.experiment.procedure.Procedure`)
     :param x_axis_labels: List of data column(s) for the x-axis of the plot.
     :param y_axis_labels: List of data column(s) for the y-axis of the plot.
-    :param num_plots: the number of plots you want displayed in the DockWindow tab
     :param linewidth: line width for plots in
         :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
     :param parent: Passed on to QtWidgets.QWidget. Default is None
