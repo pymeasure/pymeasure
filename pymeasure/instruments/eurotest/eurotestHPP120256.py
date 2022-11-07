@@ -359,8 +359,6 @@ class EurotestHPP120256(Instrument):
 
         log.info("Waiting for voltage output set done.")
 
-        return
-
     # Wrapper functions for the Adapter object
     def write(self, command, **kwargs):
         """Overrides Instrument write method for including write_delay time after the parent call.
