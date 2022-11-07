@@ -102,9 +102,11 @@ Let's start with a simple example of a procedure which loops over a certain numb
         DATA_COLUMNS = ['Iteration']
 
         def execute(self):
-            """ Loops over each iteration and emits the current iteration,
+            """Execute the procedure.
+
+            Loops over each iteration and emits the current iteration,
             before waiting for 0.01 sec, and then checking if the procedure
-            should stop
+            should stop.
             """
             for i in range(self.iterations):
                 self.emit('results', {'Iteration': i})
@@ -169,9 +171,11 @@ Let's put all the pieces together. Our SimpleProcedure can be run in a script by
         DATA_COLUMNS = ['Iteration']
 
         def execute(self):
-            """ Loops over each iteration and emits the current iteration,
+            """Execute the procedure.
+
+            Loops over each iteration and emits the current iteration,
             before waiting for 0.01 sec, and then checking if the procedure
-            should stop
+            should stop.
             """
             for i in range(self.iterations):
                 self.emit('results', {'Iteration': i})

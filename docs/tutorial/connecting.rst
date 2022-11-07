@@ -1,3 +1,5 @@
+.. _connecting-to-an-instrument:
+
 ###########################
 Connecting to an instrument
 ###########################
@@ -11,9 +13,20 @@ First import the instrument of interest. ::
 
     from pymeasure.instruments.keithley import Keithley2400
 
-Then construct an object by passing the GPIB address. For this example we connect to the instrument over GPIB (using VISA) with an address of 4. See the :ref:`adapters <adapters>` section below for more details. ::
+Then construct an object by passing the VISA address. For this example we connect to the instrument over GPIB (using VISA) with an address of 4::
 
     sourcemeter = Keithley2400("GPIB::4")
+
+
+.. note::
+
+    Passing an appropriate resource string is the default method when creating pymeasure instruments.
+    See the :ref:`adapters <adapters>` section below for more details.
+
+    If you are not sure about the correct resource string identifying your instrument, you can run the :func:`pymeasure.instruments.list_resources` function to list all available resources::
+
+        from pymeasure.instruments import list_resources
+        list_resources()
 
 For instruments with standard SCPI commands, an :code:`id` property will return the results of a :code:`*IDN?` SCPI command, identifying the instrument. ::
 
@@ -46,7 +59,13 @@ When the :code:`with`-block is exited, the :code:`shutdown` method of the instru
 Using adapters
 ==============
 
-PyMeasure supports a number of adapters, which are responsible for communicating with the underlying hardware. In the example above, we passed the string "GPIB::4" when constructing the instrument. By default this constructs a VISAAdapter class to connect to the instrument using VISA. Instead of passing a string, we could equally pass an adapter object. ::
+PyMeasure supports a number of adapters, which are responsible for communicating with the underlying hardware.
+In the example above, we passed the string "GPIB::4" when constructing the instrument.
+By default this constructs a VISAAdapter (our most popular, default adapter) to connect to the instrument using VISA.
+Passing a string (or integer in case of GPIB) is by far the most typical way to create pymeasure instruments.
+
+Sometimes, you might need to go beyond the usual setup, which is also possible.
+Instead of passing a string, you could equally pass an adapter object. ::
 
     from pymeasure.adapters import VISAAdapter
 
@@ -59,14 +78,6 @@ To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper 
 
     adapter = PrologixAdapter('/dev/ttyUSB0')
     sourcemeter = Keithley2400(adapter.gpib(4))
-
-For instruments using serial communication that have particular settings that need to be matched, a custom :class:`Adapter <pymeasure.adapters.Adapter>` sub-class can be made. For example, the LakeShore 425 Gaussmeter connects via USB, but uses particular serial communication settings. Therefore, a :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>` class enables these requirements in the background. ::
-
-    from pymeasure.instruments.lakeshore import LakeShore425
-
-    gaussmeter = LakeShore425('/dev/lakeshore425')
-
-Behind the scenes the :code:`/dev/lakeshore425` port is passed to the :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>`.
 
 Some equipment may require the vxi-11 protocol for communication. An example would be a Agilent E5810B ethernet to GPIB bridge.
 To use this type equipment the python-vxi11 library has to be installed which is part of the extras package requirements. ::

@@ -386,15 +386,9 @@ class AWG401x_base(Instrument):
     def save(self, position):
         """Save the actual configuration in memory.
 
-        Parameters
-        ----------
-        position : int
-            Instrument save position [0,4]
+        :param int position: Instrument save position [0,4]
 
-        Raises
-        ------
-        ValueError
-            If position is outside permitted limit [0,4].
+        :raises ValueError: If position is outside permitted limit [0,4].
         """
 
         if position >= 0 or position <= 4:
@@ -405,15 +399,9 @@ class AWG401x_base(Instrument):
     def load(self, position):
         """Load the actual configuration in memory.
 
-        Parameters
-        ----------
-        position : int
-            Instrument load position [0,4]
+        :param int position: Instrument load position [0,4]
 
-        Raises
-        ------
-        ValueError
-            If position is outside permitted limit [0,4].
+        :raises ValueError: If position is outside permitted limit [0,4].
         """
 
         if position >= 0 or position <= 4:
