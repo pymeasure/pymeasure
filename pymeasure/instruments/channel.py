@@ -35,33 +35,40 @@ class Channel(CommonBase):
 
     This class supports dynamic properties like :class:`Instrument`,
     but requires an :class:`Instrument` instance as a parent for communication.
-    The default implementation of :meth:`write` uses :code:`str.format` to
-    exchange :code:`'{ch}'` for the channel name.
+
+    :meth:`insert_id` inserts the channel id into the command string sent to the instrument.
+    The default implementation replaces the Channel's `placeholder` (default "ch")
+    with the channel id.
 
     :param parent: The instrument (an instance of :class:`~pymeasure.instruments.Instrument`)
         to which the channel belongs.
     :param id: Identifier of the channel, as it is used for the communication.
     """
 
+    placeholder = "ch"
+
     def __init__(self, parent, id):
         super().__init__()
         self.parent = parent
         self.id = id
 
-    # Calls to the instrument
-    def write(self, command, **kwargs):
-        """Write a string command to the instrument.
-
-        The channel id is inserted into the command and `write_termination` appended.
+    def insert_id(self, command):
+        """Insert the channel id in a command replacing `placeholder`.
 
         Subclass this method if you want to do something else,
         like always prepending the channel id.
+        """
+        return command.format_map({self.placeholder: self.id})
+
+    # Calls to the instrument
+    def write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
 
         :param command: command string to be sent to the instrument.
             '{ch}' is replaced by the channel id.
         :param kwargs: Keyword arguments for the adapter.
         """
-        self.parent.write(command.format(ch=self.id), **kwargs)
+        self.parent.write(self.insert_id(command), **kwargs)
 
     def write_bytes(self, content, **kwargs):
         """Write the bytes `content` to the instrument."""
@@ -88,7 +95,8 @@ class Channel(CommonBase):
         :param values: The values to transmit.
         :param \\*args, \\**kwargs: Further arguments to hand to the Adapter.
         """
-        self.parent.write_binary_values(command.format(ch=self.id), values, *args, **kwargs)
+        self.parent.write_binary_values(self.insert_id(command),
+                                        values, *args, **kwargs)
 
     def read_binary_values(self, **kwargs):
         """Read binary values from the instrument."""

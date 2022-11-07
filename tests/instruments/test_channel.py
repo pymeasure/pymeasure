@@ -26,13 +26,16 @@ from unittest import mock
 
 import pytest
 
-from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.common_base import DynamicProperty, CommonBase
-from pymeasure.adapters import FakeAdapter, ProtocolAdapter
-from pymeasure.instruments.fakes import FakeInstrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
+from pymeasure.instruments import Channel
+
+
+class ChannelWithPlaceholder(Channel):
+    """A test channel with a different placeholder"""
+
+    placeholder = "fn"
+
+    test = Channel.control("{fn}test?", "test{fn} %i", """Control test.""")
 
 
 class TestChannelCommunication:
@@ -60,3 +63,8 @@ class TestChannelCommunication:
     def test_write_binary_values(self, ch):
         ch.write_binary_values("abc", [5, 6, 7])
         assert ch.parent.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
+
+
+def test_channel_with_different_prefix():
+    c = ChannelWithPlaceholder(None, "A")
+    assert c.insert_id("id:{fn}") == "id:A"
