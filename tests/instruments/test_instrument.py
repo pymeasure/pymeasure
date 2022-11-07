@@ -240,21 +240,6 @@ def test_SCPI_false_raises_errors(method):
         getattr(Instrument(FakeAdapter(), "abc", includeSCPI=False), method)()
 
 
-@pytest.mark.parametrize("value, kwargs, result",
-                         (("5,6,7", {}, [5, 6, 7]),
-                          ("5.6.7", {'separator': '.'}, [5, 6, 7]),
-                          ("5,6,7", {'cast': str}, ['5', '6', '7']),
-                          ("X,Y,Z", {}, ['X', 'Y', 'Z']),
-                          ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
-                          ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
-                          ("0,5,7.1", {'cast': bool}, [False, True, True]),
-                          ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5])
-                          ))
-def test_values(value, kwargs, result):
-    instr = Instrument(FakeAdapter(), "test")
-    assert instr.values(value, **kwargs) == result
-
-
 # Testing Instrument.control
 @pytest.mark.parametrize("dynamic", [False, True])
 def test_control_doc(dynamic):
@@ -581,18 +566,6 @@ def test_with_statement():
     assert fake.isShutdown is True
 
 
-def test_dynamic_property_fget_unset():
-    d = DynamicProperty()
-    with pytest.raises(AttributeError, match="Unreadable attribute"):
-        d.__get__(5)
-
-
-def test_dynamic_property_fset_unset():
-    d = DynamicProperty()
-    with pytest.raises(AttributeError, match="set attribute"):
-        d.__set__(5, 7)
-
-
 def test_dynamic_property_unchanged_by_inheritance():
     generic = GenericInstrument()
     extended = ExtendedInstrument()
@@ -668,34 +641,7 @@ def test_dynamic_property_reading_special_attributes_forbidden():
         generic.fake_ctrl_validator
 
 
-# Test Channel implementation
-class TestChannelCommunication:
-    @pytest.fixture()
-    def ch(self):
-        a = mock.MagicMock(return_value="5")
-        return Channel(a, "A")
-
-    def test_write(self, ch):
-        ch.write("abc")
-        assert ch.parent.method_calls == [mock.call.write('abc')]
-
-    def test_read(self, ch):
-        ch.read()
-        assert ch.parent.method_calls == [mock.call.read()]
-
-    def test_write_bytes(self, ch):
-        ch.write_bytes(b"abc")
-        assert ch.parent.method_calls == [mock.call.write_bytes(b"abc")]
-
-    def test_read_bytes(self, ch):
-        ch.read_bytes(5)
-        assert ch.parent.method_calls == [mock.call.read_bytes(5)]
-
-    def test_write_binary_values(self, ch):
-        ch.write_binary_values("abc", [5, 6, 7])
-        assert ch.parent.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
-
-
+# Channel
 def test_channel_write():
     with expected_protocol(ChannelInstrument, [("ChA:volt?", None)]) as inst:
         inst.ch_A.write("Ch{ch}:volt?")
@@ -772,8 +718,8 @@ class TestMultiFunctionality:
     class SomeFunctionality(Channel):
         """This Functionality needs a prepended `id`."""
 
-        def write(self, command, **kwargs):
-            super().write(f"{self.id}:{command}")
+        def insert_id(self, command, **kwargs):
+            return f"{self.id}:{command}"
 
         voltage = Channel.control("Volt?", "Volt %f", "Set voltage in Volts.")
 
