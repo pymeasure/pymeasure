@@ -39,24 +39,45 @@ class DockWindow(ManagedWindowBase):
 
     :param procedure_class: procedure class describing the experiment (see
         :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param x_axis: the data column(s) for the x-axis of the plot. This may be string or a list
-        of strings from the data columns of the procedure.
-    :param y_axis: the data column(s) for the y-axis of the plot. This may be string or a list
-        of strings from the data columns of the procedure.
-    :param num_plots: the number of plots you want displayed in the DockWindow tab
+    :param x_axis: the data column(s) for the x-axis of the plot. This may be a string or a list
+        of strings from the data columns of the procedure. The list length determines the number of
+        plots
+    :param y_axis: the data column(s) for the y-axis of the plot. This may be a string or a list
+        of strings from the data columns of the procedure. The list length determines the number of
+        plots
     :param \\**kwargs: optional keyword arguments that will be passed to
         :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, num_plots=1, **kwargs):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None, **kwargs):
 
         self.x_axis = x_axis
         self.y_axis = y_axis
-        self.num_plots = num_plots
+
+        measure_quantities = []
+        # Expand x_axis if it is a list
+        if isinstance(self.x_axis, list):
+            measure_quantities += [*self.x_axis]
+            self.x_axis_labels = self.x_axis
+            # Change x_axis to a string from list for ResultsDialog
+            self.x_axis = self.x_axis[0]
+        else:
+            self.x_axis_labels = [self.x_axis, ]
+            measure_quantities.append(self.x_axis)
+
+        # Expand y_axis if it is a list
+        if isinstance(self.y_axis, list):
+            measure_quantities += [*self.y_axis]
+            self.y_axis_labels = self.y_axis
+            # Change y_axis to a string from list for ResultsDialog
+            self.y_axis = self.y_axis[0]
+        else:
+            self.y_axis_labels = [self.y_axis, ]
+            measure_quantities.append(self.y_axis)
 
         self.log_widget = LogWidget("Experiment Log")
-        self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis, self.y_axis,
-                                      num_plots=num_plots)
+        self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis_labels,
+                                      self.y_axis_labels)
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
@@ -64,21 +85,8 @@ class DockWindow(ManagedWindowBase):
 
         super().__init__(procedure_class, **kwargs)
 
-        measure_quantities = []
-        # Expand x_axis if it is a list
-        if isinstance(self.x_axis, list):
-            measure_quantities += [*self.x_axis]
-        else:
-            measure_quantities.append(self.x_axis)
-
-        # Expand y_axis if it is a list
-        if isinstance(self.y_axis, list):
-            measure_quantities += [*self.y_axis]
-        else:
-            measure_quantities.append(self.y_axis)
-
         self.browser_widget.browser.measured_quantities.update(measure_quantities)
 
-        logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
+        logging.getLogger().addHandler(self.log_widget.handler)
         log.setLevel(self.log_level)
         log.info("DockWindow connected to logging")
