@@ -23,7 +23,7 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.eurotest.eurotestHPP120256 import EurotestHPP120256
 
 
-def test_voltage():
+def test_voltage_setpoint():
     """Verify the communication of the voltage setter/getter."""
     with expected_protocol(
             EurotestHPP120256,
@@ -56,7 +56,7 @@ def test_voltage_ramp():
         assert inst.voltage_ramp == 1000.0
 
 
-def test_measure_voltage():
+def test_voltage():
     """Verify the communication of the measure_voltage getter."""
     with expected_protocol(
             EurotestHPP120256,
@@ -65,7 +65,7 @@ def test_measure_voltage():
         assert inst.voltage == 2.458
 
 
-def test_measure_current():
+def test_current():
     """Verify the communication of the measure_current getter."""
     with expected_protocol(
             EurotestHPP120256,
