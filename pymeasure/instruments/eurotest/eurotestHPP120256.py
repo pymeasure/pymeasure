@@ -210,7 +210,7 @@ class EurotestHPP120256(Instrument):
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
                 decode('utf-8', 'ignore'), 2)
-        ) & EurotestHPP120256.EurotestHPP120256Status.KILL_ENABLE
+        ) == EurotestHPP120256.EurotestHPP120256Status.KILL_ENABLE
     )
 
     output_enabled = Instrument.control(
@@ -225,7 +225,7 @@ class EurotestHPP120256(Instrument):
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
                 decode('utf-8', 'ignore'), 2)
-        ) & EurotestHPP120256.EurotestHPP120256Status.OUTPUT_ON
+        ) == EurotestHPP120256.EurotestHPP120256Status.OUTPUT_ON
     )
 
     id = Instrument.measurement(
