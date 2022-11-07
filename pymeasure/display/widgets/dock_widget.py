@@ -71,20 +71,20 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         x_axis_label = self.x_axis
         y_axis_label = self.y_axis
 
-        for idx, i in enumerate(range(self.num_plots)):
+        for i in range(self.num_plots):
             # If x_axis or y_axis are a list, then we want to set the label to the passed list.
             # However, if list is smaller than num_plots, repeat last item in the list.
             if isinstance(self.x_axis, list):
-                x_axis_label = self.x_axis[min(idx, len(self.x_axis) - 1)]
+                x_axis_label = self.x_axis[min(i, len(self.x_axis) - 1)]
             if isinstance(self.y_axis, list):
-                y_axis_label = self.y_axis[min(idx, len(self.y_axis) - 1)]
+                y_axis_label = self.y_axis[min(i, len(self.y_axis) - 1)]
 
             dock = Dock("Dock " + str(i + 1), closable=False, size=(200, 50))
             self.dock_area.addDock(dock)
             self.plot_frames.append(
                 PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_axis_label,
                            y_axis_label, linewidth=self.linewidth))
-            dock.addWidget(self.plot_frames[idx])
+            dock.addWidget(self.plot_frames[i])
             self.docks.append(dock)
 
     def _layout(self):
