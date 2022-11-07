@@ -4,11 +4,11 @@ HP Signal generator HP8657B
 
 
 *Note:*
-    * This instrument does not support reading back values, as it is a listen-only GPIB device
+    * This instrument does not support reading back values, as it is a listen-only GPIB device.
     
-    * Other instruments of this family could be implemented using the dymaic ranges feature
+    * Other instruments of this family could be implemented using the dynamic ranges feature.
     
-    * Optorional pulse modulation feature is not support yet
+    * Optional pulse modulation feature is not supported yet.
     
 Glossary:
     ============  ===========

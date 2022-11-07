@@ -164,7 +164,7 @@ class HP8657B(Instrument):
         """
         Set the output level in dBm.
 
-        For the 8657B the range is -143.5 to +17 dBm
+        For the 8657B the range is -143.5 to +17 dBm/
 
         """,
         validator=strict_range,
@@ -174,7 +174,7 @@ class HP8657B(Instrument):
     level_offset = Instrument.setting(
         "AO %g DB",
         """
-        Sets the output offset in dB, usable range -199 to +199 dB
+        Set the output offset in dB, usable range -199 to +199 dB.
 
         """,
         validator=strict_range,
@@ -184,7 +184,7 @@ class HP8657B(Instrument):
     output_enabled = Instrument.setting(
         "R%d",
         """
-        Controls the output
+        Control whether the output is enabled.
         """,
         validator=strict_discrete_set,
         values={False: 2, True: 3},
