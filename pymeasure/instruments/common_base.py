@@ -186,11 +186,24 @@ class CommonBase:
         child = cls(self, id, **kwargs)
         collection_list = getattr(self, collection, [])
         if not collection_list:
-            # Add a grouplist to the parent
+            # Add a grouplist to the parent.
             setattr(self, collection, collection_list)
         collection_list.append(child)
-        setattr(self, f"{prefix}_{child.id}", child)
+        setattr(self, f"{prefix}_{id}", child)
+        # Store the attribute name and the collection name in the child.
+        child._name = f"{prefix}_{id}"
+        child._collection = collection
         return collection_list.index(child)
+
+    def remove_child(self, child):
+        """Remove the child from the instrument and the corresponding collection.
+
+        :param child_name: Instance of the child to delete
+        :param collection: The collection or name of the collection, e.g. "channels".
+        """
+        collection = getattr(self, child._collection)
+        del collection[collection.index(child)]
+        delattr(self, child._name)
 
     # Communication functions
     def wait_for(self, query_delay=0):

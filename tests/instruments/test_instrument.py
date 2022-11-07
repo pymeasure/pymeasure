@@ -31,7 +31,6 @@ import pytest
 from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.common_base import DynamicProperty
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
@@ -642,77 +641,6 @@ def test_dynamic_property_reading_special_attributes_forbidden():
 
 
 # Channel
-def test_channel_write():
-    with expected_protocol(ChannelInstrument, [("ChA:volt?", None)]) as inst:
-        inst.ch_A.write("Ch{ch}:volt?")
-
-
-def test_channel_write_name_twice():
-    """Verify, that any (i.e. more than one) occurrence of '{ch}' is changed."""
-    with expected_protocol(ChannelInstrument, [("ChA:volt:ChA?", None)]) as inst:
-        inst.ch_A.write("Ch{ch}:volt:Ch{ch}?")
-
-
-def test_channel_write_without_ch():
-    """Verify, that it is possible to send a command without '{ch}'."""
-    with expected_protocol(ChannelInstrument, [("Test", None)]) as inst:
-        inst.ch_A.write("Test")
-
-
-def test_channel_control():
-    with expected_protocol(
-            ChannelInstrument,
-            [("CA:control 7", None), ("CA:control?", "1.45")]
-    ) as inst:
-        inst.ch_A.fake_ctrl = 7
-        assert inst.ch_A.fake_ctrl == 1.45
-
-
-def test_channel_setting():
-    with expected_protocol(
-            ChannelInstrument,
-            [("CA:setting 3", None)]
-    ) as inst:
-        inst.ch_A.fake_setting = 3
-
-
-def test_channel_measurement():
-    with expected_protocol(
-            ChannelInstrument,
-            [("CA:measurement?", "2")]
-    ) as inst:
-        assert inst.ch_A.fake_measurement == "Y"
-
-
-def test_channel_dynamic_property():
-    with expected_protocol(ChannelInstrument, [("CA:control 100", None)]) as inst:
-        inst.ch_A.fake_ctrl_values = (1, 200)
-        # original values is (1, 10), therefore 100 should not be allowed.
-        inst.ch_A.fake_ctrl = 100
-
-
-def test_channel_special_control():
-    """Test different Prefixes for getter and setter."""
-    with expected_protocol(ChannelInstrument,
-                           [("SOURA:special?", "super"),
-                            ("OUTPB:special test", None)],
-                           ) as inst:
-        assert inst.ch_A.special_control == "super"
-        inst.ch_B.special_control = "test"
-
-
-class TestChannelAccess:
-    @pytest.fixture(scope="class")
-    def inst(self):
-        return ChannelInstrument(ProtocolAdapter())
-
-    def test_attribute_access(self, inst):
-        assert inst.ch_B == inst.channels[1]
-
-    def test_len(self, inst):
-        assert len(inst.channels) == 2
-
-
 class TestMultiFunctionality:
     """Test the usage of children for different functionalities."""
     class SomeFunctionality(Channel):
