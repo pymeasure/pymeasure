@@ -103,7 +103,7 @@ class HP8657B(Instrument):
             * use "OFF" to deactivate AM
 
         usage example:
-            
+
         .. code-block:: python
 
             sig_gen = HP8657B("GPIB::7")
@@ -155,7 +155,7 @@ class HP8657B(Instrument):
             * refer to the documentation rearding details on use of DC FM mode
 
         usage example:
-            
+
         .. code-block:: python
 
             sig_gen = HP8657B("GPIB::7")
