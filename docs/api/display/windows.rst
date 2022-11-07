@@ -14,6 +14,6 @@ Windows classes
     :members:
     :show-inheritance:
 
-.. automodule:: pymeasure.display.windows.dock_window
+.. automodule:: pymeasure.display.windows.managed_dock_window
     :members:
     :show-inheritance:

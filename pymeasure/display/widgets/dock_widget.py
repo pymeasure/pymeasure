@@ -36,7 +36,8 @@ log.addHandler(logging.NullHandler())
 
 class DockWidget(TabWidget, QtWidgets.QWidget):
     """
-    Widget that contains a DockArea with a number of Docks as determined by num_plots.
+    Widget that contains a DockArea with a number of Docks as determined by the length of
+    the longest x_axis_labels or y_axis_labels list.
 
     :param name: Name for the TabWidget
     :param procedure_class: procedure class describing the experiment (see
@@ -50,14 +51,12 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
 
     def __init__(self, name, procedure_class, x_axis_labels=None, y_axis_labels=None, linewidth=1,
                  parent=None):
-        self.procedure_class = procedure_class
         super().__init__(name, parent)
 
+        self.procedure_class = procedure_class
         self.x_axis_labels = x_axis_labels
         self.y_axis_labels = y_axis_labels
-
         self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))
-
         self.linewidth = linewidth
 
         self.dock_area = DockArea()

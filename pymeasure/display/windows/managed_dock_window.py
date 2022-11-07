@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class DockWindow(ManagedWindowBase):
+class ManagedDockWindow(ManagedWindowBase):
     """
     Display experiment output with multiple docking windows with
     :class:`~pymeasure.display.widgets.dock_widget.DockWidget` class.
