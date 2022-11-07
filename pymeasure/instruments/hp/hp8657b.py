@@ -102,6 +102,17 @@ class HP8657B(Instrument):
             * only one internal source can be active at the time
             * use "OFF" to deactivate AM
 
+        usage example:
+            
+        .. code-block:: python
+
+            sig_gen = HP8657B("GPIB::7")
+            ...
+            sig_gen.am_source = sig_gen.Modulation.Int_400Hz    #  Enable int. 400 Hz source for AM
+            sig_gen.am_depth = 50                               #  Set AM modulation depth to 50%
+            ...
+            sig_gen.am_source = sig_gen.Modulation.OFF          #  Turn AM off
+
         """,
         validator=strict_discrete_set,
         values=Modulation,
@@ -140,8 +151,19 @@ class HP8657B(Instrument):
         *Note:*
             * AM & FM can be active at the same time
             * only one internal source can be active at the time
-            * use "OFF" to deactivate AM
+            * use "OFF" to deactivate FM
             * refer to the documentation rearding details on use of DC FM mode
+
+        usage example:
+            
+        .. code-block:: python
+
+            sig_gen = HP8657B("GPIB::7")
+            ...
+            sig_gen.fm_source = sig_gen.Modulation.External     #  Enable external source for FM
+            sig_gen.fm_deviation = 15                           #  Set FM peak deviation to 15 kHz
+            ...
+            sig_gen.fm_source = sig_gen.Modulation.OFF          #  Turn FM off
 
         """,
         validator=strict_discrete_set,
