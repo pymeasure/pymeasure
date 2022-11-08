@@ -69,3 +69,8 @@ class NIDAQ(Instrument):
     def set_chan(self, chan, value):
         setattr(self, '_%s' % chan, value)
         getattr(self._daq, chan).write('%sV' % value)
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

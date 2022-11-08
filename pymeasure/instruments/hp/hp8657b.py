@@ -220,3 +220,5 @@ class HP8657B(Instrument):
         self.output_enabled = False
         self.adapter.connection.clear()
         self.adapter.connection.close()
+        super.shutdown()
+        

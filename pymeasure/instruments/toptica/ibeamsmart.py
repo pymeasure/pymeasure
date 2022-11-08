@@ -118,3 +118,8 @@ class IBeamSmart(Instrument):
         self.write('di ext')
         self.channel2_enabled = False
         self.laser_enabled = False
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

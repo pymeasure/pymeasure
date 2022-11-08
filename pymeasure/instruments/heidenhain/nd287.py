@@ -111,3 +111,8 @@ class ND287(Instrument):
             log.error("Heidenhain ND287 error message received: %s" % err_str)
 
         return err_str
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

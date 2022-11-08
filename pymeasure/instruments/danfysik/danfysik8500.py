@@ -364,3 +364,8 @@ class Danfysik8500(Instrument):
         :param stack: A stack number between 0-15
         """
         return re.search("R%i," % stack, self.ask("S2")) is not None
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

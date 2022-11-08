@@ -139,3 +139,8 @@ class Thermotron3800(Instrument):
         mode = Thermotron3800.Thermotron3800Mode(int(mode_coded_integer))
 
         return mode
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

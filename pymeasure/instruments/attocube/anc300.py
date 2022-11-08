@@ -255,3 +255,8 @@ class ANC300Controller(Instrument):
             attribute = getattr(self, attr)
             if isinstance(attribute, Axis):
                 attribute.stop()
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

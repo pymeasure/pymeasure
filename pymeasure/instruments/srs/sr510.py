@@ -85,3 +85,8 @@ class SR510(Instrument):
             includeSCPI=False,
             **kwargs,
         )
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

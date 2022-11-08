@@ -143,3 +143,8 @@ class TC038(Instrument):
         """The information about the device and its capabilites.""",
         get_process=lambda got: got[7:-1],
         )
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

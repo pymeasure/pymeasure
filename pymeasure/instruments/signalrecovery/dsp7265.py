@@ -589,3 +589,5 @@ class DSP7265(Instrument):
         log.info("Shutting down %s." % self.name)
         self.voltage = 0.
         self.isShutdown = True
+        super.shutdown()
+

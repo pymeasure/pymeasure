@@ -573,3 +573,8 @@ class ITC503(Instrument):
     def wipe_sweep_table(self):
         """ Wipe the currently programmed sweep table. """
         self.write("w")
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()

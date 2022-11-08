@@ -503,3 +503,8 @@ class IPS120_10(Instrument):
             self.set_field(field, rate, persistent_mode_control=False)
 
         self.set_field(0)
+
+        def shutdown(self):
+            self.adapter.connection.clear()
+            self.adapter.connection.close()
+            super.shutdown()

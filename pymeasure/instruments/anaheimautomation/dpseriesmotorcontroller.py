@@ -337,3 +337,8 @@ class DPSeriesMotorController(Instrument):
         """
         while self.busy:
             sleep(interval)
+
+    def shutdown(self):
+        self.adapter.connection.clear()
+        self.adapter.connection.close()
+        super.shutdown()
