@@ -89,7 +89,7 @@ class Parent(CommonBaseTesting):
     """A Base as a parent"""
     channels = CommonBase.children(("A", "B", "C"), GenericBase)
     analog = CommonBase.children([1, 2], GenericBase, prefix="an", test=True)
-    function = CommonBase.children("", Child)
+    function = CommonBase.children(None, Child)
 
 
 # Test dynamic properties
@@ -148,7 +148,7 @@ class TestAddChild:
         parent = CommonBaseTesting(ProtocolAdapter())
         parent.add_child(GenericBase, "A")
         parent.add_child(GenericBase, "B")
-        parent.add_child(GenericBase, "", collection="function")
+        parent.add_child(GenericBase, None, collection="function")
         return parent
 
     def test_correct_class(self, parent):
@@ -168,11 +168,19 @@ class TestAddChild:
         assert parent.ch_B._collection == "channels"
 
     def test_overwriting_list_raises_error(self, parent):
+        """A single channel is only allowed, if there is no list of that name."""
         with pytest.raises(ValueError, match="already exists"):
-            parent.add_child(GenericBase, "")
+            parent.add_child(GenericBase, None)
 
     def test_single_channel(self, parent):
+        """Test, that id=None creates a single channel."""
+        assert isinstance(parent.function, GenericBase)
         assert parent.function._name == "function"
+
+    def test_evaluating_false_id_creates_channels(self, parent):
+        """Test that an id evaluating false (e.g. 0) creates a channels list."""
+        parent.add_child(GenericBase, 0, collection="special")
+        assert isinstance(parent.special, list)
 
 
 class TestRemoveChild:
@@ -181,7 +189,7 @@ class TestRemoveChild:
         parent = CommonBaseTesting(ProtocolAdapter())
         parent.add_child(GenericBase, "A")
         parent.add_child(GenericBase, "B")
-        parent.add_child(GenericBase, "", collection="function")
+        parent.add_child(GenericBase, None, collection="function")
         parent.remove_child(parent.ch_A)
         parent.remove_child(parent.channels[0])
         parent.remove_child(parent.function)

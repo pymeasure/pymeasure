@@ -137,15 +137,21 @@ class CommonBase:
         :meth:`add_child`. The variable name (e.g. :code:`channels`) will be
         used as the `collection` of the children. You may define the attribute
         prefix via keyword arguments. Normally, do use :code:`channels` as variable
-        and do leave the prefix at the default `"ch"`.
+        and do leave the prefix at the default :code:`"ch"`.
 
         .. code::
 
-            channels = CommonBase.children(["A", "B"], ChildClass)
-            functions = CommonBase.children(["power", "voltage"], (PowerChannel, VoltageChannel), prefix="fn")
+            class SomeInstrument(Instrument):
+                # Three channels of the same type: 'ch_A', 'ch_B', 'ch_C' in 'channels'
+                channels = CommonBase.children(["A", "B", "C"], ChildClass)
+                # Two functions of different types: 'fn_power', 'fn_voltage' in 'functions'
+                functions = CommonBase.children(["power", "voltage"],
+                                                (PowerChannel, VoltageChannel), prefix="fn")
+                # A control without a prefix: 'motor'
+                motor = CommonBase.children(None, MotorControl)
 
-        :param id: Single value or tuple/list of ids of the children. If False,
-            the child will be added directly under the variable name.
+        :param id: Single value or tuple/list of ids of the children. If `None`,
+            the single child will be added directly under the variable name.
         :param cls: Class for all children or tuple/list of classes, one for each child.
         :param \\**kwargs: Keyword arguments for all children.
         """
@@ -158,7 +164,7 @@ class CommonBase:
             assert (len(id) == len(cls)), "Lengths of id and cls do not match."
         elif isinstance(id, (list, tuple)) and valid_class:
             cls = len(id) * (cls,)
-        elif isinstance(id, (str, int)) and valid_class:
+        elif (isinstance(id, (str, int)) or id is None) and valid_class:
             pass  # Leave them as they are.
         else:
             raise ValueError("Invalid definition of ids and classes.")
@@ -221,8 +227,7 @@ class CommonBase:
 
         :param cls: Class of the channel.
         :param id: Child id how it is used in communication, e.g. `"A"`.
-            If it evaluates to `False`, the child will be added under the collection
-            name.
+            If `None`, the child will be added directly under the collection name.
         :param collection: Name of the collection of children, used for the list.
         :param prefix: Collection prefix for the attributes, e.g. `"ch"`
             creates attribute `self.ch_A`. An underscore separates prefix from id.
@@ -231,7 +236,14 @@ class CommonBase:
         """
         child = cls(self, id, **kwargs)
         collection_list = getattr(self, collection, [])
-        if id:
+        if id is None:
+            if collection_list:
+                raise ValueError(f"An attribute '{collection}' already exists.")
+            setattr(self, collection, child)
+            child._name = collection
+            child._collection = None
+            return 0
+        else:
             if not collection_list or isinstance(collection_list, ChildDescriptor):
                 # Add a grouplist to the parent.
                 setattr(self, collection, collection_list)
@@ -240,13 +252,6 @@ class CommonBase:
             setattr(self, f"{prefix}_{id}", child)
             child._name = f"{prefix}_{id}"
             return collection_list.index(child)
-        else:
-            if collection_list:
-                raise ValueError(f"An attribute '{collection}' already exists.")
-            setattr(self, collection, child)
-            child._name = collection
-            child._collection = None
-            return 0
 
     def remove_child(self, child):
         """Remove the child from the instrument and the corresponding collection.
@@ -542,7 +547,10 @@ class CommonBase:
 
 
 class ChildDescriptor:
-    """Describe a child of a :class:`CommonBase` subclass.
+    """Describe the child information of a :class:`CommonBase` subclass.
+
+    The :func:`CommonBase.__init__` will use :func:`CommonBase.add_child` to add
+    children to the instance according to the stored id and class information.
 
     :param id: Name or list of names of the children.
     :param cls: Class or list of classes of the children, has to have the same length.

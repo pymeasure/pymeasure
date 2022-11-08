@@ -826,7 +826,7 @@ Instruments with channels
 
 Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name. For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :code:`instrument` instead of an :code:`adapter` as parameter. All the channel communication is routed through the instrument's methods (`write`, `read`, etc.). However, :meth:`Channel.write <pymeasure.instruments.Channel.write>` uses `str.format` to replace any occurence of :code:`"{ch}"` with the channel's name in the command.
 
-In order to add a channel to an instrument or to another channel (nesting channels is possible), always use the parent's :meth:`~pymeasure.instruments.common_base.CommonBase.add_child` method. This method adds the channel as the instrument's attribute with the name :code:`ch_{id}`, e.g. :code:`ch_A`, appends the channel to the :code:`instrument.channels` list and returns the index of that channel in the list.
+In order to add a channel to an instrument or to another channel (nesting channels is possible), assign the channels with the static method :func:`pymeasure.instruments.common_base.CommonBase.children`. This method accepts a list or tuple of ids and a list of the corresponding channel classes. If you give a single class, all channels will be of the same class. This method adds the channel as the instrument's attribute with the name :code:`ch_{id}`, e.g. :code:`ch_A`, appends the channel to the :code:`instrument.channels` list and returns the index of that channel in the list. In order to add or remove programatically channels, use the parent's :meth:`~pymeasure.instruments.common_base.CommonBase.add_child`, :meth:`~pymeasure.instruments.common_base.CommonBase.remove_child` methods.
 
 .. testcode:: with-protocol-tests
 
@@ -840,19 +840,19 @@ In order to add a channel to an instrument or to another channel (nesting channe
 
     class InstrumentWithChannels(Instrument):
         """An instrument with a channel."""
+        channels = Instrument.children(("A", "B"), VoltageChannel)
 
         def __init__(self, adapter):
             super().__init__(adapter, "Instrument with Channels")
-            self.add_child(VoltageChannel, "A")
 
 .. testcode:: with-protocol-tests
     :hide:
 
     with expected_protocol(InstrumentWithChannels,
-        [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")]
+        [("SOURceA:VOLT 1.23", None), ("SOURceB:VOLT?", "1.23")]
     ) as inst:
         inst.ch_A.voltage = 1.23
-        assert inst.ch_A.voltage == 1.23
+        assert inst.ch_B.voltage == 1.23
 
 If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name. The same channel could be called with :code:`inst.channels[0].voltage = 1.23` as well.
 
@@ -860,15 +860,15 @@ If you set the voltage of the first channel of above :class:`ExtremeChannel` ins
 Channels with fix prefix
 ************************
 
-If all channel communication is prefixed by a specific command, e.g. :code:`"SOURceA:"` for channel A, you can subclass the channels :meth:`write` method.
+If all channel communication is prefixed by a specific command, e.g. :code:`"SOURceA:"` for channel A, you can subclass the channels :meth:`insert_id` method.
 
 .. testcode:: with-protocol-tests
 
     class VoltageChannelPrefix(Channel):
         """A channel of a voltage source, every command has the same prefix."""
 
-        def write(self, command, **kwargs):
-            super().write(f"SOURce{self.id}:{command}", **kwargs)
+        def insert_id(self, command):
+            return f"SOURce{self.id}:{command}"
 
         voltage = Channel.control(
             "VOLT?", "VOLT %g",
@@ -891,7 +891,7 @@ If all channel communication is prefixed by a specific command, e.g. :code:`"SOU
         inst.ch_A.voltage = 1.23
         assert inst.ch_A.voltage == 1.23
 
-This channel class implements the same communication as the previous example, but implements the channel prefix in the :meth:`write` method and not in the individual property (created by :meth:`control`).
+This channel class implements the same communication as the previous example, but implements the channel prefix in the :meth:`insert_id` method and not in the individual property (created by :meth:`control`).
 
 
 Collections of different channel types
@@ -901,15 +901,21 @@ Some devices have different types of channels. In this case, you can specify a d
 
 .. testcode:: with-protocol-tests
 
+    class PowerChannel(Channel):
+        """A channel controlling the power."""
+
+        power = Channel.measurement(
+            "POWER?", """Measure the currently consumed power.""")
+
     class MultiChannelTypeInstrument(Instrument):
         """An instrument with two different channel types."""
+        analog = Instrument.children(("A", "B"), (VoltageChannel, VoltageChannelPrefix), prefix="an")
+        digital = Instrument.children((0, 1, 2), VoltageChannel, prefix="di")
+        power = Instrument.children(None, PowerChannel)
 
         def __init__(self, adapter):
             super().__init__(adapter, "MultiChannelTypeInstrument")
-            for name in ("A", "B", "C"):
-                self.add_child(VoltageChannel, name, collection="analog", prefix="an")
-            for name in range(3):
-                self.add_child(VoltageChannelPrefix, name, collection="digital", prefix="di")
+
 
 .. testcode:: with-protocol-tests
     :hide:
@@ -921,7 +927,8 @@ Some devices have different types of channels. In this case, you can specify a d
         assert inst.di_2.voltage == 1.23
 
 
-This instrument has two collections of channels. One of type :class:`VoltageChannel` with the names :code:`an_A, an_B, an_C` in the list :code:`analog`, and one collection of type :class:`VoltageChannelPrefix` with the names :code:`di_0, di_1, di_2` in the list :code:`digital`. You can call the first channel of the second group either with :code:`inst.di_0.voltage` or with :code:`inst.digital[0].voltage`.
+This instrument has two collections of channels and one single channel. The first collection in the list :code:`analog` contains an instance of :class:`VoltageChannel` with the name :code:`an_A` and an instance of :class:`VoltageChannelPrefix` with the name :code:`an_B`. The second collection contains three channels of type :class:`VoltageChannel` with the names :code:`di_0, di_1, di_2` in the list :code:`digital`. You can call the first channel of the second group either with :code:`inst.di_0.voltage` or with :code:`inst.digital[0].voltage`.
+Finally, the instrument has a single channel with the name :code:`power`, as it does not have an ID (:code:`None`).
 
 If you have a single channel category, do not change the default parameters of :meth:`add_child`!
 
