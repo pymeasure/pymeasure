@@ -28,7 +28,7 @@ import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Channel, Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
+from pymeasure.instruments.validators import truncated_range
 
 
 class GenericChannel(Channel):

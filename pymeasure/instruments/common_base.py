@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import inspect
 import logging
 
 log = logging.getLogger(__name__)
@@ -119,6 +120,49 @@ class CommonBase:
 
     def __init__(self):
         self._special_names = self._setup_special_names()
+        # Add children from ChildDescriptors.
+        for item, value in inspect.getmembers(self.__class__):
+            if isinstance(value, ChildDescriptor):
+                if isinstance(value.id, (list, tuple)):
+                    for id, cls in zip(value.id, value.cls):
+                        self.add_child(cls, id, collection=item, **value.kwargs)
+                else:
+                    self.add_child(value.cls, value.id, collection=item, **value.kwargs)
+
+    @staticmethod
+    def children(id, cls, **kwargs):
+        """Describe children of this parent class.
+
+        The children will be added to the parent instance at instantiation with
+        :meth:`add_child`. The variable name (e.g. :code:`channels`) will be
+        used as the `collection` of the children. You may define the attribute
+        prefix via keyword arguments. Normally, do use :code:`channels` as variable
+        and do leave the prefix at the default `"ch"`.
+
+        .. code::
+
+            channels = CommonBase.children(["A", "B"], ChildClass)
+            functions = CommonBase.children(["power", "voltage"], (PowerChannel, VoltageChannel), prefix="fn")
+
+        :param id: Single value or tuple/list of ids of the children. If False,
+            the child will be added directly under the variable name.
+        :param cls: Class for all children or tuple/list of classes, one for each child.
+        :param \\**kwargs: Keyword arguments for all children.
+        """
+        try:
+            valid_class = issubclass(cls, CommonBase)
+        except Exception:
+            valid_class = False
+        if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
+            # Iteration of similar functions
+            assert (len(id) == len(cls)), "Lengths of id and cls do not match."
+        elif isinstance(id, (list, tuple)) and valid_class:
+            cls = len(id) * (cls,)
+        elif isinstance(id, (str, int)) and valid_class:
+            pass  # Leave them as they are.
+        else:
+            raise ValueError("Invalid definition of ids and classes.")
+        return ChildDescriptor(id, cls, **kwargs)
 
     def _setup_special_names(self):
         """ Return list of class/instance special names.
@@ -177,6 +221,8 @@ class CommonBase:
 
         :param cls: Class of the channel.
         :param id: Child id how it is used in communication, e.g. `"A"`.
+            If it evaluates to `False`, the child will be added under the collection
+            name.
         :param collection: Name of the collection of children, used for the list.
         :param prefix: Collection prefix for the attributes, e.g. `"ch"`
             creates attribute `self.ch_A`. An underscore separates prefix from id.
@@ -185,15 +231,22 @@ class CommonBase:
         """
         child = cls(self, id, **kwargs)
         collection_list = getattr(self, collection, [])
-        if not collection_list:
-            # Add a grouplist to the parent.
-            setattr(self, collection, collection_list)
-        collection_list.append(child)
-        setattr(self, f"{prefix}_{id}", child)
-        # Store the attribute name and the collection name in the child.
-        child._name = f"{prefix}_{id}"
-        child._collection = collection
-        return collection_list.index(child)
+        if id:
+            if not collection_list or isinstance(collection_list, ChildDescriptor):
+                # Add a grouplist to the parent.
+                setattr(self, collection, collection_list)
+            collection_list.append(child)
+            child._collection = collection
+            setattr(self, f"{prefix}_{id}", child)
+            child._name = f"{prefix}_{id}"
+            return collection_list.index(child)
+        else:
+            if collection_list:
+                raise ValueError(f"An attribute '{collection}' already exists.")
+            setattr(self, collection, child)
+            child._name = collection
+            child._collection = None
+            return 0
 
     def remove_child(self, child):
         """Remove the child from the instrument and the corresponding collection.
@@ -201,8 +254,9 @@ class CommonBase:
         :param child_name: Instance of the child to delete
         :param collection: The collection or name of the collection, e.g. "channels".
         """
-        collection = getattr(self, child._collection)
-        del collection[collection.index(child)]
+        if child._collection:
+            collection = getattr(self, child._collection)
+            del collection[collection.index(child)]
         delattr(self, child._name)
 
     # Communication functions
@@ -485,3 +539,23 @@ class CommonBase:
                                   check_set_errors=check_set_errors,
                                   dynamic=dynamic,
                                   **kwargs)
+
+
+class ChildDescriptor:
+    """Describe a child of a :class:`CommonBase` subclass.
+
+    :param id: Name or list of names of the children.
+    :param cls: Class or list of classes of the children, has to have the same length.
+    :param \\**kwargs: Keyword arguments for the children's init.
+    """
+
+    def __init__(self, id, cls, **kwargs):
+        self.id = id
+        self.cls = cls
+        self.kwargs = kwargs
+
+    def __get__(self, instance, owner=None):
+        if instance is None:
+            # Property return itself when invoked from a class
+            return self
+        raise AttributeError("Descriptor should be replaced by children.")
