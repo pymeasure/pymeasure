@@ -86,15 +86,15 @@ class HP8657B(Instrument):
     am_source = Instrument.setting(
         "AM S%i",
         """
-        Set the source for the AM function
+        Set the source for the AM function with :attr:`Modulation` enumeration.
 
         ==========  =======
         Value       Meaning
         ==========  =======
         OFF         no modulation active
-        Int_400Hz   internal 400 Hz modulation source
-        Int_1000Hz  internal 1000 Hz modulation source
-        External    External source, AC coupling
+        INT_400HZ   internal 400 Hz modulation source
+        INT_1000HZ  internal 1000 Hz modulation source
+        EXTERNAL    External source, AC coupling
         ==========  =======
 
         *Note:*
@@ -108,7 +108,7 @@ class HP8657B(Instrument):
 
             sig_gen = HP8657B("GPIB::7")
             ...
-            sig_gen.am_source = sig_gen.Modulation.Int_400Hz    #  Enable int. 400 Hz source for AM
+            sig_gen.am_source = sig_gen.Modulation.INT_400HZ    #  Enable int. 400 Hz source for AM
             sig_gen.am_depth = 50                               #  Set AM modulation depth to 50%
             ...
             sig_gen.am_source = sig_gen.Modulation.OFF          #  Turn AM off
