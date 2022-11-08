@@ -136,15 +136,15 @@ class HP8657B(Instrument):
     fm_source = Instrument.setting(
         "FM S%i",
         """
-        Set the source for the FM function
+        Set the source for the FM function with :attr:`Modulation` enumeration.
 
         ==========  =======
         Value       Meaning
         ==========  =======
         OFF         no modulation active
-        Int_400Hz   internal 400 Hz modulation source
-        Int_1000Hz  internal 1000 Hz modulation source
-        External    External source, AC coupling
+        INT_400HZ   internal 400 Hz modulation source
+        INT_1000HZ  internal 1000 Hz modulation source
+        EXTERNAL    External source, AC coupling
         DC_FM       External source, DC coupling (FM only)
         ==========  =======
 
@@ -160,7 +160,7 @@ class HP8657B(Instrument):
 
             sig_gen = HP8657B("GPIB::7")
             ...
-            sig_gen.fm_source = sig_gen.Modulation.External     #  Enable external source for FM
+            sig_gen.fm_source = sig_gen.Modulation.EXTERNAL     #  Enable external source for FM
             sig_gen.fm_deviation = 15                           #  Set FM peak deviation to 15 kHz
             ...
             sig_gen.fm_source = sig_gen.Modulation.OFF          #  Turn FM off
