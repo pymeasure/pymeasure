@@ -221,4 +221,3 @@ class HP8657B(Instrument):
         self.adapter.connection.clear()
         self.adapter.connection.close()
         super.shutdown()
-        

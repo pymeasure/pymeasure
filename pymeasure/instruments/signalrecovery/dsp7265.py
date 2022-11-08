@@ -590,4 +590,3 @@ class DSP7265(Instrument):
         self.voltage = 0.
         self.isShutdown = True
         super.shutdown()
-
