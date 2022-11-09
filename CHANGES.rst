@@ -1,18 +1,3 @@
-Version 0.XX.X (20XX-XX-XX)
-===========================
-
-Instruments
------------
-- New TEXIO PSW-360L30 Power Supply (minimal implementation)
-
-Deprecated Features
--------------------
-- "enabled" property of Keithley 2260B and TEXIO PSW-360L30 is deprecated in favor of "output_enabled"
-
-New Contributors
-----------------
-@LastStarDust
-
 Version 0.10.0 (2022-04-09)
 ===========================
 Main items of this new release:
@@ -225,7 +210,7 @@ Version 0.4.4 -- released 6/4/17
 
 Version 0.4.3 -- released 3/30/17
 =================================
-- Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and
+- Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and 
   Anritsu MS9710C instruments (@TvBMcMaster, @dvspirito, and @mhdg)
 - Updates to PyVISA support (@minhhaiphys)
 - Initial work on resource manager (@dvspirito)
