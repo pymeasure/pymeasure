@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-import inspect
 import logging
 
 log = logging.getLogger(__name__)
@@ -121,54 +120,40 @@ class CommonBase:
     def __init__(self):
         self._special_names = self._setup_special_names()
         # Add children from ChildDescriptors.
-        for item, value in inspect.getmembers(self.__class__):
+        for item, value in self.__class__.__dict__.items():
             if isinstance(value, ChildDescriptor):
-                if isinstance(value.id, (list, tuple)):
-                    for id, cls in zip(value.id, value.cls):
-                        self.add_child(cls, id, collection=item, **value.kwargs)
-                else:
-                    self.add_child(value.cls, value.id, collection=item, **value.kwargs)
+                for cls, id in value.pairs:
+                    self.add_child(cls, id, collection=item, **value.kwargs)
 
     @staticmethod
-    def children(id, cls, **kwargs):
+    def children(cls, id=None, prefix="ch_", **kwargs):
         """Describe children of this parent class.
 
         The children will be added to the parent instance at instantiation with
         :meth:`add_child`. The variable name (e.g. :code:`channels`) will be
         used as the `collection` of the children. You may define the attribute
-        prefix via keyword arguments. Normally, do use :code:`channels` as variable
-        and do leave the prefix at the default :code:`"ch"`.
+        prefix. If there are no other pressing reasons, use :code:`channels` as variable
+        and leave the prefix at the default :code:`"ch_"`.
 
         .. code::
 
             class SomeInstrument(Instrument):
                 # Three channels of the same type: 'ch_A', 'ch_B', 'ch_C' in 'channels'
-                channels = CommonBase.children(["A", "B", "C"], ChildClass)
+                channels = CommonBase.children(ChildClass, ["A", "B", "C"])
                 # Two functions of different types: 'fn_power', 'fn_voltage' in 'functions'
-                functions = CommonBase.children(["power", "voltage"],
-                                                (PowerChannel, VoltageChannel), prefix="fn")
-                # A control without a prefix: 'motor'
-                motor = CommonBase.children(None, MotorControl)
+                functions = CommonBase.children((PowerChannel, VoltageChannel),
+                                                ["power", "voltage"], prefix="fn_")
+                # A control with an prefixless attribute name: 'motor'
+                motor = CommonBase.children(MotorControl, prefix=None)
 
-        :param id: Single value or tuple/list of ids of the children. If `None`,
-            the single child will be added directly under the variable name.
         :param cls: Class for all children or tuple/list of classes, one for each child.
+        :param id: Single value or tuple/list of ids of the children.
+        :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
+            creates attribute `self.ch_A`. If prefix evaluates False,
+            the child will be added directly under the variable name.
         :param \\**kwargs: Keyword arguments for all children.
         """
-        try:
-            valid_class = issubclass(cls, CommonBase)
-        except Exception:
-            valid_class = False
-        if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
-            # Iteration of similar functions
-            assert (len(id) == len(cls)), "Lengths of id and cls do not match."
-        elif isinstance(id, (list, tuple)) and valid_class:
-            cls = len(id) * (cls,)
-        elif (isinstance(id, (str, int)) or id is None) and valid_class:
-            pass  # Leave them as they are.
-        else:
-            raise ValueError("Invalid definition of ids and classes.")
-        return ChildDescriptor(id, cls, **kwargs)
+        return ChildDescriptor(cls, id, prefix=prefix, **kwargs)
 
     def _setup_special_names(self):
         """ Return list of class/instance special names.
@@ -211,7 +196,7 @@ class CommonBase:
         return super().__getattribute__(name)
 
     # Channel management
-    def add_child(self, cls, id, collection="channels", prefix="ch", **kwargs):
+    def add_child(self, cls, id=None, collection="channels", prefix="ch_", **kwargs):
         """Add a child to this instance and return its index in the children list.
 
         The newly created child may be accessed either by the index in the
@@ -227,37 +212,38 @@ class CommonBase:
 
         :param cls: Class of the channel.
         :param id: Child id how it is used in communication, e.g. `"A"`.
-            If `None`, the child will be added directly under the collection name.
         :param collection: Name of the collection of children, used for the list.
-        :param prefix: Collection prefix for the attributes, e.g. `"ch"`
-            creates attribute `self.ch_A`. An underscore separates prefix from id.
+        :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
+            creates attribute `self.ch_A`. If prefix evaluates False,
+            the child will be added directly under the collection name.
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Index of this instance's channels.
         """
         child = cls(self, id, **kwargs)
-        collection_list = getattr(self, collection, [])
-        if id is None:
-            if collection_list:
+        collection_data = getattr(self, collection, [])
+        if isinstance(collection_data, ChildDescriptor):
+            collection_data = []
+        if prefix:
+            if not collection_data:
+                # Add a grouplist to the parent.
+                setattr(self, collection, collection_data)
+            collection_data.append(child)
+            child._collection = collection
+            setattr(self, f"{prefix}{id}", child)
+            child._name = f"{prefix}{id}"
+            return collection_data.index(child)
+        else:
+            if collection_data:
                 raise ValueError(f"An attribute '{collection}' already exists.")
             setattr(self, collection, child)
             child._name = collection
             child._collection = None
-            return 0
-        else:
-            if not collection_list or isinstance(collection_list, ChildDescriptor):
-                # Add a grouplist to the parent.
-                setattr(self, collection, collection_list)
-            collection_list.append(child)
-            child._collection = collection
-            setattr(self, f"{prefix}_{id}", child)
-            child._name = f"{prefix}_{id}"
-            return collection_list.index(child)
+            return None
 
     def remove_child(self, child):
         """Remove the child from the instrument and the corresponding collection.
 
-        :param child_name: Instance of the child to delete
-        :param collection: The collection or name of the collection, e.g. "channels".
+        :param child: Instance of the child to delete.
         """
         if child._collection:
             collection = getattr(self, child._collection)
@@ -549,21 +535,44 @@ class CommonBase:
 class ChildDescriptor:
     """Describe the child information of a :class:`CommonBase` subclass.
 
-    The :func:`CommonBase.__init__` will use :func:`CommonBase.add_child` to add
-    children to the instance according to the stored id and class information.
+    The children will be added to the parent instance at instantiation with
+    :func:`CommonBase.add_child`. The variable name (e.g. :code:`channels`) will be
+    used as the `collection` of the children. You may define the attribute
+    prefix. If there are no other pressing reasons, use :code:`channels` as variable
+    and leave the prefix at the default :code:`"ch_"`.
 
-    :param id: Name or list of names of the children.
-    :param cls: Class or list of classes of the children, has to have the same length.
-    :param \\**kwargs: Keyword arguments for the children's init.
+    .. code::
+
+        class SomeInstrument(Instrument):
+            # Three channels of the same type: 'ch_A', 'ch_B', 'ch_C' in 'channels'
+            channels = ChildDescriptor(ChildClass, ["A", "B", "C"])
+            # Two functions of different types: 'fn_power', 'fn_voltage' in 'functions'
+            functions = ChildDescriptor((PowerChannel, VoltageChannel),
+                                            ["power", "voltage"], prefix="fn_")
+            # A control option without a prefixed attribute name, simply: 'motor'
+            motor = ChildDescriptor(MotorControl, prefix=None)
+
+    :param cls: Class for all children or tuple/list of classes, one for each child.
+    :param id: Single value or tuple/list of ids of the children.
+    :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
+        creates attribute `self.ch_A`. If prefix evaluates False,
+        the child will be added directly under the variable name.
+    :param \\**kwargs: Keyword arguments for all children.
     """
 
-    def __init__(self, id, cls, **kwargs):
-        self.id = id
-        self.cls = cls
+    def __init__(self, cls, id, prefix="ch_", **kwargs):
+        try:
+            valid_class = issubclass(cls, CommonBase)
+        except TypeError:
+            valid_class = False
+        if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
+            assert (len(id) == len(cls)), "Lengths of cls and id do not match."
+            self.pairs = zip(cls, id, strict=True)
+        elif isinstance(id, (list, tuple)) and valid_class:
+            self.pairs = zip((cls,) * len(id), id)
+        elif (isinstance(id, (str, int)) or id is None) and valid_class:
+            self.pairs = ((cls, id),)
+        else:
+            raise ValueError("Invalid definition of ids and classes.")
+        kwargs.setdefault("prefix", prefix)
         self.kwargs = kwargs
-
-    def __get__(self, instance, owner=None):
-        if instance is None:
-            # Property return itself when invoked from a class
-            return self
-        raise AttributeError("Descriptor should be replaced by children.")

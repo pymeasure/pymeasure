@@ -38,7 +38,7 @@ class Channel(CommonBase):
 
     :meth:`insert_id` inserts the channel id into the command string sent to the instrument.
     The default implementation replaces the Channel's `placeholder` (default "ch")
-    with the channel id.
+    with the channel id in all command strings (e.g. "CHANnel{ch}:foo").
 
     :param parent: The instrument (an instance of :class:`~pymeasure.instruments.Instrument`)
         to which the channel belongs.
