@@ -774,6 +774,7 @@ In this case you would update the specific class parameter range without rewriti
             """Set the frequency (float).""",
             validator=strict_range,
             values=[0, 1e9],
+            dynamic=True,
             # ... other possible parameters follow
         )
         #
