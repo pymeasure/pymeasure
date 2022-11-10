@@ -274,7 +274,8 @@ class DPSeriesMotorController(Instrument):
         raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
 
     def reset_position(self):
-        """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
+        """
+        Reset position as counted by the motor controller and an externally connected encoder to 0.
         """
         # reset encoder recorded position #
         self.write("ET")
@@ -327,34 +328,6 @@ class DPSeriesMotorController(Instrument):
         else:
             cmd_str = "@%i%s" % (self._address, command)
         super().write(cmd_str)
-
-    def values(self, command, **kwargs):
-        """ Override the instrument base values method to add the motor controller's address to the
-        command string.
-
-        :param command: command string to be sent to the motor controller.
-        """
-        # check if an address related command was sent. #
-        if "%" in command or "~" in command:
-            vals = super().values("@%s" % command, **kwargs)
-        else:
-            vals = super().values("@%i%s" % (self._address, command))
-
-        return vals
-
-    def ask(self, command):
-        """ Override the instrument base ask method to add the motor controller's address to the
-        command string.
-
-        :param command: command string to be sent to the instrument
-        """
-        # check if an address related command was sent. #
-        if "%" in command or "~" in command:
-            val = super().ask("@%s" % command)
-        else:
-            val = super().ask("@%i%s" % (self._address, command))
-
-        return val
 
     def wait_for_completion(self, interval=0.5):
         """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)

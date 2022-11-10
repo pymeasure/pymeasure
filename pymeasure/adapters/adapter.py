@@ -22,8 +22,12 @@
 # THE SOFTWARE.
 #
 
+import logging
+from warnings import warn
+
 import numpy as np
 from copy import copy
+from pyvisa.util import to_ieee_block, to_hp_block, to_binary_block
 
 
 class Adapter:
@@ -33,48 +37,129 @@ class Adapter:
 
     This class should only be inherited from.
 
-    :param preprocess_reply: optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
+
+    :param log: Parent logger of the 'Adapter' logger.
     :param kwargs: all other keyword arguments are ignored.
     """
 
-    def __init__(self, preprocess_reply=None, **kwargs):
+    def __init__(self, preprocess_reply=None, log=None, **kwargs):
         self.preprocess_reply = preprocess_reply
         self.connection = None
+        if log is None:
+            self.log = logging.getLogger("Adapter")
+        else:
+            self.log = log.getChild("Adapter")
+        self.log.addHandler(logging.NullHandler())
+        if preprocess_reply is not None:
+            warn("Deprecated in Adapter, implement it in the instrument instead.",
+                 FutureWarning)
 
     def __del__(self):
         """Close connection upon garbage collection of the device"""
+        self.close()
+
+    def close(self):
+        """Close the connection."""
         if self.connection is not None:
             self.connection.close()
 
-    def write(self, command):
-        """ Writes a command to the instrument
+    # Directly called methods, which ensure proper logging of the communication
+    # without the termination characters added by the particular adapters.
+    # DO NOT OVERRIDE IN SUBCLASS!
+    def write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
 
-        :param command: SCPI command string to be sent to the instrument
+        Do not override in a subclass!
+
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
         """
-        raise NameError("Adapter (sub)class has not implemented writing")
+        self.log.debug("WRITE:%s", command)
+        self._write(command, **kwargs)
 
+    def write_bytes(self, content, **kwargs):
+        """Write the bytes `content` to the instrument.
+
+        Do not override in a subclass!
+
+        :param bytes content: The bytes to write to the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
+        """
+        self.log.debug("WRITE:%s", content)
+        self._write_bytes(content, **kwargs)
+
+    def read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer.
+
+        Do not override in a subclass!
+
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (excluding read_termination).
+        """
+        read = self._read(**kwargs)
+        self.log.debug("READ:%s", read)
+        return read
+
+    def read_bytes(self, count=-1, **kwargs):
+        """Read a certain number of bytes from the instrument.
+
+        Do not override in a subclass!
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
+        """
+        read = self._read_bytes(count, **kwargs)
+        self.log.debug("READ:%s", read)
+        return read
+
+    # Methods to implement in the subclasses.
+    def _write(self, command, **kwargs):
+        """Write string to the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented writing.")
+
+    def _write_bytes(self, content, **kwargs):
+        """Write bytes to the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented writing bytes.")
+
+    def _read(self, **kwargs):
+        """Read string from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading.")
+
+    def _read_bytes(self, count, **kwargs):
+        """Read bytes from the instrument. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented reading bytes.")
+
+    # Deprecated methods.
     def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting
-        ASCII response
+        """ Write the command to the instrument and returns the resulting
+        ASCII response.
+
+        .. deprecated:: 0.11
+           Call `Instrument.ask` instead.
 
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
+        warn("Deprecated, call `Instrument.ask` instead.",
+             FutureWarning)
         self.write(command)
         return self.read()
 
-    def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII respone
-
-        :returns: String ASCII response of the instrument.
-        """
-        raise NameError("Adapter (sub)class has not implemented reading")
-
     def values(self, command, separator=',', cast=float, preprocess_reply=None):
-        """ Writes a command to the instrument and returns a list of formatted
-        values from the result
+        """ Write a command to the instrument and returns a list of formatted
+        values from the result.
+
+        .. deprecated:: 0.11
+            Call `Instrument.values` instead.
 
         :param command: SCPI command to be sent to the instrument
         :param separator: A separator character to split the string into a list
@@ -85,6 +170,8 @@ class Adapter:
             preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
+        warn("Deprecated, call `Instrument.values` instead.",
+             FutureWarning)
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
@@ -106,13 +193,69 @@ class Adapter:
     def binary_values(self, command, header_bytes=0, dtype=np.float32):
         """ Returns a numpy array from a query for binary data
 
+        .. deprecated:: 0.11
+            Call `Instrument.binary_values` instead.
+
         :param command: SCPI command to be sent to the instrument
         :param header_bytes: Integer number of bytes to ignore in header
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        raise NameError("Adapter (sub)class has not implemented the "
-                        "binary_values method")
+        warn("Deprecated, call `Instrument.binary_values` instead.",
+             FutureWarning)
+        self.write(command)
+        binary = self.read()
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:]
+        return np.fromstring(data, dtype=dtype)
+
+    # Binary format methods
+    def read_binary_values(self, header_bytes=0, termination_bytes=None,
+                           dtype=np.float32, **kwargs):
+        """ Returns a numpy array from a query for binary data
+
+        :param int header_bytes: Number of bytes to ignore in header.
+        :param int termination_bytes: Number of bytes to strip at end of message or None.
+        :param dtype: The NumPy data type to format the values with.
+        :param kwargs: Further arguments for the NumPy fromstring method.
+        :returns: NumPy array of values
+        """
+        binary = self.read_bytes(-1)
+        # header = binary[:header_bytes]
+        data = binary[header_bytes:termination_bytes]
+        return np.fromstring(data, dtype=dtype, **kwargs)
+
+    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
+        """Format values in binary format, used internally in :meth:`Adapter.write_binary_values`.
+
+        :param values: data to be written to the device.
+        :param datatype: the format string for a single element. See struct module.
+        :param is_big_endian: boolean indicating endianess.
+        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
+        :return: binary string.
+        :rtype: bytes
+        """
+        if header_fmt == "ieee":
+            block = to_ieee_block(values, datatype, is_big_endian)
+        elif header_fmt == "hp":
+            block = to_hp_block(values, datatype, is_big_endian)
+        elif header_fmt == "empty":
+            block = to_binary_block(values, b"", datatype, is_big_endian)
+        else:
+            raise ValueError("Unsupported header_fmt: %s" % header_fmt)
+        return block
+
+    def write_binary_values(self, command, values, termination="", **kwargs):
+        """ Write binary data to the instrument, e.g. waveform for signal generators
+
+        :param command: command string to be sent to the instrument
+        :param values: iterable representing the binary values
+        :param termination: String added afterwards to terminate the message.
+        :param kwargs: Key-word arguments to pass onto :meth:`Adapter._format_binary_values`
+        :returns: number of bytes written
+        """
+        block = self._format_binary_values(values, **kwargs)
+        return self.write_bytes(command.encode() + block + termination.encode())
 
 
 class FakeAdapter(Adapter):
@@ -134,8 +277,8 @@ class FakeAdapter(Adapter):
 
     _buffer = ""
 
-    def read(self):
-        """ Returns the last commands given after the
+    def _read(self):
+        """ Return the last commands given after the
         last read call.
         """
         result = copy(self._buffer)
@@ -143,11 +286,26 @@ class FakeAdapter(Adapter):
         self._buffer = ""
         return result
 
-    def write(self, command):
-        """ Writes the command to a buffer, so that it can
+    def _read_bytes(self, count):
+        """ Return the last commands given after the
+        last read call.
+        """
+        result = copy(self._buffer)
+        # Reset the buffer
+        self._buffer = ""
+        return result[:count].encode()
+
+    def _write(self, command):
+        """ Write the command to a buffer, so that it can
         be read back.
         """
         self._buffer += command
+
+    def _write_bytes(self, command):
+        """ Write the command to a buffer, so that it can
+        be read back.
+        """
+        self._buffer += command.decode()
 
     def __repr__(self):
         return "<FakeAdapter>"

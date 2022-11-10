@@ -23,7 +23,8 @@
 #
 
 import logging
-import numpy as np
+import time
+
 from pymeasure.adapters.visa import VISAAdapter
 
 log = logging.getLogger(__name__)
@@ -145,7 +146,8 @@ class Instrument:
     __reserved_prefix = "___"
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True,
+                 **kwargs):
         if isinstance(adapter, (int, str)):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
@@ -244,50 +246,119 @@ class Instrument:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     # Wrapper functions for the Adapter object
-    def ask(self, command):
+    def write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
+
+        :param command: command string to be sent to the instrument
+        :param kwargs: Keyword arguments for the adapter.
+        """
+        self.adapter.write(command, **kwargs)
+
+    def write_bytes(self, content, **kwargs):
+        """Write the bytes `content` to the instrument."""
+        self.adapter.write_bytes(content, **kwargs)
+
+    def read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer."""
+        return self.adapter.read(**kwargs)
+
+    def read_bytes(self, count, **kwargs):
+        """Read a certain number of bytes from the instrument.
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read the whole read buffer.
+        :param kwargs: Keyword arguments for the adapter.
+        :returns bytes: Bytes response of the instrument (including termination).
+        """
+        return self.adapter.read_bytes(count, **kwargs)
+
+    def write_binary_values(self, command, values, *args, **kwargs):
+        """Write binary values to the device.
+
+        :param command: Command to send.
+        :param values: The values to transmit.
+        :param \\*args, \\**kwargs: Further arguments to hand to the Adapter.
+        """
+        self.adapter.write_binary_values(command, values, *args, **kwargs)
+
+    # Communication functions
+    def wait_for(self, query_delay=0):
+        """Wait for some time. Used by 'ask' to wait before reading.
+
+        :param query_delay: Delay between writing and reading in seconds.
+        """
+        if query_delay:
+            time.sleep(query_delay)
+
+    def ask(self, command, query_delay=0):
         """ Writes the command to the instrument through the adapter
         and returns the read response.
 
-        :param command: command string to be sent to the instrument
+        :param command: Command string to be sent to the instrument.
+        :param query_delay: Delay between writing and reading in seconds.
+        :returns: String returned by the device without read_termination.
         """
-        return self.adapter.ask(command)
+        self.write(command)
+        self.wait_for(query_delay)
+        return self.read()
 
-    def write(self, command):
-        """ Writes the command to the instrument through the adapter.
+    def values(self, command, separator=',', cast=float, preprocess_reply=None):
+        """ Writes a command to the instrument and returns a list of formatted
+        values from the result.
 
-        :param command: command string to be sent to the instrument
+        :param command: SCPI command to be sent to the instrument
+        :param separator: A separator character to split the string into a list
+        :param cast: A type to cast the result
+        :param preprocess_reply: optional callable used to preprocess values
+            received from the instrument. The callable returns the processed
+            string.
+        :returns: A list of the desired type, or strings where the casting fails
         """
-        self.adapter.write(command)
+        results = str(self.ask(command)).strip()
+        if callable(preprocess_reply):
+            results = preprocess_reply(results)
+        results = results.split(separator)
+        for i, result in enumerate(results):
+            try:
+                if cast == bool:
+                    # Need to cast to float first since results are usually
+                    # strings and bool of a non-empty string is always True
+                    results[i] = bool(float(result))
+                else:
+                    results[i] = cast(result)
+            except Exception:
+                pass  # Keep as string
+        return results
 
-    def read(self):
-        """ Reads from the instrument through the adapter and returns the
-        response.
+    def binary_values(self, command, query_delay=0, **kwargs):
+        """ Returns a numpy array from a query for binary data.
+
+        :param command: Command to be sent to the instrument.
+        :param query_delay: Delay between writing and reading in seconds.
+        :param kwargs: Arguments for :meth:`Adapter.read_binary_values`.
+        :returns: NumPy array of values
         """
-        return self.adapter.read()
+        self.write(command)
+        self.wait_for(query_delay)
+        return self.adapter.read_binary_values(**kwargs)
 
-    def values(self, command, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
-        passing on any key-word arguments.
-        """
-        return self.adapter.values(command, **kwargs)
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        return self.adapter.binary_values(command, header_bytes, dtype)
-
+    # Property creators
     @staticmethod
-    def control(get_command,  # noqa: C901 accept that this is a complex method
-                set_command,
-                docs,
-                validator=lambda v, vs: v,
-                values=(),
-                map_values=False,
-                get_process=lambda v: v,
-                set_process=lambda v: v,
-                command_process=lambda c: c,
-                check_set_errors=False,
-                check_get_errors=False,
-                dynamic=False,
-                **kwargs):
+    def control(  # noqa: C901 accept that this is a complex method
+        get_command,
+        set_command,
+        docs,
+        validator=lambda v, vs: v,
+        values=(),
+        map_values=False,
+        get_process=lambda v: v,
+        set_process=lambda v: v,
+        command_process=lambda c: c,
+        check_set_errors=False,
+        check_get_errors=False,
+        dynamic=False,
+        **kwargs
+    ):
         """Returns a property for the class based on the supplied
         commands. This property may be set and read from the
         instrument. See also :meth:`measurement` and :meth:`setting`.

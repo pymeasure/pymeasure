@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-
+import time
 from unittest import mock
 
 import pytest
@@ -31,7 +31,7 @@ from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.instrument import DynamicProperty
-from pymeasure.adapters import FakeAdapter
+from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
@@ -121,30 +121,71 @@ class TestInstrumentCommunication:
         instr.read()
         assert instr.adapter.method_calls == [mock.call.read()]
 
-    def test_ask(self, instr):
+    def test_write_bytes(self, instr):
+        instr.write_bytes(b"abc")
+        assert instr.adapter.method_calls == [mock.call.write_bytes(b"abc")]
+
+    def test_read_bytes(self, instr):
+        instr.read_bytes(5)
+        assert instr.adapter.method_calls == [mock.call.read_bytes(5)]
+
+    def test_write_binary_values(self, instr):
+        instr.write_binary_values("abc", [5, 6, 7])
+        assert instr.adapter.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
+
+
+class TestWaiting:
+    @pytest.fixture()
+    def instr(self):
+        class Faked(Instrument):
+            def wait_for(self, query_delay=0):
+                self.waited = query_delay
+        return Faked(ProtocolAdapter(), name="faked")
+
+    def test_waiting(self):
+        instr = Instrument(ProtocolAdapter(), "faked")
+        stop = time.perf_counter() + 100
+        instr.wait_for(0.1)
+        assert time.perf_counter() < stop
+
+    def test_ask_calls_wait(self, instr):
+        instr.adapter.comm_pairs = [("abc", "resp")]
         instr.ask("abc")
-        assert instr.adapter.method_calls == [mock.call.ask('abc')]
+        assert instr.waited == 0
 
-    def test_values(self, instr):
-        instr.values("abc")
-        assert instr.adapter.method_calls == [mock.call.values('abc')]
+    def test_ask_calls_wait_with_delay(self, instr):
+        instr.adapter.comm_pairs = [("abc", "resp")]
+        instr.ask("abc", query_delay=10)
+        assert instr.waited == 10
 
-    def test_binary_values(self, instr):
-        instr.binary_values("abc", dtype=int)
-        assert instr.adapter.method_calls == [mock.call.binary_values('abc', 0, int)]
+    def test_binary_values_calls_wait(self, instr):
+        instr.adapter.comm_pairs = [("abc", "abcdefgh")]
+        instr.binary_values("abc")
+        assert instr.waited == 0
 
 
-def test_id():
+@pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),
+                                                  ("complete", "*OPC?", "1"),
+                                                  ("status", "*STB?", "189"),
+                                                  ("options", "*OPT?", "a9"),
+                                                  ))
+def test_SCPI_properties(method, write, reply):
     with expected_protocol(
             Instrument,
-            [("*IDN?", "xyz")],
+            [(write, reply)],
             name="test") as instr:
-        assert "xyz" == instr.id
+        assert getattr(instr, method) == reply
 
 
-def test_id_failed():
-    with pytest.raises(NotImplementedError):
-        Instrument(FakeAdapter(), "abc", includeSCPI=False).id
+@pytest.mark.parametrize("method, write", (("clear", "*CLS"),
+                                           ("reset", "*RST")
+                                           ))
+def test_SCPI_write_commands(method, write):
+    with expected_protocol(
+            Instrument,
+            [(write, None)],
+            name="test") as instr:
+        getattr(instr, method)()
 
 
 def test_instrument_check_errors():
@@ -154,6 +195,29 @@ def test_instrument_check_errors():
              ("SYST:ERR?", "0")],
             name="test") as instr:
         assert instr.check_errors() == [[17, "funny stuff"]]
+
+
+@pytest.mark.parametrize("method", ("id", "complete", "status", "options",
+                                    "clear", "reset", "check_errors"
+                                    ))
+def test_SCPI_false_raises_errors(method):
+    with pytest.raises(NotImplementedError):
+        getattr(Instrument(FakeAdapter(), "abc", includeSCPI=False), method)()
+
+
+@pytest.mark.parametrize("value, kwargs, result",
+                         (("5,6,7", {}, [5, 6, 7]),
+                          ("5.6.7", {'separator': '.'}, [5, 6, 7]),
+                          ("5,6,7", {'cast': str}, ['5', '6', '7']),
+                          ("X,Y,Z", {}, ['X', 'Y', 'Z']),
+                          ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
+                          ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
+                          ("0,5,7.1", {'cast': bool}, [False, True, True]),
+                          ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5])
+                          ))
+def test_values(value, kwargs, result):
+    instr = Instrument(FakeAdapter(), "test")
+    assert instr.values(value, **kwargs) == result
 
 
 # Testing Instrument.control
@@ -347,33 +411,11 @@ def test_control_preprocess_reply_property(dynamic):
     fake.x = 5
     assert fake.read() == 'JUNK5'
     # notice that read returns the full reply since preprocess_reply is only
-    # called inside Adapter.values()
+    # called inside Instrument.values()
     fake.x = 5
     assert fake.x == 5
     fake.x = 5
     assert type(fake.x) == int
-
-
-@pytest.mark.parametrize("dynamic", [False, True])
-def test_control_preprocess_reply_adapter(dynamic):
-    # test setting preprocess_reply at Adapter-level
-    class Fake(FakeInstrument):
-        def __init__(self):
-            super().__init__(preprocess_reply=lambda v: v.replace('JUNK', ''))
-
-        x = Instrument.control(
-            "", "JUNK%d", "",
-            dynamic=dynamic,
-            cast=int
-        )
-
-    fake = Fake()
-    fake.x = 5
-    assert fake.read() == 'JUNK5'
-    # notice that read returns the full reply since preprocess_reply is only
-    # called inside Adapter.values()
-    fake.x = 5
-    assert fake.x == 5
 
 
 @pytest.mark.parametrize("cast, expected", ((float, 5.5),
