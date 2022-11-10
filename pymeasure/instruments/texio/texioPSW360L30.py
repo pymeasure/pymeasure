@@ -59,30 +59,3 @@ class TexioPSW360L30(Keithley2260B):
             code, message = self.error
             if (time.time() - t) > 10:
                 log.warning("Timed out for TEXIO PSW-360L30 error retrieval.")
-
-    @property
-    def output_enabled(self):
-        """Same as "enabled" property"""
-        return self.enabled
-
-    @output_enabled.setter
-    def output_enabled(self, value):
-        """Same as "enabled" property"""
-        self.enabled = value
-
-    @property
-    def enabled(self):
-        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
-                    'instead.', FutureWarning)
-        return self.enabled
-
-    @enabled.setter
-    def enabled(self, value):
-        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
-                    'instead.', FutureWarning)
-        self.enabled = value
-
-    def shutdown(self):
-        """ Disable output, call parent function"""
-        self.output_enabled = False
-        super(Instrument).shutdown()

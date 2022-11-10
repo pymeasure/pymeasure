@@ -73,28 +73,28 @@ class TestTexioPSW360L30:
     def test_everything_without_apply(self, instr, voltage_setpoint, current_limit):
         instr.current_limit = current_limit
         instr.voltage_setpoint = voltage_setpoint
-        instr.enabled = True
+        instr.output_enabled = True
         time.sleep(1)
-        assert instr.enabled is True
+        assert instr.output_enabled is True
         assert instr.voltage_setpoint == voltage_setpoint
         assert instr.current_limit == current_limit
         assert instr.voltage == pytest.approx(voltage_setpoint, abs=0.1)
         assert instr.current == pytest.approx(0, abs=0.1)
         assert instr.power == pytest.approx(0, abs=0.1)
-        instr.enabled = False
-        assert instr.enabled is False
+        instr.output_enabled = False
+        assert instr.output_enabled is False
 
     @pytest.mark.parametrize("voltage_setpoint", VOLTAGE_SETPOINT)
     @pytest.mark.parametrize("current_limit", CURRENT_LIMIT)
     def test_everything_with_apply(self, instr, voltage_setpoint, current_limit):
         instr.applied = (voltage_setpoint, current_limit)
-        instr.enabled = True
+        instr.output_enabled = True
         time.sleep(1)
-        assert instr.enabled is True
+        assert instr.output_enabled is True
         assert instr.voltage_setpoint == voltage_setpoint
         assert instr.current_limit == current_limit
         assert instr.voltage == pytest.approx(voltage_setpoint, abs=0.1)
         assert instr.current == pytest.approx(0, abs=0.1)
         assert instr.power == pytest.approx(0, abs=0.1)
-        instr.enabled = False
-        assert instr.enabled is False
+        instr.output_enabled = False
+        assert instr.output_enabled is False

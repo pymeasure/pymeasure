@@ -36,10 +36,10 @@ def test_output_enabled():
              (b"OUTPut 0", None),
              ],
     ) as inst:
-        assert inst.enabled is True
-        inst.enabled = True
-        assert inst.enabled is False
-        inst.enabled = False
+        assert inst.output_enabled is True
+        inst.output_enabled = True
+        assert inst.output_enabled is False
+        inst.output_enabled = False
 
 
 def test_current_limit():

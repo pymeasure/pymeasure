@@ -35,7 +35,7 @@ class Keithley2260B(Instrument):
             **kwargs
         )
 
-    enabled = Instrument.control(
+    output_enabled = Instrument.control(
         "OUTPut?",
         "OUTPut %d",
         """A boolean property that controls whether the source is enabled, takes
@@ -92,6 +92,18 @@ class Keithley2260B(Instrument):
     )
 
     @property
+    def enabled(self):
+        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
+                    'instead.', FutureWarning)
+        return self.output_enabled
+
+    @enabled.setter
+    def enabled(self, value):
+        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
+                    'instead.', FutureWarning)
+        self.output_enabled = value
+
+    @property
     def error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
@@ -115,5 +127,5 @@ class Keithley2260B(Instrument):
 
     def shutdown(self):
         """ Disable output, call parent function"""
-        self.enabled = False
+        self.output_enabled = False
         super().shutdown()
