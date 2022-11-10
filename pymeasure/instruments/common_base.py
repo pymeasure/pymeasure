@@ -121,16 +121,15 @@ class CommonBase:
         self._special_names = self._setup_special_names()
         # Add children from ChildDescriptors.
         for item, value in self.__class__.__dict__.items():
-            if isinstance(value, ChildDescriptor):
+            if isinstance(value, self.ChannelCreator):
                 for cls, id in value.pairs:
                     self.add_child(cls, id, collection=item, **value.kwargs)
 
-    @staticmethod
-    def children(cls, id=None, prefix="ch_", **kwargs):
-        """Describe children of this parent class.
+    class ChannelCreator:
+        """Add channels to the parent class.
 
         The children will be added to the parent instance at instantiation with
-        :meth:`add_child`. The variable name (e.g. :code:`channels`) will be
+        :func:`CommonBase.add_child`. The variable name (e.g. :code:`channels`) will be
         used as the `collection` of the children. You may define the attribute
         prefix. If there are no other pressing reasons, use :code:`channels` as variable
         and leave the prefix at the default :code:`"ch_"`.
@@ -139,12 +138,12 @@ class CommonBase:
 
             class SomeInstrument(Instrument):
                 # Three channels of the same type: 'ch_A', 'ch_B', 'ch_C' in 'channels'
-                channels = CommonBase.children(ChildClass, ["A", "B", "C"])
+                channels = Instrument.ChannelCreator(ChildClass, ["A", "B", "C"])
                 # Two functions of different types: 'fn_power', 'fn_voltage' in 'functions'
-                functions = CommonBase.children((PowerChannel, VoltageChannel),
+                functions = Instrument.ChannelCreator((PowerChannel, VoltageChannel),
                                                 ["power", "voltage"], prefix="fn_")
-                # A control with an prefixless attribute name: 'motor'
-                motor = CommonBase.children(MotorControl, prefix=None)
+                # A control option without a prefixed attribute name, simply: 'motor'
+                motor = Instrument.ChannelCreator(MotorControl, prefix=None)
 
         :param cls: Class for all children or tuple/list of classes, one for each child.
         :param id: Single value or tuple/list of ids of the children.
@@ -153,7 +152,23 @@ class CommonBase:
             the child will be added directly under the variable name.
         :param \\**kwargs: Keyword arguments for all children.
         """
-        return ChildDescriptor(cls, id, prefix=prefix, **kwargs)
+
+        def __init__(self, cls, id=None, prefix="ch_", **kwargs):
+            try:
+                valid_class = issubclass(cls, CommonBase)
+            except TypeError:
+                valid_class = False
+            if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
+                assert (len(id) == len(cls)), "Lengths of cls and id do not match."
+                self.pairs = zip(cls, id, strict=True)
+            elif isinstance(id, (list, tuple)) and valid_class:
+                self.pairs = zip((cls,) * len(id), id)
+            elif (isinstance(id, (str, int)) or id is None) and valid_class:
+                self.pairs = ((cls, id),)
+            else:
+                raise ValueError("Invalid definition of ids and classes.")
+            kwargs.setdefault("prefix", prefix)
+            self.kwargs = kwargs
 
     def _setup_special_names(self):
         """ Return list of class/instance special names.
@@ -221,7 +236,7 @@ class CommonBase:
         """
         child = cls(self, id, **kwargs)
         collection_data = getattr(self, collection, {})
-        if isinstance(collection_data, ChildDescriptor):
+        if isinstance(collection_data, self.ChannelCreator):
             collection_data = {}
         if prefix:
             if not collection_data:
@@ -528,49 +543,3 @@ class CommonBase:
                                   check_set_errors=check_set_errors,
                                   dynamic=dynamic,
                                   **kwargs)
-
-
-class ChildDescriptor:
-    """Describe the child information of a :class:`CommonBase` subclass.
-
-    The children will be added to the parent instance at instantiation with
-    :func:`CommonBase.add_child`. The variable name (e.g. :code:`channels`) will be
-    used as the `collection` of the children. You may define the attribute
-    prefix. If there are no other pressing reasons, use :code:`channels` as variable
-    and leave the prefix at the default :code:`"ch_"`.
-
-    .. code::
-
-        class SomeInstrument(Instrument):
-            # Three channels of the same type: 'ch_A', 'ch_B', 'ch_C' in 'channels'
-            channels = ChildDescriptor(ChildClass, ["A", "B", "C"])
-            # Two functions of different types: 'fn_power', 'fn_voltage' in 'functions'
-            functions = ChildDescriptor((PowerChannel, VoltageChannel),
-                                            ["power", "voltage"], prefix="fn_")
-            # A control option without a prefixed attribute name, simply: 'motor'
-            motor = ChildDescriptor(MotorControl, prefix=None)
-
-    :param cls: Class for all children or tuple/list of classes, one for each child.
-    :param id: Single value or tuple/list of ids of the children.
-    :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
-        creates attribute `self.ch_A`. If prefix evaluates False,
-        the child will be added directly under the variable name.
-    :param \\**kwargs: Keyword arguments for all children.
-    """
-
-    def __init__(self, cls, id, prefix="ch_", **kwargs):
-        try:
-            valid_class = issubclass(cls, CommonBase)
-        except TypeError:
-            valid_class = False
-        if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
-            assert (len(id) == len(cls)), "Lengths of cls and id do not match."
-            self.pairs = zip(cls, id, strict=True)
-        elif isinstance(id, (list, tuple)) and valid_class:
-            self.pairs = zip((cls,) * len(id), id)
-        elif (isinstance(id, (str, int)) or id is None) and valid_class:
-            self.pairs = ((cls, id),)
-        else:
-            raise ValueError("Invalid definition of ids and classes.")
-        kwargs.setdefault("prefix", prefix)
-        self.kwargs = kwargs

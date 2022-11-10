@@ -26,7 +26,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.common_base import DynamicProperty, CommonBase, ChildDescriptor
+from pymeasure.instruments.common_base import DynamicProperty, CommonBase
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.validators import truncated_range
 
@@ -88,10 +88,9 @@ class Child(CommonBase):
 
 class Parent(CommonBaseTesting):
     """A Base as a parent"""
-    channels = CommonBase.children(GenericBase, ("A", "B", "C"))
-    analog = CommonBase.children(GenericBase, [1, 2], prefix="an_", test=True)
-    function = CommonBase.children(Child, prefix=None)
-    test = ChildDescriptor(Child, "a", prefix=None)
+    channels = CommonBase.ChannelCreator(GenericBase, ("A", "B", "C"))
+    analog = CommonBase.ChannelCreator(GenericBase, [1, 2], prefix="an_", test=True)
+    function = CommonBase.ChannelCreator(Child, prefix=None)
 
 
 # Test dynamic properties
@@ -119,10 +118,6 @@ class TestInitWithChildren:
 
     def test_function(self, parent):
         assert isinstance(parent.function, Child)
-
-    def test_directDescriptor(self, parent):
-        assert isinstance(parent.test, Child)
-        assert parent.test._name == "test"
 
 
 class TestAddChild:
@@ -231,18 +226,18 @@ def test_control_doc(dynamic):
     (((Child, GenericBase, Child), (1, 2, 3)), [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
     ((Child, "mm", None), [(Child, "mm")], {'prefix': None}),
 ))
-def test_ChildDescriptor(args, pairs, kwargs):
-    """Test whether the descriptor receives the right arguments."""
-    d = CommonBase.children(*args)
+def test_ChannelCreator(args, pairs, kwargs):
+    """Test whether the channel creator receives the right arguments."""
+    d = CommonBase.ChannelCreator(*args)
     assert list(d.pairs) == pairs
     assert d.kwargs == kwargs
 
 
-def test_ChildDescriptor_different_list_lengths():
+def test_ChannelCreator_different_list_lengths():
     with pytest.raises(AssertionError, match="Lengths"):
-        CommonBase.children(("A", "B", "C"), (Child,) * 2)
+        CommonBase.ChannelCreator(("A", "B", "C"), (Child,) * 2)
 
 
-def test_ChildDescriptor_invalid_input():
+def test_ChannelCreator_invalid_input():
     with pytest.raises(ValueError, match="Invalid"):
-        CommonBase.children("A", {})
+        CommonBase.ChannelCreator("A", {})
