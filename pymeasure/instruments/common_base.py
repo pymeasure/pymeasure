@@ -199,10 +199,10 @@ class CommonBase:
     def add_child(self, cls, id=None, collection="channels", prefix="ch_", **kwargs):
         """Add a child to this instance and return its index in the children list.
 
-        The newly created child may be accessed either by the index in the
-        children list or by the created attribute.
+        The newly created child may be accessed either by the id in the
+        children dictionary or by the created attribute.
         The fifth channel of `instrument` with id "F" has two access options:
-        :code:`instrument.channels[4] == instrument.ch_F`
+        :code:`instrument.channels["F"] == instrument.ch_F`
 
         .. note::
 
@@ -212,7 +212,7 @@ class CommonBase:
 
         :param cls: Class of the channel.
         :param id: Child id how it is used in communication, e.g. `"A"`.
-        :param collection: Name of the collection of children, used for the list.
+        :param collection: Name of the collection of children, used for the dictionary.
         :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
             creates attribute `self.ch_A`. If prefix evaluates False,
             the child will be added directly under the collection name.
@@ -220,25 +220,23 @@ class CommonBase:
         :returns: Index of this instance's channels.
         """
         child = cls(self, id, **kwargs)
-        collection_data = getattr(self, collection, [])
+        collection_data = getattr(self, collection, {})
         if isinstance(collection_data, ChildDescriptor):
-            collection_data = []
+            collection_data = {}
         if prefix:
             if not collection_data:
                 # Add a grouplist to the parent.
                 setattr(self, collection, collection_data)
-            collection_data.append(child)
+            collection_data[id] = child
             child._collection = collection
             setattr(self, f"{prefix}{id}", child)
             child._name = f"{prefix}{id}"
-            return collection_data.index(child)
         else:
             if collection_data:
                 raise ValueError(f"An attribute '{collection}' already exists.")
             setattr(self, collection, child)
             child._name = collection
             child._collection = None
-            return None
 
     def remove_child(self, child):
         """Remove the child from the instrument and the corresponding collection.
@@ -247,7 +245,7 @@ class CommonBase:
         """
         if child._collection:
             collection = getattr(self, child._collection)
-            del collection[collection.index(child)]
+            del collection[child.id]
         delattr(self, child._name)
 
     # Communication functions

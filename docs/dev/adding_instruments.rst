@@ -835,7 +835,7 @@ This method accepts a single channel class or list of classes and a list or tupl
 If you give a single class and a list of ids, all channels will be of the same class.
 
 At instrument instantiation, the instrument will add the channels accordingly with the attribute names as a composition of the prefix (default :code:`"ch_"`) and channel id, e.g. :code:`ch_A`.
-Additionally, the channels will be collected in a list with the same name as you used for the `children` method.
+Additionally, the channels will be collected in a dictionary with the same name as you used for the `children` method.
 Without pressing reasons, call the list :code:`channels` and do not change the default prefix in order to keep the code base homogeneous.
 
 In order to add or remove programatically channels, use the parent's :meth:`~pymeasure.instruments.common_base.CommonBase.add_child`, :meth:`~pymeasure.instruments.common_base.CommonBase.remove_child` methods.
@@ -867,7 +867,7 @@ In order to add or remove programatically channels, use the parent's :meth:`~pym
         assert inst.ch_B.voltage == 4.56
 
 If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name.
-The same channel could be called with :code:`inst.channels[0].voltage = 1.23` as well.
+The same channel could be called with :code:`inst.channels["A"].voltage = 1.23` as well.
 
 
 Channels with fixed prefix
@@ -940,7 +940,10 @@ Some devices have different types of channels. In this case, you can specify a d
         assert inst.di_2.voltage == 4.56
 
 
-This instrument has two collections of channels and one single channel. The first collection in the list :code:`analog` contains an instance of :class:`VoltageChannel` with the name :code:`an_A` and an instance of :class:`VoltageChannelPrefix` with the name :code:`an_B`. The second collection contains three channels of type :class:`VoltageChannel` with the names :code:`di_0, di_1, di_2` in the list :code:`digital`. You can call the first channel of the second group either with :code:`inst.di_0.voltage` or with :code:`inst.digital[0].voltage`.
+This instrument has two collections of channels and one single channel.
+The first collection in the dictionary :code:`analog` contains an instance of :class:`VoltageChannel` with the name :code:`an_A` and an instance of :class:`VoltageChannelPrefix` with the name :code:`an_B`.
+The second collection contains three channels of type :class:`VoltageChannel` with the names :code:`di_0, di_1, di_2` in the dictionary :code:`digital`.
+You can call the first channel of the second group either with :code:`inst.di_0.voltage` or with :code:`inst.digital[0].voltage`.
 Finally, the instrument has a single channel with the name :code:`power`, as it does not have a prefix.
 
 If you have a single channel category, do not change the default parameters of :meth:`add_child`, in order to keep the code base homogeneous.

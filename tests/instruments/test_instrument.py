@@ -659,10 +659,10 @@ class TestMultiFunctionality:
             self.add_child(TestMultiFunctionality.SomeFunctionality, "X",
                            collection="functions", prefix="f_")
 
-    def test_functionality_list(self):
+    def test_functionality_dict(self):
         inst = TestMultiFunctionality.InstrumentWithFunctionality(ProtocolAdapter())
-        assert isinstance(inst.functions[0], TestMultiFunctionality.SomeFunctionality)
-        assert inst.functions[0] == inst.f_X
+        assert isinstance(inst.functions["X"], TestMultiFunctionality.SomeFunctionality)
+        assert inst.functions["X"] == inst.f_X
 
     def test_functions_voltage_getter(self):
         with expected_protocol(

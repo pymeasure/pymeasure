@@ -34,9 +34,10 @@ from pymeasure.instruments.validators import truncated_range
 class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, id=None, *args, **kwargs):
         super().__init__()
         self.parent = parent
+        self.id = id
         self.args = args
         self.kwargs = kwargs
 
@@ -129,7 +130,7 @@ class TestAddChild:
     @pytest.fixture()
     def parent(self):
         parent = CommonBaseTesting(ProtocolAdapter())
-        parent.add_child(GenericBase, "A")
+        parent.add_child(GenericBase, "A", test=5)
         parent.add_child(GenericBase, "B")
         parent.add_child(GenericBase, prefix=None, collection="function")
         return parent
@@ -138,10 +139,11 @@ class TestAddChild:
         assert isinstance(parent.ch_A, GenericBase)
 
     def test_arguments(self, parent):
-        assert parent.channels[0].args == ("A",)
+        assert parent.channels["A"].id == "A"
+        assert parent.channels["A"].kwargs == {'test': 5}
 
     def test_attribute_access(self, parent):
-        assert parent.ch_B == parent.channels[1]
+        assert parent.ch_B == parent.channels["B"]
 
     def test_len(self, parent):
         assert len(parent.channels) == 2
@@ -163,7 +165,7 @@ class TestAddChild:
     def test_evaluating_false_id_creates_channels(self, parent):
         """Test that an id evaluating false (e.g. 0) creates a channels list."""
         parent.add_child(GenericBase, 0, collection="special")
-        assert isinstance(parent.special, list)
+        assert isinstance(parent.special, dict)
 
 
 class TestRemoveChild:
@@ -174,12 +176,12 @@ class TestRemoveChild:
         parent.add_child(GenericBase, "B")
         parent.add_child(GenericBase, prefix=None, collection="function")
         parent.remove_child(parent.ch_A)
-        parent.remove_child(parent.channels[0])
+        parent.remove_child(parent.channels["B"])
         parent.remove_child(parent.function)
         return parent
 
     def test_remove_child_leaves_channels_empty(self, parent_without_children):
-        assert parent_without_children.channels == []
+        assert parent_without_children.channels == {}
 
     def test_remove_child_clears_attributes(self, parent_without_children):
         assert getattr(parent_without_children, "ch_A", None) is None
