@@ -160,7 +160,7 @@ class CommonBase:
                 valid_class = False
             if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
                 assert (len(id) == len(cls)), "Lengths of cls and id do not match."
-                self.pairs = zip(cls, id, strict=True)
+                self.pairs = zip(cls, id)
             elif isinstance(id, (list, tuple)) and valid_class:
                 self.pairs = zip((cls,) * len(id), id)
             elif (isinstance(id, (str, int)) or id is None) and valid_class:
