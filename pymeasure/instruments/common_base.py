@@ -142,7 +142,7 @@ class CommonBase:
                 # Two functions of different types: 'fn_power', 'fn_voltage' in 'functions'
                 functions = Instrument.ChannelCreator((PowerChannel, VoltageChannel),
                                                 ["power", "voltage"], prefix="fn_")
-                # A control option without a prefixed attribute name, simply: 'motor'
+                # A channel without a prefixed attribute name, simply: 'motor'
                 motor = Instrument.ChannelCreator(MotorControl, prefix=None)
 
         :param cls: Class for all children or tuple/list of classes, one for each child.
@@ -408,7 +408,7 @@ class CommonBase:
                  check_get_errors=check_get_errors,
                  ):
             if get_command is None:
-                raise LookupError("Instrument property can not be read.")
+                raise LookupError("Property can not be read.")
             vals = self.values(command_process(get_command), **kwargs)
             if check_get_errors:
                 self.check_errors()
@@ -444,7 +444,7 @@ class CommonBase:
                  ):
 
             if set_command is None:
-                raise LookupError("Instrument property can not be set.")
+                raise LookupError("Property can not be set.")
 
             value = set_process(validator(value, values))
             if not map_values:

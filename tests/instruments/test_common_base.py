@@ -25,10 +25,11 @@
 
 import pytest
 
+from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.common_base import DynamicProperty, CommonBase
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
-from pymeasure.instruments.validators import truncated_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 
 class CommonBaseTesting(CommonBase):
@@ -52,7 +53,6 @@ class CommonBaseTesting(CommonBase):
 
 
 class GenericBase(CommonBaseTesting):
-
     #  Use truncated_range as this easily lets us test for the range boundaries
     fake_ctrl = CommonBase.control(
         "C{ch}:control?", "C{ch}:control %d", "docs",
@@ -77,6 +77,58 @@ class GenericBase(CommonBaseTesting):
         """A special control with different channel specifiers for get and set.""",
         cast=str,
     )
+
+
+@pytest.fixture()
+def generic():
+    return GenericBase()
+
+
+class FakeBase(CommonBaseTesting):
+    def __init__(self, *args, **kwargs):
+        super().__init__(FakeAdapter())
+
+    fake_ctrl = CommonBase.control(
+        "", "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_setting = CommonBase.setting(
+        "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_measurement = CommonBase.measurement(
+        "", "docs",
+        values={'X': 1, 'Y': 2, 'Z': 3},
+        map_values=True,
+        dynamic=True,
+    )
+
+
+@pytest.fixture()
+def fake():
+    return FakeBase()
+
+
+class ExtendedBase(FakeBase):
+    # Keep values unchanged, just derive another instrument, e.g. to add more properties
+    pass
+
+
+class StrictExtendedBase(ExtendedBase):
+    # Use strict instead of truncated range validator
+    fake_ctrl_validator = strict_range
+    fake_setting_validator = strict_range
+
+
+class NewRangeBase(FakeBase):
+    # Choose different properties' values, like you would for another device model
+    fake_ctrl_values = (10, 20)
+    fake_setting_values = (10, 20)
+    fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
 
 
 class Child(CommonBase):
@@ -184,6 +236,30 @@ class TestRemoveChild:
         assert getattr(parent_without_children, "function", None) is None
 
 
+# Test ChildDescriptor
+@pytest.mark.parametrize("args, pairs, kwargs", (
+    ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
+    (((Child, GenericBase, Child), (1, 2, 3)), [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
+    ((Child, "mm", None), [(Child, "mm")], {'prefix': None}),
+    ((Child, None, None), [(Child, None)], {'prefix': None}),
+))
+def test_ChannelCreator(args, pairs, kwargs):
+    """Test whether the channel creator receives the right arguments."""
+    d = CommonBase.ChannelCreator(*args)
+    assert list(d.pairs) == pairs
+    assert d.kwargs == kwargs
+
+
+def test_ChannelCreator_different_list_lengths():
+    with pytest.raises(AssertionError, match="Lengths"):
+        CommonBase.ChannelCreator(("A", "B", "C"), (Child,) * 2)
+
+
+def test_ChannelCreator_invalid_input():
+    with pytest.raises(ValueError, match="Invalid"):
+        CommonBase.ChannelCreator("A", {})
+
+
 # Test CommonBase communication
 def test_ask_writes_and_reads():
     with expected_protocol(CommonBaseTesting, [("Sent", "Received")]) as inst:
@@ -205,6 +281,11 @@ def test_values(value, kwargs, result):
     assert cb.values(value, **kwargs) == result
 
 
+def test_binary_values(fake):
+    fake.read_binary_values = fake.read
+    assert fake.binary_values("123") == "123"
+
+
 # Test CommonBase property creators
 @pytest.mark.parametrize("dynamic", [False, True])
 def test_control_doc(dynamic):
@@ -220,24 +301,371 @@ def test_control_doc(dynamic):
     assert Fake.x.__doc__ == expected_doc
 
 
-# Test ChildDescriptor
-@pytest.mark.parametrize("args, pairs, kwargs", (
-    ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
-    (((Child, GenericBase, Child), (1, 2, 3)), [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
-    ((Child, "mm", None), [(Child, "mm")], {'prefix': None}),
-))
-def test_ChannelCreator(args, pairs, kwargs):
-    """Test whether the channel creator receives the right arguments."""
-    d = CommonBase.ChannelCreator(*args)
-    assert list(d.pairs) == pairs
-    assert d.kwargs == kwargs
+def test_control_check_errors_get(fake):
+    fake.fake_ctrl_check_get_errors = True
+
+    def checking():
+        fake.error = True
+    fake.check_errors = checking
+    fake.fake_ctrl
+    assert fake.error is True
 
 
-def test_ChannelCreator_different_list_lengths():
-    with pytest.raises(AssertionError, match="Lengths"):
-        CommonBase.ChannelCreator(("A", "B", "C"), (Child,) * 2)
+def test_control_check_errors_set(fake):
+    fake.fake_ctrl_check_set_errors = True
+
+    def checking():
+        fake.error = True
+    fake.check_errors = checking
+    fake.fake_ctrl = 7
+    assert fake.error is True
 
 
-def test_ChannelCreator_invalid_input():
-    with pytest.raises(ValueError, match="Invalid"):
-        CommonBase.ChannelCreator("A", {})
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_validator(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d", "",
+            validator=strict_discrete_set,
+            values=range(10),
+            dynamic=dynamic
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == '5'
+    fake.x = 5
+    assert fake.x == 5
+    with pytest.raises(ValueError):
+        fake.x = 20
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_validator_map(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d", "",
+            validator=strict_discrete_set,
+            values=[4, 5, 6, 7],
+            map_values=True,
+            dynamic=dynamic
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == '1'
+    fake.x = 5
+    assert fake.x == 5
+    with pytest.raises(ValueError):
+        fake.x = 20
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_dict_map(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d", "",
+            validator=strict_discrete_set,
+            values={5: 1, 10: 2, 20: 3},
+            map_values=True,
+            dynamic=dynamic
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == '1'
+    fake.x = 5
+    assert fake.x == 5
+    fake.x = 20
+    assert fake.read() == '3'
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_dict_str_map(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d", "",
+            validator=strict_discrete_set,
+            values={'X': 1, 'Y': 2, 'Z': 3},
+            map_values=True,
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.x = 'X'
+    assert fake.read() == '1'
+    fake.x = 'Y'
+    assert fake.x == 'Y'
+    fake.x = 'Z'
+    assert fake.read() == '3'
+
+
+def test_value_not_in_map(fake):
+    fake.parent._buffer = "123"
+    with pytest.raises(KeyError, match="not found in mapped values"):
+        fake.fake_measurement
+
+
+def test_control_invalid_values_get():
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d", "",
+            values=b"abasdfe", map_values=True)
+    with pytest.raises(ValueError, match="Values of type"):
+        Fake().x
+
+
+def test_control_invalid_values_set():
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d", "",
+            values=b"abasdfe", map_values=True)
+    with pytest.raises(ValueError, match="Values of type"):
+        Fake().x = 7
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_process(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d", "",
+            validator=strict_range,
+            values=[5e-3, 120e-3],
+            get_process=lambda v: v * 1e-3,
+            set_process=lambda v: v * 1e3,
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.x = 10e-3
+    assert fake.read() == '10'
+    fake.x = 30e-3
+    assert fake.x == 30e-3
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_process(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "JUNK%d", "",
+            validator=strict_range,
+            values=[0, 10],
+            get_process=lambda v: int(v.replace('JUNK', '')),
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == 'JUNK5'
+    fake.x = 5
+    assert fake.x == 5
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_preprocess_reply_property(dynamic):
+    # test setting preprocess_reply at property-level
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "JUNK%d",
+            "",
+            preprocess_reply=lambda v: v.replace('JUNK', ''),
+            dynamic=dynamic,
+            cast=int,
+        )
+
+    fake = Fake()
+    fake.x = 5
+    assert fake.read() == 'JUNK5'
+    # notice that read returns the full reply since preprocess_reply is only
+    # called inside CommonBase.values()
+    fake.x = 5
+    assert fake.x == 5
+    fake.x = 5
+    assert type(fake.x) == int
+
+
+@pytest.mark.parametrize("cast, expected", ((float, 5.5),
+                                            (ureg.Quantity, ureg.Quantity(5.5)),
+                                            (str, "5.5"),
+                                            (lambda v: int(float(v)), 5)
+                                            ))
+def test_measurement_cast(cast, expected):
+    class Fake(CommonBaseTesting):
+        x = CommonBase.measurement(
+            "x", "doc", cast=cast)
+    with expected_protocol(Fake, [("x", "5.5")], name="test") as instr:
+        assert instr.x == expected
+
+
+def test_measurement_cast_int():
+    class Fake(CommonBaseTesting):
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, "test", **kwargs)
+        x = CommonBase.measurement(
+            "x", "doc", cast=int)
+    with expected_protocol(Fake, [("x", "5")]) as instr:
+        y = instr.x
+        assert y == 5
+        assert type(y) is int
+
+
+def test_measurement_unitful_property():
+    class Fake(CommonBaseTesting):
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, "test", **kwargs)
+        x = CommonBase.measurement(
+            "x", "doc", get_process=lambda v: ureg.Quantity(v, ureg.m))
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:
+        y = instr.x
+        assert y.m_as(ureg.m) == 5.5
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_measurement_dict_str_map(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.measurement(
+            "", "",
+            values={'X': 1, 'Y': 2, 'Z': 3},
+            map_values=True,
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.write('1')
+    assert fake.x == 'X'
+    fake.write('2')
+    assert fake.x == 'Y'
+    fake.write('3')
+    assert fake.x == 'Z'
+
+
+def test_measurement_set(fake):
+    with pytest.raises(LookupError, match="Property can not be set."):
+        fake.fake_measurement = 7
+
+
+def test_setting_get(fake):
+    with pytest.raises(LookupError, match="Property can not be read."):
+        fake.fake_setting
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_setting_process(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.setting(
+            "OUT %d", "",
+            set_process=lambda v: int(bool(v)),
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.x = False
+    assert fake.read() == 'OUT 0'
+    fake.x = 2
+    assert fake.read() == 'OUT 1'
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_multivalue(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "%d,%d", "",
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.x = (5, 6)
+    assert fake.read() == '5,6'
+
+
+@pytest.mark.parametrize(
+    'set_command, given, expected, dynamic',
+    [("%d", 5, 5, False),
+     ("%d", 5, 5, True),
+     ("%d, %d", (5, 6), [5, 6], False),  # input has to be a tuple, not a list
+     ("%d, %d", (5, 6), [5, 6], True),  # input has to be a tuple, not a list
+     ])
+def test_FakeBase_control(set_command, given, expected, dynamic):
+    """FakeBase's custom simple control needs to process values correctly.
+    """
+    class Fake(FakeBase):
+        x = FakeBase.control(
+            "", set_command, "",
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.x = given
+    assert fake.x == expected
+
+
+def test_dynamic_property_unchanged_by_inheritance():
+    generic = FakeBase()
+    extended = ExtendedBase()
+
+    generic.fake_ctrl = 50
+    assert generic.fake_ctrl == 10
+    extended.fake_ctrl = 50
+    assert extended.fake_ctrl == 10
+
+    generic.fake_setting = 50
+    assert generic.read() == '10'
+    extended.fake_setting = 50
+    assert extended.read() == '10'
+
+    generic.write('1')
+    assert generic.fake_measurement == 'X'
+    extended.write('1')
+    assert extended.fake_measurement == 'X'
+
+
+def test_dynamic_property_strict_raises():
+    strict = StrictExtendedBase()
+
+    with pytest.raises(ValueError):
+        strict.fake_ctrl = 50
+    with pytest.raises(ValueError):
+        strict.fake_setting = 50
+
+
+def test_dynamic_property_values_update_in_subclass():
+    newrange = NewRangeBase()
+
+    newrange.fake_ctrl = 50
+    assert newrange.fake_ctrl == 20
+
+    newrange.fake_setting = 50
+    assert newrange.read() == '20'
+
+    newrange.write('4')
+    assert newrange.fake_measurement == 'X'
+
+
+def test_dynamic_property_values_update_in_instance(fake):
+    fake.fake_ctrl_values = (0, 33)
+    fake.fake_ctrl = 50
+    assert fake.fake_ctrl == 33
+
+    fake.fake_setting_values = (0, 33)
+    fake.fake_setting = 50
+    assert fake.read() == '33'
+
+    fake.fake_measurement_values = {'X': 7}
+    fake.write('7')
+    assert fake.fake_measurement == 'X'
+
+
+def test_dynamic_property_values_update_in_one_instance_leaves_other_unchanged():
+    generic1 = FakeBase()
+    generic2 = FakeBase()
+
+    generic1.fake_ctrl_values = (0, 33)
+    generic1.fake_ctrl = 50
+    generic2.fake_ctrl = 50
+    assert generic1.fake_ctrl == 33
+    assert generic2.fake_ctrl == 10
+
+
+def test_dynamic_property_reading_special_attributes_forbidden(fake):
+    with pytest.raises(AttributeError):
+        fake.fake_ctrl_validator
