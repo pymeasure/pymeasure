@@ -825,13 +825,13 @@ Instruments with channels
 =========================
 
 Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name.
-For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :code:`instrument` instead of an :code:`adapter` as parameter.
+For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :class:`~pymeasure.instruments.Instrument` instance (i.e., a parent instrument) instead of an :class:`~pymeasure.adapters.Adapter` as parameter.
 All the channel communication is routed through the instrument's methods (`write`, `read`, etc.).
 However, :meth:`Channel.insert_id <pymeasure.instruments.Channel.insert_id>` uses `str.format` to insert the channel's id at any occurence of the class attribute :attr:`Channel.placeholder`, which defaults to :code:`"ch"`, in the written commands.
 For example :code:`"Ch{ch}:VOLT?"` will be sent as :code:`"Ch3:VOLT?"` to the device, if the channel's id is "3".
 
 In order to add a channel to an instrument or to another channel (nesting channels is possible), create the channels with the class :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` as class attributes.
-It's constructor accepts a single channel class or list of classes and a list of corresponding ids.
+Its constructor accepts a single channel class or list of classes and a list of corresponding ids.
 Instead of lists, you may also use tuples.
 If you give a single class and a list of ids, all channels will be of the same class.
 
@@ -873,6 +873,7 @@ Channels with fixed prefix
 **************************
 
 If all channel communication is prefixed by a specific command, e.g. :code:`"SOURceA:"` for channel A, you can override the channel's :meth:`insert_id` method.
+That is especially useful, if you have only one channel of that type, e.g. because it defines one function of the instrument vs. another one.
 
 .. testcode:: with-protocol-tests
 
