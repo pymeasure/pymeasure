@@ -144,3 +144,4 @@ class SM7045D(Instrument):
         """
         self.ramp_to_zero()
         self.disable()
+        super().shutdown()

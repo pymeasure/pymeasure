@@ -76,3 +76,4 @@ class AnritsuMG3692C(Instrument):
         # TODO: Implement modulation
         self.modulation = False
         self.disable()
+        super().shutdown()

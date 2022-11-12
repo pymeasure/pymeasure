@@ -53,7 +53,7 @@ class AMI430(Instrument):
 
         magnet.ramp_to_current(5)             # Ramps the current to 5 A
 
-        magnet.shutdown()                     # Ramps the current to zero and disables output
+        magnet.down()                     # Ramps the current to zero and disables output
 
     """
 
@@ -220,3 +220,4 @@ class AMI430(Instrument):
         self.zero()
         self.wait_for_holding()
         self.disable_persistent_switch()
+        super().shutdown()

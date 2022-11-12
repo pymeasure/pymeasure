@@ -410,6 +410,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         """ Disables the output. """
         log.info("Shutting down %s." % self.name)
         self.disable_source()
+        super().shutdown()
 
     ###############
     # Status bits #
