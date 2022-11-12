@@ -329,9 +329,7 @@ class Channel:
         else:
             self.instrument.write("C%d:%s" % (self.number, command))
 
-    def setup(self, bwlimit=None, coupling=None, display=None, invert=None, offset=None,
-              skew_factor=None, probe_attenuation=None, scale=None, unit=None,
-              trigger_coupling=None, trigger_level=None, trigger_level2=None, trigger_slope=None):
+    def setup(self, **kwargs):
         """ Setup channel. Unspecified settings are not modified. Modifying values such as
         probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
         make multiple consecutive calls to setup() if needed.
@@ -353,32 +351,8 @@ class Channel:
         :param trigger_slope: trigger slope of the specified trigger source
         """
 
-        if bwlimit is not None:
-            self.bwlimit = bwlimit
-        if coupling is not None:
-            self.coupling = coupling
-        if display is not None:
-            self.display = display
-        if invert is not None:
-            self.invert = invert
-        if offset is not None:
-            self.offset = offset
-        if skew_factor is not None:
-            self.skew_factor = skew_factor
-        if probe_attenuation is not None:
-            self.probe_attenuation = probe_attenuation
-        if scale is not None:
-            self.scale = scale
-        if unit is not None:
-            self.unit = unit
-        if trigger_coupling is not None:
-            self.trigger_coupling = trigger_coupling
-        if trigger_level is not None:
-            self.trigger_level = trigger_level
-        if trigger_level2 is not None:
-            self.trigger_level2 = trigger_level2
-        if trigger_slope is not None:
-            self.trigger_slope = trigger_slope
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @property
     def current_configuration(self):
