@@ -258,7 +258,7 @@ class Channel:
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
         """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger
-        level will reflect th e measurement units you select. ("A" for Amperes, "V" for Volts).""",
+        level will reflect the measurement units you select. ("A" for Amperes, "V" for Volts).""",
         validator=strict_discrete_set,
         values={"A", "V"}
     )
