@@ -62,7 +62,7 @@ def _sanitize_source(source):
 
 def _trigger_select_num_pars(value):
     """
-    Find the expected number of parameters for the trigger_select property. 
+    Find the expected number of parameters for the trigger_select property.
     :param value: input parameters as a tuple
     """
     value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
@@ -188,7 +188,7 @@ class Channel:
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
-        """ A string parameter that toggles 20 MHz internal low-pass filter ("ON", "OFF").""",
+        """ Toggles the 20 MHz internal low-pass filter. (strict bool)""",
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True
@@ -212,7 +212,7 @@ class Channel:
 
     invert = Instrument.control(
         "INVS?", "INVS %s",
-        """ A string parameter that toggles the inversion of the input signal ("ON", "OFF").""",
+        """ Toggles the inversion of the input signal. (strict bool)""",
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True
