@@ -233,7 +233,7 @@ class Channel:
 
     skew_factor = Instrument.control(
         "SKEW?", "SKEW %.2ES",
-        """ Channel-tochannel skew factor for the specified channel. Each analog channel can be
+        """ Channel-to-channel skew factor for the specified channel. Each analog channel can be
         adjusted + or -100 ns for a total of 200 ns difference between channels. You can use
         the oscilloscope's skew control to remove cable-delay errors between channels.
         """,
