@@ -425,7 +425,7 @@ class LeCroyT3DSO1204(Instrument):
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
-        if hasattr(self.adapter, "connection") and self.adapter.connection is not None:
+        if self.adapter.connection is not None:
             self.adapter.connection.timeout = 3000
         self._grid_number = 14  # Number of grids in the horizontal direction
         self._seconds_since_last_write = 0  # Timestamp of the last command
