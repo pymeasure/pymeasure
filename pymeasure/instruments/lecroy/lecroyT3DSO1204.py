@@ -1002,6 +1002,20 @@ class LeCroyT3DSO1204(Instrument):
 
     _trigger_select = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
+        """ Refer to the self.trigger_select documentation. """,
+        get_process=_trigger_select_get_process,
+        validator=_trigger_select_validator,
+        values=_trigger_select_values,
+        dynamic=True
+    )
+
+    def center_trigger(self):
+        """ This command automatically sets the trigger levels to center of the trigger source
+        waveform. """
+        self.write("SET50")
+
+    @property
+    def trigger_select(self):
         """ A string parameter that selects the condition that will trigger the acquisition of
         waveforms.
         Depending on the trigger type, additional parameters must be specified. These additional
@@ -1021,33 +1035,18 @@ class LeCroyT3DSO1204(Instrument):
 
         Note:
         • "line" can only be selected when the trigger type is "edge".
-        • If there is no unit(S/mS/uS/nS) added, it defaults to be S.
+        • All time arguments should be given in multiples of seconds. Use the scientific notation
+        if necessary.
         • The range of hold_values varies from trigger types. [80nS, 1.5S] for "edge" trigger,
         and [2nS, 4.2S] for others.
-        """,
-        get_process=_trigger_select_get_process,
-        validator=_trigger_select_validator,
-        values=_trigger_select_values,
-        dynamic=True
-    )
-
-    def center_trigger(self):
-        """ This command automatically sets the trigger levels to center of the trigger source
-        waveform. """
-        self.write("SET50")
-
-    @property
-    def trigger_select(self):
-        """ Refer to the self._trigger_select documentation. """
+        • The trigger_select command is switched automatically between the short, normal and
+        extended version depending on the number of expected parameters.
+        """
         return self._trigger_select
 
     # noinspection PyAttributeOutsideInit
     @trigger_select.setter
     def trigger_select(self, value):
-        """ Refer to the self._trigger_select documentation.
-            The trigger_select command is switched automatically between the short, normal and
-            extended version depending on the number of expected parameters.
-        """
         num_expected_pars = _trigger_select_num_pars(value)
         if num_expected_pars == 3:
             self._trigger_select_set_command = self._trigger_select_short_command
