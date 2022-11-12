@@ -955,12 +955,6 @@ class LeCroyT3DSO1204(Instrument):
     #   Trigger   #
     ###############
 
-    trigger_50 = Instrument.setting(
-        "SET50",
-        """ The SET50 command automatically sets the trigger levels to center of the trigger
-        source waveform. """
-    )
-
     trigger_mode = Instrument.control(
         "TRMD?", "TRMD %s",
         """ A string parameter that selects the trigger sweep mode.
@@ -1036,6 +1030,11 @@ class LeCroyT3DSO1204(Instrument):
         values=_trigger_select_values,
         dynamic=True
     )
+
+    def center_trigger(self):
+        """ This command automatically sets the trigger levels to center of the trigger source
+        waveform. """
+        self.write("SET50")
 
     @property
     def trigger_select(self):
