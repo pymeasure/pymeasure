@@ -186,6 +186,10 @@ class Channel:
 
     _BOOLS = {True: "ON", False: "OFF"}
 
+    def __init__(self, instrument, number):
+        self.instrument = instrument
+        self.number = number
+
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
         """ Toggles the 20 MHz internal low-pass filter. (strict bool)""",
@@ -306,10 +310,6 @@ class Channel:
         values={"negative": "NEG", "positive": "POS", "window": "WINDOW"},
         map_values=True
     )
-
-    def __init__(self, instrument, number):
-        self.instrument = instrument
-        self.number = number
 
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
