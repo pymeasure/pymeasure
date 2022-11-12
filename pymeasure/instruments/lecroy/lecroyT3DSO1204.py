@@ -443,7 +443,7 @@ class LeCroyT3DSO1204(Instrument):
     ################
 
     def default_setup(self):
-        """ Setup the oscilloscope for remote operation.
+        """ Set up the oscilloscope for remote operation.
 
         The COMM_HEADER command controls the
         way the oscilloscope formats response to queries. This command does not affect the
@@ -603,7 +603,7 @@ class LeCroyT3DSO1204(Instrument):
 
     def acquisition_sample_size(self, source):
         """ Get acquisition sample size for a certain channel. Used mainly for waveform acquisition.
-        If the source is MATH, the SANU? MATH query does not seem to work so I return the memory
+        If the source is MATH, the SANU? MATH query does not seem to work, so I return the memory
         size instead.
 
         :param source: channel number of channel name.
@@ -698,10 +698,7 @@ class LeCroyT3DSO1204(Instrument):
         "WFSU?", "WFSU FP,%d",
         """ An integer parameter that specifies the address of the first data point to be sent.
         For waveforms acquired in sequence mode, this refers to the relative address in the
-        given segment.
-        For example:
-        FP = 0 corresponds to the first data point.
-        FP = 1 corresponds to the second data point.""",
+        given segment. The first data point starts at zero and is strictly positive.""",
         validator=strict_range,
         values=[0, sys.maxsize]
     )
@@ -764,7 +761,7 @@ class LeCroyT3DSO1204(Instrument):
         return self._fill_yaxis_preamble(preamble)
 
     def _fill_yaxis_preamble(self, preamble=None):
-        """ Fill the part of the waveform preamble concerning the Y-axis.
+        """ Fill waveform preamble section concerning the Y-axis.
         :param preamble: waveform preamble to be filled
         :return: filled preamble
         """
@@ -825,8 +822,8 @@ class LeCroyT3DSO1204(Instrument):
 
     def _acquire_one_point(self):
         """ Acquire a single raw data point from the scope. The header, footer and number of
-        points are sanity-checked but they are not processed otherwise.
-        :return: list containing a single byte"""
+        points are sanity-checked, but they are not processed otherwise.
+        :return: list containing a single byte and minimal waveform preamble"""
         self.write("WFSU SP,1,NP,1,FP,0")
         values = self._digitize(src=self.waveform_source)
         self._header_sanity_checks(values)
@@ -837,9 +834,9 @@ class LeCroyT3DSO1204(Instrument):
 
     def _acquire_data(self, requested_points=0, sparsing=1):
         """ Acquire raw data points from the scope. The header, footer and number of points are
-        sanity-checked but they are not processed otherwise. For a description of the input
+        sanity-checked, but they are not processed otherwise. For a description of the input
         arguments refer to the download_data method.
-        If the number of expected points is big enough, the transmission is splitted in smaller
+        If the number of expected points is big enough, the transmission is split in smaller
         chunks of 20k points and read one chunk at a time. I do not know the reason why,
         but if the chunk size is big enough the transmission does not complete successfully.
         :return: raw data points as numpy array and waveform preamble
