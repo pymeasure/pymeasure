@@ -792,17 +792,20 @@ class LeCroyT3DSO1204(Instrument):
             raise BufferError(f"read bytes ({len(binary_values)}) != requested bytes ({num_bytes})")
         return binary_values
 
-    def _header_sanity_checks(self, message):
+    def _header_footer_sanity_checks(self, message):
         """ Check that the header follows the predefined format.
         The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
-        points and it is zero padded.
+        points, and it is zero padded.
+        Then check that the footer is present. The footer is a double line-carriage \n\n
         :param message: raw bytes received from the scope
-        :return: number of transmitted points as reported by the header """
+        :return: None """
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         # Sanity check on header and footer
         if message_header[0:7] != "DAT2,#9":
             raise ValueError(f"Waveform data in invalid : header is {message_header}")
-        return int(message_header[-9:])
+        message_footer = bytes(message[-self._footer_size:]).decode("ascii")
+        if message_footer != "\n\n":
+            raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
 
     def _npoints_sanity_checks(self, message):
         """ Check that the number of transmitted points is consistent with the message length.
@@ -814,20 +817,13 @@ class LeCroyT3DSO1204(Instrument):
             raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
                              f"number of received points ({received_points})")
 
-    def _footer_sanity_checks(self, message):
-        """ Check that the footer is present. The footer is a double line-carriage \n\n """
-        message_footer = bytes(message[-self._footer_size:]).decode("ascii")
-        if message_footer != "\n\n":
-            raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
-
     def _acquire_one_point(self):
         """ Acquire a single raw data point from the scope. The header, footer and number of
         points are sanity-checked, but they are not processed otherwise.
         :return: list containing a single byte and minimal waveform preamble"""
         self.write("WFSU SP,1,NP,1,FP,0")
         values = self._digitize(src=self.waveform_source)
-        self._header_sanity_checks(values)
-        self._footer_sanity_checks(values)
+        self._header_footer_sanity_checks(values)
         self._npoints_sanity_checks(values)
         preamble = {"source": self.waveform_source}
         return values[self._header_size:-self._footer_size], self._fill_yaxis_preamble(preamble)
@@ -876,8 +872,7 @@ class LeCroyT3DSO1204(Instrument):
             # read chunk of points
             values = self._digitize(src=self.waveform_source, num_bytes=requested_bytes)
             # perform many sanity checks on the received data
-            self._header_sanity_checks(values)
-            self._footer_sanity_checks(values)
+            self._header_footer_sanity_checks(values)
             self._npoints_sanity_checks(values)
             # append the points without the header and footer
             data.append(values[self._header_size:-self._footer_size])
