@@ -475,7 +475,7 @@ class LeCroyT3DSO1204(Instrument):
     def write(self, command):
         """ Writes the command to the instrument through the adapter.
         Note.
-        If the last command was received less than WRITE_INTERVAL_S before, this method blocks for
+        If the last command was sent less than WRITE_INTERVAL_S before, this method blocks for
         the remaining time so that commands are never sent with rate more than 1/WRITE_INTERVAL_S
         Hz.
 
@@ -517,7 +517,7 @@ class LeCroyT3DSO1204(Instrument):
 
     timebase_hor_magnify = Instrument.control(
         "HMAG?", "HMAG %.2ES",
-        """ A string parameter that sets the zoomed (delayed) window horizontal scale (
+        """ A float parameter that sets the zoomed (delayed) window horizontal scale (
         seconds/div). The main sweep scale determines the range for this command. """,
         validator=strict_range,
         values=[1e-9, 20e-3]
