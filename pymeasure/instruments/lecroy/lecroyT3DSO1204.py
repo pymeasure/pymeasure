@@ -282,8 +282,8 @@ class Channel:
         "TRLV?", "TRLV %.2EV",
         """ A float parameter that sets the trigger level voltage for the active trigger source.
             When there are two trigger levels to set, this command is used to set the higher
-            trigger level voltage for the specified source. :attr:`trigger_level2` is used to set the lower
-            trigger level voltage.
+            trigger level voltage for the specified source. :attr:`trigger_level2` is used to set
+            the lower trigger level voltage.
             When setting the trigger level it must be divided by the probe attenuation. This is
             not documented in the datasheet and it is probably a bug of the scope firmware.
             An out-of-range value will be adjusted to the closest legal value.
@@ -329,6 +329,7 @@ class Channel:
         else:
             self.instrument.write("C%d:%s" % (self.number, command))
 
+    # noinspection PyIncorrectDocstring
     def setup(self, **kwargs):
         """ Setup channel. Unspecified settings are not modified. Modifying values such as
         probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
@@ -399,14 +400,15 @@ class LeCroyT3DSO1204(Instrument):
     using the lower-level methods to interact directly with the scope.
 
     Attributes:
-        SLEEP_SECONDS: sleep time between commands. If a command is received less than
-        SLEEP_SECONDS after the previous one, the code blocks until at least SLEEP_SECONDS have
-        passed.
+        WRITE_INTERVAL_S: minimum time between two commands. If a command is received less than
+        WRITE_INTERVAL_S after the previous one, the code blocks until at least WRITE_INTERVAL_S
+        seconds have passed.
         Because the oscilloscope takes a non neglibile time to perform some operations, it might
         be needed for the user to tweak the sleep time between commands.
-        The SLEEP_SECONDS is set to 0.5 seconds as default just to be on the safe side. Its
-        optimal value heavily depends on the actual commands and on the connection type,
-        so it is impossible to give a unique value to fit all cases.
+        The WRITE_INTERVAL_S is set to 10ms as default however its optimal value heavily depends
+        on the actual commands and on the connection type, so it is impossible to give a unique
+        value to fit all cases. An interval between 10ms and 500ms second proved to be good,
+        depending on the commands and connection latency.
 
     .. code-block:: python
 
@@ -419,7 +421,7 @@ class LeCroyT3DSO1204(Instrument):
 
     _BOOLS = {True: "ON", False: "OFF"}
 
-    SLEEP_SECONDS = 0.01
+    WRITE_INTERVAL_S = 0.01  # seconds
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
@@ -473,14 +475,15 @@ class LeCroyT3DSO1204(Instrument):
     def write(self, command):
         """ Writes the command to the instrument through the adapter.
         Note.
-        If the last command was received less than SLEEP_SECONDS before, this method blocks for
-        the remaining time so that commands are never sent with rate more than 1/SLEEP_SECONDS Hz.
+        If the last command was received less than WRITE_INTERVAL_S before, this method blocks for
+        the remaining time so that commands are never sent with rate more than 1/WRITE_INTERVAL_S
+        Hz.
 
         :param command: command string to be sent to the instrument
         """
         seconds_since_last_write = time.monotonic() - self._seconds_since_last_write
-        if seconds_since_last_write < self.SLEEP_SECONDS:
-            time.sleep(self.SLEEP_SECONDS - seconds_since_last_write)
+        if seconds_since_last_write < self.WRITE_INTERVAL_S:
+            time.sleep(self.WRITE_INTERVAL_S - seconds_since_last_write)
             self._seconds_since_last_write = seconds_since_last_write
         super().write(command)
 
