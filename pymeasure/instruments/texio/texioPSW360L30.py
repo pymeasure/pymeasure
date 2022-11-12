@@ -42,12 +42,10 @@ class TexioPSW360L30(Keithley2260B):
     """
 
     def __init__(self, adapter, **kwargs):
-        Instrument.__init__(self,
-                            adapter=adapter,
-                            name="TEXIO PSW-360L30 Power Supply",
-                            read_termination="\n",
-                            **kwargs
-                            )
+        kwargs['adapter'] = adapter
+        kwargs['name'] = "TEXIO PSW-360L30 Power Supply"
+        kwargs['read_termination'] = "\n"
+        super().__init__(**kwargs)
 
     def check_errors(self):
         """ Logs any system errors reported by the instrument.

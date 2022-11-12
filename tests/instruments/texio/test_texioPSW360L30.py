@@ -27,6 +27,11 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.texio.texioPSW360L30 import TexioPSW360L30
 
 
+def test_name():
+    texio = TexioPSW360L30(adapter=None)
+    assert "TEXIO" in texio.name.upper()
+
+
 def test_output_enabled():
     with expected_protocol(
             TexioPSW360L30,
