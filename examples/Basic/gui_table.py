@@ -1,19 +1,18 @@
 """
 This example demonstrates how to make a graphical interface, and uses
 a random number generator to simulate data so that it does not require
-an instrument to use.
+an instrument to use. In particular, this example show how to display
+data in tabular format.
 
 Run the program by changing to the directory containing this file and calling:
 
-python gui.py
+python gui_table.py
 
 """
 
 import sys
 import random
-import tempfile
 from time import sleep
-import PyQt5
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results, unique_filename
 from pymeasure.display.Qt import QtWidgets
@@ -55,14 +54,18 @@ class TestProcedure(Procedure):
     def shutdown(self):
         log.info("Finished")
 
+
 class ManagedWindowWithTable(ManagedWindow):
     def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
-        self.table_widget = TableWidget("Experiment Table", procedure_class.DATA_COLUMNS, float_digits=3)
+        self.table_widget = TableWidget("Experiment Table",
+                                        procedure_class.DATA_COLUMNS,
+                                        float_digits=3)
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
         kwargs["widget_list"] = kwargs["widget_list"] + (self.table_widget, )
 
         super().__init__(procedure_class, x_axis, y_axis, linewidth, **kwargs)
+
 
 class MainWindow(ManagedWindowWithTable):
 
@@ -88,7 +91,6 @@ class MainWindow(ManagedWindowWithTable):
 
 
 if __name__ == "__main__":
-    print (QtWidgets.QApplication)
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()

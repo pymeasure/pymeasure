@@ -37,6 +37,7 @@ SORT_ROLE = QtCore.Qt.UserRole + 1
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class PandasModel(QtCore.QAbstractTableModel):
     def __init__(self, results, float_digits=12, parent=None):
         QtCore.QAbstractTableModel.__init__(self, parent)
@@ -80,6 +81,7 @@ class PandasModel(QtCore.QAbstractTableModel):
                 return str(self._data.index[section])
 
         return None
+
 
 class Table(QtWidgets.QTableView):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
@@ -125,6 +127,7 @@ class Table(QtWidgets.QTableView):
     def set_color(self, color):
         self.color = color
 
+
 class MultiTable(QtWidgets.QTabWidget):
     """ Display a set of experiments in a spreadsheet like fashion
     """
@@ -163,6 +166,7 @@ class MultiTable(QtWidgets.QTabWidget):
         pixelmap = QtGui.QPixmap(12, 12)
         pixelmap.fill(table.color)
         self.setTabIcon(tab_index, QtGui.QIcon(pixelmap))
+
 
 class TableWidget(TabWidget, QtWidgets.QWidget):
     """ Widget to display experiment data in a tabular format
