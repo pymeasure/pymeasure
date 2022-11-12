@@ -43,12 +43,18 @@ def _sanitize_source(source):
     a single digit integer. The parser is case and white space insensitive.
     :return: can be "C1", "C2", "C3", "C4", "MATH" or "LINE. """
 
-    match = re.match(r"\s*(C\s*\d|CH\s*\d|CHAN\s*\d|CHANNEL\s*\d|MATH|LINE)", source,
+    match = re.match(r"^\s*(C\s*(\d)|CH\s*(\d)|CHAN\s*(\d)|CHANNEL\s*(\d)|MATH|LINE)\s*$", source,
                      re.IGNORECASE)
     if match:
-        source = match.group(1).replace(" ", "").upper()
-        if source not in ["MATH", "LINE"]:
-            source = "C" + source[-1]
+        groups = [i for i in match.groups() if i is not None]
+        if len(groups) in [1, 2]:
+            if len(groups) == 2:
+                source = "C" + groups[1]
+            else:
+                source = groups[0]
+            source = source.replace(" ", "").upper()
+        else:
+            raise ValueError(f"source {source} only partially recognized")
     else:
         raise ValueError(f"source {source} not recognized")
     return source

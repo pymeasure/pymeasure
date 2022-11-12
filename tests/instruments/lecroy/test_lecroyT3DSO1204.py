@@ -27,6 +27,10 @@ import pytest
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 from pymeasure.test import expected_protocol
 
+INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", 'LINE']
+VALID_CHANNELS = [('C1', 1), ('CHANNEL2', 2), ('ch 3', 3), ('chan 4', 4), ('\tC3\t', 3),
+                  (' math ', 'MATH')]
+
 
 def test_init():
     with expected_protocol(
@@ -34,6 +38,22 @@ def test_init():
             [("CHDR OFF", None)]
     ):
         pass  # Verify the expected communication.
+
+
+@pytest.mark.parametrize("channel", INVALID_CHANNELS)
+def test_invalid_source(channel):
+    with pytest.raises(ValueError):
+        with expected_protocol(LeCroyT3DSO1204, [("CHDR OFF", None)]) as instr:
+            instr.ch(channel)
+
+
+@pytest.mark.parametrize("channel", VALID_CHANNELS)
+def test_sanitize_valid_source(channel):
+    with expected_protocol(LeCroyT3DSO1204, [("CHDR OFF", None)]) as instr:
+        if isinstance(channel[1], int):
+            assert channel[1] == instr.ch(channel[0]).number
+        else:
+            assert instr == instr.ch(channel[0])
 
 
 def test_bwlimit():
