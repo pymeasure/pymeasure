@@ -929,7 +929,7 @@ class LeCroyT3DSO1204(Instrument):
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
         Note.
-        :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH.
+        :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH".
         :param requested_points: number of points to acquire. If 0, all available points
         will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
