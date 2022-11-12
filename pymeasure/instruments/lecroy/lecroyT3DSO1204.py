@@ -204,7 +204,7 @@ class Channel:
 
     display = Instrument.control(
         "TRA?", "TRA %s",
-        """ A string parameter that toggles the display ("ON", "OFF").""",
+        """Control the display enabled state. (strict bool)""",
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True
