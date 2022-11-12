@@ -62,7 +62,7 @@ def _sanitize_source(source):
 
 def _trigger_select_num_pars(value):
     """
-    find the expected number of parameter for the trigger_select property
+    Find the expected number of parameters for the trigger_select property. 
     :param value: input parameters as a tuple
     """
     value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
