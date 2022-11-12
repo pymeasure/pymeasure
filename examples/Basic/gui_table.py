@@ -1,7 +1,7 @@
 """
 This example demonstrates how to make a graphical interface, and uses
 a random number generator to simulate data so that it does not require
-an instrument to use. In particular, this example show how to display
+an instrument to use. In particular, this example shows how to display
 data in tabular format.
 
 Run the program by changing to the directory containing this file and calling:

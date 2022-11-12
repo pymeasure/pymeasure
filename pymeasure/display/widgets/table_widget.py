@@ -63,7 +63,7 @@ class PandasModel(QtCore.QAbstractTableModel):
                 return (str(value_render))
             elif role == SORT_ROLE:
                 # For numerical sort
-                return value
+                return float(value)
         return None
 
     def headerData(
@@ -101,13 +101,15 @@ class Table(QtWidgets.QTableView):
         self.float_digits = float_digits
         self.name = basename(self.results.data_filename)
         model = PandasModel(self.results, float_digits=self.float_digits)
-        proxyModel = QtCore.QSortFilterProxyModel()
+        proxyModel = QtCore.QSortFilterProxyModel(self)
         proxyModel.setSourceModel(model)
         model = proxyModel
+
+        model.setSortRole(SORT_ROLE)
         self.setModel(model)
         self.horizontalHeader().setStyleSheet("font: bold;")
-        model.setSortRole(SORT_ROLE)
         self.setSortingEnabled(True)
+        self.sortByColumn(-1, QtCore.Qt.AscendingOrder)
         self.horizontalHeader().setSectionsMovable(True)
 
     def update_data(self):
