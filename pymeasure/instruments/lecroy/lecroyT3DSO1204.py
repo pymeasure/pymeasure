@@ -282,7 +282,7 @@ class Channel:
         "TRLV?", "TRLV %.2EV",
         """ A float parameter that sets the trigger level voltage for the active trigger source.
             When there are two trigger levels to set, this command is used to set the higher
-            trigger level voltage for the specified source. TRLV2 is used to set the lower
+            trigger level voltage for the specified source. :attr:`trigger_level2` is used to set the lower
             trigger level voltage.
             When setting the trigger level it must be divided by the probe attenuation. This is
             not documented in the datasheet and it is probably a bug of the scope firmware.
