@@ -60,76 +60,76 @@ def test_bwlimit():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b"C1:BWL?", b"OFF"),
              (b"BWL C1,OFF", None),
-             (b"C1:BWL?", b"ON"),
-             (b"BWL C1,ON", None)
+             (b"C1:BWL?", b"OFF"),
+             (b"BWL C1,ON", None),
+             (b"C1:BWL?", b"ON")
              ]
     ) as instr:
-        assert instr.ch1.bwlimit is False
         instr.ch1.bwlimit = False
-        assert instr.ch1.bwlimit is True
+        assert instr.ch1.bwlimit is False
         instr.ch1.bwlimit = True
+        assert instr.ch1.bwlimit is True
 
 
 def test_coupling():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b"C1:CPL?", b"D1M"),
              (b"C1:CPL D1M", None),
-             (b"C1:CPL?", b"A1M"),
+             (b"C1:CPL?", b"D1M"),
              (b"C1:CPL A1M", None),
-             (b"C1:CPL?", b"GND"),
-             (b"C1:CPL GND", None)
+             (b"C1:CPL?", b"A1M"),
+             (b"C1:CPL GND", None),
+             (b"C1:CPL?", b"GND")
              ],
     ) as instr:
-        assert instr.ch1.coupling == "dc 1M"
         instr.ch1.coupling = "dc 1M"
-        assert instr.ch1.coupling == "ac 1M"
+        assert instr.ch1.coupling == "dc 1M"
         instr.ch1.coupling = "ac 1M"
-        assert instr.ch1.coupling == "ground"
+        assert instr.ch1.coupling == "ac 1M"
         instr.ch1.coupling = "ground"
+        assert instr.ch1.coupling == "ground"
 
 
 def test_offset():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b"C1:OFST?", b"1.00E+00"),
-             (b"C1:OFST 1.00E+00V", None)
+             (b"C1:OFST 1.00E+00V", None),
+             (b"C1:OFST?", b"1.00E+00")
              ]
     ) as instr:
-        assert instr.ch1.offset == 1.
         instr.ch1.offset = 1.
+        assert instr.ch1.offset == 1.
 
 
 def test_attenuation():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b"C1:ATTN?", b"100"),
              (b"C1:ATTN 100", None),
-             (b"C1:ATTN?", b"0.1"),
-             (b"C1:ATTN 0.1", None)
+             (b"C1:ATTN?", b"100"),
+             (b"C1:ATTN 0.1", None),
+             (b"C1:ATTN?", b"0.1")
              ]
     ) as instr:
-        assert instr.ch1.probe_attenuation == 100
         instr.ch1.probe_attenuation = 100
-        assert instr.ch1.probe_attenuation == 0.1
+        assert instr.ch1.probe_attenuation == 100
         instr.ch1.probe_attenuation = 0.1
+        assert instr.ch1.probe_attenuation == 0.1
 
 
 def test_skew_factor():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b"C1:SKEW?", b"1.00E-07S"),
              (b"C1:SKEW 1.00E-07S", None),
+             (b"C1:SKEW?", b"1.00E-07S"),
              ]
     ) as instr:
-        assert instr.ch1.skew_factor == 1e-7
         instr.ch1.skew_factor = 1e-7
+        assert instr.ch1.skew_factor == 1e-7
 
 
 def test_channel_setup():
@@ -172,20 +172,20 @@ def test_memory_size():
     with expected_protocol(
             LeCroyT3DSO1204,
             [("CHDR OFF", None),
-             (b"MSIZ?", b"14M"),
              (b"MSIZ 14M", None),
-             (b"MSIZ?", b"1.4M"),
+             (b"MSIZ?", b"14M"),
              (b"MSIZ 1.4M", None),
-             (b"MSIZ?", b"7K"),
-             (b"MSIZ 7K", None)
+             (b"MSIZ?", b"1.4M"),
+             (b"MSIZ 7K", None),
+             (b"MSIZ?", b"7K")
              ]
     ) as instr:
-        assert instr.memory_size == 14e6
         instr.memory_size = 14e6
-        assert instr.memory_size == 14e5
+        assert instr.memory_size == 14e6
         instr.memory_size = 14e5
-        assert instr.memory_size == 7e3
+        assert instr.memory_size == 14e5
         instr.memory_size = 7e3
+        assert instr.memory_size == 7e3
 
 
 def test_sample_size():
