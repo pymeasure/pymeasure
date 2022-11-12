@@ -486,7 +486,10 @@ class LeCroyT3DSO1204(Instrument):
 
     _comm_header = Instrument.control(
         "CHDR?", "CHDR %s",
-        """ Controls the way the oscilloscope formats response to queries.""",
+        """ Controls the way the oscilloscope formats response to queries.
+        • SHORT — response starts with the short form of the header word.
+        • LONG — response starts with the long form of the header word.
+        • OFF — header is omitted from the response and units in numbers are suppressed.""",
         validator=strict_discrete_set,
         values=["OFF", "SHORT", "LONG"],
     )
