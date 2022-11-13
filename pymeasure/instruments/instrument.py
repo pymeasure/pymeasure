@@ -580,7 +580,7 @@ class Instrument:
     def shutdown(self):
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
-        log.info("Shutting down %s" % self.name)
+        log.info(f"Finished shutting down {self.name}")
 
     def check_errors(self):
         """ Read all errors from the instrument.
