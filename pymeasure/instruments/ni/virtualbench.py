@@ -128,7 +128,6 @@ class VirtualBench():
         log.info("Shutting down %s" % self.name)
         self.vb.release()
         self.isShutdown = True
-        super().shutdown()
 
     def get_library_version(self):
         ''' Return the version of the VirtualBench runtime library
@@ -306,7 +305,6 @@ class VirtualBench():
             log.info("Shutting down %s" % self.name)
             self._instrument_handle.release()
             self.isShutdown = True
-            super().shutdown()
 
     class DigitalInputOutput(VirtualBenchInstrument):
         """ Represents Digital Input Output (DIO) Module of Virtual Bench
