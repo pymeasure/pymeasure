@@ -1,4 +1,4 @@
-/#
+#
 # This file is part of the PyMeasure package.
 #
 # Copyright (c) 2013-2022 PyMeasure Developers
