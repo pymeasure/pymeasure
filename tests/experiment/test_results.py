@@ -105,9 +105,22 @@ class Test_CSVFormatterPandas():
         record = {"index": 0, "length (m)": 10.4}
         assert self.formatter.format(record) == "0,10.4"
 
+    def test_dict_multi_record(self):
+        record = {"index": [0, 1], "length (m)": [10.4, 20.4]}
+        assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
     def test_dataframe_record(self):
         record = pd.DataFrame({"index": [0, 1], "length (m)": [10.4, 20.4]})
         assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
+    def test_dict_unitful_records(self):
+        record = {"index": [0, 1], "length (m)": [1040. * ureg.cm, 20.4 * ureg.m]}
+        assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
+    def test_dict_unitful_array(self):
+        record = {"index": [0, 1], "length (m)": ureg.Quantity([1040., 2040.], "cm")}
+        assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
 
 
 @pytest.mark.parametrize("header, units", (

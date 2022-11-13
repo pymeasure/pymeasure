@@ -151,6 +151,51 @@ class Results_Formatter(logging.Formatter):
                 units[column] = ureg.Quantity(match.groupdict()['units']).units
         return units
 
+    def conform_units(self, value, column):
+        units = self.units.get(column, None)
+
+        if units is not None:
+            if isinstance(value, str):
+                try:
+                    value = ureg.Quantity(value)
+                except pint.UndefinedUnitError:
+                    log.warning(
+                        f"Value {value} for column {column} cannot be parsed to"
+                        f" unit {units}.")
+
+            if isinstance(value, pint.Quantity):
+                try:
+                    value = value.m_as(units)
+                except pint.DimensionalityError:
+                    value = float("nan")
+                    log.warning(
+                        f"Value {value} for column {column} does not have the "
+                        f"right unit {units}.")
+            elif isinstance(value, bool):
+                value = float("nan")
+                log.warning(
+                    f"Boolean for column {column} does not have unit {units}.")
+            elif isinstance(value, (float, int, Decimal)):
+                pass
+            else:
+                value = float("nan")
+                log.warning(
+                    f"Value {value} for column {column} does not have the right"
+                    f" type for unit {units}.")
+
+        else:
+            if isinstance(value, pint.Quantity):
+                if value.units == ureg.dimensionless:
+                    value = value.magnitude
+                else:
+                    self.units[column] = value.to_base_units().units
+                    value = value.m_as(self.units[column])
+                    log.info(f"Column {column} units was set to {self.units[column]}")
+            else:
+                pass
+
+        return value
+
 
 class CSVFormatter(Results_Formatter):
     """ Formatter of data results, single-line CSV """
@@ -163,46 +208,11 @@ class CSVFormatter(Results_Formatter):
         :return: a string
         """
         line = []
-        for x in self.columns:
-            value = record.get(x, float("nan"))
-            units = self.units.get(x, None)
-            if units is not None:
-                if isinstance(value, str):
-                    try:
-                        value = ureg.Quantity(value)
-                    except pint.UndefinedUnitError:
-                        log.warning(
-                            f"Value {value} for column {x} cannot be parsed to"
-                            f" unit {units}.")
-                if isinstance(value, pint.Quantity):
-                    try:
-                        line.append(f"{value.m_as(units)}")
-                    except pint.DimensionalityError:
-                        line.append("nan")
-                        log.warning(
-                            f"Value {value} for column {x} does not have the "
-                            f"right unit {units}.")
-                elif isinstance(value, bool):
-                    line.append("nan")
-                    log.warning(
-                        f"Boolean for column {x} does not have unit {units}.")
-                elif isinstance(value, (float, int, Decimal)):
-                    line.append(f"{value}")
-                else:
-                    line.append("nan")
-                    log.warning(
-                        f"Value {value} for column {x} does not have the right"
-                        f" type for unit {units}.")
-            else:
-                if isinstance(value, pint.Quantity):
-                    if value.units == ureg.dimensionless:
-                        line.append(f"{value.magnitude}")
-                    else:
-                        self.units[x] = value.to_base_units().units
-                        line.append(f"{value.m_as(self.units[x])}")
-                        log.info(f"Column {x} units was set to {self.units[x]}")
-                else:
-                    line.append(f"{value}")
+        for column in self.columns:
+            value = record.get(column, float("nan"))
+            value = self.conform_units(value, column)
+            line.append(f"{value}")
+
         return self.delimiter.join(line)
 
     def format_header(self):
@@ -224,10 +234,20 @@ class CSVFormatterPandas(Results_Formatter):
         if isinstance(record, pd.DataFrame):
             record = record.reindex(columns=self.columns)
         elif isinstance(record, dict):
-            record = pd.DataFrame([record], columns=self.columns)
+            if isinstance(list(record.values())[0], (list, tuple)):
+                record = pd.DataFrame(record, columns=self.columns)
+            else:
+                record = pd.DataFrame([record], columns=self.columns)
         else:
             raise TypeError('Formatting of data failed. '
                             'Pandas dataframe or dict required.')
+
+        # Convert units if applicable
+        print(record.dtypes)
+        for column in record.select_dtypes(object).columns:
+            print(column)
+            record[column] = record[column].apply(self.conform_units, column=column)
+
         return record.to_csv(
             sep=self.delimiter,
             header=False,
