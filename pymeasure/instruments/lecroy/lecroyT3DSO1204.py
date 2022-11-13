@@ -660,13 +660,12 @@ class LeCroyT3DSO1204(Instrument):
         This is the same as pressing the Run key on the front panel.
         """
         self.trigger_mode = "normal"
-        self.write("ARM")
 
     def stop(self):
         """  Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
         self.write("STOP")
 
-    def single(self):
+    def arm_acquisition(self):
         """ Causes the instrument to acquire a single trigger of data.
         This is the same as pressing the Single key on the front panel. """
         self.write("ARM")
@@ -1024,15 +1023,14 @@ class LeCroyT3DSO1204(Instrument):
         restricted to those variables to be changed.
         There are five parameters that can be specified. Parameters 1. 2. 3. are always mandatory.
         Parameters 4. 5. are required only for certain combinations of the previous parameters.
-        1.  <trig_type>:={edge, slew, glit, intv, runt, drop}
-        2.  <source>:={c1, c2, c3, c4, line}
-        3.  - <hold_type>:={ti, off} for edge trigger.
-            - <hold_type>:={ti} for drop trigger.
-            - <hold_type>:={ps, pl, p2, p1} for glit/runt trigger.
-            - <hold_type>:={is, il, i2, i1} for slew/intv trigger.
-        4.  <hold_value1>:= a time value with unit.
-        5.  <hold_value2>:= a time value with unit.
-
+        1. <trig_type>:={edge, slew, glit, intv, runt, drop}
+        2. <source>:={c1, c2, c3, c4, line}
+        3. - <hold_type>:={ti, off} for edge trigger.
+        - <hold_type>:={ti} for drop trigger.
+        - <hold_type>:={ps, pl, p2, p1} for glit/runt trigger.
+        - <hold_type>:={is, il, i2, i1} for slew/intv trigger.
+        4. <hold_value1>:= a time value with unit.
+        5. <hold_value2>:= a time value with unit.
         Note:
         • "line" can only be selected when the trigger type is "edge".
         • All time arguments should be given in multiples of seconds. Use the scientific notation
@@ -1040,8 +1038,7 @@ class LeCroyT3DSO1204(Instrument):
         • The range of hold_values varies from trigger types. [80nS, 1.5S] for "edge" trigger,
         and [2nS, 4.2S] for others.
         • The trigger_select command is switched automatically between the short, normal and
-        extended version depending on the number of expected parameters.
-        """
+        extended version depending on the number of expected parameters. """
         return self._trigger_select
 
     # noinspection PyAttributeOutsideInit
