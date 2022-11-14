@@ -448,7 +448,10 @@ class LeCroyT3DSO1204(Instrument):
         interpretation of messages sent to the oscilloscope. Headers can be sent in their long or
         short form regardless of the CHDR setting.
         By setting the COMM_HEADER to OFF, the instrument is going to reply with minimal
-        information, and this makes the response message much easier to parse."""
+        information, and this makes the response message much easier to parse.
+        The user should not be fiddling with the COMM_HEADER during operation, because
+        if the communication header is anything other than OFF, the whole driver breaks down.
+        """
         self._comm_header = "OFF"
 
     def ch(self, source):
@@ -488,6 +491,8 @@ class LeCroyT3DSO1204(Instrument):
     _comm_header = Instrument.control(
         "CHDR?", "CHDR %s",
         """ Controls the way the oscilloscope formats response to queries.
+        The user should not be fiddling with the COMM_HEADER during operation, because
+        if the communication header is anything other than OFF, the whole driver breaks down.
         • SHORT — response starts with the short form of the header word.
         • LONG — response starts with the long form of the header word.
         • OFF — header is omitted from the response and units in numbers are suppressed.""",
