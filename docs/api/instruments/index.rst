@@ -52,6 +52,7 @@ Instruments by manufacturer:
    srs/index
    tektronix/index
    temptronic/index
+   texio/index
    thermotron/index
    thorlabs/index
    toptica/index
