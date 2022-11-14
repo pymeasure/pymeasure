@@ -1,8 +1,7 @@
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.keithley.keithley2260B import Keithley2260B
-
-import time
 import logging
+import time
+
+from pymeasure.instruments.keithley.keithley2260B import Keithley2260B
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
