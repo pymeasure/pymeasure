@@ -29,9 +29,11 @@ class Keithley2260B(Instrument):
 
     def __init__(self, adapter, read_termination="\n", **kwargs):
         kwargs.setdefault('name', "Keithley 2260B DC Power Supply")
-        kwargs.setdefault('adapter', adapter)
-        kwargs.setdefault("read_termination", read_termination)
-        super().__init__(**kwargs)
+        super().__init__(
+            adapter,
+            read_termination=read_termination,
+            **kwargs
+        )
 
     output_enabled = Instrument.control(
         "OUTPut?",
