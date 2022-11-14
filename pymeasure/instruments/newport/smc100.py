@@ -317,7 +317,7 @@ class SMC100(Instrument):
         check_get_errors=True,
         check_set_errors=True
     )
-    error_positioner = Instrument.measurement(  
+    error_positioner = Instrument.measurement(
         "TS",
         """Get the last positioner error.""",
         get_process=lambda v: [bool(int(c)) for c in bin(
@@ -498,7 +498,7 @@ class SMC100(Instrument):
         Example use:
 
         .. code-block:: python
-        
+
             smc.position
             smc.position = 10
             smc.position += 1""",
@@ -520,7 +520,7 @@ class SMC100(Instrument):
         check_get_errors=True,
         cast=str
     )
-    state = Instrument.measurement(  
+    state = Instrument.measurement(
         "TS",
         """Get the controller state.
 
@@ -582,7 +582,7 @@ class SMC100(Instrument):
                 f"^{address}[A-Z]{{2}}[L,R,T]?", "", v),
             **kwargs
         )
-    
+
     def __str__(self):
         """Return a string describing the controller settings."""
         message = "Newport SMC100 Motion Controller with the following\n"
@@ -650,7 +650,7 @@ class SMC100(Instrument):
             assert not any(errors)
         except AssertionError:
             raise(PositionerError(self.address, errors))
-    
+
     def get_motion_time(self, distance):
         """Get an evaluation of the time needed to complete a
         relative move.
@@ -704,4 +704,3 @@ class SMC100(Instrument):
         while not self.state.ready:
             self.check_motion_error()
             sleep(0.1)
-            
