@@ -34,27 +34,33 @@ from pymeasure.instruments.validators import truncated_range
 class GenericChannel(Channel):
     #  Use truncated_range as this easily lets us test for the range boundaries
     fake_ctrl = Channel.control(
-        "C{ch}:control?", "C{ch}:control %d", "docs",
+        "C{ch}:control?", "C{ch}:control %d", "Control docs",
         validator=truncated_range,
         values=(1, 10),
         dynamic=True,
     )
     fake_setting = Channel.setting(
-        "C{ch}:setting %d", "docs",
+        "C{ch}:setting %d", "Set docs",
         validator=truncated_range,
         values=(1, 10),
         dynamic=True,
     )
     fake_measurement = Channel.measurement(
-        "C{ch}:measurement?", "docs",
+        "C{ch}:measurement?", "Measure docs",
         values={'X': 1, 'Y': 2, 'Z': 3},
         map_values=True,
         dynamic=True,
     )
     special_control = Channel.control(
         "SOUR{ch}:special?", "OUTP{ch}:special %s",
-        """A special control with different channel specifiers for get and set.""",
+        """Control with different channel specifiers for get and set.""",
         cast=str,
+    )
+    check_errors_control = Channel.control(
+        "C{ch}:xy?", "C{ch}:xy %d",
+        """Control something, with error check on get and set.""",
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
 
@@ -69,8 +75,15 @@ class ChannelWithPlaceholder(Channel):
 class ChannelInstrument(Instrument):
     def __init__(self, adapter, name="ChannelInstrument", **kwargs):
         super().__init__(adapter, name, **kwargs)
+        self.errors = []
         self.add_child(GenericChannel, "A")
         self.add_child(GenericChannel, "B")
+
+    def check_errors(self):
+        err = self.values("SYST:ERR?")
+        if err:
+            self.errors.append(err)
+        return err
 
 
 class TestChannelCommunication:
@@ -162,3 +175,21 @@ def test_channel_special_control():
                            ) as inst:
         assert inst.ch_A.special_control == "super"
         inst.ch_B.special_control = "test"
+
+
+def test_channel_check_set_errors():
+    with expected_protocol(ChannelInstrument,
+                           [("CA:xy 5", None),
+                            ("SYST:ERR?", "Some, error")],
+                           ) as inst:
+        inst.ch_A.check_errors_control = 5
+        assert inst.errors == [["Some", " error"]]
+
+
+def test_channel_check_get_errors():
+    with expected_protocol(ChannelInstrument,
+                           [("CA:xy?", "5"),
+                            ("SYST:ERR?", "Some, error")],
+                           ) as inst:
+        assert inst.ch_A.check_errors_control == 5
+        assert inst.errors == [["Some", " error"]]

@@ -102,6 +102,13 @@ class Channel(CommonBase):
         """Read binary values from the instrument."""
         return self.parent.read_binary_values(**kwargs)
 
+    def check_errors(self):
+        """Read all errors from the instrument.
+
+        :return: list of error entries
+        """
+        return self.parent.check_errors()
+
     # Communication functions
     def wait_for(self, query_delay=0):
         """Wait for some time. Used by 'ask' to wait before reading.
