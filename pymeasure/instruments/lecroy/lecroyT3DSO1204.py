@@ -43,7 +43,7 @@ def _sanitize_source(source):
     a single digit integer. The parser is case and white space insensitive.
     :return: can be "C1", "C2", "C3", "C4", "MATH" or "LINE. """
 
-    match = re.match(r"^\s*(?:(?P<name>C|CH|CHAN|CHANNEL)\s*(?P<number>\d))\s*$|"
+    match = re.match(r"^\s*(?:(C|CH|CHAN|CHANNEL)\s*(?P<number>\d))\s*$|"
                      r"^\s*(?P<name_only>MATH|LINE)\s*$", source, re.IGNORECASE)
     if match:
         if match.group("number") is not None:
