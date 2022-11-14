@@ -10,3 +10,4 @@ This section contains specific documentation on the Newport instruments that are
    :maxdepth: 2
 
    esp300
+   smc100
