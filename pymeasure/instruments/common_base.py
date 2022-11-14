@@ -123,7 +123,8 @@ class CommonBase:
         for item, value in self.__class__.__dict__.items():
             if isinstance(value, self.ChannelCreator):
                 for cls, id in value.pairs:
-                    self.add_child(cls, id, collection=item, **value.kwargs)
+                    child = self.add_child(cls, id, collection=item, **value.kwargs)
+                    child._protected = True
 
     class ChannelCreator:
         """Add channels to the parent class.
@@ -232,7 +233,7 @@ class CommonBase:
             creates attribute `self.ch_A`. If prefix evaluates False,
             the child will be added directly under the collection name.
         :param \\**kwargs: Keyword arguments for the channel creator.
-        :returns: Index of this instance's channels.
+        :returns: Instance of the created child.
         """
         child = cls(self, id, **kwargs)
         collection_data = getattr(self, collection, {})
@@ -251,14 +252,16 @@ class CommonBase:
                 raise ValueError(f"An attribute '{collection}' already exists.")
             setattr(self, collection, child)
             child._name = collection
-            child._collection = None
+        return child
 
     def remove_child(self, child):
         """Remove the child from the instrument and the corresponding collection.
 
         :param child: Instance of the child to delete.
         """
-        if child._collection:
+        if hasattr(child, "_protected"):
+            raise TypeError("You cannot remove channels defined at class level.")
+        if hasattr(child, "_collection"):
             collection = getattr(self, child._collection)
             del collection[child.id]
         delattr(self, child._name)

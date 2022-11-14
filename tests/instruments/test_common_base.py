@@ -239,7 +239,8 @@ class TestRemoveChild:
 # Test ChildDescriptor
 @pytest.mark.parametrize("args, pairs, kwargs", (
     ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
-    (((Child, GenericBase, Child), (1, 2, 3)), [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
+    (((Child, GenericBase, Child), (1, 2, 3)),
+     [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
     ((Child, "mm", None), [(Child, "mm")], {'prefix': None}),
     ((Child, None, None), [(Child, None)], {'prefix': None}),
 ))
