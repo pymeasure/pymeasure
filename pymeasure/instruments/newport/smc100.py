@@ -569,11 +569,11 @@ class SMC100(Instrument):
     )
 
     # Special methods
-    def __init__(self, resourceName, address=1, name="SMC100", **kwargs):
+    def __init__(self, adapter, address=1, name="SMC100", **kwargs):
         """Set up connection to the controller."""
         self.address = str(address)
         super().__init__(
-            resourceName,
+            adapter,
             name,
             includeSCPI=False,
             baud_rate=57600,
