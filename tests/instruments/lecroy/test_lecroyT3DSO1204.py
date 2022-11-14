@@ -27,7 +27,7 @@ import pytest
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 from pymeasure.test import expected_protocol
 
-INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", 'LINE']
+INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "LINE", "CHANNEL"]
 VALID_CHANNELS = [('C1', 1), ('CHANNEL2', 2), ('ch 3', 3), ('chan 4', 4), ('\tC3\t', 3),
                   (' math ', 'MATH')]
 
