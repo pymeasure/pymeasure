@@ -14,14 +14,23 @@ New adapter and instrument mechanics
 - PrologixAdapter is based on VISAAdapter.
 - SerialAdapter improved to be more similar to VISAAdapter: read/write use strings, read/write_bytes bytes. Support for termination characters added.
 
+Instruments
+-----------
+- New TEXIO PSW-360L30 Power Supply (minimal implementation)
+
 Deprecated features
 -------------------
 - Adapter methods ask, values, binary_values, use same named Instrument methods instead.
 - Adapter parameter preprocess_reply, override Instrument.read instead.
 - Adapter.query_delay in favor of Instrument.wait_for().
+- "enabled" property of Keithley 2260B is deprecated in favor of "output_enabled"
 
 Internal:
 - Removed VISAAdapter.has_supported_version() as it is not needed anymore.
+
+New Contributors
+----------------
+@LastStarDust
 
 Version 0.10.0 (2022-04-09)
 ===========================
@@ -235,7 +244,7 @@ Version 0.4.4 -- released 6/4/17
 
 Version 0.4.3 -- released 3/30/17
 =================================
-- Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and 
+- Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and
   Anritsu MS9710C instruments (@TvBMcMaster, @dvspirito, and @mhdg)
 - Updates to PyVISA support (@minhhaiphys)
 - Initial work on resource manager (@dvspirito)

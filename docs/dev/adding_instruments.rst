@@ -1,3 +1,5 @@
+.. _adding-instruments:
+
 ##################
 Adding instruments
 ##################
@@ -93,8 +95,7 @@ This is a minimal instrument definition:
 .. testcode::
     
     class Extreme5000(Instrument):
-        """ Represents the imaginary Extreme 5000 instrument.
-        """
+        """Control the imaginary Extreme 5000 instrument."""
 
         def __init__(self, adapter, **kwargs):
             super().__init__(
@@ -105,9 +106,111 @@ This is a minimal instrument definition:
 
 Make sure to include the PyMeasure license to each file, and add yourself as an author to the :code:`AUTHORS.txt` file.
 
-In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
+There is a certain order of elements in an instrument class that is useful to adhere to:
 
-In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences and are highly encouraged.
+* First, the initializer (the :code:`__init__()` method), this makes it faster to find when browsing the source code.
+* Then class attributes/variables, if you need them.
+* Then properties (pymeasure-specific or generic Python variants). This will be the bulk of the implementation.
+* Finally, any methods.
+
+Your instrument's user interface
+================================
+
+Your instrument will have a certain set of properties and methods that are available to a user and discoverable via the documentation or their editor's autocomplete function.
+
+In principle you are free to choose how you do this (with the exception of standard SCPI properties like :code:`id`).
+However, there are a couple of practices that have turned out to be useful to follow:
+
+* Naming things is important. Try to choose clear, expressive, unambiguous names for your instrument's elements.
+* If there are already similar instruments in the same "family" (like a power supply) in pymeasure, try to follow their lead where applicable. It's better if, e.g., all power supplies have a :code:`current_limit` instead of an assortment of :code:`current_max`, :code:`Ilim`, :code:`max_curr`, etc.
+* If there is already an instrument with a similar command set, check if you can inherit from that one and just tweak a couple of things. This massively reduces code duplication and maintenance effort. The section :ref:`instruments_with_similar_features` shows how to achieve that.
+* The bulk of your instrument's interface will probably be made up of properties for quantities to set and/or read out. Our custom properties (see :ref:`writing_properties` ff. below) offer some convenience features and are therefore preferable, but plain Python properties are also fine.
+* "Actions", commands or verbs should typically be methods, not properties: :code:`recall()`, :code:`trigger_scan()`, :code:`prepare_resistance_measurement()`, etc.
+* This separation between properties and methods also naturally helps with observing the `"command-query separation" principle <https://en.wikipedia.org/wiki/Command%E2%80%93query_separation>`__.
+* If your instrument has multiple identical channels, see XXX. TODO: write section on channel implementations
+
+In principle, you are free to write any methods that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
+
+In practice, we have developed a number of best practices for making instruments easy to write and maintain. The following sections detail these, which are highly encouraged to follow.
+
+Common instrument types
+***********************
+There are a number of categories that many instruments fit into.
+In the future, pymeasure should gain an abstraction layer based on that, see `this issue <https://github.com/pymeasure/pymeasure/issues/416>`__.
+Until that is ready, here are a couple of guidelines towards a more uniform API.
+Note that not all already available instruments follow these, but expect this to be harmonized in the future.
+
+Frequent properties
+-------------------
+If your instrument has an **output** that can be switched on and off, use a :ref:`boolean property <boolean-properties>` called :code:`output_enabled`.
+
+Power supplies
+--------------
+PSUs typically can measure the *actual* current and voltage, as well as have settings for the voltage level and the current limit.
+To keep naming clear and avoid confusion, implement the properties :code:`current`, :code:`voltage`, :code:`voltage_setpoint` and :code:`current_limit`, respectively.
+
+Managing status codes or other indicator values
+***********************************************
+Often, an instrument features one or more collections of specific values that signal some status, an instrument mode or a number of possible configuration values.
+Typically, these are collected in mappings of some sort, as you want to provide a clear and understandable value to the user, while abstracting away the raw data, think :code:`ACQUISITION_MODE` instead of :code:`0x04`.
+The mappings normally are kept at module level (i.e. not defined within the instrument class), so that they are available when using the property factories.
+This is a small drawback of using Python class attributes.
+
+The easiest way to handle these mappings is a plain :code:`dict`.
+However, there is often a better way, the Python :code:`enum.Enum`.
+To cite the `Python documentation <https://docs.python.org/3.11/howto/enum.html>`__,
+
+    An Enum is a set of symbolic names bound to unique values. They are similar to global variables, but they offer a more useful :code:`repr()`, grouping, type-safety, and a few other features.
+
+As our signal values are often integers, the most appropriate enum types are :code:`IntEnum` and :code:`IntFlag`.
+
+:code:`IntEnum` is the same as :code:`Enum`, but its members are also integers and can be used anywhere that an integer can be used (so their use for composing commands is transparent), but logic/code they appear in is much more legible.
+
+.. doctest::
+
+    >>> from enum import IntEnum
+    >>> class InstrMode(IntEnum):
+    ...     WAITING = 0x00
+    ...     HEATING = 0x01
+    ...     COOLING = 0x05
+    ...
+    >>> received_from_device = 0x01
+    >>> current_mode = InstrMode(received_from_device)
+    >>> if current_mode == InstrMode.WAITING:
+    ...     print('Idle')
+    ... else:
+    ...     print(current_mode)
+    ...     print(f'Mode value: {current_mode}')
+    ...
+    InstrMode.HEATING
+    Mode value: 1
+
+:code:`IntFlag` has the added benefit that it supports bitwise operators and combinations, and as such is a good fit for status bitmasks or error codes that can represent multiple values:
+
+.. doctest::
+
+    >>> from enum import IntFlag
+    >>> class ErrorCode(IntFlag):
+    ...     TEMP_OUT_OF_RANGE = 8
+    ...     TEMPSENSOR_FAILURE = 4
+    ...     COOLER_FAILURE = 2
+    ...     HEATER_FAILURE = 1
+    ...     OK = 0
+    ...
+    >>> received_from_device = 7
+    >>> print(ErrorCode(received_from_device))
+    ErrorCode.TEMPSENSOR_FAILURE|COOLER_FAILURE|HEATER_FAILURE
+
+:code:`IntFlags` are used by many instruments for the purpose just demonstrated.
+
+The status property could look like this:
+.. testcode::
+
+    status = Instrument.measurement(
+        "STB?", 
+        """Measure the status of the device as enum.""",
+        get_process=lambda v: ErrorCode(v), 
+   )
 
 .. _default_connection_settings:
 
@@ -187,38 +290,45 @@ In addition, any entries in ``**kwargs**`` take precedence, so if they need to, 
 
 For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether advanced_communication_protocols_ fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
 
+.. _writing_properties:
 
 Writing properties
 ==================
 
-In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set. 
-PyMeasure comes with two convenience functions for making properties for classes. 
-The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that issues a GPIB/SCPI requests when the value is used. 
-For example, if our "Extreme 5000" has the :code:`*IDN?` command we can write the following property to be added above the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
+In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set.
+
+The property factories
+**********************
+PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+
+The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that can only read values from an instrument.
+For example, if our "Extreme 5000" has the :code:`*IDN?` command, we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
 
 .. testcode::
 
-     Extreme5000.id = Instrument.measurement(
-        "*IDN?", """ Reads the instrument identification """
+     Extreme5000.cell_temp = Instrument.measurement(
+        ":TEMP?",
+        """Measure the temperature of the reaction cell.""",
      )
 
 .. testcode::
     :hide:
     
-    # We are not mocking this in FakeInstrument, let's override silently
-    Extreme5000.id = 'Extreme 5000 identification from instrument'
+    # We have to fake this silently because the FakeInstrument cannot do
+    # a measurement property, it only mirrors values that you sent first.
+    Extreme5000.cell_temp = 127.2
     
-You will notice that a documentation string is required, and should be descriptive and specific.
+You will notice that a documentation string is required, see :ref:`docstrings` for details.
 
-When we use this property we will get the identification information.
+When we use this property we will get the temperature of the reaction cell.
 
 .. doctest::
 
     >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.id           # Reads "*IDN?"
-    'Extreme 5000 identification from instrument'
+    >>> extreme.cell_temp  # Sends ":TEMP?" to the device
+    127.2
 
 The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
 
@@ -226,53 +336,33 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functi
 
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts. This property can be set.
-        """
+        """Control the voltage in Volts (float)."""
     )
 
-You will notice that we use the `Python string format`_ :code:`%g` to pass through the floating point.
+You will notice that we use the `Python string format`_ :code:`%g` to format passed-through values as floating point.
 
 .. _Python string format: https://docs.python.org/3/library/string.html#format-specification-mini-language
 
-We can use this property to set the voltage to 100 mV, which will execute the command and then request the current voltage.
+We can use this property to set the voltage to 100 mV, which will send the appropriate command, and then to request the current voltage:
 
 .. doctest::
 
     >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.voltage = 0.1        # Executes ":VOLT 0.1"
-    >>> extreme.voltage              # Reads ":VOLT?"
+    >>> extreme.voltage = 0.1        # Sends ":VOLT 0.1" to set the voltage to 100 mV
+    >>> extreme.voltage              # Sends ":VOLT?" to query for the current value
     0.1
 
-Using :func:`Instrument.control <pymeasure.instruments.Instrument.control>` and :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` functions, you can create a number of properties for basic measurements and controls. 
+Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function can only set, but not read values.
 
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at once, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
 
-.. testcode::
+The next sections detail additional features of the property factories.
+These allow you to write properties that cover specific ranges, or that have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
 
-    Extreme5000.combination = Instrument.control(
-        ":VOLTFREQ?", ":VOLTFREQ %g,%g",
-        """ A floating point property that simultaneously controls the voltage
-        in Volts and the frequency in Hertz. This property can be set by a tuple.
-        """
-    )
+.. _validators:
 
-In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards. 
-
-.. doctest::
-
-    >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.combination = (0.2, 931)        # Executes ":VOLTFREQ 0.2,931"
-    >>> extreme.combination                     # Reads ":VOLTFREQ?"
-    [0.2, 931.0]
-
-The next section details additional features of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` that allow you to write properties that cover specific ranges, or have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
-
-.. _advanced-properties:
-
-Advanced properties
-===================
-
+Restricting values with validators
+**********************************
 Many GPIB/SCPI commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
 
 In the examples below we assume you have imported the validators.
@@ -285,7 +375,7 @@ In the examples below we assume you have imported the validators.
 In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function also provide means to achieve this.
 
 In a restricted range
-*********************
+---------------------
 
 If you have a property with a restricted range, you can use the :func:`strict_range <pymeasure.instruments.validators.strict_range>` and :func:`truncated_range <pymeasure.instruments.validators.strict_range>` functions.
 
@@ -295,8 +385,7 @@ For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, w
   
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts, from -1 to 1 V. This property can be set. """,
+        """Control the voltage in Volts (float strictly from -1 to 1).""",
         validator=strict_range,
         values=[-1, 1]
     )
@@ -317,9 +406,10 @@ This is useful if you want to alert the programmer that they are using an invali
 
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts, from -1 to 1 V. Invalid voltages are truncated.
-        This property can be set. """,
+        """Control the voltage in Volts (float from -1 to 1).
+
+        Invalid voltages are truncated.
+        """,
         validator=truncated_range,
         values=[-1, 1]
     )
@@ -329,12 +419,12 @@ Now our voltage will not raise an error, and will truncate the value to the rang
 .. doctest::
 
     >>> extreme = Extreme5000("GPIB::1")
-    >>> extreme.voltage = 100        # Executes ":VOLT 1"  
+    >>> extreme.voltage = 100  # Executes ":VOLT 1"
     >>> extreme.voltage
     1.0
 
 In a discrete set
-*****************
+-----------------
 
 Often a control property should only take a few discrete values. You can use the :func:`strict_discrete_set <pymeasure.instruments.validators.strict_discrete_set>` and :func:`truncated_discrete_set <pymeasure.instruments.validators.truncated_discrete_set>` functions to handle these situations. The strict version raises an error if the value is not in the set, as in the range examples above.
 
@@ -344,9 +434,7 @@ For example, if our "Extreme 5000" has a :code:`:RANG <float>` command that sets
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %g",
-        """ A floating point property that controls the voltage
-        range in Volts. This property can be set.
-        """,
+        """Control the voltage range in Volts (float in 10e-3, 100e-3, 1).""",
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1]
     )
@@ -361,8 +449,8 @@ Now we can set the voltage range, which will automatically truncate to an approp
     0.1
 
 
-Using maps
-**********
+Mapping values
+**************
 
 Now that you are familiar with the validators, you can additionally use maps to satisfy instruments which require non-physical values. The :code:`map_values` argument of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` enables this feature.
 
@@ -372,9 +460,8 @@ If your set of values is a list, then the command will use the index of the list
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """ A floating point property that controls the voltage
-        range in Volts, which takes values of 10 mV, 100 mV and 1 V.
-        This property can be set. """,
+        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """,
         validator=truncated_discrete_set,
         values=[10e-3, 100e-3, 1],
         map_values=True
@@ -398,9 +485,8 @@ Dictionaries provide a more flexible method for mapping between real-values and 
 
     Extreme5000.voltage = Instrument.control(
         ":RANG?", ":RANG %d",
-        """ A floating point property that controls the voltage
-        range in Volts, which takes values of 10 mV, 100 mV and 1 V.
-        This property can be set. """,
+        """Control the voltage range in Volts (float in 10 mV, 100 mV and 1 V).
+        """,
         validator=truncated_discrete_set,
         values={10e-3:1, 100e-3:2, 1:3},
         map_values=True
@@ -422,9 +508,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
   
     Extreme5000.channel = Instrument.control(
         ":CHAN?", ":CHAN %d",
-        """ A string property that controls the measurement channel,
-        which can take the values X, Y, or Z.
-        """,
+        """Control the measurement channel (string strictly in 'X', 'Y', 'Z').""",
         validator=strict_discrete_set,
         values={'X':1, 'Y':2, 'Z':3},
         map_values=True
@@ -442,6 +526,41 @@ The dictionary now maps the keys to specific values. The values and keys can be 
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be significantly extended by using validators and maps.
 
+.. _boolean-properties:
+
+Boolean properties
+******************
+
+The idea of using maps can be leveraged to implement properties where the user-facing values are booleans, so you can interact in a pythonic way using :code:`True` and :code:`False`:
+
+.. testcode::
+
+    Extreme5000.output_enabled = Instrument.control(
+        "OUTP?", "OUTP %d",
+        """Control the instrument output is enabled (boolean).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},  # the dict values could also be "on" and "off", etc. depending on the device
+    )
+
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.output_enabled = True
+    >>> extreme.read()
+    '1'
+    >>> extreme.output_enabled = False
+    >>> extreme.output_enabled
+    False
+    >>> # Invalid input raises an exception
+    >>> extreme.output_enabled = 34
+    Traceback (most recent call last):
+    ...
+    ValueError: Value of 34 is not in the discrete set {True: 1, False: 0}
+
+Good names for boolean properties are chosen such that they could also be a yes/no question: "Is the output enabled?" -> :code:`output_enabled`, :code:`display_active`, etc.
+
 Processing of set values
 ************************
 
@@ -452,8 +571,7 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :
 
     Extreme5000.current = Instrument.setting(
         ":CURR %g",
-        """ A floating point property that takes the measurement current in A
-        """,
+        """Set the measurement current in A (float strictly from 0 to 10).""",
         validator=strict_range,
         values=[0, 10],
         set_process=lambda v: 1e3*v,  # convert current to mA
@@ -473,8 +591,7 @@ Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.In
 
     Extreme5000.current = Instrument.control(
         ":CURR?", ":CURR %g",
-        """ A floating point property representing the measurement current in A
-        """,
+        """Control the measurement current in A (float strictly from 0 to 10).""",
         validator=strict_range,
         values=[0, 10],
         set_process=lambda v: 1e3*v,  # convert to mA
@@ -496,9 +613,7 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
 
     Extreme5000.current = Instrument.control(
         ":CURR?", ":CURR %g",
-        """ A floating point quantity property representing the measurement current 
-        """,
-        values=[0, 10],
+        """Control the measurement current (float).""",
         set_process=lambda v: v.m_as(ureg.mA),  # send the value as mA to the device
         get_process=lambda v: ureg.Quantity(v, ureg.mA),  # convert to quantity
     )
@@ -514,14 +629,13 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
 
     This is, how quantities can be used in pymeasure instruments right now. `Issue 666 <https://github.com/pymeasure/pymeasure/issues/666>`_ develops a more convenient implementation of quantities in the property factories.
 
-`get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit which has to be removed. This could be achieved by the following code:
+`get_process` can also be used to perform string processing. Let's say your instrument returns a value with its unit (e.g. :code:`1.23 nF`), which has to be removed. This could be achieved by the following code:
 
 .. testcode::
 
     Extreme5000.capacity = Instrument.measurement(
         ":CAP?",
-        """ A measurement returning a capacity in nF in the format '<cap> nF'
-        """,
+        """Measure the capacity in nF (float).""",
         get_process=lambda v: float(v.replace('nF', ''))
     )
 
@@ -531,15 +645,56 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
 
     Extreme5000.capacity = Instrument.measurement(
         ":CAP?",
-        """ A measurement returning a capacity in nF in the format '<cap> nF'
-        """,
+        """Measure the capacity in nF (float).""",
         preprocess_reply=lambda v: v.replace('nF', '')
         # notice how we don't need to cast to float anymore
     )
 
+Tweaking command strings
+************************
+If you need to tweak
+
+* the :code:`set_command` string immediately before the value to set is inserted via string formatting (:code:`%g` etc.), or
+* the :code:`get_command` string before sending it to the device,
+
+use the :code:`command_process` parameter of :meth:`~pymeasure.instruments.Instrument.control`.
+
+Note that there is only one parameter for both setting and getting, so the utility of this is probably limited.
+Note also that for adding e.g. channel identifiers, there are other, more preferable methods.
+
+Checking the instrument for errors
+**********************************
+If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.Instrument.control`, respectively.
+If those are enabled, the method :meth:`~pymeasure.instruments.Instrument.check_errors` will be called after device communication has concluded.
+
+Using multiple values
+*********************
+Seldomly, you might need to send/receive multiple values in one command.
+The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+
+.. testcode::
+
+    Extreme5000.combination = Instrument.control(
+        ":VOLTFREQ?", ":VOLTFREQ %g,%g",
+        """Simultaneously control the voltage in Volts and the frequency in Hertz (both float).
+
+        This property is set by a tuple.
+        """
+    )
+
+In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards. 
+
+.. doctest::
+
+    >>> extreme = Extreme5000("GPIB::1")
+    >>> extreme.combination = (0.2, 931)        # Executes ":VOLTFREQ 0.2,931"
+    >>> extreme.combination                     # Reads ":VOLTFREQ?"
+    [0.2, 931.0]
+
+This interface is not too convenient, but luckily not often needed.
 
 Dynamic properties
-===================
+******************
 
 As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
 One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
@@ -556,10 +711,8 @@ Pay attention *not* to inadvertently define other class attribute or instance at
 
 The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
 
-Let us now consider a couple of common use cases for this functionality:
-
 Dynamic validity range
-**********************
+----------------------
 Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
 The code below shows how this can be accomplished with dynamic properties.
 
@@ -567,8 +720,7 @@ The code below shows how this can be accomplished with dynamic properties.
   
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
-        """ A floating point property that controls the voltage
-        in Volts, from -1 to 1 V. This property can be set. """,
+        """Control the voltage in Volts (float).""",
         validator=strict_range,
         values=[-1, 1],
         dynamic = True,
@@ -590,22 +742,46 @@ The code below shows how this can be accomplished with dynamic properties.
 
 
 Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
+A side effect of this is that the property's docstring should be less specific, to avoid it containing dynamically changed information (like the admissible value range).
 In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
 
-Family of instruments with similar features
-*******************************************
+.. _instruments_with_similar_features:
+
+Instruments with similar features
+=================================
+
+When instruments have a similar set of features, it makes sense to use inheritance to obtain most of the functionality from a parent instrument class, instead of copy-pasting code.
+
+.. note::
+    Don't forget to update the instrument's :code:`name` attribute accordingly, by either supplying an appropriate argument (if available) during the :code:`super().__init__()` call, or by setting it anew below that call.
+
+In some cases, one only needs to add additional properties and methods.
+In other cases, some of the already present properties/methods need to be completely replaced by defining them again in the derived class.
+Often, however, only some details need to be changed.
+This can be dealt with efficiently using dynamic properties.
+
+Instrument family with different parameter values
+*************************************************
 
 A common case is to have a family of similar instruments with some parameter range different for each family member.
 In this case you would update the specific class parameter range without rewriting the entire property:
+
+.. testcode::
+    :hide:
+
+    # Behind the scene, load the real Instrument
+    from pymeasure.instruments import Instrument
+    from pymeasure.test import expected_protocol
 
 .. testcode::
 
     class FictionalInstrumentFamily(Instrument):
         frequency = Instrument.setting(
             "FREQ %g",
-            """ Command docstring""",
+            """Set the frequency (float).""",
             validator=strict_range,
             values=[0, 1e9],
+            dynamic=True,
             # ... other possible parameters follow
         )
         #
@@ -621,12 +797,18 @@ In this case you would update the specific class parameter range without rewriti
     class FictionalInstrument_9GHz(FictionalInstrumentFamily):
         frequency_values = [0, 9e9]
 
+.. testcode::
+    :hide:
+
+    with expected_protocol(FictionalInstrument_9GHz, [("FREQ 5e+09", None)], name="Test") as inst:
+        inst.frequency = 5e9
+
 Notice how easily you can derive the different family members from a common class, and the fact that the attribute is now defined at class level and not at instance level.
 
-Compatibility of instruments with similar features
-**************************************************
+Instruments with similar command syntax
+***************************************
 
-Another use case involves maintaining compatibility between instruments with commands having different syntax.
+Another use case involves maintaining compatibility between instruments with commands having different syntax, like in the following example.
 
 .. code-block:: python
 
@@ -675,16 +857,10 @@ Let's look at a simple example for a device, which requires its address as the f
 Additionally, the device needs some time after it received a command, before it responds, therefore :meth:`wait_for` waits always a certain time span.
 
 .. testcode::
-    :hide:
-
-    # Behind the scene, load the real Instrument
-    from pymeasure.instruments import Instrument
-    from pymeasure.test import expected_protocol
-
-.. testcode::
 
     class ExtremeCommunication(Instrument):
-        """The great ExtremeCommunication instrument.
+        """Control the ExtremeCommunication instrument.
+
         :param address: The device address for the communication.
         :param query_delay: Wait time after writing and before reading in seconds.
         """
@@ -694,17 +870,21 @@ Additionally, the device needs some time after it received a command, before it 
             self.query_delay = query_delay
     
         def write(self, command):
-            """Add the device address in front of every command and send it to the device."""
+            """Add the device address in front of every command before sending it."""
             super().write(self.address + command)
     
         def wait_for(self, query_delay=0):
-            """Wait always some time after writing a command.
+            """Wait for some time.
+
             :param query_delay: override the global query_delay.
             """
             super().wait_for(query_delay or self.query_delay)
     
         def read(self):
-            """Read from the device and assert, that the response starts with the device address."""
+            """Read from the device and check the response.
+
+            Assert that the response starts with the device address.
+            """
             got = super().read()
             if got.startswith(self.address):
                 return got[3:]
@@ -712,7 +892,7 @@ Additionally, the device needs some time after it received a command, before it 
                 raise ConnectionError(f"Expected message address '{self.address}', but read '{got[3:]}' for wrong address '{got[:3]}'.")
     
         voltage = Instrument.measurement(
-            ":VOLT:?", "The measured voltage in Volts.")
+            ":VOLT:?", """Measure the voltage in Volts.""")
 
 .. testcode:: :hide:
 
@@ -731,7 +911,7 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
 .. testcode::
 
     class ExtremeBytes(Instrument):
-        """The ExtremeBytes instrument with bytes communication."""
+        """Control the ExtremeBytes instrument with byte-based communication."""
         def __init__(self, adapter):
             super().__init__(adapter, "ExtremeBytes")
     
@@ -760,7 +940,7 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
     
         voltage = Instrument.control(
             "R,0x106,1", "W,0x106,%i",
-            """The output voltage in mV.""",
+            """Control the output voltage in mV.""",
         )
 
 .. testcode:: :hide:

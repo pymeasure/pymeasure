@@ -22,13 +22,35 @@
 # THE SOFTWARE.
 #
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hp3478A import HP3478A
-from .hp3437A import HP3437A
-from .hp8116a import HP8116A
-from .hp8657b import HP8657B
-from .hpsystempsu import HP6632A
-from .hpsystempsu import HP6633A
-from .hpsystempsu import HP6634A
-from .hplegacyinstrument import HPLegacyInstrument
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.hp import HP8657B
+
+
+def test_frequency():
+    with expected_protocol(
+            HP8657B,
+            [(b"FR 1234567890.0 HZ", None),
+             (b"FR 12345678.9 HZ", None)],
+    ) as instr:
+        instr.frequency = 1.23456789e9
+        instr.frequency = 1.23456789e7
+
+
+def test_level():
+    with expected_protocol(
+            HP8657B,
+            [(b"AP -123.4 DM", None)],
+    ) as instr:
+        instr.level = -123.4
+
+
+def test_output():
+    with expected_protocol(
+            HP8657B,
+            [(b"R3", None),
+             (b"R2", None)],
+    ) as instr:
+        instr.output_enabled = True
+        instr.output_enabled = False
