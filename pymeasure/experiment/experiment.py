@@ -74,6 +74,7 @@ def create_filename(title):
 
 
 class Experiment:
+    #todo update this to take a results object
     """ Class which starts logging and creates/runs the results and worker processes.
 
     .. code-block:: python

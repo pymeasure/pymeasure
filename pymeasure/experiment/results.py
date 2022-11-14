@@ -120,34 +120,26 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
     return filename
 
 
-class Results:
+class ResultsBase:
     """
-    The Results base class provides a convenient interface to reading and
+    The ResultsBase base class provides a Framework for creating a convenient interface to reading and
     writing data in connection with a :class:`.Procedure` object.
 
-    :cvar COMMENT: The character used to identify a comment (default: #)
-    :cvar DELIMITER: The character used to delimit the data (default: ,)
-    :cvar LINE_BREAK: The character used for line breaks (default \\n)
-    :cvar CHUNK_SIZE: The length of the data chuck that is read
-
-
-
-    Results should do four things:
-    make a header
-    reconstruct header from loaded data
-    provide a handler to dump data to store
-    read data from store
+    A complete Results class must implement five things:
+    - Make a header object (i.e. an object containing all parameters in the procedure)
+     that can be written to file (`create_header`)
+    - Reconstruct the parameter dictionary from the loaded data (`get_params_from_header`)
+    - Create or initialize the resources/stores to write to (`create_resources`)
+    - Create the handlers (derived from `Logging.Handler`)
+     to dump the header object and raw data to a store (`create_handlers`)
+    - Read the data from store (`reload`)
 
     """
-    COMMENT = '#'
-    DELIMITER = ','
-    LINE_BREAK = "\n"
-    CHUNK_SIZE = 1000
 
     HANDLER = None
     FORMATTER = None
 
-    def __init__(self, procedure):
+    def __init__(self, procedure, resource_specifier):
 
         self.procedure = procedure
         self.procedure_class = procedure.__class__
@@ -196,6 +188,9 @@ class Results:
     def create_header(self):
         raise NotImplementedError("Must be patched by subclass to create a header object for writing to store")
 
+    def reload(self):
+        raise NotImplementedError('Must be patched by subclass to reload data from source')
+
     @staticmethod
     def get_params_from_header(header, procedure_class=None):
         raise NotImplementedError("Must be patched by subclass to get params from a header")
@@ -232,21 +227,24 @@ class Results:
 
     @staticmethod
     def parse_header(header, procedure_class=None):
-        parameters, procedure_module, procedure_class = Results.get_params_from_header(header, procedure_class)
-        procedure = Results.get_proc_from_params(parameters, procedure_module, procedure_class)
+        parameters, procedure_module, procedure_class = ResultsBase.get_params_from_header(header, procedure_class)
+        procedure = ResultsBase.get_proc_from_params(parameters, procedure_module, procedure_class)
         return procedure
 
-    def reload(self):
-        raise NotImplementedError('Must be patched by subclass to reload data from source')
 
 
-class FileBasedResults(Results):
+class FileBasedResults(ResultsBase):
+
+    """
+    FileBasedResults defines
+
+    """
 
     def __init__(self, procedure, data_filename):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
 
-        super().__init__(procedure)
+        super().__init__(procedure, data_filename)
 
         if isinstance(data_filename, (list, tuple)):
             data_filenames, data_filename = data_filename, data_filename[0]
@@ -289,24 +287,28 @@ class JSONFileHandler(logging.FileHandler):
         step is to re-extract the dict. Then we check various conditions. The end result is a file with a
         single (possibly updated) dictionary of dictionaries. Because it is json we can't just append, we have
         to rewrite the whole file. There may be a reason you want this so it is included."""
-        key = list(record.keys())[0]
-        item = record[key]
+
 
         with open(self.baseFilename, 'r') as f:
             extant = json.load(f)
+        data = extant[list(extant.keys())[0]]
 
-        if key in extant.keys():
-            data = extant[key]
-            for column, array in data.items():
-                if isinstance(item[column], (list, tuple)):
-                    data[column] = list(np.concatenate([array, item[column]]))
-                elif isinstance(item[column], (float, int)):
-                    array.append(item[column])
-                else:
-                    raise TypeError(f'got unexpected type for {item[column]}, {type(item[column])}')
-        else:
-            extant[key] = item
+        for key in record.keys():
+            if key in data.keys():
+                for column, array in data.items():
+                    if isinstance(record[column], (list, tuple)):
+                        data[column] = list(np.concatenate([array, record[column]]))
+                    elif isinstance(record[column], (float, int, str, bool,)):
+                        array.append(record[column])
+                    else:
+                        raise TypeError(f'got unexpected type for {record[column]}, {type(record[column])}')
+            else:
+                datum = record[key]
+                if not isinstance(datum, list):
+                    datum = [datum,]
+                data[key] = datum
 
+        extant[list(extant.keys())[0]] = data
         with open(self.baseFilename, 'w') as f:
             json.dump(extant, f)
 
@@ -322,7 +324,7 @@ class JSONResults(FileBasedResults):
         reconstructed.
         """
         param_dict = {}
-        for name, parameter in self.parameter.items():
+        for name, parameter in self.parameters.items():
             param_dict[name] = parameter.value
         return json.dumps(param_dict)
 
@@ -330,7 +332,7 @@ class JSONResults(FileBasedResults):
         header = self.create_header()
         for filename in self.data_filenames:
             with open(filename, 'w') as f:
-                json.dump({header : {}})
+                json.dump({header : {}}, f)
         self._data = None
 
     @staticmethod
@@ -354,6 +356,8 @@ class JSONResults(FileBasedResults):
         raw = data[list(data.keys())[0]]
         if raw == {}:
             self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+        else:
+            self._data = pd.DataFrame(raw)
 
     @staticmethod
     def load(data_filename, procedure_class=None):
@@ -365,7 +369,7 @@ class JSONResults(FileBasedResults):
         header = json.loads(list(data.keys())[0])
         data = pd.DataFrame(data[list(data.keys())[0]])
 
-        procedure = Results.parse_header(header, procedure_class)
+        procedure = ResultsBase.parse_header(header, procedure_class)
         results = JSONResults(procedure, data_filename)
         return results
 
@@ -474,13 +478,18 @@ class CSVHandler(logging.FileHandler):
 
 class CSVResults(FileBasedResults):
 
-    """ The Results class provides a convenient interface to reading and
-    writing data in connection with a :class:`.Procedure` object.
-
-    :param procedure: Procedure object
-    :param data_filename: The data filename where the data is or should be
-                          stored
     """
+
+    :cvar COMMENT: The character used to identify a comment (default: #)
+    :cvar DELIMITER: The character used to delimit the data (default: ,)
+    :cvar LINE_BREAK: The character used for line breaks (default \\n)
+    :cvar CHUNK_SIZE: The length of the data chuck that is read
+    """
+
+    COMMENT = '#'
+    DELIMITER = ','
+    LINE_BREAK = "\n"
+    CHUNK_SIZE = 1000
 
     HANDLER = CSVHandler
     FORMATTER = CSVFormatter
@@ -490,28 +499,27 @@ class CSVResults(FileBasedResults):
             raise ValueError("Results require a Procedure object")
 
         self._header_count = -1
-
-        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
-
+        self.FORMATTER = CSVFormatter(columns=procedure.DATA_COLUMNS)
         super().__init__(procedure, data_filename)
+
 
 
     def labels(self):
         """ Returns the columns labels as a string to be written
         to the file
         """
-        return self.formatter.format_column_header() + Results.LINE_BREAK
+        return self.FORMATTER.format_column_header() + CSVResults.LINE_BREAK
 
     def format(self, data):
         """ Returns a formatted string containing the data to be written
         to a file
         """
-        return self.formatter.format(data)
+        return self.FORMATTER.format(data)
 
     def parse(self, line):
         """ Returns a dictionary containing the data from the line """
         data = {}
-        items = line.split(Results.DELIMITER)
+        items = line.split(CSVResults.DELIMITER)
         for i, key in enumerate(self.procedure.DATA_COLUMNS):
             data[key] = items[i]
         return data
@@ -530,8 +538,8 @@ class CSVResults(FileBasedResults):
                 parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
-        h = [Results.COMMENT + line for line in h]  # Comment each line
-        return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
+        h = [CSVResults.COMMENT + line for line in h]  # Comment each line
+        return CSVResults.LINE_BREAK.join(h) + CSVResults.LINE_BREAK
 
     def create_resources(self):
         for filename in self.data_filenames:
@@ -546,11 +554,11 @@ class CSVResults(FileBasedResults):
         header text.
         """
 
-        header = header.split(Results.LINE_BREAK)
+        header = header.split(CSVResults.LINE_BREAK)
         procedure_module = None
         parameters = {}
         for line in header:
-            if line.startswith(Results.COMMENT):
+            if line.startswith(CSVResults.COMMENT):
                 line = line[1:]  # Uncomment
             else:
                 raise ValueError("Parsing a header which contains "
@@ -580,12 +588,12 @@ class CSVResults(FileBasedResults):
         with open(data_filename) as f:
             while not header_read:
                 line = f.readline()
-                if line.startswith(Results.COMMENT):
-                    header += line.strip() + Results.LINE_BREAK
+                if line.startswith(CSVResults.COMMENT):
+                    header += line.strip() + CSVResults.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True
-        procedure = Results.parse_header(header[:-1], procedure_class)
+        procedure = CSVResults.parse_header(header[:-1], procedure_class)
         results = CSVResults(procedure, data_filename)
         results._header_count = header_count
         return results
@@ -595,7 +603,7 @@ class CSVResults(FileBasedResults):
         # Need to update header count for correct referencing
         if self._header_count == -1:
             self._header_count = len(
-                self.create_header()[-1].split(Results.LINE_BREAK))
+                self.create_header()[-1].split(CSVResults.LINE_BREAK))
         if self._data is None or len(self._data) == 0:
             # Data has not been read
             try:
@@ -607,10 +615,10 @@ class CSVResults(FileBasedResults):
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(
                 self.data_filename,
-                comment=Results.COMMENT,
+                comment=CSVResults.COMMENT,
                 header=0,
                 names=self._data.columns,
-                chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
+                chunksize=CSVResults.CHUNK_SIZE, skiprows=skiprows, iterator=True
             )
             try:
                 tmp_frame = pd.concat(chunks, ignore_index=True)
@@ -631,8 +639,8 @@ class CSVResults(FileBasedResults):
         """
         chunks = pd.read_csv(
             self.data_filename,
-            comment=Results.COMMENT,
-            chunksize=Results.CHUNK_SIZE,
+            comment=CSVResults.COMMENT,
+            chunksize=CSVResults.CHUNK_SIZE,
             iterator=True
         )
         try:
@@ -646,3 +654,8 @@ class CSVResults(FileBasedResults):
             self.procedure.__class__.__name__,
             self.data.shape
         )
+
+
+class Results(CSVResults):
+    def __init__(self,*args, **kwargs):
+        super(Results, self).__init__(*args, **kwargs)
