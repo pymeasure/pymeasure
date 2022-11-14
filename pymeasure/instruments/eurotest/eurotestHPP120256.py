@@ -33,7 +33,6 @@ from pymeasure.instruments.validators import strict_discrete_set
 
 from enum import IntFlag
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -123,8 +122,7 @@ class EurotestHPP120256(Instrument):
 
     voltage_setpoint = Instrument.control(
         "STATUS,U", "U,%.3fkV",
-        """ A floating point property that represents the output voltage
-        setting (in kV) of the HV Source. This property can be set.""",
+        """Control the voltage set-point in kVolts (float strictly from 0 to 12).""",
         # getter device response: "U, RANGE=3.000kV, VALUE=2.458kV"
         validator=strict_range,
         values=VOLTAGE_RANGE,
@@ -134,8 +132,7 @@ class EurotestHPP120256(Instrument):
 
     current_limit = Instrument.control(
         "STATUS,I", "I,%.3fmA",
-        """ A floating point property that represents the output current limit setting (in mA)
-        of the HV Source. This property can be set.""",
+        """Control the current limit in mAmps (float strictly from 0 to 25).""",
         # When this property acts as get, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA", then current_limit will return 1739.0,
         # hence the convenience of the get_process.
@@ -147,8 +144,7 @@ class EurotestHPP120256(Instrument):
 
     voltage_ramp = Instrument.control(
         "STATUS,RAMP", "RAMP,%dV/s",
-        """ A integer property that represents the ramp speed (V/s) of the output voltage of the
-        HV Source. This property can be set.""",
+        """Control the voltage ramp in Volts/second (int strictly from 10 to 3000).""",
         # When this property acts as get, the instrument will return a string like this:
         # "RAMP, RANGE=3000V/s, VALUE=1000V/s", then voltage_ramp will return 1000.0,
         # hence the convenience of the get_process.
@@ -160,7 +156,7 @@ class EurotestHPP120256(Instrument):
 
     voltage = Instrument.measurement(
         "STATUS,MU",
-        """ Measures the actual output voltage of the HV Source (kV).""",
+        """Measure the actual output voltage in kVolts (float).""",
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
         # hence the convenience of the get_process.
@@ -170,7 +166,7 @@ class EurotestHPP120256(Instrument):
 
     voltage_range = Instrument.measurement(
         "STATUS,MU",
-        """ Returns the actual output voltage range of the HV Source (kV).""",
+        """Measure the actual output voltage range in kVolts (float).""",
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
@@ -180,7 +176,7 @@ class EurotestHPP120256(Instrument):
 
     current = Instrument.measurement(
         "STATUS,MI",
-        """ Measures the actual output current of the power supply (mA).""",
+        """Measure the actual output current in mAmps (float).""",
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
@@ -190,7 +186,7 @@ class EurotestHPP120256(Instrument):
 
     current_range = Instrument.measurement(
         "STATUS,MI",
-        """ Measures the actual output current range of the power supply (mA).""",
+        """Measure the actual output current range in mAmps (float).""",
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
@@ -200,9 +196,9 @@ class EurotestHPP120256(Instrument):
 
     kill_enabled = Instrument.control(
         "STATUS,DI", "KILL,%s",
-        """ A boolean property that represents the kill enable setting of the HV source.
-         When Kill is enabled yellow led is flashing and the output
-         will be shut OFF permanently without ramp if Iout > IOUTmax. This property can be set.""",
+        """Control the instrument kill enable (boolean).""",
+        # When Kill is enabled yellow led is flashing and the output
+        # will be shut OFF permanently without ramp if Iout > IOUTmax.
         validator=strict_discrete_set,
         values={True: 'ENable', False: 'DISable'},
         map_values=True,
@@ -215,9 +211,9 @@ class EurotestHPP120256(Instrument):
 
     output_enabled = Instrument.control(
         "STATUS,DI", "HV,%s",
-        """A boolean property that represents the output enable setting of the HV source.
-        When output voltage is enabled green led is ON and the
-        voltage_setting will be present on the output. This property can be set.""",
+        """Control the instrument output enable (boolean).""",
+        # When output voltage is enabled green led is ON and the
+        # voltage_setting will be present on the output.
         validator=strict_discrete_set,
         values={True: 'ON', False: 'OFF'},
         map_values=True,
@@ -230,15 +226,15 @@ class EurotestHPP120256(Instrument):
 
     id = Instrument.measurement(
         "ID",
-        """ Returns the identification of the instrument """,
+        """Return the identification of the instrument (string) """,
         get_process=lambda r:
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
     status = Instrument.measurement(
         "STATUS,DI",
-        """ Returns the unit Status which is a 16bits response where
-        every bit indicates the state of one subsystem of the HV Source """,
+        """Return the instrument status (EurotestHPP120256Status).""",
+        # Every bit indicates the state of one subsystem of the HV Source.
         # response DI, b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0,
         #               0                   1
         # IpErr  b15    no input error      input error
@@ -262,19 +258,19 @@ class EurotestHPP120256(Instrument):
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
                 decode('utf-8', 'ignore'), 2)
         )
-
     )
 
     lam_status = Instrument.measurement(
         "STATUS,LAM",
-        """ Returns the LAM status which is the status of the unit from the point
-        of view of the process. Fo example, as a response of asking STATUS,LAM, the HV
-        voltage could response one of the messages from the next list:
-        LAM,ERROR External Inhibit occurred during Kill enable
-        LAM,INHIBIT External Inhibit occurred
-        LAM,TRIP ERROR Software current trip occurred
-        LAM,INPUT ERROR Wrong command received
-        LAM,OK Status OK""",
+        """Return the instrument lam status (string).""",
+        # LAM status is the status of the unit from the point
+        # of view of the process. Fo example, as a response of asking STATUS,LAM, the HV
+        # voltage could response one of the messages from the next list:
+        # LAM,ERROR External Inhibit occurred during Kill enable
+        # LAM,INHIBIT External Inhibit occurred
+        # LAM,TRIP ERROR Software current trip occurred
+        # LAM,INPUT ERROR Wrong command received
+        # LAM,OK Status OK
         get_process=lambda r:
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
