@@ -48,10 +48,8 @@ def _sanitize_source(source):
     if match:
         if match.group("number") is not None:
             source = "C" + match.group("number")
-        elif match.group("name_only") is not None:
-            source = match.group("name_only")
         else:
-            raise ValueError(f"source {source} only partially recognized")
+            source = match.group("name_only")
         source = source.replace(" ", "").upper()
     else:
         raise ValueError(f"source {source} not recognized")
