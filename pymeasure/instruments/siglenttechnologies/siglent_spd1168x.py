@@ -37,7 +37,6 @@ class SPD1168X(SPDBase):
             **kwargs
         )
 
-        self.ch = {}
         self.ch[1] = SPDChannel(self, 1)
 
     enable_4W_mode = Instrument.setting(
@@ -52,9 +51,3 @@ class SPD1168X(SPDBase):
         values={False: "2W", True: "4W"},
         map_values=True
     )
-
-    def shutdown(self):
-        """ Ensure that the voltage is turned to zero
-        and disable the output. """
-        self.ch[1].voltage_setpoint = 0
-        self.ch[1].enable_output(False)

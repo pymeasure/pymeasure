@@ -74,6 +74,8 @@ class SPDBase(Instrument):
             **kwargs
         )
 
+        self.ch = {}
+
     error = Instrument.measurement(
         "SYST:ERR?",
         """Read the error code and information of the instrument.
@@ -141,6 +143,14 @@ class SPDBase(Instrument):
         """
         index = strict_discrete_range(index, [1, 5], 1)
         self.write(f"*RCL {index:d}")
+
+    def shutdown(self):
+        """ Ensure that the voltage is turned to zero
+        and disable the output. """
+        for channel in self.ch:
+            channel.voltage_setpoint = 0
+            channel.enable_output(False)
+        super().shutdown()
 
 
 class SPDChannel(object):
