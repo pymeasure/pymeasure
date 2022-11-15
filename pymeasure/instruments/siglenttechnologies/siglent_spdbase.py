@@ -153,6 +153,18 @@ class SPDBase(Instrument):
         super().shutdown()
 
 
+class SPDSingleChannelBase(SPDBase):
+
+    def enable_4W_mode(self, enable: bool = True):
+        """Enable 4-wire mode.
+
+        :type: bool
+            ``True``: enables 4-wire mode
+            ``False``: disables it.
+        """
+        self.write(f'MODE:SET {("2W","4W")[enable]}')
+
+
 class SPDChannel(object):
     """ The channel class for Siglent SPDxxxxX instruments.
     """

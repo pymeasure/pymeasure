@@ -21,12 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.siglenttechnologies.siglent_spdbase import SPDBase, SPDChannel
+from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
+                                                                       SPDChannel)
 
 
-class SPD1168X(SPDBase):
+class SPD1168X(SPDSingleChannelBase):
     """Represent the Siglent SPD1168X Power Supply.
     """
 
@@ -38,16 +37,3 @@ class SPD1168X(SPDBase):
         )
 
         self.ch[1] = SPDChannel(self, 1)
-
-    enable_4W_mode = Instrument.setting(
-        "MODE:SET %s",
-        """Configure 4-wire mode.
-
-        :type: bool
-            ``True``: enables 4-wire mode
-            ``False``: disables it.
-        """,
-        validator=strict_discrete_set,
-        values={False: "2W", True: "4W"},
-        map_values=True
-    )

@@ -21,12 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.siglenttechnologies.siglent_spdbase import SPDBase, SPDChannel
+from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
+                                                                       SPDChannel)
 
 
-class SPD1305X(SPDBase):
+class SPD1305X(SPDSingleChannelBase):
     """Represent the Siglent SPD1305X Power Supply.
     """
 
@@ -40,27 +39,7 @@ class SPD1305X(SPDBase):
         voltage_limits = [0, 30]
         current_limits = [0, 5]
 
-        self.ch = {}
         self.ch[1] = SPDChannel(self, 1, voltage_limits, current_limits)
 
         self.ch[1].voltage_setpoint_values = voltage_limits
         self.ch[1].current_limit_values = current_limits
-
-    enable_4W_mode = Instrument.setting(
-        "MODE:SET %s",
-        """Configure 4-wire mode.
-
-        :type: bool
-            ``True``: enables 4-wire mode
-            ``False``: disables it.
-        """,
-        validator=strict_discrete_set,
-        values={False: "2W", True: "4W"},
-        map_values=True
-    )
-
-    def shutdown(self):
-        """ Ensures that the voltage is turned to zero
-        and disables the output. """
-        self.ch[1].voltage_setpoint = 0
-        self.ch[1].enable_output(False)

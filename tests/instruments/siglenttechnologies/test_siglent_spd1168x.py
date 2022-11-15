@@ -28,9 +28,11 @@ from pymeasure.instruments.siglenttechnologies.siglent_spd1168x import SPD1168X
 def test_enable_4W_mode():
     with expected_protocol(
         SPD1168X,
-        [("MODE:SET 4W", None)]
+        [("MODE:SET 4W", None),
+         ("MODE:SET 2W", None)]
     ) as inst:
-        inst.enable_4W_mode = True
+        inst.enable_4W_mode(True)
+        inst.enable_4W_mode(False)
 
 
 def test_save_config():
