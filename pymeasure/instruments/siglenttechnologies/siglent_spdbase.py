@@ -101,19 +101,6 @@ class SPDBase(Instrument):
         get_process=lambda v: SystemStatusCode(int(v, base=16)),
     )
 
-    disable_local_interface = Instrument.setting(
-        "%s",
-        """Configure the availability of the local interface.
-
-        :type: bool
-            ``True``: disables the local interface
-            ``False``: enables it.
-        """,
-        validator=strict_discrete_set,
-        values={True: "*LOCK", False: "*UNLOCK"},
-        map_values=True
-    )
-
     selected_channel = Instrument.control(
         "INST?", "INST %s",
         """Control the selected channel of the instrument.
@@ -143,6 +130,15 @@ class SPDBase(Instrument):
         """
         index = strict_discrete_range(index, [1, 5], 1)
         self.write(f"*RCL {index:d}")
+
+    def enable_local_interface(self, enable: bool = True):
+        """Configure the availability of the local interface.
+
+        :type: bool
+            ``True``: enables the local interface
+            ``False``: disables it.
+        """
+        self.write(("*LOCK", "*UNLOCK")[enable])
 
     def shutdown(self):
         """ Ensure that the voltage is turned to zero
