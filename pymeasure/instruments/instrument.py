@@ -67,19 +67,19 @@ class Instrument(CommonBase):
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True,
                  **kwargs):
-        super().__init__()
+        # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
             except ImportError:
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
-
-        self.name = name
-        self.SCPI = includeSCPI
         self.adapter = adapter
-
+        self.SCPI = includeSCPI
         self.isShutdown = False
+        self.name = name
+
+        super().__init__()
 
         log.info("Initializing %s." % self.name)
 

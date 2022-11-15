@@ -48,9 +48,9 @@ class Channel(CommonBase):
     placeholder = "ch"
 
     def __init__(self, parent, id):
-        super().__init__()
         self.parent = parent
         self.id = id
+        super().__init__()
 
     def insert_id(self, command):
         """Insert the channel id in a command replacing `placeholder`.

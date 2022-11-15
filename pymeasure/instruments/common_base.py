@@ -161,13 +161,13 @@ class CommonBase:
                 valid_class = False
             if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
                 assert (len(id) == len(cls)), "Lengths of cls and id do not match."
-                self.pairs = zip(cls, id)
+                self.pairs = list(zip(cls, id))
             elif isinstance(id, (list, tuple)) and valid_class:
-                self.pairs = zip((cls,) * len(id), id)
+                self.pairs = list(zip((cls,) * len(id), id))
             elif (isinstance(id, (str, int)) or id is None) and valid_class:
                 self.pairs = ((cls, id),)
             else:
-                raise ValueError("Invalid definition of ids and classes.")
+                raise ValueError("Invalid definition of classes '{cls}' and ids '{id}'.")
             kwargs.setdefault("prefix", prefix)
             self.kwargs = kwargs
 
@@ -237,7 +237,7 @@ class CommonBase:
         """
         child = cls(self, id, **kwargs)
         collection_data = getattr(self, collection, {})
-        if isinstance(collection_data, self.ChannelCreator):
+        if isinstance(collection_data, CommonBase.ChannelCreator):
             collection_data = {}
         if prefix:
             if not collection_data:

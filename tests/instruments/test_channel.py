@@ -193,3 +193,19 @@ def test_channel_check_get_errors():
                            ) as inst:
         assert inst.ch_A.check_errors_control == 5
         assert inst.errors == [["Some", " error"]]
+
+
+def test_channel_in_subclassed_instruments():
+    class SubInstrument(ChannelInstrument):
+        ch = Instrument.ChannelCreator(GenericChannel, (1, 2))
+
+        def __init__(self, adapter, **kwargs):
+            super().__init__(adapter, **kwargs)
+
+    with expected_protocol(SubInstrument, [], ) as inst:
+        assert len(inst.ch) == 2
+        assert isinstance(inst.ch[1], GenericChannel)
+
+    with expected_protocol(SubInstrument, [], ) as inst:
+        assert len(inst.ch) == 2
+        assert isinstance(inst.ch[1], GenericChannel)

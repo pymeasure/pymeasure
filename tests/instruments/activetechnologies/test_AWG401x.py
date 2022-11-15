@@ -26,7 +26,7 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 
 from pymeasure.instruments.activetechnologies import AWG401x_AFG
-from pymeasure.instruments.activetechnologies.AWG401x import SequenceEntry
+from pymeasure.instruments.activetechnologies.AWG401x import ChannelAFG, SequenceEntry
 
 
 class SequencerInstrument(Instrument):
@@ -40,7 +40,7 @@ class SequencerInstrument(Instrument):
 
 # AFG Tests
 AFG_init_comm = [
-    ("*IDN?", "x,AWG4012"),
+    # ("*IDN?", "x,AWG4012"),
     ("SOURce1:INITDELay? MINimum", "1"),
     ("SOURce1:INITDELay? MAXimum", "2"),
     ("SOURce1:VOLTage:LEVel:IMMediate:LOW? MINimum", "1"),
@@ -73,6 +73,7 @@ AFG_init_comm = [
     ("SOURce2:FREQuency? MAXimum", "2"),
     ("SOURce2:PHASe:ADJust? MINimum", "1"),
     ("SOURce2:PHASe:ADJust? MAXimum", "2"),
+    ("*IDN?", "x,AWG4012"),
 ]
 
 
@@ -82,6 +83,7 @@ def test_AFG_init():
             AFG_init_comm,
     ) as inst:
         assert len(inst.ch) == 2
+        assert isinstance(inst.ch[1], ChannelAFG)
 
 
 def test_AFG_frequency_setter():
@@ -91,6 +93,7 @@ def test_AFG_frequency_setter():
              ("SOURce2:FREQuency 1.5", None),
              ],
     ) as inst:
+        print(AWG401x_AFG.ch, inst.ch)
         inst.ch[2].frequency = 1.5
 
 

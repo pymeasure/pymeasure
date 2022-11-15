@@ -429,6 +429,7 @@ class AWG401x_AFG(AWG401x_base):
         print(wfg.check_errors())       # Get the error queue
 
     """
+    ch = Instrument.ChannelCreator(ChannelAFG, (1, 2))
 
     enabled = Instrument.control(
         "AFGControl:STATus?", "AFGControl:%s",
@@ -450,12 +451,12 @@ class AWG401x_AFG(AWG401x_base):
         elif model == "AWG4018":
             num_ch = 8
         else:
-            raise NotImplementedError(f"Instrument {model} non implemented in"
+            raise NotImplementedError(f"Instrument {model} not implemented in"
                                       "class AWG401x")
 
-        self.ch = {}
-        for i in range(1, num_ch + 1):
-            self.ch[i] = ChannelAFG(self, i)
+        for i in range(3, num_ch + 1):
+            child = self.add_child(ChannelAFG, i, collection="ch")
+            child._protected = True
 
 
 class AWG401x_AWG(AWG401x_base):
@@ -491,9 +492,8 @@ class AWG401x_AWG(AWG401x_base):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, **kwargs)
 
-        self.setting_ch = {}
         for i in range(1, self.num_ch + 1):
-            self.setting_ch[i] = ChannelAWG(self, i)
+            self.add_child(ChannelAWG, i, collection="setting_ch")
 
         self.entries = self.DummyEntriesElements(self, self.num_ch)
         self.burst_count_values = [self.burst_count_min, self.burst_count_max]
@@ -860,12 +860,12 @@ class SequenceEntry(Channel):
         self.length_values = [self.length_min, self.length_max]
         self.loop_count_values = [self.loop_count_min, self.loop_count_max]
 
-        self.ch = {}
         for i in range(1, self.number_of_channels + 1):
-            self.ch[i] = self.AnalogChannel(self.parent, i, sequence_number)
+            self.add_child(self.AnalogChannel, i, collection="ch",
+                           sequence_number=sequence_number)
 
-    def write(self, command):
-        self.parent.write(command.format(ent=self.id))
+    def insert_id(self, command):
+        return command.format(ent=self.id)
 
     length = Instrument.control(
         "SEQuence:ELEM{ent}:LENGth?",
@@ -919,11 +919,11 @@ class SequenceEntry(Channel):
             super().__init__(parent, id)
             self.seq_num = sequence_number
 
-            self.waveform_values = list(self.parent.waveforms.keys())
+            self.waveform_values = list(self.parent.parent.waveforms.keys())
             self.calculate_voltage_range()
 
-        def write(self, command):
-            self.parent.write(command.format(ent=self.seq_num, ch=self.id))
+        def insert_id(self, command):
+            return command.format(ent=self.seq_num, ch=self.id)
 
         voltage_amplitude = Instrument.control(
             "SEQuence:ELEM{ent}:AMPlitude{ch}?",

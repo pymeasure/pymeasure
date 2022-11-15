@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-
 import pytest
 
 from pymeasure.units import ureg
@@ -134,7 +133,7 @@ class NewRangeBase(FakeBase):
 class Child(CommonBase):
     """A child, which accepts parent and id arguments."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parent, id=None, *args, **kwargs):
         super().__init__()
 
 
@@ -168,8 +167,22 @@ class TestInitWithChildren:
         assert len(parent.channels) == 3
         assert isinstance(parent.ch_A, GenericBase)
 
+    def test_analog(self, parent):
+        assert len(parent.analog) == 2
+        assert parent.an_1 == parent.analog[1]
+        assert isinstance(parent.analog[1], GenericBase)
+
     def test_function(self, parent):
         assert isinstance(parent.function, Child)
+
+    def test_expected_protocol_runs_twice(self):
+        """Sometimes expected protocol runs only the first time."""
+        with expected_protocol(Parent, []) as inst:
+            assert isinstance(inst.ch_A, GenericBase)
+            assert inst.ch_A == inst.channels['A']
+        with expected_protocol(Parent, []) as inst:
+            assert isinstance(inst.ch_A, GenericBase)
+            assert inst.ch_A == inst.channels['A']
 
 
 class TestAddChild:
@@ -247,7 +260,10 @@ class TestRemoveChild:
 def test_ChannelCreator(args, pairs, kwargs):
     """Test whether the channel creator receives the right arguments."""
     d = CommonBase.ChannelCreator(*args)
-    assert list(d.pairs) == pairs
+    i = 0
+    for pair in d.pairs:
+        assert pair == pairs[i]
+        i += 1
     assert d.kwargs == kwargs
 
 
