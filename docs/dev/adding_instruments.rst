@@ -306,9 +306,10 @@ In PyMeasure, `Python properties`_ are the preferred method for dealing with var
 
 The property factories
 **********************
-PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`CommonBase.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`CommonBase.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`CommonBase.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
+You can call them, however, as :code:`Instrument.control`, :code:`Instrument.measurement`, and :code:`Instrument.setting`.
 
-The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that can only read values from an instrument.
+The :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` function returns a property that can only read values from an instrument.
 For example, if our "Extreme 5000" has the :code:`*IDN?` command, we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
@@ -337,7 +338,7 @@ When we use this property we will get the temperature of the reaction cell.
     >>> extreme.cell_temp  # Sends ":TEMP?" to the device
     127.2
 
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
 
 .. testcode::
 
@@ -359,9 +360,9 @@ We can use this property to set the voltage to 100 mV, which will send the appro
     >>> extreme.voltage              # Sends ":VOLT?" to query for the current value
     0.1
 
-Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function can only set, but not read values.
+Finally, the :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` function can only set, but not read values.
 
-Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
+Using the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` functions, you can create a number of properties for basic measurements and controls.
 
 The next sections detail additional features of the property factories.
 These allow you to write properties that cover specific ranges, or that have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
@@ -370,7 +371,7 @@ These allow you to write properties that cover specific ranges, or that have to 
 
 Restricting values with validators
 **********************************
-Many GPIB/SCPI commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
+Many GPIB/SCPI commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
 
 In the examples below we assume you have imported the validators.
 
@@ -379,7 +380,7 @@ In the examples below we assume you have imported the validators.
 
     from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
 
-In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function also provide means to achieve this.
+In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` function also provide means to achieve this.
 
 In a restricted range
 ---------------------
@@ -459,7 +460,7 @@ Now we can set the voltage range, which will automatically truncate to an approp
 Mapping values
 **************
 
-Now that you are familiar with the validators, you can additionally use maps to satisfy instruments which require non-physical values. The :code:`map_values` argument of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` enables this feature.
+Now that you are familiar with the validators, you can additionally use maps to satisfy instruments which require non-physical values. The :code:`map_values` argument of :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` enables this feature.
 
 If your set of values is a list, then the command will use the index of the list. For example, if our "Extreme 5000" instead has a :code:`:RANG <integer>`, where 0, 1, and 2 correspond to 10 mV, 100 mV, and 1 V, then we can use the following control.
 
@@ -531,7 +532,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     >>> extreme.channel
     'Y'
 
-As you have seen, the :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be significantly extended by using validators and maps.
+As you have seen, the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be significantly extended by using validators and maps.
 
 .. _boolean-properties:
 
@@ -571,7 +572,7 @@ Good names for boolean properties are chosen such that they could also be a yes/
 Processing of set values
 ************************
 
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` allow a keyword argument `set_process` which must be a function that takes a value after validation and performs processing before value mapping. This function must return the processed value. This can be typically used for unit conversions as in the following example:
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` allow a keyword argument `set_process` which must be a function that takes a value after validation and performs processing before value mapping. This function must return the processed value. This can be typically used for unit conversions as in the following example:
 
 
 .. testcode::
@@ -592,7 +593,7 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :
 Processing of return values
 ***************************
 
-Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` functions allow a `get_process` argument which if specified must be a function that takes a value and performs processing before value mapping. The function must return the processed value. In analogy to the example above this can be used for example for unit conversion:
+Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, and :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` functions allow a `get_process` argument which if specified must be a function that takes a value and performs processing before value mapping. The function must return the processed value. In analogy to the example above this can be used for example for unit conversion:
 
 .. testcode::
 
@@ -646,7 +647,7 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
         get_process=lambda v: float(v.replace('nF', ''))
     )
 
-The same can be also achieved by the `preprocess_reply` keyword argument to :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`. This function is forwarded to :func:`Adapter.values <pymeasure.adapters.values>` and runs directly after receiving the reply from the device. One can therefore take advantage of the built in casting abilities and simplify the code accordingly:
+The same can be also achieved by the `preprocess_reply` keyword argument to :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` or :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`. This function is forwarded to :func:`Adapter.values <pymeasure.adapters.values>` and runs directly after receiving the reply from the device. One can therefore take advantage of the built in casting abilities and simplify the code accordingly:
 
 .. testcode::
 
@@ -664,20 +665,20 @@ If you need to tweak
 * the :code:`set_command` string immediately before the value to set is inserted via string formatting (:code:`%g` etc.), or
 * the :code:`get_command` string before sending it to the device,
 
-use the :code:`command_process` parameter of :meth:`~pymeasure.instruments.Instrument.control`.
+use the :code:`command_process` parameter of :meth:`~pymeasure.instruments.common_base.CommonBase.control`.
 
 Note that there is only one parameter for both setting and getting, so the utility of this is probably limited.
 Note also that for adding e.g. channel identifiers, there are other, more preferable methods.
 
 Checking the instrument for errors
 **********************************
-If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.Instrument.control`, respectively.
+If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.common_base.CommonBase.control`, respectively.
 If those are enabled, the method :meth:`~pymeasure.instruments.Instrument.check_errors` will be called after device communication has concluded.
 
 Using multiple values
 *********************
 Seldomly, you might need to send/receive multiple values in one command.
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
 
 .. testcode::
 
@@ -716,7 +717,7 @@ Pay attention *not* to inadvertently define other class attribute or instance at
 .. note::
    To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read. 
 
-The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
 
 Dynamic validity range
 ----------------------
@@ -967,9 +968,9 @@ The :class:`~pymeasure.adapters.Adapter` exposes :meth:`~pymeasure.adapters.Adap
 For binary data, like waveforms, the adapter provides also :meth:`~pymeasure.adapters.Adapter.write_binary_values` and :meth:`~pymeasure.adapters.Adapter.read_binary_values`, which use the aforementioned methods.
 You do not need to call all these methods directly, instead, you should use the methods of :class:`~pymeasure.instruments.Instrument` with the same name. They call the Adapter for you and keep the code tidy.
 
-Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.Instrument.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.Instrument.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
+Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
 
-The getter of :meth:`Instrument.control <pymeasure.instruments.Instrument.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_for`, and reads the device response via :meth:`read`.
+The getter of :meth:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_for`, and reads the device response via :meth:`read`.
 
 Similarly, :meth:`Instrument.binary_values <pymeasure.instruments.Instrument.binary_values>` sends a command via :meth:`write`, waits with :meth:`wait_till_read`, but reads the response via :meth:`Adapter.read_binary_values <pymeasure.adapters.Adapter.read_binary_values>`.
 
