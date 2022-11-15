@@ -2,7 +2,11 @@
 Siglent Technologies Base Class
 ###############################
 
-.. autoclass:: pymeasure.instruments.siglenttechnologies.SPDBase
+.. autoclass:: pymeasure.instruments.siglenttechnologies.siglent_spdbase.SPDBase
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.siglenttechnologies.siglent_spdbase.SPDSingleChannelBase
     :members:
     :show-inheritance:
 
