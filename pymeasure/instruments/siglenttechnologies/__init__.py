@@ -22,6 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .siglent_spdbase import SPDBase
 from .siglent_spd1168x import SPD1168X
 from .siglent_spd1305x import SPD1305X
