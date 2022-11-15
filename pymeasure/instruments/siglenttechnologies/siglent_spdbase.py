@@ -64,6 +64,7 @@ class SPDBase(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
+        kwargs.setdefault('name', 'Siglent SPDxxxxX instrument Base Class')
         super().__init__(
             adapter,
             usb=dict(write_termination='\n',

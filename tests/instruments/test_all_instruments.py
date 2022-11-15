@@ -54,7 +54,7 @@ proper_adapters = ["IBeamSmart", "ANC300Controller"]
 init = ["ThorlabsPM100USB", "Keithley2700", "TC038", "Agilent34450A",
         "AWG401x_AWG", "AWG401x_AFG", "VARX", "HP8116A"]
 # Instruments which require more input arguments
-init.extend(["Instrument", "ATSBase", "SPDBase"])
+init.extend(["Instrument", "ATSBase"])
 
 
 @pytest.mark.parametrize("cls", devices)
