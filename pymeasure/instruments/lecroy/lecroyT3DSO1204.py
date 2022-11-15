@@ -682,6 +682,7 @@ class LeCroyT3DSO1204(Instrument):
 
         Note that the oscilloscope may provide less than the specified nb of points. """,
         validator=strict_range,
+        get_process=lambda vals: vals[vals.index("NP") + 1],
         values=[0, sys.maxsize]
     )
 
@@ -691,6 +692,7 @@ class LeCroyT3DSO1204(Instrument):
             SP = 0 sends all data points.
             SP = 4 sends 1 point every 4 data points.""",
         validator=strict_range,
+        get_process=lambda vals: vals[vals.index("SP") + 1],
         values=[0, sys.maxsize]
     )
 
@@ -700,6 +702,7 @@ class LeCroyT3DSO1204(Instrument):
         For waveforms acquired in sequence mode, this refers to the relative address in the
         given segment. The first data point starts at zero and is strictly positive.""",
         validator=strict_range,
+        get_process=lambda vals: vals[vals.index("FP") + 1],
         values=[0, sys.maxsize]
     )
 
@@ -924,7 +927,7 @@ class LeCroyT3DSO1204(Instrument):
             time_points = np.array([0])
         return data_points, time_points, preamble
 
-    def download_data(self, source, requested_points=0, sparsing=1):
+    def download_data(self, source, requested_points=None, sparsing=None):
         """ Get data points from the specified source of the oscilloscope. The returned objects are
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
@@ -936,10 +939,10 @@ class LeCroyT3DSO1204(Instrument):
         point every 4 points is read.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
         property for dict format. """
-        if not sparsing:
-            sparsing = 1
+        if sparsing is None:
+            sparsing = self.waveform_sparsing
         if requested_points is None:
-            requested_points = 0
+            requested_points = self.waveform_points
         self.waveform_source = _sanitize_source(source)
         if requested_points == 1:
             xdata, preamble = self._acquire_one_point()

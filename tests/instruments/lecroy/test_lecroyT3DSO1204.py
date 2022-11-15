@@ -253,7 +253,7 @@ def test_download_one_point():
              (b"C1:UNIT?", b"V")
              ]
     ) as instr:
-        y, x, preamble = instr.download_data(source="c1", requested_points=1)
+        y, x, preamble = instr.download_data(source="c1", requested_points=1, sparsing=1)
         assert preamble == {
             "sparsing": 1,
             "requested_points": 1.,
@@ -267,6 +267,24 @@ def test_download_one_point():
         assert len(x) == 1
         assert len(y) == 1
         assert y[0] == 1 * 0.05 / 25. + 0.150
+
+
+def test_implicit_preamble():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [("CHDR OFF", None),
+             (b'WFSU?', b'SP,5,NP,1,FP,0'),
+             (b'WFSU?', b'SP,5,NP,1,FP,0'),
+             (b'WFSU SP,1,NP,1,FP,0', None),
+             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
+             (b"C1:VDIV?", b"5.00E-02"),
+             (b"C1:OFST?", b"-1.50E-01"),
+             (b"C1:UNIT?", b"V")
+             ]
+    ) as instr:
+        preamble = instr.download_data(source="c1")[2]
+        assert preamble["sparsing"] == 5
+        assert preamble["requested_points"] == 1
 
 
 def test_download_two_points():
@@ -293,7 +311,7 @@ def test_download_two_points():
              (b"C1:UNIT?", b"V")
              ]
     ) as instr:
-        y, x, preamble = instr.download_data(source="c1", requested_points=2)
+        y, x, preamble = instr.download_data(source="c1", requested_points=2, sparsing=1)
         assert preamble == {
             "sparsing": 1,
             "requested_points": 2,
