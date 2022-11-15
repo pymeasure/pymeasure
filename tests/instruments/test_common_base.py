@@ -175,6 +175,14 @@ class TestInitWithChildren:
     def test_function(self, parent):
         assert isinstance(parent.function, Child)
 
+    def test_removal_of_protected_children_fails(self, parent):
+        with pytest.raises(TypeError, match="cannot remove channels defined at class"):
+            parent.remove_child(parent.ch_A)
+
+    def test_removal_of_protected_single_children_fails(self, parent):
+        with pytest.raises(TypeError, match="cannot remove channels defined at class"):
+            parent.remove_child(parent.function)
+
     def test_expected_protocol_runs_twice(self):
         """Sometimes expected protocol runs only the first time."""
         with expected_protocol(Parent, []) as inst:

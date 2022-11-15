@@ -112,6 +112,10 @@ class TestChannelCommunication:
         ch.write_binary_values("abc", [5, 6, 7])
         assert ch.parent.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
 
+    def test_read_binary_values(self, ch):
+        ch.read_binary_values()
+        assert ch.parent.method_calls == [mock.call.read_binary_values()]
+
 
 def test_channel_with_different_prefix():
     c = ChannelWithPlaceholder(None, "A")
