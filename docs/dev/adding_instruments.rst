@@ -893,7 +893,7 @@ That is especially useful, if you have only one channel of that type, e.g. becau
     :hide:
 
     class InstrumentWithChannelsPrefix(Instrument):
-        """An instrument with a channel."""
+        """An instrument with a channel, just for the test."""
         channels = Instrument.ChannelCreator(VoltageChannelPrefix, "A")
 
     with expected_protocol(InstrumentWithChannelsPrefix,

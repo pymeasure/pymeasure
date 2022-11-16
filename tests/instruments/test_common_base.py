@@ -183,14 +183,12 @@ class TestInitWithChildren:
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.function)
 
-    def test_expected_protocol_runs_twice(self):
-        """Sometimes expected protocol runs only the first time."""
-        with expected_protocol(Parent, []) as inst:
-            assert isinstance(inst.ch_A, GenericBase)
-            assert inst.ch_A == inst.channels['A']
-        with expected_protocol(Parent, []) as inst:
-            assert isinstance(inst.ch_A, GenericBase)
-            assert inst.ch_A == inst.channels['A']
+    def test_channel_creation_works_more_than_once(self):
+        """A zipper object works just once, ensure that a class may be used more often."""
+        p1 = Parent(ProtocolAdapter())  # first instance of that class
+        assert isinstance(p1.analog[1], GenericBase)  # verify that it worked once
+        p2 = Parent(ProtocolAdapter())  # second instance of that class
+        assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
 
 class TestAddChild:
