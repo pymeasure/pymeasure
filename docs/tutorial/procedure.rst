@@ -14,12 +14,13 @@ Scripts are a quick way to get up and running with a measurement in PyMeasure. F
 
 1) Import the necessary packages
 2) Set the input parameters to define the measurement
-3) Connect to the Keithley 2400
-4) Set up the instrument for the IV characteristic
-5) Allocate arrays to store the resulting measurements
-6) Loop through the current points, measure the voltage, and record
-7) Save the final data to a CSV file
-8) Shutdown the instrument
+3) Set source_current and measure_voltage parameters
+4) Connect to the Keithley 2400
+5) Set up the instrument for the IV characteristic
+6) Allocate arrays to store the resulting measurements
+7) Loop through the current points, measure the voltage, and record
+8) Save the final data to a CSV file
+9) Shutdown the instrument
 
 These steps are expressed in code as follows. ::
 
@@ -31,35 +32,43 @@ These steps are expressed in code as follows. ::
 
     # Set the input parameters
     data_points = 50
-    averages = 50
-    max_current = 0.01
+    averages = 10
+    max_current = 0.001
     min_current = -max_current
 
+    # Set source_current and measure_voltage parameters
+    current_range = 10e-3  # in Amps
+    compliance_voltage = 10  # in Volts
+    measure_nplc = 0.1  # Number of power line cycles
+    voltage_range = 1  # in VOlts
+
     # Connect and configure the instrument
-    sourcemeter = Keithley2400("GPIB::4")
+    sourcemeter = Keithley2400("GPIB::24")
     sourcemeter.reset()
     sourcemeter.use_front_terminals()
-    sourcemeter.measure_voltage()
-    sourcemeter.config_current_source()
-    sleep(0.1) # wait here to give the instrument time to react
-    sourcemeter.set_buffer(averages)
+    sourcemeter.apply_current(current_range, compliance_voltage)
+    sourcemeter.measure_voltage(measure_nplc, voltage_range)
+    sleep(0.1)  # wait here to give the instrument time to react
+    sourcemeter.stop_buffer()
+    sourcemeter.disable_buffer()
 
     # Allocate arrays to store the measurement results
     currents = np.linspace(min_current, max_current, num=data_points)
     voltages = np.zeros_like(currents)
     voltage_stds = np.zeros_like(currents)
 
+    sourcemeter.enable_source()
+
     # Loop through each current point, measure and record the voltage
     for i in range(data_points):
-        sourcemeter.current = currents[i]
-        sourcemeter.reset_buffer()
-        sleep(0.1)
+        sourcemeter.config_buffer(averages)
+        sourcemeter.source_current = currents[i]
         sourcemeter.start_buffer()
         sourcemeter.wait_for_buffer()
-
         # Record the average and standard deviation
-        voltages[i] = sourcemeter.means
-        voltage_stds[i] = sourcemeter.standard_devs
+        voltages[i] = sourcemeter.means[0]
+        sleep(1.0)
+        voltage_stds[i] = sourcemeter.standard_devs[0]
 
     # Save the data columns in a CSV file
     data = pd.DataFrame({
