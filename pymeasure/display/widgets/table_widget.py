@@ -127,8 +127,8 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def remove_results(self, results):
         self.results_list.remove(results)
-        self.row_count = self.pandas_row_count
-        self.column_count = self.pandas_column_count
+        self.row_count = self.pandas_row_count()
+        self.column_count = self.pandas_column_count()
         results.stop()
         self.layoutChanged.emit()
 
@@ -475,7 +475,7 @@ class Table(QtWidgets.QTableView):
         super().__init__(parent)
         self.force_reload = force_reload
         self.float_digits = float_digits
-        model = PandasModelByRow()
+        model = PandasModelByColumn()
         if SORTING_ENABLED:
             proxyModel = QtCore.QSortFilterProxyModel(self)
             proxyModel.setSourceModel(model)
