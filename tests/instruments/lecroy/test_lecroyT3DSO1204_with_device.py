@@ -346,7 +346,8 @@ class TestLeCroyT3DSO1204:
             sleep(7)
         scope.ch(case1).display = True
         scope.single()
-        data, time, preamble = scope.download_waveform(source=case1, requested_points=case2, sparsing=0)
+        data, time, preamble = scope.download_waveform(source=case1, requested_points=case2,
+                                                       sparsing=0)
         assert type(data) is np.ndarray
         assert len(data) == case2
         assert type(time) is np.ndarray
@@ -394,7 +395,8 @@ class TestLeCroyT3DSO1204:
         scope.ch1.display = True
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_waveform(source="c1", requested_points=7e5, sparsing=10)
+        data, time, preamble = scope.download_waveform(source="c1", requested_points=7e5,
+                                                       sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 7e5 or len(data) == 7e4
         assert type(time) is np.ndarray
