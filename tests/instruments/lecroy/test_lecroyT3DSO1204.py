@@ -405,5 +405,25 @@ def test_math_vpos():
         assert instr.math_vpos == 120
 
 
+def test_set_measure_parameter():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"PACU PKPK,C1", None)
+             ]
+    ) as instr:
+        instr.set_measure_parameter = ("PKPK", "channel1")
+
+
+def test_get_measure_parameter():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"C2:PAVA? RISE", b"RISE,3.600000E-9"),
+             ]
+    ) as instr:
+        assert instr.get_measure_parameter("RISE", "channel2") == 3.6e-9
+
+
 if __name__ == '__main__':
     pytest.main()
