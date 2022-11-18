@@ -30,7 +30,7 @@ from decimal import Decimal
 import numpy as np
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, joined_validators, \
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
 log = logging.getLogger(__name__)
