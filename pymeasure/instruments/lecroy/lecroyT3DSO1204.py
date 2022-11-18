@@ -471,7 +471,7 @@ class LeCroyT3DSO1204(Instrument):
         """ Autoscale displayed channels. """
         self.write("ASET")
 
-    def write(self, command):
+    def write(self, command, **kwargs):
         """ Writes the command to the instrument through the adapter.
         Note.
         If the last command was sent less than WRITE_INTERVAL_S before, this method blocks for
@@ -484,7 +484,7 @@ class LeCroyT3DSO1204(Instrument):
         if seconds_since_last_write < self.WRITE_INTERVAL_S:
             time.sleep(self.WRITE_INTERVAL_S - seconds_since_last_write)
             self._seconds_since_last_write = seconds_since_last_write
-        super().write(command)
+        super().write(command, **kwargs)
 
     _comm_header = Instrument.control(
         "CHDR?", "CHDR %s",
