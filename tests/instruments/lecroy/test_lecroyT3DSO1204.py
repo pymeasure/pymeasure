@@ -245,9 +245,22 @@ def test_waveform_preamble():
 def test_download_one_point():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
-             (b'WFSU SP,1,NP,1,FP,0', None),
+            [(b"CHDR OFF", None),
+             (b"WFSU SP,1", None),
+             (b"WFSU NP,1", None),
+             (b"WFSU FP,0", None),
+             (b"SANU? C1", b"7.00E+06"),
+             (b"WFSU NP,1", None),
+             (b"WFSU FP,0", None),
              (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
+             (b"WFSU?", b"SP,1,NP,2,FP,0"),
+             (b"ACQW?", b"SAMPLING"),
+             (b"SARA?", b"1.00E+09"),
+             (b"SAST?", b"Stop"),
+             (b"MSIZ?", b"7M"),
+             (b"TDIV?", b"5.00E-04"),
+             (b"TRDL?", b"-0.00E+00"),
+             (b"SANU? C1", b"7.00E+06"),
              (b"C1:VDIV?", b"5.00E-02"),
              (b"C1:OFST?", b"-1.50E-01"),
              (b"C1:UNIT?", b"V")
@@ -256,10 +269,19 @@ def test_download_one_point():
         y, x, preamble = instr.download_waveform(source="c1", requested_points=1, sparsing=1)
         assert preamble == {
             "sparsing": 1,
-            "requested_points": 1.,
+            "requested_points": 1,
+            "memory_size": 7e6,
+            "sampled_points": 7e6,
             "transmitted_points": 1,
             "first_point": 0,
             "source": "C1",
+            "type": "normal",
+            "average": None,
+            "sampling_rate": 1e9,
+            "grid_number": 14,
+            "status": "stopped",
+            "xdiv": 5e-4,
+            "xoffset": 0,
             "ydiv": 0.05,
             "yoffset": -0.150,
             "unit": "V"
@@ -267,24 +289,6 @@ def test_download_one_point():
         assert len(x) == 1
         assert len(y) == 1
         assert y[0] == 1 * 0.05 / 25. + 0.150
-
-
-def test_implicit_preamble():
-    with expected_protocol(
-            LeCroyT3DSO1204,
-            [("CHDR OFF", None),
-             (b'WFSU?', b'SP,5,NP,1,FP,0'),
-             (b'WFSU?', b'SP,5,NP,1,FP,0'),
-             (b'WFSU SP,1,NP,1,FP,0', None),
-             (b"C1:WF? DAT2", b"DAT2,#9000000001" + b"\x01" + b"\n\n"),
-             (b"C1:VDIV?", b"5.00E-02"),
-             (b"C1:OFST?", b"-1.50E-01"),
-             (b"C1:UNIT?", b"V")
-             ]
-    ) as instr:
-        preamble = instr.download_data(source="c1")[2]
-        assert preamble["sparsing"] == 5
-        assert preamble["requested_points"] == 1
 
 
 def test_download_two_points():

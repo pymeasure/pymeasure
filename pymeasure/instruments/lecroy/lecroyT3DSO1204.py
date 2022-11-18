@@ -820,21 +820,10 @@ class LeCroyT3DSO1204(Instrument):
             raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
                              f"number of received points ({received_points})")
 
-    def _acquire_one_point(self):
-        """ Acquire a single raw data point from the scope. The header, footer and number of
-        points are sanity-checked, but they are not processed otherwise.
-        :return: list containing a single byte and minimal waveform preamble"""
-        self.write("WFSU SP,1,NP,1,FP,0")
-        values = self._digitize(src=self.waveform_source)
-        self._header_footer_sanity_checks(values)
-        self._npoints_sanity_checks(values)
-        preamble = {"source": self.waveform_source}
-        return values[self._header_size:-self._footer_size], self._fill_yaxis_preamble(preamble)
-
     def _acquire_data(self, requested_points=0, sparsing=1):
         """ Acquire raw data points from the scope. The header, footer and number of points are
         sanity-checked, but they are not processed otherwise. For a description of the input
-        arguments refer to the download_data method.
+        arguments refer to the download_waveform method.
         If the number of expected points is big enough, the transmission is split in smaller
         chunks of 20k points and read one chunk at a time. I do not know the reason why,
         but if the chunk size is big enough the transmission does not complete successfully.
@@ -943,11 +932,8 @@ class LeCroyT3DSO1204(Instrument):
             sparsing = self.waveform_sparsing
         if requested_points is None:
             requested_points = self.waveform_points
-        self.waveform_source = _sanitize_source(source)
-        if requested_points == 1:
-            xdata, preamble = self._acquire_one_point()
-        else:
-            xdata, preamble = self._acquire_data(requested_points, sparsing)
+        self.waveform_source = sanitize_source(source)
+        xdata, preamble = self._acquire_data(requested_points, sparsing)
         preamble["transmitted_points"] = len(xdata)
         preamble["requested_points"] = requested_points
         preamble["sparsing"] = sparsing
