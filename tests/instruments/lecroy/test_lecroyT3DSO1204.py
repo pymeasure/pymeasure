@@ -425,5 +425,45 @@ def test_get_measure_parameter():
         assert instr.get_measure_parameter("RISE", "channel2") == 3.6e-9
 
 
+def test_menu():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"MENU ON", None),
+             (b"MENU?", b"ON"),
+             (b"MENU OFF", None),
+             (b"MENU?", b"OFF"),
+             ]
+    ) as instr:
+        instr.menu = True
+        assert instr.menu is True
+        instr.menu = False
+        assert instr.menu is False
+
+
+def test_grid_display():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"GRDS FULL", None),
+             (b"GRDS?", b"FULL"),
+             ]
+    ) as instr:
+        instr.grid_display = "full"
+        assert instr.grid_display == "full"
+
+
+def test_intensity():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"INTS GRID,50,TRACE,100", None),
+             (b"INTS?", b"GRID,50,TRACE,100"),
+             ]
+    ) as instr:
+        instr.intensity = 50, 100
+        assert instr.intensity == {"GRID": 50, "TRACE": 100}
+
+
 if __name__ == '__main__':
     pytest.main()

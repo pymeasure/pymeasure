@@ -30,7 +30,8 @@ from decimal import Decimal
 import numpy as np
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, joined_validators, \
+    strict_discrete_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -174,6 +175,19 @@ def _set_measure_parameter_validator(value, values):
     for i in range(2):
         strict_discrete_set(output[i], values=values[i])
     return output
+
+
+def _intensity_validator(value, values):
+    """ Validate the input of the intensity property (grid intensity and trace intensity)
+    :param value: input parameters as a 2-element tuple
+    :param values: allowed space for each parameter """
+    if not isinstance(value, tuple):
+        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+    if len(value) != 2:
+        raise ValueError('Number of parameters {} different from 2'.format(len(value)))
+    for i in range(2):
+        strict_discrete_range(value=value[i], values=values[i], step=1)
+    return value
 
 
 class _ChunkResizer:
@@ -1280,3 +1294,31 @@ class LeCroyT3DSO1204(Instrument):
             return float(match.group('value'))
         else:
             raise ValueError(f"Cannot extract value from output {output}")
+
+    ###############
+    #   Display   #
+    ###############
+
+    menu = Instrument.control(
+        "MENU?", "MENU %s",
+        """ Control the bottom menu enabled state. (strict bool) """,
+        validator=strict_discrete_set,
+        values=_BOOLS,
+        map_values=True
+    )
+
+    grid_display = Instrument.control(
+        "GRDS?", "GRDS %s",
+        """ Select the type of the grid which is used to display (FULL, HALF, OFF) """,
+        validator=strict_discrete_set,
+        values={"full": "FULL", "half": "HALF", "off": "OFF"},
+        map_values=True
+    )
+
+    intensity = Instrument.control(
+        "INTS?", "INTS GRID,%d,TRACE,%d",
+        """ Sets the intensity level of the grid or the trace in percent """,
+        validator=_intensity_validator,
+        values=[[0, 100], [0, 100]],
+        get_process=lambda v: {v[0]: v[1], v[2]: v[3]}
+    )
