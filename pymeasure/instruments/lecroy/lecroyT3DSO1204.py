@@ -36,14 +36,14 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _sanitize_source(source):
+def sanitize_source(source):
     """ Parse source string
 
     :param source can be "cX", "ch X", "chan X", "channel X", "math" or "line", where X is
     a single digit integer. The parser is case and white space insensitive.
     :return: can be "C1", "C2", "C3", "C4", "MATH" or "LINE. """
 
-    match = re.match(r"^\s*(?:(C|CH|CHAN|CHANNEL)\s*(?P<number>\d))\s*$|"
+    match = re.match(r"^\s*(C|CH|CHAN|CHANNEL)\s*(?P<number>\d)\s*$|"
                      r"^\s*(?P<name_only>MATH|LINE)\s*$", source, re.IGNORECASE)
     if match:
         if match.group("number") is not None:
@@ -90,7 +90,7 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
         raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
     value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
     value = list(value)
-    value[1] = _sanitize_source(value[1])
+    value[1] = sanitize_source(value[1])
     value = tuple(value)
     if value[0] not in values.keys():
         raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
@@ -138,7 +138,7 @@ def _math_define_validator(value, values):
         raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
     if len(value) != 3:
         raise ValueError('Number of parameters {} different from 3'.format(len(value)))
-    output = (_sanitize_source(value[0]), value[1], _sanitize_source(value[2]))
+    output = (sanitize_source(value[0]), value[1], sanitize_source(value[2]))
     for i in range(3):
         strict_discrete_set(output[i], values=values[i])
     return output
@@ -410,7 +410,7 @@ class LeCroyT3DSO1204(Instrument):
 
         scope = LeCroyT3DSO1204(resource)
         scope.autoscale()
-        ch1_data_array, ch1_preamble = scope.download_data(source="C1", points=2000)
+        ch1_data_array, ch1_preamble = scope.download_waveform(source="C1", points=2000)
         # ...
         scope.shutdown()
     """
@@ -459,7 +459,7 @@ class LeCroyT3DSO1204(Instrument):
         :param source: can be 1, 2, 3, 4 or C1, C2, C3, C4, MATH
         :return: handle to the selected source. """
         if isinstance(source, str):
-            source = _sanitize_source(source)
+            source = sanitize_source(source)
         if source == "MATH":
             return self
         elif source == "LINE":
@@ -610,7 +610,7 @@ class LeCroyT3DSO1204(Instrument):
         :param source: channel number of channel name.
         :return: acquisition sample size of that channel. """
         if isinstance(source, str):
-            source = _sanitize_source(source)
+            source = sanitize_source(source)
         if source in [1, "C1"]:
             return self.acquisition_sample_size_c1
         elif source in [2, "C2"]:
@@ -927,7 +927,7 @@ class LeCroyT3DSO1204(Instrument):
             time_points = np.array([0])
         return data_points, time_points, preamble
 
-    def download_data(self, source, requested_points=None, sparsing=None):
+    def download_waveform(self, source, requested_points=None, sparsing=None):
         """ Get data points from the specified source of the oscilloscope. The returned objects are
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
@@ -1087,7 +1087,7 @@ class LeCroyT3DSO1204(Instrument):
         elif any(i is not None for i in [source, trigger_type, hold_type]):
             raise ValueError("Need to specify all of source, trigger_type and hold_type arguments")
         if source is not None:
-            source = _sanitize_source(source)
+            source = sanitize_source(source)
             strict_discrete_set(source, ["C1", "C2", "C3", "C4", "LINE"])
             ch = self.ch(source)
             if coupling is not None:

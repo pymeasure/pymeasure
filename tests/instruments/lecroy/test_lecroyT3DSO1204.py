@@ -35,7 +35,7 @@ VALID_CHANNELS = [('C1', 1), ('CHANNEL2', 2), ('ch 3', 3), ('chan 4', 4), ('\tC3
 def test_init():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None)]
+            [(b"CHDR OFF", None)]
     ):
         pass  # Verify the expected communication.
 
@@ -43,13 +43,13 @@ def test_init():
 @pytest.mark.parametrize("channel", INVALID_CHANNELS)
 def test_invalid_source(channel):
     with pytest.raises(ValueError):
-        with expected_protocol(LeCroyT3DSO1204, [("CHDR OFF", None)]) as instr:
+        with expected_protocol(LeCroyT3DSO1204, [(b"CHDR OFF", None)]) as instr:
             instr.ch(channel)
 
 
 @pytest.mark.parametrize("channel", VALID_CHANNELS)
 def test_sanitize_valid_source(channel):
-    with expected_protocol(LeCroyT3DSO1204, [("CHDR OFF", None)]) as instr:
+    with expected_protocol(LeCroyT3DSO1204, [(b"CHDR OFF", None)]) as instr:
         if isinstance(channel[1], int):
             assert channel[1] == instr.ch(channel[0]).number
         else:
@@ -59,7 +59,7 @@ def test_sanitize_valid_source(channel):
 def test_bwlimit():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"BWL C1,OFF", None),
              (b"C1:BWL?", b"OFF"),
              (b"BWL C1,ON", None),
@@ -75,7 +75,7 @@ def test_bwlimit():
 def test_coupling():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"C1:CPL D1M", None),
              (b"C1:CPL?", b"D1M"),
              (b"C1:CPL A1M", None),
@@ -95,7 +95,7 @@ def test_coupling():
 def test_offset():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"C1:OFST 1.00E+00V", None),
              (b"C1:OFST?", b"1.00E+00")
              ]
@@ -107,7 +107,7 @@ def test_offset():
 def test_attenuation():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"C1:ATTN 100", None),
              (b"C1:ATTN?", b"100"),
              (b"C1:ATTN 0.1", None),
@@ -123,7 +123,7 @@ def test_attenuation():
 def test_skew_factor():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"C1:SKEW 1.00E-07S", None),
              (b"C1:SKEW?", b"1.00E-07S"),
              ]
@@ -135,7 +135,7 @@ def test_skew_factor():
 def test_channel_setup():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"C1:ATTN?", b"1"),
              (b"C1:BWL?", b"OFF"),
              (b"C1:CPL?", b"D1M"),
@@ -171,7 +171,7 @@ def test_channel_setup():
 def test_memory_size():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"MSIZ 14M", None),
              (b"MSIZ?", b"14M"),
              (b"MSIZ 1.4M", None),
@@ -191,7 +191,7 @@ def test_memory_size():
 def test_sample_size():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"SANU? C1", b"3.50E+06"),
              (b"SANU? C1", b"3.50E+06"),
              (b"SANU? C3", b"3.50E+06"),
@@ -207,7 +207,7 @@ def test_sample_size():
 def test_waveform_preamble():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"WFSU?", b"SP,1,NP,0,FP,0"),
              (b"ACQW?", b"SAMPLING"),
              (b"SARA?", b"1.00E+09"),
@@ -253,7 +253,7 @@ def test_download_one_point():
              (b"C1:UNIT?", b"V")
              ]
     ) as instr:
-        y, x, preamble = instr.download_data(source="c1", requested_points=1, sparsing=1)
+        y, x, preamble = instr.download_waveform(source="c1", requested_points=1, sparsing=1)
         assert preamble == {
             "sparsing": 1,
             "requested_points": 1.,
@@ -290,7 +290,7 @@ def test_implicit_preamble():
 def test_download_two_points():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"WFSU SP,1", None),
              (b"WFSU NP,2", None),
              (b"WFSU FP,0", None),
@@ -311,7 +311,7 @@ def test_download_two_points():
              (b"C1:UNIT?", b"V")
              ]
     ) as instr:
-        y, x, preamble = instr.download_data(source="c1", requested_points=2, sparsing=1)
+        y, x, preamble = instr.download_waveform(source="c1", requested_points=2, sparsing=1)
         assert preamble == {
             "sparsing": 1,
             "requested_points": 2,
@@ -342,7 +342,7 @@ def test_download_two_points():
 def test_trigger():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"TRSE?", b"EDGE,SR,C1,HT,OFF"),
              (b"TRMD?", b"AUTO"),
              (b"C1:TRCP?", b"DC"),
@@ -368,7 +368,7 @@ def test_trigger():
 def test_math_define():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"DEF EQN,'C2*C4'", None),
              (b"DEF?", b"EQN,'C2*C4'"),
              ]
@@ -380,7 +380,7 @@ def test_math_define():
 def test_math_vdiv():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"MTVD 1.00E+00V", None),
              (b"MTVD?", b"1.00E+00"),
              ]
@@ -392,7 +392,7 @@ def test_math_vdiv():
 def test_math_vpos():
     with expected_protocol(
             LeCroyT3DSO1204,
-            [("CHDR OFF", None),
+            [(b"CHDR OFF", None),
              (b"MTVP 120", None),
              (b"MTVP?", b"120"),
              ]

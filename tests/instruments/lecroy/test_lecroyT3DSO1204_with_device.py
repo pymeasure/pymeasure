@@ -334,7 +334,7 @@ class TestLeCroyT3DSO1204:
     def test_download_data_missing_argument(self, reseted_scope):
         with pytest.raises(TypeError):
             # noinspection PyArgumentList
-            reseted_scope.download_data()
+            reseted_scope.download_waveform()
 
     @pytest.mark.parametrize("case1", WAVEFORM_SOURCES)
     @pytest.mark.parametrize("case2", WAVEFORM_POINTS)
@@ -346,7 +346,7 @@ class TestLeCroyT3DSO1204:
             sleep(7)
         scope.ch(case1).display = True
         scope.single()
-        data, time, preamble = scope.download_data(source=case1, requested_points=case2, sparsing=0)
+        data, time, preamble = scope.download_waveform(source=case1, requested_points=case2, sparsing=0)
         assert type(data) is np.ndarray
         assert len(data) == case2
         assert type(time) is np.ndarray
@@ -357,7 +357,7 @@ class TestLeCroyT3DSO1204:
         scope.acquisition_type = "normal"
         scope.ch1.display = True
         scope.single()
-        data, time, preamble = scope.download_data(source="c1", requested_points=1)
+        data, time, preamble = scope.download_waveform(source="c1", requested_points=1)
         assert type(data) is np.ndarray
         assert len(data) == 1
         assert type(time) is np.ndarray
@@ -380,7 +380,7 @@ class TestLeCroyT3DSO1204:
         scope.ch1.display = True
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_data(source="c1", requested_points=0)
+        data, time, preamble = scope.download_waveform(source="c1", requested_points=0)
         assert type(data) is np.ndarray
         assert type(time) is np.ndarray
         assert type(preamble) is dict
@@ -394,7 +394,7 @@ class TestLeCroyT3DSO1204:
         scope.ch1.display = True
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_data(source="c1", requested_points=7e5, sparsing=10)
+        data, time, preamble = scope.download_waveform(source="c1", requested_points=7e5, sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 7e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -416,8 +416,8 @@ class TestLeCroyT3DSO1204:
         scope.acquisition_average = 16
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
-                                                   sparsing=10)
+        data, time, preamble = scope.download_waveform(source="c1", requested_points=1.75e5,
+                                                       sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -439,8 +439,8 @@ class TestLeCroyT3DSO1204:
         scope.acquisition_average = 256
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_data(source="c1", requested_points=1.75e5,
-                                                   sparsing=10)
+        data, time, preamble = scope.download_waveform(source="c1", requested_points=1.75e5,
+                                                       sparsing=10)
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -458,8 +458,8 @@ class TestLeCroyT3DSO1204:
         from matplotlib import pyplot as plt
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_data(source="math", requested_points=0,
-                                                   sparsing=10)
+        data, time, preamble = scope.download_waveform(source="math", requested_points=0,
+                                                       sparsing=10)
         assert type(data) is np.ndarray
         assert type(time) is np.ndarray
         assert type(preamble) is dict
