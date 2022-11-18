@@ -163,11 +163,9 @@ def _measure_delay_validator(value, values):
 
 
 def _set_measure_parameter_validator(value, values):
-    """
-    Validate the input of the set_measure_parameter property
+    """ Validate the input of the set_measure_parameter property
     :param value: input parameters as a 2-element tuple
-    :param values: allowed space for each parameter
-    """
+    :param values: allowed space for each parameter """
     if not isinstance(value, tuple):
         raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
     if len(value) != 2:
@@ -179,7 +177,7 @@ def _set_measure_parameter_validator(value, values):
 
 
 class _ChunkResizer:
-    """The only purpose of this class is to resize the chunk size of the instrument adapter.
+    """ The only purpose of this class is to resize the chunk size of the instrument adapter.
     This is necessary when reading a big chunk of data from the oscilloscope like image dumps and
     waveforms.
     Note.
@@ -1205,19 +1203,19 @@ class LeCroyT3DSO1204(Instrument):
         The MEASURE_DELY? query returns the measured value of delay type.
         The command accepts three arguments with the following syntax:
         measure_delay = (<type>,<sourceA>,<sourceB>)
-            <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
-            <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
-            Type      Description
-            PHA       The phase difference between two channels. (rising edge - rising edge)
-            FRR       Delay between two channels. (first rising edge - first rising edge)
-            FRF       Delay between two channels. (first rising edge - first falling edge)
-            FFR       Delay between two channels. (first falling edge - first rising edge)
-            FFF       Delay between two channels. (first falling edge - first falling edge)
-            LRR       Delay between two channels. (first rising edge - last rising edge)
-            LRF       Delay between two channels. (first rising edge - last falling edge)
-            LFR       Delay between two channels. (first falling edge - last rising edge)
-            LFF       Delay between two channels. (first falling edge - last falling edge)
-            Skew      Delay between two channels. (edge – edge of the same type) """,
+        <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
+        <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
+        Type      Description
+        PHA       The phase difference between two channels. (rising edge - rising edge)
+        FRR       Delay between two channels. (first rising edge - first rising edge)
+        FRF       Delay between two channels. (first rising edge - first falling edge)
+        FFR       Delay between two channels. (first falling edge - first rising edge)
+        FFF       Delay between two channels. (first falling edge - first falling edge)
+        LRR       Delay between two channels. (first rising edge - last rising edge)
+        LRF       Delay between two channels. (first rising edge - last falling edge)
+        LFR       Delay between two channels. (first falling edge - last rising edge)
+        LFF       Delay between two channels. (first falling edge - last falling edge)
+        Skew      Delay between two channels. (edge – edge of the same type) """,
         validator=_measure_delay_validator,
         values=[["PHA", "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "Skey"],
                 ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]
@@ -1229,33 +1227,33 @@ class LeCroyT3DSO1204(Instrument):
         measurement of the specified source.
         The commands accepts two arguments with the following syntax:
         measure_parameter = (<parameter>,<source>)
-            <source> := {C1,C2,C3,C4}'
-            <parameter> := one of the following
-            Parameter   Description
-            PKPK        vertical peak-to-peak
-            MAX         maximum vertical value
-            MIN         minimum vertical value
-            AMPL        vertical amplitude
-            TOP         waveform top value
-            BASE        waveform base value
-            CMEAN       average value in the first cycle
-            MEAN        average value
-            RMS         RMS value
-            CRMS        RMS value in the first cycle
-            OVSN        overshoot of a falling edge
-            FPRE        preshoot of a falling edge
-            OVSP        overshoot of a rising edge
-            RPRE        preshoot of a rising edge
-            PER         period
-            FREQ        frequency
-            PWID        positive pulse width
-            NWID        negative pulse width
-            RISE        rise-time
-            FALL        fall-time
-            WID         Burst width
-            DUTY        positive duty cycle
-            NDUTY       negative duty cycle
-            ALL         All measurement """,
+        <source> := {C1,C2,C3,C4}'
+        <parameter> := one of the following
+        Parameter   Description
+        PKPK        vertical peak-to-peak
+        MAX         maximum vertical value
+        MIN         minimum vertical value
+        AMPL        vertical amplitude
+        TOP         waveform top value
+        BASE        waveform base value
+        CMEAN       average value in the first cycle
+        MEAN        average value
+        RMS         RMS value
+        CRMS        RMS value in the first cycle
+        OVSN        overshoot of a falling edge
+        FPRE        preshoot of a falling edge
+        OVSP        overshoot of a rising edge
+        RPRE        preshoot of a rising edge
+        PER         period
+        FREQ        frequency
+        PWID        positive pulse width
+        NWID        negative pulse width
+        RISE        rise-time
+        FALL        fall-time
+        WID         Burst width
+        DUTY        positive duty cycle
+        NDUTY       negative duty cycle
+        ALL         All measurement """,
         validator=_set_measure_parameter_validator,
         values=[_measurable_parameters, ["C1", "C2", "C3", "C4"]]
     )
@@ -1266,8 +1264,8 @@ class LeCroyT3DSO1204(Instrument):
         The commands accepts two arguments with the following syntax:
         get_measure_parameter = (<source>, <parameter>) be careful because this is the opposite
         order as the set_measure_parameter property
-            <source> := {C1,C2,C3,C4}
-            <parameter> := same as the set_measure_parameter property
+        <source> := {C1,C2,C3,C4}
+        <parameter> := same as the set_measure_parameter property
         """
 
         parameter, source = _set_measure_parameter_validator(value=(parameter, source),
