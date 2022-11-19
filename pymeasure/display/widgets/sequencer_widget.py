@@ -476,10 +476,13 @@ class SequencerWidget(QtWidgets.QWidget):
         child_count = item.childCount()
         if child_count:
             return [
-                (dashes, self.tree.itemWidget(item, 1).currentText(), self.tree.itemWidget(item, 2).text()),
+                (dashes, self.tree.itemWidget(item, 1).currentText(),
+                 self.tree.itemWidget(item, 2).text()),
                 [self.recurse_tree(item.child(i), dashes + '-') for i in range(child_count)]]
         else:
-            return dashes, self.tree.itemWidget(item, 1).currentText(), self.tree.itemWidget(item, 2).text()
+            parameter = self.tree.itemWidget(item, 1).currentText()
+            sequence = self.tree.itemWidget(item, 2).text()
+            return dashes, parameter, sequence
 
     def flatten(self, item_list):
         """
