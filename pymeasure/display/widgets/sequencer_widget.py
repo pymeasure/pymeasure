@@ -23,7 +23,6 @@
 #
 
 import logging
-import os
 
 import re
 from functools import partial
@@ -79,7 +78,7 @@ class SequenceEvaluationException(Exception):
     pass
 
 
-class SequencerTreeWidget(QtWidgets.QTreeWidget):
+class SequencerWidget(QtWidgets.QWidget):
     """
     Widget that allows to generate a sequence of measurements with varying
     parameters. Moreover, one can write a simple text file to easily load a
@@ -92,34 +91,108 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
 
     MAXDEPTH = 10
 
-    def __init__(self, inputs=None, parameter_objects=None, parent=None):
+    def __init__(self, inputs=None, sequence_file=None, parent=None):
         super().__init__(parent)
         self._parent = parent
-        self.parameter_objects = parameter_objects
-        self._inputs = inputs
+
+        self._check_queue_signature()
+
+        # if no explicit inputs are given, use the displayed parameters
+        if inputs is not None:
+            self._inputs = inputs
+        else:
+            self._inputs = self._parent.displays
 
         self._get_properties()
         self._setup_ui()
+        self._layout()
+
+        # Load the sequence file if supplied.
+        if sequence_file is not None:
+            self.load_sequence(fileName=sequence_file)
+
+    def _check_queue_signature(self):
+        """
+        Check if the call signature of the implementation of the`ManagedWindow.queue`
+        method accepts the `procedure` keyword argument, which is required for using
+        the sequencer.
+        """
+
+        call_signature = signature(self._parent.queue)
+
+        if 'procedure' not in call_signature.parameters:
+            raise AttributeError(
+                "The queue method of of the ManagedWindow does not accept the 'procedure'"
+                "keyword argument. Accepting this keyword argument is required when using"
+                "the 'SequencerWidget'."
+            )
 
     def _get_properties(self):
         """
         Obtain the names of the input parameters.
         """
+
+        parameter_objects = self._parent.procedure_class().parameter_objects()
+
         self.names = {key: parameter.name
                       for key, parameter
-                      in self.parameter_objects.items()
+                      in parameter_objects.items()
                       if key in self._inputs}
 
         self.names_inv = {name: key for key, name in self.names.items()}
 
     def _setup_ui(self):
-        self.setHeaderLabels(["Level", "Parameter", "Sequence"])
-        width = self.viewport().size().width()
-        self.setColumnWidth(0, int(0.7 * width))
-        self.setColumnWidth(1, int(0.9 * width))
-        self.setColumnWidth(2, int(0.9 * width))
+        self.tree = QtWidgets.QTreeWidget(self)
+        self.tree.setHeaderLabels(["Level", "Parameter", "Sequence"])
+        width = self.tree.viewport().size().width()
+        self.tree.setColumnWidth(0, int(0.7 * width))
+        self.tree.setColumnWidth(1, int(0.9 * width))
+        self.tree.setColumnWidth(2, int(0.9 * width))
 
-    def add_tree_item(self, *, level=None, parameter=None, sequence=None, preview=False):
+        self.add_root_item_btn = QtWidgets.QPushButton("Add root item")
+        self.add_root_item_btn.clicked.connect(
+            partial(self._add_tree_item, level=0)
+        )
+
+        self.add_tree_item_btn = QtWidgets.QPushButton("Add item")
+        self.add_tree_item_btn.clicked.connect(self._add_tree_item)
+
+        self.remove_tree_item_btn = QtWidgets.QPushButton("Remove item")
+        self.remove_tree_item_btn.clicked.connect(self._remove_selected_tree_item)
+
+        self.load_seq_button = QtWidgets.QPushButton("Load sequence")
+        self.load_seq_button.clicked.connect(self.load_sequence)
+        self.load_seq_button.setToolTip("Load a sequence from a file.")
+
+        self.save_seq_button = QtWidgets.QPushButton("Save sequence")
+        self.save_seq_button.clicked.connect(self.save_sequence)
+        self.save_seq_button.setToolTip("Save a sequence to a file.")
+
+        self.queue_button = QtWidgets.QPushButton("Queue sequence")
+        self.queue_button.clicked.connect(self.queue_sequence)
+
+    def _layout(self):
+        btn_box = QtWidgets.QHBoxLayout()
+        btn_box.addWidget(self.load_seq_button)
+        btn_box.addWidget(self.save_seq_button)
+
+        btn_box_2 = QtWidgets.QHBoxLayout()
+        btn_box_2.addWidget(self.add_root_item_btn)
+        btn_box_2.addWidget(self.add_tree_item_btn)
+        btn_box_2.addWidget(self.remove_tree_item_btn)
+
+        btn_box_3 = QtWidgets.QHBoxLayout()
+        btn_box_3.addWidget(self.queue_button)
+
+        vbox = QtWidgets.QVBoxLayout(self)
+        vbox.setSpacing(6)
+        vbox.addLayout(btn_box)
+        vbox.addWidget(self.tree)
+        vbox.addLayout(btn_box_2)
+        vbox.addLayout(btn_box_3)
+        self.setLayout(vbox)
+
+    def _add_tree_item(self, *, level=None, parameter=None, sequence=None):
         """
         Add an item to the sequence tree. An item will be added as a child
         to the selected (existing) item, except when level is given.
@@ -131,12 +204,12 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
         :param sequence: If given, the sequence field is pre-filled
         """
 
-        selected = self.selectedItems()
+        selected = self.tree.selectedItems()
 
         if len(selected) >= 1 and level != 0:
             parent = selected[0]
         else:
-            parent = self.invisibleRootItem()
+            parent = self.tree.invisibleRootItem()
 
         if level is not None and level > 0:
             p_depth = self._depth_of_child(parent)
@@ -154,27 +227,17 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
         depth = self._depth_of_child(item)
         item.setText(0, f"{depth:d}")
 
-        if preview:
-            paramLine = QtWidgets.QLineEdit()
-            paramLine.setReadOnly(True)
-            lineEdit.setReadOnly(True)
-            self.setItemWidget(item, 1, paramLine)
-        else:
-            self.setItemWidget(item, 1, comboBox)
+        self.tree.setItemWidget(item, 1, comboBox)
+        self.tree.setItemWidget(item, 2, lineEdit)
 
-        self.setItemWidget(item, 2, lineEdit)
-
-        self.expandAll()
+        self.tree.expandAll()
 
         for selected_item in selected:
             selected_item.setSelected(False)
 
         if parameter is not None:
-            idx = comboBox.findText(parameter)
-            if preview:
-                self.itemWidget(item, 1).setText(parameter)
-            else:
-                self.itemWidget(item, 1).setCurrentIndex(idx)
+            idx = self.tree.itemWidget(item, 1).findText(parameter)
+            self.tree.itemWidget(item, 1).setCurrentIndex(idx)
             if idx == -1:
                 log.error(
                     "Parameter '{}' not found while loading sequence".format(
@@ -182,16 +245,16 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
                 )
 
         if sequence is not None:
-            self.itemWidget(item, 2).setText(sequence)
+            self.tree.itemWidget(item, 2).setText(sequence)
 
         item.setSelected(True)
 
-    def remove_selected_tree_item(self):
+    def _remove_selected_tree_item(self):
         """
         Remove the selected item (and any child items) from the sequence tree.
         """
 
-        selected = self.selectedItems()
+        selected = self.tree.selectedItems()
         if len(selected) == 0:
             return
 
@@ -199,32 +262,101 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
         parent = item.parent()
 
         if parent is None:
-            parent = self.invisibleRootItem()
+            parent = self.tree.invisibleRootItem()
 
         parent.removeChild(item)
 
-        for selected_item in self.selectedItems():
+        for selected_item in self.tree.selectedItems():
             selected_item.setSelected(False)
 
         parent.setSelected(True)
+
+    def queue_sequence(self):
+        """
+        Obtain a list of parameters from the sequence tree, enter these into
+        procedures, and queue these procedures.
+        """
+
+        self.queue_button.setEnabled(False)
+
+        try:
+            sequence = self.get_sequence_from_tree()
+        except SequenceEvaluationException:
+            log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
+        else:
+            log.info(
+                "Queuing %d measurements based on the entered sequences." % len(sequence)
+            )
+
+            for entry in sequence:
+                QtWidgets.QApplication.processEvents()
+                parameters = dict(ChainMap(*entry[::-1]))
+
+                procedure = self._parent.make_procedure()
+                procedure.set_parameters(parameters)
+                self._parent.queue(procedure=procedure)
+
+        finally:
+            self.queue_button.setEnabled(True)
+
+    def load_sequence(self, *, fileName=None):
+        """
+        Load a sequence from a .txt file.
+
+        :param fileName: Filename (string) of the to-be-loaded file.
+        """
+
+        if fileName is None:
+            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'OpenFile')
+
+        if len(fileName) == 0:
+            return
+
+        content = []
+
+        with open(fileName) as file:
+            content = file.readlines()
+
+        pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
+        for line in content:
+            line = line.strip()
+            match = pattern.search(line)
+
+            if not match:
+                continue
+
+            level = len(match.group(1)) - 1
+
+            if level < 0:
+                continue
+
+            parameter = match.group(2)
+            sequence = match.group(3)
+
+            self._add_tree_item(
+                level=level,
+                parameter=parameter,
+                sequence=sequence,
+            )
 
     def get_sequence_from_tree(self):
         """
         Generate a list of parameters from the sequence tree.
         """
 
-        iterator = QtWidgets.QTreeWidgetItemIterator(self)
-        current_sequence = [[] for _ in range(self.MAXDEPTH)]
-        temp_sequence = [[] for _ in range(self.MAXDEPTH)]
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tree)
+        sequences = []
+        current_sequence = [[] for i in range(self.MAXDEPTH)]
+        temp_sequence = [[] for i in range(self.MAXDEPTH)]
 
         while iterator.value():
             item = iterator.value()
             depth = self._depth_of_child(item)
 
-            name = self.itemWidget(item, 1).currentText()
+            name = self.tree.itemWidget(item, 1).currentText()
             parameter = self.names_inv[name]
             values = self.eval_string(
-                self.itemWidget(item, 2).text(),
+                self.tree.itemWidget(item, 2).text(),
                 name, depth,
             )
 
@@ -334,43 +466,6 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
 
-    def load_sequence(self, *, filename=None, preview=False):
-        """
-        Load a sequence from a .txt file.
-
-        :param fileName: Filename (string) of the to-be-loaded file.
-        """
-        if len(filename) == 0:
-            return
-
-        content = []
-
-        with open(filename) as file:
-            content = file.readlines()
-
-        pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
-        for line in content:
-            line = line.strip()
-            match = pattern.search(line)
-
-            if not match:
-                continue
-
-            level = len(match.group(1)) - 1
-
-            if level < 0:
-                continue
-
-            parameter = match.group(2)
-            sequence = match.group(3)
-
-            self.add_tree_item(
-                level=level,
-                parameter=parameter,
-                sequence=sequence,
-                preview=preview
-            )
-
     def recurse_tree(self, item, dashes='-'):
         """
         Recursive function to compile items in the sequence tree
@@ -381,220 +476,41 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
         child_count = item.childCount()
         if child_count:
             return [
-                (dashes, self.itemWidget(item, 1).currentText(), self.itemWidget(item, 2).text()),
+                (dashes, self.tree.itemWidget(item, 1).currentText(), self.tree.itemWidget(item, 2).text()),
                 [self.recurse_tree(item.child(i), dashes + '-') for i in range(child_count)]]
         else:
-            return dashes, self.itemWidget(item, 1).currentText(), self.itemWidget(item, 2).text()
+            return dashes, self.tree.itemWidget(item, 1).currentText(), self.tree.itemWidget(item, 2).text()
 
-    def flatten(self, leaves):
+    def flatten(self, item_list):
         """
         Recursive function to flatten items in the sequence tree
 
-        :param leaves: list of leaves to be flattened
+        :param item_list: list of items to be flattened
         """
-        for leaf in leaves:
-            if isinstance(leaf, list):
-                yield from self.flatten(leaf)
+        for i in item_list:
+            if isinstance(i, list):
+                yield from self.flatten(i)
             else:
-                yield leaf
+                yield i
 
     def serialize_tree(self):
         """
         Generate a serialized form of the sequence tree
         """
-        invis_root = self.invisibleRootItem()
+        invis_root = self.tree.invisibleRootItem()
         roots = invis_root.childCount()
         leaves = [self.recurse_tree(invis_root.child(i)) for i in range(roots)]
         return self.flatten(leaves)
 
-
-class SequenceDialog(QtWidgets.QFileDialog):
-    """
-    Widget that displays a dialog box for loading or saving a sequence tree.
-    It shows a preview of sequence tree in the dialog box
-    """
-
-    def __init__(self, save=False, parent=None):
-        """
-        Generate a serialized form of the sequence tree
-
-        :param save: True if we are saving a file. Default False.
-        """
-        super().__init__(parent)
-        self.save = save
-        self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
-        self._setup_ui()
-
-    def _setup_ui(self):
-        preview_tab = QtWidgets.QTabWidget()
-        vbox = QtWidgets.QVBoxLayout()
-        param_vbox = QtWidgets.QVBoxLayout()
-        vbox_widget = QtWidgets.QWidget()
-        param_vbox_widget = QtWidgets.QWidget()
-
-        self.preview_param = SequencerTreeWidget(inputs=[],
-                                                 parameter_objects={},
-                                                 parent=self)
-        param_vbox.addWidget(self.preview_param)
-        vbox_widget.setLayout(vbox)
-        param_vbox_widget.setLayout(param_vbox)
-        preview_tab.addTab(param_vbox_widget, "Sequence Parameters")
-        self.layout().addWidget(preview_tab, 0, 5, 4, 1)
-        self.layout().setColumnStretch(5, 1)
-        self.setMinimumSize(900, 500)
-        self.resize(900, 500)
-        if self.save:
-            self.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-            self.setFileMode(QtWidgets.QFileDialog.FileMode.AnyFile)
-        else:
-            self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
-        self.currentChanged.connect(self.update_preview)
-
-    def update_preview(self, filename):
-        if not os.path.isdir(filename) and filename != '':
-            self.preview_param.clear()
-            self.preview_param.load_sequence(filename=filename, preview=True)
-
-
-class SequencerWidget(QtWidgets.QWidget):
-    """
-    Widget that allows to generate a sequence of measurements with varying
-    parameters. Moreover, one can write a simple text file to easily load a
-    sequence.
-
-    Currently requires a queue function of the
-    :class:`ManagedWindow<pymeasure.display.windows.managed_window.ManagedWindow>` to have a
-    "procedure" argument.
-    """
-
-    def __init__(self, inputs=None, sequence_file=None, parent=None):
-        super().__init__(parent)
-        self._parent = parent
-
-        self._check_queue_signature()
-        self.parameter_objects = self._parent.procedure_class().parameter_objects()
-
-        # if no explicit inputs are given, use the displayed parameters
-        if inputs is not None:
-            self._inputs = inputs
-        else:
-            self._inputs = self._parent.displays
-
-        self._setup_ui()
-        self._layout()
-        # Load the sequence file if supplied.
-        if sequence_file is not None:
-            self.load_sequence(fileName=sequence_file)
-
-    def _check_queue_signature(self):
-        """
-        Check if the call signature of the implementation of the`ManagedWindow.queue`
-        method accepts the `procedure` keyword argument, which is required for using
-        the sequencer.
-        """
-
-        call_signature = signature(self._parent.queue)
-
-        if 'procedure' not in call_signature.parameters:
-            raise AttributeError(
-                "The queue method of of the ManagedWindow does not accept the 'procedure'"
-                "keyword argument. Accepting this keyword argument is required when using"
-                "the 'SequencerWidget'."
-            )
-
-    def _setup_ui(self):
-
-        self.tree = SequencerTreeWidget(inputs=self._inputs,
-                                        parameter_objects=self.parameter_objects, parent=self)
-
-        self.load_seq_button = QtWidgets.QPushButton("Load sequence")
-        self.load_seq_button.clicked.connect(self.load_sequence)
-        self.load_seq_button.setToolTip("Load a sequence from a file.")
-
-        self.save_seq_button = QtWidgets.QPushButton("Save sequence")
-        self.save_seq_button.clicked.connect(self.save_sequence)
-        self.save_seq_button.setToolTip("Save a sequence to a file.")
-
-        self.queue_button = QtWidgets.QPushButton("Queue sequence")
-        self.queue_button.clicked.connect(self.queue_sequence)
-
-        self.add_root_item_btn = QtWidgets.QPushButton("Add root item")
-        self.add_root_item_btn.clicked.connect(
-            partial(self.tree.add_tree_item, level=0)
-        )
-
-        self.add_tree_item_btn = QtWidgets.QPushButton("Add item")
-        self.add_tree_item_btn.clicked.connect(self.tree.add_tree_item)
-
-        self.remove_tree_item_btn = QtWidgets.QPushButton("Remove item")
-        self.remove_tree_item_btn.clicked.connect(self.tree.remove_selected_tree_item)
-
-    def _layout(self):
-
-        btn_box = QtWidgets.QHBoxLayout()
-        btn_box.addWidget(self.load_seq_button)
-        btn_box.addWidget(self.save_seq_button)
-
-        btn_box_2 = QtWidgets.QHBoxLayout()
-        btn_box_2.addWidget(self.add_root_item_btn)
-        btn_box_2.addWidget(self.add_tree_item_btn)
-        btn_box_2.addWidget(self.remove_tree_item_btn)
-
-        btn_box_3 = QtWidgets.QHBoxLayout()
-        btn_box_3.addWidget(self.queue_button)
-
-        vbox = QtWidgets.QVBoxLayout(self)
-        vbox.setSpacing(6)
-        vbox.addLayout(btn_box)
-        vbox.addWidget(self.tree)
-        vbox.addLayout(btn_box_2)
-        vbox.addLayout(btn_box_3)
-        self.setLayout(vbox)
-
-    def queue_sequence(self):
-        """
-        Obtain a list of parameters from the sequence tree, enter these into
-        procedures, and queue these procedures.
-        """
-
-        self.queue_button.setEnabled(False)
-
-        try:
-            sequence = self.tree.get_sequence_from_tree()
-        except SequenceEvaluationException:
-            log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
-        else:
-            log.info(
-                "Queuing %d measurements based on the entered sequences." % len(sequence)
-            )
-
-            for entry in sequence:
-                QtWidgets.QApplication.processEvents()
-                parameters = dict(ChainMap(*entry[::-1]))
-                procedure = self._parent.make_procedure()
-                procedure.set_parameters(parameters)
-                self._parent.queue(procedure=procedure)
-
-        finally:
-            self.queue_button.setEnabled(True)
-
     def save_sequence(self):
-        dialog = SequenceDialog(save=True)
-        if dialog.exec():
-            filename = dialog.selectedFiles()[0]
-            items = self.tree.serialize_tree()
+        """
+        Save a serialized form of the sequence tree
+        """
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File')
+        if filename:
+            items = self.serialize_tree()
             with open(filename, 'w') as file:
                 for i in items:
+                    # Write line: dashes, parameter, sequence
                     file.write(i[0] + ' "' + i[1] + '", "' + i[2] + "\"\n")
                 log.info('Saved sequence file %s' % filename)
-
-    def load_sequence(self):
-        dialog = SequenceDialog()
-        if dialog.exec():
-            filenames = dialog.selectedFiles()
-            for filename in map(str, filenames):
-                if filename == '':
-                    return
-                else:
-                    self.tree.load_sequence(filename=filename)
-                    log.info('Loaded sequence file %s' % filename)
