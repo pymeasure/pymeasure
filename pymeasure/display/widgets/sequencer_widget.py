@@ -101,22 +101,6 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
         self._get_properties()
         self._setup_ui()
 
-    def _check_queue_signature(self):
-        """
-        Check if the call signature of the implementation of the`ManagedWindow.queue`
-        method accepts the `procedure` keyword argument, which is required for using
-        the sequencer.
-        """
-
-        call_signature = signature(self._parent.queue)
-
-        if 'procedure' not in call_signature.parameters:
-            raise AttributeError(
-                "The queue method of of the ManagedWindow does not accept the 'procedure'"
-                "keyword argument. Accepting this keyword argument is required when using"
-                "the 'SequencerWidget'."
-            )
-
     def _get_properties(self):
         """
         Obtain the names of the input parameters.
@@ -135,10 +119,7 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
         self.setColumnWidth(1, int(0.9 * width))
         self.setColumnWidth(2, int(0.9 * width))
 
-    def _layout(self):
-        pass
-
-    def _add_tree_item(self, *, level=None, parameter=None, sequence=None, preview=False):
+    def add_tree_item(self, *, level=None, parameter=None, sequence=None, preview=False):
         """
         Add an item to the sequence tree. An item will be added as a child
         to the selected (existing) item, except when level is given.
@@ -205,7 +186,7 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
 
         item.setSelected(True)
 
-    def _remove_selected_tree_item(self):
+    def remove_selected_tree_item(self):
         """
         Remove the selected item (and any child items) from the sequence tree.
         """
@@ -383,7 +364,7 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
             parameter = match.group(2)
             sequence = match.group(3)
 
-            self._add_tree_item(
+            self.add_tree_item(
                 level=level,
                 parameter=parameter,
                 sequence=sequence,
@@ -539,14 +520,14 @@ class SequencerWidget(QtWidgets.QWidget):
 
         self.add_root_item_btn = QtWidgets.QPushButton("Add root item")
         self.add_root_item_btn.clicked.connect(
-            partial(self.tree._add_tree_item, level=0)
+            partial(self.tree.add_tree_item, level=0)
         )
 
         self.add_tree_item_btn = QtWidgets.QPushButton("Add item")
-        self.add_tree_item_btn.clicked.connect(self.tree._add_tree_item)
+        self.add_tree_item_btn.clicked.connect(self.tree.add_tree_item)
 
         self.remove_tree_item_btn = QtWidgets.QPushButton("Remove item")
-        self.remove_tree_item_btn.clicked.connect(self.tree._remove_selected_tree_item)
+        self.remove_tree_item_btn.clicked.connect(self.tree.remove_selected_tree_item)
 
     def _layout(self):
 
