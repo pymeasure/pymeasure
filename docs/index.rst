@@ -87,4 +87,4 @@ Information about development is also available:
 
    about/authors
    about/license
-
+   about/changes

@@ -220,3 +220,4 @@ class AMI430(Instrument):
         self.zero()
         self.wait_for_holding()
         self.disable_persistent_switch()
+        super().shutdown()

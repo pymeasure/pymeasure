@@ -22,45 +22,35 @@
 # THE SOFTWARE.
 #
 
-from ..errors import RangeError, RangeException
-from .channel import Channel
-from .instrument import Instrument
-from .resources import list_resources
-from .validators import discreteTruncate
 
-from . import activetechnologies
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anaheimautomation
-from . import anapico
-from . import andeenhagerling
-from . import anritsu
-from . import attocube
-from . import danfysik
-from . import deltaelektronika
-from . import eurotest
-from . import fluke
-from . import fwbell
-from . import hcp
-from . import heidenhain
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import rohdeschwarz
-from . import siglenttechnologies
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import temptronic
-from . import thermotron
-from . import thorlabs
-from . import toptica
-from . import yokogawa
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.hp import HP8657B
+
+
+def test_frequency():
+    with expected_protocol(
+            HP8657B,
+            [(b"FR 1234567890.0 HZ", None),
+             (b"FR 12345678.9 HZ", None)],
+    ) as instr:
+        instr.frequency = 1.23456789e9
+        instr.frequency = 1.23456789e7
+
+
+def test_level():
+    with expected_protocol(
+            HP8657B,
+            [(b"AP -123.4 DM", None)],
+    ) as instr:
+        instr.level = -123.4
+
+
+def test_output():
+    with expected_protocol(
+            HP8657B,
+            [(b"R3", None),
+             (b"R2", None)],
+    ) as instr:
+        instr.output_enabled = True
+        instr.output_enabled = False

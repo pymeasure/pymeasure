@@ -775,6 +775,13 @@ A common case is to have a family of similar instruments with some parameter ran
 In this case you would update the specific class parameter range without rewriting the entire property:
 
 .. testcode::
+    :hide:
+
+    # Behind the scene, load the real Instrument
+    from pymeasure.instruments import Instrument
+    from pymeasure.test import expected_protocol
+
+.. testcode::
 
     class FictionalInstrumentFamily(Instrument):
         frequency = Instrument.setting(
@@ -782,6 +789,7 @@ In this case you would update the specific class parameter range without rewriti
             """Set the frequency (float).""",
             validator=strict_range,
             values=[0, 1e9],
+            dynamic=True,
             # ... other possible parameters follow
         )
         #
@@ -796,6 +804,12 @@ In this case you would update the specific class parameter range without rewriti
 
     class FictionalInstrument_9GHz(FictionalInstrumentFamily):
         frequency_values = [0, 9e9]
+
+.. testcode::
+    :hide:
+
+    with expected_protocol(FictionalInstrument_9GHz, [("FREQ 5e+09", None)], name="Test") as inst:
+        inst.frequency = 5e9
 
 Notice how easily you can derive the different family members from a common class, and the fact that the attribute is now defined at class level and not at instance level.
 
