@@ -371,42 +371,6 @@ class SequencerTreeWidget(QtWidgets.QTreeWidget):
                 preview=preview
             )
 
-    def recurse_tree(self, item, dashes='-'):
-        """
-        Recursive function to compile items in the sequence tree
-
-        :param item: item from QTreeWidget tree
-        :param dashes: add dash to indicate depth for serialization
-        """
-        child_count = item.childCount()
-        if child_count:
-            return [
-                (dashes, self.itemWidget(item, 1).currentText(), self.itemWidget(item, 2).text()),
-                [self.recurse_tree(item.child(i), dashes + '-') for i in range(child_count)]]
-        else:
-            return dashes, self.itemWidget(item, 1).currentText(), self.itemWidget(item, 2).text()
-
-    def flatten(self, leaves):
-        """
-        Recursive function to flatten items in the sequence tree
-
-        :param leaves: list of leaves to be flattened
-        """
-        for leaf in leaves:
-            if isinstance(leaf, list):
-                yield from self.flatten(leaf)
-            else:
-                yield leaf
-
-    def serialize_tree(self):
-        """
-        Generate a serialized form of the sequence tree
-        """
-        invis_root = self.invisibleRootItem()
-        roots = invis_root.childCount()
-        leaves = [self.recurse_tree(invis_root.child(i)) for i in range(roots)]
-        return self.flatten(leaves)
-
 
 class SequenceDialog(QtWidgets.QFileDialog):
     """
@@ -414,14 +378,13 @@ class SequenceDialog(QtWidgets.QFileDialog):
     It shows a preview of sequence tree in the dialog box
     """
 
-    def __init__(self, save=False, parent=None):
+    def __init__(self, parent=None):
         """
         Generate a serialized form of the sequence tree
 
         :param save: True if we are saving a file. Default False.
         """
         super().__init__(parent)
-        self.save = save
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
         self._setup_ui()
 
@@ -443,11 +406,7 @@ class SequenceDialog(QtWidgets.QFileDialog):
         self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
-        if self.save:
-            self.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-            self.setFileMode(QtWidgets.QFileDialog.FileMode.AnyFile)
-        else:
-            self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
+        self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
         self.currentChanged.connect(self.update_preview)
 
     def update_preview(self, filename):
@@ -511,10 +470,6 @@ class SequencerWidget(QtWidgets.QWidget):
         self.load_seq_button.clicked.connect(self.load_sequence)
         self.load_seq_button.setToolTip("Load a sequence from a file.")
 
-        self.save_seq_button = QtWidgets.QPushButton("Save sequence")
-        self.save_seq_button.clicked.connect(self.save_sequence)
-        self.save_seq_button.setToolTip("Save a sequence to a file.")
-
         self.queue_button = QtWidgets.QPushButton("Queue sequence")
         self.queue_button.clicked.connect(self.queue_sequence)
 
@@ -532,23 +487,19 @@ class SequencerWidget(QtWidgets.QWidget):
     def _layout(self):
 
         btn_box = QtWidgets.QHBoxLayout()
-        btn_box.addWidget(self.load_seq_button)
-        btn_box.addWidget(self.save_seq_button)
+        btn_box.addWidget(self.add_root_item_btn)
+        btn_box.addWidget(self.add_tree_item_btn)
+        btn_box.addWidget(self.remove_tree_item_btn)
 
         btn_box_2 = QtWidgets.QHBoxLayout()
-        btn_box_2.addWidget(self.add_root_item_btn)
-        btn_box_2.addWidget(self.add_tree_item_btn)
-        btn_box_2.addWidget(self.remove_tree_item_btn)
-
-        btn_box_3 = QtWidgets.QHBoxLayout()
-        btn_box_3.addWidget(self.queue_button)
+        btn_box_2.addWidget(self.load_seq_button)
+        btn_box_2.addWidget(self.queue_button)
 
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
-        vbox.addLayout(btn_box)
         vbox.addWidget(self.tree)
+        vbox.addLayout(btn_box)
         vbox.addLayout(btn_box_2)
-        vbox.addLayout(btn_box_3)
         self.setLayout(vbox)
 
     def queue_sequence(self):
@@ -577,16 +528,6 @@ class SequencerWidget(QtWidgets.QWidget):
 
         finally:
             self.queue_button.setEnabled(True)
-
-    def save_sequence(self):
-        dialog = SequenceDialog(save=True)
-        if dialog.exec():
-            filename = dialog.selectedFiles()[0]
-            items = self.tree.serialize_tree()
-            with open(filename, 'w') as file:
-                for i in items:
-                    file.write(i[0] + ' "' + i[1] + '", "' + i[2] + "\"\n")
-                log.info('Saved sequence file %s' % filename)
 
     def load_sequence(self):
         dialog = SequenceDialog()
