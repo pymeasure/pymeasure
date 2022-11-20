@@ -59,7 +59,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         super().__init__(name, parent)
 
         self.procedure_class = procedure_class
-        self.procedure_name = procedure_class.__name__
+        self.dock_state_filename = './' + procedure_class.__name__ + '_dock_state.json'
         self.x_axis_labels = x_axis_labels
         self.y_axis_labels = y_axis_labels
         self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))
@@ -74,12 +74,14 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
 
     def save_dock_state(self):
         state = self.dock_area.saveState()
-        with open(path.curdir + '/' + self.procedure_name + '_dock_state.json', 'w') as f:
+        with open(self.dock_state_filename, 'w') as f:
             f.write(json.dumps(state))
+            log.info('Saved dock layout to file %s' % self.dock_state_filename)
 
     def _setup_ui(self):
-        self.save_layout = QtWidgets.QPushButton('Save Dock Layout', self)
-        self.save_layout.clicked.connect(self.save_dock_state)
+        self.save_layout_button = QtWidgets.QPushButton('Save Dock Layout', self)
+        self.save_layout_button.clicked.connect(self.save_dock_state)
+        self.save_layout_button.setToolTip("Save current dock layout to file in working directory.")
 
         for i in range(self.num_plots):
             # Set the default label for current dock from x_axis_labels and y_axis_labels
@@ -98,7 +100,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
     def _layout(self):
         hbox = QtWidgets.QHBoxLayout()
         hbox.addStretch(5)
-        hbox.addWidget(self.save_layout, 1)
+        hbox.addWidget(self.save_layout_button, 1)
 
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
@@ -107,12 +109,13 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         self.setLayout(vbox)
 
         # Load dock state file if it exists in the directory of the current procedure
-        if path.exists(path.curdir + '/' + self.procedure_name + '_dock_state.json'):
-            with open(path.curdir + '/' + self.procedure_name + '_dock_state.json', 'r') as f:
+        if path.exists(self.dock_state_filename):
+            with open(self.dock_state_filename, 'r') as f:
                 dock_state = f.read()
                 # make sure number of docks in the file matches num_plots
                 if dock_state.count('dock') == self.num_plots:
                     self.dock_area.restoreState(json.loads(dock_state))
+                    log.info('Loaded dock layout from file %s' % self.dock_state_filename)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
