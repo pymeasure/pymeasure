@@ -23,7 +23,6 @@
 #
 
 import logging
-import sys
 
 import numpy as np
 import pyqtgraph as pg
@@ -31,16 +30,6 @@ from .Qt import QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-try:
-    from matplotlib.cm import viridis
-except ImportError:
-    log.warning("Matplotlib not found. Images will be greyscale")
-
-
-def _greyscale_colormap(x):
-    """Simple greyscale colormap. Assumes x is already normalized."""
-    return np.array([x, x, x, 1])
 
 
 class ResultsCurve(pg.PlotDataItem):
@@ -87,10 +76,7 @@ class ResultsImage(pg.ImageItem):
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
         self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
-        if 'matplotlib.cm' in sys.modules:
-            self.colormap = viridis
-        else:
-            self.colormap = _greyscale_colormap
+        self.cm = pg.colormap.get('viridis')
 
         super().__init__(image=self.img_data)
 
@@ -138,6 +124,10 @@ class ResultsImage(pg.ImageItem):
         else:
             return int(x)
 
+    def colormap(self, x):
+        """ Return mapped color as 0.0-1.0 floats RGBA """
+        return self.cm.map(x, mode='float')
+
     # TODO: colormap selection
 
 
@@ -145,7 +135,7 @@ class BufferCurve(pg.PlotDataItem):
     """ Creates a curve based on a predefined buffer size and allows data to be added dynamically.
     """
 
-    data_updated = QtCore.QSignal()
+    data_updated = QtCore.Signal()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -176,13 +166,13 @@ class Crosshairs(QtCore.QObject):
     x and y graph coordinates
     """
 
-    coordinates = QtCore.QSignal(float, float)
+    coordinates = QtCore.Signal(float, float)
 
     def __init__(self, plot, pen=None):
         """ Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
-        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
+        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.PenStyle.DashLine)
         """
         super().__init__()
 

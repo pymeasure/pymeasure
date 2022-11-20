@@ -41,7 +41,7 @@ class LogHandler(Handler):
     # 4. A new utility class Emitter subclass of QObject is
     # introduced to handle record Signal and workaround the problem
     class Emitter(QtCore.QObject):
-        record = QtCore.QSignal(object)
+        record = QtCore.Signal(object)
 
     def __init__(self):
         super().__init__()

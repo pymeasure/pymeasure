@@ -249,9 +249,9 @@ class ESP300(Instrument):
         cast=int
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Newport ESP 300 Motion Controller",
             **kwargs
         )
@@ -317,3 +317,4 @@ class ESP300(Instrument):
         """ Shuts down the controller by disabling all of the axes.
         """
         self.disable()
+        super().shutdown()

@@ -57,10 +57,10 @@ class AMI430(Instrument):
 
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         kwargs.setdefault('read_termination', '\n')
         super().__init__(
-            resourceName,
+            adapter,
             "AMI superconducting magnet power supply.",
             includeSCPI=True,
             **kwargs
@@ -220,3 +220,4 @@ class AMI430(Instrument):
         self.zero()
         self.wait_for_holding()
         self.disable_persistent_switch()
+        super().shutdown()

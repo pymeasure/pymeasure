@@ -175,9 +175,9 @@ class Ametek7270(Instrument):
                                 """ Reads the instrument identification """
                                 )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Ametek DSP 7270",
             **kwargs
         )
@@ -208,6 +208,6 @@ class Ametek7270(Instrument):
 
     def shutdown(self):
         """ Ensures the instrument in a safe state """
-        self.voltage = 0.
-        self.isShutdown = True
         log.info("Shutting down %s" % self.name)
+        self.voltage = 0.
+        super().shutdown()

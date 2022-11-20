@@ -102,9 +102,11 @@ Let's start with a simple example of a procedure which loops over a certain numb
         DATA_COLUMNS = ['Iteration']
 
         def execute(self):
-            """ Loops over each iteration and emits the current iteration,
+            """Execute the procedure.
+
+            Loops over each iteration and emits the current iteration,
             before waiting for 0.01 sec, and then checking if the procedure
-            should stop
+            should stop.
             """
             for i in range(self.iterations):
                 self.emit('results', {'Iteration': i})
@@ -169,9 +171,11 @@ Let's put all the pieces together. Our SimpleProcedure can be run in a script by
         DATA_COLUMNS = ['Iteration']
 
         def execute(self):
-            """ Loops over each iteration and emits the current iteration,
+            """Execute the procedure.
+
+            Loops over each iteration and emits the current iteration,
             before waiting for 0.01 sec, and then checking if the procedure
-            should stop
+            should stop.
             """
             for i in range(self.iterations):
                 self.emit('results', {'Iteration': i})
@@ -249,6 +253,54 @@ Let's extend our SimpleProcedure with logging. ::
 First, we have imported the Python logging module and grabbed the logger using the :python:`__name__` argument. This gives us logging information specific to the current file. Conversely, we could use the :python:`''` argument to get all logs, including those of pymeasure. We use the :python:`console_log` function to conveniently output the log to the console. Further details on how to use the logger are addressed in the Python logging documentation.
 
 
+Storing metadata
+~~~~~~~~~~~~~~~~
+
+Metadata (:class:`pymeasure.experiment.parameters.Metadata`) allows storing information (e.g. the actual starting time, instrument parameters) about the measurement in the header of the datafile.
+These Metadata objects are evaluated and stored in the datafile only after the :python:`startup` method has ran; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
+Using a Metadata is nearly as straightforward as using a Parameter; extending the example of above to include metadata, looks as follows: ::
+
+    from time import sleep, time
+    from pymeasure.experiment import Procedure
+    from pymeasure.experiment import IntegerParameter, Metadata
+
+    class SimpleProcedure(Procedure):
+
+        # a Parameter that defines the number of loop iterations
+        iterations = IntegerParameter('Loop Iterations')
+
+        # the Metadata objects store information after the startup has ran
+        starttime = Metadata('Start time', fget=time)
+        custom_metadata = Metadata('Custom', default=1)
+
+        # a list defining the order and appearance of columns in our data file
+        DATA_COLUMNS = ['Iteration']
+
+        def startup(self):
+            self.custom_metadata = 20
+
+        def execute(self):
+            """ Loops over each iteration and emits the current iteration,
+            before waiting for 0.01 sec, and then checking if the procedure
+            should stop
+            """
+            for i in range(self.iterations):
+                self.emit('results', {'Iteration': i})
+                sleep(0.01)
+                if self.should_stop():
+                    break
+
+
+As with a Parameter, PyMeasure swaps out the Metadata with their values behind the scene, which makes accessing the values of Metadata very convenient.
+
+The value of a Metadata can be set either using an :python:`fget` method or manually in the startup method.
+The :python:`fget` method, if provided, is ran after startup method.
+It can also be provided as a string; in that case it is assumed that the string contains the name of an attribute (either a callable or not) of the Procedure class which returns the value that is to be stored.
+This also allows to retrieve nested attributes (e.g. in order to store a property or method of an instrument) by separating the attributes with a period: e.g. `instrument_name.attribute_name` (or even `instrument_name.subclass_name.attribute_name`); note that here only the final element (i.e. `attribute_name` in the example) is allowed to refer to a callable.
+If neither an :python:`fget` method is provided or a value manually set, the Metadata will return to its default value, if set.
+The formatting of the value of the Metadata-object can be controlled using the `fmt` argument.
+
+
 Modifying our script
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -295,12 +347,12 @@ Now that you have a background on how to use the different features of the Proce
                 self.sourcemeter.start_buffer()
                 log.info("Waiting for the buffer to fill with measurements")
                 self.sourcemeter.wait_for_buffer()
-
-                self.emit('results', {
+                data = {
                     'Current (A)': current,
                     'Voltage (V)': self.sourcemeter.means,
                     'Voltage Std (V)': self.sourcemeter.standard_devs
-                })
+                }
+                self.emit('results', data)
                 sleep(0.01)
                 if self.should_stop():
                     log.info("User aborted the procedure")
@@ -332,5 +384,10 @@ Now that you have a background on how to use the different features of the Proce
         log.info("Joining with the worker in at most 1 hr")
         worker.join(timeout=3600) # wait at most 1 hr (3600 sec)
         log.info("Finished the measurement")
+
+The parentheses in the :code:`COLUMN` entries indicate the physical unit of the data in the corresponding column, e.g. :code:`'Voltage Std (V)'` indicates Volts. If you want to indicate a dimensionless value, e.g. Mach number, you can use `(1)` instead. Combined units like `(m/s)` or the long form `(meter/second)` are also possible. The class :class:`Results` ensures, that the data is stored in the correct unit, here Volts. For example a :python:`pint.Quantity` of 500 mV will be stored as 0.5 V. A string will be converted first to a `Quantity` and a mere number (e.g. float, int, ...) is assumed to be already in the right unit (e.g 5 will be stored as 5 V).
+If the data entry is not compatible, either because it has the wrong unit, e.g. meters which is not a unit of voltage, or because it is no number at all, a warning is logged and `'nan'` will be stored in the file.
+If you do not specify a unit (i.e. no parentheses), no unit check is performed for this column, unless the data entry is a `Quantity` for that column. In this case, this column's unit is set to the base unit (e.g. meter if unit of the data entry is kilometers) of the data entry. From this point on, unit checks are enabled for this column. Also use columns without unit checks (i.e. without parentheses) for strings or booleans.
+
 
 At this point, you are familiar with how to construct a Procedure sub-class. The next section shows how to put these procedures to work in a graphical environment, where will have live-plotting of the data and the ability to easily queue up a number of experiments in sequence. All of these features come from using the Procedure object.

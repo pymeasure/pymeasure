@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 
+from decimal import Decimal
 import logging
-
 import os
 import re
 import sys
@@ -33,8 +33,10 @@ from datetime import datetime
 from string import Formatter
 
 import pandas as pd
+import pint
 
 from .procedure import Procedure, UnknownProcedure
+from pymeasure.units import ureg
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -129,7 +131,19 @@ class CSVFormatter(logging.Formatter):
         """
         super().__init__()
         self.columns = columns
+        self.units = self._parse_columns(columns)
         self.delimiter = delimiter
+
+    @staticmethod
+    def _parse_columns(columns):
+        """Parse the columns to get units in parenthesis."""
+        units_pattern = r"\((?P<units>[\w/\(\)\*\t]+)\)"
+        units = {}
+        for column in columns:
+            match = re.search(units_pattern, column)
+            if match:
+                units[column] = ureg.Quantity(match.groupdict()['units']).units
+        return units
 
     def format(self, record):
         """Formats a record as csv.
@@ -138,7 +152,48 @@ class CSVFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-        return self.delimiter.join(f'{record[x]}' for x in self.columns)
+        line = []
+        for x in self.columns:
+            value = record.get(x, float("nan"))
+            units = self.units.get(x, None)
+            if units is not None:
+                if isinstance(value, str):
+                    try:
+                        value = ureg.Quantity(value)
+                    except pint.UndefinedUnitError:
+                        log.warning(
+                            f"Value {value} for column {x} cannot be parsed to"
+                            f" unit {units}.")
+                if isinstance(value, pint.Quantity):
+                    try:
+                        line.append(f"{value.m_as(units)}")
+                    except pint.DimensionalityError:
+                        line.append("nan")
+                        log.warning(
+                            f"Value {value} for column {x} does not have the "
+                            f"right unit {units}.")
+                elif isinstance(value, bool):
+                    line.append("nan")
+                    log.warning(
+                        f"Boolean for column {x} does not have unit {units}.")
+                elif isinstance(value, (float, int, Decimal)):
+                    line.append(f"{value}")
+                else:
+                    line.append("nan")
+                    log.warning(
+                        f"Value {value} for column {x} does not have the right"
+                        f" type for unit {units}.")
+            else:
+                if isinstance(value, pint.Quantity):
+                    if value.units == ureg.dimensionless:
+                        line.append(f"{value.magnitude}")
+                    else:
+                        self.units[x] = value.to_base_units().units
+                        line.append(f"{value.m_as(self.units[x])}")
+                        log.info(f"Column {x} units was set to {self.units[x]}")
+                else:
+                    line.append(f"{value}")
+        return self.delimiter.join(line)
 
     def format_header(self):
         return self.delimiter.join(self.columns)
@@ -170,6 +225,7 @@ class Results:
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
+        self._metadata_count = -1
 
         self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
@@ -262,6 +318,36 @@ class Results:
             data[key] = items[i]
         return data
 
+    def metadata(self):
+        """ Returns a text header for the metadata to write into the datafile """
+        if not self.procedure.metadata_objects():
+            return
+
+        m = ["Metadata:"]
+        for _, metadata in self.procedure.metadata_objects().items():
+            value = str(metadata).encode("unicode_escape").decode("utf-8")
+            m.append(f"\t{metadata.name}: {value}")
+
+        self._metadata_count = len(m)
+        m = [Results.COMMENT + line for line in m]  # Comment each line
+        return Results.LINE_BREAK.join(m) + Results.LINE_BREAK
+
+    def store_metadata(self):
+        """ Inserts the metadata header (if any) into the datafile """
+        c_header = self.metadata()
+        if c_header is None:
+            return
+
+        for filename in self.data_filenames:
+            with open(filename, 'r+') as f:
+                contents = f.readlines()
+                contents.insert(self._header_count - 1, c_header)
+
+                f.seek(0)
+                f.writelines(contents)
+
+        self._header_count += self._metadata_count
+
     @staticmethod
     def parse_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
@@ -315,6 +401,17 @@ class Results:
                     parameter.name, procedure_class))
 
         procedure.refresh_parameters()  # Enforce update of meta data
+
+        # Fill the procedure with the metadata found
+        for name, metadata in procedure.metadata_objects().items():
+            if metadata.name in parameters:
+                value = parameters[metadata.name]
+                setattr(procedure, name, value)
+
+                # Set the value in the metadata
+                metadata._value = value
+                metadata.evaluated = True
+
         return procedure
 
     @staticmethod

@@ -124,13 +124,13 @@ class Manager(QtCore.QObject):
     """
     _is_continuous = True
     _start_on_add = True
-    queued = QtCore.QSignal(object)
-    running = QtCore.QSignal(object)
-    finished = QtCore.QSignal(object)
-    failed = QtCore.QSignal(object)
-    aborted = QtCore.QSignal(object)
-    abort_returned = QtCore.QSignal(object)
-    log = QtCore.QSignal(object)
+    queued = QtCore.Signal(object)
+    running = QtCore.Signal(object)
+    finished = QtCore.Signal(object)
+    failed = QtCore.Signal(object)
+    aborted = QtCore.Signal(object)
+    abort_returned = QtCore.Signal(object)
+    log = QtCore.Signal(object)
 
     def __init__(self, widget_list, browser, port=5888, log_level=logging.INFO, parent=None):
         super().__init__(parent)

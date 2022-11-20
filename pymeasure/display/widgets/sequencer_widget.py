@@ -22,11 +22,12 @@
 # THE SOFTWARE.
 #
 import logging
-from pymeasure.display.Qt import QtCore, QtGui
-from pymeasure.experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
 from functools import partial
 from inspect import signature
 from collections import ChainMap
+
+from ..Qt import QtCore, QtWidgets
+from ..experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -302,13 +303,14 @@ class SequencerTreeView(QtGui.QTreeView):
             selection_model.select(idx, QtCore.QItemSelectionModel.Select)
 
 
-class SequencerWidget(QtGui.QWidget):
+class SequencerWidget(QtWidgets.QWidget):
     """
     Widget that allows to generate a sequence of measurements with varying
     parameters. Moreover, one can write a simple text file to easily load a
     sequence.
 
-    Currently requires a queue function of the ManagedWindow to have a
+    Currently requires a queue function of the
+    :class:`ManagedWindow<pymeasure.display.windows.managed_window.ManagedWindow>` to have a
     "procedure" argument.
     """
 
@@ -379,30 +381,30 @@ class SequencerWidget(QtGui.QWidget):
             partial(self._add_tree_item, level=0)
         )
 
-        self.add_tree_item_btn = QtGui.QPushButton("Add item")
+        self.add_tree_item_btn = QtWidgets.QPushButton("Add item")
         self.add_tree_item_btn.clicked.connect(self._add_tree_item)
 
-        self.remove_tree_item_btn = QtGui.QPushButton("Remove item")
+        self.remove_tree_item_btn = QtWidgets.QPushButton("Remove item")
         self.remove_tree_item_btn.clicked.connect(self._remove_selected_tree_item)
 
-        self.load_seq_button = QtGui.QPushButton("Load sequence")
+        self.load_seq_button = QtWidgets.QPushButton("Load sequence")
         self.load_seq_button.clicked.connect(self.load_sequence)
         self.load_seq_button.setToolTip("Load a sequence from a file.")
 
-        self.queue_button = QtGui.QPushButton("Queue sequence")
+        self.queue_button = QtWidgets.QPushButton("Queue sequence")
         self.queue_button.clicked.connect(self.queue_sequence)
 
     def _layout(self):
-        btn_box = QtGui.QHBoxLayout()
+        btn_box = QtWidgets.QHBoxLayout()
         btn_box.addWidget(self.add_root_item_btn)
         btn_box.addWidget(self.add_tree_item_btn)
         btn_box.addWidget(self.remove_tree_item_btn)
 
-        btn_box_2 = QtGui.QHBoxLayout()
+        btn_box_2 = QtWidgets.QHBoxLayout()
         btn_box_2.addWidget(self.load_seq_button)
         btn_box_2.addWidget(self.queue_button)
 
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
         vbox.addWidget(self.tree)
         vbox.addLayout(btn_box)
@@ -474,7 +476,7 @@ class SequencerWidget(QtGui.QWidget):
             )
 
             for entry in sequence:
-                QtGui.QApplication.processEvents()
+                QtWidgets.QApplication.processEvents()
                 parameters = dict(ChainMap(*entry[::-1]))
 
                 procedure = self._parent.make_procedure()
@@ -492,7 +494,7 @@ class SequencerWidget(QtGui.QWidget):
         """
 
         if fileName is None:
-            fileName, _ = QtGui.QFileDialog.getOpenFileName(self, 'OpenFile')
+            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'OpenFile')
 
         if len(fileName) == 0:
             return

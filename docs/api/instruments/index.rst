@@ -19,6 +19,7 @@ Instruments by manufacturer:
 .. toctree::
    :maxdepth: 2
 
+   activetechnologies/index
    advantest/index
    agilent/index
    ametek/index
@@ -32,9 +33,11 @@ Instruments by manufacturer:
    danfysik/index
    deltaelektronica/index
    edwards/index
+   eurotest/index
    fluke/index
    fwbell/index
    heidenhain/index
+   hcp/index
    hp/index
    keithley/index
    keysight/index
@@ -46,9 +49,13 @@ Instruments by manufacturer:
    pendulum/index
    razorbill/index
    rohdeschwarz/index
+   siglenttechnologies/index
    signalrecovery/index
    srs/index
    tektronix/index
+   temptronic/index
+   texio/index
+   thermotron/index
    thorlabs/index
    toptica/index
    yokogawa/index

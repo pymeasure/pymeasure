@@ -39,9 +39,9 @@ class AnritsuMG3692C(Instrument):
         in Hz. This property can be set. """
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Anritsu MG3692C Signal Generator",
             **kwargs
         )
@@ -76,3 +76,4 @@ class AnritsuMG3692C(Instrument):
         # TODO: Implement modulation
         self.modulation = False
         self.disable()
+        super().shutdown()

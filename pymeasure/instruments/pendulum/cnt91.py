@@ -46,11 +46,11 @@ class CNT91(Instrument):
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
     MAX_BUFFER_SIZE = 32000  # User Manual 8-38
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 120000)
         kwargs.setdefault('read_termination', '\n')
         super().__init__(
-            resourceName,
+            adapter,
             "Pendulum CNT-91",
             **kwargs,
         )

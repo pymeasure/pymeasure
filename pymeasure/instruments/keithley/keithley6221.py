@@ -224,6 +224,18 @@ class Keithley6221(Instrument, KeithleyBuffer):
         values={True: 1, False: 0},
         map_values=True,
     )
+    waveform_phasemarker_phase = Instrument.control(
+        ":SOUR:WAVE:PMAR?", ":SOUR:WAVE:PMAR %g",
+        """ A numerical property that controls the phase of the phase marker.""",
+        validator=truncated_range,
+        values=[-180, 180],
+    )
+    waveform_phasemarker_line = Instrument.control(
+        ":SOUR:WAVE:PMAR:OLIN?", ":SOUR:WAVE:PMAR:OLIN %d",
+        """ A numerical property that controls the line of the phase marker.""",
+        validator=truncated_range,
+        values=[1, 6],
+    )
 
     def waveform_arm(self):
         """ Arm the current waveform function. """
@@ -398,6 +410,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         """ Disables the output. """
         log.info("Shutting down %s." % self.name)
         self.disable_source()
+        super().shutdown()
 
     ###############
     # Status bits #

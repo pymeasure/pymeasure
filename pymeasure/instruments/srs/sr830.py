@@ -86,6 +86,8 @@ class SR830(Instrument):
     SNAP_ENUMERATION = {"x": 1, "y": 2, "r": 3, "theta": 4,
                         "aux in 1": 5, "aux in 2": 6, "aux in 3": 7, "aux in 4": 8,
                         "frequency": 9, "ch1": 10, "ch2": 11}
+    REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
+    INPUT_FILTER = ['Off', 'On']
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -204,6 +206,14 @@ class SR830(Instrument):
         values=FILTER_SLOPES,
         map_values=True
     )
+    filter_synchronous = Instrument.control(
+        "SYNC?", "SYNC %d",
+        """A boolean property that controls the synchronous filter.
+        This property can be set. Allowed values are: True or False """,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True
+    )
     harmonic = Instrument.control(
         "HARM?", "HARM%d",
         """ An integer property that controls the harmonic that is measured.
@@ -249,6 +259,14 @@ class SR830(Instrument):
         values are: {}""".format(REFERENCE_SOURCES),
         validator=strict_discrete_set,
         values=REFERENCE_SOURCES,
+        map_values=True
+    )
+    reference_source_trigger = Instrument.control(
+        "RSLP?", "RSLP %d",
+        """ A string property that controls the reference source triggering. Allowed
+             values are: {}""".format(REFERENCE_SOURCE_TRIGGER),
+        validator=strict_discrete_set,
+        values=REFERENCE_SOURCE_TRIGGER,
         map_values=True
     )
 
@@ -324,9 +342,9 @@ class SR830(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
@@ -455,8 +473,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pauseBuffer()
-        ch1[index:count + 1] = self.buffer_data(1, index, count)
-        ch2[index:count + 1] = self.buffer_data(2, index, count)
+        ch1[index : count + 1] = self.buffer_data(1, index, count)  # noqa: E203
+        ch2[index : count + 1] = self.buffer_data(2, index, count)  # noqa: E203
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):
