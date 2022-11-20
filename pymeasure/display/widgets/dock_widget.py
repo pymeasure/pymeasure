@@ -42,8 +42,10 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
     :param name: Name for the TabWidget
     :param procedure_class: procedure class describing the experiment (see
         :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param x_axis_labels: List of data column(s) for the x-axis of the plot.
-    :param y_axis_labels: List of data column(s) for the y-axis of the plot.
+    :param x_axis_labels: List of data column(s) for the x-axis of the plot. If the list is shorter
+        than y_axis_labels the last item in the list to match y_axis_labels length.
+    :param y_axis_labels: List of data column(s) for the y-axis of the plot. If the list is shorter
+        than x_axis_labels the last item in the list to match x_axis_labels length.
     :param linewidth: line width for plots in
         :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
     :param parent: Passed on to QtWidgets.QWidget. Default is None
@@ -69,7 +71,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
     def _setup_ui(self):
         for i in range(self.num_plots):
             # Set the default label for current dock from x_axis_labels and y_axis_labels
-            # However, if list is smaller than num_plots, repeat last item in the list.
+            # However, if list is shorter than num_plots, repeat last item in the list.
             x_label = self.x_axis_labels[min(i, len(self.x_axis_labels) - 1)]
             y_label = self.y_axis_labels[min(i, len(self.y_axis_labels) - 1)]
 

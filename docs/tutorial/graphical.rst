@@ -235,7 +235,7 @@ In order to get familiar with the mechanism, users can check the following widge
 - :class:`~pymeasure.display.widgets.log_widget.LogWidget`
 - :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
 - :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
-
+- :class:`~pymeasure.display.widgets.image_widget.DockWidget`
 
 Using the sequencer
 ~~~~~~~~~~~~~~~~~~~

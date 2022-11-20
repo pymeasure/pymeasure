@@ -453,9 +453,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             for wdg in self.widget_list:
                 new_curve = self.new_curve(wdg, results)
                 if isinstance(new_curve, (tuple, list)):
-                    curve_list.extend(self.new_curve(wdg, results))
+                    curve_list.extend(new_curve)
                 else:
-                    curve_list.append(self.new_curve(wdg, results))
+                    curve_list.append(new_curve)
         else:
             curve_list = curve[:]
 
