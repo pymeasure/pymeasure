@@ -23,6 +23,9 @@
 #
 import logging
 
+from os import path
+import json
+
 from pyqtgraph.dockarea import Dock, DockArea
 import pyqtgraph as pg
 
@@ -56,6 +59,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         super().__init__(name, parent)
 
         self.procedure_class = procedure_class
+        self.procedure_name = procedure_class.__name__
         self.x_axis_labels = x_axis_labels
         self.y_axis_labels = y_axis_labels
         self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))
@@ -68,7 +72,15 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         self._setup_ui()
         self._layout()
 
+    def save_dock_state(self):
+        state = self.dock_area.saveState()
+        with open(path.curdir + '/' + self.procedure_name + '_dock_state.json', 'w') as f:
+            f.write(json.dumps(state))
+
     def _setup_ui(self):
+        self.save_layout = QtWidgets.QPushButton('Save Dock Layout', self)
+        self.save_layout.clicked.connect(self.save_dock_state)
+
         for i in range(self.num_plots):
             # Set the default label for current dock from x_axis_labels and y_axis_labels
             # However, if list is shorter than num_plots, repeat last item in the list.
@@ -84,10 +96,23 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             self.docks.append(dock)
 
     def _layout(self):
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.addStretch(5)
+        hbox.addWidget(self.save_layout, 1)
+
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
+        vbox.addLayout(hbox)
         vbox.addWidget(self.dock_area)
         self.setLayout(vbox)
+
+        # Load dock state file if it exists in the directory of the current procedure
+        if path.exists(path.curdir + '/' + self.procedure_name + '_dock_state.json'):
+            with open(path.curdir + '/' + self.procedure_name + '_dock_state.json', 'r') as f:
+                dock_state = f.read()
+                # make sure number of docks in the file matches num_plots
+                if dock_state.count('dock') == self.num_plots:
+                    self.dock_area.restoreState(json.loads(dock_state))
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
