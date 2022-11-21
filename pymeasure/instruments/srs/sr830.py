@@ -26,7 +26,8 @@ import re
 import time
 import numpy as np
 from enum import IntFlag
-from pymeasure.instruments import Instrument, discreteTruncate
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import discreteTruncate
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 

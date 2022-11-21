@@ -27,7 +27,8 @@ import time
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments import Instrument
+from pymeasure.errors import RangeException
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
