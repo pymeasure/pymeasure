@@ -930,7 +930,7 @@ class LeCroyT3DSO1204(Instrument):
             img = self.binary_values("SCDP", dtype=np.uint8)
         return bytearray(img)
 
-    def _process_data(self, xdata, preamble):
+    def _process_data(self, ydata, preamble):
         """ Apply scale and offset to the data points acquired from the scope.
         - Y axis : the scale is ydiv / 25 and the offset -yoffset. the
         offset is not applied for the MATH source.
@@ -940,25 +940,22 @@ class LeCroyT3DSO1204(Instrument):
 
         :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble) """
 
-        def _scale_data(x):
+        def _scale_data(y):
             if preamble["source"] == "MATH":
-                value = int.from_bytes([x], byteorder='big', signed=False) * preamble["ydiv"] / 25.
+                value = int.from_bytes([y], byteorder='big', signed=False) * preamble["ydiv"] / 25.
                 value -= preamble["ydiv"] * (preamble["yoffset"] + 255) / 50.
             else:
-                value = int.from_bytes([x], byteorder='big', signed=True) * preamble["ydiv"] / 25.
+                value = int.from_bytes([y], byteorder='big', signed=True) * preamble["ydiv"] / 25.
                 value -= preamble["yoffset"]
             return value
 
-        def _scale_time(t):
+        def _scale_time(x):
             return float(Decimal(-preamble["xdiv"] * self._grid_number / 2.) +
-                         Decimal(float(t * preamble["sparsing"])) /
+                         Decimal(float(x * preamble["sparsing"])) /
                          Decimal(preamble["sampling_rate"]))
 
-        data_points = np.vectorize(_scale_data)(xdata)
-        if len(data_points) > 1:
-            time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
-        else:
-            time_points = np.array([0])
+        data_points = np.vectorize(_scale_data)(ydata)
+        time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
         return data_points, time_points, preamble
 
     def download_waveform(self, source, requested_points=None, sparsing=None):
@@ -973,17 +970,21 @@ class LeCroyT3DSO1204(Instrument):
         point every 4 points is read.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
         property for dict format. """
+        # Sanitize the input arguments
         if sparsing is None:
             sparsing = self.waveform_sparsing
         if requested_points is None:
             requested_points = self.waveform_points
         self.waveform_source = sanitize_source(source)
-        xdata, preamble = self._acquire_data(requested_points, sparsing)
-        preamble["transmitted_points"] = len(xdata)
+        # Acquire the Y data and the preable
+        ydata, preamble = self._acquire_data(requested_points, sparsing)
+        # Update the preamble with info about actually acquired data
+        preamble["transmitted_points"] = len(ydata)
         preamble["requested_points"] = requested_points
         preamble["sparsing"] = sparsing
         preamble["first_point"] = 0
-        return self._process_data(xdata, preamble)
+        # Scale the Y-data and create the X-data
+        return self._process_data(ydata, preamble)
 
     ###############
     #   Trigger   #
