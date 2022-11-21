@@ -26,7 +26,7 @@ import logging
 import time
 
 from .common_base import CommonBase
-from ..adapters import VISAAdapter
+from ..adapters.visa import VISAAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
