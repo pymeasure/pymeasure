@@ -846,8 +846,7 @@ class LeCroyT3DSO1204(Instrument):
         The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
         points, and it is zero padded.
         Then check that the footer is present. The footer is a double line-carriage \n\n
-        :param message: raw bytes received from the scope
-        :return: None """
+        :param message: raw bytes received from the scope """
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         # Sanity check on header and footer
         if message_header[0:7] != "DAT2,#9":
