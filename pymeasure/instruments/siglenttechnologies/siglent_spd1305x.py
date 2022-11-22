@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from pymeasure.instruments.instrument import Instrument
 from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
                                                                        SPDChannel)
 
@@ -39,7 +40,9 @@ class SPD1305X(SPDSingleChannelBase):
         voltages = [0, 30]
         currents = [0, 5]
 
-        self.add_child(SPDChannel, 1, voltage_range=voltages, current_range=currents)
+        self.channels = Instrument.ChannelCreator(SPDChannel, 1,
+                                                  voltage_range=voltages,
+                                                  current_range=currents)
 
         self.ch_1.voltage_setpoint_values = voltages
         self.ch_1.current_limit_values = currents

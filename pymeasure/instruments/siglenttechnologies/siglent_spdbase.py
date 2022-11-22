@@ -60,6 +60,101 @@ class SystemStatusCode(IntFlag):
     CONSTANT_VOLTAGE = 0   # bit 0 -- constant voltage mode
 
 
+class SPDChannel(Channel):
+    """ The channel class for Siglent SPDxxxxX instruments.
+    """
+
+    def __init__(self, parent, id,
+                 voltage_range: list = [0, 16],
+                 current_range: list = [0, 8]):
+        super().__init__(parent, id)
+        self.voltage_range = voltage_range
+        self.current_range = current_range
+
+    voltage = Instrument.measurement(
+        "MEAS:VOLT? CH{ch}",
+        """Measure the channel output voltage.
+
+        :type: float
+        """
+    )
+
+    current = Instrument.measurement(
+        "MEAS:CURR? CH{ch}",
+        """Measure the channel output current.
+
+        :type: float
+        """
+    )
+
+    power = Instrument.measurement(
+        "MEAS:POWE? CH{ch}",
+        """Measure the channel output power.
+
+        :type: float
+        """
+    )
+
+    current_limit = Instrument.control(
+        "CH{ch}:CURR?", "CH{ch}:CURR %g",
+        """Control the output current configuration of the channel.
+
+        :type : float
+        """,
+        validator=truncated_range,
+        values=[0, 8],
+        dynamic=True
+    )
+
+    voltage_setpoint = Instrument.control(
+        "CH{ch}:VOLT?", "CH{ch}:VOLT %g",
+        """Control the output voltage configuration of the channel.
+
+        :type : float
+        """,
+        validator=truncated_range,
+        values=[0, 16],
+        dynamic=True
+    )
+
+    def enable_output(self, enable: bool = True):
+        """Enable the channel output.
+
+        :type: bool
+            ``True``: enables the output
+            ``False``: disables it
+        """
+        self.parent.selected_channel = self.id
+        self.write('OUTP CH{ch},' + ("ON" if enable else "OFF"))
+
+    def enable_timer(self, enable: bool = True):
+        """Enable the channel timer.
+
+        :type: bool
+            ``True``: enables the timer
+            ``False``: disables it
+        """
+        self.write('TIME CH{ch},' + ("ON" if enable else "OFF"))
+
+    def configure_timer(self, step, voltage, current, duration):
+        """Configure the timer step.
+
+        :param step:
+            int: index of the step to save the configuration
+        :param voltage:
+            float: voltage setpoint of the step
+        :param current:
+            float: current limit of the step
+        :param duration:
+            int: duration of the step in seconds
+        """
+        step = strict_discrete_range(step, [1, 5], 1)
+        voltage = truncated_range(voltage, self.voltage_range)
+        current = truncated_range(current, self.current_range)
+        duration = truncated_range(duration, [0, 10000])
+        self.write(f'TIME:SET CH{{ch}},{step:d},{voltage:1.3f},{current:1.3f},{duration:d}')
+
+
 class SPDBase(Instrument):
     """ The base class for Siglent SPDxxxxX instruments.
     """
@@ -137,7 +232,7 @@ class SPDBase(Instrument):
             ``True``: enables the local interface
             ``False``: disables it.
         """
-        self.write(("*LOCK", "*UNLOCK")[enable])
+        self.write(("*UNLOCK" if enable else "*LOCK"))
 
     def shutdown(self):
         """ Ensure that the voltage is turned to zero
@@ -149,6 +244,7 @@ class SPDBase(Instrument):
 
 
 class SPDSingleChannelBase(SPDBase):
+    channels = Instrument.ChannelCreator(SPDChannel, 1)
 
     def enable_4W_mode(self, enable: bool = True):
         """Enable 4-wire mode.
@@ -157,99 +253,4 @@ class SPDSingleChannelBase(SPDBase):
             ``True``: enables 4-wire mode
             ``False``: disables it.
         """
-        self.write(f'MODE:SET {("2W","4W")[enable]}')
-
-
-class SPDChannel(Channel):
-    """ The channel class for Siglent SPDxxxxX instruments.
-    """
-
-    def __init__(self, parent, id,
-                 voltage_range: list = [0, 16],
-                 current_range: list = [0, 8]):
-        super().__init__(parent, id)
-        self.voltage_range = voltage_range
-        self.current_range = current_range
-
-    voltage = Instrument.measurement(
-        "MEAS:VOLT? CH{ch}",
-        """Measure the channel output voltage.
-
-        :type: float
-        """
-    )
-
-    current = Instrument.measurement(
-        "MEAS:CURR? CH{ch}",
-        """Measure the channel output current.
-
-        :type: float
-        """
-    )
-
-    power = Instrument.measurement(
-        "MEAS:POWE? CH{ch}",
-        """Measure the channel output power.
-
-        :type: float
-        """
-    )
-
-    current_limit = Instrument.control(
-        "CH{ch}:CURR?", "CH{ch}:CURR %g",
-        """Control the output current configuration of the channel.
-
-        :type : float
-        """,
-        validator=truncated_range,
-        values=[0, 8],
-        dynamic=True
-    )
-
-    voltage_setpoint = Instrument.control(
-        "CH{ch}:VOLT?", "CH{ch}:VOLT %g",
-        """Control the output voltage configuration of the channel.
-
-        :type : float
-        """,
-        validator=truncated_range,
-        values=[0, 16],
-        dynamic=True
-    )
-
-    def enable_output(self, enable: bool = True):
-        """Enable the channel output.
-
-        :type: bool
-            ``True``: enables the output
-            ``False``: disables it
-        """
-        self.parent.selected_channel = self.id
-        self.write('OUTP CH{ch},' + ("OFF", "ON")[enable])
-
-    def enable_timer(self, enable: bool = True):
-        """Enable the channel timer.
-
-        :type: bool
-            ``True``: enables the timer
-            ``False``: disables it
-        """
-        self.write('TIME CH{ch},' + ("OFF", "ON")[enable])
-
-    def configure_timer(self, step, voltage, current, duration):
-        """Configure the timer step.
-
-        :param step:
-            int: index of the step to save the configuration
-        :param voltage:
-            float: voltage setpoint of the step
-        :param current:
-            float: current limit of the step
-        :param duration:
-            int: duration of the step in seconds
-        """
-        step = strict_discrete_range(step, [1, 5], 1)
-        voltage = truncated_range(voltage, self.voltage_range)
-        current = truncated_range(current, self.current_range)
-        duration = truncated_range(duration, [0, 10000])
-        self.write(f'TIME:SET CH{{ch}},{step:d},{voltage:1.3f},{current:1.3f},{duration:d}')
+        self.write(f'MODE:SET {("4W" if enable else "2W")}')
