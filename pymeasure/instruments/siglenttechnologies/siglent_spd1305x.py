@@ -36,10 +36,10 @@ class SPD1305X(SPDSingleChannelBase):
             name="Siglent Technologies SPD1305X Power Supply",
             **kwargs
         )
-        voltage_limits = [0, 30]
-        current_limits = [0, 5]
+        voltages = [0, 30]
+        currents = [0, 5]
 
-        self.add_child(SPDChannel, 1, voltage_limits, current_limits)
+        self.add_child(SPDChannel, 1, voltage_range=voltages, current_range=currents)
 
-        self.ch_1.voltage_setpoint_values = voltage_limits
-        self.ch_1.current_limit_values = current_limits
+        self.ch_1.voltage_setpoint_values = voltages
+        self.ch_1.current_limit_values = currents
