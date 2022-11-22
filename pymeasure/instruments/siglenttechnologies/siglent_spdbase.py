@@ -142,7 +142,7 @@ class SPDBase(Instrument):
     def shutdown(self):
         """ Ensure that the voltage is turned to zero
         and disable the output. """
-        for ch in self.channels:
+        for ch in self.channels.values():
             ch.voltage_setpoint = 0
             ch.enable_output(False)
         super().shutdown()
