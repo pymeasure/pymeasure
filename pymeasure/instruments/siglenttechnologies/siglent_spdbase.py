@@ -164,13 +164,10 @@ class SPDChannel(Channel):
     """ The channel class for Siglent SPDxxxxX instruments.
     """
 
-    def __init__(self, instrument,
-                 channel: int = 1,
+    def __init__(self, parent, id,
                  voltage_range: list = [0, 16],
                  current_range: list = [0, 8]):
-        self.instrument = instrument
-        self.channel = channel
-
+        super().__init__(parent, id)
         self.voltage_range = voltage_range
         self.current_range = current_range
 
