@@ -510,10 +510,11 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
     """
     float_digits = 6
 
-    def __init__(self, name, columns, refresh_time=0.2,
+    def __init__(self, name, columns, by_column=True, refresh_time=0.2,
                  check_status=True, parent=None):
         super().__init__(name, parent)
         self.columns = columns
+        self.by_column = by_column
         self.refresh_time = refresh_time
         self.check_status = check_status
         self._setup_ui()
@@ -523,6 +524,7 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
         self.table = Table(refresh_time=self.refresh_time,
                            check_status=self.check_status,
                            force_reload=False,
+                           by_column=self.by_column,
                            parent=self)
 
     def _layout(self):

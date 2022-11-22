@@ -26,7 +26,7 @@ log.addHandler(logging.NullHandler())
 
 class TestProcedure(Procedure):
 
-    iterations = IntegerParameter('Loop Iterations', default=100)
+    iterations = IntegerParameter('Loop Iterations', default=10)
     delay = FloatParameter('Delay Time', units='s', default=0.2)
     seed = Parameter('Random Seed', default='12345')
 
@@ -59,7 +59,8 @@ class ManagedWindowWithTable(ManagedWindow):
     def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
         self.table_widget = TableWidget("Experiment Table",
                                         procedure_class.DATA_COLUMNS,
-                                        float_digits=3)
+                                        by_column = True,
+                                        )
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
         kwargs["widget_list"] = kwargs["widget_list"] + (self.table_widget, )
