@@ -463,7 +463,7 @@ class LeCroyT3DSO1204(Instrument):
 
     _BOOLS = {True: "ON", False: "OFF"}
 
-    WRITE_INTERVAL_S = 0.01  # seconds
+    WRITE_INTERVAL_S = 0.02  # seconds
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
