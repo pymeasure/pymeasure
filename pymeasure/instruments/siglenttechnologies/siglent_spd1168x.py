@@ -36,4 +36,4 @@ class SPD1168X(SPDSingleChannelBase):
             **kwargs
         )
 
-        self.ch[1] = SPDChannel(self, 1)
+        self.add_child(SPDChannel, 1)

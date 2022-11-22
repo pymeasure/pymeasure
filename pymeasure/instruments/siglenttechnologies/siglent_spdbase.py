@@ -23,6 +23,7 @@
 #
 import logging
 from pymeasure.instruments.instrument import Instrument
+from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import (strict_discrete_range,
                                               strict_discrete_set,
                                               truncated_range
@@ -73,8 +74,6 @@ class SPDBase(Instrument):
                        read_termination='\n'),
             **kwargs
         )
-
-        self.ch = {}
 
     error = Instrument.measurement(
         "SYST:ERR?",
@@ -143,9 +142,9 @@ class SPDBase(Instrument):
     def shutdown(self):
         """ Ensure that the voltage is turned to zero
         and disable the output. """
-        for channel in self.ch:
-            channel.voltage_setpoint = 0
-            channel.enable_output(False)
+        for ch in self.channels:
+            ch.voltage_setpoint = 0
+            ch.enable_output(False)
         super().shutdown()
 
 
@@ -161,7 +160,7 @@ class SPDSingleChannelBase(SPDBase):
         self.write(f'MODE:SET {("2W","4W")[enable]}')
 
 
-class SPDChannel(object):
+class SPDChannel(Channel):
     """ The channel class for Siglent SPDxxxxX instruments.
     """
 
@@ -176,7 +175,7 @@ class SPDChannel(object):
         self.current_range = current_range
 
     voltage = Instrument.measurement(
-        "MEAS:VOLT? CH{channel}",
+        "MEAS:VOLT? CH{ch}",
         """Measure the channel output voltage.
 
         :type: float
@@ -184,7 +183,7 @@ class SPDChannel(object):
     )
 
     current = Instrument.measurement(
-        "MEAS:CURR? CH{channel}",
+        "MEAS:CURR? CH{ch}",
         """Measure the channel output current.
 
         :type: float
@@ -192,7 +191,7 @@ class SPDChannel(object):
     )
 
     power = Instrument.measurement(
-        "MEAS:POWE? CH{channel}",
+        "MEAS:POWE? CH{ch}",
         """Measure the channel output power.
 
         :type: float
@@ -200,7 +199,7 @@ class SPDChannel(object):
     )
 
     current_limit = Instrument.control(
-        "CH{channel}:CURR?", "CH{channel}:CURR %g",
+        "CH{ch}:CURR?", "CH{ch}:CURR %g",
         """Control the output current configuration of the channel.
 
         :type : float
@@ -211,7 +210,7 @@ class SPDChannel(object):
     )
 
     voltage_setpoint = Instrument.control(
-        "CH{channel}:VOLT?", "CH{channel}:VOLT %g",
+        "CH{ch}:VOLT?", "CH{ch}:VOLT %g",
         """Control the output voltage configuration of the channel.
 
         :type : float
@@ -221,21 +220,6 @@ class SPDChannel(object):
         dynamic=True
     )
 
-    def ask(self, cmd):
-        return self.instrument.ask(cmd.format(channel=self.channel))
-
-    def write(self, cmd):
-        self.instrument.write(cmd.format(channel=self.channel))
-
-    def values(self, cmd, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
-        passing on any key-word arguments.
-        """
-        return self.instrument.values(cmd.format(channel=self.channel), **kwargs)
-
-    def check_errors(self):
-        return self.instrument.check_errors()
-
     def enable_output(self, enable: bool = True):
         """Enable the channel output.
 
@@ -243,8 +227,8 @@ class SPDChannel(object):
             ``True``: enables the output
             ``False``: disables it
         """
-        self.instrument.selected_channel = self.channel
-        self.write(f'OUTP CH{self.channel},{("OFF","ON")[enable]}')
+        self.parent.selected_channel = self.id
+        self.write('OUTP CH{ch},' + ("OFF", "ON")[enable])
 
     def enable_timer(self, enable: bool = True):
         """Enable the channel timer.
@@ -253,7 +237,7 @@ class SPDChannel(object):
             ``True``: enables the timer
             ``False``: disables it
         """
-        self.write(f'TIME CH{self.channel},{("OFF","ON")[enable]}')
+        self.write('TIME CH{ch},' + ("OFF", "ON")[enable])
 
     def configure_timer(self, step, voltage, current, duration):
         """Configure the timer step.
@@ -271,4 +255,4 @@ class SPDChannel(object):
         voltage = truncated_range(voltage, self.voltage_range)
         current = truncated_range(current, self.current_range)
         duration = truncated_range(duration, [0, 10000])
-        self.write(f'TIME:SET CH{self.channel},{step:d},{voltage:1.3f},{current:1.3f},{duration:d}')
+        self.write(f'TIME:SET CH{{ch}},{step:d},{voltage:1.3f},{current:1.3f},{duration:d}')

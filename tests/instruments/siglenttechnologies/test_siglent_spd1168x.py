@@ -61,8 +61,8 @@ def test_set_current():
         [("CH1:CURR 0.5", None),
          ("CH1:CURR?", "0.5")]
     ) as inst:
-        inst.ch[1].current_limit = 0.5
-        assert inst.ch[1].current_limit == 0.5
+        inst.ch_1.current_limit = 0.5
+        assert inst.ch_1.current_limit == 0.5
 
 
 def test_set_current_trunc():
@@ -71,8 +71,8 @@ def test_set_current_trunc():
         [("CH1:CURR 8", None),
          ("CH1:CURR?", "8")]
     ) as inst:
-        inst.ch[1].current_limit = 10  # too large, gets truncated
-        assert inst.ch[1].current_limit == 8
+        inst.ch_1.current_limit = 10  # too large, gets truncated
+        assert inst.ch_1.current_limit == 8
 
 
 def test_enable_output():
@@ -83,8 +83,8 @@ def test_enable_output():
          ("INST CH1", None),
          ("OUTP CH1,OFF", None)]
     ) as inst:
-        inst.ch[1].enable_output()
-        inst.ch[1].enable_output(False)
+        inst.ch_1.enable_output()
+        inst.ch_1.enable_output(False)
 
 
 def test_enable_timer():
@@ -93,8 +93,8 @@ def test_enable_timer():
         [("TIME CH1,ON", None),
          ("TIME CH1,OFF", None)]
     ) as inst:
-        inst.ch[1].enable_timer()
-        inst.ch[1].enable_timer(False)
+        inst.ch_1.enable_timer()
+        inst.ch_1.enable_timer(False)
 
 
 def test_configure_timer():
@@ -102,4 +102,4 @@ def test_configure_timer():
         SPD1168X,
         [("TIME:SET CH1,1,5.001,8.000,30", None)]
     ) as inst:
-        inst.ch[1].configure_timer(1, 5.001, 8.55, 30)
+        inst.ch_1.configure_timer(1, 5.001, 8.55, 30)

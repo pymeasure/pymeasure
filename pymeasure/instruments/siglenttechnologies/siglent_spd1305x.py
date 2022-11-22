@@ -39,7 +39,7 @@ class SPD1305X(SPDSingleChannelBase):
         voltage_limits = [0, 30]
         current_limits = [0, 5]
 
-        self.ch[1] = SPDChannel(self, 1, voltage_limits, current_limits)
+        self.add_child(SPDChannel, 1)
 
-        self.ch[1].voltage_setpoint_values = voltage_limits
-        self.ch[1].current_limit_values = current_limits
+        self.ch_1.voltage_setpoint_values = voltage_limits
+        self.ch_1.current_limit_values = current_limits
