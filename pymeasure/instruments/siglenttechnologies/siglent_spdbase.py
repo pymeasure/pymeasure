@@ -244,8 +244,6 @@ class SPDBase(Instrument):
 
 
 class SPDSingleChannelBase(SPDBase):
-    channels = Instrument.ChannelCreator(SPDChannel, 1)
-
     def enable_4W_mode(self, enable: bool = True):
         """Enable 4-wire mode.
 

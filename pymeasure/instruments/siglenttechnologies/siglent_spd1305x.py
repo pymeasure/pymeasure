@@ -30,6 +30,8 @@ class SPD1305X(SPDSingleChannelBase):
     """Represent the Siglent SPD1305X Power Supply.
     """
 
+    channels = Instrument.ChannelCreator(SPDChannel, 1)
+
     def __init__(self, adapter, **kwargs):
 
         super().__init__(
