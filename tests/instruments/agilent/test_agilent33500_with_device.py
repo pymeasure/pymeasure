@@ -39,10 +39,33 @@ def generator():
         assert False
 
     yield generator
+    generator.ch[1].output = 'off'
+    generator.ch[2].output = 'off'
 
 #########
 # TESTS #
 #########
 
+
 def test_get_instrument_id(generator):
-    assert "33500" in generator.id()
+    assert "Agilent Technologies" in generator.id
+
+
+@pytest.mark.parametrize('channel', [1, 2])
+def test_turn_on_channel(generator, channel):
+    generator.ch[channel].output = 'on'
+    assert generator.ch[channel].output
+
+
+@pytest.mark.parametrize('shape', ['SIN', 'SQU', 'TRI', 'RAMP', 'PULS', 'PRBS', 'NOIS', 'ARB', 'DC'])
+@pytest.mark.parametrize('channel', [1,2])
+def test_shape_channel(generator, shape, channel):
+    generator.ch[channel].shape = shape
+    assert shape == generator.ch[channel].shape
+
+
+@pytest.mark.parametrize('frequency', [0.1, 1, 10, 100, 1000])
+@pytest.mark.parametrize('channel', [1,2])
+def test_frequency_channel(generator, frequency, channel):
+    generator.ch[channel].frequency = frequency
+    assert frequency == pytest.approx(generator.ch[channel].frequency, 0.1)
