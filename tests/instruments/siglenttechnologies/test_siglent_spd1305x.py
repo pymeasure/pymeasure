@@ -44,7 +44,8 @@ def test_set_current_trunc():
         inst.ch_1.current_limit = 10  # too large, gets truncated
         assert inst.ch_1.current_limit == 5
 
-def test_set_current():
+
+def test_set_voltage():
     with expected_protocol(
         SPD1305X,
         [("CH1:VOLT 0.5", None),
@@ -52,6 +53,7 @@ def test_set_current():
     ) as inst:
         inst.ch_1.voltage_setpoint = 0.5
         assert inst.ch_1.voltage_setpoint == 0.5
+
 
 def test_set_voltage_trunc():
     with expected_protocol(
