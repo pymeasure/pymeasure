@@ -347,3 +347,4 @@ class Keithley6517B(Instrument, KeithleyBuffer):
         self.ramp_to_voltage(0.0)
         self.stop_buffer()
         self.disable_source()
+        super().shutdown()

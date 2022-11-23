@@ -317,3 +317,4 @@ class ESP300(Instrument):
         """ Shuts down the controller by disabling all of the axes.
         """
         self.disable()
+        super().shutdown()

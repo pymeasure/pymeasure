@@ -21,46 +21,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
+                                                                       SPDChannel)
 
-from ..errors import RangeError, RangeException
-from .channel import Channel
-from .instrument import Instrument
-from .resources import list_resources
-from .validators import discreteTruncate
 
-from . import activetechnologies
-from . import advantest
-from . import agilent
-from . import ametek
-from . import ami
-from . import anaheimautomation
-from . import anapico
-from . import andeenhagerling
-from . import anritsu
-from . import attocube
-from . import danfysik
-from . import deltaelektronika
-from . import eurotest
-from . import fluke
-from . import fwbell
-from . import hcp
-from . import heidenhain
-from . import hp
-from . import keithley
-from . import keysight
-from . import lakeshore
-from . import newport
-from . import ni
-from . import oxfordinstruments
-from . import parker
-from . import razorbill
-from . import rohdeschwarz
-from . import siglenttechnologies
-from . import signalrecovery
-from . import srs
-from . import tektronix
-from . import temptronic
-from . import thermotron
-from . import thorlabs
-from . import toptica
-from . import yokogawa
+class SPD1168X(SPDSingleChannelBase):
+    """Represent the Siglent SPD1168X Power Supply.
+    """
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
+            name="Siglent Technologies SPD1168X Power Supply",
+            **kwargs
+        )
+
+        self.ch[1] = SPDChannel(self, 1)
