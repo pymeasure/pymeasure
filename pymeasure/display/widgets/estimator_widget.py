@@ -28,7 +28,7 @@ from inspect import signature
 from datetime import datetime, timedelta
 
 from ..thread import StoppableQThread
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from .sequencer_widget import SequenceEvaluationError
 
 log = logging.getLogger(__name__)

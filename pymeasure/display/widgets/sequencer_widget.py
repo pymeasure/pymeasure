@@ -26,8 +26,8 @@ from functools import partial
 from inspect import signature
 from collections import ChainMap
 
-from ..Qt import QtCore, QtWidgets
-from ..experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
+from ..Qt import QtCore, QtWidgets, QtGui
+from ...experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -234,13 +234,13 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         self.root.save(filename)
 
 
-class ComboBoxDelegate(QtGui.QStyledItemDelegate):
+class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, owner, choices):
         super().__init__(owner)
         self.items = choices
 
     def createEditor(self, parent, option, index):
-        editor = QtGui.QComboBox(parent)
+        editor = QtWidgets.QComboBox(parent)
         editor.currentIndexChanged.connect(self.commit_editor)
         editor.addItems(self.items)
         return editor
@@ -272,9 +272,9 @@ class ExpressionValidator(QtGui.QValidator):
         return return_value
 
 
-class LineEditDelegate(QtGui.QStyledItemDelegate):
+class LineEditDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
-        editor = QtGui.QLineEdit(parent)
+        editor = QtWidgets.QLineEdit(parent)
         editor.setValidator(ExpressionValidator())
         return editor
 
@@ -290,7 +290,7 @@ class LineEditDelegate(QtGui.QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
 
-class SequencerTreeView(QtGui.QTreeView):
+class SequencerTreeView(QtWidgets.QTreeView):
     def save(self, filename=None):
         self.model().save(filename)
 
@@ -376,7 +376,7 @@ class SequencerWidget(QtWidgets.QWidget):
         self.tree.setColumnWidth(2, int(0.9 * width))
         self.tree.setItemDelegateForColumn(1, ComboBoxDelegate(self, self.names_choices))
         self.tree.setItemDelegateForColumn(2, LineEditDelegate(self))
-        self.add_root_item_btn = QtGui.QPushButton("Add root item")
+        self.add_root_item_btn = QtWidgets.QPushButton("Add root item")
         self.add_root_item_btn.clicked.connect(
             partial(self._add_tree_item, level=0)
         )
