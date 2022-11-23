@@ -40,6 +40,7 @@ debug_modules_enabled = (
     #    "add_node",
     #    "remove_node",
     #    "headerData",
+    #     "setData",
 )
 
 
@@ -103,11 +104,12 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             Here, we just set all indexes to enabled, and selectable.
         """
         if not index.isValid():
-            return_value = QtCore.Qt.NoItemFlags
+            return_value = QtCore.Qt.ItemFlag.NoItemFlags
         else:
-            return_value = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+            return_value = QtCore.Qt.ItemFlag.ItemIsEnabled | \
+                QtCore.Qt.ItemFlag.ItemIsSelectable
             if index.column() >= 1:
-                return_value |= QtCore.Qt.ItemIsEditable
+                return_value |= QtCore.Qt.ItemFlag.ItemIsEditable
         return return_value
 
     def data(self, index, role):
@@ -120,7 +122,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         if not index.isValid():
             return
 
-        elif not role == QtCore.Qt.DisplayRole:
+        elif not role == QtCore.Qt.ItemDataRole.DisplayRole:
             return
 
         print_debug("data", index.row(), index.column(), index.internalPointer())
@@ -213,17 +215,20 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             as the way of finding out what to display where.
         """
         print_debug("headerData", section, orientation, role)
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+        if orientation == QtCore.Qt.Orientation.Horizontal and \
+           role == QtCore.Qt.ItemDataRole.DisplayRole:
             return self.header[section]
 
-    def setData(self, index, value, role=QtCore.Qt.EditRole):
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
         print_debug("setData", index, value, role)
         return_value = False
-        if role == QtCore.Qt.EditRole:
-            return_value = self.root.set_data(index.internalPointer(), index.row(),
-                                              index.column(), value)
+        if role == QtCore.Qt.ItemDataRole.EditRole:
+            return_value = self.root.set_data(index.internalPointer(),
+                                              index.row(),
+                                              index.column(),
+                                              value)
             if return_value:
-                self.dataChanged.emit(index, index, value)
+                self.dataChanged.emit(index, index, [role])
         return return_value
 
     def __iter__(self):
@@ -250,13 +255,13 @@ class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
         self.commitData.emit(editor)
 
     def setEditorData(self, editor, index):
-        value = index.data(QtCore.Qt.DisplayRole)
+        value = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
         num = self.items.index(value)
         editor.setCurrentIndex(num)
 
     def setModelData(self, editor, model, index):
         value = editor.currentText()
-        model.setData(index, value, QtCore.Qt.EditRole)
+        model.setData(index, value, QtCore.Qt.ItemDataRole.EditRole)
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
@@ -264,12 +269,12 @@ class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
 
 class ExpressionValidator(QtGui.QValidator):
     def validate(self, input_string, pos):
-        return_value = QtGui.QValidator.Acceptable
+        return_value = QtGui.QValidator.State.Acceptable
         try:
             SequenceFileHandler.eval_string(input_string, log_enabled=False)
         except SequenceEvaluationError:
-            return_value = QtGui.QValidator.Intermediate
-        return return_value
+            return_value = QtGui.QValidator.State.Intermediate
+        return (return_value, input_string, pos)
 
 
 class LineEditDelegate(QtWidgets.QStyledItemDelegate):
@@ -279,12 +284,12 @@ class LineEditDelegate(QtWidgets.QStyledItemDelegate):
         return editor
 
     def setEditorData(self, editor, index):
-        value = index.data(QtCore.Qt.DisplayRole)
+        value = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
         editor.setText(value)
 
     def setModelData(self, editor, model, index):
         value = editor.text()
-        model.setData(index, value, QtCore.Qt.EditRole)
+        model.setData(index, value, QtCore.Qt.ItemDataRole.EditRole)
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
@@ -296,11 +301,13 @@ class SequencerTreeView(QtWidgets.QTreeView):
 
     def selectRow(self, index):
         selection_model = self.selectionModel()
-        selection_model.select(index, QtCore.QItemSelectionModel.Clear)
+        selection_model.select(index,
+                               QtCore.QItemSelectionModel.SelectionFlag.Clear)
         for column in range(self.model().columnCount(index)):
             idx = self.model().createIndex(index.row(), column,
                                            index.internalPointer())
-            selection_model.select(idx, QtCore.QItemSelectionModel.Select)
+            selection_model.select(idx,
+                                   QtCore.QItemSelectionModel.SelectionFlag.Select)
 
 
 class SequencerWidget(QtWidgets.QWidget):
