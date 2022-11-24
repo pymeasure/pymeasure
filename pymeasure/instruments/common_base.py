@@ -119,12 +119,8 @@ class CommonBase:
 
     def __init__(self):
         self._special_names = self._setup_special_names()
-        # Add children from ChildDescriptors.
-        for item, value in self.__class__.__dict__.items():
-            if isinstance(value, self.ChannelCreator):
-                for cls, id in value.pairs:
-                    child = self.add_child(cls, id, collection=item, **value.kwargs)
-                    child._protected = True
+        # Add children from ChannelCreators.
+        self._create_channels()
 
     class ChannelCreator:
         """Add channels to the parent class.
@@ -192,6 +188,14 @@ class CommonBase:
                     # Copy class special variable at instance level, prefixing reserved_prefix
                     setattr(self, self.__reserved_prefix + attr, obj.__dict__[attr])
         return special_names
+
+    def _create_channels(self):
+        """Create channels according to the ChannelCreator objects."""
+        for item, value in self.__class__.__dict__.items():
+            if isinstance(value, self.ChannelCreator):
+                for cls, id in value.pairs:
+                    child = self.add_child(cls, id, collection=item, **value.kwargs)
+                    child._protected = True
 
     def __setattr__(self, name, value):
         """ Add reserved_prefix in front of special variables."""
