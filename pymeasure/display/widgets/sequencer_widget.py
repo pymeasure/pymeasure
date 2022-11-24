@@ -32,33 +32,16 @@ from ...experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-debug_modules_enabled = (
-    #    "rowCount",
-    #    "index",
-    #    "data",
-    #    "parent",
-    #    "add_node",
-    #    "remove_node",
-    #    "headerData",
-    #     "setData",
-)
-
-
-def print_debug(module, *args):
-    if module in debug_modules_enabled:
-        print(module, *args)
-
 
 class SequencerTreeModel(QtCore.QAbstractItemModel):
-    """ TODO: Documentation
+    """ Model for sequencer data
+
+        :param header: List of string representing header data
+        :param data: data associated with the model
+        :param parent: A QWidget that QT will give ownership of this Widget to.
     """
 
     def __init__(self, header, data, parent=None):
-        """ TreeModel constructor
-        :param header: The header to use
-        :type header: Iterable
-        :param parent: A QWidget that QT will give ownership of this Widget too.
-        """
         super().__init__(parent)
 
         self.header = header
@@ -66,12 +49,10 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
 
     def add_node(self, parameter, parent=None):
         """ Add a row in the sequencer """
-        print_debug("add_node", parameter, parent)
         if parent is None:
             parent = self.createIndex(-1, -1)
 
         idx = len(self.root.children(parent))
-        print_debug("add_node", " idx", idx)
         parent_seq_item = parent.internalPointer()
 
         self.beginInsertRows(parent, idx, idx)
@@ -80,10 +61,10 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         return self.createIndex(child_row, 0, seq_item)
 
     def remove_node(self, index):
-        """ Remove a row in the sequencer """
-        print_debug("remove_node", index, index.internalPointer())
+        """ Remove a row in the sequencer
+        """
+
         children = self.rowCount(index)
-        print_debug("remove_node", "children", children)
         seq_item = index.internalPointer()
         # Remove children from last to first
         while (children > 0):
@@ -98,8 +79,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         return self.createIndex(parent_row, 0, parent_seq_item)
 
     def flags(self, index):
-        """ QAbstractItemModel override method that is used to set the flags
-            for the item at the given QModelIndex.
+        """ Set the flags for the item at the given QModelIndex.
 
             Here, we just set all indexes to enabled, and selectable.
         """
@@ -125,13 +105,11 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         elif not role == QtCore.Qt.ItemDataRole.DisplayRole:
             return
 
-        print_debug("data", index.row(), index.column(), index.internalPointer())
         data = index.internalPointer()[index.column()]
 
         if not isinstance(data, QtCore.QObject):
             data = str(data)
 
-        print_debug("data", "ret", data)
         return data
 
     def index(self, row, col, parent):
@@ -139,7 +117,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             This method should not be called directly. This method is called implicitly by the
             QTreeView that is displaying us, as the way of finding out what to display where.
         """
-        print_debug("index", row, col, parent.row(), parent.column(), parent.internalPointer())
         if not parent or not parent.isValid():
             parent_data = None
         else:
@@ -150,7 +127,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         if child is None:
             return QtCore.QModelIndex()
         index = self.createIndex(row, col, child)
-        print_debug("index", "ret", index.row(), index.column(), index.internalPointer())
         return index
 
     def parent(self, index=None):
@@ -162,11 +138,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         :return:
         """
 
-        if index:
-            print_debug("parent", index.row(), index.column(), index.internalPointer())
-        else:
-            print_debug("parent", index)
-
         if not index or not index.isValid():
             return QtCore.QModelIndex()
 
@@ -177,7 +148,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             return QtCore.QModelIndex()
 
         index = self.createIndex(parent_row, 0, parent)
-        print_debug("parent", "ret", parent_row, index.row(), index.column(), child)
         return index
 
     def rowCount(self, parent):
@@ -187,7 +157,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
 
         :param parent: QModelIndex
         """
-        print_debug("rowCount", parent, parent.internalPointer())
         if parent.column() > 0:
             return 0
 
@@ -197,7 +166,6 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             parent = parent.internalPointer()
 
         rows = len(self.root.children(parent))
-        print_debug("rowCount", "ret", rows, parent)
         return rows
 
     def columnCount(self, parent):
@@ -214,13 +182,11 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             This method is called implicitly by the QTreeView that is displaying us,
             as the way of finding out what to display where.
         """
-        print_debug("headerData", section, orientation, role)
         if orientation == QtCore.Qt.Orientation.Horizontal and \
            role == QtCore.Qt.ItemDataRole.DisplayRole:
             return self.header[section]
 
     def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
-        print_debug("setData", index, value, role)
         return_value = False
         if role == QtCore.Qt.ItemDataRole.EditRole:
             return_value = self.root.set_data(index.internalPointer(),
