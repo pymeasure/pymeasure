@@ -24,7 +24,9 @@
 
 import pytest
 from pymeasure.instruments.agilent.agilent33500 import Agilent33500
-from pyvisa.errors import VisaIOError
+
+
+# from pyvisa.errors import VisaIOError
 
 ############
 # FIXTURES #
@@ -42,6 +44,11 @@ def generator():
     generator.ch[1].output = 'off'
     generator.ch[2].output = 'off'
 
+
+CHANNELS = [1, 2]
+WF_SHAPES = ['SIN', 'SQU', 'TRI', 'RAMP', 'PULS', 'PRBS', 'NOIS', 'ARB', 'DC']
+AMPLITUDE_RANGE = [0.01, 10]
+AMPLITUDE_UNIT = ["VPP", "VRMS", "DBM"]
 #########
 # TESTS #
 #########
@@ -51,21 +58,35 @@ def test_get_instrument_id(generator):
     assert "Agilent Technologies" in generator.id
 
 
-@pytest.mark.parametrize('channel', [1, 2])
+@pytest.mark.parametrize('channel', CHANNELS)
 def test_turn_on_channel(generator, channel):
     generator.ch[channel].output = 'on'
     assert generator.ch[channel].output
 
 
-@pytest.mark.parametrize('shape', ['SIN', 'SQU', 'TRI', 'RAMP', 'PULS', 'PRBS', 'NOIS', 'ARB', 'DC'])
-@pytest.mark.parametrize('channel', [1,2])
+@pytest.mark.parametrize('shape', WF_SHAPES)
+@pytest.mark.parametrize('channel', CHANNELS)
 def test_shape_channel(generator, shape, channel):
     generator.ch[channel].shape = shape
     assert shape == generator.ch[channel].shape
 
 
 @pytest.mark.parametrize('frequency', [0.1, 1, 10, 100, 1000])
-@pytest.mark.parametrize('channel', [1,2])
+@pytest.mark.parametrize('channel', CHANNELS)
 def test_frequency_channel(generator, frequency, channel):
     generator.ch[channel].frequency = frequency
-    assert frequency == pytest.approx(generator.ch[channel].frequency, 0.1)
+    assert frequency == pytest.approx(generator.ch[channel].frequency, 0.01)
+
+
+@pytest.mark.parametrize('amplitude', AMPLITUDE_RANGE)
+@pytest.mark.parametrize('channel', CHANNELS)
+def test_amplitude_channel(generator, amplitude, channel):
+    generator.ch[channel].amplitude = amplitude
+    assert amplitude == pytest.approx(generator.ch[channel].amplitude, 0.01)
+
+
+@pytest.mark.parametrize('amplitude_unit', AMPLITUDE_UNIT)
+@pytest.mark.parametrize('channel', CHANNELS)
+def test_amplitude_unit_channel(generator, amplitude_unit, channel):
+    generator.ch[channel].amplitude_unit = amplitude_unit
+    assert amplitude_unit == generator.ch[channel].amplitude_unit
