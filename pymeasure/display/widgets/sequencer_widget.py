@@ -246,13 +246,8 @@ class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         editor = QtWidgets.QComboBox(parent)
-        editor.currentIndexChanged.connect(self.commit_editor)
         editor.addItems(self.items)
         return editor
-
-    def commit_editor(self):
-        editor = self.sender()
-        self.commitData.emit(editor)
 
     def setEditorData(self, editor, index):
         value = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
