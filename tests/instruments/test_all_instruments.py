@@ -54,14 +54,97 @@ proper_adapters = ["IBeamSmart", "ANC300Controller"]
 init = ["ThorlabsPM100USB", "Keithley2700", "TC038", "Agilent34450A",
         "AWG401x_AWG", "AWG401x_AFG", "VARX", "HP8116A"]
 # Instruments which require more input arguments
-init.extend(["Instrument", "ATSBase"])
+name_required = ["ATSBase"]
 
 
 @pytest.mark.parametrize("cls", devices)
-def test_args(cls):
+def test_adapter_arg(cls):
     "Test that every instrument has adapter as their input argument"
     if cls.__name__ in proper_adapters:
         pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
-    elif cls.__name__ in init:
+    elif cls.__name__ in (*init, *name_required, "Instrument"):
         pytest.skip(f"{cls.__name__} requires communication in init.")
     cls(adapter=MagicMock())
+
+
+# Instruments which do not yet accept "name" argument
+nameless_instruments = [
+    "AdvantestR3767CG",
+    "Agilent33220A",
+    "Agilent33500",
+    "Agilent33521A",
+    "Agilent34410A",
+    "Agilent4156",
+    "Agilent8257D",
+    "Agilent8722ES",
+    "AgilentB1500",
+    "AgilentE4408B",
+    "AgilentE4980",
+    "Ametek7270",
+    "AMI430",
+    "DPSeriesMotorController",
+    "APSIN12G",
+    "AnritsuMG3692C",
+    "AnritsuMS9740A",
+    "Danfysik8500",
+    "SM7045D",
+    "EurotestHPP120256",
+    "Fluke7341",
+    "FWBell5080",
+    "ND287",
+    "HP33120A",
+    "HP3437A",
+    "HP34401A",
+    "HP3478A",
+    "HP6632A",
+    "HP6633A",
+    "HP6634A",
+    "HP8657B",
+    "Keithley2000",
+    "Keithley2306",
+    "Keithley2400",
+    "Keithley2450",
+    "Keithley2600",
+    "Keithley2750",
+    "Keithley6221",
+    "Keithley6517B",
+    "KeysightDSOX1102G",
+    "KeysightN5767A",
+    "KeysightN7776C",
+    "LakeShore331",
+    "LakeShore421",
+    "LakeShore425",
+    "ESP300",
+    "ParkerGV6",
+    "razorbillRP100",
+    "FSL",
+    "SFM",
+    "SPD1168X",
+    "SPD1305X",
+    "DSP7265",
+    "SG380",
+    "SR510",
+    "SR570",
+    "SR830",
+    "SR860",
+    "AFG3152C",
+    "TDS2000",
+    "ATS525",
+    "ATS545",
+    "ECO560",
+    "Thermotron3800",
+    "ThorlabsPro8000",
+    "Yokogawa7651",
+    "YokogawaGS200",
+]
+
+
+@pytest.mark.parametrize("cls", devices)
+def test_name_argument(cls):
+    "Test that every instrument accepts a name argument"
+    if cls.__name__ in (*proper_adapters, *init):
+        pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ in nameless_instruments:
+        pytest.skip(f"{cls.__name__} does not accept a name argument.")
+    inst = cls(adapter=MagicMock(), name="Name_Test")
+    assert inst.name == "Name_Test"
