@@ -232,7 +232,7 @@ class SPDBase(Instrument):
             ``True``: enables the local interface
             ``False``: disables it.
         """
-        self.write(("*UNLOCK" if enable else "*LOCK"))
+        self.write("*UNLOCK" if enable else "*LOCK")
 
     def shutdown(self):
         """ Ensure that the voltage is turned to zero
@@ -251,4 +251,4 @@ class SPDSingleChannelBase(SPDBase):
             ``True``: enables 4-wire mode
             ``False``: disables it.
         """
-        self.write(f'MODE:SET {("4W" if enable else "2W")}')
+        self.write(f'MODE:SET {"4W" if enable else "2W"}')
