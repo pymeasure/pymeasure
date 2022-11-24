@@ -255,7 +255,25 @@ class TestRemoveChild:
         assert getattr(parent_without_children, "function", None) is None
 
 
-# Test ChildDescriptor
+class TestInheritanceWithChildren:
+    class InstrumentSubclass(Parent):
+        """Override one channel group, inherit other groups."""
+        function = CommonBase.ChannelCreator(GenericBase, "overridden", prefix=None)
+
+    def test_inherited_children_present(self):
+        parent = self.InstrumentSubclass(ProtocolAdapter())
+        assert isinstance(parent.ch_A, GenericBase)
+
+    def test_ChannelCreator_is_replaced(self):
+        parent = self.InstrumentSubclass(ProtocolAdapter())
+        assert not isinstance(parent.channels, CommonBase.ChannelCreator)
+
+    def test_overridden_children(self):
+        parent = self.InstrumentSubclass(ProtocolAdapter())
+        assert parent.function.id == "overridden"
+
+
+# Test ChannelCreator
 @pytest.mark.parametrize("args, pairs, kwargs", (
     ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
     (((Child, GenericBase, Child), (1, 2, 3)),
