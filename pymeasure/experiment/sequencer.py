@@ -66,7 +66,7 @@ class SequenceItem(object):
         return "{} \"{}\" \"{}\"".format("-"*(self.level + 1), self.parameter, self.expression)
 
 
-class SequenceFileHandler():
+class SequenceFileHandler:
     """ Represent a sequence file and its methods
 
     A sequence file is a text file which represent a tree structure.
@@ -258,11 +258,11 @@ class SequenceFileHandler():
         return child
 
     def get_children_order(self, seq_item):
-        """ Return the children of order of the node identified by seq_item
+        """ Return the children order of the node identified by seq_item
 
         The children order is the index related to the parent's children list.
 
-        Provide example here: TODO
+        :param seq_item: SequenceItem instance or None
         """
 
         if seq_item is None:
@@ -341,10 +341,13 @@ class SequenceFileHandler():
             current_parent = data
             self._sequences.append(data)
 
-    def save(self, filename=None):
-        """ Save modified sequence to file """
-        for item in self.sequences:
-            print(str(item))
+    def save(self, stream):
+        """ Save modified sequence to file stream
+
+        :param stream: file object
+        """
+        if stream:
+            stream.write("\n".join(str(item) for item in self.sequences))
 
     def parameters_sequence(self, names_map=None):
         """
@@ -430,3 +433,4 @@ if __name__ == "__main__":
     print(s.parameters_sequence(names_map))
     print(s.sequences)
     print(s[2])
+    s.save(sys.stdout)
