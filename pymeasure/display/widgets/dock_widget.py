@@ -51,15 +51,16 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         than x_axis_labels the last item in the list to match x_axis_labels length.
     :param linewidth: line width for plots in
         :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
+    :param layout_path: Directory path to save dock layout state. Default is './'
     :param parent: Passed on to QtWidgets.QWidget. Default is None
     """
 
     def __init__(self, name, procedure_class, x_axis_labels=None, y_axis_labels=None, linewidth=1,
-                 parent=None):
+                 layout_path='./', parent=None):
         super().__init__(name, parent)
 
         self.procedure_class = procedure_class
-        self.dock_state_filename = './' + procedure_class.__name__ + '_dock_state.json'
+        self.dock_layout_filename = layout_path + procedure_class.__name__ + '_dock_layout.json'
         self.x_axis_labels = x_axis_labels
         self.y_axis_labels = y_axis_labels
         self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))
@@ -72,15 +73,15 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         self._setup_ui()
         self._layout()
 
-    def save_dock_state(self):
-        state = self.dock_area.saveState()
-        with open(self.dock_state_filename, 'w') as f:
-            f.write(json.dumps(state))
-            log.info('Saved dock layout to file %s' % self.dock_state_filename)
+    def save_dock_layout(self):
+        layout = self.dock_area.saveState()
+        with open(self.dock_layout_filename, 'w') as f:
+            f.write(json.dumps(layout))
+            log.info('Saved dock layout to file %s' % self.dock_layout_filename)
 
     def _setup_ui(self):
         self.save_layout_button = QtWidgets.QPushButton('Save Dock Layout', self)
-        self.save_layout_button.clicked.connect(self.save_dock_state)
+        self.save_layout_button.clicked.connect(self.save_dock_layout)
         self.save_layout_button.setToolTip("Save current dock layout to file in working directory.")
 
         for i in range(self.num_plots):
@@ -108,14 +109,14 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         vbox.addWidget(self.dock_area)
         self.setLayout(vbox)
 
-        # Load dock state file if it exists in the directory of the current procedure
-        if path.exists(self.dock_state_filename):
-            with open(self.dock_state_filename, 'r') as f:
-                dock_state = f.read()
+        # Load dock layout file if it exists in the directory of the current procedure
+        if path.exists(self.dock_layout_filename):
+            with open(self.dock_layout_filename, 'r') as f:
+                dock_layout = f.read()
                 # make sure number of docks in the file matches num_plots
-                if dock_state.count('dock') == self.num_plots:
-                    self.dock_area.restoreState(json.loads(dock_state))
-                    log.info('Loaded dock layout from file %s' % self.dock_state_filename)
+                if dock_layout.count('dock') == self.num_plots:
+                    self.dock_area.restoreState(json.loads(dock_layout))
+                    log.info('Loaded dock layout from file %s' % self.dock_layout_filename)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
