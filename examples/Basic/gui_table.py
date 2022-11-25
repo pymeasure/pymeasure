@@ -16,8 +16,8 @@ from time import sleep
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results, unique_filename
 from pymeasure.display.Qt import QtWidgets
-from pymeasure.display.windows import ManagedWindow
-from pymeasure.display.widgets import TableWidget
+from pymeasure.display.windows import ManagedWindowBase
+from pymeasure.display.widgets import TableWidget, LogWidget
 
 import logging
 log = logging.getLogger('')
@@ -55,17 +55,18 @@ class TestProcedure(Procedure):
         log.info("Finished")
 
 
-class ManagedWindowWithTable(ManagedWindow):
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
+class ManagedWindowWithTable(ManagedWindowBase):
+    def __init__(self, procedure_class, **kwargs):
+        self.log_widget = LogWidget("Experiment Log")
         self.table_widget = TableWidget("Experiment Table",
                                         procedure_class.DATA_COLUMNS,
                                         by_column = True,
                                         )
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.table_widget, )
+        kwargs["widget_list"] = kwargs["widget_list"] + (self.table_widget, self.log_widget)
 
-        super().__init__(procedure_class, x_axis, y_axis, linewidth, **kwargs)
+        super().__init__(procedure_class, **kwargs)
 
 
 class MainWindow(ManagedWindowWithTable):
@@ -73,10 +74,6 @@ class MainWindow(ManagedWindowWithTable):
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
-            inputs=['iterations', 'delay', 'seed'],
-            displays=['iterations', 'delay', 'seed'],
-            x_axis='Iteration',
-            y_axis='Random Number'
         )
         self.setWindowTitle('GUI Example')
 
