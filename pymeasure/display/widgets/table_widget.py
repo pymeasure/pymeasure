@@ -32,7 +32,7 @@ from ..Qt import QtCore, QtWidgets, QtGui
 from .tab_widget import TabWidget
 from ...experiment import Procedure
 
-SORT_ROLE = QtCore.Qt.UserRole + 1
+SORT_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
 SORTING_ENABLED = True
 
 log = logging.getLogger(__name__)
@@ -136,8 +136,8 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     def columnCount(self, parent=None):
         return self.column_count
 
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if index.isValid() and role in (QtCore.Qt.DisplayRole, SORT_ROLE):
+    def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
+        if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
             result, row, col = self.translate_to_local(index.row(), index.column())
             try:
                 value = result.data.iloc[row][col]
@@ -151,7 +151,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
                 # limit maximum number of decimal digits displayed
                 value_render = f"{value_render:.{result.float_digits:d}f}"
 
-            if role == QtCore.Qt.DisplayRole:
+            if role == QtCore.Qt.ItemDataRole.DisplayRole:
                 return (str(value_render))
             elif role == SORT_ROLE:
                 # For numerical sort
@@ -178,7 +178,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
         Override method from QAbstractTableModel
         """
-        if role == QtCore.Qt.DisplayRole:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return str(self.horizontal_header[section])
 
@@ -402,7 +402,7 @@ class Table(QtWidgets.QTableView):
         self.setModel(model)
         self.horizontalHeader().setStyleSheet("font: bold;")
         self.setSortingEnabled(True)
-        self.sortByColumn(-1, QtCore.Qt.AscendingOrder)
+        self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
         self.horizontalHeader().setSectionsMovable(True)
         self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
