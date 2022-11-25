@@ -119,7 +119,6 @@ class CommonBase:
 
     def __init__(self):
         self._special_names = self._setup_special_names()
-        # Add children from ChannelCreators.
         self._create_channels()
 
     class ChannelCreator:
@@ -190,12 +189,22 @@ class CommonBase:
         return special_names
 
     def _create_channels(self):
-        """Create channels according to the ChannelCreator objects."""
-        for item, value in self.__class__.__dict__.items():
-            if isinstance(value, self.ChannelCreator):
-                for cls, id in value.pairs:
-                    child = self.add_child(cls, id, collection=item, **value.kwargs)
-                    child._protected = True
+        """Create channels according to the ChannelCreator objects.
+
+        If a subclass overrides a ChannelCreator object with another one, the
+        one of the subclass is used, not that of the superclass.
+        """
+        channel_creators = {}
+        # Collect all ChannelCreators, override in order of subclasses
+        for obj in reversed((self,) + self.__class__.__mro__):
+            for item, value in obj.__dict__.items():
+                if isinstance(value, self.ChannelCreator):
+                    channel_creators[item] = value
+        # Create the channels
+        for name, creator in channel_creators.items():
+            for cls, id in creator.pairs:
+                child = self.add_child(cls, id, collection=name, **creator.kwargs)
+                child._protected = True
 
     def __setattr__(self, name, value):
         """ Add reserved_prefix in front of special variables."""
