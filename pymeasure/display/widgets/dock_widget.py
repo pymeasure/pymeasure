@@ -127,14 +127,6 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             curves.append(self.plot_frames[i].new_curve(results, color=pg.intColor(0), **kwargs))
         return curves
 
-    def update_x_column(self, index):
-        for i in range(self.num_plots):
-            self.plot_frames[i].update_x_column(index)
-
-    def update_y_column(self, index, plot_idx):
-        axis = self.columns_y[plot_idx].itemText(index)
-        self.plot_frames[plot_idx].change_y_axis(axis)
-
     def clear(self):
         for i in range(self.num_plots):
             self.plot_frames[i].plot.clear()
