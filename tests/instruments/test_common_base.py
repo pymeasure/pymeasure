@@ -267,7 +267,7 @@ class TestInheritanceWithChildren:
     def test_inherited_children_are_present(self, parent):
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_ChannelCreator_is_replaced(self, parent):
+    def test_ChannelCreator_is_replaced_by_channel_collection(self, parent):
         assert not isinstance(parent.channels, CommonBase.ChannelCreator)
 
     def test_overridden_child_is_present(self, parent):
