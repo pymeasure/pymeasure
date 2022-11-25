@@ -260,16 +260,17 @@ class TestInheritanceWithChildren:
         """Override one channel group, inherit other groups."""
         function = CommonBase.ChannelCreator(GenericBase, "overridden", prefix=None)
 
-    def test_inherited_children_present(self):
-        parent = self.InstrumentSubclass(ProtocolAdapter())
+    @pytest.fixture()
+    def parent(self):
+        return self.InstrumentSubclass(ProtocolAdapter())
+
+    def test_inherited_children_are_present(self, parent):
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_ChannelCreator_is_replaced(self):
-        parent = self.InstrumentSubclass(ProtocolAdapter())
+    def test_ChannelCreator_is_replaced(self, parent):
         assert not isinstance(parent.channels, CommonBase.ChannelCreator)
 
-    def test_overridden_children(self):
-        parent = self.InstrumentSubclass(ProtocolAdapter())
+    def test_overridden_child_is_present(self, parent):
         assert parent.function.id == "overridden"
 
 
