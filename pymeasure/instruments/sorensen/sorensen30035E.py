@@ -53,7 +53,7 @@ class Sorensen30035E(Instrument):
             adapter, "Sorensen 300-3.5E DC Power Supply", **kwargs
         )
 
-    source_delay = Instrument.control(
+    output_delay = Instrument.control(
         "OUTPut:PROTection:DELay?", "OUTPut:PROTection:DELay %g",
         """ A floating point property that sets a manual delay for the source
         after the output is turned on before a measurement is taken and the reverse.
@@ -67,7 +67,7 @@ class Sorensen30035E(Instrument):
     ###############
 
     current = Instrument.measurement(
-        "MEASure:CURRent?",
+        "MEAS:CURRent?",
         """ Returns the actual current in Amps. Note that this is subject to the precision
         and calibration of the internal DMM.
         """
@@ -117,7 +117,8 @@ class Sorensen30035E(Instrument):
 
     @property
     def output_enabled(self):
-        return self.query("OUTPut:ISOLation?")
+        mapper = {'0': False, '1': True}
+        return mapper[self.ask("OUTPut:ISOLation?")]
 
     @output_enabled.setter
     def output_enabled(self, state):
@@ -169,4 +170,4 @@ class Sorensen30035E(Instrument):
             if i > 3 * voltage:
                 raise ValueError("Voltage has not reached zero in reasonable time,"
                                  "giving up, OUTPUT IS STILL LIVE")
-        self.source_enable = False
+        self.output_enabled = False
