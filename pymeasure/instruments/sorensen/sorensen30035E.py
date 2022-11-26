@@ -41,7 +41,7 @@ class Sorensen30035E(Instrument):
 
         sorensen.enable_source()                # Enables output of current
         sorensen.ramp_to_voltage(200,200)       # Ramp to 200 V in 200 seconds nominally
-        
+
         print(sorensen.current)                 # Prints the actual current output in Amps
 
         sorensen.shutdown()                     # Ramps the current to 0 mA and disables output
@@ -57,7 +57,6 @@ class Sorensen30035E(Instrument):
         values=[0, 999.9999],
     )
 
-
     ###############
     # Current (A) #
     ###############
@@ -71,7 +70,7 @@ class Sorensen30035E(Instrument):
 
     current_setpoint = Instrument.control(
         "SOUR:CURR?", "SOUR:CURR %g",
-        """ A floating point property that immediately sets the desired current output 
+        """ A floating point property that immediately sets the desired current output
         in Amps, which can take floating point values between 0 and +3.5 A. """,
         validator=strict_range,
         values=[0, 3.5]
@@ -83,9 +82,7 @@ class Sorensen30035E(Instrument):
         for the supply. Can take values floating point from 0 and +3.5 A. """,
         validator=strict_range,
         values=[0, 3.5]
-    )    
-
-
+    )
 
     ###############
     # Voltage (V) #
@@ -99,7 +96,7 @@ class Sorensen30035E(Instrument):
     )
     voltage_setpoint = Instrument.control(
         "SOUR:VOLT?", "SOUR:VOLT %g",
-        """ A floating point property that immediately sets the desired voltage output 
+        """ A floating point property that immediately sets the desired voltage output
         in Volts, which can take floating point values between 300 and 300 V. """,
         validator=strict_range,
         values=[-300, 300]
@@ -111,8 +108,7 @@ class Sorensen30035E(Instrument):
         for the supply. Can take values floating point from 0 and 300 V. """,
         validator=strict_range,
         values=[0, 300]
-    )    
-
+    )
 
     def __init__(self, adapter, **kwargs):
         super(Sorensen30035E, self).__init__(
@@ -155,8 +151,8 @@ class Sorensen30035E(Instrument):
         elif not state:
             if self.source_enabled:
                 if self.current_setpoint > 0:
-                    self.ramp_to_current(0,int(self.current_setpoint)*20)
-                    while self.current>0.01:
+                    self.ramp_to_current(0, int(self.current_setpoint) * 20)
+                    while self.current > 0.01:
                         time.sleep(.1)
                     self.write("OUTPut:ISOLation 0")
 
@@ -164,13 +160,13 @@ class Sorensen30035E(Instrument):
         """ Disables the  output after ramping down at 1 V/s if voltage is non-zero."""
         voltage = self.voltage
         current = self.current
-        if voltage >0.1 or current >0.008:
-            self.ramp_to_voltage(0,voltage)
+        if voltage > 0.1 or current > 0.008:
+            self.ramp_to_voltage(0, voltage)
             i = 0
         while self.voltage >0.1:
             time.sleep(1)
-            i = i+1
+            i = i + 1
             if i > 3*voltage:
-                raise ValueError("Voltage has not reached zero in reasonable time, giving up, OUTPUT IS STILL LIVE")
+                raise ValueError("Voltage has not reached zero in reasonable time,"
+                                 "giving up, OUTPUT IS STILL LIVE")
         self.source_enable = False
-
