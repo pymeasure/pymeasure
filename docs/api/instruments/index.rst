@@ -49,6 +49,7 @@ Instruments by manufacturer:
    razorbill/index
    rohdeschwarz/index
    signalrecovery/index
+   sorensen/index
    srs/index
    tektronix/index
    temptronic/index
