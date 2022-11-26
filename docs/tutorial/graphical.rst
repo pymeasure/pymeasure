@@ -223,30 +223,30 @@ For :class:`~pymeasure.display.plotter.Plotter`, you can make a sub-class that o
             # use logarithmic x-axis (e.g. for frequency sweeps)
             plot.setLogMode(x=True)
 
-For :class:`~pymeasure.display.windows.ManagedWindow`, the mechanism to customize plots is much more flexible by using specialization via inheritance. Indeed :class:`~pymeasure.display.windows.ManagedWindowBase` is the base class for :class:`~pymeasure.display.windows.ManagedWindow` and :class:`~pymeasure.display.windows.ManagedImageWindow` which are subclasses ready to use for GUI.
+For :class:`~pymeasure.display.windows.managed_window.ManagedWindow`, the mechanism to customize plots is much more flexible by using specialization via inheritance. Indeed :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` is the base class for :class:`~pymeasure.display.windows.managed_window.ManagedWindow` and :class:`~pymeasure.display.windows.managed_image_window.ManagedImageWindow` which are subclasses ready to use for GUI.
 
 Defining your own ManagedWindow's widgets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The parameter :code:`widget_list` in :class:`~pymeasure.display.windows.ManagedWindowBase` constructor allow to introduce user's defined widget in the GUI results display area.
-The user's widget should inherit from :class:`~pymeasure.display.widgets.TabWidget` and could reimplement any of the methods that needs customization.
+The parameter :code:`widget_list` in :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` constructor allow to introduce user's defined widget in the GUI results display area.
+The user's widget should inherit from :class:`~pymeasure.display.widgets.tab_widget.TabWidget` and could reimplement any of the methods that needs customization.
 In order to get familiar with the mechanism, users can check the following widgets already provided:
 
-- :class:`~pymeasure.display.widgets.LogWidget`
-- :class:`~pymeasure.display.widgets.PlotWidget`
-- :class:`~pymeasure.display.widgets.ImageWidget`
-
+- :class:`~pymeasure.display.widgets.log_widget.LogWidget`
+- :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
+- :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
+- :class:`~pymeasure.display.widgets.image_widget.DockWidget`
 
 Using the sequencer
 ~~~~~~~~~~~~~~~~~~~
 
-As an extension to the way of graphically inputting parameters and executing multiple measurements using the :class:`~pymeasure.display.windows.ManagedWindow`, :class:`~pymeasure.display.widgets.SequencerWidget` is provided which allows users to queue a series of measurements with varying one, or more, of the parameters. This sequencer thereby provides a convenient way to scan through the parameter space of the measurement procedure.
+As an extension to the way of graphically inputting parameters and executing multiple measurements using the :class:`~pymeasure.display.windows.managed_window.ManagedWindow`, :class:`~pymeasure.display.widgets.sequencer_widget.SequencerWidget` is provided which allows users to queue a series of measurements with varying one, or more, of the parameters. This sequencer thereby provides a convenient way to scan through the parameter space of the measurement procedure.
 
-To activate the sequencer, two additional keyword arguments are added to :class:`~pymeasure.display.windows.ManagedWindow`, namely :code:`sequencer` and :code:`sequencer_inputs`. :code:`sequencer` accepts a boolean stating whether or not the sequencer has to be included into the window and :code:`sequencer_inputs` accepts either :code:`None` or a list of the parameter names are to be scanned over. If no list of parameters is given, the parameters displayed in the manager queue are used.
+To activate the sequencer, two additional keyword arguments are added to :class:`~pymeasure.display.windows.managed_window.ManagedWindow`, namely :code:`sequencer` and :code:`sequencer_inputs`. :code:`sequencer` accepts a boolean stating whether or not the sequencer has to be included into the window and :code:`sequencer_inputs` accepts either :code:`None` or a list of the parameter names are to be scanned over. If no list of parameters is given, the parameters displayed in the manager queue are used.
 
-In order to be able to use the sequencer, the :class:`~pymeasure.display.windows.ManagedWindow` class is required to have a :code:`queue` method which takes a keyword (or better keyword-only for safety reasons) argument :code:`procedure`, where a procedure instance can be passed. The sequencer will use this method to queue the parameter scan. 
+In order to be able to use the sequencer, the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` class is required to have a :code:`queue` method which takes a keyword (or better keyword-only for safety reasons) argument :code:`procedure`, where a procedure instance can be passed. The sequencer will use this method to queue the parameter scan.
 
-In order to implement the sequencer into the previous example, only the :class:`MainWindow` has to be modified slightly (where modified lines are marked):
+In order to implement the sequencer into the previous example, only the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has to be modified slightly (where modified lines are marked):
 
 .. code-block:: python
    :emphasize-lines: 10,11,12,16,19,20
@@ -309,7 +309,7 @@ This file can also be automatically loaded at the start of the program by adding
 Using the directory input
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.ManagedWindow` init. The value of the directory can be retrieved and set using the property :code:`directory`.
+It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` init. The value of the directory can be retrieved and set using the property :code:`directory`.
 A default directory can be defined by setting the :code:`directory` property in the MainWindow init.
 
 Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
@@ -350,7 +350,7 @@ A completer is implemented allowing to quickly select an existing folder, and a 
 Using the estimator widget
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to provide estimates of the measurement procedure, an :class:`~pymeasure.display.widgets.EstimatorWidget` is provided that allows the user to define and calculate estimates.
+In order to provide estimates of the measurement procedure, an :class:`~pymeasure.display.widgets.estimator_widget.EstimatorWidget` is provided that allows the user to define and calculate estimates.
 The widget is automatically activated when the :code:`get_estimates` method is added in the :code:`Procedure`.
 
 The quickest and most simple implementation of the :code:`get_estimates` function simply returns the estimated duration of the measurement in seconds (as an :code:`int` or a :code:`float`).
@@ -458,3 +458,138 @@ Note that in this example, :code:`param_A` and :code:`param_B` are identically g
 
 .. _pyqtgraph: http://www.pyqtgraph.org/
 .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+
+Using the ManagedDockWindow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Building off the `Using the ManagedWindow`_ section where we used a :code:`ManagedWindow`, we can also use :class:`~pymeasure.display.windows.managed_dock_window.ManagedDockWindow` to build a graphical interface with multiple graphs that can be docked in the main GUI window or popped out into their own window.
+
+To start with, let's make the following highlighted edits to the code example from `Using the ManagedWindow`_:
+
+1. On line 10 we now import :class:`~pymeasure.display.windows.managed_dock_window.ManagedDockWindow`
+2. On line 44 we make :code:`MainWindow` a subclass of :code:`ManagedDockWindow`
+3. On line 51 we will pass in a list of strings from :code:`DATA_COLUMNS` to the :code:`x_axis` argument
+4. On line 52 we will pass in a list of strings from :code:`DATA_COLUMNS` to the :code:`y_axis` argument
+
+.. code-block:: python
+   :emphasize-lines: 10,44,51,52
+
+   import logging
+   log = logging.getLogger(__name__)
+   log.addHandler(logging.NullHandler())
+
+   import sys
+   import tempfile
+   import random
+   from time import sleep
+   from pymeasure.display.Qt import QtWidgets
+   from pymeasure.display.windows.managed_dock_window import ManagedDockWindow
+   from pymeasure.experiment import Procedure, Results
+   from pymeasure.experiment import IntegerParameter, FloatParameter, Parameter
+
+   class RandomProcedure(Procedure):
+
+       iterations = IntegerParameter('Loop Iterations', default=10)
+       delay = FloatParameter('Delay Time', units='s', default=0.2)
+       seed = Parameter('Random Seed', default='12345')
+
+       DATA_COLUMNS = ['Iteration', 'Random Number 1', 'Random Number 2', 'Random Number 3']
+
+       def startup(self):
+           log.info("Setting the seed of the random number generator")
+           random.seed(self.seed)
+
+       def execute(self):
+           log.info("Starting the loop of %d iterations" % self.iterations)
+           for i in range(self.iterations):
+               data = {
+                   'Iteration': i,
+                   'Random Number 1': random.random(),
+                   'Random Number 2': random.random(),
+                   'Random Number 3': random.random()
+               }
+               self.emit('results', data)
+               log.debug("Emitting results: %s" % data)
+               self.emit('progress', 100 * i / self.iterations)
+               sleep(self.delay)
+               if self.should_stop():
+                   log.warning("Caught the stop flag in the procedure")
+                   break
+
+
+   class MainWindow(ManagedDockWindow):
+
+       def __init__(self):
+           super().__init__(
+               procedure_class=RandomProcedure,
+               inputs=['iterations', 'delay', 'seed'],
+               displays=['iterations', 'delay', 'seed'],
+               x_axis=['Iteration', 'Random Number 1'],
+               y_axis=['Random Number 1','Random Number 2', 'Random Number 3']
+           )
+           self.setWindowTitle('GUI Example')
+
+       def queue(self):
+           filename = tempfile.mktemp()
+
+           procedure = self.make_procedure()
+           results = Results(procedure, filename)
+           experiment = self.new_experiment(results)
+
+           self.manager.queue(experiment)
+
+
+   if __name__ == "__main__":
+       app = QtWidgets.QApplication(sys.argv)
+       window = MainWindow()
+       window.show()
+       sys.exit(app.exec())
+
+Now we can see our :code:`ManagedDockWindow`:
+
+.. image:: managed_dock_window.png
+    :alt: Managed dock window
+
+As you can see from the above screenshot, our example code created three docks with following "X Axis" and "Y Axis" labels:
+
+1. **X Axis:** "Iteration"        **Y Axis:** "Random Number 1"
+2. **X Axis:** "Random Number 1"  **Y Axis:** "Random Number 2"
+3. **X Axis:** "Random Number 1"  **Y Axis:** "Random Number 3"
+
+The list of strings for :code:`x_axis` and :code:`y_axis` set the default labels for each dockable plot and the longest list determines how many dockable plots are created. To highlight this point, in our example we define :code:`x_axis` and :code:`y_axis` with the following lists::
+
+   x_axis=['Iteration', 'Random Number 1'],
+   y_axis=['Random Number 1','Random Number 2', 'Random Number 3']
+
+If one list is longer than the last element if the other list is used as the default label for the rest of the dockable plots.
+In our example that is why we have two **X Axis** labels with "Random Number 1".
+The longest list between :code:`x_axis` and :code:`y_axis` determines the number of plots.
+In our example :code:`y_axis` has the longest list with a length of three so three plots are created.
+
+You can pop out a dockable plot from the main dock window to its own window by double clicking the blue "Dock #" title bar, which is to the left of each plot by default:
+
+.. image:: managed_dock_window_popup.gif
+    :alt: Pop up a managed dock window
+
+You can return the popped out window to the main window by clicking the close icon X in the top right.
+
+You can drag a dockable plot to reposition it in reference to other plots in the main dock window in several ways. You can drag the blue "Dock #" title bar to the left or right side of another plot to reposition a plot to be side by side with another plot:
+
+.. image:: managed_dock_window_side_drag.png
+    :alt: Side drag managed dock window
+
+.. image:: managed_dock_window_side_after.png
+    :alt: Side position managed dock window
+
+You can also drag the blue "Dock #" title bar to the top or bottom side of another plot to reposition a plot to rearrange the vertical order of the plots:
+
+.. image:: managed_dock_window_top.png
+    :alt: Top position managed dock window
+
+Finally, you can drag the blue "Dock #" title bar to the middle of another plot to reposition a plot to create a tabbed view of the two plots:
+
+.. image:: managed_dock_window_tab_drag.png
+    :alt: Tab drag managed dock window
+
+.. image:: managed_dock_window_tab_after.png
+    :alt: Tab position managed dock window
