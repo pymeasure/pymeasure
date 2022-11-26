@@ -60,7 +60,7 @@ class ManagedWindowWithTable(ManagedWindowBase):
         self.log_widget = LogWidget("Experiment Log")
         self.table_widget = TableWidget("Experiment Table",
                                         procedure_class.DATA_COLUMNS,
-                                        by_column = True,
+                                        by_column=True,
                                         )
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
