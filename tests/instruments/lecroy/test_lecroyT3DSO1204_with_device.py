@@ -101,9 +101,9 @@ class TestLeCroyT3DSO1204:
 
     # Channel
     def test_ch_current_configuration(self, autoscaled_scope):
-        autoscaled_scope.ch1.offset = 0
-        autoscaled_scope.ch1.trigger_level = 0
-        autoscaled_scope.ch1.trigger_level2 = 0
+        autoscaled_scope.ch_1.offset = 0
+        autoscaled_scope.ch_1.trigger_level = 0
+        autoscaled_scope.ch_1.trigger_level2 = 0
         expected = {"channel": 1,
                     "attenuation": 1.,
                     "bandwidth_limit": False,
@@ -163,21 +163,21 @@ class TestLeCroyT3DSO1204:
 
     def test_ch_trigger_level(self, autoscaled_scope):
         for case in self.TRIGGER_LEVELS:
-            autoscaled_scope.ch1.trigger_level = case
-            assert autoscaled_scope.ch1.trigger_level == case
+            autoscaled_scope.ch_1.trigger_level = case
+            assert autoscaled_scope.ch_1.trigger_level == case
 
     def test_ch_trigger_level2(self, autoscaled_scope):
         for case in self.TRIGGER_LEVELS:
-            autoscaled_scope.ch1.trigger_level2 = case
-            assert autoscaled_scope.ch1.trigger_level2 == case
+            autoscaled_scope.ch_1.trigger_level2 = case
+            assert autoscaled_scope.ch_1.trigger_level2 == case
 
     def test_ch_trigger_slope(self, autoscaled_scope):
         with pytest.raises(ValueError):
-            autoscaled_scope.ch1.trigger_slope = "abcd"
+            autoscaled_scope.ch_1.trigger_slope = "abcd"
         autoscaled_scope.trigger_select = ("edge", "c1", "off")
         for case in self.TRIGGER_SLOPES:
-            autoscaled_scope.ch1.trigger_slope = case
-            assert autoscaled_scope.ch1.trigger_slope == case
+            autoscaled_scope.ch_1.trigger_slope = case
+            assert autoscaled_scope.ch_1.trigger_slope == case
 
     # Timebase
     def test_timebase(self, autoscaled_scope):
@@ -242,7 +242,7 @@ class TestLeCroyT3DSO1204:
 
     def test_waveform_preamble(self, autoscaled_scope):
         autoscaled_scope.acquisition_type = "normal"
-        autoscaled_scope.ch1.offset = 0
+        autoscaled_scope.ch_1.offset = 0
         autoscaled_scope.waveform_points = 0
         autoscaled_scope.waveform_first_point = 0
         autoscaled_scope.waveform_sparsing = 1
@@ -356,7 +356,7 @@ class TestLeCroyT3DSO1204:
 
     def test_download_single_point(self, scope):
         scope.acquisition_type = "normal"
-        scope.ch1.display = True
+        scope.ch_1.display = True
         scope.single()
         data, time, preamble = scope.download_waveform(source="c1", requested_points=1)
         assert type(data) is np.ndarray
@@ -378,7 +378,7 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_all_points(self, scope):
         from matplotlib import pyplot as plt
-        scope.ch1.display = True
+        scope.ch_1.display = True
         scope.single()
         sleep(1)
         data, time, preamble = scope.download_waveform(source="c1", requested_points=0)
@@ -392,7 +392,7 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_sparsing(self, scope):
         from matplotlib import pyplot as plt
-        scope.ch1.display = True
+        scope.ch_1.display = True
         scope.single()
         sleep(1)
         data, time, preamble = scope.download_waveform(source="c1", requested_points=7e5,
@@ -412,7 +412,7 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_averaging_16(self, scope):
         from matplotlib import pyplot as plt
-        scope.ch1.display = True
+        scope.ch_1.display = True
         scope.run()
         scope.acquisition_type = "average"
         scope.acquisition_average = 16
@@ -435,7 +435,7 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_averaging_256(self, scope):
         from matplotlib import pyplot as plt
-        scope.ch1.display = True
+        scope.ch_1.display = True
         scope.run()
         scope.acquisition_type = "average"
         scope.acquisition_average = 256

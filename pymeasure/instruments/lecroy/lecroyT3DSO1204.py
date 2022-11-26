@@ -510,10 +510,10 @@ class LeCroyT3DSO1204(Instrument):
         self._seconds_since_last_write = 0  # Timestamp of the last command
         self._header_size = 16  # bytes
         self._footer_size = 2  # bytes
-        self.ch1 = Channel(self, 1)
-        self.ch2 = Channel(self, 2)
-        self.ch3 = Channel(self, 3)
-        self.ch4 = Channel(self, 4)
+        self.ch_1 = ScopeChannel(self, 1)
+        self.ch_2 = ScopeChannel(self, 2)
+        self.ch_3 = ScopeChannel(self, 3)
+        self.ch_4 = ScopeChannel(self, 4)
         self.waveform_source = "C1"
         self.default_setup()
 

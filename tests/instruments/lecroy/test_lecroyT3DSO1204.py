@@ -66,10 +66,10 @@ def test_bwlimit():
              (b"C1:BWL?", b"ON")
              ]
     ) as instr:
-        instr.ch1.bwlimit = False
-        assert instr.ch1.bwlimit is False
-        instr.ch1.bwlimit = True
-        assert instr.ch1.bwlimit is True
+        instr.ch_1.bwlimit = False
+        assert instr.ch_1.bwlimit is False
+        instr.ch_1.bwlimit = True
+        assert instr.ch_1.bwlimit is True
 
 
 def test_coupling():
@@ -84,12 +84,12 @@ def test_coupling():
              (b"C1:CPL?", b"GND")
              ],
     ) as instr:
-        instr.ch1.coupling = "dc 1M"
-        assert instr.ch1.coupling == "dc 1M"
-        instr.ch1.coupling = "ac 1M"
-        assert instr.ch1.coupling == "ac 1M"
-        instr.ch1.coupling = "ground"
-        assert instr.ch1.coupling == "ground"
+        instr.ch_1.coupling = "dc 1M"
+        assert instr.ch_1.coupling == "dc 1M"
+        instr.ch_1.coupling = "ac 1M"
+        assert instr.ch_1.coupling == "ac 1M"
+        instr.ch_1.coupling = "ground"
+        assert instr.ch_1.coupling == "ground"
 
 
 def test_offset():
@@ -100,8 +100,8 @@ def test_offset():
              (b"C1:OFST?", b"1.00E+00")
              ]
     ) as instr:
-        instr.ch1.offset = 1.
-        assert instr.ch1.offset == 1.
+        instr.ch_1.offset = 1.
+        assert instr.ch_1.offset == 1.
 
 
 def test_attenuation():
@@ -114,10 +114,10 @@ def test_attenuation():
              (b"C1:ATTN?", b"0.1")
              ]
     ) as instr:
-        instr.ch1.probe_attenuation = 100
-        assert instr.ch1.probe_attenuation == 100
-        instr.ch1.probe_attenuation = 0.1
-        assert instr.ch1.probe_attenuation == 0.1
+        instr.ch_1.probe_attenuation = 100
+        assert instr.ch_1.probe_attenuation == 100
+        instr.ch_1.probe_attenuation = 0.1
+        assert instr.ch_1.probe_attenuation == 0.1
 
 
 def test_skew_factor():
@@ -128,8 +128,8 @@ def test_skew_factor():
              (b"C1:SKEW?", b"1.00E-07S"),
              ]
     ) as instr:
-        instr.ch1.skew_factor = 1e-7
-        assert instr.ch1.skew_factor == 1e-7
+        instr.ch_1.skew_factor = 1e-7
+        assert instr.ch_1.skew_factor == 1e-7
 
 
 def test_channel_setup():
@@ -151,7 +151,7 @@ def test_channel_setup():
              (b"C1:TRSL?", b"POS"),
              ]
     ) as instr:
-        assert instr.ch1.current_configuration == {"channel": 1,
+        assert instr.ch_1.current_configuration == {"channel": 1,
                                                    "attenuation": 1.,
                                                    "bandwidth_limit": False,
                                                    "coupling": "dc 1M",
@@ -162,10 +162,10 @@ def test_channel_setup():
                                                    "volts_div": 0.05,
                                                    "inverted": False,
                                                    "trigger_coupling": "dc",
-                                                   "trigger_level": 0.150,
-                                                   "trigger_level2": 0.150,
-                                                   "trigger_slope": "positive"
-                                                   }
+                                                    "trigger_level": 0.150,
+                                                    "trigger_level2": 0.150,
+                                                    "trigger_slope": "positive"
+                                                    }
 
 
 def test_memory_size():
@@ -426,7 +426,7 @@ def test_measure_parameter():
              ]
     ) as instr:
         assert instr.measure_parameter("RISE", "channel2") == 3.6e-9
-        assert instr.ch3.measure_parameter("MEAN") == 3.6e-9
+        assert instr.ch_3.measure_parameter("MEAN") == 3.6e-9
 
 
 def test_menu():
