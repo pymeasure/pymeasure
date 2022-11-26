@@ -24,12 +24,12 @@
 
 import pytest
 
-from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
+from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204, sanitize_source
 from pymeasure.test import expected_protocol
 
-INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "LINE", "CHANNEL"]
-VALID_CHANNELS = [('C1', 1), ('CHANNEL2', 2), ('ch 3', 3), ('chan 4', 4), ('\tC3\t', 3),
-                  (' math ', 'MATH')]
+INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "CHANNEL"]
+VALID_CHANNELS = [('C1', 'C1'), ('CHANNEL2', 'C2'), ('ch 3', 'C3'), ('chan 4', 'C4'),
+                  ('\tC3\t', 'C3'), (' math ', 'MATH')]
 
 
 def test_init():
@@ -43,17 +43,12 @@ def test_init():
 @pytest.mark.parametrize("channel", INVALID_CHANNELS)
 def test_invalid_source(channel):
     with pytest.raises(ValueError):
-        with expected_protocol(LeCroyT3DSO1204, [(b"CHDR OFF", None)]) as instr:
-            instr.ch(channel)
+        sanitize_source(channel)
 
 
 @pytest.mark.parametrize("channel", VALID_CHANNELS)
 def test_sanitize_valid_source(channel):
-    with expected_protocol(LeCroyT3DSO1204, [(b"CHDR OFF", None)]) as instr:
-        if isinstance(channel[1], int):
-            assert channel[1] == instr.ch(channel[0]).number
-        else:
-            assert instr == instr.ch(channel[0])
+    assert sanitize_source(channel[0]) == channel[1]
 
 
 def test_bwlimit():
@@ -152,16 +147,16 @@ def test_channel_setup():
              ]
     ) as instr:
         assert instr.ch_1.current_configuration == {"channel": 1,
-                                                   "attenuation": 1.,
-                                                   "bandwidth_limit": False,
-                                                   "coupling": "dc 1M",
-                                                   "offset": -0.150,
-                                                   "skew_factor": 0.,
-                                                   "display": True,
-                                                   "unit": "V",
-                                                   "volts_div": 0.05,
-                                                   "inverted": False,
-                                                   "trigger_coupling": "dc",
+                                                    "attenuation": 1.,
+                                                    "bandwidth_limit": False,
+                                                    "coupling": "dc 1M",
+                                                    "offset": -0.150,
+                                                    "skew_factor": 0.,
+                                                    "display": True,
+                                                    "unit": "V",
+                                                    "volts_div": 0.05,
+                                                    "inverted": False,
+                                                    "trigger_coupling": "dc",
                                                     "trigger_level": 0.150,
                                                     "trigger_level2": 0.150,
                                                     "trigger_slope": "positive"

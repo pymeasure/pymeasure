@@ -344,7 +344,7 @@ class ScopeChannel(Channel):
 
     display_parameter = Instrument.setting(
         "PACU %s",
-        """ The waveform of this channel is processed with the specified algorithm and the result 
+        """ The waveform of this channel is processed with the specified algorithm and the result
         is displayed on the front panel. The commands accepts the following parameters:
         Parameter   Description
         PKPK        vertical peak-to-peak
@@ -501,6 +501,8 @@ class LeCroyT3DSO1204(Instrument):
 
     WRITE_INTERVAL_S = 0.02  # seconds
 
+    channels = Instrument.ChannelCreator(ScopeChannel, (1, 2, 3, 4))
+
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
         if self.adapter.connection is not None:
@@ -509,10 +511,6 @@ class LeCroyT3DSO1204(Instrument):
         self._seconds_since_last_write = 0  # Timestamp of the last command
         self._header_size = 16  # bytes
         self._footer_size = 2  # bytes
-        self.ch_1 = ScopeChannel(self, 1)
-        self.ch_2 = ScopeChannel(self, 2)
-        self.ch_3 = ScopeChannel(self, 3)
-        self.ch_4 = ScopeChannel(self, 4)
         self.waveform_source = "C1"
         self.default_setup()
 
@@ -547,7 +545,7 @@ class LeCroyT3DSO1204(Instrument):
         elif source == "LINE":
             raise ValueError("LINE is not a valid channel")
         else:
-            return getattr(self, f"ch{source if isinstance(source, int) else source[-1]}")
+            return getattr(self, f"ch_{source if isinstance(source, int) else source[-1]}")
 
     def autoscale(self):
         """ Autoscale displayed channels. """
