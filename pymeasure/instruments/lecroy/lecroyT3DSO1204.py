@@ -213,10 +213,6 @@ class ScopeChannel(Channel):
 
     _BOOLS = {True: "ON", False: "OFF"}
 
-    def __init__(self, instrument, number):
-        self.instrument = instrument
-        self.number = number
-
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
         """ Toggles the 20 MHz internal low-pass filter. (strict bool)""",
@@ -389,23 +385,14 @@ class ScopeChannel(Channel):
         else:
             raise ValueError(f"Cannot extract value from output {output}")
 
-    def values(self, command, **kwargs):
-        """ Reads a set of values from the instrument through the adapter,
-        passing on any key-word arguments.
-        """
-        return self.instrument.values("C%d:%s" % (self.number, command), **kwargs)
-
-    def ask(self, command):
-        return self.instrument.ask("C%d:%s" % (self.number, command))
-
-    def write(self, command):
+    def insert_id(self, command):
         # only in case of the BWL and PACU commands the syntax is different. Why? SIGLENT Why?
         if command[0:4] == "BWL ":
-            self.instrument.write("BWL C%d,%s" % (self.number, command[4:]))
+            return "BWL C%d,%s" % (self.id, command[4:])
         elif command[0:5] == "PACU ":
-            self.instrument.write("PACU %s,C%d" % (command[5:], self.number))
+            return "PACU %s,C%d" % (command[5:], self.id)
         else:
-            self.instrument.write("C%d:%s" % (self.number, command))
+            return "C%d:%s" % (self.id, command)
 
     # noinspection PyIncorrectDocstring
     def setup(self, **kwargs):
@@ -453,7 +440,7 @@ class ScopeChannel(Channel):
         """
 
         ch_setup = {
-            "channel": self.number,
+            "channel": self.id,
             "attenuation": self.probe_attenuation,
             "bandwidth_limit": self.bwlimit,
             "coupling": self.coupling,
