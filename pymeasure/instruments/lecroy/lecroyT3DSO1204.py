@@ -163,20 +163,6 @@ def _measure_delay_validator(value, values):
     return output
 
 
-def _set_measure_parameter_validator(value, values):
-    """ Validate the input of the set_measure_parameter property
-    :param value: input parameters as a 2-element tuple
-    :param values: allowed space for each parameter """
-    if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
-    if len(value) != 2:
-        raise ValueError('Number of parameters {} different from 2'.format(len(value)))
-    output = (value[0], sanitize_source(value[1]))
-    for i in range(2):
-        strict_discrete_set(output[i], values=values[i])
-    return output
-
-
 def _intensity_validator(value, values):
     """ Validate the input of the intensity property (grid intensity and trace intensity)
     :param value: input parameters as a 2-element tuple
@@ -353,6 +339,57 @@ class Channel:
         map_values=True
     )
 
+    _measurable_parameters = ["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "CMEAN", "MEAN", "RMS",
+                              "CRMS", "OVSN", "FPRE", "OVSP", "RPRE", "PER", "FREQ", "PWID",
+                              "NWID", "RISE", "FALL", "WID", "DUTY", "NDUTY", "ALL"]
+
+    display_parameter = Instrument.setting(
+        "PACU %s",
+        """ The waveform of this channel is processed with the specified algorithm and the result 
+        is displayed on the front panel. The commands accepts the following parameters:
+        Parameter   Description
+        PKPK        vertical peak-to-peak
+        MAX         maximum vertical value
+        MIN         minimum vertical value
+        AMPL        vertical amplitude
+        TOP         waveform top value
+        BASE        waveform base value
+        CMEAN       average value in the first cycle
+        MEAN        average value
+        RMS         RMS value
+        CRMS        RMS value in the first cycle
+        OVSN        overshoot of a falling edge
+        FPRE        preshoot of a falling edge
+        OVSP        overshoot of a rising edge
+        RPRE        preshoot of a rising edge
+        PER         period
+        FREQ        frequency
+        PWID        positive pulse width
+        NWID        negative pulse width
+        RISE        rise-time
+        FALL        fall-time
+        WID         Burst width
+        DUTY        positive duty cycle
+        NDUTY       negative duty cycle
+        ALL         All measurement """,
+        validator=strict_discrete_set,
+        values=_measurable_parameters
+    )
+
+    def measure_parameter(self, parameter: str):
+        """ Process a waveform with the selected algorithm and returns the specified measurement.
+        :param parameter: same as the display_parameter property
+        """
+        parameter = strict_discrete_set(value=parameter, values=self._measurable_parameters)
+        output = self.ask("PAVA? %s" % parameter)
+        match = re.match(r'^\s*(?P<parameter>\w+),\s*(?P<value>.*)\s*$', output)
+        if match:
+            if match.group('parameter') != parameter:
+                raise ValueError(f"Parameter {match.group('parameter')} different from {parameter}")
+            return float(match.group('value'))
+        else:
+            raise ValueError(f"Cannot extract value from output {output}")
+
     def values(self, command, **kwargs):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
@@ -363,11 +400,11 @@ class Channel:
         return self.instrument.ask("C%d:%s" % (self.number, command))
 
     def write(self, command):
-        # only in case of the BWL command the syntax is different. Why? SIGLENT Why?
-        if command == "BWL OFF":
-            self.instrument.write("BWL C%d,OFF" % self.number)
-        elif command == "BWL ON":
-            self.instrument.write("BWL C%d,ON" % self.number)
+        # only in case of the BWL and PACU commands the syntax is different. Why? SIGLENT Why?
+        if command[0:4] == "BWL ":
+            self.instrument.write("BWL C%d,%s" % (self.number, command[4:]))
+        elif command[0:5] == "PACU ":
+            self.instrument.write("PACU %s,C%d" % (command[5:], self.number))
         else:
             self.instrument.write("C%d:%s" % (self.number, command))
 
@@ -1204,12 +1241,6 @@ class LeCroyT3DSO1204(Instrument):
     #   Measure   #
     ###############
 
-    _measurable_parameters = ["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "CMEAN", "MEAN", "RMS",
-                              "CRMS", "OVSN",
-                              "FPRE", "OVSP", "RPRE", "PER", "FREQ", "PWID", "NWID", "RISE", "FALL",
-                              "WID", "DUTY",
-                              "NDUTY", "ALL"]
-
     measure_delay = Instrument.control(
         "MEAD?", "MEAD %s,%s-%s",
         """ The MEASURE_DELY command places the instrument in the continuous measurement mode and
@@ -1235,65 +1266,18 @@ class LeCroyT3DSO1204(Instrument):
                 ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]
     )
 
-    set_measure_parameter = Instrument.setting(
-        "PACU %s,%s",
-        """ The PARAMETER_CUSTOM command installs a measurement and starts the specified
-        measurement of the specified source.
-        The commands accepts two arguments with the following syntax:
-        measure_parameter = (<parameter>,<source>)
-        <source> := {C1,C2,C3,C4}'
-        <parameter> := one of the following
-        Parameter   Description
-        PKPK        vertical peak-to-peak
-        MAX         maximum vertical value
-        MIN         minimum vertical value
-        AMPL        vertical amplitude
-        TOP         waveform top value
-        BASE        waveform base value
-        CMEAN       average value in the first cycle
-        MEAN        average value
-        RMS         RMS value
-        CRMS        RMS value in the first cycle
-        OVSN        overshoot of a falling edge
-        FPRE        preshoot of a falling edge
-        OVSP        overshoot of a rising edge
-        RPRE        preshoot of a rising edge
-        PER         period
-        FREQ        frequency
-        PWID        positive pulse width
-        NWID        negative pulse width
-        RISE        rise-time
-        FALL        fall-time
-        WID         Burst width
-        DUTY        positive duty cycle
-        NDUTY       negative duty cycle
-        ALL         All measurement """,
-        validator=_set_measure_parameter_validator,
-        values=[_measurable_parameters, ["C1", "C2", "C3", "C4"]]
-    )
-
-    def get_measure_parameter(self, parameter: str, source: str):
-        """ The PARAMETER_VALUE query measures and returns the specified measurement value
-        present on the selected waveform.
-        The commands accepts two arguments with the following syntax:
-        get_measure_parameter = (<source>, <parameter>) be careful because this is the opposite
-        order as the set_measure_parameter property
-        <source> := {C1,C2,C3,C4}
-        <parameter> := same as the set_measure_parameter property
+    def display_parameter(self, parameter, channel):
         """
+        Same as the display_parameter method in the Channel subclass
+        """
+        self.ch(channel).display_parameter = parameter
 
-        parameter, source = _set_measure_parameter_validator(value=(parameter, source),
-                                                             values=[self._measurable_parameters,
-                                                                     ["C1", "C2", "C3", "C4"]])
-        output = self.ask("%s:PAVA? %s" % (source, parameter))
-        match = re.match(r'^\s*(?P<parameter>\w+),\s*(?P<value>.*)\s*$', output)
-        if match:
-            if match.group('parameter') != parameter:
-                raise ValueError(f"Parameter name {match.group('parameter')} does not match with "
-                                 f"expected one {parameter}")
-            return float(match.group('value'))
-        else:
-            raise ValueError(f"Cannot extract value from output {output}")
+    def measure_parameter(self, parameter, channel):
+        """
+        Same as the measure_parameter method in the Channel subclass
+        """
+        # noinspection PyArgumentList
+        return self.ch(channel).measure_parameter(parameter)
 
     ###############
     #   Display   #

@@ -405,24 +405,28 @@ def test_math_vpos():
         assert instr.math_vpos == 120
 
 
-def test_set_measure_parameter():
+def test_display_parameter():
     with expected_protocol(
             LeCroyT3DSO1204,
             [(b"CHDR OFF", None),
-             (b"PACU PKPK,C1", None)
+             (b"PACU PKPK,C1", None),
+             (b"PACU MEAN,C2", None)
              ]
     ) as instr:
-        instr.set_measure_parameter = ("PKPK", "channel1")
+        instr.display_parameter(parameter="PKPK", channel=1)
+        instr.ch(2).display_parameter = "MEAN"
 
 
-def test_get_measure_parameter():
+def test_measure_parameter():
     with expected_protocol(
             LeCroyT3DSO1204,
             [(b"CHDR OFF", None),
              (b"C2:PAVA? RISE", b"RISE,3.600000E-9"),
+             (b"C3:PAVA? MEAN", b"MEAN,3.600000E-9"),
              ]
     ) as instr:
-        assert instr.get_measure_parameter("RISE", "channel2") == 3.6e-9
+        assert instr.measure_parameter("RISE", "channel2") == 3.6e-9
+        assert instr.ch3.measure_parameter("MEAN") == 3.6e-9
 
 
 def test_menu():
