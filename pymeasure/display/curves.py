@@ -38,9 +38,10 @@ class ResultsCurve(pg.PlotDataItem):
     the full file instead of just appending.
     """
 
-    def __init__(self, results, x, y, force_reload=False, **kwargs):
+    def __init__(self, results, x, y, force_reload=False, wdg=None, **kwargs):
         super().__init__(**kwargs)
         self.results = results
+        self.wdg = wdg
         self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
         self.force_reload = force_reload
@@ -61,8 +62,9 @@ class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
 
-    def __init__(self, results, x, y, z, force_reload=False):
+    def __init__(self, results, x, y, z, force_reload=False, wdg=None, **kwargs):
         self.results = results
+        self.wdg = wdg
         self.x = x
         self.y = y
         self.z = z
