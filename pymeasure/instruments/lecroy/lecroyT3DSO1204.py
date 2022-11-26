@@ -29,7 +29,7 @@ from decimal import Decimal
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
@@ -206,8 +206,7 @@ class _ChunkResizer:
             self.adapter.connection.chunk_size = self.old_chunk_size
 
 
-# noinspection DuplicatedCode
-class Channel:
+class ScopeChannel(Channel):
     """ Implementation of a LeCroy T3DSO1204 Oscilloscope channel.
 
     Implementation modeled on Channel object of Keysight DSOX1102G instrument. """
