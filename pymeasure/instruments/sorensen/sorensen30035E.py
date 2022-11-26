@@ -48,6 +48,11 @@ class Sorensen30035E(Instrument):
 
     """
 
+    def __init__(self, adapter, **kwargs):
+        super(Sorensen30035E, self).__init__(
+            adapter, "Sorensen 300-3.5E DC Power Supply", **kwargs
+        )
+
     source_delay = Instrument.control(
         "OUTPut:PROTection:DELay?", "OUTPut:PROTection:DELay %g",
         """ A floating point property that sets a manual delay for the source
@@ -110,10 +115,22 @@ class Sorensen30035E(Instrument):
         values=[0, 300]
     )
 
-    def __init__(self, adapter, **kwargs):
-        super(Sorensen30035E, self).__init__(
-            adapter, "Sorensen 300-3.5E DC Power Supply", **kwargs
-        )
+    @property
+    def output_enabled(self):
+        return self.query("OUTPut:ISOLation?")
+
+    @output_enabled.setter
+    def output_enabled(self, state):
+        if state:
+            if not self.output_enabled:
+                self.write("OUTPut:ISOLation 1")
+        elif not state:
+            if self.output_enabled:
+                if self.current_setpoint > 0:
+                    self.ramp_to_current(0, int(self.current_setpoint) * 20)
+                    while self.current > 0.01:
+                        time.sleep(.1)
+                    self.write("OUTPut:ISOLation 0")
 
     def ramp_to_voltage(self, value, time=10):
         """ Utilizes built in ramp function of the power supply to ramp voltage
@@ -138,23 +155,6 @@ class Sorensen30035E(Instrument):
         """
         self.write("SOUR:CURR:RAMP:ABOR")
         self.write("SOUR:VOLT:RAMP:ABOR")
-
-    @property
-    def source_enabled(self):
-        return self.query("OUTPut:ISOLation?")
-
-    @source_enabled.setter
-    def source_enabled(self, state):
-        if state:
-            if not self.source_enabled:
-                self.write("OUTPut:ISOLation 1")
-        elif not state:
-            if self.source_enabled:
-                if self.current_setpoint > 0:
-                    self.ramp_to_current(0, int(self.current_setpoint) * 20)
-                    while self.current > 0.01:
-                        time.sleep(.1)
-                    self.write("OUTPut:ISOLation 0")
 
     def shutdown(self):
         """ Disables the  output after ramping down at 1 V/s if voltage is non-zero."""
