@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2022 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +22,10 @@
 # THE SOFTWARE.
 #
 
-import logging
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
 
-from pymeasure.instruments import Instrument, RangeException
-from pymeasure.adapters import PrologixAdapter
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-
-
-import numpy as np
 import time
-
 
 
 class Sorensen30035E(Instrument):
@@ -61,7 +53,7 @@ class Sorensen30035E(Instrument):
         """ A floating point property that sets a manual delay for the source
         after the output is turned on before a measurement is taken and the reverse.
         between 0 [seconds] and 999.9999 [seconds].""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[0, 999.9999],
     )
 
@@ -81,7 +73,7 @@ class Sorensen30035E(Instrument):
         "SOUR:CURR?", "SOUR:CURR %g",
         """ A floating point property that immediately sets the desired current output 
         in Amps, which can take floating point values between 0 and +3.5 A. """,
-        validator=truncated_range,
+        validator=strict_range,
         values=[0, 3.5]
     )
 
@@ -89,7 +81,7 @@ class Sorensen30035E(Instrument):
         "SOUR:CURR:LIM?", "SOUR:CURR:LIM %g",
         """ Sets an upper soft limit on the programmed output current
         for the supply. Can take values floating point from 0 and +3.5 A. """,
-        validator=truncated_range,
+        validator=strict_range,
         values=[0, 3.5]
     )    
 
@@ -109,7 +101,7 @@ class Sorensen30035E(Instrument):
         "SOUR:VOLT?", "SOUR:VOLT %g",
         """ A floating point property that immediately sets the desired voltage output 
         in Volts, which can take floating point values between 300 and 300 V. """,
-        validator=truncated_range,
+        validator=strict_range,
         values=[-300, 300]
     )
 
@@ -117,7 +109,7 @@ class Sorensen30035E(Instrument):
         "SOUR:VOLT:LIM?", "SOUR:VOLT:LIM %g",
         """ Sets an upper soft limit on the programmed output voltage
         for the supply. Can take values floating point from 0 and 300 V. """,
-        validator=truncated_range,
+        validator=strict_range,
         values=[0, 300]
     )    
 
@@ -134,7 +126,7 @@ class Sorensen30035E(Instrument):
          low currents/high impedance samples. """
         if value > 300:
             raise ValueError("Requested voltage too large, |V| must be 300 V or less")
-         self.write("SOUR:VOLT:RAMP %g %g" % (value, time))
+        self.write("SOUR:VOLT:RAMP %g %g" % (value, time))
 
     def ramp_to_current(self, value, time=10):
         """ Utilizes built in ramp function of the power supply to ramp voltage
@@ -143,7 +135,7 @@ class Sorensen30035E(Instrument):
          low currents/high impedance samples. """
         if value > 3.5:
             raise ValueError("Requested current too large, |I| must be 3.5 A or less")
-         self.write("SOUR:CURR:RAMP %g %g" % (value, time))
+        self.write("SOUR:CURR:RAMP %g %g" % (value, time))
 
     def abort_ramp(self):
         """ Aborts all in-progress ramps
@@ -181,32 +173,4 @@ class Sorensen30035E(Instrument):
             if i > 3*voltage:
                 raise ValueError("Voltage has not reached zero in reasonable time, giving up, OUTPUT IS STILL LIVE")
         self.source_enable = False
-
-    
-
-    @property
-    def error(self):
-        """ Returns a tuple of an error code and message from a
-        single error. """
-        err = self.values(":system:error?")
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', '')
-        return (code, message)
-
-    def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
-        code, message = self.error
-        while code != 0:
-            t = time.time()
-            log.info("Sorensen 30035E reported error: %d, %s" % (code, message))
-            code, message = self.error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Sorensen 30035E error retrieval.")
-
-    def reset(self):
-        """ Resets the instrument and clears the queue.  """
-        self.write("*RST;*CLS;")
 
