@@ -37,6 +37,7 @@ def test_output_delay():
         assert inst.output_delay == pytest.approx(5.0)
         inst.output_delay = 234.1
 
+
 def test_current_read():
     with expected_protocol(
         Sorensen30035E,
@@ -54,7 +55,6 @@ def test_current_setpoint():
         assert inst.current_setpoint == pytest.approx(2.41)
         inst.current_setpoint = 1.3
         
-
 
 def test_current_limit():
     with expected_protocol(
