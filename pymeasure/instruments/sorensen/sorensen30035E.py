@@ -163,10 +163,10 @@ class Sorensen30035E(Instrument):
         if voltage > 0.1 or current > 0.008:
             self.ramp_to_voltage(0, voltage)
             i = 0
-        while self.voltage >0.1:
+        while self.voltage > 0.1:
             time.sleep(1)
             i = i + 1
-            if i > 3*voltage:
+            if i > 3 * voltage:
                 raise ValueError("Voltage has not reached zero in reasonable time,"
                                  "giving up, OUTPUT IS STILL LIVE")
         self.source_enable = False
