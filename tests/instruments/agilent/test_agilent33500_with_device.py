@@ -251,7 +251,7 @@ def test_burst_ncycles(generator, burst_ncycles):
 
 def test_arb_file_should_not_be_empty(generator):
     file = generator.arb_file
-    assert file is not ""
+    assert file != ""
 
 
 @pytest.mark.parametrize("srate", SRATE)
