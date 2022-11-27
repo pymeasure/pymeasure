@@ -429,7 +429,7 @@ def test_burst_ncycles_channel(generator, burst_ncycles, channel):
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_arb_file_channel(generator, channel):
     file = generator.ch[channel].arb_file
-    assert file is not ""
+    assert file != ""
 
 
 @pytest.mark.parametrize("srate", SRATE)
