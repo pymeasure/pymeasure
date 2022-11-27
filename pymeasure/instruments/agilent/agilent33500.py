@@ -49,9 +49,6 @@ log.addHandler(logging.NullHandler())
 class Agilent33500Channel(Channel):
     """Implementation of a base Agilent 33500 channel"""
 
-    def __init__(self, instrument, id):
-        super().__init__(instrument, id)
-
     shape = Instrument.control(
         "SOUR{ch}:FUNC?",
         "SOUR{ch}:FUNC %s",
@@ -66,7 +63,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FREQ %f",
         """ A floating point property that controls the frequency of the output
         waveform in Hz, from 1 uHz to 120 MHz (maximum range, can be lower depending
-        on your device), depending on the specified function. Can be set. """,
+        on your device), depending on the specified function. """,
         validator=strict_range,
         values=[1e-6, 120e6],
     )
@@ -76,7 +73,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT %f",
         """ A floating point property that controls the voltage amplitude of the
         output waveform in V, from 10e-3 V to 10 V. Depends on the output
-        impedance. Can be set. """,
+        impedance.""",
         validator=strict_range,
         values=[10e-3, 10],
     )
@@ -85,7 +82,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:UNIT?",
         "SOUR{ch}:VOLT:UNIT %s",
         """ A string property that controls the units of the amplitude. Valid
-        values are VPP (default), VRMS, and DBM. Can be set. """,
+        values are VPP (default), VRMS, and DBM.""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
     )
@@ -95,7 +92,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:OFFS %f",
         """ A floating point property that controls the voltage offset of the
         output waveform in V, from 0 V to 4.995 V, depending on the set
-        voltage amplitude (maximum offset = (Vmax - voltage) / 2). Can be set.
+        voltage amplitude (maximum offset = (Vmax - voltage) / 2).
         """,
         validator=strict_range,
         values=[-4.995, +4.995],
@@ -106,7 +103,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:HIGH %f",
         """ A floating point property that controls the upper voltage of the
         output waveform in V, from -4.990 V to 5 V (must be higher than low
-        voltage by at least 1 mV). Can be set. """,
+        voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-4.99, 5],
     )
@@ -116,7 +113,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:LOW %f",
         """ A floating point property that controls the lower voltage of the
         output waveform in V, from -5 V to 4.990 V (must be lower than high
-        voltage by at least 1 mV). Can be set. """,
+        voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-5, 4.99],
     )
@@ -126,7 +123,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:PHAS %f",
         """ A floating point property that controls the phase of the output
         waveform in degrees, from -360 degrees to 360 degrees. Not available
-        for arbitrary waveforms or noise. Can be set. """,
+        for arbitrary waveforms or noise.""",
         validator=strict_range,
         values=[-360, 360],
     )
@@ -137,7 +134,7 @@ class Agilent33500Channel(Channel):
         """ A floating point property that controls the duty cycle of a square
         waveform function in percent, from 0.01% to 99.98%.
         The duty cycle is limited by the frequency and the minimal pulse width of
-        16 ns. See manual for more details. Can be set. """,
+        16 ns. See manual for more details.""",
         validator=strict_range,
         values=[0.01, 99.98],
     )
@@ -146,7 +143,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:RAMP:SYMM?",
         "SOUR{ch}:FUNC:RAMP:SYMM %f",
         """ A floating point property that controls the symmetry percentage
-        for the ramp waveform, from 0.0% to 100.0% Can be set. """,
+        for the ramp waveform, from 0.0% to 100.0%.""",
         validator=strict_range,
         values=[0, 100],
     )
@@ -178,7 +175,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:PULS:WIDT %e",
         """ A floating point property that controls the width of a pulse
         waveform function in seconds, ranging from 16 ns to 1e6 s, within a
-        set of restrictions depending on the period. Can be set. """,
+        set of restrictions depending on the period.""",
         validator=strict_range,
         values=[16e-9, 1e6],
     )
@@ -187,7 +184,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:PULS:DCYC?",
         "SOUR{ch}:FUNC:PULS:DCYC %f",
         """ A floating point property that controls the duty cycle of a pulse
-        waveform function in percent, from 0% to 100%. Can be set. """,
+        waveform function in percent, from 0% to 100%.""",
         validator=strict_range,
         values=[0, 100],
     )
@@ -198,7 +195,7 @@ class Agilent33500Channel(Channel):
         """ A floating point property that controls the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between the 10% and 90% thresholds of the edge.
-        Valid values are between 8.4 ns to 1 µs. Can be set. """,
+        Valid values are between 8.4 ns to 1 µs.""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
     )
@@ -207,7 +204,7 @@ class Agilent33500Channel(Channel):
         "OUTP{ch}?",
         "OUTP{ch} %d",
         """ A boolean property that turns on (True, 'on') or off (False, 'off')
-        the output of the function generator. Can be set. """,
+        the output of the function generator.""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
@@ -222,14 +219,14 @@ class Agilent33500Channel(Channel):
         Valid values are between 1 and 10 kOhm or INF for high impedance.
         No validator is used since both numeric and string inputs are accepted,
         thus a value outside the range will not return an error.
-        Can be set. """,
+        """,
     )
 
     burst_state = Instrument.control(
         "SOUR{ch}:BURS:STAT?",
         "SOUR{ch}:BURS:STAT %d",
         """ A boolean property that controls whether the burst mode is on
-        (True) or off (False). Can be set. """,
+        (True) or off (False).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -239,7 +236,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:BURS:MODE?",
         "SOUR{ch}:BURS:MODE %s",
         """ A string property that controls the burst mode. Valid values
-        are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
+        are: TRIG<GERED>, GAT<ED>.""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
     )
@@ -249,7 +246,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:BURS:INT:PER %e",
         """ A floating point property that controls the period of subsequent bursts.
         Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.
-        Valid values are 1 µs to 8000 s. Can be set. """,
+        Valid values are 1 µs to 8000 s.""",
         validator=strict_range,
         values=[1e-6, 8000],
     )
@@ -269,7 +266,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:ARB %s",
         """ A string property that selects the arbitrary signal from the volatile
         memory of the device. String has to match an existing arb signal in volatile
-        memore (set by data_arb()). Can be set. """,
+        memore (set by data_arb()).""",
     )
 
     arb_advance = Instrument.control(
@@ -295,24 +292,27 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:ARB:SRAT %f",
         """ An floating point property that sets the sample rate of the currently selected
         arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
-        depending on your device). This can be set. """,
+        depending on your device).""",
         validator=strict_range,
         values=[1e-6, 250e6],
     )
 
     def data_volatile_clear(self):
         """
-        Clear all arbitrary signals from the volatile memory. This should be done if the same name
-        is used continuously to load different arbitrary signals into the memory, since an error
-        will occur if a trace is loaded which already exists in the memory.
+        Clear all arbitrary signals from volatile memory for a given channel.
+
+        This should be done if the same name is used continuously to load
+        different arbitrary signals into the memory, since an error will occur
+         if a trace is loaded which already exists in memory.
         """
         self.write("SOUR{ch}:DATA:VOL:CLE")
 
     def data_arb(self, arb_name, data_points, data_format="DAC"):
         """
-        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be
-        given as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma
-        separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
+        Uploads an arbitrary trace into the volatile memory of the device for a given channel.
+
+        The data_points can be given as comma separated 16 bit DAC values (ranging from -32767 to +32767),
+        as comma separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
         Check the manual for more information. The storage depends on the device type and ranges
         from 8 Sa to 16 MSa (maximum).
         TODO: *Binary is not yet implemented*
@@ -337,14 +337,12 @@ class Agilent33500Channel(Channel):
             separator = ", "
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print(f"SOUR{{ch}}:DATA:ARB:DAC {arb_name}, {data_string}")
             self.write(f"SOUR{{ch}}:DATA:ARB:DAC {arb_name}, {data_string}")
             return
         elif data_format == "float":
             separator = ", "
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print(f"SOUR{{ch}}:DATA:ARB {arb_name}, {data_string}")
             self.write(f"SOUR{{ch}}:DATA:ARB {arb_name}, {data_string}")
             return
         elif data_format == "binary":
@@ -358,33 +356,39 @@ class Agilent33500Channel(Channel):
 
 
 class Agilent33500(Instrument):
-    """Represents the Agilent 33500 Function/Arbitrary Waveform Generator family.
+    """
+    Represents the Agilent 33500 Function/Arbitrary Waveform Generator family.
+
     Individual devices are represented by subclasses.
+    User can specify a channel to control, if no channel specified, a default channel
+    is picked based on the device e.g. For Agilent33500B the default channel
+    is channel 1. See reference manual for your device
 
     .. code-block:: python
 
         generator = Agilent33500("GPIB::1")
 
-        generator.ch[n].shape = 'SIN'                 # Sets the output signal shape to sine
-        generator.ch[n].frequency = 1e3               # Sets the output frequency to 1 kHz
-        generator.ch[n].amplitude = 5                 # Sets the output amplitude to 5 Vpp
-        generator.ch[n].output = 'on'                 # Enables the output
+        generator.shape = 'SIN'                       # Sets the output signal shape to sine for the default channel
+        generator.ch[1].shape = 'SIN'                 # Sets the output signal shape to sine for channel 1
+        generator.frequency = 1e3                     # Sets the output frequency to 1 kHz for the default channel
+        generator.ch[1].frequency = 1e3               # Sets the output frequency to 1 kHz for channel 1
+        generator.ch[2].amplitude = 5                 # Sets the output amplitude to 5 Vpp for channel 2
+        generator.ch[2].output = 'on'                 # Enables the output for channel 2
 
-        generator.ch[n].shape = 'ARB'                 # Set shape to arbitrary
-        generator.ch[n].arb_srate = 1e6               # Set sample rate to 1MSa/s
+        generator.ch[1].shape = 'ARB'                 # Set shape to arbitrary for channel 1
+        generator.ch[1].arb_srate = 1e6               # Set sample rate to 1MSa/s for channel 1
 
-        generator.ch[n].data_volatile_clear()         # Clear volatile internal memory
-        generator.ch[n].data_arb(                     # Send data points of arbitrary waveform
+        generator.ch[1].data_volatile_clear()         # Clear volatile internal memory for channel 1
+        generator.ch[1].data_arb(                     # Send data points of arbitrary waveform for channel 1
             'test',
-            range(-10000, 10000, +20),          # In this case a simple ramp
-            data_format='DAC'                   # Data format is set to 'DAC'
-        )
-        generator.ch[n].arb_file = 'test'             # Select the transmitted waveform 'test'
+            range(-10000, 10000, +20),                # In this case a simple ramp
+            data_format='DAC'                         # Data format is set to 'DAC'
+         )
+        generator.ch[1].arb_file = 'test'             # Select the transmitted waveform 'test'
 
     """
 
     ch = Instrument.ChannelCreator(Agilent33500Channel, (1, 2))
-    id = Instrument.measurement("*IDN?", """ Reads the instrument identification """)
 
     def __init__(self, adapter, **kwargs):
         super().__init__(
@@ -409,7 +413,7 @@ class Agilent33500(Instrument):
         "FREQ %f",
         """ A floating point property that controls the frequency of the output
         waveform in Hz, from 1 uHz to 120 MHz (maximum range, can be lower depending
-        on your device), depending on the specified function. Can be set. """,
+        on your device), depending on the specified function.""",
         validator=strict_range,
         values=[1e-6, 120e6],
     )
@@ -419,7 +423,7 @@ class Agilent33500(Instrument):
         "VOLT %f",
         """ A floating point property that controls the voltage amplitude of the
         output waveform in V, from 10e-3 V to 10 V. Depends on the output
-        impedance. Can be set. """,
+        impedance.""",
         validator=strict_range,
         values=[10e-3, 10],
     )
@@ -428,7 +432,7 @@ class Agilent33500(Instrument):
         "VOLT:UNIT?",
         "VOLT:UNIT %s",
         """ A string property that controls the units of the amplitude. Valid
-        values are VPP (default), VRMS, and DBM. Can be set. """,
+        values are VPP (default), VRMS, and DBM.""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
     )
@@ -438,7 +442,7 @@ class Agilent33500(Instrument):
         "VOLT:OFFS %f",
         """ A floating point property that controls the voltage offset of the
         output waveform in V, from 0 V to 4.995 V, depending on the set
-        voltage amplitude (maximum offset = (Vmax - voltage) / 2). Can be set.
+        voltage amplitude (maximum offset = (Vmax - voltage) / 2).
         """,
         validator=strict_range,
         values=[-4.995, +4.995],
@@ -449,7 +453,7 @@ class Agilent33500(Instrument):
         "VOLT:HIGH %f",
         """ A floating point property that controls the upper voltage of the
         output waveform in V, from -4.990 V to 5 V (must be higher than low
-        voltage by at least 1 mV). Can be set. """,
+        voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-4.99, 5],
     )
@@ -459,7 +463,7 @@ class Agilent33500(Instrument):
         "VOLT:LOW %f",
         """ A floating point property that controls the lower voltage of the
         output waveform in V, from -5 V to 4.990 V (must be lower than high
-        voltage by at least 1 mV). Can be set. """,
+        voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-5, 4.99],
     )
@@ -469,7 +473,7 @@ class Agilent33500(Instrument):
         "PHAS %f",
         """ A floating point property that controls the phase of the output
         waveform in degrees, from -360 degrees to 360 degrees. Not available
-        for arbitrary waveforms or noise. Can be set. """,
+        for arbitrary waveforms or noise.""",
         validator=strict_range,
         values=[-360, 360],
     )
@@ -480,7 +484,7 @@ class Agilent33500(Instrument):
         """ A floating point property that controls the duty cycle of a square
         waveform function in percent, from 0.01% to 99.98%.
         The duty cycle is limited by the frequency and the minimal pulse width of
-        16 ns. See manual for more details. Can be set. """,
+        16 ns. See manual for more details.""",
         validator=strict_range,
         values=[0.01, 99.98],
     )
@@ -489,7 +493,7 @@ class Agilent33500(Instrument):
         "FUNC:RAMP:SYMM?",
         "FUNC:RAMP:SYMM %f",
         """ A floating point property that controls the symmetry percentage
-        for the ramp waveform, from 0.0% to 100.0% Can be set. """,
+        for the ramp waveform, from 0.0% to 100.0%.""",
         validator=strict_range,
         values=[0, 100],
     )
@@ -521,7 +525,7 @@ class Agilent33500(Instrument):
         "FUNC:PULS:WIDT %e",
         """ A floating point property that controls the width of a pulse
         waveform function in seconds, ranging from 16 ns to 1e6 s, within a
-        set of restrictions depending on the period. Can be set. """,
+        set of restrictions depending on the period.""",
         validator=strict_range,
         values=[16e-9, 1e6],
     )
@@ -530,7 +534,7 @@ class Agilent33500(Instrument):
         "FUNC:PULS:DCYC?",
         "FUNC:PULS:DCYC %f",
         """ A floating point property that controls the duty cycle of a pulse
-        waveform function in percent, from 0% to 100%. Can be set. """,
+        waveform function in percent, from 0% to 100%.""",
         validator=strict_range,
         values=[0, 100],
     )
@@ -541,7 +545,7 @@ class Agilent33500(Instrument):
         """ A floating point property that controls the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between the 10% and 90% thresholds of the edge.
-        Valid values are between 8.4 ns to 1 µs. Can be set. """,
+        Valid values are between 8.4 ns to 1 µs.""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
     )
@@ -550,7 +554,7 @@ class Agilent33500(Instrument):
         "OUTP?",
         "OUTP %d",
         """ A boolean property that turns on (True, 'on') or off (False, 'off')
-        the output of the function generator. Can be set. """,
+        the output of the function generator.""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
@@ -565,14 +569,14 @@ class Agilent33500(Instrument):
         Valid values are between 1 and 10 kOhm or INF for high impedance.
         No validator is used since both numeric and string inputs are accepted,
         thus a value outside the range will not return an error.
-        Can be set. """,
+        """,
     )
 
     burst_state = Instrument.control(
         "BURS:STAT?",
         "BURS:STAT %d",
         """ A boolean property that controls whether the burst mode is on
-        (True) or off (False). Can be set. """,
+        (True) or off (False).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -582,7 +586,7 @@ class Agilent33500(Instrument):
         "BURS:MODE?",
         "BURS:MODE %s",
         """ A string property that controls the burst mode. Valid values
-        are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
+        are: TRIG<GERED>, GAT<ED>.""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
     )
@@ -592,7 +596,7 @@ class Agilent33500(Instrument):
         "BURS:INT:PER %e",
         """ A floating point property that controls the period of subsequent bursts.
         Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.
-        Valid values are 1 µs to 8000 s. Can be set. """,
+        Valid values are 1 µs to 8000 s.""",
         validator=strict_range,
         values=[1e-6, 8000],
     )
@@ -612,7 +616,7 @@ class Agilent33500(Instrument):
         "FUNC:ARB %s",
         """ A string property that selects the arbitrary signal from the volatile
         memory of the device. String has to match an existing arb signal in volatile
-        memore (set by data_arb()). Can be set. """,
+        memore (set by data_arb()).""",
     )
 
     arb_advance = Instrument.control(
@@ -637,7 +641,7 @@ class Agilent33500(Instrument):
     #     "FUNC:ARB:PER?", "FUNC:ARB:PER %e",
     #     """ A floating point property that controls the period of the arbitrary signal.
     #     Limited by number of signal points. Check for instrument errors when setting
-    #     this property. Can be set. """,
+    #     this property.""",
     #     validator=strict_range,
     #     values=[33e-9, 1e6],
     # )
@@ -646,7 +650,7 @@ class Agilent33500(Instrument):
     #     "FUNC:ARB:FREQ?", "FUNC:ARB:FREQ %f",
     #     """ A floating point property that controls the frequency of the arbitrary signal.
     #     Limited by number of signal points. Check for instrument
-    #     errors when setting this property. Can be set. """,
+    #     errors when setting this property.""",
     #     validator=strict_range,
     #     values=[1e-6, 30e+6],
     # )
@@ -670,24 +674,27 @@ class Agilent33500(Instrument):
         "FUNC:ARB:SRAT %f",
         """ An floating point property that sets the sample rate of the currently selected
         arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
-        depending on your device). This can be set. """,
+        depending on your device).""",
         validator=strict_range,
         values=[1e-6, 250e6],
     )
 
     def data_volatile_clear(self):
         """
-        Clear all arbitrary signals from the volatile memory. This should be done if the same name
-        is used continuously to load different arbitrary signals into the memory, since an error
+        Clear all arbitrary signals from volatile memory.
+
+        This should be done if the same name is used continuously to load
+        different arbitrary signals into the memory, since an error
         will occur if a trace is loaded which already exists in the memory.
         """
         self.write("DATA:VOL:CLE")
 
     def data_arb(self, arb_name, data_points, data_format="DAC"):
         """
-        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be
-        given as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma
-        separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
+        Uploads an arbitrary trace into the volatile memory of the device.
+
+        The data_points can be given as comma separated 16 bit DAC values (ranging from -32767 to +32767),
+        as comma separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
         Check the manual for more information. The storage depends on the device type and ranges
         from 8 Sa to 16 MSa (maximum).
         TODO: *Binary is not yet implemented*
@@ -708,14 +715,12 @@ class Agilent33500(Instrument):
             separator = ", "
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print(f"DATA:ARB:DAC {arb_name}, {data_string}")
             self.write(f"DATA:ARB:DAC {arb_name}, {data_string}")
             return
         elif data_format == "float":
             separator = ", "
             data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
             data_string = separator.join(data_points_str)  # Join strings with separator
-            print(f"DATA:ARB {arb_name}, {data_string}")
             self.write(f"DATA:ARB {arb_name}, {data_string}")
             return
         elif data_format == "binary":
@@ -730,7 +735,7 @@ class Agilent33500(Instrument):
     display = Instrument.setting(
         "DISP:TEXT '%s'",
         """ A string property which is displayed on the front panel of
-        the device. Can be set. """,
+        the device.""",
     )
 
     def clear_display(self):
@@ -778,7 +783,7 @@ class Agilent33500(Instrument):
         "TRIG:SOUR %s",
         """ A string property that controls the trigger source. Valid values
         are: IMM<EDIATE> (internal), EXT<ERNAL> (rear input), BUS (via trigger
-        command). This setting can be set. """,
+        command).""",
         validator=strict_discrete_set,
         values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
     )
@@ -788,7 +793,7 @@ class Agilent33500(Instrument):
         "OUTP:TRIG %d",
         """ A boolean property that controls whether the trigger out signal is
         active (True) or not (False). This signal is output from the Ext Trig
-        connector on the rear panel in Burst and Wobbel mode. Can be set. """,
+        connector on the rear panel in Burst and Wobbel mode.""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
