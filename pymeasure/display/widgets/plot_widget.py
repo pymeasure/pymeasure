@@ -108,6 +108,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         curve = ResultsCurve(results,
+                             wdg=self,
                              x=self.plot_frame.x_axis,
                              y=self.plot_frame.y_axis,
                              **kwargs
