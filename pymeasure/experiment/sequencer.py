@@ -63,7 +63,7 @@ class SequenceItem(object):
             return super().__setitem__(idx, value)
 
     def __str__(self):
-        return "{} \"{}\" \"{}\"".format("-"*(self.level + 1), self.parameter, self.expression)
+        return "{} \"{}\", \"{}\"".format("-" * (self.level + 1), self.parameter, self.expression)
 
 
 class SequenceFileHandler:
@@ -90,7 +90,6 @@ class SequenceFileHandler:
 
     Data is stored internally as a list where each
     item matches a row of the sequence file
-    [Add grphical representation ???]
  """
 
     MAXDEPTH = 10
@@ -209,7 +208,7 @@ class SequenceFileHandler:
         """ Add a node under the parent identified by parent_seq_item """
         parent_idx, level = self._get_idx(parent_seq_item)
 
-        seq_item = SequenceItem(level+1,
+        seq_item = SequenceItem(level + 1,
                                 name,
                                 "",
                                 parent_seq_item)
@@ -341,13 +340,16 @@ class SequenceFileHandler:
             current_parent = data
             self._sequences.append(data)
 
-    def save(self, stream):
+    def save(self, file_obj):
         """ Save modified sequence to file stream
 
-        :param stream: file object
+        :param file_obj: file object
         """
-        if stream:
-            stream.write("\n".join(str(item) for item in self.sequences))
+
+        if file_obj is None:
+            file_obj = self.file_obj
+
+        file_obj.write("\n".join(str(item) for item in self.sequences))
 
     def parameters_sequence(self, names_map=None):
         """
@@ -418,19 +420,3 @@ class SequenceFileHandler:
             if not isinstance(sequences[idx], tuple):
                 sequences[idx] = (sequences[idx],)
         return sequences
-
-
-if __name__ == "__main__":
-    import sys
-
-    fd = open(sys.argv[1])
-    names_map = {
-        "Delay Time": "delay",
-        "Random Seed": "seed",
-        "Loop Iterations": "iterations",
-    }
-    s = SequenceFileHandler(fd)
-    print(s.parameters_sequence(names_map))
-    print(s.sequences)
-    print(s[2])
-    s.save(sys.stdout)
