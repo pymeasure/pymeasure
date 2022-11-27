@@ -319,6 +319,7 @@ class Agilent33500Channel(Channel):
 
         :param arb_name: The name of the trace in the volatile memory. This is used to access the
                          trace.
+
         :param data_points: Individual points of the trace. The format depends on the format
                             parameter.
 
@@ -690,6 +691,7 @@ class Agilent33500(Instrument):
         Check the manual for more information. The storage depends on the device type and ranges
         from 8 Sa to 16 MSa (maximum).
         TODO: *Binary is not yet implemented*
+
         :param arb_name: The name of the trace in the volatile memory. This is used to access the
                          trace.
         :param data_points: Individual points of the trace. The format depends on the format
@@ -740,7 +742,8 @@ class Agilent33500(Instrument):
         self.write("*TRG;*WAI")
 
     def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
-        """Wait until the triggering has finished or timeout is reached.
+        """
+        Wait until the triggering has finished or timeout is reached.
 
         :param timeout: The maximum time the waiting is allowed to take. If
                         timeout is exceeded, a TimeoutError is raised. If
