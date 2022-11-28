@@ -114,7 +114,14 @@ def fake():
 
 class ExtendedBase(FakeBase):
     # Keep values unchanged, just derive another instrument, e.g. to add more properties
-    pass
+    fake_ctrl2 = CommonBase.control(
+        "", "%d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+
+    fake_ctrl2.values = (2, 20)
 
 
 class StrictExtendedBase(ExtendedBase):
@@ -662,6 +669,7 @@ def test_dynamic_property_unchanged_by_inheritance():
 
 
 def test_dynamic_property_strict_raises():
+    # Tests also that dynamic properties can be changed at class level.
     strict = StrictExtendedBase()
 
     with pytest.raises(ValueError):
@@ -711,3 +719,18 @@ def test_dynamic_property_values_update_in_one_instance_leaves_other_unchanged()
 def test_dynamic_property_reading_special_attributes_forbidden(fake):
     with pytest.raises(AttributeError):
         fake.fake_ctrl_validator
+
+
+def test_dynamic_property_with_inheritance():
+    inst = ExtendedBase()
+    # Test for inherited attribute
+    with pytest.raises(AttributeError):
+        inst.fake_ctrl_validator
+    # Test for new attribute
+    with pytest.raises(AttributeError):
+        inst.fake_ctrl2_validator
+
+
+def test_dynamic_property_values_defined_at_superclass_level():
+    inst = StrictExtendedBase()
+    inst.fake_ctrl2 = 17  # outside original values (1, 10)

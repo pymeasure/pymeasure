@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from inspect import getmembers
 import logging
 
 log = logging.getLogger(__name__)
@@ -176,35 +177,23 @@ class CommonBase:
         special_names = []
         dynamic_params = tuple(set(self._fget_params_list + self._fset_params_list))
         # Check whether class variables of DynamicProperty type are present
-        for obj in (self,) + self.__class__.__mro__:
-            for attr_name, attr in obj.__dict__.items():
-                if isinstance(attr, DynamicProperty):
-                    special_names += [attr_name + "_" + key for key in dynamic_params]
+        for attr_name, attr in getmembers(self.__class__):
+            if isinstance(attr, DynamicProperty):
+                special_names += [attr_name + "_" + key for key in dynamic_params]
         # Check if special variables are defined at class level
-        for obj in (self,) + self.__class__.__mro__:
-            for attr in obj.__dict__:
-                if attr in special_names:
-                    # Copy class special variable at instance level, prefixing reserved_prefix
-                    setattr(self, self.__reserved_prefix + attr, obj.__dict__[attr])
+        for attr, value in getmembers(self.__class__):
+            if attr in special_names:
+                # Copy class special variable at instance level, prefixing reserved_prefix
+                setattr(self, self.__reserved_prefix + attr, value)
         return special_names
 
     def _create_channels(self):
-        """Create channels according to the ChannelCreator objects.
-
-        If a subclass overrides a ChannelCreator object with another one, the
-        one of the subclass is used, not that of the superclass.
-        """
-        channel_creators = {}
-        # Collect all ChannelCreators, override in order of subclasses
-        for obj in reversed((self,) + self.__class__.__mro__):
-            for item, value in obj.__dict__.items():
-                if isinstance(value, self.ChannelCreator):
-                    channel_creators[item] = value
-        # Create the channels
-        for name, creator in channel_creators.items():
-            for cls, id in creator.pairs:
-                child = self.add_child(cls, id, collection=name, **creator.kwargs)
-                child._protected = True
+        """Create channels according to the ChannelCreator objects."""
+        for name, creator in getmembers(self.__class__):
+            if isinstance(creator, CommonBase.ChannelCreator):
+                for cls, id in creator.pairs:
+                    child = self.add_child(cls, id, collection=name, **creator.kwargs)
+                    child._protected = True
 
     def __setattr__(self, name, value):
         """ Add reserved_prefix in front of special variables."""
