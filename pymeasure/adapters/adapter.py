@@ -45,10 +45,11 @@ class Adapter:
             Implement it in the instrument's `read` method instead.
 
     :param log: Parent logger of the 'Adapter' logger.
-    :param kwargs: all other keyword arguments are ignored.
+    :param kwargs: Keyword arguments just to be cooperative.
     """
 
     def __init__(self, preprocess_reply=None, log=None, **kwargs):
+        super().__init__(**kwargs)
         self.preprocess_reply = preprocess_reply
         self.connection = None
         if log is None:
