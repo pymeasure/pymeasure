@@ -116,12 +116,12 @@ class ExtendedBase(FakeBase):
     # Keep values unchanged, just derive another instrument, e.g. to add more properties
     fake_ctrl2 = CommonBase.control(
         "", "%d", "docs",
-        validator=truncated_range,
+        validator=strict_range,
         values=(1, 10),
         dynamic=True,
     )
 
-    fake_ctrl2_values = (2, 20)
+    fake_ctrl2_values = (5, 20)
 
 
 class StrictExtendedBase(ExtendedBase):
@@ -732,5 +732,9 @@ def test_dynamic_property_with_inheritance():
 
 
 def test_dynamic_property_values_defined_at_superclass_level():
+    """Test whether a dynamic property can be changed a superclass level"""
     inst = StrictExtendedBase()
-    inst.fake_ctrl2 = 17  # outside original values (1, 10)
+    # Test whether the change of values from (1, 10) to (5, 20) succeeded:
+    inst.fake_ctrl2 = 17  # should raise an error if change unsuccessful
+    with pytest.raises(ValueError):
+        inst.fake_ctrl2 = 2  # should not raise an error if change unsuccessful
