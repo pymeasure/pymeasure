@@ -50,11 +50,17 @@ for manufacturer in dir(instruments):
 
 # Instruments unable to accept an Adapter instance.
 proper_adapters = ["IBeamSmart", "ANC300Controller"]
-# Instruments with communication in their __init__ which consequently fails.
-init = ["ThorlabsPM100USB", "Keithley2700", "TC038", "Agilent34450A",
-        "AWG401x_AWG", "AWG401x_AFG", "VARX", "HP8116A"]
-# Instruments which require more input arguments
-name_required = ["ATSBase"]
+# Instruments with communication in their __init__, which consequently fails.
+need_init_communication = [
+    "ThorlabsPM100USB",
+    "Keithley2700",
+    "TC038",
+    "Agilent34450A",
+    "AWG401x_AWG",
+    "AWG401x_AFG",
+    "VARX",
+    "HP8116A",
+]
 
 
 @pytest.mark.parametrize("cls", devices)
@@ -62,8 +68,10 @@ def test_adapter_arg(cls):
     "Test that every instrument has adapter as their input argument"
     if cls.__name__ in proper_adapters:
         pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
-    elif cls.__name__ in (*init, *name_required, "Instrument"):
+    elif cls.__name__ in need_init_communication:
         pytest.skip(f"{cls.__name__} requires communication in init.")
+    elif cls.__name__ == "Instrument":
+        pytest.skip("`Instrument` requires a `name` parameter.")
     cls(adapter=MagicMock())
 
 
@@ -142,9 +150,9 @@ nameless_instruments = [
 @pytest.mark.parametrize("cls", devices)
 def test_name_argument(cls):
     "Test that every instrument accepts a name argument"
-    if cls.__name__ in (*proper_adapters, *init):
+    if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in nameless_instruments:
-        pytest.skip(f"{cls.__name__} does not accept a name argument.")
+        pytest.skip(f"{cls.__name__} does not accept a name argument yet.")
     inst = cls(adapter=MagicMock(), name="Name_Test")
     assert inst.name == "Name_Test"
