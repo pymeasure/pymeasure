@@ -296,7 +296,6 @@ class SequenceDialog(QtWidgets.QFileDialog):
         param_vbox_widget = QtWidgets.QWidget()
 
         self.preview_param = SequencerTreeView(
-            preview=True,
             parent=self
         )
         self.preview_param.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -536,8 +535,7 @@ class SequencerWidget(QtWidgets.QWidget):
                 for filename in map(str, filenames):
                     if filename == '':
                         return
-
-        if len(filename) == 0:
+        elif len(filename) == 0:
             return
 
         self.data = SequenceFileHandler(open(filename, "r"))
