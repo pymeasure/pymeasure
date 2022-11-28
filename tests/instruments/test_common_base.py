@@ -114,7 +114,14 @@ def fake():
 
 class ExtendedBase(FakeBase):
     # Keep values unchanged, just derive another instrument, e.g. to add more properties
-    pass
+    fake_ctrl2 = CommonBase.control(
+        "", "%d", "docs",
+        validator=strict_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+
+    fake_ctrl2_values = (5, 20)
 
 
 class StrictExtendedBase(ExtendedBase):
@@ -255,7 +262,26 @@ class TestRemoveChild:
         assert getattr(parent_without_children, "function", None) is None
 
 
-# Test ChildDescriptor
+class TestInheritanceWithChildren:
+    class InstrumentSubclass(Parent):
+        """Override one channel group, inherit other groups."""
+        function = CommonBase.ChannelCreator(GenericBase, "overridden", prefix=None)
+
+    @pytest.fixture()
+    def parent(self):
+        return self.InstrumentSubclass(ProtocolAdapter())
+
+    def test_inherited_children_are_present(self, parent):
+        assert isinstance(parent.ch_A, GenericBase)
+
+    def test_ChannelCreator_is_replaced_by_channel_collection(self, parent):
+        assert not isinstance(parent.channels, CommonBase.ChannelCreator)
+
+    def test_overridden_child_is_present(self, parent):
+        assert parent.function.id == "overridden"
+
+
+# Test ChannelCreator
 @pytest.mark.parametrize("args, pairs, kwargs", (
     ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
     (((Child, GenericBase, Child), (1, 2, 3)),
@@ -643,6 +669,7 @@ def test_dynamic_property_unchanged_by_inheritance():
 
 
 def test_dynamic_property_strict_raises():
+    # Tests also that dynamic properties can be changed at class level.
     strict = StrictExtendedBase()
 
     with pytest.raises(ValueError):
@@ -692,3 +719,22 @@ def test_dynamic_property_values_update_in_one_instance_leaves_other_unchanged()
 def test_dynamic_property_reading_special_attributes_forbidden(fake):
     with pytest.raises(AttributeError):
         fake.fake_ctrl_validator
+
+
+def test_dynamic_property_with_inheritance():
+    inst = ExtendedBase()
+    # Test for inherited attribute
+    with pytest.raises(AttributeError):
+        inst.fake_ctrl_validator
+    # Test for new attribute
+    with pytest.raises(AttributeError):
+        inst.fake_ctrl2_validator
+
+
+def test_dynamic_property_values_defined_at_superclass_level():
+    """Test whether a dynamic property can be changed a superclass level"""
+    inst = StrictExtendedBase()
+    # Test whether the change of values from (1, 10) to (5, 20) succeeded:
+    inst.fake_ctrl2 = 17  # should raise an error if change unsuccessful
+    with pytest.raises(ValueError):
+        inst.fake_ctrl2 = 2  # should not raise an error if change unsuccessful
