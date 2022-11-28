@@ -118,9 +118,10 @@ class CommonBase:
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._special_names = self._setup_special_names()
         self._create_channels()
+        super().__init__(**kwargs)
 
     class ChannelCreator:
         """Add channels to the parent class.
