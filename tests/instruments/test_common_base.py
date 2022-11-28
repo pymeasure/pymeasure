@@ -121,7 +121,7 @@ class ExtendedBase(FakeBase):
         dynamic=True,
     )
 
-    fake_ctrl2.values = (2, 20)
+    fake_ctrl2_values = (2, 20)
 
 
 class StrictExtendedBase(ExtendedBase):
