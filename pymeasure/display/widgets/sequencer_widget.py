@@ -532,7 +532,7 @@ class SequencerWidget(QtWidgets.QWidget):
 
         if (filename is None) or (filename == ''):
             dialog = SequenceDialog()
-            dialog.exec():
+            dialog.exec()
             filenames = dialog.selectedFiles()
             if filenames:
                 filename = filenames[0]
