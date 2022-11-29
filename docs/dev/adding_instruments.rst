@@ -104,10 +104,10 @@ This is a minimal instrument definition:
     class Extreme5000(Instrument):
         """Control the imaginary Extreme 5000 instrument."""
 
-        def __init__(self, adapter, **kwargs):
+        def __init__(self, adapter, name="Extreme 5000", **kwargs):
             super().__init__(
                 adapter,
-                "Extreme 5000",
+                name,
                 **kwargs
             )
 
@@ -211,13 +211,14 @@ As our signal values are often integers, the most appropriate enum types are :co
 :code:`IntFlags` are used by many instruments for the purpose just demonstrated.
 
 The status property could look like this:
+
 .. testcode::
 
     status = Instrument.measurement(
         "STB?", 
         """Measure the status of the device as enum.""",
         get_process=lambda v: ErrorCode(v), 
-   )
+    )
 
 .. _default_connection_settings:
 
@@ -236,10 +237,10 @@ The simplest version, suitable when the instrument connection needs default sett
 
 .. code-block:: python
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", **kwargs):
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             **kwargs
         )
 
@@ -248,10 +249,10 @@ This is suitable when the instrument has one type of interface, or any defaults 
 
 .. code-block:: python
 
-    def __init__(self, adapter, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", baud_rate=2400, **kwargs):
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             baud_rate=baud_rate,
             **kwargs
         )
@@ -260,11 +261,11 @@ If you want to set defaults, but they don't need to be prominently exposed for r
 
 .. code-block:: python
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             **kwargs
         )
 
@@ -279,11 +280,11 @@ These then contain a *dictionary* with the settings specific to the respective i
 
 .. code-block:: python
 
-    def __init__(self, adapter, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             gpib=dict(enable_repeat_addressing=False,
                       read_termination='\r'),
             asrl={'baud_rate': baud_rate,
@@ -1003,8 +1004,8 @@ Additionally, the device needs some time after it received a command, before it 
         :param address: The device address for the communication.
         :param query_delay: Wait time after writing and before reading in seconds.
         """
-        def __init__(self, adapter, address=0, query_delay=0.1):
-            super().__init__(adapter, "ExtremeCommunication")
+        def __init__(self, adapter, name="ExtremeCommunication", address=0, query_delay=0.1):
+            super().__init__(adapter, name)
             self.address = f"{address:03}"
             self.query_delay = query_delay
     
@@ -1052,8 +1053,8 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
 
     class ExtremeBytes(Instrument):
         """Control the ExtremeBytes instrument with byte-based communication."""
-        def __init__(self, adapter):
-            super().__init__(adapter, "ExtremeBytes")
+        def __init__(self, adapter, name="ExtremeBytes"):
+            super().__init__(adapter, name)
     
         def write(self, command):
             """Write to the device according to the comma separated command.

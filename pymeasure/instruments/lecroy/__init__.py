@@ -22,35 +22,4 @@
 # THE SOFTWARE.
 #
 
-
-from pymeasure.test import expected_protocol
-
-from pymeasure.instruments.hp import HP8657B
-
-
-def test_frequency():
-    with expected_protocol(
-            HP8657B,
-            [(b"FR 1234567890 HZ", None),
-             (b"FR   12345678 HZ", None)],
-    ) as instr:
-        instr.frequency = 1.23456789e9
-        instr.frequency = 1.2345678e7
-
-
-def test_level():
-    with expected_protocol(
-            HP8657B,
-            [(b"AP -123.4 DM", None)],
-    ) as instr:
-        instr.level = -123.4
-
-
-def test_output():
-    with expected_protocol(
-            HP8657B,
-            [(b"R3", None),
-             (b"R2", None)],
-    ) as instr:
-        instr.output_enabled = True
-        instr.output_enabled = False
+from .lecroyT3DSO1204 import LeCroyT3DSO1204
