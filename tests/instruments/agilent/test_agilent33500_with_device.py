@@ -29,7 +29,6 @@ from math import pi, sin
 
 # from pyvisa.errors import VisaIOError
 
-@pytest.skip('Only works with connected hardware', allow_module_level=True)
 ############
 # FIXTURES #
 ############
@@ -75,6 +74,7 @@ BURST_NCYCLES = [1, 99999]
 SRATE = [1e-6, 1.6e8]
 
 
+@pytest.skip('Only works with connected hardware', allow_module_level=True)
 def generate_simple_harmonic_waveform(harmonic, distortion):
     """
     Generates a waveform with onlhy one harmonic
@@ -92,13 +92,14 @@ def generate_simple_harmonic_waveform(harmonic, distortion):
     while time < ((1 / frequency) * number_of_cycles):
         fundamental = fundamental_amplitude * sin(2 * pi * frequency * time)
         harmonic_amplitude = (
-                (distortion / 100) * fundamental_amplitude * sin(harmonic * 2 * pi * frequency * time)
+                (distortion / 100) *
+                fundamental_amplitude *
+                sin(harmonic * 2 * pi * frequency * time)
         )
         waveform.append(fundamental + harmonic_amplitude)
         time += time_step
 
     return waveform
-
 
 #########
 # TESTS #
@@ -107,6 +108,8 @@ def generate_simple_harmonic_waveform(harmonic, distortion):
 #####################
 # NON-CHANNEL TESTS #
 #####################
+
+
 def test_get_instrument_id(generator):
     assert "Agilent Technologies" in generator.id
 
