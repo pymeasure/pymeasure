@@ -408,8 +408,8 @@ def test_display_parameter():
              (b"PACU MEAN,C2", None)
              ]
     ) as instr:
-        instr.display_parameter(parameter="PKPK", channel=1)
-        instr.ch(2).display_parameter = "MEAN"
+        instr.set_display_parameter(parameter="PKPK", channel=1)
+        instr.ch(2).set_display_parameter = "MEAN"
 
 
 def test_measure_parameter():

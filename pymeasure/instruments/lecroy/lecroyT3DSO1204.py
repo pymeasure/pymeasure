@@ -338,10 +338,10 @@ class ScopeChannel(Channel):
                               "CRMS", "OVSN", "FPRE", "OVSP", "RPRE", "PER", "FREQ", "PWID",
                               "NWID", "RISE", "FALL", "WID", "DUTY", "NDUTY", "ALL"]
 
-    display_parameter = Instrument.setting(
+    set_display_parameter = Instrument.setting(
         "PACU %s",
-        """ The waveform of this channel is processed with the specified algorithm and the result
-        is displayed on the front panel. The commands accepts the following parameters:
+        """ Set the waveform processing of this channel with the specified algorithm and the result
+        is displayed on the front panel. The command accepts the following parameters:
         Parameter   Description
         PKPK        vertical peak-to-peak
         MAX         maximum vertical value
@@ -373,7 +373,7 @@ class ScopeChannel(Channel):
 
     def measure_parameter(self, parameter: str):
         """ Process a waveform with the selected algorithm and returns the specified measurement.
-        :param parameter: same as the display_parameter property
+        :param parameter: same as the set_display_parameter property
         """
         parameter = strict_discrete_set(value=parameter, values=self._measurable_parameters)
         output = self.ask("PAVA? %s" % parameter)
@@ -1250,11 +1250,11 @@ class LeCroyT3DSO1204(Instrument):
                 ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]
     )
 
-    def display_parameter(self, parameter, channel):
+    def set_display_parameter(self, parameter, channel):
         """
-        Same as the display_parameter method in the Channel subclass
+        Same as the set_display_parameter method in the Channel subclass
         """
-        self.ch(channel).display_parameter = parameter
+        self.ch(channel).set_display_parameter = parameter
 
     def measure_parameter(self, parameter, channel):
         """
