@@ -51,7 +51,7 @@ def sanitize_source(source):
             source = "C" + match.group("number")
         else:
             source = match.group("name_only")
-        source = source.replace(" ", "").upper()
+        source = source.upper()
     else:
         raise ValueError(f"source {source} not recognized")
     return source
