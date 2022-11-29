@@ -102,20 +102,20 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:HIGH?",
         "SOUR{ch}:VOLT:HIGH %f",
         """ A floating point property that controls the upper voltage of the
-        output waveform in V, from -4.990 V to 5 V (must be higher than low
+        output waveform in V, from -4.999 V to 5 V (must be higher than low
         voltage by at least 1 mV).""",
         validator=strict_range,
-        values=[-4.99, 5],
+        values=[-4.999, 5],
     )
 
     voltage_low = Instrument.control(
         "SOUR{ch}:VOLT:LOW?",
         "SOUR{ch}:VOLT:LOW %f",
         """ A floating point property that controls the lower voltage of the
-        output waveform in V, from -5 V to 4.990 V (must be lower than high
+        output waveform in V, from -5 V to 4.999 V (must be lower than high
         voltage by at least 1 mV).""",
         validator=strict_range,
-        values=[-5, 4.99],
+        values=[-5, 4.999],
     )
 
     phase = Instrument.control(
@@ -152,7 +152,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:PULS:PER?",
         "SOUR{ch}:FUNC:PULS:PER %e",
         """ A floating point property that controls the period of a pulse
-        waveform function in seconds, ranging from 33 ns to 1e6 s. Can be set
+        waveform function in seconds, ranging from 33 ns to 1 Ms. Can be set
         and overwrites the frequency for *all* waveforms. If the period is
         shorter than the pulse width + the edge time, the edge time and pulse
         width will be adjusted accordingly. """,
@@ -266,7 +266,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:ARB %s",
         """ A string property that selects the arbitrary signal from the volatile
         memory of the device. String has to match an existing arb signal in volatile
-        memore (set by data_arb()).""",
+        memory (set by :meth:`data_arb`).""",
     )
 
     arb_advance = Instrument.control(
@@ -311,11 +311,12 @@ class Agilent33500Channel(Channel):
         """
         Uploads an arbitrary trace into the volatile memory of the device for a given channel.
 
-        The data_points can be given as comma separated 16 bit DAC values (ranging from -32767 to +32767),
-        as comma separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
+        The data_points can be given as:
+        comma separated 16 bit DAC values (ranging from -32767 to +32767),
+        as comma separated floating point values (ranging from -1.0 to +1.0),
+        or as a binary data stream.
         Check the manual for more information. The storage depends on the device type and ranges
         from 8 Sa to 16 MSa (maximum).
-        TODO: *Binary is not yet implemented*
 
         :param arb_name: The name of the trace in the volatile memory. This is used to access the
                          trace.
@@ -345,7 +346,7 @@ class Agilent33500Channel(Channel):
             data_string = separator.join(data_points_str)  # Join strings with separator
             self.write(f"SOUR{{ch}}:DATA:ARB {arb_name}, {data_string}")
             return
-        elif data_format == "binary":
+        elif data_format == "binary":  # TODO: *Binary is not yet implemented*
             raise NotImplementedError(
                 'The binary format has not yet been implemented. Use "DAC" or "float" instead.'
             )
@@ -368,23 +369,23 @@ class Agilent33500(Instrument):
 
         generator = Agilent33500("GPIB::1")
 
-        generator.shape = 'SIN'                       # Sets the output signal shape to sine for the default channel
-        generator.ch[1].shape = 'SIN'                 # Sets the output signal shape to sine for channel 1
-        generator.frequency = 1e3                     # Sets the output frequency to 1 kHz for the default channel
-        generator.ch[1].frequency = 1e3               # Sets the output frequency to 1 kHz for channel 1
-        generator.ch[2].amplitude = 5                 # Sets the output amplitude to 5 Vpp for channel 2
-        generator.ch[2].output = 'on'                 # Enables the output for channel 2
+        generator.shape = 'SIN'                 # Sets default channel output signal shape to sine
+        generator.ch[1].shape = 'SIN'           # Sets channel 1 output signal shape to sine
+        generator.frequency = 1e3               # Sets default channel output frequency to 1 kHz
+        generator.ch[1].frequency = 1e3         # Sets channel 1 output frequency to 1 kHz
+        generator.ch[2].amplitude = 5           # Sets channel 2 output amplitude to 5 Vpp
+        generator.ch[2].output = 'on'           # Enables channel 2 output
 
-        generator.ch[1].shape = 'ARB'                 # Set shape to arbitrary for channel 1
-        generator.ch[1].arb_srate = 1e6               # Set sample rate to 1MSa/s for channel 1
+        generator.ch[1].shape = 'ARB'           # Set channel 1 shape to arbitrary
+        generator.ch[1].arb_srate = 1e6         # Set channel 1 sample rate to 1MSa/s
 
-        generator.ch[1].data_volatile_clear()         # Clear volatile internal memory for channel 1
-        generator.ch[1].data_arb(                     # Send data points of arbitrary waveform for channel 1
+        generator.ch[1].data_volatile_clear()   # Clear channel 1 volatile internal memory
+        generator.ch[1].data_arb(               # Send data of arbitrary waveform to channel 1
             'test',
-            range(-10000, 10000, +20),                # In this case a simple ramp
-            data_format='DAC'                         # Data format is set to 'DAC'
+            range(-10000, 10000, +20),          # In this case a simple ramp
+            data_format='DAC'                   # Data format is set to 'DAC'
          )
-        generator.ch[1].arb_file = 'test'             # Select the transmitted waveform 'test'
+        generator.ch[1].arb_file = 'test'       # Select the transmitted waveform 'test'
 
     """
 
@@ -452,20 +453,20 @@ class Agilent33500(Instrument):
         "VOLT:HIGH?",
         "VOLT:HIGH %f",
         """ A floating point property that controls the upper voltage of the
-        output waveform in V, from -4.990 V to 5 V (must be higher than low
+        output waveform in V, from -4.999 V to 5 V (must be higher than low
         voltage by at least 1 mV).""",
         validator=strict_range,
-        values=[-4.99, 5],
+        values=[-4.999, 5],
     )
 
     voltage_low = Instrument.control(
         "VOLT:LOW?",
         "VOLT:LOW %f",
         """ A floating point property that controls the lower voltage of the
-        output waveform in V, from -5 V to 4.990 V (must be lower than high
+        output waveform in V, from -5 V to 4.999 V (must be lower than high
         voltage by at least 1 mV).""",
         validator=strict_range,
-        values=[-5, 4.99],
+        values=[-5, 4.999],
     )
 
     phase = Instrument.control(
@@ -524,7 +525,7 @@ class Agilent33500(Instrument):
         "FUNC:PULS:WIDT?",
         "FUNC:PULS:WIDT %e",
         """ A floating point property that controls the width of a pulse
-        waveform function in seconds, ranging from 16 ns to 1e6 s, within a
+        waveform function in seconds, ranging from 16 ns to 1 Ms, within a
         set of restrictions depending on the period.""",
         validator=strict_range,
         values=[16e-9, 1e6],
@@ -616,7 +617,7 @@ class Agilent33500(Instrument):
         "FUNC:ARB %s",
         """ A string property that selects the arbitrary signal from the volatile
         memory of the device. String has to match an existing arb signal in volatile
-        memore (set by data_arb()).""",
+        memory (set by :meth:`data_arb`).""",
     )
 
     arb_advance = Instrument.control(
@@ -693,11 +694,13 @@ class Agilent33500(Instrument):
         """
         Uploads an arbitrary trace into the volatile memory of the device.
 
-        The data_points can be given as comma separated 16 bit DAC values (ranging from -32767 to +32767),
-        as comma separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
-        Check the manual for more information. The storage depends on the device type and ranges
+        The data_points can be given as:
+        comma separated 16 bit DAC values (ranging from -32767 to +32767),
+        as comma separated floating point values (ranging from -1.0 to +1.0)
+        or as a binary data stream.
+        Check the manual for more information.
+        The storage depends on the device type and ranges
         from 8 Sa to 16 MSa (maximum).
-        TODO: *Binary is not yet implemented*
 
         :param arb_name: The name of the trace in the volatile memory. This is used to access the
                          trace.
@@ -723,7 +726,7 @@ class Agilent33500(Instrument):
             data_string = separator.join(data_points_str)  # Join strings with separator
             self.write(f"DATA:ARB {arb_name}, {data_string}")
             return
-        elif data_format == "binary":
+        elif data_format == "binary":  # TODO: *Binary is not yet implemented*
             raise NotImplementedError(
                 'The binary format has not yet been implemented. Use "DAC" or "float" instead.'
             )

@@ -29,10 +29,10 @@ from math import pi, sin
 
 # from pyvisa.errors import VisaIOError
 
+@pytest.skip('Only works with connected hardware', allow_module_level=True)
 ############
 # FIXTURES #
 ############
-
 
 @pytest.fixture(scope="session")
 def generator():
@@ -60,8 +60,8 @@ AMPLITUDE_RANGE = [0.01, 10]
 PHASE_RANGE = [-360, 360]
 AMPLITUDE_UNIT = ["VPP", "VRMS", "DBM"]
 OFFSET_RANGE = [-4.995, 4.995]
-VOLTAGE_HIGH_RANGE = [-4.99, 5]
-VOLTAGE_LOW_RANGE = [-5, 4.99]
+VOLTAGE_HIGH_RANGE = [-4.999, 5]
+VOLTAGE_LOW_RANGE = [-5, 4.999]
 SQUARE_DUTYCYCLE_RANGE = [0.01, 99.98]
 RAMP_SYMMETRY_RANGE = [0, 100]
 PULSE_PERIOD_RANGE = [33e-9, 1e6]
@@ -92,7 +92,7 @@ def generate_simple_harmonic_waveform(harmonic, distortion):
     while time < ((1 / frequency) * number_of_cycles):
         fundamental = fundamental_amplitude * sin(2 * pi * frequency * time)
         harmonic_amplitude = (
-            (distortion / 100) * fundamental_amplitude * sin(harmonic * 2 * pi * frequency * time)
+                (distortion / 100) * fundamental_amplitude * sin(harmonic * 2 * pi * frequency * time)
         )
         waveform.append(fundamental + harmonic_amplitude)
         time += time_step
@@ -149,8 +149,8 @@ def test_offset(generator, offset):
 
 @pytest.mark.parametrize("voltage_high", VOLTAGE_HIGH_RANGE)
 def test_voltage_high(
-    generator,
-    voltage_high,
+        generator,
+        voltage_high,
 ):
     generator.voltage_high = voltage_high
     assert voltage_high == pytest.approx(generator.voltage_high, 0.01)
@@ -158,8 +158,8 @@ def test_voltage_high(
 
 @pytest.mark.parametrize("voltage_low", VOLTAGE_LOW_RANGE)
 def test_voltage_low(
-    generator,
-    voltage_low,
+        generator,
+        voltage_low,
 ):
     generator.voltage_low = voltage_low
     assert voltage_low == pytest.approx(generator.voltage_low, 0.01)
