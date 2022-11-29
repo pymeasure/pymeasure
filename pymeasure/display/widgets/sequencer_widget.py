@@ -289,17 +289,19 @@ class SequenceDialog(QtWidgets.QFileDialog):
         self._setup_ui()
 
     def _setup_ui(self):
-        preview_tab = QtWidgets.QTabWidget()
-        vbox = QtWidgets.QVBoxLayout()
-        param_vbox = QtWidgets.QVBoxLayout()
-        vbox_widget = QtWidgets.QWidget()
-        param_vbox_widget = QtWidgets.QWidget()
-
-        self.preview_param = SequencerTreeView(
-            parent=self
-        )
-        self.preview_param.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         if not self.save:
+            # TODO: Add append flag here ?
+            preview_tab = QtWidgets.QTabWidget()
+            vbox = QtWidgets.QVBoxLayout()
+            param_vbox = QtWidgets.QVBoxLayout()
+            vbox_widget = QtWidgets.QWidget()
+            param_vbox_widget = QtWidgets.QWidget()
+
+            self.preview_param = SequencerTreeView(
+                parent=self
+            )
+            self.preview_param.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
             param_vbox.addWidget(self.preview_param)
             vbox_widget.setLayout(vbox)
             param_vbox_widget.setLayout(param_vbox)
@@ -308,7 +310,7 @@ class SequenceDialog(QtWidgets.QFileDialog):
             self.layout().setColumnStretch(5, 1)
             self.setMinimumSize(900, 500)
             self.resize(900, 500)
-            self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
+            self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
             self.currentChanged.connect(self.update_preview)
         else:
             self.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
@@ -463,7 +465,7 @@ class SequencerWidget(QtWidgets.QWidget):
 
         model = self.tree.model()
         node_index = model.add_node(parameter=parameter, parent=parent)
-
+        self.tree.openPersistentEditor(model.index(node_index.row(), 1, parent))
         self.tree.expandAll()
 
         self.tree.selectRow(node_index)
@@ -528,15 +530,14 @@ class SequencerWidget(QtWidgets.QWidget):
         :param filename: Filename (string) of the to-be-loaded file.
         """
 
-        if filename is None:
+        if (filename is None) or (filename == ''):
             dialog = SequenceDialog()
-            if dialog.exec():
-                filenames = dialog.selectedFiles()
-                for filename in map(str, filenames):
-                    if filename == '':
-                        return
-        elif len(filename) == 0:
-            return
+            dialog.exec():
+            filenames = dialog.selectedFiles()
+            if filenames:
+                filename = filenames[0]
+            else:
+                return
 
         self.data = SequenceFileHandler(open(filename, "r"))
         self.tree_model = SequencerTreeModel(data=self.data)
