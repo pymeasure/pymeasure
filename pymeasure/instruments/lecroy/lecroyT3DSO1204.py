@@ -343,8 +343,8 @@ class ScopeChannel(Channel):
 
     display_parameter = Instrument.setting(
         "PACU %s",
-        """ The waveform of this channel is processed with the specified algorithm and the result
-        is displayed on the front panel. The commands accepts the following parameters:
+        """Set the waveform processing of this channel with the specified algorithm and the result
+        is displayed on the front panel. The command accepts the following parameters:
         Parameter   Description
         PKPK        vertical peak-to-peak
         MAX         maximum vertical value
