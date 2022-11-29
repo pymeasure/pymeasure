@@ -124,6 +124,7 @@ nameless_instruments = [
     "LakeShore331",
     "LakeShore421",
     "LakeShore425",
+    "LeCroyT3DSO1204",
     "ESP300",
     "ParkerGV6",
     "CNT91",  # pendulum
