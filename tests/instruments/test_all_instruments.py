@@ -94,8 +94,10 @@ nameless_instruments = [
     "APSIN12G",
     "AnritsuMG3692C",
     "AnritsuMS9740A",
+    "BKPrecision9130B",
     "Danfysik8500",
-    "SM7045D",
+    "SM7045D",  # deltaelektronika
+    "Nxds",  # edwards
     "EurotestHPP120256",
     "Fluke7341",
     "FWBell5080",
@@ -124,11 +126,12 @@ nameless_instruments = [
     "LakeShore425",
     "ESP300",
     "ParkerGV6",
+    "CNT91",  # pendulum
     "razorbillRP100",
     "FSL",
     "SFM",
-    "SPD1168X",
-    "SPD1305X",
+    "SPD1168X",  # siglenttechnologies
+    "SPD1305X",  # siglenttechnologies
     "DSP7265",
     "SG380",
     "SR510",
@@ -136,10 +139,11 @@ nameless_instruments = [
     "SR830",
     "SR860",
     "AFG3152C",
-    "TDS2000",
-    "ATS525",
-    "ATS545",
-    "ECO560",
+    "TDS2000",  # tectronix
+    "ATS525",  # temptronic
+    "ATS545",  # temptronic
+    "ECO560",  # temptronic
+    "TexioPSW360L30",
     "Thermotron3800",
     "ThorlabsPro8000",
     "Yokogawa7651",
