@@ -3,6 +3,7 @@ Upcoming version
 New adapter and instrument mechanics
 ------------------------------------
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
+- All instruments are required to accept a :code:`name` argument.
 
 Version 0.11.0 (2022-11-19)
 ===========================
