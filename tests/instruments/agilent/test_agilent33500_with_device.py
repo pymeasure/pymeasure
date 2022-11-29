@@ -27,6 +27,7 @@ from pymeasure.instruments.agilent.agilent33500 import Agilent33500
 from math import pi, sin
 
 
+pytest.skip('Only works with connected hardware', allow_module_level=True)
 # from pyvisa.errors import VisaIOError
 
 ############
