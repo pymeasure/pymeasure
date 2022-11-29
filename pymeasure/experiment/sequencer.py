@@ -69,12 +69,12 @@ class SequenceItem(object):
 class SequenceFileHandler:
     """ Represent a sequence file and its methods
 
-    A sequence file is a text file which represent a tree structure.
+    A sequence file is a text file which represents a tree structure.
     Each node of the tree is composed of 3 elements:
 
     - Level: that is the distance from the root node
     - Parameter: A string that is the parameter name
-    - Expression: A python expression which describe the list of values to be assumed
+    - Expression: A python expression which describes the list of values to be assumed
       by the Parameter.
 
     The syntax of the file is as follow: ::
@@ -89,7 +89,11 @@ class SequenceFileHandler:
     Parameter4 has no child.
 
     Data is stored internally as a list where each
-    item matches a row of the sequence file
+    item matches a row of the sequence file.
+
+    Data can be changed with methods to add or remove nodes.
+
+    Data can also be saved back to the file object provided.
  """
 
     MAXDEPTH = 10
@@ -129,9 +133,9 @@ class SequenceFileHandler:
     }
 
     def __init__(self, file_obj):
-        self.file_obj = file_obj
-        self._sequences = None
-        self.parse()
+        self._sequences = []
+        if file_obj:
+            self.load(file_obj)
 
     @staticmethod
     def eval_string(string, name=None, depth=None, log_enabled=True):
@@ -294,14 +298,14 @@ class SequenceFileHandler:
     def __getitem__(self, key):
         return self.sequences[key]
 
-    def parse(self):
+    def load(self, file_obj, append=False):
         """
         Read and parse a sequence file.
 
         """
 
-        self._sequences = []
-        self.parent = {}
+        if not append:
+            self._sequences = []
         current_parent = None
 
         pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
