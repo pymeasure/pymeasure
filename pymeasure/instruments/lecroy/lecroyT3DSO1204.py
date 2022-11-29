@@ -180,9 +180,12 @@ class _ChunkResizer:
     """ The only purpose of this class is to resize the chunk size of the instrument adapter.
     This is necessary when reading a big chunk of data from the oscilloscope like image dumps and
     waveforms.
-    Note.
-    Only if the new chunk size is bigger than the current chunk size, it is resized. """
-
+    .. Note::
+        Only if the new chunk size is bigger than the current chunk size, it is resized.
+    :param adapter: adapter attribute of the instrument. This is usually accessed through the
+        Instrument::adapter attribute.
+    :param int chunk_size: new chunk size
+    """
     def __init__(self, adapter, chunk_size):
         """ Just initialize the object attributes.
         :param: adapter of the instrument. This is usually accessed through the
