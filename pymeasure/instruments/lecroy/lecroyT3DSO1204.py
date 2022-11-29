@@ -1043,7 +1043,7 @@ class LeCroyT3DSO1204(Instrument):
         map_values=True
     )
 
-    _trigger_select_values = {
+    _trigger_select_vals = {
         "EDGE": [["C1", "C2", "C3", "C4", "LINE"], ["TI", "OFF"], [80e-9, 1.5]],
         "DROP": [["C1", "C2", "C3", "C4"], ["TI"], [2e-9, 4.2]],
         "GLIT": [["C1", "C2", "C3", "C4"], ["PS", "PL", "P2", "P1"], [2e-9, 4.2], [2e-9, 4.2]],
@@ -1061,7 +1061,7 @@ class LeCroyT3DSO1204(Instrument):
         """ Refer to the self.trigger_select documentation. """,
         get_process=_trigger_select_get_process,
         validator=_trigger_select_validator,
-        values=_trigger_select_values,
+        values=_trigger_select_vals,
         dynamic=True
     )
 
