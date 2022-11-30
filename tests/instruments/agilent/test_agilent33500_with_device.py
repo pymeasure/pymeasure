@@ -34,6 +34,7 @@ pytest.skip('Only works with connected hardware', allow_module_level=True)
 # FIXTURES #
 ############
 
+
 @pytest.fixture(scope="session")
 def generator():
     try:
