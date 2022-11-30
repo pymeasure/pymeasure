@@ -28,7 +28,7 @@ from inspect import signature
 from collections import ChainMap
 
 from ..Qt import QtCore, QtWidgets, QtGui
-from ...experiment.sequencer import SequenceFileHandler, SequenceEvaluationError
+from ...experiment.sequencer import SequenceHandler, SequenceEvaluationError
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -197,12 +197,28 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
                 self.dataChanged.emit(index, index, [role])
         return return_value
 
-    def __iter__(self):
-        for row, child in enumerate(self.root.children()):
-            yield self.createIndex(row, 0, None)
+    def visit_tree(self, parent):
+        """ Return a generator to enumerate all the nodes in the tree """
+        parent_data = None
+        if parent:
+            parent_data = parent.internalPointer()
 
-    def save(self, filename=None):
-        self.root.save(filename)
+        for row, child in enumerate(self.root.children(parent_data)):
+            node = self.index(row, 0, parent)
+            if node.isValid():
+                yield node
+                yield from self.visit_tree(node)
+
+    def __iter__(self):
+        yield from self.visit_tree(None)
+
+    def save(self, file_obj):
+        self.root.save(file_obj)
+
+    def load(self, file_obj, append=False):
+        self.layoutAboutToBeChanged.emit()
+        self.root.load(file_obj, append=append)
+        self.layoutChanged.emit()
 
 
 class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
@@ -232,7 +248,7 @@ class ExpressionValidator(QtGui.QValidator):
     def validate(self, input_string, pos):
         return_value = QtGui.QValidator.State.Acceptable
         try:
-            SequenceFileHandler.eval_string(input_string, log_enabled=False)
+            SequenceHandler.eval_string(input_string, log_enabled=False)
         except SequenceEvaluationError:
             return_value = QtGui.QValidator.State.Intermediate
         return (return_value, input_string, pos)
@@ -270,6 +286,16 @@ class SequencerTreeView(QtWidgets.QTreeView):
             selection_model.select(idx,
                                    QtCore.QItemSelectionModel.SelectionFlag.Select)
 
+    def activate_persistent_editor(self):
+        model = self.model()
+        for item in model:
+            index = model.index(item.row(), 1, model.parent(item))
+            self.openPersistentEditor(index)
+
+    def setModel(self, model):
+        super().setModel(model)
+        self.model().layoutChanged.connect(self.activate_persistent_editor)
+
 
 class SequenceDialog(QtWidgets.QFileDialog):
     """
@@ -290,22 +316,21 @@ class SequenceDialog(QtWidgets.QFileDialog):
 
     def _setup_ui(self):
         if not self.save:
-            # TODO: Add append flag here ?
+            self.append_checkbox = QtWidgets.QCheckBox("Append to existing sequence")
             preview_tab = QtWidgets.QTabWidget()
             vbox = QtWidgets.QVBoxLayout()
             param_vbox = QtWidgets.QVBoxLayout()
             vbox_widget = QtWidgets.QWidget()
             param_vbox_widget = QtWidgets.QWidget()
 
-            self.preview_param = SequencerTreeView(
-                parent=self
-            )
-            self.preview_param.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
+            self.preview_param = SequencerTreeView(parent=self)
+            triggers = QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+            self.preview_param.setEditTriggers(triggers)
             param_vbox.addWidget(self.preview_param)
             vbox_widget.setLayout(vbox)
             param_vbox_widget.setLayout(param_vbox)
             preview_tab.addTab(param_vbox_widget, "Sequence Parameters")
+            self.layout().addWidget(self.append_checkbox)
             self.layout().addWidget(preview_tab, 0, 5, 4, 1)
             self.layout().setColumnStretch(5, 1)
             self.setMinimumSize(900, 500)
@@ -318,7 +343,8 @@ class SequenceDialog(QtWidgets.QFileDialog):
 
     def update_preview(self, filename):
         if not os.path.isdir(filename) and filename != '':
-            data = SequenceFileHandler(open(filename, "r"))
+            with open(filename, 'r') as file_object:
+                data = SequenceHandler(file_object)
             tree_model = SequencerTreeModel(data=data)
             self.preview_param.setModel(tree_model)
             self.preview_param.expandAll()
@@ -334,8 +360,6 @@ class SequencerWidget(QtWidgets.QWidget):
     :class:`ManagedWindow<pymeasure.display.windows.managed_window.ManagedWindow>` to have a
     "procedure" argument.
     """
-
-    MAXDEPTH = 10
 
     def __init__(self, inputs=None, sequence_file=None, parent=None):
         super().__init__(parent)
@@ -353,7 +377,8 @@ class SequencerWidget(QtWidgets.QWidget):
         self._setup_ui()
         self._layout()
 
-        # Load the sequence file if supplied.
+        self.data = SequenceHandler()
+        self.tree.setModel(SequencerTreeModel(data=self.data))
         if sequence_file is not None:
             self.load_sequence(filename=sequence_file)
 
@@ -520,7 +545,8 @@ class SequencerWidget(QtWidgets.QWidget):
         dialog = SequenceDialog(save=True)
         if dialog.exec():
             filename = dialog.selectedFiles()[0]
-            self.tree.save(open(filename, "w"))
+            with open(filename, 'w') as file_object:
+                self.tree.save(file_object)
             log.info('Saved sequence file %s' % filename)
 
     def load_sequence(self, *, filename=None):
@@ -529,17 +555,17 @@ class SequencerWidget(QtWidgets.QWidget):
 
         :param filename: Filename (string) of the to-be-loaded file.
         """
-
+        append_flag = False
         if (filename is None) or (filename == ''):
             dialog = SequenceDialog()
             dialog.exec()
+            append_flag = dialog.append_checkbox.checkState() == QtCore.Qt.CheckState.Checked
             filenames = dialog.selectedFiles()
             if filenames:
                 filename = filenames[0]
             else:
                 return
 
-        self.data = SequenceFileHandler(open(filename, "r"))
-        self.tree_model = SequencerTreeModel(data=self.data)
-        self.tree.setModel(self.tree_model)
+        with open(filename, 'r') as file_object:
+            self.tree.model().load(file_object, append=append_flag)
         self.tree.expandAll()
