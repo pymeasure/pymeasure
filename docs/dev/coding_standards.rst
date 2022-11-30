@@ -21,7 +21,7 @@ Many editors/IDEs can run this tool in the background while you work, showing re
 
 It is allowed but not required to use the `black`_ code formatter. 
 To avoid introducing unrelated changes when working on an existing file, it is recommended to use the `darker`_ tool.
-This helps keep the focus on the implementation instead of unrelated formatting, and helps reviewers reviewing the code.
+This helps to keep the focus on the implementation instead of unrelated formatting, and thereby facilitates code reviews.
 :code:`darker` is compatible with :code:`black`, but only formats regions that show as changed in Git.
 If there are conflicts between :code:`black`/:code:`darker`'s output and flake8 (especially related to `E203`_), flake8 takes precedence. Use ``#noqa : E203`` to disable E203 warnings for a specific line if appropriate.
 
