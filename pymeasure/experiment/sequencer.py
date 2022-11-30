@@ -66,11 +66,13 @@ class SequenceItem(object):
         return "{} \"{}\", \"{}\"".format("-" * (self.level + 1), self.parameter, self.expression)
 
 
-class SequenceFileHandler:
-    """ Represent a sequence file and its methods
+class SequenceHandler:
+    """ It represents a sequence, that is a tree of parameter sweep.
 
-    A sequence file is a text file which represents a tree structure.
-    Each node of the tree is composed of 3 elements:
+    A sequence can be loaded from a file or created programmatically with :meth:`~.add_node`
+    and :meth:`~.remove_node`
+
+    The internal representation is a nodes tree with each nodecomposed of 3 elements:
 
     - Level: that is the distance from the root node
     - Parameter: A string that is the parameter name
@@ -90,8 +92,6 @@ class SequenceFileHandler:
 
     Data is stored internally as a list where each
     item matches a row of the sequence file.
-
-    Data can be changed with methods to add or remove nodes.
 
     Data can also be saved back to the file object provided.
  """
@@ -132,7 +132,7 @@ class SequenceFileHandler:
         'tanh': numpy.tanh,
     }
 
-    def __init__(self, file_obj):
+    def __init__(self, file_obj=None):
         self._sequences = []
         if file_obj:
             self.load(file_obj)
@@ -157,7 +157,7 @@ class SequenceFileHandler:
         if len(string) > 0:
             try:
                 evaluated_string = eval(
-                    string, {"__builtins__": None}, SequenceFileHandler.SAFE_FUNCTIONS
+                    string, {"__builtins__": None}, SequenceHandler.SAFE_FUNCTIONS
                 )
             except TypeError:
                 if log_enabled:
@@ -300,7 +300,10 @@ class SequenceFileHandler:
 
     def load(self, file_obj, append=False):
         """
-        Read and parse a sequence file.
+        Read and parse a sequence stored in a file.
+
+        :params file_obj: file object
+        :params append: flag to control whether to append to or replace current sequence
 
         """
 
@@ -309,8 +312,8 @@ class SequenceFileHandler:
         current_parent = None
 
         pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
-        self.file_obj.seek(0)
-        for line in self.file_obj:
+        file_obj.seek(0)
+        for line in file_obj:
             line = line.strip()
             match = pattern.search(line)
 
@@ -349,9 +352,6 @@ class SequenceFileHandler:
 
         :param file_obj: file object
         """
-
-        if file_obj is None:
-            file_obj = self.file_obj
 
         file_obj.write("\n".join(str(item) for item in self.sequences))
 
