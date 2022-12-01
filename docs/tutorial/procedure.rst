@@ -335,7 +335,7 @@ Now that you have a background on how to use the different features of the Proce
 
         def startup(self):
             log.info("Connecting and configuring the instrument")
-            self.sourcemeter = Keithley2400("GPIB::24", includeSCPI=True)
+            self.sourcemeter = Keithley2400("GPIB::24")
             self.sourcemeter.reset()
             self.sourcemeter.use_front_terminals()
             self.sourcemeter.apply_current(100e-3, 10.0)  # current_range = 100e-3, compliance_voltage = 10.0
