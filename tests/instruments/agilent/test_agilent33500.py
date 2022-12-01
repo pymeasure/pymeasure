@@ -27,9 +27,6 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.agilent.agilent33500 import Agilent33500
 
 
-# TODO: Tests with a range in floats, seems to be flaky. Need to
-#       figure out the reason for protocol returning 6 after decimal point
-
 @pytest.mark.parametrize(
     "shape", ["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"]
 )
