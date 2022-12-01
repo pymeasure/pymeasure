@@ -85,7 +85,6 @@ def test_amplitude(amplitude):
     """
     Test Agilent 33500 amplitude function
     """
-    print(amplitude)
     with expected_protocol(
         Agilent33500,
         [
@@ -151,3 +150,147 @@ def test_output(state):
         inst.ch[1].output = state
         inst.ch[2].output = state
         inst.output = state
+
+
+@pytest.mark.parametrize("offset", [-4.995, 4.995])
+def test_offset(offset):
+    """
+    Test Agilent 33500 offset function
+    """
+    with expected_protocol(
+        Agilent33500,
+        [
+            ("SOUR1:VOLT:OFFS?", offset),
+            ("SOUR2:VOLT:OFFS?", offset),
+            ("VOLT:OFFS?", offset),
+            (f"SOUR1:VOLT:OFFS {'{:.6f}'.format(offset)}", None),
+            (f"SOUR2:VOLT:OFFS {'{:.6f}'.format(offset)}", None),
+            (f"VOLT:OFFS {'{:.6f}'.format(offset)}", None),
+        ],
+    ) as inst:
+        assert offset == inst.ch[1].offset
+        assert offset == inst.ch[2].offset
+        assert offset == inst.offset
+        inst.ch[1].offset = offset
+        inst.ch[2].offset = offset
+        inst.offset = offset
+
+
+@pytest.mark.parametrize("voltage_high", [-4.995, 4.995])
+def test_voltage_high(voltage_high):
+    """
+    Test Agilent 33500 voltage_high function
+    """
+    with expected_protocol(
+        Agilent33500,
+        [
+            ("SOUR1:VOLT:HIGH?", voltage_high),
+            ("SOUR2:VOLT:HIGH?", voltage_high),
+            ("VOLT:HIGH?", voltage_high),
+            (f"SOUR1:VOLT:HIGH {'{:.6f}'.format(voltage_high)}", None),
+            (f"SOUR2:VOLT:HIGH {'{:.6f}'.format(voltage_high)}", None),
+            (f"VOLT:HIGH {'{:.6f}'.format(voltage_high)}", None),
+        ],
+    ) as inst:
+        assert voltage_high == inst.ch[1].voltage_high
+        assert voltage_high == inst.ch[2].voltage_high
+        assert voltage_high == inst.voltage_high
+        inst.ch[1].voltage_high = voltage_high
+        inst.ch[2].voltage_high = voltage_high
+        inst.voltage_high = voltage_high
+
+
+@pytest.mark.parametrize("voltage_low", [-4.995, 4.995])
+def test_voltage_low(voltage_low):
+    """
+    Test Agilent 33500 voltage_low function
+    """
+    with expected_protocol(
+        Agilent33500,
+        [
+            ("SOUR1:VOLT:LOW?", voltage_low),
+            ("SOUR2:VOLT:LOW?", voltage_low),
+            ("VOLT:LOW?", voltage_low),
+            (f"SOUR1:VOLT:LOW {'{:.6f}'.format(voltage_low)}", None),
+            (f"SOUR2:VOLT:LOW {'{:.6f}'.format(voltage_low)}", None),
+            (f"VOLT:LOW {'{:.6f}'.format(voltage_low)}", None),
+        ],
+    ) as inst:
+        assert voltage_low == inst.ch[1].voltage_low
+        assert voltage_low == inst.ch[2].voltage_low
+        assert voltage_low == inst.voltage_low
+        inst.ch[1].voltage_low = voltage_low
+        inst.ch[2].voltage_low = voltage_low
+        inst.voltage_low = voltage_low
+
+
+@pytest.mark.parametrize("phase", [-360, 360])
+def test_phase(phase):
+    """
+    Test Agilent 33500 phase function
+    """
+    with expected_protocol(
+        Agilent33500,
+        [
+            ("SOUR1:PHAS?", phase),
+            ("SOUR2:PHAS?", phase),
+            ("PHAS?", phase),
+            (f"SOUR1:PHAS {'{:.6f}'.format(phase)}", None),
+            (f"SOUR2:PHAS {'{:.6f}'.format(phase)}", None),
+            (f"PHAS {'{:.6f}'.format(phase)}", None),
+        ],
+    ) as inst:
+        assert phase == inst.ch[1].phase
+        assert phase == inst.ch[2].phase
+        assert phase == inst.phase
+        inst.ch[1].phase = phase
+        inst.ch[2].phase = phase
+        inst.phase = phase
+
+
+@pytest.mark.parametrize("square_dutycycle", [0.01, 99.98])
+def test_square_dutycycle(square_dutycycle):
+    """
+    Test Agilent 33500 square_dutycycle function
+    """
+    with expected_protocol(
+        Agilent33500,
+        [
+            ("SOUR1:FUNC:SQU:DCYC?", square_dutycycle),
+            ("SOUR2:FUNC:SQU:DCYC?", square_dutycycle),
+            ("FUNC:SQU:DCYC?", square_dutycycle),
+            (f"SOUR1:FUNC:SQU:DCYC {'{:.6f}'.format(square_dutycycle)}", None),
+            (f"SOUR2:FUNC:SQU:DCYC {'{:.6f}'.format(square_dutycycle)}", None),
+            (f"FUNC:SQU:DCYC {'{:.6f}'.format(square_dutycycle)}", None),
+        ],
+    ) as inst:
+        assert square_dutycycle == inst.ch[1].square_dutycycle
+        assert square_dutycycle == inst.ch[2].square_dutycycle
+        assert square_dutycycle == inst.square_dutycycle
+        inst.ch[1].square_dutycycle = square_dutycycle
+        inst.ch[2].square_dutycycle = square_dutycycle
+        inst.square_dutycycle = square_dutycycle
+
+
+@pytest.mark.parametrize("ramp_symmetry", [0.01, 99.98])
+def test_ramp_symmetry(ramp_symmetry):
+    """
+    Test Agilent 33500 ramp_symmetry function
+    """
+    with expected_protocol(
+        Agilent33500,
+        [
+            ("SOUR1:FUNC:RAMP:SYMM?", ramp_symmetry),
+            ("SOUR2:FUNC:RAMP:SYMM?", ramp_symmetry),
+            ("FUNC:RAMP:SYMM?", ramp_symmetry),
+            (f"SOUR1:FUNC:RAMP:SYMM {'{:.6f}'.format(ramp_symmetry)}", None),
+            (f"SOUR2:FUNC:RAMP:SYMM {'{:.6f}'.format(ramp_symmetry)}", None),
+            (f"FUNC:RAMP:SYMM {'{:.6f}'.format(ramp_symmetry)}", None),
+        ],
+    ) as inst:
+        assert ramp_symmetry == inst.ch[1].ramp_symmetry
+        assert ramp_symmetry == inst.ch[2].ramp_symmetry
+        assert ramp_symmetry == inst.ramp_symmetry
+        inst.ch[1].ramp_symmetry = ramp_symmetry
+        inst.ch[2].ramp_symmetry = ramp_symmetry
+        inst.ramp_symmetry = ramp_symmetry
