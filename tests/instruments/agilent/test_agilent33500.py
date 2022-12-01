@@ -56,7 +56,6 @@ def test_shape(shape):
         inst.shape = shape
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize("frequency", [1e-6, 1.2e8])
 def test_frequency(frequency):
     """
@@ -68,9 +67,9 @@ def test_frequency(frequency):
             ("SOUR1:FREQ?", frequency),
             ("SOUR2:FREQ?", frequency),
             ("FREQ?", frequency),
-            (f"SOUR1:FREQ {frequency}", None),
-            (f"SOUR2:FREQ {frequency}", None),
-            (f"FREQ {frequency}", None),
+            (f"SOUR1:FREQ {'{:.6f}'.format(frequency)}", None),
+            (f"SOUR2:FREQ {'{:.6f}'.format(frequency)}", None),
+            (f"FREQ {'{:.6f}'.format(frequency)}", None),
         ],
     ) as inst:
         assert frequency == inst.ch[1].frequency
@@ -81,21 +80,21 @@ def test_frequency(frequency):
         inst.frequency = frequency
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize("amplitude", [10e-3, 10])
 def test_amplitude(amplitude):
     """
     Test Agilent 33500 amplitude function
     """
+    print(amplitude)
     with expected_protocol(
         Agilent33500,
         [
             ("SOUR1:VOLT?", amplitude),
             ("SOUR2:VOLT?", amplitude),
             ("VOLT?", amplitude),
-            (f"SOUR1:VOLT {amplitude}", None),
-            (f"SOUR2:VOLT {amplitude}", None),
-            (f"VOLT {amplitude}", None),
+            (f"SOUR1:VOLT {'{:.6f}'.format(amplitude)}", None),
+            (f"SOUR2:VOLT {'{:.6f}'.format(amplitude)}", None),
+            (f"VOLT {'{:.6f}'.format(amplitude)}", None),
         ],
     ) as inst:
         assert amplitude == inst.ch[1].amplitude
