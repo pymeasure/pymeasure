@@ -67,9 +67,9 @@ def test_frequency(frequency):
             ("SOUR1:FREQ?", frequency),
             ("SOUR2:FREQ?", frequency),
             ("FREQ?", frequency),
-            (f"SOUR1:FREQ {'{:.6f}'.format(frequency)}", None),
-            (f"SOUR2:FREQ {'{:.6f}'.format(frequency)}", None),
-            (f"FREQ {'{:.6f}'.format(frequency)}", None),
+            (f"SOUR1:FREQ {frequency:.6f}", None),
+            (f"SOUR2:FREQ {frequency:.6f}", None),
+            (f"FREQ {frequency:.6f}", None),
         ],
     ) as inst:
         assert frequency == inst.ch[1].frequency
@@ -91,9 +91,9 @@ def test_amplitude(amplitude):
             ("SOUR1:VOLT?", amplitude),
             ("SOUR2:VOLT?", amplitude),
             ("VOLT?", amplitude),
-            (f"SOUR1:VOLT {'{:.6f}'.format(amplitude)}", None),
-            (f"SOUR2:VOLT {'{:.6f}'.format(amplitude)}", None),
-            (f"VOLT {'{:.6f}'.format(amplitude)}", None),
+            (f"SOUR1:VOLT {amplitude:.6f}", None),
+            (f"SOUR2:VOLT {amplitude:.6f}", None),
+            (f"VOLT {amplitude:.6f}", None),
         ],
     ) as inst:
         assert amplitude == inst.ch[1].amplitude
@@ -163,9 +163,9 @@ def test_offset(offset):
             ("SOUR1:VOLT:OFFS?", offset),
             ("SOUR2:VOLT:OFFS?", offset),
             ("VOLT:OFFS?", offset),
-            (f"SOUR1:VOLT:OFFS {'{:.6f}'.format(offset)}", None),
-            (f"SOUR2:VOLT:OFFS {'{:.6f}'.format(offset)}", None),
-            (f"VOLT:OFFS {'{:.6f}'.format(offset)}", None),
+            (f"SOUR1:VOLT:OFFS {offset:.6f}", None),
+            (f"SOUR2:VOLT:OFFS {offset:.6f}", None),
+            (f"VOLT:OFFS {offset:.6f}", None),
         ],
     ) as inst:
         assert offset == inst.ch[1].offset
@@ -187,9 +187,9 @@ def test_voltage_high(voltage_high):
             ("SOUR1:VOLT:HIGH?", voltage_high),
             ("SOUR2:VOLT:HIGH?", voltage_high),
             ("VOLT:HIGH?", voltage_high),
-            (f"SOUR1:VOLT:HIGH {'{:.6f}'.format(voltage_high)}", None),
-            (f"SOUR2:VOLT:HIGH {'{:.6f}'.format(voltage_high)}", None),
-            (f"VOLT:HIGH {'{:.6f}'.format(voltage_high)}", None),
+            (f"SOUR1:VOLT:HIGH {voltage_high:.6f}", None),
+            (f"SOUR2:VOLT:HIGH {voltage_high:.6f}", None),
+            (f"VOLT:HIGH {voltage_high:.6f}", None),
         ],
     ) as inst:
         assert voltage_high == inst.ch[1].voltage_high
@@ -211,9 +211,9 @@ def test_voltage_low(voltage_low):
             ("SOUR1:VOLT:LOW?", voltage_low),
             ("SOUR2:VOLT:LOW?", voltage_low),
             ("VOLT:LOW?", voltage_low),
-            (f"SOUR1:VOLT:LOW {'{:.6f}'.format(voltage_low)}", None),
-            (f"SOUR2:VOLT:LOW {'{:.6f}'.format(voltage_low)}", None),
-            (f"VOLT:LOW {'{:.6f}'.format(voltage_low)}", None),
+            (f"SOUR1:VOLT:LOW {voltage_low:.6f}", None),
+            (f"SOUR2:VOLT:LOW {voltage_low:.6f}", None),
+            (f"VOLT:LOW {voltage_low:.6f}", None),
         ],
     ) as inst:
         assert voltage_low == inst.ch[1].voltage_low
@@ -235,9 +235,9 @@ def test_phase(phase):
             ("SOUR1:PHAS?", phase),
             ("SOUR2:PHAS?", phase),
             ("PHAS?", phase),
-            (f"SOUR1:PHAS {'{:.6f}'.format(phase)}", None),
-            (f"SOUR2:PHAS {'{:.6f}'.format(phase)}", None),
-            (f"PHAS {'{:.6f}'.format(phase)}", None),
+            (f"SOUR1:PHAS {phase:.6f}", None),
+            (f"SOUR2:PHAS {phase:.6f}", None),
+            (f"PHAS {phase:.6f}", None),
         ],
     ) as inst:
         assert phase == inst.ch[1].phase
@@ -259,9 +259,9 @@ def test_square_dutycycle(square_dutycycle):
             ("SOUR1:FUNC:SQU:DCYC?", square_dutycycle),
             ("SOUR2:FUNC:SQU:DCYC?", square_dutycycle),
             ("FUNC:SQU:DCYC?", square_dutycycle),
-            (f"SOUR1:FUNC:SQU:DCYC {'{:.6f}'.format(square_dutycycle)}", None),
-            (f"SOUR2:FUNC:SQU:DCYC {'{:.6f}'.format(square_dutycycle)}", None),
-            (f"FUNC:SQU:DCYC {'{:.6f}'.format(square_dutycycle)}", None),
+            (f"SOUR1:FUNC:SQU:DCYC {square_dutycycle:.6f}", None),
+            (f"SOUR2:FUNC:SQU:DCYC {square_dutycycle:.6f}", None),
+            (f"FUNC:SQU:DCYC {square_dutycycle:.6f}", None),
         ],
     ) as inst:
         assert square_dutycycle == inst.ch[1].square_dutycycle
@@ -283,9 +283,9 @@ def test_ramp_symmetry(ramp_symmetry):
             ("SOUR1:FUNC:RAMP:SYMM?", ramp_symmetry),
             ("SOUR2:FUNC:RAMP:SYMM?", ramp_symmetry),
             ("FUNC:RAMP:SYMM?", ramp_symmetry),
-            (f"SOUR1:FUNC:RAMP:SYMM {'{:.6f}'.format(ramp_symmetry)}", None),
-            (f"SOUR2:FUNC:RAMP:SYMM {'{:.6f}'.format(ramp_symmetry)}", None),
-            (f"FUNC:RAMP:SYMM {'{:.6f}'.format(ramp_symmetry)}", None),
+            (f"SOUR1:FUNC:RAMP:SYMM {ramp_symmetry:.6f}", None),
+            (f"SOUR2:FUNC:RAMP:SYMM {ramp_symmetry:.6f}", None),
+            (f"FUNC:RAMP:SYMM {ramp_symmetry:.6f}", None),
         ],
     ) as inst:
         assert ramp_symmetry == inst.ch[1].ramp_symmetry
