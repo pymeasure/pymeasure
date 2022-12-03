@@ -132,7 +132,7 @@ class SequenceHandler:
         'tanh': numpy.tanh,
     }
 
-    def __init__(self, valid_inputs=[], file_obj=None):
+    def __init__(self, valid_inputs=(), file_obj=None):
         self._sequences = []
         self.valid_inputs = valid_inputs
         if file_obj:

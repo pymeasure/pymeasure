@@ -42,7 +42,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         :param parent: A QWidget that QT will give ownership of this Widget to.
     """
 
-    def __init__(self, data, header=["Level", "Parameter", "Sequence"], parent=None):
+    def __init__(self, data, header=("Level", "Parameter", "Sequence"), parent=None):
         super().__init__(parent)
 
         self.header = header
@@ -182,7 +182,7 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
             as the way of finding out what to display where.
         """
         if orientation == QtCore.Qt.Orientation.Horizontal and \
-           role == QtCore.Qt.ItemDataRole.DisplayRole:
+                role == QtCore.Qt.ItemDataRole.DisplayRole:
             return self.header[section]
 
     def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
@@ -275,6 +275,11 @@ class LineEditDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class SequencerTreeView(QtWidgets.QTreeView):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.width = self.viewport().size().width()
+
     def save(self, filename=None):
         self.model().save(filename)
 
@@ -296,6 +301,9 @@ class SequencerTreeView(QtWidgets.QTreeView):
 
     def setModel(self, model):
         super().setModel(model)
+        self.setColumnWidth(0, int(0.7 * self.width))
+        self.setColumnWidth(1, int(0.9 * self.width))
+        self.setColumnWidth(2, int(0.9 * self.width))
         self.model().layoutChanged.connect(self.activate_persistent_editor)
 
 
@@ -309,37 +317,44 @@ class SequenceDialog(QtWidgets.QFileDialog):
     """
 
     def __init__(self, save=False, parent=None):
+        """
+        Generate a serialized form of the sequence tree
+
+        :param save: True if we are saving a file. Default False.
+        :param parent: Passed on to QtWidgets.QWidget. Default is None
+        """
         super().__init__(parent)
         self.save = save
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
         self._setup_ui()
 
     def _setup_ui(self):
+        preview_tab = QtWidgets.QTabWidget()
+        vbox = QtWidgets.QVBoxLayout()
+        param_vbox = QtWidgets.QVBoxLayout()
+        vbox_widget = QtWidgets.QWidget()
+        param_vbox_widget = QtWidgets.QWidget()
+
+        self.preview_param = SequencerTreeView(parent=self)
+        triggers = QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+        self.preview_param.setEditTriggers(triggers)
+        param_vbox.addWidget(self.preview_param)
+        vbox_widget.setLayout(vbox)
+        param_vbox_widget.setLayout(param_vbox)
+        preview_tab.addTab(param_vbox_widget, "Sequence Parameters")
         if not self.save:
             self.append_checkbox = QtWidgets.QCheckBox("Append to existing sequence")
-            preview_tab = QtWidgets.QTabWidget()
-            vbox = QtWidgets.QVBoxLayout()
-            param_vbox = QtWidgets.QVBoxLayout()
-            vbox_widget = QtWidgets.QWidget()
-            param_vbox_widget = QtWidgets.QWidget()
-
-            self.preview_param = SequencerTreeView(parent=self)
-            triggers = QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
-            self.preview_param.setEditTriggers(triggers)
-            param_vbox.addWidget(self.preview_param)
-            vbox_widget.setLayout(vbox)
-            param_vbox_widget.setLayout(param_vbox)
-            preview_tab.addTab(param_vbox_widget, "Sequence Parameters")
+            self.append_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
             self.layout().addWidget(self.append_checkbox)
-            self.layout().addWidget(preview_tab, 0, 5, 4, 1)
-            self.layout().setColumnStretch(5, 1)
-            self.setMinimumSize(900, 500)
-            self.resize(900, 500)
             self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
-            self.currentChanged.connect(self.update_preview)
         else:
             self.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
             self.setFileMode(QtWidgets.QFileDialog.FileMode.AnyFile)
+        self.layout().addWidget(preview_tab, 0, 5, 4, 1)
+        self.layout().setColumnStretch(5, 1)
+        self.setMinimumSize(900, 500)
+        self.resize(900, 500)
+        self.currentChanged.connect(self.update_preview)
 
     def update_preview(self, filename):
         if not os.path.isdir(filename) and filename != '':
@@ -419,10 +434,6 @@ class SequencerWidget(QtWidgets.QWidget):
     def _setup_ui(self):
         self.tree = SequencerTreeView(self)
         self.tree.setHeaderHidden(False)
-        width = self.tree.viewport().size().width()
-        self.tree.setColumnWidth(0, int(0.7 * width))
-        self.tree.setColumnWidth(1, int(0.9 * width))
-        self.tree.setColumnWidth(2, int(0.9 * width))
         self.tree.setItemDelegateForColumn(1, ComboBoxDelegate(self, self.names_choices))
         self.tree.setItemDelegateForColumn(2, LineEditDelegate(self))
         self.load_seq_button = QtWidgets.QPushButton("Load sequence")
@@ -558,12 +569,12 @@ class SequencerWidget(QtWidgets.QWidget):
         :param filename: Filename (string) of the to-be-loaded file.
         """
         append_flag = False
+
         if (filename is None) or (filename == ''):
             dialog = SequenceDialog()
-            dialog.exec()
-            append_flag = dialog.append_checkbox.checkState() == QtCore.Qt.CheckState.Checked
-            filenames = dialog.selectedFiles()
-            if filenames:
+            if dialog.exec():
+                append_flag = dialog.append_checkbox.checkState() == QtCore.Qt.CheckState.Checked
+                filenames = dialog.selectedFiles()
                 filename = filenames[0]
             else:
                 return

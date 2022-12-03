@@ -75,7 +75,7 @@ def test_sequencer(seq_file_text):
     file_text, levels, children, params = seq_file_text
     fd = StringIO(file_text)
 
-    s = SequenceHandler(fd)
+    s = SequenceHandler(file_obj=fd)
     assert(len(s) == non_empty_lines(file_text))
 
     for index, lev in enumerate(levels):
@@ -122,5 +122,5 @@ def test_sequencer_errors(seq_file_text_err):
     fd = StringIO(file_text)
 
     with pytest.raises(exception, match=exc_text):
-        seq = SequenceHandler(fd)
+        seq = SequenceHandler(file_obj=fd)
         seq.parameters_sequence()
