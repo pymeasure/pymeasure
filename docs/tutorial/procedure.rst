@@ -14,12 +14,13 @@ Scripts are a quick way to get up and running with a measurement in PyMeasure. F
 
 1) Import the necessary packages
 2) Set the input parameters to define the measurement
-3) Connect to the Keithley 2400
-4) Set up the instrument for the IV characteristic
-5) Allocate arrays to store the resulting measurements
-6) Loop through the current points, measure the voltage, and record
-7) Save the final data to a CSV file
-8) Shutdown the instrument
+3) Set source_current and measure_voltage parameters
+4) Connect to the Keithley 2400
+5) Set up the instrument for the IV characteristic
+6) Allocate arrays to store the resulting measurements
+7) Loop through the current points, measure the voltage, and record
+8) Save the final data to a CSV file
+9) Shutdown the instrument
 
 These steps are expressed in code as follows. ::
 
@@ -31,35 +32,43 @@ These steps are expressed in code as follows. ::
 
     # Set the input parameters
     data_points = 50
-    averages = 50
-    max_current = 0.01
+    averages = 10
+    max_current = 0.001
     min_current = -max_current
 
+    # Set source_current and measure_voltage parameters
+    current_range = 10e-3  # in Amps
+    compliance_voltage = 10  # in Volts
+    measure_nplc = 0.1  # Number of power line cycles
+    voltage_range = 1  # in VOlts
+
     # Connect and configure the instrument
-    sourcemeter = Keithley2400("GPIB::4")
+    sourcemeter = Keithley2400("GPIB::24")
     sourcemeter.reset()
     sourcemeter.use_front_terminals()
-    sourcemeter.measure_voltage()
-    sourcemeter.config_current_source()
-    sleep(0.1) # wait here to give the instrument time to react
-    sourcemeter.set_buffer(averages)
+    sourcemeter.apply_current(current_range, compliance_voltage)
+    sourcemeter.measure_voltage(measure_nplc, voltage_range)
+    sleep(0.1)  # wait here to give the instrument time to react
+    sourcemeter.stop_buffer()
+    sourcemeter.disable_buffer()
 
     # Allocate arrays to store the measurement results
     currents = np.linspace(min_current, max_current, num=data_points)
     voltages = np.zeros_like(currents)
     voltage_stds = np.zeros_like(currents)
 
+    sourcemeter.enable_source()
+
     # Loop through each current point, measure and record the voltage
     for i in range(data_points):
-        sourcemeter.current = currents[i]
-        sourcemeter.reset_buffer()
-        sleep(0.1)
+        sourcemeter.config_buffer(averages)
+        sourcemeter.source_current = currents[i]
         sourcemeter.start_buffer()
         sourcemeter.wait_for_buffer()
-
         # Record the average and standard deviation
-        voltages[i] = sourcemeter.means
-        voltage_stds[i] = sourcemeter.standard_devs
+        voltages[i] = sourcemeter.means[0]
+        sleep(1.0)
+        voltage_stds[i] = sourcemeter.standard_devs[0]
 
     # Save the data columns in a CSV file
     data = pd.DataFrame({
@@ -308,49 +317,52 @@ Now that you have a background on how to use the different features of the Proce
 
     # Import necessary packages
     from pymeasure.instruments.keithley import Keithley2400
-    from pymeasure.experiment import Procedure
+    from pymeasure.experiment import Procedure, Results, Worker
     from pymeasure.experiment import IntegerParameter, FloatParameter
     from time import sleep
+    import numpy as np
+
+    from pymeasure.log import log, console_log
 
     class IVProcedure(Procedure):
 
-        data_points = IntegerParameter('Data points', default=50)
-        averages = IntegerParameter('Averages', default=50)
-        max_current = FloatParameter('Maximum Current', units='A', default=0.01)
-        min_current = FloatParameter('Minimum Current', units='A', default=-0.01)
+        data_points = IntegerParameter('Data points', default=20)
+        averages = IntegerParameter('Averages', default=8)
+        max_current = FloatParameter('Maximum Current', units='A', default=0.001)
+        min_current = FloatParameter('Minimum Current', units='A', default=-0.001)
 
         DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Voltage Std (V)']
 
         def startup(self):
             log.info("Connecting and configuring the instrument")
-            self.sourcemeter = Keithley2400("GPIB::4")
+            self.sourcemeter = Keithley2400("GPIB::24")
             self.sourcemeter.reset()
             self.sourcemeter.use_front_terminals()
-            self.sourcemeter.measure_voltage()
-            self.sourcemeter.config_current_source()
-            sleep(0.1) # wait here to give the instrument time to react
-            self.sourcemeter.set_buffer(averages)
+            self.sourcemeter.apply_current(100e-3, 10.0)  # current_range = 100e-3, compliance_voltage = 10.0
+            self.sourcemeter.measure_voltage(0.01, 1.0)  # nplc = 0.01, voltage_range = 1.0
+            sleep(0.1)  # wait here to give the instrument time to react
+            self.sourcemeter.stop_buffer()
+            self.sourcemeter.disable_buffer()
 
         def execute(self):
             currents = np.linspace(
-                self.min_current, 
+                self.min_current,
                 self.max_current,
                 num=self.data_points
             )
-
+            self.sourcemeter.enable_source()
             # Loop through each current point, measure and record the voltage
             for current in currents:
+                self.sourcemeter.config_buffer(IVProcedure.averages.value)
                 log.info("Setting the current to %g A" % current)
-                self.sourcemeter.current = current
-                self.sourcemeter.reset_buffer()
-                sleep(0.1)
+                self.sourcemeter.source_current = current
                 self.sourcemeter.start_buffer()
                 log.info("Waiting for the buffer to fill with measurements")
                 self.sourcemeter.wait_for_buffer()
                 data = {
                     'Current (A)': current,
-                    'Voltage (V)': self.sourcemeter.means,
-                    'Voltage Std (V)': self.sourcemeter.standard_devs
+                    'Voltage (V)': self.sourcemeter.means[0],
+                    'Voltage Std (V)': self.sourcemeter.standard_devs[0]
                 }
                 self.emit('results', data)
                 sleep(0.01)
@@ -362,15 +374,16 @@ Now that you have a background on how to use the different features of the Proce
             self.sourcemeter.shutdown()
             log.info("Finished measuring")
 
+
     if __name__ == "__main__":
         console_log(log)
 
         log.info("Constructing an IVProcedure")
         procedure = IVProcedure()
-        procedure.data_points = 100
-        procedure.averages = 50
-        procedure.max_current = -0.01
-        procedure.min_current = 0.01
+        procedure.data_points = 20
+        procedure.averages = 8
+        procedure.max_current = -0.001
+        procedure.min_current = 0.001
 
         data_filename = 'example.csv'
         log.info("Constructing the Results with a data file: %s" % data_filename)
@@ -382,7 +395,7 @@ Now that you have a background on how to use the different features of the Proce
         log.info("Started the Worker")
 
         log.info("Joining with the worker in at most 1 hr")
-        worker.join(timeout=3600) # wait at most 1 hr (3600 sec)
+        worker.join(timeout=3600)  # wait at most 1 hr (3600 sec)
         log.info("Finished the measurement")
 
 The parentheses in the :code:`COLUMN` entries indicate the physical unit of the data in the corresponding column, e.g. :code:`'Voltage Std (V)'` indicates Volts. If you want to indicate a dimensionless value, e.g. Mach number, you can use `(1)` instead. Combined units like `(m/s)` or the long form `(meter/second)` are also possible. The class :class:`Results` ensures, that the data is stored in the correct unit, here Volts. For example a :python:`pint.Quantity` of 500 mV will be stored as 0.5 V. A string will be converted first to a `Quantity` and a mere number (e.g. float, int, ...) is assumed to be already in the right unit (e.g 5 will be stored as 5 V).
