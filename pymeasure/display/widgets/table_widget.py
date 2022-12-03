@@ -43,13 +43,14 @@ class ResultsTable(QtCore.QObject):
     """ Class representing a panda dataframe """
     data_changed = QtCore.Signal(int, int, int, int)
 
-    def __init__(self, results, color, float_digits, force_reload=False, **kwargs):
+    def __init__(self, results, color, float_digits, force_reload=False, wdg=None, **kwargs):
         super().__init__()
         self.results = results
         self.color = color
         self.force_reload = force_reload
         self.last_row_count = 0
         self.float_digits = float_digits
+        self.wdg = wdg
         self._data = self.results.data
         self._started = False
 
@@ -535,7 +536,7 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
         self.setLayout(vbox)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
-        ret = ResultsTable(results, color, self.float_digits, **kwargs)
+        ret = ResultsTable(results, color, self.float_digits, wdg=self, **kwargs)
         return ret
 
     def load(self, table):

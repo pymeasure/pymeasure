@@ -74,6 +74,8 @@ class MainWindow(ManagedWindowWithTable):
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
+            inputs=['iterations', 'delay', 'seed'],
+            displays=['iterations', 'delay', 'seed'],
         )
         self.setWindowTitle('GUI Example')
 
