@@ -59,14 +59,14 @@ class MKS937B(Instrument):
     :param kwargs: Any valid key-word argument for Instrument
     """
 
-    def __init__(self, adapter, address=253, **kwargs):
+    def __init__(self, adapter, name="MKS 937B vacuum gauge controller", address=253, **kwargs):
         kwargs.setdefault("write_termination", ";FF")
         kwargs.setdefault("read_termination", ";")  # in reality its ";FF"
         # which is, however, invalid for pyvisa. Therefore extra bytes have to
         # be read in the read() method.
         super().__init__(
             adapter,
-            "MKS 937B vacuum gauge controller",
+            name,
             includeSCPI=False,
             **kwargs
         )
