@@ -132,8 +132,9 @@ class SequenceHandler:
         'tanh': numpy.tanh,
     }
 
-    def __init__(self, file_obj=None):
+    def __init__(self, valid_inputs=[], file_obj=None):
         self._sequences = []
+        self.valid_inputs = valid_inputs
         if file_obj:
             self.load(file_obj)
 
@@ -307,8 +308,9 @@ class SequenceHandler:
 
         """
 
-        if not append:
-            self._sequences = []
+        _sequences = []
+        if append:
+            _sequences += self._sequences
         current_parent = None
 
         pattern = re.compile("([-]+) \"(.*?)\", \"(.*?)\"")
@@ -340,12 +342,19 @@ class SequenceHandler:
             else:
                 raise SequenceEvaluationError("Invalid file format: level missing ?")
 
+            if self.valid_inputs and parameter not in self.valid_inputs:
+                error_message = f'Unexpected parameter name "{parameter:s}", ' + \
+                    f'valid parameters name are {self.valid_inputs}'
+                raise SequenceEvaluationError(error_message)
+
             data = SequenceItem(level,
                                 parameter,
                                 sequence,
                                 current_parent)
             current_parent = data
-            self._sequences.append(data)
+            _sequences.append(data)
+        # No errors, update internal data
+        self._sequences = _sequences
 
     def save(self, file_obj):
         """ Save modified sequence to file stream

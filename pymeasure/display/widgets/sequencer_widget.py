@@ -132,9 +132,8 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
     def parent(self, index=None):
         """ Return the index of the parent of a given index. If index is not supplied,
         return an invalid QModelIndex.
-        Optional args: index
 
-        :param index: QModelIndex
+        :param index: QModelIndex optional.
         :return:
         """
 
@@ -217,7 +216,10 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
 
     def load(self, file_obj, append=False):
         self.layoutAboutToBeChanged.emit()
-        self.root.load(file_obj, append=append)
+        try:
+            self.root.load(file_obj, append=append)
+        except SequenceEvaluationError as e:
+            log.error(f"Error during sequence loading: {e}")
         self.layoutChanged.emit()
 
 
@@ -300,15 +302,13 @@ class SequencerTreeView(QtWidgets.QTreeView):
 class SequenceDialog(QtWidgets.QFileDialog):
     """
     Widget that displays a dialog box for loading or saving a sequence tree.
-    It shows a preview of sequence tree in the dialog box
+
+    It also shows a preview of sequence tree in the dialog box
+
+    :param save: True if we are saving a file. Default False.
     """
 
     def __init__(self, save=False, parent=None):
-        """
-        Generate a serialized form of the sequence tree
-
-        :param save: True if we are saving a file. Default False.
-        """
         super().__init__(parent)
         self.save = save
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
@@ -338,13 +338,13 @@ class SequenceDialog(QtWidgets.QFileDialog):
             self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
             self.currentChanged.connect(self.update_preview)
         else:
-            self.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+            self.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
             self.setFileMode(QtWidgets.QFileDialog.FileMode.AnyFile)
 
     def update_preview(self, filename):
         if not os.path.isdir(filename) and filename != '':
             with open(filename, 'r') as file_object:
-                data = SequenceHandler(file_object)
+                data = SequenceHandler(file_obj=file_object)
             tree_model = SequencerTreeModel(data=data)
             self.preview_param.setModel(tree_model)
             self.preview_param.expandAll()
@@ -352,13 +352,16 @@ class SequenceDialog(QtWidgets.QFileDialog):
 
 class SequencerWidget(QtWidgets.QWidget):
     """
-    Widget that allows to generate a sequence of measurements with varying
-    parameters. Moreover, one can write a simple text file to easily load a
-    sequence.
+    Widget that allows to generate a sequence of measurements
+
+    It allows sweeping parameters and moreover, one can write a simple text file to easily load a
+    sequence. Sequences can also be saved
 
     Currently requires a queue function of the
     :class:`ManagedWindow<pymeasure.display.windows.managed_window.ManagedWindow>` to have a
     "procedure" argument.
+
+    :param inputs: List of strings representing the parameters name
     """
 
     def __init__(self, inputs=None, sequence_file=None, parent=None):
@@ -377,7 +380,7 @@ class SequencerWidget(QtWidgets.QWidget):
         self._setup_ui()
         self._layout()
 
-        self.data = SequenceHandler()
+        self.data = SequenceHandler(list(self.names_inv.keys()))
         self.tree.setModel(SequencerTreeModel(data=self.data))
         if sequence_file is not None:
             self.load_sequence(filename=sequence_file)
@@ -466,7 +469,7 @@ class SequencerWidget(QtWidgets.QWidget):
         vbox.addLayout(btn_box_3)
         self.setLayout(vbox)
 
-    def _add_tree_item(self, *, level=None, parameter=None, sequence=None):
+    def _add_tree_item(self, *, level=0, parameter=None):
         """
         Add an item to the sequence tree. An item will be added as a child
         to the selected (existing) item, except when level is given.
@@ -475,7 +478,6 @@ class SequencerWidget(QtWidgets.QWidget):
             item is added. If level is 0, a root item will be added.
 
         :param parameter: If given, the parameter field is pre-filled
-        :param sequence: If given, the sequence field is pre-filled
         """
 
         selected = self.tree.selectionModel().selection().indexes()
