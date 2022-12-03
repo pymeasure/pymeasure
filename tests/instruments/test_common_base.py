@@ -511,6 +511,24 @@ def test_control_get_process(dynamic):
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_process_multiple_values(dynamic):
+    """get_process acts on the whole list in case we receive multiple values."""
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "JUNK%d, JUNK%d", "",
+            get_process=lambda v: [int(entry.replace('JUNK', '')) for entry in v],
+            # get_process=lambda v: int(v.replace('JUNK', '')),  #desired single-entry application
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.x = 5, 6
+    assert fake.read() == 'JUNK5, JUNK6'  # the raw reply from the instrument
+    fake.x = 5, 6
+    assert fake.x == [5, 6]
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
 def test_control_preprocess_reply_property(dynamic):
     # test setting preprocess_reply at property-level
     class Fake(FakeBase):
@@ -615,7 +633,7 @@ def test_setting_process(dynamic):
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
-def test_control_multivalue(dynamic):
+def test_control_set_multiple_value(dynamic):
     class Fake(FakeBase):
         x = CommonBase.control(
             "", "%d,%d", "",
@@ -625,6 +643,33 @@ def test_control_multivalue(dynamic):
     fake = Fake()
     fake.x = (5, 6)
     assert fake.read() == '5,6'
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_multiple_value(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "", "",
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.write('5,6')
+    assert fake.x == [5.0, 6.0]
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_multiple_value_cast(dynamic):
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "", "",
+            cast=int,
+            dynamic=dynamic,
+        )
+
+    fake = Fake()
+    fake.write('5,6')
+    assert fake.x == [5, 6]
 
 
 @pytest.mark.parametrize(

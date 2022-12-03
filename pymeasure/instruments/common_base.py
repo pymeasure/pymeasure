@@ -362,7 +362,7 @@ class CommonBase:
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
             interpreted as a map
-        :param get_process: A function that take a value and allows processing
+        :param get_process: A function that takes a value or list of values and allows processing
             before value mapping, returning the processed value
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
@@ -494,7 +494,7 @@ class CommonBase:
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
             interpreted as a map
-        :param get_process: A function that take a value and allows processing
+        :param get_process: A function that takes a value or list of values and allows processing
             before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
             before executing the command, for getting
