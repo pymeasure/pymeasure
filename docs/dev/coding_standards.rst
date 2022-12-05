@@ -19,9 +19,14 @@ Many editors/IDEs can run this tool in the background while you work, showing re
 
 .. _flake8: https://flake8.pycqa.org/en/latest/
 
-It is allowed but not required to use the `black`_ code formatter. Do only format files that you are actively working on and make a dedicated commit for the initial formatting when working on an existing file that does not adhere to the black code style to facilitate code review. If there are conflicts between black's output and flake8 (especially related to `E203`_), flake8 takes precedence. Use ``#noqa : E203`` to disable E203 warnings for a specific line if appropriate.
+It is allowed but not required to use the `black`_ code formatter. 
+To avoid introducing unrelated changes when working on an existing file, it is recommended to use the `darker`_ tool instead of `black`.
+This helps to keep the focus on the implementation instead of unrelated formatting, and thereby facilitates code reviews.
+:code:`darker` is compatible with :code:`black`, but only formats regions that show as changed in Git.
+If there are conflicts between :code:`black`/:code:`darker`'s output and flake8 (especially related to `E203`_), flake8 takes precedence. Use ``#noqa : E203`` to disable E203 warnings for a specific line if appropriate.
 
 .. _black: https://black.readthedocs.io/en/stable/
+.. _darker: https://github.com/akaihola/darker
 .. _E203: https://www.flake8rules.com/rules/E203.html
 
 There are no plans to support type hinting in PyMeasure code. This adds a lot of additional code to manage, without a clear advantage for this project. 
