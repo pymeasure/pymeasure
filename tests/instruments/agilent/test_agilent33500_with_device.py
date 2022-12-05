@@ -27,7 +27,7 @@ from pymeasure.instruments.agilent.agilent33500 import Agilent33500
 from math import pi, sin
 
 
-pytest.skip('Only works with connected hardware', allow_module_level=True)
+pytest.skip(allow_module_level=True)
 # from pyvisa.errors import VisaIOError
 
 ############
@@ -38,7 +38,7 @@ pytest.skip('Only works with connected hardware', allow_module_level=True)
 @pytest.fixture(scope="session")
 def generator():
     try:
-        generator = Agilent33500("TCPIP::192.168.225.208::inst0::INSTR")
+        generator = Agilent33500("TCPIP::192.168.1.20::inst0::INSTR")
     except IOError:
         print("Not able to connect to waveform generator")
         assert False
@@ -76,7 +76,6 @@ BURST_NCYCLES = [1, 99999]
 SRATE = [1e-6, 1.6e8]
 
 
-@pytest.skip('Only works with connected hardware', allow_module_level=True)
 def generate_simple_harmonic_waveform(harmonic, distortion):
     """
     Generates a waveform with onlhy one harmonic
@@ -451,3 +450,8 @@ def test_uploaded_arb_file_channel(generator, channel):
     generator.ch[channel].data_arb("test", waveform, data_format="float")
     generator.ch[channel].arb_file = "test"
     assert '"TEST"' == generator.ch[channel].arb_file
+
+
+def test_phase_sync(generator):
+    generator.phase_sync()
+

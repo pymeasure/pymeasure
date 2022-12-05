@@ -690,6 +690,10 @@ class Agilent33500(Instrument):
         """
         self.write("DATA:VOL:CLE")
 
+    def phase_sync(self):
+        """ Command to synchronize all channels phase"""
+        self.write("PHAS:SYNC")
+
     def data_arb(self, arb_name, data_points, data_format="DAC"):
         """
         Uploads an arbitrary trace into the volatile memory of the device.
