@@ -454,4 +454,3 @@ def test_uploaded_arb_file_channel(generator, channel):
 
 def test_phase_sync(generator):
     generator.phase_sync()
-
