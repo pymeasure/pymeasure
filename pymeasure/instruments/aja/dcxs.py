@@ -51,7 +51,7 @@ class DCXS(Instrument):
             **kwargs
         )
         # here we want to flush the read buffer since the device upon power up sends some '>'
-        # characters. 
+        # characters.
         try:
             self.adapter.flush_read_buffer()
         except NotImplementedError:
@@ -65,9 +65,12 @@ class DCXS(Instrument):
                     # occurs always when calling read and no character is waiting
                     pass
                 self.adapter.connection.timeout = timeout
-            except AttributeError: 
+            except AttributeError:
                 # occurs in test suite (see #742 -> should be removed before merging)
                 pass
+        except AttributeError:
+            # occurs in test suite (see #742 -> should be removed before merging)
+            pass
 
     def read(self, reply_length=-1, **kwargs):
         return self.read_bytes(reply_length, **kwargs).decode()
