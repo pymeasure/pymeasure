@@ -237,7 +237,7 @@ class HP3478A(HPLegacyInstrument):
         :return error_status: one byte with the error status register content
         :rtype error_status: int
         """
-        # Read the error status reigster only one time for this method, as
+        # Read the error status register only one time for this method, as
         # the manual states that reading the error status register also clears it.
         current_errors = self.error_status
         if current_errors != 0:
@@ -463,3 +463,89 @@ class HP3478A(HPLegacyInstrument):
     def trigger(self, value):
         trig_set = self.TRIGGERS[strict_discrete_set(value, self.TRIGGERS)]
         self.write(trig_set)
+
+    @property
+    def calibration_data(self):
+        """Return the full calibration data as an array of 256 values between 0 and 15.
+
+        The calibration data of an HP 3478A is stored in a 256x4 SRAM that is
+        permanently powered by a 3v Lithium battery. When the battery runs
+        out, the calibration data is lost, and recalibration is required.
+
+        This property fetches the calibration data so that it can be backed up.
+
+        """
+        cal_data = []
+        for addr in range(0, 256):
+            # To fetch one nibble: 'W<address>', where address is a raw 8-bit number.
+            cmd = bytes([ord('W'), addr])
+            self.write_bytes(cmd)
+            rvalue = self.read_bytes(1)[0]
+            if rvalue < 64 or rvalue >= 80:
+                raise Exception("calibration nibble out of range")
+            cal_data.append(rvalue-64)
+
+        return cal_data
+
+    @calibration_data.setter
+    def calibration_data(self, cal_data):
+        """Write the full calibration data to the instrument
+
+        Expects an array of 256 values between 0 and 15.
+
+        The CAL ENABLE switch at the front of the instrument must be set to ON,
+        otherwise an exception is raised.
+
+        IMPORTANT: changing the calibration data results in permanent loss of
+        the previous data. Use with care!
+
+        """
+
+        if not(self.calibration_enabled):
+            raise Exception("CAL ENABLE switch not set to ON")
+        if len(cal_data)!= 256:
+            raise Exception("cal_data must contain 256 values")
+
+        for addr in range(0,256):
+            # To write one nibble: 'X<address><byte>', where address and byte are a raw 8-bit numbers.
+            cmd = bytes([ord('X'), addr, cal_data[addr] ])
+            self.write_bytes(cmd)
+
+    def verify_calibration_entry(self, cal_data, entry_nr):
+        """Verify the checksum of one calibration entry.
+
+        Expects an array of 256 values with calibration data, and an entry
+        number from 0 to 18.
+
+        Returns True when the checksum of the specified calibration entry
+        is correct.
+
+        """
+        if len(cal_data)!=256:
+            raise Exception("cal_data must contain 256 values")
+
+        sum = 0
+        for idx in range(0, 13):
+            val = cal_data[entry_nr*13 + idx + 1]
+            if idx!=11:
+                sum += val
+            else:
+                sum += val*16
+        return sum==255
+
+    def verify_calibration_data(self, cal_data):
+        """Verify the checksums of all calibration entries.
+
+        Expects an array of 256 values with calibration data.
+
+        Returns True when the checksum of all used calibration entries is
+        correct.
+
+        """
+        for entry_nr in range(0, 19):
+            if entry_nr in [5, 16, 18]:
+                continue
+            if not(self.verify_calibration_entry(cal_data, entry_nr)):
+                return False
+        return True
+
