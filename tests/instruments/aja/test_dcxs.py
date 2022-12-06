@@ -28,14 +28,13 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.aja.dcxs import DCXS
 
 
-
 def test_id():
     """
     Test DCXS identification property
     """
     with expected_protocol(
         DCXS,
-        [("?", "DCXS750-4"),],
+        [("?", "DCXS750-4"), ],
     ) as inst:
         assert inst.id == "DCXS750-4"
 
@@ -84,4 +83,3 @@ def test_enabled():
     ) as inst:
         inst.enabled = True
         assert inst.enabled is True
-

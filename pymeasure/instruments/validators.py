@@ -143,7 +143,7 @@ def truncated_discrete_set(value, values):
 def truncated_string(value, maxlength):
     """ Provides a validator function that truncates a string to a maximum length.
     It returns the original value if its length is smaller or equal to the maximum,
-    otherwise only the characters up to the maximum length will be returned. 
+    otherwise only the characters up to the maximum length will be returned.
 
     :param value: a value to test
     :param maxlength: maximum length of the string

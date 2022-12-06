@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-import re
-
 import pyvisa
 
 from pymeasure.instruments import Instrument
@@ -52,8 +50,9 @@ class DCXS(Instrument):
             read_termination="",
             **kwargs
         )
-        # here we want to flush the read buffer since the device upon power up sends some '>' characters
-        # since self.adapter.flush_read_buffer() raises NotImplemented we fake a read operation here
+        # here we want to flush the read buffer since the device upon power up sends some '>'
+        # characters. since self.adapter.flush_read_buffer() raises NotImplemented we fake a read
+        # operation here
         try:
             timeout = self.adapter.connection.timeout
             self.adapter.connection.timeout = 0
@@ -65,7 +64,6 @@ class DCXS(Instrument):
             self.adapter.connection.timeout = timeout
         except AttributeError:  # occurs in test suite
             pass
-
 
     def ask(self, command, query_delay=0, reply_length=None):
         """Write a command to the instrument and return the read response.
@@ -178,8 +176,9 @@ class DCXS(Instrument):
     )
 
     setpoint = Instrument.control(
-        "b", "C%04d", """setpoint value, units determined by regulation mode
-                         (power -> W, voltage -> V, current -> mA)""",
+        "b", "C%04d",
+        """setpoint value, units determined by regulation mode
+           (power -> W, voltage -> V, current -> mA)""",
         reply_length=4,
         validator=strict_range,
         map_values=True,
@@ -187,7 +186,8 @@ class DCXS(Instrument):
     )
 
     regulation_mode = Instrument.control(
-        "c", "D%d", """Regulation mode of the power supply""",
+        "c", "D%d",
+        """Regulation mode of the power supply""",
         reply_length=1,
         validator=strict_discrete_set,
         map_values=True,
@@ -198,7 +198,8 @@ class DCXS(Instrument):
     )
 
     ramp_time = Instrument.control(
-        "g", "E%02d", """Ramp time in seconds, can be set only when 'enabled' is False""",
+        "g", "E%02d",
+        """Ramp time in seconds, can be set only when 'enabled' is False""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -206,7 +207,8 @@ class DCXS(Instrument):
     )
 
     shutter_delay = Instrument.control(
-        "h", "F%02d", """shutter delay in seconds, can be set only when 'enabled' is False""",
+        "h", "F%02d",
+        """shutter delay in seconds, can be set only when 'enabled' is False""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -214,7 +216,8 @@ class DCXS(Instrument):
     )
 
     deposition_time_min = Instrument.control(
-        "i", "G%03d", """minutes part of deposition time, can be set only when 'enabled' is False""",
+        "i", "G%03d",
+        """minutes part of deposition time, can be set only when 'enabled' is False""",
         reply_length=3,
         cast=int,
         validator=strict_range,
@@ -222,7 +225,8 @@ class DCXS(Instrument):
     )
 
     deposition_time_sec = Instrument.control(
-        "j", "H%02d", """seconds part of deposition time, can be set only when 'enabled' is False""",
+        "j", "H%02d",
+        """seconds part of deposition time, can be set only when 'enabled' is False""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -244,4 +248,3 @@ class DCXS(Instrument):
         validator=strict_range,
         values=range(1, 6),
     )
-
