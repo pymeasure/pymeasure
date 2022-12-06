@@ -503,12 +503,12 @@ class HP3478A(HPLegacyInstrument):
 
         if not(self.calibration_enabled):
             raise Exception("CAL ENABLE switch not set to ON")
-        if len(cal_data)!= 256:
+        if len(cal_data) != 256:
             raise Exception("cal_data must contain 256 values")
 
-        for addr in range(0,256):
-            # To write one nibble: 'X<address><byte>', where address and byte are a raw 8-bit numbers.
-            cmd = bytes([ord('X'), addr, cal_data[addr] ])
+        for addr in range(0, 256):
+            # To write one nibble: 'X<address><byte>', where address and byte are raw 8-bit numbers.
+            cmd = bytes([ord('X'), addr, cal_data[ addr ] ])
             self.write_bytes(cmd)
 
     def verify_calibration_entry(self, cal_data, entry_nr):
@@ -521,13 +521,13 @@ class HP3478A(HPLegacyInstrument):
         is correct.
 
         """
-        if len(cal_data)!=256:
+        if len(cal_data) != 256:
             raise Exception("cal_data must contain 256 values")
 
         sum = 0
         for idx in range(0, 13):
             val = cal_data[entry_nr*13 + idx + 1]
-            if idx!=11:
+            if idx != 11:
                 sum += val
             else:
                 sum += val*16
@@ -548,4 +548,3 @@ class HP3478A(HPLegacyInstrument):
             if not(self.verify_calibration_entry(cal_data, entry_nr)):
                 return False
         return True
-
