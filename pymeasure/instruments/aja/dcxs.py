@@ -243,3 +243,4 @@ class DCXS(Instrument):
         validator=strict_range,
         values=range(1, 6),
     )
+

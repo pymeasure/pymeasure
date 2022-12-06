@@ -84,3 +84,4 @@ def test_enabled():
     ) as inst:
         inst.enabled = True
         assert inst.enabled is True
+
