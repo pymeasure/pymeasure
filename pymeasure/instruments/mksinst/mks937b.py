@@ -56,9 +56,12 @@ class PressureChannel(Channel):
         check_set_errors=True,
     )
 
+
+class IonGaugeAndPressureChannel(PressureChannel):
+    """Channel having both a pressure and an ion gauge sensor"""
     ion_gauge_status = Channel.measurement(
         "T{ch}?",
-        """Ion gauge status of the channel, only valid for channel 1, 3, and 5""",
+        """Ion gauge status of the channel""",
         map_values=True,
         values=_ion_gauge_status,
     )
@@ -81,7 +84,10 @@ class MKS937B(Instrument):
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
     """
-    channels = Instrument.ChannelCreator(PressureChannel, ("1", "2", "3", "4", "5", "6"))
+    channels = Instrument.ChannelCreator(
+        (IonGaugeAndPressureChannel, PressureChannel) * 3,
+        ("1", "2", "3", "4", "5", "6"),
+    )  # Channels 1,3,5 have both an ion gauge and a pressure sensor, 2,4,6 only a pressure sensor
 
     def __init__(self, adapter, name="MKS 937B vacuum gauge controller", address=253, **kwargs):
         super().__init__(

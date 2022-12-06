@@ -28,7 +28,7 @@ from pymeasure.instruments.mksinst.mks937b import MKS937B
 
 
 def test_pressure():
-    """Verify the communication of the voltage getter."""
+    """Verify the communication of the pressure getter."""
     with expected_protocol(
         MKS937B,
         [("@253PR1?", "@253ACK1.10e-9"),
@@ -39,7 +39,7 @@ def test_pressure():
 
 
 def test_ion_gauge_status():
-    """Verify the communication of the voltage getter."""
+    """Verify the communication of the ion gauge status getter."""
     with expected_protocol(
         MKS937B,
         [("@253T1?", "@253ACKG"),
@@ -47,6 +47,17 @@ def test_ion_gauge_status():
     ) as inst:
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.ch_1.ion_gauge_status == "Good"
+
+
+def test_ion_gauge_status_invalid_channel():
+    """Ion gauge status does not exist on all channels."""
+    with expected_protocol(
+        MKS937B,
+        [],
+    ) as inst:
+        inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
+        with pytest.raises(AttributeError):
+            inst.ch_2.ion_gauge_status
 
 
 def test_unit():
