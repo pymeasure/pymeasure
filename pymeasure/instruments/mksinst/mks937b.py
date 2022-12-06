@@ -24,7 +24,7 @@
 
 import re
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
 
@@ -38,7 +38,30 @@ _ion_gauge_status = {"Wait": "W",
                      "No gauge": "N",
                      "Good": "G",
                      "NOT_IONGAUGE": "NAK152",
+                     "INVALID COMMAND": "NAK160",
                      }
+
+
+class PressureChannel(Channel):
+    pressure = Channel.measurement(
+        "PR{ch}?", """ Pressure on the channel in units selected on the device""",
+    )
+
+    power_enabled = Channel.control(
+        "CP{ch}?", "CP{ch}!%s",
+        """Power status of the channel""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        check_set_errors=True,
+    )
+
+    ion_gauge_status = Channel.measurement(
+        "T{ch}?",
+        """Ion gauge status of the channel, only valid for channel 1, 3, and 5""",
+        map_values=True,
+        values=_ion_gauge_status,
+    )
 
 
 class MKS937B(Instrument):
@@ -58,16 +81,17 @@ class MKS937B(Instrument):
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
     """
+    channels = Instrument.ChannelCreator(PressureChannel, ("1", "2", "3", "4", "5", "6"))
 
     def __init__(self, adapter, name="MKS 937B vacuum gauge controller", address=253, **kwargs):
-        kwargs.setdefault("write_termination", ";FF")
-        kwargs.setdefault("read_termination", ";")  # in reality its ";FF"
-        # which is, however, invalid for pyvisa. Therefore extra bytes have to
-        # be read in the read() method.
         super().__init__(
             adapter,
             name,
             includeSCPI=False,
+            read_termination=";",  # in reality its ";FF"
+            # which is, however, invalid for pyvisa. Therefore extra bytes have to
+            # be read in the read() method and the terminators are hardcoded here.
+            write_termination=";FF",
             **kwargs
         )
         self.address = address
@@ -133,30 +157,6 @@ class MKS937B(Instrument):
         cast=str,
     )
 
-    pressure1 = Instrument.measurement(
-        "PR1?", """ Pressure on channel 1 in selected units """,
-    )
-
-    pressure2 = Instrument.measurement(
-        "PR2?", """ Pressure on channel 2 in selected units """,
-    )
-
-    pressure3 = Instrument.measurement(
-        "PR3?", """ Pressure on channel 3 in selected units """,
-    )
-
-    pressure4 = Instrument.measurement(
-        "PR4?", """ Pressure on channel 4 in selected units """,
-    )
-
-    pressure5 = Instrument.measurement(
-        "PR5?", """ Pressure on channel 5 in selected units """,
-    )
-
-    pressure6 = Instrument.measurement(
-        "PR6?", """ Pressure on channel 6 in selected units """,
-    )
-
     all_pressures = Instrument.measurement(
         "PRZ?", """ Read pressures on all channels in selected units """,
     )
@@ -169,27 +169,6 @@ class MKS937B(Instrument):
         "PC2?", """ Read pressure on channel 2 and its combination sensor """,
     )
 
-    ion_gauge_status1 = Instrument.measurement(
-        "T1?",
-        """Ion gauge status of channel 1""",
-        map_values=True,
-        values=_ion_gauge_status,
-    )
-
-    ion_gauge_status3 = Instrument.measurement(
-        "T3?",
-        """Ion gauge status of channel 3""",
-        map_values=True,
-        values=_ion_gauge_status,
-    )
-
-    ion_gauge_status5 = Instrument.measurement(
-        "T5?",
-        """Ion gauge status of channel 5""",
-        map_values=True,
-        values=_ion_gauge_status,
-    )
-
     unit = Instrument.control(
         "U?", "U!%s",
         """Pressure unit used for all pressure readings from the instrument""",
@@ -200,59 +179,5 @@ class MKS937B(Instrument):
                 "Pascal": "PASCAL",
                 "Micron": "MICRON",
                 },
-        check_set_errors=True,
-    )
-
-    power1_enabled = Instrument.control(
-        "CP1?", "CP1!%s",
-        """Power status of channel 1""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: "ON", False: "OFF"},
-        check_set_errors=True,
-    )
-
-    power2_enabled = Instrument.control(
-        "CP2?", "CP2!%s",
-        """Power status of channel 2""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: "ON", False: "OFF"},
-        check_set_errors=True,
-    )
-
-    power3_enabled = Instrument.control(
-        "CP3?", "CP3!%s",
-        """Power status of channel 3""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: "ON", False: "OFF"},
-        check_set_errors=True,
-    )
-
-    power4_enabled = Instrument.control(
-        "CP4?", "CP4!%s",
-        """Power status of channel 4""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: "ON", False: "OFF"},
-        check_set_errors=True,
-    )
-
-    power5_enabled = Instrument.control(
-        "CP5?", "CP5!%s",
-        """Power status of channel 5""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: "ON", False: "OFF"},
-        check_set_errors=True,
-    )
-
-    power6_enabled = Instrument.control(
-        "CP6?", "CP6!%s",
-        """Power status of channel 6""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: "ON", False: "OFF"},
         check_set_errors=True,
     )

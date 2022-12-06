@@ -35,7 +35,7 @@ def test_pressure():
          (None, b"FF")],
     ) as inst:
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
-        assert inst.pressure1 == pytest.approx(1.1e-9)
+        assert inst.ch_1.pressure == pytest.approx(1.1e-9)
 
 
 def test_ion_gauge_status():
@@ -46,7 +46,7 @@ def test_ion_gauge_status():
          (None, b"FF")],
     ) as inst:
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
-        assert inst.ion_gauge_status1 == "Good"
+        assert inst.ch_1.ion_gauge_status == "Good"
 
 
 def test_unit():
@@ -68,4 +68,4 @@ def test_power_enabled():
          (None, b"FF")],
     ) as inst:
         inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
-        assert inst.power1_enabled is True
+        assert inst.ch_1.power_enabled is True
