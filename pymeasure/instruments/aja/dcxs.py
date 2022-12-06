@@ -68,8 +68,8 @@ class DCXS(Instrument):
 
 
     def ask(self, command, query_delay=0, reply_length=None):
-        """ Writes the command to the instrument through the adapter
-        and returns the read response.
+        """Write a command to the instrument and return the read response.
+
         :param command: Command string to be sent to the instrument.
         :param query_delay: Delay between writing and reading in seconds.
         :param reply_length: number of bytes to expect in the reply. If set
@@ -84,8 +84,9 @@ class DCXS(Instrument):
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None,
                reply_length=None):
-        """ Writes a command to the instrument and returns a list of formatted
+        """Write a command to the instrument and return a list of formatted
         values from the result.
+
         :param command: SCPI command to be sent to the instrument
         :param separator: A separator character to split the string into a list
         :param cast: A type to cast the result
@@ -95,7 +96,7 @@ class DCXS(Instrument):
         :param reply_length: number of bytes to expect in the reply. If set
             self.read_bytes is used instead of self.read.
         :returns: A list of the desired type, or strings where the casting fails
-        """        
+        """
         results = str(self.ask(command, reply_length=reply_length)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
