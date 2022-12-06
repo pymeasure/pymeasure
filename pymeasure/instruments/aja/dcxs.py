@@ -24,6 +24,8 @@
 
 import re
 
+import pyvisa
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_string
 
@@ -32,7 +34,7 @@ class DCXS(Instrument):
     """ AJA DCXS-750 or 1500 DC magnetron sputtering power supply with multiple outputs
 
     Connection to the device is made through an RS232 serial connection.
-    The communication settings are fixed in the device at 38400, stopbit one, parity none.
+    The communication settings are fixed in the device at 38400, one stopbit, no parity.
     The communication protocol of the device uses single character commands and fixed length replys,
     both without any terminator.
 
@@ -40,16 +42,30 @@ class DCXS(Instrument):
     :param kwargs: Any valid key-word argument for Instrument
     """
 
-    def __init__(self, adapter, **kwargs):
-        kwargs.setdefault("write_termination", "")
-        kwargs.setdefault("read_termination", "")
+    def __init__(self, adapter, name="AJA DCXS sputtering power supply", **kwargs):
         kwargs.setdefault("asrl", dict(baud_rate=38400))
         super().__init__(
             adapter,
-            "AJA DCXS sputtering power supply",
+            name,
             includeSCPI=False,
+            write_termination="",
+            read_termination="",
             **kwargs
         )
+        # here we want to flush the read buffer since the device upon power up sends some '>' characters
+        # since self.adapter.flush_read_buffer() raises NotImplemented we fake a read operation here
+        try:
+            timeout = self.adapter.connection.timeout
+            self.adapter.connection.timeout = 0
+            try:
+                self.read()
+            except pyvisa.errors.VisaIOError:
+                # occurs always when calling read since no terminator is set
+                pass
+            self.adapter.connection.timeout = timeout
+        except AttributeError:  # occurs in test suite
+            pass
+
 
     def ask(self, command, query_delay=0, reply_length=None):
         """ Writes the command to the instrument through the adapter
@@ -181,7 +197,7 @@ class DCXS(Instrument):
     )
 
     ramp_time = Instrument.control(
-        "g", "E%02d", """Ramp time in seconds, can be set only when state is False""",
+        "g", "E%02d", """Ramp time in seconds, can be set only when 'enabled' is False""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -189,7 +205,7 @@ class DCXS(Instrument):
     )
 
     shutter_delay = Instrument.control(
-        "h", "F%02d", """shutter delay in seconds, can be set only when state is False""",
+        "h", "F%02d", """shutter delay in seconds, can be set only when 'enabled' is False""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -197,7 +213,7 @@ class DCXS(Instrument):
     )
 
     deposition_time_min = Instrument.control(
-        "i", "G%03d", """minutes part of deposition time, can be set only when state is False""",
+        "i", "G%03d", """minutes part of deposition time, can be set only when 'enabled' is False""",
         reply_length=3,
         cast=int,
         validator=strict_range,
@@ -205,7 +221,7 @@ class DCXS(Instrument):
     )
 
     deposition_time_sec = Instrument.control(
-        "j", "H%02d", """seconds part of deposition time, can be set only when state is False""",
+        "j", "H%02d", """seconds part of deposition time, can be set only when 'enabled' is False""",
         reply_length=2,
         cast=int,
         validator=strict_range,
