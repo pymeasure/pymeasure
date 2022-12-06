@@ -279,7 +279,7 @@ class CommonBase:
         """
         raise NotImplementedError("Implement in subclass!")
 
-    def ask(self, command, query_delay=0):
+    def ask(self, command, query_delay=0, **kwargs):
         """Write a command to the instrument and return the read response.
 
         :param command: Command string to be sent to the instrument.
@@ -288,9 +288,9 @@ class CommonBase:
         """
         self.write(command)
         self.wait_for(query_delay)
-        return self.read()
+        return self.read(**kwargs)
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=None):
+    def values(self, command, separator=',', cast=float, preprocess_reply=None, **kwargs):
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
@@ -302,7 +302,7 @@ class CommonBase:
             string.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        results = str(self.ask(command)).strip()
+        results = str(self.ask(command, **kwargs)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
         results = results.split(separator)

@@ -51,65 +51,26 @@ class DCXS(Instrument):
             **kwargs
         )
         # here we want to flush the read buffer since the device upon power up sends some '>'
-        # characters. since self.adapter.flush_read_buffer() raises NotImplemented we fake a read
-        # operation here
+        # characters. 
         try:
-            timeout = self.adapter.connection.timeout
-            self.adapter.connection.timeout = 0
+            self.adapter.flush_read_buffer()
+        except NotImplementedError:
+            # flush_read_buffer is not implemented for TCPIP sockets
             try:
-                self.read()
-            except pyvisa.errors.VisaIOError:
-                # occurs always when calling read since no terminator is set
+                timeout = self.adapter.connection.timeout
+                self.adapter.connection.timeout = 0
+                try:
+                    self.read()
+                except pyvisa.errors.VisaIOError:
+                    # occurs always when calling read and no character is waiting
+                    pass
+                self.adapter.connection.timeout = timeout
+            except AttributeError: 
+                # occurs in test suite (see #742 -> should be removed before merging)
                 pass
-            self.adapter.connection.timeout = timeout
-        except AttributeError:  # occurs in test suite
-            pass
 
-    def ask(self, command, query_delay=0, reply_length=None):
-        """Write a command to the instrument and return the read response.
-
-        :param command: Command string to be sent to the instrument.
-        :param query_delay: Delay between writing and reading in seconds.
-        :param reply_length: number of bytes to expect in the reply. If set
-            self.read_bytes is used instead of self.read.
-        :returns: String returned by the device without read_termination.
-        """
-        self.write(command)
-        self.wait_for(query_delay)
-        if reply_length:
-            return self.read_bytes(reply_length).decode()
-        return self.read()
-
-    def values(self, command, separator=',', cast=float, preprocess_reply=None,
-               reply_length=None):
-        """Write a command to the instrument and return a list of formatted
-        values from the result.
-
-        :param command: SCPI command to be sent to the instrument
-        :param separator: A separator character to split the string into a list
-        :param cast: A type to cast the result
-        :param preprocess_reply: optional callable used to preprocess values
-            received from the instrument. The callable returns the processed
-            string.
-        :param reply_length: number of bytes to expect in the reply. If set
-            self.read_bytes is used instead of self.read.
-        :returns: A list of the desired type, or strings where the casting fails
-        """
-        results = str(self.ask(command, reply_length=reply_length)).strip()
-        if callable(preprocess_reply):
-            results = preprocess_reply(results)
-        results = results.split(separator)
-        for i, result in enumerate(results):
-            try:
-                if cast == bool:
-                    # Need to cast to float first since results are usually
-                    # strings and bool of a non-empty string is always True
-                    results[i] = bool(float(result))
-                else:
-                    results[i] = cast(result)
-            except Exception:
-                pass  # Keep as string
-        return results
+    def read(self, reply_length=-1, **kwargs):
+        return self.read_bytes(reply_length, **kwargs).decode()
 
     id = Instrument.measurement(
         "?", """Power supply type identifier""",
