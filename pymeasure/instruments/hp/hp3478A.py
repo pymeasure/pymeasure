@@ -508,7 +508,7 @@ class HP3478A(HPLegacyInstrument):
 
         for addr in range(0, 256):
             # To write one nibble: 'X<address><byte>', where address and byte are raw 8-bit numbers.
-            cmd = bytes([ord('X'), addr, cal_data[ addr ] ])
+            cmd = bytes([ord('X'), addr, cal_data[addr]])
             self.write_bytes(cmd)
 
     def verify_calibration_entry(self, cal_data, entry_nr):
@@ -531,7 +531,7 @@ class HP3478A(HPLegacyInstrument):
                 sum += val
             else:
                 sum += val*16
-        return sum==255
+        return sum == 255
 
     def verify_calibration_data(self, cal_data):
         """Verify the checksums of all calibration entries.
