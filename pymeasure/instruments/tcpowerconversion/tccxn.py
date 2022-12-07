@@ -25,7 +25,7 @@
 import struct
 
 from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Channel, Instrument
 
 
 def int2char(value):
@@ -34,6 +34,24 @@ def int2char(value):
     of two representing characters.
     """
     return tuple(int(b) for b in value.to_bytes(2, "big"))
+
+
+class PresetChannel(Channel):
+    load_capacity = Instrument.control(
+        "GU\x00{ch:c}\x00\x00", "TD{ch:c}\x01\x00%c",
+        """ percentage of full-scale value of the load capacity preset """,
+        preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
+        validator=strict_discrete_set,
+        values=range(101),
+    )
+
+    tune_capacity = Instrument.control(
+        "GU\x00{ch:c}\x00\x00", "TD{ch:c}\x02\x00%c",
+        """ percentage of full-scale value of the tune capacity preset """,
+        preprocess_reply=lambda d: struct.unpack(">H", d[4:6]),
+        validator=strict_discrete_set,
+        values=range(101),
+    )
 
 
 class CXN(Instrument):
@@ -70,6 +88,8 @@ class CXN(Instrument):
     Failure to do so will mean loss of control and the device will reset
     certain parameters (setpoint, disable RF, ...)
     """
+    presets = Instrument.ChannelCreator(PresetChannel, (1, 2, 3, 4, 5, 6, 7, 8, 9),
+                                        prefix="preset_")
 
     def __init__(self, adapter, address=0, **kwargs):
         self.address = address
@@ -199,7 +219,7 @@ class CXN(Instrument):
 
     status = Instrument.measurement(
         "GS\x00\x00\x00\x00",
-        """ Get status field, where used bit correspond to:
+        """ Get status field, where used bits correspond to:
         bit 14: Analog interface enabled,
         bit 11: Interlock open,
         bit 10: Over temperature,
@@ -286,9 +306,20 @@ class CXN(Instrument):
         values=range(1, 99),
     )
 
+    manual_mode = Instrument.control(
+        "GT\x00\x00\x00\x00", "TM\x00%c\x00\x00",
+        """ set manual tuner mode """,
+        preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
+        get_process=lambda v: bool(v & 1),
+        set_process=lambda v: 2 if v else 1,
+        validator=strict_discrete_set,
+        values=(True, False),
+    )
+
     load_capacity = Instrument.control(
         "GT\x00\x00\x00\x00", "TC\x00\x01\x00%c",
-        """ percentage of full-scale value of the load capacity """,
+        """ percentage of full-scale value of the load capacity,
+           can be set only when manual_mode is True. """,
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
         get_process=lambda d: float(d)/10,
         validator=strict_discrete_set,
@@ -297,11 +328,21 @@ class CXN(Instrument):
 
     tune_capacity = Instrument.control(
         "GT\x00\x00\x00\x00", "TC\x00\x02\x00%c",
-        """ percentage of full-scale value of the tune capacity """,
+        """ percentage of full-scale value of the tune capacity,
+           can be set only when manual_mode is True. """,
         preprocess_reply=lambda d: struct.unpack(">H", d[4:6]),
         get_process=lambda d: float(d)/10,
         validator=strict_discrete_set,
         values=range(101),
+    )
+
+    preset_slot = Instrument.control(
+        "GT\x00\x00\x00\x00", "TP\x00%c\x00\x00",
+        """Selects which preset slot will be used for auto-tune mode.
+           Valid values are 0 to 9. 0 means no preset will be used""",
+        preprocess_reply=lambda d: struct.unpack(">H", d[8:10]),
+        validator=strict_discrete_set,
+        values=range(10),
     )
 
     rf_enable = Instrument.control(
