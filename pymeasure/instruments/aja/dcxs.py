@@ -25,7 +25,21 @@
 import pyvisa
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_string
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+
+def truncated_string(value, maxlength):
+    """ Provides a validator function that truncates a string to a maximum length.
+    It returns the original value if its length is smaller or equal to the maximum,
+    otherwise only the characters up to the maximum length will be returned.
+
+    :param value: a value to test
+    :param maxlength: maximum length of the string ("values" arg of the property factories)
+    """
+    if len(value) <= maxlength:
+        return value
+    else:
+        return value[:maxlength]
 
 
 class DCXS(Instrument):
@@ -37,6 +51,7 @@ class DCXS(Instrument):
     both without any terminator.
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
+    :param string name: The name of the instrument.
     :param kwargs: Any valid key-word argument for Instrument
     """
 
