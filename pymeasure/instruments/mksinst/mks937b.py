@@ -80,6 +80,7 @@ class MKS937B(Instrument):
     class overloads the device communication methods.
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
+    :param string name: The name of the instrument.
     :param address: device address included in every message to the instrument
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
