@@ -34,7 +34,6 @@ def test_pressure():
         [("@253PR1?", "@253ACK1.10e-9"),
          (None, b"FF")],
     ) as inst:
-        inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.ch_1.pressure == pytest.approx(1.1e-9)
 
 
@@ -45,7 +44,6 @@ def test_ion_gauge_status():
         [("@253T1?", "@253ACKG"),
          (None, b"FF")],
     ) as inst:
-        inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.ch_1.ion_gauge_status == "Good"
 
 
@@ -55,7 +53,6 @@ def test_ion_gauge_status_invalid_channel():
         MKS937B,
         [],
     ) as inst:
-        inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         with pytest.raises(AttributeError):
             inst.ch_2.ion_gauge_status
 
@@ -67,7 +64,6 @@ def test_unit():
         [("@253U?", "@253ACKTORR"),
          (None, b"FF")],
     ) as inst:
-        inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.unit == "Torr"
 
 
@@ -78,5 +74,4 @@ def test_power_enabled():
         [("@253CP1?", "@253ACKON"),
          (None, b"FF")],
     ) as inst:
-        inst.adapter.preprocess_reply = inst._extract_reply  # needed to workaround a bug
         assert inst.ch_1.power_enabled is True
