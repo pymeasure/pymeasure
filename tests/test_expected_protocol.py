@@ -126,6 +126,24 @@ def test_preprocess_reply_on_values():
         assert instr.simple == 3.12345
 
 
+class TestConnectionCalls:
+    def test_connection_method_call(self):
+        with expected_protocol(
+                BasicTestInstrument,
+                [],
+                connection_methods={'stb': 17}
+        ) as inst:
+            assert inst.adapter.connection.stb() == 17
+
+    def test_connection_attribute(self):
+        with expected_protocol(
+                BasicTestInstrument,
+                [],
+                connection_attributes={'timeout': 100}
+        ) as inst:
+            assert inst.adapter.connection.timeout == 100
+
+
 @pytest.mark.xfail
 def test_preprocess_reply_on_init():
     # TODO: For now preprocess_reply at init level is nonfunctional because this
@@ -133,7 +151,6 @@ def test_preprocess_reply_on_init():
     class InstrumentWithPreprocess(BasicTestInstrument):
         def __init__(self, adapter, **kwargs):
             super().__init__(adapter, preprocess_reply=lambda v: v + "2345", **kwargs)
-
     with expected_protocol(
         InstrumentWithPreprocess,
         [("VOLT?", "3.1")]
