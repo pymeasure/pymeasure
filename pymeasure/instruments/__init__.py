@@ -52,6 +52,7 @@ from . import keithley
 from . import keysight
 from . import lakeshore
 from . import lecroy
+from . import mksinst
 from . import newport
 from . import ni
 from . import oxfordinstruments
