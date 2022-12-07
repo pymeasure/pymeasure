@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from pytest import raises
 
 from pymeasure.test import expected_protocol
@@ -142,17 +141,3 @@ class TestConnectionCalls:
                 connection_attributes={'timeout': 100}
         ) as inst:
             assert inst.adapter.connection.timeout == 100
-
-
-@pytest.mark.xfail
-def test_preprocess_reply_on_init():
-    # TODO: For now preprocess_reply at init level is nonfunctional because this
-    #  lives in the real adapter, should be fixed with #567
-    class InstrumentWithPreprocess(BasicTestInstrument):
-        def __init__(self, adapter, **kwargs):
-            super().__init__(adapter, preprocess_reply=lambda v: v + "2345", **kwargs)
-    with expected_protocol(
-        InstrumentWithPreprocess,
-        [("VOLT?", "3.1")]
-    ) as instr:
-        assert instr.simple == 3.12345
