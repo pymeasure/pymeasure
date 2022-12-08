@@ -472,7 +472,7 @@ class HP3478A(HPLegacyInstrument):
         permanently powered by a 3v Lithium battery. When the battery runs
         out, the calibration data is lost, and recalibration is required.
 
-        When read, this property fetches and returns the calibration data so that it can be 
+        When read, this property fetches and returns the calibration data so that it can be
         backed up.
 
         When assigned a value, it similarly expects an array of 256 values between 0 and 15,
@@ -480,9 +480,9 @@ class HP3478A(HPLegacyInstrument):
 
         When writing, exceptions are raised for the following conditions:
 
-        * The CAL ENABLE switch at the front of the instrument is not set to ON. 
+        * The CAL ENABLE switch at the front of the instrument is not set to ON.
         * The array with values does not contain exactly 256 elements.
-        * The array with values does not pass a verification check. 
+        * The array with values does not pass a verification check.
 
         IMPORTANT: changing the calibration data results in permanent loss of
         the previous data. Use with care!
@@ -504,11 +504,11 @@ class HP3478A(HPLegacyInstrument):
 
     @calibration_data.setter
     def calibration_data(self, cal_data):
-        """Setter to write the calibration data. 
+        """Setter to write the calibration data.
 
         """
 
-        if not self.calibration_enabled :
+        if not self.calibration_enabled:
             raise Exception("CAL ENABLE switch not set to ON")
 
         self.write_calibration_data(cal_data, True)
@@ -518,7 +518,8 @@ class HP3478A(HPLegacyInstrument):
 
         The cal_data parameter format is the same as the 'calibration_data' property.
 
-        Verification of the cal_data array can be bypassed by setting 'verify_calibration_data' to False.
+        Verification of the cal_data array can be bypassed by setting 
+        'verify_calibration_data' to False.
 
         """
         if verify_calibration_data:
