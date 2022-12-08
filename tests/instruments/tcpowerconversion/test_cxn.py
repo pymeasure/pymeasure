@@ -1,0 +1,90 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2022 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+import pytest
+
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.tcpowerconversion import CXN
+
+
+def test_id():
+    """Verify the communication of the id property."""
+    with expected_protocol(
+        CXN,
+        [(b'C\x00Gi\x00\x01\x00\x00\x00\xf4', b'\x2aR\x00\x00\x10\x00\x01AG 0313 GTC  \x00\x03\x10'), ],
+    ) as inst:
+        assert inst.id == "AG 0313 GTC"
+
+
+def test_power():
+    """Verify the processing the power measurement."""
+    with expected_protocol(
+        CXN,
+        [(b'C\x00GP\x00\x00\x00\x00\x00\xda', b'\x2aR\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x58'), ],
+    ) as inst:
+        assert inst.power == (0.0, 0.0, 0.0)
+
+
+def test_temperature():
+    """Verify the processing the temperature measurement."""
+    with expected_protocol(
+        CXN,
+        [(b'C\x00GS\x00\x00\x00\x00\x00\xdd', b'\x2aR\x00\x00\x08\x00\x10\x00\xdd\x00\x04\x00\x03\x01\x4e'), ],
+    ) as inst:
+        assert inst.temperature == pytest.approx(22.1)
+
+
+def test_power_limit():
+    """Verify the processing the power limit property"""
+    with expected_protocol(
+        CXN,
+        [(b'C\x00Gp\x00\x00\x00\x00\x00\xfa', b'\x2aR\x00\x00\x144\xf8\x0b\xb8\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff4\xf8\x02\xbc\x10\x33'), ],
+    ) as inst:
+        assert inst.power_limit == pytest.approx(300.0)
+
+
+def test_manual_mode():
+    """Verify the processing the manual mode property"""
+    with expected_protocol(
+        CXN,
+        [(b'C\x00GT\x00\x00\x00\x00\x00\xde', b'\x2aR\x00\x00\n\x00\x01\x01\xa9\x02v\x00\x00\x00\x00\x01\x7f'), ],
+    ) as inst:
+        assert inst.manual_mode is True
+
+
+def test_load_capacity():
+    """Verify the processing the load capacity property"""
+    with expected_protocol(
+        CXN,
+        [(b'C\x00GU\x00\x01\x00\x00\x00\xe0', b'\x2aR\x00\x00\n\x00\x01\x002\x002\xff\xff\xff\xff\x04\xbd'), ],
+    ) as inst:
+        assert inst.load_capacity1 == 50
+
+
+def test_load_capacity_preset():
+    """Verify the processing the load capacity propert via a Channel"""
+    with expected_protocol(
+        CXN,
+        [(b'C\x00GU\x00\x01\x00\x00\x00\xe0', b'\x2aR\x00\x00\n\x00\x01\x002\x002\xff\xff\xff\xff\x04\xbd'), ],
+    ) as inst:
+        assert inst.preset_1.load_capacity == 50

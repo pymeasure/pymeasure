@@ -81,6 +81,7 @@ class CXN(Instrument):
     response messages are received after the acknowledge byte.
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
+    :param string name: Name of the instrument.
     :param kwargs: Any valid key-word argument for Instrument
 
     Note: In order to enable setting any parameters one has to request control
@@ -91,14 +92,14 @@ class CXN(Instrument):
     presets = Instrument.ChannelCreator(PresetChannel, (1, 2, 3, 4, 5, 6, 7, 8, 9),
                                         prefix="preset_")
 
-    def __init__(self, adapter, address=0, **kwargs):
+    def __init__(self, adapter, name="T&C RF sputtering power supply", address=0, **kwargs):
         self.address = address
-        kwargs.setdefault("write_termination", "")
-        kwargs.setdefault("read_termination", "")
         kwargs.setdefault("asrl", dict(baud_rate=38400))
         super().__init__(adapter,
-                         "T&C RF sputtering power supply",
+                         name,
                          includeSCPI=False,
+                         write_termination="",
+                         read_termination="",
                          **kwargs)
 
     @staticmethod
@@ -127,6 +128,12 @@ class CXN(Instrument):
         Reads from the instrument and returns the data fields as bytes
         """
         header = super().read_bytes(4)
+        # check valid header
+        if header[0] != 82:
+            raise ValueError(f"invalid header start byte '{header[0]}' received")
+        if header[1] != self.address:
+            raise ValueError(f"invalid address byte '{header[1]}' received; "
+                             f"should be {self.address.to_bytes(1, 'big')}")
         datalength = int.from_bytes(header[2:], "big")
         data = super().read_bytes(datalength)
         chksum = super().read_bytes(2)
@@ -136,7 +143,7 @@ class CXN(Instrument):
             raise ValueError(
                 f"checksum error in received message {header + data} "
                 f"with checksum {self._checksum(header + data)} "
-                f"but should be {chksum}")
+                f"but received {chksum}")
 
     def write(self, command):
         """
@@ -345,7 +352,7 @@ class CXN(Instrument):
         values=range(10),
     )
 
-    rf_enable = Instrument.control(
+    rf_enabled = Instrument.control(
         "GS\x00\x00\x00\x00", "BR%c%c\x00\x00",
         """ enable or disable RF output """,
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
