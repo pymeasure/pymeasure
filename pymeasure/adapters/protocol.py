@@ -63,8 +63,8 @@ class ProtocolAdapter(Adapter):
         what is sent to the instrument, the second one is the returned message.
         'None' indicates that a pair member (write or read) does not exist.
         The messages do **not** include the termination characters.
-    :param dict connection_attributes: Dictionary of attributes of the connection.
-    :param dict connection_methods: Pairs of method names and return values.
+    :param connection_attributes: Dictionary of connection attributes and their values.
+    :param connection_methods: Dictionary of method names of the connection and their return values.
     """
 
     def __init__(self, comm_pairs=[], preprocess_reply=None,

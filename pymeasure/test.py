@@ -49,8 +49,8 @@ def expected_protocol(instrument_cls, comm_pairs,
         'None' indicates that a pair member (command or response) does not
         exist, e.g. `(None, 'RESP1')`. Commands and responses are without
         termination characters.
-    :param dict connection_attributes: Dictionary of attributes of the connection.
-    :param dict connection_methods: Pairs of method names and return values.
+    :param connection_attributes: Dictionary of connection attributes and their values.
+    :param connection_methods: Dictionary of method names of the connection and their return values.
     :param \\**kwargs:
         Keyword arguments for the instantiation of the instrument.
     """
