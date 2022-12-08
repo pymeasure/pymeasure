@@ -518,7 +518,7 @@ class HP3478A(HPLegacyInstrument):
 
         The cal_data parameter format is the same as the 'calibration_data' property.
 
-        Verification of the cal_data array can be bypassed by setting 
+        Verification of the cal_data array can be bypassed by setting
         'verify_calibration_data' to False.
 
         """
