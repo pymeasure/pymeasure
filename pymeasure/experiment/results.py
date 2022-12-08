@@ -398,7 +398,7 @@ class Results:
                 setattr(procedure, name, value)
             else:
                 log.warning(
-                    f"Parameter \"{parameter.name}\" not found when loading" +
+                    f"Parameter \"{parameter.name}\" not found when loading " +
                     f"'{procedure_class}', setting default value")
                 setattr(procedure, name, parameter.default)
 
