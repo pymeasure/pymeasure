@@ -96,29 +96,56 @@ class AnritsuMS2090A(Instrument):
     # Spectrum Parameters - Wavelength #
     ####################################
 
-    resolution = Instrument.control(
-        "RES?", "RES %s", "Resolution (nm)",
-        validator=truncated_discrete_set,
-        values=[0.03, 0.05, 0.07, 0.1, 0.2, 0.5, 1.0],
+    frequency_center = Instrument.control(
+        "FREQuency:CENTer?", "FREQuency:CENTer %g Hz",
+        "Sets the center frequency in Hz",
+        validator=truncated_range,
+        values=[-99999999995, 299999999995],
     )
 
-    resolution_vbw = Instrument.control(
-        "VBW?", "VBW %s", "Video Bandwidth Resolution",
-        validator=strict_discrete_set,
-        values=["1MHz", "100kHz", "10kHz", "2kHz", "1kHz", "200Hz", "100Hz", "10Hz"]
+    frequency_offset = Instrument.control(
+        "FREQuency:OFFSet?", "FREQuency:OFFSet %g Hz",
+        "Sets the frequency offset in Hz",
+        validator=truncated_range,
+        values=[-10000000000, 10000000000],
     )
 
-    average_sweep = Instrument.control(
-        "AVS?", "AVS %d",
-        "Nr. of averages to make on a sweep (1-1000), with 1 being a single (non-averaged) sweep",
-        validator=truncated_range, values=[1, 1000]
+    frequency_span = Instrument.control(
+        "FREQuency:SPAN?", "FREQuency:SPAN %g Hz",
+        "Sets the frequency span in Hz",
+        validator=truncated_range,
+        values=[10, 400000000000],
     )
 
-    sampling_points = Instrument.control(
-        "MPT?", "MPT %d", "Number of sampling points",
-        validator=truncated_discrete_set,
-        values=[51, 101, 251, 501, 1001, 2001, 5001, 10001, 20001, 50001],
-        get_process=lambda v: int(v)
+    frequency_span_full = Instrument.control(
+        "","FREQuency:SPAN:FULL",
+        "Sets the frequency span to full span"
+    )
+
+    frequency_span_last = Instrument.control(
+        "","FREQuency:SPAN:LAST"
+        "Sets the frequency span to the previous span value."
+    )
+
+    frequency_start = Instrument.control(
+        "FREQuency:STARt?", "FREQuency:STARt %g Hz",
+        "Sets the start frequency in Hz",
+        validator=truncated_range,
+        values=[-100000000000, 299999999990],
+    )
+
+    frequency_step = Instrument.control(
+        ":FREQuency:STEP?", ":FREQuency:STEP %g Hz",
+        "Set or query the step size to gradually increase or decrease frequency values in Hz",
+        validator=truncated_range,
+        values=[0.1, 1000000000],
+    )
+
+    frequency_stop = Instrument.control(
+        "FREQuency:STOP?", "FREQuency:STOP %g Hz",
+        "Sets the start frequency in Hz",
+        validator=truncated_range,
+        values=[-99999999990, 300000000000],
     )
 
     ##########################
