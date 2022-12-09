@@ -28,17 +28,15 @@ import logging
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
-from pymeasure.adapters import VISAAdapter
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-class VoltageChannel(Channel):
-    
-    # TODO: create new init for Channel to set these ranges per channel
-    VOLTAGE_RANGE = [0,25]
-    CURRENT_RANGE = [0,5]
 
+class VoltageChannel(Channel):
+
+    # TODO: create new init for Channel to set these ranges per channel
+    VOLTAGE_RANGE = [0, 25]
+    CURRENT_RANGE = [0, 5]
 
     voltage_setpoint = Channel.control(
         "VOLT? (@{ch})",
@@ -72,9 +70,8 @@ class VoltageChannel(Channel):
         """Control whether the channel output is enabled (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
-        values = {True:1, False:0},
+        values={True: 1, False: 0},
     )
-
 
 
 class KeysightE36312A(Instrument):
@@ -88,11 +85,9 @@ class KeysightE36312A(Instrument):
     print(supply.ch1.voltage)
     """
 
-
     channels = Instrument.ChannelCreator(VoltageChannel, (1, 2, 3))
 
     def __init__(self, adapter, name="Keysight E36312A", **kwargs):
         super().__init__(
             adapter, name, **kwargs
         )
-
