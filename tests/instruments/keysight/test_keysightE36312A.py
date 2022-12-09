@@ -31,7 +31,7 @@ def test_voltage_setpoint():
     with expected_protocol(
         KeysightE36312A,
         [("VOLT 1.5, (@1)", None),
-        ("VOLT? (@1)")],
+        ("VOLT? (@1)"), 1.5],
     ) as inst:
         inst.ch1.voltage_setpoint = 1.5
         assert inst.ch1.voltage == 1.5
@@ -42,7 +42,7 @@ def test_current_limit():
     with expected_protocol(
         KeysightE36312A,
         [("CURR 0.5, (@1)", None),
-        ("CURR? (@1)")],
+        ("CURR? (@1)"), 0.5],
     ) as inst:
         inst.ch1.current_limit = 0.5
         assert inst.ch1.current_limit == 0.5
