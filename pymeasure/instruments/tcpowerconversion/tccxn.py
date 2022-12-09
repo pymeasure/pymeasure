@@ -37,6 +37,10 @@ def int2char(value):
 
 
 class PresetChannel(Channel):
+    def values(self, command, cast=int, separator=',', preprocess_reply=None):
+        results = self.ask(command)
+        return self.parent._format_reply(results, cast, separator, preprocess_reply)
+
     load_capacity = Instrument.control(
         "GU\x00{ch:c}\x00\x00", "TD{ch:c}\x01\x00%c",
         """ percentage of full-scale value of the load capacity preset """,
@@ -137,6 +141,7 @@ class CXN(Instrument):
         datalength = int.from_bytes(header[2:], "big")
         data = super().read_bytes(datalength)
         chksum = super().read_bytes(2)
+        print(header+data+chksum)
         if chksum == self._checksum(header + data):
             return data
         else:
@@ -153,19 +158,35 @@ class CXN(Instrument):
         """
         fullcmd = self._prepend_cmdheader(command.encode())
         super().write_bytes(fullcmd + self._checksum(fullcmd))
+        print(fullcmd + self._checksum(fullcmd))
         self.check_acknowledgment()
 
-    def values(self, command, cast=int, preprocess_reply=None):
-        """ Writes a command to the instrument and returns a list of formatted
+    # could be removed if the split of values is put into CommonBase
+    def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwargs):
+        """Write a command to the instrument and return a list of formatted
         values from the result.
-        :param command: command to be sent to the instrument
+
+        :param command: SCPI command to be sent to the instrument
+        :param separator: A separator character to split the string into a list
+        :param cast: A type to cast the result
+        :param preprocess_reply: optional callable used to preprocess values
+            received from the instrument. The callable returns the processed
+            string.
+        :returns: A list of the desired type, or strings where the casting fails
+        """
+        results = self.ask(command)
+        return self._format_reply(results, cast, separator, preprocess_reply)
+
+    def _format_reply(self, results, cast=int, separator=None, preprocess_reply=None):
+        """ formats a return string from the instrument to a list of formatted
+        values.
+        :param results: return string from the instrument
         :param cast: A type to cast the result
         :param preprocess_reply: optional callable used to preprocess values
             received from the instrument. The callable returns the processed
             string.
         :returns: A list of the desired type, or bytes where the casting fails
         """
-        results = self.ask(command)
         if callable(preprocess_reply):
             results = preprocess_reply(results)
         for i, result in enumerate(results):
@@ -360,6 +381,14 @@ class CXN(Instrument):
         set_process=lambda v: (85, 85) if v else (0, 0),
         validator=strict_discrete_set,
         values=(True, False),
+    )
+
+    load_capacity1 = Instrument.control(
+        "GU\x00\x01\x00\x00", "TD\x01\x01\x00%c",
+        """ percentage of full-scale value of the load capacity preset """,
+        preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
+        validator=strict_discrete_set,
+        values=range(101),
     )
 
     def request_control(self):
