@@ -480,7 +480,7 @@ class SequencerWidget(QtWidgets.QWidget):
         vbox.addLayout(btn_box_3)
         self.setLayout(vbox)
 
-    def _add_tree_item(self, *, level=0, parameter=None):
+    def _add_tree_item(self, *, level=None, parameter=None):
         """
         Add an item to the sequence tree. An item will be added as a child
         to the selected (existing) item, except when level is given.
