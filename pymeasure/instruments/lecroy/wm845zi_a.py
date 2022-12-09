@@ -64,7 +64,7 @@ class Channel():
         """ An integer parameter that sets the number of sweeps to average on this channel.
         Range is 1 to 1,000,000""",
         validator=strict_range,
-        values=[1,1000000],
+        values=[1, 1000000],
         map_values=True
     )
 
