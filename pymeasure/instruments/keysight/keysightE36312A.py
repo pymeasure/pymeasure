@@ -40,7 +40,7 @@ class VoltageChannel(Channel):
 
     voltage_setpoint = Channel.control(
         "VOLT? (@{ch})",
-        "VOLT? %g, (@{ch})",
+        "VOLT %g, (@{ch})",
         """Control the output voltage of this channel, range depends on channel.""",
         validator=strict_range,
         values=VOLTAGE_RANGE
