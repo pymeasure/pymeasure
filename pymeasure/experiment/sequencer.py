@@ -72,7 +72,7 @@ class SequenceHandler:
     A sequence can be loaded from a file or created programmatically with :meth:`~.add_node`
     and :meth:`~.remove_node`
 
-    The internal representation is a nodes tree with each nodecomposed of 3 elements:
+    The internal representation is a nodes tree with each node composed of 3 elements:
 
     - Level: that is the distance from the root node
     - Parameter: A string that is the parameter name
