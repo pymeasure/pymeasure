@@ -76,15 +76,15 @@ def test_sequencer(seq_file_text):
     fd = StringIO(file_text)
 
     s = SequenceHandler(file_obj=fd)
-    assert len(s) == non_empty_lines(file_text)
+    assert len(s._sequences) == non_empty_lines(file_text)
 
     for index, lev in enumerate(levels):
-        assert s[index].level == lev
+        assert s._sequences[index].level == lev
     for index, c in enumerate(children):
-        assert len(s.children(s[index])) == c
+        assert len(s.children(s._sequences[index])) == c
 
     for index, c in enumerate(params):
-        assert s[index].parameter == c
+        assert s._sequences[index].parameter == c
 
 
 seq_file_text_err1 = """
