@@ -188,13 +188,6 @@ class SequenceHandler:
         evaluated_string = numpy.array(evaluated_string)
         return evaluated_string
 
-    @property
-    def sequences(self):
-        """ Return a list of sequences, each one representing a node of the tree """
-        if self._sequences is None:
-            raise Exception("Not initialized")
-        return self._sequences
-
     def _get_idx(self, seq_item):
         """ Return the index and level of the list whose value correspond to sequence """
         try:
@@ -205,7 +198,7 @@ class SequenceHandler:
         if idx < 0:
             level = -1
         else:
-            level = self[idx].level
+            level = self._sequences[idx].level
 
         return idx, level
 
@@ -219,8 +212,8 @@ class SequenceHandler:
                                 parent_seq_item)
         # Find position where to insert new row
         idx = parent_idx + 1
-        while idx < len(self):
-            if self[idx].level <= level:
+        while idx < len(self._sequences):
+            if self._sequences[idx].level <= level:
                 break
             idx += 1
 
@@ -242,10 +235,10 @@ class SequenceHandler:
         idx, current_level = self._get_idx(seq_item)
         child_list = []
         idx += 1
-        while idx < len(self):
-            if self[idx].level == (current_level + 1):
-                child_list.append(self[idx])
-            if self[idx].level <= current_level:
+        while idx < len(self._sequences):
+            if self._sequences[idx].level == (current_level + 1):
+                child_list.append(self._sequences[idx])
+            if self._sequences[idx].level <= current_level:
                 break
             idx += 1
         return child_list
@@ -290,14 +283,8 @@ class SequenceHandler:
         if idx < 0:
             return False
 
-        self.sequences[idx][column] = value
+        self._sequences[idx][column] = value
         return True
-
-    def __len__(self):
-        return len(self.sequences)
-
-    def __getitem__(self, key):
-        return self.sequences[key]
 
     def load(self, file_obj, append=False):
         """
@@ -362,7 +349,7 @@ class SequenceHandler:
         :param file_obj: file object
         """
 
-        file_obj.write("\n".join(str(item) for item in self.sequences))
+        file_obj.write("\n".join(str(item) for item in self._sequences))
 
     def parameters_sequence(self, names_map=None):
         """
@@ -379,7 +366,9 @@ class SequenceHandler:
 
         idx = 0
         while (idx < len(self._sequences)):
-            depth, parameter, seq = self[idx].level, self[idx].parameter, self[idx].expression
+            depth, parameter, seq = self._sequences[idx].level, \
+                self._sequences[idx].parameter, \
+                self._sequences[idx].expression
             values = self.eval_string(seq, parameter, depth)
             if names_map is not None:
                 parameter = names_map[parameter]
