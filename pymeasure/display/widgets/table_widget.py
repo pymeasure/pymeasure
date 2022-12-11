@@ -161,16 +161,11 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         return None
 
     def _get_new_rows_columns(self, result, r1, c1, r2, c2):
-        new_rows = new_rows_start = new_columns = new_columns_start = 0
-        current_rows = self.pandas_row_count()
-        current_columns = self.pandas_column_count()
-        if current_rows > self.row_count:
-            new_rows = current_rows - self.row_count
-            new_rows_start = self.row_count
+        new_rows = self.pandas_column_count() - self.row_count
+        new_rows_start = self.row_count
 
-        if current_columns > self.column_count:
-            new_columns = current_columns - self.column_count
-            new_columns_start = self.column_count
+        new_columns = self.pandas_column_count() - self.column_count
+        new_columns_start = self.column_count
 
         return new_rows, new_rows_start, new_columns, new_columns_start
 
@@ -246,8 +241,9 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         """ Translate from full table coordinate to single result coordinates """
         raise Exception("Subclass should implement it")
 
-    def translate_to_full(self, result, row, col):
+    def translate_to_global(self, result, row, col):
         """ Translate from single result coordinates to full table coordinates """
+        raise Exception("Subclass should implement it")
 
     @property
     def horizontal_header(self):
