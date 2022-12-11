@@ -57,23 +57,50 @@ class Racal1992(Instrument):
             **kwargs
         )
 
-    def read_value_raw(self):
+    int_types   = [ b'RS', b'UT' ]
+    float_types = [ b'FA', b'PA', b'CK' ]
+
+    def read_and_decode(self, allowed_types=None):
         v = self.read_bytes(21)
-        return v
+        #print(v)
+        num=float(v[2:19])
+
+        if allowed_types and v[0:2] not in allowed_types:
+            raise Exception("Unexpected value type returned")
+
+        if v[0:2] in Racal1992.int_types:
+            return int(num)
+        elif v[0:2] in Racal1992.float_types:
+            return num
+        else:
+            raise Exception("Unsupported return type")
 
     @property
     def resolution(self):
         """Number of significant digits. 
 
-        This must be an integer from 3 to 9.
+        This must be an integer from 3 to 10.
 
         """
 
         self.write("RRS")
-        return self.read_value_raw(self)
+        return self.read_and_decode()
 
     @resolution.setter
     def resolution(self, value):
-        strict_discrete_range(value, range(3,10), 1)
+        strict_discrete_range(value, range(3,11), 1)
         self.write(f"SRS {value}")
+
+    @property
+    def unit(self):
+        """Device type. Should return 1992."""
+        self.write("RUT")
+        return self.read_and_decode()
+
+    @property
+    def measured_value(self):
+        """Measured value."""
+        return self.read_and_decode(allowed_types=[b'PA', b'FA', b'CK'])
+
+
 
