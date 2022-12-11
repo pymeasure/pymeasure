@@ -97,7 +97,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     display them as a single table.
 
     The multiple pandas dataframes are provided as ResultTable class instances
-    and all of the share the same number of columns.
+    and all of them share the same number of columns.
 
     There are some assumptions:
     - Series in the dataframe are identical, we call this number k
@@ -161,7 +161,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         return None
 
     def _get_new_rows_columns(self, result, r1, c1, r2, c2):
-        new_rows = self.pandas_column_count() - self.row_count
+        new_rows = self.pandas_row_count() - self.row_count
         new_rows_start = self.row_count
 
         new_columns = self.pandas_column_count() - self.column_count
@@ -191,23 +191,23 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def _data_changed(self, result, r1, c1, r2, c2):
         """ Internal method to handle data changed signal """
-        new_rows, new_rows_start, new_columns, new_columns_start = \
+        rows, rows_start, columns, columns_start = \
             self._get_new_rows_columns(result, r1, c1, r2, c2)
-        if new_rows or new_columns:
-            if new_rows > 0:
+        if rows or columns:
+            if rows > 0:
                 # New rows available
                 self.beginInsertRows(QtCore.QModelIndex(),
-                                     new_rows_start,
-                                     new_rows_start + new_rows - 1)
-                self.row_count += new_rows
+                                     rows_start,
+                                     rows_start + rows - 1)
+                self.row_count += rows
                 self.endInsertRows()
 
-            if new_columns > 0:
+            if columns > 0:
                 # New columns available
                 self.beginInsertColumns(QtCore.QModelIndex(),
-                                        new_columns_start,
-                                        new_columns_start + new_columns - 1)
-                self.column_count += new_columns
+                                        columns_start,
+                                        columns_start + columns - 1)
+                self.column_count += columns
                 self.endInsertColumns()
         else:
             top_bottom = self._get_row_column_set(result, r1, c1, r2, c2)
@@ -442,10 +442,8 @@ class Table(QtWidgets.QTableView):
             for k, v in self.supported_formats.items():
                 if v == ext:
                     break
-            try:
-                getattr(df.style, 'to_' + k)(filename)
-            except AttributeError:
-                getattr(df, 'to_' + k)(filename)
+            prefix = df.style if k == "latex" else df
+            getattr(prefix, 'to_' + k)(filename)
 
     def refresh_action(self):
         self.update_tables()

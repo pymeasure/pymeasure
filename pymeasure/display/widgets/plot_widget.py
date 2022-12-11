@@ -136,4 +136,4 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
 
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
-        curve.set_color(curve, color)
+        curve.set_color(color)
