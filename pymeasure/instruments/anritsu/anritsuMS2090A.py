@@ -363,20 +363,6 @@ class AnritsuMS2090A(Instrument):
         map_values=True
     )
 
-    init_sweep = Instrument.setting(
-        "INIT",
-        '''
-        Initiates a sweep/measurement.
-        '''
-    )
-
-    init_sweep_all = Instrument.setting(
-        "INIT:ALL",
-        '''
-        Initiates sweep until all active traces reach its average count
-        '''
-    )
-
     init_spa_self = Instrument.measurement(
         "INIT:SPA:SELF?",
         docs='''
@@ -529,3 +515,22 @@ class AnritsuMS2090A(Instrument):
         values=ONOFF,
         validator=strict_discrete_set
     )
+
+
+    def init_sweep(self):
+        '''
+        Initiate a sweep/measurement.
+        '''
+        self.write("INIT")
+
+    def init_all_sweep(self):
+        '''
+        Initiate all sweep/measurement.
+        '''
+        self.write('INIT:ALL')
+
+    def abort(self):
+        '''
+        Initiate a sweep/measurement.
+        '''
+        self.write("ABOR")
