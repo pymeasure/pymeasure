@@ -509,4 +509,3 @@ class AnritsuMS2090A(Instrument):
         Initiate a sweep/measurement.
         '''
         self.write("ABOR")
-
