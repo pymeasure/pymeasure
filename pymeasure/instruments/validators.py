@@ -140,6 +140,11 @@ def truncated_discrete_set(value, values):
     return values[-1]
 
 def double_validation_value_and_freq(value, values):
+    '''
+        *_1 is the unit that user introduces
+        *_2 is the numbre of frequency that user introduces
+    '''
+    print('hola')
     pass_discrete = None
     pass_range = None
 
@@ -161,8 +166,7 @@ def double_validation_value_and_freq(value, values):
         raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
             value_2, min(values_2), max(values_2)
         ))
-
-    return [pass_discrete, pass_range]
+    return f'{pass_range} {pass_discrete}'
 
 
 def joined_validators(*validators):

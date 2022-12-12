@@ -49,7 +49,7 @@ class AnritsuMS2090A(Instrument):
     #############
 
     ONOFF = ["ON", "OFF"]
-    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF'}
+    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}
 
     OFFFIRSTREPEAT = ['OFF', 'FIRSt', 'REPeat']
 
@@ -120,21 +120,21 @@ class AnritsuMS2090A(Instrument):
     ####################################
 
     frequency_center = Instrument.control(
-        "FREQuency:CENTer?", "FREQuency:CENTer %g %s",
+        "FREQuency:CENTer?", "FREQuency:CENTer %s",
         "Sets the center frequency in Hz",
         validator=double_validation_value_and_freq,
         values=[[-99999999995, 299999999995], UNITSFREQ]
     )
 
     frequency_offset = Instrument.control(
-        "FREQuency:OFFSet?", "FREQuency:OFFSet %g %g",
+        "FREQuency:OFFSet?", "FREQuency:OFFSet %s",
         "Sets the frequency offset in Hz",
         validator=double_validation_value_and_freq,
         values=[[-10000000000, 10000000000], UNITSFREQ],
     )
 
     frequency_span = Instrument.control(
-        "FREQuency:SPAN?", "FREQuency:SPAN %g %g",
+        "FREQuency:SPAN?", "FREQuency:SPAN %s",
         "Sets the frequency span in Hz",
         validator=double_validation_value_and_freq,
         values=[[10, 400000000000], UNITSFREQ],
@@ -151,21 +151,21 @@ class AnritsuMS2090A(Instrument):
     )
 
     frequency_start = Instrument.control(
-        "FREQuency:STARt?", "FREQuency:STARt %g %g",
+        "FREQuency:STARt?", "FREQuency:STARt %s",
         "Sets the start frequency in Hz",
         validator=double_validation_value_and_freq,
         values=[[-100000000000, 299999999990], UNITSFREQ],
     )
 
     frequency_step = Instrument.control(
-        ":FREQuency:STEP?", ":FREQuency:STEP %g %g",
+        ":FREQuency:STEP?", ":FREQuency:STEP %s",
         "Set or query the step size to gradually increase or decrease frequency values in Hz",
         validator=double_validation_value_and_freq,
         values=[[0.1, 1000000000], UNITSFREQ],
     )
 
     frequency_stop = Instrument.control(
-        "FREQuency:STOP?", "FREQuency:STOP %g %g",
+        "FREQuency:STOP?", "FREQuency:STOP %s",
         "Sets the start frequency in Hz",
         validator=double_validation_value_and_freq,
         values=[[-99999999990, 300000000000], UNITSFREQ],
@@ -534,20 +534,13 @@ specification.
         values=SPAMODES,
     )
 
-    ##########################
-    #  Data Memory Commands  #
-    ##########################
-
-    data_memory_select = Instrument.control(
-        "TTP?", "TTP %s",
-        "Memory Data Select.",
-        validator=strict_discrete_set,
-        values=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+    preamp = Instrument.control(
+        "POWer:RF:GAIN:STATe?", "POWer:RF:GAIN:STATe %g",
+        '''
+        Sets the state of the preamp. Note that this may cause a change in the reference level
+and/or attenuation.
+        ''',
+        values=ONOFF,
+        validator=strict_discrete_set
     )
 
-    def repeat_sweep(self, n=20, delay=0.5):
-        """Perform a single sweep and wait for completion."""
-        log.debug("Performing a repeat Spectrum Sweep")
-        self.clear()
-        self.write('SRT')
-        self.wait_for_sweep(n=n, delay=delay)
