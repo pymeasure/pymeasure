@@ -48,5 +48,5 @@ def test_preamp():
             AnritsuMS2090A,
             [(b"POWer:RF:GAIN:STATe?", 'ON')],
             ) as instr:
-        assert instr.preamp == True
+        assert instr.preamp is True
         
