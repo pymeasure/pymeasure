@@ -49,4 +49,3 @@ def test_preamp():
             [(b"POWer:RF:GAIN:STATe?", 'ON')],
             ) as instr:
         assert instr.preamp is True
-        
