@@ -39,7 +39,7 @@ class VoltageChannel(Channel):
         "VOLT %g, (@{ch})",
         """Control the output voltage of this channel, range depends on channel.""",
         validator=strict_range,
-        values=[0,25],
+        values=[0, 25],
         dynamic=True,
     )
 
@@ -48,7 +48,7 @@ class VoltageChannel(Channel):
         "CURR %g, (@{ch})",
         """Control the current limit of this channel, range depends on channel.""",
         validator=strict_range,
-        values=[0,1],
+        values=[0, 1],
         dynamic=True,
     )
 
@@ -90,5 +90,5 @@ class KeysightE36312A(Instrument):
         super().__init__(
             adapter, name, **kwargs
         )
-        self.channels[1].voltage_setpoint_values = [0,6]
-        self.channels[1].current_limit_values = [0,5]
+        self.channels[1].voltage_setpoint_values = [0, 6]
+        self.channels[1].current_limit_values = [0, 5]
