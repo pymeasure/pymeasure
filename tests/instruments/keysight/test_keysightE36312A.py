@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import pytest
+# import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.keysight.keysightE36312A import KeysightE36312A
@@ -57,6 +57,7 @@ def test_current_limit():
 #         with pytest.raises(ValueError):
 #             inst.ch_1.current_limit = 7
 
+
 def test_output_enabled():
     """Verify the output enable setter and getter."""
     with expected_protocol(
@@ -65,4 +66,4 @@ def test_output_enabled():
          ("OUTPut? (@1)", "0")],
     ) as inst:
         inst.ch_1.output_enabled = True
-        assert inst.ch_1.output_enabled == False
+        assert inst.ch_1.output_enabled is False
