@@ -43,19 +43,14 @@ class AnritsuMS2090A(Instrument):
         super().__init__(
             adapter, name="Anritsu MS2090A Handheld Spectrum Analyzer", **kwargs)
 
-
     #############
     #  Mappings #
     #############
 
-
     ONOFF = ["ON", "OFF"]
     ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}
-
     OFFFIRSTREPEAT = ['OFF', 'FIRSt', 'REPeat']
-
     SPAMODES = ["SPECtrum", "NRADio", "RTSA", "LTE", "EMFMeter", "PANalyzer"]
-
     UNITSFREQ = ['Hz', 'kHz', 'MHz', 'GHz']
     UNITSFREQ_MAP = []
 
@@ -66,28 +61,28 @@ class AnritsuMS2090A(Instrument):
     gps_full = Instrument.measurement(
         "FETCh:GPS:FULL?",
         '''
-        This command returns the timestamp, latitude, longitude, altitude, and satellite count of the device. The response is a comma-delimited ASCII response of one of the following forms: NO FIX or GOOD FIX,<timestamp>,<latitude>,<longitude>,<altitude>,<satellites>
+        This command returns the timestamp, latitude, longitude, altitude, and satellite count of the device.
         '''
     )
 
     gps_all = Instrument.measurement(
         "FETCh:GPS:ALL?",
         '''
-        This command returns the fix timestamp, latitude, longitude, altitude and information on the satellites used for the last fix and the GNSS systems they are from.
+        Returns the fix timestamp, latitude, longitude, altitude and information on the satellites used.
         '''
     )
 
     gps = Instrument.measurement(
         ":FETCh:GPS?",
         '''
-        This command returns the timestamp, latitude, and longitude of the device. 
+        Returns the timestamp, latitude, and longitude of the device. 
         '''
     )
 
     gps_last = Instrument.measurement(
         ":FETCh:GPS:LAST?",
         '''
-        This command returns the timestamp, latitude, longitude, and altitude of the last fixed GPS result.
+        Returns the timestamp, latitude, longitude, and altitude of the last fixed GPS result.
         ''',
     )
 
@@ -175,7 +170,7 @@ class AnritsuMS2090A(Instrument):
         '''
     )
 
-    fet_pbch_constellation  = Instrument.measurement(
+    fet_pbch_constellation = Instrument.measurement(
         "FET:CONS:PBCH",
         '''
         Get the latest Physical Broadcast Channel constellation hitmap
@@ -364,7 +359,7 @@ class AnritsuMS2090A(Instrument):
     )
 
     init_sweep_all = Instrument.setting(
-        "INIT:ALL", 
+        "INIT:ALL",
         '''
         Initiates sweep until all active traces reach its average count
         '''
@@ -522,4 +517,3 @@ class AnritsuMS2090A(Instrument):
         values=ONOFF,
         validator=strict_discrete_set
     )
-
