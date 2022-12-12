@@ -35,49 +35,12 @@ def test_init():
         pass  # Verify the expected communication.
 
 
-def test_power():
+def test_freq_conf():
     with expected_protocol(
             AnritsuMS2090A,
-            [(b":POWER?;", "123.45")],
+            [(b"FREQuency:CENTer?", (2, 'MHz'))],
             ) as instr:
-        assert instr.power == 123.45
+        assert instr.frequency_center == (2, 'MHz')
 
 
-def test_power_setter():
-    with expected_protocol(
-            AnritsuMS2090A,
-            [(b":POWER 123.45 dBm;", None)],
-            ) as instr:
-        instr.power = 123.45
-
-
-def test_frequency():
-    with expected_protocol(
-            AnritsuMS2090A,
-            [(b":FREQUENCY?;", "123.45")],
-            ) as instr:
-        assert instr.frequency == 123.45
-
-
-def test_frequency_setter():
-    with expected_protocol(
-            AnritsuMS2090A,
-            [(b":FREQUENCY 1.234500e+02 Hz;", None)],
-            ) as instr:
-        instr.frequency = 123.45
-
-
-def test_output():
-    with expected_protocol(
-            AnritsuMS2090A,
-            [(b":OUTPUT?", "1")],
-            ) as instr:
-        assert instr.output is True
-
-
-def test_output_setter():
-    with expected_protocol(
-            AnritsuMS2090A,
-            [(b":OUTPUT ON;", None)],
-            ) as instr:
-        instr.output = True
+test_freq_conf()
