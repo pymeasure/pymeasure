@@ -25,8 +25,7 @@ import logging
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
-    truncated_range,
-    double_validation_value_and_freq
+    truncated_range
 )
 
 log = logging.getLogger(__name__)
@@ -41,12 +40,36 @@ class AnritsuMS2090A(Instrument):
         super().__init__(
             adapter, name, **kwargs)
 
+    def double_validation_value_and_freq(value, values):
+        pass_discrete = None
+        pass_range = None
+
+        value_2 = value[0]
+        value_1 = value[1]
+        values_2 = values[0]
+        values_1 = values[1]
+
+        if value_1 in values_1:
+            pass_discrete = value_1
+        else:
+            raise ValueError('Value of {:s} is not in the discrete set {:s}'.format(
+                value_1, values_1
+            ))
+
+        if min(values_2) <= value_2 <= max(values_2):
+            pass_range = value_2
+        else:
+            raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
+                value_2, min(values_2), max(values_2)
+            ))
+        return f'{pass_range} {pass_discrete}'
+
     #############
     #  Mappings #
     #############
 
     ONOFF = ["ON", "OFF"]
-    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}
+    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF'}
     OFFFIRSTREPEAT = ['OFF', 'FIRSt', 'REPeat']
     SPAMODES = ["SPECtrum", "NRADio", "RTSA", "LTE", "EMFMeter", "PANalyzer"]
     UNITSFREQ = ['Hz', 'kHz', 'MHz', 'GHz']
@@ -147,84 +170,77 @@ class AnritsuMS2090A(Instrument):
         values=[[-99999999990, 300000000000], UNITSFREQ],
     )
 
-    abort = Instrument.setting(
-        "ABOR",
-        '''
-        Abort measure
-        '''
-    )
-
-    fet_power = Instrument.measurement(
+    fetch_power = Instrument.measurement(
         "FET:CHP:CHP?",
         '''
         Returns the most recent channel power measurement.
         '''
     )
 
-    fet_density = Instrument.measurement(
+    fetch_density = Instrument.measurement(
         "FET:CHP:DEN?",
         '''
         Returns the most recent channel density measurement
         '''
     )
 
-    fet_pbch_constellation = Instrument.measurement(
+    fetch_pbch_constellation = Instrument.measurement(
         "FET:CONS:PBCH",
         '''
         Get the latest Physical Broadcast Channel constellation hitmap
         '''
     )
 
-    fet_pdsch_constellation = Instrument.measurement(
+    fetch_pdsch_constellation = Instrument.measurement(
         "FET:CONS:PDSC?",
         '''
         Get the latest Physical Downlink Shared Channel constellation
         '''
     )
 
-    fet_control = Instrument.measurement(
+    fetch_control = Instrument.measurement(
         "FET:CONT?",
         '''
         Returns the Control Channel measurement in json format.
         '''
     )
 
-    fet_eirpower = Instrument.measurement(
+    fetch_eirpower = Instrument.measurement(
         "FET:EIRP?",
         '''
         Returns the current EIRP, Max EIRP, Horizontal EIRP, Vertical and Sum EIRP results in dBm.
         '''
     )
 
-    fet_eirpower_data = Instrument.measurement(
+    fetch_eirpower_data = Instrument.measurement(
         "FET:EIRP:DAT?",
         '''
         This command returns the current EIRP measurement result in dBm.
         '''
     )
 
-    fet_eirpower_max = Instrument.measurement(
+    fetch_eirpower_max = Instrument.measurement(
         "FET:EIRP:MAX?",
         '''
         This command returns the Max EIRP measurement result in dBm.
         '''
     )
 
-    fet_emf = Instrument.measurement(
+    fetch_emf = Instrument.measurement(
         "FET:EMF?",
         '''
         Return the current EMF measurement data. JSON format.
         '''
     )
 
-    fet_emf_meter = Instrument.measurement(
+    fetch_emf_meter = Instrument.measurement(
         "FET:EMF:MET?",
         '''
         Return the live EMF measurement data. JSON format.
         '''
     )
 
-    fet_emf_meter_sample = Instrument.measurement(
+    fetch_emf_meter_sample = Instrument.measurement(
         "FET:EMF:MET:SAM%g?",
         '''
         Return the EMF measurement data for a specified sample number. JSON format.
@@ -233,21 +249,21 @@ class AnritsuMS2090A(Instrument):
         values=[1, 16],
     )
 
-    fet_interference_power = Instrument.measurement(
+    fetch_interference_power = Instrument.measurement(
         "FET:INT:POW?",
         '''
         Fetch Interference Finder Integrated Power.
         '''
     )
 
-    fet_mimo_antenas = Instrument.measurement(
+    fetch_mimo_antenas = Instrument.measurement(
         "FET:MIMO:ANT?",
         '''
         Returns the sync power measurement in json format.
         '''
     )
 
-    fet_ocupied_bw = Instrument.measurement(
+    fetch_ocupied_bw = Instrument.measurement(
         "FET:OBW%g?",
         '''
         Returns the different set of measurement information depending on the suffix.
@@ -256,84 +272,84 @@ class AnritsuMS2090A(Instrument):
         values=[1, 2]
     )
 
-    fet_ota_mapping = Instrument.measurement(
+    fetch_ota_mapping = Instrument.measurement(
         "FET:OTA:MAPP?",
         '''
         Returns the most recent Coverage Mapping measurement result.
         '''
     )
 
-    fet_pan = Instrument.measurement(
+    fetch_pan = Instrument.measurement(
         "FET:PAN?",
         '''
         Return the current Pulse Analyzer measurement data. JSON format
         '''
     )
 
-    fet_pci = Instrument.measurement(
+    fetch_pci = Instrument.measurement(
         "FET:PCI?",
         '''
         Returns PCI measurements
         '''
     )
 
-    fet_pdsch = Instrument.measurement(
+    fetch_pdsch = Instrument.measurement(
         "FET:PDSC?",
         '''
         Returns the Data Channel Measurements in JSON format.
         '''
     )
 
-    fet_peak = Instrument.measurement(
+    fetch_peak = Instrument.measurement(
         "FET:PEAK?",
         '''
         Returns a pair of peak amplitude in current sweep.
         '''
     )
 
-    fet_rrm = Instrument.measurement(
+    fetch_rrm = Instrument.measurement(
         "FET:RRM?",
         '''
         Returns the Radio Resource Management in JSON format.
         '''
     )
 
-    fet_scan = Instrument.measurement(
+    fetch_scan = Instrument.measurement(
         "FET:SCAN?",
         '''
         Returns the cell scanner measurements in JSON format
         '''
     )
 
-    fet_semask = Instrument.measurement(
+    fetch_semask = Instrument.measurement(
         "FET:SEM?",
         '''
         This command returns the current Spectral Emission Mask measurement result.
         '''
     )
 
-    fet_ssb = Instrument.measurement(
+    fetch_ssb = Instrument.measurement(
         "FET:SSB?",
         '''
         Returns the SSB measurement
         '''
     )
 
-    fet_sync_evm = Instrument.measurement(
+    fetch_sync_evm = Instrument.measurement(
         "FET:SYNC:EVM?",
         '''
         Returns the Sync EVM measurement in JSON format.
         '''
     )
 
-    fet_sync_power = Instrument.measurement(
+    fetch_sync_power = Instrument.measurement(
         "FET:SYNC:POW?",
         '''
         Returns the sync power measurements in JSON format
         '''
     )
 
-    fet_tae = Instrument.measurement(
+    fetch_tae = Instrument.measurement(
         "FET:TAE?",
         '''
         Returns the Time Alignment Error in JSON format.
@@ -368,7 +384,7 @@ class AnritsuMS2090A(Instrument):
         '''
     )
 
-    inst_active_state = Instrument.control(
+    active_state = Instrument.control(
         "INST:ACT:STAT?", "INST:ACT:STAT %g",
         docs='''
         The "set" state indicates that the instrument is used by someone.
@@ -406,7 +422,7 @@ class AnritsuMS2090A(Instrument):
         '''
     )
 
-    meas_density = Instrument.measurement(
+    power_density = Instrument.measurement(
         "MEASure:CHPower:DENSity?",
         '''
         Sets the active measurement to channel power, sets the default measurement

@@ -139,32 +139,6 @@ def truncated_discrete_set(value, values):
 
     return values[-1]
 
-
-def double_validation_value_and_freq(value, values):
-    pass_discrete = None
-    pass_range = None
-
-    value_2 = value[0]
-    value_1 = value[1]
-    values_2 = values[0]
-    values_1 = values[1]
-
-    if value_1 in values_1:
-        pass_discrete = value_1
-    else:
-        raise ValueError('Value of {:s} is not in the discrete set {:s}'.format(
-            value_1, values_1
-        ))
-
-    if min(values_2) <= value_2 <= max(values_2):
-        pass_range = value_2
-    else:
-        raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
-            value_2, min(values_2), max(values_2)
-        ))
-    return f'{pass_range} {pass_discrete}'
-
-
 def joined_validators(*validators):
     """Returns a validator function that represents a list of validators joined together.
 
