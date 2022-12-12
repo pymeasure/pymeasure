@@ -26,7 +26,7 @@ from pymeasure.instruments.keysight.keysightE36312A import KeysightE36312A
 
 
 def test_voltage_setpoint():
-    """Verify the voltage setter."""
+    """Verify the voltage setpoint setter and getter."""
     with expected_protocol(
         KeysightE36312A,
         [("VOLT 1.5, (@1)", None),
@@ -37,7 +37,7 @@ def test_voltage_setpoint():
 
 
 def test_current_limit():
-    """Verify the current limit setter."""
+    """Verify the current limit setter and getter."""
     with expected_protocol(
         KeysightE36312A,
         [("CURR 0.5, (@1)", None),
