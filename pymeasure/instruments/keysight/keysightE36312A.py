@@ -34,16 +34,13 @@ log.addHandler(logging.NullHandler())
 
 class VoltageChannel(Channel):
 
-    # TODO: create new init for Channel to set these ranges per channel
-    VOLTAGE_RANGE = [0, 25]
-    CURRENT_RANGE = [0, 5]
-
     voltage_setpoint = Channel.control(
         "VOLT? (@{ch})",
         "VOLT %g, (@{ch})",
         """Control the output voltage of this channel, range depends on channel.""",
         validator=strict_range,
-        values=VOLTAGE_RANGE
+        values=[0,25],
+        dynamic=True,
     )
 
     current_limit = Channel.control(
@@ -51,7 +48,8 @@ class VoltageChannel(Channel):
         "CURR %g, (@{ch})",
         """Control the current limit of this channel, range depends on channel.""",
         validator=strict_range,
-        values=CURRENT_RANGE
+        values=[0,1],
+        dynamic=True,
     )
 
     voltage = Channel.measurement(
@@ -80,9 +78,10 @@ class KeysightE36312A(Instrument):
 
     .. code-block:: python
     supply = KeysightE36312A(resource)
-    supply.ch1.voltage = 10
-    supply.ch2.current = 0.1
-    print(supply.ch1.voltage)
+    supply.ch_1.voltage_setpoint=10
+    supply.ch_1.current_setpoint=0.1
+    supply.ch_1.output_enabled=True
+    print(supply.ch_1.voltage)
     """
 
     channels = Instrument.ChannelCreator(VoltageChannel, (1, 2, 3))
@@ -91,3 +90,5 @@ class KeysightE36312A(Instrument):
         super().__init__(
             adapter, name, **kwargs
         )
+        self.channels[1].voltage_setpoint_values = [0,6]
+        self.channels[1].current_limit_values = [0,5]

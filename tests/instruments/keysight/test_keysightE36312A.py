@@ -21,6 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import pytest
+
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.keysight.keysightE36312A import KeysightE36312A
 
@@ -40,11 +42,20 @@ def test_current_limit():
     """Verify the current limit setter and getter."""
     with expected_protocol(
         KeysightE36312A,
-        [("CURR 0.5, (@1)", None),
-         ("CURR? (@1)", "0.5")],
+        [("CURR 0.5, (@3)", None),
+         ("CURR? (@3)", "0.5")],
     ) as inst:
-        inst.ch_1.current_limit = 0.5
-        assert inst.ch_1.current_limit == 0.5
+        inst.ch_3.current_limit = 0.5
+        assert inst.ch_3.current_limit == 0.5
+
+# def test_current_limit_validator():
+#     """Verify the current limit validator."""
+#     with expected_protocol(
+#         KeysightE36312A,
+#         [(None, None)],
+#     ) as inst:
+#         with pytest.raises(ValueError):
+#             inst.ch_1.current_limit = 7
 
 def test_output_enabled():
     """Verify the output enable setter and getter."""
