@@ -62,9 +62,9 @@ class AnritsuMS2090A(Instrument):
 
     gps_all = Instrument.measurement(
         "FETCh:GPS:ALL?",
-        '''
-        Returns the fix timestamp, latitude, longitude, altitude and information on the sat used.
-        '''
+        """Returns the fix timestamp, latitude, longitude, altitude and information on the sat used.
+        """
+
     )
 
     gps = Instrument.measurement(
