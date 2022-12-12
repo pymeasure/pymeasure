@@ -44,8 +44,7 @@ class AnritsuMS2090A(Instrument):
     #  Mappings #
     #############
 
-    ONOFF = ["ON", "OFF"]
-    ONOFF_MAPPING = {True: 'ON', False: 'OFF'}
+    ONOFF = {True: 'ON', False: 'OFF'}
     OFFFIRSTREPEAT = ['OFF', 'FIRSt', 'REPeat']
     SPAMODES = ["SPECtrum", "NRADio", "RTSA", "LTE", "EMFMeter", "PANalyzer"]
 
@@ -485,7 +484,7 @@ class AnritsuMS2090A(Instrument):
     )
 
     preamp = Instrument.control(
-        "POWer:RF:GAIN:STATe?", "POWer:RF:GAIN:STATe %g",
+        "POWer:RF:GAIN:STATe?", "POWer:RF:GAIN:STATe %s",
         """
         Sets the state of the preamp. Note that this may cause a change in the reference level
         and/or attenuation.
