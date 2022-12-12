@@ -139,6 +139,7 @@ def truncated_discrete_set(value, values):
 
     return values[-1]
 
+
 def joined_validators(*validators):
     """Returns a validator function that represents a list of validators joined together.
 

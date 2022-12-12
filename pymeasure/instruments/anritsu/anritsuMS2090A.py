@@ -516,7 +516,6 @@ class AnritsuMS2090A(Instrument):
         validator=strict_discrete_set
     )
 
-
     def init_sweep(self):
         '''
         Initiate a sweep/measurement.
