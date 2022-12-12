@@ -36,11 +36,10 @@ log.addHandler(logging.NullHandler())
 class AnritsuMS2090A(Instrument):
     """Anritsu MS2090A Handheld Spectrum Analyzer."""
 
-    def __init__(self, adapter, **kwargs):
-        """Constructor."""
+    def __init__(self, adapter, name="Anritsu MS2090A Handheld Spectrum Analyzer", **kwargs):
         self.analysis_mode = None
         super().__init__(
-            adapter, name="Anritsu MS2090A Handheld Spectrum Analyzer", **kwargs)
+            adapter, name, **kwargs)
 
     #############
     #  Mappings #
