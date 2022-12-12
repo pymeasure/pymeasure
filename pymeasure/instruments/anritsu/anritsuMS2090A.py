@@ -260,7 +260,7 @@ class AnritsuMS2090A(Instrument):
     fet_ota_mapping = Instrument.measurement(
         "FET:OTA:MAPP?",
         '''
-        Available in Spectrum Analyzer mode. Returns the most recent Coverage Mapping measurement result.
+        Returns the most recent Coverage Mapping measurement result.
         '''
     )
 
