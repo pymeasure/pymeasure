@@ -144,7 +144,6 @@ def double_validation_value_and_freq(value, values):
         *_1 is the unit that user introduces
         *_2 is the numbre of frequency that user introduces
     '''
-    print('hola')
     pass_discrete = None
     pass_range = None
 
