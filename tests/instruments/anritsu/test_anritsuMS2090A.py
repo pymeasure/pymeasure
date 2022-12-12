@@ -38,9 +38,9 @@ def test_init():
 def test_freq_conf():
     with expected_protocol(
             AnritsuMS2090A,
-            [(b"FREQuency:CENTer?", (2, 'MHz'))],
+            [(b"FREQuency:CENTer?", (4, 'MHz'))],
             ) as instr:
-        assert instr.frequency_center == (2, 'MHz')
+        assert instr.frequency_center == (4, 'MHz')
 
 
 test_freq_conf()
