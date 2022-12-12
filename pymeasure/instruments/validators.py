@@ -139,6 +139,7 @@ def truncated_discrete_set(value, values):
 
     return values[-1]
 
+
 def double_validation_value_and_freq(value, values):
     '''
         *_1 is the unit that user introduces

@@ -53,9 +53,9 @@ class AnritsuMS2090A(Instrument):
 
     OFFFIRSTREPEAT = ['OFF', 'FIRSt', 'REPeat']
 
-    SPAMODES = ["SPECtrum","NRADio","RTSA","LTE","EMFMeter","PANalyzer"]
+    SPAMODES = ["SPECtrum", "NRADio", "RTSA", "LTE", "EMFMeter", "PANalyzer"]
 
-    UNITSFREQ = ['Hz', 'kHz', 'MHz' , 'GHz']
+    UNITSFREQ = ['Hz', 'kHz', 'MHz', 'GHz']
     UNITSFREQ_MAP = []
 
     ####################################
@@ -92,8 +92,6 @@ class AnritsuMS2090A(Instrument):
         This command returns the timestamp, latitude, and longitude of the device. The response is a comma-delimited ASCII response of one of the following forms: NO FIX or GOOD FIX,<timestamp>,<latitude>,<longitude>
         If no GPS fix is currently available, the first response form (NO FIX) is returned.
         If the GPS does have a fix, the second response form (GOOD FIX) is returned.
-        <timestamp> is in ISO8601 format. The timestamp provides the 24-hour time, and will include the year/date and/or UTC offset if the hardware supports it. If no UTC offset is provided, the time is in UTC time.
-        <latitude> and <longitude> are specified in decimal degrees.
         '''
     )
 
@@ -101,10 +99,6 @@ class AnritsuMS2090A(Instrument):
         ":FETCh:GPS:LAST?",
         '''
         This command returns the timestamp, latitude, longitude, and altitude of the last fixed GPS result. The response is a comma-delimited ASCII response of one of the following forms: NO FIX or GOOD FIX,<timestamp>,<latitude>,<longitude>,<altitude> If a GPS fix has never been acquired, the first response form (NO FIX) is returned.
-        If a GPS fix was previously acquired, the second response form (GOOD FIX) is returned.
-        <timestamp> is in ISO8601 format. The timestamp provides the 24-hour time, and will include the year/date and/or UTC offset if the hardware supports it. If no UTC offset is provided, the time is in UTC time.
-        <latitude> and <longitude> are specified in decimal degrees.
-        <altitude> specifies the current altitude relative to mean sea level, in meters.
         ''',
     )
 
@@ -209,14 +203,14 @@ class AnritsuMS2090A(Instrument):
     fet_control = Instrument.measurement(
         "FET:CONT?",
         '''
-        Returns the Control Channel measurement in json format. This includes Sync, Reference, Broadcast and Control channel measurements. If a measurement is in progress, it blocks until complete.
+        Returns the Control Channel measurement in json format. This includes Sync, Reference, Broadcast and Control channel measurements.
         '''
     )
 
     fet_eirpower = Instrument.measurement(
         "FET:EIRP?",
         '''
-        This command returns the current EIRP, Max EIRP, Horizontal EIRP, Vertical and Sum EIRP results in dBm.
+        Returns the current EIRP, Max EIRP, Horizontal EIRP, Vertical and Sum EIRP results in dBm.
         '''
     )
 
@@ -254,7 +248,7 @@ class AnritsuMS2090A(Instrument):
         Return the EMF measurement data for a specified sample number. JSON format.
         ''',
         validator=truncated_range,
-        values=[1,16],
+        values=[1, 16],
     )
 
     fet_interference_power = Instrument.measurement(
@@ -277,7 +271,7 @@ class AnritsuMS2090A(Instrument):
         Returns the different set of measurement information depending on the suffix.
         ''',
         validator=truncated_range,
-        values=[1,2]
+        values=[1, 2]
     )
 
     fet_ota_mapping = Instrument.measurement(
@@ -409,11 +403,7 @@ class AnritsuMS2090A(Instrument):
         Sets the active measurement to adjacent channel power ratio, sets the default
         measurement parameters, triggers a new measurement and returns the main channel
         power, lower adjacent, upper adjacent, lower alternate and upper alternate channel
-        power results. It is a combination of the commands :CONFigure:ACPower;
-        :READ:ACPower? For a description of the default adjacent channel power ratio
-        measurement parameters see :CONFigure:ACPower. To make an adjacent channel
-        power ratio measurement with settings other than the default values send:
-        :CONFigure:ACPower
+        power results.
         '''
     )
 
@@ -431,8 +421,8 @@ class AnritsuMS2090A(Instrument):
         "MEASure:CHPower:CHPower?",
         '''
         Sets the active measurement to channel power, sets the default measurement
-parameters, triggers a new measurement and returns channel power as the result. It is a
-combination of the commands :CONFigure:CHPower; :READ:CHPower:CHPower?
+        parameters, triggers a new measurement and returns channel power as the result. It is a
+        combination of the commands :CONFigure:CHPower; :READ:CHPower:CHPower?
         '''
     )
 
@@ -440,9 +430,9 @@ combination of the commands :CONFigure:CHPower; :READ:CHPower:CHPower?
         "MEASure:CHPower:DENSity?",
         '''
         Sets the active measurement to channel power, sets the default measurement
-parameters, triggers a new measurement and returns channel power density as the
-result. It is a combination of the commands :CONFigure:CHPower;
-:READ:CHPower:DENSity?
+        parameters, triggers a new measurement and returns channel power density as the
+        result. It is a combination of the commands :CONFigure:CHPower;
+        :READ:CHPower:DENSity?
         '''
     )
 
@@ -450,7 +440,7 @@ result. It is a combination of the commands :CONFigure:CHPower;
         "MEASure:EMF:METer:CLEar:ALL",
         '''
         Clear the EMF measurement data of all samples.
-Sampling state will be turned off if it was on.
+        Sampling state will be turned off if it was on.
         '''
     )
 
@@ -458,7 +448,7 @@ Sampling state will be turned off if it was on.
         "MEASure:EMF:METer:CLEar:SAMPle%g",
         '''
         Clear the EMF measurement data for a specified sample number.
-Sampling state will be turned off if the specified sample is currently active.
+        Sampling state will be turned off if the specified sample is currently active.
         ''',
         validator=truncated_range,
         values=[1, 16],
@@ -477,9 +467,9 @@ Sampling state will be turned off if the specified sample is currently active.
         "MEASure:INTerference:POWer?",
         '''
         Sets the active measurement to interference finder, sets the default measurement
-parameters, triggers a new measurement and returns integrated power as the result. It
-is a combination of the commands :CONFigure:INTerference;
-:READ:INTerference:POWer?
+        parameters, triggers a new measurement and returns integrated power as the result. It
+        is a combination of the commands :CONFigure:INTerference;
+        :READ:INTerference:POWer?
         '''
     )
 
@@ -494,7 +484,7 @@ is a combination of the commands :CONFigure:INTerference;
         "MEASure:IQ:CAPTure:FAIL?", "MEASure:IQ:CAPTure:FAIL %g",
         '''
         Sets or queries whether the instrument will automatically save an IQ capture when
-losing sync
+        losing sync
         ''',
         values=OFFFIRSTREPEAT
     )
@@ -503,7 +493,7 @@ losing sync
         "MEASure:OTA:MAPPing?",
         '''
         Sets the active measurement to OTA Coverage Mapping, sets the default measurement
-parameters, triggers a new measurement, and returns the measured values.
+        parameters, triggers a new measurement, and returns the measured values.
         '''
     )
 
@@ -511,7 +501,7 @@ parameters, triggers a new measurement, and returns the measured values.
         "MEASure:OTA:MAPPing:RUN?", "MEASure:OTA:MAPPing:RUN %g",
         '''
         Turn on/off OTA Coverage Mapping Data Collection. The instrument must be in
-Coverage Mapping measurement for the command to be effective
+        Coverage Mapping measurement for the command to be effective
         ''',
         values=ONOFF,
         map_values=True
@@ -521,8 +511,8 @@ Coverage Mapping measurement for the command to be effective
         "MODE:CATalog?",
         '''
         Returns a list of available modes for the Spa application. The response is a
-comma-separated list of mode names. See command [:SENSe]:MODE for the mode name
-specification.
+        comma-separated list of mode names. See command [:SENSe]:MODE for the mode name
+        specification.
         '''
     )
 
@@ -538,7 +528,7 @@ specification.
         "POWer:RF:GAIN:STATe?", "POWer:RF:GAIN:STATe %g",
         '''
         Sets the state of the preamp. Note that this may cause a change in the reference level
-and/or attenuation.
+        and/or attenuation.
         ''',
         values=ONOFF,
         validator=strict_discrete_set
