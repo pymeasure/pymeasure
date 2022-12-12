@@ -141,10 +141,10 @@ def truncated_discrete_set(value, values):
 
 
 def double_validation_value_and_freq(value, values):
-    '''
+    """ Provides a validator function that returns the value
         *_1 is the unit that user introduces
         *_2 is the numbre of frequency that user introduces
-    '''
+    """
     pass_discrete = None
     pass_range = None
 
