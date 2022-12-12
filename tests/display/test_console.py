@@ -62,7 +62,7 @@ class TestArgParsing:
         console = ConsoleArgumentParser(TestProcedure)
         console.setup_parser([name])
         args = vars(console.parse_args(['--' + name, str(value)]))
-        assert(args[name] == value)
+        assert args[name] == value
 
 
 class TestArgHelpString:
@@ -86,10 +86,10 @@ class TestArgHelpString:
         console = ConsoleArgumentParser(TestProcedure)
         console.setup_parser(['parameter'])
         help_message = [value.strip() for value in console.format_help().split("\n")]
-        assert('--parameter PARAMETER' in help_message)
+        assert '--parameter PARAMETER' in help_message
         for help_line in help_message:
             if desc in help_line:
                 break
-        assert(desc in help_line)
-        assert('default' in help_line)
-        assert(str(default_value) in help_line)
+        assert desc in help_line
+        assert 'default' in help_line
+        assert str(default_value) in help_line
