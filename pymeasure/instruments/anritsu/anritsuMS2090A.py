@@ -40,30 +40,6 @@ class AnritsuMS2090A(Instrument):
         super().__init__(
             adapter, name, **kwargs)
 
-    def double_validation_value_and_freq(value, values):
-        pass_discrete = None
-        pass_range = None
-
-        value_2 = value[0]
-        value_1 = value[1]
-        values_2 = values[0]
-        values_1 = values[1]
-
-        if value_1 in values_1:
-            pass_discrete = value_1
-        else:
-            raise ValueError('Value of {:s} is not in the discrete set {:s}'.format(
-                value_1, values_1
-            ))
-
-        if min(values_2) <= value_2 <= max(values_2):
-            pass_range = value_2
-        else:
-            raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
-                value_2, min(values_2), max(values_2)
-            ))
-        return f'{pass_range} {pass_discrete}'
-
     #############
     #  Mappings #
     #############
@@ -119,24 +95,24 @@ class AnritsuMS2090A(Instrument):
     ####################################
 
     frequency_center = Instrument.control(
-        "FREQuency:CENTer?", "FREQuency:CENTer %s",
-        "Sets the center frequency",
-        validator=double_validation_value_and_freq,
+        "FREQuency:CENTer?", "FREQuency:CENTer %g",
+        "Sets the center frequency in Hz",
+        validator=truncated_range,
         values=[[-99999999995, 299999999995], UNITSFREQ]
     )
 
     frequency_offset = Instrument.control(
-        "FREQuency:OFFSet?", "FREQuency:OFFSet %s",
-        "Sets the frequency offset",
-        validator=double_validation_value_and_freq,
-        values=[[-10000000000, 10000000000], UNITSFREQ],
+        "FREQuency:OFFSet?", "FREQuency:OFFSet %g",
+        "Sets the frequency offset in Hz",
+        validator=truncated_range,
+        values=[-10000000000, 10000000000],
     )
 
     frequency_span = Instrument.control(
-        "FREQuency:SPAN?", "FREQuency:SPAN %s",
-        "Sets the frequency span",
-        validator=double_validation_value_and_freq,
-        values=[[10, 400000000000], UNITSFREQ],
+        "FREQuency:SPAN?", "FREQuency:SPAN %g",
+        "Sets the frequency span in Hz",
+        validator=truncated_range,
+        values=[10, 400000000000],
     )
 
     frequency_span_full = Instrument.setting(
@@ -150,24 +126,24 @@ class AnritsuMS2090A(Instrument):
     )
 
     frequency_start = Instrument.control(
-        "FREQuency:STARt?", "FREQuency:STARt %s",
-        "Sets the start frequency",
-        validator=double_validation_value_and_freq,
-        values=[[-100000000000, 299999999990], UNITSFREQ],
+        "FREQuency:STARt?", "FREQuency:STARt %g",
+        "Sets the start frequency in Hz",
+        validator=truncated_range,
+        values=[-100000000000, 299999999990],
     )
 
     frequency_step = Instrument.control(
-        ":FREQuency:STEP?", ":FREQuency:STEP %s",
-        "Set or query the step size to gradually increase or decrease frequency values",
-        validator=double_validation_value_and_freq,
-        values=[[0.1, 1000000000], UNITSFREQ],
+        ":FREQuency:STEP?", ":FREQuency:STEP %g",
+        "Set or query the step size to gradually increase or decrease frequency values in Hz",
+        validator=truncated_range,
+        values=[0.1, 1000000000],
     )
 
     frequency_stop = Instrument.control(
-        "FREQuency:STOP?", "FREQuency:STOP %s",
-        "Sets the start frequency",
-        validator=double_validation_value_and_freq,
-        values=[[-99999999990, 300000000000], UNITSFREQ],
+        "FREQuency:STOP?", "FREQuency:STOP %g",
+        "Sets the start frequency in Hz",
+        validator=truncated_range,
+        values=[-99999999990, 300000000000],
     )
 
     fetch_power = Instrument.measurement(
@@ -533,3 +509,4 @@ class AnritsuMS2090A(Instrument):
         Initiate a sweep/measurement.
         '''
         self.write("ABOR")
+
