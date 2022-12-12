@@ -48,6 +48,7 @@ class AnritsuMS2090A(Instrument):
     #  Mappings #
     #############
 
+
     ONOFF = ["ON", "OFF"]
     ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}
 
@@ -66,39 +67,27 @@ class AnritsuMS2090A(Instrument):
         "FETCh:GPS:FULL?",
         '''
         This command returns the timestamp, latitude, longitude, altitude, and satellite count of the device. The response is a comma-delimited ASCII response of one of the following forms: NO FIX or GOOD FIX,<timestamp>,<latitude>,<longitude>,<altitude>,<satellites>
-        If no GPS fix is currently available, the first response form (NO FIX) is returned.
-        If the GPS does have a fix, the second response form (GOOD FIX) is returned.
-        <timestamp> is in ISO8601 format. The timestamp provides the 24-hour time, and will include the year/date and/or UTC offset if the hardware supports it. If no UTC offset is provided, the time is in UTC time.
-        <latitude> and <longitude> are specified in decimal degrees.
-        <altitude> specifies the current altitude relative to mean sea level, in meters.
-        <satellites> specifies an integer count of the number of satellites currently used in the fix.
         '''
     )
 
     gps_all = Instrument.measurement(
         "FETCh:GPS:ALL?",
         '''
-        This command returns the fix timestamp, latitude, longitude, altitude and information on the satellites used for the last fix and the GNSS systems they are from. The response is in JSON format in the one of the following forms: {"fix":"GPS OFF"}
-        or {"fix":"GOOD FIX","timestamp":<timestamp>,"latitude":<latitude>,"longitude":<longitude>,"altitude": <altitude>, "satellitesUsed":<satellitesUsed>,"satellites":[ {"name":"GPS","count":x}, {"name":"Galileo","count":x}, {"name":"GLONASS","count":x}, {"name":"BeiDou","count":x}]} <timestamp> is in ISO8601 format. The timestamp provides the 24-hour time, and will include the year/date and/or UTC offset if the hardware supports it. If no UTC offset is provided, the time is in UTC time.
-        <latitude> and <longitude> are specified in decimal degrees.
-        <altitude> specifies the current altitude relative to mean sea level, in meters.
-        All satellite systems will be present with a count of 0 if they are not used in the fix.
+        This command returns the fix timestamp, latitude, longitude, altitude and information on the satellites used for the last fix and the GNSS systems they are from.
         '''
     )
 
     gps = Instrument.measurement(
         ":FETCh:GPS?",
         '''
-        This command returns the timestamp, latitude, and longitude of the device. The response is a comma-delimited ASCII response of one of the following forms: NO FIX or GOOD FIX,<timestamp>,<latitude>,<longitude>
-        If no GPS fix is currently available, the first response form (NO FIX) is returned.
-        If the GPS does have a fix, the second response form (GOOD FIX) is returned.
+        This command returns the timestamp, latitude, and longitude of the device. 
         '''
     )
 
     gps_last = Instrument.measurement(
         ":FETCh:GPS:LAST?",
         '''
-        This command returns the timestamp, latitude, longitude, and altitude of the last fixed GPS result. The response is a comma-delimited ASCII response of one of the following forms: NO FIX or GOOD FIX,<timestamp>,<latitude>,<longitude>,<altitude> If a GPS fix has never been acquired, the first response form (NO FIX) is returned.
+        This command returns the timestamp, latitude, longitude, and altitude of the last fixed GPS result.
         ''',
     )
 
@@ -189,21 +178,21 @@ class AnritsuMS2090A(Instrument):
     fet_pbch_constellation  = Instrument.measurement(
         "FET:CONS:PBCH",
         '''
-        Get the latest Physical Broadcast Channel constellation hitmap results for the selected beam after waiting for the current measurement to complete.
+        Get the latest Physical Broadcast Channel constellation hitmap
         '''
     )
 
     fet_pdsch_constellation = Instrument.measurement(
         "FET:CONS:PDSC?",
         '''
-        Get the latest Physical Downlink Shared Channel constellation results after waiting for the current measurement to complete.
+        Get the latest Physical Downlink Shared Channel constellation
         '''
     )
 
     fet_control = Instrument.measurement(
         "FET:CONT?",
         '''
-        Returns the Control Channel measurement in json format. This includes Sync, Reference, Broadcast and Control channel measurements.
+        Returns the Control Channel measurement in json format.
         '''
     )
 
