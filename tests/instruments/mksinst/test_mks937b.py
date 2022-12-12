@@ -21,36 +21,57 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
+import pytest
 
 from pymeasure.test import expected_protocol
+from pymeasure.instruments.mksinst.mks937b import MKS937B
 
-from pymeasure.instruments.hp import HP8657B
 
-
-def test_frequency():
+def test_pressure():
+    """Verify the communication of the pressure getter."""
     with expected_protocol(
-            HP8657B,
-            [(b"FR 1234567890 HZ", None),
-             (b"FR   12345678 HZ", None)],
-    ) as instr:
-        instr.frequency = 1.23456789e9
-        instr.frequency = 1.2345678e7
+        MKS937B,
+        [("@253PR1?", "@253ACK1.10e-9"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.ch_1.pressure == pytest.approx(1.1e-9)
 
 
-def test_level():
+def test_ion_gauge_status():
+    """Verify the communication of the ion gauge status getter."""
     with expected_protocol(
-            HP8657B,
-            [(b"AP -123.4 DM", None)],
-    ) as instr:
-        instr.level = -123.4
+        MKS937B,
+        [("@253T1?", "@253ACKG"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.ch_1.ion_gauge_status == "Good"
 
 
-def test_output():
+def test_ion_gauge_status_invalid_channel():
+    """Ion gauge status does not exist on all channels."""
     with expected_protocol(
-            HP8657B,
-            [(b"R3", None),
-             (b"R2", None)],
-    ) as instr:
-        instr.output_enabled = True
-        instr.output_enabled = False
+        MKS937B,
+        [],
+    ) as inst:
+        with pytest.raises(AttributeError):
+            inst.ch_2.ion_gauge_status
+
+
+def test_unit():
+    """Verify the communication of the voltage getter."""
+    with expected_protocol(
+        MKS937B,
+        [("@253U?", "@253ACKTORR"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.unit == "Torr"
+
+
+def test_power_enabled():
+    """Verify the communication of the voltage getter."""
+    with expected_protocol(
+        MKS937B,
+        [("@253CP1?", "@253ACKON"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.ch_1.power_enabled is True

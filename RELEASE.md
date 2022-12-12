@@ -22,7 +22,8 @@
 9. Build final packages and confirm the correct version number is being used
     - `python -m build`
     - Check the distributions (`twine check dist/*`)
-10. Create a tagged release on GitHub
+10. Push the Git tag
+11. Create a tagged [release on GitHub](https://github.com/pymeasure/pymeasure/releases). You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST.
 
 ## PyPI release
 

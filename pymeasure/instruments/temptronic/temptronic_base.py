@@ -556,8 +556,8 @@ class ATSBase(Instrument):
         dynamic=True
     )
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, query_delay=0.05, **kwargs)
+    def __init__(self, adapter, name="ATSBase", **kwargs):
+        super().__init__(adapter, name=name, query_delay=0.05, **kwargs)
 
     def reset(self):
         """Reset (force) the System to the Operator screen.
