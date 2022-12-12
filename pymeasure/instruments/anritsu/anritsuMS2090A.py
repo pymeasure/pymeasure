@@ -25,7 +25,6 @@ import logging
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
-    truncated_discrete_set,
     truncated_range,
     double_validation_value_and_freq
 )
@@ -75,7 +74,7 @@ class AnritsuMS2090A(Instrument):
     gps = Instrument.measurement(
         ":FETCh:GPS?",
         '''
-        Returns the timestamp, latitude, and longitude of the device. 
+        Returns the timestamp, latitude, and longitude of the device.
         '''
     )
 
@@ -83,7 +82,7 @@ class AnritsuMS2090A(Instrument):
         ":FETCh:GPS:LAST?",
         '''
         Returns the timestamp, latitude, longitude, and altitude of the last fixed GPS result.
-        ''',
+        '''
     )
 
     external_current = Instrument.measurement(
@@ -261,9 +260,7 @@ class AnritsuMS2090A(Instrument):
     fet_ota_mapping = Instrument.measurement(
         "FET:OTA:MAPP?",
         '''
-        Available in Spectrum Analyzer mode. 
-
-        Returns the most recent Coverage Mapping measurement result.
+        Available in Spectrum Analyzer mode. Returns the most recent Coverage Mapping measurement result.
         '''
     )
 
