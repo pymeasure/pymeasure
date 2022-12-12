@@ -215,12 +215,17 @@ class SequencerTreeModel(QtCore.QAbstractItemModel):
         self.root.save(file_obj)
 
     def load(self, file_obj, append=False):
-        self.layoutAboutToBeChanged.emit()
+        # Since we are loading new data, following Qt documentation,
+        # we call beginResetModel to inform that any previous data reported
+        # from the model is now invalid and has to be queried for again.
+        # This also means that the current item and any selected items will become invalid.
+        self.beginResetModel()
         try:
             self.root.load(file_obj, append=append)
         except SequenceEvaluationError as e:
             log.error(f"Error during sequence loading: {e}")
-        self.layoutChanged.emit()
+        # Complete model reset operation
+        self.endResetModel()
 
 
 class ComboBoxDelegate(QtWidgets.QStyledItemDelegate):
