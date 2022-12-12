@@ -48,8 +48,6 @@ class AnritsuMS2090A(Instrument):
     ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF'}
     OFFFIRSTREPEAT = ['OFF', 'FIRSt', 'REPeat']
     SPAMODES = ["SPECtrum", "NRADio", "RTSA", "LTE", "EMFMeter", "PANalyzer"]
-    UNITSFREQ = ['Hz', 'kHz', 'MHz', 'GHz']
-    UNITSFREQ_MAP = []
 
     ####################################
     #              GPS                 #
@@ -98,7 +96,7 @@ class AnritsuMS2090A(Instrument):
         "FREQuency:CENTer?", "FREQuency:CENTer %g",
         "Sets the center frequency in Hz",
         validator=truncated_range,
-        values=[[-99999999995, 299999999995], UNITSFREQ]
+        values=[-99999999995, 299999999995]
     )
 
     frequency_offset = Instrument.control(
