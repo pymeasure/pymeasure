@@ -61,14 +61,14 @@ class AnritsuMS2090A(Instrument):
     gps_full = Instrument.measurement(
         "FETCh:GPS:FULL?",
         '''
-        This command returns the timestamp, latitude, longitude, altitude, and satellite count of the device.
+        Returns the timestamp, latitude, longitude, altitude, and satellite count of the device.
         '''
     )
 
     gps_all = Instrument.measurement(
         "FETCh:GPS:ALL?",
         '''
-        Returns the fix timestamp, latitude, longitude, altitude and information on the satellites used.
+        Returns the fix timestamp, latitude, longitude, altitude and information on the sat used.
         '''
     )
 
