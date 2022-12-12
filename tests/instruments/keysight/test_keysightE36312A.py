@@ -45,3 +45,13 @@ def test_current_limit():
     ) as inst:
         inst.ch_1.current_limit = 0.5
         assert inst.ch_1.current_limit == 0.5
+
+def test_output_enabled():
+    """Verify the output enable setter and getter."""
+    with expected_protocol(
+        KeysightE36312A,
+        [("OUTPut 1, (@1)", None),
+         ("OUTPut? (@1)", "0")],
+    ) as inst:
+        inst.ch_1.output_enabled = True
+        assert inst.ch_1.output_enabled == False
