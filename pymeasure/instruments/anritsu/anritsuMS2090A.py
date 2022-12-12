@@ -97,21 +97,21 @@ class AnritsuMS2090A(Instrument):
 
     frequency_center = Instrument.control(
         "FREQuency:CENTer?", "FREQuency:CENTer %s",
-        "Sets the center frequency in Hz",
+        "Sets the center frequency",
         validator=double_validation_value_and_freq,
         values=[[-99999999995, 299999999995], UNITSFREQ]
     )
 
     frequency_offset = Instrument.control(
         "FREQuency:OFFSet?", "FREQuency:OFFSet %s",
-        "Sets the frequency offset in Hz",
+        "Sets the frequency offset",
         validator=double_validation_value_and_freq,
         values=[[-10000000000, 10000000000], UNITSFREQ],
     )
 
     frequency_span = Instrument.control(
         "FREQuency:SPAN?", "FREQuency:SPAN %s",
-        "Sets the frequency span in Hz",
+        "Sets the frequency span",
         validator=double_validation_value_and_freq,
         values=[[10, 400000000000], UNITSFREQ],
     )
@@ -128,21 +128,21 @@ class AnritsuMS2090A(Instrument):
 
     frequency_start = Instrument.control(
         "FREQuency:STARt?", "FREQuency:STARt %s",
-        "Sets the start frequency in Hz",
+        "Sets the start frequency",
         validator=double_validation_value_and_freq,
         values=[[-100000000000, 299999999990], UNITSFREQ],
     )
 
     frequency_step = Instrument.control(
         ":FREQuency:STEP?", ":FREQuency:STEP %s",
-        "Set or query the step size to gradually increase or decrease frequency values in Hz",
+        "Set or query the step size to gradually increase or decrease frequency values",
         validator=double_validation_value_and_freq,
         values=[[0.1, 1000000000], UNITSFREQ],
     )
 
     frequency_stop = Instrument.control(
         "FREQuency:STOP?", "FREQuency:STOP %s",
-        "Sets the start frequency in Hz",
+        "Sets the start frequency",
         validator=double_validation_value_and_freq,
         values=[[-99999999990, 300000000000], UNITSFREQ],
     )
