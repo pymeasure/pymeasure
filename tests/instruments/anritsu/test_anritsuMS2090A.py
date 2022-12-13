@@ -38,14 +38,16 @@ def test_init():
 def test_freq_conf():
     with expected_protocol(
             AnritsuMS2090A,
-            [(b"FREQuency:CENTer?", 4)],
+            [(b"FREQuency:CENTer 9000", None), (b"FREQuency:CENTer?", 9000)],
             ) as instr:
-        assert instr.frequency_center == 4
+        instr.frequency_center = 9000
+        assert instr.frequency_center == 9000
 
 
 def test_preamp():
     with expected_protocol(
             AnritsuMS2090A,
-            [(b"POWer:RF:GAIN:STATe?", 'ON')],
+            [(b"POWer:RF:GAIN:STATe ON", None), (b"POWer:RF:GAIN:STATe?", 'ON')],
             ) as instr:
+        instr.preamp = True
         assert instr.preamp is True

@@ -25,7 +25,8 @@ import logging
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
-    truncated_range
+    truncated_range,
+    strict_range
 )
 
 log = logging.getLogger(__name__)
@@ -94,21 +95,21 @@ class AnritsuMS2090A(Instrument):
     frequency_center = Instrument.control(
         "FREQuency:CENTer?", "FREQuency:CENTer %g",
         "Sets the center frequency in Hz",
-        validator=truncated_range,
-        values=[-99999999995, 299999999995]
+        validator=strict_range,
+        values=[9E3, 54E9]
     )
 
     frequency_offset = Instrument.control(
         "FREQuency:OFFSet?", "FREQuency:OFFSet %g",
         "Sets the frequency offset in Hz",
-        validator=truncated_range,
-        values=[-10000000000, 10000000000],
+        validator=strict_range,
+        values=[-10E9, 10E9],
     )
 
     frequency_span = Instrument.control(
         "FREQuency:SPAN?", "FREQuency:SPAN %g",
         "Sets the frequency span in Hz",
-        validator=truncated_range,
+        validator=strict_range,
         values=[10, 400000000000],
     )
 
@@ -125,22 +126,22 @@ class AnritsuMS2090A(Instrument):
     frequency_start = Instrument.control(
         "FREQuency:STARt?", "FREQuency:STARt %g",
         "Sets the start frequency in Hz",
-        validator=truncated_range,
-        values=[-100000000000, 299999999990],
+        validator=strict_range,
+        values=[9E3, 54E9],
     )
 
     frequency_step = Instrument.control(
         ":FREQuency:STEP?", ":FREQuency:STEP %g",
         "Set or query the step size to gradually increase or decrease frequency values in Hz",
-        validator=truncated_range,
-        values=[0.1, 1000000000],
+        validator=strict_range,
+        values=[1E3, 1E9],
     )
 
     frequency_stop = Instrument.control(
         "FREQuency:STOP?", "FREQuency:STOP %g",
         "Sets the start frequency in Hz",
-        validator=truncated_range,
-        values=[-99999999990, 300000000000],
+        validator=strict_range,
+        values=[9E3, 54E9],
     )
 
     fetch_power = Instrument.measurement(
@@ -218,7 +219,7 @@ class AnritsuMS2090A(Instrument):
         """
         Return the EMF measurement data for a specified sample number. JSON format.
         """,
-        validator=truncated_range,
+        validator=strict_range,
         values=[1, 16],
     )
 
