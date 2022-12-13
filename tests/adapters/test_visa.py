@@ -42,12 +42,14 @@ def adapter():
                        read_termination="\n")
 
 
-def test_nested_adapter(adapter):
-    adapter.query_delay = 10
-    a = VISAAdapter(adapter)
+@pytest.mark.parametrize("query_delay", (0, 10))
+def test_nested_adapter(query_delay):
+    a0 = VISAAdapter(SIM_RESOURCE, visa_library='@sim', read_termination="\n",
+                     query_delay=query_delay)
+    a = VISAAdapter(a0)
     assert a.resource_name == SIM_RESOURCE
-    assert a.connection == adapter.connection
-    assert a.query_delay == 10
+    assert a.connection == a0.connection
+    assert a.query_delay == query_delay
 
 
 def test_ProtocolAdapter():
