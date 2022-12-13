@@ -22,9 +22,6 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
-
 def pytest_addoption(parser):
     parser.addoption(
         "--resource-name",
@@ -34,20 +31,3 @@ def pytest_addoption(parser):
         help="""Pass a resource name for an instrument needed for a test.
                 See also --instrument-present."""
     )
-
-
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", """needs_instrument:
-                        mark test that needs an instrument to be present."""
-    )
-
-
-def pytest_collection_modifyitems(config, items):
-    if not config.getoption("--resource-name"):
-        skipper = pytest.mark.skip(
-            reason="Only run when a resource name is provided via --resource-name."
-            )
-        for item in items:
-            if "needs_instrument" in item.keywords:
-                item.add_marker(skipper)
