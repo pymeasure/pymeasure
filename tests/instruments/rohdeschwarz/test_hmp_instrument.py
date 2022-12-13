@@ -25,9 +25,8 @@
 from time import sleep
 
 import pytest
-from pymeasure.instruments.rohdeschwarz.hmp import HMP4040
 
-pytest.skip('Only works with connected hardware', allow_module_level=True)
+from pymeasure.instruments.rohdeschwarz.hmp import HMP4040
 
 # change the resource name to the address of your instrument
 RESOURCE = "ASRL5::INSTR"
