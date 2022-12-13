@@ -25,7 +25,7 @@
 import logging
 
 import numpy as np
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
@@ -51,11 +51,9 @@ class FSL(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(
-            adapter, "Rohde&Schwarz FSL", includeSCPI=True, **kwargs
-        )
+        super().__init__(adapter, "Rohde&Schwarz FSL", includeSCPI=True, **kwargs)
 
-    # Frequency settings ------------------------------------------------------
+    # Frequency settings --------------------------------------------------------------
 
     freq_span = Instrument.control(
         "FREQ:SPAN?",
@@ -102,7 +100,7 @@ class FSL(Instrument):
         set_process=_number_or_auto,
     )
 
-    # Sweeping ----------------------------------------------------------------
+    # Sweeping ------------------------------------------------------------------------
 
     sweep_time = Instrument.control(
         "SWE:TIME?",
@@ -129,17 +127,30 @@ class FSL(Instrument):
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
-    # Traces ------------------------------------------------------------------
+    # Traces --------------------------------------------------------------------------
 
     def read_trace(self, n_trace=1):
         """
-        Read trace data.
+        Read trace data from the active channel.
 
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
-        y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
-        x = np.linspace(self.freq_start, self.freq_stop, len(y))
+        trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
+        if (
+            self.active_channel == ("PNO")
+            or self.available_channels.get(self.active_channel) == "PNOISE"
+        ):
+            y = trace_data[1::2]
+            x = trace_data[0::2]
+
+        elif (
+            self.active_channel == ("SAN")
+            or self.available_channels.get(self.active_channel) == "SANALYZER"
+        ):
+            y = trace_data
+            x = np.linspace(self.freq_start, self.freq_stop, len(y))
+
         return np.array([x, y])
 
     trace_mode = Instrument.control(
@@ -150,15 +161,14 @@ class FSL(Instrument):
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
     )
 
-    # Markers -----------------------------------------------------------------
+    # Markers -------------------------------------------------------------------------
 
     def create_marker(self, num=1, is_delta_marker=False):
         """
         Create a marker.
 
         :param num: The marker number (1-4)
-        :param is_delta_marker: True if the marker is a delta marker, default
-            is False.
+        :param is_delta_marker: True if the marker is a delta marker, default is False.
         :return: The marker object.
         """
         return self.Marker(self, num, is_delta_marker)
@@ -170,8 +180,7 @@ class FSL(Instrument):
 
             :param instrument: The FSL instrument.
             :param num: The marker number (1-4)
-            :param is_delta_marker: True if the marker is a delta marker,
-                defaults to False.
+            :param is_delta_marker: True if the marker is a delta marker, defaults to False.
             """
             self.instrument = instrument
             self.is_delta_marker = is_delta_marker
@@ -198,12 +207,10 @@ class FSL(Instrument):
 
         def values(self, command, **kwargs):
             """
-            Reads a set of values from the instrument through the adapter,
+            Read a set of values from the instrument through the adapter,
             passing on any keyword arguments.
             """
-            return self.instrument.values(
-                f"CALC:{self.name}:{command}", **kwargs
-            )
+            return self.instrument.values(f"CALC:{self.name}:{command}", **kwargs)
 
         def activate(self):
             """Activate a marker."""
@@ -213,13 +220,9 @@ class FSL(Instrument):
             """Disable a marker."""
             self.write("STAT OFF")
 
-        x = Instrument.control(
-            "X?", "X %s", "Position of marker on the frequency axis in Hz."
-        )
+        x = Instrument.control("X?", "X %s", "Position of marker on the frequency axis in Hz.")
 
-        y = Instrument.control(
-            "Y?", "Y %s", "Amplitude of the marker position in dBm."
-        )
+        y = Instrument.control("Y?", "Y %s", "Amplitude of the marker position in dBm.")
 
         peak_excursion = Instrument.control(
             "PEXC?",
@@ -243,8 +246,7 @@ class FSL(Instrument):
             """
             Set marker to next peak.
 
-            :param direction: Direction of the next peak ('left' or 'right' of
-                the current position).
+            :param direction: Direction of the next peak ('left' or 'right' of the current position)
             """
             self.write(f"MAX:{direction}")
 
@@ -257,3 +259,100 @@ class FSL(Instrument):
                 passed it is interpreted as a frequency span.
             """
             self.write(f"FUNC:ZOOM {value}; *WAI")
+
+    # Channels -----------------------------------------------------------------
+
+    def create_channel(self, channel_type, channel_name):
+        """Create a new channel.
+
+        :param channel_type: Type of channel to be created.For example "PNOISE" or "SANALYZER"
+        :param channel_name: Name of the channel to be added.
+        """
+
+        strict_discrete_set(channel_type, ["PNOISE", "SANALYZER"])
+        self.write(f"INST:CRE:NEW {channel_type}, '{channel_name}'")
+
+    def _channel_list_to_dict(raw):
+        """dictionary with channel_name as keys and channel_type as values
+
+        :param raw: List of channel types and channel names
+        :return: dictionary with channel_name : channel_type
+        :rtype: has table type with string type elements
+        """
+        d = {
+            set_keys.strip("'"): set_values.strip("'")
+            for (set_values, set_keys) in zip(raw[0::2], raw[1::2])
+        }
+
+        return d
+
+    available_channels = Instrument.measurement(
+        "INST:LIST?",
+        "Measure open channel names and corresponding types",
+        get_process=_channel_list_to_dict,
+    )
+
+    def delete_channel(self, channel_name):
+        """Deletes an active channel."""
+        strict_discrete_set(channel_name, list((self.available_channels).keys()))
+        self.write(f"INST:DEL '{channel_name}'")
+
+    def select_channel(self, channel_name):
+        """Select an open channel
+
+        :param channel_name: Channel to be selected.
+        """
+        self.write(f"INST:SEL '{channel_name}'")
+
+    @property
+    def active_channel(self):
+        """Return the name of the active channel.
+
+        :return: active channel name
+        :rtype: string
+        """
+        return self.values("INST?")[0]
+
+    @active_channel.setter
+    def activate_channel(self, channel):
+        """Activate another open channel.
+        :param channel: Name of the channel to be activated
+        """
+        availabel_channels = [chan for chan in self.available_channels.keys()]
+        channel = strict_discrete_set(channel, availabel_channels)
+        self.write(f"INST '{channel}'")
+
+    split_view = Instrument.control(
+        "DISP:FORM?",
+        "DISP:FORM %s",
+        "Control the viewmode of the device: True for split view or False for single channel view",
+        values={True: "SPL", False: "SING"},
+        map_values=True,
+    )
+
+    def rename_channel(self, current_name, new_name):
+        """Rename current_name of a channel to a new_name.
+
+        :param current_name: Channel to be renamed
+        :param new_name: New name of the channel
+        """
+        # channels = self.available_channels
+        # strict_discrete_set(current_name, list(channels.keys()))
+        current_name = strict_discrete_set(current_name, list((self.available_channels).keys()))
+        self.write(f"INST:REN '{current_name}', '{new_name}'")
+
+    # Phase noise limit lines --------------------------------------
+
+    def phase_noise_trace(self, trace):
+        strict_discrete_range(trace, range(1, 7), 1)
+        self.write(f"CALC:PNL:TRAC {trace}")
+
+    def select_trace(self, trace):
+        strict_discrete_range(trace, range(1, 7), 1)
+
+        self.write(f"DISP:TRAC:SEL {trace}")
+
+    # Overview -----------------------------------------------------
+    nominal_level = Instrument.control(
+        "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the R&S FSW"
+    )
