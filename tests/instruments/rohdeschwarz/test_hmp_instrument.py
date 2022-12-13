@@ -28,16 +28,14 @@ import pytest
 
 from pymeasure.instruments.rohdeschwarz.hmp import HMP4040
 
-# change the resource name to the address of your instrument
-RESOURCE = "ASRL5::INSTR"
-
 
 @pytest.fixture(scope="session")
-def hmp4040():
+def hmp4040(pytestconfig):
     """
     Return a HMP4040 instrument.
     """
-    hmp4040 = HMP4040(RESOURCE)
+    resource_name = pytestconfig.getoption("resource_name")
+    hmp4040 = HMP4040(resource_name)
     hmp4040.reset()
     return hmp4040
 
