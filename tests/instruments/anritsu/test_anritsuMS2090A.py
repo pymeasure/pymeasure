@@ -22,7 +22,32 @@
 # THE SOFTWARE.
 #
 
-from .anritsuMG3692C import AnritsuMG3692C
-from .anritsuMS9710C import AnritsuMS9710C
-from .anritsuMS9740A import AnritsuMS9740A
-from .anritsuMS2090A import AnritsuMS2090A
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.anritsu import AnritsuMS2090A
+
+
+def test_init():
+    with expected_protocol(
+            AnritsuMS2090A,
+            [],
+            ):
+        pass  # Verify the expected communication.
+
+
+def test_freq_conf():
+    with expected_protocol(
+            AnritsuMS2090A,
+            [(b"FREQuency:CENTer 9000", None), (b"FREQuency:CENTer?", 9000)],
+            ) as instr:
+        instr.frequency_center = 9000
+        assert instr.frequency_center == 9000
+
+
+def test_preamp():
+    with expected_protocol(
+            AnritsuMS2090A,
+            [(b"POWer:RF:GAIN:STATe ON", None), (b"POWer:RF:GAIN:STATe?", 'ON')],
+            ) as instr:
+        instr.preamp = True
+        assert instr.preamp is True
