@@ -36,8 +36,8 @@ def hmp4040(pytestconfig):
     """
     Return a HMP4040 instrument.
     """
-    resource_name = pytestconfig.getoption("resource_name")
-    hmp4040 = HMP4040(resource_name)
+    adapter = pytestconfig.getoption("adapter")
+    hmp4040 = HMP4040(adapter)
     hmp4040.reset()
     return hmp4040
 

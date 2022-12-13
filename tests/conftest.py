@@ -25,9 +25,9 @@
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--resource-name",
+        "--adapter",
         action="store",
         default=None,
-        dest="resource_name",
-        help="""Pass a resource name for an instrument needed for a test.""",
+        dest="adapter",
+        help="Pass an adapter for connection to an instrument needed for a test.",
     )
