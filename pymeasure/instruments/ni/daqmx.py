@@ -168,3 +168,4 @@ class DAQmx:
     def shutdown(self):
         self.stop()
         self.terminated = True
+        super().shutdown()

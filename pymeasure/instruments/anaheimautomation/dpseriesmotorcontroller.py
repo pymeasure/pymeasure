@@ -182,7 +182,7 @@ class DPSeriesMotorController(Instrument):
             logging.error("DP-Series motor controller error detected: %s" % current_errors)
         return current_errors
 
-    def __init__(self, resourceName, address=0, encoder_enabled=False, **kwargs):
+    def __init__(self, adapter, address=0, encoder_enabled=False, **kwargs):
         """
         Initialize communication with the motor controller with the address given by `address`.
 
@@ -200,7 +200,7 @@ class DPSeriesMotorController(Instrument):
         kwargs.setdefault('timeout', 2000)
 
         super().__init__(
-            resourceName,
+            adapter,
             "Anaheim Automation Stepper Motor Controller",
             includeSCPI=False,
             asrl={'baud_rate': 38400},
@@ -274,7 +274,8 @@ class DPSeriesMotorController(Instrument):
         raise NotImplementedError("steps_to_absolute() must be implemented in subclasses!")
 
     def reset_position(self):
-        """ Reset the position as counted by the motor controller and an externally connected encoder to 0.
+        """
+        Reset position as counted by the motor controller and an externally connected encoder to 0.
         """
         # reset encoder recorded position #
         self.write("ET")
@@ -327,34 +328,6 @@ class DPSeriesMotorController(Instrument):
         else:
             cmd_str = "@%i%s" % (self._address, command)
         super().write(cmd_str)
-
-    def values(self, command, **kwargs):
-        """ Override the instrument base values method to add the motor controller's address to the
-        command string.
-
-        :param command: command string to be sent to the motor controller.
-        """
-        # check if an address related command was sent. #
-        if "%" in command or "~" in command:
-            vals = super().values("@%s" % command, **kwargs)
-        else:
-            vals = super().values("@%i%s" % (self._address, command))
-
-        return vals
-
-    def ask(self, command):
-        """ Override the instrument base ask method to add the motor controller's address to the
-        command string.
-
-        :param command: command string to be sent to the instrument
-        """
-        # check if an address related command was sent. #
-        if "%" in command or "~" in command:
-            val = super().ask("@%s" % command)
-        else:
-            val = super().ask("@%i%s" % (self._address, command))
-
-        return val
 
     def wait_for_completion(self, interval=0.5):
         """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)

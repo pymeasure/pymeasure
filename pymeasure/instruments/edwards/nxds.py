@@ -38,9 +38,9 @@ class Nxds(Instrument):
                                 validator=strict_discrete_set,
                                 values=(0, 1),)
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Edwards NXDS Vacuum Pump",
             includeSCPI=False,
             **kwargs

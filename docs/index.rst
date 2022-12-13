@@ -61,7 +61,7 @@ Information about development is also available:
 
 .. toctree::
    :maxdepth: 1
-   :caption: API References
+   :caption: API Reference
 
    api/adapters
    api/experiment/index
@@ -87,4 +87,4 @@ Information about development is also available:
 
    about/authors
    about/license
-
+   about/changes

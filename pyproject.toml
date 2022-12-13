@@ -4,3 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 # write_to = "pymeasure/_version.py"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"

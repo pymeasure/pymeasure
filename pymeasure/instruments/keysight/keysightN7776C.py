@@ -51,9 +51,9 @@ class KeysightN7776C(Instrument):
         laser.output_enabled = 0
 
     """
-    def __init__(self, address, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super(KeysightN7776C, self).__init__(
-            address, "N7776C Tunable Laser Source", **kwargs)
+            adapter, "N7776C Tunable Laser Source", **kwargs)
 
     locked = Instrument.control(':LOCK?', ':LOCK %g,'+str(LOCK_PW),
                                 """ Boolean property controlling the lock state (True/False) of
@@ -230,6 +230,7 @@ class KeysightN7776C(Instrument):
         """
         Function returning the wavelength data logged in the internal memory of the laser
         """
+        # Using pyvisa's method bypassing the normal read.
         return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',
                         datatype=u'd'))
 
@@ -237,4 +238,4 @@ class KeysightN7776C(Instrument):
         """
         Fully closes the connection to the instrument through the adapter connection.
         """
-        self.adapter.connection.close()
+        self.adapter.close()

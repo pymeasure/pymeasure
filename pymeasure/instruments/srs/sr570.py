@@ -29,9 +29,9 @@ from pymeasure.instruments.validators import strict_discrete_set, \
 
 class SR570(Instrument):
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Stanford Research Systems SR570 Lock-in amplifier",
             **kwargs
         )

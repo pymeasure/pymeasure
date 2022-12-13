@@ -3,8 +3,8 @@ pymeasure.adapters
 ##################
 
 The adapter classes allow the instruments to be independent of the communication method used.
-
-Adapters for specific instruments should be grouped in an :code:`adapters.py` file in the corresponding manufacturer's folder of :mod:`pymeasure.instruments </api/instruments/index>`. For example, the adapter for communicating with LakeShore instruments over USB, :class:`LakeShoreUSBAdapter <pymeasure.instruments.lakeshore.LakeShoreUSBAdapter>`, is found in :mod:`pymeasure.instruments.lakeshore.adapters`.
+The instrument implementation takes care of any potential quirks in its commmunication protocol (see :ref:`advanced_communication_protocols`), and the adapter takes care of the details of the over-the-wire communication with the hardware device.
+In the vast majority of cases, it will be sufficient to pass a connection string or integer to the instrument (see :ref:`connecting-to-an-instrument`), which uses the :class:`pymeasure.adapters.VISAAdapter` in the background.
 
 ==================
 Adapter base class
@@ -66,9 +66,21 @@ Telnet adapter
     :inherited-members:
     :show-inheritance:
 
-============
-Fake adapter
-============
+=============
+Test adapters
+=============
+
+These pieces are useful when writing tests.
+
+.. automodule:: pymeasure.test
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.adapters.ProtocolAdapter
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 .. autoclass:: pymeasure.adapters.FakeAdapter
     :members:

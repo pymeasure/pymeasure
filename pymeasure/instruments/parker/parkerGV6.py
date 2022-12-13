@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.adapters import SerialAdapter
 from time import sleep
 import re
 
@@ -36,23 +35,23 @@ class ParkerGV6(Instrument):
 
     degrees_per_count = 0.00045  # 90 deg per 200,000 count
 
-    def __init__(self, port):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            SerialAdapter(port, 9600, timeout=0.5),
-            "Parker GV6 Motor Controller"
+            adapter,
+            "Parker GV6 Motor Controller",
+            asrl={'baud_rate': 9600,
+                  'timeout': 500,
+                  },
+            write_termination="\r",
+            **kwargs
         )
-        self.setDefaults()
-
-    def write(self, command):
-        """ Overwrites the Insturment.write command to provide the correct
-        line break syntax
-        """
-        self.connection.write(command + "\r")
+        self.set_defaults()
 
     def read(self):
         """ Overwrites the Instrument.read command to provide the correct
         functionality
         """
+        # TODO seems to be broken as it does not make sense see issue #623
         return re.sub(r'\r\n\n(>|\?)? ', '', "\n".join(self.readlines()))
 
     def set_defaults(self):
@@ -198,6 +197,11 @@ class ParkerGV6(Instrument):
         self.write("LSPOS%d" % int(positive))
         self.write("LSNEG%d" % int(negative))
 
+    @property
+    def echo(self):
+        pass
+
+    @echo.setter
     def echo(self, enable=False):
         """ Enables (True) or disables (False) the echoing
         of all commands that are sent to the instrument

@@ -24,3 +24,4 @@
 
 from .sfm import SFM
 from .fsl import FSL
+from .hmp import HMP4040

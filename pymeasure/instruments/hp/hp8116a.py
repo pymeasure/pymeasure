@@ -56,12 +56,12 @@ class HP8116A(Instrument):
     The resolution for all floating point instrument parameters is 3 digits.
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
-            resourceName,
+            adapter,
             'Hewlett-Packard 8116A',
             includeSCPI=False,
             **kwargs
@@ -223,18 +223,11 @@ class HP8116A(Instrument):
 
     def write(self, command):
         """ Write a command to the instrument and wait until the 8116A has interpreted it. """
-        self.adapter.write(command)
+        super().write(command)
 
         # We need to read the status byte and wait until the buffer_not_empty bit
         # is cleared because some older units lock up if we don't.
         self._wait_for_commands_processed()
-
-    def read(self):
-        """ Some units of the 8116A don't use the EOI line (see service note 8116A-07A).
-        Therefore reads with automatic end-of-transmission detection will timeout.
-        Instead, :code:`adapter.read_bytes()` has to be used.
-        """
-        raise NotImplementedError('Not supported, use adapter.read_bytes() instead')
 
     def ask(self, command, num_bytes=None):
         """ Write a command to the instrument, read the response, and return the response as ASCII text.
@@ -256,31 +249,8 @@ class HP8116A(Instrument):
 
         # The first character is always a space or a leftover character from the previous command,
         # when the number of bytes read was too large or too small.
-        bytes = self.adapter.read_bytes(num_bytes)[1:]
+        bytes = self.read_bytes(num_bytes)[1:]
         return bytes.decode('ascii').strip(' ,\r\n')
-
-    def values(self, command, separator=',', cast=float, preprocess_reply=None, **kwargs):
-        # I had to copy the values method from the adapter class since we need to call
-        # our own ask() method instead of the adapter's default one.
-        results = str(self.ask(command))
-        if callable(preprocess_reply):
-            results = preprocess_reply(results)
-        elif callable(self.adapter.preprocess_reply):
-            results = self.adapter.preprocess_reply(results)
-        results = results.split(separator)
-        for i, result in enumerate(results):
-            try:
-                if cast == bool:
-                    # Need to cast to float first since results are usually
-                    # strings and bool of a non-empty string is always True
-                    results[i] = bool(float(result))
-                else:
-                    results[i] = cast(result)
-            except Exception:
-                pass  # Keep as string
-        return results
-
-    # Instrument controls #
 
     operating_mode = Instrument.control(
         'CST', '%s',
@@ -378,7 +348,8 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[10, 90.0001],
-        get_process=lambda x: int(x[6:8])
+        cast=int,
+        # get_process=lambda x: int(x[6:8])
     )
 
     pulse_width = Instrument.control(

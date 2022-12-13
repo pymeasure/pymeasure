@@ -63,9 +63,9 @@ class DSP7265(Instrument):
                   # Dual modes
                   'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2']
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Signal Recovery DSP 7265",
             includeSCPI=False,
             # Remove extra unicode character
@@ -588,4 +588,4 @@ class DSP7265(Instrument):
     def shutdown(self):
         log.info("Shutting down %s." % self.name)
         self.voltage = 0.
-        self.isShutdown = True
+        super().shutdown()

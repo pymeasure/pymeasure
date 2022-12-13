@@ -24,6 +24,7 @@
 
 import telnetlib
 import time
+from warnings import warn
 
 from .adapter import Adapter
 
@@ -36,8 +37,13 @@ class TelnetAdapter(Adapter):
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
         method
-    :param preprocess_reply: optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
+
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
         this is only 'timeout'
     """
@@ -46,6 +52,11 @@ class TelnetAdapter(Adapter):
                  **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
+        if query_delay:
+            warn("Use Instrument.ask with query_delay argument instead of Adapter.ask.",
+                 FutureWarning)
+        self.write_termination = kwargs.pop('write_termination', "")
+        self.read_termination = kwargs.pop('read_termination', "")
         safe_keywords = ['timeout']
         for kw in kwargs:
             if kw not in safe_keywords:
@@ -54,29 +65,42 @@ class TelnetAdapter(Adapter):
                     f"allowed are: {str(safe_keywords)}")
         self.connection = telnetlib.Telnet(host, port, **kwargs)
 
-    def write(self, command):
-        """ Writes a command to the instrument
+    def _write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
 
-        :param command: command string to be sent to the instrument
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
         """
-        self.connection.write(command.encode())
+        self.connection.write((command + self.write_termination).encode(), **kwargs)
 
-    def read(self):
+    def _read(self, **kwargs):
         """ Read something even with blocking the I/O. After something is
         received check again to obtain a full reply.
 
-        :returns: String ASCII response of the instrument.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        return self.connection.read_some().decode() + \
-            self.connection.read_very_eager().decode()
+        read = self.connection.read_some(**kwargs).decode() + \
+            self.connection.read_very_eager(**kwargs).decode()
+        # Python>3.8 return read.removesuffix(self.read_termination)
+        if self.read_termination:
+            return read.split(self.read_termination)[0]
+        else:
+            return read
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
         response
 
+        .. deprecated:: 0.11
+           Call `Instrument.ask` instead.
+
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
+        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
+             FutureWarning)
         self.write(command)
         time.sleep(self.query_delay)
         return self.read()

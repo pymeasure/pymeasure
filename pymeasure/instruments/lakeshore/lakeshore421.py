@@ -56,9 +56,9 @@ class LakeShore421(Instrument):
     UNITS = ['G', 'T']
     WRITE_DELAY = 0.05
 
-    def __init__(self, resource_name, baud_rate=9600, **kwargs):
+    def __init__(self, adapter, baud_rate=9600, **kwargs):
         super(LakeShore421, self).__init__(
-            resource_name,
+            adapter,
             "Lake Shore 421 Gaussmeter",
             baud_rate=baud_rate,
             data_bits=7,
@@ -429,18 +429,6 @@ class LakeShore421(Instrument):
 
         self.last_write_time = time()
 
-    def ask(self, command):
-        self.delay_write()
-        return super().ask(command)
-
     def write(self, command):
         self.delay_write()
         super().write(command)
-
-    def values(self, command, **kwargs):
-        self.delay_write()
-        return super().values(command, **kwargs)
-
-    def binary_values(self, command, *args, **kwargs):
-        self.delay_write()
-        return super().binary_values(command, *args, **kwargs)

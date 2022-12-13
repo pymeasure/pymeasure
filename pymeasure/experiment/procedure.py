@@ -28,7 +28,7 @@ import inspect
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
 
-from .parameters import Parameter, Measurable
+from .parameters import Parameter, Measurable, Metadata
 
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
@@ -68,6 +68,7 @@ class Procedure:
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
         self._update_parameters()
+        self._update_metadata()
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
@@ -179,6 +180,37 @@ class Procedure:
                 if except_missing:
                     raise NameError("Parameter '{}' does not belong to '{}'".format(
                         name, repr(self)))
+
+    def _update_metadata(self):
+        """ Collects all the Metadata objects for the procedure and stores
+        them in a meta dictionary so that the actual values can be set and used
+        in their stead
+        """
+        self._metadata = {}
+
+        for item, metadata in inspect.getmembers(self.__class__):
+            if isinstance(metadata, Metadata):
+                self._metadata[item] = deepcopy(metadata)
+
+                if metadata.is_set():
+                    setattr(self, item, metadata.value)
+                else:
+                    setattr(self, item, None)
+
+    def evaluate_metadata(self):
+        """ Evaluates all Metadata objects, fixing their values to the current value
+        """
+        for item, metadata in self._metadata.items():
+            # Evaluate the metadata, fixing its value
+            value = metadata.evaluate(parent=self, new_value=getattr(self, item))
+
+            # Make the value of the metadata easily accessible
+            setattr(self, item, value)
+
+    def metadata_objects(self):
+        """ Returns a dictionary of all the Metadata objects
+        """
+        return self._metadata
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement

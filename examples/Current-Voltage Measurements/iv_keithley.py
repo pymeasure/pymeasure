@@ -18,7 +18,7 @@ from time import sleep
 import numpy as np
 
 from pymeasure.instruments.keithley import Keithley2000, Keithley2400
-from pymeasure.display.Qt import QtGui
+from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 from pymeasure.experiment import (
     Procedure, FloatParameter, unique_filename, Results
@@ -119,7 +119,7 @@ class MainWindow(ManagedWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

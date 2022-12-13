@@ -25,13 +25,13 @@
 import logging
 
 from ..browser import Browser
-from ..Qt import QtGui
+from ..Qt import QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BrowserWidget(QtGui.QWidget):
+class BrowserWidget(QtWidgets.QWidget):
     """
     Widget wrapper for :class:`Browser<pymeasure.display.browser.Browser>` class
     """
@@ -43,20 +43,20 @@ class BrowserWidget(QtGui.QWidget):
 
     def _setup_ui(self):
         self.browser = Browser(*self.browser_args, parent=self)
-        self.clear_button = QtGui.QPushButton('Clear all', self)
+        self.clear_button = QtWidgets.QPushButton('Clear all', self)
         self.clear_button.setEnabled(False)
-        self.hide_button = QtGui.QPushButton('Hide all', self)
+        self.hide_button = QtWidgets.QPushButton('Hide all', self)
         self.hide_button.setEnabled(False)
-        self.show_button = QtGui.QPushButton('Show all', self)
+        self.show_button = QtWidgets.QPushButton('Show all', self)
         self.show_button.setEnabled(False)
-        self.open_button = QtGui.QPushButton('Open', self)
+        self.open_button = QtWidgets.QPushButton('Open', self)
         self.open_button.setEnabled(True)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.show_button)

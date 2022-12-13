@@ -67,9 +67,9 @@ class AdvantestR3767CG(Instrument):
         "TRAC:DATA? FDAT1", """ Reads the Data array from trace 1 after formatting """
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Advantest R3767CG",
             **kwargs
         )

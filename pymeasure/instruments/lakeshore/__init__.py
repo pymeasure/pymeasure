@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .adapters import LakeShoreUSBAdapter
 from .lakeshore331 import LakeShore331
 from .lakeshore421 import LakeShore421
 from .lakeshore425 import LakeShore425

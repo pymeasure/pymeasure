@@ -32,7 +32,7 @@ class TabWidget:
     """ Utility class to define default implementation for some basic methods.
 
         When defining a widget to be used in subclasses of
-        :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`,
+        :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`,
         users should inherit from this class and provide an
         implementation of these methods
     """

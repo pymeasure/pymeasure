@@ -23,9 +23,9 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_discrete_set, strict_discrete_set
-from pymeasure.adapters import SerialAdapter
+from pymeasure.instruments.validators import strict_discrete_set
 from numpy import array, float64
+from time import sleep
 
 
 class FWBell5080(Instrument):
@@ -40,7 +40,7 @@ class FWBell5080(Instrument):
         meter = FWBell5080('/dev/ttyUSB0')  # Connects over serial port /dev/ttyUSB0 (Linux)
 
         meter.units = 'gauss'               # Sets the measurement units to Gauss
-        meter.range = 3e3                   # Sets the range to 3 kG
+        meter.range = 1                     # Sets the range to 3 kG
         print(meter.field)                  # Reads and prints a field measurement in G
 
         fields = meter.fields(100)          # Samples 100 field measurements
@@ -48,14 +48,23 @@ class FWBell5080(Instrument):
 
     """
 
-    id = Instrument.measurement(
-        "*IDN?", """ Reads the idenfitication information. """
-    )
+    def __init__(self, adapter, **kwargs):
+        kwargs.setdefault('timeout', 500)
+        kwargs.setdefault('baudrate', 2400)
+        super().__init__(
+            adapter,
+            "F.W. Bell 5080 Handheld Gaussmeter",
+            includeSCPI=True,
+            **kwargs
+        )
+
     field = Instrument.measurement(
-        ":MEAS:FLUX?",
+        ":MEASure:FLUX?",
         """ Reads a floating point value of the field in the appropriate units.
         """,
-        get_process=lambda v: v.split(' ')[0]  # Remove units
+        # Remove units
+        get_process=lambda v: float(v.replace('T', '').replace('G', '').replace('Am', ''))
+
     )
     UNITS = {
         'gauss': 'DC:GAUSS', 'gauss ac': 'AC:GAUSS',
@@ -63,68 +72,50 @@ class FWBell5080(Instrument):
         'amp-meter': 'DC:AM', 'amp-meter ac': 'AC:AM'
     }
     units = Instrument.control(
-        ":UNIT:FLUX?", ":UNIT:FLUX%s",
+        ":UNIT:FLUX?", ":UNIT:FLUX:%s",
         """ A string property that controls the field units, which can take the
         values: 'gauss', 'gauss ac', 'tesla', 'tesla ac', 'amp-meter', and
         'amp-meter ac'. The AC versions configure the instrument to measure AC.
         """,
         validator=strict_discrete_set,
         values=UNITS,
-        map_values=True,
-        get_process=lambda v: v.replace(' ', ':')  # Make output consistent with input
+        map_values=True
     )
 
-    def __init__(self, port):
-        super().__init__(
-            SerialAdapter(port, 2400, timeout=0.5),
-            "F.W. Bell 5080 Handheld Gaussmeter"
-        )
+    range = Instrument.control(
+        ":SENS:FLUX:RANG?", ":SENS:FLUX:RANG %d",
+        """ An integer property that controls the maximum field range in the active units.
+        The range unit is dependent on the current units mode (gauss, tesla, amp-meter). Value
+        sets an equivalent range across units that increases in magnitude (1, 10, 100).
 
-    @property
-    def range(self):
-        """ A floating point property that controls the maximum field
-        range in the active units. This can take the values of 300 G,
-        3 kG, and 30 kG for Gauss, 30 mT, 300 mT, and 3 T for Tesla,
-        and 23.88 kAm, 238.8 kAm, and 2388 kAm for Amp-meter. """
-        i = self.values(":SENS:FLUX:RANG?", cast=int)
-        if 'gauss' in self.units:
-            return [300, 3e3, 30e3][i]
-        elif 'tesla' in self.units:
-            return [30e-3, 300e-3, 3][i]
-        elif 'amp-meter' in self.units:
-            return [23.88e3, 238.8e3, 2388e3][i]
-
-    @range.setter
-    def range(self, value):
-        if 'gauss' in self.units:
-            i = truncated_discrete_set(value, [300, 3e3, 30e3])
-        elif 'tesla' in self.units:
-            i = truncated_discrete_set(value, [30e-3, 300e-3, 3])
-        elif 'amp-meter' in self.units:
-            i = truncated_discrete_set(value, [23.88e3, 238.8e3, 2388e3])
-        self.write(":SENS:FLUX:RANG %d" % i)
+        +--------+--------+---------+-----------+
+        | Value  | gauss  |  tesla  | amp-meter |
+        +--------+--------+---------+-----------+
+        | 0      | 300 G  |  30  mT | 23.88 kAm |
+        +--------+--------+---------+-----------+
+        | 1      | 3 kG   |  300 mT | 238.8 kAm |
+        +--------+--------+---------+-----------+
+        | 2      | 30 kG  |  3 T    | 2388  kAm |
+        +--------+--------+---------+-----------+
+        """,
+        validator=strict_discrete_set,
+        values=[0, 1, 2],
+        cast=int
+    )
 
     def read(self):
         """ Overwrites the :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`
-        method to remove the last 2 characters from the output.
+        method to remove semicolons and replace spaces with colons.
         """
-        return super().read()[:-2]
-
-    def ask(self, command):
-        """ Overwrites the :meth:`Instrument.ask <pymeasure.instruments.Instrument.ask>`
-        method to remove the last 2 characters from the output.
-        """
-        return super().ask()[:-2]
-
-    def values(self, command):
-        """ Overwrites the :meth:`Instrument.values <pymeasure.instruments.Instrument.values>`
-        method to remove the lastv2 characters from the output.
-        """
-        return super().values()[:-2]
+        # To set the unit mode to DC Tesla you need to write(':UNIT:FLUX:DC:TESLA')
+        # However the response from ask(':UNIT:FLUX?') is "DC TESLA", with no colon.
+        # We replace space with colon to preserve the mapping in UNITS.
+        # Semicolons may be appended to end of response from FW Bell 5080, and are removed
+        return super().read().replace(' ', ':').replace(';', '')
 
     def reset(self):
         """ Resets the instrument. """
-        self.write("*OPC")
+        self.clear()
 
     def fields(self, samples=1):
         """ Returns a numpy array of field samples for a given sample number.
@@ -140,3 +131,5 @@ class FWBell5080(Instrument):
     def auto_range(self):
         """ Enables the auto range functionality. """
         self.write(":SENS:FLUX:RANG:AUTO")
+        # Instrument needs a delay before next command
+        sleep(2)

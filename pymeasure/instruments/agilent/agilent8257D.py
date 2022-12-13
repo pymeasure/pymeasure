@@ -340,3 +340,4 @@ class Agilent8257D(Instrument):
         """
         self.disable_modulation()
         self.disable()
+        super().shutdown()

@@ -130,9 +130,9 @@ class Agilent4156(Instrument):
 
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Agilent 4155/4156 Semiconductor Parameter Analyzer",
             **kwargs
         )
@@ -426,9 +426,9 @@ class Agilent4156(Instrument):
 
 
 class SMU(Instrument):
-    def __init__(self, resourceName, channel, **kwargs):
+    def __init__(self, adapter, channel, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "SMU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
             **kwargs
         )
@@ -649,9 +649,9 @@ class SMU(Instrument):
 
 
 class VMU(Instrument):
-    def __init__(self, resourceName, channel, **kwargs):
+    def __init__(self, adapter, channel, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "VMU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
             **kwargs
         )
@@ -707,9 +707,9 @@ class VMU(Instrument):
 
 
 class VSU(Instrument):
-    def __init__(self, resourceName, channel, **kwargs):
+    def __init__(self, adapter, channel, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "VSU of Agilent 4155/4156 Semiconductor Parameter Analyzer",
             **kwargs
         )
@@ -805,9 +805,9 @@ class VSU(Instrument):
 class VARX(Instrument):
     """ Base class to define sweep variable settings """
 
-    def __init__(self, resourceName, var_name, **kwargs):
+    def __init__(self, adapter, var_name, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Methods to setup sweep variables",
             **kwargs
         )
@@ -908,9 +908,9 @@ class VAR1(VARX):
     Most common methods are inherited from base class.
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "VAR1",
             **kwargs
         )
@@ -937,9 +937,9 @@ class VAR2(VARX):
     Common methods are imported from base class.
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "VAR2",
             **kwargs
         )
@@ -968,9 +968,9 @@ class VARD(Instrument):
     VARD is always defined in relation to VAR1.
     """
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Definitions for VARD sweep variable.",
             **kwargs
         )
