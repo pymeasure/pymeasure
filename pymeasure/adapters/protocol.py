@@ -23,6 +23,7 @@
 #
 
 import logging
+from unittest.mock import MagicMock
 
 from .adapter import Adapter
 
@@ -50,15 +51,29 @@ class ProtocolAdapter(Adapter):
 
     This adapter is primarily meant for use within :func:`pymeasure.test.expected_protocol()`.
 
+    The :attr:`connection` attribute is a :class:`unittest.mock.MagicMock` such
+    that every call returns. If you want to set a return value, you can use
+    :code:`adapter.connection.some_method.return_value = 7`,
+    such that a call to :code:`adapter.connection.some_method()` will return `7`.
+    Similarly, you can verify that this call to the connection method happened
+    with :code:`assert adapter.connection.some_method.called is True`.
+    You can specify dictionaries with return values of attributes and methods.
+
     :param list comm_pairs: List of "reference" message pair tuples. The first element is
         what is sent to the instrument, the second one is the returned message.
         'None' indicates that a pair member (write or read) does not exist.
         The messages do **not** include the termination characters.
+    :param connection_attributes: Dictionary of connection attributes and their values.
+    :param connection_methods: Dictionary of method names of the connection and their return values.
     """
 
-    def __init__(self, comm_pairs=[], preprocess_reply=None, **kwargs):
+    def __init__(self, comm_pairs=[], preprocess_reply=None,
+                 connection_attributes={},
+                 connection_methods={},
+                 **kwargs):
         """Generate the adapter and initialize internal buffers."""
         super().__init__(preprocess_reply=preprocess_reply, **kwargs)
+        # Setup communication
         assert isinstance(comm_pairs, (list, tuple)), (
             "Parameter comm_pairs has to be a list or tuple.")
         for pair in comm_pairs:
@@ -68,6 +83,15 @@ class ProtocolAdapter(Adapter):
         self._write_buffer = b""
         self.comm_pairs = comm_pairs
         self._index = 0
+        # Setup attributes
+        self._setup_connection(connection_attributes, connection_methods)
+
+    def _setup_connection(self, connection_attributes, connection_methods):
+        self.connection = MagicMock()
+        for key, value in connection_attributes.items():
+            setattr(self.connection, key, value)
+        for key, value in connection_methods.items():
+            getattr(self.connection, key).return_value = value
 
     def _write(self, command, **kwargs):
         """Compare the command with the expected one and fill the read."""
