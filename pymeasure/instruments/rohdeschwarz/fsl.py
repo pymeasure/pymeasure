@@ -25,8 +25,9 @@
 import logging
 
 import numpy as np
-from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
+
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -53,7 +54,7 @@ class FSL(Instrument):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "Rohde&Schwarz FSL", includeSCPI=True, **kwargs)
 
-    # Frequency settings --------------------------------------------------------------
+    # Frequency settings ---------------------------------------------------------------------------
 
     freq_span = Instrument.control(
         "FREQ:SPAN?",
@@ -100,7 +101,7 @@ class FSL(Instrument):
         set_process=_number_or_auto,
     )
 
-    # Sweeping ------------------------------------------------------------------------
+    # Sweeping -------------------------------------------------------------------------------------
 
     sweep_time = Instrument.control(
         "SWE:TIME?",
@@ -127,7 +128,7 @@ class FSL(Instrument):
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
-    # Traces --------------------------------------------------------------------------
+    # Traces ---------------------------------------------------------------------------------------
 
     def read_trace(self, n_trace=1):
         """
@@ -161,7 +162,7 @@ class FSL(Instrument):
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
     )
 
-    # Markers -------------------------------------------------------------------------
+    # Markers --------------------------------------------------------------------------------------
 
     def create_marker(self, num=1, is_delta_marker=False):
         """
@@ -207,8 +208,8 @@ class FSL(Instrument):
 
         def values(self, command, **kwargs):
             """
-            Read a set of values from the instrument through the adapter,
-            passing on any keyword arguments.
+            Read a set of values from the instrument through the adapter, passing on any keyword
+            arguments.
             """
             return self.instrument.values(f"CALC:{self.name}:{command}", **kwargs)
 
@@ -254,13 +255,12 @@ class FSL(Instrument):
             """
             Zoom in to a frequency span or by a factor.
 
-            :param value: The value to zoom in by. If a number is passed it is
-                interpreted as a factor. If a string (number with unit) is
-                passed it is interpreted as a frequency span.
+            :param value: The value to zoom in by. If a number is passed it is interpreted as a
+            factor. If a string (number with unit) is passed it is interpreted as a frequency span.
             """
             self.write(f"FUNC:ZOOM {value}; *WAI")
 
-    # Channels -----------------------------------------------------------------
+    # Channels -------------------------------------------------------------------------------------
 
     def create_channel(self, channel_type, channel_name):
         """Create a new channel.
@@ -316,6 +316,7 @@ class FSL(Instrument):
     @active_channel.setter
     def activate_channel(self, channel):
         """Activate another open channel.
+
         :param channel: Name of the channel to be activated
         """
         availabel_channels = [chan for chan in self.available_channels.keys()]
@@ -336,12 +337,10 @@ class FSL(Instrument):
         :param current_name: Channel to be renamed
         :param new_name: New name of the channel
         """
-        # channels = self.available_channels
-        # strict_discrete_set(current_name, list(channels.keys()))
         current_name = strict_discrete_set(current_name, list((self.available_channels).keys()))
         self.write(f"INST:REN '{current_name}', '{new_name}'")
 
-    # Phase noise limit lines --------------------------------------
+    # Phase noise limit lines ----------------------------------------------------------------------
 
     def phase_noise_trace(self, trace):
         strict_discrete_range(trace, range(1, 7), 1)
@@ -352,7 +351,7 @@ class FSL(Instrument):
 
         self.write(f"DISP:TRAC:SEL {trace}")
 
-    # Overview -----------------------------------------------------
+    # Overview -------------------------------------------------------------------------------------
     nominal_level = Instrument.control(
         "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the R&S FSW"
     )
