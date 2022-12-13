@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
+
 def pytest_addoption(parser):
     parser.addoption(
         "--resource-name",
         action="store",
         default=None,
         dest="resource_name",
-        help="""Pass a resource name for an instrument needed for a test.
-                See also --instrument-present."""
+        help="""Pass a resource name for an instrument needed for a test.""",
     )
