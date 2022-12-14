@@ -175,16 +175,16 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         Override method from QAbstractTableModel
         """
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+            if orientation == QtCore.Qt.Orientation.Horizontal:
                 return str(self.horizontal_header[section])
 
-            if orientation == QtCore.Qt.Vertical:
+            if orientation == QtCore.Qt.Orientation.Vertical:
                 return str(self.vertical_header[section])
-        elif role == QtCore.Qt.DecorationRole:
-            if orientation == QtCore.Qt.Horizontal:
+        elif role == QtCore.Qt.ItemDataRole.DecorationRole:
+            if orientation == QtCore.Qt.Orientation.Horizontal:
                 return self.horizontal_header_decoration(section)
 
-            if orientation == QtCore.Qt.Vertical:
+            if orientation == QtCore.Qt.Orientation.Vertical:
                 return self.vertical_header_decoration(section)
 
         return None
@@ -401,7 +401,7 @@ class Table(QtWidgets.QTableView):
         self.setSortingEnabled(True)
         self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
         self.horizontalHeader().setSectionsMovable(True)
-        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
 
         self.setup_context_menu()
 
@@ -453,7 +453,7 @@ class Table(QtWidgets.QTableView):
         df.to_clipboard()
 
     def setup_context_menu(self):
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.context_menu)
         self.copy = QtGui.QAction("Copy table data", self)
         self.copy.triggered.connect(self.copy_action)
