@@ -22,16 +22,32 @@
 # THE SOFTWARE.
 #
 
-from .browser_widget import BrowserWidget
-from .directory_widget import DirectoryLineEdit
-from .estimator_widget import EstimatorWidget, EstimatorThread
-from .image_frame import ImageFrame
-from .image_widget import ImageWidget
-from .inputs_widget import InputsWidget
-from .log_widget import LogWidget
-from .plot_frame import PlotFrame
-from .plot_widget import PlotWidget
-from .results_dialog import ResultsDialog
-from .sequencer_widget import SequencerWidget
-from .tab_widget import TabWidget
-from .table_widget import TableWidget
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.anritsu import AnritsuMS2090A
+
+
+def test_init():
+    with expected_protocol(
+            AnritsuMS2090A,
+            [],
+            ):
+        pass  # Verify the expected communication.
+
+
+def test_freq_conf():
+    with expected_protocol(
+            AnritsuMS2090A,
+            [(b"FREQuency:CENTer 9000", None), (b"FREQuency:CENTer?", 9000)],
+            ) as instr:
+        instr.frequency_center = 9000
+        assert instr.frequency_center == 9000
+
+
+def test_preamp():
+    with expected_protocol(
+            AnritsuMS2090A,
+            [(b"POWer:RF:GAIN:STATe ON", None), (b"POWer:RF:GAIN:STATe?", 'ON')],
+            ) as instr:
+        instr.preamp = True
+        assert instr.preamp is True
