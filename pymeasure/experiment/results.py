@@ -207,7 +207,7 @@ class JSONFormatter(logging.Formatter):
         :return: a string
         """
         if self.procedure is not None:
-            parameters = procedure.parameter_objects()
+            parameters = self.procedure.parameter_objects()
         else:
             parameters = self.parameters
         base_types = {}
