@@ -310,6 +310,7 @@ class SequencerTreeView(QtWidgets.QTreeView):
         self.setColumnWidth(1, int(0.9 * self.width))
         self.setColumnWidth(2, int(0.9 * self.width))
         self.model().layoutChanged.connect(self.activate_persistent_editor)
+        self.model().modelReset.connect(self.activate_persistent_editor)
 
 
 class SequenceDialog(QtWidgets.QFileDialog):
