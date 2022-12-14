@@ -401,7 +401,9 @@ class Table(QtWidgets.QTableView):
         self.setSortingEnabled(True)
         self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
         self.horizontalHeader().setSectionsMovable(True)
-        self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(
+            QtWidgets.QHeaderView.ResizeMode.ResizeToContents
+        )
 
         self.setup_context_menu()
 
