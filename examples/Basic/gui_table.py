@@ -55,27 +55,21 @@ class TestProcedure(Procedure):
         log.info("Finished")
 
 
-class ManagedWindowWithTable(ManagedWindowBase):
-    def __init__(self, procedure_class, **kwargs):
-        self.log_widget = LogWidget("Experiment Log")
-        self.table_widget = TableWidget("Experiment Table",
-                                        procedure_class.DATA_COLUMNS,
-                                        by_column=True,
-                                        )
-        if "widget_list" not in kwargs:
-            kwargs["widget_list"] = ()
-        kwargs["widget_list"] = kwargs["widget_list"] + (self.table_widget, self.log_widget)
-
-        super().__init__(procedure_class, **kwargs)
-
-
-class MainWindow(ManagedWindowWithTable):
+class MainWindow(ManagedWindowBase):
 
     def __init__(self):
+        widget_list = (TableWidget("Experiment Table",
+                                   TestProcedure.DATA_COLUMNS,
+                                   by_column=True,
+                                   ),
+                       LogWidget("Experiment Log"),
+                       )
+
         super().__init__(
             procedure_class=TestProcedure,
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
+            widget_list=widget_list,
         )
         self.setWindowTitle('GUI Example')
 
