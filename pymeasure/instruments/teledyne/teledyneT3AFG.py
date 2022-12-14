@@ -38,8 +38,11 @@ class SignalChannel(Channel):
 class TeledyneT3AFG(Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
     generator interface for interacting with the instrument.
-    Limits are not accurate for T3AFG5, T3AFG10.
-    
+
+    Intially targeting T3AFG80, some features may not be avalible on
+    lower end models and features from higher end models are not 
+    included here intially. 
+
     .. code-block: python
     generator=TeledyneT3AFG(resource)
     """
