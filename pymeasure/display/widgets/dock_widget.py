@@ -52,15 +52,21 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
     :param linewidth: line width for plots in
         :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
     :param layout_path: Directory path to save dock layout state. Default is './'
+    :param layout_filename: Optional filename for dock layout file.
+        Default: *current procedure class* + "_dock_layout.json"
     :param parent: Passed on to QtWidgets.QWidget. Default is None
     """
 
     def __init__(self, name, procedure_class, x_axis_labels=None, y_axis_labels=None, linewidth=1,
-                 layout_path='./', parent=None):
+                 layout_path='./', layout_filename='', parent=None):
         super().__init__(name, parent)
 
         self.procedure_class = procedure_class
-        self.dock_layout_filename = layout_path + procedure_class.__name__ + '_dock_layout.json'
+        if layout_filename:
+            self.dock_layout_filename = path.join(layout_path, layout_filename)
+        else:
+            self.dock_layout_filename = path.join(layout_path,
+                                                  procedure_class.__name__ + '_dock_layout.json')
         self.x_axis_labels = x_axis_labels
         self.y_axis_labels = y_axis_labels
         self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))
@@ -77,7 +83,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         layout = self.dock_area.saveState()
         with open(self.dock_layout_filename, 'w') as f:
             f.write(json.dumps(layout))
-            log.info('Saved dock layout to file %s' % self.dock_layout_filename)
+        log.info('Saved dock layout to file %s' % self.dock_layout_filename)
 
     def _setup_ui(self):
         self.save_layout_button = QtWidgets.QPushButton('Save Dock Layout', self)
@@ -113,10 +119,15 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         if path.exists(self.dock_layout_filename):
             with open(self.dock_layout_filename, 'r') as f:
                 dock_layout = f.read()
-                # make sure number of docks in the file matches num_plots
-                if dock_layout.count('dock') == self.num_plots:
-                    self.dock_area.restoreState(json.loads(dock_layout))
-                    log.info('Loaded dock layout from file %s' % self.dock_layout_filename)
+
+            # make sure number of docks in the file matches num_plots
+            if dock_layout.count('dock') == self.num_plots:
+                self.dock_area.restoreState(json.loads(dock_layout))
+                log.info('Loaded dock layout from file %s' % self.dock_layout_filename)
+            else:
+                log.warning(
+                    'Number of displayed docks does not match number of docks in layout file %s'
+                    % self.dock_layout_filename)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:
