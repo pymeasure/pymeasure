@@ -298,7 +298,7 @@ The later two either add a item as a child of the currently selected item or rem
 To queue the entered sequence the button :code:`Queue` sequence can be used.
 If an error occurs in evaluating the sequence text-boxes, this is mentioned in the logger, and nothing is queued.
 
-Finally, it is possible to create sequence file such that the user does not need to write the sequence again each time. The sequence file can be created by saving current sequence built within the GUI using the :code:`Save sequence` button or directly writing a simple text file.
+Finally, it is possible to create a sequence file such that the user does not need to write the sequence again each time. The sequence file can be created by saving current sequence built within the GUI using the :code:`Save sequence` button or directly writing a simple text file.
 Once created, the sequence can be loaded with the :code:`Load sequence` button.
 
 In the sequence file each line adds one item to the sequence tree, starting with a number of dashes (:code:`-`) to indicate the level of the item (starting with 1 dash for top level), followed by the name of the parameter and the sequence string, both as a python string between parentheses.
