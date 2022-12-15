@@ -23,3 +23,4 @@
 #
 
 from .lecroyT3DSO1204 import LeCroyT3DSO1204
+from .lecroyDSOXXXX import LeCroyDSOXXXX
