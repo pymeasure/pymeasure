@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import pytest
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -29,5 +31,15 @@ def pytest_addoption(parser):
         action="store",
         default=None,
         dest="adapter",
-        help="Pass an adapter for connection to an instrument needed for a test.",
+        help="Pass an adapter string for connection to an instrument needed for a test.",
     )
+
+
+@pytest.fixture(scope="session")
+def adapter_address(pytestconfig):
+    """
+    Fixture to pass the adapter address from the command line for tests that require a connection
+    to a device.
+    """
+    address = pytestconfig.getoption("--adapter", skip=True)
+    return address
