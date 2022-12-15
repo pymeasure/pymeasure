@@ -48,7 +48,7 @@ from . import fwbell
 from . import hcp
 from . import heidenhain
 from . import hp
-from . import keithley
+from . import keithleya
 from . import keysight
 from . import lakeshore
 from . import lecroy
