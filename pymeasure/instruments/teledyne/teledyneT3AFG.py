@@ -25,14 +25,24 @@
 import logging
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class SignalChannel(Channel):
-    pass
+    
+    output_enabled = Channel.control(
+        "C{ch}:OUTPut?",
+        "C{ch}:OUTPut %s",
+        """Control whether the channel output is enabled (boolean).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 'ON', False: 'OFF'},
+        get_process=lambda x: x[0].split(' ')[1],
+        # Not sure why "OFF" doesn't get transformed into False
+    )
 
 
 class TeledyneT3AFG(Instrument):
@@ -47,7 +57,7 @@ class TeledyneT3AFG(Instrument):
     generator=TeledyneT3AFG(resource)
     """
 
-    channels = Instrument.ChannelCreator(SignalChannel)
+    channels = Instrument.ChannelCreator(SignalChannel, (1,2))
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(

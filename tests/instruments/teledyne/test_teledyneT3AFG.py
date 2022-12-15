@@ -30,7 +30,7 @@ def test_output_enabled():
     with expected_protocol(
         TeledyneT3AFG,
         [("C1:OUTPut ON", None),
-         ("C1:OUTPut?", "OFF")],
+         ("C1:OUTPut?", "C1:OUTP OFF,LOAD,HZ,PLRT,NOR")],
     ) as inst:
         inst.ch_1.output_enabled = True
         assert inst.ch_1.output_enabled is False
