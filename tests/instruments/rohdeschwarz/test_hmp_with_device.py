@@ -28,16 +28,13 @@ import pytest
 
 from pymeasure.instruments.rohdeschwarz.hmp import HMP4040
 
-pytest.skip("Only works with connected hardware", allow_module_level=True)
-
 
 @pytest.fixture(scope="session")
-def hmp4040(pytestconfig):
+def hmp4040(adapter_address):
     """
     Return a HMP4040 instrument.
     """
-    adapter = pytestconfig.getoption("adapter")
-    hmp4040 = HMP4040(adapter)
+    hmp4040 = HMP4040(adapter_address)
     hmp4040.reset()
     return hmp4040
 
