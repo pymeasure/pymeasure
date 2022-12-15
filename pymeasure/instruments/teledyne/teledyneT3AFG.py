@@ -44,6 +44,57 @@ class SignalChannel(Channel):
         # Not sure why "OFF" doesn't get transformed into False
     )
 
+    # TODO: Add other OUTPut related controls like Load and Polarity
+
+    wavetype = Channel.control(
+        "C{ch}:BSWV?",
+        "C{ch}:BSWV WVTP,%s",
+        """Control the type of waveform to be output.
+        Options are: {SINE, SQUARE, RAMP, PULSE, NOISE, ARB, DC, PRBS, IQ}
+        """,
+        validator=strict_discrete_set,
+        # TODO: make ENUM for more descriptive names?
+        values=['SINE', 'SQUARE', 'RAMP', 'PULSE', 'NOISE', 'ARB', 'DC', 'PRBS', 'IQ'],
+        get_process=lambda x: x[1],
+    )
+
+    # TODO: Wavetype dependent processing with errors
+    # For example, DC wavetype does not return frequency
+
+    # TODO: Add frequency ranges per model?
+    frequency = Channel.control(
+        "C{ch}:BSWV?",
+        "C{ch}:BSWV FRQ,%g",
+        """Control the frequency of waveform to be output in Hertz.""",
+        validator=strict_range,
+        values=[0,350e6],
+        get_process=lambda x: x,
+        #get_process=lambda x: x[1].split(',')[2].split('HZ'),
+    )
+
+    # TODO: Add range of outputs per model? Tricky without knowing offset
+    amplitude = Channel.control(
+        "C{ch}:BSWV?",
+        "C{ch}:BSWV AMP,%g",
+        """Control the amplitude of waveform to be output in volts peak-to-peak.""",
+        validator=strict_range,
+        values=[0,5],
+        get_process=lambda x: x[1].split(',')[6].split('V'),
+    )
+
+    # TODO: Add range of offset per model? Tricky without knowing amplitude
+    offset = Channel.control(
+        "C{ch}:BSWV?",
+        "C{ch}:BSWV OFST,%g",
+        """Control the offset of waveform to be output in volts.""",
+        validator=strict_range,
+        values=[0,5],
+        get_process=lambda x: x[1].split(',')[8].split('V'),
+    )
+
+    # TODO: Add other Basic Waveform parameters like period
+
+    # TODO: Add odd parameter like MAX_OUTPUT_AMP
 
 class TeledyneT3AFG(Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
@@ -63,3 +114,5 @@ class TeledyneT3AFG(Instrument):
         super().__init__(
             adapter, name, **kwargs
         )
+
+    # TODO: Add channel coupling control

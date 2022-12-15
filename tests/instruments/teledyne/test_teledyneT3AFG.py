@@ -34,3 +34,11 @@ def test_output_enabled():
     ) as inst:
         inst.ch_1.output_enabled = True
         assert inst.ch_1.output_enabled is False
+
+    # TODO: Test Wavetype control
+
+    # TODO: Test Frequency control
+
+    # TODO: Test Amplitude control
+
+    # TODO: Test Offset control
