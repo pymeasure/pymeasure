@@ -32,7 +32,21 @@ log.addHandler(logging.NullHandler())
 
 
 class SignalChannel(Channel):
-    
+
+    def get_process_generator(keyword, unit, type):
+        """Generate a get_process method searching for keyword, stripping unit"""
+        def selector(values):
+            if keyword in values:
+                try:
+                    return type(values[values.index(keyword)+1].strip(unit))
+                except (ValueError, IndexError):
+                    # Something went quite wrong if the keyword exists but the value doesn't
+                    return None
+            else:
+                # Wrong wavetype for this keyword
+                return None
+        return selector
+
     output_enabled = Channel.control(
         "C{ch}:OUTPut?",
         "C{ch}:OUTPut %s",
@@ -40,8 +54,8 @@ class SignalChannel(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 'ON', False: 'OFF'},
-        get_process=lambda x: x[0].split(' ')[1],
-        # Not sure why "OFF" doesn't get transformed into False
+        # Replace ON and OFF with True and False in both get and set
+        get_process=lambda x: True if x[0].split(' ')[1] == 'ON' else False,
     )
 
     # TODO: Add other OUTPut related controls like Load and Polarity
@@ -53,62 +67,61 @@ class SignalChannel(Channel):
         Options are: {SINE, SQUARE, RAMP, PULSE, NOISE, ARB, DC, PRBS, IQ}
         """,
         validator=strict_discrete_set,
-        # TODO: make ENUM for more descriptive names?
         values=['SINE', 'SQUARE', 'RAMP', 'PULSE', 'NOISE', 'ARB', 'DC', 'PRBS', 'IQ'],
         get_process=lambda x: x[1],
     )
-
-    # TODO: Wavetype dependent processing with errors
-    # For example, DC wavetype does not return frequency
 
     # TODO: Add frequency ranges per model?
     frequency = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV FRQ,%g",
-        """Control the frequency of waveform to be output in Hertz.""",
+        """Control the frequency of waveform to be output in Hertz.
+        Has no effect when WVTP is NOISE or DC.""",
         validator=strict_range,
-        values=[0,350e6],
-        get_process=lambda x: x,
-        #get_process=lambda x: x[1].split(',')[2].split('HZ'),
+        values=[0, 350e6],
+        get_process=get_process_generator('FRQ', 'HZ', float),
     )
 
     # TODO: Add range of outputs per model? Tricky without knowing offset
     amplitude = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV AMP,%g",
-        """Control the amplitude of waveform to be output in volts peak-to-peak.""",
+        """Control the amplitude of waveform to be output in volts peak-to-peak.
+        Has no effect when WVTP is NOISE or DC.""",
         validator=strict_range,
-        values=[0,5],
-        get_process=lambda x: x[1].split(',')[6].split('V'),
+        values=[0, 5],
+        get_process=get_process_generator('AMP', 'V', float),
     )
 
     # TODO: Add range of offset per model? Tricky without knowing amplitude
     offset = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV OFST,%g",
-        """Control the offset of waveform to be output in volts.""",
+        """Control the offset of waveform to be output in volts.
+        Has no effect when WVTP is NOISE.""",
         validator=strict_range,
-        values=[0,5],
-        get_process=lambda x: x[1].split(',')[8].split('V'),
+        values=[0, 5],
+        get_process=get_process_generator('OFST', 'V', float),
     )
 
     # TODO: Add other Basic Waveform parameters like period
 
     # TODO: Add odd parameter like MAX_OUTPUT_AMP
 
+
 class TeledyneT3AFG(Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
     generator interface for interacting with the instrument.
 
     Intially targeting T3AFG80, some features may not be avalible on
-    lower end models and features from higher end models are not 
-    included here intially. 
+    lower end models and features from higher end models are not
+    included here intially.
 
     .. code-block: python
     generator=TeledyneT3AFG(resource)
     """
 
-    channels = Instrument.ChannelCreator(SignalChannel, (1,2))
+    channels = Instrument.ChannelCreator(SignalChannel, (1, 2))
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(

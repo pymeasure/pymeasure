@@ -25,6 +25,7 @@
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.teledyne.TeledyneT3AFG import TeledyneT3AFG
 
+
 def test_output_enabled():
     """Verify the output enable setter and getter."""
     with expected_protocol(
@@ -35,10 +36,58 @@ def test_output_enabled():
         inst.ch_1.output_enabled = True
         assert inst.ch_1.output_enabled is False
 
-    # TODO: Test Wavetype control
 
-    # TODO: Test Frequency control
+def test_wavetype():
+    """Verify the wavetype setter and getter for ramp or sine wavetype."""
+    with expected_protocol(
+        TeledyneT3AFG,
+        [("C1:BSWV WVTP,RAMP", None),
+         ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
+          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
+    ) as inst:
+        inst.ch_1.wavetype = 'RAMP'
+        assert inst.ch_1.wavetype == "SINE"
 
-    # TODO: Test Amplitude control
 
-    # TODO: Test Offset control
+def test_frequency():
+    """Verify the frequency setter and getter for ramp or sine wavetype."""
+    with expected_protocol(
+        TeledyneT3AFG,
+        [("C1:BSWV FRQ,1000", None),
+         ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
+          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
+    ) as inst:
+        inst.ch_1.frequency = 1000
+        assert inst.ch_1.frequency == 0.3
+
+
+def test_frequency_getter_error():
+    """Verify the frequency getter for DC wavetype with no frequency value."""
+    with expected_protocol(
+        TeledyneT3AFG,
+        [("C1:BSWV?", "C1:BSWV WVTP,DC,MAX_OUT_AMP,4.6V,OFST,0V")],
+    ) as inst:
+        assert inst.ch_1.frequency is None
+
+
+def test_amplitude():
+    """Verify the amplitude setter and getter for ramp or sine wavetype."""
+    with expected_protocol(
+        TeledyneT3AFG,
+        [("C1:BSWV AMP,1", None),
+         ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
+          "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
+    ) as inst:
+        inst.ch_1.amplitude = 1
+        assert inst.ch_1.amplitude == 0.08
+
+
+def test_offset():
+    """Verify the offset setter and getter for DC wavetype."""
+    with expected_protocol(
+        TeledyneT3AFG,
+        [("C1:BSWV OFST,1", None),
+         ("C1:BSWV?", "C1:BSWV WVTP,DC,MAX_OUT_AMP,4.6V,OFST,0V")],
+    ) as inst:
+        inst.ch_1.offset = 1
+        assert inst.ch_1.offset == 0
