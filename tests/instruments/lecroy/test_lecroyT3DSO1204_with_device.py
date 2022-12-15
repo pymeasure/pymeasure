@@ -23,15 +23,13 @@
 #
 
 from time import sleep
+from unittest.mock import ANY
 
 import numpy as np
 import pytest
-from unittest.mock import ANY
 from pyvisa.errors import VisaIOError
 
 from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
-
-pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestLeCroyT3DSO1204:
@@ -43,11 +41,6 @@ class TestLeCroyT3DSO1204:
         - The device's address must be set in the RESOURCE constant;
         - A probe on Channel 1 must be connected to the Demo output of the oscilloscope.
     """
-
-    ##################################################
-    # LeCroyT3DSO1204 device address goes here:
-    RESOURCE = "TCPIP::192.168.10.61::INSTR"
-    ##################################################
 
     #########################
     # PARAMETRIZATION CASES #
@@ -63,29 +56,28 @@ class TestLeCroyT3DSO1204:
     WAVEFORM_SOURCES = ["C1", "C2", "C3", "C4"]
     CHANNELS = [1, 2, 3, 4]
 
-    SCOPE = LeCroyT3DSO1204(RESOURCE)
-
     ############
     # FIXTURES #
     ############
 
-    @pytest.fixture
-    def scope(self):
-        return self.SCOPE
+    @pytest.fixture(scope="session")
+    def scope(self, adapter_address):
+        scope = LeCroyT3DSO1204(adapter_address)
+        return scope
 
     @pytest.fixture
-    def reseted_scope(self):
-        self.SCOPE.reset()
+    def reseted_scope(self, scope):
+        scope.reset()
         sleep(7)
-        return self.SCOPE
+        return scope
 
     @pytest.fixture
-    def autoscaled_scope(self):
-        self.SCOPE.reset()
+    def autoscaled_scope(self, scope):
+        scope.reset()
         sleep(7)
-        self.SCOPE.autoscale()
+        scope.autoscale()
         sleep(7)
-        return self.SCOPE
+        return scope
 
     #########
     # TESTS #
