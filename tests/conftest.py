@@ -39,7 +39,7 @@ def pytest_addoption(parser):
 def connected_device_address(pytestconfig):
     """
     Fixture to pass the adapter address to a device. from the command line for tests that require a
-    connection to an instrument.
+    connection to an instrument  Select the desired module to test with the -k option.
     """
     address = pytestconfig.getoption("--device-address", skip=True)
     return address
