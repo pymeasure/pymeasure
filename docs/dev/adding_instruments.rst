@@ -1157,7 +1157,15 @@ Device tests
 It can be useful as well to test the code against an actual device. The necessary device setup instructions (for example: connect a probe to the test output) should be written in the header of the test file or test methods. There should be the connection configuration (for example serial port), too.
 In order to distinguish the test module from protocol tests, the filename should be :code:`test_instrumentName_with_device.py`, if the device is called :code:`instrumentName`.
 
-To make it easier for others to run these tests using their own instruments, we recommend to use a :code:`pytest.fixture` to create an instance of the instrument class. A simple example of such a fixture looks like this:
+To make it easier for others to run these tests using their own instruments, we recommend to use :code:`pytest.fixture` to create an instance of the instrument class.
+It is important to use the specific argument name :code:`connected_device_address` and define the scope of the fixture to only establish a single connection to the device.
+This ensures two things:
+First, it makes it possible to specify the address of the device to be used for the test using the :code:`--device-address` command line argument.
+Second, tests using this fixture, i.e. tests that rely on a device to be connected to the computer are skipped by default when running pytest.
+This is done to avoid that the tests are run on a CI server that does not have the device connected.
+It is important that all tests that require a connection to a device either use the :code:`connected_device_address` fixture or a fixture derived from it as an argument.
+
+A simple example of a fixture that returns a connected instrument instance looks like this:
 
 .. code-block:: python
 
@@ -1167,12 +1175,8 @@ To make it easier for others to run these tests using their own instruments, we 
         # ensure the device is in a defined state, e.g. by resetting it.
         return instr
 
-It is important to use the specific argument name :code:`connected_device_address` and define the scope of the fixture to only establish a single connection to the device.
-This ensures two things:
-First, tests using this fixture, i.e. tests that rely on a device to be connected to the computer are skipped by default when running pytest.
-Second, it makes it possible to specify the address of the device to be used for the test using the :code:`--device-address` command line argument.
-
-This fixture can then be used in the test functions like this:
+Note that this fixture uses :code: `connected_device_address`as an input argument and will thus be skipped by automatic test runs.
+ This fixture can then be used in a test functions like this:
 
 .. code-block:: python
 
@@ -1180,9 +1184,9 @@ This fixture can then be used in the test functions like this:
         extreme5000.voltage = 0.345
         assert extreme5000.voltage == 0.3
 
-Again, it is important to use the specific argument name of the fixture to be used, in this case :code:`extreme5000`.
+Again, by specifying the fixture's name, in this case :code:`extreme5000`, invoking :code:`pytest` will skip these tests by default.
 
-It is also possible to defined derived fixtures for example to put the device into a specific state. Such a fixture would look like this:
+It is also possible to define derived fixtures for example to put the device into a specific state. Such a fixture would look like this:
 
 .. code-block:: python
 
@@ -1191,7 +1195,7 @@ It is also possible to defined derived fixtures for example to put the device in
         extreme5000.auto_scale()
         return extreme5000
 
-In this case, do not specify the fixture's scope, so it is called for every test function using it.
+In this case, do not specify the fixture's scope, so it is called again for every test function using it.
 
 To run the test, specify the address of the device to be used via the :code:`--device-address` command line argument and limit pytest to the relevant tests.
 You can filter tests with the :code:`-k` option or you can specify the filename.
