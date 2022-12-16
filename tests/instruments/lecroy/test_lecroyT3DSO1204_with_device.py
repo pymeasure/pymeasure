@@ -96,21 +96,22 @@ class TestLeCroyT3DSO1204:
         autoscaled_scope.ch_1.offset = 0
         autoscaled_scope.ch_1.trigger_level = 0
         autoscaled_scope.ch_1.trigger_level2 = 0
-        expected = {"channel": 1,
-                    "attenuation": 1.,
-                    "bandwidth_limit": False,
-                    "coupling": "dc 1M",
-                    "offset": 0.,
-                    "skew_factor": 0.,
-                    "display": True,
-                    "unit": "V",
-                    "volts_div": 0.05,
-                    "inverted": False,
-                    "trigger_coupling": "dc",
-                    "trigger_level": 0.,
-                    "trigger_level2": 0.,
-                    "trigger_slope": "positive"
-                    }
+        expected = {
+            "channel": 1,
+            "attenuation": 1.0,
+            "bandwidth_limit": False,
+            "coupling": "dc 1M",
+            "offset": 0.0,
+            "skew_factor": 0.0,
+            "display": True,
+            "unit": "V",
+            "volts_div": 0.05,
+            "inverted": False,
+            "trigger_coupling": "dc",
+            "trigger_level": 0.0,
+            "trigger_level2": 0.0,
+            "trigger_slope": "positive",
+        }
         actual = autoscaled_scope.ch(1).current_configuration
         assert actual == expected
 
@@ -177,9 +178,9 @@ class TestLeCroyT3DSO1204:
         autoscaled_scope.timebase_hor_position = 0
         expected = {
             "timebase_scale": 5e-4,
-            "timebase_offset": 0.,
+            "timebase_offset": 0.0,
             "timebase_hor_magnify": 5e-6,
-            "timebase_hor_position": 0.
+            "timebase_hor_position": 0.0,
         }
         actual = autoscaled_scope.timebase
         for key, val in actual.items():
@@ -240,12 +241,12 @@ class TestLeCroyT3DSO1204:
         autoscaled_scope.waveform_sparsing = 1
         autoscaled_scope.waveform_source = "C1"
         expected_preamble = {
-            "sparsing": 1.,
-            "requested_points": 0.,
-            'memory_size': 14e6,
-            'sampled_points': 7e6,
-            'transmitted_points': None,
-            "first_point": 0.,
+            "sparsing": 1.0,
+            "requested_points": 0.0,
+            "memory_size": 14e6,
+            "sampled_points": 7e6,
+            "transmitted_points": None,
+            "first_point": 0.0,
             "source": autoscaled_scope.waveform_source,
             "type": "normal",
             "average": None,
@@ -253,10 +254,10 @@ class TestLeCroyT3DSO1204:
             "grid_number": 14,
             "status": ANY,
             "xdiv": 5e-4,
-            "xoffset": -0.,
+            "xoffset": -0.0,
             "ydiv": 0.05,
-            "yoffset": 0.,
-            "unit": "V"
+            "yoffset": 0.0,
+            "unit": "V",
         }
         preamble = autoscaled_scope.waveform_preamble
         assert preamble == expected_preamble
@@ -284,31 +285,32 @@ class TestLeCroyT3DSO1204:
             coupling="dc 1M",
             display=True,
             invert=False,
-            offset=0.,
-            skew_factor=0.,
-            probe_attenuation=1.,
+            offset=0.0,
+            skew_factor=0.0,
+            probe_attenuation=1.0,
             scale=0.05,
             unit="V",
             trigger_coupling="dc",
             trigger_level=0.150,
             trigger_level2=0.150,
-            trigger_slope="positive"
+            trigger_slope="positive",
         )
-        expected = {"channel": ch_number,
-                    "attenuation": 1.,
-                    "bandwidth_limit": False,
-                    "coupling": "dc 1M",
-                    "offset": 0.,
-                    "skew_factor": 0.,
-                    "display": True,
-                    "unit": "V",
-                    "volts_div": 0.05,
-                    "inverted": False,
-                    "trigger_coupling": "dc",
-                    "trigger_level": 0.150,
-                    "trigger_level2": 0.150,
-                    "trigger_slope": "positive"
-                    }
+        expected = {
+            "channel": ch_number,
+            "attenuation": 1.0,
+            "bandwidth_limit": False,
+            "coupling": "dc 1M",
+            "offset": 0.0,
+            "skew_factor": 0.0,
+            "display": True,
+            "unit": "V",
+            "volts_div": 0.05,
+            "inverted": False,
+            "trigger_coupling": "dc",
+            "trigger_level": 0.150,
+            "trigger_level2": 0.150,
+            "trigger_slope": "positive",
+        }
         actual = scope.ch(ch_number).current_configuration
         assert actual == expected
 
@@ -338,8 +340,9 @@ class TestLeCroyT3DSO1204:
             sleep(7)
         scope.ch(case1).display = True
         scope.single()
-        data, time, preamble = scope.download_waveform(source=case1, requested_points=case2,
-                                                       sparsing=0)
+        data, time, preamble = scope.download_waveform(
+            source=case1, requested_points=case2, sparsing=0
+        )
         assert type(data) is np.ndarray
         assert len(data) == case2
         assert type(time) is np.ndarray
@@ -358,18 +361,19 @@ class TestLeCroyT3DSO1204:
         assert type(preamble) is dict
         assert preamble == {
             "sparsing": 1,
-            "requested_points": 1.,
-            "transmitted_points": 1.,
+            "requested_points": 1.0,
+            "transmitted_points": 1.0,
             "first_point": 0,
             "source": "C1",
             "ydiv": ANY,
             "yoffset": ANY,
-            "unit": "V"
+            "unit": "V",
         }
 
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_all_points(self, scope):
         from matplotlib import pyplot as plt
+
         scope.ch_1.display = True
         scope.single()
         sleep(1)
@@ -384,11 +388,13 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_sparsing(self, scope):
         from matplotlib import pyplot as plt
+
         scope.ch_1.display = True
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_waveform(source="c1", requested_points=7e5,
-                                                       sparsing=10)
+        data, time, preamble = scope.download_waveform(
+            source="c1", requested_points=7e5, sparsing=10
+        )
         assert type(data) is np.ndarray
         assert len(data) == 7e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -404,14 +410,16 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_averaging_16(self, scope):
         from matplotlib import pyplot as plt
+
         scope.ch_1.display = True
         scope.run()
         scope.acquisition_type = "average"
         scope.acquisition_average = 16
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_waveform(source="c1", requested_points=1.75e5,
-                                                       sparsing=10)
+        data, time, preamble = scope.download_waveform(
+            source="c1", requested_points=1.75e5, sparsing=10
+        )
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -427,14 +435,16 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_averaging_256(self, scope):
         from matplotlib import pyplot as plt
+
         scope.ch_1.display = True
         scope.run()
         scope.acquisition_type = "average"
         scope.acquisition_average = 256
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_waveform(source="c1", requested_points=1.75e5,
-                                                       sparsing=10)
+        data, time, preamble = scope.download_waveform(
+            source="c1", requested_points=1.75e5, sparsing=10
+        )
         assert type(data) is np.ndarray
         assert len(data) == 1.75e5 or len(data) == 7e4
         assert type(time) is np.ndarray
@@ -450,10 +460,12 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_math(self, scope):
         from matplotlib import pyplot as plt
+
         scope.single()
         sleep(1)
-        data, time, preamble = scope.download_waveform(source="math", requested_points=0,
-                                                       sparsing=10)
+        data, time, preamble = scope.download_waveform(
+            source="math", requested_points=0, sparsing=10
+        )
         assert type(data) is np.ndarray
         assert type(time) is np.ndarray
         assert type(preamble) is dict
@@ -489,5 +501,5 @@ class TestLeCroyT3DSO1204:
         assert reseted_scope.trigger == expected
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()
