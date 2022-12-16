@@ -60,7 +60,7 @@ class TestLeCroyT3DSO1204:
     # FIXTURES #
     ############
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="module")
     def scope(self, adapter_address):
         scope = LeCroyT3DSO1204(adapter_address)
         return scope

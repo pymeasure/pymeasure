@@ -29,7 +29,7 @@ import pytest
 from pymeasure.instruments.rohdeschwarz.hmp import HMP4040
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def hmp4040(adapter_address):
     """
     Return a HMP4040 instrument.
