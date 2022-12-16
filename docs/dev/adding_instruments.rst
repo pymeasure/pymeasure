@@ -1157,21 +1157,39 @@ Device tests
 It can be useful as well to test the code against an actual device. The necessary device setup instructions (for example: connect a probe to the test output) should be written in the header of the test file or test methods. There should be the connection configuration (for example serial port), too.
 In order to distinguish the test module from protocol tests, the filename should be :code:`test_instrumentName_with_device.py`, if the device is called :code:`instrumentName`.
 
-Mark tests that require instrument hardware to be `skipped <https://docs.pytest.org/en/stable/how-to/skipping.html>`_ by default.
-If the whole test module requires hardware, add this at module level/after the import statements:
+To make it easier for others to run these tests using their own instruments, we recommend to use a :code:`pytest.fixture` to create an instance of the instrument class. A simple example of such a fixture looks like this:
 
 .. code-block:: python
 
-    pytest.skip('Only works with connected hardware', allow_module_level=True)
+    @pytest.fixture(scope="module")
+    def extreme5000(connected_device_address):
+        instr = Extreme5000(connected_device_address)
+        instr.reset()  # ensure the device is in a defined state
+        return instr
 
+It is important to use the specific argument name :code: `connected_device_address` and define the scope of the fixture to only establish a single connection to the device. This ensures two things: First, tests using this fixture, i.e. tests that rely on a device to be connected to the computer are skipped by default when running pytest. Second, it makes it possible to specify the address of the device to be used for the test using the :code:`--device-address` command line argument.
 
-If only some test functions in a module need hardware, decorate those with
+This fixture can then be used in the test functions like this:
 
 .. code-block:: python
 
-    @pytest.mark.skip(reason='Only works with connected hardware')
-    def test_something():
-        ...
+    def test_voltage(extreme5000):
+        extreme5000.voltage = 0.345
+        assert extreme5000.voltage == 0.3
 
-If you want to run these tests with a connected device, select those tests and ignore the skip marker.
-For example, if your tests are in a file called :code:`test_extreme5000.py`, invoke pytest with :code:`pytest -k extreme5000 --no-skip`.
+Again, it is important to use the specific argument name of the fixture to be used, in this case :code:`extreme5000`.
+
+It is also possible to defined derived fixtures for example to put the device into a specific state. Such a fixture would look like this:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def auto_scaled_extreme5000(extreme5000):
+        extreme5000.auto_scale()
+        return extreme5000
+
+In this case, do not specify the fixture's scope, so it is called for every test function using it.
+
+To run the test, specify the address of the device to be used via the :code:`--device-address` command line argument and use the :code:`-k` option to select only relevant tests. For example, if your tests are in a file called :code:`test_extreme5000_with_device.py`, invoke pytest with :code:`pytest -k extreme5000 --device-address TCPIP::192.168.0.123::INSTR"`.
+
+There might also be tests where manual intervention is necessary. In this case, skip the test by prepending the test function with a :code:`@pytest.mark.skip(reason="A human needs to press a button.")` decorator.
