@@ -38,8 +38,11 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session")
 def connected_device_address(pytestconfig):
     """
-    Fixture to pass the adapter address to a device. from the command line for tests that require a
-    connection to an instrument  Select the desired module to test with the -k option.
+    Fixture to pass the address to a device for tests that require a connection to an instrument.
+
+    Using this fixture in a test function will skip it when running pytest by default. The test will
+    only run, if a device address is provided with the --device-address option when invoking pytest.
+    To run only relevant tests, use the -k option to select the desired tests.
     """
     address = pytestconfig.getoption("--device-address", skip=True)
     return address
