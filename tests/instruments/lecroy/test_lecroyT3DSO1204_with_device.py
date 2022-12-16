@@ -62,8 +62,7 @@ class TestLeCroyT3DSO1204:
 
     @pytest.fixture(scope="module")
     def instrument(self, connected_device_address):
-        instrument = LeCroyT3DSO1204(connected_device_address)
-        return instrument
+        return LeCroyT3DSO1204(connected_device_address)
 
     @pytest.fixture
     def resetted_instrument(self, instrument):
