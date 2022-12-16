@@ -31,7 +31,10 @@ def pytest_addoption(parser):
         action="store",
         default=None,
         dest="adapter",
-        help="Pass an adapter string for connection to an instrument needed for a test.",
+        help=(
+            "Pass an adapter string for connection to an instrument needed for a test, e.g. "
+            "--device-address ASRL1::INSTR or --device-address TCPIP::192.168.0.123::INSTR"
+        ),
     )
 
 
