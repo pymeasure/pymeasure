@@ -27,7 +27,7 @@ import pytest
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--adapter",
+        "--device-address",
         action="store",
         default=None,
         dest="adapter",
