@@ -30,11 +30,11 @@ from pymeasure.instruments.rohdeschwarz.hmp import HMP4040
 
 
 @pytest.fixture(scope="module")
-def hmp4040(adapter_address):
+def hmp4040(connected_device_address):
     """
     Return a HMP4040 instrument.
     """
-    hmp4040 = HMP4040(adapter_address)
+    hmp4040 = HMP4040(connected_device_address)
     hmp4040.reset()
     return hmp4040
 

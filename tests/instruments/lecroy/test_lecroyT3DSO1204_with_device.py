@@ -61,8 +61,8 @@ class TestLeCroyT3DSO1204:
     ############
 
     @pytest.fixture(scope="module")
-    def instrument(self, adapter_address):
-        instrument = LeCroyT3DSO1204(adapter_address)
+    def instrument(self, connected_device_address):
+        instrument = LeCroyT3DSO1204(connected_device_address)
         return instrument
 
     @pytest.fixture

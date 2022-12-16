@@ -36,10 +36,10 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def adapter_address(pytestconfig):
+def connected_device_address(pytestconfig):
     """
-    Fixture to pass the adapter address from the command line for tests that require a connection
-    to a device.
+    Fixture to pass the adapter address to a device. from the command line for tests that require a
+    connection to an instrument.
     """
-    address = pytestconfig.getoption("--adapter", skip=True)
+    address = pytestconfig.getoption("--device-address", skip=True)
     return address
