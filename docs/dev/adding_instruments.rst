@@ -1164,7 +1164,7 @@ To make it easier for others to run these tests using their own instruments, we 
     @pytest.fixture(scope="module")
     def extreme5000(connected_device_address):
         instr = Extreme5000(connected_device_address)
-        instr.reset()  # ensure the device is in a defined state
+        # ensure the device is in a defined state, e.g. by resetting it.
         return instr
 
 It is important to use the specific argument name :code: `connected_device_address` and define the scope of the fixture to only establish a single connection to the device. This ensures two things: First, tests using this fixture, i.e. tests that rely on a device to be connected to the computer are skipped by default when running pytest. Second, it makes it possible to specify the address of the device to be used for the test using the :code:`--device-address` command line argument.
