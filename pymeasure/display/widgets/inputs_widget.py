@@ -27,7 +27,7 @@ import logging
 from functools import partial
 
 from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
-from ..Qt import QtCore, QtWidgets
+from ..Qt import QtWidgets
 from ...experiment import parameters
 
 log = logging.getLogger(__name__)
