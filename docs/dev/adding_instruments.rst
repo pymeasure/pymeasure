@@ -1175,8 +1175,8 @@ A simple example of a fixture that returns a connected instrument instance looks
         # ensure the device is in a defined state, e.g. by resetting it.
         return instr
 
-Note that this fixture uses :code:`connected_device_address`as an input argument and will thus be skipped by automatic test runs.
- This fixture can then be used in a test functions like this:
+Note that this fixture uses :code:`connected_device_address` as an input argument and will thus be skipped by automatic test runs. 
+This fixture can then be used in a test functions like this:
 
 .. code-block:: python
 
