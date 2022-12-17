@@ -12,3 +12,4 @@ This section contains specific documentation on the Anritsu instruments that are
    anritsuMG3692C
    anritsuMS9710C
    anritsuMS9740A 
+   anritsuMS2090A

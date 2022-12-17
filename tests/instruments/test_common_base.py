@@ -172,6 +172,7 @@ class TestInitWithChildren:
 
     def test_channels(self, parent):
         assert len(parent.channels) == 3
+        assert parent.ch_A == parent.channels['A']
         assert isinstance(parent.ch_A, GenericBase)
 
     def test_analog(self, parent):
@@ -196,6 +197,9 @@ class TestInitWithChildren:
         assert isinstance(p1.analog[1], GenericBase)  # verify that it worked once
         p2 = Parent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
+
+    def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
+        assert isinstance(parent.__class__.channels, CommonBase.ChannelCreator)
 
 
 class TestAddChild:
@@ -323,7 +327,9 @@ def test_ask_writes_and_reads():
                           ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
                           ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
                           ("0,5,7.1", {'cast': bool}, [False, True, True]),
-                          ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5])
+                          ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5]),
+                          ("X,Y,Z", {'maxsplit': 1}, ["X", "Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 0}, ["X,Y,Z"]),
                           ))
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
