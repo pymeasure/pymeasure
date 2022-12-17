@@ -26,17 +26,26 @@ from pytest import raises
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
 
 
 class BasicTestInstrument(Instrument):
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Basic Test Instrument")
+    def __init__(self, adapter, name="Basic Test Instrument", **kwargs):
+        super().__init__(adapter, name)
         self.kwargs = kwargs
 
     simple = Instrument.control(
         "VOLT?", "VOLT %s V",
         """Simple property replying with plain floats""",
     )
+
+    limited_control = Instrument.control(
+        "AMP?", "AMP %g A",
+        """Property limited to 0, 10.""",
+        values=(0, 10),
+        validator=strict_range
+    )
+
     with_error_checks = Instrument.control(
         "VOLT?", "VOLT %s V",
         """Property with error checks after both setting and getting""",
@@ -141,3 +150,13 @@ class TestConnectionCalls:
                 connection_attributes={'timeout': 100}
         ) as inst:
             assert inst.adapter.connection.timeout == 100
+
+
+def test_limited_control_raises_validator_exception():
+    """Verify, that the validator's exception is caught."""
+    with expected_protocol(
+            BasicTestInstrument,
+            [],
+    ) as inst:
+        with raises(ValueError, match="not in range"):
+            inst.limited_control = 20

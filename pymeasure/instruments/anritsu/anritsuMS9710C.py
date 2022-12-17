@@ -76,7 +76,7 @@ class AnritsuMS9710C(Instrument):
     #  Mappings #
     #############
     ONOFF = ["ON", "OFF"]
-    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF'}
+    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}
 
     ######################
     #  Status Registers  #
