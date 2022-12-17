@@ -321,4 +321,3 @@ class Channel:
         else:
             self.ramp_to_voltage(0.0)
         self.source_output = 'OFF'
-        self.instrument.shutdown()
