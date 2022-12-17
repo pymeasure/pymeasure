@@ -522,9 +522,8 @@ class HP3478A(HPLegacyInstrument):
         'verify_calibration_data' to False.
 
         """
-        if verify_calibration_data:
-            if not self.verify_calibration_data(cal_data):
-                raise Exception("cal_data verification fail.")
+        if verify_calibration_data and not self.verify_calibration_data(cal_data):
+            raise Exception("cal_data verification fail.")
 
         for addr in range(0, 256):
             # To write one nibble: 'X<address><byte>', where address and byte are raw 8-bit numbers.

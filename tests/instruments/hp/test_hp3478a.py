@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import pytest
+
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.hp import HP3478A
 
@@ -90,44 +92,46 @@ def test_calibration_data_getter():
         assert instr.verify_calibration_data(cal_data)
 
 
-def test_calibration_data_setter():
+def test_calibration_data_setter_cal_disabled():
+    with pytest.raises(Exception, match="CAL ENABLE switch not set to ON"):
+        with expected_protocol(
+                HP3478A,
+                # cal_enable cleared. As a result there won't be calibration
+                # write transactions.
+                [
+                    (b"B", b'\x00\x00\x00\x00\x00'),
+                ]
+        ) as instr:
+            instr.calibration_data = VALID_CAL_DATA
+
+
+def test_calibration_data_setter_pass():
     valid_cal_write_xfers = convert_cal_data_to_cal_write_xfers(VALID_CAL_DATA)
 
     with expected_protocol(
             HP3478A,
-
-            # setter fail due to cal_enable cleared
-            [
-                (b"B", b'\x00\x00\x00\x00\x00'),
-            ] +
-
             # setter pass
             [
                 (b"B", b'\x00\x20\x00\x00\x00'),
-            ] + valid_cal_write_xfers +
-
-            # setter fail due to invalid data
-            [
-                (b"B", b'\x00\x20\x00\x00\x00'),
-            ]
-
+            ] + valid_cal_write_xfers
     ) as instr:
-        # There will be no data writes when cal_enable is false.
-        try:
-            instr.calibration_data = VALID_CAL_DATA
-        except Exception:
-            pass
-
         # Writing correct data
         instr.calibration_data = VALID_CAL_DATA
 
-        # Assigning invalid data results in an Exception without data writes
-        try:
+
+def test_calibration_data_setter_invalid_data():
+    with pytest.raises(Exception, match="cal_data verification fail"):
+        with expected_protocol(
+                HP3478A,
+                # setter fail due to invalid data
+                [
+                    (b"B", b'\x00\x20\x00\x00\x00'),
+                ]
+        ) as instr:
+            # Assigning invalid data results in an Exception without data writes
             valid_cal_data_corrupt = VALID_CAL_DATA.copy()
             valid_cal_data_corrupt[1] = 1
             instr.calibration_data = valid_cal_data_corrupt
-        except Exception:
-            pass
 
 
 def test_write_calibration_data():
