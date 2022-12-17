@@ -142,7 +142,13 @@ class CSVFormatter(logging.Formatter):
         for column in columns:
             match = re.search(units_pattern, column)
             if match:
-                units[column] = ureg.Quantity(match.groupdict()['units']).units
+                try:
+                    units[column] = ureg.Quantity(match.groupdict()['units']).units
+                except pint.UndefinedUnitError:
+                    log.warning(
+                        f"Column {column} cannot be parsed to"
+                        f" unit {match.groupdict()['units']}.")
+
         return units
 
     def format(self, record):
