@@ -57,24 +57,72 @@ class Racal1992(Instrument):
             **kwargs
         )
 
-    int_types   = [ b'RS', b'UT' ]
-    float_types = [ b'FA', b'PA', b'CK' ]
+    int_types   = [ 'SF', 'RS', 'UT', 'MS' ]
+    float_types = [ 'FA', 'PA', 'CK', 'MX', 'MZ' ]
 
     def read_and_decode(self, allowed_types=None):
         v = self.read_bytes(21)
-        #print(v)
-        num=float(v[2:19])
+        val_type=v[0:2].decode('utf-8')
+        val=float(v[2:19].decode('utf-8'))
 
-        if allowed_types and v[0:2] not in allowed_types:
+        if allowed_types and val_type not in allowed_types:
             raise Exception("Unexpected value type returned")
 
-        if v[0:2] in Racal1992.int_types:
-            return int(num)
-        elif v[0:2] in Racal1992.float_types:
-            return num
+        if val_type in Racal1992.int_types:
+            return int(val)
+        elif val_type in Racal1992.float_types:
+            return val
         else:
             raise Exception("Unsupported return type")
 
+    def fetch_config(self, config):
+        self.write('R' + config)
+        self.wait_for()
+        return self.read_and_decode(allowed_types=config)
+
+    # ============================================================
+    # MS - Software Version
+    # ============================================================
+    @property
+    def software_version(self):
+        """Special function. An integer value between 10 and 78.
+
+        Check manual for further information.
+
+        """
+        return self.fetch_config('MS')
+
+    # ============================================================
+    # MX - Math Constant X
+    # ============================================================
+    @property
+    def math_x(self):
+        """Math constant X.
+
+        """
+        return self.fetch_config('MX')
+
+    @resolution.setter
+    def resolution(self, value):
+        self.write(f"SMX {value}")
+
+    # ============================================================
+    # MZ - Math Constant Z
+    # ============================================================
+    @property
+    def math_z(self):
+        """Math constant Z.
+
+        """
+        return self.fetch_config('MZ')
+
+    @resolution.setter
+    def resolution(self, value):
+        self.write(f"SMZ {value}")
+
+    # ============================================================
+    # RS - Resolution
+    # ============================================================
     @property
     def resolution(self):
         """Number of significant digits. 
@@ -82,25 +130,37 @@ class Racal1992(Instrument):
         This must be an integer from 3 to 10.
 
         """
-
-        self.write("RRS")
-        return self.read_and_decode()
+        return self.fetch_config('RS')
 
     @resolution.setter
     def resolution(self, value):
         strict_discrete_range(value, range(3,11), 1)
         self.write(f"SRS {value}")
 
+    # ============================================================
+    # SF - Special Function
+    # ============================================================
+    @property
+    def special_function(self):
+        """Special function. An integer value between 10 and 78.
+
+        Check manual for further information.
+
+        """
+        return self.fetch_config('SF')
+
+    # ============================================================
+    # UT - Unit
+    # ============================================================
     @property
     def unit(self):
         """Device type. Should return 1992."""
-        self.write("RUT")
-        return self.read_and_decode()
+        return self.fetch_config('UT')
 
     @property
     def measured_value(self):
         """Measured value."""
-        return self.read_and_decode(allowed_types=[b'PA', b'FA', b'CK'])
+        return self.read_and_decode(allowed_types=['PA', 'FA', 'CK'])
 
 
 
