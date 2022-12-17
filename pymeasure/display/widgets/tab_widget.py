@@ -56,3 +56,13 @@ class TabWidget:
     def set_color(self, curve, color):
         """ Set color for widget """
         pass
+
+    def preview_widget(self, parent=None):
+        """ Return a Qt widget suitable for preview during loading
+
+        See also :class:`ResultsDialog<pymeasure.display.widgets.results_dialog.ResultsDialog>`
+        If the object returned is not None, then it should have also an
+        attribute `name`.
+        """
+
+        return None

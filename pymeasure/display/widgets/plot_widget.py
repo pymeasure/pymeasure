@@ -137,3 +137,34 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
         curve.set_color(color)
+
+    def preview_widget(self, parent=None):
+        """ Return a widget suitable for preview during loading """
+        return PlotPreviewWidget("Results",
+                                 self.columns,
+                                 self.plot_frame.x_axis,
+                                 self.plot_frame.y_axis,
+                                 parent=parent)
+
+
+class PlotPreviewWidget(PlotWidget):
+    """ Class variant intended to be used during preview """
+
+    name = "Plot preview"
+
+    def preview_update(self, results):
+        """ Update the preview widget """
+        self.plot.clear()
+        curve = ResultsCurve(results,
+                             x=self.plot_frame.x_axis,
+                             y=self.plot_frame.y_axis,
+                             # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
+                             # circumvent plotting slowdown. Once the issue
+                             # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
+                             # it can be reverted
+                             pen=pg.mkPen(color=(255, 0, 0), width=1),
+                             antialias=True
+                             )
+        curve.update_data()
+
+        self.plot.addItem(curve)

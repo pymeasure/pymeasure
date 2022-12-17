@@ -385,7 +385,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.clear()
 
     def open_experiment(self):
-        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        dialog = ResultsDialog(self.procedure_class,
+                               widget_list=self.widget_list)
         if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
