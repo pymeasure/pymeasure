@@ -79,9 +79,14 @@ class Racal1992(Instrument):
     }
 
     operating_modes = {
-        'frequency_a'   : 'FA',
-        'period_a'      : 'PA',
-        'self_check'    : 'CK',
+        'frequency_a'     : 'FA',
+        'period_a'        : 'PA',
+        'self_check'      : 'CK',
+        'phase_a_to_b'    : 'PH',
+        'ratio_a_to_b'    : 'RA',
+        'ratio_c_to_b'    : 'RC',
+        'interval_a_to_b' : 'TI',
+        'total_a_by_b'    : 'TA',
     }
 
     def read_and_decode(self, allowed_types=None):
@@ -148,10 +153,10 @@ class Racal1992(Instrument):
         pass
 
     # ============================================================
-    # CK - Self-Check mode
+    # RE - Reset measurement
     # ============================================================
-    def enable_self_check(self):
-        self.write(' CK')
+    def reset_measurement(self):
+        self.write(' RE')
         pass
 
     # ============================================================
@@ -245,5 +250,18 @@ class Racal1992(Instrument):
 
         return self.fetch_param(f'L{channel_name}')
 
-    def set_mode(self, mode):
+    def operating_mode(self, mode):
+        if mode not in Racal1992.operating_modes:
+            raise Exception(f"{mode} is not a valid operating mode")
+
+        self.write(' ' + Racal1992.operating_modes[mode])
         pass
+
+    # ============================================================
+    # Measured value
+    # ============================================================
+    @property
+    def measured_value(self):
+        """Measured value."""
+        #return self.read_and_decode(allowed_types=['PA', 'FA', 'CK', 'PH', 'RA', 'RC' ])
+        return self.read_and_decode(allowed_types=Racal1992.operating_modes.values())
