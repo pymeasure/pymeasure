@@ -120,7 +120,7 @@ def test_calibration_data_setter_pass():
 
 
 def test_calibration_data_setter_invalid_data():
-    with pytest.raises(Exception, match="cal_data verification fail"):
+    with pytest.raises(ValueError, match="cal_data verification fail"):
         with expected_protocol(
                 HP3478A,
                 # setter fail due to invalid data
