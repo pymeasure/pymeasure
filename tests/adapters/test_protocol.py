@@ -22,9 +22,17 @@
 # THE SOFTWARE.
 #
 
+from unittest.mock import call
+import pytest
+
 from pymeasure.adapters.protocol import to_bytes, ProtocolAdapter
 
 from pytest import mark, raises, fixture
+
+
+@pytest.fixture
+def adapter():
+    return ProtocolAdapter()
 
 
 @mark.parametrize("input, output", (("superXY", b"superXY"),
@@ -44,6 +52,27 @@ def test_to_bytes_invalid():
 def test_protocol_instantiation():
     a = ProtocolAdapter([("write", "read"), ("write_only", None)])
     assert a.comm_pairs == [("write", "read"), ("write_only", None)]
+
+
+@pytest.fixture
+def mockAdapter():
+    adapter = ProtocolAdapter(connection_attributes={'timeout': 100},
+                              connection_methods={'stb': 17})
+    return adapter
+
+
+def test_connection_call(mockAdapter):
+    """Test whether a call to the connection is registered."""
+    mockAdapter.connection.clear(7)
+    assert mockAdapter.connection.clear.call_args_list == [call(7)]
+
+
+def test_connection_attribute(mockAdapter):
+    assert mockAdapter.connection.timeout == 100
+
+
+def test_connection_method(mockAdapter):
+    assert mockAdapter.connection.stb() == 17
 
 
 class Test_write:

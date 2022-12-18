@@ -35,7 +35,7 @@ class TestProcedure(Procedure):
 
     def startup(self):
         log.info("Setting up random number generator")
-        random.seed(self.seed)
+        random.seed(int(self.seed))
 
     def execute(self):
         log.info("Starting to generate numbers")

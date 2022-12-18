@@ -397,8 +397,10 @@ class Results:
                 value = parameters[parameter.name]
                 setattr(procedure, name, value)
             else:
-                raise Exception("Missing '{}' parameter when loading '{}' class".format(
-                    parameter.name, procedure_class))
+                log.warning(
+                    f"Parameter \"{parameter.name}\" not found when loading " +
+                    f"'{procedure_class}', setting default value")
+                setattr(procedure, name, parameter.default)
 
         procedure.refresh_parameters()  # Enforce update of meta data
 

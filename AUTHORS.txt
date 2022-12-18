@@ -54,4 +54,7 @@ Fabio Garzetti
 Daniel Schmeer
 Mike Manno
 David Sanchez Sanchez
+Andres Ruz-Nieto
 Carlos Martinez
+Scott Candey
+Tom Verbeure
