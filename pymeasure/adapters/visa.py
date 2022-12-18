@@ -218,6 +218,11 @@ class VISAAdapter(Adapter):
         """
         self.connection.wait_for_srq(timeout * 1000)
 
+    def read_stb(self):
+        """ Read the instrument Servive Request Status register
+        """
+        return self.connection.read_stb()
+
     def flush_read_buffer(self):
         """ Flush and discard the input buffer
 
