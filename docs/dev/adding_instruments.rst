@@ -1186,7 +1186,7 @@ This fixture can then be used in a test functions like this:
 
 Again, by specifying the fixture's name, in this case :code:`extreme5000`, invoking :code:`pytest` will skip these tests by default.
 
-It is also possible to define derived fixtures for example to put the device into a specific state. Such a fixture would look like this:
+It is also possible to define derived fixtures, for example to put the device into a specific state. Such a fixture would look like this:
 
 .. code-block:: python
 
