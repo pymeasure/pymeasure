@@ -1162,7 +1162,7 @@ It is important to use the specific argument name :code:`connected_device_addres
 This ensures two things:
 First, it makes it possible to specify the address of the device to be used for the test using the :code:`--device-address` command line argument.
 Second, tests using this fixture, i.e. tests that rely on a device to be connected to the computer are skipped by default when running pytest.
-This is done to avoid that the tests are run on a CI server that does not have the device connected.
+This is done to avoid that tests that require a device are run when none is connected.
 It is important that all tests that require a connection to a device either use the :code:`connected_device_address` fixture or a fixture derived from it as an argument.
 
 A simple example of a fixture that returns a connected instrument instance looks like this:
