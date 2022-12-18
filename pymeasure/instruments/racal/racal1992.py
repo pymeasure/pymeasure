@@ -236,11 +236,6 @@ class Racal1992(Instrument):
         """Device type. Should return 1992."""
         return self.fetch_param('UT')
 
-    @property
-    def measured_value(self):
-        """Measured value."""
-        return self.read_and_decode(allowed_types=['PA', 'FA', 'CK'])
-
     # ============================================================
     # Lx - Trigger level A or B
     # ============================================================
@@ -258,10 +253,17 @@ class Racal1992(Instrument):
         pass
 
     # ============================================================
+    # Wait for measurement value
+    # ============================================================
+    def wait_for_measurement(self):
+        while (self.adapter.read_stb() & 0x10) == 0:
+            print(".", end='', flush=True)
+            pass
+
+    # ============================================================
     # Measured value
     # ============================================================
     @property
     def measured_value(self):
         """Measured value."""
-        #return self.read_and_decode(allowed_types=['PA', 'FA', 'CK', 'PH', 'RA', 'RC' ])
         return self.read_and_decode(allowed_types=Racal1992.operating_modes.values())
