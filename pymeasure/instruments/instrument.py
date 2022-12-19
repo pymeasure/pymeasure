@@ -76,7 +76,7 @@ class Instrument(CommonBase):
         self.adapter = adapter
         self.SCPI = includeSCPI
         self.isShutdown = False
-        self.name = "name"
+        self.name = name
 
         super().__init__()
 
