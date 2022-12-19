@@ -71,6 +71,9 @@ class MainWindow(ManagedWindowBase):
             displays=['iterations', 'delay', 'seed'],
             widget_list=widget_list,
         )
+        logging.getLogger().addHandler(widget_list[1].handler)  # needs to be in Qt context?
+        log.setLevel(self.log_level)
+        log.info("ManagedWindow connected to logging")
         self.setWindowTitle('GUI Example')
 
     def queue(self):
