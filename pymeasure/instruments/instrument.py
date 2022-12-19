@@ -33,7 +33,7 @@ log.addHandler(logging.NullHandler())
 
 
 class Instrument(CommonBase):
-    """ The base class for all Instrument definitions.
+    """The base class for all Instrument definitions.
 
     It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
     with the connected hardware device. This decouples the instrument/command definition from the
@@ -65,19 +65,18 @@ class Instrument(CommonBase):
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True,
-                 **kwargs):
+    def __init__(self, adapter, name, includeSCPI=True, **kwargs):
+        ...
         # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
             except ImportError:
-                raise Exception("Invalid Adapter provided for Instrument since"
-                                " PyVISA is not present")
+                raise Exception("Invalid Adapter provided for Instrument since" " PyVISA is not present")
         self.adapter = adapter
         self.SCPI = includeSCPI
         self.isShutdown = False
-        self.name = name
+        self.name = "name"
 
         super().__init__()
 
@@ -92,7 +91,7 @@ class Instrument(CommonBase):
     # SCPI default properties
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete
+        """This property allows synchronization between a controller and a device. The Operation Complete
         query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
@@ -103,7 +102,7 @@ class Instrument(CommonBase):
 
     @property
     def status(self):
-        """ Requests and returns the status byte and Master Summary Status bit. """
+        """Requests and returns the status byte and Master Summary Status bit."""
         if self.SCPI:
             return self.ask("*STB?").strip()
         else:
@@ -111,7 +110,7 @@ class Instrument(CommonBase):
 
     @property
     def options(self):
-        """ Requests and returns the device options installed. """
+        """Requests and returns the device options installed."""
         if self.SCPI:
             return self.ask("*OPT?").strip()
         else:
@@ -119,7 +118,7 @@ class Instrument(CommonBase):
 
     @property
     def id(self):
-        """ Requests and returns the identification of the instrument. """
+        """Requests and returns the identification of the instrument."""
         if self.SCPI:
             return self.ask("*IDN?").strip()
         else:
@@ -176,15 +175,14 @@ class Instrument(CommonBase):
 
     # SCPI default methods
     def clear(self):
-        """ Clears the instrument status byte
-        """
+        """Clears the instrument status byte"""
         if self.SCPI:
             self.write("*CLS")
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     def reset(self):
-        """ Resets the instrument. """
+        """Resets the instrument."""
         if self.SCPI:
             self.write("*RST")
         else:
@@ -196,7 +194,7 @@ class Instrument(CommonBase):
         log.info(f"Finished shutting down {self.name}")
 
     def check_errors(self):
-        """ Read all errors from the instrument.
+        """Read all errors from the instrument.
 
         :return: list of error entries
         """
