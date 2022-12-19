@@ -14,5 +14,5 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2600(Instrument):
+class LeCroyDSOXXXX(Instrument):
     pass
