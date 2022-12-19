@@ -105,6 +105,7 @@ class ResultsDialog(QtWidgets.QFileDialog):
             for widget in self.preview_widget_list:
                 widget.preview_update(results)
 
+            self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():
                 new_item = QtWidgets.QTreeWidgetItem([param.name, str(param)])
                 self.preview_param.addTopLevelItem(new_item)
