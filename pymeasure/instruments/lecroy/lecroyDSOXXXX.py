@@ -15,4 +15,5 @@ log.addHandler(logging.NullHandler())
 
 
 class LeCroyDSOXXXX(Instrument):
+    ...
     pass
