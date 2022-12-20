@@ -141,7 +141,6 @@ class CXN(Instrument):
         datalength = int.from_bytes(header[2:], "big")
         data = super().read_bytes(datalength)
         chksum = super().read_bytes(2)
-        print(header+data+chksum)
         if chksum == self._checksum(header + data):
             return data
         else:
@@ -158,7 +157,6 @@ class CXN(Instrument):
         """
         fullcmd = self._prepend_cmdheader(command.encode())
         super().write_bytes(fullcmd + self._checksum(fullcmd))
-        print(fullcmd + self._checksum(fullcmd))
         self.check_acknowledgment()
 
     # could be removed if the split of values is put into CommonBase
