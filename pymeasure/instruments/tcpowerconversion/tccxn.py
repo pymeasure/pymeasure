@@ -381,21 +381,17 @@ class CXN(Instrument):
         values=(True, False),
     )
 
-    load_capacity1 = Instrument.control(
-        "GU\x00\x01\x00\x00", "TD\x01\x01\x00%c",
-        """ percentage of full-scale value of the load capacity preset """,
-        preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
-        validator=strict_discrete_set,
-        values=range(101),
-    )
-
     def request_control(self):
         self.write("BC\x55\x55\x00\x00")
-        print(int(struct.unpack(">H", self.read())[0]))
+        status = int(struct.unpack(">H", self.read())[0])
+        if status != 1:
+            print("error(CXN): control request denied!")
 
     def release_control(self):
         self.write("BC\x00\x00\x00\x00")
-        print(int(struct.unpack(">H", self.read())[0]))
+        status = int(struct.unpack(">H", self.read())[0])
+        if status != 0:
+            print("error(CXN): release of control unsuccessful!")
 
     def ping(self):
         self.write("BP\x00\x00\x00\x00")
