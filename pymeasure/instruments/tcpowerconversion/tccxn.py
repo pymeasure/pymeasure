@@ -224,6 +224,13 @@ class CXN(Instrument):
         get_process=lambda d: d.decode()[2:-1].strip(),
     )
 
+    firmware_version = Instrument.measurement(
+        "Gf\x00\x00\x00\x00",
+        """ UI-processor and RF-processor firmware version numbers """,
+        preprocess_reply=lambda d: struct.unpack("BBBB", d),
+        get_process=lambda v: str.format("UI {}.{}, RF {}.{}", *v)
+    )
+
     pulse_params = Instrument.measurement(
         "GE\x00\x00\x00\x00",
         """ Get pulse on/off time of the pulse waveform """,
