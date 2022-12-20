@@ -72,19 +72,17 @@ def test_manual_mode():
         assert inst.manual_mode is True
 
 
-def test_load_capacity():
-    """Verify the processing the load capacity property"""
-    with expected_protocol(
-        CXN,
-        [(b'C\x00GU\x00\x01\x00\x00\x00\xe0', b'\x2aR\x00\x00\n\x00\x01\x002\x002\xff\xff\xff\xff\x04\xbd'), ],
-    ) as inst:
-        assert inst.load_capacity1 == 50
-
-
-def test_load_capacity_preset():
+@pytest.mark.parametrize("channel", range(1, 10))
+def test_load_capacity_preset(channel):
     """Verify the processing the load capacity propert via a Channel"""
+    # here we use '%' for formating since encoding from strings makes troubles
+    # with some values (e.g. \xff)
+    cmd = b'C\x00GU\x00%c\x00\x00' % (channel)
+    cmd += CXN._checksum(cmd)
+    response = b'R\x00\x00\n\x00%c\x00\x32\x00\x32\xff\xff\xff\xff' % (channel)
+    response += CXN._checksum(response)
+    print(cmd, response)
     with expected_protocol(
-        CXN,
-        [(b'C\x00GU\x00\x01\x00\x00\x00\xe0', b'\x2aR\x00\x00\n\x00\x01\x002\x002\xff\xff\xff\xff\x04\xbd'), ],
+        CXN, [(cmd, b'\x2a' + response), ],
     ) as inst:
-        assert inst.preset_1.load_capacity == 50
+        assert inst.presets[channel].load_capacity == 50
