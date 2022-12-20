@@ -26,7 +26,7 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
-from .Qt import QtCore
+from .Qt import QtCore, QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -38,9 +38,10 @@ class ResultsCurve(pg.PlotDataItem):
     the full file instead of just appending.
     """
 
-    def __init__(self, results, x, y, force_reload=False, **kwargs):
+    def __init__(self, results, x, y, force_reload=False, wdg=None, **kwargs):
         super().__init__(**kwargs)
         self.results = results
+        self.wdg = wdg
         self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
         self.force_reload = force_reload
@@ -61,8 +62,9 @@ class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
 
-    def __init__(self, results, x, y, z, force_reload=False):
+    def __init__(self, results, x, y, z, force_reload=False, wdg=None, **kwargs):
         self.results = results
+        self.wdg = wdg
         self.x = x
         self.y = y
         self.z = z
@@ -80,11 +82,13 @@ class ResultsImage(pg.ImageItem):
 
         super().__init__(image=self.img_data)
 
-        # Scale and translate image so that the pixels are in the coorect
+        # Scale and translate image so that the pixels are in the correct
         # position in "data coordinates"
-        self.scale(self.xstep, self.ystep)
-        self.translate(int(self.xstart / self.xstep) - 0.5,
-                       int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
+        tr = QtGui.QTransform()
+        tr.scale(self.xstep, self.ystep)
+        tr.translate(int(self.xstart / self.xstep) - 0.5,
+                     int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
+        self.setTransform(tr)
 
     def update_data(self):
         if self.force_reload:

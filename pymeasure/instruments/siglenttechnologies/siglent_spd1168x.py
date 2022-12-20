@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from pymeasure.instruments.instrument import Instrument
 from pymeasure.instruments.siglenttechnologies.siglent_spdbase import (SPDSingleChannelBase,
                                                                        SPDChannel)
 
@@ -29,11 +30,11 @@ class SPD1168X(SPDSingleChannelBase):
     """Represent the Siglent SPD1168X Power Supply.
     """
 
+    channels = Instrument.ChannelCreator(SPDChannel, 1)
+
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
             name="Siglent Technologies SPD1168X Power Supply",
             **kwargs
         )
-
-        self.ch[1] = SPDChannel(self, 1)

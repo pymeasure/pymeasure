@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from inspect import getmembers
 import logging
 
 log = logging.getLogger(__name__)
@@ -117,14 +118,10 @@ class CommonBase:
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._special_names = self._setup_special_names()
-        # Add children from ChildDescriptors.
-        for item, value in self.__class__.__dict__.items():
-            if isinstance(value, self.ChannelCreator):
-                for cls, id in value.pairs:
-                    child = self.add_child(cls, id, collection=item, **value.kwargs)
-                    child._protected = True
+        self._create_channels()
+        super().__init__(**kwargs)
 
     class ChannelCreator:
         """Add channels to the parent class.
@@ -181,17 +178,23 @@ class CommonBase:
         special_names = []
         dynamic_params = tuple(set(self._fget_params_list + self._fset_params_list))
         # Check whether class variables of DynamicProperty type are present
-        for obj in (self,) + self.__class__.__mro__:
-            for attr_name, attr in obj.__dict__.items():
-                if isinstance(attr, DynamicProperty):
-                    special_names += [attr_name + "_" + key for key in dynamic_params]
+        for attr_name, attr in getmembers(self.__class__):
+            if isinstance(attr, DynamicProperty):
+                special_names += [attr_name + "_" + key for key in dynamic_params]
         # Check if special variables are defined at class level
-        for obj in (self,) + self.__class__.__mro__:
-            for attr in obj.__dict__:
-                if attr in special_names:
-                    # Copy class special variable at instance level, prefixing reserved_prefix
-                    setattr(self, self.__reserved_prefix + attr, obj.__dict__[attr])
+        for attr, value in getmembers(self.__class__):
+            if attr in special_names:
+                # Copy class special variable at instance level, prefixing reserved_prefix
+                setattr(self, self.__reserved_prefix + attr, value)
         return special_names
+
+    def _create_channels(self):
+        """Create channels according to the ChannelCreator objects."""
+        for name, creator in getmembers(self.__class__):
+            if isinstance(creator, CommonBase.ChannelCreator):
+                for cls, id in creator.pairs:
+                    child = self.add_child(cls, id, collection=name, **creator.kwargs)
+                    child._protected = True
 
     def __setattr__(self, name, value):
         """ Add reserved_prefix in front of special variables."""
@@ -287,7 +290,7 @@ class CommonBase:
         self.wait_for(query_delay)
         return self.read()
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=None):
+    def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1):
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
@@ -297,12 +300,13 @@ class CommonBase:
         :param preprocess_reply: optional callable used to preprocess values
             received from the instrument. The callable returns the processed
             string.
+        :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
         :returns: A list of the desired type, or strings where the casting fails
         """
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
-        results = results.split(separator)
+        results = results.split(separator, maxsplit=maxsplit)
         for i, result in enumerate(results):
             try:
                 if cast == bool:

@@ -28,7 +28,9 @@ from pymeasure.adapters.protocol import ProtocolAdapter
 
 
 @contextmanager
-def expected_protocol(instrument_cls, comm_pairs, **kwargs):
+def expected_protocol(instrument_cls, comm_pairs,
+                      connection_attributes={}, connection_methods={},
+                      **kwargs):
     """Context manager that checks sent/received instrument commands without a
     device connected.
 
@@ -47,10 +49,13 @@ def expected_protocol(instrument_cls, comm_pairs, **kwargs):
         'None' indicates that a pair member (command or response) does not
         exist, e.g. `(None, 'RESP1')`. Commands and responses are without
         termination characters.
+    :param connection_attributes: Dictionary of connection attributes and their values.
+    :param connection_methods: Dictionary of method names of the connection and their return values.
     :param \\**kwargs:
         Keyword arguments for the instantiation of the instrument.
     """
-    protocol = ProtocolAdapter(comm_pairs)
+    protocol = ProtocolAdapter(comm_pairs, connection_attributes=connection_attributes,
+                               connection_methods=connection_methods)
     instr = instrument_cls(protocol, **kwargs)
     yield instr
     assert protocol._index == len(comm_pairs), (
