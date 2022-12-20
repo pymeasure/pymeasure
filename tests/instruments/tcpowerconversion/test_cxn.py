@@ -31,7 +31,12 @@ def test_id():
     """Verify the communication of the id property."""
     with expected_protocol(
         CXN,
-        [(b'C\x00Gi\x00\x01\x00\x00\x00\xf4', b'\x2aR\x00\x00\x10\x00\x01AG 0313 GTC  \x00\x03\x10'), ],
+        [
+            (
+                b"C\x00Gi\x00\x01\x00\x00\x00\xf4",
+                b"\x2aR\x00\x00\x10\x00\x01AG 0313 GTC  \x00\x03\x10",
+            ),
+        ],
     ) as inst:
         assert inst.id == "AG 0313 GTC"
 
@@ -40,7 +45,12 @@ def test_power():
     """Verify the processing the power measurement."""
     with expected_protocol(
         CXN,
-        [(b'C\x00GP\x00\x00\x00\x00\x00\xda', b'\x2aR\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x58'), ],
+        [
+            (
+                b"C\x00GP\x00\x00\x00\x00\x00\xda",
+                b"\x2aR\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00\x58",
+            ),
+        ],
     ) as inst:
         assert inst.power == (0.0, 0.0, 0.0)
 
@@ -49,7 +59,12 @@ def test_temperature():
     """Verify the processing the temperature measurement."""
     with expected_protocol(
         CXN,
-        [(b'C\x00GS\x00\x00\x00\x00\x00\xdd', b'\x2aR\x00\x00\x08\x00\x10\x00\xdd\x00\x04\x00\x03\x01\x4e'), ],
+        [
+            (
+                b"C\x00GS\x00\x00\x00\x00\x00\xdd",
+                b"\x2aR\x00\x00\x08\x00\x10\x00\xdd\x00\x04\x00\x03\x01\x4e",
+            ),
+        ],
     ) as inst:
         assert inst.temperature == pytest.approx(22.1)
 
@@ -58,7 +73,13 @@ def test_power_limit():
     """Verify the processing the power limit property"""
     with expected_protocol(
         CXN,
-        [(b'C\x00Gp\x00\x00\x00\x00\x00\xfa', b'\x2aR\x00\x00\x144\xf8\x0b\xb8\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff4\xf8\x02\xbc\x10\x33'), ],
+        [
+            (
+                b"C\x00Gp\x00\x00\x00\x00\x00\xfa",
+                b"\x2aR\x00\x00\x144\xf8\x0b\xb8\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+                b"4\xf8\x02\xbc\x10\x33",
+            ),
+        ],
     ) as inst:
         assert inst.power_limit == pytest.approx(300.0)
 
@@ -67,7 +88,12 @@ def test_manual_mode():
     """Verify the processing the manual mode property"""
     with expected_protocol(
         CXN,
-        [(b'C\x00GT\x00\x00\x00\x00\x00\xde', b'\x2aR\x00\x00\n\x00\x01\x01\xa9\x02v\x00\x00\x00\x00\x01\x7f'), ],
+        [
+            (
+                b"C\x00GT\x00\x00\x00\x00\x00\xde",
+                b"\x2aR\x00\x00\n\x00\x01\x01\xa9\x02v\x00\x00\x00\x00\x01\x7f",
+            ),
+        ],
     ) as inst:
         assert inst.manual_mode is True
 
@@ -77,12 +103,15 @@ def test_load_capacity_preset(channel):
     """Verify the processing the load capacity propert via a Channel"""
     # here we use '%' for formating since encoding from strings makes troubles
     # with some values (e.g. \xff)
-    cmd = b'C\x00GU\x00%c\x00\x00' % (channel)
+    cmd = b"C\x00GU\x00%c\x00\x00" % (channel)
     cmd += CXN._checksum(cmd)
-    response = b'R\x00\x00\n\x00%c\x00\x32\x00\x32\xff\xff\xff\xff' % (channel)
+    response = b"R\x00\x00\n\x00%c\x00\x32\x00\x32\xff\xff\xff\xff" % (channel)
     response += CXN._checksum(response)
     print(cmd, response)
     with expected_protocol(
-        CXN, [(cmd, b'\x2a' + response), ],
+        CXN,
+        [
+            (cmd, b"\x2a" + response),
+        ],
     ) as inst:
         assert inst.presets[channel].load_capacity == 50
