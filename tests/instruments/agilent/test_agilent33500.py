@@ -303,4 +303,5 @@ def test_channel_phase_synchronization():
             ("PHAS:SYNC", '')
         ]
     ) as inst:
-        inst.phase_sync()
+        response = inst.phase_sync()
+        assert response is None

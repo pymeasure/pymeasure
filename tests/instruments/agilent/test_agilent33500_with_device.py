@@ -27,7 +27,7 @@ from pymeasure.instruments.agilent.agilent33500 import Agilent33500
 from math import pi, sin
 
 
-pytest.skip(allow_module_level=True)
+pytest.skip('Only works with connected hardware', allow_module_level=True)
 # from pyvisa.errors import VisaIOError
 
 ############
@@ -38,7 +38,7 @@ pytest.skip(allow_module_level=True)
 @pytest.fixture(scope="session")
 def generator():
     try:
-        generator = Agilent33500("TCPIP::192.168.1.20::inst0::INSTR")
+        generator = Agilent33500("TCPIP::192.168.225.208::inst0::INSTR")
     except IOError:
         print("Not able to connect to waveform generator")
         assert False
