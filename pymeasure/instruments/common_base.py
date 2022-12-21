@@ -30,7 +30,7 @@ log.addHandler(logging.NullHandler())
 
 
 class DynamicProperty(property):
-    """ Class that allows managing python property behaviour in a "dynamic" fashion
+    """Class that allows managing python property behaviour in a "dynamic" fashion
 
     The class allows passing, in addition to regular property parameters, a list of
     runtime configurable parameters.
@@ -55,8 +55,7 @@ class DynamicProperty(property):
                    parameters.
     """
 
-    def __init__(self, fget=None, fset=None, fdel=None, doc=None, fget_params_list=None,
-                 fset_params_list=None, prefix=""):
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None, fget_params_list=None, fset_params_list=None, prefix=""):
         super().__init__(fget, fset, fdel, doc)
         self.fget_params_list = () if fget_params_list is None else fget_params_list
         self.fset_params_list = () if fset_params_list is None else fset_params_list
@@ -100,20 +99,9 @@ class CommonBase:
 
     # Variable holding the list of DynamicProperty parameters that are configurable
     # by users
-    _fget_params_list = ('get_command',
-                         'values',
-                         'map_values',
-                         'get_process',
-                         'command_process',
-                         'check_get_errors')
+    _fget_params_list = ("get_command", "values", "map_values", "get_process", "command_process", "check_get_errors")
 
-    _fset_params_list = ('set_command',
-                         'validator',
-                         'values',
-                         'map_values',
-                         'set_process',
-                         'command_process',
-                         'check_set_errors')
+    _fset_params_list = ("set_command", "validator", "values", "map_values", "set_process", "command_process", "check_set_errors")
 
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
@@ -157,7 +145,7 @@ class CommonBase:
             except TypeError:
                 valid_class = False
             if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
-                assert (len(id) == len(cls)), "Lengths of cls and id do not match."
+                assert len(id) == len(cls), "Lengths of cls and id do not match."
                 self.pairs = list(zip(cls, id))
             elif isinstance(id, (list, tuple)) and valid_class:
                 self.pairs = list(zip((cls,) * len(id), id))
@@ -169,7 +157,7 @@ class CommonBase:
             self.kwargs = kwargs
 
     def _setup_special_names(self):
-        """ Return list of class/instance special names.
+        """Return list of class/instance special names.
 
         Compute the list of special names based on the list of
         class attributes that are a DynamicProperty. Check also for class variables
@@ -197,21 +185,20 @@ class CommonBase:
                     child._protected = True
 
     def __setattr__(self, name, value):
-        """ Add reserved_prefix in front of special variables."""
-        if hasattr(self, '_special_names'):
+        """Add reserved_prefix in front of special variables."""
+        if hasattr(self, "_special_names"):
             if name in self._special_names:
                 name = self.__reserved_prefix + name
         super().__setattr__(name, value)
 
     def __getattribute__(self, name):
-        """ Prevent read access to variables with special names used to
+        """Prevent read access to variables with special names used to
         support dynamic property behaviour."""
-        if name in ('_special_names', '__dict__'):
+        if name in ("_special_names", "__dict__"):
             return super().__getattribute__(name)
-        if hasattr(self, '_special_names'):
+        if hasattr(self, "_special_names"):
             if name in self._special_names:
-                raise AttributeError(
-                    f"{name} is a reserved variable name and it cannot be read")
+                raise AttributeError(f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
 
     # Channel management
@@ -290,7 +277,7 @@ class CommonBase:
         self.wait_for(query_delay)
         return self.read()
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=None):
+    def values(self, command, separator=",", cast=float, preprocess_reply=None):
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
@@ -319,7 +306,7 @@ class CommonBase:
         return results
 
     def binary_values(self, command, query_delay=0, **kwargs):
-        """ Write a command to the instrument and return a numpy array of the binary data.
+        """Write a command to the instrument and return a numpy array of the binary data.
 
         :param command: Command to be sent to the instrument.
         :param query_delay: Delay between writing and reading in seconds.
@@ -345,7 +332,7 @@ class CommonBase:
         check_set_errors=False,
         check_get_errors=False,
         dynamic=False,
-        **kwargs
+        **kwargs,
     ):
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
@@ -405,14 +392,15 @@ class CommonBase:
         considered reserved for dynamic property control.
         """
 
-        def fget(self,
-                 get_command=get_command,
-                 values=values,
-                 map_values=map_values,
-                 get_process=get_process,
-                 command_process=command_process,
-                 check_get_errors=check_get_errors,
-                 ):
+        def fget(
+            self,
+            get_command=get_command,
+            values=values,
+            map_values=map_values,
+            get_process=get_process,
+            command_process=command_process,
+            check_get_errors=check_get_errors,
+        ):
             if get_command is None:
                 raise LookupError("Property can not be read.")
             vals = self.values(command_process(get_command), **kwargs)
@@ -430,24 +418,22 @@ class CommonBase:
                             return k
                     raise KeyError(f"Value {value} not found in mapped values")
                 else:
-                    raise ValueError(
-                        'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values))
-                    )
+                    raise ValueError("Values of type `{}` are not allowed " "for Instrument.control".format(type(values)))
             else:
                 vals = get_process(vals)
                 return vals
 
-        def fset(self,
-                 value,
-                 set_command=set_command,
-                 validator=validator,
-                 values=values,
-                 map_values=map_values,
-                 set_process=set_process,
-                 command_process=command_process,
-                 check_set_errors=check_set_errors,
-                 ):
+        def fset(
+            self,
+            value,
+            set_command=set_command,
+            validator=validator,
+            values=values,
+            map_values=map_values,
+            set_process=set_process,
+            command_process=command_process,
+            check_set_errors=check_set_errors,
+        ):
 
             if set_command is None:
                 raise LookupError("Property can not be set.")
@@ -460,10 +446,7 @@ class CommonBase:
             elif isinstance(values, dict):
                 value = values[value]
             else:
-                raise ValueError(
-                    'Values of type `{}` are not allowed '
-                    'for CommonBase.control'.format(type(values))
-                )
+                raise ValueError("Values of type `{}` are not allowed " "for CommonBase.control".format(type(values)))
             self.write(command_process(set_command) % value)
             if check_set_errors:
                 self.check_errors()
@@ -473,18 +456,15 @@ class CommonBase:
 
         if dynamic:
             fget.__doc__ += "(dynamic)"
-            return DynamicProperty(fget=fget, fset=fset,
-                                   fget_params_list=CommonBase._fget_params_list,
-                                   fset_params_list=CommonBase._fset_params_list,
-                                   prefix=CommonBase.__reserved_prefix)
+            return DynamicProperty(
+                fget=fget, fset=fset, fget_params_list=CommonBase._fget_params_list, fset_params_list=CommonBase._fset_params_list, prefix=CommonBase.__reserved_prefix
+            )
         else:
             return property(fget, fset)
 
     @staticmethod
-    def measurement(get_command, docs, values=(), map_values=None,
-                    get_process=lambda v: v, command_process=lambda c: c,
-                    check_get_errors=False, dynamic=False, **kwargs):
-        """ Return a property for the class based on the supplied
+    def measurement(get_command, docs, values=(), map_values=None, get_process=lambda v: v, command_process=lambda c: c, check_get_errors=False, dynamic=False, **kwargs):
+        """Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
 
@@ -503,23 +483,21 @@ class CommonBase:
             instances or subclasses. See :meth:`control` for an usage example.
         """
 
-        return CommonBase.control(get_command=get_command,
-                                  set_command=None,
-                                  docs=docs,
-                                  values=values,
-                                  map_values=map_values,
-                                  get_process=get_process,
-                                  command_process=command_process,
-                                  check_get_errors=check_get_errors,
-                                  dynamic=dynamic,
-                                  **kwargs)
+        return CommonBase.control(
+            get_command=get_command,
+            set_command=None,
+            docs=docs,
+            values=values,
+            map_values=map_values,
+            get_process=get_process,
+            command_process=command_process,
+            check_get_errors=check_get_errors,
+            dynamic=dynamic,
+            **kwargs,
+        )
 
     @staticmethod
-    def setting(set_command, docs,
-                validator=lambda x, y: x, values=(), map_values=False,
-                set_process=lambda v: v,
-                check_set_errors=False, dynamic=False,
-                **kwargs):
+    def setting(set_command, docs, validator=lambda x, y: x, values=(), map_values=False, set_process=lambda v: v, check_set_errors=False, dynamic=False, **kwargs):
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
@@ -539,13 +517,15 @@ class CommonBase:
             instances or subclasses. See :meth:`control` for an usage example.
         """
 
-        return CommonBase.control(get_command=None,
-                                  set_command=set_command,
-                                  docs=docs,
-                                  validator=validator,
-                                  values=values,
-                                  map_values=map_values,
-                                  set_process=set_process,
-                                  check_set_errors=check_set_errors,
-                                  dynamic=dynamic,
-                                  **kwargs)
+        return CommonBase.control(
+            get_command=None,
+            set_command=set_command,
+            docs=docs,
+            validator=validator,
+            values=values,
+            map_values=map_values,
+            set_process=set_process,
+            check_set_errors=check_set_errors,
+            dynamic=dynamic,
+            **kwargs,
+        )
