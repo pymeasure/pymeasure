@@ -32,7 +32,7 @@ log.addHandler(logging.NullHandler())
 
 
 class SignalChannel(Channel):
-    
+
     @staticmethod
     def get_process_generator(keyword, unit, type):
         """Generate a get_process method searching for keyword, stripping unit"""
@@ -81,6 +81,7 @@ class SignalChannel(Channel):
         validator=strict_range,
         values=[0, 350e6],
         get_process=get_process_generator('FRQ', 'HZ', float),
+        dynamic=True,
     )
 
     # TODO: Add range of outputs per model? Tricky without knowing offset
@@ -92,6 +93,7 @@ class SignalChannel(Channel):
         validator=strict_range,
         values=[0, 5],
         get_process=get_process_generator('AMP', 'V', float),
+        dynamic=True,
     )
 
     # TODO: Add range of offset per model? Tricky without knowing amplitude
@@ -103,6 +105,7 @@ class SignalChannel(Channel):
         validator=strict_range,
         values=[0, 5],
         get_process=get_process_generator('OFST', 'V', float),
+        dynamic=True,
     )
 
     # TODO: Add other Basic Waveform parameters like period
