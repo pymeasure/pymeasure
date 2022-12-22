@@ -32,7 +32,8 @@ log.addHandler(logging.NullHandler())
 
 
 class SignalChannel(Channel):
-
+    
+    @staticmethod
     def get_process_generator(keyword, unit, type):
         """Generate a get_process method searching for keyword, stripping unit"""
         def selector(values):
