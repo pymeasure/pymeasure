@@ -154,6 +154,4 @@ class PlotPreviewWidget(PlotWidget):
         """ Update the preview widget """
         self.plot.clear()
         curve = self.new_curve(results, antialias=True)
-        curve.update_data()
-
-        self.plot.addItem(curve)
+        self.load(curve)

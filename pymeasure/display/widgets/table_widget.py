@@ -439,7 +439,7 @@ class Table(QtWidgets.QTableView):
         filename = filename_and_ext[0]
         ext = filename_and_ext[1]
         if filename:
-            mode =  self.supported_formats[ext]
+            mode = self.supported_formats[ext]
             prefix = df.style if mode == "latex" else df
             getattr(prefix, 'to_' + mode)(filename)
 
