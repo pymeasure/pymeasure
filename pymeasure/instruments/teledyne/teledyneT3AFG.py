@@ -82,35 +82,50 @@ class SignalChannel(Channel):
         values=[0, 350e6],
         get_process=get_process_generator('FRQ', 'HZ', float),
         dynamic=True,
+        check_set_errors=True,
     )
 
-    # TODO: Add range of outputs per model? Tricky without knowing offset
+    # TODO: Add range of outputs per model? Tricky without knowing offset and frequency
     amplitude = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV AMP,%g",
         """Control the amplitude of waveform to be output in volts peak-to-peak.
-        Has no effect when WVTP is NOISE or DC.""",
+        Has no effect when WVTP is NOISE or DC.
+        Max amplitude depends on offset, frequency, and load.
+        Max amplitude also depends on the channel max output amplitude.""",
         validator=strict_range,
         values=[0, 5],
         get_process=get_process_generator('AMP', 'V', float),
         dynamic=True,
+        check_set_errors=True,
     )
 
-    # TODO: Add range of offset per model? Tricky without knowing amplitude
+    # TODO: Add range of offset per model? Tricky without knowing amplitude, frequency
     offset = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV OFST,%g",
         """Control the offset of waveform to be output in volts.
-        Has no effect when WVTP is NOISE.""",
+        Has no effect when WVTP is NOISE.
+        Max offset depends on amplitude, frequency, and load.
+        Max offset also depends on the channel max output amplitude.""",
         validator=strict_range,
         values=[0, 5],
         get_process=get_process_generator('OFST', 'V', float),
         dynamic=True,
+        check_set_errors=True,
     )
 
     # TODO: Add other Basic Waveform parameters like period
 
-    # TODO: Add odd parameter like MAX_OUTPUT_AMP
+    max_output_amplitude = Channel.control(
+        "C{ch}:BSWV?",
+        "C{ch}:BSWV MAX_OUTPUT_AMP,%g",
+        """Control the maximum output amplitude of the channel in volts peak to peak.""",
+        validator=strict_range,
+        values=[0,20],
+        get_process=get_process_generator('MAX_OUTPUT_AMP', 'V', float),
+        dynamic=True,
+    )
 
 
 class TeledyneT3AFG(Instrument):
