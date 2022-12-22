@@ -153,7 +153,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
                 value_render = f"{value_render:.{result.float_digits:d}f}"
 
             if role == QtCore.Qt.ItemDataRole.DisplayRole:
-                return (str(value_render))
+                return str(value_render)
             elif role == SORT_ROLE:
                 # For numerical sort
                 return float(value)
@@ -276,7 +276,7 @@ class PandasModelByRow(PandasModelBase):
     def _get_row_column_set(self, result, r1, c1, r2, c2):
         top = self.translate_to_global(result, r1, c1)
         bottom = self.translate_to_global(result, r2, c2)
-        return ((top + bottom),)
+        return (top + bottom),
 
     def translate_to_local(self, row, col):
         """ Translate from full table coordinate to single result coordinates """
@@ -321,8 +321,6 @@ class PandasModelByColumn(PandasModelBase):
         return cols
 
     def _get_row_column_set(self, result, r1, c1, r2, c2):
-        top = self.translate_to_global(result, r1, c1)
-        bottom = self.translate_to_global(result, r2, c2)
         top_bottoms = []
         for i in range(c1, c2 + 1):
             top = self.translate_to_global(result, r1, i)
@@ -372,13 +370,13 @@ class Table(QtWidgets.QTableView):
     """
 
     supported_formats = {
-        'csv': "CSV file (*.csv)",
-        'excel': "Excel file (*.xlsx)",
-        'html': "HTML file (*.html *.htm)",
-        'json': "JSON file (*.json)",
-        'latex': "LaTeX file (*.tex)",
-        'markdown': "Markdown file (*.md)",
-        'xml': "XML file (*.xml)",
+        "CSV file (*.csv)": 'csv',
+        "Excel file (*.xlsx)": 'excel',
+        "HTML file (*.html *.htm)": 'html',
+        "JSON file (*.json)": 'json',
+        "LaTeX file (*.tex)": 'latex',
+        "Markdown file (*.md)": 'markdown',
+        "XML file (*.xml)": 'xml',
     }
 
     def __init__(self, refresh_time=0.2, check_status=True,
@@ -433,7 +431,7 @@ class Table(QtWidgets.QTableView):
     def export_action(self):
         df = self.composed_dataframe()
 
-        formats = ";;".join(self.supported_formats.values())
+        formats = ";;".join(self.supported_formats.keys())
         filename_and_ext = QtWidgets.QFileDialog.getSaveFileName(self,
                                                                  "Save File",
                                                                  "",
@@ -441,11 +439,9 @@ class Table(QtWidgets.QTableView):
         filename = filename_and_ext[0]
         ext = filename_and_ext[1]
         if filename:
-            for k, v in self.supported_formats.items():
-                if v == ext:
-                    break
-            prefix = df.style if k == "latex" else df
-            getattr(prefix, 'to_' + k)(filename)
+            mode =  self.supported_formats[ext]
+            prefix = df.style if mode == "latex" else df
+            getattr(prefix, 'to_' + mode)(filename)
 
     def refresh_action(self):
         self.update_tables()
