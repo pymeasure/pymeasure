@@ -92,7 +92,7 @@ class SignalChannel(Channel):
         """Control the amplitude of waveform to be output in volts peak-to-peak.
         Has no effect when WVTP is NOISE or DC.
         Max amplitude depends on offset, frequency, and load.
-        Max amplitude also depends on the channel max output amplitude.""",
+        Amplitude is also limited by the channel max output amplitude.""",
         validator=strict_range,
         values=[0, 5],
         get_process=get_process_generator('AMP', 'V', float),
@@ -107,7 +107,7 @@ class SignalChannel(Channel):
         """Control the offset of waveform to be output in volts.
         Has no effect when WVTP is NOISE.
         Max offset depends on amplitude, frequency, and load.
-        Max offset also depends on the channel max output amplitude.""",
+        Offset is also limited by the channel max output amplitude.""",
         validator=strict_range,
         values=[0, 5],
         get_process=get_process_generator('OFST', 'V', float),
