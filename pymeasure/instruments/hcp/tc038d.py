@@ -99,7 +99,7 @@ class TC038D(Instrument):
         self.write_bytes(bytes(data))
 
     def read(self):
-        """Read response and interpret the number"""
+        """Read response and interpret the number, returning it as a string."""
         # Slave address, function
         got = self.read_bytes(2)
         if got[1] == Functions.R:
@@ -109,7 +109,7 @@ class TC038D(Instrument):
             read = self.read_bytes(length[0] + 2)
             if read[-2:] != bytes(CRC16(got + length + read[:-2])):
                 raise ConnectionError("Response CRC does not match.")
-            return int.from_bytes(read[:-2], byteorder="big", signed=True)
+            return str(int.from_bytes(read[:-2], byteorder="big", signed=True))
         elif got[1] == Functions.W:
             # start address, number elements, CRC; each 2 Bytes long
             got += self.read_bytes(2 + 2 + 2)
@@ -120,7 +120,7 @@ class TC038D(Instrument):
             got += self.read_bytes(2 + 2 + 2)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
-            return int.from_bytes(got[-4:-2], "big")
+            return str(int.from_bytes(got[-4:-2], "big"))
         else:  # an error occurred
             # got[1] is functioncode + 0x80
             end = self.read_bytes(3)  # error code and CRC
@@ -138,7 +138,7 @@ class TC038D(Instrument):
 
     def ping(self, test_data=0):
         """Test the connection sending an integer up to 65535, checks the response."""
-        assert self.ask(f"ECHO,0,{test_data}") == test_data
+        assert int(self.ask(f"ECHO,0,{test_data}")) == test_data
 
     setpoint = Instrument.control(
         "R,0x106", "W,0x106,%i",
