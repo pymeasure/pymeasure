@@ -138,6 +138,9 @@ class TeledyneT3AFG(Instrument):
 
     .. code-block: python
     generator=TeledyneT3AFG(resource)
+    generator.ch_1.wavetype='SINE'
+    generator.ch_1.amplitude=2
+    generator.ch_1.output_enabled=True
     """
 
     channels = Instrument.ChannelCreator(SignalChannel, (1, 2))
