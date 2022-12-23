@@ -65,7 +65,7 @@ class SignalChannel(Channel):
         "C{ch}:BSWV?",
         "C{ch}:BSWV WVTP,%s",
         """Control the type of waveform to be output.
-        Options are: {SINE, SQUARE, RAMP, PULSE, NOISE, ARB, DC, PRBS, IQ}
+        Options are: {'SINE', 'SQUARE', 'RAMP', 'PULSE', 'NOISE', 'ARB', 'DC', 'PRBS', 'IQ'}
         """,
         validator=strict_discrete_set,
         values=['SINE', 'SQUARE', 'RAMP', 'PULSE', 'NOISE', 'ARB', 'DC', 'PRBS', 'IQ'],
