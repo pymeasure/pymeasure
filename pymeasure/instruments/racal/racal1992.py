@@ -25,7 +25,6 @@ import logging
 import time
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_range
 
 log = logging.getLogger(__name__)   # https://docs.python.org/3/howto/logging.html#library-config
 log.addHandler(logging.NullHandler())
@@ -44,26 +43,9 @@ class Racal1992(Instrument):
     channel B.
     """
 
-    resolution = Instrument.setting(
-            " SRS %d",
-            """ An integer from 3 to 9 that specifies the number
-            of significant digits. """,
-            validator=strict_discrete_range,
-            values=range(3, 10),
-            map_values=True
-    )
-
-    def __init__(self, adapter, name="Racal-Dana 1992", **kwargs):
-        kwargs.setdefault('write_termination', '\r\n')
-
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
-
     int_types = ['SF', 'RS', 'UT', 'MS', 'TA']
-    float_types = ['CK', 'FA', 'PA', 'TI', 'PH', 'RA', 'MX', 'MZ', 'LA', 'LB', 'FC', 'RC']
+    float_types = ['CK', 'FA', 'PA', 'TI', 'PH', 'RA',
+                   'MX', 'MZ', 'LA', 'LB', 'FC', 'RC', 'DT', 'GS']
 
     channel_params = {
         'A' : {                                                         # noqa
@@ -98,10 +80,16 @@ class Racal1992(Instrument):
         'frequency_c'     : 'FC',    # noqa
     }
 
-    def read_and_decode(self, allowed_types=None):
-        v = self.read_bytes(21)
-        val_type = v[0:2].decode('utf-8')
-        val = float(v[2:19].decode('utf-8'))
+    # All values returned follow the same format: 2 letters to indicate
+    # the type of the value returned, followed by a floating point number
+    # (which could be an integer, of course.)
+    # This here, for example, is math constant Z: MZ+001.00000000E+00
+    def decode(v, allowed_types=None):
+        if len(v) != 19:
+            raise Exception("Length of instrument response must always be 19 characters")
+
+        val_type = v[0:2]
+        val = float(v[2:19])
 
         if allowed_types and val_type not in allowed_types:
             raise Exception("Unexpected value type returned")
@@ -113,25 +101,161 @@ class Racal1992(Instrument):
         else:
             raise Exception("Unsupported return type")
 
-    def set_param(self, param, value=None):
-        self.write(f" S{param} {value}")
+    operating_mode = Instrument.setting(
+            " %s",
+            """ Set operating mode.
 
-    def fetch_param(self, param):
-        self.write(' R' + param)
-        self.wait_for()
-        return self.read_and_decode(allowed_types=param)
+            Permitted modes are:
+                'self_check',
+                'frequency_a',
+                'period_a',
+                'phase_a_rel_b',
+                'ratio_a_to_b',
+                'ratio_c_to_b',
+                'interval_a_to_b',
+                'total_a_by_b',
+                'frequency_c'
+            """,
+            set_process=(lambda mode: Racal1992.operating_modes[mode]),
+        )
+
+    resolution = Instrument.control(
+            " RRS",
+            " SRS %d",
+            """ Control the resolution of the counter with an integer from 3 to 10 that
+            specifies the number of significant digits. """,
+            get_process=(lambda v: Racal1992.decode(v, "RS"))
+        )
+
+    delay_enable = Instrument.setting(
+            " D%s",
+            """ Enable or disable delay. True=enable, False=disable""",
+            set_process=(lambda enable: {True: "E", False: "D"}[enable])
+        )
+
+    delay_time = Instrument.control(
+            " RDT",
+            " SDT %f",
+            """ Control delay time.""",
+            get_process=(lambda v: Racal1992.decode(v, "DT"))
+        )
+
+    special_function_enable = Instrument.setting(
+            " SF%s",
+            """ Enable or disable special function. True=enable, False=disable""",
+            set_process=(lambda enable: {True: "E", False: "D"}[enable])
+        )
+
+    # FIXME: not tested on real instrument!
+    special_function_number = Instrument.control(
+            " RSF",
+            " S%d",
+            """ Control special function.""",
+            get_process=(lambda v: Racal1992.decode(v, "SF"))
+        )
+
+    # FIXME: not tested on real instrument!
+    total_so_far = Instrument.measurement(
+            " RF",
+            """ Total number of events so far.""",
+            get_process=(lambda v: Racal1992.decode(v, "RF"))
+        )
+
+    software_version = Instrument.measurement(
+            " RMS",
+            "Instrument software version",
+            get_process=(lambda v: Racal1992.decode(v, "MS"))
+        )
+
+    gpib_software_version = Instrument.measurement(
+            " RGS",
+            "GPIB software version",
+            get_process=(lambda v: Racal1992.decode(v, "GS"))
+        )
+
+    device_type = Instrument.measurement(
+            " RUT",
+            """Unit device type. Should return 1992 for a Racal-Dana 1992
+            or 1991 for a Racal-Dana 1991.""",
+            get_process=(lambda v: Racal1992.decode(v, "UT"))
+        )
+
+    math_mode = Instrument.setting(
+            " M%s",
+            """ Enable or disable math mode. True=enable, False=disable""",
+            set_process=(lambda enable: {True: "E", False: "D"}[enable])
+        )
+
+    math_x = Instrument.control(
+            " RMX",
+            " SMX %f",
+            """ Control math constant X.""",
+            get_process=(lambda v: Racal1992.decode(v, "MX"))
+        )
+
+    math_z = Instrument.control(
+            " RMZ",
+            " SMZ %f",
+            """ Control math constant Z.""",
+            get_process=(lambda v: Racal1992.decode(v, "MZ"))
+        )
+
+    trigger_level_a = Instrument.control(
+            " RLA",
+            " SLA %f",
+            """ Control trigger level for channel A""",
+            get_process=(lambda v: Racal1992.decode(v, "LA"))
+        )
+
+    trigger_level_b = Instrument.control(
+            " RLB",
+            " SLB %f",
+            """ Control trigger level for channel B""",
+            get_process=(lambda v: Racal1992.decode(v, "LB"))
+        )
+
+    def __init__(self, adapter, name="Racal-Dana 1992", **kwargs):
+        kwargs.setdefault('write_termination', '\r\n')
+
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+    def read(self):
+        return self.read_bytes(21).decode('utf-8')
+
+    def read_and_decode(self, allowed_types=None):
+        v = self.read_bytes(21).decode('utf-8')
+        return Racal1992.decode(v, allowed_types)
 
     # ============================================================
     # Channel-specific settings
     # ============================================================
-    def channel_settings(self, channel_name, **kwargs):
+    def channel_settings(self, channel_name, **settings):
+        """ Set channel configuration paramters.
+
+        :param channel_name: 'A' or 'B'
+        :param settings: one or multiple of the following:
+
+            'coupling'      : 'AC' or 'DC'
+            'attenuation'   : 'X1' or 'X10'
+            'trigger'       : 'auto' or 'manual'
+            'impedance'     : '50' or '1M'
+            'slope'         : 'pos' or 'neg'
+            'filtering'     : True or False (only allowed for channel A)
+            'input_select'  : 'separate' or 'common' (only allowed for channel B)
+            'trigger_level' : <floating point number>
+
+        """
         if channel_name not in Racal1992.channel_params:
             raise Exception("Channel name must by 'A' or 'B'")
 
         settings_str = ""
         trigger_str = ""
 
-        for setting, value in kwargs.items():
+        for setting, value in settings.items():
             if setting not in Racal1992.channel_params[channel_name]:
                 raise Exception(f"Channel {channel_name} does not support a {setting} setting")
 
@@ -158,131 +282,26 @@ class Racal1992(Instrument):
     # IP - Instrument Preset
     # ============================================================
     def preset(self):
+        """ Configure instrument with default presets."""
         self.write(' IP')
-        pass
 
     # ============================================================
     # RE - Reset measurement
     # ============================================================
     def reset_measurement(self):
+        """ Reset ongoing measurement."""
         self.write(' RE')
-        pass
-
-    # ============================================================
-    # MS - Software Version
-    # ============================================================
-    @property
-    def software_version(self):
-        """Special function. An integer value between 10 and 78.
-
-        Check manual for further information.
-
-        """
-        return self.fetch_param('MS')
-
-    # ============================================================
-    # MX - Math Constant X
-    # ============================================================
-    @property
-    def math_x(self):
-        """Math constant X.
-
-        """
-        return self.fetch_param('MX')
-
-    @math_x.setter
-    def math_x(self, value):
-        self.set_param('MX', value)
-
-    # ============================================================
-    # MZ - Math Constant Z
-    # ============================================================
-    @property
-    def math_z(self):
-        """Math constant Z.
-
-        """
-        return self.fetch_param('MZ')
-
-    @math_z.setter
-    def math_z(self, value):
-        self.set_param('MZ', value)
-
-    # ============================================================
-    # ME/MD - Math function enable/disable
-    # ============================================================
-    # FIXME: How to make this a setter when there's no corresponding getter?
-    def math_mode(self, enable):
-        """Math mode
-
-        enable: True enables math mode. False disables it.
-
-        """
-        if enable:
-            self.write(' ME')
-        else:
-            self.write(' MD')
-
-    # ============================================================
-    # RS - Resolution
-    # ============================================================
-    @property
-    def resolution(self):
-        """Number of significant digits.
-
-        This must be an integer from 3 to 10.
-
-        """
-        return self.fetch_param('RS')
-
-    @resolution.setter
-    def resolution(self, value):
-        strict_discrete_range(value, range(3, 11), 1)
-        self.set_param('RS', value)
-
-    # ============================================================
-    # SF - Special Function
-    # ============================================================
-    @property
-    def special_function(self):
-        """Special function. An integer value between 10 and 78.
-
-        Check manual for further information.
-
-        """
-        return self.fetch_param('SF')
-
-    # ============================================================
-    # UT - Unit
-    # ============================================================
-    @property
-    def unit(self):
-        """Device type. Should return 1992."""
-        return self.fetch_param('UT')
-
-    # ============================================================
-    # Lx - Trigger level A or B
-    # ============================================================
-    def trigger_level(self, channel_name):
-        if channel_name not in ('A', 'B'):
-            raise Exception("Channel name must by 'A' or 'B'")
-
-        return self.fetch_param(f'L{channel_name}')
-
-    # ============================================================
-    # Set operating mode
-    # ============================================================
-    def operating_mode(self, mode):
-        if mode not in Racal1992.operating_modes:
-            raise Exception(f"{mode} is not a valid operating mode")
-
-        self.write(' ' + Racal1992.operating_modes[mode])
-        pass
 
     # ============================================================
     # Wait for measurement value
     # ============================================================
     def wait_for_measurement(self, timeout=None, progressDots=False):
+        """ Wait until a new measurement is available.
+
+        :param timeout: number of seconds to wait before timeout exception.
+        :param progressDots: when true, print '.' after each ready-check
+
+        """
         if timeout is not None:
             end_time = time.time() + timeout
 

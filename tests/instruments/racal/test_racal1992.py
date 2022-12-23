@@ -37,7 +37,7 @@ def test_self_check():
                 (' CK', 'CK+010.00000000E+06'),
             ],
     ) as instr:
-        instr.operating_mode('self_check')
+        instr.operating_mode = 'self_check'
         assert instr.measured_value == 10000000.0
 
 
@@ -48,7 +48,7 @@ def test_frequency_a():
                 (' FA', 'FA+010.00000000E+06'),
             ],
     ) as instr:
-        instr.operating_mode('frequency_a')
+        instr.operating_mode = 'frequency_a'
         assert instr.measured_value == 10000000.0
 
 
@@ -59,7 +59,7 @@ def test_period_a():
                 (' PA', 'PA+000100.00000E-09'),
             ],
     ) as instr:
-        instr.operating_mode('period_a')
+        instr.operating_mode = 'period_a'
         assert instr.measured_value == 100e-9
 
 
@@ -70,7 +70,7 @@ def test_interval_a_to_b():
                 (' TI', 'TI+00000000046.E-09'),
             ],
     ) as instr:
-        instr.operating_mode('interval_a_to_b')
+        instr.operating_mode = 'interval_a_to_b'
         assert instr.measured_value == 46e-9
 
 
@@ -81,7 +81,7 @@ def test_total_a_by_b():
                 (' TA', 'TA+00000000001.E+00'),
             ],
     ) as instr:
-        instr.operating_mode('total_a_by_b')
+        instr.operating_mode = 'total_a_by_b'
         assert instr.measured_value == 1
 
 
@@ -92,7 +92,7 @@ def test_phase_a_rel_b():
                 (' PH', 'PH+00000000164.E+00'),
             ],
     ) as instr:
-        instr.operating_mode('phase_a_rel_b')
+        instr.operating_mode = 'phase_a_rel_b'
         assert instr.measured_value == 164
 
 
@@ -103,7 +103,7 @@ def test_ratio_a_to_b():
                 (' RA', 'RA+00001.000000E+00'),
             ],
     ) as instr:
-        instr.operating_mode('ratio_a_to_b')
+        instr.operating_mode = 'ratio_a_to_b'
         assert instr.measured_value == 1.0
 
 
@@ -114,7 +114,7 @@ def test_ratio_c_to_b():
                 (' RC', 'RC+00001.000000E+00'),
             ],
     ) as instr:
-        instr.operating_mode('ratio_c_to_b')
+        instr.operating_mode = 'ratio_c_to_b'
         assert instr.measured_value == 1.0
 
 
@@ -125,7 +125,7 @@ def test_frequency_c():
                 (' FC', 'FC+010.00000000E+06'),
             ],
     ) as instr:
-        instr.operating_mode('frequency_c')
+        instr.operating_mode = 'frequency_c'
         assert instr.measured_value == 10000000.0
 
 
@@ -231,11 +231,21 @@ def test_software_version():
         assert instr.software_version == 85720404
 
 
+def test_gpib_software_version():
+    with expected_protocol(
+            Racal1992,
+            [
+                (' RGS', 'GS+0000000003.1E+00'),
+            ],
+    ) as instr:
+        assert instr.gpib_software_version == 3.1
+
+
 def test_math_x():
     with expected_protocol(
             Racal1992,
             [
-                (' SMX 1.0', None),
+                (' SMX 1.000000', None),
                 (' RMX', 'MX+001.00000000E+00')
             ],
     ) as instr:
@@ -247,7 +257,7 @@ def test_math_z():
     with expected_protocol(
             Racal1992,
             [
-                (' SMZ 1.0', None),
+                (' SMZ 1.000000', None),
                 (' RMZ', 'MZ+001.00000000E+00')
             ],
     ) as instr:
@@ -263,27 +273,67 @@ def test_math_mode():
                 (' MD', None),
             ],
     ) as instr:
-        instr.math_mode(True)
-        instr.math_mode(False)
+        instr.math_mode = True
+        instr.math_mode = False
 
 
-def test_unit():
+def test_device_type():
     with expected_protocol(
             Racal1992,
             [
                 (' RUT', 'UT+00000001992.E+00')
             ],
     ) as instr:
-        assert instr.unit == 1992
+        assert instr.device_type == 1992
 
 
 def test_trigger_level():
     with expected_protocol(
             Racal1992,
             [
+                (' SLA 1.500000', None),
+                (' SLB 1.500000', None),
                 (' RLA', 'LA+000000001.50E+00'),
                 (' RLB', 'LB+000000001.50E+00'),
             ],
     ) as instr:
-        assert instr.trigger_level('A') == 1.5
-        assert instr.trigger_level('B') == 1.5
+        instr.trigger_level_a = 1.5
+        instr.trigger_level_b = 1.5
+        assert instr.trigger_level_a == 1.5
+        assert instr.trigger_level_b == 1.5
+
+
+def test_delay_enable():
+    with expected_protocol(
+            Racal1992,
+            [
+                (' DE', None),
+                (' DD', None),
+            ],
+    ) as instr:
+        instr.delay_enable = True
+        instr.delay_enable = False
+
+
+def test_delay_time():
+    with expected_protocol(
+            Racal1992,
+            [
+                (' SDT 1.500000', None),
+                (' RDT', 'DT+000000001.50E+00'),
+            ],
+    ) as instr:
+        instr.delay_time = 1.5
+        assert instr.delay_time == 1.5
+
+
+def test_special_function_enable():
+    with expected_protocol(
+            Racal1992,
+            [
+                (' SFE', None),
+                (' SFD', None),
+            ],
+    ) as instr:
+        instr.special_function_enable = True
+        instr.special_function_enable = False
