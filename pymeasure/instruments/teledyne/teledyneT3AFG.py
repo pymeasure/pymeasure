@@ -147,7 +147,7 @@ class TeledyneT3AFG(Instrument):
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(
-            adapter, name, **kwargs
+            adapter, name, includeSCPI=True, **kwargs
         )
 
     # TODO: Add channel coupling control
