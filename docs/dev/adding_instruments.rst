@@ -1068,14 +1068,14 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             self.write_bytes(bytes(b))
     
         def read(self):
-            """Read the response and return the data as an integer, if applicable."""
+            """Read the response and return the data as a string, if applicable."""
             response = self.read_bytes(2)  # return type and payload
             if response[0] == 0x00:
                 raise ConnectionError(f"Device error of type {response[1]} occurred.")
             if response[0] == 0x03:
                 # read that many bytes and return them as an integer
                 data = self.read_bytes(response[1])
-                return int.from_bytes(data, byteorder="big", signed=True)
+                return str(int.from_bytes(data, byteorder="big", signed=True))
             if response[0] == 0x10 and response[1] != 0x00:
                 raise ConnectionError(f"Writing to the device failed with error {response[1]}")
     
