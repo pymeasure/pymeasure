@@ -137,8 +137,8 @@ class TeledyneT3AFG(Instrument):
     included here intially.
 
     .. code-block: python
-    # For use with Ethernet interface
-    generator=TeledyneT3AFG('TCPIP0::xxx.xxx.xxx.xxx::pppp::SOCKET',read_termination='\n')
+    # Example assumes Ethernet (TCPIP) interface
+    generator=TeledyneT3AFG('TCPIP0::xxx.xxx.xxx.xxx::pppp::SOCKET')
     generator.reset()
     generator.ch_1.wavetype='SINE'
     generator.ch_1.amplitude=2
@@ -149,7 +149,9 @@ class TeledyneT3AFG(Instrument):
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(
-            adapter, name, includeSCPI=True, **kwargs
+            adapter, name, includeSCPI=True,
+            tcpip={'read_termination': '\n'},
+            **kwargs
         )
 
     # TODO: Add channel coupling control
