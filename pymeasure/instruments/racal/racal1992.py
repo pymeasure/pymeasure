@@ -20,11 +20,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-#
+
+import logging
+import time
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_range
 
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 class Racal1992(Instrument):
     """ Represents the Racal-Dana 1992 Universal counter
@@ -34,10 +38,12 @@ class Racal1992(Instrument):
         from pymeasure.instruments.racal import Racal1992
         counter = Racal1992("GPIB0::10")
 
+    This class should also work for Racal-Dana 1991, it has the same
+    product manual, as long as you don't use functionality that requires
+    channel B.
     """
 
-    resolution = Instrument.control(
-            None,
+    resolution = Instrument.setting(
             " SRS %d",
             """ An integer from 3 to 9 that specifies the number
             of significant digits. """,
@@ -46,47 +52,49 @@ class Racal1992(Instrument):
             map_values=True
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Racal-Dana 1992", **kwargs):
         kwargs.setdefault('write_termination', '\r\n')
 
         super().__init__(
             adapter,
-            "Racal-Dana 1992",
+            name,
             **kwargs
         )
 
-    int_types = ['SF', 'RS', 'UT', 'MS']
-    float_types = ['FA', 'PA', 'CK', 'MX', 'MZ', 'LA', 'LB']
+    int_types = ['SF', 'RS', 'UT', 'MS', 'TA']
+    float_types = ['CK', 'FA', 'PA', 'TI', 'PH', 'RA', 'MX', 'MZ', 'LA', 'LB', 'FC', 'RC' ]
 
     channel_params = {
-        'A' : {
-            'coupling'      : { 'AC'   : 'AAC',  'DC'     : 'ADC' },
-            'attenuation'   : { 'X1'   : 'AAD',  'X10'    : 'AAE' },
-            'trigger'       : { 'auto' : 'AAU',  'manual' : 'AMN' },
-            'impedance'     : { '50'   : 'ALI',  '1M'     : 'AHI' },
-            'slope'         : { 'pos'  : 'APS',  'neg'    : 'ANS' },
-            'filtering'     : { True   : 'AFE',  False    : 'AFD' },
-            'trigger_level' : None,   # Special case, see code
+        'A' : {                                                         # noqa
+            'coupling'      : { 'AC'   : 'AAC',  'DC'     : 'ADC' },    # noqa
+            'attenuation'   : { 'X1'   : 'AAD',  'X10'    : 'AAE' },    # noqa
+            'trigger'       : { 'auto' : 'AAU',  'manual' : 'AMN' },    # noqa
+            'impedance'     : { '50'   : 'ALI',  '1M'     : 'AHI' },    # noqa
+            'slope'         : { 'pos'  : 'APS',  'neg'    : 'ANS' },    # noqa
+            'filtering'     : { True   : 'AFE',  False    : 'AFD' },    # noqa
+            'trigger_level' : None,                                     # noqa
             },
-        'B' : {
-            'coupling'      : { 'AC'   : 'BAC',  'DC'     : 'BDC' },
-            'attenuation'   : { 'X1'   : 'BAD',  'X10'    : 'BAE' },
-            'trigger'       : { 'auto' : 'BAU',  'manual' : 'BMN' },
-            'impedance'     : { '50'   : 'BLI',  '1M'     : 'BHI' },
-            'slope'         : { 'pos'  : 'BPS',  'neg'    : 'BNS' },
-            'trigger_level' : None,
+        'B' : {                                                         # noqa
+            'coupling'      : { 'AC'        : 'BAC',  'DC'     : 'BDC' },    # noqa
+            'attenuation'   : { 'X1'        : 'BAD',  'X10'    : 'BAE' },    # noqa
+            'trigger'       : { 'auto'      : 'BAU',  'manual' : 'BMN' },    # noqa
+            'impedance'     : { '50'        : 'BLI',  '1M'     : 'BHI' },    # noqa
+            'slope'         : { 'pos'       : 'BPS',  'neg'    : 'BNS' },    # noqa
+            'input_select'  : { 'separate'  : 'BCS',  'common' : 'BCC' },    # noqa
+            'trigger_level' : None,                                     # noqa
             },
     }
 
     operating_modes = {
-        'frequency_a'     : 'FA',
-        'period_a'        : 'PA',
-        'self_check'      : 'CK',
-        'phase_a_to_b'    : 'PH',
-        'ratio_a_to_b'    : 'RA',
-        'ratio_c_to_b'    : 'RC',
-        'interval_a_to_b' : 'TI',
-        'total_a_by_b'    : 'TA',
+        'self_check'      : 'CK',    # noqa
+        'frequency_a'     : 'FA',    # noqa
+        'period_a'        : 'PA',    # noqa
+        'phase_a_rel_b'   : 'PH',    # noqa
+        'ratio_a_to_b'    : 'RA',    # noqa
+        'ratio_c_to_b'    : 'RC',    # noqa
+        'interval_a_to_b' : 'TI',    # noqa
+        'total_a_by_b'    : 'TA',    # noqa
+        'frequency_c'     : 'FC',    # noqa
     }
 
     def read_and_decode(self, allowed_types=None):
@@ -200,6 +208,21 @@ class Racal1992(Instrument):
         self.set_param('MZ', value)
 
     # ============================================================
+    # ME/MD - Math function enable/disable
+    # ============================================================
+    # FIXME: How to make this a setter when there's no corresponding getter?
+    def math_mode(self, enable):
+        """Math mode
+
+        enable: True enables math mode. False disables it.
+
+        """
+        if enable:
+            self.write(' ME')
+        else:
+            self.write(' MD')
+
+    # ============================================================
     # RS - Resolution
     # ============================================================
     @property
@@ -245,6 +268,9 @@ class Racal1992(Instrument):
 
         return self.fetch_param(f'L{channel_name}')
 
+    # ============================================================
+    # Set operating mode
+    # ============================================================
     def operating_mode(self, mode):
         if mode not in Racal1992.operating_modes:
             raise Exception(f"{mode} is not a valid operating mode")
@@ -255,10 +281,13 @@ class Racal1992(Instrument):
     # ============================================================
     # Wait for measurement value
     # ============================================================
-    def wait_for_measurement(self):
-        while (self.adapter.read_stb() & 0x10) == 0:
-            print(".", end='', flush=True)
-            pass
+    def wait_for_measurement(self, timeout=None):
+        while True:
+            stb = self.adapter.connection.read_stb()
+            if stb & 0x10:
+                break
+
+        return stb
 
     # ============================================================
     # Measured value
@@ -267,3 +296,5 @@ class Racal1992(Instrument):
     def measured_value(self):
         """Measured value."""
         return self.read_and_decode(allowed_types=Racal1992.operating_modes.values())
+
+

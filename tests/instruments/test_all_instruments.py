@@ -140,7 +140,7 @@ nameless_instruments = [
     "SR830",
     "SR860",
     "AFG3152C",
-    "TDS2000",  # tectronix
+    "TDS2000",  # tektronix
     "ATS525",  # temptronic
     "ATS545",  # temptronic
     "ECO560",  # temptronic
