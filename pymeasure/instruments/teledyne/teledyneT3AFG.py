@@ -30,6 +30,7 @@ from pymeasure.instruments.validators import strict_range, strict_discrete_set
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 def get_process_generator_search(keyword, unit, type):
     """Generate a get_process method searching for keyword, stripping unit"""
     def selector(values):
@@ -43,6 +44,7 @@ def get_process_generator_search(keyword, unit, type):
             # Wrong wavetype for this keyword
             return None
     return selector
+
 
 class SignalChannel(Channel):
 
@@ -120,7 +122,7 @@ class SignalChannel(Channel):
         "C{ch}:BSWV MAX_OUTPUT_AMP,%g",
         """Control the maximum output amplitude of the channel in volts peak to peak.""",
         validator=strict_range,
-        values=[0,20],
+        values=[0, 20],
         get_process=get_process_generator_search('MAX_OUTPUT_AMP', 'V', float),
         dynamic=True,
     )
