@@ -27,7 +27,7 @@ import time
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_range
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)   # https://docs.python.org/3/howto/logging.html#library-config
 log.addHandler(logging.NullHandler())
 
 
@@ -282,11 +282,14 @@ class Racal1992(Instrument):
     # ============================================================
     # Wait for measurement value
     # ============================================================
-    def wait_for_measurement(self, timeout=None):
+    def wait_for_measurement(self, timeout=None, progressDots=False):
         if timeout is not None:
             end_time = time.time() + timeout
 
         while True:
+            if progressDots:
+                log.info(".")
+
             stb = self.adapter.connection.read_stb()
             if stb & 0x10:
                 break
