@@ -30,23 +30,21 @@ from pymeasure.instruments.validators import strict_range, strict_discrete_set
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+def get_process_generator_search(keyword, unit, type):
+    """Generate a get_process method searching for keyword, stripping unit"""
+    def selector(values):
+        if keyword in values:
+            try:
+                return type(values[values.index(keyword)+1].strip(unit))
+            except (ValueError, IndexError):
+                # Something went quite wrong if the keyword exists but the value doesn't
+                return None
+        else:
+            # Wrong wavetype for this keyword
+            return None
+    return selector
 
 class SignalChannel(Channel):
-
-    @staticmethod
-    def get_process_generator(keyword, unit, type):
-        """Generate a get_process method searching for keyword, stripping unit"""
-        def selector(values):
-            if keyword in values:
-                try:
-                    return type(values[values.index(keyword)+1].strip(unit))
-                except (ValueError, IndexError):
-                    # Something went quite wrong if the keyword exists but the value doesn't
-                    return None
-            else:
-                # Wrong wavetype for this keyword
-                return None
-        return selector
 
     output_enabled = Channel.control(
         "C{ch}:OUTPut?",
@@ -80,7 +78,7 @@ class SignalChannel(Channel):
         Has no effect when WVTP is NOISE or DC.""",
         validator=strict_range,
         values=[0, 350e6],
-        get_process=get_process_generator('FRQ', 'HZ', float),
+        get_process=get_process_generator_search('FRQ', 'HZ', float),
         dynamic=True,
         check_set_errors=True,
     )
@@ -95,7 +93,7 @@ class SignalChannel(Channel):
         Amplitude is also limited by the channel max output amplitude.""",
         validator=strict_range,
         values=[0, 5],
-        get_process=get_process_generator('AMP', 'V', float),
+        get_process=get_process_generator_search('AMP', 'V', float),
         dynamic=True,
         check_set_errors=True,
     )
@@ -110,7 +108,7 @@ class SignalChannel(Channel):
         Offset is also limited by the channel max output amplitude.""",
         validator=strict_range,
         values=[0, 5],
-        get_process=get_process_generator('OFST', 'V', float),
+        get_process=get_process_generator_search('OFST', 'V', float),
         dynamic=True,
         check_set_errors=True,
     )
@@ -123,7 +121,7 @@ class SignalChannel(Channel):
         """Control the maximum output amplitude of the channel in volts peak to peak.""",
         validator=strict_range,
         values=[0,20],
-        get_process=get_process_generator('MAX_OUTPUT_AMP', 'V', float),
+        get_process=get_process_generator_search('MAX_OUTPUT_AMP', 'V', float),
         dynamic=True,
     )
 
