@@ -76,7 +76,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.columns[0],
             self.columns[1],
             self.refresh_time,
-            self.check_status
+            self.check_status,
+            parent=self
         )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot

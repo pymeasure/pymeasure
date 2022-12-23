@@ -111,24 +111,35 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._init_data()
+
+    def _init_data(self):
         self.results_list = []
         self.row_count = 0
         self.column_count = 0
 
-    def add_results(self, result):
-        if result not in self.results_list:
-            self.results_list.append(result)
-            result.data_changed.connect(partial(self._data_changed, result))
-            self.layoutChanged.emit()
-            result.init()
-            result.start()
-            result.update_data()
+    def clear(self):
+        self.beginResetModel()
+        for results in self.results_list:
+            results.stop()
+        self._init_data()
+        self.endResetModel()
 
-    def remove_results(self, result):
-        self.results_list.remove(result)
+    def add_results(self, results):
+        if results not in self.results_list:
+            self.results_list.append(results)
+            results.data_changed.connect(partial(self._data_changed, results))
+            self.layoutChanged.emit()
+            results.init()
+            results.start()
+            results.update_data()
+
+    def remove_results(self, results):
+        if results in self.results_list:
+            self.results_list.remove(results)
         self.row_count = self.pandas_row_count()
         self.column_count = self.pandas_column_count()
-        result.stop()
+        results.stop()
         self.layoutChanged.emit()
 
     def rowCount(self, parent=None):
@@ -139,10 +150,10 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
-            result, row, col = self.translate_to_local(index.row(), index.column())
+            results, row, col = self.translate_to_local(index.row(), index.column())
             try:
-                value = result.data.iloc[row][col]
-                column_type = result.data.dtypes[col]
+                value = results.data.iloc[row][col]
+                column_type = results.data.dtypes[col]
                 # Cast to column type
                 value_render = column_type.type(value)
             except IndexError:
@@ -150,7 +161,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
                 value_render = ""
             if isinstance(value_render, float64):
                 # limit maximum number of decimal digits displayed
-                value_render = f"{value_render:.{result.float_digits:d}f}"
+                value_render = f"{value_render:.{results.float_digits:d}f}"
 
             if role == QtCore.Qt.ItemDataRole.DisplayRole:
                 return str(value_render)
@@ -160,7 +171,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
         return None
 
-    def _get_new_rows_columns(self, result, r1, c1, r2, c2):
+    def _get_new_rows_columns(self, results, r1, c1, r2, c2):
         new_rows = self.pandas_row_count() - self.row_count
         new_rows_start = self.row_count
 
@@ -189,10 +200,10 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
         return None
 
-    def _data_changed(self, result, r1, c1, r2, c2):
+    def _data_changed(self, results, r1, c1, r2, c2):
         """ Internal method to handle data changed signal """
         rows, rows_start, columns, columns_start = \
-            self._get_new_rows_columns(result, r1, c1, r2, c2)
+            self._get_new_rows_columns(results, r1, c1, r2, c2)
         if rows or columns:
             if rows > 0:
                 # New rows available
@@ -210,7 +221,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
                 self.column_count += columns
                 self.endInsertColumns()
         else:
-            top_bottom = self._get_row_column_set(result, r1, c1, r2, c2)
+            top_bottom = self._get_row_column_set(results, r1, c1, r2, c2)
             for r1, c1, r2, c2 in top_bottom:
                 self.dataChanged.emit(self.createIndex(r1, c1),
                                       self.createIndex(r2, c2))
@@ -229,7 +240,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         """
         raise Exception("Subclass should implement it")
 
-    def _get_row_column_set(self, result, r1, c1, r2, c2):
+    def _get_row_column_set(self, results, r1, c1, r2, c2):
         """ Return set of top/bottom coordinates for data changed event.
 
         Depending on the geometry of the table a single top/bottom could be
@@ -238,11 +249,11 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         raise Exception("Subclass should implement it")
 
     def translate_to_local(self, row, col):
-        """ Translate from full table coordinate to single result coordinates """
+        """ Translate from full table coordinate to single results coordinates """
         raise Exception("Subclass should implement it")
 
-    def translate_to_global(self, result, row, col):
-        """ Translate from single result coordinates to full table coordinates """
+    def translate_to_global(self, results, row, col):
+        """ Translate from single results coordinates to full table coordinates """
         raise Exception("Subclass should implement it")
 
     @property
@@ -273,26 +284,26 @@ class PandasModelByRow(PandasModelBase):
             cols = self.results_list[0].columns
         return cols
 
-    def _get_row_column_set(self, result, r1, c1, r2, c2):
-        top = self.translate_to_global(result, r1, c1)
-        bottom = self.translate_to_global(result, r2, c2)
+    def _get_row_column_set(self, results, r1, c1, r2, c2):
+        top = self.translate_to_global(results, r1, c1)
+        bottom = self.translate_to_global(results, r2, c2)
         return (top + bottom),
 
     def translate_to_local(self, row, col):
-        """ Translate from full table coordinate to single result coordinates """
-        for index, result in enumerate(self.results_list):
-            if row < result.rows:
+        """ Translate from full table coordinate to single results coordinates """
+        for index, results in enumerate(self.results_list):
+            if row < results.rows:
                 break
-            row -= result.rows
-        return result, row, col
+            row -= results.rows
+        return results, row, col
 
-    def translate_to_global(self, result, row, col):
-        """ Translate from single result coordinates to full table coordinates """
+    def translate_to_global(self, results, row, col):
+        """ Translate from single results coordinates to full table coordinates """
         rows = 0
         for res in self.results_list:
-            if res == result:
+            if res == results:
                 break
-            rows += result.rows
+            rows += results.rows
         return rows + row, col
 
     @property
@@ -303,9 +314,9 @@ class PandasModelByRow(PandasModelBase):
             return []
 
     def vertical_header_decoration(self, section):
-        result, _, _ = self.translate_to_local(section, 0)
+        results, _, _ = self.translate_to_local(section, 0)
         pixelmap = QtGui.QPixmap(6, 6)
-        pixelmap.fill(result.color)
+        pixelmap.fill(results.color)
         return pixelmap
 
 
@@ -320,31 +331,31 @@ class PandasModelByColumn(PandasModelBase):
             cols = self.results_list[0].columns * size
         return cols
 
-    def _get_row_column_set(self, result, r1, c1, r2, c2):
+    def _get_row_column_set(self, results, r1, c1, r2, c2):
         top_bottoms = []
         for i in range(c1, c2 + 1):
-            top = self.translate_to_global(result, r1, i)
-            bottom = self.translate_to_global(result, r2, i)
+            top = self.translate_to_global(results, r1, i)
+            bottom = self.translate_to_global(results, r2, i)
             top_bottoms.append(top + bottom)
 
         return top_bottoms
 
     def translate_to_local(self, row, col):
-        """ Translate from full table coordinate to single result coordinates """
+        """ Translate from full table coordinate to single results coordinates """
         columns = 0
-        for index, result in enumerate(self.results_list):
-            if col < (columns + result.columns):
+        for index, results in enumerate(self.results_list):
+            if col < (columns + results.columns):
                 break
-            columns += result.columns
-        return result, row, col - columns
+            columns += results.columns
+        return results, row, col - columns
 
-    def translate_to_global(self, result, row, col):
-        """ Translate from single result coordinates to full table coordinates """
+    def translate_to_global(self, results, row, col):
+        """ Translate from single results coordinates to full table coordinates """
         columns = 0
         for res in self.results_list:
-            if res == result:
+            if res == results:
                 break
-            columns += result.columns
+            columns += results.columns
         return row, col + columns
 
     @property
@@ -357,9 +368,9 @@ class PandasModelByColumn(PandasModelBase):
             return []
 
     def horizontal_header_decoration(self, section):
-        result, _, _ = self.translate_to_local(0, section)
+        results, _, _ = self.translate_to_local(0, section)
         pixelmap = QtGui.QPixmap(6, 6)
-        pixelmap.fill(result.color)
+        pixelmap.fill(results.color)
         return pixelmap
 
 
@@ -407,7 +418,7 @@ class Table(QtWidgets.QTableView):
 
         self.refresh_time = refresh_time
         self.check_status = check_status
-        self.timer = QtCore.QTimer()
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_tables)
         self.timer.start(int(self.refresh_time * 1e3))
 
@@ -418,8 +429,10 @@ class Table(QtWidgets.QTableView):
         else:
             model = self.model()
 
-        df_list = [result.data for result in model.results_list]
-        if isinstance(model, PandasModelByRow):
+        df_list = [results.data for results in model.results_list]
+        if not df_list:  # Empty list
+            df = None
+        elif isinstance(model, PandasModelByRow):
             # Concatenate pandas data frames
             df = pd.concat(df_list, axis=0).replace(to_replace=NaN, value="")
         else:
@@ -431,24 +444,26 @@ class Table(QtWidgets.QTableView):
     def export_action(self):
         df = self.composed_dataframe()
 
-        formats = ";;".join(self.supported_formats.keys())
-        filename_and_ext = QtWidgets.QFileDialog.getSaveFileName(self,
-                                                                 "Save File",
-                                                                 "",
-                                                                 formats)
-        filename = filename_and_ext[0]
-        ext = filename_and_ext[1]
-        if filename:
-            mode = self.supported_formats[ext]
-            prefix = df.style if mode == "latex" else df
-            getattr(prefix, 'to_' + mode)(filename)
+        if df is not None:
+            formats = ";;".join(self.supported_formats.keys())
+            filename_and_ext = QtWidgets.QFileDialog.getSaveFileName(self,
+                                                                     "Save File",
+                                                                     "",
+                                                                     formats)
+            filename = filename_and_ext[0]
+            ext = filename_and_ext[1]
+            if filename:
+                mode = self.supported_formats[ext]
+                prefix = df.style if mode == "latex" else df
+                getattr(prefix, 'to_' + mode)(filename)
 
     def refresh_action(self):
         self.update_tables()
 
     def copy_action(self):
         df = self.composed_dataframe()
-        df.to_clipboard()
+        if df is not None:
+            df.to_clipboard()
 
     def setup_context_menu(self):
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
@@ -482,20 +497,28 @@ class Table(QtWidgets.QTableView):
     def set_color(self, table, color):
         table.set_color(color)
 
-    def addTable(self, table):
+    def add_table(self, table):
         if SORTING_ENABLED:
             model = self.model().sourceModel()
         else:
             model = self.model()
         model.add_results(table)
 
-    def removeTable(self, table):
+    def remove_table(self, table):
         if SORTING_ENABLED:
             model = self.model().sourceModel()
         else:
             model = self.model()
         model.remove_results(table)
         table.stop()
+
+    def clear(self):
+        if SORTING_ENABLED:
+            model = self.model().sourceModel()
+        else:
+            model = self.model()
+
+        model.clear()
 
 
 class TableWidget(TabWidget, QtWidgets.QWidget):
@@ -532,11 +555,31 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
         return ret
 
     def load(self, table):
-        self.table.addTable(table)
+        self.table.add_table(table)
 
     def remove(self, table):
-        self.table.removeTable(table)
+        self.table.remove_table(table)
 
     def set_color(self, table, color):
         """ Change the color of the pen of the curve """
         self.table.set_color(table, color)
+
+    def preview_widget(self, parent=None):
+        """ Return a widget suitable for preview during loading """
+
+        return TablePreviewWidget("Table preview",
+                                  columns=self.columns,
+                                  by_column=self.by_column,
+                                  refresh_time=self.refresh_time,
+                                  check_status=True,
+                                  parent=None)
+
+
+class TablePreviewWidget(TableWidget):
+    """ Class variant intended to be used during preview """
+
+    def preview_update(self, results):
+        """ Update the preview widget """
+        self.table.clear()
+        curve = self.new_curve(results)
+        self.load(curve)
