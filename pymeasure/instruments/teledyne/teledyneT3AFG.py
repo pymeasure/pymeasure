@@ -135,7 +135,7 @@ class TeledyneT3AFG(Instrument):
     Intially targeting T3AFG80, some features may not be available on
     lower end models and features from higher end models are not
     included here intially.
-    Note that commands appear to always create -108,"Parameter not allowed" errors 
+    Note that commands appear to always create -108,"Parameter not allowed" errors
     regardless of whether command execution succeeds.
 
     .. code-block: python
