@@ -30,6 +30,7 @@ from pymeasure.instruments.validators import strict_discrete_range
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class Racal1992(Instrument):
     """ Represents the Racal-Dana 1992 Universal counter
 
@@ -62,7 +63,7 @@ class Racal1992(Instrument):
         )
 
     int_types = ['SF', 'RS', 'UT', 'MS', 'TA']
-    float_types = ['CK', 'FA', 'PA', 'TI', 'PH', 'RA', 'MX', 'MZ', 'LA', 'LB', 'FC', 'RC' ]
+    float_types = ['CK', 'FA', 'PA', 'TI', 'PH', 'RA', 'MX', 'MZ', 'LA', 'LB', 'FC', 'RC']
 
     channel_params = {
         'A' : {                                                         # noqa
@@ -282,10 +283,16 @@ class Racal1992(Instrument):
     # Wait for measurement value
     # ============================================================
     def wait_for_measurement(self, timeout=None):
+        if timeout is not None:
+            end_time = time.time() + timeout
+
         while True:
             stb = self.adapter.connection.read_stb()
             if stb & 0x10:
                 break
+
+            if timeout is not None and time.time() > end_time:
+                raise Exception("Timeout while waiting for measurement")
 
         return stb
 
@@ -296,5 +303,3 @@ class Racal1992(Instrument):
     def measured_value(self):
         """Measured value."""
         return self.read_and_decode(allowed_types=Racal1992.operating_modes.values())
-
-

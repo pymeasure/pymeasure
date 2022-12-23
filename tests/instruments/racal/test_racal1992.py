@@ -254,6 +254,7 @@ def test_math_z():
         instr.math_z = 1.0
         assert instr.math_z == 1.0
 
+
 def test_math_mode():
     with expected_protocol(
             Racal1992,
@@ -264,6 +265,7 @@ def test_math_mode():
     ) as instr:
         instr.math_mode(True)
         instr.math_mode(False)
+
 
 def test_unit():
     with expected_protocol(
@@ -285,6 +287,3 @@ def test_trigger_level():
     ) as instr:
         assert instr.trigger_level('A') == 1.5
         assert instr.trigger_level('B') == 1.5
-
-
-
