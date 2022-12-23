@@ -132,9 +132,11 @@ class TeledyneT3AFG(Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
     generator interface for interacting with the instrument.
 
-    Intially targeting T3AFG80, some features may not be avalible on
+    Intially targeting T3AFG80, some features may not be available on
     lower end models and features from higher end models are not
     included here intially.
+    Note that commands appear to always create -108,"Parameter not allowed" errors 
+    regardless of whether command execution succeeds.
 
     .. code-block: python
     generator=TeledyneT3AFG(resource)
@@ -147,7 +149,8 @@ class TeledyneT3AFG(Instrument):
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(
-            adapter, name, includeSCPI=True, **kwargs
+            adapter, name, includeSCPI=True, read_termination="\n", write_termination="\n",
+            **kwargs
         )
 
     # TODO: Add channel coupling control
