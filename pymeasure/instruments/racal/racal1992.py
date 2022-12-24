@@ -102,7 +102,7 @@ class Racal1992(Instrument):
             raise Exception("Unsupported return type")
 
     operating_mode = Instrument.setting(
-            " %s",
+            "%s",
             """ Set operating mode.
 
             Permitted modes are:
@@ -120,96 +120,96 @@ class Racal1992(Instrument):
         )
 
     resolution = Instrument.control(
-            " RRS",
-            " SRS %d",
+            "RRS",
+            "SRS %d",
             """ Control the resolution of the counter with an integer from 3 to 10 that
             specifies the number of significant digits. """,
             get_process=(lambda v: Racal1992.decode(v, "RS"))
         )
 
     delay_enable = Instrument.setting(
-            " D%s",
+            "D%s",
             """ Enable or disable delay. True=enable, False=disable""",
             set_process=(lambda enable: {True: "E", False: "D"}[enable])
         )
 
     delay_time = Instrument.control(
-            " RDT",
-            " SDT %f",
+            "RDT",
+            "SDT %f",
             """ Control delay time.""",
             get_process=(lambda v: Racal1992.decode(v, "DT"))
         )
 
     special_function_enable = Instrument.setting(
-            " SF%s",
+            "SF%s",
             """ Enable or disable special function. True=enable, False=disable""",
             set_process=(lambda enable: {True: "E", False: "D"}[enable])
         )
 
     # FIXME: not tested on real instrument!
     special_function_number = Instrument.control(
-            " RSF",
-            " S%d",
+            "RSF",
+            "S%d",
             """ Control special function.""",
             get_process=(lambda v: Racal1992.decode(v, "SF"))
         )
 
     # FIXME: not tested on real instrument!
     total_so_far = Instrument.measurement(
-            " RF",
+            "RF",
             """ Total number of events so far.""",
             get_process=(lambda v: Racal1992.decode(v, "RF"))
         )
 
     software_version = Instrument.measurement(
-            " RMS",
+            "RMS",
             "Instrument software version",
             get_process=(lambda v: Racal1992.decode(v, "MS"))
         )
 
     gpib_software_version = Instrument.measurement(
-            " RGS",
+            "RGS",
             "GPIB software version",
             get_process=(lambda v: Racal1992.decode(v, "GS"))
         )
 
     device_type = Instrument.measurement(
-            " RUT",
+            "RUT",
             """Unit device type. Should return 1992 for a Racal-Dana 1992
             or 1991 for a Racal-Dana 1991.""",
             get_process=(lambda v: Racal1992.decode(v, "UT"))
         )
 
     math_mode = Instrument.setting(
-            " M%s",
+            "M%s",
             """ Enable or disable math mode. True=enable, False=disable""",
             set_process=(lambda enable: {True: "E", False: "D"}[enable])
         )
 
     math_x = Instrument.control(
-            " RMX",
-            " SMX %f",
+            "RMX",
+            "SMX %f",
             """ Control math constant X.""",
             get_process=(lambda v: Racal1992.decode(v, "MX"))
         )
 
     math_z = Instrument.control(
-            " RMZ",
-            " SMZ %f",
+            "RMZ",
+            "SMZ %f",
             """ Control math constant Z.""",
             get_process=(lambda v: Racal1992.decode(v, "MZ"))
         )
 
     trigger_level_a = Instrument.control(
-            " RLA",
-            " SLA %f",
+            "RLA",
+            "SLA %f",
             """ Control trigger level for channel A""",
             get_process=(lambda v: Racal1992.decode(v, "LA"))
         )
 
     trigger_level_b = Instrument.control(
-            " RLB",
-            " SLB %f",
+            "RLB",
+            "SLB %f",
             """ Control trigger level for channel B""",
             get_process=(lambda v: Racal1992.decode(v, "LB"))
         )
@@ -225,6 +225,13 @@ class Racal1992(Instrument):
 
     def read(self):
         return self.read_bytes(21).decode('utf-8')
+
+    def write(self, s):
+        # Space added in front of all commands that are sent to the
+        # instrument to work around weird model issue. It shouldn't
+        # be needed on almost all devices, but it also doesn't hurt. And it
+        # fixes a real issue that's seen on a few device.
+        super().write(' ' + s)
 
     def read_and_decode(self, allowed_types=None):
         v = self.read_bytes(21).decode('utf-8')
@@ -252,7 +259,7 @@ class Racal1992(Instrument):
         if channel_name not in Racal1992.channel_params:
             raise Exception("Channel name must by 'A' or 'B'")
 
-        settings_str = ""
+        commands = []
         trigger_str = ""
 
         for setting, value in settings.items():
@@ -266,31 +273,33 @@ class Racal1992(Instrument):
                 # last setting of all.
                 if value < -51 or value > 51:
                     raise Exception(f"{value} is out of range for {setting}")
-                trigger_str = f" SL{channel_name} {value}"
+                trigger_str = f"SL{channel_name} {value}"
                 continue
 
             if value not in accepted_values:
                 raise Exception(f"{value} is not an acceptable value for {setting}")
 
             command = accepted_values[value]
+            commands.append(command)
 
-            settings_str += " " + command
+        if trigger_str != "":
+            commands.append(trigger_str)
 
-        self.write(settings_str + trigger_str)
+        self.write(" ".join(c for c in commands))
 
     # ============================================================
     # IP - Instrument Preset
     # ============================================================
     def preset(self):
         """ Configure instrument with default presets."""
-        self.write(' IP')
+        self.write('IP')
 
     # ============================================================
     # RE - Reset measurement
     # ============================================================
     def reset_measurement(self):
         """ Reset ongoing measurement."""
-        self.write(' RE')
+        self.write('RE')
 
     # ============================================================
     # Wait for measurement value
