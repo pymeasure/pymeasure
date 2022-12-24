@@ -303,7 +303,7 @@ class CommonBase:
         :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        results = str(self.ask(command)).strip()
+        results = self.ask(command).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
         results = results.split(separator, maxsplit=maxsplit)
