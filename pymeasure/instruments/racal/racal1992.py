@@ -30,6 +30,10 @@ log = logging.getLogger(__name__)   # https://docs.python.org/3/howto/logging.ht
 log.addHandler(logging.NullHandler())
 
 
+class ReturnValueError(Exception):
+    pass
+
+
 class Racal1992(Instrument):
     """ Represents the Racal-Dana 1992 Universal counter
 
@@ -80,26 +84,27 @@ class Racal1992(Instrument):
         'frequency_c'     : 'FC',    # noqa
     }
 
-    # All values returned follow the same format: 2 letters to indicate
-    # the type of the value returned, followed by a floating point number
-    # (which could be an integer, of course.)
-    # This here, for example, is math constant Z: MZ+001.00000000E+00
     def decode(v, allowed_types=None):
+        """All values returned follow the same format: 2 letters to indicate
+        the type of the value returned, followed by a floating point number
+        (which could be an integer, of course.)
+        This here, for example, is math constant Z: MZ+001.00000000E+00
+        """
         if len(v) != 19:
-            raise Exception("Length of instrument response must always be 19 characters")
+            raise ReturnValueError("Length of instrument response must always be 19 characters")
 
         val_type = v[0:2]
         val = float(v[2:19])
 
         if allowed_types and val_type not in allowed_types:
-            raise Exception("Unexpected value type returned")
+            raise ValueError("Unexpected value type returned")
 
         if val_type in Racal1992.int_types:
             return int(val)
         elif val_type in Racal1992.float_types:
             return val
         else:
-            raise Exception("Unsupported return type")
+            raise ValueError("Unsupported return type")
 
     operating_mode = Instrument.setting(
             "%s",
@@ -130,7 +135,8 @@ class Racal1992(Instrument):
     delay_enable = Instrument.setting(
             "D%s",
             """ Enable or disable delay. True=enable, False=disable""",
-            set_process=(lambda enable: {True: "E", False: "D"}[enable])
+            values={True: "E", False: "D"},
+            map_values=True
         )
 
     delay_time = Instrument.control(
@@ -143,7 +149,8 @@ class Racal1992(Instrument):
     special_function_enable = Instrument.setting(
             "SF%s",
             """ Enable or disable special function. True=enable, False=disable""",
-            set_process=(lambda enable: {True: "E", False: "D"}[enable])
+            values={True: "E", False: "D"},
+            map_values=True
         )
 
     # FIXME: not tested on real instrument!
@@ -183,7 +190,8 @@ class Racal1992(Instrument):
     math_mode = Instrument.setting(
             "M%s",
             """ Enable or disable math mode. True=enable, False=disable""",
-            set_process=(lambda enable: {True: "E", False: "D"}[enable])
+            values={True: "E", False: "D"},
+            map_values=True
         )
 
     math_x = Instrument.control(
@@ -227,10 +235,10 @@ class Racal1992(Instrument):
         return self.read_bytes(21).decode('utf-8')
 
     def write(self, s):
-        # Space added in front of all commands that are sent to the
-        # instrument to work around weird model issue. It shouldn't
-        # be needed on almost all devices, but it also doesn't hurt. And it
-        # fixes a real issue that's seen on a few device.
+        """Space added in front of all commands that are sent to the
+        instrument to work around weird model issue. It shouldn't
+        be needed on almost all devices, but it also doesn't hurt. And it
+        fixes a real issue that's seen on a few device."""
         super().write(' ' + s)
 
     def read_and_decode(self, allowed_types=None):
@@ -257,14 +265,14 @@ class Racal1992(Instrument):
 
         """
         if channel_name not in Racal1992.channel_params:
-            raise Exception("Channel name must by 'A' or 'B'")
+            raise ValueError("Channel name must by 'A' or 'B'")
 
         commands = []
         trigger_str = ""
 
         for setting, value in settings.items():
             if setting not in Racal1992.channel_params[channel_name]:
-                raise Exception(f"Channel {channel_name} does not support a {setting} setting")
+                raise ValueError(f"Channel {channel_name} does not support a {setting} setting")
 
             accepted_values = Racal1992.channel_params[channel_name][setting]
             if accepted_values is None:
@@ -272,12 +280,12 @@ class Racal1992(Instrument):
                 # Use special string for that because it's used the
                 # last setting of all.
                 if value < -51 or value > 51:
-                    raise Exception(f"{value} is out of range for {setting}")
+                    raise ValueError(f"{value} is out of range for {setting}")
                 trigger_str = f"SL{channel_name} {value}"
                 continue
 
             if value not in accepted_values:
-                raise Exception(f"{value} is not an acceptable value for {setting}")
+                raise ValueError(f"{value} is not an acceptable value for {setting}")
 
             command = accepted_values[value]
             commands.append(command)
@@ -332,5 +340,21 @@ class Racal1992(Instrument):
     # ============================================================
     @property
     def measured_value(self):
-        """Measured value."""
+        """Measured value.
+
+        A Racal-Dana 1992 doesn't return measurement data after a request for
+        measurement data. Instead, it fills a FIFO with data whenever it completes
+        a measurement. When the FIFO is full, the oldest measurement is removed.
+
+        The FIFO buffer gets cleared when a command is received that requires
+        an immediate reply, such reading a setting. It also gets cleared when
+        an operating mode is cleared.
+
+        When there is no measurement data, this property will stall until data
+        is avaiable. It was also timeout after a time that can be set with the standard
+        pyvisa API.
+
+        One can make sure that measurement data is available by furst calling
+        `wait_for_measurement()`.
+        """
         return self.read_and_decode(allowed_types=Racal1992.operating_modes.values())
