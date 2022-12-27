@@ -112,11 +112,7 @@ class Keithley2200(Instrument):
     """
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(
-            adapter,
-            "Keithley 2230",
-            **kwargs
-        )
+        super().__init__(adapter, "Keithley 2200", **kwargs)
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
         self.ch3 = Channel(self, 3)
