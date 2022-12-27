@@ -24,7 +24,7 @@
 
 import logging
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -88,7 +88,7 @@ class Channel():
 
     voltage_limit_enabled = Instrument.control(
         "VOLT:LIM:STAT?", "VOLT:LIM:STAT %d",
-        """A boolean property that controls whether the voltage limit is enabled, 
+        """A boolean property that controls whether the voltage limit is enabled,
         takes values True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -133,7 +133,6 @@ class Keithley2200(Instrument):
         get_process=lambda v: v.replace('"', '')
     )
 
-
     def ch(self, channel_number):
         """Get a channel from this instrument.
 
@@ -150,4 +149,3 @@ class Keithley2200(Instrument):
             return self.ch3
         else:
             raise ValueError("Invalid channel number. Must be 1, 2 or 3.")
-
