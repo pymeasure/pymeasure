@@ -399,12 +399,6 @@ class Table(QtWidgets.QTableView):
         else:
             model = PandasModelByRow()
 
-        if SORTING_ENABLED:
-            proxyModel = QtCore.QSortFilterProxyModel(self)
-            proxyModel.setSourceModel(model)
-            model = proxyModel
-
-            model.setSortRole(SORT_ROLE)
         self.setModel(model)
         self.horizontalHeader().setStyleSheet("font: bold;")
         self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
@@ -422,12 +416,25 @@ class Table(QtWidgets.QTableView):
         self.timer.timeout.connect(self.update_tables)
         self.timer.start(int(self.refresh_time * 1e3))
 
-    def composed_dataframe(self):
-        """ Create single pandas dataframe out of the dataframe list """
+    def setModel(self, model):
+        if SORTING_ENABLED:
+            proxyModel = QtCore.QSortFilterProxyModel(self)
+            proxyModel.setSourceModel(model)
+            model = proxyModel
+
+            model.setSortRole(SORT_ROLE)
+        super().setModel(model)
+
+    def source_model(self):
         if SORTING_ENABLED:
             model = self.model().sourceModel()
         else:
             model = self.model()
+        return model
+
+    def composed_dataframe(self):
+        """ Create single pandas dataframe out of the dataframe list """
+        model = self.source_model()
 
         df_list = [results.data for results in model.results_list]
         if not df_list:  # Empty list
@@ -483,10 +490,7 @@ class Table(QtWidgets.QTableView):
         menu.exec(self.mapToGlobal(point))
 
     def update_tables(self):
-        if SORTING_ENABLED:
-            model = self.model().sourceModel()
-        else:
-            model = self.model()
+        model = self.source_model()
         for item in model.results_list:
             if self.check_status:
                 if item.results.procedure.status == Procedure.RUNNING:
@@ -498,25 +502,16 @@ class Table(QtWidgets.QTableView):
         table.set_color(color)
 
     def add_table(self, table):
-        if SORTING_ENABLED:
-            model = self.model().sourceModel()
-        else:
-            model = self.model()
+        model = self.source_model()
         model.add_results(table)
 
     def remove_table(self, table):
-        if SORTING_ENABLED:
-            model = self.model().sourceModel()
-        else:
-            model = self.model()
+        model = self.source_model()
         model.remove_results(table)
         table.stop()
 
     def clear(self):
-        if SORTING_ENABLED:
-            model = self.model().sourceModel()
-        else:
-            model = self.model()
+        model = self.model().source_model()
 
         model.clear()
 
