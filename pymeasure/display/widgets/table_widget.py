@@ -407,8 +407,8 @@ class Table(QtWidgets.QTableView):
             model.setSortRole(SORT_ROLE)
         self.setModel(model)
         self.horizontalHeader().setStyleSheet("font: bold;")
-        self.setSortingEnabled(True)
         self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
+        self.setSortingEnabled(True)
         self.horizontalHeader().setSectionsMovable(True)
         self.horizontalHeader().setSectionResizeMode(
             QtWidgets.QHeaderView.ResizeMode.ResizeToContents
