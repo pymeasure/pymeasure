@@ -22,8 +22,23 @@
 # THE SOFTWARE.
 #
 
-from .anritsuMG3692C import AnritsuMG3692C
-from .anritsuMS9710C import AnritsuMS9710C
-from .anritsuMS9740A import AnritsuMS9740A
-from .anritsuMS2090A import AnritsuMS2090A
-from .anritsuMS464xB import AnritsuMS464xB
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.anritsu import AnritsuMS464xB
+
+
+def test_init():
+    with expected_protocol(
+            AnritsuMS464xB,
+            [],
+            ):
+        pass  # Verify the expected communication.
+
+
+def test_center_freq():
+    with expected_protocol(
+            AnritsuMS464xB,
+            [(b":SENS1:FREQ:CENT 35000", None), (b":SENS1:FREQ:CENT?", 35000)],
+            ) as instr:
+        instr.channels[1].center_frequency = 35000
+        assert instr.channels[1].center_frequency == 35000
