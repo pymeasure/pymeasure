@@ -327,7 +327,9 @@ def test_ask_writes_and_reads():
                           ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
                           ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
                           ("0,5,7.1", {'cast': bool}, [False, True, True]),
-                          ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5])
+                          ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5]),
+                          ("X,Y,Z", {'maxsplit': 1}, ["X", "Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 0}, ["X,Y,Z"]),
                           ))
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
