@@ -111,7 +111,6 @@ nameless_instruments = [
     "HP6634A",
     "HP8657B",
     "Keithley2000",
-    "Keithley2200",
     "Keithley2306",
     "Keithley2400",
     "Keithley2450",

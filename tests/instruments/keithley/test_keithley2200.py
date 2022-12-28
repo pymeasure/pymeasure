@@ -35,42 +35,36 @@ def test_init():
         pass  # Verify the expected communication.
 
 
-def test_set_voltage_current():
+def test_set_voltage():
     # instr.ch1.voltage should produce the following commands
     with expected_protocol(
         Keithley2200,
-        [(b"INST:SEL CH1;VOLT 1.456", None)],
+        [
+            (b"INST:SEL CH1;VOLT 1.456", None),
+            (b"INST:SEL CH1;VOLT?", 1.456),
+            (b"INST:SEL CH1;MEAS:VOLT?", 1.456),
+            (b"INST:SEL CH3;VOLT 1.456", None)
+        ],
     ) as instr:
-        instr.ch1.voltage = 1.456
+        instr.ch_1.voltage = 1.456
+        assert instr.ch_1.voltage == 1.456
+        assert instr.ch_1.measure_voltage == 1.456
+        instr.ch_3.voltage = 1.456
 
+
+def test_set_current():
+    # instr.ch1.voltage should produce the following commands
     with expected_protocol(
         Keithley2200,
-        [("INST:SEL CH1;VOLT?", 1.456)],
-    ) as inst:
-        val = inst.ch1.voltage
-        assert val == 1.456
-
-    with expected_protocol(
-        Keithley2200,
-        [("INST:SEL CH1;MEAS:VOLT?", 1.456)],
-    ) as inst:
-        val = inst.ch1.measure_voltage
-        assert val == 1.456
-
-    with expected_protocol(
-        Keithley2200,
-        [(b"INST:SEL CH3;VOLT 1.456", None)],
+        [(b"INST:SEL CH3;CURR 1.456", None), (b"INST:SEL CH1;CURR 2.654", None)],
     ) as instr:
-        instr.ch3.voltage = 1.456
+        instr.ch_3.current = 1.456
+        instr.ch_1.current = 2.654
 
-    with expected_protocol(
-        Keithley2200,
-        [(b"INST:SEL CH1;CURR 2.654", None)],
-    ) as instr:
-        instr.ch1.current = 2.654
 
+def test_output_enabled():
     with expected_protocol(
         Keithley2200,
         [(b"INST:SEL CH1;SOURCE:OUTP:ENAB 1", None)],
     ) as instr:
-        instr.ch1.output_enabled = True
+        instr.ch_1.output_enabled = True

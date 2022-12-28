@@ -23,14 +23,14 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Channel():
+class PSChannel(Channel):
     """ Implementation of a Keithley 2200 channel. """
 
     VOLTAGE_RANGE = [0, 70]
@@ -38,8 +38,7 @@ class Channel():
 
     output_enabled = Instrument.control(
         "SOURCE:OUTP:ENAB?", "SOURCE:OUTP:ENAB %d",
-        """A boolean property that controls whether the output is enabled, takes
-        values True or False. """,
+        """ A boolean property representing output state.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -47,80 +46,63 @@ class Channel():
 
     voltage = Instrument.control(
         "VOLT?", "VOLT %g",
-        """ A floating point property that represents the output voltage
-        setting of the power supply in Volts. This property can be set. """,
+        """ A floating point property representing the output voltage in Volts.""",
         validator=strict_range,
         values=VOLTAGE_RANGE
     )
 
     current = Instrument.control(
         "CURR?", "CURR %g",
-        """ A floating point property that represents the output current of
-        the power supply in Amps. This property can be set. """,
+        """ A floating point property that representing the output current in Amps.""",
         validator=strict_range,
         values=CURRENT_RANGE
     )
 
     measure_current = Instrument.measurement(
         "MEAS:CURR?",
-        """ A measurement property that reads the measured current in Amps.
-        This property is readonly. """,
+        """ A measurement property that reads the measured current in Amps.""",
     )
 
     measure_voltage = Instrument.measurement(
         "MEAS:VOLT?",
-        """ A measurement property that reads the measured current in Volts.
-        This property is readonly. """,
+        """ A measurement property that reads the measured current in Volts.""",
     )
 
     measure_power = Instrument.measurement(
         "MEAS:VOLT?",
-        """ A measurement property that reads the measured power in watts.
-        This property is readonly. """,
+        """ A measurement property that reads the measured power in watts.""",
     )
 
     voltage_limit = Instrument.control(
         "VOLT:LIM?", "VOLT:LIM %g",
-        """ A property which represents the maximum voltage limit""",
+        """ A property which represents the maximum voltage limit.""",
         validator=strict_range,
         values=VOLTAGE_RANGE
     )
 
     voltage_limit_enabled = Instrument.control(
         "VOLT:LIM:STAT?", "VOLT:LIM:STAT %d",
-        """A boolean property that controls whether the voltage limit is enabled,
-        takes values True or False. """,
+        """A boolean property that representing voltage limit.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
     )
 
-    def __init__(self, instrument, number):
-        self.instrument = instrument
-        self.number = number
-
-    def values(self, command, **kwargs):
-        return self.instrument.values(f"INST:SEL CH{self.number};{command}",
-                                      **kwargs)
-
-    def write(self, command):
-        self.instrument.write(f"INST:SEL CH{self.number};{command}")
+    def insert_id(self, command):
+        return f"INST:SEL CH{self.id};{command}"
 
 
 class Keithley2200(Instrument):
     """ Represents the Keithley 2230 Power Supply.
     """
+    def __init__(self, adapter, name="Keithley2200"):
+        super().__init__(adapter, name)
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Keithley 2200", **kwargs)
-        self.ch1 = Channel(self, 1)
-        self.ch2 = Channel(self, 2)
-        self.ch3 = Channel(self, 3)
+    channels = Instrument.ChannelCreator(PSChannel, ("1", "2", "3"))
 
     display_enabled = Instrument.control(
         "DISP?", ":DISP %d",
-        """A boolean property that controls whether the display is enabled,
-        takes values True or False. """,
+        """ A boolean property that controls whether the display is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -128,24 +110,6 @@ class Keithley2200(Instrument):
 
     display_text_data = Instrument.control(
         ":DISP:TEXT:DATA?", ":DISP:TEXT:DATA \"%s\"",
-        """A string property that control text to be displayed, takes strings
-        up to 32 characters. """,
+        """ A string property that control text to be displayed(32 characters).""",
         get_process=lambda v: v.replace('"', '')
     )
-
-    def ch(self, channel_number):
-        """Get a channel from this instrument.
-
-        :param: channel_number:
-            int: the number of the channel to be selected
-        :type: :class:`.Channel`
-
-        """
-        if channel_number == 1:
-            return self.ch1
-        elif channel_number == 2:
-            return self.ch2
-        elif channel_number == 3:
-            return self.ch3
-        else:
-            raise ValueError("Invalid channel number. Must be 1, 2 or 3.")
