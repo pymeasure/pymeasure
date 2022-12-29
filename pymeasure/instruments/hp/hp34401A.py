@@ -171,16 +171,102 @@ class HP34401A(Instrument):
         values={"FRONT": "FRON", "REAR": "REAR"},
         map_values=True)
 
+    # Trigger related commands
+    def init_trigger(self):
+        """ This command changes the state of the triggering system
+        from the "idle" state to the "wait-for-trigger" state.
+        Measurements will begin when the specified trigger conditions
+        are satisfied after this command is received """
+        self.write("INIT")
+
     reading = Instrument.measurement(
         "READ?",
-        """ The reading of the currently selected function. """)
+        """ The reading(s) of the currently selected function.
+        Reading this property is equivalent to calling `init_trigger()`,
+        waiting for completion and fetching the reading(s). """)
 
+    trigger_source = Instrument.control(
+        "TRIG:SOUR?", "TRIG:SOUR %s",
+        """ A string property that controls the trigger source.
+        Valid values: IMM, BUS, EXT
+        The multimeter will accept a software (bus) trigger,
+        an immediate internal trigger (this is the default source),
+        or a hardware trigger from the rear-panel Ext Trig (external trigger) terminal. """)
+
+    trigger_delay = Instrument.control(
+        "TRIG:DEL?", "TRIG:DEL %s",
+        """ A float / string property that controls the trigger delay in seconds.
+        Valid values: 0 to 3600 seconds, "MIN" or "MAX". """)
+
+    trigger_auto_delay_enabled = Instrument.control(
+        "TRIG:DEL:AUTO?", "TRIG:DEL:AUTO %s",
+        """ A boolean property that controls the automatic trigger delay state.
+        If enabled, the delay is determined by function, range, integration time,
+        and ac filter setting. Selecting a specific trigger delay value
+        automatically turns off the automatic trigger delay. """,
+        validator=strict_discrete_set,
+        values=BOOL_MAPPINGS,
+        map_values=True)
+
+    sample_count = Instrument.control(
+        "SAMP:COUN?", "SAMP:COUN %s",
+        """ A integer property that controls the number of samples to be taken
+        for each trigger event. Valid values: 1 to 50000, "MIN" or "MAX". """)
+
+    trigger_count = Instrument.control(
+        "TRIG:COUN?", "TRIG:COUN %s",
+        """ A integer property that controls the number of triggers the multimeter
+        will accept before returning to the "idle" state.
+        Valid values: 1 to 50000, "MIN", "MAX" or "INF".
+        The INFinite parameter instructs the multimeter to continuously accept triggers
+        (you must send a device clear to return to the "idle" state). """)
+
+    stored_reading = Instrument.measurement(
+        "FETCh?",
+        """ This property returns the reading(s) currently stored in the
+        multimeter's internal memory. Reading this property will NOT initialize a trigger.
+        If you need that, use the `reading` property instead. """)
+
+    # Display related commands
     display_enabled = Instrument.control(
         "DISP?", "DISP %s",
         """ A boolean property that controls the display state. """,
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True)
+
+    displayed_text = Instrument.control(
+        "DISP:TEXT?", "DISP:TEXT \"%s\"",
+        """ A string property that controls the text that is displayed on the
+        multimeter's display. The text can be up to 12 characters long;
+        any additional characters are truncated my the multimeter. """,
+        get_process=lambda x: x.strip('"'))
+
+    # System related commands
+    def beep(self):
+        """ This command causes the multimeter to beep once. """
+        self.write("SYST:BEEP")
+
+    beeper_enabled = Instrument.control(
+        "SYST:BEEP:STAT?", "SYST:BEEP:STAT %s",
+        """ A boolean property that controls if the beeper is enabled. """,
+        validator=strict_discrete_set,
+        values=BOOL_MAPPINGS,
+        map_values=True)
+
+    scpi_version = Instrument.measurement(
+        "SYST:VERS?",
+        """ Query the SCPI version of the multimeter. """)
+
+    stored_readings_count = Instrument.measurement(
+        "DATA:POIN?",
+        """ Query the number of readings currently stored
+        in the multimeter's internal memory. """)
+
+    self_test_result = Instrument.measurement(
+        "*TST?",
+        """ A boolean property that, if read,
+        initiates a self-test of the multimeter and returns the result. """)
 
     def _get_function_range_prefix(self):
         function_prefix = HP34401A.FUNCTIONS_WITH_RANGE[self.function_]
