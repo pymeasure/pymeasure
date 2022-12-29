@@ -106,6 +106,7 @@ ENV/
 
 # VSCode
 settings.json
+*.code-workspace
 
 # Vim
 *.swp
