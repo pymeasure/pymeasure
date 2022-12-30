@@ -266,7 +266,9 @@ class HP34401A(Instrument):
     self_test_result = Instrument.measurement(
         "*TST?",
         """ A boolean property that, if read,
-        initiates a self-test of the multimeter and returns the result. """)
+        initiates a self-test of the multimeter and returns the result.
+        Be sure to set an appropriate connection timeout,
+        otherwise the command will fail. """)
 
     def _get_function_range_prefix(self):
         function_prefix = HP34401A.FUNCTIONS_WITH_RANGE[self.function_]
