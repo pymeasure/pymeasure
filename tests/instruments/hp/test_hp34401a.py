@@ -23,12 +23,11 @@
 #
 
 import pytest
-import math
 import time
 import logging
 from pymeasure.instruments.hp import HP34401A
 
-# pytest.skip('Only work with connected hardware', allow_module_level=True)
+pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -65,142 +64,142 @@ class TestHP8116A:
         self.instr.reset()
         return self.instr
 
-    # def test_correct_model_by_idn(self, make_resetted_instr):
-    #     instr = make_resetted_instr
-    #     assert "34401a" in instr.id.lower()
+    def test_correct_model_by_idn(self, make_resetted_instr):
+        instr = make_resetted_instr
+        assert "34401a" in instr.id.lower()
 
-    # @pytest.mark.parametrize("function_", FUNCTIONS)
-    # def test_given_function_when_set_then_function_is_set(self, make_resetted_instr, function_):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.function_ == function_
+    @pytest.mark.parametrize("function_", FUNCTIONS)
+    def test_given_function_when_set_then_function_is_set(self, make_resetted_instr, function_):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        assert len(instr.check_errors()) == 0
+        assert instr.function_ == function_
 
-    # @pytest.mark.parametrize("function_", FUNCTIONS)
-    # def test_given_function_is_set_then_reading_avaliable(self, make_resetted_instr, function_):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.reading is not None
+    @pytest.mark.parametrize("function_", FUNCTIONS)
+    def test_given_function_is_set_then_reading_avaliable(self, make_resetted_instr, function_):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        assert len(instr.check_errors()) == 0
+        assert instr.reading is not None
 
-    # @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    # def test_given_function_is_set_then_range_avaliable(self, make_resetted_instr, function_):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.range_ is not None
+    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
+    def test_given_function_is_set_then_range_avaliable(self, make_resetted_instr, function_):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        assert len(instr.check_errors()) == 0
+        assert instr.range_ is not None
 
-    # @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    # def test_given_function_is_set_then_auto_range_is_enabled(self, make_resetted_instr, function_):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.auto_range_enabled == True
+    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
+    def test_given_function_set_then_auto_range_enabled(self, make_resetted_instr, function_):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        assert len(instr.check_errors()) == 0
+        assert instr.auto_range_enabled is True
 
-    # @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    # def test_given_function_and_range_when_set_then_ratio_correct(self, make_resetted_instr, function_):
-    #     for range in self.TEST_RANGES[function_]:
-    #         instr = make_resetted_instr
-    #         instr.function_ = function_
-    #         instr.range_ = range
-    #         assert len(instr.check_errors()) == 0
-    #         assert instr.range_ == range
+    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
+    def test_given_range_set_then_range_correct(self, make_resetted_instr, function_):
+        for range in self.TEST_RANGES[function_]:
+            instr = make_resetted_instr
+            instr.function_ = function_
+            instr.range_ = range
+            assert len(instr.check_errors()) == 0
+            assert instr.range_ == range
 
-    # @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    # def test_autorange_enable(self, make_resetted_instr, function_):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     instr.auto_range_enabled = True
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.auto_range_enabled == True
+    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
+    def test_autorange_enable(self, make_resetted_instr, function_):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        instr.auto_range_enabled = True
+        assert len(instr.check_errors()) == 0
+        assert instr.auto_range_enabled is True
 
-    # @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    # def test_autorange_disable(self, make_resetted_instr, function_):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     instr.auto_range_enabled = False
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.auto_range_enabled == False
+    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
+    def test_autorange_disable(self, make_resetted_instr, function_):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        instr.auto_range_enabled = False
+        assert len(instr.check_errors()) == 0
+        assert instr.auto_range_enabled is False
 
-    # def test_dcv_range_min_max(self, make_resetted_instr):
-    #     instr = make_resetted_instr
-    #     instr.function_ = "DCV"
-    #     instr.range_ = "MIN"
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.range_ == 0.1
-    #     instr.range_ = "MAX"
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.range_ == 1000
+    def test_dcv_range_min_max(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.function_ = "DCV"
+        instr.range_ = "MIN"
+        assert len(instr.check_errors()) == 0
+        assert instr.range_ == 0.1
+        instr.range_ = "MAX"
+        assert len(instr.check_errors()) == 0
+        assert instr.range_ == 1000
 
-    # @pytest.mark.parametrize("enabled", [True, False])
-    # def test_display_enabled(self, make_resetted_instr, enabled):
-    #     instr = make_resetted_instr
-    #     instr.display_enabled = enabled
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.display_enabled == enabled
+    @pytest.mark.parametrize("enabled", [True, False])
+    def test_display_enabled(self, make_resetted_instr, enabled):
+        instr = make_resetted_instr
+        instr.display_enabled = enabled
+        assert len(instr.check_errors()) == 0
+        assert instr.display_enabled == enabled
 
-    # @pytest.mark.parametrize("function_", ["DCV", "ACV", "DCI", "R2W"])
-    # def test_resolution(self, make_resetted_instr, function_):
-    #     instr: HP34401A = make_resetted_instr
-    #     instr.function_ = function_
-    #     instr.range_ = 1
-    #     instr.resolution = 0.0001
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.resolution == 0.0001
+    @pytest.mark.parametrize("function_", ["DCV", "ACV", "DCI", "R2W"])
+    def test_resolution(self, make_resetted_instr, function_):
+        instr: HP34401A = make_resetted_instr
+        instr.function_ = function_
+        instr.range_ = 1
+        instr.resolution = 0.0001
+        assert len(instr.check_errors()) == 0
+        assert instr.resolution == 0.0001
 
-    # @pytest.mark.parametrize("function_", ["DCV", "DCI", "R2W"])
-    # @pytest.mark.parametrize("nplc", [0.02, 1, 100])
-    # def test_nplc(self, make_resetted_instr, function_, nplc):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     instr.nplc = nplc
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.nplc == nplc
+    @pytest.mark.parametrize("function_", ["DCV", "DCI", "R2W"])
+    @pytest.mark.parametrize("nplc", [0.02, 1, 100])
+    def test_nplc(self, make_resetted_instr, function_, nplc):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        instr.nplc = nplc
+        assert len(instr.check_errors()) == 0
+        assert instr.nplc == nplc
 
-    # @pytest.mark.parametrize("function_", ["FREQ", "PERIOD"])
-    # @pytest.mark.parametrize("gate_time", [0.01, 0.01, 1])
-    # def test_gate_time(self, make_resetted_instr, function_, gate_time):
-    #     instr = make_resetted_instr
-    #     instr.function_ = function_
-    #     instr.gate_time = gate_time
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.gate_time == gate_time
+    @pytest.mark.parametrize("function_", ["FREQ", "PERIOD"])
+    @pytest.mark.parametrize("gate_time", [0.01, 0.01, 1])
+    def test_gate_time(self, make_resetted_instr, function_, gate_time):
+        instr = make_resetted_instr
+        instr.function_ = function_
+        instr.gate_time = gate_time
+        assert len(instr.check_errors()) == 0
+        assert instr.gate_time == gate_time
 
-    # @pytest.mark.parametrize("detector_bandwidth", [3, 20, 200])
-    # def test_detector_bandwidth(self, make_resetted_instr, detector_bandwidth):
-    #     instr = make_resetted_instr
-    #     instr.function_ = "FREQ"
-    #     instr.detector_bandwidth = detector_bandwidth
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.detector_bandwidth == detector_bandwidth
+    @pytest.mark.parametrize("detector_bandwidth", [3, 20, 200])
+    def test_detector_bandwidth(self, make_resetted_instr, detector_bandwidth):
+        instr = make_resetted_instr
+        instr.function_ = "FREQ"
+        instr.detector_bandwidth = detector_bandwidth
+        assert len(instr.check_errors()) == 0
+        assert instr.detector_bandwidth == detector_bandwidth
 
-    # @pytest.mark.parametrize("enable", [True, False])
-    # def test_autozero(self, make_resetted_instr, enable):
-    #     instr = make_resetted_instr
-    #     instr.autozero_enabled = enable
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.autozero_enabled == enable
+    @pytest.mark.parametrize("enable", [True, False])
+    def test_autozero(self, make_resetted_instr, enable):
+        instr = make_resetted_instr
+        instr.autozero_enabled = enable
+        assert len(instr.check_errors()) == 0
+        assert instr.autozero_enabled == enable
 
-    # def test_single_autozero(self, make_resetted_instr):
-    #     instr = make_resetted_instr
-    #     instr.autozero_enabled = True
-    #     instr.trigger_single_autozero()
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.autozero_enabled == False
+    def test_single_autozero(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.autozero_enabled = True
+        instr.trigger_single_autozero()
+        assert len(instr.check_errors()) == 0
+        assert instr.autozero_enabled is False
 
-    # def test_auto_input_impedance(self, make_resetted_instr):
-    #     instr = make_resetted_instr
-    #     instr.auto_input_impedance_enabled = True
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.auto_input_impedance_enabled == True
-    #     instr.auto_input_impedance_enabled = False
-    #     assert len(instr.check_errors()) == 0
-    #     assert instr.auto_input_impedance_enabled == False
+    def test_auto_input_impedance(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.auto_input_impedance_enabled = True
+        assert len(instr.check_errors()) == 0
+        assert instr.auto_input_impedance_enabled is True
+        instr.auto_input_impedance_enabled = False
+        assert len(instr.check_errors()) == 0
+        assert instr.auto_input_impedance_enabled is False
 
-    # def test_terminals_used(self, make_resetted_instr):
-    #     instr = make_resetted_instr
-    #     assert instr.terminals_used in ["FRONT", "REAR"]
-    #     assert len(instr.check_errors()) == 0
+    def test_terminals_used(self, make_resetted_instr):
+        instr = make_resetted_instr
+        assert instr.terminals_used in ["FRONT", "REAR"]
+        assert len(instr.check_errors()) == 0
 
     def test_when_init_trigger_called_then_no_error(self, make_resetted_instr):
         instr = make_resetted_instr
@@ -242,7 +241,6 @@ class TestHP8116A:
         assert instr.trigger_count == 10
 
     def test_read_stored_readings(self, make_resetted_instr):
-        # TODO: Under construction...
         instr: HP34401A = make_resetted_instr
         instr.sample_count = 10
         instr.trigger_source = "IMM"
