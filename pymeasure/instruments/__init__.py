@@ -23,6 +23,7 @@
 #
 
 from ..errors import RangeError, RangeException
+from .channel import Channel
 from .instrument import Instrument
 from .resources import list_resources
 from .validators import discreteTruncate
@@ -37,8 +38,10 @@ from . import anapico
 from . import andeenhagerling
 from . import anritsu
 from . import attocube
+from . import bkprecision
 from . import danfysik
 from . import deltaelektronika
+from . import edwards
 from . import eurotest
 from . import fluke
 from . import fwbell
@@ -48,10 +51,13 @@ from . import hp
 from . import keithley
 from . import keysight
 from . import lakeshore
+from . import lecroy
+from . import mksinst
 from . import newport
 from . import ni
 from . import oxfordinstruments
 from . import parker
+from . import pendulum
 from . import razorbill
 from . import rohdeschwarz
 from . import siglenttechnologies
@@ -59,6 +65,7 @@ from . import signalrecovery
 from . import srs
 from . import tektronix
 from . import temptronic
+from . import texio
 from . import thermotron
 from . import thorlabs
 from . import toptica

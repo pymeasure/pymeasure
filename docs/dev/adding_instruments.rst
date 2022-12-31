@@ -8,6 +8,20 @@ You can make a significant contribution to PyMeasure by adding a new instrument 
 
 Before getting started, become familiar with the :doc:`contributing work-flow <contribute>` for PyMeasure, which steps through the process of adding a new feature (like an instrument) to the development version of the source code. This section will describe how to lay out your instrument code.
 
+.. testsetup::
+
+    # Behind the scene, replace Instrument with FakeInstrument to enable
+    # doctesting simple usage cases (default doctest group)
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument
+
+.. testsetup:: with-protocol-tests
+
+    # If we want to run protocol tests on doctest code, we need to use a
+    # separate doctest "group" and a different set of imports.
+    # See https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html
+    from pymeasure.instruments import Instrument, Channel
+    from pymeasure.test import expected_protocol
+
 File structure
 ==============
 
@@ -82,13 +96,6 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     #
 
     # from pymeasure.instruments import Instrument
-    
-.. testcode::
-    :hide:
-
-    # Behind the scene, replace Instrument with FakeInstrument to enable
-    # doctesting all this
-    from pymeasure.instruments.fakes import FakeInstrument as Instrument
 
 This is a minimal instrument definition:
 
@@ -97,10 +104,10 @@ This is a minimal instrument definition:
     class Extreme5000(Instrument):
         """Control the imaginary Extreme 5000 instrument."""
 
-        def __init__(self, adapter, **kwargs):
+        def __init__(self, adapter, name="Extreme 5000", **kwargs):
             super().__init__(
                 adapter,
-                "Extreme 5000",
+                name,
                 **kwargs
             )
 
@@ -204,13 +211,14 @@ As our signal values are often integers, the most appropriate enum types are :co
 :code:`IntFlags` are used by many instruments for the purpose just demonstrated.
 
 The status property could look like this:
+
 .. testcode::
 
     status = Instrument.measurement(
         "STB?", 
         """Measure the status of the device as enum.""",
         get_process=lambda v: ErrorCode(v), 
-   )
+    )
 
 .. _default_connection_settings:
 
@@ -229,10 +237,10 @@ The simplest version, suitable when the instrument connection needs default sett
 
 .. code-block:: python
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", **kwargs):
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             **kwargs
         )
 
@@ -241,10 +249,10 @@ This is suitable when the instrument has one type of interface, or any defaults 
 
 .. code-block:: python
 
-    def __init__(self, adapter, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", baud_rate=2400, **kwargs):
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             baud_rate=baud_rate,
             **kwargs
         )
@@ -253,11 +261,11 @@ If you want to set defaults, but they don't need to be prominently exposed for r
 
 .. code-block:: python
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             **kwargs
         )
 
@@ -272,11 +280,11 @@ These then contain a *dictionary* with the settings specific to the respective i
 
 .. code-block:: python
 
-    def __init__(self, adapter, baud_rate=2400, **kwargs):
+    def __init__(self, adapter, name="Extreme 5000", baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
-            "Extreme 5000",
+            name,
             gpib=dict(enable_repeat_addressing=False,
                       read_termination='\r'),
             asrl={'baud_rate': baud_rate,
@@ -299,9 +307,10 @@ In PyMeasure, `Python properties`_ are the preferred method for dealing with var
 
 The property factories
 **********************
-PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`CommonBase.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`CommonBase.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`CommonBase.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
+You can call them, however, as :code:`Instrument.control`, :code:`Instrument.measurement`, and :code:`Instrument.setting`.
 
-The :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` function returns a property that can only read values from an instrument.
+The :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` function returns a property that can only read values from an instrument.
 For example, if our "Extreme 5000" has the :code:`*IDN?` command, we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
@@ -330,7 +339,7 @@ When we use this property we will get the temperature of the reaction cell.
     >>> extreme.cell_temp  # Sends ":TEMP?" to the device
     127.2
 
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function extends this behavior by creating a property that you can read and set. For example, if our "Extreme 5000" has the :code:`:VOLT?` and :code:`:VOLT <float>` commands that are in Volts, we can write the following property.
 
 .. testcode::
 
@@ -352,9 +361,9 @@ We can use this property to set the voltage to 100 mV, which will send the appro
     >>> extreme.voltage              # Sends ":VOLT?" to query for the current value
     0.1
 
-Finally, the :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function can only set, but not read values.
+Finally, the :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` function can only set, but not read values.
 
-Using the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, and :func:`Instrument.control <pymeasure.instruments.Instrument.control>` functions, you can create a number of properties for basic measurements and controls.
+Using the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` functions, you can create a number of properties for basic measurements and controls.
 
 The next sections detail additional features of the property factories.
 These allow you to write properties that cover specific ranges, or that have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
@@ -363,7 +372,7 @@ These allow you to write properties that cover specific ranges, or that have to 
 
 Restricting values with validators
 **********************************
-Many GPIB/SCPI commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
+Many GPIB/SCPI commands are more restrictive than our basic examples above. The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function has the ability to encode these restrictions using :mod:`validators <pymeasure.instruments.validators>`. A validator is a function that takes a value and a set of values, and returns a valid value or raises an exception. There are a number of pre-defined validators in :mod:`pymeasure.instruments.validators` that should cover most situations. We will cover the four basic types here.
 
 In the examples below we assume you have imported the validators.
 
@@ -372,7 +381,7 @@ In the examples below we assume you have imported the validators.
 
     from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
 
-In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` function also provide means to achieve this.
+In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` function also provide means to achieve this.
 
 In a restricted range
 ---------------------
@@ -452,7 +461,7 @@ Now we can set the voltage range, which will automatically truncate to an approp
 Mapping values
 **************
 
-Now that you are familiar with the validators, you can additionally use maps to satisfy instruments which require non-physical values. The :code:`map_values` argument of :func:`Instrument.control <pymeasure.instruments.Instrument.control>` enables this feature.
+Now that you are familiar with the validators, you can additionally use maps to satisfy instruments which require non-physical values. The :code:`map_values` argument of :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` enables this feature.
 
 If your set of values is a list, then the command will use the index of the list. For example, if our "Extreme 5000" instead has a :code:`:RANG <integer>`, where 0, 1, and 2 correspond to 10 mV, 100 mV, and 1 V, then we can use the following control.
 
@@ -524,7 +533,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     >>> extreme.channel
     'Y'
 
-As you have seen, the :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be significantly extended by using validators and maps.
+As you have seen, the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be significantly extended by using validators and maps.
 
 .. _boolean-properties:
 
@@ -564,7 +573,7 @@ Good names for boolean properties are chosen such that they could also be a yes/
 Processing of set values
 ************************
 
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>` allow a keyword argument `set_process` which must be a function that takes a value after validation and performs processing before value mapping. This function must return the processed value. This can be typically used for unit conversions as in the following example:
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` allow a keyword argument `set_process` which must be a function that takes a value after validation and performs processing before value mapping. This function must return the processed value. This can be typically used for unit conversions as in the following example:
 
 
 .. testcode::
@@ -585,7 +594,7 @@ The :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :
 Processing of return values
 ***************************
 
-Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, and :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` functions allow a `get_process` argument which if specified must be a function that takes a value and performs processing before value mapping. The function must return the processed value. In analogy to the example above this can be used for example for unit conversion:
+Similar to `set_process` the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, and :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` functions allow a `get_process` argument which if specified must be a function that takes a value and performs processing before value mapping. The function must return the processed value. In analogy to the example above this can be used for example for unit conversion:
 
 .. testcode::
 
@@ -639,7 +648,7 @@ Another use-case of `set-process`, `get-process` is conversion from/to a :code:`
         get_process=lambda v: float(v.replace('nF', ''))
     )
 
-The same can be also achieved by the `preprocess_reply` keyword argument to :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`. This function is forwarded to :func:`Adapter.values <pymeasure.adapters.values>` and runs directly after receiving the reply from the device. One can therefore take advantage of the built in casting abilities and simplify the code accordingly:
+The same can be also achieved by the `preprocess_reply` keyword argument to :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` or :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`. This function is forwarded to :func:`Adapter.values <pymeasure.adapters.values>` and runs directly after receiving the reply from the device. One can therefore take advantage of the built in casting abilities and simplify the code accordingly:
 
 .. testcode::
 
@@ -657,20 +666,20 @@ If you need to tweak
 * the :code:`set_command` string immediately before the value to set is inserted via string formatting (:code:`%g` etc.), or
 * the :code:`get_command` string before sending it to the device,
 
-use the :code:`command_process` parameter of :meth:`~pymeasure.instruments.Instrument.control`.
+use the :code:`command_process` parameter of :meth:`~pymeasure.instruments.common_base.CommonBase.control`.
 
 Note that there is only one parameter for both setting and getting, so the utility of this is probably limited.
 Note also that for adding e.g. channel identifiers, there are other, more preferable methods.
 
 Checking the instrument for errors
 **********************************
-If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.Instrument.control`, respectively.
+If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.common_base.CommonBase.control`, respectively.
 If those are enabled, the method :meth:`~pymeasure.instruments.Instrument.check_errors` will be called after device communication has concluded.
 
 Using multiple values
 *********************
 Seldomly, you might need to send/receive multiple values in one command.
-The :func:`Instrument.control <pymeasure.instruments.Instrument.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
 
 .. testcode::
 
@@ -709,7 +718,7 @@ Pay attention *not* to inadvertently define other class attribute or instance at
 .. note::
    To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read. 
 
-The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
 
 Dynamic validity range
 ----------------------
@@ -826,6 +835,137 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
 
 
+.. _channels:
+
+Instruments with channels
+=========================
+
+Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name.
+For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :class:`~pymeasure.instruments.Instrument` instance (i.e., a parent instrument) instead of an :class:`~pymeasure.adapters.Adapter` as parameter.
+All the channel communication is routed through the instrument's methods (`write`, `read`, etc.).
+However, :meth:`Channel.insert_id <pymeasure.instruments.Channel.insert_id>` uses `str.format` to insert the channel's id at any occurence of the class attribute :attr:`Channel.placeholder`, which defaults to :code:`"ch"`, in the written commands.
+For example :code:`"Ch{ch}:VOLT?"` will be sent as :code:`"Ch3:VOLT?"` to the device, if the channel's id is "3".
+
+In order to add a channel to an instrument or to another channel (nesting channels is possible), create the channels with the class :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` as class attributes.
+Its constructor accepts a single channel class or list of classes and a list of corresponding ids.
+Instead of lists, you may also use tuples.
+If you give a single class and a list of ids, all channels will be of the same class.
+
+At instrument instantiation, the instrument will add the channels accordingly with the attribute names as a composition of the prefix (default :code:`"ch_"`) and channel id, e.g. the channel with id "A" will be added as attribute :code:`ch_A`.
+Additionally, the channels will be collected in a dictionary with the same name as you used for the `ChannelCreator`.
+Without pressing reasons, call the dictionary :code:`channels` and do not change the default prefix in order to keep the code base homogeneous.
+
+In order to add or remove programatically channels, use the parent's :meth:`~pymeasure.instruments.common_base.CommonBase.add_child`, :meth:`~pymeasure.instruments.common_base.CommonBase.remove_child` methods.
+
+.. testcode:: with-protocol-tests
+
+    class VoltageChannel(Channel):
+        """A channel of the voltage source."""
+
+        voltage = Channel.control(
+            "SOURce{ch}:VOLT?", "SOURce{ch}:VOLT %g",
+            """Control the output voltage of this channel.""",
+        )
+
+    class InstrumentWithChannels(Instrument):
+        """An instrument with channels."""
+        channels = Instrument.ChannelCreator(VoltageChannel, ("A", "B"))
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(InstrumentWithChannels,
+        [("SOURceA:VOLT 1.23", None), ("SOURceB:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.ch_A.voltage = 1.23
+        assert inst.ch_B.voltage == 4.56
+
+If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name.
+The same channel could be addressed with :code:`inst.channels["A"].voltage = 1.23` as well.
+
+
+Channels with fixed prefix
+**************************
+
+If all channel communication is prefixed by a specific command, e.g. :code:`"SOURceA:"` for channel A, you can override the channel's :meth:`insert_id` method.
+That is especially useful, if you have only one channel of that type, e.g. because it defines one function of the instrument vs. another one.
+
+.. testcode:: with-protocol-tests
+
+    class VoltageChannelPrefix(Channel):
+        """A channel of a voltage source, every command has the same prefix."""
+
+        def insert_id(self, command):
+            return f"SOURce{self.id}:{command}"
+
+        voltage = Channel.control(
+            "VOLT?", "VOLT %g",
+            """Control the output voltage of this channel.""",
+        )
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    class InstrumentWithChannelsPrefix(Instrument):
+        """An instrument with a channel, just for the test."""
+        channels = Instrument.ChannelCreator(VoltageChannelPrefix, "A")
+
+    with expected_protocol(InstrumentWithChannelsPrefix,
+        [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")],
+        name="Test",
+    ) as inst:
+        inst.ch_A.voltage = 1.23
+        assert inst.ch_A.voltage == 1.23
+
+This channel class implements the same communication as the previous example, but implements the channel prefix in the :meth:`insert_id` method and not in the individual property (created by :meth:`control`).
+
+
+Collections of different channel types
+**************************************
+
+Some devices have different types of channels. In this case, you can specify a different `collection` and `prefix` parameter.
+
+.. testcode:: with-protocol-tests
+
+    class PowerChannel(Channel):
+        """A channel controlling the power."""
+
+        power = Channel.measurement(
+            "POWER?", """Measure the currently consumed power.""")
+
+    class MultiChannelTypeInstrument(Instrument):
+        """An instrument with two different channel types."""
+        analog = Instrument.ChannelCreator(
+            (VoltageChannel, VoltageChannelPrefix),
+            ("A", "B"),
+            prefix="an_")
+        digital = Instrument.ChannelCreator(VoltageChannel, (0, 1, 2), prefix="di_")
+        power = Instrument.ChannelCreator(PowerChannel, prefix=None)
+
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(MultiChannelTypeInstrument,
+        [("SOURceB:VOLT 1.23", None), ("SOURce2:VOLT?", "4.56")],
+        name="MultiChannelTypeInstrument",
+    ) as inst:
+        inst.an_B.voltage = 1.23
+        assert inst.di_2.voltage == 4.56
+
+
+This instrument has two collections of channels and one single channel.
+The first collection in the dictionary :code:`analog` contains an instance of :class:`VoltageChannel` with the name :code:`an_A` and an instance of :class:`VoltageChannelPrefix` with the name :code:`an_B`.
+The second collection contains three channels of type :class:`VoltageChannel` with the names :code:`di_0, di_1, di_2` in the dictionary :code:`digital`.
+You can address the first channel of the second group either with :code:`inst.di_0` or with :code:`inst.digital[0]`.
+Finally, the instrument has a single channel with the name :code:`power`, as it does not have a prefix.
+
+If you have a single channel category, do not change the default parameters of :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` or :meth:`~pymeasure.instruments.common_base.CommonBase.add_child`, in order to keep the code base homogeneous.
+We expect the default behaviour to be sufficient for most use cases.
+
+
+
 .. _advanced_communication_protocols:
 
 Advanced communication protocols
@@ -843,9 +983,9 @@ The :class:`~pymeasure.adapters.Adapter` exposes :meth:`~pymeasure.adapters.Adap
 For binary data, like waveforms, the adapter provides also :meth:`~pymeasure.adapters.Adapter.write_binary_values` and :meth:`~pymeasure.adapters.Adapter.read_binary_values`, which use the aforementioned methods.
 You do not need to call all these methods directly, instead, you should use the methods of :class:`~pymeasure.instruments.Instrument` with the same name. They call the Adapter for you and keep the code tidy.
 
-Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.Instrument.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.Instrument.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
+Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
 
-The getter of :meth:`Instrument.control <pymeasure.instruments.Instrument.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_for`, and reads the device response via :meth:`read`.
+The getter of :meth:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_for`, and reads the device response via :meth:`read`.
 
 Similarly, :meth:`Instrument.binary_values <pymeasure.instruments.Instrument.binary_values>` sends a command via :meth:`write`, waits with :meth:`wait_till_read`, but reads the response via :meth:`Adapter.read_binary_values <pymeasure.adapters.Adapter.read_binary_values>`.
 
@@ -856,7 +996,7 @@ Adding a device address and adding delay
 Let's look at a simple example for a device, which requires its address as the first three characters and returns the same style. This is straightforward, as :meth:`write` just prepends the device address to the command, and :meth:`read` has to strip it again doing some error checking. Similarly, a checksum could be added.
 Additionally, the device needs some time after it received a command, before it responds, therefore :meth:`wait_for` waits always a certain time span.
 
-.. testcode::
+.. testcode:: with-protocol-tests
 
     class ExtremeCommunication(Instrument):
         """Control the ExtremeCommunication instrument.
@@ -864,8 +1004,8 @@ Additionally, the device needs some time after it received a command, before it 
         :param address: The device address for the communication.
         :param query_delay: Wait time after writing and before reading in seconds.
         """
-        def __init__(self, adapter, address=0, query_delay=0.1):
-            super().__init__(adapter, "ExtremeCommunication")
+        def __init__(self, adapter, name="ExtremeCommunication", address=0, query_delay=0.1):
+            super().__init__(adapter, name)
             self.address = f"{address:03}"
             self.query_delay = query_delay
     
@@ -894,7 +1034,8 @@ Additionally, the device needs some time after it received a command, before it 
         voltage = Instrument.measurement(
             ":VOLT:?", """Measure the voltage in Volts.""")
 
-.. testcode:: :hide:
+.. testcode:: with-protocol-tests
+    :hide:
 
     with expected_protocol(ExtremeCommunication, [("012:VOLT:?", "01215.5")], address=12
         ) as inst:
@@ -908,12 +1049,12 @@ Bytes communication
 
 Some devices do not expect ASCII strings but raw bytes. In those cases, you can call the :meth:`write_bytes` and :meth:`read_bytes` in your :meth:`write` and :meth:`read` methods. The following example shows an instrument, which has registers to be written and read via bytes sent.
 
-.. testcode::
+.. testcode:: with-protocol-tests
 
     class ExtremeBytes(Instrument):
         """Control the ExtremeBytes instrument with byte-based communication."""
-        def __init__(self, adapter):
-            super().__init__(adapter, "ExtremeBytes")
+        def __init__(self, adapter, name="ExtremeBytes"):
+            super().__init__(adapter, name)
     
         def write(self, command):
             """Write to the device according to the comma separated command.
@@ -927,14 +1068,14 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             self.write_bytes(bytes(b))
     
         def read(self):
-            """Read the response and return the data as an integer, if applicable."""
+            """Read the response and return the data as a string, if applicable."""
             response = self.read_bytes(2)  # return type and payload
             if response[0] == 0x00:
                 raise ConnectionError(f"Device error of type {response[1]} occurred.")
             if response[0] == 0x03:
                 # read that many bytes and return them as an integer
                 data = self.read_bytes(response[1])
-                return int.from_bytes(data, byteorder="big", signed=True)
+                return str(int.from_bytes(data, byteorder="big", signed=True))
             if response[0] == 0x10 and response[1] != 0x00:
                 raise ConnectionError(f"Writing to the device failed with error {response[1]}")
     
@@ -943,7 +1084,8 @@ Some devices do not expect ASCII strings but raw bytes. In those cases, you can 
             """Control the output voltage in mV.""",
         )
 
-.. testcode:: :hide:
+.. testcode:: with-protocol-tests
+    :hide:
 
     with expected_protocol(ExtremeBytes, [(b"\x03\x01\x06\x00\x00\x00\x00\x00\x00\x00\x01", b"\x03\x01\x0f")]) as inst:
         assert inst.voltage == 15
@@ -1015,21 +1157,48 @@ Device tests
 It can be useful as well to test the code against an actual device. The necessary device setup instructions (for example: connect a probe to the test output) should be written in the header of the test file or test methods. There should be the connection configuration (for example serial port), too.
 In order to distinguish the test module from protocol tests, the filename should be :code:`test_instrumentName_with_device.py`, if the device is called :code:`instrumentName`.
 
-Mark tests that require instrument hardware to be `skipped <https://docs.pytest.org/en/stable/how-to/skipping.html>`_ by default.
-If the whole test module requires hardware, add this at module level/after the import statements:
+To make it easier for others to run these tests using their own instruments, we recommend to use :code:`pytest.fixture` to create an instance of the instrument class.
+It is important to use the specific argument name :code:`connected_device_address` and define the scope of the fixture to only establish a single connection to the device.
+This ensures two things:
+First, it makes it possible to specify the address of the device to be used for the test using the :code:`--device-address` command line argument.
+Second, tests using this fixture, i.e. tests that rely on a device to be connected to the computer are skipped by default when running pytest.
+This is done to avoid that tests that require a device are run when none is connected.
+It is important that all tests that require a connection to a device either use the :code:`connected_device_address` fixture or a fixture derived from it as an argument.
+
+A simple example of a fixture that returns a connected instrument instance looks like this:
 
 .. code-block:: python
 
-    pytest.skip('Only works with connected hardware', allow_module_level=True)
+    @pytest.fixture(scope="module")
+    def extreme5000(connected_device_address):
+        instr = Extreme5000(connected_device_address)
+        # ensure the device is in a defined state, e.g. by resetting it.
+        return instr
 
-
-If only some test functions in a module need hardware, decorate those with
+Note that this fixture uses :code:`connected_device_address` as an input argument and will thus be skipped by automatic test runs. 
+This fixture can then be used in a test functions like this:
 
 .. code-block:: python
 
-    @pytest.mark.skip(reason='Only works with connected hardware')
-    def test_something():
-        ...
+    def test_voltage(extreme5000):
+        extreme5000.voltage = 0.345
+        assert extreme5000.voltage == 0.3
 
-If you want to run these tests with a connected device, select those tests and ignore the skip marker.
-For example, if your tests are in a file called :code:`test_extreme5000.py`, invoke pytest with :code:`pytest -k extreme5000 --no-skip`.
+Again, by specifying the fixture's name, in this case :code:`extreme5000`, invoking :code:`pytest` will skip these tests by default.
+
+It is also possible to define derived fixtures, for example to put the device into a specific state. Such a fixture would look like this:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def auto_scaled_extreme5000(extreme5000):
+        extreme5000.auto_scale()
+        return extreme5000
+
+In this case, do not specify the fixture's scope, so it is called again for every test function using it.
+
+To run the test, specify the address of the device to be used via the :code:`--device-address` command line argument and limit pytest to the relevant tests.
+You can filter tests with the :code:`-k` option or you can specify the filename.
+For example, if your tests are in a file called :code:`test_extreme5000_with_device.py`, invoke pytest with :code:`pytest -k extreme5000 --device-address TCPIP::192.168.0.123::INSTR"`.
+
+There might also be tests where manual intervention is necessary. In this case, skip the test by prepending the test function with a :code:`@pytest.mark.skip(reason="A human needs to press a button.")` decorator.

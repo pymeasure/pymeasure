@@ -44,6 +44,7 @@ from ..widgets import (
     EstimatorWidget,
 )
 from ...experiment import Results, Procedure
+from ..curves import ResultsCurve
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -294,11 +295,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
             if state == QtCore.Qt.CheckState.Unchecked:
-                for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                    wdg.remove(curve)
+                for curve in experiment.curve_list:
+                    if curve:
+                        curve.wdg.remove(curve)
             else:
-                for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                    wdg.load(curve)
+                for curve in experiment.curve_list:
+                    if curve:
+                        curve.wdg.load(curve)
 
     def browser_item_menu(self, position):
         item = self.browser.itemAt(position)
@@ -411,8 +414,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             pixelmap = QtGui.QPixmap(24, 24)
             pixelmap.fill(color)
             experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
-            for wdg, curve in zip(self.widget_list, experiment.curve_list):
-                wdg.set_color(curve, color=color)
+            for curve in experiment.curve_list:
+                if curve:
+                    curve.wdg.set_color(curve, color=color)
 
     def open_file_externally(self, filename):
         """ Method to open the datafile using an external editor or viewer. Uses the default
@@ -447,13 +451,17 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if curve is None:
             curve_list = []
             for wdg in self.widget_list:
-                curve_list.append(self.new_curve(wdg, results))
+                new_curve = self.new_curve(wdg, results)
+                if isinstance(new_curve, (tuple, list)):
+                    curve_list.extend(new_curve)
+                else:
+                    curve_list.append(new_curve)
         else:
             curve_list = curve[:]
 
         curve_color = pg.intColor(0)
-        for wdg, curve in zip(self.widget_list, curve_list):
-            if isinstance(wdg, PlotWidget):
+        for curve in curve_list:
+            if isinstance(curve, ResultsCurve):
                 curve_color = curve.opts['pen'].color()
                 break
 
@@ -604,7 +612,7 @@ class ManagedWindow(ManagedWindowBase):
         super().__init__(procedure_class, **kwargs)
 
         # Setup measured_quantities once we know x_axis and y_axis
-        self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
+        self.browser_widget.browser.measured_quantities.update([self.x_axis, self.y_axis])
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)

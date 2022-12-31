@@ -171,7 +171,7 @@ class HP8657B(Instrument):
         )
 
     frequency = Instrument.setting(
-        "FR %9.1f HZ",
+        "FR %10.0f HZ",
         """
         Set the output frequency of the instrument in Hz.
 
