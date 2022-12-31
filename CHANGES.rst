@@ -5,6 +5,14 @@ New adapter and instrument mechanics
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 - All instruments are required to accept a :code:`name` argument.
 
+Version 0.11.1 (2022-12-31)
+===========================
+Adapter and instrument mechanics
+--------------------------------
+- Fix broken `PrologixAdapter.gpib`. Due to a bug in `VISAAdapter`, you could not get a second adapter with that connection (#765).
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.11.0...v0.11.1
+
 Version 0.11.0 (2022-11-19)
 ===========================
 Main items of this new release:
