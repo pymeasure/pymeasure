@@ -1,8 +1,8 @@
-Version 0.11.1 (2022-12-03)
+Version 0.11.1 (2022-12-31)
 ===========================
 Adapter and instrument mechanics
 --------------------------------
-- Fix broken `PrologixAdapter.gpib` due to bug in `VISAAdapter`, that you could not get a second adapter with that connection (#765).
+- Fix broken `PrologixAdapter.gpib`. Due to a bug in `VISAAdapter`, you could not get a second adapter with that connection (#765).
 
 **Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.11.0...v0.11.1
 
