@@ -37,8 +37,10 @@ class PrologixAdapter(VISAAdapter):
     Serial connection sharing is achieved by using the :meth:`.gpib`
     method to spawn new PrologixAdapters for different GPIB addresses.
 
-    :param port: The Serial port name or a connection object
-    :param address: Integer GPIB address of the desired instrument
+    :param resource_name: A
+        `VISA resource string <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
+        that identifies the target of the connection.
+    :param address: Integer GPIB address of the desired instrument.
     :param rw_delay: An optional delay to set between a write and read call for
         slow to respond instruments.
 
@@ -54,7 +56,18 @@ class PrologixAdapter(VISAAdapter):
 
     :param kwargs: Key-word arguments if constructing a new serial object
 
-    :ivar address: Integer GPIB address of the desired instrument
+    :ivar address: Integer GPIB address of the desired instrument.
+
+    Usage example:
+
+    .. code::
+
+        adapter = PrologixAdapter("ASRL5::INSTR", 7)
+        # generate another instance with a different GPIB address:
+        adapter2 = adapter.gpib(9)
+        sourcemeter1 = Keithley2400(adapter)  # at GPIB address 7
+        sourcemeter2 = Keithley2400(adapter2)  # at GPIB address 9
+
 
     To allow user access to the Prologix adapter in Linux, create the file:
     :code:`/etc/udev/rules.d/51-prologix.rules`, with contents:
