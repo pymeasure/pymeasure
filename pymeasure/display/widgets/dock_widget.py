@@ -86,9 +86,9 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         log.info('Saved dock layout to file %s' % self.dock_layout_filename)
 
     def _setup_ui(self):
-        self.save_layout_button = QtWidgets.QPushButton('Save Dock Layout', self)
-        self.save_layout_button.clicked.connect(self.save_dock_layout)
-        self.save_layout_button.setToolTip("Save current dock layout to file in working directory.")
+        save_menu = QtWidgets.QWidgetAction(self)
+        save_menu.setText("Save Dock Layout")
+        save_menu.triggered.connect(self.save_dock_layout)
 
         for i in range(self.num_plots):
             # Set the default label for current dock from x_axis_labels and y_axis_labels
@@ -101,17 +101,14 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             self.plot_frames.append(
                 PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_label,
                            y_label, linewidth=self.linewidth))
+            self.plot_frames[i].plot_frame.plot_widget.scene().contextMenu.append(save_menu)
             dock.addWidget(self.plot_frames[i])
             self.docks.append(dock)
 
     def _layout(self):
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.addStretch(5)
-        hbox.addWidget(self.save_layout_button, 1)
 
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
-        vbox.addLayout(hbox)
         vbox.addWidget(self.dock_area)
         self.setLayout(vbox)
 
