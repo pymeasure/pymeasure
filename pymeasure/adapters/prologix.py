@@ -29,7 +29,7 @@ from pymeasure.adapters import VISAAdapter
 
 class PrologixAdapter(VISAAdapter):
     """ Encapsulates the additional commands necessary
-    to communicate over a Prologix GPIB Adapter,
+    to communicate over a Prologix GPIB-USB Adapter,
     using the :class:`VISAAdapter`.
 
     Each PrologixAdapter is constructed based on a connection to the Prologix device
