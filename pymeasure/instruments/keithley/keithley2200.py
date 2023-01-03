@@ -31,61 +31,66 @@ log.addHandler(logging.NullHandler())
 
 
 class PSChannel(Channel):
-    """ Implementation of a Keithley 2200 channel. """
+    """Implementation of a Keithley 2200 channel."""
 
     VOLTAGE_RANGE = [0, 70]
     CURRENT_RANGE = [0, 45]
 
     output_enabled = Instrument.control(
-        "SOURCE:OUTP:ENAB?", "SOURCE:OUTP:ENAB %d",
-        """ A boolean property representing output state.""",
+        "SOURCE:OUTP:ENAB?",
+        "SOURCE:OUTP:ENAB %d",
+        """ Enables or Disables the output.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
-        map_values=True
+        map_values=True,
     )
 
-    voltage = Instrument.control(
-        "VOLT?", "VOLT %g",
-        """ A floating point property representing the output voltage in Volts.""",
+    voltage_setpoint = Instrument.control(
+        "VOLT?",
+        "VOLT %g",
+        """ Set output voltage in Volts.""",
         validator=strict_range,
-        values=VOLTAGE_RANGE
+        values=VOLTAGE_RANGE,
     )
 
-    current = Instrument.control(
-        "CURR?", "CURR %g",
-        """ A floating point property that representing the output current in Amps.""",
+    current_limit = Instrument.control(
+        "CURR?",
+        "CURR %g",
+        """ Set output current in Amps.""",
         validator=strict_range,
-        values=CURRENT_RANGE
+        values=CURRENT_RANGE,
     )
 
-    measure_current = Instrument.measurement(
+    current = Instrument.measurement(
         "MEAS:CURR?",
-        """ A measurement property that reads the measured current in Amps.""",
+        """ Measure the current in Amps.""",
     )
 
-    measure_voltage = Instrument.measurement(
+    voltage = Instrument.measurement(
         "MEAS:VOLT?",
-        """ A measurement property that reads the measured current in Volts.""",
+        """ Measure the voltage in Volts.""",
     )
 
-    measure_power = Instrument.measurement(
-        "MEAS:VOLT?",
-        """ A measurement property that reads the measured power in watts.""",
+    power = Instrument.measurement(
+        "MEAS:POW?",
+        """ Measure the power in watts.""",
     )
 
     voltage_limit = Instrument.control(
-        "VOLT:LIM?", "VOLT:LIM %g",
-        """ A property which represents the maximum voltage limit.""",
+        "VOLT:LIM?",
+        "VOLT:LIM %g",
+        """ Limits the maximum voltage that can be set.""",
         validator=strict_range,
-        values=VOLTAGE_RANGE
+        values=VOLTAGE_RANGE,
     )
 
     voltage_limit_enabled = Instrument.control(
-        "VOLT:LIM:STAT?", "VOLT:LIM:STAT %d",
-        """A boolean property that representing voltage limit.""",
+        "VOLT:LIM:STAT?",
+        "VOLT:LIM:STAT %d",
+        """ Turns on or off the maximum voltage limit.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
-        map_values=True
+        map_values=True,
     )
 
     def insert_id(self, command):
@@ -93,23 +98,25 @@ class PSChannel(Channel):
 
 
 class Keithley2200(Instrument):
-    """ Represents the Keithley 2230 Power Supply.
-    """
-    def __init__(self, adapter, name="Keithley2200"):
-        super().__init__(adapter, name)
+    """Represents the Keithley 2230 Power Supply."""
+
+    def __init__(self, adapter, name="Keithley2200", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     channels = Instrument.ChannelCreator(PSChannel, ("1", "2", "3"))
 
     display_enabled = Instrument.control(
-        "DISP?", ":DISP %d",
-        """ A boolean property that controls whether the display is enabled.""",
+        "DISP?",
+        ":DISP %d",
+        """ Controls whether the display is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
-        map_values=True
+        map_values=True,
     )
 
     display_text_data = Instrument.control(
-        ":DISP:TEXT:DATA?", ":DISP:TEXT:DATA \"%s\"",
-        """ A string property that control text to be displayed(32 characters).""",
-        get_process=lambda v: v.replace('"', '')
+        ":DISP:TEXT:DATA?",
+        ':DISP:TEXT:DATA "%s"',
+        """ Controls text to be displayed(32 characters).""",
+        get_process=lambda v: v.replace('"', ""),
     )

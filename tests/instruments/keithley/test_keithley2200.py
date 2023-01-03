@@ -43,13 +43,13 @@ def test_set_voltage():
             (b"INST:SEL CH1;VOLT 1.456", None),
             (b"INST:SEL CH1;VOLT?", 1.456),
             (b"INST:SEL CH1;MEAS:VOLT?", 1.456),
-            (b"INST:SEL CH3;VOLT 1.456", None)
+            (b"INST:SEL CH3;VOLT 1.456", None),
         ],
     ) as instr:
-        instr.ch_1.voltage = 1.456
+        instr.ch_1.voltage_setpoint = 1.456
+        assert instr.ch_1.voltage_setpoint == 1.456
         assert instr.ch_1.voltage == 1.456
-        assert instr.ch_1.measure_voltage == 1.456
-        instr.ch_3.voltage = 1.456
+        instr.ch_3.voltage_setpoint = 1.456
 
 
 def test_set_current():
@@ -58,8 +58,8 @@ def test_set_current():
         Keithley2200,
         [(b"INST:SEL CH3;CURR 1.456", None), (b"INST:SEL CH1;CURR 2.654", None)],
     ) as instr:
-        instr.ch_3.current = 1.456
-        instr.ch_1.current = 2.654
+        instr.ch_3.current_limit = 1.456
+        instr.ch_1.current_limit = 2.654
 
 
 def test_output_enabled():
