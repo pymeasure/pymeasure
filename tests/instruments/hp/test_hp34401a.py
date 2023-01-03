@@ -23,270 +23,364 @@
 #
 
 import pytest
-import time
-import logging
-from pymeasure.instruments.hp import HP34401A
+from pymeasure.test import expected_protocol
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+from pymeasure.instruments.hp.hp34401A import HP34401A
 
 
-class TestHP8116A:
-    """
-    Unit tests for HP34401A class.
+@pytest.mark.parametrize("function_", HP34401A.FUNCTIONS.keys())
+def test_function(function_):
+    with expected_protocol(
+            HP34401A,
+            [
+                ("FUNC?", HP34401A.FUNCTIONS[function_]),
+                (f"FUNC \"{HP34401A.FUNCTIONS[function_]}\"", None),
+            ],
+    ) as inst:
+        assert function_ == inst.function_
+        inst.function_ = function_
 
-    This test suite, needs the following setup to work properly:
-        - A HP34401A device should be connected to the computer;
-        - The device's address must be set in the RESOURCE constant.
-    """
 
-    RESOURCE = 'GPIB0::16'
-    instr = HP34401A(RESOURCE)
+def test_range_dcv():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"VOLT\"", None),
+                ("FUNC?", "VOLT"),
+                (f"VOLT:RANG?", "1"),
+                ("FUNC?", "VOLT"),
+                (f"VOLT:RANG 1", None),
+            ],
+    ) as inst:
+        inst.function_ = "DCV"
+        assert 1 == inst.range_
+        inst.range_ = 1
 
-    FUNCTIONS = ["DCV", "DCV_RATIO", "ACV", "DCI", "ACI", "R2W",
-                 "R4W", "FREQ", "PERIOD", "CONTINUITY", "DIODE"]
 
-    FUNCTIONS_WITH_RANGE = ["DCV", "ACV", "DCI", "ACI",
-                            "R2W", "R4W", "FREQ", "PERIOD"]
+def test_range_freq():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"FREQ\"", None),
+                ("FUNC?", "FREQ"),
+                (f"FREQ:VOLT:RANG?", "1"),
+                ("FUNC?", "FREQ"),
+                (f"FREQ:VOLT:RANG 1", None),
+            ],
+    ) as inst:
+        inst.function_ = "FREQ"
+        assert 1 == inst.range_
+        inst.range_ = 1
 
-    TEST_RANGES = {
-        "DCV": [0.1, 1, 10], "ACV": [0.1, 1, 10], "DCI": [0.1, 1, 3],
-        "ACI": [1, 3], "R2W": [100, 1e3, 10e3], "R4W": [100, 1e3, 10e3],
-        "FREQ": [0.1, 1, 10], "PERIOD": [0.1, 1, 10]}
 
-    @pytest.fixture
-    def make_resetted_instr(self):
-        self.instr.reset()
-        self.instr.check_errors()
-        self.instr.write("*RST")
-        self.instr.reset()
-        return self.instr
+@pytest.mark.parametrize("enabled", [True, False])
+def test_autorange_dcv(enabled):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"VOLT\"", None),
+                ("FUNC?", "VOLT"),
+                (f"VOLT:RANG:AUTO?", "1" if enabled else "0"),
+                ("FUNC?", "VOLT"),
+                (f"VOLT:RANG:AUTO {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        inst.function_ = "DCV"
+        assert enabled == inst.autorange
+        inst.autorange = enabled
 
-    def test_correct_model_by_idn(self, make_resetted_instr):
-        instr = make_resetted_instr
-        assert "34401a" in instr.id.lower()
 
-    @pytest.mark.parametrize("function_", FUNCTIONS)
-    def test_given_function_when_set_then_function_is_set(self, make_resetted_instr, function_):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        assert len(instr.check_errors()) == 0
-        assert instr.function_ == function_
+@pytest.mark.parametrize("enabled", [True, False])
+def test_autorange_freq(enabled):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"FREQ\"", None),
+                ("FUNC?", "FREQ"),
+                (f"FREQ:VOLT:RANG:AUTO?", "1" if enabled else "0"),
+                ("FUNC?", "FREQ"),
+                (f"FREQ:VOLT:RANG:AUTO {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        inst.function_ = "FREQ"
+        assert enabled == inst.autorange
+        inst.autorange = enabled
 
-    @pytest.mark.parametrize("function_", FUNCTIONS)
-    def test_given_function_is_set_then_reading_avaliable(self, make_resetted_instr, function_):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        assert len(instr.check_errors()) == 0
-        assert instr.reading is not None
 
-    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    def test_given_function_is_set_then_range_avaliable(self, make_resetted_instr, function_):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        assert len(instr.check_errors()) == 0
-        assert instr.range_ is not None
+@pytest.mark.parametrize("function_", HP34401A.FUNCTIONS.keys())
+def test_resolution(function_):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"{HP34401A.FUNCTIONS[function_]}\"", None),
+                ("FUNC?", HP34401A.FUNCTIONS[function_]),
+                (f"{HP34401A.FUNCTIONS[function_]}:RES?", "1"),
+                ("FUNC?", HP34401A.FUNCTIONS[function_]),
+                (f"{HP34401A.FUNCTIONS[function_]}:RES 1", None),
+            ],
+    ) as inst:
+        inst.function_ = function_
+        assert 1 == inst.resolution
+        inst.resolution = 1
 
-    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    def test_given_function_set_then_auto_range_enabled(self, make_resetted_instr, function_):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        assert len(instr.check_errors()) == 0
-        assert instr.auto_range_enabled is True
 
-    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    def test_given_range_set_then_range_correct(self, make_resetted_instr, function_):
-        for range in self.TEST_RANGES[function_]:
-            instr = make_resetted_instr
-            instr.function_ = function_
-            instr.range_ = range
-            assert len(instr.check_errors()) == 0
-            assert instr.range_ == range
+@pytest.mark.parametrize("function_", HP34401A.FUNCTIONS.keys())
+def test_nplc(function_):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"{HP34401A.FUNCTIONS[function_]}\"", None),
+                ("FUNC?", HP34401A.FUNCTIONS[function_]),
+                (f"{HP34401A.FUNCTIONS[function_]}:NPLC?", "1"),
+                ("FUNC?", HP34401A.FUNCTIONS[function_]),
+                (f"{HP34401A.FUNCTIONS[function_]}:NPLC 1", None),
+            ],
+    ) as inst:
+        inst.function_ = function_
+        assert 1 == inst.nplc
+        inst.nplc = 1
 
-    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    def test_autorange_enable(self, make_resetted_instr, function_):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        instr.auto_range_enabled = True
-        assert len(instr.check_errors()) == 0
-        assert instr.auto_range_enabled is True
 
-    @pytest.mark.parametrize("function_", FUNCTIONS_WITH_RANGE)
-    def test_autorange_disable(self, make_resetted_instr, function_):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        instr.auto_range_enabled = False
-        assert len(instr.check_errors()) == 0
-        assert instr.auto_range_enabled is False
+@pytest.mark.parametrize("function_", ["FREQ", "PERIOD"])
+def test_gate_time(function_):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"{HP34401A.FUNCTIONS[function_]}\"", None),
+                ("FUNC?", HP34401A.FUNCTIONS[function_]),
+                (f"{HP34401A.FUNCTIONS[function_]}:APER?", "1"),
+                ("FUNC?", HP34401A.FUNCTIONS[function_]),
+                (f"{HP34401A.FUNCTIONS[function_]}:APER 1", None),
+            ],
+    ) as inst:
+        inst.function_ = function_
+        assert 1 == inst.gate_time
+        inst.gate_time = 1
 
-    def test_dcv_range_min_max(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.function_ = "DCV"
-        instr.range_ = "MIN"
-        assert len(instr.check_errors()) == 0
-        assert instr.range_ == 0.1
-        instr.range_ = "MAX"
-        assert len(instr.check_errors()) == 0
-        assert instr.range_ == 1000
 
-    @pytest.mark.parametrize("enabled", [True, False])
-    def test_display_enabled(self, make_resetted_instr, enabled):
-        instr = make_resetted_instr
-        instr.display_enabled = enabled
-        assert len(instr.check_errors()) == 0
-        assert instr.display_enabled == enabled
+def test_detector_bandwidth():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"DET:BAND?", "1"),
+                (f"DET:BAND 1", None),
+            ],
+    ) as inst:
+        assert 1 == inst.detector_bandwidth
+        inst.detector_bandwidth = 1
 
-    @pytest.mark.parametrize("function_", ["DCV", "ACV", "DCI", "R2W"])
-    def test_resolution(self, make_resetted_instr, function_):
-        instr: HP34401A = make_resetted_instr
-        instr.function_ = function_
-        instr.range_ = 1
-        instr.resolution = 0.0001
-        assert len(instr.check_errors()) == 0
-        assert instr.resolution == 0.0001
 
-    @pytest.mark.parametrize("function_", ["DCV", "DCI", "R2W"])
-    @pytest.mark.parametrize("nplc", [0.02, 1, 100])
-    def test_nplc(self, make_resetted_instr, function_, nplc):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        instr.nplc = nplc
-        assert len(instr.check_errors()) == 0
-        assert instr.nplc == nplc
+@pytest.mark.parametrize("enabled", [True, False])
+def test_autozero_enabled(enabled):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"ZERO:AUTO?", "1" if enabled else "0"),
+                (f"ZERO:AUTO {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        assert enabled == inst.autozero_enabled
+        inst.autozero_enabled = enabled
 
-    @pytest.mark.parametrize("function_", ["FREQ", "PERIOD"])
-    @pytest.mark.parametrize("gate_time", [0.01, 0.01, 1])
-    def test_gate_time(self, make_resetted_instr, function_, gate_time):
-        instr = make_resetted_instr
-        instr.function_ = function_
-        instr.gate_time = gate_time
-        assert len(instr.check_errors()) == 0
-        assert instr.gate_time == gate_time
 
-    @pytest.mark.parametrize("detector_bandwidth", [3, 20, 200])
-    def test_detector_bandwidth(self, make_resetted_instr, detector_bandwidth):
-        instr = make_resetted_instr
-        instr.function_ = "FREQ"
-        instr.detector_bandwidth = detector_bandwidth
-        assert len(instr.check_errors()) == 0
-        assert instr.detector_bandwidth == detector_bandwidth
+def test_trigger_single_autozero():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"ZERO:AUTO ONCE", None),
+            ],
+    ) as inst:
+        inst.trigger_single_autozero()
 
-    @pytest.mark.parametrize("enable", [True, False])
-    def test_autozero(self, make_resetted_instr, enable):
-        instr = make_resetted_instr
-        instr.autozero_enabled = enable
-        assert len(instr.check_errors()) == 0
-        assert instr.autozero_enabled == enable
 
-    def test_single_autozero(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.autozero_enabled = True
-        instr.trigger_single_autozero()
-        assert len(instr.check_errors()) == 0
-        assert instr.autozero_enabled is False
+@pytest.mark.parametrize("enabled", [True, False])
+def test_auto_input_impedance_enabled(enabled):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"INP:IMP:AUTO?", "1" if enabled else "0"),
+                (f"INP:IMP:AUTO {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        assert enabled == inst.auto_input_impedance_enabled
+        inst.auto_input_impedance_enabled = enabled
 
-    def test_auto_input_impedance(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.auto_input_impedance_enabled = True
-        assert len(instr.check_errors()) == 0
-        assert instr.auto_input_impedance_enabled is True
-        instr.auto_input_impedance_enabled = False
-        assert len(instr.check_errors()) == 0
-        assert instr.auto_input_impedance_enabled is False
 
-    def test_terminals_used(self, make_resetted_instr):
-        instr = make_resetted_instr
-        assert instr.terminals_used in ["FRONT", "REAR"]
-        assert len(instr.check_errors()) == 0
+def test_terminals_used():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"ROUT:TERM?", "FRON"),
+            ],
+    ) as inst:
+        assert "FRONT" == inst.terminals_used
 
-    def test_when_init_trigger_called_then_no_error(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.init_trigger()
-        assert len(instr.check_errors()) == 0
 
-    @pytest.mark.parametrize("trigger_source", ["IMM", "BUS", "EXT"])
-    def test_trigger_source(self, make_resetted_instr, trigger_source):
-        instr = make_resetted_instr
-        instr.trigger_source = trigger_source
-        assert len(instr.check_errors()) == 0
-        assert instr.trigger_source == trigger_source
+def test_init_trigger():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"INIT", None)
+            ],
+    ) as inst:
+        inst.init_trigger()
 
-    def test_trigger_delay(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.trigger_delay = 10.5
-        trigger_delay = instr.trigger_delay
-        assert len(instr.check_errors()) == 0
-        assert trigger_delay == 10.5
 
-    @pytest.mark.parametrize("enabled", [True, False])
-    def test_trigger_auto_delay_enabled(self, make_resetted_instr, enabled):
-        instr = make_resetted_instr
-        instr.trigger_auto_delay_enabled = enabled
-        trigger_auto_delay_enabled = instr.trigger_auto_delay_enabled
-        assert len(instr.check_errors()) == 0
-        assert trigger_auto_delay_enabled == enabled
+def test_reading():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"READ?", "1")
+            ],
+    ) as inst:
+        assert 1 == inst.reading
 
-    def test_sample_count(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.sample_count = 10
-        assert instr.sample_count == 10
-        assert len(instr.check_errors()) == 0
 
-    def test_trigger_count(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.trigger_count = 10
-        assert len(instr.check_errors()) == 0
-        assert instr.trigger_count == 10
+@pytest.mark.parametrize("trigger_source", ["BUS", "EXT", "IMM"])
+def test_trigger_source(trigger_source):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"TRIG:SOUR?", trigger_source),
+                (f"TRIG:SOUR {trigger_source}", None),
+            ],
+    ) as inst:
+        assert trigger_source == inst.trigger_source
+        inst.trigger_source = trigger_source
 
-    def test_read_stored_readings(self, make_resetted_instr):
-        instr: HP34401A = make_resetted_instr
-        instr.sample_count = 10
-        instr.trigger_source = "IMM"
-        instr.nplc = 0.02
-        instr.init_trigger()
-        instr.complete
-        readings = instr.stored_readings
-        print(readings)
-        assert len(instr.check_errors()) == 0
-        assert len(readings) == 10
 
-    def test_displayed_text(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.displayed_text = "Hello World"
-        assert instr.displayed_text == "Hello World"
-        assert len(instr.check_errors()) == 0
+def test_trigger_delay():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"TRIG:DEL?", "1"),
+                (f"TRIG:DEL 1", None),
+            ],
+    ) as inst:
+        assert 1 == inst.trigger_delay
+        inst.trigger_delay = 1
 
-    def test_beep(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.beep()
-        assert len(instr.check_errors()) == 0
 
-    @pytest.mark.parametrize("enabled", [True, False])
-    def test_beeper_enabled(self, make_resetted_instr, enabled):
-        instr = make_resetted_instr
-        instr.beeper_enabled = enabled
-        assert instr.beeper_enabled == enabled
-        assert len(instr.check_errors()) == 0
+@pytest.mark.parametrize("enabled", [True, False])
+def test_trigger_auto_delay_enabled(enabled):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"TRIG:DEL:AUTO?", "1" if enabled else "0"),
+                (f"TRIG:DEL:AUTO {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        assert enabled == inst.trigger_auto_delay_enabled
+        inst.trigger_auto_delay_enabled = enabled
 
-    def test_scpi_version(self, make_resetted_instr):
-        instr = make_resetted_instr
-        assert len(str(instr.scpi_version)) > 0
-        assert len(instr.check_errors()) == 0
 
-    def test_stored_readings_count(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.nplc = 0.02
-        instr.sample_count = 10
-        instr.trigger_source = "IMM"
-        instr.init_trigger()
-        time.sleep(1)
-        assert instr.stored_readings_count == 10
-        assert len(instr.check_errors()) == 0
+def test_sample_count():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"SAMP:COUN?", "1"),
+                (f"SAMP:COUN 1", None),
+            ],
+    ) as inst:
+        assert 1 == inst.sample_count
+        inst.sample_count = 1
 
-    def test_self_test_result(self, make_resetted_instr):
-        instr = make_resetted_instr
-        instr.adapter.connection.timeout = 60000
-        assert instr.self_test_result in [True, False]
-        assert len(instr.check_errors()) == 0
+
+def test_trigger_count():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"TRIG:COUN?", "1"),
+                (f"TRIG:COUN 1", None),
+            ],
+    ) as inst:
+        assert 1 == inst.trigger_count
+        inst.trigger_count = 1
+
+
+def test_stored_reading():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FETC?", "1"),
+            ],
+    ) as inst:
+        assert 1 == inst.stored_reading
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_display_enabled(enabled):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"DISP?", "1" if enabled else "0"),
+                (f"DISP {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        assert enabled == inst.display_enabled
+        inst.display_enabled = enabled
+
+
+def test_displayed_text():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"DISP:TEXT?", "HELLO"),
+                (f"DISP:TEXT \"HELLO\"", None),
+            ],
+    ) as inst:
+        assert "HELLO" == inst.displayed_text
+        inst.displayed_text = "HELLO"
+
+
+def test_beep():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"SYST:BEEP", None),
+            ],
+    ) as inst:
+        inst.beep()
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_beeper_enabled(enabled):
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"SYST:BEEP:STAT?", "1" if enabled else "0"),
+                (f"SYST:BEEP:STAT {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        assert enabled == inst.beeper_enabled
+        inst.beeper_enabled = enabled
+
+
+def test_scpi_version():
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"SYST:VERS?", "1-2-3"),
+            ],
+    ) as inst:
+        assert "1-2-3" == inst.scpi_version
+
+
+def test_stored_readings_count():
+    with expected_protocol(
+        HP34401A,
+        [
+            (f"DATA:POIN?", "1"),
+        ],
+    ) as inst:
+        assert 1 == inst.stored_readings_count
+
+
+def test_self_test_result():
+    with expected_protocol(
+        HP34401A,
+        [
+            (f"*TST?", "0"),
+        ],
+    ) as inst:
+        assert 0 == inst.self_test_result

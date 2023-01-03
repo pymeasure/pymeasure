@@ -74,14 +74,14 @@ class HP34401A(Instrument):
         self.write(command)
 
     @property
-    def auto_range_enabled(self):
+    def autorange(self):
         """ A boolean property that controls the autorange state
         for the currently active function. """
         command = f"{self._get_function_range_prefix()}:RANG:AUTO?"
         return self.ask(command).strip() == "1"
 
-    @auto_range_enabled.setter
-    def auto_range_enabled(self, value):
+    @autorange.setter
+    def autorange(self, value):
         command = f"{self._get_function_range_prefix()}:RANG:AUTO {HP34401A.BOOL_MAPPINGS[value]}"
         self.write(command)
 
@@ -222,7 +222,7 @@ class HP34401A(Instrument):
         (you must send a device clear to return to the "idle" state). """)
 
     stored_reading = Instrument.measurement(
-        "FETCh?",
+        "FETC?",
         """ This property returns the reading(s) currently stored in the
         multimeter's internal memory. Reading this property will NOT initialize a trigger.
         If you need that, use the `reading` property instead. """)
