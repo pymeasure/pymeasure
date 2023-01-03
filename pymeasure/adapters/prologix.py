@@ -29,17 +29,18 @@ from pymeasure.adapters import VISAAdapter
 
 class PrologixAdapter(VISAAdapter):
     """ Encapsulates the additional commands necessary
-    to communicate over a Prologix GPIB-USB Adapter,
+    to communicate over a Prologix GPIB Adapter,
     using the :class:`VISAAdapter`.
 
-    Each PrologixAdapter is constructed based on a serial port or
-    connection and the GPIB address to be communicated to.
-    Serial connection sharing is achieved by using the :meth:`.gpib`
+    Each PrologixAdapter is constructed based on a connection to the Prologix device
+    itself and the GPIB address of the instrument to be communicated to.
+    Connection sharing is achieved by using the :meth:`.gpib`
     method to spawn new PrologixAdapters for different GPIB addresses.
 
     :param resource_name: A
         `VISA resource string <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
-        that identifies the target of the connection.
+        that identifies the connection to the Prologix device itself, for example
+        "ASRL5" for the 5th COM port.
     :param address: Integer GPIB address of the desired instrument.
     :param rw_delay: An optional delay to set between a write and read call for
         slow to respond instruments.
@@ -63,10 +64,10 @@ class PrologixAdapter(VISAAdapter):
     .. code::
 
         adapter = PrologixAdapter("ASRL5::INSTR", 7)
+        sourcemeter = Keithley2400(adapter)  # at GPIB address 7
         # generate another instance with a different GPIB address:
         adapter2 = adapter.gpib(9)
-        sourcemeter1 = Keithley2400(adapter)  # at GPIB address 7
-        sourcemeter2 = Keithley2400(adapter2)  # at GPIB address 9
+        multimeter = Keithley2000(adapter2)  # at GPIB address 9
 
 
     To allow user access to the Prologix adapter in Linux, create the file:
