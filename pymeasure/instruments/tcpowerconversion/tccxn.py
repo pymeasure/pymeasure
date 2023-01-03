@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import enum
 import struct
 
 from pymeasure.instruments.validators import strict_discrete_set
@@ -206,6 +207,31 @@ class CXN(Instrument):
         super().write_bytes(fullcmd + self._checksum(fullcmd))
         self._check_acknowledgment()
 
+    class Status(enum.IntFlag):
+        """IntFlag type used to represent the CXN status.
+
+        The used bits correspond to:
+        bit 14: Analog interface enabled,
+        bit 11: Interlock open,
+        bit 10: Over temperature,
+        bit 9: Reverse power limit,
+        bit 8: Forward power limit,
+        bit 6: MCG mode active,
+        bit 5: load power leveling active,
+        bit 4, External RF source active,
+        bit 0: RF power on.
+
+        """
+        RF_ENABLED = 1
+        EXTERNAL_RFSOURCE = 16
+        LOAD_POWER_LEVELING = 32
+        MCG_MODE = 64
+        FORWARD_POWER_LIMIT = 256
+        REVERSE_POWER_LIMIT = 512
+        OVER_TEMPERATURE = 1024
+        INTERLOCK_OPEN = 2048
+        ANALOG_INTERFACE = 16384
+
     id = Instrument.measurement(
         "Gi\x00\x01\x00\x00",
         """Get the device identification string.""",
@@ -248,19 +274,10 @@ class CXN(Instrument):
 
     status = Instrument.measurement(
         "GS\x00\x00\x00\x00",
-        """Get status field. The used bits correspond to:
-        bit 14: Analog interface enabled,
-        bit 11: Interlock open,
-        bit 10: Over temperature,
-        bit 9: Reverse power limit,
-        bit 8: Forward power limit,
-        bit 6: MCG mode active,
-        bit 5: load power leveling active,
-        bit 4, External RF source active,
-        bit 0: RF power on.
-        """,
+        """Get status field. The return value is represented by the IntFlag
+        type Status.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
-        get_process=lambda d: f"{d:016b}",
+        get_process=lambda d: CXN.Status(d),
     )
 
     temperature = Instrument.measurement(

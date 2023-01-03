@@ -42,7 +42,7 @@ def test_id():
 
 
 def test_power():
-    """Verify the processing the power measurement."""
+    """Verify processing the power measurement."""
     with expected_protocol(
         CXN,
         [
@@ -56,7 +56,7 @@ def test_power():
 
 
 def test_temperature():
-    """Verify the processing the temperature measurement."""
+    """Verify processing the temperature measurement."""
     with expected_protocol(
         CXN,
         [
@@ -69,8 +69,25 @@ def test_temperature():
         assert inst.temperature == pytest.approx(22.1)
 
 
+def test_status():
+    """Verify processing the status IntFlag."""
+    with expected_protocol(
+        CXN,
+        [
+            (
+                b"C\x00GS\x00\x00\x00\x00\x00\xdd",
+                b"\x2aR\x00\x00\x08\x00\x11\x00\xdd\x00\x04\x00\x03\x01\x4f",
+            ),
+        ],
+    ) as inst:
+        status = inst.status
+        assert CXN.Status.EXTERNAL_RFSOURCE in status
+        assert CXN.Status.RF_ENABLED in status
+        assert CXN.Status.RF_ENABLED | CXN.Status.EXTERNAL_RFSOURCE == status
+
+
 def test_power_limit():
-    """Verify the processing the power limit property"""
+    """Verify processing the power limit property"""
     with expected_protocol(
         CXN,
         [
@@ -85,7 +102,7 @@ def test_power_limit():
 
 
 def test_manual_mode():
-    """Verify the processing the manual mode property"""
+    """Verify processing the manual mode property"""
     with expected_protocol(
         CXN,
         [
@@ -100,14 +117,13 @@ def test_manual_mode():
 
 @pytest.mark.parametrize("channel", range(1, 10))
 def test_load_capacity_preset(channel):
-    """Verify the processing the load capacity propert via a Channel"""
+    """Verify processing the load capacity propert via a Channel"""
     # here we use '%' for formating since encoding from strings makes troubles
     # with some values (e.g. \xff)
     cmd = b"C\x00GU\x00%c\x00\x00" % (channel)
     cmd += CXN._checksum(cmd)
     response = b"R\x00\x00\n\x00%c\x00\x32\x00\x32\xff\xff\xff\xff" % (channel)
     response += CXN._checksum(response)
-    print(cmd, response)
     with expected_protocol(
         CXN,
         [
