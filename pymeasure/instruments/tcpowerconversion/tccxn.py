@@ -32,6 +32,11 @@ def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwar
     """Write a command to the instrument and return a list of formatted
     values from the result.
 
+    This is derived from CommonBase.values and adapted here for use with bytes
+    communication messages (no str conversion and strip). It is implemented as a
+    general method to allow using it equally in PresetChannel and CXN. See
+    Github issue #784 for details.
+
     :param command: SCPI command to be sent to the instrument
     :param separator: A separator character to split the string into a list
     :param cast: A type to cast the result
@@ -57,10 +62,7 @@ def values(self, command, cast=int, separator=',', preprocess_reply=None, **kwar
 
 
 def int2char(value):
-    """
-    converts an integer (unsigned-16bit) to a tuple containing the values
-    of two representing characters.
-    """
+    """Convert an 16-bit unsigned integer to a tuple of two representing characters."""
     return tuple(int(b) for b in value.to_bytes(2, "big"))
 
 
@@ -69,7 +71,7 @@ class PresetChannel(Channel):
 
     load_capacity = Instrument.control(
         "GU\x00{ch:c}\x00\x00", "TD{ch:c}\x01\x00%c",
-        """ percentage of full-scale value of the load capacity preset """,
+        """Control the percentage of full-scale value of the load capacity preset.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
         validator=strict_discrete_set,
         values=range(101),
@@ -77,7 +79,7 @@ class PresetChannel(Channel):
 
     tune_capacity = Instrument.control(
         "GU\x00{ch:c}\x00\x00", "TD{ch:c}\x02\x00%c",
-        """ percentage of full-scale value of the tune capacity preset """,
+        """Control the percentage of full-scale value of the tune capacity preset.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[4:6]),
         validator=strict_discrete_set,
         values=range(101),
@@ -114,10 +116,13 @@ class CXN(Instrument):
     :param string name: Name of the instrument.
     :param kwargs: Any valid key-word argument for Instrument
 
-    Note: In order to enable setting any parameters one has to request control
-    and periodically (at least once per 2s) poll any value from the device.
-    Failure to do so will mean loss of control and the device will reset
-    certain parameters (setpoint, disable RF, ...)
+    .. Note::
+
+        In order to enable setting any parameters one has to request control
+        and periodically (at least once per 2s) poll any value from the device.
+        Failure to do so will mean loss of control and the device will reset
+        certain parameters (setpoint, disable RF, ...). If no value should be polled
+        but control should remain active one can also use the ping method.
     """
     # use predefined values method to allow reusing in the Channels
     values = values
@@ -126,38 +131,52 @@ class CXN(Instrument):
 
     def __init__(self, adapter, name="T&C RF sputtering power supply", address=0, **kwargs):
         self.address = address
-        kwargs.setdefault("asrl", dict(baud_rate=38400))
         super().__init__(adapter,
                          name,
                          includeSCPI=False,
                          write_termination="",
                          read_termination="",
+                         asrl=dict(baud_rate=38400),
                          **kwargs)
 
     @staticmethod
     def _checksum(msg):
-        """
-        returns 2 bytes checksum calculated by a bytewise sum
+        """Calculate a 2 bytes checksum calculated by a bytewise sum of the message.
 
-        Parameters
-        ----------
-        msg : bytes object corresponding to the message
+        :param bytes msg: message content
+        :returns: calculated checksum
+        :rtype: bytes
         """
         return struct.pack(">H", sum(msg))
 
     def _prepend_cmdheader(self, cmd):
-        """
-        prepends command start byte and address to the command
+        """Prepends command start byte and address to the command.
 
-        Parameters
-        ----------
-        msg : bytes object corresponding to the command id and parameters
+        :param bytes msg: command message
         """
         return b"C" + self.address.to_bytes(1, "big") + cmd
 
-    def read(self):
+    def _check_acknowledgment(self):
+        """Check reply string for acknowledgement byte.
+
+        :raises ValueError: if an invalid an invalid byte is read from the instrument
         """
-        Reads from the instrument and returns the data fields as bytes
+        ret = super().read_bytes(1)
+        if ret == b"*":
+            return
+        # no valid acknowledgement message found
+        raise ValueError(
+            f"invalid reply '{ret}' found in acknowledgement check")
+
+    def read(self):
+        """Reads a response message from the instrument.
+
+        This method determines the length of the message from the automatically
+        by reading the message header and also checks for a correct checksum.
+
+        :returns: the data fields
+        :rtype: bytes
+        :raises ValueError: if a checksum error is detected
         """
         header = super().read_bytes(4)
         # check valid header
@@ -178,69 +197,58 @@ class CXN(Instrument):
                 f"but received {chksum}")
 
     def write(self, command):
-        """
-        Writes to the instrument and includes needed command header/address
+        """Writes a command to the instrument and includes needed required
+        header and address.
 
-        :param command: command string to be sent to the instrument
+        :param str command: command to be sent to the instrument
         """
         fullcmd = self._prepend_cmdheader(command.encode())
         super().write_bytes(fullcmd + self._checksum(fullcmd))
-        self.check_acknowledgment()
-
-    def check_acknowledgment(self):
-        """
-        check reply string for acknowledgement string
-        """
-        ret = super().read_bytes(1)
-        if ret == b"*":
-            return
-        # no valid acknowledgement message found
-        raise ValueError(
-            f"invalid reply '{ret}' found in acknowledgement check")
+        self._check_acknowledgment()
 
     id = Instrument.measurement(
         "Gi\x00\x01\x00\x00",
-        """ Device identification string """,
+        """Get the device identification string.""",
         cast=str,
         get_process=lambda d: d.decode()[2:-1].strip(),
     )
 
     serial = Instrument.measurement(
         "Gi\x00\x02\x00\x00",
-        """ Serial number of the instrument """,
+        """Get the serial number of the instrument.""",
         cast=str,
         get_process=lambda d: d.decode()[2:-1].strip(),
     )
 
     firmware_version = Instrument.measurement(
         "Gf\x00\x00\x00\x00",
-        """ UI-processor and RF-processor firmware version numbers """,
+        """Get the UI-processor and RF-processor firmware version numbers.""",
         preprocess_reply=lambda d: struct.unpack("BBBB", d),
         get_process=lambda v: str.format("UI {}.{}, RF {}.{}", *v)
     )
 
     pulse_params = Instrument.measurement(
         "GE\x00\x00\x00\x00",
-        """ Get pulse on/off time of the pulse waveform """,
+        """Get pulse on/off time of the pulse waveform.""",
         preprocess_reply=lambda d: struct.unpack(">HH", d),
     )
 
     frequency = Instrument.measurement(
         "GF\x00\x00\x00\x00",
-        """ Get operating frequency in Hz""",
+        """Get operating frequency in Hz.""",
         preprocess_reply=lambda d: struct.unpack(">L", d),
     )
 
     power = Instrument.measurement(
         "GP\x00\x00\x00\x00",
-        """ Get power readings for forward/reverse/load power in watts """,
+        """Get power readings for forward/reverse/load power in watts.""",
         preprocess_reply=lambda d: struct.unpack(">HHH", d),
         get_process=lambda d: (float(d[0])/10, float(d[1])/10, float(d[2])/10),
     )
 
     status = Instrument.measurement(
         "GS\x00\x00\x00\x00",
-        """ Get status field, where used bits correspond to:
+        """Get status field. The used bits correspond to:
         bit 14: Analog interface enabled,
         bit 11: Interlock open,
         bit 10: Over temperature,
@@ -257,14 +265,14 @@ class CXN(Instrument):
 
     temperature = Instrument.measurement(
         "GS\x00\x00\x00\x00",
-        """ Get heat sink temperature in deg Celsius """,
+        """Get heat sink temperature in deg Celsius.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
         get_process=lambda d: float(d)/10,
     )
 
     tuner = Instrument.measurement(
         "GS\x00\x00\x00\x00",
-        """ Get type of tuning. """,
+        """Get type of the used tuner.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[6:]),
         values={"none": 1, "AFT generator": 2,
                 "analog tuner": 3, "digital tuner": 4},
@@ -273,27 +281,27 @@ class CXN(Instrument):
 
     power_limit = Instrument.measurement(
         "Gp\x00\x00\x00\x00",
-        """ Get maximum power of the power supply. """,
+        """Get maximum power of the power supply.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
         get_process=lambda d: float(d)/10,
     )
 
     reverse_power_limit = Instrument.measurement(
         "Gp\x00\x00\x00\x00",
-        """ Get maximum power reverse power. """,
+        """Get maximum reverse power.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[18:20]),
         get_process=lambda d: float(d)/10,
     )
 
     dc_voltage = Instrument.measurement(
         "GT\x00\x00\x00\x00",
-        """ chamber DC voltage in volts. """,
+        """Get the DC voltage in volts.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[6:8]),
     )
 
     operation_mode = Instrument.control(
         "GS\x00\x00\x00\x00", "SO\x00%c\x00\x00",
-        """ operation mode """,
+        """Control the operation mode.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[4:6]),
         values={"normal": 1, "<invalid>": 2, "pulse": 3, "ramp": 4},
         map_values=True,
@@ -301,7 +309,7 @@ class CXN(Instrument):
 
     setpoint = Instrument.control(
         "GL\x00\x00\x00\x00", "SA%c%c\x00\x00",
-        """ setpoint power level in watts """,
+        """Contrl the setpoint power level in watts.""",
         preprocess_reply=lambda d: struct.unpack(">H", d),
         get_process=lambda d: float(d)/10,
         set_process=int2char,
@@ -311,7 +319,7 @@ class CXN(Instrument):
 
     ramp_start_power = Instrument.control(
         "GR\x00\x00\x00\x00", "RP%c%c\x00\x00",
-        """ ramp starting power in watts""",
+        """Control the ramp starting power in watts.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
         set_process=int2char,
         validator=strict_discrete_set,
@@ -320,7 +328,7 @@ class CXN(Instrument):
 
     ramp_rate = Instrument.control(
         "GR\x00\x00\x00\x00", "RR%c%c\x00\x00",
-        """ ramp rate in watts/second""",
+        """Control the ramp rate in watts/second.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:]),
         set_process=int2char,
         validator=strict_discrete_set,
@@ -329,7 +337,7 @@ class CXN(Instrument):
 
     manual_mode = Instrument.control(
         "GT\x00\x00\x00\x00", "TM\x00%c\x00\x00",
-        """ set manual tuner mode """,
+        """Control the manual tuner mode.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
         get_process=lambda v: bool(v & 1),
         set_process=lambda v: 2 if v else 1,
@@ -339,8 +347,8 @@ class CXN(Instrument):
 
     load_capacity = Instrument.control(
         "GT\x00\x00\x00\x00", "TC\x00\x01\x00%c",
-        """ percentage of full-scale value of the load capacity,
-           can be set only when manual_mode is True. """,
+        """Control the percentage of full-scale value of the load capacity.
+           It can be set only when manual_mode is True.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
         get_process=lambda d: float(d)/10,
         validator=strict_discrete_set,
@@ -349,8 +357,8 @@ class CXN(Instrument):
 
     tune_capacity = Instrument.control(
         "GT\x00\x00\x00\x00", "TC\x00\x02\x00%c",
-        """ percentage of full-scale value of the tune capacity,
-           can be set only when manual_mode is True. """,
+        """Control the percentage of full-scale value of the tune capacity.
+           It can be set only when manual_mode is True.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[4:6]),
         get_process=lambda d: float(d)/10,
         validator=strict_discrete_set,
@@ -359,7 +367,7 @@ class CXN(Instrument):
 
     preset_slot = Instrument.control(
         "GT\x00\x00\x00\x00", "TP\x00%c\x00\x00",
-        """Selects which preset slot will be used for auto-tune mode.
+        """Control which preset slot will be used for auto-tune mode.
            Valid values are 0 to 9. 0 means no preset will be used""",
         preprocess_reply=lambda d: struct.unpack(">H", d[8:10]),
         validator=strict_discrete_set,
@@ -368,7 +376,7 @@ class CXN(Instrument):
 
     rf_enabled = Instrument.control(
         "GS\x00\x00\x00\x00", "BR%c%c\x00\x00",
-        """ enable or disable RF output """,
+        """Control the RF output.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[:2]),
         get_process=lambda v: bool(v & 1),
         set_process=lambda v: (85, 85) if v else (0, 0),
@@ -377,16 +385,26 @@ class CXN(Instrument):
     )
 
     def request_control(self):
+        """Request control of the instrument.
+
+        This is required to be able to set any properties.
+        """
         self.write("BC\x55\x55\x00\x00")
         status = int(struct.unpack(">H", self.read())[0])
         if status != 1:
             print("error(CXN): control request denied!")
 
     def release_control(self):
+        """Release instrument control.
+
+        This will reset certain properties to safe defaults and disable the RF
+        output.
+        """
         self.write("BC\x00\x00\x00\x00")
         status = int(struct.unpack(">H", self.read())[0])
         if status != 0:
             print("error(CXN): release of control unsuccessful!")
 
     def ping(self):
+        """Send a ping to the instrument."""
         self.write("BP\x00\x00\x00\x00")
