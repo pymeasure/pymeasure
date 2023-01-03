@@ -31,7 +31,7 @@ from pyqtgraph.dockarea.Dock import DockLabel
 import pyqtgraph as pg
 
 from .plot_widget import PlotWidget
-from ..Qt import QtWidgets, QtCore
+from ..Qt import QtWidgets
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
@@ -112,11 +112,10 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             self.plot_frames.append(
                 PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_label,
                            y_label, linewidth=self.linewidth))
-            self.plot_frames[i].plot_frame.plot_widget.scene().contextMenu.append(self.save_dock_action())
+            self.plot_frames[i].plot_frame.plot_widget.scene().contextMenu.append(
+                self.save_dock_action())
             dock.addWidget(self.plot_frames[i])
             self.docks.append(dock)
-
-
 
     def _layout(self):
 
