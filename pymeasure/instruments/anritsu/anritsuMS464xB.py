@@ -30,7 +30,7 @@ from pymeasure.instruments.validators import (
 
 
 class CustomEnum(Enum):
-    """Provides additional methods to IntEnum:
+    """Provides additional methods to Enum:
 
     * Conversion to string automatically replaces '_' with ' ' in names
       and converts to title case
@@ -43,34 +43,17 @@ class CustomEnum(Enum):
     def __str__(self):
         """Gives title case string of enum value."""
         return str(self.value).replace("_", " ")
-        # str() conversion just because of pylint bug
-
-    @classmethod
-    def get(cls, input_value):
-        """Gives Enum member by specifying name or value.
-
-        Args:
-            input_value (str|int): Enum name or value
-
-        Returns:
-            _type_: enum member
-        """
-
-        if isinstance(input_value, int):
-            return cls(input_value)
-        else:
-            return cls[input_value.upper()]
 
 
 class VNAChannel(Channel):
-    """Implementation of a Anritsu MS464xB channel."""
+    """Implementation of an Anritsu MS464xB channel."""
 
     _SWEEP_TYPES = {"LIN", "LOG", "FSEGM", "ISEGM", "POW", "MFGC"}
 
     center_frequency = Instrument.control(
         ":FREQ:CENT?",
         ":FREQ:CENT %d",
-        """Center Frequency in Hz.""",
+        """Control the center frequency in Hz.""",
         validator=strict_range,
         values=[30000, 8000000000],
     )
@@ -78,7 +61,7 @@ class VNAChannel(Channel):
     cw_frequency = Instrument.control(
         ":FREQ:CW?",
         ":FREQ:CW %d",
-        """CQ Frequency in Hz.""",
+        """Control CW Frequency in Hz.""",
         validator=strict_range,
         values=[30000, 8000000000],
     )
@@ -86,7 +69,7 @@ class VNAChannel(Channel):
     span_frequency = Instrument.control(
         ":FREQ:SPAN?",
         ":FREQ:SPAN %d",
-        """Span Frequency in Hz""",
+        """Control Span Frequency in Hz""",
         validator=strict_range,
         values=[1, 8000000000],
     )
@@ -94,7 +77,7 @@ class VNAChannel(Channel):
     start_frequency = Instrument.control(
         ":FREQ:STAR?",
         ":FREQ:STAR %d",
-        """ Starting frequency in Hz.""",
+        """Control starting frequency in Hz.""",
         validator=strict_range,
         values=[1, 8000000000],
     )
@@ -102,7 +85,7 @@ class VNAChannel(Channel):
     stop_frequency = Instrument.control(
         ":FREQ:STOP?",
         ":FREQ:STOP %d",
-        """ Stop frequency in Hz.""",
+        """Control stop frequency in Hz.""",
         validator=strict_range,
         values=[1, 8000000000],
     )
@@ -110,7 +93,7 @@ class VNAChannel(Channel):
     sweep_type = Instrument.control(
         ":SWE:TYP?",
         ":SWE:TYP %s",
-        """ Sweep Type. Valid options are LIN|LOG|FSEGM|ISEGM|POW|MFGC.""",
+        """Control sweep Type. Valid options are LIN|LOG|FSEGM|ISEGM|POW|MFGC.""",
         validator=strict_discrete_set,
         values=_SWEEP_TYPES,
     )
@@ -124,13 +107,25 @@ class VNAChannel(Channel):
     )
 
     sweep_points = Instrument.control(
-        ":SWE:POI?", ":SWE:POI %d", """ Sweep point.""", validator=strict_range, values=[2, 100000]
+        ":SWE:POI?",
+        ":SWE:POI %d",
+        """Controls the number of measurement points.""",
+        validator=strict_range,
+        values=[2, 100000],
+    )
+
+    sweep_time = Instrument.control(
+        ":SWE:TIME?",
+        ":SWE:TIME %d",
+        """Controls the sweep time of the indicated channel.""",
+        validator=strict_range,
+        values=[2, 100000],
     )
 
     num_averages = Instrument.control(
         ":AVER:COUN?",
         ":AVER:COUN %d",
-        """ Sets the number of averages.""",
+        """Controls the number of averages.""",
         validator=strict_range,
         values=[1, 20000],
     )
@@ -138,13 +133,17 @@ class VNAChannel(Channel):
     bandwidth = Instrument.control(
         ":BWID?",
         ":BWID %d",
-        """ Sets the IF bandwidth.""",
+        """Controls the IF bandwidth.""",
         validator=strict_range,
         values=[1, 1000000],
     )
 
     def insert_id(self, command):
         return f":SENS{self.id}{command}"
+
+    def clear_averaging(self):
+        """Clears and restarts the averaging sweep count"""
+        self.write(":AVER:CLE")
 
 
 class AnritsuMS464xB(Instrument):
@@ -156,7 +155,7 @@ class AnritsuMS464xB(Instrument):
         VNAChannel, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
     )
 
-    class BinaryData_Byte_Format(CustomEnum):
+    class BinaryDataByteFormat(CustomEnum):
         MSB_FIRST = "NORM"
         LSB_FIRST = "SWAP"
 
@@ -174,7 +173,7 @@ class AnritsuMS464xB(Instrument):
         REAL = "REAL"
         REAL32 = "REAL32"
 
-    class DataFileFrequency(CustomEnum):
+    class DataFileFrequencyUnits(CustomEnum):
         """Binary Data file frequency units."""
 
         HZ = "HZ"
@@ -185,60 +184,54 @@ class AnritsuMS464xB(Instrument):
     def __init__(self, adapter, name="Anritsu MS464xB", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    def load_data_file(self, filename: str):
+    def load_data_file(self, filename):
         """Loads a data file in VNA HDD.
 
-        Args:
-            filename (str): full filename including path
+        :param str filename: full filename including path
         """
+
         self.write(f":MMEM:LOAD '{filename}'")
 
-    def delete_data_file(self, filename: str):
+    def delete_data_file(self, filename):
         """Deletes a file on the VNA HDD.
 
-        Args:
-            filename (str): full filename including path
+        :param str filename: full filename including path
         """
         self.write(f":MMEM:DEL '{filename}'")
 
-    def copy_data_file(self, from_filename: str, to_filename: str):
+    def copy_data_file(self, from_filename, to_filename):
         """Copies a file on the VNA HDD.
 
-        Args:
-            from_filename (str): full filename including path
-            to_filename (str): full filename including path
+        :param str from_filename: full filename including pat
+        :param str to_filename: full filename including path
         """
         self.write(f":MMEM:COPY '{from_filename}', '{to_filename}'")
 
-    def load_data_file_to_memory(self, filename: str):
+    def load_data_file_to_memory(self, filename):
         """Loads a data file to a memory trace.
 
-        Args:
-            filename (str): full filename including path
+        :param str filename: full filename including path
         """
         self.write(f":MMEM:LOAD:MDATA '{filename}'")
 
-    def create_directory(self, dir_name: str):
+    def create_directory(self, dir_name):
         """Create directory on the VNA HDD.
 
-        Args:
-            dir_name (str): full filename including path
+        :param str dir_name: directory name
         """
         self.write(f":MMEM:MDIR '{dir_name}'")
 
-    def delete_directory(self, dir_name: str):
+    def delete_directory(self, dir_name):
         """Deletes a directory on the VNA HDD.
 
-        Args:
-            dir_name (str): full filename including path
+        :param str dir_name: directory name
         """
         self.write(f":MMEM:RDIR '{dir_name}'")
 
-    def store_image(self, filename: str):
+    def store_image(self, filename):
         """Captures a screenshot to the file specified.
 
-        Args:
-            filename (str): full filename including path
+        :param str filename: full filename including path
         """
         self.write(f":MMEM:STOR:IMAG '{filename}'")
 
@@ -247,7 +240,7 @@ class AnritsuMS464xB(Instrument):
         ":FORM:BORD %s",
         """ IO Data format. NORM|SWAP = MSB First|LSB First.""",
         validator=strict_discrete_set,
-        values=BinaryData_Byte_Format,
+        values=BinaryDataByteFormat,
     )
 
     binary_data_format = Instrument.control(
@@ -270,17 +263,17 @@ class AnritsuMS464xB(Instrument):
     datafile_frequency = Instrument.control(
         ":FORM:SNP:FREQ?",
         ":FORM:SNP:FREQ %s",
-        """ Sets the frequency unit in a SNP data file.
+        """Controls the frequency unit in a SNP data file.
 
         Use the DataFileFrequency enum as input values.""",
         validator=strict_discrete_set,
-        values=DataFileFrequency,
+        values=DataFileFrequencyUnits,
     )
 
     datafile_parameter = Instrument.control(
         ":FORM:SNP:PAR?",
         ":FORM:SNP:PAR %s",
-        """ Sets the parameter format in a SNP data file.
+        """Controls the parameter format in a SNP data file.
 
         Use the DataFileParameter enum as input values.""",
         validator=strict_discrete_set,
@@ -289,20 +282,19 @@ class AnritsuMS464xB(Instrument):
 
     def read_datafile(
         self,
-        channel: int,
-        sweep_points: int,
-        datafile_freq: DataFileFrequency,
-        datafile_par: DataFileParameter,
-        filename: str,
+        channel,
+        sweep_points,
+        datafile_freq,
+        datafile_par,
+        filename,
     ):
         """Reads a data file from the VNA
 
-        Args:
-            channel (int): Channel Index
-            sweep_points (int): number of sweep point as an integer
-            datafile_freq (DataFileFrequency): Data file frequency based on enum
-            datafile_par (DataFileParameter): Data file parameter based on enum
-            filename (str): full path of the file to be saved
+        :param int channel: Channel Index
+        :param int sweep_points: number of sweep point as an integer
+        :param DataFileFrequencyUnits datafile_freq: Data file frequency based on enum
+        :param DataFileParameter datafile_par: Data file parameter based on enum
+        :param str filename: full path of the file to be saved
         """
         cur_ch = self.channels[channel]  # type: VNAChannel
         cur_ch.sweep_points = sweep_points

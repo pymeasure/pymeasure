@@ -130,8 +130,8 @@ def test_binary_data_byte_format():
         AnritsuMS464xB,
         [(b":FORM:BORD NORM", None), (b":FORM:BORD?", "NORM")],
     ) as instr:
-        instr.binary_data_byte_format = AnritsuMS464xB.BinaryData_Byte_Format.MSB_FIRST
-        assert instr.binary_data_byte_format == str(AnritsuMS464xB.BinaryData_Byte_Format.MSB_FIRST)
+        instr.binary_data_byte_format = AnritsuMS464xB.BinaryDataByteFormat.MSB_FIRST
+        assert instr.binary_data_byte_format == str(AnritsuMS464xB.BinaryDataByteFormat.MSB_FIRST)
 
 
 def test_binary_format():
@@ -157,8 +157,8 @@ def test_datafile_frequency():
         AnritsuMS464xB,
         [(b":FORM:SNP:FREQ KHZ", None), (b":FORM:SNP:FREQ?", "KHZ")],
     ) as instr:
-        instr.datafile_frequency = AnritsuMS464xB.DataFileFrequency.KHZ
-        assert instr.datafile_frequency == str(AnritsuMS464xB.DataFileFrequency.KHZ)
+        instr.datafile_frequency = AnritsuMS464xB.DataFileFrequencyUnits.KHZ
+        assert instr.datafile_frequency == str(AnritsuMS464xB.DataFileFrequencyUnits.KHZ)
 
 
 def test_datafile_parameter():
