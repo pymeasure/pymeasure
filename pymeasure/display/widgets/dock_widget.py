@@ -27,10 +27,11 @@ from os import path
 import json
 
 from pyqtgraph.dockarea import Dock, DockArea
+from pyqtgraph.dockarea.Dock import DockLabel
 import pyqtgraph as pg
 
 from .plot_widget import PlotWidget
-from ..Qt import QtWidgets
+from ..Qt import QtWidgets, QtCore
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
@@ -85,10 +86,22 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             f.write(json.dumps(layout))
         log.info('Saved dock layout to file %s' % self.dock_layout_filename)
 
+    def save_dock_action(self):
+        save_dock_action = QtWidgets.QWidgetAction(self)
+        save_dock_action.setText("Save Dock Layout")
+        save_dock_action.triggered.connect(self.save_dock_layout)
+        return save_dock_action
+    
+    def dock_menu(self, position):
+        # if child widget is PlotWidget or DockLabel, create context menu
+        if isinstance(self.childAt(position), (PlotWidget, DockLabel)):
+            menu = QtWidgets.QMenu(self)
+            menu.addAction(self.save_dock_action())
+            menu.exec(self.mapToGlobal(position))
+
     def _setup_ui(self):
-        save_menu = QtWidgets.QWidgetAction(self)
-        save_menu.setText("Save Dock Layout")
-        save_menu.triggered.connect(self.save_dock_layout)
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.dock_menu)
 
         for i in range(self.num_plots):
             # Set the default label for current dock from x_axis_labels and y_axis_labels
@@ -101,9 +114,11 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             self.plot_frames.append(
                 PlotWidget("Results Graph", self.procedure_class.DATA_COLUMNS, x_label,
                            y_label, linewidth=self.linewidth))
-            self.plot_frames[i].plot_frame.plot_widget.scene().contextMenu.append(save_menu)
+            self.plot_frames[i].plot_frame.plot_widget.scene().contextMenu.append(self.save_dock_action())
             dock.addWidget(self.plot_frames[i])
             self.docks.append(dock)
+
+
 
     def _layout(self):
 
