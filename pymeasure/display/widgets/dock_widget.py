@@ -100,13 +100,6 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
                 menu.addAction(self.save_dock_action())
                 menu.exec(self.mapToGlobal(position))
 
-    def dock_menu(self, position):
-        # if child widget is PlotWidget or DockLabel, create context menu
-        if isinstance(self.childAt(position), (PlotWidget, DockLabel)):
-            menu = QtWidgets.QMenu(self)
-            menu.addAction(self.save_dock_action())
-            menu.exec(self.mapToGlobal(position))
-
     def _setup_ui(self):
         for i in range(self.num_plots):
             # Set the default label for current dock from x_axis_labels and y_axis_labels
