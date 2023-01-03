@@ -116,7 +116,7 @@ class Keithley2200(Instrument):
 
     display_text_data = Instrument.control(
         ":DISP:TEXT:DATA?",
-        ':DISP:TEXT:DATA "%s"',
+        ":DISP:TEXT:DATA '%s'",
         """ Controls text to be displayed(32 characters).""",
         get_process=lambda v: v.replace('"', ""),
     )
