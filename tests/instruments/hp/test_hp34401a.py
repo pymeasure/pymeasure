@@ -45,11 +45,11 @@ def test_range_dcv():
     with expected_protocol(
             HP34401A,
             [
-                (f"FUNC \"VOLT\"", None),
+                ("FUNC \"VOLT\"", None),
                 ("FUNC?", "VOLT"),
-                (f"VOLT:RANG?", "1"),
+                ("VOLT:RANG?", "1"),
                 ("FUNC?", "VOLT"),
-                (f"VOLT:RANG 1", None),
+                ("VOLT:RANG 1", None),
             ],
     ) as inst:
         inst.function_ = "DCV"
@@ -61,11 +61,11 @@ def test_range_freq():
     with expected_protocol(
             HP34401A,
             [
-                (f"FUNC \"FREQ\"", None),
+                ("FUNC \"FREQ\"", None),
                 ("FUNC?", "FREQ"),
-                (f"FREQ:VOLT:RANG?", "1"),
+                ("FREQ:VOLT:RANG?", "1"),
                 ("FUNC?", "FREQ"),
-                (f"FREQ:VOLT:RANG 1", None),
+                ("FREQ:VOLT:RANG 1", None),
             ],
     ) as inst:
         inst.function_ = "FREQ"
@@ -78,9 +78,9 @@ def test_autorange_dcv(enabled):
     with expected_protocol(
             HP34401A,
             [
-                (f"FUNC \"VOLT\"", None),
+                ("FUNC \"VOLT\"", None),
                 ("FUNC?", "VOLT"),
-                (f"VOLT:RANG:AUTO?", "1" if enabled else "0"),
+                ("VOLT:RANG:AUTO?", "1" if enabled else "0"),
                 ("FUNC?", "VOLT"),
                 (f"VOLT:RANG:AUTO {1 if enabled else 0}", None),
             ],
@@ -95,9 +95,9 @@ def test_autorange_freq(enabled):
     with expected_protocol(
             HP34401A,
             [
-                (f"FUNC \"FREQ\"", None),
+                ("FUNC \"FREQ\"", None),
                 ("FUNC?", "FREQ"),
-                (f"FREQ:VOLT:RANG:AUTO?", "1" if enabled else "0"),
+                ("FREQ:VOLT:RANG:AUTO?", "1" if enabled else "0"),
                 ("FUNC?", "FREQ"),
                 (f"FREQ:VOLT:RANG:AUTO {1 if enabled else 0}", None),
             ],
@@ -162,8 +162,8 @@ def test_detector_bandwidth():
     with expected_protocol(
             HP34401A,
             [
-                (f"DET:BAND?", "1"),
-                (f"DET:BAND 1", None),
+                ("DET:BAND?", "1"),
+                ("DET:BAND 1", None),
             ],
     ) as inst:
         assert 1 == inst.detector_bandwidth
@@ -175,7 +175,7 @@ def test_autozero_enabled(enabled):
     with expected_protocol(
             HP34401A,
             [
-                (f"ZERO:AUTO?", "1" if enabled else "0"),
+                ("ZERO:AUTO?", "1" if enabled else "0"),
                 (f"ZERO:AUTO {1 if enabled else 0}", None),
             ],
     ) as inst:
@@ -187,7 +187,7 @@ def test_trigger_single_autozero():
     with expected_protocol(
             HP34401A,
             [
-                (f"ZERO:AUTO ONCE", None),
+                ("ZERO:AUTO ONCE", None),
             ],
     ) as inst:
         inst.trigger_single_autozero()
@@ -198,7 +198,7 @@ def test_auto_input_impedance_enabled(enabled):
     with expected_protocol(
             HP34401A,
             [
-                (f"INP:IMP:AUTO?", "1" if enabled else "0"),
+                ("INP:IMP:AUTO?", "1" if enabled else "0"),
                 (f"INP:IMP:AUTO {1 if enabled else 0}", None),
             ],
     ) as inst:
@@ -210,7 +210,7 @@ def test_terminals_used():
     with expected_protocol(
             HP34401A,
             [
-                (f"ROUT:TERM?", "FRON"),
+                ("ROUT:TERM?", "FRON"),
             ],
     ) as inst:
         assert "FRONT" == inst.terminals_used
@@ -220,7 +220,7 @@ def test_init_trigger():
     with expected_protocol(
             HP34401A,
             [
-                (f"INIT", None)
+                ("INIT", None)
             ],
     ) as inst:
         inst.init_trigger()
@@ -230,7 +230,7 @@ def test_reading():
     with expected_protocol(
             HP34401A,
             [
-                (f"READ?", "1")
+                ("READ?", "1")
             ],
     ) as inst:
         assert 1 == inst.reading
@@ -241,7 +241,7 @@ def test_trigger_source(trigger_source):
     with expected_protocol(
             HP34401A,
             [
-                (f"TRIG:SOUR?", trigger_source),
+                ("TRIG:SOUR?", trigger_source),
                 (f"TRIG:SOUR {trigger_source}", None),
             ],
     ) as inst:
@@ -253,8 +253,8 @@ def test_trigger_delay():
     with expected_protocol(
             HP34401A,
             [
-                (f"TRIG:DEL?", "1"),
-                (f"TRIG:DEL 1", None),
+                ("TRIG:DEL?", "1"),
+                ("TRIG:DEL 1", None),
             ],
     ) as inst:
         assert 1 == inst.trigger_delay
@@ -266,7 +266,7 @@ def test_trigger_auto_delay_enabled(enabled):
     with expected_protocol(
             HP34401A,
             [
-                (f"TRIG:DEL:AUTO?", "1" if enabled else "0"),
+                ("TRIG:DEL:AUTO?", "1" if enabled else "0"),
                 (f"TRIG:DEL:AUTO {1 if enabled else 0}", None),
             ],
     ) as inst:
@@ -278,8 +278,8 @@ def test_sample_count():
     with expected_protocol(
             HP34401A,
             [
-                (f"SAMP:COUN?", "1"),
-                (f"SAMP:COUN 1", None),
+                ("SAMP:COUN?", "1"),
+                ("SAMP:COUN 1", None),
             ],
     ) as inst:
         assert 1 == inst.sample_count
@@ -290,8 +290,8 @@ def test_trigger_count():
     with expected_protocol(
             HP34401A,
             [
-                (f"TRIG:COUN?", "1"),
-                (f"TRIG:COUN 1", None),
+                ("TRIG:COUN?", "1"),
+                ("TRIG:COUN 1", None),
             ],
     ) as inst:
         assert 1 == inst.trigger_count
@@ -302,7 +302,7 @@ def test_stored_reading():
     with expected_protocol(
             HP34401A,
             [
-                (f"FETC?", "1"),
+                ("FETC?", "1"),
             ],
     ) as inst:
         assert 1 == inst.stored_reading
@@ -313,7 +313,7 @@ def test_display_enabled(enabled):
     with expected_protocol(
             HP34401A,
             [
-                (f"DISP?", "1" if enabled else "0"),
+                ("DISP?", "1" if enabled else "0"),
                 (f"DISP {1 if enabled else 0}", None),
             ],
     ) as inst:
@@ -325,8 +325,8 @@ def test_displayed_text():
     with expected_protocol(
             HP34401A,
             [
-                (f"DISP:TEXT?", "HELLO"),
-                (f"DISP:TEXT \"HELLO\"", None),
+                ("DISP:TEXT?", "HELLO"),
+                ("DISP:TEXT \"HELLO\"", None),
             ],
     ) as inst:
         assert "HELLO" == inst.displayed_text
@@ -337,7 +337,7 @@ def test_beep():
     with expected_protocol(
             HP34401A,
             [
-                (f"SYST:BEEP", None),
+                ("SYST:BEEP", None),
             ],
     ) as inst:
         inst.beep()
@@ -348,7 +348,7 @@ def test_beeper_enabled(enabled):
     with expected_protocol(
             HP34401A,
             [
-                (f"SYST:BEEP:STAT?", "1" if enabled else "0"),
+                ("SYST:BEEP:STAT?", "1" if enabled else "0"),
                 (f"SYST:BEEP:STAT {1 if enabled else 0}", None),
             ],
     ) as inst:
@@ -360,7 +360,7 @@ def test_scpi_version():
     with expected_protocol(
             HP34401A,
             [
-                (f"SYST:VERS?", "1-2-3"),
+                ("SYST:VERS?", "1-2-3"),
             ],
     ) as inst:
         assert "1-2-3" == inst.scpi_version
@@ -370,7 +370,7 @@ def test_stored_readings_count():
     with expected_protocol(
         HP34401A,
         [
-            (f"DATA:POIN?", "1"),
+            ("DATA:POIN?", "1"),
         ],
     ) as inst:
         assert 1 == inst.stored_readings_count
@@ -380,7 +380,7 @@ def test_self_test_result():
     with expected_protocol(
         HP34401A,
         [
-            (f"*TST?", "0"),
+            ("*TST?", "0"),
         ],
     ) as inst:
         assert 0 == inst.self_test_result
