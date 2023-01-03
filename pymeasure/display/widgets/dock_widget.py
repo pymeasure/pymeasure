@@ -30,7 +30,7 @@ from pyqtgraph.dockarea import Dock, DockArea
 from pyqtgraph.dockarea.Dock import DockLabel
 import pyqtgraph as pg
 
-from .plot_widget import PlotWidget
+from .plot_widget import PlotWidget, PlotFrame
 from ..Qt import QtWidgets
 from .tab_widget import TabWidget
 
@@ -94,11 +94,11 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
 
     def contextMenuEvent(self, event):
         position = event.pos()
-        if isinstance(self.childAt(position), (PlotWidget, DockLabel)):
-            if isinstance(self.childAt(position), (PlotWidget, DockLabel)):
-                menu = QtWidgets.QMenu(self)
-                menu.addAction(self.save_dock_action())
-                menu.exec(self.mapToGlobal(position))
+        # Create menu outside pyqtgraph.PlotWidget position
+        if isinstance(self.childAt(position), (PlotWidget, DockLabel, QtWidgets.QLabel, PlotFrame)):
+            menu = QtWidgets.QMenu(self)
+            menu.addAction(self.save_dock_action())
+            menu.exec(self.mapToGlobal(position))
 
     def _setup_ui(self):
         for i in range(self.num_plots):
