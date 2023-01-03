@@ -162,12 +162,12 @@ def test_detector_bandwidth():
     with expected_protocol(
             HP34401A,
             [
-                ("DET:BAND?", "1"),
-                ("DET:BAND 1", None),
+                ("DET:BAND?", "3"),
+                ("DET:BAND 3", None),
             ],
     ) as inst:
-        assert 1 == inst.detector_bandwidth
-        inst.detector_bandwidth = 1
+        assert 3 == inst.detector_bandwidth
+        inst.detector_bandwidth = 3
 
 
 @pytest.mark.parametrize("enabled", [True, False])
@@ -255,6 +255,7 @@ def test_trigger_delay():
             [
                 ("TRIG:DEL?", "1"),
                 ("TRIG:DEL 1", None),
+                ("SYST:ERR?", "+0,\"No error\"")
             ],
     ) as inst:
         assert 1 == inst.trigger_delay
@@ -280,6 +281,7 @@ def test_sample_count():
             [
                 ("SAMP:COUN?", "1"),
                 ("SAMP:COUN 1", None),
+                ("SYST:ERR?", "+0,\"No error\"")
             ],
     ) as inst:
         assert 1 == inst.sample_count
@@ -292,6 +294,7 @@ def test_trigger_count():
             [
                 ("TRIG:COUN?", "1"),
                 ("TRIG:COUN 1", None),
+                ("SYST:ERR?", "+0,\"No error\"")
             ],
     ) as inst:
         assert 1 == inst.trigger_count

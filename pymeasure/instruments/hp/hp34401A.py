@@ -109,6 +109,7 @@ class HP34401A(Instrument):
 
     @autorange.setter
     def autorange(self, value):
+        value = strict_discrete_set(value, HP34401A.BOOL_MAPPINGS.keys())
         command = f"{self._get_function_range_prefix()}:RANG:AUTO {HP34401A.BOOL_MAPPINGS[value]}"
         self.write(command)
 
@@ -141,6 +142,7 @@ class HP34401A(Instrument):
 
     @nplc.setter
     def nplc(self, value):
+        value = strict_discrete_set(value, [0.02, 0.2, 1, 10, 100, "MIN", "MAX"])
         command = f"{HP34401A.FUNCTIONS[self.function_]}:NPLC {value}"
         self.write(command)
 
@@ -156,6 +158,7 @@ class HP34401A(Instrument):
 
     @gate_time.setter
     def gate_time(self, value):
+        value = strict_discrete_set(value, [0.01, 0.1, 1, "MIN", "MAX"])
         command = f"{HP34401A.FUNCTIONS[self.function_]}:APER {value}"
         self.write(command)
 
@@ -163,7 +166,9 @@ class HP34401A(Instrument):
         "DET:BAND?", "DET:BAND %s",
         """Control the lowest frequency expected in the input signal in Hertz.
 
-        Valid values: 3, 20, 200, "MIN", "MAX".""")
+        Valid values: 3, 20, 200, "MIN", "MAX".""",
+        validator=strict_discrete_set,
+        values=[3, 20, 200, "MIN", "MAX"])
 
     autozero_enabled = Instrument.control(
         "ZERO:AUTO?", "ZERO:AUTO %s",
@@ -221,13 +226,17 @@ class HP34401A(Instrument):
         Valid values: "IMM", "BUS", "EXT"
         The multimeter will accept a software (bus) trigger,
         an immediate internal trigger (this is the default source),
-        or a hardware trigger from the rear-panel Ext Trig (external trigger) terminal.""")
+        or a hardware trigger from the rear-panel Ext Trig (external trigger) terminal.""",
+        validator=strict_discrete_set,
+        values=["IMM", "BUS", "EXT"])
 
     trigger_delay = Instrument.control(
         "TRIG:DEL?", "TRIG:DEL %s",
         """Control the trigger delay in seconds.
 
-        Valid values: 0 to 3600 seconds, "MIN", "MAX".""")
+        Valid values (incl. floats): 0 to 3600 seconds, "MIN", "MAX".""",
+        # Use check_set_errors instead of strict_range validator to allow "MIN" and "MAX"
+        check_set_errors=True)
 
     trigger_auto_delay_enabled = Instrument.control(
         "TRIG:DEL:AUTO?", "TRIG:DEL:AUTO %s",
@@ -244,7 +253,8 @@ class HP34401A(Instrument):
         "SAMP:COUN?", "SAMP:COUN %s",
         """Controls the number of samples per trigger event.
 
-        Valid values: 1 to 50000, "MIN", "MAX".""")
+        Valid values: 1 to 50000, "MIN", "MAX".""",
+        check_set_errors=True)
 
     trigger_count = Instrument.control(
         "TRIG:COUN?", "TRIG:COUN %s",
@@ -252,7 +262,8 @@ class HP34401A(Instrument):
 
         Valid values: 1 to 50000, "MIN", "MAX", "INF".
         The INFinite parameter instructs the multimeter to continuously accept triggers
-        (you must send a device clear to return to the "idle" state).""")
+        (you must send a device clear to return to the "idle" state).""",
+        check_set_errors=True)
 
     stored_reading = Instrument.measurement(
         "FETC?",
