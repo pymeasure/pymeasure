@@ -22,8 +22,20 @@
 # THE SOFTWARE.
 #
 
+import logging
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+def _deprecation_warning(property_name):
+    def func(x):
+        log.warning(f'Deprecated property name "{property_name}", use the "function_" '
+                    'and "reading" properties instead.')
+        return x
+    return func
 
 
 class HP34401A(Instrument):
@@ -46,6 +58,23 @@ class HP34401A(Instrument):
             asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs
         )
+
+    # Log a deprecated warning for the old function property
+    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts",
+                                        get_process=_deprecation_warning('voltage_ac'))
+
+    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps",
+                                        get_process=_deprecation_warning('current_dc'))
+
+    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps",
+                                        get_process=_deprecation_warning('current_ac'))
+
+    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms",
+                                        get_process=_deprecation_warning('resistance'))
+
+    resistance_4w = Instrument.measurement(
+        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms",
+        get_process=_deprecation_warning('resistance_4w'))
 
     function_ = Instrument.control(
         "FUNC?", "FUNC \"%s\"",
