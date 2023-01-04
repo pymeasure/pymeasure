@@ -38,7 +38,8 @@ def adapter():
 @mark.parametrize("input, output", (("superXY", b"superXY"),
                                     ([1, 2, 3, 4], b"\x01\x02\x03\x04"),
                                     (5, b"5"),
-                                    (4.6, b"4.6")
+                                    (4.6, b"4.6"),
+                                    (None, None),
                                     ))
 def test_to_bytes(input, output):
     assert to_bytes(input) == output
@@ -84,7 +85,7 @@ class Test_write:
     def test_write_without_response(self):
         a = ProtocolAdapter([("Hey ho", None)])
         a.write("Hey ho")
-        assert a._read_buffer == b""
+        assert a._read_buffer is None
 
     def test_wrong_command(self):
         a = ProtocolAdapter([("Hey ho", None)])
@@ -105,7 +106,7 @@ class Test_write_bytes:
         return a
 
     def test_write_write_buffer(self, written):
-        assert written._write_buffer == b""
+        assert written._write_buffer is None
 
     def test_write_index(self, written):
         assert written._index == 1
@@ -127,7 +128,7 @@ class Test_write_bytes:
     def test_no_response(self):
         a = ProtocolAdapter([("written", None)])
         a.write_bytes(b"writ")
-        assert a._read_buffer == b""
+        assert a._read_buffer is None
 
     def test_not_enough_pairs(self):
         a = ProtocolAdapter([("a", None)])
@@ -149,7 +150,13 @@ class Test_read:
         a = ProtocolAdapter()
         a._read_buffer = b"jklasdf"
         a.read()
-        assert a._read_buffer == b""
+        assert a._read_buffer is None
+
+    def test_read_empty_message(self):
+        a = ProtocolAdapter()
+        a._read_buffer = b""
+        assert a.read() == ""
+        assert a._read_buffer is None
 
 
 class Test_read_bytes:
@@ -170,11 +177,16 @@ class Test_read_bytes:
         with raises(AssertionError):
             a.read_bytes(3)
 
-    def test_read_empties_read_buffer(self):
+    def test_read_all_bytes_empties_read_buffer(self):
         a = ProtocolAdapter()
         a._read_buffer = b"jklasdf"
-        a.read_bytes(10)
-        assert a._read_buffer == b""
+        a.read_bytes(7)
+        assert a._read_buffer is None
+
+    def test_read_all_bytes__from_pairs_empties_read_buffer(self):
+        a = ProtocolAdapter([(None, b"jklasdf")])
+        a.read_bytes(7)
+        assert a._read_buffer is None
 
     def test_no_messages(self):
         a = ProtocolAdapter()
@@ -195,6 +207,11 @@ class Test_read_bytes:
         a = ProtocolAdapter([(b"a", b"b")])
         with raises(AssertionError):
             a.read_bytes(10)
+
+    def test_catch_None_None_pair(self):
+        a = ProtocolAdapter([(None, None)])
+        with raises(AssertionError, match="None, None"):
+            a.read_bytes(1)
 
 
 def test_read_write_sequence():
