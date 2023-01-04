@@ -22,18 +22,15 @@
 # THE SOFTWARE.
 #
 
-import logging
+from warnings import warn
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 
 def _deprecation_warning(property_name):
     def func(x):
-        log.warning(f'Deprecated property name "{property_name}", use the "function_" '
-                    'and "reading" properties instead.')
+        warn(f'Deprecated property name "{property_name}", use the "function_" '
+             'and "reading" properties instead.', DeprecationWarning)
         return x
     return func
 
@@ -87,80 +84,54 @@ class HP34401A(Instrument):
         map_values=True,
         get_process=lambda v: v.strip('"'))
 
-    @property
-    def range_(self):
+    range_ = Instrument.control(
+        "<function_prefix_for_range>:RANG?", "<function_prefix_for_range>:RANG %s",
         """Control the range for the currently active function.
 
         For frequency and period measurements, ranging applies to
         the signal's input voltage, not its frequency"""
-        command = f"{self._get_function_range_prefix()}:RANG?"
-        return float(self.ask(command))
+    )
 
-    @range_.setter
-    def range_(self, value):
-        command = f"{self._get_function_range_prefix()}:RANG {value}"
-        self.write(command)
+    autorange = Instrument.control(
+        "<function_prefix_for_range>:RANG:AUTO?", "<function_prefix_for_range>:RANG:AUTO %d",
+        """Control the autorange state for the currently active function.""",
+        validator=strict_discrete_set,
+        values=BOOL_MAPPINGS,
+        map_values=True
+    )
 
-    @property
-    def autorange(self):
-        """Control the autorange state for the currently active function."""
-        command = f"{self._get_function_range_prefix()}:RANG:AUTO?"
-        return self.ask(command).strip() == "1"
-
-    @autorange.setter
-    def autorange(self, value):
-        value = strict_discrete_set(value, HP34401A.BOOL_MAPPINGS.keys())
-        command = f"{self._get_function_range_prefix()}:RANG:AUTO {HP34401A.BOOL_MAPPINGS[value]}"
-        self.write(command)
-
-    @property
-    def resolution(self):
+    resolution = Instrument.control(
+        "<function>:RES?", "<function>:RES %g",
         """Control the resolution of the measurements.
 
         Not valid for frequency, period, or ratio.
         Specify the resolution in the same units as the
         measurement function, not in number of digits.
         MIN selects the smallest value accepted, which gives the most resolution.
-        MAX selects the largest value accepted which gives the least resolution."""
-        command = f"{HP34401A.FUNCTIONS[self.function_]}:RES?"
-        return float(self.ask(command))
+        MAX selects the largest value accepted which gives the least resolution.""",
+    )
 
-    @resolution.setter
-    def resolution(self, value):
-        command = f"{HP34401A.FUNCTIONS[self.function_]}:RES {value}"
-        self.write(command)
-
-    @property
-    def nplc(self):
+    nplc = Instrument.control(
+        "<function>:NPLC?", "<function>:NPLC %s",
         """Control the integration time in number of power line cycles (NPLC).
 
         Valid values: 0.02, 0.2, 1, 10, 100, "MIN", "MAX".
         This command is valid only for dc volts, ratio, dc current,
-        2-wire ohms, and 4-wire ohms."""
-        command = f"{HP34401A.FUNCTIONS[self.function_]}:NPLC?"
-        return float(self.ask(command))
+        2-wire ohms, and 4-wire ohms.""",
+        validator=strict_discrete_set,
+        values=[0.02, 0.2, 1, 10, 100, "MIN", "MAX"],
+    )
 
-    @nplc.setter
-    def nplc(self, value):
-        value = strict_discrete_set(value, [0.02, 0.2, 1, 10, 100, "MIN", "MAX"])
-        command = f"{HP34401A.FUNCTIONS[self.function_]}:NPLC {value}"
-        self.write(command)
-
-    @property
-    def gate_time(self):
+    gate_time = Instrument.control(
+        "<function>:APER?", "<function>:APER %s",
         """Control the gate time (or aperture time) for frequency or period measurements.
 
         Valid values: 0.01, 0.1, 1, "MIN", "MAX".
         Specifically:  10 ms (4.5 digits), 100 ms (default; 5.5 digits),
-        or 1 second (6.5 digits)."""
-        command = f"{HP34401A.FUNCTIONS[self.function_]}:APER?"
-        return float(self.ask(command))
-
-    @gate_time.setter
-    def gate_time(self, value):
-        value = strict_discrete_set(value, [0.01, 0.1, 1, "MIN", "MAX"])
-        command = f"{HP34401A.FUNCTIONS[self.function_]}:APER {value}"
-        self.write(command)
+        or 1 second (6.5 digits).""",
+        validator=strict_discrete_set,
+        values=[0.01, 0.1, 1, "MIN", "MAX"],
+    )
 
     detector_bandwidth = Instrument.control(
         "DET:BAND?", "DET:BAND %s",
@@ -315,7 +286,16 @@ class HP34401A(Instrument):
         Be sure to set an appropriate connection timeout,
         otherwise the command will fail.""")
 
-    def _get_function_range_prefix(self):
+    def write(self, command):
+        """Write a command to the instrument."""
+        if "<function_prefix_for_range>" in command:
+            command = command.replace("<function_prefix_for_range>",
+                                      self._get_function_prefix_for_range())
+        elif "<function>" in command:
+            command = command.replace("<function>", HP34401A.FUNCTIONS[self.function_])
+        super().write(command)
+
+    def _get_function_prefix_for_range(self):
         function_prefix = HP34401A.FUNCTIONS_WITH_RANGE[self.function_]
         if function_prefix in ["FREQ", "PER"]:
             function_prefix += ":VOLT"
