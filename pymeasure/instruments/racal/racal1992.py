@@ -237,10 +237,11 @@ class Racal1992(Instrument):
         return self.read_bytes(21).decode('utf-8')
 
     def write(self, s):
-        """Space added in front of all commands that are sent to the
-        instrument to work around weird model issue. It shouldn't
-        be needed on almost all devices, but it also doesn't hurt. And it
-        fixes a real issue that's seen on a few device."""
+        """Add a space in front of all commands that are sent to the
+        instrument to work around weird model issue.
+
+        It shouldn't be needed on almost all devices, but it also doesn't hurt.
+        And it fixes a real issue that's seen on a few devices."""
         super().write(' ' + s)
 
     def read_and_decode(self, allowed_types=None):
