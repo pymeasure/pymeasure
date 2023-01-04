@@ -97,7 +97,7 @@ class Racal1992(Instrument):
         val = float(v[2:19])
 
         if allowed_types and val_type not in allowed_types:
-            raise ValueError("Unexpected value type returned")
+            raise ValueError(f"Unexpected value type returned: '{val_type}'")
 
         if val_type in Racal1992.int_types:
             return int(val)
