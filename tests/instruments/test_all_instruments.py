@@ -50,7 +50,7 @@ for manufacturer in dir(instruments):
                 devices.append(d)
 
 # Instruments unable to accept an Adapter instance.
-proper_adapters = ["IBeamSmart", "ANC300Controller"]
+proper_adapters = ["ANC300Controller"]
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
     "ThorlabsPM100USB",
@@ -61,6 +61,7 @@ need_init_communication = [
     "AWG401x_AFG",
     "VARX",
     "HP8116A",
+    "IBeamSmart",
 ]
 
 

@@ -98,7 +98,7 @@ class IBeamSmart(Instrument):
         except VisaIOError:
             reply = '\n'.join(msg)
             try:
-                self.adapter.flush_read_buffer()
+                self.adapter.connection.flush_read_buffer()
             except AttributeError:
                 log.warning("Adapter does not have 'flush_read_buffer' method.")
             raise ValueError(
@@ -111,27 +111,21 @@ class IBeamSmart(Instrument):
         else:
             return reply
 
-    def write(self, command, check_ack=True):
-        """ Writes a command to the instrument. Also reads back a LF+CR which
-        is always sent back.
-
-        :param command: command string to be sent to the instrument
-        :param check_ack: flag to decide if also an acknowledgement from the
-          device is expected. This is the case for set commands.
-        """
+    def write(self, command):
         self.lastcommand = command
         super().write(command)
-        # The following lines are used in order to avoid the need of a
-        # complicated Instrument where every property would need to use
-        # check_set/get_errors and many Adapter functions would need to be
-        # reimplemented in the Instrument. See discussion in PR #352
-        if check_ack:
-            reply = self.read()
-            if reply != "":
-                # if any message is returned here this indicates some misuse
-                raise ValueError(
-                    f"TopticaAdapter.write: Error after command '{command}'"
-                    f"with message '{reply}'")
+
+    def check_errors(self):
+        """ checks if the last reply is '[OK]', otherwise a ValueError is
+        raised and the read buffer is flushed because one has to assume that
+        some communication is out of sync.
+        """
+        reply = self.read()
+        if reply != '[OK]':
+            self.adapter.connection.flush()
+            raise ValueError(
+                f"IBeamSmart: Error after command '{self.lastcommand}' with "
+                f"message '{self.lastreply}'")
 
     version = Instrument.measurement(
            "ver", """ Firmware version number """,
@@ -159,6 +153,7 @@ class IBeamSmart(Instrument):
             values=[True, False],
             get_process=lambda s: True if s == 'ON' else False,
             set_process=lambda v: "on" if v else "off",
+            check_set_errors=True,
     )
 
     channel1_enabled = Instrument.control(
@@ -169,6 +164,7 @@ class IBeamSmart(Instrument):
             values=[True, False],
             get_process=lambda s: True if s == 'ON' else False,
             set_process=lambda v: "en 1" if v else "di 1",
+            check_set_errors=True,
     )
 
     channel2_enabled = Instrument.control(
@@ -179,6 +175,7 @@ class IBeamSmart(Instrument):
             values=[True, False],
             get_process=lambda s: True if s == 'ON' else False,
             set_process=lambda v: "en 2" if v else "di 2",
+            check_set_errors=True,
     )
 
     power = Instrument.control(
@@ -188,11 +185,13 @@ class IBeamSmart(Instrument):
             one.""",
             validator=strict_range,
             values=[0, 200000],
+            check_set_errors=True,
     )
 
     def enable_continous(self):
         """ enable countinous emmission mode """
         self.write('di ext')
+        self.check_errors()
         self.laser_enabled = True
         self.channel2_enabled = True
 
@@ -202,9 +201,11 @@ class IBeamSmart(Instrument):
         self.laser_enabled = True
         self.channel2_enabled = True
         self.write('en ext')
+        self.check_errors()
 
     def disable(self):
         """ shutdown all laser operation """
         self.write('di ext')
+        self.check_errors()
         self.channel2_enabled = False
         self.laser_enabled = False
