@@ -85,7 +85,9 @@ class Racal1992(Instrument):
     }
 
     def decode(v, allowed_types=None):
-        """All values returned follow the same format: 2 letters to indicate
+        """Decode received message.
+
+        All values returned follow the same format: 2 letters to indicate
         the type of the value returned, followed by a floating point number
         (which could be an integer, of course.)
         This here, for example, is math constant Z: MZ+001.00000000E+00
