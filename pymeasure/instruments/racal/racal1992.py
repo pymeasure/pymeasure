@@ -351,10 +351,10 @@ class Racal1992(Instrument):
         an operating mode is cleared.
 
         When there is no measurement data, this property will stall until data
-        is avaiable. It was also timeout after a time that can be set with the standard
+        is available. It will also timeout after a time that can be set with the standard
         pyvisa API.
 
-        One can make sure that measurement data is available by furst calling
+        One can make sure that measurement data is available by first calling
         `wait_for_measurement()`.
         """
         return self.read_and_decode(allowed_types=Racal1992.operating_modes.values())
