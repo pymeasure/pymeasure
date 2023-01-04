@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import pytest
+
 from pymeasure.test import expected_protocol
 
 
@@ -39,10 +41,10 @@ def test_init():
         pass  # verify init
 
 
-def test_ver():
+def test_version():
     with expected_protocol(
             IBeamSmart,
-            init_comm + [("ver", ""), (None, "iBPs-001A01-05"), (None, "[OK]")]
+            init_comm + [("ver", ""), (None, "iBPs-001A01-05"), (None, "[OK]")],
     ) as inst:
         assert inst.version == "iBPs-001A01-05"
 
@@ -50,6 +52,23 @@ def test_ver():
 def test_power():
     with expected_protocol(
             IBeamSmart,
-            init_comm + [("sh pow", ""), (None, "PIC  = 000001 uW  "), (None, "[OK]")]
+            init_comm + [("sh pow", ""), (None, "PIC  = 000001 uW  "), (None, "[OK]")],
     ) as inst:
         assert inst.power == 1
+
+
+def test_disable_laser():
+    with expected_protocol(
+            IBeamSmart,
+            init_comm + [("la off", ""), (None, "[OK]")],
+    ) as inst:
+        inst.laser_enabled = False
+
+
+def test_setting_failed():
+    with expected_protocol(
+            IBeamSmart,
+            init_comm + [("la off", ""), (None, "abc"), (None, "[OK]")],
+    ) as inst:
+        with pytest.raises(ValueError):
+            inst.laser_enabled = False

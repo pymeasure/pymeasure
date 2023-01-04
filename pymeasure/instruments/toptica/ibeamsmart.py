@@ -39,9 +39,9 @@ log.addHandler(logging.NullHandler())
 class IBeamSmart(Instrument):
     """ IBeam Smart laser diode
 
-    :param port: pyvisa resource name of the instrument
-    :param baud_rate: communication speed, defaults to 115200
-    :param kwargs: Any valid key-word argument for VISAAdapter
+    :param adapter: pyvisa resource name or adapter instance.
+    :param baud_rate: communication speed, defaults to 115200.
+    :param \\**kwargs: Any valid key-word argument for VISAAdapter.
     """
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
@@ -116,7 +116,9 @@ class IBeamSmart(Instrument):
         super().write(command)
 
     def check_errors(self):
-        """ checks if the last reply is '[OK]', otherwise a ValueError is
+        """Check communication after setting a value.
+
+        Checks if the last reply is '[OK]', otherwise a ValueError is
         raised and the read buffer is flushed because one has to assume that
         some communication is out of sync.
         """
@@ -125,86 +127,85 @@ class IBeamSmart(Instrument):
             self.adapter.connection.flush()
             raise ValueError(
                 f"IBeamSmart: Error after command '{self.lastcommand}' with "
-                f"message '{self.lastreply}'")
+                f"message '{reply}'")
 
     version = Instrument.measurement(
-           "ver", """ Firmware version number """,
+        "ver", """Get Firmware version number.""",
     )
 
     serial = Instrument.measurement(
-           "serial", """ Serial number of the laser system """,
+        "serial", """Get Serial number of the laser system.""",
     )
 
     temp = Instrument.measurement(
-            "sh temp",
-            """ temperature of the laser diode in degree centigrade.""",
+        "sh temp",
+        """Measure the temperature of the laser diode in degree centigrade.""",
     )
 
     system_temp = Instrument.measurement(
-            "sh temp sys",
-            """ base plate (heatsink) temperature in degree centigrade.""",
+        "sh temp sys",
+        """Measure base plate (heatsink) temperature in degree centigrade.""",
     )
 
     laser_enabled = Instrument.control(
-            "sta la", "la %s",
-            """ Status of the laser diode driver.
-                This can be True if the laser is on or False otherwise""",
-            validator=strict_discrete_set,
-            values=[True, False],
-            get_process=lambda s: True if s == 'ON' else False,
-            set_process=lambda v: "on" if v else "off",
-            check_set_errors=True,
+        "sta la", "la %s",
+        """Control emission status of the laser diode driver (bool).""",
+        validator=strict_discrete_set,
+        values=[True, False],
+        get_process=lambda s: True if s == 'ON' else False,
+        set_process=lambda v: "on" if v else "off",
+        check_set_errors=True,
     )
 
     channel1_enabled = Instrument.control(
-            "sta ch 1", "%s",
-            """ Status of Channel 1 of the laser.
-                This can be True if the laser is on or False otherwise""",
-            validator=strict_discrete_set,
-            values=[True, False],
-            get_process=lambda s: True if s == 'ON' else False,
-            set_process=lambda v: "en 1" if v else "di 1",
-            check_set_errors=True,
+        "sta ch 1", "%s",
+        """Control status of Channel 1 of the laser (bool).""",
+        validator=strict_discrete_set,
+        values=[True, False],
+        get_process=lambda s: True if s == 'ON' else False,
+        set_process=lambda v: "en 1" if v else "di 1",
+        check_set_errors=True,
     )
 
     channel2_enabled = Instrument.control(
-            "sta ch 2", "%s",
-            """ Status of Channel 2 of the laser.
-                This can be True if the laser is on or False otherwise""",
-            validator=strict_discrete_set,
-            values=[True, False],
-            get_process=lambda s: True if s == 'ON' else False,
-            set_process=lambda v: "en 2" if v else "di 2",
-            check_set_errors=True,
+        "sta ch 2", "%s",
+        """Control status of Channel 2 of the laser (bool).""",
+        validator=strict_discrete_set,
+        values=[True, False],
+        get_process=lambda s: True if s == 'ON' else False,
+        set_process=lambda v: "en 2" if v else "di 2",
+        check_set_errors=True,
     )
 
     power = Instrument.control(
-            "sh pow", "ch pow %f mic",
-            """ Actual output power in uW of the laser system. In pulse mode
-            this means that the set value might not correspond to the readback
-            one.""",
-            validator=strict_range,
-            values=[0, 200000],
-            check_set_errors=True,
+        "sh pow", "ch pow %f mic",
+        """Control actual output power in uW of the laser system. In pulse mode
+        this means that the set value might not correspond to the readback
+        one (float up to 200000).""",
+        validator=strict_range,
+        values=[0, 200000],
+        check_set_errors=True,
     )
 
     def enable_continous(self):
-        """ enable countinous emmission mode """
+        """Enable countinous emmission mode."""
         self.write('di ext')
         self.check_errors()
         self.laser_enabled = True
         self.channel2_enabled = True
 
     def enable_pulsing(self):
-        """ enable pulsing mode. The optical output is controlled by a digital
-        input signal on a dedicated connnector on the device """
+        """Enable pulsing mode.
+
+        The optical output is controlled by a digital
+        input signal on a dedicated connnector on the device."""
         self.laser_enabled = True
         self.channel2_enabled = True
         self.write('en ext')
         self.check_errors()
 
     def disable(self):
-        """ shutdown all laser operation """
+        """Shutdown all laser operation."""
         self.write('di ext')
         self.check_errors()
         self.channel2_enabled = False
