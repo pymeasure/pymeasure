@@ -81,6 +81,12 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         self._layout()
 
     def save_dock_layout(self):
+        """
+        Save the current layout of the docks. When running the GUI you can access this
+        function by right-clicking in the widget area to bring up the context men
+        and selecting "Save Dock Layout"
+        """
+
         layout = self.dock_area.saveState()
         with open(self.dock_layout_filename, 'w') as f:
             f.write(json.dumps(layout))
