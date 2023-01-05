@@ -106,5 +106,5 @@ def test_procedure_init_with_invalid_property():
         ("x (m/s)", ureg.m / ureg.s),
         ("x (V/(m*s))", ureg.V / ureg.m / ureg.s),
 ))
-def test_csv_formatter_parse_columns(header, units):
+def test_procedure_parse_columns(header, units):
     assert Procedure.parse_columns([header])[header] == ureg.Quantity(1, units)
