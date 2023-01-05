@@ -131,19 +131,8 @@ class CSVFormatter(logging.Formatter):
         """
         super().__init__()
         self.columns = columns
-        self.units = self._parse_columns(columns)
+        self.units = Procedure.parse_columns(columns)
         self.delimiter = delimiter
-
-    @staticmethod
-    def _parse_columns(columns):
-        """Parse the columns to get units in parenthesis."""
-        units_pattern = r"\((?P<units>[\w/\(\)\*\t]+)\)"
-        units = {}
-        for column in columns:
-            match = re.search(units_pattern, column)
-            if match:
-                units[column] = ureg.Quantity(match.groupdict()['units']).units
-        return units
 
     def format(self, record):
         """Formats a record as csv.
