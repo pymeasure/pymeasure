@@ -183,7 +183,7 @@ class Test_read_bytes:
         a.read_bytes(7)
         assert a._read_buffer is None
 
-    def test_read_all_bytes__from_pairs_empties_read_buffer(self):
+    def test_read_all_bytes_from_pairs_empties_read_buffer(self):
         a = ProtocolAdapter([(None, b"jklasdf")])
         a.read_bytes(7)
         assert a._read_buffer is None
