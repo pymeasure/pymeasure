@@ -96,15 +96,6 @@ class Test_csv_formatter_format:
         assert formatter.format(data) == "nan,nan,nan"
 
 
-@pytest.mark.parametrize("header, units", (
-    ("x (m)", ureg.m),
-    ("x (m/s)", ureg.m/ureg.s),
-    ("x (V/(m*s))", ureg.V / ureg.m / ureg.s),
-    ))
-def test_csv_formatter_parse_columns(header, units):
-    assert CSVFormatter._parse_columns([header])[header] == ureg.Quantity(1, units)
-
-
 def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()

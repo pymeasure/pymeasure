@@ -142,9 +142,10 @@ class CSVFormatter(logging.Formatter):
         :return: a string
         """
         line = []
+        numeric_types = (float, int, Decimal)
         for x in self.columns:
             value = record.get(x, float("nan"))
-            if isinstance(value, (float, int, Decimal)):
+            if type(value) in numeric_types:
                 line.append(f"{value}")
             else:
                 units = self.units.get(x, None)

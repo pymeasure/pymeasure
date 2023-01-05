@@ -27,6 +27,7 @@ import pickle
 
 from pymeasure.experiment.procedure import Procedure, ProcedureWrapper
 from pymeasure.experiment.parameters import Parameter
+from pymeasure.units import ureg
 
 from data.procedure_for_testing import RandomProcedure
 
@@ -44,6 +45,7 @@ def test_parameters():
     assert 'x' in objs
     assert objs['x'].value == p.x
 
+
 # TODO: Add tests for measureables
 
 
@@ -58,6 +60,7 @@ def test_procedure_wrapper():
     assert new_wrapper.procedure.iterations == 101
     assert RandomProcedure.iterations.value == 100
 
+
 # This test checks that user can define properties using the parameters inside the procedure
 # The test ensure that property is evaluated only when the Parameter has been processed during
 # class initialization.
@@ -67,17 +70,19 @@ def test_procedure_properties():
     class TestProcedure(Procedure):
         @property
         def a(self):
-            assert(isinstance(self.x, int))
+            assert (isinstance(self.x, int))
             return self.x
 
         @property
         def z(self):
-            assert(isinstance(self.x, int))
+            assert (isinstance(self.x, int))
             return self.x
+
         x = Parameter('X', default=5)
 
     p = TestProcedure()
     assert p.x == 5
+
 
 # Make sure that a procedure can be initialized even though some properties are raising
 # errors at initialization time
@@ -88,8 +93,18 @@ def test_procedure_init_with_invalid_property():
         @property
         def prop(self):
             return self.x
+
     p = TestProcedure()
     with pytest.raises(AttributeError):
         _ = p.prop  # AttributeError
     p.x = 5
     assert p.prop == 5
+
+
+@pytest.mark.parametrize("header, units", (
+        ("x (m)", ureg.m),
+        ("x (m/s)", ureg.m / ureg.s),
+        ("x (V/(m*s))", ureg.V / ureg.m / ureg.s),
+))
+def test_csv_formatter_parse_columns(header, units):
+    assert Procedure.parse_columns([header])[header] == ureg.Quantity(1, units)
