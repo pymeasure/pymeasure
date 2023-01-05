@@ -36,6 +36,22 @@ def _deprecation_warning(property_name):
 
 
 class HP34401A(Instrument):
+    """ Represents the HP / Agilent / Keysight 34401A Multimeter and
+    provides a high-level interface for interacting with the instrument.
+
+    .. code-block:: python
+
+        dmm = HP34401A("GPIB::1")
+        dmm.function_ = "DCV"
+        print(dmm.reading)  # -> Single float reading
+
+        dmm.nplc = 0.02
+        dmm.autozero_enabled = False
+        dmm.trigger_count = 100
+        dmm.trigger_delay = "MIN"
+        print(dmm.reading)  # -> Array of 100 very fast readings
+
+    """
     FUNCTIONS = {"DCV": "VOLT", "DCV_RATIO": "VOLT:RAT",
                  "ACV": "VOLT:AC", "DCI": "CURR", "ACI": "CURR:AC",
                  "R2W": "RES", "R4W": "FRES", "FREQ": "FREQ",
