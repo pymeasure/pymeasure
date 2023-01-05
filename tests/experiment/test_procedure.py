@@ -108,3 +108,18 @@ def test_procedure_init_with_invalid_property():
 ))
 def test_procedure_parse_columns(header, units):
     assert Procedure.parse_columns([header])[header] == ureg.Quantity(1, units)
+
+
+@pytest.mark.parametrize("valid_header_no_unit", (
+        ["x"], ["x ( x + y )"], ["x ( notes )"],
+))
+def test_procedure_no_parsed_units(valid_header_no_unit):
+    assert Procedure.parse_columns(valid_header_no_unit) == {}
+
+
+@pytest.mark.parametrize("invalid_header_unit", (
+        ["x (sqrt)"], ["x (x)"], ["x (y)"],
+))
+def test_procedure_invalid_parsed_unit(invalid_header_unit):
+    with pytest.raises(ValueError):
+        Procedure.parse_columns(invalid_header_unit)
