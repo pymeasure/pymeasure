@@ -67,7 +67,7 @@ class IBeamSmart(Instrument):
         self.ask('talk usual')
 
     def read(self):
-        """Read a reply of the instrument and exctract the values.
+        """Read a reply of the instrument and exctract the values, if possible.
 
         Reads a reply of the instrument which consists of at least two
         lines. The initial ones are the reply to the command while the last one
@@ -81,7 +81,7 @@ class IBeamSmart(Instrument):
         Value extraction: extract <value> from 'name = <value> [unit]'.
         If <value> can not be identified the orignal string is returned.
 
-        :returns: string containing the ASCII response of the instrument.
+        :return: string containing the ASCII response of the instrument (without '[OK]').
         """
         reply = super().read()  # read back the LF+CR which is always sent back
         if reply != "":
@@ -118,12 +118,13 @@ class IBeamSmart(Instrument):
     def check_errors(self):
         """Check communication after setting a value.
 
-        Checks if the last reply is '[OK]', otherwise a ValueError is
+        Checks if the last reply is only '[OK]', otherwise a ValueError is
         raised and the read buffer is flushed because one has to assume that
         some communication is out of sync.
         """
         reply = self.read()
-        if reply != '[OK]':
+        if reply:
+            # anything else than '[OK]'.
             self.adapter.connection.flush()
             raise ValueError(
                 f"IBeamSmart: Error after command '{self.lastcommand}' with "

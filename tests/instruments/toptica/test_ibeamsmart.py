@@ -29,8 +29,10 @@ from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.toptica import IBeamSmart
 
-
-# TODO verify the talk usual communication
+# Note: This communication does not contain the first two device responses, as they are
+# ignored due to `adapter.flush_read_buffer()`.
+# The device communication depends on previous commands and whether the device power cycled.
+# TODO verify the right talk usual communication
 init_comm = [("echo off", None), ("prom off", None), ("talk usual", ""), (None, "[OK]")]
 
 
