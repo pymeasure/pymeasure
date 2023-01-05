@@ -142,13 +142,7 @@ class CSVFormatter(logging.Formatter):
         for column in columns:
             match = re.search(units_pattern, column)
             if match:
-                try:
-                    units[column] = ureg.Quantity(match.groupdict()['units']).units
-                except pint.UndefinedUnitError:
-                    log.warning(
-                        f"Column {column} cannot be parsed to"
-                        f" unit {match.groupdict()['units']}.")
-
+                units[column] = ureg.Quantity(match.groupdict()['units']).units
         return units
 
     def format(self, record):
@@ -161,44 +155,45 @@ class CSVFormatter(logging.Formatter):
         line = []
         for x in self.columns:
             value = record.get(x, float("nan"))
-            units = self.units.get(x, None)
-            if units is not None:
-                if isinstance(value, str):
-                    try:
-                        value = ureg.Quantity(value)
-                    except pint.UndefinedUnitError:
-                        log.warning(
-                            f"Value {value} for column {x} cannot be parsed to"
-                            f" unit {units}.")
-                if isinstance(value, pint.Quantity):
-                    try:
-                        line.append(f"{value.m_as(units)}")
-                    except pint.DimensionalityError:
+            if isinstance(value, (float, int, Decimal)):
+                line.append(f"{value}")
+            else:
+                units = self.units.get(x, None)
+                if units is not None:
+                    if isinstance(value, str):
+                        try:
+                            value = ureg.Quantity(value)
+                        except pint.UndefinedUnitError:
+                            log.warning(
+                                f"Value {value} for column {x} cannot be parsed to"
+                                f" unit {units}.")
+                    if isinstance(value, pint.Quantity):
+                        try:
+                            line.append(f"{value.m_as(units)}")
+                        except pint.DimensionalityError:
+                            line.append("nan")
+                            log.warning(
+                                f"Value {value} for column {x} does not have the "
+                                f"right unit {units}.")
+                    elif isinstance(value, bool):
                         line.append("nan")
                         log.warning(
-                            f"Value {value} for column {x} does not have the "
-                            f"right unit {units}.")
-                elif isinstance(value, bool):
-                    line.append("nan")
-                    log.warning(
-                        f"Boolean for column {x} does not have unit {units}.")
-                elif isinstance(value, (float, int, Decimal)):
-                    line.append(f"{value}")
-                else:
-                    line.append("nan")
-                    log.warning(
-                        f"Value {value} for column {x} does not have the right"
-                        f" type for unit {units}.")
-            else:
-                if isinstance(value, pint.Quantity):
-                    if value.units == ureg.dimensionless:
-                        line.append(f"{value.magnitude}")
+                            f"Boolean for column {x} does not have unit {units}.")
                     else:
-                        self.units[x] = value.to_base_units().units
-                        line.append(f"{value.m_as(self.units[x])}")
-                        log.info(f"Column {x} units was set to {self.units[x]}")
+                        line.append("nan")
+                        log.warning(
+                            f"Value {value} for column {x} does not have the right"
+                            f" type for unit {units}.")
                 else:
-                    line.append(f"{value}")
+                    if isinstance(value, pint.Quantity):
+                        if value.units == ureg.dimensionless:
+                            line.append(f"{value.magnitude}")
+                        else:
+                            self.units[x] = value.to_base_units().units
+                            line.append(f"{value.m_as(self.units[x])}")
+                            log.info(f"Column {x} units was set to {self.units[x]}")
+                    else:
+                        line.append(f"{value}")
         return self.delimiter.join(line)
 
     def format_header(self):
