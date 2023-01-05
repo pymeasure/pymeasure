@@ -121,6 +121,8 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
 class CSVFormatter(logging.Formatter):
     """ Formatter of data results """
 
+    numeric_types = (float, int, Decimal)
+
     def __init__(self, columns, delimiter=','):
         """Creates a csv formatter for a given list of columns (=header).
 
@@ -142,10 +144,9 @@ class CSVFormatter(logging.Formatter):
         :return: a string
         """
         line = []
-        numeric_types = (float, int, Decimal)
         for x in self.columns:
             value = record.get(x, float("nan"))
-            if type(value) in numeric_types:
+            if type(value) in self.numeric_types:
                 line.append(f"{value}")
             else:
                 units = self.units.get(x, None)
