@@ -82,7 +82,8 @@ class HP34401A(Instrument):
         validator=strict_discrete_set,
         values=FUNCTIONS,
         map_values=True,
-        get_process=lambda v: v.strip('"'))
+        get_process=lambda v: v.strip('"')
+    )
 
     range_ = Instrument.control(
         "<function_prefix_for_range>:RANG?", "<function_prefix_for_range>:RANG %s",
@@ -107,8 +108,9 @@ class HP34401A(Instrument):
         Not valid for frequency, period, or ratio.
         Specify the resolution in the same units as the
         measurement function, not in number of digits.
+        Results in a "Settings Conflict" error if autorange is enabled.
         MIN selects the smallest value accepted, which gives the most resolution.
-        MAX selects the largest value accepted which gives the least resolution.""",
+        MAX selects the largest value accepted which gives the least resolution."""
     )
 
     nplc = Instrument.control(
@@ -119,7 +121,7 @@ class HP34401A(Instrument):
         This command is valid only for dc volts, ratio, dc current,
         2-wire ohms, and 4-wire ohms.""",
         validator=strict_discrete_set,
-        values=[0.02, 0.2, 1, 10, 100, "MIN", "MAX"],
+        values=[0.02, 0.2, 1, 10, 100, "MIN", "MAX"]
     )
 
     gate_time = Instrument.control(
@@ -130,7 +132,7 @@ class HP34401A(Instrument):
         Specifically:  10 ms (4.5 digits), 100 ms (default; 5.5 digits),
         or 1 second (6.5 digits).""",
         validator=strict_discrete_set,
-        values=[0.01, 0.1, 1, "MIN", "MAX"],
+        values=[0.01, 0.1, 1, "MIN", "MAX"]
     )
 
     detector_bandwidth = Instrument.control(
@@ -139,14 +141,16 @@ class HP34401A(Instrument):
 
         Valid values: 3, 20, 200, "MIN", "MAX".""",
         validator=strict_discrete_set,
-        values=[3, 20, 200, "MIN", "MAX"])
+        values=[3, 20, 200, "MIN", "MAX"]
+    )
 
     autozero_enabled = Instrument.control(
         "ZERO:AUTO?", "ZERO:AUTO %s",
         """Control the autozero state.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
-        map_values=True)
+        map_values=True
+    )
 
     def trigger_single_autozero(self):
         """Trigger an autozero measurement.
@@ -164,7 +168,8 @@ class HP34401A(Instrument):
         >10 GOhms for the 100 mV, 1 V, and 10 V ranges.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
-        map_values=True)
+        map_values=True
+    )
 
     terminals_used = Instrument.measurement(
         "ROUT:TERM?",
@@ -173,7 +178,8 @@ class HP34401A(Instrument):
 
         Returns "FRONT" or "REAR".""",
         values={"FRONT": "FRON", "REAR": "REAR"},
-        map_values=True)
+        map_values=True
+    )
 
     # Trigger related commands
     def init_trigger(self):
@@ -188,7 +194,8 @@ class HP34401A(Instrument):
         """Take a measurement of the currently selected function.
 
         Reading this property is equivalent to calling `init_trigger()`,
-        waiting for completion and fetching the reading(s).""")
+        waiting for completion and fetching the reading(s)."""
+    )
 
     trigger_source = Instrument.control(
         "TRIG:SOUR?", "TRIG:SOUR %s",
@@ -199,15 +206,15 @@ class HP34401A(Instrument):
         an immediate internal trigger (this is the default source),
         or a hardware trigger from the rear-panel Ext Trig (external trigger) terminal.""",
         validator=strict_discrete_set,
-        values=["IMM", "BUS", "EXT"])
+        values=["IMM", "BUS", "EXT"]
+    )
 
     trigger_delay = Instrument.control(
         "TRIG:DEL?", "TRIG:DEL %s",
         """Control the trigger delay in seconds.
 
-        Valid values (incl. floats): 0 to 3600 seconds, "MIN", "MAX".""",
-        # Use check_set_errors instead of strict_range validator to allow "MIN" and "MAX"
-        check_set_errors=True)
+        Valid values (incl. floats): 0 to 3600 seconds, "MIN", "MAX"."""
+    )
 
     trigger_auto_delay_enabled = Instrument.control(
         "TRIG:DEL:AUTO?", "TRIG:DEL:AUTO %s",
@@ -218,14 +225,15 @@ class HP34401A(Instrument):
         automatically turns off the automatic trigger delay.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
-        map_values=True)
+        map_values=True
+    )
 
     sample_count = Instrument.control(
         "SAMP:COUN?", "SAMP:COUN %s",
         """Controls the number of samples per trigger event.
 
-        Valid values: 1 to 50000, "MIN", "MAX".""",
-        check_set_errors=True)
+        Valid values: 1 to 50000, "MIN", "MAX"."""
+    )
 
     trigger_count = Instrument.control(
         "TRIG:COUN?", "TRIG:COUN %s",
@@ -233,15 +241,16 @@ class HP34401A(Instrument):
 
         Valid values: 1 to 50000, "MIN", "MAX", "INF".
         The INFinite parameter instructs the multimeter to continuously accept triggers
-        (you must send a device clear to return to the "idle" state).""",
-        check_set_errors=True)
+        (you must send a device clear to return to the "idle" state)."""
+    )
 
     stored_reading = Instrument.measurement(
         "FETC?",
         """Measure the reading(s) currently stored in the multimeter's internal memory.
 
         Reading this property will NOT initialize a trigger.
-        If you need that, use the `reading` property instead.""")
+        If you need that, use the `reading` property instead."""
+    )
 
     # Display related commands
     display_enabled = Instrument.control(
@@ -249,7 +258,8 @@ class HP34401A(Instrument):
         """Control the display state.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
-        map_values=True)
+        map_values=True
+    )
 
     displayed_text = Instrument.control(
         "DISP:TEXT?", "DISP:TEXT \"%s\"",
@@ -257,7 +267,8 @@ class HP34401A(Instrument):
 
         The text can be up to 12 characters long;
         any additional characters are truncated my the multimeter.""",
-        get_process=lambda x: x.strip('"'))
+        get_process=lambda x: x.strip('"')
+    )
 
     # System related commands
     def beep(self):
@@ -269,22 +280,26 @@ class HP34401A(Instrument):
         """Control whether the beeper is enabled.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
-        map_values=True)
+        map_values=True
+    )
 
     scpi_version = Instrument.measurement(
         "SYST:VERS?",
-        """The SCPI version of the multimeter.""")
+        """The SCPI version of the multimeter."""
+    )
 
     stored_readings_count = Instrument.measurement(
         "DATA:POIN?",
-        """The number of readings currently stored in the multimeter's internal memory.""")
+        """The number of readings currently stored in the multimeter's internal memory."""
+    )
 
     self_test_result = Instrument.measurement(
         "*TST?",
         """Initiate a self-test of the multimeter and return the result.
 
         Be sure to set an appropriate connection timeout,
-        otherwise the command will fail.""")
+        otherwise the command will fail."""
+    )
 
     def write(self, command):
         """Write a command to the instrument."""
