@@ -105,13 +105,14 @@ def test_procedure_init_with_invalid_property():
         ("x (m)", ureg.m),
         ("x (m/s)", ureg.m / ureg.s),
         ("x (V/(m*s))", ureg.V / ureg.m / ureg.s),
+        ("x (1)", ureg.dimensionless)
 ))
 def test_procedure_parse_columns(header, units):
     assert Procedure.parse_columns([header])[header] == ureg.Quantity(1, units)
 
 
 @pytest.mark.parametrize("valid_header_no_unit", (
-        ["x"], ["x ( x + y )"], ["x ( notes )"],
+        ["x"], ["x ( x + y )"], ["x ( notes )"], ["x [V]"]
 ))
 def test_procedure_no_parsed_units(valid_header_no_unit):
     assert Procedure.parse_columns(valid_header_no_unit) == {}
