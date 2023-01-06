@@ -138,7 +138,6 @@ def test_input_toggling_multiple_conditions(qtbot):
     assert wdg.x.isVisibleTo(wdg) is True
 
 
-
 @pytest.mark.parametrize(
     "condition", [
         True,
@@ -221,4 +220,3 @@ def test_input_toggling_lambda_condition(qtbot):
     wdg.toggle_par.setValue(40)
 
     assert wdg.x.isVisibleTo(wdg) is False
-
