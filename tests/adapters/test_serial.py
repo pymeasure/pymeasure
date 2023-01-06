@@ -69,4 +69,4 @@ def test_read_bytes(adapter):
 def test_adapter_write_binary_values(adapter, test_input, expected):
     adapter.write_binary_values("OUTP", test_input, datatype='B')
     # Add 10 bytes more, just to check that no extra bytes are present
-    assert(adapter.connection.read(len(expected) + 10) == expected)
+    assert adapter.connection.read(len(expected) + 10) == expected

@@ -303,7 +303,7 @@ class AnritsuMS9710C(Instrument):
         log.info("Wait for OPC")
         res = self.ask("*OPC?")
         n_attempts = n
-        while(res == ''):
+        while res == '':
             log.debug(f"Empty OPC Response. {n_attempts} remaining")
             if n_attempts == 0:
                 break
@@ -320,7 +320,7 @@ class AnritsuMS9710C(Instrument):
         """
         log.debug("Waiting for spectrum sweep")
 
-        while(self.esr2 != 3 and n > 0):
+        while self.esr2 != 3 and n > 0:
             log.debug(f"Wait for sweep [{n}]")
             # log.debug("ESR2: {}".format(esr2))
             sleep(delay)
