@@ -35,7 +35,7 @@ def test_init():
         pass  # Verify the expected communication.
 
 
-def test_set_voltage():
+def test_voltage():
     # instr.ch1.voltage should produce the following commands
     with expected_protocol(
         Keithley2200,
@@ -52,7 +52,7 @@ def test_set_voltage():
         instr.ch_3.voltage_setpoint = 1.456
 
 
-def test_set_current():
+def test_current():
     # instr.ch1.voltage should produce the following commands
     with expected_protocol(
         Keithley2200,
