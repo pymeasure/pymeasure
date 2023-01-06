@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ from .tab_widget import TabWidget
 from ...experiment import Procedure
 
 SORT_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
-SORTING_ENABLED = True
+SORTING_ENABLED = True  # Allow to disable sorting, for debug purpose only
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,20 +43,29 @@ class ResultsTable(QtCore.QObject):
     """ Class representing a panda dataframe """
     data_changed = QtCore.Signal(int, int, int, int)
 
-    def __init__(self, results, color, float_digits, force_reload=False, wdg=None, **kwargs):
+    def __init__(self, results, color, column_index=None,
+                 force_reload=False, wdg=None, **kwargs):
         super().__init__()
         self.results = results
         self.color = color
         self.force_reload = force_reload
         self.last_row_count = 0
-        self.float_digits = float_digits
         self.wdg = wdg
-        self._data = self.results.data
+        self.column_index = column_index
+        self.data = self.results.data
         self._started = False
 
     @property
     def data(self):
         return self._data
+
+    @data.setter
+    def data(self, value):
+        self._data = value
+        if self.column_index is not None:
+            self._data = self._data.set_index(self.column_index)
+        else:
+            self._data.reset_index()
 
     @property
     def rows(self):
@@ -80,7 +89,7 @@ class ResultsTable(QtCore.QObject):
             return
         if self.force_reload:
             self.results.reload()
-        self._data = self.results.data
+        self.data = self.results.data
         current_row_count, columns = self._data.shape
         if (self.last_row_count < current_row_count):
             # Request cells content update
@@ -90,6 +99,9 @@ class ResultsTable(QtCore.QObject):
 
     def set_color(self, color):
         self.color = color
+
+    def set_index(self, index):
+        self.column_index = index
 
 
 class PandasModelBase(QtCore.QAbstractTableModel):
@@ -109,14 +121,21 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     - By row: column fixed to the number of series, in this case table shape
     will be: k x (sum of l(x) x=1..n)
     """
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._init_data()
 
-    def _init_data(self):
-        self.results_list = []
-        self.row_count = 0
-        self.column_count = 0
+    float_digits = 6
+    concat_axis = 0
+
+    def __init__(self, column_index=None, results_list=[], parent=None):
+        super().__init__(parent)
+        self.column_index = column_index
+        self._init_data(results_list)
+
+    def _init_data(self, results_list=None):
+        if results_list is None:
+            results_list = []
+        self.results_list = results_list
+        self.row_count = self.pandas_row_count()
+        self.column_count = self.pandas_column_count()
 
     def clear(self):
         self.beginResetModel()
@@ -127,20 +146,22 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def add_results(self, results):
         if results not in self.results_list:
+            self.beginResetModel()
             self.results_list.append(results)
             results.data_changed.connect(partial(self._data_changed, results))
-            self.layoutChanged.emit()
+            self.endResetModel()
             results.init()
             results.start()
             results.update_data()
 
     def remove_results(self, results):
+        self.beginResetModel()
         if results in self.results_list:
             self.results_list.remove(results)
         self.row_count = self.pandas_row_count()
         self.column_count = self.pandas_column_count()
         results.stop()
-        self.layoutChanged.emit()
+        self.endResetModel()
 
     def rowCount(self, parent=None):
         return self.row_count
@@ -152,16 +173,20 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
             results, row, col = self.translate_to_local(index.row(), index.column())
             try:
+                if (self.column_index is not None) and isinstance(self, PandasModelByColumn):
+                    # Remap row to matching index entry when layout is by column
+                    index = self.vertical_header[row]
+                    row = list(results.data.index).index(index)
                 value = results.data.iloc[row][col]
                 column_type = results.data.dtypes[col]
                 # Cast to column type
                 value_render = column_type.type(value)
-            except IndexError:
+            except (IndexError, ValueError):
                 value = NaN
                 value_render = ""
             if isinstance(value_render, float64):
                 # limit maximum number of decimal digits displayed
-                value_render = f"{value_render:.{results.float_digits:d}f}"
+                value_render = f"{value_render:.{self.float_digits:d}f}"
 
             if role == QtCore.Qt.ItemDataRole.DisplayRole:
                 return str(value_render)
@@ -270,8 +295,37 @@ class PandasModelBase(QtCore.QAbstractTableModel):
     def vertical_header_decoration(self, section):
         return None
 
+    def export_df(self):
+        df_list = [results.data for results in self.results_list]
+        if not df_list:  # Empty list
+            df = None
+        else:
+            # Concatenate pandas data frames
+            df = pd.concat(df_list, axis=self.concat_axis).replace(to_replace=NaN, value="")
+        return df
+
+    def set_index(self, index):
+        self.column_index = index
+        # Update results list
+        for r in self.results_list:
+            r.stop()
+            r.set_index(index)
+        self.beginResetModel()
+        for r in self.results_list:
+            r.start()
+            r.update_data()
+        self.row_count = self.pandas_row_count()
+        self.column_count = self.pandas_column_count()
+        self.endResetModel()
+
+    def copy_model(self, model_class):
+        model = model_class(self.column_index, self.results_list[:])
+        return model
+
 
 class PandasModelByRow(PandasModelBase):
+    concat_axis = 0
+
     def pandas_row_count(self):
         rows = 0
         for r in self.results_list:
@@ -307,6 +361,16 @@ class PandasModelByRow(PandasModelBase):
         return rows + row, col
 
     @property
+    def vertical_header(self):
+        if self.column_index is None:
+            header = range(self.row_count)
+        else:
+            header = []
+            for r in self.results_list:
+                header.extend(r.data.index)
+        return header
+
+    @property
     def horizontal_header(self):
         if self.results_list:
             return self.results_list[0].data.columns
@@ -321,8 +385,13 @@ class PandasModelByRow(PandasModelBase):
 
 
 class PandasModelByColumn(PandasModelBase):
+    concat_axis = 1
+
     def pandas_row_count(self):
-        return max([0] + [r.rows for r in self.results_list])
+        if self.column_index is None:
+            return max([0] + [r.rows for r in self.results_list])
+        else:
+            return len(self.vertical_header)
 
     def pandas_column_count(self):
         cols = 0
@@ -373,6 +442,14 @@ class PandasModelByColumn(PandasModelBase):
         pixelmap.fill(results.color)
         return pixelmap
 
+    @property
+    def vertical_header(self):
+        header = set([])
+        for r in self.results_list:
+            header = header.union(set(r.data.index))
+        header = sorted(list(header))
+        return header
+
 
 class Table(QtWidgets.QTableView):
     """ Table format view of :class:`Experiment<pymeasure.display.manager.Experiment>`
@@ -391,14 +468,12 @@ class Table(QtWidgets.QTableView):
     }
 
     def __init__(self, refresh_time=0.2, check_status=True,
-                 force_reload=False, by_column=True, parent=None):
+                 force_reload=False, layout_class=PandasModelByColumn,
+                 column_index=None, float_digits=6, parent=None):
         super().__init__(parent)
         self.force_reload = force_reload
-        if by_column:
-            model = PandasModelByColumn()
-        else:
-            model = PandasModelByRow()
-
+        self.float_digits = float_digits
+        model = layout_class(column_index=column_index)
         self.setModel(model)
         self.horizontalHeader().setStyleSheet("font: bold;")
         self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
@@ -412,11 +487,13 @@ class Table(QtWidgets.QTableView):
 
         self.refresh_time = refresh_time
         self.check_status = check_status
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.update_tables)
-        self.timer.start(int(self.refresh_time * 1e3))
+        if self.refresh_time is not None:
+            self.timer = QtCore.QTimer(self)
+            self.timer.timeout.connect(self.update_tables)
+            self.timer.start(int(self.refresh_time * 1e3))
 
     def setModel(self, model):
+        model.float_digits = self.float_digits
         if SORTING_ENABLED:
             proxyModel = QtCore.QSortFilterProxyModel(self)
             proxyModel.setSourceModel(model)
@@ -426,30 +503,13 @@ class Table(QtWidgets.QTableView):
         super().setModel(model)
 
     def source_model(self):
+        model = self.model()
         if SORTING_ENABLED:
-            model = self.model().sourceModel()
-        else:
-            model = self.model()
+            model = model.sourceModel()
         return model
 
-    def composed_dataframe(self):
-        """ Create single pandas dataframe out of the dataframe list """
-        model = self.source_model()
-
-        df_list = [results.data for results in model.results_list]
-        if not df_list:  # Empty list
-            df = None
-        elif isinstance(model, PandasModelByRow):
-            # Concatenate pandas data frames
-            df = pd.concat(df_list, axis=0).replace(to_replace=NaN, value="")
-        else:
-            # Concatenate pandas data frames
-            df = pd.concat(df_list, axis=1).replace(to_replace=NaN, value="")
-
-        return df
-
     def export_action(self):
-        df = self.composed_dataframe()
+        df = self.source_model().export_df()
 
         if df is not None:
             formats = ";;".join(self.supported_formats.keys())
@@ -468,7 +528,7 @@ class Table(QtWidgets.QTableView):
         self.update_tables()
 
     def copy_action(self):
-        df = self.composed_dataframe()
+        df = self.source_model().export_df()
         if df is not None:
             df.to_clipboard()
 
@@ -489,14 +549,14 @@ class Table(QtWidgets.QTableView):
         menu.addAction(self.export)
         menu.exec(self.mapToGlobal(point))
 
-    def update_tables(self):
+    def update_tables(self, force=False):
         model = self.source_model()
         for item in model.results_list:
-            if self.check_status:
+            if not self.check_status or force:
+                item.update_data()
+            else:
                 if item.results.procedure.status == Procedure.RUNNING:
                     item.update_data()
-            else:
-                item.update_data()
 
     def set_color(self, table, color):
         table.set_color(color)
@@ -509,44 +569,115 @@ class Table(QtWidgets.QTableView):
         model = self.source_model()
         model.remove_results(table)
         table.stop()
+        if model.rowCount() == 0:
+            # Empty table, reset sorting policy
+            self.setSortingEnabled(False)
+            self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
+            self.setSortingEnabled(True)
 
     def clear(self):
-        model = self.model().source_model()
+        model = self.source_model()
 
         model.clear()
+        self.setSortingEnabled(False)
+        self.sortByColumn(-1, QtCore.Qt.SortOrder.AscendingOrder)
+        self.setSortingEnabled(True)
+
+    def set_index(self, index):
+        model = self.source_model()
+        model.set_index(index)
+
+    def set_model(self, model_class):
+        """ Replace model with new instance of model_class """
+        model = self.source_model()
+        new_model = model.copy_model(model_class)
+        self.setModel(new_model)
 
 
 class TableWidget(TabWidget, QtWidgets.QWidget):
     """ Widget to display experiment data in a tabular format
     """
-    float_digits = 6
+    layout_class_map = {
+        'By Row': PandasModelByRow,
+        'By Column': PandasModelByColumn,
+    }
 
-    def __init__(self, name, columns, by_column=True, refresh_time=0.2,
+    def __init__(self, name, columns, by_column=True,
+                 column_index=None, refresh_time=0.2,
+                 float_digits=6,
                  check_status=True, parent=None):
         super().__init__(name, parent)
         self.columns = columns
-        self.by_column = by_column
+        self.layout_names = list(self.layout_class_map.keys())
+        self.table_layout = self.layout_names[1] if by_column else self.layout_names[0]
+        self.column_index = column_index
         self.refresh_time = refresh_time
         self.check_status = check_status
+        self.float_digits = float_digits
         self._setup_ui()
         self._layout()
 
     def _setup_ui(self):
+        self.column_index_label = QtWidgets.QLabel(self)
+        self.column_index_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        self.column_index_label.setText('Index:')
+        self.layout_label = QtWidgets.QLabel(self)
+        self.layout_label.setMaximumSize(QtCore.QSize(45, 16777215))
+        self.layout_label.setText('Layout:')
+
+        self.column_index_combo = QtWidgets.QComboBox(self)
+        self.layout = QtWidgets.QComboBox(self)
+        self.column_index_combo.addItem('<None>')
+        for column in self.columns:
+            self.column_index_combo.addItem(column)
+        if self.column_index is not None:
+            self.column_index_combo.setCurrentText(self.column_index)
+
+        for key in self.layout_names:
+            self.layout.addItem(key)
+        self.layout.setCurrentText(self.table_layout)
+
+        self.column_index_combo.activated.connect(self.update_column_index)
+        self.layout.activated.connect(self.update_layout)
+
         self.table = Table(refresh_time=self.refresh_time,
                            check_status=self.check_status,
                            force_reload=False,
-                           by_column=self.by_column,
+                           layout_class=self.layout_class_map[self.table_layout],
+                           column_index=self.column_index,
+                           float_digits=self.float_digits,
                            parent=self)
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.setSpacing(10)
+        hbox.setContentsMargins(-1, 6, -1, 6)
+        hbox.addWidget(self.column_index_label)
+        hbox.addWidget(self.column_index_combo)
+        hbox.addWidget(self.layout_label)
+        hbox.addWidget(self.layout)
+
+        vbox.addLayout(hbox)
         vbox.addWidget(self.table)
         self.setLayout(vbox)
 
+    def update_layout(self, entry):
+        model = self.layout.itemText(entry)
+        self.table_layout = entry
+        self.table.set_model(self.layout_class_map[model])
+
+    def update_column_index(self, entry):
+        index = self.column_index_combo.itemText(entry)
+        if index == "<None>":
+            index = None
+        self.column_index = index
+        self.table.set_index(index)
+
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
-        ret = ResultsTable(results, color, self.float_digits, wdg=self, **kwargs)
+        ret = ResultsTable(results, color, self.column_index, wdg=self, **kwargs)
         return ret
 
     def load(self, table):
@@ -561,12 +692,13 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
 
     def preview_widget(self, parent=None):
         """ Return a widget suitable for preview during loading """
-
+        by_column = False if self.table_layout == self.layout_names[0] else True
         return TablePreviewWidget("Table preview",
                                   columns=self.columns,
-                                  by_column=self.by_column,
-                                  refresh_time=self.refresh_time,
-                                  check_status=True,
+                                  by_column=by_column,
+                                  refresh_time=None,
+                                  check_status=False,
+                                  float_digits=self.float_digits,
                                   parent=None)
 
 
