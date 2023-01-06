@@ -699,7 +699,8 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
                                   refresh_time=None,
                                   check_status=False,
                                   float_digits=self.float_digits,
-                                  parent=None)
+                                  parent=None,
+                                  )
 
 
 class TablePreviewWidget(TableWidget):
