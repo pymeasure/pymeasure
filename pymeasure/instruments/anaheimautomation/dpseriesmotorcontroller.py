@@ -154,8 +154,9 @@ class DPSeriesMotorController(Instrument):
 
     encoder_window = Instrument.control(
         "VEW", "EW%i",
-        """An integer property that represents the allowable error in encoder pulses from the desired
-           position before the encoder auto-correct function runs. This property can be set.""",
+        """An integer property that represents the allowable error in encoder pulses from the
+        desired position before the encoder auto-correct function runs. This property can be set.
+        """,
         validator=truncated_range,
         values=[0, 255],
         cast=int,
@@ -330,7 +331,7 @@ class DPSeriesMotorController(Instrument):
         super().write(cmd_str)
 
     def wait_for_completion(self, interval=0.5):
-        """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)
+        """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)  # noqa: E501
 
         :param interval: (float) seconds between queries to the "busy" flag.
         :return: None

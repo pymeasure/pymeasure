@@ -319,28 +319,31 @@ class Agilent34450A(Instrument):
     # Temperature (C) #
     ###################
 
-    temperature = Instrument.measurement(":READ?",
-                                         """ Reads a temperature measurement in Celsius, based on the
-                                         active :attr:`~.Agilent34450A.mode`. """
-                                         )
+    temperature = Instrument.measurement(
+        ":READ?",
+        """ Reads a temperature measurement in Celsius, based on the active :attr:`~.Agilent34450A.mode`.  # noqa: E501
+        """
+    )
 
     #############
     # Diode (V) #
     #############
 
-    diode = Instrument.measurement(":READ?",
-                                   """ Reads a diode measurement in Volts, based on the
-                                   active :attr:`~.Agilent34450A.mode`. """
-                                   )
+    diode = Instrument.measurement(
+        ":READ?",
+        """ Reads a diode measurement in Volts, based on the active :attr:`~.Agilent34450A.mode`.
+        """
+    )
 
     ###################
     # Capacitance (F) #
     ###################
 
-    capacitance = Instrument.measurement(":READ?",
-                                         """ Reads a capacitance measurement in Farads,
-                                         based on the active :attr:`~.Agilent34450A.mode`. """
-                                         )
+    capacitance = Instrument.measurement(
+        ":READ?",
+        """ Reads a capacitance measurement in Farads, based on the active :attr:`~.Agilent34450A.mode`.  # noqa: E501
+        """
+    )
     capacitance_range = Instrument.control(
         ":SENS:CAP:RANG?", ":SENS:CAP:RANG:AUTO 0;:SENS:CAP:RANG %s",
         """ A property that controls the capacitance range
