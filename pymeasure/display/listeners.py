@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -91,13 +91,13 @@ class Monitor(QtCore.QThread):
     are losts
     """
 
-    status = QtCore.QSignal(int)
-    progress = QtCore.QSignal(float)
-    log = QtCore.QSignal(object)
-    worker_running = QtCore.QSignal()
-    worker_failed = QtCore.QSignal()
-    worker_finished = QtCore.QSignal()  # Distinguished from QThread.finished
-    worker_abort_returned = QtCore.QSignal()
+    status = QtCore.Signal(int)
+    progress = QtCore.Signal(float)
+    log = QtCore.Signal(object)
+    worker_running = QtCore.Signal()
+    worker_failed = QtCore.Signal()
+    worker_finished = QtCore.Signal()  # Distinguished from QThread.finished
+    worker_abort_returned = QtCore.Signal()
 
     def __init__(self, queue):
         super().__init__()

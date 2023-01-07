@@ -9,7 +9,6 @@ This section contains specific documentation on the Lake Shore Cryogenics instru
 .. toctree::
    :maxdepth: 2
 
-   adapters
    lakeshore331
    lakeshore421
    lakeshore425

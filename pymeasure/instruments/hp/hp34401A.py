@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,9 +42,9 @@ class HP34401A(Instrument):
     resistance_4w = Instrument.measurement(
         "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "HP 34401A",
             asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs

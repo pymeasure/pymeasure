@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ def _check_errors(response):
               "03": "Register number does not exist.",
               "04": "Out of setpoint range.",
               "05": "Out of data number range.",
-              "06": "Executed monitor without specifying what do monitor.",
+              "06": "Executed monitor without specifying what to monitor.",
               "08": "Illegal parameter is set.",
               "42": "Sum does not match the expected value.",
               "43": "Data value greater than specified received.",
@@ -51,7 +51,7 @@ def _check_errors(response):
     if response[5:7] == "OK":
         return []
     else:  # got[5:7] == "ER"
-        """If communication is complete abnormally, TC038 return a
+        """If communication is completed abnormally, TC038 returns a
         character string “ER” and error code (EC1 and EC2)"""
         EC1 = response[7:9]
         if EC1 in ("03", "04", "05", "08"):
@@ -70,66 +70,39 @@ class TC038(Instrument):
     application.
 
     The oven always responds with an "OK" to all valid requests or commands.
+
+    :param str adapter: Name of the COM-Port.
+    :param int address: Address of the device. Should be between 1 and 99.
+    :param int timeout: Timeout in ms.
     """
 
-    def __init__(self, resourceName, address=1, timeout=1000,
-                 includeSCPI=False):
-        """
-        Initialize the communication.
+    def __init__(self, adapter, address=1, timeout=1000,
+                 includeSCPI=False, **kwargs):
 
-        Parameters
-        ----------
-        resourceName : str
-            name COM-Port.
-        address : int
-            address of the device. Should be between 1 and 99.
-        timeout : int
-            Timeout in ms.
-        """
-        super().__init__(resourceName, "TC038", timeout=timeout,
+        super().__init__(adapter, "TC038", timeout=timeout,
                          write_termination="\r", read_termination="\r",
-                         parity=Parity.even,)
+                         parity=Parity.even, **kwargs)
         self.address = address
 
         self.set_monitored_quantity()  # start to monitor the temperature
 
-    def _adjust_command(self, command):
-        """
-        Return an adjusted command string for the oven protocol.
-
-        :param str command: Three chars indicating the type, and data for
-            the command, if necessary.
-        """
-        # 010 is CPU (01) and time to wait (0), which are fix
-        return chr(2) + f"{self.address:02}" + "010" + command + chr(3)
-        # Response is chr(2) + address:02 + "01" + response + chr(3)
-
     def write(self, command):
         """Send a `command` in its own protocol."""
-        super().write(self._adjust_command(command))
+        # 010 is CPU (01) and time to wait (0), which are fix
+        super().write(chr(2) + f"{self.address:02}" + "010" + command + chr(3))
 
-    def ask(self, command):
-        """Send a `command` to the oven and read its string response."""
-        got = super().ask(self._adjust_command(command))
+    def read(self):
+        """Do error checking on reading."""
+        # Response is chr(2) + address:02 + "01" + response + chr(3)
+        got = super().read()
         errors = _check_errors(got)
-        if errors:
-            raise ConnectionError(errors[0])
-        return got
-
-    def values(self, command, **kwargs):
-        """Read the values of the oven in its own protocol."""
-        got = super().values(self._adjust_command(command), **kwargs)
-        errors = _check_errors(got[0])
         if errors:
             raise ConnectionError(errors[0])
         return got
 
     def check_errors(self):
         """Read the error from the instrument and return a list of errors."""
-        errors = _check_errors(super().read())
-        if errors:
-            raise ConnectionError(errors[0])
-        return errors
+        self.read()
 
     def set_monitored_quantity(self, quantity='temperature'):
         """

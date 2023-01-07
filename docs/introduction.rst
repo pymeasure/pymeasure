@@ -9,6 +9,8 @@ Instruments with VISA (GPIB, Serial, etc) are supported through the `PyVISA pack
 .. _PyVISA package: https://pyvisa.readthedocs.io/en/latest/
 .. _Prologix GPIB: http://prologix.biz/
 
+In order to keep the corresponding numbers and physical units (e.g. 5 meters) together, `pint <https://pint.readthedocs.io>`_ quantities can be used. That way it is easy to handle different orders of magnitude (meters and centimeters) or different units (meters and feet).
+
 Before using PyMeasure, you may find it helpful to be acquainted with `basic Python programming for the sciences`_ and understand the concept of objects.
 
 .. _basic Python programming for the sciences: https://scipy-lectures.github.io/

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -369,10 +369,9 @@ class Agilent34450A(Instrument):
 
     def __init__(self, adapter, **kwargs):
         super().__init__(
-            adapter, "HP/Agilent/Keysight 34450A Multimeter", **kwargs
+            adapter, "HP/Agilent/Keysight 34450A Multimeter", timeout=10000, **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
-        self.adapter.connection.timeout = 10000
         self.check_errors()
 
     def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):

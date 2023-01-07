@@ -9,5 +9,4 @@ This section contains specific documentation on the Danfysik instruments that ar
 .. toctree::
    :maxdepth: 2
 
-   adapters
    danfysik8500

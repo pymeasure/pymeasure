@@ -11,3 +11,4 @@ This section contains specific documentation on the Rohde & Schwarz instruments 
 
    sfm
    fsl
+   hmp

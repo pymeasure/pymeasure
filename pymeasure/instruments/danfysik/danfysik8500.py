@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument, RangeException
-from .adapters import DanfysikAdapter
 
 from time import sleep
 import numpy as np
@@ -57,14 +56,33 @@ class Danfysik8500(Instrument):
         "PRINT", """ Reads the idenfitication information. """
     )
 
-    def __init__(self, port):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            DanfysikAdapter(port),
+            adapter,
             "Danfysik 8500 Current Supply",
-            includeSCPI=False
+            includeSCPI=False,
+            write_termination="\r",
+            read_termination="\r",
+            timeout=500,
+            **kwargs
         )
+        # TODO verify serial connection.
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode
+
+    def read(self):
+        """ Read the device and raise exceptions if errors are reported by the instrument.
+
+        :returns: String ASCII response of the instrument
+        :raises: An :code:`Exception` if the Danfysik raises an error
+        """
+        result = super().read()
+        search = re.search(r"^\?\x07\s(?P<name>.*)$", result, re.MULTILINE)
+        if search:
+            raise Exception("Danfysik raised the error: %s" % (
+                            search.groups()[0]))
+        else:
+            return result
 
     def local(self):
         """ Sets the instrument in local mode, where the front

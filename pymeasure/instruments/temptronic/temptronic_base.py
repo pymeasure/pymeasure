@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -233,7 +233,8 @@ class ATSBase(Instrument):
         “out of range” error in TS.
         """,
         validator=truncated_range,
-        values=[-99, 25]
+        values=[-99, 25],
+        dynamic=True
     )
 
     temperature_limit_air_high = Instrument.control(
@@ -326,7 +327,7 @@ class ATSBase(Instrument):
         """,
         validator=truncated_range,
         values=[0, 255],
-        get_process=lambda v: TemperatureStatusCode(v),
+        get_process=lambda v: TemperatureStatusCode(int(v)),
     )
 
     set_point_number = Instrument.control(
@@ -448,7 +449,7 @@ class ATSBase(Instrument):
         """,
         validator=truncated_range,
         values=[0, int(2**16-1)],
-        get_process=lambda v: ErrorCode(v),
+        get_process=lambda v: ErrorCode(int(v)),
     )
 
     nozzle_air_flow_rate = Instrument.measurement(
@@ -543,19 +544,20 @@ class ATSBase(Instrument):
 
     mode = Instrument.measurement(
         "WHAT?",
-        """Returns an integer indicating what the system is doing at the time the query is processed.
+        """Returns a string indicating what the system is doing at the time the query is processed.
 
-        5: on Operator screen (manual mode)
-        6: on Cycle screen (program mode)
+        :type: string
+
         """,
         values={'manual': 5,
                 'program': 6,
                 },
-        map_values=True
+        map_values=True,
+        dynamic=True
     )
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, query_delay=0.05, **kwargs)
+    def __init__(self, adapter, name="ATSBase", **kwargs):
+        super().__init__(adapter, name=name, query_delay=0.05, **kwargs)
 
     def reset(self):
         """Reset (force) the System to the Operator screen.
@@ -790,29 +792,29 @@ class ATSBase(Instrument):
     def cycling_stopped(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.CYCLING_STOPPED
+        return TemperatureStatusCode.CYCLING_STOPPED in self.temperature_condition_status_code
 
     def end_of_all_cycles(self):
         """:returns: ``True`` if cycling has stopped.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.END_OF_ALL_CYCLES
+        return TemperatureStatusCode.END_OF_ALL_CYCLES in self.temperature_condition_status_code
 
     def end_of_one_cycle(self):
         """:returns: ``True`` if TS is at end of one cycle.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.END_OF_ONE_CYCLE
+        return TemperatureStatusCode.END_OF_ONE_CYCLE in self.temperature_condition_status_code
 
     def end_of_test(self):
         """:returns: ``True`` if TS is at end of test.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.END_OF_TEST
+        return TemperatureStatusCode.END_OF_TEST in self.temperature_condition_status_code
 
     def not_at_temperature(self):
         """:returns: ``True`` if not at temperature.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.NOT_AT_TEMPERATURE
+        return TemperatureStatusCode.NOT_AT_TEMPERATURE in self.temperature_condition_status_code
 
     def at_temperature(self):
         """:returns: ``True`` if at temperature.
         """
-        return self.temperature_condition_status_code == TemperatureStatusCode.AT_TEMPERATURE
+        return TemperatureStatusCode.AT_TEMPERATURE in self.temperature_condition_status_code

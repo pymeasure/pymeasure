@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -92,7 +92,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         raise OxfordVISAError(f"Retried {self.max_attempts} times without getting a valid "
                               "response, maybe there is something worse at hand.")
 
-    def write(self, command):
+    def _write(self, command):
         """Write command to instrument and check whether the reply indicates that the given command
         was not understood.
         The devices from Oxford Instruments reply with '?xxx' to a command 'xxx' if this command is
@@ -103,7 +103,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         :raises: :class:`~.OxfordVISAError` if the instrument does not recognise the supplied
             command or if the response of the instrument is not understood
         """
-        super().write(command)
+        super()._write(command)
 
         if not command[0] == "$":
             response = self.read()

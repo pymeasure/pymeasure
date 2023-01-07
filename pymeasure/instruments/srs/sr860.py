@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -432,13 +432,13 @@ class SR860(Instrument):
             val3 = None
         """
         if val3 is None:
-            return self.adapter.values(
+            return self.values(
                 command=f"SNAP? {val1}, {val2}",
                 separator=",",
                 cast=float,
             )
         else:
-            return self.adapter.values(
+            return self.values(
                 command=f"SNAP? {val1}, {val2}, {val3}",
                 separator=",",
                 cast=float,
@@ -559,9 +559,9 @@ class SR860(Instrument):
         values=range(0, 16)
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Stanford Research Systems SR860 Lock-in amplifier",
             **kwargs
         )

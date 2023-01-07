@@ -12,3 +12,4 @@ This section contains specific documentation on the temptronic instruments that 
    temptronic_base
    temptronic_ats525
    temptronic_ats545
+   temptronic_eco560

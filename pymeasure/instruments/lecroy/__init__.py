@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,33 +22,4 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters import SerialAdapter
-
-
-class LakeShoreUSBAdapter(SerialAdapter):
-    """ Provides a :class:`SerialAdapter` with the specific baudrate,
-    timeout, parity, and byte size for LakeShore USB communication.
-
-    Initiates the adapter to open serial communcation over
-    the supplied port.
-
-    :param port: A string representing the serial port
-    """
-
-    def __init__(self, port):
-        super().__init__(
-            port,
-            baudrate=57600,
-            timeout=0.5,
-            parity='O',
-            bytesize=7
-        )
-
-    def write(self, command):
-        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
-        method to automatically append a Unix-style linebreak at the end
-        of the command.
-
-        :param command: SCPI command string to be sent to the instrument
-        """
-        super().write(command + "\n")
+from .lecroyT3DSO1204 import LeCroyT3DSO1204

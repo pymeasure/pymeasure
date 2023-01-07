@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,11 +34,11 @@ class IBeamSmart(Instrument):
     :param baud_rate: communication speed, defaults to 115200
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
-    def __init__(self, port, baud_rate=115200, **kwargs):
-        if not isinstance(port, str):
-            raise TypeError("'port' must be a pyvisa resource name string")
+    def __init__(self, adapter, baud_rate=115200, **kwargs):
+        if not isinstance(adapter, str):
+            raise TypeError("'adapter' must be a pyvisa resource name string")
         super().__init__(
-            TopticaAdapter(port, baud_rate, **kwargs),
+            TopticaAdapter(adapter, baud_rate, **kwargs),
             "toptica IBeam Smart laser diode",
             includeSCPI=False,
         )
