@@ -10,6 +10,13 @@ Deprecated features
 - HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties,
   use :code:`function_` and :code:`reading` properties instead.
 
+Version 0.11.1 (2022-12-31)
+===========================
+Adapter and instrument mechanics
+--------------------------------
+- Fix broken `PrologixAdapter.gpib`. Due to a bug in `VISAAdapter`, you could not get a second adapter with that connection (#765).
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.11.0...v0.11.1
 
 Version 0.11.0 (2022-11-19)
 ===========================
