@@ -27,10 +27,16 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
 
+deprecated_text = """
+
+.. deprecated:: 0.12 Use the :code:`function_` and :code:`reading` properties instead.
+"""
+
+
 def _deprecation_warning(property_name):
     def func(x):
         warn(f'Deprecated property name "{property_name}", use the "function_" '
-             'and "reading" properties instead.', DeprecationWarning)
+             'and "reading" properties instead.', FutureWarning)
         return x
     return func
 
@@ -73,20 +79,25 @@ class HP34401A(Instrument):
         )
 
     # Log a deprecated warning for the old function property
-    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts",
+    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF",
+                                        "AC voltage, in Volts" + deprecated_text,
                                         get_process=_deprecation_warning('voltage_ac'))
 
-    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps",
+    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF",
+                                        "DC current, in Amps" + deprecated_text,
                                         get_process=_deprecation_warning('current_dc'))
 
-    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps",
+    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF",
+                                        "AC current, in Amps" + deprecated_text,
                                         get_process=_deprecation_warning('current_ac'))
 
-    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms",
+    resistance = Instrument.measurement("MEAS:RES? DEF,DEF",
+                                        "Resistance, in Ohms" + deprecated_text,
                                         get_process=_deprecation_warning('resistance'))
 
     resistance_4w = Instrument.measurement(
-        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms",
+        "MEAS:FRES? DEF,DEF",
+        "Four-wires (remote sensing) resistance, in Ohms" + deprecated_text,
         get_process=_deprecation_warning('resistance_4w'))
 
     function_ = Instrument.control(
@@ -110,7 +121,8 @@ class HP34401A(Instrument):
     )
 
     autorange = Instrument.control(
-        "{function_prefix_for_range}:RANG:AUTO?", "{function_prefix_for_range}:RANG:AUTO %d",
+        "{function_prefix_for_range}:RANG:AUTO?",
+        "{function_prefix_for_range}:RANG:AUTO %d",
         """Control the autorange state for the currently active function.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
@@ -220,7 +232,8 @@ class HP34401A(Instrument):
         Valid values: "IMM", "BUS", "EXT"
         The multimeter will accept a software (bus) trigger,
         an immediate internal trigger (this is the default source),
-        or a hardware trigger from the rear-panel Ext Trig (external trigger) terminal.""",
+        or a hardware trigger from the rear-panel
+        Ext Trig (external trigger) terminal.""",
         validator=strict_discrete_set,
         values=["IMM", "BUS", "EXT"],
     )
