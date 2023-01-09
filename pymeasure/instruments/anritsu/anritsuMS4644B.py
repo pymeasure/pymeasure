@@ -36,6 +36,9 @@ log.addHandler(logging.NullHandler())
 class AnritsuMS4644B(Instrument):
     """ A class representing the Anritsu MS4644B Vector Network Analyzer (VNA).
 
+    Can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
+    of the instrument), that are accessible via the `channels` dict or directly via `ch_` + the
+    channel number.
     """
     CHANNELS = [1, 16]
     TRACES = [1, 16]
@@ -163,8 +166,8 @@ class AnritsuMS4644B(Instrument):
         "*ESE?", "*ESE %d",
         """Control the Standard Event Status Enable Register bits.
 
-        The register can be queried using the ~`query_event_status_register` method. Valid values
-        are between 0 and 255. Refer to the instrument manual for an explanation of the bits.
+        The register can be queried using the :meth:`~.query_event_status_register` method. Valid
+        values are between 0 and 255. Refer to the instrument manual for an explanation of the bits.
         """,
         values=[0, 255],
         validator=strict_range,
@@ -302,7 +305,7 @@ class AnritsuMS4644B(Instrument):
         ":TRIG:EXT:DEL?", ":TRIG:EXT:DEL %g",
         """Control the the delay time of the external trigger.
 
-        Valid values are between 0 [s] and 10[s] in steps of 1e-9 [s] (i.e. 1 ns).
+        Valid values are between 0 [s] and 10 [s] in steps of 1e-9 [s] (i.e. 1 ns).
         """,
         values=[0, 10],
         validator=strict_range,
@@ -457,6 +460,7 @@ class AnritsuMS4644B(Instrument):
 
 
 class Port(Channel):
+    """Represents a port within a :class:`~.MeasurementChannel` of the Anritsu MS464xB VNA. """
     placeholder = "pt"
 
     power_level = Channel.control(
@@ -468,6 +472,7 @@ class Port(Channel):
 
 
 class Trace(Channel):
+    """Represents a trace within a :class:`~.MeasurementChannel` of the Anritsu MS464xB VNA. """
     placeholder = "tr"
 
     def activate(self):
@@ -499,6 +504,12 @@ class Trace(Channel):
 
 
 class MeasurementChannel(Channel):
+    """Represents a channel of Anritsu MS464xB VNA.
+
+    Can contain up to 4 instances of :class:`~.Port` (accessible via the `ports` dict or directly
+    `pt_` + the port number) and up to 16 instances of :class:`~.Trace` (accessible via the `traces`
+    dict or directly `tr_` + the trace number).
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
