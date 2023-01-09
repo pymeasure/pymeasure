@@ -230,7 +230,6 @@ class AnritsuMS4644B(Instrument):
         validator=strict_discrete_set,
     )
 
-    # TODO: use this value to determine the number of channels
     max_number_of_points = Instrument.control(
         ":SYST:POIN:MAX?", ":SYST:POIN:MAX %d",
         """Control the maximum number of points the instrument can measure in a sweep.
