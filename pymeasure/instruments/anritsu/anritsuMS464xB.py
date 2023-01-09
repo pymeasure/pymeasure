@@ -88,7 +88,7 @@ class AnritsuMS464xB(Instrument):
         while len(self.channels) > number_of_channels:
             self.remove_child(self.channels[len(self.channels)])
 
-        # Remove create new channels
+        # Create new channels
         while len(self.channels) < number_of_channels:
             self.add_child(MeasurementChannel, len(self.channels) + 1,
                            frequency_range=self.FREQUENCY_RANGE)
