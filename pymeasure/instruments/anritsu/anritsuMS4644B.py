@@ -216,9 +216,9 @@ class MeasurementChannel(Channel):
         ":SENS{ch}:FREQ:SPAN?", ":SENS{ch}:FREQ:SPAN %g",
         """Control the span value of the sweep range of the indicated channel in hertz.
 
-        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
+        Valid values are between 2 [Hz] and 4E10 [Hz] (i.e. 40 GHz).
         """,
-        values=FREQUENCY_RANGE,
+        values=[2, FREQUENCY_RANGE[1]],
         validator=strict_range,
     )
 
